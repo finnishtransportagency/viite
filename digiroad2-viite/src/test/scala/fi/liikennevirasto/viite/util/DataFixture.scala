@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.util
 
 import java.util.Properties
 
-import com.googlecode.flyway.core.Flyway
+import org.flywaydb.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
@@ -264,11 +264,12 @@ object DataFixture {
   }*/
 
   def flyway: Flyway = {
-    val flyway = new Flyway()
-    flyway.setDataSource(ds)
-    flyway.setInitVersion("-1")
-    flyway.setInitOnMigrate(true)
-    flyway.setLocations("db.migration")
+    val configuration = Flyway.configure().
+      dataSource(ds).
+      baselineVersion("-1").
+      baselineOnMigrate(true).
+      locations("db.migration")
+    val flyway = new Flyway(configuration)
     flyway
   }
 
@@ -277,6 +278,7 @@ object DataFixture {
   }
 
   def tearDown() {
+    SqlScriptRunner.executeStatement("DROP extension IF EXISTS postgis CASCADE;")
     flyway.clean()
   }
 
@@ -294,7 +296,7 @@ object DataFixture {
   }
 
   def flywayInit() {
-    flyway.init()
+    flyway.baseline()
   }
 
   def importMunicipalityCodes() {
@@ -310,7 +312,7 @@ object DataFixture {
     import scala.util.control.Breaks._
     val operation = args.headOption
     val username = properties.getProperty("bonecp.username")
-    if (!username.startsWith("dr2dev") && !operation.getOrElse("").equals("test_integration_api_all_municipalities")) {
+    if ((!username.startsWith("dr2dev") && !username.equals("postgres")) && !operation.getOrElse("").equals("test_integration_api_all_municipalities")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
       println("*************************************************************************************")

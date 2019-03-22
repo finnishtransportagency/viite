@@ -63,7 +63,7 @@ object Digiroad2Build extends Build {
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
-        "com.googlecode.flyway" % "flyway-core" % "2.3" % "test"
+        "org.flywaydb" % "flyway-core" % "6.0.0-beta" % "test"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,

@@ -63,7 +63,7 @@ object OracleDatabase {
   }
 
   def setSessionLanguage() {
-    sqlu"""alter session set nls_language = 'american'""".execute
+    //sqlu"""alter session set nls_language = 'american'""".execute
   }
 
   def jodaToSqlDate(jodaDate: LocalDate): Date = {
@@ -71,7 +71,7 @@ object OracleDatabase {
   }
 
   def initDataSource: DataSource = {
-    Class.forName("oracle.jdbc.driver.OracleDriver")
+    Class.forName("org.postgresql.Driver")
     val cfg = new BoneCPConfig(localProperties)
     new BoneCPDataSource(cfg)
   }
@@ -86,6 +86,7 @@ object OracleDatabase {
     props
   }
 
+  // TODO Convert to Postgis
   def boundingBoxFilter(bounds: BoundingRectangle, geometryColumn: String): String = {
     val leftBottomX = bounds.leftBottom.x
     val leftBottomY = bounds.leftBottom.y
