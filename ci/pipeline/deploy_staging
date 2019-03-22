@@ -133,7 +133,7 @@ pipeline {
                         "${build_args} -f ci/docker/Dockerfile.maven ci"
                     )
                     docker.build(
-                        "viite-capistrano",
+                        "viite-cap",
                         "${build_args} -f ci/docker/Dockerfile.ruby ci"
                      )
                 }
@@ -234,7 +234,7 @@ pipeline {
 
             agent {
                 docker {
-                    image "viite-capistrano"
+                    image "viite-cap"
                     reuseNode true
                 }
             }
