@@ -51,7 +51,7 @@ object RoadwayPointDAO {
 
   def fetch(id:Long) : RoadwayPoint = {
     sql"""
-      SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_DATE
+      SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
       from ROADWAY_POINT
       where id = $id
      """.as[RoadwayPoint].first
@@ -59,7 +59,7 @@ object RoadwayPointDAO {
 
   def fetch(roadwayNumber: Long, addrM: Long) : Option[RoadwayPoint] = {
     sql"""
-      SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_DATE
+      SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
       from ROADWAY_POINT
       where ROADWAY_NUMBER= $roadwayNumber and ADDR_M = $addrM
      """.as[RoadwayPoint].firstOption
