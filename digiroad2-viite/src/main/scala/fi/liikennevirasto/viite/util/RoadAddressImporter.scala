@@ -111,6 +111,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     roadwayPointStatement.setLong( 1, roadwayPoint.roadwayNumber)
     roadwayPointStatement.setLong(2, roadwayPoint.addrMValue)
     roadwayPointStatement.setString(3, roadwayPoint.createdBy)
+    roadwayPointStatement.addBatch()
     id
   }
 
@@ -120,6 +121,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     calibrationPointStatement.setLong(3, calibrationPoint.startOrEnd)
     calibrationPointStatement.setLong(4, calibrationPoint.typeCode.value)
     calibrationPointStatement.setString(5, calibrationPoint.createdBy)
+    calibrationPointStatement.addBatch()
   }
 
   private def fetchRoadLinksFromVVH(linkIds: Set[Long]): Map[Long, RoadLinkLike] = {
