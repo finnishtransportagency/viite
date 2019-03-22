@@ -57,9 +57,9 @@ pipeline {
                             "mkdir digiroad2-oracle/conf/lib/",
                             "cp -r tmp/ digiroad2-oracle/conf/lib/",
                             "mkdir digiroad2-oracle/conf/dev/",
-                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/dev/bonecp.properties",
-                            "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/dev/bonecp.properties",
-                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/dev/bonecp.properties"
+                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/ci-vahti/bonecp.properties"
                         ].join(" && ")
 
                         STAGE_RUN_TESTS = [
