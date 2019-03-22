@@ -7,7 +7,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 object RoadwayPointDAO {
 
-  case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, createdBy: String, createdTime: DateTime, modifiedBy: Option[String] = None, modifiedTime: Option[DateTime] = None)
+  case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, createdBy: String, createdTime: Option[DateTime] = None, modifiedBy: Option[String] = None, modifiedTime: Option[DateTime] = None)
 
   implicit val getRoadwayPointRow = new GetResult[RoadwayPoint] {
     def apply(r: PositionedResult) = {
@@ -15,7 +15,7 @@ object RoadwayPointDAO {
       val roadwayNumber = r.nextLong()
       val addrMValue = r.nextLong()
       val createdBy = r.nextString()
-      val createdTime = new DateTime(r.nextDate())
+      val createdTime = r.nextDateOption().map(d => new DateTime(d.getTime))
       val modifiedBy = r.nextStringOption()
       val modifiedTime = r.nextDateOption().map(d => new DateTime(d.getTime))
 
@@ -55,5 +55,13 @@ object RoadwayPointDAO {
       from ROADWAY_POINT
       where id = $id
      """.as[RoadwayPoint].first
+  }
+
+  def fetch(roadwayNumber: Long, addrM: Long) : Option[RoadwayPoint] = {
+    sql"""
+      SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_DATE
+      from ROADWAY_POINT
+      where ROADWAY_NUMBER= $roadwayNumber and ADDR_M = $addrM
+     """.as[RoadwayPoint].firstOption
   }
 }
