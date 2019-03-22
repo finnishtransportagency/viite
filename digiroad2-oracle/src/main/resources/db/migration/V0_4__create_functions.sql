@@ -1,19 +1,20 @@
-CREATE OR REPLACE FUNCTION GET_X (g sdo_geometry) return number is
+/* It seems these are not in use
+CREATE OR REPLACE FUNCTION GET_X (g geometry) return number is
 begin
-return g.sdo_ordinates(1);
+return ST_X(g);
 end;
 /
 
-CREATE OR REPLACE FUNCTION GET_Y (g sdo_geometry) return number is
+CREATE OR REPLACE FUNCTION GET_Y (g geometry) return number is
 begin
-return g.sdo_ordinates(2);
+return ST_Y(g);
 end;
 /
 
-CREATE OR REPLACE FUNCTION TO_2D (geom MDSYS.SDO_GEOMETRY)
-  RETURN MDSYS.SDO_GEOMETRY DETERMINISTIC
+CREATE OR REPLACE FUNCTION TO_2D (geom GEOMETRY)
+  RETURN GEOMETRY DETERMINISTIC
 AS
-  geom_2d       MDSYS.SDO_GEOMETRY;
+  geom_2d       GEOMETRY;
   dim_count     INTEGER; -- number of dimensions in layer
   gtype         INTEGER; -- geometry type (single digit)
   n_points      INTEGER; -- number of points in ordinates array
@@ -89,3 +90,4 @@ BEGIN
   RETURN geom_2d;
 END to_2d;
 /
+*/
