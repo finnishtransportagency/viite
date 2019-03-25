@@ -295,7 +295,7 @@ Tieosoiteprojektit-lista suljetaan yläpalkin oikeassa kulmassa olevasta X-paini
 
 _Tieosoiteprojektit -listaus._
 
-7. Muutosilmoitusten tekeminen tieosoiteprojektissa
+#7. Muutosilmoitusten tekeminen tieosoiteprojektissa
 --------------------------
 
 
