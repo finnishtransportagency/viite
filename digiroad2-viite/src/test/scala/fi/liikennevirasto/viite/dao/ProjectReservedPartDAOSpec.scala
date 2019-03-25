@@ -309,25 +309,38 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   }
 
   test("Test roadPartReservedTo When getting the road parts reserved Then should return the project that has the roads") {
-    runWithRollback {
-      val projectId = 123
-      val roadNumber = 99999
-      val roadPartNumber = 1
-      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.RRRR'),'-', to_date('01.01.2018','DD.MM.RRRR'), null, to_date('01.01.2018','DD.MM.RRRR'), null, null, 0, 0, 0)""".execute
-      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
-      projectReservedPartDAO.roadPartReservedTo(roadNumber, roadPartNumber).get._1 should be (projectId)
-    }
+      runWithRollback {
+        val roadwayIds = roadwayDAO.create(dummyRoadways)
+        val linearLocationIds = linearLocationDAO.create(dummyLinearLocations)
+
+        val id = Sequences.nextViitePrimaryKeySeqValue
+        val projectLinkId = id + 1
+        val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+        projectDAO.create(rap)
+        projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
+        val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1,  0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, linearLocationId = linearLocationIds.head)
+        )
+        projectLinkDAO.create(projectLinks)
+        projectReservedPartDAO.roadPartReservedTo(roadNumber1, roadPartNumber1).get._1 should be (id)
+      }
   }
 
   test("Test roadPartReservedByProject When road parts are reserved by project Then it should return the project name") {
-    runWithRollback {
-      val projectId = 123
-      val roadNumber = 99999
-      val roadPartNumber = 1
-      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.RRRR'),'-', to_date('01.01.2018','DD.MM.RRRR'), null, to_date('01.01.2018','DD.MM.RRRR'), null, null, 0, 0, 0)""".execute
-      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
-      projectReservedPartDAO.roadPartReservedByProject(roadNumber, roadPartNumber).get should be("Test Project")
-    }
+      runWithRollback {
+        val roadwayIds = roadwayDAO.create(dummyRoadways)
+        val linearLocationIds = linearLocationDAO.create(dummyLinearLocations)
+
+        val id = Sequences.nextViitePrimaryKeySeqValue
+        val projectLinkId = id + 1
+        val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+        projectDAO.create(rap)
+        projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
+        val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1,  0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, linearLocationId = linearLocationIds.head)
+        )
+        projectLinkDAO.create(projectLinks)
+        val project = projectReservedPartDAO.roadPartReservedByProject(roadNumber1, roadPartNumber1)
+        project should be(Some("'Test Project"))
+      }
   }
 
   test("Test fetchHistoryRoadParts When fetching road parts history Then it should return the reserved history") {
@@ -372,7 +385,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Tetst reserveRoadPart When trying to reserve same road in two diferent projects Then should throw a SQLIntegrityConstraintViolationException exception") {
+  test("Test reserveRoadPart When trying to reserve same road in two diferent projects Then should throw a SQLIntegrityConstraintViolationException exception") {
     runWithRollback {
       val error = intercept[SQLIntegrityConstraintViolationException] {
         val projectId = 123
