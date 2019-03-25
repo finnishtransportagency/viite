@@ -59,6 +59,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     dynamicSession.prepareStatement(sql = "Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES (CALIBRATION_POINT_SEQ.nextval, ?, ?, ?, ?, ?)")
   }
 
+  private def linkStatement(): PreparedStatement = {
+    dynamicSession.prepareStatement(sql = "Insert into LINK values(?)")
+  }
+
   def datePrinter(date: Option[DateTime]): String = {
     date match {
       case Some(dt) => dateFormatter.print(dt)
@@ -238,6 +242,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     val linearLocationPs = linearLocationStatement()
     val roadwayPointPs = roadwayPointStatement()
     val calibrationPointPs = calibrationPointStatement()
+    val linkPs = linkStatement()
 
     currentMappedConversionAddresses.mapValues {
       case address =>
