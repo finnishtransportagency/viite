@@ -320,6 +320,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     if(LinkDAO.fetch(location.linkId).isEmpty){
       statement.setLong(1, location.linkId)
       statement.addBatch()
+      statement.executeBatch()
     }
   }
 
