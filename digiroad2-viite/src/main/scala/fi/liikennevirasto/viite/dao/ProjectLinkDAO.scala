@@ -437,7 +437,7 @@ class ProjectLinkDAO {
 
   def fetchElyFromProjectLinks(projectId:Long): Option[Long]= {
     val query =
-      s"""SELECT ELY FROM PROJECT_LINK WHERE PROJECT_ID=$projectId AND ELY IS NOT NULL AND ROWNUM < 2"""
+      s"""SELECT ELY FROM PROJECT_LINK WHERE PROJECT_ID=$projectId AND ELY IS NOT NULL AND ROW_NUMBER < 2"""
     Q.queryNA[Long](query).firstOption
   }
 
@@ -695,7 +695,7 @@ class ProjectLinkDAO {
                           maxResults: Option[Int] = None): List[Long] =
   {
     val filter = status.map(s => s" AND status = ${s.value}").getOrElse("")
-    val limit = maxResults.map(s => s" AND ROWNUM <= $s").getOrElse("")
+    val limit = maxResults.map(s => s" AND ROW_NUMBER <= $s").getOrElse("")
     val query= s"""
          SELECT link_id
          FROM Project_link

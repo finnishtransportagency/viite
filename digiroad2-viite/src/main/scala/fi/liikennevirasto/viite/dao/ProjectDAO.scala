@@ -122,7 +122,7 @@ class ProjectDAO {
   }
 
   def assignNewProjectTRId(projectId: Long): Unit = {
-    Q.updateNA(s"UPDATE PROJECT SET TR_ID = viite_project_seq.nextval WHERE ID= $projectId").execute
+    Q.updateNA(s"UPDATE PROJECT SET TR_ID = nextval('viite_project_seq') WHERE ID= $projectId").execute
   }
 
   def removeProjectTRId(projectId: Long): Unit = {
@@ -170,7 +170,7 @@ class ProjectDAO {
       s"""
          SELECT *
          FROM project
-         WHERE UPPER(name)=UPPER('$projectName') and state<>7 and ROWNUM=1
+         WHERE UPPER(name)=UPPER('$projectName') and state<>7 and ROW_NUMBER=1
        """
     val projects = Q.queryNA[Long](query).list
     projects.isEmpty || projects.contains(projectId)

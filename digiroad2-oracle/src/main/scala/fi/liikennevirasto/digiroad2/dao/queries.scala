@@ -7,34 +7,34 @@ import slick.jdbc.{StaticQuery => Q}
 
 object Queries {
 
-  def nextViiteProjectId = sql"select viite_project_seq.nextval from dual"
+  def nextViiteProjectId = sql"select nextval('viite_project_seq')"
 
-  def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
+  def nextViitePrimaryKeyId = sql"select nextval('viite_general_seq')"
 
-  def nextRoadwayId = sql"select ROADWAY_SEQ.nextval from dual"
+  def nextRoadwayId = sql"select nextval('ROADWAY_SEQ')"
 
-  def nextLinearLocationId = sql"select LINEAR_LOCATION_SEQ.nextval from dual"
+  def nextLinearLocationId = sql"select nextval('LINEAR_LOCATION_SEQ')"
 
-  def nextRoadwayNumber = sql"select ROADWAY_NUMBER_SEQ.nextval from dual"
+  def nextRoadwayNumber = sql"select nextval('ROADWAY_NUMBER_SEQ')"
 
-  def nextRoadNetworkErrorId = sql"select ROAD_NETWORK_ERROR_SEQ.nextval from dual"
+  def nextRoadNetworkErrorId = sql"select nextval('ROAD_NETWORK_ERROR_SEQ')"
 
-  def nextProjectId = sql"select VIITE_PROJECT_SEQ.nextval from dual"
+  def nextProjectId = sql"select nextval('viite_project_seq')"
 
-  def nextRoadwayChangeLink = sql"select ROADWAY_CHANGE_LINK.nextval from dual"
+  def nextRoadwayChangeLink = sql"select nextval('ROADWAY_CHANGE_LINK')"
 
-  def nextPublishedRoadNetworkId = sql"select PUBLISHED_ROAD_NETWORK_SEQ.nextval from dual"
+  def nextPublishedRoadNetworkId = sql"select nextval('PUBLISHED_ROAD_NETWORK_SEQ')"
 
   def fetchViitePrimaryKeyId(len: Int) = {
-    sql"""select viite_general_seq.nextval from dual connect by level <= $len""".as[Long].list
+    sql"""select nextval('viite_general_seq') connect by level <= $len""".as[Long].list
   }
 
   def fetchRoadwayIds(len: Int) = {
-    sql"""select ROADWAY_SEQ.nextval from dual connect by level <= $len""".as[Long].list
+    sql"""select nextval('ROADWAY_SEQ') connect by level <= $len""".as[Long].list
   }
 
   def fetchLinearLocationIds(len: Int) = {
-    sql"""select LINEAR_LOCATION_SEQ.nextval from dual connect by level <= $len""".as[Long].list
+    sql"""select nextval('LINEAR_LOCATION_SEQ') connect by level <= $len""".as[Long].list
   }
 
   def getMunicipalities: Seq[Int] = {
