@@ -258,11 +258,18 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
   test("Test reserveRoadPart When having reserved one project with that part Then should fetch it without any problems") {
     runWithRollback {
+      val roadwayIds = roadwayDAO.create(dummyRoadways)
+      val linearLocationIds = linearLocationDAO.create(dummyLinearLocations)
       val id = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId = id + 1
+
       val reservedParts = Seq(ProjectReservedPart(id: Long, roadNumber1: Long, roadPartNumber1: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, reservedParts, None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, "TestUser")
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1,  0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, linearLocationId = linearLocationIds.head)
+      )
+      projectLinkDAO.create(projectLinks)
       val fetchedPart = projectReservedPartDAO.fetchReservedRoadPart(roadNumber1, roadPartNumber1)
       fetchedPart.nonEmpty should be (true)
       fetchedPart.get.roadNumber should be (reservedParts.head.roadNumber)
@@ -373,15 +380,21 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchReservedRoadParts When finding reserved parts by road number and part Then it should return the project reserved parts") {
     runWithRollback {
-      val projectId = 123
-      val roadNumber = 99999
-      val roadPartNumber = 1
-      sqlu"""INSERT INTO PROJECT VALUES ($projectId, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.RRRR'),'-',to_date('01.01.2018','DD.MM.RRRR'), null, to_date('01.01.2018','DD.MM.RRRR'), null, null, 0, 0, 0)""".execute
-      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId, 'Test')""".execute
-      val fetched = projectReservedPartDAO.fetchReservedRoadPart(roadNumber, roadPartNumber)
+      val roadwayIds = roadwayDAO.create(dummyRoadways)
+      val linearLocationIds = linearLocationDAO.create(dummyLinearLocations)
+
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId = id + 1
+      val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      projectDAO.create(rap)
+      projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1,  0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, linearLocationId = linearLocationIds.head)
+      )
+      projectLinkDAO.create(projectLinks)
+      val fetched = projectReservedPartDAO.fetchReservedRoadPart(roadNumber1, roadPartNumber1)
       fetched.size should be (1)
-      fetched.head.roadNumber should be (roadNumber)
-      fetched.head.roadPartNumber should be (roadPartNumber)
+      fetched.head.roadNumber should be (roadNumber1)
+      fetched.head.roadPartNumber should be (roadPartNumber1)
     }
   }
 
