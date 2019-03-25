@@ -50,16 +50,17 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       "values (ROADWAY_SEQ.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)")
 
   private def linearLocationStatement(): PreparedStatement =
-    dynamicSession.prepareStatement(sql = "insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, " +
-      "geometry, created_by, valid_from, valid_to) " +
-      "values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
+    dynamicSession.prepareStatement(sql = "insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by, valid_from, valid_to) " +
+      " values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
 
   private def roadwayPointStatement(): PreparedStatement = {
-    dynamicSession.prepareStatement(sql = "Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) Values (?, ?, ?, ?, ?)")
+    dynamicSession.prepareStatement(sql = "Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) " +
+      " values (?, ?, ?, ?, ?)")
   }
 
   private def calibrationPointStatement(): PreparedStatement = {
-    dynamicSession.prepareStatement(sql = "Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES (CALIBRATION_POINT_SEQ.nextval, ?, ?, ?, ?, ?)")
+    dynamicSession.prepareStatement(sql = "Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) " +
+      " values (CALIBRATION_POINT_SEQ.nextval, ?, ?, ?, ?, ?)")
   }
 
   private def linkStatement(): PreparedStatement = {
@@ -315,6 +316,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     }
     else if(startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id != NewRoadwayPointId && startCalibrationPoint.get._2.id == NewCalibrationPointId){
       insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2)
+    }
+    if(endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id == NewRoadwayPointId){
+      val roadwayPointId = insertRoadwayPoint(roadwayPointPs, endCalibrationPoint.get._1)
+      insertCalibrationPoint(calibrationPointPs, endCalibrationPoint.get._2.copy(roadwayPointId = roadwayPointId))
+    }
+    else if(endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id != NewRoadwayPointId && endCalibrationPoint.get._2.id == NewCalibrationPointId){
+      insertCalibrationPoint(calibrationPointPs, endCalibrationPoint.get._2)
     }
   }
 
