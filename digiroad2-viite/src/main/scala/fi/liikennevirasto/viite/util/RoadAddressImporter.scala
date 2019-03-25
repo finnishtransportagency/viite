@@ -259,8 +259,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
             val startCalibrationPoint = getStartCalibrationPoint(converted)
             val endCalibrationPoint = getEndCalibrationPoint(converted)
             handlePoints(roadwayPointPs, calibrationPointPs, startCalibrationPoint, endCalibrationPoint)
+
             val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayNumber, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, roadLink.linkSource, createdBy = "import",
               converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), groupedLinkCoeffs(converted.linkId))
+            insertLink(linkPs, linearLocation)
             if (add._1.directionFlag == 1) {
               val revertedDirectionLinearLocation = linearLocation.copy(sideCode = SideCode.switch(linearLocation.sideCode))
               insertLinearLocation(linearLocationPs, revertedDirectionLinearLocation)
@@ -294,20 +296,30 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
         insertRoadway(roadwayPs, roadAddress)
     }
-
+    calibrationPointPs.executeBatch()
     linearLocationPs.executeBatch()
     roadwayPs.executeBatch()
     println(s"${DateTime.now()} - Roadways saved")
+    calibrationPointPs.close()
+    linkPs.close()
+    linearLocationPs.close()
     roadwayPs.close()
   }
 
-  private def handlePoints(roadwayPointPs: PreparedStatement, calibrationPointPs: PreparedStatement, startCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)], endCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)]) = {
+  private def handlePoints(roadwayPointPs: PreparedStatement, calibrationPointPs: PreparedStatement, startCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)], endCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)]): Unit = {
     if(startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id == NewRoadwayPointId){
       val roadwayPointId = insertRoadwayPoint(roadwayPointPs, startCalibrationPoint.get._1)
       insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2.copy(roadwayPointId = roadwayPointId))
     }
     else if(startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id != NewRoadwayPointId && startCalibrationPoint.get._2.id == NewCalibrationPointId){
       insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2)
+    }
+  }
+
+  private def insertLink(statement: PreparedStatement, location: IncomingLinearLocation): Unit = {
+    if(LinkDAO.fetch(location.linkId).isEmpty){
+      statement.setLong(1, location.linkId)
+      statement.addBatch()
     }
   }
 
