@@ -10,13 +10,12 @@ import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{Queries, SequenceResetterDAO}
+import fi.liikennevirasto.digiroad2.dao.SequenceResetterDAO
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
@@ -141,9 +140,7 @@ class DataImporter {
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
       sqlu"""UPDATE LINEAR_LOCATION
         SET ADJUSTED_TIMESTAMP = ${importOptions.geometryAdjustedTimeStamp}""".execute
-
       println(s"${DateTime.now()} - Updating terminated roadways information")
-
       sqlu"""UPDATE ROADWAY SET TERMINATED = 2
             WHERE TERMINATED = 0 AND end_date IS NOT null AND EXISTS (SELECT 1 FROM ROADWAY rw
             	WHERE ROADWAY.ROAD_NUMBER = rw.ROAD_NUMBER
