@@ -13,7 +13,7 @@ __Huom! Suosittelemme käyttämään selaimena Firefoxia tai Chromea.__
 
 __Huom! Käyttöohjeen kuvia voi klikata isommaksi, jolloin tekstit erottuvat paremmin.__
 
-1. Miten päästä alkuun?
+#1. Miten päästä alkuun?
 -----------------------
 
 Viite-sovelluksen käyttöä varten tarvitaan Väylän tunnukset (A-, U-, LX-, K- tai L-alkuinen). Mikäli sinulla ei ole Väylän tunnuksia, pyydä ne yhteyshenkilöltäsi Väylästä.
