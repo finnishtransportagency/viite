@@ -179,14 +179,18 @@ class ProjectReservedPartDAO {
 
   def roadPartReservedByProject(roadNumber: Long, roadPart: Long, projectId: Long = 0, withProjectId: Boolean = false): Option[String] = {
     time(logger, "Road part reserved by project") {
-          val filter = if (withProjectId && projectId != 0) s" AND project_id != $projectId " else ""
-          val query =
-            s"""SELECT p.name
-            FROM project p
-            JOIN PROJECT_RESERVED_ROAD_PART l
-            ON l.PROJECT_ID =  p.ID
-            WHERE l.road_number=$roadNumber AND road_part_number=$roadPart $filter"""
-
+      val filter = if (withProjectId && projectId != 0) s" AND link.PROJECT_ID != $projectId " else ""
+      val query =
+        s"""
+        SELECT prj.NAME FROM PROJECT prj
+          WHERE prj.ID IN (
+            SELECT DISTINCT(link.PROJECT_ID) FROM PROJECT_LINK link
+              WHERE LINK_ID IN (
+                SELECT link.LINK_ID FROM LINEAR_LOCATION link
+                  INNER JOIN ROADWAY road ON link.ROADWAY_NUMBER = road.ROADWAY_NUMBER
+                  WHERE road.ROAD_NUMBER = $roadNumber
+                  AND road.ROAD_PART_NUMBER = $roadPart
+                  $filter))"""
       Q.queryNA[String](query).firstOption
     }
   }
