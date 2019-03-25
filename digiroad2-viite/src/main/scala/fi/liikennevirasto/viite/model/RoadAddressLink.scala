@@ -45,10 +45,7 @@ case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: Long, geome
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                           anomaly: Anomaly = Anomaly.None, roadwayNumber: Long = 0, newGeometry: Option[Seq[Point]] = None, floating: Boolean = false) extends RoadAddressLinkLike {
-  def floatingAsInt = {
-    if (floating) 1 else 0
-  }
+                           anomaly: Anomaly = Anomaly.None, roadwayNumber: Long = 0, newGeometry: Option[Seq[Point]] = None) extends RoadAddressLinkLike {
 }
 
 sealed trait Anomaly {

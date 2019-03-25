@@ -14,7 +14,6 @@ import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPo
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
@@ -208,8 +207,6 @@ trait BaseRoadAddress {
 
   def calibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint])
 
-  def floating: FloatingReason
-
   def geometry: Seq[Point]
 
   def ely: Long
@@ -219,8 +216,6 @@ trait BaseRoadAddress {
   def reversed: Boolean
 
   def roadwayNumber: Long
-
-  def isFloating: Boolean = floating.isFloating
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
@@ -318,7 +313,7 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
                        startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None,
                        linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
-                       floating: FloatingReason = NoFloating, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
+                       geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
                        terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
                        roadName: Option[String] = None) extends BaseRoadAddress {
 

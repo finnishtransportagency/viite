@@ -5,7 +5,6 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 
 trait RoadAddressMapper {
 
