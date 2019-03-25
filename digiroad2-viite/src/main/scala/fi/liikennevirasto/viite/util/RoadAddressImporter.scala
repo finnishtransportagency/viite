@@ -118,6 +118,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     roadwayPointStatement.setLong(3, roadwayPoint.addrMValue)
     roadwayPointStatement.setString(4, roadwayPoint.createdBy)
     roadwayPointStatement.addBatch()
+    roadwayPointStatement.executeBatch()
     id
   }
 
