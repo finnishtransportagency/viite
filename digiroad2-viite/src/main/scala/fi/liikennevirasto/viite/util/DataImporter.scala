@@ -132,6 +132,12 @@ class DataImporter {
       sqlu"""DELETE FROM ROADWAY""".execute
       sqlu"""DELETE FROM LINEAR_LOCATION""".execute
       sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
+      sqlu"""DELETE FROM LINK""".execute
+      sqlu"""DELETE FROM CALIBRATION_POINT""".execute
+      sqlu"""DELETE FROM JUNCTION_POINT""".execute
+      sqlu"""DELETE FROM NODE_POINT""".execute
+      sqlu"""DELETE FROM ROADWAY_POINT""".execute
+
       println(s"${DateTime.now()} - Old address data removed")
 
       val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
