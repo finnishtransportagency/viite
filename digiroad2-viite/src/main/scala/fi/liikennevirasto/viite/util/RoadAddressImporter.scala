@@ -55,7 +55,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       "values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
 
   private def roadwayPointStatement(): PreparedStatement = {
-    dynamicSession.prepareStatement(sql = "Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY) Values (?, ?, ?, ?)")
+    dynamicSession.prepareStatement(sql = "Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) Values (?, ?, ?, ?, ?)")
   }
 
   private def calibrationPointStatement(): PreparedStatement = {
@@ -117,6 +117,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     roadwayPointStatement.setLong(2, roadwayPoint.roadwayNumber)
     roadwayPointStatement.setLong(3, roadwayPoint.addrMValue)
     roadwayPointStatement.setString(4, roadwayPoint.createdBy)
+    roadwayPointStatement.setString(5, roadwayPoint.createdBy)
     roadwayPointStatement.addBatch()
     roadwayPointStatement.executeBatch()
     id
