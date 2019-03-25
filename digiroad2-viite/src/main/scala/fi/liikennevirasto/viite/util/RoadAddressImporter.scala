@@ -217,13 +217,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def importAddresses(validConversionAddressesInChunk: Seq[ConversionAddress], allConversionAddresses: Seq[ConversionAddress]): Unit = {
 
-    val linkIds = validConversionAddressesInChunk.map(_.linkId)
+    val linkIds = validConversionAddressesInChunk.map(_.linkId).toSet
     print(s"${DateTime.now()} - ")
     println("Total of %d link ids".format(linkIds.size))
-    val mappedRoadLinks = fetchRoadLinksFromVVH(linkIds.toSet)
+    val mappedRoadLinks = fetchRoadLinksFromVVH(linkIds)
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(mappedRoadLinks.size))
-    val mappedHistoryRoadLinks = fetchHistoryRoadLinksFromVVH(linkIds.filterNot(linkId => mappedRoadLinks.get(linkId).isDefined).toSet)
+    val mappedHistoryRoadLinks = fetchHistoryRoadLinksFromVVH(linkIds.filterNot(linkId => mappedRoadLinks.get(linkId).isDefined))
     print(s"${DateTime.now()} - ")
     println("Read %d road links history from vvh".format(mappedHistoryRoadLinks.size))
 
@@ -240,7 +240,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         GeometryUtils.geometryLength(roadLink.geometry) / (maxM - minM)
     }
     val (currentConversionAddresses, historyConversionAddresses) = validConversionAddressesInChunk.filterNot(ca => suppressedRoadLinks.map(_.roadwayNumber).distinct.contains(ca.roadwayNumber)).partition(_.endDate.isEmpty)
-
     val currentMappedConversionAddresses = currentConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val historyMappedConversionAddresses = historyConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val roadwayPs = roadwayStatement()
@@ -248,7 +247,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     val roadwayPointPs = roadwayPointStatement()
     val calibrationPointPs = calibrationPointStatement()
     val linkPs = linkStatement()
-
+    insertLinks(linkPs, linkIds)
     currentMappedConversionAddresses.mapValues {
       case address =>
         address.sortBy(_.startAddressM).zip(1 to address.size)
@@ -265,7 +264,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
             val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayNumber, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, roadLink.linkSource, createdBy = "import",
               converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), groupedLinkCoeffs(converted.linkId))
-            insertLink(linkPs, linearLocation)
             if (add._1.directionFlag == 1) {
               val revertedDirectionLinearLocation = linearLocation.copy(sideCode = SideCode.switch(linearLocation.sideCode))
               insertLinearLocation(linearLocationPs, revertedDirectionLinearLocation)
@@ -326,12 +324,15 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     }
   }
 
-  private def insertLink(statement: PreparedStatement, location: IncomingLinearLocation): Unit = {
-    if(LinkDAO.fetch(location.linkId).isEmpty){
-      statement.setLong(1, location.linkId)
-      statement.addBatch()
-      statement.executeBatch()
+  private def insertLinks(statement: PreparedStatement, links: Set[Long]): Unit = {
+    links.foreach{
+      link =>
+        if(LinkDAO.fetch(link).isEmpty){
+          statement.setLong(1, link)
+          statement.addBatch()
+        }
     }
+    statement.executeBatch()
   }
 
   private def importTerminatedAddresses(terminatedConversionAddresses: Seq[ConversionAddress]): Unit = {
