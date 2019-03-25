@@ -94,7 +94,7 @@ case class LinearLocation(id: Long, orderNumber: Double, linkId: Long, startMVal
       validTo.exists(vt => vt.isEqualNow || vt.isBeforeNow)
   }
 
-  def copyWithGeometry(newGeometry: Seq[Point]) = {
+  def copyWithGeometry(newGeometry: Seq[Point]): LinearLocation = {
     this.copy(geometry = newGeometry)
   }
 
@@ -116,25 +116,13 @@ class LinearLocationDAO {
 
   val selectFromLinearLocation =
     """
-    select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.SIDE,
-      loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, t.X, t.Y, t2.X, t2.Y,
-      loc.valid_from, loc.valid_to
-    from LINEAR_LOCATION loc cross join
-      TABLE(SDO_UTIL.GETVERTICES(loc.geometry)) t cross join
-      TABLE(SDO_UTIL.GETVERTICES(loc.geometry)) t2
+      select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.SIDE,
+      (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 0) AS cal_start_addr_m,
+      (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 1) AS cal_end_addr_m,
+      link.SOURCE, link.ADJUSTED_TIMESTAMP, geometry, loc.valid_from, loc.valid_to
+      from LINEAR_LOCATION loc
+      JOIN LINK ON (link.id = loc.link_id)
     """
-
-  // TODO If not used, remove
-  def optDateTimeParse(string: String): Option[DateTime] = {
-    try {
-      if (string == null || string == "")
-        None
-      else
-        Some(DateTime.parse(string, formatter))
-    } catch {
-      case ex: Exception => None
-    }
-  }
 
   def getNextLinearLocationId: Long = {
     Queries.nextLinearLocationId.as[Long].first
@@ -142,10 +130,8 @@ class LinearLocationDAO {
 
   def create(linearLocations: Iterable[LinearLocation], createdBy: String = "-"): Seq[Long] = {
     val ps = dynamicSession.prepareStatement(
-      """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE,
-        cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, geometry, created_by)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-        MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)), ?)""")
+      """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by) " +
+        " values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), ?)""")
 
     // Set ids for the linear locations without one
     val (ready, idLess) = linearLocations.partition(_.id != NewLinearLocation)
@@ -155,12 +141,13 @@ class LinearLocationDAO {
     )
 
     createLinearLocations.foreach {
-      case location =>
+      location =>
         val roadwayNumber = if (location.roadwayNumber == NewRoadwayNumber) {
           Sequences.nextRoadwayNumber
         } else {
           location.roadwayNumber
         }
+        val (p1, p2) = (location.geometry.head, location.geometry.last)
         ps.setLong(1, location.id)
         ps.setLong(2, roadwayNumber)
         ps.setLong(3, location.orderNumber.toLong)
@@ -168,24 +155,13 @@ class LinearLocationDAO {
         ps.setDouble(5, location.startMValue)
         ps.setDouble(6, location.endMValue)
         ps.setInt(7, location.sideCode.value)
-        location.startCalibrationPoint match {
-          case Some(value) => ps.setLong(8, value)
-          case None => ps.setNull(8, Types.BIGINT)
-        }
-        location.endCalibrationPoint match {
-          case Some(value) => ps.setLong(9, value)
-          case None => ps.setNull(9, Types.BIGINT)
-        }
-        ps.setInt(10, location.linkGeomSource.value)
-        ps.setLong(11, location.adjustedTimestamp)
-        val (p1, p2) = (location.geometry.head, location.geometry.last)
-        ps.setDouble(12, p1.x)
-        ps.setDouble(13, p1.y)
-        ps.setDouble(14, location.startMValue)
-        ps.setDouble(15, p2.x)
-        ps.setDouble(16, p2.y)
-        ps.setDouble(17, location.endMValue)
-        ps.setString(18, if (createdBy == null) "-" else createdBy)
+        ps.setDouble(8, p1.x)
+        ps.setDouble(9, p1.y)
+        ps.setDouble(10, location.startMValue)
+        ps.setDouble(11, p2.x)
+        ps.setDouble(12, p2.y)
+        ps.setDouble(13, location.endMValue)
+        ps.setString(14, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
@@ -210,16 +186,12 @@ class LinearLocationDAO {
       val calEndM = r.nextLongOption()
       val linkSource = r.nextInt()
       val adjustedTimestamp = r.nextLong()
-      val x1 = r.nextDouble()
-      val y1 = r.nextDouble()
-      val x2 = r.nextDouble()
-      val y2 = r.nextDouble()
+      val geom = OracleDatabase.loadJGeometryToGeometry(r.nextObjectOption())
       val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 
       LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
-        (calStartM, calEndM), Seq(Point(x1, y1), Point(x2, y2)),
-        LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
+        (calStartM, calEndM), geom, LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
     }
   }
 
@@ -242,7 +214,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where loc.id = $id and t.id < t2.id
+          where loc.id = $id
         """
       Q.queryNA[LinearLocation](query).firstOption
     }
@@ -267,7 +239,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          $where and t.id < t2.id $validToFilter
+          $where $validToFilter
         """
       queryList(query)
     }
@@ -287,7 +259,7 @@ class LinearLocationDAO {
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.id
-              where t.id < t2.id  $validToFilter
+              where $validToFilter
             """
           queryList(query)
       }
@@ -314,7 +286,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where loc.link_id in ($linkIdsString) $idFilter and t.id < t2.id and loc.valid_to is null
+          where loc.link_id in ($linkIdsString) $idFilter and loc.valid_to is null
         """
       queryList(query)
     }
@@ -328,7 +300,7 @@ class LinearLocationDAO {
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.link_id
-              where t.id < t2.id and loc.valid_to is null
+              where and loc.valid_to is null
             """
           queryList(query)
       }
@@ -352,7 +324,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where t.id < t2.id and valid_to is null and loc.ROADWAY_NUMBER in (select ROADWAY_NUMBER from linear_location
+          where and valid_to is null and loc.ROADWAY_NUMBER in (select ROADWAY_NUMBER from linear_location
             where valid_to is null and link_id in ($linkIdsString))
         """
       queryList(query)
@@ -366,8 +338,7 @@ class LinearLocationDAO {
           val query =
             s"""
               $selectFromLinearLocation
-
-              where t.id < t2.id and loc.valid_to is null and loc.ROADWAY_NUMBER in (
+              where and loc.valid_to is null and loc.ROADWAY_NUMBER in (
                 select ROADWAY_NUMBER from linear_location
                 join $idTableName i on i.id = link_id
                 where valid_to is null)
@@ -478,14 +449,6 @@ class LinearLocationDAO {
     for (adjustment <- linearLocationAdjustments) update(adjustment, createdBy)
   }
 
-  // Use this only in the initial import
-  def updateLinkSource(id: Long, linkSource: LinkGeomSource): Boolean = {
-    sqlu"""
-      UPDATE LINEAR_LOCATION SET link_source = ${linkSource.value} WHERE id = $id
-    """.execute
-    true
-  }
-
   /**
     * Updates the geometry of a linear location by expiring the current one and inserting a new one.
     *
@@ -558,7 +521,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where $boundingBoxFilter and t.id < t2.id and valid_to is null
+          where $boundingBoxFilter and valid_to is null
         """
       queryList(query)
     }
@@ -585,7 +548,7 @@ class LinearLocationDAO {
       val query =
         s"""
         $selectFromLinearLocation
-        where valid_to is null and t.id < t2.id and ROADWAY_NUMBER in ($boundingBoxQuery)
+        where valid_to is null and ROADWAY_NUMBER in ($boundingBoxQuery)
         """
       queryList(query)
     }
@@ -601,13 +564,13 @@ class LinearLocationDAO {
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.ROADWAY_NUMBER
-              where valid_to is null and t.id < t2.id
+              where valid_to is null
             """.stripMargin
         }
       } else {
         s"""
             $selectFromLinearLocation
-            where valid_to is null and t.id < t2.id and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
+            where valid_to is null and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
           """
       }
       queryList(query)
@@ -651,8 +614,8 @@ class LinearLocationDAO {
   private def withUpdatedSince(sinceDate: DateTime)(query: String): String = {
     val sinceString = sinceDate.toString("yyyy-MM-dd")
     s"""$query
-        where valid_from >= to_date('${sinceString}', 'YYYY-MM-DD')
-          OR (valid_to IS NOT NULL AND valid_to >= to_date('${sinceString}', 'YYYY-MM-DD'))"""
+        where valid_from >= to_date('$sinceString', 'YYYY-MM-DD')
+          OR (valid_to IS NOT NULL AND valid_to >= to_date('$sinceString', 'YYYY-MM-DD'))"""
   }
 
   /**
