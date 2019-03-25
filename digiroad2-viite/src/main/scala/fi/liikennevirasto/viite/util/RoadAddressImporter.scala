@@ -63,7 +63,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def linkStatement(): PreparedStatement = {
-    dynamicSession.prepareStatement(sql = "Insert into LINK values(?)")
+    dynamicSession.prepareStatement(sql = "Insert into LINK (ID) values(?)")
   }
 
   def datePrinter(date: Option[DateTime]): String = {
