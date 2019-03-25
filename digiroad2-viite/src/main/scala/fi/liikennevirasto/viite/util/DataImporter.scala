@@ -138,7 +138,7 @@ class DataImporter {
       roadAddressImporter.importRoadAddress()
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
-      sqlu"""UPDATE LINEAR_LOCATION
+      sqlu"""UPDATE LINK
         SET ADJUSTED_TIMESTAMP = ${importOptions.geometryAdjustedTimeStamp}""".execute
       println(s"${DateTime.now()} - Updating terminated roadways information")
       sqlu"""UPDATE ROADWAY SET TERMINATED = 2
