@@ -53,10 +53,10 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oike
 
 Tämä ohje käsittelee pääasiassa vain VIITE-sovelluksen käyttöä ei niinkään tieosoitejärjestelmää. Tarkemmat tiedot tieosoitejärjestelmästä löydät täältä: https://vayla.fi/documents/20473/143621/tieosoitejärjestelmä.pdf.
 
-2. Perustietoja Viite-sovelluksesta
+#2. Perustietoja Viite-sovelluksesta
 --------------------------
 
-2.2 Tiedon rakentuminen Viite-sovelluksessa
+2.1 Tiedon rakentuminen Viite-sovelluksessa
 --------------------------
 
 Viite-sovelluksessa tieosoiteverkko piirretään VVH:n tarjoaman Maanmittauslaitoksen keskilinja-aineiston päälle. Maanmittauslaitoksen keskilinja-aineisto muodostuu tielinkeistä. Tielinkki on tien, kadun, kevyen liikenteen väylän tai lauttayhteyden keskilinjageometrian pienin yksikkö. Tieosoiteverkko piirtyy geometrian päälle tieosoitesegmentteinä _lineaarisen referoinnin_ avulla. 
@@ -73,7 +73,7 @@ Tieosoitesegmentit piirretään Viite-sovelluksessa kartalle erilaisin värein (
 
 Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle, maasto@maanmittauslaitos.fi. Mukaan liitetään selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
 
-3. Karttanäkymän muokkaus
+#3. Karttanäkymän muokkaus
 --------------------------
 
 ![Karttanäkymän muokkaus](k3.JPG)
@@ -115,7 +115,7 @@ Kohdistin (6) kertoo kartan keskipisteen. Kohdistimen koordinaatit näkyvät kar
 Merkitse-painike (8) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki poistuu vain, kun merkitään uusi piste kartalta.
 
 
-4. Tieosoiteverkon katselu
+#4. Tieosoiteverkon katselu
 --------------------------
 
 Geometrialtaan yleistetty tieosoiteverkko tulee näkyviin, kun zoomaa tasolle, jonka mittakaavajanassa on lukema 5 km. Tästä tasosta ja sitä lähempää piirretään kartalle valtatiet, kantatiet, seututiet, yhdystiet ja numeroidut kadut. Yleistämätön tieverkko piirtyy mittakaavajanan lukemalla 2 km. 100 metriä (100 metrin mittakaavajanoja on kaksi kappaletta) suuremmilla mittakaavatasoilla tulevat näkyviin kaikki tieverkon kohteet.
@@ -204,7 +204,7 @@ Esimerkiksi: https://extranet.vayla.fi/viite/#linkProperty/799497 näkyy kuvassa
 _Kohdistaminen tielinkin ID:llä._
 
 
-5. Automatiikka Viite-sovelluksessa
+#5. Automatiikka Viite-sovelluksessa
 --------------------------
 Viite-sovelluksessa on muutamia automatiikan tekemiä yleistyksiä tai korjauksia. Automatiikka ei muuta mitään sellaisia tietoja, jotka muuttaisivat varsinaisesti tieosoitteita. Automatiikan tekemät muutokset liittyvät siihen, että tieosoiteverkkoa ylläpidetään keskilinjageometrian päällä, ja tuon keskilinjageometrian ylläpidosta vastaa Maanmittauslaitos. Tietyt automaattiset toimenpiteet helpottavat tieosoiteverkon ylläpitäjää varsinaisessa tieosoiteverkon hallinnassa.
 
@@ -229,7 +229,7 @@ Automatiikka tekee korjaukset, kun
 2. __Maanmittauslaitos yhdistelee tielinkkejä, esimerkiksi poistamalla tonttiliittymiä maanteiden varsilta:__ Tieosoitesegmentit siirretään uudelle geometrialle automaattisesti Väyläverkon hallinnan (VVH) tarjoaman tielinkkien muutosrajapinnan avulla.
 
 
-6. Tieosoiteprojektin tekeminen
+#6. Tieosoiteprojektin tekeminen
 --------------------------
 
 Uuden tieosoiteprojektin tekeminen aloitetaan klikkaamalla painiketta Tieosoiteprojektit (1) ja avautuvasta ikkunasta painiketta Uusi tieosoiteprojekti (2).
