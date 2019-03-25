@@ -44,6 +44,9 @@
      viewBox="0 1692.90073 100 141.07506154"
      id="16" />
   <view
+     viewBox="0 2257.20098 100 141.07506154"
+     id="17" />
+  <view
      viewBox="0 1833.9758 100 141.07506154"
      id="2" />
   <view
@@ -52,9 +55,6 @@
   <view
      viewBox="0 2116.12592 100 141.07506154"
      id="9" />
-  <view
-     viewBox="0 2257.20098 100 141.07506154"
-     id="17" />
   <view
      viewBox="0 2398.27604 100 141.07506154"
      id="18" />
@@ -214,6 +214,18 @@
        style="opacity:1;fill:#e9b28a;fill-opacity:1;stroke:none" />
   </g>
   <g
+      transform="matrix(0.99999377,0,0,1,-1.8092844e-5,564.31249)"
+      id="g17">
+    <path
+     id="path906"
+     style="opacity:1;fill:#1f7c15;fill-opacity:1;stroke:none"
+     d="m 50,1697.3093 52.90315,66.129 L 50,1829.5672 -2.9031496,1763.4383 Z" />
+    <path
+     id="path908"
+     d="M 50,1722.2914 82.917516,1763.4383 50,1804.5852 17.082484,1763.4383 Z"
+     style="opacity:1;fill:#eaf2ab;fill-opacity:1;stroke:none" />
+  </g>
+  <g
      id="g2"
      transform="translate(0,141.07882)">
     <path
@@ -248,18 +260,6 @@
        style="opacity:1;fill:#d2d2d2;fill-opacity:1;stroke:none"
        d="M 50,1722.2914 82.917516,1763.4383 50,1804.5852 17.082484,1763.4383 Z"
        id="path902" />
-  </g>
-  <g
-     transform="matrix(0.99999377,0,0,1,-1.8092844e-5,564.31249)"
-     id="g17">
-    <path
-       id="path906"
-       style="opacity:1;fill:#a4a4a4;fill-opacity:1;stroke:none"
-       d="m 50,1697.3093 52.90315,66.129 L 50,1829.5672 -2.9031496,1763.4383 Z" />
-    <path
-       id="path908"
-       d="M 50,1722.2914 82.917516,1763.4383 50,1804.5852 17.082484,1763.4383 Z"
-       style="opacity:1;fill:#d2d2d2;fill-opacity:1;stroke:none" />
   </g>
   <g
      id="g18"
