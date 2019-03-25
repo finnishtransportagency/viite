@@ -11,6 +11,9 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
+import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
+import fi.liikennevirasto.viite.dao.{CalibrationCode, TerminationCode}
 import fi.liikennevirasto.viite.dao.RoadwayPointDAO.RoadwayPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
 import fi.liikennevirasto.viite.dao._
@@ -32,7 +35,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   case class IncomingRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long, startAddrM: Long, endAddrM: Long, reversed: Long,
                              startDate: Option[DateTime], endDate: Option[DateTime], createdBy: String, roadType: Long, ely: Long, validFrom: Option[DateTime], validTo: Option[DateTime], discontinuity: Long, terminated: Long)
 
-  case class IncomingLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: SideCode, linkGeomSource: LinkGeomSource, floating: FloatingReason, createdBy: String, x1: Option[Double], y1: Option[Double],
+  case class IncomingLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: SideCode, linkGeomSource: LinkGeomSource, createdBy: String, x1: Option[Double], y1: Option[Double],
                                     x2: Option[Double], y2: Option[Double], validFrom: Option[DateTime], validTo: Option[DateTime])
 
   val dateFormatter = ISODateTimeFormat.basicDate()
@@ -47,9 +50,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       "values (ROADWAY_SEQ.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)")
 
   private def linearLocationStatement(): PreparedStatement =
-    dynamicSession.prepareStatement(sql = "insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, floating, " +
+    dynamicSession.prepareStatement(sql = "insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, " +
       "geometry, created_by, valid_from, valid_to) " +
-      "values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
+      "values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
 
   private def roadwayPointStatement(): PreparedStatement = {
     dynamicSession.prepareStatement(sql = "Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY) Values (?, ?, ?, ?)")
@@ -97,15 +100,14 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     linearLocationStatement.setDouble(4, linearLocation.startMeasure)
     linearLocationStatement.setDouble(5, linearLocation.endMeasure)
     linearLocationStatement.setLong(6, linearLocation.sideCode.value)
-    linearLocationStatement.setLong(7, linearLocation.floating.value)
-    linearLocationStatement.setDouble(8, linearLocation.x1.get)
-    linearLocationStatement.setDouble(9, linearLocation.y1.get)
-    linearLocationStatement.setDouble(10, linearLocation.x2.get)
-    linearLocationStatement.setDouble(11, linearLocation.y2.get)
-    linearLocationStatement.setDouble(12, linearLocation.endMeasure)
-    linearLocationStatement.setString(13, linearLocation.createdBy)
-    linearLocationStatement.setString(14, datePrinter(linearLocation.validFrom))
-    linearLocationStatement.setString(15, datePrinter(linearLocation.validTo))
+    linearLocationStatement.setDouble(7, linearLocation.x1.get)
+    linearLocationStatement.setDouble(8, linearLocation.y1.get)
+    linearLocationStatement.setDouble(9, linearLocation.x2.get)
+    linearLocationStatement.setDouble(10, linearLocation.y2.get)
+    linearLocationStatement.setDouble(11, linearLocation.endMeasure)
+    linearLocationStatement.setString(12, linearLocation.createdBy)
+    linearLocationStatement.setString(13, datePrinter(linearLocation.validFrom))
+    linearLocationStatement.setString(14, datePrinter(linearLocation.validTo))
     linearLocationStatement.addBatch()
   }
 
@@ -257,7 +259,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
             val startCalibrationPoint = getStartCalibrationPoint(converted)
             val endCalibrationPoint = getEndCalibrationPoint(converted)
             handlePoints(roadwayPointPs, calibrationPointPs, startCalibrationPoint, endCalibrationPoint)
-            val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayNumber, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, roadLink.linkSource, FloatingReason.NoFloating, createdBy = "import",
+            val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayNumber, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, roadLink.linkSource, createdBy = "import",
               converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), groupedLinkCoeffs(converted.linkId))
             if (add._1.directionFlag == 1) {
               val revertedDirectionLinearLocation = linearLocation.copy(sideCode = SideCode.switch(linearLocation.sideCode))

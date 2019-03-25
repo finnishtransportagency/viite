@@ -773,7 +773,7 @@ class ProjectValidator {
         pls.exists(_.connected(ra))).groupBy(ra => (ra.roadNumber, ra.roadPartNumber))
       // Check all the fetched road parts to see if any of them is a roundabout
       roadParts.keys.exists(rp => TrackSectionOrder.isRoundabout(
-        roadAddressService.getRoadAddressWithRoadAndPart(rp._1, rp._2, withFloating = true)))
+        roadAddressService.getRoadAddressWithRoadAndPart(rp._1, rp._2)))
     }
 
     def checkContinuityBetweenLinksOnParts: Seq[ValidationErrorDetails] = {

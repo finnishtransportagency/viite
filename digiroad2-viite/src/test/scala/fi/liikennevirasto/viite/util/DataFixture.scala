@@ -93,14 +93,6 @@ object DataFixture {
 
   }
 
-  def updateUnaddressedRoadLink(): Unit = {
-    println(s"\nUpdating unaddressed road link table at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    dataImporter.updateUnaddressedRoadLinks(vvhClient)
-    println(s"Unaddressed road link update complete at time: ${DateTime.now()}")
-    println()
-  }
-
   def updateLinearLocationGeometry(): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
@@ -286,7 +278,6 @@ object DataFixture {
       "insert_users.sql",
       "test_fixture_sequences.sql",
       "insert_road_address_data.sql",
-      "insert_floating_road_addresses.sql",
       "insert_overlapping_road_addresses.sql", // Test data for OverLapDataFixture (VIITE-1518)
       "insert_project_link_data.sql",
       "insert_road_names.sql"
@@ -340,8 +331,6 @@ object DataFixture {
         importComplementaryRoadAddress()
       /*case Some("update_missing") if geometryFrozen =>
         showFreezeInfo()*/
-      case Some("update_missing") =>
-        updateUnaddressedRoadLink()
       case Some("update_road_addresses_geometry") =>
         updateLinearLocationGeometry()
       case Some("import_road_address_change_test_data") =>
