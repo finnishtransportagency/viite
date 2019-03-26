@@ -255,31 +255,35 @@
 
     var createOrUpdate = function (dataJson) {
       if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
+        if (dataJson.roadNumber !== 0 && dataJson.roadPartNumber !== 0) {
         resetEditedDistance();
         var ids = dataJson.ids;
-        if (dataJson.linkStatus === LinkStatus.New.value && ids.length === 0) {
-          backend.createProjectLinks(dataJson, function (successObject) {
-            if (!successObject.success) {
-              new ModalConfirm(successObject.errorMessage);
-              applicationModel.removeSpinner();
+            if (dataJson.linkStatus === LinkStatus.New.value && ids.length === 0) {
+              backend.createProjectLinks(dataJson, function (successObject) {
+                if (!successObject.success) {
+                  new ModalConfirm(successObject.errorMessage);
+                  applicationModel.removeSpinner();
+                } else {
+                  publishableProject = successObject.publishable;
+                  projectErrors = successObject.projectErrors;
+                  eventbus.trigger('projectLink:projectLinksCreateSuccess');
+                  eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+                }
+              });
             } else {
-              publishableProject = successObject.publishable;
-              projectErrors = successObject.projectErrors;
-              eventbus.trigger('projectLink:projectLinksCreateSuccess');
-              eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+              backend.updateProjectLinks(dataJson, function (successObject) {
+                if (successObject.success) {
+                  publishableProject = successObject.publishable;
+                  projectErrors = successObject.projectErrors;
+                  eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+                } else {
+                  new ModalConfirm(successObject.errorMessage);
+                  applicationModel.removeSpinner();
+                }
+              });
             }
-          });
         } else {
-          backend.updateProjectLinks(dataJson, function (successObject) {
-            if (successObject.success) {
-              publishableProject = successObject.publishable;
-              projectErrors = successObject.projectErrors;
-              eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
-            } else {
-              new ModalConfirm(successObject.errorMessage);
-              applicationModel.removeSpinner();
-            }
-          });
+            eventbus.trigger('roadAddress:projectValidationFailed', "Virheellinen tieosanumero");
         }
       } else {
         eventbus.trigger('roadAddress:projectLinksUpdateFailed', PRECONDITION_FAILED_412);
