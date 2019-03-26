@@ -28,7 +28,7 @@ _Kirjautuminen Viite-sovellukseen._
 
 Kirjautumisen jälkeen avautuu karttakäyttöliittymässä katselutila.
 
-![Näkymä kirjautumisen jälkeen.](k2.JPG)
+![Näkymä kirjautumisen jälkeen.](k2.jpg)
 
 _Karttanäkymä kirjautumisen jälkeen._
 
