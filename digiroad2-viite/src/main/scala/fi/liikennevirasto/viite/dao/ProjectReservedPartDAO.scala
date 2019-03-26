@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite._
 import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -137,16 +138,16 @@ class ProjectReservedPartDAO {
           WHERE pl.PROJECT_ID = gr.PROJECT_ID
             AND pl.ROAD_NUMBER = gr.ROAD_NUMBER
             AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
-            AND pl.STATUS != 5
-            AND pl.TRACK IN (0, 1)
+            AND pl.STATUS != ${LinkStatus.Terminated.value}
+            AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
             AND END_ADDR_M = gr.LENGTH_NEW
             AND ROWNUM < 2) AS discontinuity_new,
         (SELECT LINK_ID FROM PROJECT_LINK pl
           WHERE pl.PROJECT_ID = gr.PROJECT_ID
             AND pl.ROAD_NUMBER = gr.ROAD_NUMBER
             AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
-            AND pl.STATUS != 5
-            AND pl.TRACK IN (0, 1)
+            AND pl.STATUS != ${LinkStatus.Terminated.value}
+            AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
             AND pl.START_ADDR_M = 0
             AND pl.END_ADDR_M > 0
             AND ROWNUM < 2) AS first_link FROM
@@ -169,9 +170,9 @@ class ProjectReservedPartDAO {
             pl.PROJECT_ID = rp.PROJECT_ID
             AND pl.ROAD_NUMBER = rp.ROAD_NUMBER
             AND pl.ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER
-            AND pl.STATUS != 5)
+            AND pl.STATUS != ${LinkStatus.Terminated.value})
           LEFT JOIN ROADWAY ra ON
-            ( (ra.ROAD_NUMBER = rp.ROAD_NUMBER
+            ((ra.ROAD_NUMBER = rp.ROAD_NUMBER
             AND ra.ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER
             AND ra.END_DATE IS NULL
             AND ra.VALID_TO IS NULL)
@@ -183,8 +184,8 @@ class ProjectReservedPartDAO {
             AND ra.END_DATE IS NULL
             AND ra.VALID_TO IS NULL
             AND (pl.STATUS IS NULL
-            OR (pl.STATUS != 5
-            AND pl.TRACK IN (0, 1)))
+            OR (pl.STATUS != ${LinkStatus.Terminated.value}
+            AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})))
           GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
         Option[Long], Option[Long])](sql).firstOption.map {
