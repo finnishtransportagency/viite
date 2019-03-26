@@ -374,9 +374,9 @@ class RoadwayChangesDAO {
             val roadWayChangesLinkPS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES_LINK " +
               "(roadway_change_id, project_id, project_link_id) values (?,?,?)")
 
-            val terminated = ProjectDeltaCalculator.partition(delta.terminations)
-            terminated.foreach(roadwaySection =>
-              addToBatch(roadwaySection, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
+            val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping)
+            terminated.originalSections.foreach(roadwaySection =>
+              addToBatch(roadwaySection._2, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
             )
 
             val news = ProjectDeltaCalculator.partition(delta.newRoads)
@@ -384,7 +384,7 @@ class RoadwayChangesDAO {
 
             val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping)
 
-            val transferred = ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated ++ news)
+            val transferred = ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated.originalSections.values.toSeq ++ news)
 
             val numbering = ProjectDeltaCalculator.partition(delta.numbering.mapping)
 
