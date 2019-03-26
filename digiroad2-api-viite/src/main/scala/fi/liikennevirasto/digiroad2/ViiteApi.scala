@@ -835,7 +835,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val user = userProvider.getCurrentUser()
       try {
         val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-        if (links.roadNumber == 0 || links.roadPartNumber == 0)
+        if (links.roadNumber == 0)
+          throw RoadAndPartNumberException("Virheellinen tienumero")
+        if (links.roadPartNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
         logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
         val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
