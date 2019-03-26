@@ -708,10 +708,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/roadaddress/project/all", operation(getAllRoadAddressProjects)) {
     time(logger, "GET request for /roadlinks/roadaddress/project/all") {
-      projectService.getAllProjects.map(p => {
-        val projectLinksElys = projectService.getProjectEly(p.id)
-          roadAddressProjectToApi(p, projectLinksElys)
-      })
+        val (deletedProjs, currentProjs) = projectService.getAllProjects.map(p => {
+          p.id -> (p, projectService.getProjectEly(p.id))
+        }).partition(_._2._2.isEmpty)
+        deletedProjs.map(p => roadAddressProjectToApi(p._2._1, p._2._2)) ++ currentProjs.sortBy(e => e._2._2.min).map(p => roadAddressProjectToApi(p._2._1, p._2._2))
     }
   }
 
