@@ -101,6 +101,8 @@ class ProjectValidator {
     def message: String
 
     def notification: Boolean
+
+    def priority: Int = 9
   }
 
   object ValidationErrorList {
@@ -148,6 +150,8 @@ class ProjectValidator {
       def message: String = InsufficientTrackCoverageMessage
 
       def notification = false
+
+      override def priority = 2
     }
 
     // Viite-453
@@ -196,6 +200,8 @@ class ProjectValidator {
       def message: String = ""
 
       def notification = false
+
+      override def priority = 1
     }
 
     case object ConnectedDiscontinuousLink extends ValidationError {
