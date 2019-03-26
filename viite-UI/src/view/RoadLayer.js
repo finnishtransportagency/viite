@@ -70,7 +70,9 @@
               'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
               'Ajorata: ' + roadData.trackCode + '<br>' +
               'AET: ' + roadData.startAddressM + '<br>' +
-              'LET: ' + roadData.endAddressM + '<br>' + '</p>';
+              'LET: ' + roadData.endAddressM + '<br>' +
+              'Linkin ID: ' + roadData.linkId + '<br>' +'</p>'
+            ;
           } else {
             infoContent.innerHTML = '<p>' +
               'Tuntematon tien segmentti' + '</p>';
