@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
+import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.{NewRoadway, RoadType}
@@ -38,6 +39,9 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
+
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
@@ -64,6 +68,10 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
         0, 100, false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination)
     )
   }
+
+  private def dummyLinearLocations = Seq(
+    dummyLinearLocation(roadwayNumber = roadwayNumber1, orderNumber = 1L, linkId = linkId1, startMValue = 0.0, endMValue = 10.0),
+    dummyLinearLocation(roadwayNumber = roadwayNumber2, orderNumber = 1L, linkId = linkId2, startMValue = 0.0, endMValue = 10.0))
 
   private def splittedDummyRoadways: Seq[Roadway] = {
     Seq(Roadway(NewRoadway, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
@@ -509,7 +517,9 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchByProjectRoadParts When creating two project links Then they should be returned") {
     runWithRollback {
+
       val roadwayIds = roadwayDAO.create(dummyRoadways)
+      val linearLocationIds = linearLocationDAO.create(dummyLinearLocations)
       val id = Sequences.nextViitePrimaryKeySeqValue
       val projectLinkId1 = id + 1
       val projectLinkId2 = id + 2
@@ -518,8 +528,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0),
-        dummyProjectLink(projectLinkId2, id, linkId1, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, linearLocationIds.head),
+        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, linearLocationIds.last)
       )
       projectLinkDAO.create(projectLinks)
       projectReservedPartDAO.roadPartReservedByProject(roadNumber1, roadPartNumber1) should be(Some("TestProject"))
