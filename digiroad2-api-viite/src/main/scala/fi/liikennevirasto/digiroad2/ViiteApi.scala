@@ -883,7 +883,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val user = userProvider.getCurrentUser()
       try {
         val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-        if (links.roadNumber == 0 || links.roadPartNumber == 0)
+        if (links.roadNumber == 0)
+          throw RoadAndPartNumberException("Virheellinen tienumero")
+        if (links.roadPartNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
         if (projectService.validateLinkTrack(links.trackCode)) {
           projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus),
