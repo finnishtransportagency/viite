@@ -236,7 +236,7 @@ Uuden tieosoiteprojektin tekeminen aloitetaan klikkaamalla painiketta Tieosoitep
 
 ![Uusi tieosoiteprojekti](k17.JPG)
 
-_Tieosoiteprojektit -painike ja Uusi tieosoiteprojekti -painike._
+_Tieosoiteprojektit-painike ja Uusi tieosoiteprojekti -painike._
 
 Näytön oikeaan reunaan avautuu lomake tieosoiteprojektin perustietojen täydentämistä varten. Jos käyttäjä on ollut katselutilassa,  sovellus siirtyy tässä vaiheessa automaattisesti muokkaustilaan.
 
@@ -256,7 +256,7 @@ Varaa-painikkeen klikkauksen jälkeen tieosan tiedot tulevat näkyviin lomakkeel
 
 ![Uusi tieosoiteprojekti](k22.JPG)
 
-_Tieosan tiedot lomakkeella Lisää -painikkeen painamisen jälkeen._
+_Tieosan tiedot lomakkeella Lisää-painikkeen painamisen jälkeen._
 
 Tieosoiteprojekti tallentuu automaattisesti painikkeesta Jatka toimenpiteisiin, jolloin tiedot tallentuvat tietokantaan ja sovellus siirtyy toimenpidenäytölle. Varaamisen yhteydessä Viite kohdistaa kartan varatun tieosan alkuun. Poistu-painikkeesta projekti suljetaan ja käyttäjältä varmistetaan, halutaanko tallentamattomat muutokset tallentaa. Projektiin pääsee palaamaan Tieosoiteprojektit-listan kautta. 
 
@@ -293,7 +293,7 @@ Tieosoiteprojektit-lista suljetaan yläpalkin oikeassa kulmassa olevasta X-paini
 
 ![Uusi tieosoiteprojekti](k26.JPG)
 
-_Tieosoiteprojektit -listaus._
+_Tieosoiteprojektit-listaus._
 
 #7. Muutosilmoitusten tekeminen tieosoiteprojektissa
 --------------------------
@@ -355,7 +355,7 @@ Valitut tielinkit näkyvät kartalla vihreällä korostettuna. Kun valitaan Toim
 
 ![Uusi tieosoite](k43.JPG)
 
-_Kun toimenpidevalikosta valitaan 'Uusi', oikeaan laitaan ilmestyy näkyviin kentät uuden tieosoitteen syöttämistä varten._ 
+_Kun valitaan toimenpidevalikosta Uusi, oikeaan laitaan ilmestyy näkyviin kentät uuden tieosoitteen syöttämistä varten._ 
 
 Tietyyppiä voi muokata pudotusvalikosta (3). Jatkuu-arvo määräytyy ensimmäisellä tallennuskerralla automaattisesti jatkuvaksi (5 Jatkuva). Muutokset tallennetaan Tallenna-painikkeella (4). Ennen tallennusta muutokset voi perua Peruuta-painikkeesta. 
 
@@ -370,7 +370,7 @@ _Tieosoite on jo olemassa projektin alkupäivänä._
 
 ![Kasvusuunnan vaihto](k47.JPG)
 
-_Valittuna olevan uuden tieosoitteen vaikutussunta vaihtuu lomakkeen 'Käännä vaikutussuunta'-nappulasta._
+_Valittuna olevan uuden tieosoitteen kasvusuunta vaihtuu lomakkeen Käännä tieosan kasvusuunta -painikkeesta._
 
 
 Uuden tieosoitteen linkit piirtyvät kartalle pinkillä (2). Tieosan alku- ja loppupisteisiin sijoitetaan automaattisesti etäisyyslukema-symbolit. Viite laskee uudelle tieosuudelle automaattisesti myös linkkien m-arvot käyttäen VVH:n tietoja. Uudelle tieosoitteelle määrittyy aluksi satunnainen kasvusuunta, joka näkyy kartalla pinkkien nuolien suunnasta.
@@ -544,4 +544,4 @@ Projektia ei voi muokata, kun sen tila on joko Lähetetty tierekisteriin, Tierek
 
 ![Tila-statuksia](k39.JPG)
 
-_Tila-statuksia tieosoiteprojektit -listassa._
+_Tilatietoja Tieosoiteprojektit-listassa._
