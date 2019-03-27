@@ -214,6 +214,7 @@ class ProjectReservedPartDAO {
       val query =
         s"""
         SELECT prj.NAME FROM PROJECT prj
+          JOIN PROJECT_RESERVED_ROAD_PART reserved ON reserved.PROJECT_ID = prj.ID
           WHERE prj.ID IN (
             SELECT DISTINCT(link.PROJECT_ID) FROM PROJECT_LINK link
               WHERE LINK_ID IN (
