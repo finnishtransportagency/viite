@@ -43,6 +43,7 @@ Jos kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, ei k
 --------------------------
 
 Viite-sovelluksen käytössä avustaa Janne Grekula, janne.grekula@cgi.com.
+
 ####Ongelmatilanteet####
 
 Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oikein), menettele seuraavasti:
