@@ -76,7 +76,7 @@ Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle,
 #3. Karttanäkymän muokkaus
 --------------------------
 
-![Karttanäkymän muokkaus](k3.JPG)
+![Karttanäkymän muokkaus](k3.jpg)
 
 _Karttanäkymä._
 
