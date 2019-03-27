@@ -34,8 +34,8 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
   val projectReservedPartDAO = new ProjectReservedPartDAO
 
   def addTestProjects(): Unit = {
-    sqlu"""insert into project (id,state,name,created_by, start_date) VALUES (1,0,'testproject','automatedtest', sysdate)""".execute
-    sqlu"""insert into project (id,state,name,created_by, start_date) VALUES (2,0,'testproject2','automatedtest', sysdate)""".execute
+    sqlu"""insert into project (id,state,name,created_by, start_date) VALUES (1,0,'testproject','automatedtest', current_date)""".execute
+    sqlu"""insert into project (id,state,name,created_by, start_date) VALUES (2,0,'testproject2','automatedtest', current_date)""".execute
   }
 
   def addProjectRoads(): Unit = {
