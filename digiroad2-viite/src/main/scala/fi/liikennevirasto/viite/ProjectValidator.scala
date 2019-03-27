@@ -67,7 +67,7 @@ class ProjectValidator {
   }
 
   def checkNotReserved(number: Long, part: Long, currentProject: Project): Unit = {
-    val project = projectReservedPartDAO.roadPartReservedByProject(number, part, currentProject.id, withProjectId = true)
+    val project = projectReservedPartDAO.roadPartReservedByProject(number, part, currentProject.id, withoutProjectId = true)
     if (project.nonEmpty) {
       throw new ProjectValidationException(RoadReservedOtherProjectMessage.format(number, part, currentProject.name))
     }
