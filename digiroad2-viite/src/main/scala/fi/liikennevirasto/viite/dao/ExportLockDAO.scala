@@ -6,7 +6,7 @@ import slick.jdbc.StaticQuery.interpolation
 object ExportLockDAO {
 
   def insert: Unit = {
-    sqlu"""INSERT INTO EXPORT_LOCK VALUES (1, SYSDATE)""".execute
+    sqlu"""INSERT INTO EXPORT_LOCK VALUES (1, current_date)""".execute
   }
 
   def delete: Unit = {

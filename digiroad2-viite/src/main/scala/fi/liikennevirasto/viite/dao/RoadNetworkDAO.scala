@@ -17,11 +17,11 @@ class RoadNetworkDAO {
   protected def logger = LoggerFactory.getLogger(getClass)
 
   def createPublishedRoadNetwork (publishedRoadNetworkId: Long = Sequences.nextPublishedRoadNetworkId): Unit = {
-    sqlu"""INSERT INTO published_road_network (id, created) VALUES ($publishedRoadNetworkId, sysdate)""".execute
+    sqlu"""INSERT INTO published_road_network (id, created) VALUES ($publishedRoadNetworkId, current_date)""".execute
   }
 
   def expireRoadNetwork: Unit = {
-    sqlu"""UPDATE published_road_network SET valid_to = sysdate WHERE id = (SELECT MAX(ID) FROM published_road_network)""".execute
+    sqlu"""UPDATE published_road_network SET valid_to = current_date WHERE id = (SELECT MAX(ID) FROM published_road_network)""".execute
   }
 
   def createPublishedRoadway(networkVersion: Long, roadwayId: Long): Unit = {

@@ -152,7 +152,7 @@ object RoadNameDAO {
   }
 
   def expire(id: Long, username: String) = {
-    val query = s"""Update ROAD_NAME Set valid_to = sysdate, created_by = '${username}' where id = $id"""
+    val query = s"""Update ROAD_NAME Set valid_to = current_date, created_by = '${username}' where id = $id"""
     Q.updateNA(query).first
   }
 

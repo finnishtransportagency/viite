@@ -26,15 +26,15 @@ object Queries {
   def nextPublishedRoadNetworkId = sql"select nextval('PUBLISHED_ROAD_NETWORK_SEQ')"
 
   def fetchViitePrimaryKeyId(len: Int) = {
-    sql"""select nextval('viite_general_seq') connect by level <= $len""".as[Long].list
+    sql"""select nextval('viite_general_seq') from generate_series(1, $len)""".as[Long].list
   }
 
   def fetchRoadwayIds(len: Int) = {
-    sql"""select nextval('ROADWAY_SEQ') connect by level <= $len""".as[Long].list
+    sql"""select nextval('ROADWAY_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
   def fetchLinearLocationIds(len: Int) = {
-    sql"""select nextval('LINEAR_LOCATION_SEQ') connect by level <= $len""".as[Long].list
+    sql"""select nextval('LINEAR_LOCATION_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
   def getMunicipalities: Seq[Int] = {

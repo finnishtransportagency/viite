@@ -581,7 +581,7 @@ class RoadwayDAO extends BaseDAO {
       sql"""
 			select distinct (ra.id)
       from ROADWAY ra
-      where ra.valid_to is null and (ra.end_date is null or ra.end_date >= sysdate)
+      where ra.valid_to is null and (ra.end_date is null or ra.end_date >= current_date)
 		  """.as[Long].list.toSet
     }
   }
@@ -647,11 +647,11 @@ class RoadwayDAO extends BaseDAO {
           s"""
             $query
             join $idTableName i on i.id = a.ROAD_NUMBER
-            where a.valid_to is null AND (a.end_date is null or a.end_date >= sysdate) AND a.terminated = 0
+            where a.valid_to is null AND (a.end_date is null or a.end_date >= current_date) AND a.terminated = 0
           """.stripMargin
       }
     } else {
-      s"""$query where a.valid_to is null AND (a.end_date is null or a.end_date >= sysdate) AND a.terminated = 0 AND a.road_number in (${roadNumbers.mkString(",")})"""
+      s"""$query where a.valid_to is null AND (a.end_date is null or a.end_date >= current_date) AND a.terminated = 0 AND a.road_number in (${roadNumbers.mkString(",")})"""
     }
   }
 
@@ -871,7 +871,7 @@ class RoadwayDAO extends BaseDAO {
   def expireById(ids: Set[Long]): Int = {
     val query =
       s"""
-        Update ROADWAY Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
+        Update ROADWAY Set valid_to = current_date where valid_to IS NULL and id in (${ids.mkString(",")})
       """
     if (ids.isEmpty)
       0
