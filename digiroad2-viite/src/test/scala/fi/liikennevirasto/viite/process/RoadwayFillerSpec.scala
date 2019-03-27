@@ -11,7 +11,7 @@ import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.dao.TerminationCode.{Subsequent, Termination}
+import fi.liikennevirasto.viite.dao.TerminationCode._
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
