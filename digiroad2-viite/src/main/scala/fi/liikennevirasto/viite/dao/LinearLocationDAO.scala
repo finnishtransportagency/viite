@@ -129,9 +129,10 @@ class LinearLocationDAO {
   }
 
   def create(linearLocations: Iterable[LinearLocation], createdBy: String = "-"): Seq[Long] = {
+
     val ps = dynamicSession.prepareStatement(
-      """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by) " +
-        " values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), ?)""")
+      """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by)
+      values (?, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)), ?)""".stripMargin)
 
     // Set ids for the linear locations without one
     val (ready, idLess) = linearLocations.partition(_.id != NewLinearLocation)
@@ -142,6 +143,7 @@ class LinearLocationDAO {
 
     createLinearLocations.foreach {
       location =>
+        LinkDAO.createIfEmptyFetch(location.linkId)
         val roadwayNumber = if (location.roadwayNumber == NewRoadwayNumber) {
           Sequences.nextRoadwayNumber
         } else {
@@ -492,11 +494,11 @@ class LinearLocationDAO {
 
   def withLinkIdAndMeasure(linkId: Long, startM: Option[Double], endM: Option[Double])(query: String): String = {
     val startFilter = startM match {
-      case Some(s) => s" AND loc.start_Measure <= $s"
+      case Some(s) => s" AND loc.start_measure <= $s"
       case None => ""
     }
     val endFilter = endM match {
-      case Some(e) => s" AND loc.end_Measure >= $endM"
+      case Some(e) => s" AND loc.end_measure >= $endM"
       case None => ""
     }
 
@@ -637,35 +639,20 @@ class LinearLocationDAO {
       withRoadNumbersFilter(roadNumbers.tail, alias,s"""$filter OR $filterAdd""")
   }
 
-  /**
-    * Returns the calibration code of a linear location found by it's id.
-    * @param linearLocationId: Long - The linear location id.
-    * @return
-    */
-  def getLinearLocationCalibrationCode(linearLocationId: Long): CalibrationCode = {
-    val query =
-      s"""SELECT (CASE
-            WHEN CAL_START_ADDR_M IS NOT NULL AND CAL_END_ADDR_M IS NOT NULL THEN 3
-            WHEN CAL_END_ADDR_M IS NOT NULL THEN 1
-            WHEN CAL_START_ADDR_M IS NOT NULL THEN 2
-            ELSE 0
-            END) AS calibrationCode
-            FROM LINEAR_LOCATION WHERE id = $linearLocationId"""
-    CalibrationCode(Q.queryNA[Long](query).firstOption.getOrElse(0L).toInt)
-  }
-
   def getLinearLocationCalibrationCodeNSide(linearLocationIds: Seq[Long]): Map[Long, (CalibrationCode, SideCode)] = {
     if (linearLocationIds.isEmpty) {
       Map()
     } else {
       val query =
-        s"""SELECT ID, (CASE
-                       WHEN CAL_START_ADDR_M IS NOT NULL AND CAL_END_ADDR_M IS NOT NULL THEN 3
-                       WHEN CAL_END_ADDR_M IS NOT NULL THEN 1
-                       WHEN CAL_START_ADDR_M IS NOT NULL THEN 2
-                       ELSE 0
-                       END) AS calibrationCode, side
-                       FROM LINEAR_LOCATION WHERE id in (${linearLocationIds.mkString(",")})"""
+        s"""SELECT DISTINCT loc.ID,
+             (CASE
+             WHEN (SELECT count(*) FROM CALIBRATION_POINT WHERE LINK_ID = loc.LINK_ID AND cp.VALID_TO IS null) > 1 THEN 3
+             WHEN (SELECT count(*) FROM CALIBRATION_POINT WHERE LINK_ID = loc.LINK_ID AND START_END = 0 AND cp.VALID_TO IS null) = 1 THEN 1
+             WHEN (SELECT count(*) FROM CALIBRATION_POINT WHERE LINK_ID = loc.LINK_ID AND START_END = 1 AND cp.VALID_TO IS null) = 1 THEN 2
+             ELSE 0
+             END) AS calibrationCode,
+             loc.side
+             FROM LINEAR_LOCATION loc JOIN CALIBRATION_POINT cp ON (loc.LINK_ID = cp.LINK_ID) WHERE loc.id in (${linearLocationIds.mkString(",")})"""
       Q.queryNA[(Long, Int, Int)](query).list.map {
         case (id, code, side) => id -> (CalibrationCode(code), SideCode.apply(side))
       }.toMap

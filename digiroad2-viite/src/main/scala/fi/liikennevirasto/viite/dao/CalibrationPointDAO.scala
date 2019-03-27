@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult}
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 object CalibrationPointDAO {
 
@@ -52,6 +52,13 @@ object CalibrationPointDAO {
       """.execute
   }
 
+  def create(roadwayPointId: Long, linkId: Long, startOrEnd: Long, calType: CalibrationPointType, createdBy: String) = {
+    sqlu"""
+      Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES
+      (${Sequences.nextCalibrationPointId}, $roadwayPointId, $linkId, $startOrEnd, ${calType.value}, $createdBy)
+      """.execute
+  }
+
   def fetch(id:Long) : CalibrationPoint = {
     sql"""
          SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
@@ -62,6 +69,16 @@ object CalibrationPointDAO {
      """.as[CalibrationPoint].first
   }
 
+  def fetch(linkId:Long, startOrEnd: Long) : Option[CalibrationPoint] = {
+    sql"""
+         SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+         FROM CALIBRATION_POINT CP
+         JOIN ROADWAY_POINT RP
+          ON RP.ID = CP.ROADWAY_POINT_ID
+         WHERE cp.link_id = $linkId and start_end = $startOrEnd
+     """.as[CalibrationPoint].firstOption
+  }
+
   def fetchByRoadwayPoint(roadwayPointId:Long) : Option[CalibrationPoint] = {
     sql"""
          SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
@@ -70,5 +87,21 @@ object CalibrationPointDAO {
           ON RP.ID = CP.ROADWAY_POINT_ID
          WHERE cp.roadway_point_id = $roadwayPointId
      """.as[CalibrationPoint].firstOption
+  }
+
+  def fetch(calibrationPointsLinkIds: Seq[Long], startOrEnd: Long): Seq[CalibrationPoint] = {
+    val whereClause = calibrationPointsLinkIds.map(p => s" (link_id = $p and start_end = $startOrEnd)").mkString(" where ", " or ", "")
+    val query = s"""
+     SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+     FROM CALIBRATION_POINT CP
+     JOIN ROADWAY_POINT RP
+     ON RP.ID = CP.ROADWAY_POINT_ID
+      $whereClause
+       """
+    queryList(query)
+  }
+
+  private def queryList(query: String): Seq[CalibrationPoint] = {
+    Q.queryNA[CalibrationPoint](query).list
   }
 }
