@@ -271,7 +271,7 @@ class ProjectLinkDAO {
       val createdBy = r.nextStringOption()
       val modifiedBy = r.nextStringOption()
       val linkId = r.nextLong()
-      val geom=r.nextObjectOption()
+      val geom = r.nextObjectOption()
       val length = r.nextDouble()
       val calibrationPoints =
         CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt), linkId, startMValue, endMValue,
@@ -437,7 +437,7 @@ class ProjectLinkDAO {
 
   def fetchElyFromProjectLinks(projectId:Long): Option[Long]= {
     val query =
-      s"""SELECT ELY FROM PROJECT_LINK WHERE PROJECT_ID=$projectId AND ELY IS NOT NULL AND ROW_NUMBER < 2"""
+      s"""SELECT ELY FROM PROJECT_LINK WHERE PROJECT_ID=$projectId AND ELY IS NOT NULL LIMIT 1"""
     Q.queryNA[Long](query).firstOption
   }
 
@@ -695,7 +695,7 @@ class ProjectLinkDAO {
                           maxResults: Option[Int] = None): List[Long] =
   {
     val filter = status.map(s => s" AND status = ${s.value}").getOrElse("")
-    val limit = maxResults.map(s => s" AND ROW_NUMBER <= $s").getOrElse("")
+    val limit = maxResults.map(s => s" LIMIT $s").getOrElse("")
     val query= s"""
          SELECT link_id
          FROM Project_link

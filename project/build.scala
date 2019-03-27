@@ -62,6 +62,8 @@ object Digiroad2Build extends Build {
         "com.github.tototoshi" %% "scala-csv" % "1.0.0",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
+        "org.postgresql" % "postgresql" % "42.2.5",
+        "net.postgis" % "postgis-jdbc" % "2.3.0",
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
         "org.flywaydb" % "flyway-core" % "6.0.0-beta" % "test"
       ),
