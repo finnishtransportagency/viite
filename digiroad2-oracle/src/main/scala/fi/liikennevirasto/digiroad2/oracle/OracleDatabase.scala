@@ -15,6 +15,7 @@ import fi.liikennevirasto.digiroad2.Point
 import oracle.spatial.geometry.JGeometry
 import oracle.sql.STRUCT
 
+// TODO Rename to PostGisDatabase
 object OracleDatabase {
   lazy val ds: DataSource = initDataSource
 
