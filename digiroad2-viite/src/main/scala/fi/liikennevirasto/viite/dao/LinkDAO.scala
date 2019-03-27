@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.dao
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class Link (id: Long, source: Long, adjustedTimestamp: Long, createdTime: Option[DateTime])
@@ -24,11 +25,18 @@ object LinkDAO {
     Q.queryNA[Link](sql).firstOption
   }
 
-  def create(ids: Seq[Long], adjustedTimestamp: Long, source: Long) = {
-    val ps = dynamicSession.prepareStatement(
-      """insert into LINK (id, source, adjusted_timestamp, created_time) values (?, ?, ?, ?)"""
-    )
+//  def create(ids: Seq[Long], adjustedTimestamp: Long, source: Long) = {
+//    val ps = dynamicSession.prepareStatement(
+//      """insert into LINK (id, source, adjusted_timestamp, created_time) values (?, ?, ?, ?)"""
+//    )
+//  }
 
+  def createIfEmptyFetch(id: Long): Unit = {
+    if(fetch(id).isEmpty){
+      sqlu"""
+        INSERT INTO LINK (ID) values (${id})
+      """.execute
+    }
   }
 
 

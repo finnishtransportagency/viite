@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.RoadwayPointDAO.RoadwayPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.dao._
@@ -559,11 +560,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           if (roadwayCheckSum.getOrElse(roadwayNumber, -1) != roadwayLinearLocations.map(_.orderNumber).sum) {
             linearLocationDAO.expireByIds(existingLinearLocations.map(_.id).toSet)
             linearLocationDAO.create(roadwayLinearLocations)
+            handleCalibrationPoints(roadwayLinearLocations, createdBy = "applyChanges")
           }
       }
 
       linearLocationDAO.create(changeSet.newLinearLocations.map(l => l.copy(id = NewLinearLocation)))
-
+      handleCalibrationPoints(changeSet.newLinearLocations, createdBy = "applyChanges")
       //TODO Implement the missing at user story VIITE-1596
     }
 
@@ -739,96 +741,32 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
-  def mergeRoadAddress(data: RoadAddressMerge): Unit = {
-    try {
-      withDynTransaction {
-        mergeRoadAddressInTX(data)
-      }
-    } catch {
-      case ex: InvalidAddressDataException => logger.error("Duplicate merging(s) found, skipped.", ex)
-      case ex: ConnectException => logger.error("A connection problem has occurred.", ex)
-      case ex: Exception => logger.error("An unexpected error occurred.", ex)
+  def handleCalibrationPoints(linearLocations: Iterable[LinearLocation], createdBy : String = "-"): Unit = {
+    val startCalibrationPointsToCheck = linearLocations.filter(_.startCalibrationPoint.isDefined)
+    val endCalibrationPointsToCheck = linearLocations.filter(_.endCalibrationPoint.isDefined)
+    startCalibrationPointsToCheck.foreach{
+      cal =>
+        val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 0)
+        if(calibrationPoint.isDefined)
+          RoadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
+        else{
+          val roadwayPointId = RoadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
+          CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = createdBy)
+        }
+    }
+    endCalibrationPointsToCheck.foreach{
+      cal =>
+        val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 1)
+        if(calibrationPoint.isDefined)
+          RoadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.endCalibrationPoint.get, createdBy)
+        else{
+          val roadwayPointId = RoadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, createdBy)
+          CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 1, calType = CalibrationPointType.Mandatory, createdBy = createdBy)
+        }
     }
   }
 
-  def mergeRoadAddressHistory(data: RoadAddressMerge): Unit = {
-    try {
-      withDynTransaction {
-        mergeRoadAddressHistoryInTX(data)
-      }
-    } catch {
-      case ex: InvalidAddressDataException => logger.error("Duplicate merging(s) found, skipped.", ex)
-      case ex: ConnectException => logger.error("A connection problem has occurred.", ex)
-      case ex: Exception => logger.error("An unexpected error occurred.", ex)
-    }
-  }
 
-  def mergeRoadAddressInTX(data: RoadAddressMerge): Unit = {
-    throw new NotImplementedError("This method probably will not be needed anymore, the fuse process can only be applied to linear location")
-    //    val unMergedCount = RoadAddressDAO.queryById(data.merged).size
-    //    if (unMergedCount != data.merged.size)
-    //      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows no longer valid")
-    //    val mergedCount = expireRoadAddresses(data.merged)
-    //    if (mergedCount == data.merged.size)
-    //      createMergedSegments(data.created)
-    //    else
-    //      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows not updated")
-  }
-
-  def mergeRoadAddressHistoryInTX(data: RoadAddressMerge): Unit = {
-    throw new NotImplementedError("This method probably will not be needed anymore, the fuse process can only be applied to linear location")
-    //    val unMergedCount = RoadAddressDAO.queryById(data.merged).size
-    //    if (unMergedCount != data.merged.size)
-    //      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows no longer valid")
-    //    val mergedCount = expireRoadAddresses(data.merged)
-    //    if (mergedCount == data.merged.size)
-    //      createMergedSegments(data.created)
-    //    else
-    //      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows not updated")
-  }
-
-  private def createMergedSegments(mergedRoadAddress: Seq[RoadAddress]): Unit = {
-    throw new NotImplementedError("This method probably will not be needed anymore, and if it's needed can be done a batch execution")
-    //    mergedRoadAddress.grouped(500).foreach(group => RoadAddressDAO.create(group, Some("Automatic_merged")))
-  }
-
-  def expireRoadAddresses(expiredIds: Set[Long]): Int = {
-    throw new NotImplementedError("This method probably will not be needed anymore, and if it's needed can be done a batch execution")
-    //expiredIds.grouped(500).map(group => RoadAddressDAO.expireById(group)).sum
-  }
-
-  def saveAdjustments(addresses: Seq[LinearLocationAdjustment]): Unit = {
-    throw new NotImplementedError("Can be fixed at VIITE-1552")
-    //    withDynTransaction {
-    //      addresses.foreach(RoadAddressDAO.updateLinearLocation)
-    //    }
-  }
-
-  //  def getAdjacentAddresses(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long,
-  //                           id: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
-  //    withDynSession {
-  //      getAdjacentAddressesInTX(chainLinks, chainIds, linkId, id, roadNumber, roadPartNumber, track)
-  //    }
-  //  }
-  //
-  //  def getAdjacentAddressesInTX(chainLinks: Set[Long], chainIds: Set[Long], linkId: Long, id: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
-  //    val roadAddresses = (if (chainIds.nonEmpty)
-  //      RoadAddressDAO.queryById(chainIds)
-  //    else if (chainLinks.nonEmpty)
-  //      RoadAddressDAO.fetchByLinkId(chainLinks, includeFloating = true, includeHistory = false)
-  //    else Seq.empty[RoadAddress]
-  //      ).sortBy(_.startAddrMValue)
-  //    assert(roadAddresses.forall(r => r.roadNumber == roadNumber && r.roadPartNumber == roadPartNumber && r.track == track),
-  //      s"Mixed floating addresses selected ($roadNumber/$roadPartNumber/$track): " + roadAddresses.map(r =>
-  //        s"${r.linkId} = ${r.roadNumber}/${r.roadPartNumber}/${r.track.value}").mkString(", "))
-  //    val startValues = roadAddresses.map(_.startAddrMValue)
-  //    val endValues = roadAddresses.map(_.endAddrMValue)
-  //    val orphanStarts = startValues.filterNot(st => endValues.contains(st))
-  //    val orphanEnds = endValues.filterNot(st => startValues.contains(st))
-  //    (orphanStarts.flatMap(st => RoadAddressDAO.fetchByAddressEnd(roadNumber, roadPartNumber, track, st))
-  //      ++ orphanEnds.flatMap(end => RoadAddressDAO.fetchByAddressStart(roadNumber, roadPartNumber, track, end)))
-  //      .distinct.filterNot(fo => chainIds.contains(fo.id) || chainLinks.contains(fo.linkId))
-  //  }
 }
 
 sealed trait RoadClass {
