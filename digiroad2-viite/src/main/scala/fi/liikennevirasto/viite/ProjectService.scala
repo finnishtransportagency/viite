@@ -1447,11 +1447,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               if (roadAddresses.exists(x =>
                 x.roadNumber == newRoadNumber && x.roadPartNumber == newRoadPartNumber)) // check the original numbering wasn't exactly the same
                 throw new ProjectValidationException(ErrorRenumberingToOriginalNumber) // you cannot use current roadnumber and roadpart number in numbering operation
-              if(currentAddresses.nonEmpty)
+              if (currentAddresses.nonEmpty)
                 throw new ProjectValidationException(ErrorRenumberingValuesAlreadyInUse)
               if (toUpdateLinks.map(pl => (pl.roadNumber, pl.roadPartNumber)).distinct.lengthCompare(1) != 0 ||
                 roadAddresses.map(ra => (ra.roadNumber, ra.roadPartNumber)).distinct.lengthCompare(1) != 0) {
                 throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)
+              }
+              val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, projectId)
+              if (roadPartLinks.exists(rpl => rpl.status == UnChanged || rpl.status == Transfer || rpl.status == New || rpl.status == Terminated)) {
+                throw new ProjectValidationException(ErrorOtherActionWithNumbering)
               }
               checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Numbering, toUpdateLinks)
 
@@ -1459,7 +1463,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 linkStatus, newRoadNumber, newRoadPartNumber, userName, ely.getOrElse(toUpdateLinks.head.ely))
               projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(toUpdateLinks.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
               val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
-              if(nameError.nonEmpty)
+              if (nameError.nonEmpty)
                 return nameError
             } else {
               throw new ProjectValidationException(ErrorRoadLinkNotFoundInProject)
@@ -1479,7 +1483,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               projectReservedPartDAO.removeReservedRoadPart(projectId, road.get, part.get)
             }
             val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
-            if(nameError.nonEmpty)
+            if (nameError.nonEmpty)
               return nameError
           case LinkStatus.UnChanged =>
             checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.UnChanged, toUpdateLinks)

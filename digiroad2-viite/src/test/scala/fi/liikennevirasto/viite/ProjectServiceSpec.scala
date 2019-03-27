@@ -949,6 +949,26 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Test projectService.updateProjectLinks When applying the operation \"Numerointi\" to a road part that already has some other action applied Then return an error message") {
+    runWithRollback {
+      val rap1 = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1963-01-01"),
+        "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val addr1 = List(ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue, 5, 207, Some(0L), Some(Continuous),
+        Some(8L), None, None, None, None, isDirty = true))
+      val project1 = projectService.createRoadLinkProject(rap1)
+      mockForProject(project1.id, roadAddressServiceRealRoadwayAddressMapper.getRoadAddressWithRoadAndPart(5, 207).map(toProjectLink(project1)))
+      projectService.saveProject(project1.copy(reservedParts = addr1))
+      projectService.updateProjectLinks(project1.id, Set(), projectLinkDAO.fetchProjectLinks(project1.id).map(_.linkId),
+        LinkStatus.Terminated, "TestUser", 5, 207, 0, None,
+        RoadType.PublicRoad.value, Discontinuity.Continuous.value, Some(8))
+      val response = projectService.updateProjectLinks(project1.id, Set(), projectLinkDAO.fetchProjectLinks(project1.id).map(_.linkId),
+        LinkStatus.Numbering, "TestUser", 5, 308, 0, None,
+        RoadType.PublicRoad.value, Discontinuity.Continuous.value, Some(8))
+      response.get should be(ErrorOtherActionWithNumbering)
+    }
+  }
+
   test("Test projectLinkDAO.getProjectLinks() When after the \"Numerointi\" operation on project links of a newly created project Then the last returned link should have a discontinuity of \"EndOfRoad\", all the others should be \"Continuous\" ") {
     runWithRollback {
       val rap1 = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(),
