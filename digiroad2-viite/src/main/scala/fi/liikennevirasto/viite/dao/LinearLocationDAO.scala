@@ -173,11 +173,10 @@ class LinearLocationDAO {
   val selectFromLinearLocation =
     """
     select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.SIDE,
-      loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, loc.floating, t.X, t.Y, t2.X, t2.Y,
+      loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, loc.floating,
+      ST_X(ST_StartPoint(loc.geometry)), ST_Y(ST_StartPoint(loc.geometry)), ST_X(ST_EndPoint(loc.geometry)), ST_Y(ST_EndPoint(loc.geometry)),
       loc.valid_from, loc.valid_to
-    from LINEAR_LOCATION loc cross join
-      TABLE(SDO_UTIL.GETVERTICES(loc.geometry)) t cross join
-      TABLE(SDO_UTIL.GETVERTICES(loc.geometry)) t2
+    from LINEAR_LOCATION loc
     """
 
   // TODO If not used, remove
@@ -300,7 +299,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where loc.id = $id and t.id < t2.id
+          where loc.id = $id
         """
       Q.queryNA[LinearLocation](query).firstOption
     }
@@ -325,7 +324,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          $where and t.id < t2.id $validToFilter
+          $where $validToFilter
         """
       queryList(query)
     }
@@ -350,7 +349,7 @@ class LinearLocationDAO {
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.id
-              where t.id < t2.id $floating $validToFilter
+              where $floating $validToFilter
             """
           queryList(query)
       }
@@ -381,7 +380,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where loc.link_id in ($linkIdsString) $floating $idFilter and t.id < t2.id and loc.valid_to is null
+          where loc.link_id in ($linkIdsString) $floating $idFilter and loc.valid_to is null
         """
       queryList(query)
     }
@@ -399,7 +398,7 @@ class LinearLocationDAO {
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.link_id
-              where t.id < t2.id $floating and loc.valid_to is null
+              where $floating and loc.valid_to is null
             """
           queryList(query)
       }
@@ -423,7 +422,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where t.id < t2.id and valid_to is null and loc.ROADWAY_NUMBER in (select ROADWAY_NUMBER from linear_location
+          where valid_to is null and loc.ROADWAY_NUMBER in (select ROADWAY_NUMBER from linear_location
             where valid_to is null and link_id in ($linkIdsString))
         """
       queryList(query)
@@ -438,7 +437,7 @@ class LinearLocationDAO {
             s"""
               $selectFromLinearLocation
 
-              where t.id < t2.id and loc.valid_to is null and loc.ROADWAY_NUMBER in (
+              where loc.valid_to is null and loc.ROADWAY_NUMBER in (
                 select ROADWAY_NUMBER from linear_location
                 join $idTableName i on i.id = link_id
                 where valid_to is null)
@@ -461,7 +460,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          $where AND loc.floating > 0 and t.id < t2.id and loc.valid_to is null
+          $where AND loc.floating > 0 and loc.valid_to is null
         """
       queryList(query)
     }
@@ -475,7 +474,7 @@ class LinearLocationDAO {
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.link_id
-              where loc.floating > 0 and t.id < t2.id and loc.valid_to is null
+              where loc.floating > 0 and loc.valid_to is null
             """
           queryList(query)
       }
@@ -487,7 +486,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where t.id < t2.id and loc.floating > 0 and loc.valid_to is null
+          where loc.floating > 0 and loc.valid_to is null
           order by loc.ROADWAY_NUMBER, loc.order_number
         """
       queryList(query)
@@ -692,7 +691,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where $boundingBoxFilter and t.id < t2.id and valid_to is null
+          where $boundingBoxFilter and valid_to is null
         """
       queryList(query)
     }
@@ -719,7 +718,7 @@ class LinearLocationDAO {
       val query =
         s"""
         $selectFromLinearLocation
-        where valid_to is null and t.id < t2.id and ROADWAY_NUMBER in ($boundingBoxQuery)
+        where valid_to is null and ROADWAY_NUMBER in ($boundingBoxQuery)
         """
       queryList(query)
     }
@@ -735,13 +734,13 @@ class LinearLocationDAO {
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.ROADWAY_NUMBER
-              where valid_to is null and t.id < t2.id
+              where valid_to is null
             """.stripMargin
         }
       } else {
         s"""
             $selectFromLinearLocation
-            where valid_to is null and t.id < t2.id and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
+            where valid_to is null and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
           """
       }
       queryList(query)
