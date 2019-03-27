@@ -170,7 +170,8 @@ class ProjectDAO {
       s"""
          SELECT *
          FROM project
-         WHERE UPPER(name)=UPPER('$projectName') and state<>7 and ROW_NUMBER=1
+         WHERE UPPER(name)=UPPER('$projectName') and state<>7
+         LIMIT 1
        """
     val projects = Q.queryNA[Long](query).list
     projects.isEmpty || projects.contains(projectId)

@@ -61,9 +61,9 @@ class ProjectReservedPartDAO {
       val sql =
         s"""SELECT ROAD_NUMBER, ROAD_PART_NUMBER, LENGTH, ELY,
            (SELECT IPLH.DISCONTINUITY_TYPE FROM PROJECT_LINK_HISTORY IPLH
-           WHERE IPLH.ROAD_NUMBER = PLH.ROAD_NUMBER AND IPLH.ROAD_PART_NUMBER = PLH.ROAD_PART_NUMBER AND IPLH.END_ADDR_M = PLH.LENGTH AND ROW_NUMBER < 2) AS DISCONTINUITY_TYPE,
+           WHERE IPLH.ROAD_NUMBER = PLH.ROAD_NUMBER AND IPLH.ROAD_PART_NUMBER = PLH.ROAD_PART_NUMBER AND IPLH.END_ADDR_M = PLH.LENGTH LIMIT 1) AS DISCONTINUITY_TYPE,
            (SELECT IPLH.LINK_ID FROM PROJECT_LINK_HISTORY IPLH
-           WHERE IPLH.ROAD_NUMBER = PLH.ROAD_NUMBER AND IPLH.ROAD_PART_NUMBER = PLH.ROAD_PART_NUMBER AND IPLH.START_ADDR_M = 0 AND ROW_NUMBER < 2) AS LINK_ID
+           WHERE IPLH.ROAD_NUMBER = PLH.ROAD_NUMBER AND IPLH.ROAD_PART_NUMBER = PLH.ROAD_PART_NUMBER AND IPLH.START_ADDR_M = 0 LIMIT 1) AS LINK_ID
            FROM
            (
            	SELECT ROAD_NUMBER, ROAD_PART_NUMBER, MAX(END_ADDR_M) as LENGTH, ELY
@@ -88,16 +88,16 @@ class ProjectReservedPartDAO {
           ely, ely_new,
           (SELECT DISCONTINUITY FROM ROADWAY ra WHERE ra.road_number = gr.road_number AND
             ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
-            AND END_ADDR_M = gr.length and ROW_NUMBER < 2) as discontinuity,
+            AND END_ADDR_M = gr.length LIMIT 1) as discontinuity,
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
             AND PL.STATUS != 5 AND PL.TRACK IN (0,1)
-            AND END_ADDR_M = gr.length_new AND ROW_NUMBER < 2) as discontinuity_new,
+            AND END_ADDR_M = gr.length_new LIMIT 1) as discontinuity_new,
           (SELECT LINK_ID FROM PROJECT_LINK pl
             WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
             AND PL.STATUS != 5 AND PL.TRACK IN (0,1) AND pl.START_ADDR_M = 0
-            AND pl.END_ADDR_M > 0 AND ROW_NUMBER < 2) as first_link
+            AND pl.END_ADDR_M > 0 LIMIT 1) as first_link
           FROM (
             SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
               MAX(ra.END_ADDR_M) as length,
@@ -130,16 +130,16 @@ class ProjectReservedPartDAO {
           ely, ely_new,
           (SELECT DISCONTINUITY FROM ROADWAY ra WHERE ra.road_number = gr.road_number AND
           ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
-          AND END_ADDR_M = gr.length and ROW_NUMBER < 2) as discontinuity,
+          AND END_ADDR_M = gr.length LIMIT 1) as discontinuity,
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
           AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
           AND PL.STATUS != 5 AND PL.TRACK IN (0,1)
-          AND END_ADDR_M = gr.length_new and ROW_NUMBER < 2) as discontinuity_new,
+          AND END_ADDR_M = gr.length_new LIMIT 1) as discontinuity_new,
           (SELECT LINK_ID FROM PROJECT_LINK pl
             WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
             AND PL.STATUS != 5 AND PL.TRACK IN (0,1) AND pl.START_ADDR_M = 0
-            AND pl.END_ADDR_M > 0 AND ROW_NUMBER < 2) as first_link
+            AND pl.END_ADDR_M > 0 LIMIT 1) as first_link
           FROM (
             SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
               MAX(ra.END_ADDR_M) as length,

@@ -847,7 +847,8 @@ class RoadwayDAO extends BaseDAO {
               WHERE road_number = $roadNumber AND road_part_number < $current
                 AND valid_to IS NULL AND end_date IS NULL
               ORDER BY road_part_number DESC
-            ) WHERE ROW_NUMBER < 2
+            ) AS PREVIOUS
+            LIMIT 1
         """
     Q.queryNA[Long](query).firstOption
   }

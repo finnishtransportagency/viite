@@ -6,14 +6,14 @@ import java.util.Properties
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource, ConnectionHandle}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import oracle.jdbc.{OracleDriver, driver}
 import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
-import slick.jdbc.StaticQuery.interpolation
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Point
 import oracle.spatial.geometry.JGeometry
 import oracle.sql.STRUCT
+import org.postgis.PGgeometry
+import org.postgresql.util.PGobject
 
 // TODO Rename to PostGisDatabase
 object OracleDatabase {
@@ -110,12 +110,18 @@ object OracleDatabase {
       JGeometry.store(JGeometry.createLinearLineString(ordinates, dim, srid), oracleConn)
   }
 
+  // TODO Maybe this should be optimized
   def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
-    // Convert STRUCT into geometry
-    val geom = geometry.map(g => g.asInstanceOf[STRUCT])
-    if (geom.nonEmpty) {
-      val jgeom: JGeometry = JGeometry.load(geom.get)
-      jgeom.getOrdinatesArray.toList.sliding(3, 3).toList.map(p => Point(p.head, p.tail.head, p.last))
+    if (geometry.nonEmpty) {
+      val pgObject = geometry.get.asInstanceOf[PGobject]
+      val geom = PGgeometry.geomFromString(pgObject.getValue)
+      val n = geom.numPoints()
+      var points: Seq[Point] = Seq()
+      for (i <- 1 to n) {
+        val point = geom.getPoint(i - 1)
+        points = points :+ Point(point.x, point.y, point.z)
+      }
+      points
     } else {
       Seq()
     }
