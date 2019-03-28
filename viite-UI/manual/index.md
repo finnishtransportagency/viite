@@ -50,7 +50,7 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oike
 - Tarkista, että selaimestasi on käytössä ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
 - Jos edellä olevat eivät korjaa ongelmaa, ota yhteyttä janne.grekula@cgi.com.
 
-Tämä ohje käsittelee pääasiassa vain VIITE-sovelluksen käyttöä ei niinkään tieosoitejärjestelmää. Tarkemmat tiedot tieosoitejärjestelmästä löydät täältä: https://vayla.fi/documents/20473/143621/tieosoitejärjestelmä.pdf.
+Tämä ohje käsittelee pääasiassa vain Viite-sovelluksen käyttöä, ei niinkään tieosoitejärjestelmää. Tarkemmat tiedot tieosoitejärjestelmästä löydät täältä: https://vayla.fi/documents/20473/143621/tieosoitejärjestelmä.pdf.
 
 #2. Perustietoja Viite-sovelluksesta
 --------------------------
@@ -135,7 +135,7 @@ Tieosoitteelliset kadut erottuvat kartalla muista tieosoitesegmenteistä siten, 
 
 _Tieosoitteellinen katu, merkattuna mustalla reunaviivalla tienumeron värityksen lisäksi._
 
-Kun hiiren vie tieosoiteverkon päälle, tulee kartalle näkyviin infolaatikko, joka kertoo kyseisen tieosoitesegmentin tienumeron, tieosanumeron, ajoratakoodin, alku- ja loppuetäisyyden sekä linkki-id:n.
+Kun hiiren vie tieosoiteverkon päälle, tulee kartalle näkyviin infolaatikko, joka kertoo kyseisen tieosoitesegmentin tienumeron, tieosanumeron, ajoratakoodin sekä alku- ja loppuetäisyyden.
 
 ![Hover](k35.JPG)
 
