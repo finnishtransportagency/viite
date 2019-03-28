@@ -5,9 +5,7 @@ Viite
 
 Viite on Väylän tieosoitejärjestelmän ylläpitosovellus. Viitteellä hallitaan tieosoitejärjestelmän muutoksia ja se tarjoaa ajantasaisen kuvauksen tiestöstä Digiroadin (VVH:n) ajantasaisella linkkigeometrialla.
 
-Seuraavasta linkistä pääsee Väylän extranetin Viite-sivulle (tällä hetkellä testiextranet käytössä, varsinainen extranet-osoite päivitetään myöhemmin), jossa kerrotaan Viitteen yleiskuvaus ja annetaan tiedotteita käyttäjille. Sivulla ylläpidetään myös dokumentaatiota Viitteestä. 
-
-https://testiextranet.vayla.fi/extranet/web/fi/viite?kategoria=7457637 (testi) 
+Linkistä https://testiextranet.vayla.fi/extranet/web/fi/viite?kategoria=7457637 (testi) pääsee Väylän extranetin Viite-sivulle (tällä hetkellä testiextranet käytössä, varsinainen extranet-osoite päivitetään myöhemmin), jossa kerrotaan Viitteen yleiskuvaus ja annetaan tiedotteita käyttäjille. Sivulla ylläpidetään myös dokumentaatiota Viitteestä. 
 
 __Huom! Suosittelemme käyttämään selaimena Firefoxia tai Chromea.__
 
