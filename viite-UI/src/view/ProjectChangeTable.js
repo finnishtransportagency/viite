@@ -91,7 +91,15 @@
 
     function getChanges() {
       var currentProject = projectCollection.getCurrentProject();
-      projectChangeInfoModel.getChanges(currentProject.project.id);
+      projectChangeInfoModel.getChanges(currentProject.project.id,function () {
+        var source = $('[id=label-source-btn]');
+        var target = $('[id=label-target-btn]');
+        if (source.hasClass('fa-sort-down') || source.hasClass('fa-sort-up')) {
+          projectChangeInfoModel.sortChanges('source', source.attr('class').match('fa-sort-up'));
+        } else if (target.hasClass('fa-sort-down') || target.hasClass('fa-sort-up')) {
+          projectChangeInfoModel.sortChanges('target', target.attr('class').match('fa-sort-up'));
+        }
+      });
     }
 
     function setTableHeight() {
@@ -181,17 +189,18 @@
     }
 
     function sortChanges(btn) {
-      if ($(btn).hasClass('fa-sort-down') || $(btn).hasClass('fa-sort')) {
-        $(btn).removeClass('fa-sort-down');
+      if ($(btn).hasClass('fa-sort-up') || $(btn).hasClass('fa-sort')) {
         $(btn).removeClass('fa-sort');
-        $(btn).addClass('fa-sort-up');
-      } else {
         $(btn).removeClass('fa-sort-up');
         $(btn).addClass('fa-sort-down');
+      } else {
+        $(btn).removeClass('fa-sort-down');
+        $(btn).addClass('fa-sort-up');
       }
 
       var side = btn.id.match('-(.*)-')[1];
-      var otherBtn = $(document.getElementById('label-' + (side === 'source' ? 'target' : 'source') + '-btn'));
+      // var otherBtn = $(document.getElementById('label-' + (side === 'source' ? 'target' : 'source') + '-btn'));
+      var otherBtn = $('[id=label-' + (side === 'source' ? 'target' : 'source') + '-btn');
       otherBtn.removeClass('fa-sort-down');
       otherBtn.removeClass('fa-sort-up');
       otherBtn.addClass('fa-sort');
