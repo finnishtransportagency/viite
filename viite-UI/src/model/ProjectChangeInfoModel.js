@@ -11,21 +11,24 @@
       }
     }
 
-    function getChanges(projectID){
+    function getChanges(projectID, sortFn){
       backend.getChangeTable(projectID, function(changeData) {
         loadChanges(roadChangeAPIResultParser(changeData));
+        sortFn();
       });
     }
 
-    function sortChanges(side, reversed) {
-      projectChanges.changeTable.changeInfoSeq =
-        _.sortBy(_.sortBy(_.sortBy(_.sortBy(projectChanges.changeTable.changeInfoSeq,
-          side + '.trackCode'),
-          side + '.startAddressM'),
-          side + '.startRoadPartNumber'),
-          side + '.roadNumber');
-      if(reversed) projectChanges.changeTable.changeInfoSeq.reverse();
-      loadChanges(projectChanges);
+    function sortChanges(side, reverse) {
+      if (projectChanges.changeTable.changeInfoSeq) {
+        projectChanges.changeTable.changeInfoSeq =
+          _.sortBy(_.sortBy(_.sortBy(_.sortBy(projectChanges.changeTable.changeInfoSeq,
+            side + '.trackCode'),
+            side + '.startAddressM'),
+            side + '.startRoadPartNumber'),
+            side + '.roadNumber');
+        if (reverse) projectChanges.changeTable.changeInfoSeq.reverse();
+        loadChanges(projectChanges);
+      }
     }
 
     function roadChangeAPIResultParser(changeData) {
