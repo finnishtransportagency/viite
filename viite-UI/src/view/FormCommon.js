@@ -304,6 +304,9 @@
       var buttonIndex = 0;
       var errorLines = '';
       projectCollection.clearCoordinates();
+      projectErrors.sort(function(a, b) {
+        return a.priority - b.priority; // Sort by priority ascending
+      });
       _.each(projectErrors, function (error) {
         var button = '';
         var coordinates = getErrorCoordinates(error, links);
@@ -312,7 +315,7 @@
           projectCollection.pushCoordinates(button);
           buttonIndex++;
         }
-        errorLines += '<div class="form-project-errors-list">' +
+        errorLines += '<div class="form-project-errors-list' + (error.priority === 1 ? ' warning' : '') + '">' +
           addSmallLabelTopped('LINKIDS: ') + ' ' + addSmallLabelWrapped(error.linkIds) + '</br>' +
           addSmallLabel('VIRHE: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
           addSmallLabel('INFO: ') + ' ' + addSmallLabelLowercase((error.info ? error.info: 'N/A')) + '</br>' +
