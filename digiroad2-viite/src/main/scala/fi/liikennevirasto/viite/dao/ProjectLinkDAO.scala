@@ -1,9 +1,8 @@
 package fi.liikennevirasto.viite.dao
 
+import java.sql.Types
 import java.util.Date
 
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
@@ -317,7 +316,7 @@ class ProjectLinkDAO {
         "TRACK, discontinuity_type, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, created_by, " +
         "calibration_points, status, road_type, roadway_id, linear_location_id, connected_link_id, ely, reversed, geometry, " +
         "link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
-        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?, 3067), ?, ?, ?, ?, ?, ?, ?)")
       val (ready, idLess) = links.partition(_.id != NewRoadway)
       val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
       val projectLinks = ready ++ idLess.zip(plIds).map(x =>
@@ -339,20 +338,20 @@ class ProjectLinkDAO {
         addressPS.setLong(13, pl.status.value)
         addressPS.setLong(14, pl.roadType.value)
         if (pl.roadwayId == 0)
-          addressPS.setString(15, null)
+          addressPS.setNull(15, Types.BIGINT)
         else
           addressPS.setLong(15, pl.roadwayId)
         if (pl.linearLocationId == 0)
-          addressPS.setString(16, null)
+          addressPS.setNull(16, Types.BIGINT)
         else
           addressPS.setLong(16, pl.linearLocationId)
         if (pl.connectedLinkId.isDefined)
           addressPS.setLong(17, pl.connectedLinkId.get)
         else
-          addressPS.setString(17, null)
+          addressPS.setNull(17, Types.BIGINT)
         addressPS.setLong(18, pl.ely)
-        addressPS.setBoolean(19, pl.reversed)
-        addressPS.setObject(20, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
+        addressPS.setInt(19, if (pl.reversed) 1 else 0)
+        addressPS.setString(20, OracleDatabase.createJGeometry(pl.geometry))
         addressPS.setLong(21, pl.linkId)
         addressPS.setLong(22, pl.sideCode.value)
         addressPS.setDouble(23, pl.startMValue)
@@ -385,7 +384,7 @@ class ProjectLinkDAO {
       }
       val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK = ?, " +
         "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, ORIGINAL_START_ADDR_M=?, ORIGINAL_END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
-        "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
+        "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ST_GeomFromText(?, 3067), " +
         "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ? WHERE id = ?")
 
       for (projectLink <- links) {
@@ -404,7 +403,7 @@ class ProjectLinkDAO {
         projectLinkPS.setInt(13, projectLink.status.value)
         projectLinkPS.setInt(14, projectLink.roadType.value)
         projectLinkPS.setInt(15, if (projectLink.reversed) 1 else 0)
-        projectLinkPS.setObject(16, OracleDatabase.createJGeometry(projectLink.geometry, dynamicSession.conn))
+        projectLinkPS.setString(16, OracleDatabase.createJGeometry(projectLink.geometry))
         projectLinkPS.setInt(17, projectLink.sideCode.value)
         projectLinkPS.setDouble(18, projectLink.startMValue)
         projectLinkPS.setDouble(19, projectLink.endMValue)
@@ -421,10 +420,10 @@ class ProjectLinkDAO {
   def updateProjectLinksGeometry(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
     time(logger,
       "Update project links geometry") {
-      val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET  GEOMETRY = ?, MODIFIED_BY= ?, ADJUSTED_TIMESTAMP = ? WHERE id = ?")
+      val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET  GEOMETRY = ST_GeomFromText(?, 3067), MODIFIED_BY= ?, ADJUSTED_TIMESTAMP = ? WHERE id = ?")
 
       for (projectLink <- projectLinks) {
-        projectLinkPS.setObject(1, OracleDatabase.createJGeometry(projectLink.geometry, dynamicSession.conn))
+        projectLinkPS.setString(1, OracleDatabase.createJGeometry(projectLink.geometry))
         projectLinkPS.setString(2, modifier)
         projectLinkPS.setLong(3, projectLink.linkGeometryTimeStamp)
         projectLinkPS.setLong(4, projectLink.id)
