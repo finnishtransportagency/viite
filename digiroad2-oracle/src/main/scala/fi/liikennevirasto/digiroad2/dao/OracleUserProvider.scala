@@ -28,7 +28,7 @@ class OracleUserProvider extends UserProvider {
     OracleDatabase.withDynSession {
       sqlu"""
         insert into service_user (id, username, configuration)
-        values (service_user_seq.nextval, ${username.toLowerCase}, ${write(config)})
+        values (nextval('service_user_seq'), ${username.toLowerCase}, ${write(config)})
       """.execute
     }
   }

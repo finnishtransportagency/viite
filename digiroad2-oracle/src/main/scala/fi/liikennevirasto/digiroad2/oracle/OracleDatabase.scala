@@ -87,7 +87,6 @@ object OracleDatabase {
     props
   }
 
-  // TODO Convert to Postgis
   def boundingBoxFilter(bounds: BoundingRectangle, geometryColumn: String): String = {
     val leftBottomX = bounds.leftBottom.x
     val leftBottomY = bounds.leftBottom.y
@@ -102,12 +101,8 @@ object OracleDatabase {
     """
   }
 
-  def createJGeometry(points: Seq[Point], con: java.sql.Connection): STRUCT = {
-    val ordinates = points.flatMap(p => Seq(p.x, p.y, p.z)).toArray
-    val dim = 4
-    val srid = 3067
-    val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
-      JGeometry.store(JGeometry.createLinearLineString(ordinates, dim, srid), oracleConn)
+  def createJGeometry(points: Seq[Point]): String = {
+    s"""LINESTRING(${points.map(p => s"""${p.x} ${p.y} ${p.z}""").mkString(", ")})"""
   }
 
   // TODO Maybe this should be optimized

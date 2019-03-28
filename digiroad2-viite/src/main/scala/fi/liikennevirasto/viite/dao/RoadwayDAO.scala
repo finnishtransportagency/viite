@@ -924,7 +924,7 @@ class RoadwayDAO extends BaseDAO {
         insert into ROADWAY (id, roadway_number, road_number, road_part_number,
         TRACK, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by,
         road_type, ely, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, ?,
-        TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, ?)
+        TO_DATE(?, 'YYYYMMDD'), TO_DATE(?, 'YYYYMMDD'), ?, ?, ?, ?)
       """)
     val (ready, idLess) = roadways.partition(_.id != NewRoadway)
     val plIds = Sequences.fetchRoadwayIds(idLess.size)

@@ -41,7 +41,7 @@ object ProjectLinkNameDAO {
   }
 
   def create(projectLinkNames: Seq[ProjectLinkName]): Unit = {
-    val projectLinkNamePS = dynamicSession.prepareStatement("insert into project_link_name (id, project_id, road_number, road_name) values values (project_link_name_seq.nextval, ?, ?, ?)")
+    val projectLinkNamePS = dynamicSession.prepareStatement("insert into project_link_name (id, project_id, road_number, road_name) values values (nextval('project_link_name_seq'), ?, ?, ?)")
     projectLinkNames.foreach { projectLinkName =>
       projectLinkNamePS.setLong(1, projectLinkName.projectId)
       projectLinkNamePS.setLong(2, projectLinkName.roadNumber)
@@ -67,7 +67,7 @@ object ProjectLinkNameDAO {
   def create(projectId: Long, roadNumber: Long, roadName: String): Unit = {
     sqlu"""
          insert into project_link_name (id, project_id, road_number, road_name)
-         values (project_link_name_seq.nextval, $projectId, $roadNumber, $roadName)
+         values (nextval('project_link_name_seq'), $projectId, $roadNumber, $roadName)
     """.execute
   }
 
