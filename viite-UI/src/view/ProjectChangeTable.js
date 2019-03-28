@@ -199,7 +199,6 @@
       }
 
       var side = btn.id.match('-(.*)-')[1];
-      // var otherBtn = $(document.getElementById('label-' + (side === 'source' ? 'target' : 'source') + '-btn'));
       var otherBtn = $('[id=label-' + (side === 'source' ? 'target' : 'source') + '-btn');
       otherBtn.removeClass('fa-sort-down');
       otherBtn.removeClass('fa-sort-up');
