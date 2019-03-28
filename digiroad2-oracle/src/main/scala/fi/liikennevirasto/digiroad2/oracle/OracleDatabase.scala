@@ -105,6 +105,10 @@ object OracleDatabase {
     s"""LINESTRING(${points.map(p => s"""${p.x} ${p.y} ${p.z}""").mkString(", ")})"""
   }
 
+  def createXYZMGeometry(points: Seq[(Point, Double)]): String = {
+    s"""LINESTRING(${points.map(p => s"""${p._1.x} ${p._1.y} ${p._1.z} ${p._2}""").mkString(", ")})"""
+  }
+
   // TODO Maybe this should be optimized
   def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
     if (geometry.nonEmpty) {
