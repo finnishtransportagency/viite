@@ -233,41 +233,41 @@ Automatiikka tekee korjaukset, kun
 
 Uuden tieosoiteprojektin tekeminen aloitetaan klikkaamalla painiketta Tieosoiteprojektit (1) ja avautuvasta ikkunasta painiketta Uusi tieosoiteprojekti (2).
 
-![Uusi tieosoiteprojekti](k17.JPG)
+![Uusi tieosoiteprojekti](k17.jpg)
 
 _Tieosoiteprojektit-painike ja Uusi tieosoiteprojekti -painike._
 
 Näytön oikeaan reunaan avautuu lomake tieosoiteprojektin perustietojen täydentämistä varten. Jos käyttäjä on ollut katselutilassa,  sovellus siirtyy tässä vaiheessa automaattisesti muokkaustilaan.
 
-![Uusi tieosoiteprojekti](k18.JPG)
+![Uusi tieosoiteprojekti](k18.jpg)
 
 _Tieosoiteprojektin perustietojen lomake._
 
-Pakollisia tietoja ovat nimi ja projektin muutosten voimaantulopäivämäärä, jotka on merkattu lomakkeelle oranssilla (3). Projektiin ei tarvitse varata yhtään tieosaa. Lisätiedot-kenttään käyttäjä voi halutessaan tehdä muistiinpanoja tieosoiteprojektista. Tiedot tallentuvat painamalla Jatka toimenpiteisiin -painiketta (4). Poistu-painike (NUMERO)sulkee projektin tietoja tallentamatta.
+Pakollisia tietoja ovat nimi ja projektin muutosten voimaantulopäivämäärä, jotka on merkattu lomakkeelle oranssilla (3). Projektiin ei tarvitse varata yhtään tieosaa. Lisätiedot-kenttään käyttäjä voi halutessaan tehdä muistiinpanoja tieosoiteprojektista. Tiedot tallentuvat painamalla Jatka toimenpiteisiin -painiketta (4). Poistu-painike (5) sulkee projektin tietoja tallentamatta.
 
-![Uusi tieosoiteprojekti](k19.JPG)
+![Uusi tieosoiteprojekti](k19.jpg)
 
 _Tieosoiteprojektin perustietojen täyttäminen._
 
-Projektin tieosat lisätään täydentämällä niiden tiedot kenttiin TIE, AOSA sekä LOSA ja painamalla painiketta Varaa (5). __Kaikki kentät tulee täyttää, jos haluaa varata tieosan!__ 
+Projektin tieosat lisätään täydentämällä niiden tiedot kenttiin TIE, AOSA sekä LOSA ja painamalla painiketta Varaa (6). __Kaikki kentät tulee täyttää, jos haluaa varata tieosan!__ 
 
-Varaa-painikkeen klikkauksen jälkeen tieosan tiedot tulevat näkyviin lomakkeelle.
+Varaa-painikkeen klikkauksen jälkeen tieosan tiedot tulevat näkyviin lomakkeelle (7).
 
-![Uusi tieosoiteprojekti](k22.JPG)
+![Uusi tieosoiteprojekti](k22.jpg)
 
-_Tieosan tiedot lomakkeella Lisää-painikkeen painamisen jälkeen._
+_Tieosan tiedot lomakkeella Varaa-painikkeen painamisen jälkeen._
 
 Tieosoiteprojekti tallentuu automaattisesti painikkeesta Jatka toimenpiteisiin, jolloin tiedot tallentuvat tietokantaan ja sovellus siirtyy toimenpidenäytölle. Varaamisen yhteydessä Viite kohdistaa kartan varatun tieosan alkuun. Poistu-painikkeesta projekti suljetaan ja käyttäjältä varmistetaan, halutaanko tallentamattomat muutokset tallentaa. Projektiin pääsee palaamaan Tieosoiteprojektit-listan kautta. 
 
-Käyttäjä voi poistaa varattuja tieosia klikkaamalla Roskakori-kuvaketta valitsemansa tieosan kohdalla Projektiin varatut tieosat -listalla. Mikäli tieosille ei ole tehty muutoksia, vaan ne on vain varattu projektiin, varaus poistetaan projektista. Jos tieosille on tehty muutoksia, Viite pyytää käyttäjää vahvistamaan poiston.
+Käyttäjä voi poistaa varattuja tieosia klikkaamalla Roskakori-kuvaketta (8) valitsemansa tieosan kohdalla Projektiin varatut tieosat -listalla. Mikäli tieosille ei ole tehty muutoksia, vaan ne on vain varattu projektiin, varaus poistetaan projektista. Jos tieosille on tehty muutoksia, Viite pyytää käyttäjää vahvistamaan poiston.
 
-Keskeneräisen projektin voi poistaa Poista projekti –painikkeella, jolloin projekti ja sen varaamat aihiot ja tehdyt muutokset poistetaan. Viite pyytää käyttäjää vahvistamaan poiston. 
+Keskeneräisen projektin voi poistaa Poista projekti –painikkeella (9), jolloin projekti ja sen varaamat aihiot ja tehdyt muutokset poistetaan. Viite pyytää käyttäjää vahvistamaan poiston. 
 
 
 
-![Uusi tieosoiteprojekti](k20.JPG)
+![Uusi tieosoiteprojekti](k20.jpg)
 
-_Kun tieosa on varattu projektiin, Viite kohdistaa kartan siten että tieosa näkyy kartalla kokonaisuudessaan._  
+_Kun tieosa on varattu projektiin, Viite kohdistaa kartan siten, että tieosa näkyy kartalla kokonaisuudessaan._  
 
 Varauksen yhteydessä järjestelmä tekee varattaville tieosille tarkistukset:
 
