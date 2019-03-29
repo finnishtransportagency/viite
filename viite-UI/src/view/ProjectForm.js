@@ -338,6 +338,12 @@
         }
       };
 
+      var disableAutoComplete = function () {
+        $('[id=nimi]').attr('autocomplete', 'off');
+        $('[id=alkupvm]').attr('autocomplete', 'off');
+        $('[id=lisatiedot]').attr('autocomplete', 'off');
+      };
+
       eventbus.on('roadAddress:newProject', function () {
         currentProject = {
           id: 0,
@@ -351,9 +357,7 @@
         activeLayer = true;
         projectCollection.clearRoadAddressProjects();
         $('#generalNext').prop('disabled', true);
-        $('[id=nimi]').attr('autocomplete', 'off');
-        $('[id=alkupvm]').attr('autocomplete', 'off');
-        $('[id=lisatiedot]').attr('autocomplete', 'off');
+        disableAutoComplete();
       });
 
       eventbus.on('roadAddress:openProject', function (result) {
@@ -362,6 +366,7 @@
         projectCollection.setProjectErrors(result.projectErrors);
         currentProject.isDirty = false;
         projectCollection.clearRoadAddressProjects();
+        disableAutoComplete();
         projectCollection.setCurrentProject(result);
         projectCollection.setReservedParts(result.projectLinks);
         var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
