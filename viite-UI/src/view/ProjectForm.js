@@ -339,9 +339,9 @@
       };
 
       var disableAutoComplete = function () {
-        $('[id=nimi]').attr('autocomplete', 'off');
-        $('[id=alkupvm]').attr('autocomplete', 'off');
-        $('[id=lisatiedot]').attr('autocomplete', 'off');
+        $('[id=nimi]').attr('autocomplete', 'false');
+        $('[id=alkupvm]').attr('autocomplete', 'false');
+        $('[id=lisatiedot]').attr('autocomplete', 'false');
       };
 
       eventbus.on('roadAddress:newProject', function () {
