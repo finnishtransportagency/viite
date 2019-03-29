@@ -351,6 +351,9 @@
         activeLayer = true;
         projectCollection.clearRoadAddressProjects();
         $('#generalNext').prop('disabled', true);
+        // $('[id=nimi]').attr('autocomplete', 'off');
+        $('[id=alkupvm]').attr('autocomplete', 'off');
+        // $('[id=lisatiedot]').attr('autocomplete', 'off');
       });
 
       eventbus.on('roadAddress:openProject', function (result) {
