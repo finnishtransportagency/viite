@@ -185,7 +185,6 @@ class ProjectReservedPartDAO {
               LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
               WHERE
                 rp.project_id = $projectId
-                AND rp.reserved = 0
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
             ) gr order by gr.road_number, gr.road_part_number"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long],
@@ -255,7 +254,8 @@ class ProjectReservedPartDAO {
   def fetchFormedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ProjectReservedPart] = {
     time(logger, "Fetch reserved road part") {
       val sql =
-        s"""SELECT ID, ROAD_NUMBER, ROAD_PART_NUMBER, length_new, ely_new,
+        s"""
+        SELECT ID, ROAD_NUMBER, ROAD_PART_NUMBER, length_new, ely_new,
         (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl
           WHERE pl.PROJECT_ID = gr.PROJECT_ID
             AND pl.ROAD_NUMBER = gr.ROAD_NUMBER
@@ -306,7 +306,6 @@ class ProjectReservedPartDAO {
             AND (pl.STATUS IS NULL
             OR (pl.STATUS != ${LinkStatus.Terminated.value}
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})))
-            AND rp.reserved = 0
           GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long],
         Option[Long], Option[Long])](sql).firstOption.map {
