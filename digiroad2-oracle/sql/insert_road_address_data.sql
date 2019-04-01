@@ -1243,7 +1243,6 @@ insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) v
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (ROADWAY_POINT_SEQ.nextval, 52378, 6152, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (ROADWAY_POINT_SEQ.nextval, 39477, 4711, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (ROADWAY_POINT_SEQ.nextval, 39477, 6362, 'import', 'import');
-insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (ROADWAY_POINT_SEQ.nextval, 44462, 1466, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (ROADWAY_POINT_SEQ.nextval, 59985, 4326, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (ROADWAY_POINT_SEQ.nextval, 59985, 5694, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (ROADWAY_POINT_SEQ.nextval, 59986, 6509, 'import', 'import');
