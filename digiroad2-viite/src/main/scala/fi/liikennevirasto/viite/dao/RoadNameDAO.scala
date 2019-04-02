@@ -218,11 +218,11 @@ object RoadNameDAO {
   }
 
 
-  def expireByRoadNumber(roadNumbers: Set[Long], endDate: Long): Unit = {
+  def expireByRoadNumber(roadNumbers: Set[Long], validTo: Long): Unit = {
     if (roadNumbers.isEmpty) return // dont even bother with empty set
     val query = s" UPDATE ROAD_NAME SET VALID_TO = ? WHERE VALID_TO IS NULL AND ROAD_NUMBER in (${qMarksGenerator(roadNumbers)})"
     val roadNamesPS = dynamicSession.prepareStatement(query)
-    roadNamesPS.setDate(1, new Date(endDate))
+    roadNamesPS.setDate(1, new Date(validTo))
     var index = 2
     for (roadNumber <- roadNumbers) {
       roadNamesPS.setLong(index, roadNumber)

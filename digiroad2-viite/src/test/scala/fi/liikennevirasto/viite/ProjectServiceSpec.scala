@@ -2340,7 +2340,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadNames = RoadNameDAO.getAllByRoadNumber(roadNumber)
       roadNames.foreach(rn => {
         rn.endDate.isDefined should be (true)
-        rn.endDate.get.toLocalDate should be (projectStartTime.toLocalDate)
+        rn.endDate.get.toLocalDate should be (projectStartTime.toLocalDate.minusDays(1))
       })
 
     }
@@ -2380,7 +2380,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
         if(rn.endDate.isDefined) {
-          rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+          rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate.minusDays(1))
         }
       })
       val targetRoadNames = RoadNameDAO.getAllByRoadNumber(targetRoadNumber)
@@ -2428,7 +2428,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
         if(rn.endDate.isDefined) {
-          rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+          rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate.minusDays(1))
         }
       })
     }
@@ -2468,7 +2468,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
         if(rn.endDate.isDefined) {
-          rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+          rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate.minusDays(1))
         }
       })
       val targetRoadNames = RoadNameDAO.getAllByRoadNumber(targetRoadNumber)
@@ -2516,7 +2516,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
         if(rn.endDate.isDefined) {
-          rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate)
+          rn.endDate.get.toLocalDate should be(project.startDate.toLocalDate.minusDays(1))
         }
       })
     }
