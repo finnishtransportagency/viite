@@ -72,7 +72,7 @@ Tieosoitesegmentit piirretään Viite-sovelluksessa kartalle erilaisin värein (
 
 Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle, maasto@maanmittauslaitos.fi. Mukaan liitetään selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
 
-#3. Karttanäkymän muokkaus
+#3. Karttanäkymän toiminnot
 --------------------------
 
 ![Karttanäkymän muokkaus](k3.jpg)
