@@ -82,7 +82,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "road_type" -> 3,
       "discontinuity" -> 0,
       "start_date" -> "2015-01-01",
-      "end_date" -> "2016-01-01",
+      "end_date" -> "2015-12-31",
       "calibration_points" -> Map("start" -> Some(Map("link_id" -> 120, "address_m_value" -> 2, "segment_m_value" -> 1.0)), "end" -> None)
     )))
   }
@@ -149,8 +149,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
-        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2018, 1, 1), None, "MOCK"),
-        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 2), date(1900, 1, 1), None, "MOCK")
+        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 1), date(2018, 1, 1), None, "MOCK"),
+        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 1), date(1900, 1, 1), None, "MOCK")
       ))
     )
     getWithBasicUserAuth("/roadnames/changes?since=2018-01-01", "kalpa", "kalpa") {
@@ -158,8 +158,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       response.body should equal(
         "[{\"road_number\":2,\"names\":[" +
           "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"MY ROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}," +
-          "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-02").toString + "\"}," +
-          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-02").toString + "\"}" +
+          "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-01").toString + "\"}," +
+          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-01").toString + "\"}" +
           "]}]"
       )
     }
@@ -170,8 +170,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2017, 12, 1), None, "MOCK"),
-        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2017, 12, 1), None, "MOCK"),
-        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 2), date(1900, 1, 1), None, "MOCK")
+        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 1), date(2017, 12, 1), None, "MOCK"),
+        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 1), date(1900, 1, 1), None, "MOCK")
       ))
     )
     getWithBasicUserAuth("/roadnames/changes?since=2017-12-01", "kalpa", "kalpa") {
@@ -180,8 +180,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
         "[" +
           "{\"road_number\":2,\"names\":[" +
           "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"MY ROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}," +
-          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-02").toString + "\"}," +
-          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-02").toString + "\"}" +
+          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-01").toString + "\"}," +
+          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-01").toString + "\"}" +
           "]}," +
           "{\"road_number\":3,\"names\":[" +
           "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"ANOTHER ROAD\",\"start_date\":\"" + DateTime.parse("2017-12-12").toString + "\",\"end_date\":null}" +
@@ -218,8 +218,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
-        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2018, 1, 1), None, "MOCK"),
-        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 2), date(1900, 1, 1), None, "MOCK")
+        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 1), date(2018, 1, 1), None, "MOCK"),
+        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 1), date(1900, 1, 1), None, "MOCK")
       ))
     )
     getWithBasicUserAuth("/roadnames/changes?since=2018-01-01&until=2018-01-03", "kalpa", "kalpa") {
@@ -227,8 +227,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       response.body should equal(
         "[{\"road_number\":2,\"names\":[" +
           "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"MY ROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}," +
-          "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-02").toString + "\"}," +
-          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-02").toString + "\"}" +
+          "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-01").toString + "\"}," +
+          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-01").toString + "\"}" +
           "]}]"
       )
     }
@@ -239,8 +239,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2017, 12, 1), None, "MOCK"),
-        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 2), date(2017, 12, 1), None, "MOCK"),
-        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 2), date(1900, 1, 1), None, "MOCK")
+        RoadName(2, 2, "THEROAD", date(2000, 2, 2), date(2018, 2, 1), date(2017, 12, 1), None, "MOCK"),
+        RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 1), date(1900, 1, 1), None, "MOCK")
       ))
     )
     getWithBasicUserAuth("/roadnames/changes?since=2017-12-01&until=2018-12-03", "kalpa", "kalpa") {
@@ -249,8 +249,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
         "[" +
           "{\"road_number\":2,\"names\":[" +
           "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"MY ROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}," +
-          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-02").toString + "\"}," +
-          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-02").toString + "\"}" +
+          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-01").toString + "\"}," +
+          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-01").toString + "\"}" +
           "]}," +
           "{\"road_number\":3,\"names\":[" +
           "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"ANOTHER ROAD\",\"start_date\":\"" + DateTime.parse("2017-12-12").toString + "\",\"end_date\":null}" +

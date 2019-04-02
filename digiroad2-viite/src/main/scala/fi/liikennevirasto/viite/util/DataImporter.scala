@@ -153,7 +153,7 @@ class DataImporter {
             	AND ROADWAY.START_ADDR_M = rw.START_ADDR_M
             	AND ROADWAY.END_ADDR_M = rw.END_ADDR_M
             	AND ROADWAY.TRACK = rw.TRACK
-            	AND ROADWAY.END_DATE = rw.start_date
+            	AND ROADWAY.END_DATE = rw.start_date - 1
             	AND rw.VALID_TO IS NULL AND rw.TERMINATED = 1)""".execute
 
       enableRoadwayTriggers

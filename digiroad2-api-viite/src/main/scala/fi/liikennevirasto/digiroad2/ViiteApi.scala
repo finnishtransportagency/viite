@@ -339,8 +339,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       .parameters(
         queryParam[Long]("roadNumber").description("Road Number of a road address"),
         queryParam[String]("roadName").description("Road Name of a road address"),
-        queryParam[String]("startDate").description("Start date of a of a road address"),
-        queryParam[String]("endDate").description("Road Name of a road address")
+        queryParam[String]("startDate").description("Start date of a road address"),
+        queryParam[String]("endDate").description("End date of a road address")
       )
       tags "ViiteAPI - RoadNames"
       summary "Returns a sequence of RoadName objects that match the given parameters."

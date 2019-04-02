@@ -1920,7 +1920,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             //TODO we should check situations where we need to create one new roadway for new and transfer/unchanged
             // Transferred part, original values
             roadAddress.copy(id = NewProjectLink, startAddrMValue = startAddr, endAddrMValue = endAddr,
-              endDate = Some(project.startDate), createdBy = Some(project.createdBy), startMValue = startM, endMValue = endM, floating = floatingValue),
+              endDate = Some(project.startDate.minusDays(1)), createdBy = Some(project.createdBy), startMValue = startM, endMValue = endM, floating = floatingValue),
             // Transferred part, new values
             roadAddress.copy(id = NewProjectLink, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
               startDate = Some(project.startDate), createdBy = Some(project.createdBy), linkId = pl.linkId,
@@ -1929,7 +1929,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           )
         case Terminated => // TODO Check roadway_number
           Seq(roadAddress.copy(id = NewProjectLink, startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
-            endDate = Some(project.startDate), createdBy = Some(project.createdBy), linkId = pl.linkId, startMValue = pl.startMValue,
+            endDate = Some(project.startDate.minusDays(1)), createdBy = Some(project.createdBy), linkId = pl.linkId, startMValue = pl.startMValue,
             endMValue = pl.endMValue, adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry, terminated = Termination))
         case _ =>
           logger.error(s"Invalid status for split project link: ${pl.status} in project ${pl.projectId}")
@@ -1939,7 +1939,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * Expires roadways (valid_to = null and end_date = project_date)
+    * Expires roadways (valid_to = sysdate)
     *
     * @param projectLinks          ProjectLinks
     * @param expiringRoadAddresses A map of (RoadwayId -> RoadAddress)
@@ -2012,7 +2012,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val targetExistingRoadways = roadwayDAO.fetchAllByRoad(targetRoadNumber)
 
           if (srcExistingRoadways.isEmpty && srcExistingRoadName.isDefined) {
-            RoadNameDAO.expireAndCreateHistory(srcExistingRoadName.get.id, rwc.user, historyRoadName = srcExistingRoadName.get.copy(endDate = Some(rwc.projectStartDate)))
+            RoadNameDAO.expireAndCreateHistory(srcExistingRoadName.get.id, rwc.user, historyRoadName = srcExistingRoadName.get.copy(endDate = Some(rwc.projectStartDate.minusDays(1))))
           }
 
           // CREATE NEW ROADNAME FOR TARGET ROADNUMBER
@@ -2033,7 +2033,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val roadways = roadwayDAO.fetchAllByRoad(roadNumber)
         val roadNameOpt = RoadNameDAO.getLatestRoadName(roadNumber)
         if (roadways.isEmpty && roadNameOpt.isDefined) {
-          RoadNameDAO.expireAndCreateHistory(roadNameOpt.get.id, rwc.user, historyRoadName = roadNameOpt.get.copy(endDate = Some(rwc.projectStartDate)))
+          RoadNameDAO.expireAndCreateHistory(roadNameOpt.get.id, rwc.user, historyRoadName = roadNameOpt.get.copy(endDate = Some(rwc.projectStartDate.minusDays(1))))
         }
       }
     })

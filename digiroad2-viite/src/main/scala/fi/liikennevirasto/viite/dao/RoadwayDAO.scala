@@ -719,7 +719,7 @@ class RoadwayDAO extends BaseDAO {
   private def withRoadwayNumbersAndDate(roadwayNumbers: Set[Long], searchDate: DateTime)(query: String): String = {
     def dateFilter(table: String): String = {
       val strDate = dateFormatter.print(searchDate)
-      s" ($table.start_date <= to_date('$strDate', 'yyyymmdd') and (to_date('$strDate', 'yyyymmdd') < $table.end_date or $table.end_date is null))"
+      s" ($table.start_date <= to_date('$strDate', 'yyyymmdd') and (to_date('$strDate', 'yyyymmdd') <= $table.end_date or $table.end_date is null))"
     }
     if (roadwayNumbers.size > 1000) {
       MassQuery.withIds(roadwayNumbers) {
@@ -782,10 +782,13 @@ class RoadwayDAO extends BaseDAO {
     s"""$query where valid_to is null and road_number BETWEEN  ${roadNumbers._1} AND ${roadNumbers._2}"""
   }
 
-  // TODO What about end_date?
   private def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
-    s"""$query where valid_to is null and start_date >= to_date('${sinceDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
-          AND start_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')"""
+    s"""$query where valid_to is null
+          AND start_date >= to_date('${sinceDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
+          AND start_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
+          AND end_date >= to_date('${sinceDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
+          AND end_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
+    """
   }
 
   private def withUpdatedSince(sinceDate: DateTime)(query: String): String = {
@@ -867,7 +870,7 @@ class RoadwayDAO extends BaseDAO {
     * @param ids: Seq[Long] - The ids of the roadways to expire.
     * @return
     */
-  def expireById(ids: Set[Long]): Int = {
+  def  expireById(ids: Set[Long]): Int = {
     val query =
       s"""
         Update ROADWAY Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})

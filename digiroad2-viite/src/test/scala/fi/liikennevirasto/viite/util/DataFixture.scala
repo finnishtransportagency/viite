@@ -286,7 +286,6 @@ object DataFixture {
       "insert_users.sql",
       "test_fixture_sequences.sql",
       "insert_road_address_data.sql",
-      "insert_floating_road_addresses.sql",
       "insert_overlapping_road_addresses.sql", // Test data for OverLapDataFixture (VIITE-1518)
       "insert_project_link_data.sql",
       "insert_road_names.sql"
