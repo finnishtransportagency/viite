@@ -338,6 +338,12 @@
         }
       };
 
+      var disableAutoComplete = function () {
+        $('[id=nimi]').attr('autocomplete', 'false');
+        $('[id=alkupvm]').attr('autocomplete', 'false');
+        $('[id=lisatiedot]').attr('autocomplete', 'false');
+      };
+
       eventbus.on('roadAddress:newProject', function () {
         currentProject = {
           id: 0,
@@ -351,6 +357,7 @@
         activeLayer = true;
         projectCollection.clearRoadAddressProjects();
         $('#generalNext').prop('disabled', true);
+        disableAutoComplete();
       });
 
       eventbus.on('roadAddress:openProject', function (result) {
@@ -359,6 +366,7 @@
         projectCollection.setProjectErrors(result.projectErrors);
         currentProject.isDirty = false;
         projectCollection.clearRoadAddressProjects();
+        disableAutoComplete();
         projectCollection.setCurrentProject(result);
         projectCollection.setReservedParts(result.projectLinks);
         var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
