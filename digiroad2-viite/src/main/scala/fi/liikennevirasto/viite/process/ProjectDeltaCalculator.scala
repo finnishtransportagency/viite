@@ -213,9 +213,8 @@ object ProjectDeltaCalculator {
   def matchesFitOnTarget(target: Seq[RoadwaySection], matchers: Seq[RoadwaySection]): Boolean = {
     val (targetStartMAddress, targetEndMAddress) = (target.map(_.startMAddr).min, target.map(_.endMAddr).max)
     val (matcherStartMAddress, matcherEndMAddress) = (matchers.map(_.startMAddr).min, matchers.map(_.endMAddr).max)
-    val (matcherDiscontinuity, targetDiscontinuity) = (matchers.maxBy(_.endMAddr).discontinuity, target.maxBy(_.endMAddr).discontinuity)
-    ((targetStartMAddress <= matcherStartMAddress && targetEndMAddress >= matcherStartMAddress) || (targetStartMAddress <= matcherEndMAddress && targetEndMAddress >= matcherEndMAddress) ||
-      (matcherStartMAddress <= targetStartMAddress && matcherEndMAddress >= targetStartMAddress) || (matcherStartMAddress <= targetEndMAddress && matcherEndMAddress >= targetEndMAddress)) && (matcherDiscontinuity == Continuous && targetDiscontinuity == Continuous)
+    (targetStartMAddress < matcherStartMAddress && targetEndMAddress > matcherStartMAddress) || (targetStartMAddress < matcherEndMAddress && targetEndMAddress > matcherEndMAddress) ||
+      (matcherStartMAddress < targetStartMAddress && matcherEndMAddress > targetStartMAddress) || (matcherStartMAddress < targetEndMAddress && matcherEndMAddress > targetEndMAddress)
   }
 
   def partition[T <: BaseRoadAddress](roadAddresses: Seq[ProjectLink]): Seq[RoadwaySection] = {
