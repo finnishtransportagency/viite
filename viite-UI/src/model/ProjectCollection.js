@@ -185,7 +185,7 @@
           };
           projectErrors = result.projectErrors;
           eventbus.trigger('roadAddress:projectSaved', result);
-          dirtyRoadPartList = result.formInfo;
+          reservedPartList = result.reservedInfo;
           currentProject = result;
         }
         else {
@@ -536,7 +536,7 @@
     this.deleteProject = function (projectId) {
       backend.deleteRoadAddressProject(projectId, function (result) {
         if (result.success) {
-          dirtyRoadPartList = [];
+          reservedPartList = [];
           currentProject = undefined;
         }
         else {
@@ -644,9 +644,9 @@
     };
 
 
-    var addToDirtyRoadPartList = function (queryResult) {
+    var addToReservedPartList = function (queryResult) {
       var qRoadParts = [];
-      _.each(queryResult.roadparts, function (row) {
+      _.each(queryResult.reservedInfo, function (row) {
         qRoadParts.push(row);
       });
 
@@ -659,6 +659,10 @@
       _.each(qRoadParts, function (row) {
         currentReservedParts.push(row);
       });
+    };
+
+    var addToFormedPartList = function (queryResult) {
+
     };
 
     this.deleteRoadPartFromList = function (list, roadNumber, roadPartNumber) {
@@ -758,7 +762,8 @@
       if (validationResult.success !== "ok") {
         eventbus.trigger('roadAddress:projectValidationFailed', validationResult.success);
       } else {
-        addToDirtyRoadPartList(validationResult);
+        addToReservedPartList(validationResult);
+        addToFormedPartList(validationResult);
         updateReservedRoads(parseRoadPartInfoToResultRow());
         eventbus.trigger('roadAddress:projectValidationSucceed');
       }

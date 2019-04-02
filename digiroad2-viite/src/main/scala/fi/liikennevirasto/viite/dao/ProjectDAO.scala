@@ -213,7 +213,7 @@ class ProjectDAO {
         val projectState = ProjectState.apply(state)
 
         Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
-          addInfo, Seq(), statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)))
+          addInfo, Seq(), Seq(), statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)))
     }
   }
 }

@@ -263,8 +263,8 @@
           currentProject.isDirty = false;
           var text = '';
           var index = 0;
-          projectCollection.setReservedParts(result.formInfo);
-          _.each(result.formInfo, function (line) {
+          projectCollection.setReservedParts(result.reservedInfo);
+          _.each(result.reservedInfo, function (line) {
             var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber);
             text += '<div class="form-reserved-roads-list">' + button +
               addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) +
@@ -360,7 +360,7 @@
         currentProject.isDirty = false;
         projectCollection.clearRoadAddressProjects();
         projectCollection.setCurrentProject(result);
-        projectCollection.setReservedParts(result.projectLinks);
+        projectCollection.setReservedParts(result.reservedInfo);
         var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
         var newReserved = writeHtmlList(projectCollection.getNewReservedParts());
         rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, currentReserved, newReserved));

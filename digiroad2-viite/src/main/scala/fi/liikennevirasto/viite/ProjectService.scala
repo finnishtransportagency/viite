@@ -181,13 +181,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def checkRoadPartsReservable(roadNumber: Long, startPart: Long, endPart: Long): Either[String, Seq[ProjectReservedPart]] = {
+  def checkRoadPartsReservable(roadNumber: Long, startPart: Long, endPart: Long): Either[String, (Seq[ProjectReservedPart], Seq[ProjectReservedPart])] = {
     (startPart to endPart).foreach(part =>
       projectReservedPartDAO.roadPartReservedByProject(roadNumber, part) match {
         case Some(name) => return Left(s"Tie $roadNumber osa $part ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna projektissa: $name.")
         case _ =>
       })
-    Right((startPart to endPart).flatMap(part => getAddressPartInfo(roadNumber, part))
+    val reserved: Seq[ProjectReservedPart] = (startPart to endPart).flatMap(part => getReservedAddressPartInfo(roadNumber, part))
+    val formed: Seq[ProjectReservedPart] = (startPart to endPart).flatMap(part => getFormedAddressPartInfo(roadNumber, part))
+    Right(
+      (reserved, formed)
     )
   }
 
@@ -203,18 +206,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectDate: DateTime
     * @return Either the error message or the reserved road parts.
     */
-  def checkRoadPartExistsAndReservable(roadNumber: Long, startPart: Long, endPart: Long, projectDate: DateTime): Either[String, Seq[ProjectReservedPart]] = {
+  def checkRoadPartExistsAndReservable(roadNumber: Long, startPart: Long, endPart: Long, projectDate: DateTime): Either[String, (Seq[ProjectReservedPart], Seq[ProjectReservedPart])] = {
     withDynTransaction {
       checkRoadPartsExist(roadNumber, startPart, endPart) match {
         case None => checkRoadPartsReservable(roadNumber, startPart, endPart) match {
           case Left(err) => Left(err)
-          case Right(reservedRoadParts) =>
-            if (reservedRoadParts.isEmpty) {
-              Right(reservedRoadParts)
+          case Right((reserved, formed)) =>
+            if (reserved.isEmpty && formed.isEmpty) {
+              Right(reserved, formed)
             } else {
-              validateProjectDate(reservedRoadParts, projectDate) match {
-                case Some(errMsg) => Left(errMsg)
-                case None => Right(reservedRoadParts)
+              (validateProjectDate(reserved, projectDate), validateProjectDate(formed, projectDate)) match {
+                case (Some(errMsg), _) => Left(errMsg)
+                case (_, Some(errMsg)) => Left(errMsg)
+                case (None, None) => Right(reserved, formed)
               }
             }
         }
@@ -277,9 +281,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     None
   }
 
-  private def getAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ProjectReservedPart] = {
+  private def getReservedAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ProjectReservedPart] = {
     projectReservedPartDAO.fetchReservedRoadPart(roadNumber, roadPart).orElse(generateAddressPartInfo(roadNumber, roadPart))
   }
+
+  private def getFormedAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ProjectReservedPart] = {
+    projectReservedPartDAO.fetchFormedRoadPart(roadNumber, roadPart).orElse(None)
+  }
+
 
   private def generateAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ProjectReservedPart] = {
     roadwayDAO.getRoadPartInfo(roadNumber, roadPart).map {
