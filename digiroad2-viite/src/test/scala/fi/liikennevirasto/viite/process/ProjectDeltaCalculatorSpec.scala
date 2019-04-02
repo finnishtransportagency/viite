@@ -221,7 +221,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     val newParts = ProjectDeltaCalculator.partition(newLinks)
     newParts should have size 4
     newParts.filter(_.startMAddr < 100).foreach(to => {
-      to.endMAddr should be(51)
+      to.endMAddr should be(53)
     })
     newParts.filter(_.startMAddr >= 100).foreach(to => {
       to.endMAddr should be(125)
@@ -452,7 +452,8 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
     })
     val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp, Seq()).adjustedSections.keys
-    partitionCp.size should be(2)
+    //Changing calibration points 2 -> 1 because we don't need to have separated sections by roadwayNumber
+    partitionCp.size should be(1)
     val firstSection = partitionCp.last
     val secondSection = partitionCp.head
     val cutPoint = projectLinksWithCp.find(_._2.roadwayId == 10L).get._2
