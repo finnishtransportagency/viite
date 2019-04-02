@@ -82,7 +82,8 @@
       '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
     projectList.append('<div id="project-list" style="width:820px; height:390px; overflow:auto;"></div>' +
-      '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="TRProjectsVisible" value="TRProjectsVisible" id="TRProjectsVisibleCheckbox">Näytä kaikki Tierekisteriin viedyt projektit</label>');
+      '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="TRProjectsVisible" value="TRProjectsVisible" id="TRProjectsVisibleCheckbox">Näytä kaikki Tierekisteriin viedyt projektit</label>' +
+      '<i id="sync" class="btn-icon btn-refresh fa fa-sync-alt" title="Päivitä lista"></i>');
 
     var staticFieldProjectName = function (dataField) {
       var field;
@@ -151,7 +152,7 @@
 
     function bindEvents() {
 
-      eventbus.once('roadAddressProjects:fetched', function (projects) {
+      eventbus.on('roadAddressProjects:fetched', function (projects) {
         projectArray = _.filter(projects, function (proj) {
           return proj.statusCode !== projectStatus.Deleted.value; //filter deleted projects out
         });
@@ -300,6 +301,10 @@
       $('#userNameBox').keyup(function () {
         filterByUser();
       });
+
+      projectList.on('click', '#sync', function () {
+        fetchProjects();
+      })
     }
 
     return {
