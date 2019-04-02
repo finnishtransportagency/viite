@@ -290,7 +290,7 @@ Tallennetun tieosoiteprojektin saa auki Tieosoiteprojektit-listalta painamalla A
 
 Tieosoiteprojektit-lista suljetaan yläpalkin oikeassa kulmassa olevasta X-painikkeesta.
 
-![Uusi tieosoiteprojekti](k26.JPG)
+![Uusi tieosoiteprojekti](k26.jpg)
 
 _Tieosoiteprojektit-listaus._
 
