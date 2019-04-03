@@ -206,7 +206,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       sqlu"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','ROAD ONE',to_date('02.02.3001','DD.MM.RRRR'),null,to_date('01.01.3001','DD.MM.RRRR'),null,'TR',to_timestamp('01.01.3001 14:14:44','DD.MM.RRRR HH24:MI:SS'))""".execute
       sqlu"""Insert into ROAD_NAME (ROAD_NUMBER,ROAD_NAME,START_DATE,END_DATE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('999','OLD NAME',to_date('02.02.2901','DD.MM.RRRR'),to_date('31.12.3000','DD.MM.RRRR'),to_date('01.01.2901','DD.MM.RRRR'),null,'TR',to_timestamp('01.01.2901 12:00:00','DD.MM.RRRR HH24:MI:SS'))""".execute
-      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-01")))
+      val result = roadNameService.getUpdatedRoadNamesInTX(DateTime.parse("3001-01-01"), Some(DateTime.parse("3001-01-02")))
       result.isRight should be(true)
       result.right.get.size should be(2)
     }

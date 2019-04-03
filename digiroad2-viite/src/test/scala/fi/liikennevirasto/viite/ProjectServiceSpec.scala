@@ -2522,7 +2522,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test save project with reserved road parts having different ELY codes "){
+  test("Test save project with reserved road parts having different ELY codes ") {
     runWithRollback {
 
       val roadNumber = 75
