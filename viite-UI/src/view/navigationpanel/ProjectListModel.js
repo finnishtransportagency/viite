@@ -81,9 +81,11 @@
       '<div class="actions">' +
       '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
-    projectList.append('<div id="project-list" style="width:820px; height:390px; overflow:auto;"></div>' +
+    projectList.append('<div id="project-list" style="width:820px; height:390px; overflow:auto;"></div>');
+    projectList.append('<div class="content-footer">' +
       '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="TRProjectsVisible" value="TRProjectsVisible" id="TRProjectsVisibleCheckbox">Näytä kaikki Tierekisteriin viedyt projektit</label>' +
-      '<i id="sync" class="btn-icon btn-refresh fa fa-sync-alt" title="Päivitä lista"></i>');
+      '<i id="sync" class="btn-icon btn-refresh fa fa-sync-alt" title="Päivitä lista"></i>' +
+      '</div>');
 
     var staticFieldProjectName = function (dataField) {
       var field;
