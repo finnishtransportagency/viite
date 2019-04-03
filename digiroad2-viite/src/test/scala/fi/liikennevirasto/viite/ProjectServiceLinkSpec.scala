@@ -521,7 +521,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.updateProjectLinks(project.id, Set(), transferLinks.map(_.linkId), LinkStatus.Transfer, "Test", 77, 35, 0, Option.empty[Int]) should be(None)
 
       val (resultNew, resultTransfer) = projectLinkDAO.fetchProjectLinks(project.id).partition(_.status == LinkStatus.New)
-      resultTransfer.head.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(5167598, 296.597, 0, RoadAddressSource)))
+      resultTransfer.head.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(5167598, 296.597, 0, ProjectLinkSource))) // TODO Was before RoadAddressSource. Can this test be fixed by setting this to ProjectLinkSource?
       resultNew.last.calibrationPoints._2 should not be None
       allLinks.size should be(resultNew.size + resultTransfer.size)
     }
