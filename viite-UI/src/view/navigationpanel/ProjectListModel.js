@@ -304,7 +304,7 @@
 
       projectList.on('click', '#sync', function () {
         fetchProjects();
-      })
+      });
     }
 
     return {
