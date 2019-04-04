@@ -132,7 +132,7 @@ class LinearLocationDAO {
 
     val ps = dynamicSession.prepareStatement(
       """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by)
-      values (?, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0,0,?,?,0,0)), ?)""".stripMargin)
+      values (?, ?, ?, ?, ?, ?, ?, ?, ?)""".stripMargin)
 
     // Set ids for the linear locations without one
     val (ready, idLess) = linearLocations.partition(_.id != NewLinearLocation)
@@ -157,11 +157,8 @@ class LinearLocationDAO {
         ps.setDouble(5, location.startMValue)
         ps.setDouble(6, location.endMValue)
         ps.setInt(7, location.sideCode.value)
-        ps.setDouble(8, p1.x)
-        ps.setDouble(9, p1.y)
-        ps.setDouble(10, p2.x)
-        ps.setDouble(11, p2.y)
-        ps.setString(12, if (createdBy == null) "-" else createdBy)
+        ps.setObject(8, OracleDatabase.createJGeometry(Seq(p1, p2), dynamicSession.conn))
+        ps.setString(9, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
