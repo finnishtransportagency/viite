@@ -90,7 +90,7 @@
     var showLinkId = function(selected){
       if (selected.length === 1){
         return '' +
-            formCommon.staticField('Linkin ID: ', selected[0].linkId);
+            formCommon.staticField('Linkin ID', selected[0].linkId);
         } else {
            return '';}
     };
