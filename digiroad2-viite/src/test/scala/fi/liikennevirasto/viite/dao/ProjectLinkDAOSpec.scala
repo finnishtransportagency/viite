@@ -9,7 +9,6 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.{NewRoadway, RoadType}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -528,8 +527,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, linearLocationIds.head),
-        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), FloatingReason.NoFloating, Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, linearLocationIds.last)
+        dummyProjectLink(projectLinkId1, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, linearLocationIds.head),
+        dummyProjectLink(projectLinkId2, id, linkId2, roadwayIds.last, roadwayNumber1, roadNumber1, roadPartNumber2, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, linearLocationIds.last)
       )
       projectLinkDAO.create(projectLinks)
       projectReservedPartDAO.roadPartReservedByProject(roadNumber1, roadPartNumber1) should be(Some("TestProject"))
