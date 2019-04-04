@@ -302,7 +302,7 @@ class LinearLocationDAO {
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.link_id
-              where and loc.valid_to is null
+              where loc.valid_to is null
             """
           queryList(query)
       }
@@ -326,7 +326,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where and valid_to is null and loc.ROADWAY_NUMBER in (select ROADWAY_NUMBER from linear_location
+          where valid_to is null and loc.ROADWAY_NUMBER in (select ROADWAY_NUMBER from linear_location
             where valid_to is null and link_id in ($linkIdsString))
         """
       queryList(query)
@@ -340,7 +340,7 @@ class LinearLocationDAO {
           val query =
             s"""
               $selectFromLinearLocation
-              where and loc.valid_to is null and loc.ROADWAY_NUMBER in (
+              where loc.valid_to is null and loc.ROADWAY_NUMBER in (
                 select ROADWAY_NUMBER from linear_location
                 join $idTableName i on i.id = link_id
                 where valid_to is null)
