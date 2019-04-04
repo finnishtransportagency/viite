@@ -371,7 +371,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     else
       addNewLinksToProjectInTX(newLinks, projectId, user, firstLinkId)
-
   }
 
   /**
@@ -892,7 +891,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param reservedRoadPart Reservation information (req: road number, road part number)
     * @return
     */
-  private def checkAndReserve(project: Project, reservedRoadPart: ProjectReservedPart): Unit = {
+  private def checkAndReserve(project: Project, reservedRoadPart: ProjectReservedPart, reserved: Long = 1L): Unit = {
     //if part not completely reserved and not pseudo reserved in current project, then it can be reserved
     val currentReservedPart = (projectReservedPartDAO.roadPartReservedByProject(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber), projectReservedPartDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber, projectId = project.id, withProjectId = true))
     logger.info(s"Check ${project.id} matching to " + currentReservedPart)
@@ -1386,7 +1385,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
 
-    def checkAndMakeReservation(projectId: Long, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): (Boolean, Option[Long], Option[Long]) = {
+    def checkAndMakeReservation(projectId: Long, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink], reserved: Long = 1L): (Boolean, Option[Long], Option[Long]) = {
       val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber, linkStatus, projectLinks)
       try {
         val (toReplace, road, part) = isCompletelyNewPart(projectLinks)

@@ -128,8 +128,7 @@ class ProjectReservedPartDAO {
   def fetchReservedRoadParts(projectId: Long): Seq[ProjectReservedPart] = {
     time(logger, s"Fetch reserved road parts for project: $projectId") {
       val sql =
-        s"""
-        SELECT id, road_number, road_part_number, length, ely,
+        s"""SELECT id, road_number, road_part_number, length, ely,
           (SELECT DISCONTINUITY FROM ROADWAY ra WHERE ra.road_number = gr.road_number AND
             ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
             AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
@@ -149,7 +148,6 @@ class ProjectReservedPartDAO {
               LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
               WHERE
                 rp.project_id = $projectId
-                AND rp.reserved = 1
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
             ) gr order by gr.road_number, gr.road_part_number"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
@@ -163,8 +161,7 @@ class ProjectReservedPartDAO {
   def fetchFormedRoadParts(projectId: Long): Seq[ProjectReservedPart] = {
     time(logger, s"Fetch formed road parts for project: $projectId") {
       val sql =
-        s"""
-        SELECT id, road_number, road_part_number, length_new, ely_new,
+        s"""SELECT id, road_number, road_part_number, length_new, ely_new,
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
             AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
@@ -185,6 +182,7 @@ class ProjectReservedPartDAO {
               LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
               WHERE
                 rp.project_id = $projectId
+                AND EXISTS (SELECT id FROM project_link WHERE status != ${LinkStatus.NotHandled.value} AND project_id = rp.project_id)
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
             ) gr order by gr.road_number, gr.road_part_number"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long],
@@ -240,7 +238,6 @@ class ProjectReservedPartDAO {
             AND (pl.STATUS IS NULL
             OR (pl.STATUS != ${LinkStatus.Terminated.value}
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})))
-            AND rp.reserved = 1
           GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
         Option[Long], Option[Long])](sql).firstOption.map {
@@ -254,8 +251,7 @@ class ProjectReservedPartDAO {
   def fetchFormedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ProjectReservedPart] = {
     time(logger, "Fetch reserved road part") {
       val sql =
-        s"""
-        SELECT ID, ROAD_NUMBER, ROAD_PART_NUMBER, length_new, ely_new,
+        s"""SELECT ID, ROAD_NUMBER, ROAD_PART_NUMBER, length_new, ely_new,
         (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl
           WHERE pl.PROJECT_ID = gr.PROJECT_ID
             AND pl.ROAD_NUMBER = gr.ROAD_NUMBER
@@ -306,6 +302,7 @@ class ProjectReservedPartDAO {
             AND (pl.STATUS IS NULL
             OR (pl.STATUS != ${LinkStatus.Terminated.value}
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})))
+            AND EXISTS (SELECT id FROM project_link WHERE status != ${LinkStatus.NotHandled.value} AND project_id = rp.project_id)
           GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long],
         Option[Long], Option[Long])](sql).firstOption.map {
