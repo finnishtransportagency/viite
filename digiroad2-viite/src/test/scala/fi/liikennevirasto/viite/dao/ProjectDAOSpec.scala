@@ -57,7 +57,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   private val linearLocationId = 0
 
   private def dummyProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project ={
-    Project(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Some("current status info"), coordinates)
+    Project(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Seq(), Some("current status info"), coordinates)
   }
 
   private def dummyRoadways: Seq[Roadway] = {
@@ -238,7 +238,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyProject(id, ProjectState.Incomplete, List(), None)
-      val updatedRap = Project(id, ProjectState.apply(1), "newname", "TestUser", DateTime.parse("1901-01-02"), "TestUser", DateTime.parse("1901-01-02"), DateTime.now(), "updated info", List(reservedPart), None)
+      val updatedRap = Project(id, ProjectState.apply(1), "newname", "TestUser", DateTime.parse("1901-01-02"), "TestUser", DateTime.parse("1901-01-02"), DateTime.now(), "updated info", List(reservedPart), Seq(), None)
       projectDAO.create(rap)
       projectDAO.update(updatedRap)
       projectDAO.fetchById(id) match {

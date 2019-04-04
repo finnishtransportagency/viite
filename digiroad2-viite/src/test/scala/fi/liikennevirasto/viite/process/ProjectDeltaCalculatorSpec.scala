@@ -42,7 +42,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   }
 
   private val project: Project = Project(13L, ProjectState.Incomplete, "foo", "user", DateTime.now(), "user", DateTime.now(),
-    DateTime.now(), "", Seq(), None, None)
+    DateTime.now(), "", Seq(), Seq(), None, None)
 
   private def createTransferProjectLink(start: Long, distance: Long) = {
     toProjectLinkWithMove(project, LinkStatus.Transfer)(createRoadAddress(start, distance))
