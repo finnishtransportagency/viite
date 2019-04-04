@@ -2254,31 +2254,6 @@ Left|      |Right
     }
   }
 
-  //  //TODO to be done/changed in a more detailed story
-  //  ignore("Project Links must have a ely change discontinuity code if next part is on different ely") {
-  //    runWithRollback {
-  //      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
-  //      val raId = RoadAddressDAO.create(Seq(RoadAddress(NewRoadAddress, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-  //        0L, 10L, Some(DateTime.now()), None, None, 39399L, 0.0, 10.0, TowardsDigitizing, 0L, (Some(CalibrationPoint(39399L, 0.0, 0L)), Some(CalibrationPoint(39399L, 10.0, 10L))),
-  //         Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplimentaryLinkInterface, 9L, NoTermination, 0))).head
-  //      val errors = ProjectValidator.checkRoadContinuityCodes(project, projectLinks).distinct
-  //      errors should have size 1
-  //      errors.head.validationError should be(ElyCodeChangeDetected)
-  //
-  //      val (starting, last) = projectLinks.splitAt(3)
-  //      val errorsUpd = ProjectValidator.checkRoadContinuityCodes(project,
-  //        starting ++ last.map(_.copy(discontinuity = Discontinuity.ChangingELYCode))).distinct
-  //      errorsUpd should have size 0
-  //
-  //      RoadAddressDAO.updateGeometry(raId, Seq(Point(0.0, 40.0), Point(0.0, 50.0)))
-  //
-  //      val connectedError = ProjectValidator.checkRoadContinuityCodes(project,
-  //        starting ++ last.map(_.copy(discontinuity = Discontinuity.Continuous))).distinct
-  //      connectedError should have size 1
-  //      connectedError.head.validationError should be(ElyCodeChangeDetected)
-  //    }
-  //  }
-
   test("Test projectValidator.checkProjectElyCodes When converting all of ely codes to a new one and putting the correct link status then validator should not return an error") {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.Numbering, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.ChangingELYCode)
