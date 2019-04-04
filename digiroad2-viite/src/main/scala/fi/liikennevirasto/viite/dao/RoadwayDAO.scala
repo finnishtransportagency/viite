@@ -786,9 +786,6 @@ class RoadwayDAO extends BaseDAO {
     s"""$query where valid_to is null
           AND start_date >= to_date('${sinceDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
           AND start_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
-          AND (end_date is null
-            OR (end_date >= to_date('${sinceDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
-            AND end_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')))
     """
   }
 
