@@ -452,14 +452,10 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
     })
     val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp, Seq()).adjustedSections.keys
-    partitionCp.size should be(2)
+    partitionCp.size should be(1)
     val firstSection = partitionCp.last
-    val secondSection = partitionCp.head
-    val cutPoint = projectLinksWithCp.find(_._2.roadwayId == 10L).get._2
     firstSection._1.startMAddr should be(projectLinksWithCp.head._2.startAddrMValue)
-    firstSection._1.endMAddr should be(cutPoint.endAddrMValue)
-    secondSection._1.startMAddr should be(cutPoint.endAddrMValue)
-    secondSection._1.endMAddr should be(projectLinksWithCp.last._2.endAddrMValue)
+    firstSection._1.endMAddr should be(projectLinksWithCp.last._2.endAddrMValue)
   }
 
   //TODO Will be implemented when split is implemented
