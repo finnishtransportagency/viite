@@ -86,16 +86,16 @@ pipeline {
                             "mkdir digiroad2-oracle/conf/",
                             "mkdir digiroad2-oracle/conf/lib/",
                             "cp -r tmp/ digiroad2-oracle/conf/lib/",
-                            "mkdir digiroad2-oracle/conf/dev/",
-                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/dev/bonecp.properties",
-                            "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/dev/bonecp.properties",
-                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/dev/bonecp.properties"
+                            "mkdir digiroad2-oracle/conf/ci-vahti/",
+                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/ci-vahti/bonecp.properties"
                         ].join(" && ")
 
                         STAGE_RUN_TASK = [
                             "./sbt",
                             "$java_opts",
-                            "-Ddigiroad2.env=dev",
+                            "-Ddigiroad2.env=ci-vahti",
                             "\'project digiroad2-viite\'",
                             "\'test:run-main fi.liikennevirasto.viite.util.DataFixture $TASK $IMPORT_TABLE\'"
                         ].join(" ")
@@ -150,7 +150,7 @@ pipeline {
             steps {
                 sh STAGE_SETUP_ORACLE
                 withCredentials([file(credentialsId: 'CONV_DATABASE', variable: 'CONV_DATABASE')]) {
-                    sh "cp ${CONV_DATABASE} digiroad2-oracle/conf/dev/"
+                    sh "cp ${CONV_DATABASE} digiroad2-oracle/conf/ci-vahti/"
                 }
 
                 sh STAGE_RUN_TASK
