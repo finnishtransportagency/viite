@@ -278,6 +278,9 @@ object DataFixture {
       "insert_users.sql",
       "test_fixture_sequences.sql",
       "insert_roadways.sql",
+      "insert_links.sql",
+      "insert_roadway_points.sql",
+      "insert_calibration_points.sql",
       "insert_linear_locations.sql",
       "insert_project_link_data.sql",
       "insert_road_names.sql"
