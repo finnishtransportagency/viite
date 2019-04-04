@@ -185,8 +185,7 @@ class ProjectReservedPartDAO {
                 AND EXISTS (SELECT id FROM project_link WHERE status != ${LinkStatus.NotHandled.value} AND project_id = rp.project_id)
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
             ) gr order by gr.road_number, gr.road_part_number"""
-      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long],
-        Option[Long], Option[Long])](sql).list.map {
+      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
         case (id, road, part, newLength, newEly, newDiscontinuity, startingLinkId) =>
           ProjectReservedPart(id, road, part, None, None, None, newLength,
             newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
@@ -197,7 +196,7 @@ class ProjectReservedPartDAO {
  def fetchReservedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ProjectReservedPart] = {
     time(logger, "Fetch reserved road part") {
       val sql =
-        s"""SELECT ID, ROAD_NUMBER, ROAD_PART_NUMBER, length ely,
+        s"""SELECT ID, ROAD_NUMBER, ROAD_PART_NUMBER, length, ely,
         (SELECT DISCONTINUITY FROM ROADWAY ra
           WHERE ra.ROAD_NUMBER = gr.ROAD_NUMBER
             AND ra.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
@@ -239,11 +238,10 @@ class ProjectReservedPartDAO {
             OR (pl.STATUS != ${LinkStatus.Terminated.value}
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})))
           GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
-      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
-        Option[Long], Option[Long])](sql).firstOption.map {
-        case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, linkId) =>
-          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
-            newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
+      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).firstOption.map {
+        case (id, road, part, length, ely, discontinuity, linkId) =>
+          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, None,
+            None, None, linkId)
       }
     }
   }
@@ -304,8 +302,7 @@ class ProjectReservedPartDAO {
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})))
             AND EXISTS (SELECT id FROM project_link WHERE status != ${LinkStatus.NotHandled.value} AND project_id = rp.project_id)
           GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
-      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long],
-        Option[Long], Option[Long])](sql).firstOption.map {
+      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).firstOption.map {
         case (id, road, part, newLength, newEly, newDiscontinuity, linkId) =>
           ProjectReservedPart(id, road, part, None, None, None, newLength,
             newDiscontinuity.map(Discontinuity.apply), newEly, linkId)
