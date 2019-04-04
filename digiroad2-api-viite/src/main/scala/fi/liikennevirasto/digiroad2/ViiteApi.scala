@@ -459,10 +459,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/roadaddress/project/all", operation(getAllRoadAddressProjects)) {
     time(logger, "GET request for /roadlinks/roadaddress/project/all") {
-      projectService.getAllProjects.map(p => {
-        val projectLinksElys = projectService.getProjectEly(p.id)
-          roadAddressProjectToApi(p, projectLinksElys)
-      })
+        val (deletedProjs, currentProjs) = projectService.getAllProjects.map(p => {
+          p.id -> (p, projectService.getProjectEly(p.id))
+        }).partition(_._2._2.isEmpty)
+        deletedProjs.map(p => roadAddressProjectToApi(p._2._1, p._2._2)) ++ currentProjs.sortBy(e => e._2._2.min).map(p => roadAddressProjectToApi(p._2._1, p._2._2))
     }
   }
 
@@ -586,6 +586,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val user = userProvider.getCurrentUser()
       try {
         val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
+        if (links.roadNumber == 0)
+          throw RoadAndPartNumberException("Virheellinen tienumero")
+        if (links.roadPartNumber == 0)
+          throw RoadAndPartNumberException("Virheellinen tieosanumero")
         logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
         val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
           Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), RoadType.apply(links.roadType),
@@ -601,6 +605,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           case _ => response
         }
       } catch {
+        case e: RoadAndPartNumberException => Map("success" -> false, "errorMessage" -> e.getMessage)
         case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case e: MappingException =>
           logger.warn("Exception treating road links", e)
@@ -629,6 +634,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val user = userProvider.getCurrentUser()
       try {
         val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
+        if (links.roadNumber == 0)
+          throw RoadAndPartNumberException("Virheellinen tienumero")
+        if (links.roadPartNumber == 0)
+          throw RoadAndPartNumberException("Virheellinen tieosanumero")
         if (projectService.validateLinkTrack(links.trackCode)) {
           projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus),
             user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
@@ -645,6 +654,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           Map("success" -> false, "errorMessage" -> "Ajoratakoodi puuttuu")
         }
       } catch {
+        case e: RoadAndPartNumberException => Map("success" -> false, "errorMessage" -> e.getMessage)
         case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case e: MappingException =>
           logger.warn("Exception treating road links", e)
@@ -1222,7 +1232,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "errorCode" -> errorParts.validationError.value,
       "errorMessage" -> errorParts.validationError.message,
       "info" -> errorParts.optionalInformation,
-      "coordinates" -> errorParts.coordinates
+      "coordinates" -> errorParts.coordinates,
+      "priority" -> errorParts.validationError.priority
     )
   }
 
@@ -1351,6 +1362,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
    }*/
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
+  case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
 
 }
 
@@ -1362,7 +1374,7 @@ object ProjectConverter {
     Project(project.id, ProjectState.apply(project.status),
       if (project.name.length > 32) project.name.substring(0, 32).trim else project.name.trim, //TODO the name > 32 should be a handled exception since the user can't insert names with this size
       user.username, DateTime.now(), user.username, formatter.parseDateTime(project.startDate), DateTime.now(),
-      project.additionalInfo, project.roadPartList.map(toReservedRoadPart), Option(project.additionalInfo))
+      project.additionalInfo, project.roadPartList.distinct.map(toReservedRoadPart), Option(project.additionalInfo))
   }
 
   def toReservedRoadPart(rp: RoadPartExtractor): ProjectReservedPart = {

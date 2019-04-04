@@ -616,7 +616,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   test("Test fetchAllRoadAddressErrors When fetch including history Then return addresses with errors") {
     runWithRollback {
       val roadwayId = dao.getNextRoadwayId
-      dao.create(List(testRoadway1.copy(id = roadwayId, endDate = Some(DateTime.parse("2010-01-01"))), testRoadway2, testRoadway3))
+      dao.create(List(testRoadway1.copy(id = roadwayId, endDate = Some(DateTime.parse("2009-12-31"))), testRoadway2, testRoadway3))
       val linearLocationId1 = linearLocationDAO.getNextLinearLocationId
       linearLocationDAO.create(List(testLinearLocation1.copy(id = linearLocationId1)))
       val roadNetworkDAO = new RoadNetworkDAO

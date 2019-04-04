@@ -160,6 +160,8 @@ class RoadNetworkService {
             val newErrors = uniqueErrors.filterNot(r => existingErrors.exists(e => e.roadwayId == r.roadwayId && e.linearLocationId == r.linearLocationId && e.error == r.error && e.network_version == r.network_version))
             newErrors.sortBy(_.roadwayId).foreach { e =>
               logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
+              // TODO Should we check here if this error already exists in the table? Now it can throw:
+              // ORA-00001: unique constraint (DR2DEV15.ADDRESS_ERROR_VERSION_UK) violated
               roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, e.error, e.network_version)
             }
           }

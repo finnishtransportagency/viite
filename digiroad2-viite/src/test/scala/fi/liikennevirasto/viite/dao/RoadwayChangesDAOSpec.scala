@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.{ProjectService, RoadType}
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.process.{Delta, ReNumeration, Transferred, Unchanged}
+import fi.liikennevirasto.viite.process._
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -52,7 +52,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
     val newProjectLink = ProjectLink(1, 1, 1, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0,
       SideCode.Unknown, (None, None), List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false,
       None, 748800L)
-    val delta = Delta(DateTime.now(), Seq(), Seq(newProjectLink), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
+    val delta = Delta(DateTime.now(), Seq(newProjectLink), Termination(Seq()), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {
       addprojects()
       new RoadwayChangesDAO().insertDeltaToRoadChangeTable(delta, 1)
@@ -64,7 +64,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
     val newProjectLink = ProjectLink(1, 1, 1, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0,
       SideCode.Unknown, (None, None),  List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false,
       None, 748800L)
-    val delta = Delta(DateTime.now(), Seq(), Seq(newProjectLink), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
+    val delta = Delta(DateTime.now(), Seq(newProjectLink), Termination(Seq()), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {
       addprojects()
       val dao = new RoadwayChangesDAO()
