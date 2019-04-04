@@ -132,7 +132,7 @@ class LinearLocationDAO {
 
     val ps = dynamicSession.prepareStatement(
       """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by)
-      values (?, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,?,?,?,0.0,?)), ?)""".stripMargin)
+      values (?, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0,0,?,?,0,0)), ?)""".stripMargin)
 
     // Set ids for the linear locations without one
     val (ready, idLess) = linearLocations.partition(_.id != NewLinearLocation)
@@ -159,11 +159,9 @@ class LinearLocationDAO {
         ps.setInt(7, location.sideCode.value)
         ps.setDouble(8, p1.x)
         ps.setDouble(9, p1.y)
-        ps.setDouble(10, location.startMValue)
-        ps.setDouble(11, p2.x)
-        ps.setDouble(12, p2.y)
-        ps.setDouble(13, location.endMValue)
-        ps.setString(14, if (createdBy == null) "-" else createdBy)
+        ps.setDouble(10, p2.x)
+        ps.setDouble(11, p2.y)
+        ps.setString(12, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
@@ -253,7 +251,7 @@ class LinearLocationDAO {
         idTableName =>
 
           val validToFilter = if (rejectInvalids)
-            " and loc.valid_to is null"
+            " where loc.valid_to is null"
           else
             ""
 
@@ -261,7 +259,7 @@ class LinearLocationDAO {
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.id
-              where $validToFilter
+              $validToFilter
             """
           queryList(query)
       }
