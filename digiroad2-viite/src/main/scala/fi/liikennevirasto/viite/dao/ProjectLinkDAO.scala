@@ -201,7 +201,7 @@ class ProjectLinkDAO {
     WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
     WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROADWAY.START_DATE
     ELSE PRJ.START_DATE END as start_date,
-  CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE ELSE null END as end_date,
+  CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE - 1 ELSE null END as end_date,
   PROJECT_LINK.ADJUSTED_TIMESTAMP,
   CASE
     WHEN rn.road_name IS NOT NULL AND rn.END_DATE IS NULL AND rn.VALID_TO IS null THEN rn.road_name
@@ -233,7 +233,7 @@ class ProjectLinkDAO {
             WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
             WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROADWAY.START_DATE
             ELSE PRJ.START_DATE END as start_date,
-          CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE ELSE null END as end_date,
+          CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE - 1 ELSE null END as end_date,
           plh.ADJUSTED_TIMESTAMP,
           CASE
             WHEN rn.road_name IS NOT NULL AND rn.END_DATE IS NULL AND rn.VALID_TO IS null THEN rn.road_name
