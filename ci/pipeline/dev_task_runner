@@ -59,7 +59,10 @@ pipeline {
     stages {
         stage("Setup") {
             steps {
-                withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'), string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE')]) {
+                withCredentials([
+                                string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'),
+                                string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE'),
+                                file(credentialsId: 'CONV_DATABASE', variable: 'CONV_DATABASE')]) {
                     script {
 
                         def ojdbc = 'ojdbc6'
@@ -87,7 +90,8 @@ pipeline {
                             "mkdir digiroad2-oracle/conf/dev/",
                             "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/dev/bonecp.properties",
                             "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/dev/bonecp.properties",
-                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/dev/bonecp.properties"
+                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/dev/bonecp.properties",
+                            "cp ${CONV_DATABASE} digiroad2-oracle/conf/dev/"
                         ].join(" && ")
 
                         STAGE_RUN_TASK = [
