@@ -90,7 +90,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       connectedLinkId = connectedLinkId, 631152000, roadwayNumber, roadAddressLength = Some(endAddrMValue - startAddrMValue))
 
   private def dummyRoadAddressProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project = {
-    Project(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Some("current status info"), coordinates)
+    Project(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Seq(), Some("current status info"), coordinates)
   }
 
   //TODO test coverage missing for ProjectLinkDAO methods:
@@ -523,7 +523,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val projectLinkId1 = id + 1
       val projectLinkId2 = id + 2
-      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
@@ -620,7 +620,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val projectLinkId1 = id + 1
       val projectLinkId2 = id + 2
-      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
@@ -640,7 +640,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val projectLinkId1 = id + 1
       val projectLinkId2 = id + 2
-      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
@@ -662,7 +662,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val projectLinkId1 = id + 1
       val projectLinkId2 = id + 2
-      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
@@ -683,7 +683,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val projectLinkId1 = id + 1
       val projectLinkId2 = id + 2
-      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber2, rap.createdBy)
@@ -705,7 +705,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val projectLinkId1 = id + 1
       val projectLinkId2 = id + 2
       val projectLinkId3 = id + 3
-      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(
@@ -726,7 +726,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val projectLinkId1 = id + 1
       val projectLinkId2 = id + 2
-      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber2, roadPartNumber2, rap.createdBy)
