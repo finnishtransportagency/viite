@@ -124,19 +124,19 @@ class DataImporter {
       sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
       sqlu"""DELETE FROM PROJECT_LINK""".execute
       sqlu"""DELETE FROM PROJECT_LINK_HISTORY""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
       sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART""".execute
       sqlu"""DELETE FROM PROJECT""".execute
       sqlu"""DELETE FROM ROAD_NETWORK_ERROR""".execute
       sqlu"""DELETE FROM PUBLISHED_ROADWAY""".execute
       sqlu"""DELETE FROM PUBLISHED_ROAD_NETWORK""".execute
-      sqlu"""DELETE FROM ROADWAY""".execute
       sqlu"""DELETE FROM LINEAR_LOCATION""".execute
-      sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
-      sqlu"""DELETE FROM LINK""".execute
       sqlu"""DELETE FROM CALIBRATION_POINT""".execute
       sqlu"""DELETE FROM JUNCTION_POINT""".execute
       sqlu"""DELETE FROM NODE_POINT""".execute
       sqlu"""DELETE FROM ROADWAY_POINT""".execute
+      sqlu"""DELETE FROM LINK""".execute
+      sqlu"""DELETE FROM ROADWAY""".execute
 
       println(s"${DateTime.now()} - Old address data removed")
 
