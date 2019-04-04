@@ -102,7 +102,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     linearLocationStatement.setDouble(4, linearLocation.startMeasure)
     linearLocationStatement.setDouble(5, linearLocation.endMeasure)
     linearLocationStatement.setLong(6, linearLocation.sideCode.value)
-    linearLocationStatement.setObject(7, OracleDatabase.createJGeometry(Seq(Point(linearLocation.x1.get, linearLocation.y1.get), Point(linearLocation.x2.get, linearLocation.y2.get)), dynamicSession.conn))
+    linearLocationStatement.setObject(7, OracleDatabase.createRoadsJGeometry(Seq(Point(linearLocation.x1.get, linearLocation.y1.get), Point(linearLocation.x2.get, linearLocation.y2.get)), dynamicSession.conn, linearLocation.endMeasure))
     linearLocationStatement.setDouble(8, linearLocation.endMeasure)
     linearLocationStatement.setString(9, linearLocation.createdBy)
     linearLocationStatement.setString(10, datePrinter(linearLocation.validFrom))

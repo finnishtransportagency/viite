@@ -157,7 +157,7 @@ class LinearLocationDAO {
         ps.setDouble(5, location.startMValue)
         ps.setDouble(6, location.endMValue)
         ps.setInt(7, location.sideCode.value)
-        ps.setObject(8, OracleDatabase.createJGeometry(Seq(p1, p2), dynamicSession.conn))
+        ps.setObject(8, OracleDatabase.createRoadsJGeometry(Seq(p1, p2), dynamicSession.conn, location.endMValue))
         ps.setString(9, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
