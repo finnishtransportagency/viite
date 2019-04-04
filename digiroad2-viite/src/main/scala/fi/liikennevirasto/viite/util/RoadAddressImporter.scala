@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
 import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
@@ -51,7 +52,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def linearLocationStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by, valid_from, valid_to) " +
-      " values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
+      " values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
 
   private def roadwayPointStatement(): PreparedStatement = {
     dynamicSession.prepareStatement(sql = "Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) " +
@@ -101,14 +102,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     linearLocationStatement.setDouble(4, linearLocation.startMeasure)
     linearLocationStatement.setDouble(5, linearLocation.endMeasure)
     linearLocationStatement.setLong(6, linearLocation.sideCode.value)
-    linearLocationStatement.setDouble(7, linearLocation.x1.get)
-    linearLocationStatement.setDouble(8, linearLocation.y1.get)
-    linearLocationStatement.setDouble(9, linearLocation.x2.get)
-    linearLocationStatement.setDouble(10, linearLocation.y2.get)
-    linearLocationStatement.setDouble(11, linearLocation.endMeasure)
-    linearLocationStatement.setString(12, linearLocation.createdBy)
-    linearLocationStatement.setString(13, datePrinter(linearLocation.validFrom))
-    linearLocationStatement.setString(14, datePrinter(linearLocation.validTo))
+    linearLocationStatement.setObject(7, OracleDatabase.createJGeometry(Seq(Point(linearLocation.x1.get, linearLocation.y1.get), Point(linearLocation.x2.get, linearLocation.y2.get)), dynamicSession.conn))
+    linearLocationStatement.setDouble(8, linearLocation.endMeasure)
+    linearLocationStatement.setString(9, linearLocation.createdBy)
+    linearLocationStatement.setString(10, datePrinter(linearLocation.validFrom))
+    linearLocationStatement.setString(11, datePrinter(linearLocation.validTo))
     linearLocationStatement.addBatch()
   }
 
