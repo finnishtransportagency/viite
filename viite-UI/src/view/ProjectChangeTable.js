@@ -28,9 +28,9 @@
       '<div id ="change-table-borders-target"></div></div>');
     changeTableHeader.append('<div class="change-table-sections">' +
       '<label class="change-table-heading-label" id="label-type">Ilmoitus</label>' +
-      '<label class="change-table-heading-label" id="label-source">Nykyosoite</label>' +
+      '<label class="change-table-heading-label" id="label-source">Nykyosoite<i id="label-source-btn" class="btn-icon sort fas fa-sort"></i></label>' +
       '<label class="change-table-heading-label" id="label-reverse"></label>' +
-      '<label class="change-table-heading-label" id="label-target">Uusi osoite</label>');
+      '<label class="change-table-heading-label" id="label-target">Uusi osoite<i id="label-target-btn" class="btn-icon sort fas fa-sort"></i></label>');
     changeTableHeader.append('<div class="change-header">' +
       '<label class="project-change-table-dimension-header">TIE</label>' +
       '<label class="project-change-table-dimension-header">AJR</label>' +
@@ -91,7 +91,15 @@
 
     function getChanges() {
       var currentProject = projectCollection.getCurrentProject();
-      projectChangeInfoModel.getChanges(currentProject.project.id);
+      projectChangeInfoModel.getChanges(currentProject.project.id,function () {
+        var source = $('[id=label-source-btn]');
+        var target = $('[id=label-target-btn]');
+        if (source.hasClass('fa-sort-down') || source.hasClass('fa-sort-up')) {
+          projectChangeInfoModel.sortChanges('source', source.attr('class').match('fa-sort-up'));
+        } else if (target.hasClass('fa-sort-down') || target.hasClass('fa-sort-up')) {
+          projectChangeInfoModel.sortChanges('target', target.attr('class').match('fa-sort-up'));
+        }
+      });
     }
 
     function setTableHeight() {
@@ -102,7 +110,7 @@
 
     function bindEvents() {
       $('.row-changes').remove();
-      eventbus.once('projectChanges:fetched', function(projectChangeData) {
+      eventbus.on('projectChanges:fetched', function(projectChangeData) {
         var htmlTable = "";
         var warningM = projectChangeData.warningMessage;
         if (!_.isUndefined(warningM))
@@ -174,6 +182,29 @@
       changeTable.on('click', 'button.close', function (){
         hide();
       });
+
+      changeTable.on('click', "i[id^='label-'][id$='-btn']", function (btn) {
+        sortChanges(btn.toElement);
+      });
+    }
+
+    function sortChanges(btn) {
+      if ($(btn).hasClass('fa-sort-up') || $(btn).hasClass('fa-sort')) {
+        $(btn).removeClass('fa-sort');
+        $(btn).removeClass('fa-sort-up');
+        $(btn).addClass('fa-sort-down');
+      } else {
+        $(btn).removeClass('fa-sort-down');
+        $(btn).addClass('fa-sort-up');
+      }
+
+      var side = btn.id.match('-(.*)-')[1];
+      var otherBtn = $('[id=label-' + (side === 'source' ? 'target' : 'source') + '-btn');
+      otherBtn.removeClass('fa-sort-down');
+      otherBtn.removeClass('fa-sort-up');
+      otherBtn.addClass('fa-sort');
+
+      projectChangeInfoModel.sortChanges(side, btn.className.match('fa-sort-up'));
     }
 
     function getReversed(changeInfoSeq){

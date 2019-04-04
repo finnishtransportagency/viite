@@ -277,8 +277,8 @@ object DataFixture {
     SqlScriptRunner.runScripts(List(
       "insert_users.sql",
       "test_fixture_sequences.sql",
-      "insert_road_address_data.sql",
-      "insert_overlapping_road_addresses.sql", // Test data for OverLapDataFixture (VIITE-1518)
+      "insert_roadways.sql",
+      "insert_linear_locations.sql",
       "insert_project_link_data.sql",
       "insert_road_names.sql"
     ))
