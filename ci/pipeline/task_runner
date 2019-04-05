@@ -1,11 +1,11 @@
 import java.net.URI
 
-def get_server() {
-    if (${ENVIRONMENT}.equals("staging"))
+def get_server(env) {
+    if (env.equals("staging"))
         return "gateway"
-    if (${ENVIRONMENT}.equals("testing"))
+    if (env.equals("testing"))
         return "testing1"
-    if (${ENVIRONMENT}.equals("production"))
+    if (env.equals("production"))
         return "production1"
 }
 
@@ -51,25 +51,21 @@ pipeline {
     stages {
         stage("Setup") {
             steps {
-                withCredentials([
-                                string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'),
-                                string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE')]) {
                     script {
 
                         def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
-                        def SERVER = get_server()
+                        def SERVER = get_server($ENVIRONMENT)
 
                         STAGE_RUN_TASK = [
-                            "ssh web@${SERVER} cd /home/web/viite/current && echo YES |",
+                            "ssh web@$SERVER cd /home/web/viite/current && echo YES |",
                              "/home/web/viite/current/./sbt",
                              "$java_opts",
-                             "-Ddigiroad2.env=$ENVIRONMENT",
+                             "-Ddigiroad2.env=${ENVIRONMENT}",
                              "\'project digiroad2-viite\'",
                              "\'test:run-main fi.liikennevirasto.viite.util.DataFixture $TASK $IMPORT_TABLE\'"
                         ].join(" ")
 
                     }
-                }
             }
         }
 
