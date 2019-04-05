@@ -158,19 +158,32 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: _.map(_.filter(self.getAllReservedParts(), function (part) {
-          return !_.isUndefined(part.newLength, part.currentLength, part.newEly, part.currentEly);
+        reservedPartList: _.map(_.filter(self.getReservedParts(), function (part) {
+          return !_.isUndefined(part.currentLength, part.currentEly);
         }), function (part) {
           return {
-            discontinuity: (part.newDiscontinuity ? part.newDiscontinuity : part.currentDiscontinuity),
-            ely: (part.newEly ? part.newEly : part.currentEly),
-            roadLength: (part.newLength ? part.newLength : part.currentLength),
+            discontinuity: (part.currentDiscontinuity),
+            ely: (part.currentEly),
+            roadLength: (part.currentLength),
             roadNumber: part.roadNumber,
             roadPartId: 0,
             roadPartNumber: part.roadPartNumber,
             startingLinkId: part.startingLinkId
           };
         }),
+        formedPartList: _.map(_.filter(self.getFormedParts(), function (part) {
+              return !_.isUndefined(part.newLength, part.newEly);
+          }), function (part) {
+              return {
+                  discontinuity: (part.newDiscontinuity),
+                  ely: (part.newEly),
+                  roadLength: (part.newLength),
+                  roadNumber: part.roadNumber,
+                  roadPartId: 0,
+                  roadPartNumber: part.roadPartNumber,
+                  startingLinkId: part.startingLinkId
+              };
+          }),
         resolution: resolution
       };
 

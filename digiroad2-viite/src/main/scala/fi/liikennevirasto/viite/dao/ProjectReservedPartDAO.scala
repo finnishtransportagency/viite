@@ -45,6 +45,21 @@ class ProjectReservedPartDAO {
     }
   }
 
+  def removeFormedRoadPartAndChanges(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
+    time(logger, "Remove formed road part") {
+      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
+      sqlu"""
+           DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
+           (EXISTS (SELECT 1 FROM ROADWAY RA, LINEAR_LOCATION LC WHERE RA.ID = ROADWAY_ID AND
+           RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber))
+           OR (ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber
+           AND (STATUS = ${LinkStatus.New.value} OR STATUS = ${LinkStatus.Numbering.value}))
+           """.execute
+      sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPartNumber}""".execute
+    }
+  }
+
   def removeReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
     sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
     sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
@@ -135,8 +150,7 @@ class ProjectReservedPartDAO {
           (SELECT LINK_ID FROM PROJECT_LINK pl
             WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-            AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) AND pl.START_ADDR_M = 0
-            AND pl.END_ADDR_M > 0 AND ROWNUM < 2) as first_link
+            AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) AND ROWNUM < 2) as first_link
           FROM (
             SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
               (SELECT MAX(ra.end_addr_m) FROM roadway ra WHERE ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND ra.end_date IS NULL AND ra.valid_to IS NULL) as length,
@@ -165,12 +179,12 @@ class ProjectReservedPartDAO {
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
             AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
-            AND END_ADDR_M = gr.length_new AND ROWNUM < 2) as discontinuity_new,
+            AND END_ADDR_M = (SELECT MAX(pl2.end_addr_m) FROM project_link pl2 where pl2.road_number = gr.road_number AND pl2.road_part_number = gr.road_part_number
+            AND pl2.status != ${LinkStatus.Terminated.value} AND pl2.track IN (${Track.Combined.value}, ${Track.RightSide.value})) AND ROWNUM < 2) as discontinuity_new,
           (SELECT LINK_ID FROM PROJECT_LINK pl
             WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-            AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) AND pl.START_ADDR_M = 0
-            AND pl.END_ADDR_M > 0 AND ROWNUM < 2) as first_link
+            AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) AND ROWNUM < 2) as first_link
           FROM (
             SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
               MAX(pl.END_ADDR_M) as length_new,
@@ -210,8 +224,6 @@ class ProjectReservedPartDAO {
             AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
             AND pl.STATUS != ${LinkStatus.Terminated.value}
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
-            AND pl.START_ADDR_M = 0
-            AND pl.END_ADDR_M > 0
             AND ROWNUM < 2) AS first_link FROM
           (SELECT rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER,
             (SELECT MAX(ra.end_addr_m) FROM roadway ra WHERE ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND ra.end_date IS NULL AND ra.valid_to IS NULL) as length,
@@ -256,7 +268,8 @@ class ProjectReservedPartDAO {
             AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
             AND pl.STATUS != ${LinkStatus.Terminated.value}
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
-            AND END_ADDR_M = gr.LENGTH_NEW
+            AND END_ADDR_M = (SELECT MAX(pl2.end_addr_m) FROM project_link pl2 where pl2.road_number = gr.road_number AND pl2.road_part_number = gr.road_part_number
+            AND pl2.status != ${LinkStatus.Terminated.value} AND pl2.track IN (${Track.Combined.value}, ${Track.RightSide.value}))
             AND ROWNUM < 2) AS discontinuity_new,
         (SELECT LINK_ID FROM PROJECT_LINK pl
           WHERE pl.PROJECT_ID = gr.PROJECT_ID
@@ -264,21 +277,9 @@ class ProjectReservedPartDAO {
             AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
             AND pl.STATUS != ${LinkStatus.Terminated.value}
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
-            AND pl.START_ADDR_M = 0
-            AND pl.END_ADDR_M > 0
             AND ROWNUM < 2) AS first_link FROM
           (SELECT rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER,
-            CASE
-              WHEN EXISTS(SELECT prj.NAME FROM PROJECT prj
-                WHERE prj.ID IN (SELECT DISTINCT(link.PROJECT_ID)
-                  FROM PROJECT_LINK link
-                    WHERE link.LINK_ID IN (SELECT lrm.LINK_ID FROM LINEAR_LOCATION lrm
-                      INNER JOIN ROADWAY road ON lrm.ROADWAY_NUMBER = road.ROADWAY_NUMBER
-                        WHERE road.ROAD_NUMBER = $roadNumber
-                        AND road.ROAD_PART_NUMBER = $roadPartNumber)))
-              THEN MAX(pl.END_ADDR_M)
-              ELSE MAX(ra.END_ADDR_M)
-            END AS length_new,
+            MAX(pl.END_ADDR_M) AS length_new,
             MAX(pl.ELY) AS ely_new FROM PROJECT_RESERVED_ROAD_PART rp
           LEFT JOIN PROJECT_LINK pl ON (
             pl.PROJECT_ID = rp.PROJECT_ID
