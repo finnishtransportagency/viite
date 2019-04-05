@@ -3,10 +3,12 @@ import java.net.URI
 def get_server(env) {
     if (env.equals("staging"))
         return "web@gateway"
-    if (env.equals("testing"))
+    else if (env.equals("testing"))
         return "web@testing1"
-    if (env.equals("production"))
+    else if (env.equals("production"))
         return "web@production1"
+    else
+        return ""
 }
 
 pipeline {
@@ -62,7 +64,7 @@ pipeline {
                              "$java_opts",
                              "-Ddigiroad2.env=${ENVIRONMENT}",
                              "\'project digiroad2-viite\'",
-                             "\'test:run-main fi.liikennevirasto.viite.util.DataFixture $TASK $IMPORT_TABLE\'"
+                             "\'test:run-main fi.liikennevirasto.viite.util.DataFixture ${TASK} ${IMPORT_TABLE}\'"
                         ].join(" ")
 
                     }
