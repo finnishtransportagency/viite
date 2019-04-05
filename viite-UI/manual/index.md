@@ -148,11 +148,11 @@ Geometrialtaan yleistetty tieosoiteverkko tulee näkyviin, kun zoomaa tasolle, j
 
 Tieosoiteverkko on värikoodattu tienumeroiden mukaan. Vasemman yläkulman selitteessä on kerrottu kunkin värikoodin tienumerot. Lisäksi kartalle piirtyvät etäisyyslukemasymbolit, kohdat, joissa vaihtuu tieosa tai ajoratakoodi. Tieverkon kasvusuunta näkyy kartalla pisaran mallisena nuolena.
 
-![Mittakaavajanassa 2km](k4.JPG)
+![Mittakaavajanassa 2km](k4.jpg)
 
 _Tieosoiteverkon piirtyminen kartalle, kun mittakaavajanassa on 2 km._
 
-![Mittakaavajanassa 100 m](k5.JPG)
+![Mittakaavajanassa 100 m](k5.jpg)
 
 _Tieosoiteverkon piirtyminen kartalle, kun mittakaavajanassa on 100 m._
 
