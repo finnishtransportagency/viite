@@ -41,7 +41,7 @@ case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartN
 case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNumber: Long)
 
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
-                                       additionalInfo: String, roadPartList: List[RoadPartExtractor], resolution: Int)
+                                       additionalInfo: String, reservedPartList: List[RoadPartExtractor], formedPartList: List[RoadPartExtractor], resolution: Int)
 
 case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long,
                                             roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long,
@@ -1675,7 +1675,7 @@ object ProjectConverter {
     Project(project.id, ProjectState.apply(project.status),
       if (project.name.length > 32) project.name.substring(0, 32).trim else project.name.trim, //TODO the name > 32 should be a handled exception since the user can't insert names with this size
       user.username, DateTime.now(), user.username, formatter.parseDateTime(project.startDate), DateTime.now(),
-      project.additionalInfo, project.roadPartList.distinct.map(toReservedRoadPart), Seq(), Option(project.additionalInfo))
+      project.additionalInfo, project.reservedPartList.distinct.map(toReservedRoadPart), project.formedPartList.distinct.map(toReservedRoadPart), Option(project.additionalInfo))
   }
 
   def toReservedRoadPart(rp: RoadPartExtractor): ProjectReservedPart = {
