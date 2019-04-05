@@ -1,0 +1,122 @@
+import java.net.URI
+
+def get_server() {
+    if (${ENVIRONMENT}.equals("staging"))
+        return "gateway"
+    if (${ENVIRONMENT}.equals("testing"))
+        return "testing1"
+    if (${ENVIRONMENT}.equals("production"))
+        return "production1"
+}
+
+pipeline {
+    agent any
+    parameters {
+
+        choice(name: 'ENVIRONMENT', choices: ['-',
+                                     'staging',
+                                     'testing',
+                                     'production',
+                                     ])
+
+        choice(name: 'TASK', choices: [
+                                       'import_road_addresses',
+                                       'recalculate_addresses',
+                                       'update_unaddressed',
+                                       'find_floating_road_addresses',
+                                       'import_complementary_road_address',
+                                       'update_road_addresses_geometry_no_complementary',
+                                       'update_road_addresses_geometry',
+                                       'update_project_link_SDO_GEOMETRY',
+                                       'import_road_address_change_test_data',
+                                       'apply_change_information_to_road_address_links',
+                                       'update_road_address_link_source',
+                                       'update_road_addresses_ely_and_road_type',
+                                       'import_road_address_history',
+                                       'fuse_multi_segment_road_addresses',
+                                       'check_road_network',
+                                       'check_lrm_position',
+                                       'fuse_road_address_with_history',
+                                       'import_road_names',
+                                       'test_integration_api_all_municipalities'
+                                       ])
+
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "25"))
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage("Setup") {
+            steps {
+                withCredentials([
+                                string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'),
+                                string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE')]) {
+                    script {
+
+                        def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
+                        def SERVER = get_server()
+
+                        STAGE_RUN_TASK = [
+                            "ssh web@${SERVER} cd /home/web/viite/current && echo YES |",
+                             "/home/web/viite/current/./sbt",
+                             "$java_opts",
+                             "-Ddigiroad2.env=$ENVIRONMENT",
+                             "\'project digiroad2-viite\'",
+                             "\'test:run-main fi.liikennevirasto.viite.util.DataFixture $TASK $IMPORT_TABLE\'"
+                        ].join(" ")
+
+                    }
+                }
+            }
+        }
+
+        stage("Prepare") {
+            steps {
+                script {
+
+                    def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
+
+                    def build_args = [
+                        "--build-arg http_proxy=${http_proxy}",
+                        "--build-arg https_proxy=${http_proxy}",
+                        "--build-arg no_proxy=${no_proxy}",
+                        "--build-arg JENKINS_UID=${jenkins_uid}"
+                    ].join(" ")
+
+                    docker.build(
+                         "viite-cap",
+                         "${build_args} -f ci/docker/Dockerfile.ruby ci"
+                    )
+                }
+            }
+        }
+
+        stage("Run Task") {
+            agent {
+                docker {
+                    image "viite-backend-sbt"
+                    reuseNode true
+                }
+            }
+            steps {
+
+                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
+                                 file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                 file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
+                    sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                    sh "cp ${ID_RSA} ~/.ssh/"
+                }
+                sh STAGE_RUN_TASK
+            }
+        }
+    }
+
+    post {
+        always {
+            deleteDir()
+        }
+    }
+}
