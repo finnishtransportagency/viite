@@ -54,7 +54,7 @@ pipeline {
                     script {
 
                         def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
-                        def SERVER = get_server($ENVIRONMENT)
+                        def SERVER = get_server(${ENVIRONMENT})
 
                         STAGE_RUN_TASK = [
                             "ssh web@$SERVER cd /home/web/viite/current && echo YES |",
