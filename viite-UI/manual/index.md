@@ -78,7 +78,8 @@ Viite-sovelluksessa on muutamia automatiikan tekemiä yleistyksiä tai korjauksi
 
 __Huom! Automatiikka ei koskaan muuta tieosan mitattua pituutta. Arvot tieosien ja ajoratojen vaihtumiskohdissa pysyvät aina ennallaan automatiikan tekemien korjausten yhteydessä.__
 
-##3.1 Tieosoitesegmenttien yhdistely tielinkin mittaisiksi osuuksiksi##
+3.1 Tieosoitesegmenttien yhdistely tielinkin mittaisiksi osuuksiksi
+--------------------------
 
 Kun käyttäjä valitsee kartalla kohteita kaksoisklikkaamalla (luku 4.1), on pienin valittava yksikkö tielinkin mittainen osuus tieosoiteverkosta, koska tielinkki on pienin mahdollinen yksikkö Maanmittauslaitoksen ylläpitämällä linkkiverkolla.
 
@@ -89,14 +90,15 @@ Tätä varten järjestelmä tekee automaattista yhdistelyä:
 
 ##3.2 Tieosoitesegmenttien automaattinen korjaus jatkuvasti päivittyvällä linkkigeometrialla##
 
+3.2 Tieosoitesegmenttien automaattinen korjaus jatkuvasti päivittyvällä linkkigeometrialla
+--------------------------
+
 Viite-sovellus päivittää automaattisesti tieosoitesegmentit takaisin ajantasaiselle keskilinjalle, kun Maanmittauslaitos on tehnyt pieniä tarkennuksia keskilinjageometriaan. Tässä luvussa on kuvattu tapaukset, joissa Viite-sovellus osaa tehdä korjaukset automaattisesti. Ne tapaukset, joissa korjaus ei tapahdu automaattisesti, segmentit irtoavat geometriasta ja ne on korjattava manuaalisesti operaattorin toimesta.
 
 Automatiikka tekee korjaukset, kun
 
 1. __Tielinkki pitenee tai lyhenee alle metrin:__ Viite-sovellus lyhentää/pidentää tieosoitesegmenttiä automaattisesti muutoksen verran.
 2. __Maanmittauslaitos yhdistelee tielinkkejä, esimerkiksi poistamalla tonttiliittymiä maanteiden varsilta:__ Tieosoitesegmentit siirretään uudelle geometrialle automaattisesti Väyläverkon hallinnan (VVH) tarjoaman tielinkkien muutosrajapinnan avulla.
-
-
 
 
 #4. Karttanäkymän toiminnot
@@ -231,7 +233,10 @@ Esimerkiksi: https://extranet.vayla.fi/viite/#linkProperty/799497 näkyy kuvassa
 _Kohdistaminen tielinkin ID:llä._
 
 
-#6. Tieosoiteprojektin tekeminen
+#6. Tieosoiteprojekti
+--------------------------
+
+6.1 Uusi tieosoiteprojekti
 --------------------------
 
 Uuden tieosoiteprojektin tekeminen aloitetaan klikkaamalla painiketta Tieosoiteprojektit (1) ja avautuvasta ikkunasta painiketta Uusi tieosoiteprojekti (2).
@@ -280,7 +285,7 @@ Varauksen yhteydessä järjestelmä tekee varattaville tieosille tarkistukset:
 Virheellisistä varausyrityksistä järjestelmä antaa virheilmoituksen.  __Käyttäjän tulee huomioida, että varauksen yhteydessä kaikki kentät (TIE, AOSA, LOSA) tulee täyttää, tai käyttäjä saa virheilmoituksen!__
 
 
-6.1 Tieosoiteprojektit-lista ja projektin avaaminen
+6.2 Olemassa oleva tieosoiteprojekti
 --------------------------
 
 Tieosoiteprojektit-listalla näkyvät kaikkien käyttäjien projektit. Projektit on järjestetty ELY-koodien mukaiseen järjestykseen pienimmästä suurimpaan ja niiden sisällä projektin nimen ja käyttäjätunnuksen mukaiseen järjestykseen. 
@@ -403,7 +408,7 @@ Tieosan linkkien tieosoitteen voi säilyttää ennallaan esimerkiksi silloin, ku
 Siirto-toimenpide tehdään tieosalle uusien m-arvojen laskemiseksi. Siirtoa käytetään, kun osa tieosan linkeistä käsitellään jollain muulla toimenpiteellä ja loppujen linkkien m-arvot täytyy laskea uudelleen. Esimerkkinä osalle tieosan linkeistä voidaan tehdä lakkautus, lisätä uusia linkkejä ja pitää osa linkeistä ennallaan. Siirto tehdään tieosoiteprojektiin varatulle tieosalle (varaaminen kuvattu luvussa 6) siten, että tieosalle on ensin tehty muita toimenpiteitä, kuten lakkautus, uusi tai numerointi. Linkit, joille siirto tehdään, valitaan kaksoisklikkaamalla ensimmäinen haluttu linkki ja lisäämällä valintaan Ctrl+klikkaamalla linkkejä. Sitten valitaan toimenpidevalikosta siirto ja tallennetaan. Siirretyt linkit muuttuvat toimenpiteen tallennuksen jälkeen punaiseksi. Muutokset näkyvät projektin yhteenvetotaulukossa.   
 
 
-7.1.5 Numeroinnin muutos
+7.1.5 Numerointi
 --------------------------
 Tieosoitteen numeroinnin muutoksella tarkoitetaan Viitteessä tienumeron ja/tai tieosanumeron muuttamista. 
 Projektiin varataan tarvittava(t) tieosa(t), kuten luvussa 6 on kuvattu. Varaamisen jälkeen siirrytään toimenpidelomakkeelle Jatka toimenpiteisiin -painikkeella. Valitaan muokattava, keltaisella näkyvä varattu tieosa klikkaamalla kartalta. Tieosa muuttuu vihreäksi. Viite poimii tällöin koko tieosan mukaan valintaan, vaikkei se näkyisi kokonaisuudessaan karttanäkymässä ja käyttäjälle tulee tästä ilmoitus. Mikäli on tarpeen muuttaa vain tietyn linkin numerointia tieosalla, tehdään valinta kaksoisklikkauksella halutun linkin päältä. Jos valitaan lisää yksittäisiä linkkejä, tehdään se Ctrl+klikkaamalla. Toimenpide-lomakkeelle syötetään uusi numerointi (tienumero ja/tai tieosanumero) ja tallennetaan muutokset. Numeroitu osuus muuttuu tallennettaessa ruskeaksi.
@@ -436,29 +441,19 @@ _Kaksiajorataisen osuuden kääntö_
 
 Kun käännetään tieosan kaksiajoratainen osuus, se tehdään edellä kuvatulla tavalla siirron tai numeroinnin yhteydessä yksi ajorata kerrallaan. Kartalta valitaan haluttu ajorata ja lomakkeelta joko siirto tai numerointi. Määritetään uusi ajoratakoodi sekä muut tarvittavat tieosoitemuutostiedot lomakkeelle ja tallennetaan. Mikäli tieosoitteen kasvusuunta ei automaattisesti käänny (esim. kun käsitellään yhtä tieosaa), tehdään kääntö manuaalisesti Käännä kasvusuunta -painikkeella. Yhteenvetotaulussa Kääntö-sarake sekä muutosilmoituksen rivit päivittyvät. 
  
- 
 7.1.7 Etäisyyslukeman muutos
 --------------------------
 Tieosoiteprojektissa uudelle tieosoitteistettavalle tieosalle on mahdollista asettaa käyttäjän antama tieosan loppuetäisyyslukema. Ensin valitaan haluttu tieosa kartalta, jonka jälkeen lomakkeelle ilmestyy kenttä, johon loppuetäisyyden voi muuttaa. Muutettu arvo huomioidaan lomakkeella punaisella huutomerkillä. 
 
-
-7.1.8 Suunnitelmalinkkien tieosoitteistaminen ja sen jakaminen saksi-työkalulla
---------------------------
-
-__Saksi-työkalun käyttö suunnitelmalinkin jakamiseen__
-
-Saksi-työkalulla voi jakaa suunnitelmalinkin kahteen osaan. Työkalua hyödynnetään, kun linkin osat halutaan käsitellä eri toimenpiteillä. Ensin valitaan saksi-työkalu selitteen alaosasta. Sitten ristikursorilla klikataan kartalta tielinkin kohdasta, josta tie jaetaan. Suunnitelmalinkki jakaantuu tällöin A ja B osaan. Sivun oikeaan reunaan avautuu A ja B osille lomake, johon eri toimenpiteet määritellään ja tehdään tallennus.
-Kun osioiden toimenpiteet on tallennettu, suunnitelmalinkin alla sijaitseva nykylinkki tarvittavilta osin lakkautuu automaattisesti oikeasta leikkauskohdasta ja se näkyy jatkossa C-osana lomakkeella. 
-
-7.1.9 Useiden muutosten tekeminen samalle tieosalle
---------------------------
-
-7.1.10 ELY-koodin, jatkuvuuden ja tietyypin muutos
+7.1.8 ELY-koodin, jatkuvuuden ja tietyypin muutos
 --------------------------
 Viitteessä voi muokata ELY-koodia, jatkuvuutta ja tietyyppiä. Näitä muutoksia voi tehdä esimerkiksi Ennallaan-muutosilmoituksella, jolloin lomakkeelle tulee pudotusvalikot ELYlle, jatkuvuudelle ja tietyypille. Uudet arvot annetaan valitulle aihiolle ja tallennetaan. Jatkuvuus koodi näytetään valinnan viimeiseltä linkiltä ja muutokset kohdistuvat myös viimeiseen linkkiin. Tietyypin ja ja ELY-koodin muutos kohdistuu kaikille valituille linkeille. Ennallaan toimenpiteen lisäksi näitä arvoja voi muokata aina, kun ne ovat eri muutosilmoituksen yhteydessä lomakkeella muokattavissa. 
 
 Huom! Jatkuvuuskoodia 5 - jatkuva on valittavissa kaksi eri vaihtoehtoa. Jatkuvuuskoodi 5 - jatkuva (rinnakkainen tielinkki) käytetään kaksiajorataisella tiellä osoittamaan rinnakkainen linkki silloin, kun toisella ajoradalla on lievä epäjatkuvuus, eikä automaatio ole löytänyt oikeaa linkkiparia. Jatkuvuuskoodi 4 - lievä epäjatkuvuus annetaan normaalisti toisen ajoradan epäjatkuvuuskohtaan. Viite antaa automaattisesti kalibrointipisteet molemmille ajoradoille. Jos rinnakkaisen ajoradan kalibrointipiste ei ole halutussa kohdassa, valitaan haluttu rinnakkainen linkki ja annetaan sille jatkuvuuskoodiksi 5 - jatkuva (rinnakkainen linkki). Tällöin kalibrointipiste tulee kyseisen linkin loppuun, ja ajoratojen AET- ja LET-arvot saadaan täsmättyä lievään epäjatkuvuuskohtaan.
 
+
+7.1.9 Useiden muutosten tekeminen samalle tieosalle
+--------------------------
 
 7.2 Muutosilmoitusten tarkastelu taulukkonäkymässä
 --------------------------
@@ -547,3 +542,12 @@ Projektia ei voi muokata, kun sen tila on joko Lähetetty tierekisteriin, Tierek
 ![Tila-statuksia](k39.JPG)
 
 _Tilatietoja Tieosoiteprojektit-listassa._
+
+#8. Tienimien ylläpito
+--------------------------
+
+
+#9. Solmut ja liittymät
+--------------------------
+
+
