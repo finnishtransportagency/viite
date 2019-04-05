@@ -64,7 +64,7 @@ Tielinkki on Viite-sovelluksen lineaarinen viitekehys, jonka geometriaan sidotaa
 
 Kullakin tieosoitesegmentillä on lisäksi tiettyjä sille annettuja ominaisuustietoja, kuten tienumero, tieosanumero ja ajoratakoodi. Tieosoitesegmenttien ominaisuustiedoista on kerrottu tarkemmin kohdassa "Tieosoitteen ominaisuustiedot".
 
-![Kohteita](k9.JPG)
+![Kohteita](k9.jpg)
 
 _Tieosoitesegmenttejä (1) ja muita tielinkkejä (2) Viitteen karttaikkunassa._
 
