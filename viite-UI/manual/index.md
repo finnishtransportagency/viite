@@ -20,7 +20,7 @@ Kaikilla V채yl채n tunnuksilla on p채채sy Viite-sovellukseen katseluk채ytt채j채n�
 
 Viite-sovellukseen kirjaudutaan osoitteessa: <a href="https://extranet.vayla.fi/viite/" target="_blank">https://extranet.vayla.fi/viite/</a>.
 
-![Kirjautuminen Viite-sovellukseen.](k1.JPG)
+![Kirjautuminen Viite-sovellukseen.](k1.jpg)
 
 _Kirjautuminen Viite-sovellukseen._
 
