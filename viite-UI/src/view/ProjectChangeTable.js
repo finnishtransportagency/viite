@@ -317,7 +317,6 @@
     }
 
     eventbus.on('projectChangeTable:refresh', function() {
-      bindEvents();
       getChanges();
       enableTableInteractions();
     });
