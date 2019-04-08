@@ -1,9 +1,9 @@
 import java.net.URI
 
-def get_server(target) {
-    if (target.equals("staging")) {return "web@gateway"}
-    if (target.equals("testing")) {return "web@testing1"}
-    if (target.equals("production")) {return "web@production1"}
+def get_server() {
+    if (${params.TARGET}.equals("staging")) {return "web@gateway"}
+    if (${params.TARGET}.equals("testing")) {return "web@testing1"}
+    if (${params.TARGET}.equals("production")) {return "web@production1"}
     return ""
 }
 
@@ -56,13 +56,10 @@ pipeline {
 
                         def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
 
-                        def EXECUTION_TAGET =  {  if (${TARGET}.equals("staging")) {return "web@gateway"}
-                                                  if (${TARGET}.equals("testing")) {return "web@testing1"}
-                                                  if (${TARGET}.equals("production")) {return "web@production1"}
-                                                  return "" }
+                        def EXECUTION_TAGET = get_server()
 
                         STAGE_RUN_TASK = [
-                            "ssh EXECUTION_TAGET cd /home/web/viite/current && echo YES |",
+                            "ssh ${EXECUTION_TAGET} cd /home/web/viite/current && echo YES |",
                              "/home/web/viite/current/./sbt",
                              "-Ddigiroad2.env=${TARGET}",
                              "\'project digiroad2-viite\'",
