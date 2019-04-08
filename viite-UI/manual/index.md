@@ -537,10 +537,6 @@ Projektia ei voi muokata, kun sen tila on joko Lähetetty tierekisteriin, Tierek
 |Virhe tierekisterissä|Tierekisteri ei hyväksynyt projektia. Tierekisterin tarkempi virheilmoitus tulee näkyviin viemällä osoittimen "Virhe tierekisterissä"-tekstin päälle. Projektin voi avata uudelleen.|
 |Virhetilanne Viiteessä|Projekti on lähetty Tierekisteriin ja se on Tierekisterin hyväksymä, mutta projektin tiedot eivät piirry Viite-sovelluksessa.| 
 
-![Tila-statuksia](k39.JPG)
-
-_Tilatietoja Tieosoiteprojektit-listassa._
-
 #8. Tienimien ylläpito
 --------------------------
 
