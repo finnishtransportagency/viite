@@ -1,9 +1,9 @@
 import java.net.URI
 
 def get_server() {
-    if (env.equals("staging")) {return "web@gateway"}
-    if (env.equals("testing")) {return "web@testing1"}
-    if (env.equals("production")) {return "web@production1"}
+    if ($ENV.equals("staging")) {return "web@gateway"}
+    if ($ENV.equals("testing")) {return "web@testing1"}
+    if ($ENV.equals("production")) {return "web@production1"}
     return ""
 }
 
