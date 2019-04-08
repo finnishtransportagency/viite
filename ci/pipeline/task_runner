@@ -59,17 +59,9 @@ pipeline {
                         //def env = ${ENVIRONMENT}
                         def server = get_server()
 
-                        def java_opts = [
-                            "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
-                            "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
-                            "-Dhttp.nonProxyHosts=*.vally.local",
-                            "-DproxySet=true"
-                        ].join(" ")
-
                         STAGE_RUN_TASK = [
                             "ssh ${server} cd /home/web/viite/current && echo YES |",
                              "/home/web/viite/current/./sbt",
-                             "$java_opts",
                              "-Ddigiroad2.env=${ENVIRONMENT}",
                              "\'project digiroad2-viite\'",
                              "\'test:run-main fi.liikennevirasto.viite.util.DataFixture ${TASK} ${IMPORT_TABLE}\'"
