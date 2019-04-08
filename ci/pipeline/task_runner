@@ -40,9 +40,6 @@ pipeline {
                                        ])
 
     }
-    environment {
-        ENV = "${ENVIRONMENT}"
-    }
 
     options {
         buildDiscarder(logRotator(numToKeepStr: "25"))
@@ -51,6 +48,10 @@ pipeline {
 
     stages {
         stage("Setup") {
+
+            environment {
+                ENV = "${ENVIRONMENT}"
+            }
             steps {
                     //get_server()
                     script {
