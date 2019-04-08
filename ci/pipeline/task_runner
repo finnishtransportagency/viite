@@ -1,9 +1,9 @@
 import java.net.URI
 
-def get_server() {
-    if ($ENV.equals("staging")) {return "web@gateway"}
-    if ($ENV.equals("testing")) {return "web@testing1"}
-    if ($ENV.equals("production")) {return "web@production1"}
+def get_server(target) {
+    if (target.equals("staging")) {return "web@gateway"}
+    if (target.equals("testing")) {return "web@testing1"}
+    if (target.equals("production")) {return "web@production1"}
     return ""
 }
 
@@ -11,7 +11,7 @@ pipeline {
     agent any
     parameters {
 
-        choice(name: 'ENVIRONMENT', choices: ['-',
+        choice(name: 'TARGET', choices: ['-',
                                      'staging',
                                      'testing',
                                      'production',
@@ -50,7 +50,7 @@ pipeline {
         stage("Setup") {
 
             environment {
-                ENV = "${ENVIRONMENT}"
+                EXECUTION_TAGET = get_server(${TARGET})
             }
             steps {
                     //get_server()
@@ -58,12 +58,12 @@ pipeline {
 
                         def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
                         //def env = ${ENVIRONMENT}
-                        def server = get_server()
+                       // def server = get_server()
 
                         STAGE_RUN_TASK = [
                             "ssh ${server} cd /home/web/viite/current && echo YES |",
                              "/home/web/viite/current/./sbt",
-                             "-Ddigiroad2.env=${ENVIRONMENT}",
+                             "-Ddigiroad2.env=${EXECUTION_TAGET}",
                              "\'project digiroad2-viite\'",
                              "\'test:run-main fi.liikennevirasto.viite.util.DataFixture ${TASK} ${IMPORT_TABLE}\'"
                         ].join(" ")
