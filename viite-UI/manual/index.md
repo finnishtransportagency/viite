@@ -245,10 +245,6 @@ _Tieosoiteprojektit-painike ja Uusi tieosoiteprojekti -painike._
 
 Näytön oikeaan reunaan avautuu lomake tieosoiteprojektin perustietojen täydentämistä varten. Jos käyttäjä on ollut katselutilassa,  sovellus siirtyy tässä vaiheessa automaattisesti muokkaustilaan.
 
-![Uusi tieosoiteprojekti](k18.jpg)
-
-_Tieosoiteprojektin perustietojen lomake._
-
 Pakollisia tietoja ovat nimi ja projektin muutosten voimaantulopäivämäärä, jotka on merkattu lomakkeelle oranssilla (3). Projektiin ei tarvitse varata yhtään tieosaa. Lisätiedot-kenttään käyttäjä voi halutessaan tehdä muistiinpanoja tieosoiteprojektista. Tiedot tallentuvat painamalla Jatka toimenpiteisiin -painiketta (4). Poistu-painike (5) sulkee projektin tietoja tallentamatta.
 
 ![Uusi tieosoiteprojekti](k19.jpg)
