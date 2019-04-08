@@ -352,16 +352,13 @@ Tämän jälkeen klikataan Jatka toimenpiteisiin -painiketta, jolla siirrytään
 
 Toimenpiteellä määritetään uusi tieosoite tieosoitteettomille linkeille. Tieosoitteettomia muun tieverkon linkkejä, jotka piirtyvät kartalle harmaina tai tuntemattomia mustia linkkejä, joissa on kysymysmerkkisymboli tai suravage-linkkejä, voi valita kerta- tai kaksoisklikkauksella, kuten muitakin tielinkkejä. Kaksoisklikkaus valitsee yhden tielinkin ja Ctrl+klikkauksella voi lisätä tai poistaa valintaan linkkejä yksi kerrallaan. Kertaklikkaus valitsee homogeenisen jakson, jossa käytetään VVH:n tielinkin tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa käytetään tienimeä.
 
-Valitut tielinkit näkyvät kartalla vihreällä korostettuna. Kun valitaan Toimenpiteet-pudotusvalikosta 'Uusi' (1) lomakkeelle avautuvat kentät uuden tieosoitteen tiedoille (2). Jos valitulla tieosuudella on jo olemassa VVH:ssa tienumero ja tieosanumero, ne esitäyttyvät kenttiin automattisesti.
+Valitut tielinkit näkyvät kartalla vihreällä korostettuna. Kun valitaan Toimenpiteet-pudotusvalikosta Uusi (1), lomakkeelle avautuvat kentät uuden tieosoitteen tiedoille (2). Jos valitulla tieosuudella on jo olemassa VVH:ssa tienumero ja tieosanumero, ne esitäyttyvät kenttiin automattisesti.
 
 ![Uusi tieosoite](k43.jpg)
 
 _Kun valitaan toimenpidevalikosta Uusi, oikeaan laitaan ilmestyy näkyviin kentät uuden tieosoitteen syöttämistä varten._ 
 
-Tietyyppiä voi muokata pudotusvalikosta (3). Jatkuu-arvo määräytyy ensimmäisellä tallennuskerralla automaattisesti jatkuvaksi (5 Jatkuva). Muutokset tallennetaan Tallenna-painikkeella (4). Ennen tallennusta muutokset voi perua Peruuta-painikkeesta. 
-
-Huom: Mikäli jatkuvuutta täytyy muokata, esimerkiksi tien lopussa, käyttäjä klikkaa tieosan lopusta aktiiviseksi viimeisen tieosan "Uusi"-toimenpiteellä käsitellyn linkin, jossa tien loppu sijaitsee. Lomakkeelle tulee tiedot linkin osoitteesta ja sille tehdystä toimenpiteestä. Nyt linkin jatkuvuuskoodin muokkaaminen on mahdollista ja oikea koodi, esimerkiksi "1 Tien loppu", valitaan pudotusvalikosta ja tallennetaan. Päivitetty tieto näkyy myös yhteenvetotaulukossa tallennuksen jälkeen.   
-
+Tietyyppiä voi muokata pudotusvalikosta (3). Tien nimi (4) on pakollinen tieto, kun tien numero on pienempi kuin 70000. Muutokset tallennetaan Tallenna-painikkeella (5). Ennen tallennusta muutokset voi perua Peruuta-painikkeesta. 
 
 Käyttöliittymä varoittaa virheilmoituksella, jos uusi tieosoite on jo olemassa projektin alkupäivänä tai se on varattuna toisessa tieosoiteprojektissa.
 
