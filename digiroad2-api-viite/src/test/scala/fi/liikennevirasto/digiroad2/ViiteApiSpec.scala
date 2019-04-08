@@ -18,7 +18,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   test("Test json.extract[RoadAddressProjectExtractor] When sending a list of 1 road part link coded in a JSON format Then return the decoded Road Address Project list with 1 element.") {
     val str = "{\"id\":0,\"status\":1,\"name\":\"erwgerg\",\"startDate\":\"22.4.2017\",\"additionalInfo\":\"\",\"projectEly\":5,\"roadPartList\":[{\"roadPartNumber\":205,\"roadNumber\":5,\"ely\":5,\"roadLength\":6730,\"roadPartId\":30,\"discontinuity\":\"Jatkuva\"}],\"resolution\":8}"
     val json = parse(str)
-    json.extract[RoadAddressProjectExtractor].roadPartList should have size(1)
+      json.extract[RoadAddressProjectExtractor].reservedPartList should have size(1)
   }
 
   test("Test json.extract[RoadAddressProjectExtractor] When sending am excessively big name in JSON format Then return the decoded name but with some loss of letters.") {

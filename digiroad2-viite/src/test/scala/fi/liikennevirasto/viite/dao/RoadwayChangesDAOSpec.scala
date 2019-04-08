@@ -57,7 +57,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       addprojects()
       new RoadwayChangesDAO().insertDeltaToRoadChangeTable(delta, 1)
-      sql"""Select Project_Id From ROADWAY_CHANGES Where Project_Id In (1)""".as[Long].firstOption.get should be(1)
+      sql"""Select Project_Id From ROADWAY_CHANGES Where Project_Id In (1)""".as[Long].firstOption.getOrElse(0) should be(1)
     }
   }
 
