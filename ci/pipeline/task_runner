@@ -56,9 +56,9 @@ pipeline {
 
                         def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
 
-                        def EXECUTION_TAGET =  {  if ($TARGET.equals("staging")) {return "web@gateway"}
-                                                  if ($TARGET.equals("testing")) {return "web@testing1"}
-                                                  if ($TARGET.equals("production")) {return "web@production1"}
+                        def EXECUTION_TAGET =  {  if (${TARGET}.equals("staging")) {return "web@gateway"}
+                                                  if (${TARGET}.equals("testing")) {return "web@testing1"}
+                                                  if (${TARGET}.equals("production")) {return "web@production1"}
                                                   return "" }
 
                         STAGE_RUN_TASK = [
