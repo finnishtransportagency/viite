@@ -49,7 +49,7 @@ pipeline {
     stages {
         stage("Setup") {
 
-            
+
             steps {
                     //get_server()
                     script {
@@ -62,7 +62,7 @@ pipeline {
                                                   return "" }
 
                         STAGE_RUN_TASK = [
-                            "ssh ${server} cd /home/web/viite/current && echo YES |",
+                            "ssh ${EXECUTION_TAGET} cd /home/web/viite/current && echo YES |",
                              "/home/web/viite/current/./sbt",
                              "-Ddigiroad2.env=${EXECUTION_TAGET}",
                              "\'project digiroad2-viite\'",
