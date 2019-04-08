@@ -59,14 +59,14 @@ pipeline {
                         //def env = ${ENVIRONMENT}
                         def server = get_server()
 
-                        //STAGE_RUN_TASK = [
-                        //    "ssh ${server} cd /home/web/viite/current && echo YES |",
-                        //     "/home/web/viite/current/./sbt",
-                        //     "$java_opts",
-                        //     "-Ddigiroad2.env=${ENVIRONMENT}",
-                        //     "\'project digiroad2-viite\'",
-                        //     "\'test:run-main fi.liikennevirasto.viite.util.DataFixture ${TASK} ${IMPORT_TABLE}\'"
-                        //].join(" ")
+                        STAGE_RUN_TASK = [
+                            "ssh ${server} cd /home/web/viite/current && echo YES |",
+                             "/home/web/viite/current/./sbt",
+                             "$java_opts",
+                             "-Ddigiroad2.env=${ENVIRONMENT}",
+                             "\'project digiroad2-viite\'",
+                             "\'test:run-main fi.liikennevirasto.viite.util.DataFixture ${TASK} ${IMPORT_TABLE}\'"
+                        ].join(" ")
 
                     }
             }
