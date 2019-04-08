@@ -21,7 +21,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectRoadwayChange, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -1009,7 +1009,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
       reservedParts.size should be(1)
       reservedParts.head.roadPartNumber should be(2)
-      reservedParts.head.newDiscontinuity.get should be(Discontinuity.apply(2))
+      reservedParts.head.discontinuity.get should be(Discontinuity.apply(2))
 
       val link = projectLinkDAO.getProjectLinksByLinkId(12345L).head
       link.status should be(LinkStatus.Transfer)
@@ -2550,7 +2550,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val reservedPart2 = savedProject.reservedParts.find(rp => rp.roadNumber == roadNumber && rp.roadPartNumber == part2)
       reservedPart1.nonEmpty should be (true)
       reservedPart1.get.ely.get should be (originalElyPart1.head)
-      reservedPart1.get.newEly should be (ely1)
+      reservedPart1.get.ely should be (ely1)
       reservedPart2.nonEmpty should be (true)
       reservedPart2.get.ely.get should be (originalElyPart2.head)
       reservedPart2.get.newEly should be (ely2)
@@ -2753,7 +2753,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectLinks = projectLinkDAO.fetchProjectLinks(project_id)
       val lastLink = Set(projectLinks.maxBy(_.endAddrMValue).id)
 
-      projectService.updateProjectLinks(project_id, lastLink, Seq(), LinkStatus.Transfer, "test",
+      val updatedResult = projectService.updateProjectLinks(project_id, lastLink, Seq(), LinkStatus.Transfer, "test",
         roadNumber, newRoadPartNumber, 0, None, 1, 5, Some(8L), reversed = false, None)
       val lengthOfTheTransferredPart = 5
       val lengthPart1 = linearLocations.filter(_.roadwayNumber == roadwayNumber1).map(_.endMValue).sum - linearLocations.filter(_.roadwayNumber == roadwayNumber1).map(_.startMValue).sum
@@ -2763,7 +2763,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val reservation = projectReservedPartDAO.fetchReservedRoadParts(project_id)
 
-      reservation.filter(_.roadPartNumber == 1).head.newLength should be(Some(newLengthOfTheRoadPart1))
+      reservation.filter(_.roadPartNumber == 1).head.addressLength should be(Some(newLengthOfTheRoadPart1))
       reservation.filter(_.roadPartNumber == 2).head.newLength should be(Some(lengthOfTheTransferredPart))
 
       projectService.validateProjectById(project_id).exists(
