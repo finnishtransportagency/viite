@@ -37,7 +37,11 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
-
+  lazy val properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
   val mockProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
@@ -65,12 +69,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   private val roadwayNumber2 = 2000000000l
   private val roadwayNumber3 = 3000000000l
   private val linearLocationId = 1
-
-  val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
 
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
 
@@ -1006,10 +1004,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val updatedLink = projectLinkDAO.getProjectLinksByLinkId(12345L)
 
       projectService.updateProjectLinks(project.id, Set(updatedLink.head.id), Seq(), LinkStatus.Transfer, "TestUserTwo", 9999, 2, 1, Some(30), 5L, 2) should be(None)
-      val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
-      reservedParts.size should be(1)
-      reservedParts.head.roadPartNumber should be(2)
-      reservedParts.head.discontinuity.get should be(Discontinuity.apply(2))
+      val formedParts = projectReservedPartDAO.fetchFormedRoadParts(project.id)
+      formedParts.size should be(1)
+      formedParts.head.roadPartNumber should be(2)
+      formedParts.head.newDiscontinuity.get should be(Discontinuity.apply(2))
 
       val link = projectLinkDAO.getProjectLinksByLinkId(12345L).head
       link.status should be(LinkStatus.Transfer)
@@ -2522,7 +2520,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test save project with reserved road parts having different ELY codes "){
+  test("Test save project with reserved road parts having different ELY codes should not update them. Formed road parts on other side," +
+    " should get ely from project links"){
     runWithRollback {
 
       val roadNumber = 75
@@ -2543,17 +2542,17 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val address1 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(roadNumber, part1).map(_.roadwayNumber).toSet))
       val address2 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(roadNumber, part2).map(_.roadwayNumber).toSet))
       mockForProject(project.id, (address1 ++ address2).map(toProjectLink(rap)))
-      val savedProject = projectService.saveProject(project.copy(reservedParts = reservations))
+      val savedProject = projectService.saveProject(project.copy(reservedParts = reservations, formedParts = reservations))
       val originalElyPart1 = roadwayDAO.fetchAllByRoadAndPart(roadNumber, part1).map(_.ely).toSet
       val originalElyPart2 = roadwayDAO.fetchAllByRoadAndPart(roadNumber, part2).map(_.ely).toSet
       val reservedPart1 = savedProject.reservedParts.find(rp => rp.roadNumber == roadNumber && rp.roadPartNumber == part1)
       val reservedPart2 = savedProject.reservedParts.find(rp => rp.roadNumber == roadNumber && rp.roadPartNumber == part2)
+      val formedPart1 = savedProject.reservedParts.find(rp => rp.roadNumber == roadNumber && rp.roadPartNumber == part1)
+      val formedPart2 = savedProject.reservedParts.find(rp => rp.roadNumber == roadNumber && rp.roadPartNumber == part2)
       reservedPart1.nonEmpty should be (true)
       reservedPart1.get.ely.get should be (originalElyPart1.head)
-      reservedPart1.get.ely should be (ely1)
       reservedPart2.nonEmpty should be (true)
       reservedPart2.get.ely.get should be (originalElyPart2.head)
-      reservedPart2.get.newEly should be (ely2)
 
     }
   }
@@ -2720,7 +2719,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
           0L, 20L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None),
         //RightSide
         Roadway(raId + 1, roadwayNumber2, roadNumber, newRoadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
-          20L, 70L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
+          0L, 50L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None))
 
       val linearLocations = Seq(
 //        part1
@@ -2753,7 +2752,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectLinks = projectLinkDAO.fetchProjectLinks(project_id)
       val lastLink = Set(projectLinks.maxBy(_.endAddrMValue).id)
 
-      val updatedResult = projectService.updateProjectLinks(project_id, lastLink, Seq(), LinkStatus.Transfer, "test",
+      projectService.updateProjectLinks(project_id, lastLink, Seq(), LinkStatus.Transfer, "test",
         roadNumber, newRoadPartNumber, 0, None, 1, 5, Some(8L), reversed = false, None)
       val lengthOfTheTransferredPart = 5
       val lengthPart1 = linearLocations.filter(_.roadwayNumber == roadwayNumber1).map(_.endMValue).sum - linearLocations.filter(_.roadwayNumber == roadwayNumber1).map(_.startMValue).sum
@@ -2762,9 +2761,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val newLengthOfTheRoadPart2 = lengthPart2 + lengthOfTheTransferredPart
 
       val reservation = projectReservedPartDAO.fetchReservedRoadParts(project_id)
+      val formed = projectReservedPartDAO.fetchFormedRoadParts(project_id)
 
-      reservation.filter(_.roadPartNumber == 1).head.addressLength should be(Some(newLengthOfTheRoadPart1))
-      reservation.filter(_.roadPartNumber == 2).head.newLength should be(Some(lengthOfTheTransferredPart))
+      reservation.filter(_.roadPartNumber == 1).head.addressLength should be(Some(ra.head.endAddrMValue))
+      reservation.filter(_.roadPartNumber == 2).head.addressLength should be(Some(ra.last.endAddrMValue))
+
+      formed.filter(_.roadPartNumber == 1).head.newLength should be(Some(newLengthOfTheRoadPart1))
+      formed.filter(_.roadPartNumber == 2).head.newLength should be(Some(lengthOfTheTransferredPart))
 
       projectService.validateProjectById(project_id).exists(
         _.validationError.message == s"Toimenpidettä ei saa tehdä tieosalle, jota ei ole varattu projektiin. Varaa tie $roadNumber osa $newRoadPartNumber."
@@ -2782,8 +2785,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         roadNumber, newRoadPartNumber, 0, None, 1, 5, Some(1L), reversed = false, None)
 
       val reservation2 = projectReservedPartDAO.fetchReservedRoadParts(project_id)
-      reservation2.filter(_.roadPartNumber == 1).head.newLength should be(Some(newLengthOfTheRoadPart1))
-      reservation2.filter(_.roadPartNumber == 2).head.newLength should be(Some(newLengthOfTheRoadPart2))
+      val formed2 = projectReservedPartDAO.fetchFormedRoadParts(project_id)
+      reservation2.filter(_.roadPartNumber == 1).head.addressLength should be(Some(ra.head.endAddrMValue))
+      reservation.filter(_.roadPartNumber == 2).head.addressLength should be(Some(ra.last.endAddrMValue))
+
+      formed2.filter(_.roadPartNumber == 1).head.newLength should be(Some(newLengthOfTheRoadPart1))
+      formed2.filter(_.roadPartNumber == 2).head.newLength should be(Some(ra.last.endAddrMValue+lengthOfTheTransferredPart))
 
       projectService.validateProjectById(project_id).exists(
         _.validationError.message == s"Toimenpidettä ei saa tehdä tieosalle, jota ei ole varattu projektiin. Varaa tie $roadNumber osa $newRoadPartNumber."
