@@ -52,10 +52,10 @@ pipeline {
                     script {
 
                         def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
-                        //def server = get_server(${ENVIRONMENT})
+                        def server = get_server(${ENVIRONMENT})
 
                         //STAGE_RUN_TASK = [
-                        //    "ssh ${SERVER} cd /home/web/viite/current && echo YES |",
+                        //    "ssh ${server} cd /home/web/viite/current && echo YES |",
                         //     "/home/web/viite/current/./sbt",
                         //     "$java_opts",
                         //     "-Ddigiroad2.env=${ENVIRONMENT}",
