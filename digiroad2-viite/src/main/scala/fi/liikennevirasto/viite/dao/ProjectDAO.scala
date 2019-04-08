@@ -49,6 +49,9 @@ case class Project(id: Long, status: ProjectState, name: String, createdBy: Stri
   def isReserved(roadNumber: Long, roadPartNumber: Long): Boolean = {
     reservedParts.exists(p => p.roadNumber == roadNumber && p.roadPartNumber == roadPartNumber)
   }
+  def isFormed(roadNumber: Long, roadPartNumber: Long): Boolean = {
+    formedParts.exists(p => p.roadNumber == roadNumber && p.roadPartNumber == roadPartNumber)
+  }
 }
 
 case class ProjectCoordinates(x: Double = DefaultLatitude, y: Double = DefaultLongitude, zoom: Int = DefaultZoomLevel)
