@@ -158,13 +158,13 @@ _Tieosoiteverkon piirtyminen kartalle, kun mittakaavajanassa on 100 m._
 
 Tieosoitteelliset kadut erottuvat kartalla muista tieosoitesegmenteistä siten, että niiden ympärillä on musta reunaviiva.
 
-![Tieosoitteellinen katu](k16.JPG)
+![Tieosoitteellinen katu](k16.jpg)
 
 _Tieosoitteellinen katu, merkattuna mustalla reunaviivalla tienumeron värityksen lisäksi._
 
-Kun hiiren vie tieosoiteverkon päälle, tulee kartalle näkyviin infolaatikko, joka kertoo kyseisen tieosoitesegmentin tienumeron, tieosanumeron, ajoratakoodin sekä alku- ja loppuetäisyyden.
+Kun hiiren vie tieosoiteverkon päälle, tulee kartalle näkyviin infolaatikko, joka kertoo kyseisen tieosoitesegmentin tienumeron, tieosanumeron, ajoratakoodin, alku- ja loppuetäisyyden sekä linkin ID:n.
 
-![Hover](k35.JPG)
+![Hover](k35.jpg)
 
 _Infolaatikko, kun hiiri on viety tieosoitesegmentin päälle._
 
@@ -172,13 +172,13 @@ _Infolaatikko, kun hiiri on viety tieosoitesegmentin päälle._
 --------------------------
 Kohteita voi valita kartalta klikkaamalla. Kertaklikkauksella sovellus valitsee kartalla näkyvästä tieosasta osuuden, jolla on sama tienumero, tieosanumero ja ajoratakoodi. Valittu tieosa korostuu kartalla (1), ja sen tiedot tulevat näkyviin karttaikkunan oikean reunan ominaisuustietonäkymään (2).
 
-![Tieosan valinta](k6.JPG)
+![Tieosuuden valinta](k6.jpg)
 
 _Tieosan valinta._
 
 Kaksoisklikkaus valitsee yhden tielinkin mittaisen osuuden tieosoitteesta. Valittu osuus korostuu kartalla (3), ja sen tiedot tulevat näkyviin karttaikkunan oikean reunan ominaisuustietonäkymään (4).
 
-![Tieosoitesegmentin valinta](k7.JPG)
+![Tieosoitesegmentin valinta](k7.jpg)
 
 _Tielinkin mittaisen osuuden valinta._
 
@@ -224,9 +224,9 @@ Palautteet hallinnollisen luokan virheistä voi toimittaa Maanmittauslaitokselle
 
 Kun kohdetta klikkaa kartalla, tulee selaimen osoiteriville näkyviin valitun kohteen tielinkin ID. Osoiterivillä olevan URL:n avulla voi myös kohdistaa käyttöliittymässä ko. tielinkkiin. URL:n voi lähettää sähköpostilla toiselle henkilölle, jolloin tämä pääsee käyttöliittymässä samaan paikkaan.
 
-Esimerkiksi: https://extranet.vayla.fi/viite/#linkProperty/799497 näkyy kuvassa osoiterivillä (5). 799497 on tielinkin ID.
+Esimerkiksi: https://extranet.vayla.fi/viite/#linkProperty/1204420 näkyy kuvassa osoiterivillä (5). 1204420 on tielinkin ID.
 
-![Kohdistaminen tielinkin ID:llä](k8.JPG)
+![Kohdistaminen tielinkin ID:llä](k8.jpg)
 
 _Kohdistaminen tielinkin ID:llä._
 
