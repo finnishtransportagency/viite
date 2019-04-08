@@ -1,9 +1,9 @@
 import java.net.URI
 
-def get_server() {
-    if (${params.TARGET}.equals("staging")) {return "web@gateway"}
-    if (${params.TARGET}.equals("testing")) {return "web@testing1"}
-    if (${params.TARGET}.equals("production")) {return "web@production1"}
+def get_server(trgt) {
+    if (trgt.equals("staging")) {return "web@gateway"}
+    if (trgt.equals("testing")) {return "web@testing1"}
+    if (trgt.equals("production")) {return "web@production1"}
     return ""
 }
 
@@ -56,7 +56,7 @@ pipeline {
 
                         def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
 
-                        def EXECUTION_TAGET = get_server()
+                        def EXECUTION_TAGET = get_server(${params.TARGET})
 
                         STAGE_RUN_TASK = [
                             "ssh ${EXECUTION_TAGET} cd /home/web/viite/current && echo YES |",
