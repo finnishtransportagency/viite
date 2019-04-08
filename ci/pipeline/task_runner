@@ -49,9 +49,7 @@ pipeline {
     stages {
         stage("Setup") {
 
-            environment {
-                EXECUTION_TAGET = get_server(${params.TARGET})
-            }
+            
             steps {
                     //get_server()
                     script {
