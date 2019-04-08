@@ -136,10 +136,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   protected def fetchAllTerminatedAddressesFromConversionTable(): Seq[ConversionAddress] = {
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
-      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
-           TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss'),  ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
+      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss') as alkupvm, TO_CHAR(loppupvm - 1, 'YYYY-MM-DD hh:mm:ss') as loppupvm,
+           TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss') as muutospvm, null as lakkautuspvm, ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
            loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
-           WHERE aet >= 0 AND let >= 0 AND (lakkautuspvm is not null or linkid is null)  """
+           WHERE aet >= 0 AND let >= 0 AND linkid is null AND lakkautuspvm is null"""
         .as[ConversionAddress].list
     }
   }
@@ -273,38 +273,29 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     roadwayPs.close()
   }
 
+  private def createIncomingRoadway(r: ConversionAddress, terminated: TerminationCode): IncomingRoadway = {
+    IncomingRoadway(r.roadwayNumber, r.roadNumber, r.roadPartNumber, r.trackCode, r.startAddressM, r.endAddressM,
+      reversed = 0, r.startDate, r.endDate, "import", r.roadType, r.ely, r.validFrom, r.expirationDate, r.discontinuity,
+      terminated = terminated.value)
+  }
+
   private def importTerminatedAddresses(terminatedConversionAddresses: Seq[ConversionAddress]): Unit = {
-    val (terminatedOldConversionAddresses, validTerminatedConversionAddresses) = terminatedConversionAddresses.partition(_.expirationDate.isEmpty)
-    val validTerminatedMappedConversionAddresses = validTerminatedConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate))
-    val terminatedOldMappedConversionAddresses = terminatedOldConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val roadwayPs = roadwayStatement()
 
-    validTerminatedMappedConversionAddresses.mapValues {
-      case address =>
-        address.sortBy(_.startAddressM).zip(1 to address.size)
-    }.foreach {
-      case (key, addresses) =>
-        val minAddress = addresses.head._1
-        val maxAddress = addresses.last._1
+    val roadways = terminatedConversionAddresses.groupBy(t => t.roadwayNumber)
 
-        val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
-          minAddress.startDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = Termination.value)
+    roadways.foreach {
+      case (roadwayNumber, roadways) =>
+        val sorted = roadways.sortBy(-_.startDate.get.getMillis)
+        val terminated = sorted.head
+        val subsequent: Seq[ConversionAddress] = if (roadways.size > 1) {
+          sorted.tail
+        } else {
+          Seq()
+        }
 
-        insertRoadway(roadwayPs, roadAddress)
-    }
-
-    terminatedOldMappedConversionAddresses.mapValues {
-      case address =>
-        address.sortBy(_.startAddressM).zip(1 to address.size)
-    }.foreach {
-      case (key, addresses) =>
-        val minAddress = addresses.head._1
-        val maxAddress = addresses.last._1
-
-        val roadway = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
-          minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, minAddress.expirationDate, maxAddress.discontinuity, terminated = NoTermination.value)
-
-        insertRoadway(roadwayPs, roadway)
+        insertRoadway(roadwayPs, createIncomingRoadway(terminated, Termination))
+        subsequent.foreach(roadway => insertRoadway(roadwayPs, createIncomingRoadway(roadway, Subsequent)))
     }
     roadwayPs.executeBatch()
     roadwayPs.close()
