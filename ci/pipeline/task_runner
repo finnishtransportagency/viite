@@ -1,9 +1,9 @@
 import java.net.URI
 
-def get_server(v) {
-    if (v.equals("staging")) {return "web@gateway"}
-    if (v.equals("testing")) {return "web@testing1"}
-    if (v.equals("production")) {return "web@production1"}
+def get_server() {
+    if ($ENVIRONMENT.equals("staging")) {return "web@gateway"}
+    if ($ENVIRONMENT.equals("testing")) {return "web@testing1"}
+    if ($ENVIRONMENT.equals("production")) {return "web@production1"}
     return ""
 }
 
@@ -49,11 +49,12 @@ pipeline {
     stages {
         stage("Setup") {
             steps {
+                    get_server()
                     script {
 
                         def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
-                        def env = ${ENVIRONMENT}
-                        def server = get_server(env)
+                        //def env = ${ENVIRONMENT}
+                        //def server = get_server(env)
 
                         //STAGE_RUN_TASK = [
                         //    "ssh ${server} cd /home/web/viite/current && echo YES |",
