@@ -95,7 +95,7 @@ pipeline {
         stage("Run Task") {
             agent {
                 docker {
-                    image "viite-backend-sbt"
+                    image "viite-cap"
                     reuseNode true
                 }
             }
