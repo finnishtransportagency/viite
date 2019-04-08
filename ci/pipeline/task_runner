@@ -41,7 +41,7 @@ pipeline {
 
     }
     environment {
-        ENV = ${ENVIRONMENT}
+        ENV = "${ENVIRONMENT}"
     }
 
     options {
