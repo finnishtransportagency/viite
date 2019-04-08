@@ -2013,6 +2013,7 @@ Left|      |Right
       projectLinkDAO.create(links)
       val allLinks = projectLinkDAO.fetchProjectLinks(project.id)
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
+      val formedParts = projectReservedPartDAO.fetchFormedRoadParts(project.id)
 
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L))
       when(mockRoadAddressService.getRoadAddressesFiltered(19999L, 2L)).thenReturn(Seq(ra.last))
@@ -2021,7 +2022,7 @@ Left|      |Right
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(None)
 
-      val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts), g._2).distinct)
+      val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts, formedParts = formedParts), g._2).distinct)
       errors.size should be(0)
       sqlu"""UPDATE PROJECT_LINK SET ROAD_PART_NUMBER = 1, STATUS = 3, START_ADDR_M = 10, END_ADDR_M = 20 WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 2""".execute
       val linksAfterTransfer = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
@@ -2211,7 +2212,8 @@ Left|      |Right
       sqlu"""UPDATE Project_Link Set Road_part_Number = 2, Discontinuity_type = 1, start_addr_m = 0 , end_addr_m = 10 Where project_id = ${project.id} and end_addr_m = 30""".execute
       val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
-      val projectWithReservations = project.copy(reservedParts = reservedParts)
+      val formedParts = projectReservedPartDAO.fetchFormedRoadParts(project.id)
+      val projectWithReservations = project.copy(reservedParts = reservedParts, formedParts = formedParts)
       //Should NOT have error in both tracks
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L))
       when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(ra)
@@ -2410,6 +2412,7 @@ Left|      |Right
       projectLinkDAO.create(links)
       val allLinks = projectLinkDAO.fetchProjectLinks(project.id)
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
+      val formedParts = projectReservedPartDAO.fetchFormedRoadParts(project.id)
 
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L))
       when(mockRoadAddressService.getRoadAddressesFiltered(19999L, 2L)).thenReturn(Seq(ra.last))
@@ -2418,7 +2421,7 @@ Left|      |Right
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(None)
 
-      val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts), g._2).distinct)
+      val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts, formedParts = formedParts), g._2).distinct)
       errors.size should be(0)
       when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(Seq(linearLocations.last))
       when(mockRoadwayAddressMapper.getRoadAddressesByRoadway(any[Seq[Roadway]])).thenReturn(Seq(ra.last))
