@@ -46,6 +46,10 @@ pipeline {
         disableConcurrentBuilds()
     }
 
+    environment {
+        EXECUTION_TARGET = params.TARGET
+    }
+
     stages {
         stage("Setup") {
 
@@ -56,10 +60,10 @@ pipeline {
 
                         def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
 
-                        def EXECUTION_TAGET = get_server(${params.TARGET})
+                        //def EXECUTION_TAGET = get_server(${params.TARGET})
 
                         STAGE_RUN_TASK = [
-                            "ssh ${EXECUTION_TAGET} cd /home/web/viite/current && echo YES |",
+                            "ssh env.EXECUTION_TAGET cd /home/web/viite/current && echo YES |",
                              "/home/web/viite/current/./sbt",
                              "-Ddigiroad2.env=${TARGET}",
                              "\'project digiroad2-viite\'",
