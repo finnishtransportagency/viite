@@ -49,7 +49,6 @@ pipeline {
     stages {
         stage("Setup") {
 
-
             steps {
 
                     //get_server()
@@ -61,11 +60,11 @@ pipeline {
                         //def EXECUTION_TAGET = get_server(${params.TARGET})
 
                         STAGE_RUN_TASK = [
-                            "ssh $execution_target cd /home/web/viite/current && echo YES |",
+                            "ssh $execution_target \'cd /home/web/viite/current && echo YES |",
                              "/home/web/viite/current/./sbt",
                              "-Ddigiroad2.env=${TARGET}",
-                             "\'project digiroad2-viite\'",
-                             "\'test:run-main fi.liikennevirasto.viite.util.DataFixture ${TASK} ${IMPORT_TABLE}\'"
+                             "project digiroad2-viite",
+                             "test:run-main fi.liikennevirasto.viite.util.DataFixture ${TASK} ${IMPORT_TABLE}\'"
                         ].join(" ")
 
                     }
