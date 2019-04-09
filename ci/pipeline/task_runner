@@ -63,8 +63,8 @@ pipeline {
                             "ssh $execution_target \'cd /home/web/viite/current && echo YES |",
                              "/home/web/viite/current/./sbt",
                              "-Ddigiroad2.env=${TARGET}",
-                             "project digiroad2-viite",
-                             "test:run-main fi.liikennevirasto.viite.util.DataFixture ${TASK} ${IMPORT_TABLE}\'"
+                             "\'project digiroad2-viite\'",
+                             "\'test:run-main fi.liikennevirasto.viite.util.DataFixture ${TASK} ${IMPORT_TABLE}\'\'"
                         ].join(" ")
 
                     }
