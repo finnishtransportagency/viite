@@ -1448,7 +1448,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 x.roadNumber == newRoadNumber && x.roadPartNumber == newRoadPartNumber)) // check the original numbering wasn't exactly the same
                 throw new ProjectValidationException(ErrorRenumberingToOriginalNumber) // you cannot use current roadnumber and roadpart number in numbering operation
               if (currentAddresses.nonEmpty)
-                throw new ProjectValidationException(ErrorRenumberingValuesAlreadyInUse)
+                throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
               if (toUpdateLinks.map(pl => (pl.roadNumber, pl.roadPartNumber)).distinct.lengthCompare(1) != 0 ||
                 roadAddresses.map(ra => (ra.roadNumber, ra.roadPartNumber)).distinct.lengthCompare(1) != 0) {
                 throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)
