@@ -46,11 +46,9 @@ pipeline {
         disableConcurrentBuilds()
     }
 
-    def execution_target = get_server(params.TARGET)
-
     stages {
         stage("Setup") {
-
+            def execution_target = get_server(params.TARGET)
 
             steps {
                     //get_server()
