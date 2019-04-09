@@ -48,9 +48,10 @@ pipeline {
 
     stages {
         stage("Setup") {
-            def execution_target = get_server(params.TARGET)
+
 
             steps {
+                    def execution_target = get_server(params.TARGET)
                     //get_server()
                     script {
 
