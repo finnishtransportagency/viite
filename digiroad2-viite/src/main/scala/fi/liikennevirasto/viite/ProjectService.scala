@@ -1986,7 +1986,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       handleTransferAndNumbering(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
       ProjectLinkNameDAO.removeByProject(projectID)
-      Some(s"road addresses created")
       projectLinks.map(_.roadNumber).toSet
     } catch {
       case e: ProjectValidationException =>
