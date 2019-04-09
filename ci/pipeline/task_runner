@@ -61,7 +61,7 @@ pipeline {
                         //def EXECUTION_TAGET = get_server(${params.TARGET})
 
                         STAGE_RUN_TASK = [
-                            "ssh execution_target cd /home/web/viite/current && echo YES |",
+                            "ssh $execution_target cd /home/web/viite/current && echo YES |",
                              "/home/web/viite/current/./sbt",
                              "-Ddigiroad2.env=${TARGET}",
                              "\'project digiroad2-viite\'",
