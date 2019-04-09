@@ -356,22 +356,23 @@ Valitut tielinkit näkyvät kartalla vihreällä korostettuna. Kun valitaan Toim
 
 ![Uusi tieosoite](k43.jpg)
 
-_Kun valitaan toimenpidevalikosta Uusi, oikeaan laitaan ilmestyy näkyviin kentät uuden tieosoitteen syöttämistä varten._ 
+_Kun valitaan toimenpide Uusi, oikeaan laitaan tulee näkyviin kentät uuden tieosoitteen syöttämistä varten._ 
 
 Tietyyppiä voi muokata pudotusvalikosta (3). Tien nimi (4) on pakollinen tieto, kun tien numero on pienempi kuin 70000. Muutokset tallennetaan Tallenna-painikkeella (5). Ennen tallennusta muutokset voi perua Peruuta-painikkeesta. 
 
-Käyttöliittymä varoittaa virheilmoituksella, jos uusi tieosoite on jo olemassa projektin alkupäivänä tai se on varattuna toisessa tieosoiteprojektissa.
+Jos uusi tieosoite on jo olemassa projektin alkupäivänä tai se on varattuna toisessa tieosoiteprojektissa, käyttäjä saa tästä ilmoituksen.
 
 ![Tieosoite on jo olemassa](k44.JPG)
 
 _Tieosoite on jo olemassa projektin alkupäivänä._
 
-![Kasvusuunnan vaihto](k47.JPG)
+Kun tieosoitteen tiedot on tallennettu, lomakkeelle tulee pudotusvalikko, josta valitaan jatkuvuuskoodi (1). Uudelle tieosoitteelle määrittyy aluksi satunnainen kasvusuunta, joka näytetään kartalla pinkeillä nuolilla. Kasvusuunnan voi vaihtaa Käännä tieosan kasvusuunta -painikkeella (2).
+
+![Kasvusuunnan vaihto](k47.jpg)
 
 _Valittuna olevan uuden tieosoitteen kasvusuunta vaihtuu lomakkeen Käännä tieosan kasvusuunta -painikkeesta._
 
-
-Uuden tieosoitteen linkit piirtyvät kartalle pinkillä (2). Tieosan alku- ja loppupisteisiin sijoitetaan automaattisesti etäisyyslukema-symbolit. Viite laskee uudelle tieosuudelle automaattisesti myös linkkien m-arvot käyttäen VVH:n tietoja. Uudelle tieosoitteelle määrittyy aluksi satunnainen kasvusuunta, joka näkyy kartalla pinkkien nuolien suunnasta.
+Uuden tieosoitteen linkit piirtyvät kartalle pinkillä (3). Tieosan alku- ja loppupisteisiin sijoitetaan automaattisesti etäisyyslukema-symbolit. Viite laskee uudelle tieosuudelle automaattisesti myös linkkien m-arvot käyttäen VVH:n tietoja. 
 
 ![Uusi tieosoite pinkilla](k46.JPG)
 
