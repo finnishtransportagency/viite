@@ -47,7 +47,7 @@ pipeline {
     }
 
     environment {
-        EXECUTION_TARGET = ${params.TARGET}
+        EXECUTION_TARGET = '${params.TARGET}'
     }
 
     stages {
