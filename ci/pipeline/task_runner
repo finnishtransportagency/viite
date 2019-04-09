@@ -53,14 +53,11 @@ pipeline {
 
                     //get_server()
                     script {
-                        def execution_target = get_server(params.TARGET)
-
+                        def EXECUTION_TARGET = get_server(params.TARGET)
                         def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
 
-                        //def EXECUTION_TAGET = get_server(${params.TARGET})
-
                         STAGE_RUN_TASK = [
-                            "ssh $execution_target \'cd /home/web/viite/current && echo YES |",
+                            "ssh $EXECUTION_TARGET \'cd /home/web/viite/current && echo YES |",
                              "/home/web/viite/current/./sbt",
                              "-Ddigiroad2.env=${TARGET}",
                              "\"project digiroad2-viite\"",
