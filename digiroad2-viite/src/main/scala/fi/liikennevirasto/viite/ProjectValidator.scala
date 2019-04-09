@@ -108,7 +108,7 @@ class ProjectValidator {
   object ValidationErrorList {
     val values = Set(MinorDiscontinuityFound, MajorDiscontinuityFound, InsufficientTrackCoverage, DiscontinuousAddressScheme,
       SharedLinkIdsExist, NoContinuityCodesAtEnd, UnsuccessfulRecalculation, MissingEndOfRoad, HasNotHandledLinks, ConnectedDiscontinuousLink,
-      IncompatibleDiscontinuityCodes, EndOfRoadNotOnLastPart, ElyCodeChangeDetected, DiscontinuityOnRamp,
+      IncompatibleDiscontinuityCodes, EndOfRoadNotOnLastPart, ElyCodeChangeDetected, DiscontinuityOnRamp, DiscontinuityInsideRoadPart,
       ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
       MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
       ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved)
@@ -354,6 +354,14 @@ class ProjectValidator {
       def value = 27
 
       def message: String = RoadNotReservedMessage
+
+      def notification = true
+    }
+
+    case object DiscontinuityInsideRoadPart extends ValidationError {
+      def value = 28
+
+      def message: String = DiscontinuityInsideRoadPartMessage
 
       def notification = true
     }
@@ -873,8 +881,18 @@ class ProjectValidator {
       discontinuousErrors.toSeq
     }
 
+    def checkDiscontinuityInsideRoadPart: Seq[ValidationErrorDetails] = {
+      val discontinuousErrors = {
+        error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(roadProjectLinks.filter { pl =>
+          val nextLink = roadProjectLinks.find(pl2 => pl2.startAddrMValue == pl.endAddrMValue)
+          (nextLink.nonEmpty && pl.discontinuity == Discontinuous)
+        })
+      }
+      discontinuousErrors.toSeq
+    }
+
     /**
-      * This will evaluate that the last link of the road part has EndOfRoad discontinuity value.
+      * This will evaluate that the last link of the road has EndOfRoad discontinuity value.
       *
       * @return
       */
@@ -1031,6 +1049,7 @@ class ProjectValidator {
       checkContinuityBetweenLinksOnParts,
       checkMinorDiscontinuityBetweenLinksOnPart,
       checkDiscontinuityBetweenLinksOnRamps,
+      checkDiscontinuityInsideRoadPart,
       checkEndOfRoadOnLastPart,
       checkDiscontinuityOnLastPart,
       checkEndOfRoadOutsideOfProject,
