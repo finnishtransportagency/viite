@@ -73,7 +73,8 @@
         insertErrorMessage(errorMessage) +
         formCommon.staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
-        formCommon.staticField('Geometrian Lähde', roadLinkSources)+
+        formCommon.staticField('Geometrian lähde', roadLinkSources)+
+        showLinkId(selected) +
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         selectionForm(project, selection, selected, road) +
@@ -84,6 +85,14 @@
         '</div>'+
         '</div>'+
         '<footer>' + formCommon.actionButtons('project-', projectCollection.isDirty()) + '</footer>');
+    };
+
+    var showLinkId = function(selected){
+      if (selected.length === 1){
+        return '' +
+            formCommon.staticField('Linkin ID', selected[0].linkId);
+        } else {
+           return '';}
     };
 
     var selectionForm = function(project, selection, selected, road) {

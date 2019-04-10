@@ -1889,6 +1889,22 @@ Left|      |Right
     }
   }
 
+  test("Test checkDiscontinuityInsideRoadParts When there are no major discontinuity codes inside a road part Then should not be any error") {
+    runWithRollback {
+      val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad)
+      val allLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
+      val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts), g._2).distinct)
+      errors.size should be(0)
+      sqlu"""UPDATE PROJECT_LINK SET DISCONTINUITY_TYPE = 2  WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 1 AND DISCONTINUITY_TYPE <> 1""".execute
+      val linksAfterTransfer = projectLinkDAO.fetchProjectLinks(project.id)
+      val errorsAfterTransfer = linksAfterTransfer.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts), g._2).distinct)
+      linksAfterTransfer.head.connected(linksAfterTransfer.last) should be(true)
+      //Should return DiscontinuityInsideRoadPart, ConnectedDiscontinuousLink
+      errorsAfterTransfer.size should be(2)
+    }
+  }
+
   test("Test checkRoadContinuityCodes When there is Minor discontinuous ending in ramp road between parts (of any kind) Then should not give any error") {
     runWithRollback {
       val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))

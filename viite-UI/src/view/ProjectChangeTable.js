@@ -183,8 +183,8 @@
         hide();
       });
 
-      changeTable.on('click', "i[id^='label-'][id$='-btn']", function (btn) {
-        sortChanges(btn.toElement);
+      changeTable.on('click', "i[id^='label-'][id$='-btn']", function (event) {
+        sortChanges(event.target);
       });
     }
 
@@ -317,7 +317,6 @@
     }
 
     eventbus.on('projectChangeTable:refresh', function() {
-      bindEvents();
       getChanges();
       enableTableInteractions();
     });
