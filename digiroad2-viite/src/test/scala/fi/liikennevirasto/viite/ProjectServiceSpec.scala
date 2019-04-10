@@ -723,22 +723,22 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         calibrationPoints._1,
         calibrationPoints._2, Anomaly.None, projectLink.status, 12345, 123456)
 
-        mockForProject(id, Seq(p))
+      mockForProject(id, Seq(p))
 
-        val message1project1 = projectService.addNewLinksToProject(Seq(projectLink), id, "U", p.linkId).getOrElse("")
-        val links = projectLinkDAO.fetchProjectLinks(id)
-        links.size should be(0)
-        message1project1 should be("Varattujen tieosien haku tietokannasta epäonnistui. Tie 5 osa 207 ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä 03.03.1972 tai se on varattu toiseen projektiin.") //check that it is reserved in roadaddress table
+      val message1project1 = projectService.addNewLinksToProject(Seq(projectLink), id, "U", p.linkId).getOrElse("")
+      val links = projectLinkDAO.fetchProjectLinks(id)
+      links.size should be(0)
+      message1project1 should be("Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot.") //check that it is reserved in roadaddress table
 
-        val message1project2 = projectService.addNewLinksToProject(Seq(projectLink2), id + 1, "U", p.linkId)
-        val links2 = projectLinkDAO.fetchProjectLinks(id + 1)
-        links2.size should be(2)
-        message1project2 should be(None)
+      val message1project2 = projectService.addNewLinksToProject(Seq(projectLink2), id + 1, "U", p.linkId)
+      val links2 = projectLinkDAO.fetchProjectLinks(id + 1)
+      links2.size should be(2)
+      message1project2 should be(None)
 
-        val message2project1 = projectService.addNewLinksToProject(Seq(projectLink3), id, "U", p.linkId).getOrElse("")
-        val links3 = projectLinkDAO.fetchProjectLinks(id)
+      val message2project1 = projectService.addNewLinksToProject(Seq(projectLink3), id, "U", p.linkId).getOrElse("")
+      val links3 = projectLinkDAO.fetchProjectLinks(id)
       links3.size should be(0)
-      message2project1 should be("Varattujen tieosien haku tietokannasta epäonnistui. Tie 5 osa 999 ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä 03.03.1972 tai se on varattu toiseen projektiin.")
+      message2project1 should be("Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot.")
     }
   }
 
@@ -901,7 +901,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newLink.map(toRoadLink))
       val response = projectService.createProjectLinks(Seq(12345L), project.id, 5, 206, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       response("success").asInstanceOf[Boolean] should be(false)
-      response("errorMessage").asInstanceOf[String] should be("Varattujen tieosien haku tietokannasta epäonnistui. Tie 5 osa 206 ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä 01.01.1901 tai se on varattu toiseen projektiin.")
+      response("errorMessage").asInstanceOf[String] should be("Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot.")
     }
   }
 
