@@ -190,7 +190,7 @@ class ProjectDAO {
 
         val projectState = ProjectState.apply(state)
         val reservedRoadParts = if (projectState == Saved2TR)
-          projectReservedPartDAO.fetchHistoryRoadParts(id).distinct
+          Seq()
         else
           projectReservedPartDAO.fetchReservedRoadParts(id).filterNot(p => p.addressLength.isEmpty && p.ely.isEmpty && p.discontinuity.isEmpty).distinct
 
