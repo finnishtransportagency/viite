@@ -196,7 +196,8 @@ class ProjectReservedPartDAO {
               LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
               WHERE
                 rp.project_id = $projectId
-                AND EXISTS (SELECT id FROM project_link WHERE status != ${LinkStatus.NotHandled.value} AND project_id = rp.project_id)
+                AND EXISTS (SELECT id FROM project_link WHERE status != ${LinkStatus.NotHandled.value} AND project_id = rp.project_id AND ROAD_NUMBER = rp.ROAD_NUMBER
+                AND ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER)
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
             ) gr order by gr.road_number, gr.road_part_number"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
@@ -301,7 +302,8 @@ class ProjectReservedPartDAO {
             AND (pl.STATUS IS NULL
             OR (pl.STATUS != ${LinkStatus.Terminated.value}
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})))
-            AND EXISTS (SELECT id FROM project_link WHERE status != ${LinkStatus.NotHandled.value} AND project_id = rp.project_id)
+            AND EXISTS (SELECT id FROM project_link WHERE status != ${LinkStatus.NotHandled.value} AND project_id = rp.project_id AND ROAD_NUMBER = rp.ROAD_NUMBER
+            AND ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER)
           GROUP BY rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER) gr"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).firstOption.map {
         case (id, road, part, newLength, newEly, newDiscontinuity, linkId) =>
