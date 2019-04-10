@@ -81,7 +81,7 @@ __Huom! Automatiikka ei koskaan muuta tieosan mitattua pituutta. Arvot tieosien 
 3.1 Tieosoitesegmenttien yhdistely tielinkin mittaisiksi osuuksiksi
 --------------------------
 
-Kun käyttäjä valitsee kartalla kohteita kaksoisklikkaamalla (luku 4.1), on pienin valittava yksikkö tielinkin mittainen osuus tieosoiteverkosta, koska tielinkki on pienin mahdollinen yksikkö Maanmittauslaitoksen ylläpitämällä linkkiverkolla.
+Kun käyttäjä valitsee kartalla kohteita kaksoisklikkaamalla (ks.luku 5.1), on pienin valittava yksikkö tielinkin mittainen osuus tieosoiteverkosta, koska tielinkki on pienin mahdollinen yksikkö Maanmittauslaitoksen ylläpitämällä linkkiverkolla.
 
 Tätä varten järjestelmä tekee automaattista yhdistelyä:
 
