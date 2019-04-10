@@ -274,7 +274,7 @@ object ProjectDeltaCalculator {
     val links = transfers.map(_._2)
     val sections = sectioned.flatMap { case (key, (src, targetToMap)) =>
       val matches = matchingTracks(sectioned, key, oppositeSections)
-      val target = targetToMap.map(t => t.copy(projectLinks = links.filter(link => link.roadNumber == t.roadNumber && link.roadPartNumber == t.roadPartNumberEnd && link.track == t.track && link.ely == t.ely &&
+      val target = targetToMap.map(t => t.copy(projectLinks = links.filter(link => link.roadwayNumber == t.roadwayNumber && link.roadNumber == t.roadNumber && link.roadPartNumber == t.roadPartNumberEnd && link.track == t.track && link.ely == t.ely &&
         link.startAddrMValue >= t.startMAddr && link.endAddrMValue <= t.endMAddr)))
       //exclusive 'or' operation, so we don't want to find a matching track when we want to reduce 2 tracks to track 0
       if (matches.nonEmpty && !(key._3 == Track.Combined ^ key._7 == Track.Combined))
