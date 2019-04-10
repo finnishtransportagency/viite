@@ -68,7 +68,7 @@ Kullakin tieosoitesegmentillä on lisäksi tiettyjä sille annettuja ominaisuust
 
 _Tieosoitesegmenttejä (1) ja muita tielinkkejä (2) Viitteen karttaikkunassa._
 
-Tieosoitesegmentit piirretään Viite-sovelluksessa kartalle erilaisin värein (kts. luku 4. Tieosoiteverkon katselu). Muut tielinkit, jotka eivät kuulu tieosoiteverkkoon, piirretään kartalle harmaalla. Näitä ovat esimerkiksi tieosoitteettomat kuntien omistamat tiet, ajopolut, ajotiet.
+Tieosoitesegmentit piirretään Viite-sovelluksessa kartalle erilaisin värein (ks. luku 5. Tieosoiteverkon katselu). Muut tielinkit, jotka eivät kuulu tieosoiteverkkoon, piirretään kartalle harmaalla. Näitä ovat esimerkiksi tieosoitteettomat kuntien omistamat tiet, ajopolut, ajotiet.
 
 Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle, maasto@maanmittauslaitos.fi. Mukaan liitetään selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
 
