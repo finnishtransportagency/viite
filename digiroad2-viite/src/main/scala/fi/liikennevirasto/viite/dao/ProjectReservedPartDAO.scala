@@ -194,7 +194,7 @@ class ProjectReservedPartDAO {
               pl.road_part_number = rp.road_part_number AND pl.status != ${LinkStatus.Terminated.value})
               LEFT JOIN Roadway ra ON (ra.Id = pl.Roadway_Id OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
               LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
-              ) WHERE
+            WHERE
               rp.project_id = $projectId
             AND (EXISTS (SELECT id FROM project_link WHERE status != ${LinkStatus.Terminated.value} AND project_id = rp.project_id AND ROAD_NUMBER = rp.ROAD_NUMBER
             AND ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER) OR
