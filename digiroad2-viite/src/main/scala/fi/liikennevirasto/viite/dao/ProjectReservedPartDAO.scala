@@ -186,23 +186,26 @@ class ProjectReservedPartDAO {
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
             AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) AND ROWNUM < 2) as first_link
           FROM (
-            SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
-              MAX(pl.END_ADDR_M) as length_new,
-              MAX(pl.ely) as ELY_NEW
-              FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
-              PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
-              pl.road_part_number = rp.road_part_number AND pl.status != ${LinkStatus.Terminated.value})
-              LEFT JOIN Roadway ra ON (ra.Id = pl.Roadway_Id OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
-              LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
-            WHERE
-              rp.project_id = $projectId
-            AND (EXISTS (SELECT id FROM project_link WHERE status != ${LinkStatus.Terminated.value} AND project_id = rp.project_id AND ROAD_NUMBER = rp.ROAD_NUMBER
-            AND ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER) OR
-            EXISTS (SELECT lc.link_id FROM linear_location lc LEFT JOIN ROADWAY ra ON ra.roadway_number = lc.roadway_number LEFT JOIN PROJECT_LINK pl ON pl.Linear_location_id = lc.id WHERE pl.status != ${LinkStatus.Terminated.value} AND project_id = rp.project_id
-            AND ra.end_date is null and ra.valid_to is null
-            AND (ra.ROAD_NUMBER != pl.ROAD_NUMBER OR ra.ROAD_PART_NUMBER != pl.ROAD_PART_NUMBER)))
-                GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
-            ) gr order by gr.road_number, gr.road_part_number"""
+            SELECT rp.id, rp.project_id,
+          CASE WHEN ra.road_number IS NULL THEN rp.ROAD_NUMBER
+          ELSE ra.ROAD_NUMBER END AS ROAD_NUMBER,
+          CASE WHEN ra.road_part_number IS NULL THEN rp.ROAD_PART_NUMBER
+          ELSE ra.ROAD_PART_NUMBER END AS ROAD_PART_NUMBER,
+          ABS(NVL(MAX(ra.END_ADDR_M), 0) - NVL(MAX(pl.END_ADDR_M), 0) as length_new,
+          MAX(pl.ely) as ELY_NEW
+          FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
+          PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
+            pl.road_part_number = rp.road_part_number AND pl.status != ${LinkStatus.Terminated.value})
+          LEFT JOIN Roadway ra ON (ra.Id = pl.Roadway_Id OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
+          LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
+          WHERE (rp.project_id = $projectId
+            AND EXISTS (
+            SELECT id FROM project_link
+              WHERE status != ${LinkStatus.NotHandled.value} AND project_id = rp.project_id
+              AND ROAD_NUMBER = rp.ROAD_NUMBER AND ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER
+          ))
+          GROUP BY rp.id, rp.project_id, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER
+          ) gr order by gr.road_number, gr.road_part_number"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
         case (id, road, part, newLength, newEly, newDiscontinuity, startingLinkId) =>
           ProjectReservedPart(id, road, part, None, None, None, newLength,
