@@ -194,12 +194,13 @@ class ProjectReservedPartDAO {
               pl.road_part_number = rp.road_part_number AND pl.status != ${LinkStatus.Terminated.value})
               LEFT JOIN Roadway ra ON (ra.Id = pl.Roadway_Id OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
               LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
-
-              AND (EXISTS (SELECT lc.link_id FROM project_link pl WHERE pl.status != ${LinkStatus.NotHandled.value} AND project_id = rp.project_id AND ROAD_NUMBER = rp.ROAD_NUMBER AND ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER)
-              OR EXISTS(SELECT lc.link_id FROM linear_location lc LEFT JOIN PROJECT_LINK pl ON pl.Linear_location_id = lc.id WHERE pl.link_id IS NULL AND lc.link_id IS NOT NULL AND pl.status != ${LinkStatus.NotHandled.value}
-              AND project_id = rp.project_id)
               ) WHERE
               rp.project_id = $projectId
+            AND (EXISTS (SELECT id FROM project_link WHERE status != ${LinkStatus.Terminated.value} AND project_id = rp.project_id AND ROAD_NUMBER = rp.ROAD_NUMBER
+            AND ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER) OR
+            EXISTS (SELECT lc.link_id FROM linear_location lc LEFT JOIN ROADWAY ra ON ra.roadway_number = lc.roadway_number LEFT JOIN PROJECT_LINK pl ON pl.Linear_location_id = lc.id WHERE pl.status != ${LinkStatus.Terminated.value} AND project_id = rp.project_id
+            AND ra.end_date is null and ra.valid_to is null
+            AND (ra.ROAD_NUMBER != pl.ROAD_NUMBER OR ra.ROAD_PART_NUMBER != pl.ROAD_PART_NUMBER)))
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
             ) gr order by gr.road_number, gr.road_part_number"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
