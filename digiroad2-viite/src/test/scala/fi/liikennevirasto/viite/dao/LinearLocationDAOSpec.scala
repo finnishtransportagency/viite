@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{Point, asset}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -52,7 +53,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id = linearLocationDAO.getNextLinearLocationId
       val orderNumber = 1
-      val linkId = 1000l
+      val linkId = 10l
       val startMValue = 0.0
       val endMValue = 100.0
       val sideCode = SideCode.TowardsDigitizing
@@ -64,6 +65,8 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val linearLocation = LinearLocation(id, orderNumber, linkId, startMValue, endMValue, sideCode, adjustedTimestamp,
         calibrationPoints, geometry, linkSource, roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation))
+      val roadwayPointId = RoadwayPointDAO.create(linearLocation.roadwayNumber, linearLocation.startCalibrationPoint.get, "test")
+      CalibrationPointDAO.create(roadwayPointId, linearLocation.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = "test")
       val loc = linearLocationDAO.fetchById(id).getOrElse(fail())
 
       // Check that the values were saved correctly in database
@@ -73,7 +76,6 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       loc.startMValue should be(startMValue +- 0.001)
       loc.endMValue should be(endMValue +- 0.001)
       loc.sideCode should be(sideCode)
-      loc.adjustedTimestamp should be(adjustedTimestamp)
       loc.calibrationPoints should be(calibrationPoints)
       loc.geometry.head.x should be(geometry.head.x +- 0.001)
       loc.geometry.head.y should be(geometry.head.y +- 0.001)

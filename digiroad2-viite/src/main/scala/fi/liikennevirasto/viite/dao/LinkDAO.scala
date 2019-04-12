@@ -25,11 +25,12 @@ object LinkDAO {
     Q.queryNA[Link](sql).firstOption
   }
 
-//  def create(ids: Seq[Long], adjustedTimestamp: Long, source: Long) = {
-//    val ps = dynamicSession.prepareStatement(
-//      """insert into LINK (id, source, adjusted_timestamp, created_time) values (?, ?, ?, ?)"""
-//    )
-//  }
+  def create(id: Long, adjustedTimestamp: Long, source: Long) = {
+    sqlu"""
+      insert into LINK (id, source, adjusted_timestamp) values (${id}, ${source}, ${adjustedTimestamp})
+      """.execute
+
+  }
 
   def createIfEmptyFetch(id: Long): Unit = {
     if(fetch(id).isEmpty){
