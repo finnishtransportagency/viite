@@ -191,7 +191,8 @@ class ProjectReservedPartDAO {
           ELSE ra.ROAD_NUMBER END AS ROAD_NUMBER,
           CASE WHEN ra.road_part_number IS NULL THEN rp.ROAD_PART_NUMBER
           ELSE ra.ROAD_PART_NUMBER END AS ROAD_PART_NUMBER,
-          ABS(NVL(MAX(ra.END_ADDR_M), 0) - NVL(MAX(pl.END_ADDR_M), 0)) as length_new,
+          CASE WHEN MAX(ra.END_ADDR_M) <= MAX(pl.END_ADDR_M) THEN MAX(pl.END_ADDR_M)
+          ELSE ABS(NVL( MAX(ra.END_ADDR_M), 0) - NVL(MAX(pl.END_ADDR_M), 0)) END AS length_new,
           MAX(pl.ely) as ELY_NEW
           FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
           PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
