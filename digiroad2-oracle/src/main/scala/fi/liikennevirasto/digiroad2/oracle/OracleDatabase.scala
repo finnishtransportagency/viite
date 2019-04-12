@@ -138,4 +138,15 @@ object OracleDatabase {
     }
   }
 
+  def loadRoadsJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
+    // Convert STRUCT into geometry
+    val geom = geometry.map(g => g.asInstanceOf[STRUCT])
+    if (geom.nonEmpty) {
+      val jgeom: JGeometry = JGeometry.load(geom.get)
+      jgeom.getOrdinatesArray.toList.sliding(4, 4).toList.map(p => Point(p.head, p.tail.head, p.tail.tail.head))
+    } else {
+      Seq()
+    }
+  }
+
 }
