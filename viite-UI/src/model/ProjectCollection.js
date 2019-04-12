@@ -509,7 +509,7 @@
     };
 
     this.createProject = function (data, resolution) {
-      var roadPartList = _.map(reservedParts.concat(formedParts), function (part) {
+      var roadPartList = _.map(reservedParts, function (part) {
         return {
           roadNumber: part.roadNumber,
           roadPartNumber: part.roadPartNumber,
@@ -523,7 +523,7 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: roadPartList,
+        reservedPartList: roadPartList,
         resolution: resolution
       };
 
