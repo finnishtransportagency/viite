@@ -1464,7 +1464,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               }
               val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, projectId)
               if (roadPartLinks.exists(rpl => rpl.status == UnChanged || rpl.status == Transfer || rpl.status == New || rpl.status == Terminated)) {
-                throw new ProjectValidationException(ErrorOtherActionWithNumbering)
+                throw new ProjectValidationException(ErrorNumberingActionWithNumbering)
               }
               checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Numbering, toUpdateLinks)
 
@@ -1479,6 +1479,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
 
           case LinkStatus.Transfer =>
+            val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, projectId)
+            if (roadPartLinks.exists(rpl => rpl.status == Numbering)) {
+              throw new ProjectValidationException(ErrorTransferActionWithNumbering)
+            }
             val (replaceable, road, part) = checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Transfer, toUpdateLinks)
             val updated = toUpdateLinks.map(l => {
               l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode),
@@ -1494,6 +1498,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
             if (nameError.nonEmpty)
               return nameError
+
           case LinkStatus.UnChanged =>
             checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.UnChanged, toUpdateLinks)
             // Reset back to original values
@@ -1868,9 +1873,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           logger.error(s"Current network have errors for another project roads, solve Them first.")
         } else {
           val currNetworkVersion = roadNetworkDAO.getLatestRoadNetworkVersionId
-          if (currNetworkVersion.isDefined)
-            eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.get + 1L, throughActor = true))
-          else logger.info(s"There is no published version for the network so far")
+//          if (currNetworkVersion.isDefined)
+//            eventbus.publish("roadAddress:RoadNetworkChecker", RoadCheckOptions(Seq(), roadNumbers.get, currNetworkVersion, currNetworkVersion.get + 1L, throughActor = true))
+//          else logger.info(s"There is no published version for the network so far")
         }
       case None =>
         logger.info(s"During status checking VIITE wasn't able to find TR_ID to project $projectID")
