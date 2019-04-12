@@ -173,40 +173,63 @@ class ProjectReservedPartDAO {
   }
 
   def fetchFormedRoadParts(projectId: Long): Seq[ProjectReservedPart] = {
+    (formedByIncrease(projectId)++formedByReduction(projectId)).sortBy(p => (p.roadNumber, p.roadPartNumber))
+  }
+
+  def formedByIncrease(projectId: Long): Seq[ProjectReservedPart] = {
     time(logger, s"Fetch formed road parts for project: $projectId") {
       val sql =
         s"""SELECT id, road_number, road_part_number, length_new, ely_new,
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
             AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
-            AND END_ADDR_M = (SELECT MAX(pl2.end_addr_m) FROM project_link pl2 where pl2.road_number = gr.road_number AND pl2.road_part_number = gr.road_part_number
-            AND pl2.status != ${LinkStatus.Terminated.value} AND pl2.track IN (${Track.Combined.value}, ${Track.RightSide.value})) AND ROWNUM < 2) as discontinuity_new,
+            AND END_ADDR_M = length_new AND ROWNUM < 2) as discontinuity_new,
           (SELECT LINK_ID FROM PROJECT_LINK pl
             WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
             AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) AND ROWNUM < 2) as first_link
           FROM (
-            SELECT rp.id, rp.project_id,
-          CASE WHEN ra.road_number IS NULL THEN rp.ROAD_NUMBER
-          ELSE ra.ROAD_NUMBER END AS ROAD_NUMBER,
-          CASE WHEN ra.road_part_number IS NULL THEN rp.ROAD_PART_NUMBER
-          ELSE ra.ROAD_PART_NUMBER END AS ROAD_PART_NUMBER,
-          CASE WHEN MAX(ra.END_ADDR_M) <= MAX(pl.END_ADDR_M) THEN MAX(pl.END_ADDR_M)
-          ELSE ABS(NVL( MAX(ra.END_ADDR_M), 0) - NVL(MAX(pl.END_ADDR_M), 0)) END AS length_new,
+            SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
+          MAX(pl.end_addr_m) as length_new,
           MAX(pl.ely) as ELY_NEW
           FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
           PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
             pl.road_part_number = rp.road_part_number AND pl.status != ${LinkStatus.Terminated.value})
           LEFT JOIN Roadway ra ON (ra.Id = pl.Roadway_Id OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
           LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
-          WHERE (rp.project_id = $projectId
-            AND EXISTS (
-            SELECT id FROM project_link
-              WHERE status != ${LinkStatus.NotHandled.value} AND project_id = rp.project_id
-              AND ROAD_NUMBER = rp.ROAD_NUMBER AND ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER
-          ))
-          GROUP BY rp.id, rp.project_id, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER
+          WHERE rp.project_id = $projectId AND pl.status != ${LinkStatus.NotHandled.value}
+          GROUP BY rp.id, rp.project_id, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER
           ) gr order by gr.road_number, gr.road_part_number"""
+      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
+        case (id, road, part, newLength, newEly, newDiscontinuity, startingLinkId) =>
+          ProjectReservedPart(id, road, part, None, None, None, newLength,
+            newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
+      }
+    }
+  }
+
+  def formedByReduction(projectId: Long): Seq[ProjectReservedPart] = {
+    time(logger, s"Fetch formed road parts for project: $projectId") {
+      val sql =
+        s"""SELECT id, road_number, road_part_number, length_new, ELY_NEW, (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = projectid
+            AND pl.road_number = road_number AND pl.road_part_number = road_part_number
+            AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
+            AND END_ADDR_M = length_new
+            AND ROWNUM < 2) AS discontinuity_new,
+            (SELECT LINK_ID FROM PROJECT_LINK pl
+            WHERE pl.project_id = projectid
+            AND pl.road_number = road_number AND pl.road_part_number = road_part_number
+            AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) AND ROWNUM < 2) AS first_link
+            FROM
+            (SELECT DISTINCT rp.id, pl.project_id AS projectid, rw.road_number AS road_number, rw.road_part_number AS road_part_number, MAX(pl.end_addr_m) AS length_new,
+            MAX(pl.ely) AS ELY_NEW
+            FROM linear_location lc, roadway rw, project_link pl, project_reserved_road_part rp WHERE
+            rw.roadway_number = lc.ROADWAY_NUMBER AND
+            rw.road_Number = pl.road_number AND rw.road_part_number = pl.road_part_number AND rp.project_id = pl.project_id AND
+            rp.road_number = pl.road_number AND rp.road_part_number = pl.road_part_number AND
+            lc.id NOT IN (select pl2.linear_location_id from project_link pl2 WHERE pl2.road_number = rw.road_number AND pl2.road_part_number = rw.road_part_number)
+            AND rp.project_id = $projectId AND pl.status = ${LinkStatus.NotHandled.value}
+            GROUP BY rp.id, pl.project_id, rw.road_number, rw.road_part_number) gr ORDER BY gr.road_number, gr.road_part_number"""
       Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long])](sql).list.map {
         case (id, road, part, newLength, newEly, newDiscontinuity, startingLinkId) =>
           ProjectReservedPart(id, road, part, None, None, None, newLength,
