@@ -183,7 +183,7 @@ class LinearLocationDAO {
       val calEndM = r.nextLongOption()
       val linkSource = r.nextInt()
       val adjustedTimestamp = r.nextLong()
-      val geom = OracleDatabase.loadJGeometryToGeometry(r.nextObjectOption())
+      val geom = OracleDatabase.loadRoadsJGeometryToGeometry(r.nextObjectOption())
       val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 
