@@ -8,10 +8,11 @@ object ProjectCalibrationPointDAO {
 
   trait CalibrationPointMValues {
     def segmentMValue: Double
+
     def addressMValue: Long
   }
 
-  trait BaseCalibrationPoint extends CalibrationPointMValues{
+  trait BaseCalibrationPoint extends CalibrationPointMValues {
     def linkId: Long
   }
 
@@ -131,8 +132,8 @@ object ProjectCalibrationPointDAO {
   }
 
   def removeAllCalibrationPoints(projectLinkIds: Set[Long]) = {
-    if(projectLinkIds.nonEmpty)
-    sqlu"""
+    if (projectLinkIds.nonEmpty)
+      sqlu"""
         Delete From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID in (#${projectLinkIds.mkString(",")})
       """.execute
   }
