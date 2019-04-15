@@ -1,11 +1,12 @@
 package fi.liikennevirasto.viite.dao
+
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-case class Link (id: Long, source: Long, adjustedTimestamp: Long, createdTime: Option[DateTime])
+case class Link(id: Long, source: Long, adjustedTimestamp: Long, createdTime: Option[DateTime])
 
 object LinkDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
@@ -21,7 +22,7 @@ object LinkDAO {
   }
 
   def fetch(id: Long): Option[Link] = {
-    val sql= s"""SELECT * FROM LINK where id = $id"""
+    val sql = s"""SELECT * FROM LINK where id = $id"""
     Q.queryNA[Link](sql).firstOption
   }
 
@@ -33,13 +34,12 @@ object LinkDAO {
   }
 
   def createIfEmptyFetch(id: Long): Unit = {
-    if(fetch(id).isEmpty){
+    if (fetch(id).isEmpty) {
       sqlu"""
         INSERT INTO LINK (ID) values (${id})
       """.execute
     }
   }
-
 
 
 }
