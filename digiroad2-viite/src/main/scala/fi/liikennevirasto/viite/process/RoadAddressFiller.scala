@@ -18,12 +18,13 @@ object RoadAddressFiller {
   val roadAddressLinkBuilder = new RoadAddressLinkBuilder(new RoadwayDAO, new LinearLocationDAO, new ProjectLinkDAO)
 
   case class LinearLocationAdjustment(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], geometry: Seq[Point])
+
   case class ChangeSet(
-                      droppedSegmentIds: Set[Long],
-                      adjustedMValues: Seq[LinearLocationAdjustment],
-                      newLinearLocations: Seq[LinearLocation],
-                      //TODO check if this will be needed here at VIITE-1596
-                      unaddressedRoadLink: Seq[UnaddressedRoadLink])
+                        droppedSegmentIds: Set[Long],
+                        adjustedMValues: Seq[LinearLocationAdjustment],
+                        newLinearLocations: Seq[LinearLocation],
+                        //TODO check if this will be needed here at VIITE-1596
+                        unaddressedRoadLink: Seq[UnaddressedRoadLink])
 
   private def extendToGeometry(roadLink: RoadLinkLike, segments: Seq[ProjectAddressLink]): Seq[ProjectAddressLink] = {
     if (segments.isEmpty || segments.exists(_.connectedLinkId.nonEmpty))
@@ -80,7 +81,7 @@ object RoadAddressFiller {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val (overflowingSegments, passThroughSegments) = segments.partition(x => x.startMValue + Epsilon > linkLength)
 
-    val droppedSegmentIds = overflowingSegments.map (s => s.id)
+    val droppedSegmentIds = overflowingSegments.map(s => s.id)
 
     (passThroughSegments, changeSet.copy(droppedSegmentIds = changeSet.droppedSegmentIds ++ droppedSegmentIds))
   }
@@ -88,6 +89,7 @@ object RoadAddressFiller {
   /**
     * If the linear location segment end measure is bigger that the geometry length + ${MaxDistanceDiffAllowed},
     * the linear location segment is cut to fit the all road link geometry
+    *
     * @param roadLink
     * @param segments
     * @param changeSet
@@ -113,7 +115,7 @@ object RoadAddressFiller {
     val lastSegment = sorted.last
     val restSegments = sorted.init
 
-    val (extendedSegments, adjustments) = if((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed ){
+    val (extendedSegments, adjustments) = if ((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed) {
       val newGeom = GeometryUtils.geometrySeqEndPoints(GeometryUtils.truncateGeometry3D(roadLink.geometry, lastSegment.startMValue, linkLength))
       (restSegments ++ Seq(lastSegment.copy(endMValue = linkLength, geometry = newGeom)),
         Seq(LinearLocationAdjustment(lastSegment.id, lastSegment.linkId, None, Option(linkLength), newGeom)))
@@ -126,8 +128,9 @@ object RoadAddressFiller {
 
   /**
     * Drops all the linear locations with length less than ${MinAllowedRoadAddressLength}
-    * @param roadLink The vvh road link
-    * @param segments The linear location on the given road link
+    *
+    * @param roadLink  The vvh road link
+    * @param segments  The linear location on the given road link
     * @param changeSet The resume of changes applied on all the adjust operations
     * @return
     */
@@ -135,7 +138,7 @@ object RoadAddressFiller {
     if (segments.size < 2)
       return (segments, changeSet)
 
-    val (droppedSegments, passThroughSegments) = segments.partition (s => (s.endMValue - s.startMValue) < MinAllowedRoadAddressLength)
+    val (droppedSegments, passThroughSegments) = segments.partition(s => (s.endMValue - s.startMValue) < MinAllowedRoadAddressLength)
 
     val droppedSegmentIds = droppedSegments.map(_.id).toSet
 
@@ -159,7 +162,7 @@ object RoadAddressFiller {
         case ((existingSegments, changeSet), (linkId, roadLinkSegments)) =>
           val roadLinkOption = topologyMap.getOrElse(linkId, Seq()).headOption
           //If there is on segment floating any adjustment should be done for the road link
-          if(roadLinkOption.isEmpty){
+          if (roadLinkOption.isEmpty) {
             (existingSegments ++ roadLinkSegments, changeSet)
           } else {
             val (ajustedSegments, adjustments) = adjustOperations.foldLeft(roadLinkSegments, changeSet) {
@@ -176,6 +179,7 @@ object RoadAddressFiller {
     * Generate unaddressed road address links only for the all road link, missing unaddressed parts of the road link are generated
     * by batch process
     * ATTENTION: We can in the future also crete here unaddressed parts if needed.
+    *
     * @param roadLink
     * @param roadAddresses
     * @return
@@ -197,7 +201,7 @@ object RoadAddressFiller {
     }
   }
 
-  private def generateSegments(topology: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink]  = {
+  private def generateSegments(topology: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     roadAddresses.map(ra => roadAddressLinkBuilder.build(topology, ra))
   }
 
@@ -211,7 +215,7 @@ object RoadAddressFiller {
     topology.flatMap {
       roadLink =>
         val segments = roadAddressesMap.getOrElse(roadLink.linkId, Seq())
-        fillOperations.flatMap(operation =>  operation(roadLink, segments))
+        fillOperations.flatMap(operation => operation(roadLink, segments))
     }
   }
 }

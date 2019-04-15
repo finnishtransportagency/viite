@@ -121,7 +121,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     id
   }
 
-  private def insertCalibrationPoint(calibrationPointStatement: PreparedStatement, calibrationPoint: CalibrationPoint) : Unit = {
+  private def insertCalibrationPoint(calibrationPointStatement: PreparedStatement, calibrationPoint: CalibrationPoint): Unit = {
     calibrationPointStatement.setLong(1, calibrationPoint.roadwayPointId)
     calibrationPointStatement.setLong(2, calibrationPoint.linkId)
     calibrationPointStatement.setLong(3, calibrationPoint.startOrEnd)
@@ -305,26 +305,26 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def handlePoints(roadwayPointPs: PreparedStatement, calibrationPointPs: PreparedStatement, startCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)], endCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)]): Unit = {
-    if(startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id == NewRoadwayPointId){
+    if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id == NewRoadwayPointId) {
       val roadwayPointId = insertRoadwayPoint(roadwayPointPs, startCalibrationPoint.get._1)
       insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2.copy(roadwayPointId = roadwayPointId))
     }
-    else if(startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id != NewRoadwayPointId && startCalibrationPoint.get._2.id == NewCalibrationPointId){
+    else if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id != NewRoadwayPointId && startCalibrationPoint.get._2.id == NewCalibrationPointId) {
       insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2)
     }
-    if(endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id == NewRoadwayPointId){
+    if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id == NewRoadwayPointId) {
       val roadwayPointId = insertRoadwayPoint(roadwayPointPs, endCalibrationPoint.get._1)
       insertCalibrationPoint(calibrationPointPs, endCalibrationPoint.get._2.copy(roadwayPointId = roadwayPointId))
     }
-    else if(endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id != NewRoadwayPointId && endCalibrationPoint.get._2.id == NewCalibrationPointId){
+    else if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id != NewRoadwayPointId && endCalibrationPoint.get._2.id == NewCalibrationPointId) {
       insertCalibrationPoint(calibrationPointPs, endCalibrationPoint.get._2)
     }
   }
 
   private def insertLinks(statement: PreparedStatement, links: Set[Long]): Unit = {
-    links.foreach{
+    links.foreach {
       link =>
-        if(LinkDAO.fetch(link).isEmpty){
+        if (LinkDAO.fetch(link).isEmpty) {
           statement.setLong(1, link)
           statement.addBatch()
         }
@@ -372,38 +372,36 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def getStartCalibrationPoint(convertedAddress: ConversionAddress): Option[(RoadwayPoint, CalibrationPoint)] = {
     convertedAddress.calibrationCode match {
-      case AtBeginning | AtBoth =>
-        {
-          val existingRoadwayPoint = RoadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.startAddressM)
-          existingRoadwayPoint match {
-            case Some(x) =>
-              val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPoint(x.id)
-              if(existingCalibrationPoint.isDefined)
-                Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
-              else
-                Some((existingRoadwayPoint.get, CalibrationPoint(NewCalibrationPointId, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, 0, CalibrationPointType.Mandatory, createdBy = "import" )))
-            case _ =>
-              Some(RoadwayPoint(NewRoadwayPointId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, "import"), CalibrationPoint(NewCalibrationPointId, NewRoadwayPointId, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, 0, CalibrationPointType.Mandatory, createdBy = "import" ))
-          }
+      case AtBeginning | AtBoth => {
+        val existingRoadwayPoint = RoadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.startAddressM)
+        existingRoadwayPoint match {
+          case Some(x) =>
+            val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPoint(x.id)
+            if (existingCalibrationPoint.isDefined)
+              Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
+            else
+              Some((existingRoadwayPoint.get, CalibrationPoint(NewCalibrationPointId, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, 0, CalibrationPointType.Mandatory, createdBy = "import")))
+          case _ =>
+            Some(RoadwayPoint(NewRoadwayPointId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, "import"), CalibrationPoint(NewCalibrationPointId, NewRoadwayPointId, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, 0, CalibrationPointType.Mandatory, createdBy = "import"))
         }
+      }
       case _ => None
     }
   }
 
   private def getEndCalibrationPoint(convertedAddress: ConversionAddress): Option[(RoadwayPoint, CalibrationPoint)] = {
     convertedAddress.calibrationCode match {
-      case AtEnd | AtBoth =>
-      {
+      case AtEnd | AtBoth => {
         val existingRoadwayPoint = RoadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.endAddressM)
         existingRoadwayPoint match {
           case Some(x) =>
             val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPoint(x.id)
-            if(existingCalibrationPoint.isDefined)
+            if (existingCalibrationPoint.isDefined)
               Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
             else
-              Some((existingRoadwayPoint.get, CalibrationPoint(NewCalibrationPointId, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, 1, CalibrationPointType.Mandatory, createdBy = "import" )))
+              Some((existingRoadwayPoint.get, CalibrationPoint(NewCalibrationPointId, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, 1, CalibrationPointType.Mandatory, createdBy = "import")))
           case _ =>
-            Some(RoadwayPoint(NewRoadwayPointId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, "import"), CalibrationPoint(NewCalibrationPointId, NewRoadwayPointId, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, 1, CalibrationPointType.Mandatory, createdBy = "import" ))
+            Some(RoadwayPoint(NewRoadwayPointId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, "import"), CalibrationPoint(NewCalibrationPointId, NewRoadwayPointId, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, 1, CalibrationPointType.Mandatory, createdBy = "import"))
         }
       }
       case _ => None
