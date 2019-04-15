@@ -486,9 +486,9 @@ Tarkastusilmoitus koostuu seuraavista kentistä:
 
 ![Tarkastusilmoitus](k50.JPG)
 
-_Tielinkki 6634188 on tieosan viimeinen linkki mutta siltä puuttuu jatkuvuuskoodi Tien loppu._ 
+_Tielinkki 7304402 on tieosan viimeinen linkki, mutta siltä puuttuu jatkuvuuskoodi Tien loppu._ 
 
-Karttanäkymä kohdistuu tarkastusilmoituksen kohteena olevan tielinkin keskikohtaan painamalla Korjaa-painiketta. Painamalla Korjaa-nappia uudestaan kohdistus siirtyy seuraavaan tielinkkiin, jos sama tarkastus kohdistuu useampaan linkkiin. Käyttäjä voi nyt valita tarkastusilmoituksen kohteena olevan tielinkin ja tehdä sille korjaavan toimenpiteen. 
+Karttanäkymä kohdistuu tarkastusilmoituksen kohteena olevan tielinkin keskikohtaan painamalla Korjaa-painiketta. Painiketta uudestaan klikkaamalla kohdistus siirtyy seuraavaan tielinkkiin, jos sama tarkastus kohdistuu useampaan linkkiin. Käyttäjä voi nyt valita tarkastusilmoituksen kohteena olevan tielinkin ja tehdä sille korjaavan toimenpiteen. 
 
 ####Tieosoiteprojektissa tehtävät tarkastukset:####
 
