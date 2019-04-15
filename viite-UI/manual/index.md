@@ -425,8 +425,11 @@ Tämän jälkeen siirtoon ja kääntöön voi valita lisää linkkejä tieltä 1
 
 ![Siirto ja kääntö](k48.jpg)
 
-_Kuvasarjassa siirretään osa tiestä 14 tielle 459. Tieosoitteiden kasvusuunnat teillä ovat vastakkaiset, jolloin siirrossa tien 14 kasvusuunta kääntyy._
+![Siirto ja kääntö](k51.jpg)
 
+![Siirto ja kääntö](k52.jpg)
+
+_Kuvasarjassa siirretään osa tiestä 14 tielle 459. Tieosoitteiden kasvusuunnat teillä ovat vastakkaiset, jolloin siirrossa tien 14 kasvusuunta kääntyy._
 
 
 _Manuaalinen kääntö siirron ja numeroinnin yhteydessä:_
@@ -522,7 +525,7 @@ Muutosilmoitus viedään tierekisteriin avaamalla ensin yhteenvetotaulukko klikk
 
 ![Muutosilmoituksen painike](k38.jpg)
 
-_Muutosilmoitukse lähetyspainike oikeassa alakulmassa._
+_Muutosilmoituksen lähetyspainike oikeassa alakulmassa._
 
 Kun muutosilmoitus on lähetetty, muuttuu projektilistauksessa ko. projektin tilatidoksi Lähetetty tierekisteriin. Viite-sovellus tarkistaa minuutin välein Tierekisteristä, onko muutos käsitelty Tierekisterissä loppuun asti. Kun tämä on tehty onnistuneesti, tilatiedoksi tulee Viety tierekisteriin ja projekti on valmis. Mikäli muutosilmoitus ei ole mennyt läpi Tierekisterissä, tilaksi päivittyy Virhe tierekisterissä ja listalle tulee oranssi Avaa uudelleen -painike. Viemällä hiiren Virhe tierekisterissä -tekstin päälle virheen infolaatikko tulee näkyviin. Virhe korjataan avaamalla projekti ja tekemällä tarvittavat muokkaukset, jonka jälkeen ilmoitus lähetetään uudelleen Tierekisteriin.  
 
