@@ -58,22 +58,22 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       }.values.flatten.toSeq
   }
 
-  private def createAddressMap(sources: Seq[ChangeInfo]): Seq[LinearLocationMapping] = {
-    val pseudoGeom = Seq(Point(0.0, 0.0), Point(1.0, 0.0))
-    fuseLengthChanges(sources).map(ci => {
-      ci.changeType match {
-        case CombinedModifiedPart | CombinedRemovedPart | DividedModifiedPart | DividedNewPart =>
-          logger.debug("Change info> oldId: " + ci.oldId + " newId: " + ci.newId + " changeType: " + ci.changeType)
-          Some(LinearLocationMapping(ci.oldId.get, ci.newId.get, 0, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
-            ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
-        case LengthenedCommonPart | LengthenedNewPart | ShortenedCommonPart | ShortenedRemovedPart =>
-          logger.debug("Change info, length change > oldId: " + ci.oldId + " newId: " + ci.newId + " changeType: " + ci.changeType + s" $ci")
-          Some(LinearLocationMapping(ci.oldId.get, ci.newId.get, 0, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
-            ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
-        case _ => None
-      }
-    }).filter(c => c.isDefined).map(_.get)
-  }
+//  private def createAddressMap(sources: Seq[ChangeInfo]): Seq[LinearLocationMapping] = {
+//    val pseudoGeom = Seq(Point(0.0, 0.0), Point(1.0, 0.0))
+//    fuseLengthChanges(sources).map(ci => {
+//      ci.changeType match {
+//        case CombinedModifiedPart | CombinedRemovedPart | DividedModifiedPart | DividedNewPart =>
+//          logger.debug("Change info> oldId: " + ci.oldId + " newId: " + ci.newId + " changeType: " + ci.changeType)
+//          Some(LinearLocationMapping(ci.oldId.get, ci.newId.get, 0, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
+//            ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
+//        case LengthenedCommonPart | LengthenedNewPart | ShortenedCommonPart | ShortenedRemovedPart =>
+//          logger.debug("Change info, length change > oldId: " + ci.oldId + " newId: " + ci.newId + " changeType: " + ci.changeType + s" $ci")
+//          Some(LinearLocationMapping(ci.oldId.get, ci.newId.get, 0, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
+//            ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
+//        case _ => None
+//      }
+//    }).filter(c => c.isDefined).map(_.get)
+//  }
 
 //  private def applyChanges(changes: Seq[Seq[ChangeInfo]], roadAddresses: Map[(Long, Long), Seq[RoadAddress]]): Map[(Long, Long), Seq[RoadAddress]] = {
 //    changes.foldLeft(roadAddresses) { case (addresses, changeInfo) =>

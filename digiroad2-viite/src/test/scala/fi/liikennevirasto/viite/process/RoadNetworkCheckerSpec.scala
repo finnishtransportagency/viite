@@ -15,7 +15,7 @@ import org.scalatest.{FunSuite, Matchers}
 
 class RoadNetworkCheckerSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val floatingChecker = new RoadNetworkChecker(roadLinkService = mockRoadLinkService)
+  val networkChecker = new RoadNetworkChecker(roadLinkService = mockRoadLinkService)
 
   test("Geometry subtracted by more than 1 meter should trigger floating check") {
     val geometry = Seq(Point(0.0, 0.0), Point(60.0, 0.0), Point(60.0, 9.844))
@@ -28,22 +28,22 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
     )
     val link = RoadLink(12L, geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
       Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    floatingChecker.isGeometryChange(link, roadAddressSeq) should be(false)
+    networkChecker.isGeometryChange(link, roadAddressSeq) should be(false)
 
     val truncatedGeomLink = link.copy(
       geometry = GeometryUtils.truncateGeometry2D(geometry, 1.01, 69.844), length = 68.834)
 
-    floatingChecker.isGeometryChange(truncatedGeomLink, roadAddressSeq) should be(true)
+    networkChecker.isGeometryChange(truncatedGeomLink, roadAddressSeq) should be(true)
 
     val additionalGeomLink = link.copy(
       geometry = geometry ++ Seq(Point(60.0, 10.854)), length = 70.854)
 
-    floatingChecker.isGeometryChange(additionalGeomLink, roadAddressSeq) should be(true)
+    networkChecker.isGeometryChange(additionalGeomLink, roadAddressSeq) should be(true)
 
     val subtractedGeom = link.copy(
       geometry = Seq(Point(0.0, 0.0), Point(59.5, -1.1), Point(59.5, 9.844)), length = 70.454)
 
-    floatingChecker.isGeometryChange(subtractedGeom, roadAddressSeq) should be(true)
+    networkChecker.isGeometryChange(subtractedGeom, roadAddressSeq) should be(true)
   }
 
   test("Geometry subtracted by less than 1 meter should not trigger floating check") {
@@ -57,11 +57,11 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
     )
     val link = RoadLink(12L, geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
       Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    floatingChecker.isGeometryChange(link, roadAddressSeq) should be(false)
+    networkChecker.isGeometryChange(link, roadAddressSeq) should be(false)
 
-    floatingChecker.isGeometryChange(link.copy(
+    networkChecker.isGeometryChange(link.copy(
       geometry = GeometryUtils.truncateGeometry2D(geometry, 0.99, 69.844), length = 68.944), roadAddressSeq) should be(false)
-    floatingChecker.isGeometryChange(link.copy(
+    networkChecker.isGeometryChange(link.copy(
       geometry = geometry ++ Seq(Point(60.0, 10.834)), length = 70.834), roadAddressSeq) should be(false)
   }
 
@@ -78,6 +78,6 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
     val link = RoadLink(6474047L, roadLinkGeometry, 69.87700000000001, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
       Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
-    floatingChecker.isGeometryChange(link, roadAddressSeq) should be(false)
+    networkChecker.isGeometryChange(link, roadAddressSeq) should be(false)
   }
 }
