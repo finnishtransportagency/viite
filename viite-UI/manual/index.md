@@ -522,7 +522,7 @@ Muutosilmoitus viedään tierekisteriin avaamalla ensin yhteenvetotaulukko klikk
 
 ![Muutosilmoituksen painike](k38.jpg)
 
-_Muutosilmoituspainike oikeassa alakulmassa._
+_Muutosilmoitukse lähetyspainike oikeassa alakulmassa._
 
 Kun muutosilmoitus on lähetetty, muuttuu projektilistauksessa ko. projektin tilatidoksi Lähetetty tierekisteriin. Viite-sovellus tarkistaa minuutin välein Tierekisteristä, onko muutos käsitelty Tierekisterissä loppuun asti. Kun tämä on tehty onnistuneesti, tilatiedoksi tulee Viety tierekisteriin ja projekti on valmis. Mikäli muutosilmoitus ei ole mennyt läpi Tierekisterissä, tilaksi päivittyy Virhe tierekisterissä ja listalle tulee oranssi Avaa uudelleen -painike. Viemällä hiiren Virhe tierekisterissä -tekstin päälle virheen infolaatikko tulee näkyviin. Virhe korjataan avaamalla projekti ja tekemällä tarvittavat muokkaukset, jonka jälkeen ilmoitus lähetetään uudelleen Tierekisteriin.  
 
