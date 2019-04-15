@@ -271,7 +271,7 @@ Keskeneräisen projektin voi poistaa Poista projekti –painikkeella (9), jolloi
 
 _Kun tieosa on varattu projektiin, Viite kohdistaa kartan siten, että tieosa näkyy kartalla kokonaisuudessaan._  
 
-Varauksen yhteydessä järjestelmä tekee varattaville tieosille tarkistukset:
+Varauksen yhteydessä järjestelmä tekee varattaville tieosille tarkastukset:
 
 - Onko varattava tieosa olemassa projektin voimaantulopäivänä
 - Onko varattava tieosa vapaana vai onko se jo varattu toiseen projektiin
@@ -507,7 +507,7 @@ Jatkuvuuden tarkastukset:
 - Tieosan sisällä epäjatkuvuuskohdissa (aukkopaikka yli 0,1 m) jatkuvuuskoodi tulee olla 4 (lievä epäjatkuvuus). 
 Tieosan sisäisen epäjatkuvuuden pituudelle ei ole asetettu ylärajaa.
 
-- Tieosan lopussa tulee olla jatkuvuuskoodi 2 (epäjatkuva) tai 4 (lievä epäjatkuvuus), jos ennen tien seuraavaa tieosaa on epäjatkuvuuskohta. Seuraavaa tieosaa ei ole välttämättä valittu projektiin, joten tarkistus huomioi myös projektin ulkopuoliset tieosat.
+- Tieosan lopussa tulee olla jatkuvuuskoodi 2 (epäjatkuva) tai 4 (lievä epäjatkuvuus), jos ennen tien seuraavaa tieosaa on epäjatkuvuuskohta. Seuraavaa tieosaa ei ole välttämättä valittu projektiin, joten tarkastus huomioi myös projektin ulkopuoliset tieosat.
 
 - Tieosoitteen viimeisellä (suurin tieosanumero) tieosalla tulee olla jatkuvuuskoodi 1 (tien loppu)
 
