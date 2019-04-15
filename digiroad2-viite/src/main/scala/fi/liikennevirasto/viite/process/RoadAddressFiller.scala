@@ -160,7 +160,6 @@ object RoadAddressFiller {
       linearLocationMap.foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
         case ((existingSegments, changeSet), (linkId, roadLinkSegments)) =>
           val roadLinkOption = topologyMap.getOrElse(linkId, Seq()).headOption
-          //If there is on segment floating any adjustment should be done for the road link
           if (roadLinkOption.isEmpty) {
             (existingSegments ++ roadLinkSegments, changeSet)
           } else {
