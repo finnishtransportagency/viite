@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
 

@@ -1,146 +1,107 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.dao.Sequences
+import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 object CalibrationPointDAO {
 
-  trait CalibrationPointMValues {
-    def segmentMValue: Double
-    def addressMValue: Long
+  sealed trait CalibrationPointType {
+    def value: Int
   }
 
-  trait BaseCalibrationPoint extends CalibrationPointMValues{
-    def linkId: Long
+  object CalibrationPointType {
+    val values = Set(Optional, SemiMandatory, Mandatory)
+
+    def apply(intValue: Int): CalibrationPointType = {
+      values.find(_.value == intValue).getOrElse(Optional)
+    }
+
+    case object Optional extends CalibrationPointType {def value = 0}
+    case object SemiMandatory extends CalibrationPointType {def value = 1;}
+    case object Mandatory extends CalibrationPointType {def value = 2;}
   }
 
-  case class UserDefinedCalibrationPoint(id: Long, projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues
+  case class CalibrationPoint(id: Long, roadwayPointId: Long, linkId: Long, roadwayNumber: Long, addrM: Long, startOrEnd: Long, typeCode: CalibrationPointType, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String, createdTime: Option[DateTime] = None)
 
-  implicit val getCalibrationPoint = new GetResult[UserDefinedCalibrationPoint] {
+  implicit val getRoadwayPointRow = new GetResult[CalibrationPoint] {
     def apply(r: PositionedResult) = {
+      val calibrationPointId = r.nextLong()
+      val roadwayPointId = r.nextLong()
+      val linkId = r.nextLong()
+      val roadwayNumber = r.nextLong()
+      val addrMValue = r.nextLong()
+      val startOrEnd = r.nextLong()
+      val typeCode = CalibrationPointType.apply(r.nextLong().toInt)
+      val validFrom = r.nextDateOption().map(d => new DateTime(d.getTime))
+      val validTo = r.nextDateOption().map(d => new DateTime(d.getTime))
+      val createdBy = r.nextString()
+      val createdTime = r.nextDateOption().map(d => new DateTime(d.getTime))
 
-      val id = r.nextLong()
-      val projectLinkId = r.nextLong()
-      val projectId = r.nextLong()
-      val segmentMValue = r.nextDouble()
-      val addressMValue = r.nextLong()
-
-      UserDefinedCalibrationPoint(id, projectLinkId, projectId, segmentMValue, addressMValue)
-    }
-
-  }
-
-
-  def findCalibrationPointById(id: Long): Option[UserDefinedCalibrationPoint] = {
-    val baseQuery =
-      s"""
-         Select * From PROJECT_CALIBRATION_POINT Where ID = ${id}
-       """
-
-    val tuples = Q.queryNA[UserDefinedCalibrationPoint](baseQuery).list
-    tuples.groupBy(_.id).map {
-      case (id, calibrationPointList) =>
-        calibrationPointList.head
-    }.toList.headOption
-  }
-
-  def findCalibrationPointByRemainingValues(projectLinkId: Long, projectId: Long, segmentMValue: Double, epsilon: Double = 0.1): Seq[UserDefinedCalibrationPoint] = {
-    val baseQuery =
-      s"""
-         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From PROJECT_CALIBRATION_POINT Where
-         PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId And ABS(LINK_M - $segmentMValue) < $epsilon
-       """
-
-    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map {
-      case (id, linkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id, linkId, prId, linkM, addressM)
+      CalibrationPoint(calibrationPointId, roadwayPointId, linkId, roadwayNumber, addrMValue, startOrEnd, typeCode, validFrom, validTo, createdBy, createdTime)
     }
   }
 
-  def findEndCalibrationPoint(projectLinkId: Long, projectId: Long): Seq[UserDefinedCalibrationPoint] = {
-    val baseQuery =
-      s"""
-         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId
-         And ADDRESS_M = (Select Max(Address_M) from PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId)
+
+  def create(calibrationPoint: CalibrationPoint): Unit = {
+    sqlu"""
+      Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES
+      (${Sequences.nextCalibrationPointId}, ${calibrationPoint.roadwayPointId}, ${calibrationPoint.linkId}, ${calibrationPoint.startOrEnd}, ${calibrationPoint.typeCode.value}, ${calibrationPoint.createdBy})
+      """.execute
+  }
+
+  def create(roadwayPointId: Long, linkId: Long, startOrEnd: Long, calType: CalibrationPointType, createdBy: String) = {
+    sqlu"""
+      Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES
+      (${Sequences.nextCalibrationPointId}, $roadwayPointId, $linkId, $startOrEnd, ${calType.value}, $createdBy)
+      """.execute
+  }
+
+  def fetch(id:Long) : CalibrationPoint = {
+    sql"""
+         SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+         FROM CALIBRATION_POINT CP
+         JOIN ROADWAY_POINT RP
+          ON RP.ID = CP.ROADWAY_POINT_ID
+         WHERE cp.id = $id
+     """.as[CalibrationPoint].first
+  }
+
+  def fetch(linkId:Long, startOrEnd: Long) : Option[CalibrationPoint] = {
+    sql"""
+         SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+         FROM CALIBRATION_POINT CP
+         JOIN ROADWAY_POINT RP
+          ON RP.ID = CP.ROADWAY_POINT_ID
+         WHERE cp.link_id = $linkId and start_end = $startOrEnd
+     """.as[CalibrationPoint].firstOption
+  }
+
+  def fetchByRoadwayPoint(roadwayPointId:Long) : Option[CalibrationPoint] = {
+    sql"""
+         SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+         FROM CALIBRATION_POINT CP
+         JOIN ROADWAY_POINT RP
+          ON RP.ID = CP.ROADWAY_POINT_ID
+         WHERE cp.roadway_point_id = $roadwayPointId
+     """.as[CalibrationPoint].firstOption
+  }
+
+  def fetch(calibrationPointsLinkIds: Seq[Long], startOrEnd: Long): Seq[CalibrationPoint] = {
+    val whereClause = calibrationPointsLinkIds.map(p => s" (link_id = $p and start_end = $startOrEnd)").mkString(" where ", " or ", "")
+    val query = s"""
+     SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+     FROM CALIBRATION_POINT CP
+     JOIN ROADWAY_POINT RP
+     ON RP.ID = CP.ROADWAY_POINT_ID
+      $whereClause
        """
-
-    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map {
-      case (id, linkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id, linkId, prId, linkM, addressM)
-    }
+    queryList(query)
   }
 
-  def findCalibrationPointsOfRoad(projectId: Long, projectLinkId: Long): Seq[UserDefinedCalibrationPoint] = {
-    val baseQuery =
-      s"""
-         Select ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID = $projectLinkId And PROJECT_ID = $projectId
-       """
-
-    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map {
-      case (id, projectLinkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id, projectLinkId, prId, linkM, addressM)
-    }
+  private def queryList(query: String): Seq[CalibrationPoint] = {
+    Q.queryNA[CalibrationPoint](query).list
   }
-
-  def fetchByRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Seq[UserDefinedCalibrationPoint] = {
-    val baseQuery =
-      s"""
-         Select PROJECT_CALIBRATION_POINT.ID, PROJECT_LINK_ID, pl.PROJECT_ID, LINK_M, ADDRESS_M From PROJECT_CALIBRATION_POINT JOIN PROJECT_LINK pl
-           ON (pl.ID = PROJECT_CALIBRATION_POINT.PROJECT_LINK_ID)
-         WHERE pl.ROAD_NUMBER = $roadNumber AND pl.ROAD_PART_NUMBER = $roadPartNumber
-         AND pl.PROJECT_ID = $projectId
-       """
-
-    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map {
-      case (id, projectLinkId, prId, linkM, addressM) => UserDefinedCalibrationPoint(id, projectLinkId, prId, linkM, addressM)
-    }
-  }
-
-  def createCalibrationPoint(calibrationPoint: UserDefinedCalibrationPoint): Long = {
-    val nextCalibrationPointId = sql"""select PROJECT_CAL_POINT_ID_SEQ.nextval from dual""".as[Long].first
-    sqlu"""
-      Insert Into PROJECT_CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M) Values
-      (${nextCalibrationPointId}, ${calibrationPoint.projectLinkId}, ${calibrationPoint.projectId}, ${calibrationPoint.segmentMValue}, ${calibrationPoint.addressMValue})
-      """.execute
-    nextCalibrationPointId
-  }
-
-  def createCalibrationPoint(projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long): Long = {
-    val nextCalibrationPointId = sql"""select PROJECT_CAL_POINT_ID_SEQ.nextval from dual""".as[Long].first
-    sqlu"""
-      Insert Into PROJECT_CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M) Values
-      (${nextCalibrationPointId}, ${projectLinkId}, ${projectId}, ${segmentMValue}, ${addressMValue})
-      """.execute
-    nextCalibrationPointId
-  }
-
-  def updateSpecificCalibrationPointMeasures(id: Long, segmentMValue: Double, addressMValue: Long) = {
-    sqlu"""
-        Update PROJECT_CALIBRATION_POINT Set LINK_M = ${segmentMValue}, ADDRESS_M = ${addressMValue} Where ID = ${id}
-      """.execute
-  }
-
-  def removeSpecificCalibrationPoint(id: Long) = {
-    sqlu"""
-        Delete From PROJECT_CALIBRATION_POINT Where ID = ${id}
-      """.execute
-  }
-
-  def removeAllCalibrationPointsFromRoad(projectLinkId: Long, projectId: Long) = {
-    sqlu"""
-        Delete From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID = ${projectLinkId} And PROJECT_ID  = ${projectId}
-      """.execute
-  }
-
-  def removeAllCalibrationPoints(projectLinkIds: Set[Long]) = {
-    if(projectLinkIds.nonEmpty)
-    sqlu"""
-        Delete From PROJECT_CALIBRATION_POINT Where PROJECT_LINK_ID in (#${projectLinkIds.mkString(",")})
-      """.execute
-  }
-
-  def removeAllCalibrationPointsFromProject(projectId: Long) = {
-    sqlu"""
-        Delete From PROJECT_CALIBRATION_POINT Where PROJECT_ID  = ${projectId}
-      """.execute
-  }
-
 }

@@ -5,8 +5,8 @@ import org.scalatest.{FunSuite, Matchers}
 class ValidityPeriodTest extends FunSuite with Matchers {
 
   test("testAnd with basic case") {
-    def valid1 = ValidityPeriod(0, 5, ValidityPeriodDayOfWeek.Weekday, 0, 0)
-    def valid2 = ValidityPeriod(3, 8, ValidityPeriodDayOfWeek.Weekday, 0, 0)
+    def valid1 = ValidityPeriod(0, 5, ValidityPeriodDayOfWeek.Weekday, 0)
+    def valid2 = ValidityPeriod(3, 8, ValidityPeriodDayOfWeek.Weekday, 0)
     def hoursOnly = valid1.and(valid2)
     hoursOnly.isEmpty should be (false)
     hoursOnly.get.startMinute should be (0)

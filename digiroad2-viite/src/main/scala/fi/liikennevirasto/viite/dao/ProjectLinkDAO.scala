@@ -2,8 +2,6 @@ package fi.liikennevirasto.viite.dao
 
 import java.util.Date
 
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
@@ -12,9 +10,8 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -71,7 +68,7 @@ case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue:
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, originalStartAddrMValue: Long, originalEndAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
-                       calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None), floating: FloatingReason = NoFloating,
+                       calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None),
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadwayId: Long, linearLocationId: Long,
                        ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, roadwayNumber: Long = NewRoadwayNumber, roadName: Option[String] = None, roadAddressLength: Option[Long] = None,
@@ -201,7 +198,7 @@ class ProjectLinkDAO {
     WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
     WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROADWAY.START_DATE
     ELSE PRJ.START_DATE END as start_date,
-  CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE ELSE null END as end_date,
+  CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE - 1 ELSE null END as end_date,
   PROJECT_LINK.ADJUSTED_TIMESTAMP,
   CASE
     WHEN rn.road_name IS NOT NULL AND rn.END_DATE IS NULL AND rn.VALID_TO IS null THEN rn.road_name
@@ -233,7 +230,7 @@ class ProjectLinkDAO {
             WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
             WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROADWAY.START_DATE
             ELSE PRJ.START_DATE END as start_date,
-          CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE ELSE null END as end_date,
+          CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE - 1 ELSE null END as end_date,
           plh.ADJUSTED_TIMESTAMP,
           CASE
             WHEN rn.road_name IS NOT NULL AND rn.END_DATE IS NULL AND rn.VALID_TO IS null THEN rn.road_name
@@ -298,7 +295,7 @@ class ProjectLinkDAO {
 
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddrMValue, originalEndAddrMValue, startDate, endDate,
-        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), NoFloating, OracleDatabase.loadJGeometryToGeometry(geom), projectId,
+        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), OracleDatabase.loadJGeometryToGeometry(geom), projectId,
         status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, roadwayNumber, Some(roadName),
         roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
         roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack,

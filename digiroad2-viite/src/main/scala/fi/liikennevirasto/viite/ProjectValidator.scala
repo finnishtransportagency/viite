@@ -36,7 +36,7 @@ class ProjectValidator {
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean) {
+  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -786,7 +786,7 @@ class ProjectValidator {
         pls.exists(_.connected(ra))).groupBy(ra => (ra.roadNumber, ra.roadPartNumber))
       // Check all the fetched road parts to see if any of them is a roundabout
       roadParts.keys.exists(rp => TrackSectionOrder.isRoundabout(
-        roadAddressService.getRoadAddressWithRoadAndPart(rp._1, rp._2, withFloating = true)))
+        roadAddressService.getRoadAddressWithRoadAndPart(rp._1, rp._2)))
     }
 
     def checkContinuityBetweenLinksOnParts: Seq[ValidationErrorDetails] = {
@@ -881,12 +881,10 @@ class ProjectValidator {
     }
 
     def checkDiscontinuityInsideRoadPart: Seq[ValidationErrorDetails] = {
-      val discontinuousErrors = {
-        error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(roadProjectLinks.filter { pl =>
-          val nextLink = roadProjectLinks.find(pl2 => pl2.startAddrMValue == pl.endAddrMValue)
-          (nextLink.nonEmpty && pl.discontinuity == Discontinuous)
-        })
-      }
+      val discontinuousErrors = error(project.id, ValidationErrorList.DiscontinuityInsideRoadPart)(roadProjectLinks.filter { pl =>
+        val nextLink = roadProjectLinks.find(pl2 => pl2.startAddrMValue == pl.endAddrMValue)
+        (nextLink.nonEmpty && pl.discontinuity == Discontinuous)
+      })
       discontinuousErrors.toSeq
     }
 
