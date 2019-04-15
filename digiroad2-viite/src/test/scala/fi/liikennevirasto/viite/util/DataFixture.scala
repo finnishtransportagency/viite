@@ -99,25 +99,6 @@ object DataFixture {
     println()
   }
 
-  //  def findFloatingRoadAddresses(): Unit = {
-  //    println(s"\nFinding road addresses that are floating at time: ${DateTime.now()}")
-  //    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-  //    val username = properties.getProperty("bonecp.username")
-  //    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-  //    val roadAddressDAO = new RoadwayDAO
-  //    val linearLocationDAO = new LinearLocationDAO
-  //    val roadNetworkDAO = new RoadNetworkDAO
-  //    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
-  //    OracleDatabase.withDynTransaction {
-  //      val checker = new RoadNetworkChecker(roadLinkService)
-  //      val roads = checker.checkRoadNetwork(username)
-  //      println(s"${roads.size} segment(s) found")
-  //      roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet, float = true)
-  //    }
-  //    println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
-  //    println()
-  //  }
-
   def checkRoadNetwork(): Unit = {
     println(s"\nstart checking road network at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
@@ -317,10 +298,6 @@ object DataFixture {
     }
 
     operation match {
-      /*case Some("find_floating_road_addresses") if geometryFrozen =>
-        showFreezeInfo()*/
-      //      case Some("find_floating_road_addresses") =>
-      //        findFloatingRoadAddresses()
       case Some("check_road_network") =>
         checkRoadNetwork()
       case Some("import_road_addresses") =>

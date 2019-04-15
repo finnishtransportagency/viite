@@ -1,31 +1,13 @@
 package fi.liikennevirasto.viite
-
-import java.util.{Date, Properties}
-
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.{InUse, UnknownConstructionType}
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, NormalLinkInterface, SuravageLinkInterface}
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, SuravageLinkInterface}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
-import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.RoadType._
-import fi.liikennevirasto.viite.dao.Discontinuity._
-import fi.liikennevirasto.viite.dao.TerminationCode._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.Anomaly.NoAddressGiven
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
-import fi.liikennevirasto.viite.process.RoadAddressFiller.{ChangeSet, LinearLocationAdjustment}
-import fi.liikennevirasto.viite.process.{DefloatMapper, LinkRoadAddressCalculator, RoadAddressFiller, RoadwayAddressMapper}
-import fi.liikennevirasto.viite.util.StaticTestData
+import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
@@ -34,24 +16,22 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.viite.Dummies._
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class RoadAddressServiceSpec extends FunSuite with Matchers{
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
-  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
-  val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
+  val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
+  val mockLinearLocationDAO: LinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
+  val mockRoadwayDAO: RoadwayDAO = MockitoSugar.mock[RoadwayDAO]
+  val mockRoadNetworkDAO: RoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
 
   val roadwayAddressMappper = new RoadwayAddressMapper(mockRoadwayDAO, mockLinearLocationDAO)
 
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, roadwayAddressMappper, mockEventBus) {
+  val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, roadwayAddressMappper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }
@@ -530,349 +510,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
             from UNADDRESSED_ROAD_LINK where link_id = $linkId
       """.as[(Long, Long, Long, Long, Long, Int)].list
   }
-
-  //TODO this should be removed when we remove UnaddressedRoadLink logic
-//  test("check UnaddressedRoadLink geometry is created correctly") {
-//    runWithRollback {
-//      val geom = Seq(Point(374668.195, 6676884.282, 0.0),Point(374643.384, 6676882.176, 0.0))
-//      val raLink = RoadAddressLink(0, 1611616, geom, 297.7533188814259, State, SingleCarriageway, NormalRoadLinkType,
-//        InUse, NormalLinkInterface, RoadType.PrivateRoadType, Some("Vt5"), None, BigInt(0), Some("22.09.2016 14:51:28"), Some("dr1_conversion"),
-//                    Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", "", 0.0, 0.0, SideCode.Unknown,
-//        None, None, Anomaly.None)
-//
-//      RoadAddressDAO.createUnaddressedRoadLink(
-//      UnaddressedRoadLink(raLink.linkId, Some(raLink.startAddressM), Some(raLink.endAddressM), RoadType.PublicRoad,
-//        Some(raLink.roadNumber), Some(raLink.roadPartNumber), None, None, Anomaly.NoAddressGiven, geom))
-//
-//      RoadAddressDAO.getUnaddressedRoadLinks(Set(raLink.linkId)).foreach { mra =>
-//        mra.geom should be(geom)
-//      }
-//    }
-//  }
-
-  //TODO this should be removed when we remove floatings logic
-//  test("Floating check gets floating flag updated, not geometry") {
-//    val linkId = 5171359L
-//    when(mockRoadLinkService.getCurrentAndComplementaryVVHRoadLinks(Set(linkId))).thenReturn(Nil)
-//    runWithRollback {
-//      val addressList = RoadAddressDAO.fetchByLinkId(Set(linkId))
-//      addressList should have size (1)
-//      val address = addressList.head
-//      address.isFloating should be (false)
-//      roadAddressService.checkRoadAddressFloatingWithoutTX(Set(address.id))
-//      dynamicSession.rollback()
-//      val addressUpdated = RoadAddressDAO.queryById(Set(address.id)).head
-//      addressUpdated.geometry should be (address.geometry)
-//      addressUpdated.isFloating should be (true)
-//      addressUpdated.roadwayNumber should be (addressList.head.roadwayNumber)
-//    }
-//  }
-
-  //TODO this should be removed when we remove floating logic
-//  test("transferRoadAddress should keep calibration points") {
-//    val linkId1 = 15171208
-//    val linkId2 = 15171209
-//    val segmentId1 = 63298
-//    val segmentId2 = 63299
-//    val roadwayNumber = 1015171208
-//    runWithRollback {
-//      val floatGeom = Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834))
-//      val floatGeomLength = GeometryUtils.geometryLength(floatGeom)
-//      val floatingLinks = Seq(
-//        RoadAddressLink(linkId1, linkId1, floatGeom, floatGeomLength, Municipality, SingleCarriageway,
-//          NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"), None, BigInt(0),
-//          None, None, Map("linkId" -> linkId1, "segmentId" -> segmentId1), 5, 205, 1, 0, 0, 0, 500, "01.01.2015", "", 0.0, floatGeomLength,
-//          SideCode.TowardsDigitizing, Option(CalibrationPoint(linkId1, 0.0, 0)), Option(CalibrationPoint(linkId1, floatGeomLength, 500)), Anomaly.None, roadwayNumber))
-//      RoadAddressDAO.create(floatingLinks.map(roadAddressLinkToRoadAddress(FloatingReason.NewAddressGiven)))
-//
-//      val cutPoint = GeometryUtils.calculatePointFromLinearReference(floatGeom, 230.0).get
-//      val geom1 = Seq(floatGeom.head, cutPoint)
-//      val geom2 = Seq(cutPoint, floatGeom.last)
-//      val targetLinks = Seq(
-//        RoadAddressLink(0, linkId1, geom1, GeometryUtils.geometryLength(geom1), Municipality, SingleCarriageway,
-//          NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"), None, BigInt(0),
-//          None, None, Map("linkId" -> linkId1, "segmentId" -> segmentId1), 5, 205, 1, 0, 0, 0, 1, "01.01.2015", "", 0.0, GeometryUtils.geometryLength(geom1),
-//          SideCode.Unknown, None, None, Anomaly.None, roadwayNumber),
-//        RoadAddressLink(0, linkId2, geom2, GeometryUtils.geometryLength(geom2), Municipality, SingleCarriageway,
-//          NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"), None, BigInt(0),
-//          None, None, Map("linkId" -> linkId2, "segmentId" -> segmentId2), 5, 205, 1, 0, 0, 1, 2, "01.01.2015", "", 0.0, GeometryUtils.geometryLength(geom2),
-//          SideCode.Unknown, None, None, Anomaly.None, roadwayNumber))
-//      when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn((targetLinks.map(roadAddressLinkToRoadLink), floatingLinks.map(roadAddressLinkToHistoryLink)))
-//      when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(floatingLinks.map(roadAddressLinkToHistoryLink))
-//      val newLinks = roadAddressService.transferRoadAddress(floatingLinks, targetLinks, User(1L, "foo", new Configuration()))
-//      newLinks should have size (2)
-//      newLinks.filter(_.linkId == linkId1).head.endCalibrationPoint should be(None)
-//      newLinks.filter(_.linkId == linkId2).head.startCalibrationPoint should be(None)
-//      newLinks.filter(_.linkId == linkId1).head.startCalibrationPoint.isEmpty should be(false)
-//      newLinks.filter(_.linkId == linkId2).head.endCalibrationPoint.isEmpty should be(false)
-//      newLinks.filter(_.linkId == linkId1).head.roadwayNumber should be(roadwayNumber)
-//      newLinks.filter(_.linkId == linkId2).head.roadwayNumber should be(roadwayNumber)
-//      val startCP = newLinks.filter(_.linkId == linkId1).head.startCalibrationPoint.get
-//      val endCP = newLinks.filter(_.linkId == linkId2).head.endCalibrationPoint.get
-//      startCP.segmentMValue should be(0.0)
-//      endCP.segmentMValue should be(GeometryUtils.geometryLength(geom2) +- 0.1)
-//      startCP.addressMValue should be(0L)
-//      endCP.addressMValue should be(500L)
-//    }
-//  }
-
-//  private def roadAddressLinkToRoadLink(roadAddressLink: RoadAddressLink) = {
-//    RoadLink(roadAddressLink.linkId, roadAddressLink.geometry, GeometryUtils.geometryLength(roadAddressLink.geometry),
-//      roadAddressLink.administrativeClass, 99, TrafficDirection.AgainstDigitizing, SingleCarriageway,
-//      Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-//      InUse, NormalLinkInterface)
-//  }
-//
-//  private def roadAddressLinkToHistoryLink(roadAddressLink: RoadAddressLink) = {
-//    VVHHistoryRoadLink(roadAddressLink.linkId, 749, roadAddressLink.geometry, roadAddressLink.administrativeClass,
-//      TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, 123, 123, Map("MUNICIPALITYCODE" -> BigInt.apply(749)))
-//  }
-
-  //TODO this should be removed when we remove floating logic
-//  test("Defloating road links on road 1130 part 4") {
-//    val links = StaticTestData.road1130Links.filter(_.roadNumber.getOrElse("") == "1130").filter(_.attributes("ROADPARTNUMBER").asInstanceOf[BigInt].intValue == 4)
-//    val history = StaticTestData.road1130HistoryLinks
-//    val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadAddressDAO, mockRoadwayAddressMapper,mockEventBus)
-//    when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]],any[Boolean])).thenReturn((StaticTestData.road1130Links, StaticTestData.road1130HistoryLinks))
-//    when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(351714,6674367),Point(361946,6681967)), Seq((1,50000)), Set(), false, true, false)).thenReturn(links)
-//    when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq())
-//    when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(history)
-//    when(mockRoadLinkService.getChangeInfoFromVVHF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq.empty))
-//    when(mockRoadLinkService.getSuravageLinksFromVVHF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq.empty))
-//    when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(StaticTestData.road1130HistoryLinks)
-//    runWithRollback {
-//      val addressLinks = roadAddressService.getRoadAddressLinksWithSuravage(BoundingRectangle(Point(351714, 6674367), Point(361946, 6681967)), Seq((1, 50000)), false, true)
-//      addressLinks.count(_.id == 0L) should be(2) // >There should be 2 unknown address links
-//      addressLinks.forall(_.id == 0L) should be(false)
-//      addressLinks.count(_.roadLinkSource == LinkGeomSource.HistoryLinkInterface) should be(4)
-//      // >There should be 4 floating links
-//      val replacement1s = addressLinks.filter(l => l.linkId == 1717639 || l.linkId == 499897217)
-//      val replacement1t = addressLinks.filter(l => l.linkId == 500130192)
-//      replacement1s.size should be(2)
-//      replacement1t.size should be(1)
-//      val result1 = roadAddressService.transferRoadAddress(replacement1s, replacement1t, User(0L, "foo", Configuration())).sortBy(_.startAddrMValue)
-//      sanityCheck(result1)
-//      result1.head.startMValue should be(0.0)
-//      result1.head.startAddrMValue should be(replacement1s.map(_.startAddressM).min)
-//      result1.last.endAddrMValue should be(replacement1s.map(_.endAddressM).max)
-//
-//      val replacement2s = addressLinks.filter(l => l.linkId == 1718096 || l.linkId == 1718097)
-//      val replacement2t = addressLinks.filter(l => l.linkId == 500130201)
-//      replacement2s.size should be(2)
-//      replacement2t.size should be(1)
-//      val result2 = roadAddressService.transferRoadAddress(replacement2s, replacement2t, User(0L, "foo", Configuration())).sortBy(_.startAddrMValue)
-//      sanityCheck(result2)
-//
-//      result2.head.startMValue should be(0.0)
-//      result2.head.startAddrMValue should be(replacement2s.map(_.startAddressM).min)
-//      result2.last.endAddrMValue should be(replacement2s.map(_.endAddressM).max)
-//    }
-//  }
-
-//TODO this should be removed when we remove Floating logic
-//  test("GetFloatingAdjacents road links on road 75 part 2 sourceLinkId 5176142") {
-//    val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
-//    val road75FloatingAddresses = RoadAddress(367,75,2,RoadType.Unknown, Track.Combined,Discontinuity.Continuous,3532,3598,None,None,Some("tr"),
-//      5176142,0.0,65.259,SideCode.TowardsDigitizing,0,(None,None),FloatingReason.ApplyChanges,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)),
-//      LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
-//
-//    when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(
-//      Seq.empty[VVHHistoryRoadLink]
-//    )
-//
-//    val result = roadAddressService.getFloatingAdjacent(Set(road75FloatingAddresses.linkId), Set(road75FloatingAddresses.id), road75FloatingAddresses.linkId, road75FloatingAddresses.id, road75FloatingAddresses.roadNumber, road75FloatingAddresses.roadPartNumber, road75FloatingAddresses.track.value)
-//    result.size should be (0)
-//  }
-
-  //TODO this should be removed when we remove floating logic
-//  test("Defloating road links from three links to two links") {
-//    val roadwayNumber = 123
-//    val sources = Seq(
-//      createRoadAddressLink(8000001L, 123L, Seq(Point(0.0, 0.0), Point(10.0, 10.0)), 1L, 1L, 0, 100, 114, SideCode.TowardsDigitizing, Anomaly.None, roadwayNumber = roadwayNumber),
-//      createRoadAddressLink(8000002L, 124L, Seq(Point(10.0, 10.0), Point(20.0, 20.0)), 1L, 1L, 0, 114, 128, SideCode.TowardsDigitizing, Anomaly.None, roadwayNumber = roadwayNumber),
-//      createRoadAddressLink(8000003L, 125L, Seq(Point(20.0, 20.0), Point(30.0, 30.0)), 1L, 1L, 0, 128, 142, SideCode.TowardsDigitizing, Anomaly.None, roadwayNumber = roadwayNumber)
-//    )
-//    val targets = Seq(
-//      createRoadAddressLink(0L, 457L, Seq(Point(15.0, 15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber),
-//      createRoadAddressLink(0L, 456L, Seq(Point(0.0, 0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber)
-//    )
-//    when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(
-//      (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
-//    when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-//    val targetLinks = targets.map(roadAddressLinkToRoadLink)
-//    val result = runWithRollback {
-//      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(FloatingReason.NewAddressGiven)))
-//      roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
-//    }
-//    sanityCheck(result)
-//    val linkResult = result.map(ra => RoadAddressLinkBuilder.build(targetLinks.find(_.linkId == ra.linkId).get, ra))
-//    val link456 = linkResult.find(_.linkId == 456L)
-//    val link457 = linkResult.find(_.linkId == 457L)
-//    link456.nonEmpty should be(true)
-//    link457.nonEmpty should be(true)
-//    link456.get.startAddressM should be(100)
-//    link457.get.startAddressM should be(121)
-//    link456.get.endAddressM should be(121)
-//    link457.get.endAddressM should be(142)
-//    result.forall(l => l.startCalibrationPoint.isEmpty && l.endCalibrationPoint.isEmpty) should be(true)
-//    result.forall(l => l.roadwayNumber == roadwayNumber) should be(true)
-//  }
-
-  //TODO this should be removed when we remove floating logic
-//  test("Defloating road links from three links to two links with against digitizing direction") {
-//    val roadwayNumber = 123
-//    val sources = Seq(
-//      createRoadAddressLink(800001L, 123L, Seq(Point(0.0, 0.0), Point(10.0, 10.0)), 1L, 1L, 0, 128, 142, SideCode.AgainstDigitizing, Anomaly.None, roadwayNumber = roadwayNumber),
-//      createRoadAddressLink(800002L, 124L, Seq(Point(10.0, 10.0), Point(20.0, 20.0)), 1L, 1L, 0, 114, 128, SideCode.AgainstDigitizing, Anomaly.None, roadwayNumber = roadwayNumber),
-//      createRoadAddressLink(800003L, 125L, Seq(Point(20.0, 20.0), Point(30.0, 30.0)), 1L, 1L, 0, 100, 114, SideCode.AgainstDigitizing, Anomaly.None, roadwayNumber = roadwayNumber)
-//    )
-//    val targets = Seq(
-//      createRoadAddressLink(0L, 457L, Seq(Point(15.0, 15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber),
-//      createRoadAddressLink(0L, 456L, Seq(Point(0.0, 0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber)
-//    )
-//    when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(
-//      (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
-//    when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-//    val result = runWithRollback {
-//      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(FloatingReason.ApplyChanges)))
-//      roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
-//    }
-//    sanityCheck(result)
-//    val link456 = result.find(_.linkId == 456L)
-//    val link457 = result.find(_.linkId == 457L)
-//    link456.nonEmpty should be(true)
-//    link457.nonEmpty should be(true)
-//    link456.get.startAddrMValue should be(121)
-//    link457.get.startAddrMValue should be(100)
-//    link456.get.endAddrMValue should be(142)
-//    link457.get.endAddrMValue should be(121)
-//    result.forall(l => l.startCalibrationPoint.isEmpty && l.endCalibrationPoint.isEmpty) should be(true)
-//    result.forall(l => l.sideCode == SideCode.AgainstDigitizing) should be(true)
-//    result.forall(l => l.roadwayNumber == roadwayNumber) should be(true)
-//  }
-
-  //TODO this should be removed when we remove floating logic
-//  test("Defloating road links from three links to two links with one calibration point in beginning") {
-//    val roadwayNumber = 123
-//    val sources = Seq(
-//      createRoadAddressLink(800001L, 123L, Seq(Point(0.0, 0.0), Point(10.0, 10.0)), 1L, 1L, 0, 0, 14, SideCode.TowardsDigitizing, Anomaly.None, startCalibrationPoint = true, endCalibrationPoint = false, roadwayNumber = roadwayNumber),
-//      createRoadAddressLink(800003L, 125L, Seq(Point(20.0, 20.0), Point(30.0, 30.0)), 1L, 1L, 0, 28, 42, SideCode.TowardsDigitizing, Anomaly.None, startCalibrationPoint = false, endCalibrationPoint = false, roadwayNumber = roadwayNumber),
-//      createRoadAddressLink(800002L, 124L, Seq(Point(10.0, 10.0), Point(20.0, 20.0)), 1L, 1L, 0, 14, 28, SideCode.TowardsDigitizing, Anomaly.None, startCalibrationPoint = false, endCalibrationPoint = false, roadwayNumber = roadwayNumber)
-//    )
-//    val targets = Seq(
-//      createRoadAddressLink(0L, 456L, Seq(Point(0.0, 0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, startCalibrationPoint = false, endCalibrationPoint = false, roadwayNumber = roadwayNumber),
-//      createRoadAddressLink(0L, 457L, Seq(Point(15.0, 15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, startCalibrationPoint = false, endCalibrationPoint = false, roadwayNumber = roadwayNumber)
-//    )
-//    when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(
-//      (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
-//    when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-//    val result = runWithRollback {
-//      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(FloatingReason.ApplyChanges)))
-//      roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
-//    }
-//    sanityCheck(result)
-//    val link456 = result.find(_.linkId == 456L)
-//    val link457 = result.find(_.linkId == 457L)
-//    link456.nonEmpty should be(true)
-//    link457.nonEmpty should be(true)
-//    link456.get.startAddrMValue should be(0)
-//    link457.get.startAddrMValue should be(21)
-//    link456.get.endAddrMValue should be(21)
-//    link457.get.endAddrMValue should be(42)
-//    result.forall(l => l.endCalibrationPoint.isEmpty) should be(true)
-//    link456.get.startCalibrationPoint.nonEmpty should be(true)
-//    link457.get.startCalibrationPoint.nonEmpty should be(false)
-//    result.forall(l => l.roadwayNumber == roadwayNumber) should be(true)
-//  }
-
-  //TODO this should be removed when we remove floating logic
-//  test("Defloating road links from three links to two links with one calibration point in the end") {
-//    val roadwayNumber = 123
-//    val sources = Seq(
-//      createRoadAddressLink(800001L, 123L, Seq(Point(0.0,0.0), Point(10.0, 10.0)), 1L, 1L, 0, 0, 14, SideCode.TowardsDigitizing, Anomaly.None, roadwayNumber = roadwayNumber),
-//      createRoadAddressLink(800003L, 125L, Seq(Point(20.0,20.0), Point(30.0, 30.0)), 1L, 1L, 0, 28, 42, SideCode.TowardsDigitizing, Anomaly.None, endCalibrationPoint = true, roadwayNumber = roadwayNumber),
-//      createRoadAddressLink(800002L, 124L, Seq(Point(10.0,10.0), Point(20.0, 20.0)), 1L, 1L, 0, 14, 28, SideCode.TowardsDigitizing, Anomaly.None, roadwayNumber = roadwayNumber)
-//    )
-//    val targets = Seq(
-//      createRoadAddressLink(0L, 456L, Seq(Point(0.0,0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber),
-//      createRoadAddressLink(0L, 457L, Seq(Point(15.0,15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, roadwayNumber = roadwayNumber)
-//    )
-//    when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]],any[Boolean])).thenReturn(
-//      (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
-//    when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-//    val result = runWithRollback {
-//      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(FloatingReason.ApplyChanges)))
-//      roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
-//    }
-//    sanityCheck(result)
-//    val link456 = result.find(_.linkId == 456L)
-//    val link457 = result.find(_.linkId == 457L)
-//    link456.nonEmpty should be (true)
-//    link457.nonEmpty should be (true)
-//    link456.get.startAddrMValue should be (0)
-//    link457.get.startAddrMValue should be (21)
-//    link456.get.endAddrMValue should be (21)
-//    link457.get.endAddrMValue should be (42)
-//    result.forall(l => l.startCalibrationPoint.isEmpty) should be (true)
-//    link456.get.endCalibrationPoint.isEmpty should be (true)
-//    link457.get.endCalibrationPoint.isEmpty should be (false)
-//    result.forall(l => l.roadwayNumber == roadwayNumber) should be(true)
-//  }
-
-  //TODO this should be removed when we remove floating logic
-//  test("Zigzag geometry defloating") {
-//
-//    /*
-//
-//   (10,10) x                     x (30,10)           ,                     x (30,10)
-//          / \                   /                   / \                   /
-//         /   \                 /                   /   \                 /
-//        /     \               /                   /     \               /
-//       /       \             /                   /       \             /
-//      x (5,5)   \           /                   x (5,5)   \           /
-//                 \         /                               \         /
-//                  \       /                                 \       /
-//                   \     /                                   \     /
-//                    \   /                                     \   /
-//                     \ /                                (19,1) x /
-//                      x (20,0)                                  v
-//
-//     */
-//
-//    val roadwayNumber = 123
-//    val sources = Seq(
-//      createRoadAddressLink(800001L, 123L, Seq(Point(5.0, 5.0), Point(10.0, 10.0)), 1L, 1L, 0, 100, 107, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
-//      createRoadAddressLink(800003L, 125L, Seq(Point(20.0, 0.0), Point(30.0, 10.0)), 1L, 1L, 0, 121, 135, SideCode.TowardsDigitizing, Anomaly.None, false, false, roadwayNumber),
-//      createRoadAddressLink(800002L, 124L, Seq(Point(20.0, 0.0), Point(10.0, 10.0)), 1L, 1L, 0, 107, 121, SideCode.AgainstDigitizing, Anomaly.None, false, false, roadwayNumber)
-//    )
-//    val targets = Seq(
-//      createRoadAddressLink(0L, 456L, Seq(Point(19.0, 1.0), Point(10.0, 10.0), Point(5.0, 5.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, false, false, roadwayNumber),
-//      createRoadAddressLink(0L, 457L, Seq(Point(19.0, 1.0), Point(20.0, 0.0), Point(30.0, 10.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven, false, false, roadwayNumber)
-//    )
-//    when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(
-//      (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
-//    when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-//    val result = runWithRollback {
-//      RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(FloatingReason.ApplyChanges)))
-//      roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
-//    }
-//    sanityCheck(result)
-//    val link456 = result.find(_.linkId == 456L)
-//    val link457 = result.find(_.linkId == 457L)
-//    link456.nonEmpty should be(true)
-//    link457.nonEmpty should be(true)
-//    link456.get.sideCode should be(SideCode.AgainstDigitizing)
-//    link457.get.sideCode should be(SideCode.TowardsDigitizing)
-//    link456.get.startAddrMValue should be(100)
-//    link457.get.startAddrMValue should be(120)
-//    link456.get.endAddrMValue should be(120)
-//    link457.get.endAddrMValue should be(135)
-//    link456.get.startCalibrationPoint.nonEmpty should be(false)
-//    link457.get.startCalibrationPoint.nonEmpty should be(false)
-//    link457.get.endCalibrationPoint.nonEmpty should be(false)
-//    link456.get.endCalibrationPoint.nonEmpty should be(false)
-//    result.forall(l => l.roadwayNumber == roadwayNumber) should be(true)
-//  }
 
   //TODO this will be implemented at VIITE-1536
 //  test("Kokkolantie 2 + 1 segments to 2 segments mapping (2 links to 1 link)") {
