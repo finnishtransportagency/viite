@@ -570,7 +570,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     projectLinkDAO.create(newProjectLinks.filterNot(ad => projectLinks.exists(pl => pl.roadAddressRoadNumber.getOrElse(pl.roadNumber) == ad.roadNumber && pl.roadAddressRoadPart.getOrElse(pl.roadPartNumber) == ad.roadPartNumber)))
     logger.debug(s"New links created ${newProjectLinks.size}")
-    val linksOnRemovedParts = projectLinks.filterNot(pl => project.reservedParts.exists(_.holds(pl)))
+    val linksOnRemovedParts = projectLinks.filterNot(pl => (project.reservedParts++project.formedParts).exists(_.holds(pl)))
     roadwayChangesDAO.clearRoadChangeTable(project.id)
     projectLinkDAO.removeProjectLinksById(linksOnRemovedParts.map(_.id).toSet)
     val road = newProjectLinks.headOption
@@ -798,8 +798,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             if (projectDAO.isUniqueName(roadAddressProject.id, roadAddressProject.name)) {
               projectDAO.update(roadAddressProject)
               val storedProject = projectDAO.fetchById(roadAddressProject.id).get
-              val removedReservation = storedProject.reservedParts.filterNot(part =>
-                roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
+
+              val removedReservation = (storedProject.reservedParts++storedProject.formedParts).filterNot(part =>
+                (roadAddressProject.reservedParts++roadAddressProject.formedParts).exists(rp => rp.roadPartNumber == part.roadPartNumber &&
                   rp.roadNumber == part.roadNumber))
 
               removedReservation.foreach(p => projectReservedPartDAO.removeReservedRoadPartAndChanges(roadAddressProject.id, p.roadNumber, p.roadPartNumber))
