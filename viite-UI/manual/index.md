@@ -454,43 +454,45 @@ Huom! Jatkuvuuskoodia 5 - jatkuva on valittavissa kaksi eri vaihtoehtoa. Jatkuvu
 7.2 Muutosilmoitusten tarkastelu taulukkonäkymässä
 --------------------------
 
-Projektin muutosilmoitusten näkymässä on mahdollista tarkastella ilmoitusten yhteenvetotaulukkoa. Avaa projektin yhteenvetotaulukko -painiketta (1) klikkaamalla avautuu taulukkonäkymä, joka kertoo projektissa olevien tieosoitteiden vanhan ja uuden tilanteen sekä tehdyn muutosilmoituksen. Taulukossa rivit on järjestetty suurimasta pienimpään tieosoitteen mukaan (tie, tieosa, alkuetäisyys, ajorata), jotta saman tien tieosuudet ovat taulukossa peräkkäin suurimmasta pienimpään. Yhteenvetotaulukon AET- ja LET-arvot päivittyvät oikein vasta, kun kaikki tieosan aihiot on käsitelty. Muutosilmoitusten tekojärjestyksellä ei ole vaikutusta lopulliseen yhteenvetotaulukkoon.
+Projektin muutosilmoitusnäkymässä on mahdollista tarkastella ilmoitusten yhteenvetotaulukkoa. Avaa projektin yhteenvetotaulukko -painikkeella (1) avautuu taulukkonäkymä, joka kertoo projektissa olevien tieosoitteiden vanhan ja uuden tilanteen sekä tehdyn muutosilmoituksen. Taulukossa rivit on järjestetty suurimmasta pienimpään tieosoitteen mukaan (tie, tieosa). Rivien järjestystä voi muokata nuolipainikkeilla (2). Yhteenvetotaulukon AET- ja LET-arvot päivittyvät oikein vasta kun kaikki tieosan aihiot on käsitelty.
 
 Taulukon rivien tietoja voi kopioida maalaamalla halutut tiedot hiirellä ja kopioimalla ne. 
 
-Taulukon saa suurennettua ja pienennettyä sekä suljettua taulukon oikeasta yläkulmasta (2). Taulukon voi pitää auki muokatessa ja muutokset päivittyvät taulukkoon tallennettaessa. Viite-sovelluksen voi esimerkiksi venyttää kahdelle näytölle, joista toisella voi tarkastella muutostaulukkoa ja toisella käyttää karttanäkymää. Taulukkoa voi liikuttaa tarraamalla osoittimella yläpalkista. Yhteenvetotaulukko ei välttämättä näy oikeanlaisena, jos selaimen zoom-taso on liian suuri. Ongelma korjaantuu palauttamalla selaimen zoom-taso normaaliksi (Firefox/Chrome Ctrl+0).
+Taulukon kokoa saa muutettua taulukon yläkulmassa olevasta painikkeesta (3). Taulukon voi pitää auki muokatessa ja muutokset päivittyvät taulukkoon tallennettaessa. Viite-sovelluksen voi venyttää kahdelle näytölle, joista toisella voi tarkastella muutostaulukkoa ja toisella käyttää karttanäkymää. Taulukkoa voi liikuttaa tarraamalla osoittimella yläpalkista. Yhteenvetotaulukko ei välttämättä näy oikeanlaisena, jos selaimen zoom-taso on liian suuri. Ongelma korjaantuu palauttamalla selaimen zoom-taso normaaliksi (Firefox/Chrome Ctrl+0). 
 
-![Avaus](k41.JPG)
+Taulukon saa pois näkyvistä Sulje-painikkeesta (4).
 
-_Taulukon avaus ja muutosilmoitustalukon näkymä._
+![Avaus](k41.jpg)
+
+_Muutosilmoitustaulukkonäkymä._
 
 7.3 Tarkastukset
 --------------------------
 
-Viite-sovellus tekee tieosoiteprojektissa automaattisia tarkastuksia jotka auttavat käyttäjää valmistelemaan muutosilmoituksen Tierekisterin vaatimaan muotoon. Tarkistukset ovat projektissa jatkuvasti päällä ja reagoivat projektin tilan muutoksiin.  Avatun projektin tarkistusilmoitukset ilmestyvät käyttäjälle projektissa oikealle tarkistusnäkymään "Jatka toimenpiteisiin"-napin painalluksen jälkeen. Tarkistusilmoituksia voi olla samanaikaisesti auki useita. Tieosoiteprojektin voi lähettää Tierekisteriin, kun se läpäisee kaikki tarkistukset eikä oikeassa reunassa näy enää yhtään tarkistusilmoitusta.
+Viite-sovellus tekee tieosoiteprojektissa automaattisia tarkastuksia, jotka auttavat käyttäjää valmistelemaan muutosilmoituksen Tierekisterin vaatimaan muotoon. Tarkastukset ovat projektissa jatkuvasti päällä ja reagoivat projektin tilan muutoksiin.  Avatun projektin tarkastusilmoitukset tulevat esiin Jatka toimenpiteisiin -painikkeen klikkauksen jälkeen. Tarkastusilmoituksia voi olla samanaikaisesti auki useita. Tieosoiteprojektin voi lähettää Tierekisteriin, kun oikeassa reunassa ei näy enää tarkastusilmoituksia.
 
-![Tarkisilmoitusnäkymä](k49.JPG)
+![Tarkastusilmoitusnäkymä](k49.JPG)
 
-_Tarkistusilmoitukset näkyvät projektissa oikealla._
+_Tarkastusilmoitukset näkyvät projektissa oikealla._
 
 
-Tarkistusilmoitus koostuu seuraavista kentistä:
+Tarkastusilmoitus koostuu seuraavista kentistä:
 
 |Kenttä|Kuvaus|
 |------|------|
-|Linkids|Tarkistuksen kohteena oleva yksittäisen tielinkin ID. Vaihtoehtoisesti linkkien lukumäärä jos tarkistusilmoitus koskee useampaa linkkiä.|
-|Virhe|Kuvaus tarkistuksen ongelmatilanteesta|
-|Info|Mahdollisia lisäohjeita tarkistuksen virhetilanteen korjaamiseksi.|
+|Linkids|Tarkastuksen kohteena oleva yksittäisen tielinkin ID. Vaihtoehtoisesti linkkien lukumäärä jos tarkastusilmoitus koskee useampaa linkkiä.|
+|Virhe|Kuvaus tarkastuksen ongelmatilanteesta|
+|Info|Mahdollisia lisäohjeita tarkastuksen virhetilanteen korjaamiseksi.|
 
-![Tarkistuilmoitus](k50.JPG)
+![Tarkastusilmoitus](k50.JPG)
 
 _Tielinkki 6634188 on tieosan viimeinen linkki mutta siltä puuttuu jatkuvuuskoodi Tien loppu._ 
 
-Karttanäkymä kohdistuu tarkistusilmoituksen kohteena olevan tielinkin keskikohtaan painamalla Korjaa-painiketta. Painamalla Korjaa-nappia uudestaan kohdistus siirtyy seuraavaan tielinkkiin, jos sama tarkistus kohdistuu useampaan linkkiin. Käyttäjä voi nyt valita tarkistusilmoituksen kohteena olevan tielinkin ja tehdä sille tarkistuksen korjaavan toimenpiteen. 
+Karttanäkymä kohdistuu tarkastusilmoituksen kohteena olevan tielinkin keskikohtaan painamalla Korjaa-painiketta. Painamalla Korjaa-nappia uudestaan kohdistus siirtyy seuraavaan tielinkkiin, jos sama tarkastus kohdistuu useampaan linkkiin. Käyttäjä voi nyt valita tarkastusilmoituksen kohteena olevan tielinkin ja tehdä sille korjaavan toimenpiteen. 
 
-####Tieosoiteprojektissa tehtävät tarkistukset:####
+####Tieosoiteprojektissa tehtävät tarkastukset:####
 
-Tieosoiteprojektiin kohdistuvat tarkistukset:
+Tieosoiteprojektiin kohdistuvat tarkastukset:
 
 - Uusi tieosa ei saa olla varattuna jossakin toisessa tieosoiteprojektissa
 - Tieosoitteen kasvusuunta ei saa muuttua kesken tien
@@ -498,7 +500,7 @@ Tieosoiteprojektiin kohdistuvat tarkistukset:
 - Ajoratojen 1 ja 2 tulee kattaa samaa osoitealue
 - Tieosoitteelta ei saa puuttua tieosoiteväliä (katkoa m-arvoissa)
 
-Jatkuvuuden tarkistukset:
+Jatkuvuuden tarkastukset:
 
 - Tieosan sisällä jatkuvissa kohdissa (aukkopaikka alle 0,1 m), jatkuvuuskoodin tulee olla 5 (jatkuva)
 
@@ -509,20 +511,20 @@ Tieosan sisäisen epäjatkuvuuden pituudelle ei ole asetettu ylärajaa.
 
 - Tieosoitteen viimeisellä (suurin tieosanumero) tieosalla tulee olla jatkuvuuskoodi 1 (tien loppu)
 
-- Jos tieosoitteen viimeinen tieosa lakkautetaan kokonaan, tien edellisellä tieosalla tulee olla jatkuvuuskoodi 1 (tien loppu). Tätä tieosaa ei ole välttämättä valittu projektiin, joten tarkistus ulottuu myös projektin ulkopuolisiin tieosiin.
+- Jos tieosoitteen viimeinen tieosa lakkautetaan kokonaan, tien edellisellä tieosalla tulee olla jatkuvuuskoodi 1 (tien loppu). Tätä tieosaa ei ole välttämättä valittu projektiin ja siksi tarkastus ulottuu myös projektin ulkopuolisiin tieosiin.
 
 - Jos tieosan seuraava tieosa on eri ELY-koodilla, jatkuvuuskoodin tulee olla tieosan lopussa 3 (ELY-raja).
 
 7.4 Muutosilmoitusten lähettäminen Tierekisteriin
 --------------------------
 
-Muutosilmoitus viedään Tierekisteriin avaamalle ensin yhteenvetotaulukko klikkaamalla oikean alakulman sinistä Avaa projektin yhteenvetotaulukko -painiketta. Kun projektilla ei ole enää korjaamattomia tarkistusilmoituksia, aktivoituu vihreä Lähetä muutosilmoitus Tierekisteriin -painike. Painikkeen painamisen jälkeen sovellus ilmoittaa muutosilmoituksen tekemisestä Muutosilmoitus lähetetty Tierekisteriin -viestillä.
+Muutosilmoitus viedään Tierekisteriin avaamalla ensin yhteenvetotaulukko klikkaamalla oikean alakulman sinistä Avaa projektin yhteenvetotaulukko -painiketta. Kun projektilla ei ole enää korjaamattomia tarkastusilmoituksia, aktivoituu vihreä Lähetä muutosilmoitus Tierekisteriin -painike. Painikkeen painamisen jälkeen sovellus ilmoittaa muutosilmoituksen tekemisestä Muutosilmoitus lähetetty Tierekisteriin -viestillä.
 
 ![Muutosilmoituksen painike](k38.JPG)
 
 _Muutosilmoituspainike oikeassa alakulmassa._
 
-Kun muutosilmoitus on lähetetty, muuttuu projektilistauksessa ko. projektin Tila-tieto statukselle Lähetetty tierekisteriin. Viite-sovellus tarkistaa minuutin välein Tierekisteristä, onko muutos käsitelty Tierekisterissä loppuun asti. Kun tämä on tehty onnistuneesti, muuttuu Tila-tieto statukselle Viety tierekisteriin. Tällöin tieosoiteprojekti on viety onnistuneesti Tierekisteriin ja se on valmis. Mikäli muutosilmoitus ei ole mennyt läpi Tierekisterissä, tilaksi päivittyy Virhe tierekisterissä ja listalle tulee oranssi Avaa uudelleen -painike. Tarkemmin virheen tiedot pääsee tarkistamaan viemällä hiiren Virhe tierekisterissä -tekstin päälle, jolloin virheen infolaatikko tulee näkyviin. Virhe korjataan avaamalla projekti oranssista painikkeesta ja tekemällä tarvittavat muokkaukset sekä lähettämällä ilmoitukset uudelleen Tierekisteriin.  
+Kun muutosilmoitus on lähetetty, muuttuu projektilistauksessa ko. projektin Tila-tieto statukselle Lähetetty tierekisteriin. Viite-sovellus tarkistaa minuutin välein Tierekisteristä, onko muutos käsitelty Tierekisterissä loppuun asti. Kun tämä on tehty onnistuneesti, tilatiedoksi tulee Viety tierekisteriin ja projekti on valmis. Mikäli muutosilmoitus ei ole mennyt läpi Tierekisterissä, tilaksi päivittyy Virhe tierekisterissä ja listalle tulee oranssi Avaa uudelleen -painike. Viemällä hiiren Virhe tierekisterissä -tekstin päälle virheen infolaatikko tulee näkyviin. Virhe korjataan avaamalla projekti ja tekemällä tarvittavat muokkaukset, jonka jälkeen ilmoitus lähetetään uudelleen Tierekisteriin.  
 
 Projektia ei voi muokata, kun sen tila on joko Lähetetty tierekisteriin, Tierekisterissä käsittelyssä tai Viety tierekisteriin.
 
