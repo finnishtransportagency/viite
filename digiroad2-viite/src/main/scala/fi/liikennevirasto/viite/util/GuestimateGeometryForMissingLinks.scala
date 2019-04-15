@@ -73,11 +73,10 @@ class GuestimateGeometryForMissingLinks {
         val pToNAddrLength = n.startAddrMValue.toDouble-p.endAddrMValue
         GeometryUtils.truncateGeometry2D(geom, geomLength*(link.startAddrMValue - p.endAddrMValue) / pToNAddrLength,
           geomLength*(link.endAddrMValue - p.endAddrMValue) / pToNAddrLength)
-      case (None, Some(n)) => {
+      case (None, Some(n)) =>
         val start= n.geometry.head - (n.geometry.last - n.geometry.head).normalize2D().scale(n.startAddrMValue - link.startAddrMValue)
         val end= n.geometry.head - (n.geometry.last - n.geometry.head).normalize2D().scale(n.startAddrMValue -link.endAddrMValue)
         Seq(start,end)
-      }
       case (Some(p), None) =>
         val start=p.geometry.last + (p.geometry.last - p.geometry.head).normalize2D().scale(link.startAddrMValue - p.endAddrMValue)
         val end=p.geometry.last + (p.geometry.last - p.geometry.head).normalize2D().scale(link.endAddrMValue - p.endAddrMValue)

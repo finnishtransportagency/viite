@@ -22,7 +22,7 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
     val roadwayNumber = 12L
     val startDate = new DateTime(2007, 1, 1, 0, 0)
 
-    val roadwayAddress = Roadway(2L, roadwayNumber, 1551, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 140, 300, false, startDate, None, "test_user", None, 0, NoTermination, startDate)
+    val roadwayAddress = Roadway(2L, roadwayNumber, 1551, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 140, 300, reversed = false, startDate, None, "test_user", None, 0, NoTermination, startDate)
     val linearLocations = Seq(
       LinearLocation(2L, 1, 125, 45.0, 105.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(45.0,0.0), Point(105.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
       LinearLocation(3L, 2, 123, 0.0, 49.0, SideCode.TowardsDigitizing, 0, (None, Some(250)), Seq(Point(105.0,0.0), Point(154.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
@@ -59,8 +59,8 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
     val historyStartDate = new DateTime(1975, 7, 1, 0, 0)
     val historyEndDate = new DateTime(2006, 12, 31, 0, 0)
 
-    val currentRoadwayAddress = Roadway(2L, roadwayNumber, 1551, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 140, 300, false, currentStartDate, None, "test_user", None, 0, NoTermination, currentStartDate)
-    val historyRoadwayAddress = Roadway(3L, roadwayNumber, 1551, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 240, 400, false, historyStartDate, Some(historyEndDate), "test_user", None, 0, NoTermination, historyStartDate)
+    val currentRoadwayAddress = Roadway(2L, roadwayNumber, 1551, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 140, 300, reversed = false, currentStartDate, None, "test_user", None, 0, NoTermination, currentStartDate)
+    val historyRoadwayAddress = Roadway(3L, roadwayNumber, 1551, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 240, 400, reversed = false, historyStartDate, Some(historyEndDate), "test_user", None, 0, NoTermination, historyStartDate)
     val linearLocations = Seq(
       LinearLocation(2L, 1, 125, 45.0, 105.0, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(45.0,0.0), Point(105.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
       LinearLocation(3L, 2, 123, 0.0, 49.0, SideCode.TowardsDigitizing, 0, (None, Some(250)), Seq(Point(105.0,0.0), Point(154.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),

@@ -33,13 +33,13 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
   private val roadwayNumber3 = 3000000000l
 
   val testRoadway1 = Roadway(NewRoadway, roadwayNumber1, roadNumber1, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-    0, 100, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+    0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
   val testRoadway2 = Roadway(NewRoadway, roadwayNumber2, roadNumber1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-    100, 200, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+    100, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
   val testRoadway3 = Roadway(NewRoadway, roadwayNumber3, roadNumber2, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-    0, 100, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
+    0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
 
   // createPublishedRoadNetwork
 
@@ -79,8 +79,8 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
       dao.createPublishedRoadway(networkId, roadwayId1)
       dao.createPublishedRoadway(networkId, roadwayId2)
       val roadways = roadwayDAO.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), networkId)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }

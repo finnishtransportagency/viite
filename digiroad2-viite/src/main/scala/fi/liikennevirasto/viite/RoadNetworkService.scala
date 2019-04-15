@@ -116,11 +116,10 @@ class RoadNetworkService {
     }
 
     def checkAddressMValues(rw1: Roadway, rw2: Roadway, errors: Seq[RoadNetworkError]): Seq[RoadNetworkError] = {
-      rw1.endAddrMValue != rw2.startAddrMValue match {
-        case true => {
-          errors :+ RoadNetworkError(0, rw1.id, 0L, AddressError.InconsistentAddressValues, System.currentTimeMillis(), options.currNetworkVersion)
-        }
-        case _ => Seq()
+      if (rw1.endAddrMValue != rw2.startAddrMValue) {
+        errors :+ RoadNetworkError(0, rw1.id, 0L, AddressError.InconsistentAddressValues, System.currentTimeMillis(), options.currNetworkVersion)
+      } else {
+        Seq()
       }
     }
 
@@ -184,15 +183,13 @@ class RoadNetworkService {
 
         } catch {
           case e: SQLIntegrityConstraintViolationException => logger.error("A road network check is already running")
-          case e: SQLException => {
+          case e: SQLException =>
             logger.info("SQL Exception")
             logger.error(e.getMessage)
             dynamicSession.rollback()
-          }
-          case e: Exception => {
+          case e: Exception =>
             logger.error(e.getMessage)
             dynamicSession.rollback()
-          }
         }
       }
 

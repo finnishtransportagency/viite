@@ -57,7 +57,6 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     adjustedLinearLocations should have size 4
     changeSet.adjustedMValues should have size 0
-    changeSet.unaddressedRoadLink should have size 0
     changeSet.droppedSegmentIds should have size 0
   }
 
@@ -84,7 +83,6 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     changeSet.droppedSegmentIds should have size 1
     changeSet.droppedSegmentIds.head should be (5L)
     changeSet.adjustedMValues should have size 0
-    changeSet.unaddressedRoadLink should have size 0
   }
 
   test("Test adjustToTopology When exists a linear location with 1 meter longer than road link geometry Then linear location should be cap to road link geometry"){
@@ -120,7 +118,6 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     adjustedMValue.linkId should be (125L)
     adjustedMValue.startMeasure should be (None)
     adjustedMValue.endMeasure should be (Some(10.0))
-    changeSet.unaddressedRoadLink should have size 0
   }
 
   test("Test adjustToTopology When exists a linear location with 1 meter shorter than road link geometry Then linear location should be extended to road link geometry"){
@@ -156,7 +153,6 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     adjustedMValue.linkId should be (125L)
     adjustedMValue.startMeasure should be (None)
     adjustedMValue.endMeasure should be (Some(10.0))
-    changeSet.unaddressedRoadLink should have size 0
   }
 
   test("Test adjustToTopology When exists a linear location with adjustments and one linear location floating in same road link Then any adjustment should be applied"){
@@ -177,7 +173,6 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     adjustedLinearLocations should have size 4
     changeSet.adjustedMValues should have size 1
-    changeSet.unaddressedRoadLink should have size 0
     changeSet.droppedSegmentIds should have size 0
   }
 

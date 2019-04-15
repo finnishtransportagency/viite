@@ -21,9 +21,7 @@ object RoadAddressFiller {
   case class ChangeSet(
                       droppedSegmentIds: Set[Long],
                       adjustedMValues: Seq[LinearLocationAdjustment],
-                      newLinearLocations: Seq[LinearLocation],
-                      //TODO check if this will be needed here at VIITE-1596
-                      unaddressedRoadLink: Seq[UnaddressedRoadLink])
+                      newLinearLocations: Seq[LinearLocation])
 
   private def extendToGeometry(roadLink: RoadLinkLike, segments: Seq[ProjectAddressLink]): Seq[ProjectAddressLink] = {
     if (segments.isEmpty || segments.exists(_.connectedLinkId.nonEmpty))
@@ -54,9 +52,10 @@ object RoadAddressFiller {
 
   private def generateUnknownLink(roadLink: RoadLinkLike) = {
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
-    Seq(UnaddressedRoadLink(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), isPublicRoad(roadLink) match {
-      case true => Anomaly.NoAddressGiven
-      case false => Anomaly.None
+    Seq(UnaddressedRoadLink(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), if (isPublicRoad(roadLink)) {
+      Anomaly.NoAddressGiven
+    } else {
+      Anomaly.None
     }, geom))
   }
 
@@ -143,7 +142,7 @@ object RoadAddressFiller {
   }
 
   //TODO can also be done here the fuse of linear locations when thr roadway id of the linear location is the same and no calibration points in the middle
-  def adjustToTopology(topology: Seq[RoadLinkLike], linearLocations: Seq[LinearLocation], initialChangeSet: ChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty)): (Seq[LinearLocation], ChangeSet) = {
+  def adjustToTopology(topology: Seq[RoadLinkLike], linearLocations: Seq[LinearLocation], initialChangeSet: ChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty)): (Seq[LinearLocation], ChangeSet) = {
     time(logger, "Adjust linear location to topology") {
       val adjustOperations: Seq[(RoadLinkLike, Seq[LinearLocation], ChangeSet) => (Seq[LinearLocation], ChangeSet)] = Seq(
         dropSegmentsOutsideGeometry,
@@ -183,9 +182,10 @@ object RoadAddressFiller {
   private def generateUnaddressedSegments(roadLink: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     //TODO check if its needed to create unaddressed road link for part after VIITE-1536
     if (roadAddresses.isEmpty) {
-      val anomaly = isPublicRoad(roadLink) match {
-        case true => Anomaly.NoAddressGiven
-        case false => Anomaly.None
+      val anomaly = if (isPublicRoad(roadLink)) {
+        Anomaly.NoAddressGiven
+      } else {
+        Anomaly.None
       }
       val unaddressedRoadLink =
         UnaddressedRoadLink(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), anomaly,

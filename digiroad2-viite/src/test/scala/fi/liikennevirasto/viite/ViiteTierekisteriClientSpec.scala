@@ -31,7 +31,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   val defaultChangeInfo = RoadwayChangeInfo(AddressChangeType.apply(2),
     RoadwayChangeSection(None, None, None, None, None, None, None, None, None),
     RoadwayChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
-      Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1), false, 1)
+      Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1), reversed = false, 1)
 
   def getRestEndPoint: String = {
     val loadedKeyString = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")

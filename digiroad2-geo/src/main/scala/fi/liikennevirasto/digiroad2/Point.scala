@@ -19,10 +19,10 @@ case class Matrix(m: Seq[Seq[Double]]) {
   }
   def transpose: Matrix = {
     m.size match {
-      case 2 => Matrix(Seq(Seq(m(0)(0), m(1)(0)), Seq(m(0)(1), m(1)(1))))
-      case 3 => Matrix(Seq(Seq(m(0)(0), m(1)(0), m(2)(0)),
-        Seq(m(0)(1), m(1)(1), m(2)(1)),
-        Seq(m(0)(2), m(1)(2), m(2)(2))))
+      case 2 => Matrix(Seq(Seq(m.head.head, m(1).head), Seq(m.head(1), m(1)(1))))
+      case 3 => Matrix(Seq(Seq(m.head.head, m(1).head, m(2).head),
+        Seq(m.head(1), m(1)(1), m(2)(1)),
+        Seq(m.head(2), m(1)(2), m(2)(2))))
     }
   }
 }

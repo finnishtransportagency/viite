@@ -90,6 +90,6 @@ object ProjectLinkNameDAO {
   }
 
   def removeByProject(projectId: Long): Unit = {
-    sqlu"""DELETE FROM PROJECT_LINK_NAME WHERE PROJECT_ID = ${projectId}""".execute
+    sqlu"""DELETE FROM PROJECT_LINK_NAME WHERE PROJECT_ID = $projectId""".execute
   }
 }
