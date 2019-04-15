@@ -373,8 +373,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   private def getStartCalibrationPoint(convertedAddress: ConversionAddress): Option[(RoadwayPoint, CalibrationPoint)] = {
     convertedAddress.calibrationCode match {
       case AtBeginning | AtBoth =>
-        {
-          val existingRoadwayPoint = RoadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.startAddressM)
+        val existingRoadwayPoint = RoadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.startAddressM)
           existingRoadwayPoint match {
             case Some(x) =>
               val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPoint(x.id)
@@ -385,7 +384,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
             case _ =>
               Some(RoadwayPoint(NewRoadwayPointId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, "import"), CalibrationPoint(NewCalibrationPointId, NewRoadwayPointId, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, 0, CalibrationPointType.Mandatory, createdBy = "import" ))
           }
-        }
       case _ => None
     }
   }
@@ -393,7 +391,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   private def getEndCalibrationPoint(convertedAddress: ConversionAddress): Option[(RoadwayPoint, CalibrationPoint)] = {
     convertedAddress.calibrationCode match {
       case AtEnd | AtBoth =>
-      {
         val existingRoadwayPoint = RoadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.endAddressM)
         existingRoadwayPoint match {
           case Some(x) =>
@@ -405,7 +402,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
           case _ =>
             Some(RoadwayPoint(NewRoadwayPointId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, "import"), CalibrationPoint(NewCalibrationPointId, NewRoadwayPointId, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, 1, CalibrationPointType.Mandatory, createdBy = "import" ))
         }
-      }
       case _ => None
     }
   }

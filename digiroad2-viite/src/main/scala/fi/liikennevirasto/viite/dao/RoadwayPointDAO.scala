@@ -45,13 +45,13 @@ object RoadwayPointDAO {
 
   def update(id: Long, addressMValue: Long, modifiedBy: String) = {
     sqlu"""
-        Update ROADWAY_POINT Set ADDR_M = ${addressMValue}, MODIFIED_BY = ${modifiedBy}, MODIFIED_TIME = SYSDATE Where ID = ${id}
+        Update ROADWAY_POINT Set ADDR_M = $addressMValue, MODIFIED_BY = $modifiedBy, MODIFIED_TIME = SYSDATE Where ID = $id
       """.execute
   }
 
   def update(id: Long, roadwayNumber: Long, addressMValue: Long, modifiedBy: String) = {
     sqlu"""
-        Update ROADWAY_POINT Set ROADWAY_NUMBER = ${roadwayNumber}, ADDR_M = ${addressMValue}, MODIFIED_BY = ${modifiedBy}, MODIFIED_TIME = SYSDATE Where ID = ${id}
+        Update ROADWAY_POINT Set ROADWAY_NUMBER = $roadwayNumber, ADDR_M = $addressMValue, MODIFIED_BY = $modifiedBy, MODIFIED_TIME = SYSDATE Where ID = $id
       """.execute
   }
 

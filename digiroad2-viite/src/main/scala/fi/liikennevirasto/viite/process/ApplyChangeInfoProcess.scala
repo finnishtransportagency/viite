@@ -156,9 +156,10 @@ object ApplyChangeInfoProcess {
 
     //TODO check if it's a good idea to generate here the database identifier
     //PROS: Then we are using the right identifier on the next fill topology adjustments
-    val newId = projection.oldLinkId == projection.newLinkId match {
-      case true => linearLocation.id
-      case _ => NewLinearLocation
+    val newId = if (projection.oldLinkId == projection.newLinkId) {
+      linearLocation.id
+    } else {
+      NewLinearLocation
     }
 
     val geometry = mappedRoadLinks.get(projection.newLinkId).map(
@@ -267,16 +268,15 @@ object ApplyChangeInfoProcess {
 
     //If contains some unsupported change type there is no need to apply any change
     //because the linear locations will be set as floating
-    changes.isEmpty || changes.exists(nonSupportedChange) match {
-      case true =>
-        (linearLocations, changeSet)
-      case _ =>
-        val projections = generateProjections(changes)
-        linearLocations.foldLeft((Seq[LinearLocation](), changeSet)) {
-          case ((cLinearLocations, cChangeSet), linearLocation) =>
-            val (adjustedLinearLocations, resultChangeSet) = projectLinearLocation(linearLocation, projections, cChangeSet, mappedRoadLinks)
-            (cLinearLocations ++ adjustedLinearLocations, resultChangeSet)
-        }
+    if (changes.isEmpty || changes.exists(nonSupportedChange)) {
+      (linearLocations, changeSet)
+    } else {
+      val projections = generateProjections(changes)
+      linearLocations.foldLeft((Seq[LinearLocation](), changeSet)) {
+        case ((cLinearLocations, cChangeSet), linearLocation) =>
+          val (adjustedLinearLocations, resultChangeSet) = projectLinearLocation(linearLocation, projections, cChangeSet, mappedRoadLinks)
+          (cLinearLocations ++ adjustedLinearLocations, resultChangeSet)
+      }
     }
   }
 
@@ -288,7 +288,7 @@ object ApplyChangeInfoProcess {
 
     val mappedRoadLinks = roadLinks.groupBy(_.linkId).mapValues(_.head)
 
-    val initialChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty)
+    val initialChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty)
 
     linearLocations.groupBy(_.linkId).foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
       case ((existingSegments, changeSet), (linkId, linearLocations)) =>

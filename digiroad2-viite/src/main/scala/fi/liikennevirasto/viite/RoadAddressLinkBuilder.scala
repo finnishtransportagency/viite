@@ -131,13 +131,15 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       case Some(road) => road.sideCode
       case _ => SideCode.Unknown
     }
-    val startAddrM = roadAddresses.nonEmpty match {
-      case true => roadAddresses.map(_.startAddrMValue).min
-      case false => 0L
+    val startAddrM = if (roadAddresses.nonEmpty) {
+      roadAddresses.map(_.startAddrMValue).min
+    } else {
+      0L
     }
-    val endAddrM = roadAddresses.nonEmpty match {
-      case true => roadAddresses.map(_.endAddrMValue).max
-      case false => 0L
+    val endAddrM = if (roadAddresses.nonEmpty) {
+      roadAddresses.map(_.endAddrMValue).max
+    } else {
+      0L
     }
 
     val roadLinkRoadNumber = toLongNumber(headAddress.map(_.roadNumber), roadLink.attributes.get(RoadNumber))
