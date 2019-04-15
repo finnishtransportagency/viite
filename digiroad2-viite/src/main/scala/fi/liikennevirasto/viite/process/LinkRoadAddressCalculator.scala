@@ -36,7 +36,7 @@ object LinkRoadAddressCalculator {
   private def recalculateTrack[T <: BaseRoadAddress](addressList: Seq[T]): Seq[T] = {
     val groupedList = addressList.groupBy(_.roadPartNumber)
     groupedList.mapValues {
-      case (addresses) =>
+      case addresses =>
         val sortedAddresses = addresses.sortBy(_.startAddrMValue)
         segmentize(sortedAddresses, Seq())
     }.values.flatten.toSeq

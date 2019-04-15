@@ -52,7 +52,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val roadNetworkDAO = new RoadNetworkDAO
   val linearLocationDAO = new LinearLocationDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
-  val unaddressedRoadLinkDAO = new UnaddressedRoadLinkDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val mockwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
   val mockProjectLinkDAO = MockitoSugar.mock[ProjectLinkDAO]
@@ -73,12 +72,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
 
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, unaddressedRoadLinkDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
-  val roadAddressServiceRealRoadwayAddressMapper = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, unaddressedRoadLinkDAO, roadwayAddressMapper, mockEventBus) {
+  val roadAddressServiceRealRoadwayAddressMapper = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -564,7 +563,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectDAO.create(rap)
         projectService.updateProjectsWaitingResponseFromTR()
         val project = projectDAO.fetchById(projectId).head
-        project.statusInfo.getOrElse("") contains ("Failed to find TR-ID") should be(true)
+        project.statusInfo.getOrElse("") contains "Failed to find TR-ID" should be(true)
       }
     }
   }
@@ -612,7 +611,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projDate = DateTime.parse("1990-01-01")
       val addresses = List(ProjectReservedPart(5: Long, 5: Long, 205: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val errorMsg = projectService.validateProjectDate(addresses, projDate)
-      errorMsg should not be (None)
+      errorMsg should not be None
     }
   }
 
@@ -657,7 +656,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Test getRoadAddressSingleProject When project with reserved parts is created Then return the created project") {
-    var projectId = 0L
+    val projectId = 0L
     val roadNumber = 19438
     val roadPartNumber = 1
     val linkId = 12345L

@@ -81,7 +81,7 @@ class DataImporterSpec extends FunSuite with Matchers {
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
   when(mockVVHClient.suravageData).thenReturn(mockVVHSuravageClient)
   when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
-  when(mockVVHClient.frozenTimeRoadLinkData)thenReturn(mockVVHFrozenTimeRoadLinkClient)
+  when(mockVVHClient.frozenTimeRoadLinkData)thenReturn mockVVHFrozenTimeRoadLinkClient
   when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
   when(mockVVHComplementaryClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
   when(mockVVHFrozenTimeRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)

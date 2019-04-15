@@ -70,7 +70,7 @@ object ApplyChangeInfoProcess {
     val maxNewMeasure = Math.max(projection.newStart, projection.newEnd)
 
     // Test if the direction has changed -> side code will be also affected
-    val (newStartMeasure, newEndMeasure, newSideCode) = if (isDirectionChangeProjection(projection)) {
+    val (newStartMeasure, newEndMeasure, _) = if (isDirectionChangeProjection(projection)) {
       val newStart = projection.newStart - (linearLocation.endMValue - projection.oldStart) * Math.abs(newLength / oldLength)
       val newEnd = projection.newEnd - (linearLocation.startMValue - projection.oldEnd) * Math.abs(newLength / oldLength)
       (newStart, newEnd, SideCode.switch(linearLocation.sideCode))

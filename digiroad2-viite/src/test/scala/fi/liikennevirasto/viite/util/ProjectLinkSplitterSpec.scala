@@ -40,7 +40,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -156,7 +156,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     splitGeometryOpt.isEmpty should be (false)
     val g = splitGeometryOpt.get
     GeometryUtils.geometryLength(g) should be < GeometryUtils.geometryLength(geomT)
-    GeometryUtils.geometryLength(g) should be > (0.0)
+    GeometryUtils.geometryLength(g) should be > 0.0
     GeometryUtils.minimumDistance(g.last, geomT) should be < MaxDistanceForConnectedLinks
     g.length should be (3)
     g.lastOption.foreach { p =>
@@ -174,7 +174,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
     splitGeometryOpt.isEmpty should be (false)
     val g = splitGeometryOpt.get
     GeometryUtils.geometryLength(g) should be < GeometryUtils.geometryLength(geomT)
-    GeometryUtils.geometryLength(g) should be > (0.0)
+    GeometryUtils.geometryLength(g) should be > 0.0
     GeometryUtils.minimumDistance(g.last, geomT) should be < MaxDistanceForConnectedLinks
     g.length should be (3)
     g.headOption.foreach { p =>

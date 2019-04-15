@@ -171,39 +171,12 @@ object RoadAddressFiller {
     }
   }
 
-  /**
-    * Generate unaddressed road address links only for the all road link, missing unaddressed parts of the road link are generated
-    * by batch process
-    * ATTENTION: We can in the future also crete here unaddressed parts if needed.
-    * @param roadLink
-    * @param roadAddresses
-    * @return
-    */
-  private def generateUnaddressedSegments(roadLink: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-    //TODO check if its needed to create unaddressed road link for part after VIITE-1536
-    if (roadAddresses.isEmpty) {
-      val anomaly = if (isPublicRoad(roadLink)) {
-        Anomaly.NoAddressGiven
-      } else {
-        Anomaly.None
-      }
-      val unaddressedRoadLink =
-        UnaddressedRoadLink(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), anomaly,
-          GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length))
-
-      Seq(roadAddressLinkBuilder.build(roadLink, unaddressedRoadLink))
-    } else {
-      Seq()
-    }
-  }
-
   private def generateSegments(topology: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink]  = {
     roadAddresses.map(ra => roadAddressLinkBuilder.build(topology, ra))
   }
 
   def fillTopology(topology: Seq[RoadLinkLike], roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     val fillOperations: Seq[(RoadLinkLike, Seq[RoadAddress]) => Seq[RoadAddressLink]] = Seq(
-      generateUnaddressedSegments,
       generateSegments
     )
 

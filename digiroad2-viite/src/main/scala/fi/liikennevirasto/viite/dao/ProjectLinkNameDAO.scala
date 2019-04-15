@@ -13,7 +13,6 @@ case class ProjectLinkName(id: Long, projectId: Long, roadNumber: Long, roadName
 
 object ProjectLinkNameDAO {
 
-  private val logger = LoggerFactory.getLogger(getClass)
   private val ptojectLinkNameQueryBase = s"""select id, project_id, road_number, road_name from project_link_name """
 
   implicit val getProjectLinkNameRow = new GetResult[ProjectLinkName] {
