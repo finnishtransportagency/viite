@@ -6,8 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import org.scalatest.{FunSuite, Matchers}
@@ -308,7 +307,7 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     val adjustedLinearLocations = locations
 
     adjustedLinearLocations.sortBy(_.id) should be (linearLocations)
-    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty))
+    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty))
   }
 
   test("Test applyChange When the road link is shortened at the end Then linear locations measure should be adjusted") {
@@ -373,7 +372,7 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     val adjustedLinearLocations = locations
 
     adjustedLinearLocations.sortBy(_.id) should be (linearLocations)
-    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty))
+    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty))
   }
 
   test("Test applyChange When there at least one new road link change not supported Then any change should be applied for that road link") {
@@ -400,7 +399,7 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     val adjustedLinearLocations = locations
 
     adjustedLinearLocations.sortBy(_.id) should be (linearLocations)
-    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty))
+    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty))
   }
 
 }

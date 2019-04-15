@@ -103,9 +103,10 @@ object ProjectLinkSplitter {
   private def connectTerminatedProjectLinks(splitA: ProjectLink, splitB: ProjectLink, terminatedLink: ProjectLink, templateLink: ProjectLink, disconnectedProjectLinks: Seq[ProjectLink]) = {
     def concat(geo1: Seq[Point], geo2: Seq[Point]) = {
       //check first here where is adjacent to know if it's needed to prepend or append
-      GeometryUtils.areAdjacent(geo1.last, geo2.head) match {
-        case true => geo1 ++ geo2
-        case false => geo2 ++ geo1
+      if (GeometryUtils.areAdjacent(geo1.last, geo2.head)) {
+        geo1 ++ geo2
+      } else {
+        geo2 ++ geo1
       }
     }
     def copy(pProjectLink: ProjectLink, nProjectLink: ProjectLink, result: SplitResult) = {
@@ -121,9 +122,10 @@ object ProjectLinkSplitter {
     def merge(pProjectLink: ProjectLink, nProjectLinks: Seq[ProjectLink], result: SplitResult) : SplitResult = {
       nProjectLinks.headOption match {
         case Some(nProjectLink) =>
-          GeometryUtils.areAdjacent(pProjectLink.geometry, nProjectLink.geometry) match {
-            case true => merge(nProjectLink.copy(status = LinkStatus.Terminated), nProjectLinks.tail, copy(pProjectLink, nProjectLink, result))
-            case false => result.copy(allTerminatedProjectLinks = result.allTerminatedProjectLinks ++ Seq(pProjectLink))
+          if (GeometryUtils.areAdjacent(pProjectLink.geometry, nProjectLink.geometry)) {
+            merge(nProjectLink.copy(status = LinkStatus.Terminated), nProjectLinks.tail, copy(pProjectLink, nProjectLink, result))
+          } else {
+            result.copy(allTerminatedProjectLinks = result.allTerminatedProjectLinks ++ Seq(pProjectLink))
           }
         case _ => result.copy(allTerminatedProjectLinks = result.allTerminatedProjectLinks ++ Seq(pProjectLink))
       }

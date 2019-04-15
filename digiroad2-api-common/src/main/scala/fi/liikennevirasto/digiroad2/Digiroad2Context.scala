@@ -46,13 +46,6 @@ class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
 //  }
 //}
 
-//TODO check if this is needed at VIITE-1538
-//class RoadAddressFloater(roadAddressService: RoadAddressService) extends Actor {
-//  def receive = {
-//    case w: Set[any] => roadAddressService.checkRoadAddressFloating(w.asInstanceOf[Set[Long]])
-//    case _                    => println("roadAddressUpdater: Received unknown message")
-//  }
-//}
 
 class RoadNetworkChecker(roadNetworkService: RoadNetworkService) extends Actor {
   def receive = {
@@ -117,7 +110,7 @@ object Digiroad2Context {
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, roadwayAddressMapper, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+    new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, roadwayAddressMapper, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   }
 
   lazy val projectService: ProjectService = {

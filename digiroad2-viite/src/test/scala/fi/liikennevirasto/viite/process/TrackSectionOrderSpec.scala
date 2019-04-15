@@ -10,7 +10,6 @@ import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.util.toProjectLink
 
@@ -28,7 +27,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
   private def generateProjectLink(id: Long, geometry: Seq[Point], track: Track = Track.Combined) = {
     //TODO the road address now have the linear location id and as been setted to 1L
     toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, track, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), NoFloating,
+      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None),
       geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
   }
 
@@ -83,7 +82,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     TrackSectionOrder.isRoundabout(list.init) should be (false)
     TrackSectionOrder.isRoundabout(list.tail) should be (false)
     val result = TrackSectionOrder.mValueRoundabout(list)
-    result should have size(8)
+    result should have size 8
     result.head.sideCode should be (TowardsDigitizing)
     result.forall(_.sideCode == result.head.sideCode) should be (false)
     result.head.geometry should be (list.head.geometry)
@@ -134,7 +133,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     TrackSectionOrder.isRoundabout(list.init) should be (false)
     TrackSectionOrder.isRoundabout(list.tail) should be (false)
     val result = TrackSectionOrder.mValueRoundabout(list)
-    result should have size(8)
+    result should have size 8
     result.head.sideCode should be (AgainstDigitizing)
     result.forall(_.sideCode == result.head.sideCode) should be (false)
     result.head.geometry should be (list.head.geometry)

@@ -36,10 +36,10 @@ object RoadNameDAO {
 
   def dateParser(oDate: Option[DateTime]): String = {
     oDate match {
-      case Some(date) => {
+      case Some(date) =>
         val dtfOut: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
         dtfOut.print(date)
-      }
+
       case _=>
         logger.error("Failed to parse date in RoadName search ")
         "01.01.1900"
@@ -54,10 +54,9 @@ object RoadNameDAO {
     */
   private def optionStringToDateTime(dateString: Option[String]): Option[java.sql.Date] = {
     dateString match {
-      case Some(dateString) => {
+      case Some(dateString) =>
         val splitDate = dateString.split('.')
         Option(new java.sql.Date(splitDate(2).toInt, splitDate(1).toInt, splitDate(0).toInt))
-      }
       case _ => None
     }
   }
@@ -152,7 +151,7 @@ object RoadNameDAO {
   }
 
   def expire(id: Long, username: String) = {
-    val query = s"""Update ROAD_NAME Set valid_to = sysdate, created_by = '${username}' where id = $id"""
+    val query = s"""Update ROAD_NAME Set valid_to = sysdate, created_by = '$username' where id = $id"""
     Q.updateNA(query).first
   }
 
@@ -218,11 +217,11 @@ object RoadNameDAO {
   }
 
 
-  def expireByRoadNumber(roadNumbers: Set[Long], endDate: Long): Unit = {
+  def expireByRoadNumber(roadNumbers: Set[Long], validTo: Long): Unit = {
     if (roadNumbers.isEmpty) return // dont even bother with empty set
     val query = s" UPDATE ROAD_NAME SET VALID_TO = ? WHERE VALID_TO IS NULL AND ROAD_NUMBER in (${qMarksGenerator(roadNumbers)})"
     val roadNamesPS = dynamicSession.prepareStatement(query)
-    roadNamesPS.setDate(1, new Date(endDate))
+    roadNamesPS.setDate(1, new Date(validTo))
     var index = 2
     for (roadNumber <- roadNumbers) {
       roadNamesPS.setLong(index, roadNumber)

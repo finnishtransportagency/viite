@@ -7,7 +7,7 @@ import org.scalatra.swagger._
 
 class ScalatraBootstrap extends LifeCycle {
 
-  implicit val swagger = new ViiteSwagger
+  implicit val swagger: ViiteSwagger = new ViiteSwagger
 
   override def init(context: ServletContext) {
     context.mount(new SessionApi, "/api/auth/*")

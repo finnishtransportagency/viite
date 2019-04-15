@@ -79,24 +79,6 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     )
   }
 
-  def build(roadLink: RoadLinkLike, unaddressedRoadLink: UnaddressedRoadLink): ProjectAddressLink = {
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, unaddressedRoadLink.startMValue.getOrElse(0.0), unaddressedRoadLink.endMValue.getOrElse(roadLink.length))
-    val length = GeometryUtils.geometryLength(geom)
-    val roadLinkRoadNumber: Long = roadLink.attributes.get(RoadNumber).map(toLongNumber).getOrElse(0L)
-    val roadLinkRoadPartNumber: Long = roadLink.attributes.get(RoadPartNumber).map(toLongNumber).getOrElse(0L)
-    val roadLinkTrackCode: Int = roadLink.attributes.get(TrackCode).map(toIntNumber).getOrElse(0)
-    val roadName = roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString
-    val municipalityCode = roadLink.municipalityCode
-    val linkType = roadLink match {
-      case rl: RoadLink => rl.linkType
-      case _ => UnknownLinkType
-    }
-    build(roadLink, 0L, geom, length, roadLinkRoadNumber, roadLinkRoadPartNumber, roadLinkTrackCode, Some(roadName), municipalityCode,
-      linkType, getRoadType(roadLink.administrativeClass, linkType), Discontinuity.Continuous, unaddressedRoadLink.startAddrMValue.getOrElse(0), unaddressedRoadLink.endAddrMValue.getOrElse(0),
-      unaddressedRoadLink.startMValue.getOrElse(0.0), unaddressedRoadLink.endMValue.getOrElse(0.0), SideCode.Unknown,
-      None, None, Anomaly.None, LinkStatus.Unknown, 0, 0, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), reversed = false, None, None)
-  }
-
   def build(ral: RoadAddressLinkLike): ProjectAddressLink = {
     ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType,
       ral.constructionType, ral.roadLinkSource, ral.roadType, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.modifiedAt, ral.modifiedBy,
