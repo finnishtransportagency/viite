@@ -216,7 +216,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val result = roadNameService.getRoadNameByNumber(99999, 99999)
       result.get("roadName").isDefined should be (true)
-      result.get("roadName").get should be (None)
+      result("roadName") should be (None)
     }
   }
 }

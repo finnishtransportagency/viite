@@ -18,7 +18,7 @@ class RoadAddressSplitMapperSpec extends FunSuite with Matchers {
       456L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None), Seq(Point(0.0, 0.0), Point(0.0, 15.0)), 1L,
       Transfer, PublicRoad, LinkGeomSource.SuravageLinkInterface, 15.0, 1L, 1L, 1L, reversed = false, Some(123L), 8750L)
     val map = RoadAddressSplitMapper.createAddressMap(Seq(template, suravage))
-    map should have size (2)
+    map should have size 2
     map.exists(m => m.sourceStartM == 0.0 && m.targetLinkId == 456L) should be (true)
     map.exists(_.sourceStartM == 15.0) should be (true)
     map.forall(m => m.sourceStartM == m.targetStartM && m.sourceEndM == m.targetEndM && m.sourceLinkId == 123L) should be (true)
@@ -32,7 +32,7 @@ class RoadAddressSplitMapperSpec extends FunSuite with Matchers {
       456L, 15.0, 18.9, SideCode.AgainstDigitizing, (None, None), Seq(Point(0.0, 15.0), Point(0.0, 18.9)), 1L,
       Transfer, PublicRoad, LinkGeomSource.SuravageLinkInterface, 3.9, 1L, 1L, 1L, reversed = false, Some(123L), 8750L)
     val map = RoadAddressSplitMapper.createAddressMap(Seq(template, suravage))
-    map should have size (2)
+    map should have size 2
     map.exists(m => m.sourceStartM == 15.0 && m.targetLinkId == 456L) should be (true)
     map.exists(m => m.sourceStartM == 0.0 && m.targetLinkId == 123L) should be (true)
     map.forall(m => m.sourceStartM == m.targetStartM && m.sourceEndM == m.targetEndM && m.sourceLinkId == 123L) should be (true)
@@ -49,7 +49,7 @@ class RoadAddressSplitMapperSpec extends FunSuite with Matchers {
       456L, 3.9, 13.9, SideCode.AgainstDigitizing, (None, None), Seq(Point(0.0, 15.0), Point(5.0, 15.0), Point(5.0, 20.0)), 1L,
       Transfer, PublicRoad, LinkGeomSource.SuravageLinkInterface, 10.0, 1L, 1L, 1L, reversed = false, Some(123L), 8750L)
     val map = RoadAddressSplitMapper.createAddressMap(Seq(template, suravage, newPart))
-    map should have size (2)
+    map should have size 2
     map.exists(m => m.sourceStartM == 15.0 && m.targetLinkId == 456L && m.targetEndM == 0.0) should be (true)
     map.exists(m => m.sourceStartM == 0.0 && m.targetLinkId == 123L) should be (true)
   }

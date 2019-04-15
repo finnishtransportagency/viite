@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.user;
+package fi.liikennevirasto.digiroad2.user
 
 
 class DummyUserProvider extends UserProvider {

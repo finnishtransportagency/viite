@@ -58,7 +58,7 @@ trait AddressLinkBuilder {
     try {
       value.asInstanceOf[String].toInt
     } catch {
-      case e: Exception => 0
+      case e: Throwable => 0
     }
   }
 

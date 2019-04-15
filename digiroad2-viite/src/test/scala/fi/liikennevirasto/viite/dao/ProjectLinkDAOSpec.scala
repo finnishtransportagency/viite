@@ -62,9 +62,9 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
   private def dummyRoadways: Seq[Roadway] = {
     Seq(Roadway(NewRoadway, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-      0, 100, false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination),
+      0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination),
       Roadway(NewRoadway, roadwayNumber2, roadNumber1, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-        0, 100, false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination)
+        0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination)
     )
   }
 
@@ -74,7 +74,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
 
   private def splittedDummyRoadways: Seq[Roadway] = {
     Seq(Roadway(NewRoadway, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-      0, 100, false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination)
+      0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination)
     )
   }
 
@@ -353,7 +353,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
         discontinuity, startAddrMValue, endAddrMValue, Some(DateTime.now), None, None, 12345, startMValue, endMValue, side, 1542205983000L, (None, None),
         geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 1, Some(DateTime.now), None, None)
 
-      projectLinkDAO.updateProjectLinkValues(projectId, roadAddress, updateGeom = true)
+      projectLinkDAO.updateProjectLinkValues(projectId, roadAddress)
 
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       val updatedProjectLink = updatedProjectLinks.filter(link => link.id == projectLinks.head.id).head
@@ -605,7 +605,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
 
-      val side = projectLinks.head.sideCode
       val result1 = projectLinkDAO.countLinksByStatus(projectId, roadNumber1, roadPartNumber1, Set(LinkStatus.Transfer.value))
       val result2 = projectLinkDAO.countLinksByStatus(projectId, roadNumber1, roadPartNumber1, Set(LinkStatus.UnChanged.value, LinkStatus.Terminated.value, LinkStatus.Unknown.value, LinkStatus.NotHandled.value, LinkStatus.Numbering.value, LinkStatus.New.value))
       result1 should be(projectLinks.size)
@@ -708,9 +707,9 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId3, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, false, 0),
-        dummyProjectLink(projectLinkId1, id, linkId2, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 40, 0.0, 40.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, false, 0, Some(linkId1)),
-        dummyProjectLink(projectLinkId2, id, linkId3, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 40, 100, 0.0, 60.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, false, 0, Some(linkId1))
+        dummyProjectLink(projectLinkId3, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0),
+        dummyProjectLink(projectLinkId1, id, linkId2, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 40, 0.0, 40.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0, Some(linkId1)),
+        dummyProjectLink(projectLinkId2, id, linkId3, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 40, 100, 0.0, 60.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0, Some(linkId1))
       )
       projectLinkDAO.create(projectLinks)
       projectLinkDAO.fetchSplitLinks(id, linkId1)

@@ -126,8 +126,8 @@ class ProjectCalibrationPointDAOSpec extends FunSuite with Matchers {
       val id3 = ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
       val id4 = ProjectCalibrationPointDAO.createCalibrationPoint(1, 1, 14.0, 25)
       ProjectCalibrationPointDAO.removeAllCalibrationPointsFromRoad(1,1)
-      val deletedCalibrationPoint3 = ProjectCalibrationPointDAO.findCalibrationPointById(id)
-      val deletedCalibrationPoint4 = ProjectCalibrationPointDAO.findCalibrationPointById(id2)
+      val deletedCalibrationPoint3 = ProjectCalibrationPointDAO.findCalibrationPointById(id3)
+      val deletedCalibrationPoint4 = ProjectCalibrationPointDAO.findCalibrationPointById(id4)
       deletedCalibrationPoint3.isEmpty should be (true)
       deletedCalibrationPoint4.isEmpty should be (true)
     }

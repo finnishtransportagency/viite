@@ -285,21 +285,15 @@ trait BaseRoadAddress {
       val direction = if (geometry.head.y == geometry.last.y) Vector3d(1.0, 0.0, 0.0) else Vector3d(0.0, 1.0, 0.0)
       Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
     } else {
-      val startingPoint: Point = sideCode == SideCode.TowardsDigitizing match {
-        case true =>
-          //reversed for both SideCodes
-          geometry.head
-        case false =>
-          //NOT reversed for both SideCodes
-          geometry.last
+      val startingPoint: Point = if (sideCode == SideCode.TowardsDigitizing) {
+        geometry.head
+      } else {
+        geometry.last
       }
-      val endPoint: Point = sideCode == SideCode.TowardsDigitizing match {
-        case true =>
-          //reversed for both SideCodes
-          geometry.last
-        case false =>
-          //NOT reversed for both SideCodes
-          geometry.head
+      val endPoint: Point = if (sideCode == SideCode.TowardsDigitizing) {
+        geometry.last
+      } else {
+        geometry.head
       }
       (startingPoint, endPoint)
     }
@@ -789,8 +783,8 @@ class RoadwayDAO extends BaseDAO {
   private def withUpdatedSince(sinceDate: DateTime)(query: String): String = {
     val sinceString = sinceDate.toString("yyyy-MM-dd")
     s"""$query
-        where valid_from >= to_date('${sinceString}', 'YYYY-MM-DD')
-          OR (valid_to IS NOT NULL AND valid_to >= to_date('${sinceString}', 'YYYY-MM-DD'))"""
+        where valid_from >= to_date('$sinceString', 'YYYY-MM-DD')
+          OR (valid_to IS NOT NULL AND valid_to >= to_date('$sinceString', 'YYYY-MM-DD'))"""
   }
 
   /**

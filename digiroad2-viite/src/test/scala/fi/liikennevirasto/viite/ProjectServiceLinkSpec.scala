@@ -52,10 +52,9 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   val roadNetworkDAO = new RoadNetworkDAO
   val linearLocationDAO = new LinearLocationDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
-  val unaddressedRoadLinkDAO = new UnaddressedRoadLinkDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, roadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -294,7 +293,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     templateLink.connectedLinkId should be(Some(newLink.linkId))
     newLink.startMValue should be(splitMValue)
     newLink.startAddrMValue should be(splitAddrMValue)
-    newLink.endAddrMValue should be > (splitAddrMValue)
+    newLink.endAddrMValue should be > splitAddrMValue
     newLink.endMValue should be(survageEndMValue)
     unchangedLink.startMValue should be(0)
     unchangedLink.startAddrMValue should be(startAddrMValue)
@@ -1331,7 +1330,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newLink.map(toRoadLink))
       ProjectLinkNameDAO.create(project.id, 9999, "road name")
       val createdLink = projectService.createProjectLinks(Seq(12345L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
-      createdLink.get("success").get.asInstanceOf[Boolean] should be(true)
+      createdLink("success").asInstanceOf[Boolean] should be(true)
       val updatedLink = projectLinkDAO.fetchProjectLinksByLinkId(Seq(12345L))
       projectService.updateProjectLinks(project.id, Set(updatedLink.head.id), Seq(), updatedLink.head.status, updatedLink.head.createdBy.get, updatedLink.head.roadNumber, updatedLink.head.roadPartNumber, updatedLink.head.track.value, Some(updatedLink.head.endAddrMValue.toInt), updatedLink.head.roadType.value, updatedLink.head.discontinuity.value) should be(None)
       val userDefinedCalibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(project.id, updatedLink.head.roadNumber, updatedLink.head.roadPartNumber)

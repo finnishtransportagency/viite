@@ -28,7 +28,7 @@ object LinkDAO {
 
   def create(id: Long, adjustedTimestamp: Long, source: Long) = {
     sqlu"""
-      insert into LINK (id, source, adjusted_timestamp) values (${id}, ${source}, ${adjustedTimestamp})
+      insert into LINK (id, source, adjusted_timestamp) values ($id, $source, $adjustedTimestamp)
       """.execute
 
   }
@@ -36,7 +36,7 @@ object LinkDAO {
   def createIfEmptyFetch(id: Long): Unit = {
     if (fetch(id).isEmpty) {
       sqlu"""
-        INSERT INTO LINK (ID) values (${id})
+        INSERT INTO LINK (ID) values ($id)
       """.execute
     }
   }

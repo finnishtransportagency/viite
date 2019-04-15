@@ -307,7 +307,7 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     val adjustedLinearLocations = locations
 
     adjustedLinearLocations.sortBy(_.id) should be (linearLocations)
-    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty))
+    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty))
   }
 
   test("Test applyChange When the road link is shortened at the end Then linear locations measure should be adjusted") {
@@ -372,7 +372,7 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     val adjustedLinearLocations = locations
 
     adjustedLinearLocations.sortBy(_.id) should be (linearLocations)
-    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty))
+    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty))
   }
 
   test("Test applyChange When there at least one new road link change not supported Then any change should be applied for that road link") {
@@ -399,7 +399,7 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     val adjustedLinearLocations = locations
 
     adjustedLinearLocations.sortBy(_.id) should be (linearLocations)
-    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty))
+    changeSet should be (ChangeSet(Set.empty, Seq.empty, Seq.empty))
   }
 
 }

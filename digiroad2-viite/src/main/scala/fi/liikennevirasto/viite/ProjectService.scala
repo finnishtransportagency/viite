@@ -731,10 +731,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val splitResult = try {
           ProjectLinkSplitter.split(roadLink.get, newProjectLink(suravageLink, project, splitOptions), bestFit, projectLinks, splitOptions)
         } catch {
-          case e: Exception => {
+          case e: Exception =>
             logger.error(e.getMessage)
             throw e
-          }
         }
         (Some(splitResult), None, GeometryUtils.calculatePointAndHeadingOnGeometry(suravageLink.geometry, splitOptions.splitPoint))
       }

@@ -48,7 +48,6 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   private val roadwayNumber1 = 1000l
   private val roadwayNumber2 = 2000l
-  private val roadwayNumber3 = 3000l
 
   private val linkId1 = 1000l
   private val linkId2 = 2000l
@@ -61,9 +60,9 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   private def dummyRoadways: Seq[Roadway] = {
     Seq(Roadway(NewRoadway, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-      0, 100, false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination),
+      0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination),
     Roadway(NewRoadway, roadwayNumber2, roadNumber1, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-      0, 100, false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination)
+      0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, TerminationCode.NoTermination)
     )
   }
 
@@ -158,7 +157,6 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test updateProjectStateInfo When project info is updated Then project info should change") {
     runWithRollback {
-      val projectListSize = projectDAO.fetchAll().length
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = dummyProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], coordinates = None)
       projectDAO.create(rap)
@@ -273,7 +271,6 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   }
 
   test("Test fetchProjectIdsWithSendingToTRStatus When there is one project in SendingToTR status Then should return that one project") {
-    val address = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
       val waitingCountP = projectDAO.fetchProjectIdsWithSendingToTRStatus.length
       val id = Sequences.nextViitePrimaryKeySeqValue
