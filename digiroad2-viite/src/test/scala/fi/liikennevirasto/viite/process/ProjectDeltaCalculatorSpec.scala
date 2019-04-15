@@ -52,7 +52,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       roadAddress.discontinuity, roadAddress.startAddrMValue + project.id, roadAddress.endAddrMValue + project.id, roadAddress.startAddrMValue + project.id, roadAddress.endAddrMValue + project.id, roadAddress.startDate,
       roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), roadAddress.geometry, project.id, status,
-      roadAddress.roadType, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely, false,
+      roadAddress.roadType, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely, reversed = false,
       None, 748800L)
   }
 
@@ -204,7 +204,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     val uncParts = ProjectDeltaCalculator.partition(unchanged, oppositeSections = Seq()).adjustedSections.keys
     uncParts should have size 2
     uncParts.foreach(x => {
-      val (fr, to) = x
+      val (fr, _) = x
       fr.startMAddr should be(0L)
       fr.endMAddr should be(38L)
     })
@@ -427,7 +427,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         createTransferProjectLink(0, 1524).copy(discontinuity = MinorDiscontinuity, reversed = true)))
     val mapping =
       ProjectDeltaCalculator.partition(transfer).adjustedSections.keys
-    mapping should have size (2)
+    mapping should have size 2
     mapping.foreach { case (from, to) =>
       from.endMAddr - from.startMAddr should be(to.endMAddr - to.startMAddr)
       if (from.discontinuity != Continuous)

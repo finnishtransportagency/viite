@@ -44,7 +44,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
   val mockProjectLinkDAO = MockitoSugar.mock[ProjectLinkDAO]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, new UnaddressedRoadLinkDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -172,7 +172,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
         val pl = projectLinks.getOrElse(rl.linkId, unknownProjectLink)
         rl.linkId -> ProjectAddressLinkBuilder.build(rl, pl)
     }
-    projectRoadLinks should have size (2)
+    projectRoadLinks should have size 2
     val pal1 = projectRoadLinks.head._2
     val pal2 = projectRoadLinks.tail.head._2
 

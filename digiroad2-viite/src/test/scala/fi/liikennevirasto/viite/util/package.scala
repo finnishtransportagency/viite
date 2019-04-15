@@ -136,10 +136,9 @@ package object util {
     //Makes two tracks for the created links
     def withTrack(t: Track, roadNumber: Long, roadPartNumber: Long): Seq[ProjectLink] = {
       addrM.init.zip(addrM.tail).map {
-        case (st, en) => {
+        case (st, en) =>
           val (roadwayId, linkId) = if (withRoadAddress) createRoadAddresses(roadNumber, roadPartNumber, t.value, st, en) else (0L, 0L)
           projectLink(st, en, t, projectId, linkStatus, roadNumber, roadPartNumber, discontinuity, ely, linkId, roadwayId)
-        }
       }
     }
 
@@ -195,14 +194,14 @@ package object util {
         roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
         roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
         roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), roadAddress.geometry, project.id, status, roadAddress.roadType,
-        roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, 0, roadAddress.ely,false,
+        roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, 0, roadAddress.ely,reversed = false,
         None, roadAddress.adjustedTimestamp, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
     } else {
       ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
         roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
         roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
         roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), roadAddress.geometry, project.id, status, roadAddress.roadType,
-        roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely,false,
+        roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely,reversed = false,
         None, roadAddress.adjustedTimestamp, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
     }
   }
@@ -212,7 +211,7 @@ package object util {
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
-      roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely,false,
+      roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely,reversed = false,
       None, roadAddress.adjustedTimestamp, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
   }
 
@@ -230,7 +229,7 @@ package object util {
       None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue,
       rl.sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPoints((rl.startCalibrationPoint, rl.endCalibrationPoint), rl.roadwayId), rl.geometry, project.id,
       LinkStatus.NotHandled, RoadType.PublicRoad,
-      rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == LinkStatus.New) 0 else rl.id, if (rl.status == LinkStatus.New) 0 else rl.linearLocationId,  rl.elyCode, false,
+      rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == LinkStatus.New) 0 else rl.id, if (rl.status == LinkStatus.New) 0 else rl.linearLocationId,  rl.elyCode, reversed = false,
       None, rl.vvhTimeStamp)
   }
 

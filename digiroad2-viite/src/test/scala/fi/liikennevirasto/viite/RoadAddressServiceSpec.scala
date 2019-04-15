@@ -48,11 +48,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
-  val mockUnaddressedRoadLinkDAO = MockitoSugar.mock[UnaddressedRoadLinkDAO]
 
   val roadwayAddressMappper = new RoadwayAddressMapper(mockRoadwayDAO, mockLinearLocationDAO)
 
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, mockUnaddressedRoadLinkDAO, roadwayAddressMappper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, roadwayAddressMappper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }
@@ -102,7 +101,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     verify(mockRoadLinkService, times(1)).getChangeInfoFromVVHF(Set(123L, 124L, 125L))
     verify(mockRoadLinkService, times(1)).getRoadLinksHistoryFromVVH(Set(123L, 124L, 125L))
-    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIdsFromVVH(Set(123L, 124L, 125L), false)
+    verify(mockRoadLinkService, times(1)).getRoadLinksByLinkIdsFromVVH(Set(123L, 124L, 125L), frozenTimeVVHAPIServiceEnabled = false)
 
     result.size should be (3)
   }
@@ -518,7 +517,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
 
 
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999, false)).thenReturn(roadLinks)
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999, useFrozenVVHLinks = false)).thenReturn(roadLinks)
     when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
     when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
     val roadAddresses = roadAddressService.getAllByMunicipality(99999)

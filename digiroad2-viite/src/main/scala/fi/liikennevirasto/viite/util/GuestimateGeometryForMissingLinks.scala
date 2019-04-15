@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.util
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.dao.{BaseRoadAddress}
+import fi.liikennevirasto.viite.dao.BaseRoadAddress
 
 class GuestimateGeometryForMissingLinks {
 
@@ -36,7 +36,7 @@ class GuestimateGeometryForMissingLinks {
             else
               withGeometry++Seq(addedGeometry)
 
-          case (p,n) =>  //if we didnt have geometry on both sides we have to check if we have any any geometry and then find geometry we can use
+          case (_,n) =>  //if we didnt have geometry on both sides we have to check if we have any any geometry and then find geometry we can use
             val foundGeometryOnRoadPartOrTrack = withGeometry.filter(matchingTrack(missingLink))
             if (foundGeometryOnRoadPartOrTrack.isEmpty)
               throw new RuntimeException(s"Road part or track part did not have geometry to form a guesstimate of missing geometry")
@@ -73,11 +73,10 @@ class GuestimateGeometryForMissingLinks {
         val pToNAddrLength = n.startAddrMValue.toDouble-p.endAddrMValue
         GeometryUtils.truncateGeometry2D(geom, geomLength*(link.startAddrMValue - p.endAddrMValue) / pToNAddrLength,
           geomLength*(link.endAddrMValue - p.endAddrMValue) / pToNAddrLength)
-      case (None, Some(n)) => {
+      case (None, Some(n)) =>
         val start= n.geometry.head - (n.geometry.last - n.geometry.head).normalize2D().scale(n.startAddrMValue - link.startAddrMValue)
         val end= n.geometry.head - (n.geometry.last - n.geometry.head).normalize2D().scale(n.startAddrMValue -link.endAddrMValue)
         Seq(start,end)
-      }
       case (Some(p), None) =>
         val start=p.geometry.last + (p.geometry.last - p.geometry.head).normalize2D().scale(link.startAddrMValue - p.endAddrMValue)
         val end=p.geometry.last + (p.geometry.last - p.geometry.head).normalize2D().scale(link.endAddrMValue - p.endAddrMValue)

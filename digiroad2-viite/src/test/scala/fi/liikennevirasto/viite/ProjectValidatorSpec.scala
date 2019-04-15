@@ -39,7 +39,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val projectRoadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val projectRoadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -87,9 +87,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
     def calibrationPoint(cp: Option[ProjectLinkCalibrationPoint]): Option[Long] = {
       cp match {
-        case Some(x) => {
+        case Some(x) =>
           Some(x.addressMValue)
-        }
         case _ => Option.empty[Long]
       }
     }
@@ -853,8 +852,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq.empty[LinearLocation])
       when(mockRoadAddressService.getCurrentRoadAddresses(any[Seq[LinearLocation]])).thenReturn(Seq.empty[RoadAddress])
-      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 1L, false, false)).thenReturn(Seq(roadAddresses.head))
-      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 2L, false, false)).thenReturn(Seq(roadAddresses.last))
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 1L, withHistory = false, fetchOnlyEnd = false)).thenReturn(Seq(roadAddresses.head))
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(19999L, 2L, withHistory = false, fetchOnlyEnd = false)).thenReturn(Seq(roadAddresses.last))
       when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(Some(1L))
 
       val errors = projectValidator.validateProject(updProject, currentProjectLinks).distinct
@@ -2285,7 +2284,7 @@ Left|      |Right
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       updatedProjectLinks.groupBy(_.ely).size should be (2)
       mockEmptyRoadAddressServiceCalls()
-      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2.map(p => p.copy(ely = 8L))
+      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).map(_._2).map(p => p.copy(ely = 8L))
       roadwayDAO.create(rw)
       val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
       elyCodeCheck.size should be (0)
@@ -2309,7 +2308,7 @@ Left|      |Right
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       updatedProjectLinks.map(_.roadwayId)
       mockEmptyRoadAddressServiceCalls()
-      updatedProjectLinks.map(p =>
+      updatedProjectLinks.foreach(p =>
         sqlu"""UPDATE roadway Set ely = 8 Where road_number = ${p.roadNumber} and road_part_number = ${p.roadPartNumber} """.execute
       )
       val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
@@ -2334,7 +2333,7 @@ Left|      |Right
       })
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       mockEmptyRoadAddressServiceCalls()
-      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2.map(p => p.copy(ely = 8))
+      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).map(_._2).map(p => p.copy(ely = 8))
       roadwayDAO.create(rw)
       val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
       elyCodeCheck.size should be (1)
@@ -2350,7 +2349,7 @@ Left|      |Right
       addProjectLinksToProject(LinkStatus.Transfer, Seq(40L, 50L, 60L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, ely = 1L)
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       mockEmptyRoadAddressServiceCalls()
-      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2
+      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).map(_._2)
       roadwayDAO.create(rw)
       val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
       elyCodeCheck.size should be (1)
@@ -2365,7 +2364,7 @@ Left|      |Right
       addProjectLinksToProject(LinkStatus.Transfer, Seq(40L, 50L, 60L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadPartNumber = 2L, ely = 1L)
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       mockEmptyRoadAddressServiceCalls()
-      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2
+      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).map(_._2)
       roadwayDAO.create(rw)
       val elyCodeCheck = projectValidator.checkProjectElyCodes(project, updatedProjectLinks)
       elyCodeCheck.size should be (1)
@@ -2378,10 +2377,10 @@ Left|      |Right
   test("Test projectValidator.checkRoadContinuityCodes When issuing a Ely change and one of the roads becomes the end of it Then the discontinuity codes validations should return a MissingEndOfRoad error.") {
     runWithRollback {
       val project = setUpProjectWithLinks(LinkStatus.UnChanged, Seq(0L, 10L, 20L, 30L, 40L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.Continuous, ely = 1L)
-      addProjectLinksToProject(LinkStatus.Transfer, Seq(60L, 70L, 80L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadNumber = 20000L,roadPartNumber = 1L, ely = 2L)
+      addProjectLinksToProject(LinkStatus.Transfer, Seq(60L, 70L, 80L), discontinuity = Discontinuity.Continuous, lastLinkDiscontinuity = Discontinuity.EndOfRoad, project = project, roadNumber = 20000L, ely = 2L)
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       mockEmptyRoadAddressServiceCalls()
-      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).unzip._2
+      val rw = updatedProjectLinks.map(toRoadwayAndLinearLocation).map(_._2)
       roadwayDAO.create(rw)
       val checkRoadContinuityChecks = projectValidator.checkRoadContinuityCodes(project, updatedProjectLinks)
       checkRoadContinuityChecks.size should be (1)
@@ -2439,7 +2438,7 @@ Left|      |Right
       when(mockRoadwayAddressMapper.getRoadAddressesByRoadway(any[Seq[Roadway]])).thenReturn(Seq(ra.last))
       when(mockRoadAddressService.getRoadAddressesByRoadwayIds(any[Seq[Long]])).thenReturn(Seq(ra.last))
       when(mockRoadAddressService.getRoadAddressesFiltered(19999L, 2L)).thenReturn(Seq(ra.last))
-      projectService.updateProjectLinks(project.id, allLinks.filter(_.roadPartNumber == 2).map(_.id).toSet, Seq(), LinkStatus.Transfer, "silari", 20000, 1, 0, None, 1, 1 , Some(1), false, Some("asd"), None)
+      projectService.updateProjectLinks(project.id, allLinks.filter(_.roadPartNumber == 2).map(_.id).toSet, Seq(), LinkStatus.Transfer, "silari", 20000, 1, 0, None, 1, 1 , Some(1), reversed = false, Some("asd"), None)
       val linksAfterTransfer = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
 
       when(mockRoadAddressService.getRoadAddressesFiltered(20000l, 2L)).thenReturn(Seq())

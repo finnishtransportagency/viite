@@ -210,7 +210,7 @@ class DataImporter {
   // TODO This is not used and probably should be removed.
   def updateRoadWithSingleRoadType(roadNumber:Long, roadPartNumber: Long, roadType : Long, elyCode :Long) = {
     println(s"Updating road number $roadNumber and part $roadPartNumber with roadType = $roadType and elyCode = $elyCode")
-    sqlu"""UPDATE ROADWAY SET ROAD_TYPE = ${roadType}, ELY= ${elyCode} where ROAD_NUMBER = ${roadNumber} AND ROAD_PART_NUMBER = ${roadPartNumber} """.execute
+    sqlu"""UPDATE ROADWAY SET ROAD_TYPE = $roadType, ELY= $elyCode where ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber """.execute
   }
 
   private def generateChunks(linkIds: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
@@ -290,7 +290,7 @@ class DataImporter {
       sqlu"""UPDATE LINEAR_LOCATION
           SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
                MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, 0.0, 0.0, $x2, $y2, 0.0, $length))
-          WHERE id = ${linearLocationId}""".execute
+          WHERE id = $linearLocationId""".execute
     }
   }
 

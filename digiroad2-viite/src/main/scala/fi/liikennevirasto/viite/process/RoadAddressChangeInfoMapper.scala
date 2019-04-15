@@ -22,14 +22,14 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   }
 
   private def fuseLengthChanges(sources: Seq[ChangeInfo]) = {
-    val (lengthened, rest) = sources.partition(ci => ci.changeType == LengthenedCommonPart.value ||
-      ci.changeType == LengthenedNewPart.value)
-    val (shortened, others) = rest.partition(ci => ci.changeType == ShortenedRemovedPart.value ||
-      ci.changeType == ShortenedCommonPart.value)
+    val (lengthened, rest) = sources.partition(ci => ci.changeType.value == LengthenedCommonPart.value ||
+      ci.changeType.value == LengthenedNewPart.value)
+    val (shortened, others) = rest.partition(ci => ci.changeType.value == ShortenedRemovedPart.value ||
+      ci.changeType.value == ShortenedCommonPart.value)
     others ++
       lengthened.groupBy(ci => (ci.newId, ci.vvhTimeStamp)).mapValues { s =>
-        val common = s.find(_.changeType == LengthenedCommonPart.value)
-        val added = s.find(st => st.changeType == LengthenedNewPart.value)
+        val common = s.find(_.changeType.value == LengthenedCommonPart.value)
+        val added = s.find(st => st.changeType.value == LengthenedNewPart.value)
         (common, added) match {
           case (Some(c), Some(a)) =>
             val (expStart, expEnd) = if (c.newStartMeasure.get > c.newEndMeasure.get)
@@ -41,8 +41,8 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
         }
       }.values.flatten.toSeq ++
       shortened.groupBy(ci => (ci.oldId, ci.vvhTimeStamp)).mapValues { s =>
-        val common = s.find(_.changeType == ShortenedCommonPart.value)
-        val toRemove = s.filter(_.changeType == ShortenedRemovedPart.value)
+        val common = s.find(_.changeType.value == ShortenedCommonPart.value)
+        val toRemove = s.filter(_.changeType.value == ShortenedRemovedPart.value)
         val fusedRemove = if (toRemove.lengthCompare(0) > 0) {
           Some(toRemove.head.copy(oldStartMeasure = toRemove.minBy(_.oldStartMeasure).oldStartMeasure, oldEndMeasure = toRemove.maxBy(_.oldEndMeasure).oldEndMeasure))
         } else None
