@@ -674,10 +674,6 @@
       });
     };
 
-    var addToFormedPartList = function (queryResult) {
-
-    };
-
     this.deleteRoadPartFromList = function (list, roadNumber, roadPartNumber) {
       return _.filter(list, function (dirty) {
         return !(dirty.roadNumber.toString() === roadNumber && dirty.roadPartNumber.toString() === roadPartNumber);
@@ -772,7 +768,6 @@
         eventbus.trigger('roadAddress:projectValidationFailed', validationResult.success);
       } else {
         addToReservedPartList(validationResult);
-        addToFormedPartList(validationResult);
         updateReservedRoads(parseRoadPartInfoToResultRow());
         eventbus.trigger('roadAddress:projectValidationSucceed');
       }
