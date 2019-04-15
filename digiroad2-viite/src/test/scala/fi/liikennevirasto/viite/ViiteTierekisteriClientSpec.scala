@@ -142,7 +142,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     parsedProject should be(reparsed)
     reparsed.id should be(8914)
     reparsed.changeDate should be("2017-06-01")
-    reparsed.changeInfoSeq should have size (1)
+    reparsed.changeInfoSeq should have size 1
   }
 
   test("Test createJsonMessage to check if it returns the JSON with the ely codes inside the change_info objects") {
@@ -211,7 +211,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     val parsedProject = parse(StringInput(string)).extract[ChangeProject]
     val reparsed = parse(StreamInput(ViiteTierekisteriClient.createJsonMessage(parsedProject).getContent)).extract[ChangeProject]
     parsedProject should be(reparsed)
-    reparsed.changeInfoSeq should have size (2)
+    reparsed.changeInfoSeq should have size 2
     val part2 = reparsed.changeInfoSeq.find(_.source.startRoadPartNumber.get == 2)
     val part3 = reparsed.changeInfoSeq.find(_.source.startRoadPartNumber.get == 3)
     part2.nonEmpty should be(true)

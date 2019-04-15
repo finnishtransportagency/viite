@@ -703,7 +703,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       roadway.roadType should be(testRoadway1.roadType)
       roadway.ely should be(testRoadway1.ely)
       roadway.terminated should be(testRoadway1.terminated)
-      roadway.validFrom should not be (None)
+      roadway.validFrom should not be None
       roadway.validTo should be(None)
     }
   }

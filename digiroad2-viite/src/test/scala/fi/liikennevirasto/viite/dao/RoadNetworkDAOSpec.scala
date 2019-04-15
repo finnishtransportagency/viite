@@ -259,7 +259,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
       error2.error should be(addressError)
       error2.error_timestamp should be > 0l
       error2.id should be > 0l
-      error2.id should not be (error1.id)
+      error2.id should not be error1.id
       error2.network_version.getOrElse(fail) should be(error1.network_version.getOrElse(fail))
       error2.roadwayId should be(roadwayId)
       error2.linearLocationId should be(linearLocationId2)

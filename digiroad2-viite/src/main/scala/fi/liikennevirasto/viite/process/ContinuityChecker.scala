@@ -61,8 +61,4 @@ class ContinuityChecker(roadLinkService: RoadLinkService) {
         sameTrackFollows(address, nextAddressItems) ||
         splitTrackFollows(address, nextAddressItems))
   }
-
-  private def checkLinksExist(addresses: Seq[RoadAddress]): Seq[MissingLink] = {
-    Seq()
-  }
 }

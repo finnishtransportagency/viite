@@ -48,11 +48,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
-  val mockUnaddressedRoadLinkDAO = MockitoSugar.mock[UnaddressedRoadLinkDAO]
 
   val roadwayAddressMappper = new RoadwayAddressMapper(mockRoadwayDAO, mockLinearLocationDAO)
 
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, mockUnaddressedRoadLinkDAO, roadwayAddressMappper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, roadwayAddressMappper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }
