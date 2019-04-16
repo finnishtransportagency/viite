@@ -20,17 +20,15 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import org.joda.time.format.DateTimeFormat
 
-import scala.collection.immutable
-
 class ProjectValidator {
 
   val logger = LoggerFactory.getLogger(getClass)
-  lazy val properties: Properties = {
+  val properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
-  val vvhClient = new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+  lazy val vvhClient: VVHClient = new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   val eventBus = new DummyEventBus
   val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
   val roadwayDAO = new RoadwayDAO
@@ -600,7 +598,7 @@ class ProjectValidator {
 
   def checkActionsInRoadsNotInProject(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     val linkStatus = List(LinkStatus.Transfer, LinkStatus.Numbering)
-    val operationsOutsideProject: Seq[Roadway] = project.reservedParts.flatMap(r =>
+    val operationsOutsideProject: Seq[Roadway] = (project.reservedParts++project.formedParts).flatMap(r =>
       roadwayDAO.fetchAllByRoadAndPart(r.roadNumber, r.roadPartNumber)).filterNot(
       l => projectLinks.exists(r => r.roadAddressRoadNumber.nonEmpty && r.roadAddressRoadNumber.get == l.roadNumber && r.roadAddressRoadPart.nonEmpty && r.roadAddressRoadPart.get == l.roadPartNumber)
     )
@@ -608,7 +606,7 @@ class ProjectValidator {
     if (erroredProjectLinks.nonEmpty) {
       erroredProjectLinks.flatMap{ l =>
         Seq(ValidationErrorDetails(project.id, alterShortMessage(ValidationErrorList.RoadNotReserved, currentRoadAndPart = Some(Seq((l._2.head.roadNumber, l._2.head.roadPartNumber))))
-          , Seq(l._2.map(_.id)).flatten, l._2.map { pl =>
+          , Seq(l._2.map(_.id)).flatten, l._2.map{ pl =>
             val point = GeometryUtils.midPointGeometry(pl.geometry)
             ProjectCoordinates(point.x, point.y, 12)
           }, None))
@@ -905,7 +903,7 @@ class ProjectValidator {
               val last = nonTerminated.maxBy(_.endAddrMValue)
               val (road, part) = (last.roadNumber, last.roadPartNumber)
               val discontinuity = last.discontinuity
-              val projectNextRoadParts = project.reservedParts.filter(rp =>
+              val projectNextRoadParts = (project.reservedParts++project.formedParts).filter(rp =>
                 rp.roadNumber == road && rp.roadPartNumber > part && rp.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == rp.roadPartNumber))
 
               val nextProjectPart = projectNextRoadParts.map(_.roadPartNumber).sorted.headOption
@@ -949,7 +947,7 @@ class ProjectValidator {
               val last = nonTerminated.maxBy(_.endAddrMValue)
               val (road, part) = (last.roadNumber, last.roadPartNumber)
               val discontinuity = last.discontinuity
-              val projectNextRoadParts = project.reservedParts.filter(rp =>
+              val projectNextRoadParts = (project.reservedParts++project.formedParts).filter(rp =>
                 rp.roadNumber == road && rp.roadPartNumber > part)
 
               val nextProjectPart = projectNextRoadParts.filter(np => np.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == np.roadPartNumber))
