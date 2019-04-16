@@ -286,6 +286,8 @@ Listan oikeassa alakulmassa olevaa Päivitä lista -painiketta klikkaamalla proj
 
 Tallennetun tieosoiteprojektin saa auki Tieosoiteprojektit-listalta painamalla Avaa-painiketta. Avaamisen yhteydessä sovellus kohdistaa kartan paikkaan, jossa käyttäjä on viimeksi tallentanut toimenpiteen. Mikäli toimenpiteitä ei ole tehty, karttanäkymä rajautuu siten, että kaikki varatut aihiot näkyvät karttanäkymässä.
 
+Projektia ei voi muokata, jos sen tila on joko Lähetetty tierekisteriin, Tierekisterissä käsittelyssä tai Viety tierekisteriin.
+
 Tieosoiteprojektit-lista suljetaan yläpalkin oikeassa kulmassa olevasta rastipainikkeesta.
 
 ![Uusi tieosoiteprojekti](k26.jpg)
@@ -516,8 +518,6 @@ Muutosilmoitus viedään tierekisteriin avaamalla ensin yhteenvetotaulukko klikk
 _Muutosilmoituksen lähetyspainike oikeassa alakulmassa._
 
 Kun muutosilmoitus on lähetetty, muuttuu projektin tilatiedoksi Lähetetty tierekisteriin. Viite-sovellus tarkistaa minuutin välein tierekisterin tilanteen. Kun muutos on käsitelty siellä, tilatiedoksi tulee Viety tierekisteriin ja projekti on valmis. Mikäli muutosilmoitus ei ole mennyt läpi Tierekisterissä, tilaksi päivittyy Virhe tierekisterissä ja listalle tulee oranssi Avaa uudelleen -painike. Viemällä hiiren Virhe tierekisterissä -tekstin päälle virheen infolaatikko tulee näkyviin. Virhe korjataan avaamalla projekti ja tekemällä tarvittavat muokkaukset, jonka jälkeen ilmoitus lähetetään uudelleen Tierekisteriin.  
-
-Projektia ei voi muokata, jos sen tila on joko Lähetetty tierekisteriin, Tierekisterissä käsittelyssä tai Viety tierekisteriin.
 
 |Tieosoiteprojektin tila|Selitys|
 |-|-|
