@@ -34,7 +34,7 @@
         "startDate": "28.12.2017",
         "modifiedBy": "-",
         "createdDate": "28.12.2017"
-      }, "formInfo": [{
+      }, "reservedInfo": [{
         "linkId": 1820547,
         "roadPartNumber": 1,
         "currentDiscontinuity": "Tien loppu",
