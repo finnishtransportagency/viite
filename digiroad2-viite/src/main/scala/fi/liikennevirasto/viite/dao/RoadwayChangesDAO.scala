@@ -371,47 +371,48 @@ class RoadwayChangesDAO {
               "old_TRACK,new_TRACK,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
               "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reversed, roadway_change_id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 
-            val roadWayChangesLinkPS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES_LINK " +
-              "(roadway_change_id, project_id, project_link_id) values (?,?,?)")
+          val roadWayChangesLinkPS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES_LINK " +
+            "(roadway_change_id, project_id, project_link_id) values (?,?,?)")
 
-            val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping)
-            terminated.originalSections.foreach(roadwaySection =>
-              addToBatch(roadwaySection._2, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
-            )
+          val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping)
+          terminated.originalSections.foreach(roadwaySection =>
+            addToBatch(roadwaySection._2, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
+          )
 
-            val news = ProjectDeltaCalculator.partition(delta.newRoads)
-            news.foreach(roadwaySection => addToBatch(roadwaySection, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
+          val news = ProjectDeltaCalculator.partition(delta.newRoads)
+          news.foreach(roadwaySection => addToBatch(roadwaySection, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
 
-            val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping)
+          val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping)
 
-            val transferred = ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated.originalSections.values.toSeq ++ news)
+          val transferred = ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated.originalSections.values.toSeq ++ news)
 
-            val numbering = ProjectDeltaCalculator.partition(delta.numbering.mapping)
+          val numbering = ProjectDeltaCalculator.partition(delta.numbering.mapping)
 
-            val adjustedUnchanged = ProjectDeltaCalculator.adjustStartSourceAddressValues(unchanged.adjustedSections, unchanged.originalSections++transferred.originalSections++numbering.originalSections)
-            val adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(transferred.adjustedSections, unchanged.originalSections++transferred.originalSections++numbering.originalSections)
-            val adjustedNumbering = ProjectDeltaCalculator.adjustStartSourceAddressValues(numbering.adjustedSections, unchanged.originalSections++transferred.originalSections++numbering.originalSections)
+          val adjustedUnchanged = ProjectDeltaCalculator.adjustStartSourceAddressValues(unchanged.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
+          val adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(transferred.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
+          val adjustedNumbering = ProjectDeltaCalculator.adjustStartSourceAddressValues(numbering.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
 
-            adjustedUnchanged._1.foreach { case (roadwaySection1, roadwaySection2) =>
-                            addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
-            }
-            adjustedTransferred._1.foreach { case (roadwaySection1, roadwaySection2) =>
-              addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.Transfer, roadwayChangePS, roadWayChangesLinkPS)
-            }
-            adjustedNumbering._1.foreach { case (roadwaySection1, roadwaySection2) =>
-              addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.ReNumeration, roadwayChangePS, roadWayChangesLinkPS)
-            }
+          adjustedUnchanged._1.foreach { case (roadwaySection1, roadwaySection2) =>
+            addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
+          }
+          adjustedTransferred._1.foreach { case (roadwaySection1, roadwaySection2) =>
+            addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.Transfer, roadwayChangePS, roadWayChangesLinkPS)
+          }
+          adjustedNumbering._1.foreach { case (roadwaySection1, roadwaySection2) =>
+            addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.ReNumeration, roadwayChangePS, roadWayChangesLinkPS)
+          }
 
 
-            roadwayChangePS.executeBatch()
-            roadwayChangePS.close()
-            roadWayChangesLinkPS.executeBatch()
-            roadWayChangesLinkPS.close()
-            val endTime = System.currentTimeMillis()
-            logger.info("Delta insertion in ChangeTable completed in %d ms".format(endTime - startTime))
-            val warning = (adjustedUnchanged._2 ++ adjustedTransferred._2 ++ adjustedNumbering._2).toSeq
-            (true, if (warning.nonEmpty) Option(warning.head) else None)
-          case _ => (false, None)
+          roadwayChangePS.executeBatch()
+          roadwayChangePS.close()
+          roadWayChangesLinkPS.executeBatch()
+          roadWayChangesLinkPS.close()
+          val endTime = System.currentTimeMillis()
+          logger.info("Delta insertion in ChangeTable completed in %d ms".format(endTime - startTime))
+          val warning = (adjustedUnchanged._2 ++ adjustedTransferred._2 ++ adjustedNumbering._2).toSeq
+          (true, if (warning.nonEmpty) Option(warning.head) else None)
+        } else {
+          (false, None)
         }
       case _ => (false, None)
     }

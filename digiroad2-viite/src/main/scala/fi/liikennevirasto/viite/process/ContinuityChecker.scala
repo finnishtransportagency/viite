@@ -23,43 +23,13 @@ case class MissingLink(roadNumber: Long, roadPartNumber: Long, startMAddr: Optio
 //TODO check the need of that continuity checker
 class ContinuityChecker(roadLinkService: RoadLinkService) {
 
-  def checkRoadPart(roadNumber: Int, roadPartNumber: Int, checkMissingLinks: Boolean = false) = {
-    throw new NotImplementedError("Will be implemented at VIITE-1538")
-//    val roadwayList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true)
-//    assert(roadwayList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
-//    val missingSegments = checkAddressesHaveNoGaps(roadwayList)
-//    // TODO: Combine these checks, maybe?
-//    if (checkMissingLinks)
-//      new FloatingChecker(roadLinkService).checkRoadNetwork().map(ra =>
-//        MissingLink(ra.roadNumber, ra.roadPartNumber, Some(ra.startAddrMValue), Some(ra.endAddrMValue), Some(ra.linkId)))
-//    else
-//      missingSegments
-  }
-
-  def checkRoad(roadNumber: Int) = {
-    throw new NotImplementedError("Will be implemented at VIITE-1538")
-//    var current = Option(0)
-//    while (current.nonEmpty) {
-//      current = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, current.get)
-//      current.foreach(partNumber => checkRoadPart(roadNumber, partNumber))
-//    }
-  }
-
-  def checkRoadNetwork() = {
-    throw new NotImplementedError("Will be implemented at VIITE-1538")
-//    var current = Option(0)
-//    while (current.nonEmpty) {
-//      current = RoadAddressDAO.fetchNextRoadNumber(current.get)
-//      current.foreach(checkRoad)
-//    }
-  }
-
   def checkAddressesHaveNoGaps(addresses: Seq[RoadAddress]): Seq[MissingSegment] = {
     val addressMap = addresses.groupBy(_.startAddrMValue)
-    val missingFirst = !addressMap.contains(0L) match {
-      case true => Seq(MissingSegment(addresses.head.roadNumber, addresses.head.roadPartNumber,
+    val missingFirst = if (!addressMap.contains(0L)) {
+      Seq(MissingSegment(addresses.head.roadNumber, addresses.head.roadPartNumber,
         Some(0), Some(addresses.map(_.startAddrMValue).min), None))
-      case _ => Seq()
+    } else {
+      Seq()
     }
     missingFirst ++ addresses.filter(addressHasGapAfter(addressMap)).map(ra =>
       MissingSegment(ra.roadNumber, ra.roadPartNumber, Some(ra.startAddrMValue), None, None))
@@ -90,9 +60,5 @@ class ContinuityChecker(roadLinkService: RoadLinkService) {
       !(combinedTrackFollows(address, nextAddressItems) ||
         sameTrackFollows(address, nextAddressItems) ||
         splitTrackFollows(address, nextAddressItems))
-  }
-
-  private def checkLinksExist(addresses: Seq[RoadAddress]): Seq[MissingLink] = {
-    Seq()
   }
 }

@@ -116,11 +116,10 @@ class RoadNetworkService {
     }
 
     def checkAddressMValues(rw1: Roadway, rw2: Roadway, errors: Seq[RoadNetworkError]): Seq[RoadNetworkError] = {
-      rw1.endAddrMValue != rw2.startAddrMValue match {
-        case true => {
-          errors :+ RoadNetworkError(0, rw1.id, 0L, AddressError.InconsistentAddressValues, System.currentTimeMillis(), options.currNetworkVersion)
-        }
-        case _ => Seq()
+      if (rw1.endAddrMValue != rw2.startAddrMValue) {
+        errors :+ RoadNetworkError(0, rw1.id, 0L, AddressError.InconsistentAddressValues, System.currentTimeMillis(), options.currNetworkVersion)
+      } else {
+        Seq()
       }
     }
 
@@ -160,6 +159,8 @@ class RoadNetworkService {
             val newErrors = uniqueErrors.filterNot(r => existingErrors.exists(e => e.roadwayId == r.roadwayId && e.linearLocationId == r.linearLocationId && e.error == r.error && e.network_version == r.network_version))
             newErrors.sortBy(_.roadwayId).foreach { e =>
               logger.info(s" Found error for roadway id ${e.roadwayId}, linear location id ${e.linearLocationId}")
+              // TODO Should we check here if this error already exists in the table? Now it can throw:
+              // ORA-00001: unique constraint (DR2DEV15.ADDRESS_ERROR_VERSION_UK) violated
               roadNetworkDAO.addRoadNetworkError(e.roadwayId, e.linearLocationId, e.error, e.network_version)
             }
           }
@@ -182,15 +183,13 @@ class RoadNetworkService {
 
         } catch {
           case e: SQLIntegrityConstraintViolationException => logger.error("A road network check is already running")
-          case e: SQLException => {
+          case e: SQLException =>
             logger.info("SQL Exception")
             logger.error(e.getMessage)
             dynamicSession.rollback()
-          }
-          case e: Exception => {
+          case e: Exception =>
             logger.error(e.getMessage)
             dynamicSession.rollback()
-          }
         }
       }
 

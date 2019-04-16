@@ -31,7 +31,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   val defaultChangeInfo = RoadwayChangeInfo(AddressChangeType.apply(2),
     RoadwayChangeSection(None, None, None, None, None, None, None, None, None),
     RoadwayChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
-      Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1), false, 1)
+      Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1), reversed = false, 1)
 
   def getRestEndPoint: String = {
     val loadedKeyString = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
@@ -142,7 +142,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     parsedProject should be(reparsed)
     reparsed.id should be(8914)
     reparsed.changeDate should be("2017-06-01")
-    reparsed.changeInfoSeq should have size (1)
+    reparsed.changeInfoSeq should have size 1
   }
 
   test("Test createJsonMessage to check if it returns the JSON with the ely codes inside the change_info objects") {
@@ -211,7 +211,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     val parsedProject = parse(StringInput(string)).extract[ChangeProject]
     val reparsed = parse(StreamInput(ViiteTierekisteriClient.createJsonMessage(parsedProject).getContent)).extract[ChangeProject]
     parsedProject should be(reparsed)
-    reparsed.changeInfoSeq should have size (2)
+    reparsed.changeInfoSeq should have size 2
     val part2 = reparsed.changeInfoSeq.find(_.source.startRoadPartNumber.get == 2)
     val part3 = reparsed.changeInfoSeq.find(_.source.startRoadPartNumber.get == 3)
     part2.nonEmpty should be(true)

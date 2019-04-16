@@ -41,7 +41,7 @@ class ProjectReservedPartDAO {
            OR (ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber
            AND (STATUS = ${LinkStatus.New.value} OR STATUS = ${LinkStatus.Numbering.value}))
            """.execute
-      sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPartNumber}""".execute
+      sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber""".execute
     }
   }
 
@@ -63,7 +63,7 @@ class ProjectReservedPartDAO {
   def removeReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
     sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
     sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
-    sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPartNumber}""".execute
+    sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber""".execute
   }
 
   def removeReservedRoadPartsByProject(projectId: Long): Unit = {
@@ -387,7 +387,7 @@ class ProjectReservedPartDAO {
              from project pro,
              ROADWAY ra
              where  pro.id = $projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber AND
-             (ra.START_DATE > pro.START_DATE or ra.END_DATE > pro.START_DATE) AND
+             (ra.START_DATE > pro.START_DATE or ra.END_DATE >= pro.START_DATE) AND
              ra.VALID_TO is null) OR EXISTS (
              SELECT 1 FROM project_reserved_road_part pro, ROADWAY ra
               WHERE pro.project_id != $projectId AND pro.road_number = ra.road_number AND pro.road_part_number = ra.road_part_number

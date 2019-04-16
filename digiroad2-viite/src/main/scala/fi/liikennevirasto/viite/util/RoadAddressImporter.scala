@@ -1,20 +1,25 @@
 package fi.liikennevirasto.viite.util
 
-import java.sql.{PreparedStatement, Timestamp, Types}
-import java.util.Date
+import java.sql.{PreparedStatement, Types}
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import org.joda.time.format.ISODateTimeFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
 import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
-import fi.liikennevirasto.viite.dao.{CalibrationCode, FloatingReason, TerminationCode}
+import fi.liikennevirasto.viite.dao.{CalibrationCode, TerminationCode}
+import fi.liikennevirasto.viite.dao.RoadwayPointDAO.RoadwayPoint
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
+import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPoint, CalibrationPointType}
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -31,8 +36,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   case class IncomingRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long, startAddrM: Long, endAddrM: Long, reversed: Long,
                              startDate: Option[DateTime], endDate: Option[DateTime], createdBy: String, roadType: Long, ely: Long, validFrom: Option[DateTime], validTo: Option[DateTime], discontinuity: Long, terminated: Long)
 
-  case class IncomingLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: SideCode,
-                                    calStartM: Option[Long], calEndM: Option[Long], linkGeomSource: LinkGeomSource, floating: FloatingReason, createdBy: String, x1: Option[Double], y1: Option[Double],
+  case class IncomingLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: SideCode, linkGeomSource: LinkGeomSource, createdBy: String, x1: Option[Double], y1: Option[Double],
                                     x2: Option[Double], y2: Option[Double], validFrom: Option[DateTime], validTo: Option[DateTime])
 
   val dateFormatter = ISODateTimeFormat.basicDate()
@@ -42,14 +46,27 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       format(r.linkId, r.startM, r.endM, r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddressM, r.endAddressM, r.startDate, r.endDate, r.userId, r.validFrom, r.roadwayNumber, r.calibrationCode)
   }
 
-  private def roadwayStatement() =
-    dynamicSession.prepareStatement("insert into ROADWAY (id, ROADWAY_NUMBER, road_number, road_part_number, TRACK, start_addr_m, end_addr_m, reversed, start_date, end_date, created_by, road_type, ely, valid_from, valid_to, discontinuity, terminated) " +
+  private def roadwayStatement(): PreparedStatement =
+    dynamicSession.prepareStatement(sql = "insert into ROADWAY (id, ROADWAY_NUMBER, road_number, road_part_number, TRACK, start_addr_m, end_addr_m, reversed, start_date, end_date, created_by, road_type, ely, valid_from, valid_to, discontinuity, terminated) " +
       "values (ROADWAY_SEQ.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)")
 
-  private def linearLocationStatement() =
-    dynamicSession.prepareStatement("insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, cal_start_addr_m, cal_end_addr_m, link_source, " +
-      "created_by, floating, geometry, valid_from, valid_to) " +
-      "values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(?,?,0.0,0.0,?,?,0.0,?)), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
+  private def linearLocationStatement(): PreparedStatement =
+    dynamicSession.prepareStatement(sql = "insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by, valid_from, valid_to) " +
+      " values (LINEAR_LOCATION_SEQ.nextval, ?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
+
+  private def roadwayPointStatement(): PreparedStatement = {
+    dynamicSession.prepareStatement(sql = "Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) " +
+      " values (?, ?, ?, ?, ?)")
+  }
+
+  private def calibrationPointStatement(): PreparedStatement = {
+    dynamicSession.prepareStatement(sql = "Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) " +
+      " values (CALIBRATION_POINT_SEQ.nextval, ?, ?, ?, ?, ?)")
+  }
+
+  private def linkStatement(): PreparedStatement = {
+    dynamicSession.prepareStatement(sql = "Insert into LINK (ID) values(?)")
+  }
 
   def datePrinter(date: Option[DateTime]): String = {
     date match {
@@ -85,26 +102,32 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     linearLocationStatement.setDouble(4, linearLocation.startMeasure)
     linearLocationStatement.setDouble(5, linearLocation.endMeasure)
     linearLocationStatement.setLong(6, linearLocation.sideCode.value)
-    linearLocation.calStartM match {
-      case Some(value) => linearLocationStatement.setLong(7, value)
-      case None => linearLocationStatement.setNull(7, Types.BIGINT)
-    }
-    linearLocation.calEndM match {
-      case Some(value) => linearLocationStatement.setLong(8, value)
-      case None => linearLocationStatement.setNull(8, Types.BIGINT)
-    }
-    linearLocationStatement.setLong(9, linearLocation.linkGeomSource.value)
-    linearLocationStatement.setString(10, linearLocation.createdBy)
-    linearLocationStatement.setLong(11, linearLocation.floating.value)
-    linearLocationStatement.setDouble(12, linearLocation.x1.get)
-    linearLocationStatement.setDouble(13, linearLocation.y1.get)
-    linearLocationStatement.setDouble(14, linearLocation.x2.get)
-    linearLocationStatement.setDouble(15, linearLocation.y2.get)
-    linearLocationStatement.setDouble(16, linearLocation.endMeasure)
-    linearLocationStatement.setString(17, datePrinter(linearLocation.validFrom))
-    linearLocationStatement.setString(18, datePrinter(linearLocation.validTo))
+    linearLocationStatement.setObject(7, OracleDatabase.createRoadsJGeometry(Seq(Point(linearLocation.x1.get, linearLocation.y1.get), Point(linearLocation.x2.get, linearLocation.y2.get)), dynamicSession.conn, linearLocation.endMeasure))
+    linearLocationStatement.setString(8, linearLocation.createdBy)
+    linearLocationStatement.setString(9, datePrinter(linearLocation.validFrom))
+    linearLocationStatement.setString(10, datePrinter(linearLocation.validTo))
     linearLocationStatement.addBatch()
+  }
 
+  private def insertRoadwayPoint(roadwayPointStatement: PreparedStatement, roadwayPoint: RoadwayPoint): Long = {
+    val id = Sequences.nextRoadwayPointId
+    roadwayPointStatement.setLong(1, id)
+    roadwayPointStatement.setLong(2, roadwayPoint.roadwayNumber)
+    roadwayPointStatement.setLong(3, roadwayPoint.addrMValue)
+    roadwayPointStatement.setString(4, roadwayPoint.createdBy)
+    roadwayPointStatement.setString(5, roadwayPoint.createdBy)
+    roadwayPointStatement.addBatch()
+    roadwayPointStatement.executeBatch()
+    id
+  }
+
+  private def insertCalibrationPoint(calibrationPointStatement: PreparedStatement, calibrationPoint: CalibrationPoint): Unit = {
+    calibrationPointStatement.setLong(1, calibrationPoint.roadwayPointId)
+    calibrationPointStatement.setLong(2, calibrationPoint.linkId)
+    calibrationPointStatement.setLong(3, calibrationPoint.startOrEnd)
+    calibrationPointStatement.setLong(4, calibrationPoint.typeCode.value)
+    calibrationPointStatement.setString(5, calibrationPoint.createdBy)
+    calibrationPointStatement.addBatch()
   }
 
   private def fetchRoadLinksFromVVH(linkIds: Set[Long]): Map[Long, RoadLinkLike] = {
@@ -136,10 +159,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   protected def fetchAllTerminatedAddressesFromConversionTable(): Seq[ConversionAddress] = {
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
-      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
-           TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss'),  ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
+      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss') as alkupvm, TO_CHAR(loppupvm - 1, 'YYYY-MM-DD hh:mm:ss') as loppupvm,
+           TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss') as muutospvm, null as lakkautuspvm, ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
            loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
-           WHERE aet >= 0 AND let >= 0 AND (lakkautuspvm is not null or linkid is null)  """
+           WHERE aet >= 0 AND let >= 0 AND linkid is null AND lakkautuspvm is null"""
         .as[ConversionAddress].list
     }
   }
@@ -191,13 +214,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def importAddresses(validConversionAddressesInChunk: Seq[ConversionAddress], allConversionAddresses: Seq[ConversionAddress]): Unit = {
 
-    val linkIds = validConversionAddressesInChunk.map(_.linkId)
+    val linkIds = validConversionAddressesInChunk.map(_.linkId).toSet
     print(s"${DateTime.now()} - ")
     println("Total of %d link ids".format(linkIds.size))
-    val mappedRoadLinks = fetchRoadLinksFromVVH(linkIds.toSet)
+    val mappedRoadLinks = fetchRoadLinksFromVVH(linkIds)
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(mappedRoadLinks.size))
-    val mappedHistoryRoadLinks = fetchHistoryRoadLinksFromVVH(linkIds.filterNot(linkId => mappedRoadLinks.get(linkId).isDefined).toSet)
+    val mappedHistoryRoadLinks = fetchHistoryRoadLinksFromVVH(linkIds.filterNot(linkId => mappedRoadLinks.get(linkId).isDefined))
     print(s"${DateTime.now()} - ")
     println("Read %d road links history from vvh".format(mappedHistoryRoadLinks.size))
 
@@ -214,12 +237,14 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         GeometryUtils.geometryLength(roadLink.geometry) / (maxM - minM)
     }
     val (currentConversionAddresses, historyConversionAddresses) = validConversionAddressesInChunk.filterNot(ca => suppressedRoadLinks.map(_.roadwayNumber).distinct.contains(ca.roadwayNumber)).partition(_.endDate.isEmpty)
-
     val currentMappedConversionAddresses = currentConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val historyMappedConversionAddresses = historyConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val roadwayPs = roadwayStatement()
     val linearLocationPs = linearLocationStatement()
-
+    val roadwayPointPs = roadwayPointStatement()
+    val calibrationPointPs = calibrationPointStatement()
+    val linkPs = linkStatement()
+    insertLinks(linkPs, linkIds)
     currentMappedConversionAddresses.mapValues {
       case address =>
         address.sortBy(_.startAddressM).zip(1 to address.size)
@@ -230,9 +255,12 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
           add =>
             val converted = add._1
             val roadLink = mappedRoadLinks.getOrElse(converted.linkId, mappedHistoryRoadLinks(converted.linkId))
+            val startCalibrationPoint = getStartCalibrationPoint(converted)
+            val endCalibrationPoint = getEndCalibrationPoint(converted)
+            handlePoints(roadwayPointPs, calibrationPointPs, startCalibrationPoint, endCalibrationPoint)
 
-            val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayNumber, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, getStartCalibrationPointValue(converted), getEndCalibrationPointValue(converted),
-              roadLink.linkSource, FloatingReason.NoFloating, createdBy = "import", converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), groupedLinkCoeffs(converted.linkId))
+            val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayNumber, add._2, converted.linkId, converted.startM, converted.endM, converted.sideCode, roadLink.linkSource, createdBy = "import",
+              converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), groupedLinkCoeffs(converted.linkId))
             if (add._1.directionFlag == 1) {
               val revertedDirectionLinearLocation = linearLocation.copy(sideCode = SideCode.switch(linearLocation.sideCode))
               insertLinearLocation(linearLocationPs, revertedDirectionLinearLocation)
@@ -266,61 +294,107 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
         insertRoadway(roadwayPs, roadAddress)
     }
-
+    calibrationPointPs.executeBatch()
     linearLocationPs.executeBatch()
     roadwayPs.executeBatch()
     println(s"${DateTime.now()} - Roadways saved")
+    calibrationPointPs.close()
+    linkPs.close()
+    linearLocationPs.close()
     roadwayPs.close()
   }
 
+  private def handlePoints(roadwayPointPs: PreparedStatement, calibrationPointPs: PreparedStatement, startCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)], endCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)]): Unit = {
+    if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id == NewRoadwayPointId) {
+      val roadwayPointId = insertRoadwayPoint(roadwayPointPs, startCalibrationPoint.get._1)
+      insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2.copy(roadwayPointId = roadwayPointId))
+    }
+    else if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id != NewRoadwayPointId && startCalibrationPoint.get._2.id == NewCalibrationPointId) {
+      insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2)
+    }
+    if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id == NewRoadwayPointId) {
+      val roadwayPointId = insertRoadwayPoint(roadwayPointPs, endCalibrationPoint.get._1)
+      insertCalibrationPoint(calibrationPointPs, endCalibrationPoint.get._2.copy(roadwayPointId = roadwayPointId))
+    }
+    else if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id != NewRoadwayPointId && endCalibrationPoint.get._2.id == NewCalibrationPointId) {
+      insertCalibrationPoint(calibrationPointPs, endCalibrationPoint.get._2)
+    }
+  }
+
+  private def insertLinks(statement: PreparedStatement, links: Set[Long]): Unit = {
+    links.foreach {
+      link =>
+        if (LinkDAO.fetch(link).isEmpty) {
+          statement.setLong(1, link)
+          statement.addBatch()
+        }
+    }
+    statement.executeBatch()
+  }
+
+  private def createIncomingRoadway(r: ConversionAddress, terminated: TerminationCode): IncomingRoadway = {
+    IncomingRoadway(r.roadwayNumber, r.roadNumber, r.roadPartNumber, r.trackCode, r.startAddressM, r.endAddressM,
+      reversed = 0, r.startDate, r.endDate, "import", r.roadType, r.ely, r.validFrom, r.expirationDate, r.discontinuity,
+      terminated = terminated.value)
+  }
+
   private def importTerminatedAddresses(terminatedConversionAddresses: Seq[ConversionAddress]): Unit = {
-    val (terminatedOldConversionAddresses, validTerminatedConversionAddresses) = terminatedConversionAddresses.partition(_.expirationDate.isEmpty)
-    val validTerminatedMappedConversionAddresses = validTerminatedConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate))
-    val terminatedOldMappedConversionAddresses = terminatedOldConversionAddresses.groupBy(ra => (ra.roadwayNumber, ra.roadNumber, ra.roadPartNumber, ra.trackCode, ra.startDate, ra.endDate))
     val roadwayPs = roadwayStatement()
 
-    validTerminatedMappedConversionAddresses.mapValues {
-      case address =>
-        address.sortBy(_.startAddressM).zip(1 to address.size)
-    }.foreach {
-      case (key, addresses) =>
-        val minAddress = addresses.head._1
-        val maxAddress = addresses.last._1
+    val roadways = terminatedConversionAddresses.groupBy(t => t.roadwayNumber)
 
-        val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
-          minAddress.startDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = Termination.value)
+    roadways.foreach {
+      case (roadwayNumber, roadways) =>
+        val sorted = roadways.sortBy(-_.startDate.get.getMillis)
+        val terminated = sorted.head
+        val subsequent: Seq[ConversionAddress] = if (roadways.size > 1) {
+          sorted.tail
+        } else {
+          Seq()
+        }
 
-        insertRoadway(roadwayPs, roadAddress)
-    }
-
-    terminatedOldMappedConversionAddresses.mapValues {
-      case address =>
-        address.sortBy(_.startAddressM).zip(1 to address.size)
-    }.foreach {
-      case (key, addresses) =>
-        val minAddress = addresses.head._1
-        val maxAddress = addresses.last._1
-
-        val roadway = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, reversed = 0, minAddress.startDate,
-          minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, minAddress.expirationDate, maxAddress.discontinuity, terminated = NoTermination.value)
-
-        insertRoadway(roadwayPs, roadway)
+        insertRoadway(roadwayPs, createIncomingRoadway(terminated, Termination))
+        subsequent.foreach(roadway => insertRoadway(roadwayPs, createIncomingRoadway(roadway, Subsequent)))
     }
     roadwayPs.executeBatch()
     roadwayPs.close()
   }
 
 
-  private def getStartCalibrationPointValue(convertedAddress: ConversionAddress): Option[Long] = {
+  private def getStartCalibrationPoint(convertedAddress: ConversionAddress): Option[(RoadwayPoint, CalibrationPoint)] = {
     convertedAddress.calibrationCode match {
-      case AtBeginning | AtBoth => Some(convertedAddress.startAddressM)
+      case AtBeginning | AtBoth => {
+        val existingRoadwayPoint = RoadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.startAddressM)
+        existingRoadwayPoint match {
+          case Some(x) =>
+            val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPoint(x.id)
+            if (existingCalibrationPoint.isDefined)
+              Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
+            else
+              Some((existingRoadwayPoint.get, CalibrationPoint(NewCalibrationPointId, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, 0, CalibrationPointType.Mandatory, createdBy = "import")))
+          case _ =>
+            Some(RoadwayPoint(NewRoadwayPointId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, "import"), CalibrationPoint(NewCalibrationPointId, NewRoadwayPointId, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, 0, CalibrationPointType.Mandatory, createdBy = "import"))
+        }
+      }
       case _ => None
     }
   }
 
-  private def getEndCalibrationPointValue(convertedAddress: ConversionAddress): Option[Long] = {
+  private def getEndCalibrationPoint(convertedAddress: ConversionAddress): Option[(RoadwayPoint, CalibrationPoint)] = {
     convertedAddress.calibrationCode match {
-      case AtEnd | AtBoth => Some(convertedAddress.endAddressM)
+      case AtEnd | AtBoth =>
+
+        val existingRoadwayPoint = RoadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.endAddressM)
+        existingRoadwayPoint match {
+          case Some(x) =>
+            val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPoint(x.id)
+            if (existingCalibrationPoint.isDefined)
+              Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
+            else
+              Some((existingRoadwayPoint.get, CalibrationPoint(NewCalibrationPointId, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, 1, CalibrationPointType.Mandatory, createdBy = "import")))
+          case _ =>
+            Some(RoadwayPoint(NewRoadwayPointId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, "import"), CalibrationPoint(NewCalibrationPointId, NewRoadwayPointId, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, 1, CalibrationPointType.Mandatory, createdBy = "import"))
+        }
       case _ => None
     }
   }
@@ -371,17 +445,12 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         }
       }
 
-      val viiteEndDate = endDateOption match {
-        case Some(endDate) => Some(endDate.plusDays(1))
-        case _ => None
-      }
-
       if (startAddrM < endAddrM) {
-        ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, viiteEndDate, validFrom, expirationDate, ely, roadType, 0,
+        ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, endDateOption, validFrom, expirationDate, ely, roadType, 0,
           linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.TowardsDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
       } else {
         //switch startAddrM, endAddrM and set the side code to AgainstDigitizing
-        ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, endAddrM, startAddrM, startM, endM, startDate, viiteEndDate, validFrom, expirationDate, ely, roadType, 0,
+        ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, endAddrM, startAddrM, startM, endM, startDate, endDateOption, validFrom, expirationDate, ely, roadType, 0,
           linkId, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.AgainstDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
       }
     }

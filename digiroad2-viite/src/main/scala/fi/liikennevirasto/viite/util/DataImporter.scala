@@ -10,14 +10,12 @@ import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{Queries, SequenceResetterDAO}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.dao.SequenceResetterDAO
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
@@ -126,25 +124,29 @@ class DataImporter {
       sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
       sqlu"""DELETE FROM PROJECT_LINK""".execute
       sqlu"""DELETE FROM PROJECT_LINK_HISTORY""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
       sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART""".execute
       sqlu"""DELETE FROM PROJECT""".execute
       sqlu"""DELETE FROM ROAD_NETWORK_ERROR""".execute
       sqlu"""DELETE FROM PUBLISHED_ROADWAY""".execute
       sqlu"""DELETE FROM PUBLISHED_ROAD_NETWORK""".execute
-      sqlu"""DELETE FROM ROADWAY""".execute
       sqlu"""DELETE FROM LINEAR_LOCATION""".execute
-      sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
+      sqlu"""DELETE FROM CALIBRATION_POINT""".execute
+      sqlu"""DELETE FROM JUNCTION_POINT""".execute
+      sqlu"""DELETE FROM NODE_POINT""".execute
+      sqlu"""DELETE FROM ROADWAY_POINT""".execute
+      sqlu"""DELETE FROM LINK""".execute
+      sqlu"""DELETE FROM ROADWAY""".execute
+
       println(s"${DateTime.now()} - Old address data removed")
 
       val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
       roadAddressImporter.importRoadAddress()
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
-      sqlu"""UPDATE LINEAR_LOCATION
+      sqlu"""UPDATE LINK
         SET ADJUSTED_TIMESTAMP = ${importOptions.geometryAdjustedTimeStamp}""".execute
-
       println(s"${DateTime.now()} - Updating terminated roadways information")
-
       sqlu"""UPDATE ROADWAY SET TERMINATED = 2
             WHERE TERMINATED = 0 AND end_date IS NOT null AND EXISTS (SELECT 1 FROM ROADWAY rw
             	WHERE ROADWAY.ROAD_NUMBER = rw.ROAD_NUMBER
@@ -153,7 +155,7 @@ class DataImporter {
             	AND ROADWAY.START_ADDR_M = rw.START_ADDR_M
             	AND ROADWAY.END_ADDR_M = rw.END_ADDR_M
             	AND ROADWAY.TRACK = rw.TRACK
-            	AND ROADWAY.END_DATE = rw.start_date
+            	AND ROADWAY.END_DATE = rw.start_date - 1
             	AND rw.VALID_TO IS NULL AND rw.TERMINATED = 1)""".execute
 
       enableRoadwayTriggers
@@ -208,38 +210,7 @@ class DataImporter {
   // TODO This is not used and probably should be removed.
   def updateRoadWithSingleRoadType(roadNumber:Long, roadPartNumber: Long, roadType : Long, elyCode :Long) = {
     println(s"Updating road number $roadNumber and part $roadPartNumber with roadType = $roadType and elyCode = $elyCode")
-    sqlu"""UPDATE ROADWAY SET ROAD_TYPE = ${roadType}, ELY= ${elyCode} where ROAD_NUMBER = ${roadNumber} AND ROAD_PART_NUMBER = ${roadPartNumber} """.execute
-  }
-
-  def updateUnaddressedRoadLinks(vvhClient: VVHClient) = {
-    val roadNumbersToFetch = Seq((1, 19999), (40000,49999))
-    val eventBus = new DummyEventBus
-    val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-    val roadwayDAO = new RoadwayDAO
-    val linearLocationDAO = new LinearLocationDAO
-    val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-    val projectLinkDAO = new ProjectLinkDAO
-    lazy val properties: Properties = {
-      val props = new Properties()
-      props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-      props
-    }
-    val service = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
-    val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, projectLinkDAO)
-    roadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
-    roadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
-    val municipalities = OracleDatabase.withDynTransaction {
-      sqlu"""DELETE FROM UNADDRESSED_ROAD_LINK""".execute
-      println("Old address data cleared")
-      Queries.getMunicipalitiesWithoutAhvenanmaa
-    }
-      municipalities.foreach(municipality => {
-        println("Processing municipality %d at time: %s".format(municipality, DateTime.now()))
-        val unaddressed = service.getUnaddressedRoadLink(roadNumbersToFetch, municipality)
-        println("Got %d links".format(unaddressed.size))
-        service.createUnaddressedRoadLink(unaddressed)
-        println("Municipality %d: %d links added at time: %s".format(municipality, unaddressed.size, DateTime.now()))
-      })
+    sqlu"""UPDATE ROADWAY SET ROAD_TYPE = $roadType, ELY= $elyCode where ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber """.execute
   }
 
   private def generateChunks(linkIds: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
@@ -276,7 +247,7 @@ class DataImporter {
         withDynTransaction {
         val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
         val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
-        val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false)
+        val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet)
         val topologyLocation = unGroupedTopology.groupBy(_.linkId)
         roadLinksFromVVH.foreach(roadLink => {
           val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
@@ -319,7 +290,7 @@ class DataImporter {
       sqlu"""UPDATE LINEAR_LOCATION
           SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
                MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, 0.0, 0.0, $x2, $y2, 0.0, $length))
-          WHERE id = ${linearLocationId}""".execute
+          WHERE id = $linearLocationId""".execute
     }
   }
 
