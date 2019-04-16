@@ -110,7 +110,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     val id = Sequences.nextViitePrimaryKeySeqValue
 
     val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-      "", Seq(), None, None)
+      "", Seq(), Seq(), None, None)
     projectDAO.create(project)
     addProjectLinksToProject(linkStatus, addrM, changeTrack, roadNumber, roadPartNumber, discontinuity, ely, roadwayId, lastLinkDiscontinuity, project, withRoadInfo)
     project
@@ -119,7 +119,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   private def setUpProjectWithRampLinks(linkStatus: LinkStatus, addrM: Seq[Long]) = {
     val id = Sequences.nextViitePrimaryKeySeqValue
     val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-      "", Seq(), None, None)
+      "", Seq(), Seq(), None, None)
     projectDAO.create(project)
     val links = addrM.init.zip(addrM.tail).map { case (st, en) =>
       projectLink(st, en, Combined, id, linkStatus).copy(roadNumber = 39999)
@@ -357,7 +357,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 1999L, 1L, "u")
 
@@ -432,7 +432,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
 
@@ -628,7 +628,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
@@ -682,7 +682,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       linearLocationDAO.create(linearLocations)
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
@@ -734,7 +734,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
@@ -787,7 +787,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
@@ -840,7 +840,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, id, LinkStatus.Terminated, 19999L, 2L, discontinuity = Discontinuity.EndOfRoad, 8, 12346, raId + 1, linearLocationId + 1).copy(geometry = roadAddresses.last.geometry)))
@@ -896,7 +896,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
@@ -973,7 +973,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
 
@@ -1040,7 +1040,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 20000L, 2L, "u")
       projectLinkDAO.create(Seq(util.projectLink(0L, 10L, Combined, project.id, LinkStatus.Terminated).copy(roadwayId = ra.last.id, roadNumber = ra.last.roadNumber, roadPartNumber = ra.last.roadPartNumber)))
@@ -1104,7 +1104,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
@@ -1155,7 +1155,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
@@ -1206,7 +1206,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
@@ -1257,7 +1257,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
@@ -1316,7 +1316,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       linearLocationDAO.create(linearLocations)
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19998L, 1L, "u")
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
@@ -1431,7 +1431,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 2L, "u")
@@ -1481,7 +1481,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
 
@@ -1538,7 +1538,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
 
@@ -1615,7 +1615,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
       projectLinkDAO.create(
@@ -1688,7 +1688,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
 
@@ -1748,7 +1748,7 @@ Left|      |Right
 
       val id = Sequences.nextViitePrimaryKeySeqValue
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), None, None)
+        "", Seq(), Seq(), None, None)
       projectDAO.create(project)
       projectReservedPartDAO.reserveRoadPart(id, 19999L, 1L, "u")
 
@@ -2027,6 +2027,7 @@ Left|      |Right
       projectLinkDAO.create(links)
       val allLinks = projectLinkDAO.fetchProjectLinks(project.id)
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
+      val formedParts = projectReservedPartDAO.fetchFormedRoadParts(project.id)
 
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L))
       when(mockRoadAddressService.getRoadAddressesFiltered(19999L, 2L)).thenReturn(Seq(ra.last))
@@ -2035,7 +2036,7 @@ Left|      |Right
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(None)
 
-      val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts), g._2).distinct)
+      val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts, formedParts = formedParts), g._2).distinct)
       errors.size should be(0)
       sqlu"""UPDATE PROJECT_LINK SET ROAD_PART_NUMBER = 1, STATUS = 3, START_ADDR_M = 10, END_ADDR_M = 20 WHERE ROAD_NUMBER = 19999 AND ROAD_PART_NUMBER = 2""".execute
       val linksAfterTransfer = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
@@ -2225,7 +2226,8 @@ Left|      |Right
       sqlu"""UPDATE Project_Link Set Road_part_Number = 2, Discontinuity_type = 1, start_addr_m = 0 , end_addr_m = 10 Where project_id = ${project.id} and end_addr_m = 30""".execute
       val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
-      val projectWithReservations = project.copy(reservedParts = reservedParts)
+      val formedParts = projectReservedPartDAO.fetchFormedRoadParts(project.id)
+      val projectWithReservations = project.copy(reservedParts = reservedParts, formedParts = formedParts)
       //Should NOT have error in both tracks
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L))
       when(mockRoadAddressService.getRoadAddressesFiltered(any[Long], any[Long])).thenReturn(ra)
@@ -2424,6 +2426,7 @@ Left|      |Right
       projectLinkDAO.create(links)
       val allLinks = projectLinkDAO.fetchProjectLinks(project.id)
       val reservedParts = projectReservedPartDAO.fetchReservedRoadParts(project.id)
+      val formedParts = projectReservedPartDAO.fetchFormedRoadParts(project.id)
 
       when(mockRoadAddressService.getValidRoadAddressParts(any[Long], any[DateTime])).thenReturn(Seq(1L, 2L))
       when(mockRoadAddressService.getRoadAddressesFiltered(19999L, 2L)).thenReturn(Seq(ra.last))
@@ -2432,7 +2435,7 @@ Left|      |Right
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(Seq.empty[RoadAddress])
       when(mockRoadAddressService.getPreviousRoadAddressPart(any[Long], any[Long])).thenReturn(None)
 
-      val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts), g._2).distinct)
+      val errors = allLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).flatMap(g => projectValidator.checkRoadContinuityCodes(project.copy(reservedParts = reservedParts, formedParts = formedParts), g._2).distinct)
       errors.size should be(0)
       when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(Seq(linearLocations.last))
       when(mockRoadwayAddressMapper.getRoadAddressesByRoadway(any[Seq[Roadway]])).thenReturn(Seq(ra.last))

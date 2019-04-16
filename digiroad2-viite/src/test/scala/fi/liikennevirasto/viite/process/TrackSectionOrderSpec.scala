@@ -22,7 +22,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
   val projectId = 1
   val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"),
     "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
-    List.empty[ProjectReservedPart], None)
+    List.empty[ProjectReservedPart], Seq(), None)
 
   private def generateProjectLink(id: Long, geometry: Seq[Point], track: Track = Track.Combined) = {
     //TODO the road address now have the linear location id and as been setted to 1L
