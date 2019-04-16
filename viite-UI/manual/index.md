@@ -11,7 +11,7 @@ __Huom! Suosittelemme käyttämään selaimena Firefoxia tai Chromea.__
 
 __Huom! Käyttöohjeen kuvia voi klikata isommaksi, jolloin tekstit erottuvat paremmin.__
 
-#1. Miten päästä alkuun?
+#1. Miten päästä alkuun
 -----------------------
 
 Viite-sovelluksen käyttöä varten tarvitaan Väylän tunnukset (A-, U-, LX-, K- tai L-alkuinen). Mikäli sinulla ei ole Väylän tunnuksia, pyydä ne yhteyshenkilöltäsi Väylästä.
@@ -37,7 +37,7 @@ Oikeudet on rajattu käyttäjän roolin mukaan:
 
 Jos kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, ei kyseisellä tunnuksella ole pääsyä Väylän extranettiin. Tällöin tulee ottaa yhteyttä Väylässä tai ELYssä omaan yhteyshenkilöön.
 
-1.1 Mistä saada opastusta?
+1.1 Mistä saada opastusta
 --------------------------
 
 Viite-sovelluksen käytössä avustaa Janne Grekula, janne.grekula@cgi.com.
@@ -506,7 +506,7 @@ Tieosan sisäisen epäjatkuvuuden pituudelle ei ole asetettu ylärajaa.
 
 - Jos tieosan seuraava tieosa on eri ELY-koodilla, jatkuvuuskoodin tulee olla tieosan lopussa _3 ELYn raja_.
 
-7.4 Muutosilmoitusten lähettäminen tierekisteriin
+7.4 Muutosilmoitusten lähettäminen
 --------------------------
 
 Muutosilmoitus viedään tierekisteriin avaamalla ensin yhteenvetotaulukko klikkaamalla oikean alakulman sinistä Avaa projektin yhteenvetotaulukko -painiketta. Kun projektilla ei ole enää korjaamattomia tarkastusilmoituksia, aktivoituu vihreä Lähetä muutosilmoitus Tierekisteriin -painike. Painikkeen painamisen jälkeen sovellus ilmoittaa muutosilmoituksen tekemisestä Muutosilmoitus lähetetty Tierekisteriin -viestillä.
