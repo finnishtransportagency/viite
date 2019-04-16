@@ -41,16 +41,16 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   private val roadwayNumber3 = 3000000000l
 
   val testRoadway1 = Roadway(NewRoadway, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-    0, 100, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+    0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
   val testRoadway2 = Roadway(NewRoadway, roadwayNumber2, roadNumber1, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-    100, 200, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+    100, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
   val testRoadway3 = Roadway(NewRoadway, roadwayNumber3, roadNumber2, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-    0, 100, false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
+    0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
 
   val testLinearLocation1 = LinearLocation(NewLinearLocation, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
-    (Some(0l), None), FloatingReason.NoFloating, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
+    (Some(0l), None),  Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
     roadwayNumber1)
 
   // fetchByRoadwayNumber
@@ -103,8 +103,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1), testRoadway3))
       val roadways = dao.fetchAllBySection(roadNumber1, 1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -136,8 +136,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1), testRoadway3))
       val roadways = dao.fetchAllBySectionAndTracks(roadNumber1, 1, Set(Track.Combined))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -169,8 +169,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3))
       val roadways = dao.fetchAllBySectionsAndTracks(roadNumber1, Set(1l, 2l), Set(Track.Combined))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -179,8 +179,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3))
       val roadways = dao.fetchAllBySectionsAndTracks(roadNumber1, Set(1l, 2l, -1l, -2l), Set(Track.Combined))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -189,8 +189,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1.copy(track = Track.LeftSide), testRoadway2.copy(track = Track.RightSide), testRoadway3))
       val roadways = dao.fetchAllBySectionsAndTracks(roadNumber1, Set(1l, 2l), Set(Track.LeftSide, Track.RightSide))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -215,8 +215,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = roadPartNumber1), testRoadway3))
       val roadways = dao.fetchAllByRoadAndPart(roadNumber1, roadPartNumber1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -224,12 +224,12 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   test("Test fetchAllByRoadAndPart When existing road and road part number with history Then return roadways") {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = roadPartNumber1, endDate = Some(DateTime.now())), testRoadway3))
-      val roadwaysWithoutHistory = dao.fetchAllByRoadAndPart(roadNumber1, roadPartNumber1, withHistory = false)
-      roadwaysWithoutHistory.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      val roadwaysWithoutHistory = dao.fetchAllByRoadAndPart(roadNumber1, roadPartNumber1)
+      roadwaysWithoutHistory.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadwaysWithoutHistory.size should be(1)
       val roadways = dao.fetchAllByRoadAndPart(roadNumber1, roadPartNumber1, withHistory = true)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -238,12 +238,12 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = roadPartNumber1, endDate = Some(DateTime.now()),
         terminated = TerminationCode.Termination), testRoadway3))
-      val roadwaysWithoutHistory = dao.fetchAllByRoadAndPart(roadNumber1, roadPartNumber1, withHistory = false)
-      roadwaysWithoutHistory.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      val roadwaysWithoutHistory = dao.fetchAllByRoadAndPart(roadNumber1, roadPartNumber1)
+      roadwaysWithoutHistory.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadwaysWithoutHistory.size should be(1)
       val roadways = dao.fetchAllByRoadAndPart(roadNumber1, roadPartNumber1, withHistory = true)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -275,8 +275,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1), testRoadway3))
       val roadways = dao.fetchAllByRoadAndTracks(roadNumber1, Set(Track.Combined))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -303,8 +303,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val roadwayId2 = dao.getNextRoadwayId
       dao.create(List(testRoadway1.copy(id = roadwayId1), testRoadway2.copy(id = roadwayId2), testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
       val roadways = dao.fetchAllByRoadwayId(Seq(roadwayId1, roadwayId2))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber2).head.endDate should be(None)
       roadways.size should be(2)
     }
@@ -330,8 +330,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
       val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber2).head.endDate should be(None)
       roadways.size should be(2)
     }
@@ -371,9 +371,9 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3))
       val roadways = dao.fetchAllByBetweenRoadNumbers(roadNumber1, roadNumber2)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber3).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber3) should be(1)
       roadways.size should be(3)
     }
   }
@@ -412,8 +412,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1l), testRoadway3))
       val roadways = dao.fetchAllBySectionTrackAndAddresses(roadNumber1, 1l, Track.Combined, Some(0l), Some(200l))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -422,8 +422,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1l), testRoadway3))
       val roadways = dao.fetchAllBySectionTrackAndAddresses(roadNumber1, 1l, Track.Combined, None, Some(100l))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(0)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(0)
       roadways.size should be(1)
     }
   }
@@ -432,8 +432,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1l), testRoadway3))
       val roadways = dao.fetchAllBySectionTrackAndAddresses(roadNumber1, 1l, Track.Combined, Some(100l), None)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(0)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(0)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(1)
     }
   }
@@ -442,8 +442,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1l), testRoadway3))
       val roadways = dao.fetchAllBySectionTrackAndAddresses(roadNumber1, 1l, Track.Combined, None, None)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -452,7 +452,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1.copy(track = Track.LeftSide), testRoadway2.copy(track = Track.RightSide, roadPartNumber = 1l), testRoadway3))
       val roadways = dao.fetchAllBySectionTrackAndAddresses(roadNumber1, 1l, Track.LeftSide, Some(0l), Some(100l))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadways.size should be(1)
     }
   }
@@ -484,8 +484,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1l), testRoadway3))
       val roadways = dao.fetchAllBySectionAndAddresses(roadNumber1, 1l, Some(0l), Some(200l))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -494,8 +494,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1l), testRoadway3))
       val roadways = dao.fetchAllBySectionAndAddresses(roadNumber1, 1l, None, Some(100l))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(0)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(0)
       roadways.size should be(1)
     }
   }
@@ -504,8 +504,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1l), testRoadway3))
       val roadways = dao.fetchAllBySectionAndAddresses(roadNumber1, 1l, Some(100l), None)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(0)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(0)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(1)
     }
   }
@@ -514,8 +514,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = 1l), testRoadway3))
       val roadways = dao.fetchAllBySectionAndAddresses(roadNumber1, 1l, None, None)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -524,7 +524,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1.copy(track = Track.LeftSide), testRoadway2.copy(track = Track.RightSide, roadPartNumber = 1l), testRoadway3))
       val roadways = dao.fetchAllBySectionAndAddresses(roadNumber1, 1l, Some(0l), Some(100l))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadways.size should be(1)
     }
   }
@@ -549,9 +549,9 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3))
       val roadways = dao.fetchAllByDateRange(DateTime.parse("2000-01-01"), DateTime.parse("2000-01-01"))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber3).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber3) should be(1)
     }
   }
 
@@ -559,9 +559,9 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3.copy(startDate = DateTime.parse("2000-01-02"))))
       val roadways = dao.fetchAllByDateRange(DateTime.parse("2000-01-01"), DateTime.parse("2000-01-02"))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber3).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber3) should be(1)
     }
   }
 
@@ -569,9 +569,9 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3.copy(startDate = DateTime.parse("1999-12-31"))))
       val roadways = dao.fetchAllByDateRange(DateTime.parse("2000-01-01"), DateTime.parse("2000-01-01"))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber3).size should be(0)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber3) should be(0)
     }
   }
 
@@ -579,9 +579,9 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3.copy(startDate = DateTime.parse("2000-01-02"))))
       val roadways = dao.fetchAllByDateRange(DateTime.parse("2000-01-01"), DateTime.parse("2000-01-01"))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber3).size should be(0)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber3) should be(0)
     }
   }
 
@@ -616,7 +616,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   test("Test fetchAllRoadAddressErrors When fetch including history Then return addresses with errors") {
     runWithRollback {
       val roadwayId = dao.getNextRoadwayId
-      dao.create(List(testRoadway1.copy(id = roadwayId, endDate = Some(DateTime.parse("2010-01-01"))), testRoadway2, testRoadway3))
+      dao.create(List(testRoadway1.copy(id = roadwayId, endDate = Some(DateTime.parse("2009-12-31"))), testRoadway2, testRoadway3))
       val linearLocationId1 = linearLocationDAO.getNextLinearLocationId
       linearLocationDAO.create(List(testLinearLocation1.copy(id = linearLocationId1)))
       val roadNetworkDAO = new RoadNetworkDAO
@@ -703,7 +703,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       roadway.roadType should be(testRoadway1.roadType)
       roadway.ely should be(testRoadway1.ely)
       roadway.terminated should be(testRoadway1.terminated)
-      roadway.validFrom should not be (None)
+      roadway.validFrom should not be None
       roadway.validTo should be(None)
     }
   }
@@ -721,8 +721,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway3))
       val roadways = dao.fetchAllByRoad(roadNumber1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
     }
   }
@@ -747,8 +747,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       dao.create(List(testRoadway1, testRoadway2, testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
       val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), DateTime.parse("2018-10-01"))
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber2).head.endDate should be(None)
       roadways.size should be(2)
     }
@@ -825,8 +825,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId2)
       roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId3)
       val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), roadNetworkVersionId)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber1).size should be(1)
-      roadways.filter(r => r.roadwayNumber == roadwayNumber2).size should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
+      roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber2).head.endDate should be(None)
       roadways.size should be(2)
     }

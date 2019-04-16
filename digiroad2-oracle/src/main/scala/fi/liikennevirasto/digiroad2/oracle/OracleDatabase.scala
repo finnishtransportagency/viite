@@ -11,7 +11,7 @@ import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import oracle.spatial.geometry.JGeometry
 import oracle.sql.STRUCT
 
@@ -119,12 +119,31 @@ object OracleDatabase {
       JGeometry.store(JGeometry.createLinearLineString(ordinates, dim, srid), oracleConn)
   }
 
+  def createRoadsJGeometry(points: Seq[Point], con: java.sql.Connection, endMValue:Double): STRUCT = {
+    val ordinates = points.flatMap(p => Seq(GeometryUtils.roundN(p.x), GeometryUtils.roundN(p.y), GeometryUtils.roundN(p.z), GeometryUtils.roundN(endMValue))).toArray
+    val dim = 4
+    val srid = 3067
+    val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
+    JGeometry.store(JGeometry.createLinearLineString(ordinates, dim, srid), oracleConn)
+  }
+
   def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
     // Convert STRUCT into geometry
     val geom = geometry.map(g => g.asInstanceOf[STRUCT])
     if (geom.nonEmpty) {
       val jgeom: JGeometry = JGeometry.load(geom.get)
       jgeom.getOrdinatesArray.toList.sliding(3, 3).toList.map(p => Point(p.head, p.tail.head, p.last))
+    } else {
+      Seq()
+    }
+  }
+
+  def loadRoadsJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
+    // Convert STRUCT into geometry
+    val geom = geometry.map(g => g.asInstanceOf[STRUCT])
+    if (geom.nonEmpty) {
+      val jgeom: JGeometry = JGeometry.load(geom.get)
+      jgeom.getOrdinatesArray.toList.sliding(4, 4).toList.map(p => Point(p.head, p.tail.head, p.tail.tail.head))
     } else {
       Seq()
     }

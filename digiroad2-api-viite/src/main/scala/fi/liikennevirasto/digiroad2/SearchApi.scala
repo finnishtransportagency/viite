@@ -108,8 +108,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
       "linkId" -> roadAddress.linkId,
       "startMValue" -> roadAddress.startMValue,
       "endMValue" -> roadAddress.endMValue,
-      "sideCode" -> roadAddress.sideCode.value,
-      "floating" -> roadAddress.isFloating
+      "sideCode" -> roadAddress.sideCode.value
     )
   }
 }
