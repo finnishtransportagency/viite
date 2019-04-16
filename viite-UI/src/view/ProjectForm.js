@@ -205,18 +205,35 @@
         projectCollection.setReservedParts(_.filter(projectCollection.getAllReservedParts(), function (part) {
           return part.roadNumber != roadNumber || part.roadPartNumber != roadPartNumber;
         }));
-        fillForm(projectCollection.getCurrentReservedParts(), projectCollection.getNewReservedParts());
+        fillForm(projectCollection.getReservedParts(), projectCollection.getFormedParts());
       };
 
       var updateReservedParts = function (currParts, newParts) {
         var reservedParts = $("#reservedRoads");
-        var newReservedParts = $("#newReservedRoads");
+        var formedParts = $("#newReservedRoads");
 
         reservedParts.append(reservedParts.html(currParts));
-        newReservedParts.append(newReservedParts.html(newParts));
+          formedParts.append(formedParts.html(newParts));
       };
 
-      var writeHtmlList = function (list) {
+        var reservedHtmlList = function (list) {
+            var text = '';
+            var index = 0;
+            _.each(list, function (line) {
+                if (!_.isUndefined(line.currentLength)) {
+                    text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber) +
+                        addSmallLabel(line.roadNumber) +
+                        addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
+                        addSmallLabelWithIds((line.currentLength), 'reservedRoadLength') +
+                        addSmallLabelWithIds((line.currentDiscontinuity), 'reservedDiscontinuity') +
+                        addSmallLabelWithIds((line.currentEly), 'reservedEly') +
+                        '</div>';
+                }
+            });
+            return text;
+        };
+
+      var formedHtmlList = function (list) {
         var text = '';
         var index = 0;
         _.each(list, function (line) {
@@ -224,9 +241,9 @@
             text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber) +
               addSmallLabel(line.roadNumber) +
               addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
-              addSmallLabelWithIds((line.newLength ? line.newLength : line.currentLength), 'reservedRoadLength') +
-              addSmallLabelWithIds((line.newDiscontinuity ? line.newDiscontinuity : line.currentDiscontinuity), 'reservedDiscontinuity') +
-              addSmallLabelWithIds((line.newEly ? line.newEly : line.currentEly), 'reservedEly') +
+              addSmallLabelWithIds((line.newLength), 'reservedRoadLength') +
+              addSmallLabelWithIds((line.newDiscontinuity), 'reservedDiscontinuity') +
+              addSmallLabelWithIds((line.newEly), 'reservedEly') +
               '</div>';
           }
         });
@@ -264,8 +281,8 @@
           currentProject.isDirty = false;
           var text = '';
           var index = 0;
-          projectCollection.setReservedParts(result.formInfo);
-          _.each(result.formInfo, function (line) {
+          projectCollection.setReservedParts(result.reservedInfo);
+          _.each(result.reservedInfo, function (line) {
             var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber);
             text += '<div class="form-reserved-roads-list">' + button +
               addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) +
@@ -321,7 +338,7 @@
         if (newParts.length === 0 && currParts.length === 0) {
           hasReservedRoadParts = false;
         }
-        updateReservedParts(writeHtmlList(currParts), writeHtmlList(newParts));
+        updateReservedParts(reservedHtmlList(currParts), formedHtmlList(newParts));
         applicationModel.setProjectButton(true);
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
@@ -369,9 +386,10 @@
         projectCollection.clearRoadAddressProjects();
         disableAutoComplete();
         projectCollection.setCurrentProject(result);
-        projectCollection.setReservedParts(result.projectLinks);
-        var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
-        var newReserved = writeHtmlList(projectCollection.getNewReservedParts());
+        projectCollection.setReservedParts(result.reservedInfo);
+        projectCollection.setFormedParts(result.formedInfo);
+        var currentReserved = reservedHtmlList(projectCollection.getReservedParts());
+        var newReserved = formedHtmlList(projectCollection.getFormedParts());
         rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, currentReserved, newReserved));
         jQuery('#projectList').remove();
         if (!_.isUndefined(currentProject)) {
@@ -544,8 +562,8 @@
         var roadPartNumber = this.attributes.roadPartNumber.value;
 
           if (!currentProject) {
-            projectCollection.setReservedParts(projectCollection.deleteRoadPartFromList(projectCollection.getCurrentReservedParts(), roadNumber, roadPartNumber));
-            $('#reservedRoads').html(writeHtmlList(projectCollection.getCurrentReservedParts()));
+            projectCollection.setReservedParts(projectCollection.deleteRoadPartFromList(projectCollection.getReservedParts(), roadNumber, roadPartNumber));
+            $('#reservedRoads').html(reservedHtmlList(projectCollection.getReservedParts()));
           }
           if (isProjectEditable()) {
             if (currentProject && projectCollection.getAllReservedParts()[id]) {
