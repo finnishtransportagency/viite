@@ -364,12 +364,11 @@ class RoadwayChangesDAO {
     logger.info("Begin delta insertion in ChangeTable")
     projectDAO.fetchById(projectId) match {
       case Some(project) =>
-        (project.reservedParts.nonEmpty || project.formedParts.nonEmpty) match {
-          case true =>
-            val roadwayChangePS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES " +
-              "(project_id, change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
-              "old_TRACK,new_TRACK,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
-              "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reversed, roadway_change_id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        if (project.reservedParts.nonEmpty || project.formedParts.nonEmpty) {
+          val roadwayChangePS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES " +
+            "(project_id, change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
+            "old_TRACK,new_TRACK,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
+            "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reversed, roadway_change_id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 
           val roadWayChangesLinkPS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES_LINK " +
             "(roadway_change_id, project_id, project_link_id) values (?,?,?)")
