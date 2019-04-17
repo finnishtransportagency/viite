@@ -159,7 +159,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   protected def fetchAllTerminatedAddressesFromConversionTable(): Seq[ConversionAddress] = {
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
-      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss') as alkupvm, TO_CHAR(loppupvm - 1, 'YYYY-MM-DD hh:mm:ss') as loppupvm,
+      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss') as alkupvm, TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss') as loppupvm,
            TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss') as muutospvm, null as lakkautuspvm, ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
            loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
            WHERE aet >= 0 AND let >= 0 AND linkid is null AND lakkautuspvm is null"""
@@ -353,7 +353,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
           Seq()
         }
 
-        insertRoadway(roadwayPs, createIncomingRoadway(terminated, Termination))
+        insertRoadway(roadwayPs, createIncomingRoadway(terminated.copy(endDate = Some(terminated.endDate.get.plusDays(1))), Termination))
         subsequent.foreach(roadway => insertRoadway(roadwayPs, createIncomingRoadway(roadway, Subsequent)))
     }
     roadwayPs.executeBatch()
