@@ -406,7 +406,7 @@ Koska numeroinnin muutos kohdistuu koko tieosaan, muita toimenpiteitä ei tallen
 --------------------------
 Tieosoitteen kasvusuunnan voi kääntää Viitteessä joko esimerkiksi siirron tai numeroinnin yhteydessä. Kääntö tapahtuu joko automaattisesti tai tietyissä tilanteissa käyttäjä tekee sen manuaalisesti.  
 
-_Automaattinen kääntö siirron yhteydessä:_
+####Automaattinen kääntö siirron yhteydessä:####
 
 Kun siirretään tieosa (osittain tai kokonaan) toiselle tieosalle, jolla on eri tieosoitteen kasvusuunta, Viite päättelee siirron yhteydessä kasvusuunnan siirrettäville linkeille. 
 
@@ -551,13 +551,13 @@ _Listaus tienimistä ja uudelleenhaku._
 
 _Lakkautettu tie. Tienimeä ei voi enää muuttaa._
 
-##Tien nimen muokkaaminen, kun tiellä on jo nimi
+####Tien nimen muokkaaminen, kun tiellä on jo nimi####
 
 Voimassa olevaa nimeä voi muokata suoraan Tien nimi -kentässä (2) (Kuva xx). Tallenna-painike (5) aktivoituu, kun nimeä muokataan. Tallennuksen jälkeen tulee ilmoitus jo olemasta olevasta nimestä (kuva xx). Kun nimeä muokkaa, se ei saa uutta loppupäivämäärää eikä uutta riviä muodostu listalle.
 
 ![Uuden tienimen muuttaminen](k56.JPG)
 
-##Uuden tienimen antaminen tielle, jolla on jo nimi
+####Uuden tienimen antaminen tielle, jolla on jo nimi####
 
 Tielle on mahdollista antaa uusi nimi esimerkiksi tien alku- tai loppupaikkakunnan muuttuessa. Uusi nimi annetaan painamalla voimassa olevan nimen perässä olevaa [+]-painiketta (6). Lomakkeelle ilmestyy uusi rivi (1), johon tiedot syötetään. Tielle annetaan uusi nimi (2),  joka  voi olla enintään 50 merkkiä pitkä, ja alkupäivämäärä (3). Alkupäivämäärä voi olla aikaisintaan edellistä alkupäivämäärää seuraava päivä.
 Edellinen nimi saa loppupäivämääräksi (4) automaattisesti uuden nimen alkupäivämäärän. Jos uutta nimeä ei halutakaan tallentaa, painetaan [-]-painiketta (5), jolloin alin rivi poistuu. Uusi nimi tallennetaan Tallenna-painikkeella. Viite varmistaa, halutaanko tielle varmasti antaa uusi nimi. 
