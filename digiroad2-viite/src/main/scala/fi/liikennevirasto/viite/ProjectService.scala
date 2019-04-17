@@ -797,12 +797,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               projectDAO.update(roadAddressProject)
               val storedProject = projectDAO.fetchById(roadAddressProject.id).get
 
-              val removedReservation = (storedProject.reservedParts++storedProject.formedParts).filterNot(part =>
-                (roadAddressProject.reservedParts++roadAddressProject.formedParts).exists(rp => rp.roadPartNumber == part.roadPartNumber &&
+              val removedReservation = storedProject.reservedParts.filterNot(part =>
+                roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
                   rp.roadNumber == part.roadNumber))
 
-              removedReservation.foreach(p => projectReservedPartDAO.removeReservedRoadPartAndChanges(roadAddressProject.id, p.roadNumber, p.roadPartNumber))
-              removedReservation.groupBy(_.roadNumber).keys.foreach(ProjectLinkNameDAO.revert(_, roadAddressProject.id))
+              val removedFormed = storedProject.formedParts.filterNot(part =>
+                roadAddressProject.formedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
+                  rp.roadNumber == part.roadNumber))
+
+              (removedReservation++removedFormed).foreach(p => projectReservedPartDAO.removeReservedRoadPartAndChanges(roadAddressProject.id, p.roadNumber, p.roadPartNumber))
+              (removedReservation++removedFormed).groupBy(_.roadNumber).keys.foreach(ProjectLinkNameDAO.revert(_, roadAddressProject.id))
               addLinksToProject(roadAddressProject)
               val savedProject = projectDAO.fetchById(roadAddressProject.id).get
               saveProjectCoordinates(savedProject.id, calculateProjectCoordinates(savedProject.id))
