@@ -2793,7 +2793,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         ProjectReservedPart(0L, roadNumber, newRoadPartNumber, None, None, None, None, None, None, None),
         reservedPart1)
 
-      projectService.saveProject(project.copy(reservedParts = reservedParts))
+      projectService.saveProject(project.copy(reservedParts = reservedParts, formedParts = formed))
       val projectLinksSet = projectLinkDAO.fetchProjectLinks(project_id).filter(_.roadPartNumber == 2).map(_.id).toSet
       projectService.updateProjectLinks(project_id, projectLinksSet, Seq(), LinkStatus.Transfer, "test",
         roadNumber, newRoadPartNumber, 0, None, 1, 5, Some(1L), reversed = false, None)
