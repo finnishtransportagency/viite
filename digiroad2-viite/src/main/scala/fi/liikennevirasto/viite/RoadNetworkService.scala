@@ -119,7 +119,7 @@ class RoadNetworkService {
       if (rw1.endAddrMValue != rw2.startAddrMValue) {
         errors :+ RoadNetworkError(0, rw1.id, 0L, AddressError.InconsistentAddressValues, System.currentTimeMillis(), options.currNetworkVersion)
       } else {
-        Seq()
+        errors
       }
     }
 
