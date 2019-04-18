@@ -123,7 +123,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
   implicit val getConversionNodePoint: GetResult[ConversionNodePoint] = new GetResult[ConversionNodePoint] {
     def apply(r: PositionedResult): ConversionNodePoint = {
       val id = r.nextLong()
-      val beforeOrAfter = r.nextLong()
+      val beforeOrAfter = r.nextString().toLong
       val roadwayPointId = r.nextLong()
       val nodeId = r.nextLong()
       val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
