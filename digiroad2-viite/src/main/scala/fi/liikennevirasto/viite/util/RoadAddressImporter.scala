@@ -145,13 +145,23 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     linearLocation.copy(startMeasure = BigDecimal(linearLocation.startMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble, endMeasure = BigDecimal(linearLocation.endMeasure * coefficient).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble)
   }
 
+//  protected def fetchValidAddressesFromConversionTable(minRoadwayNumber: Long, maxRoadwayNumber: Long): Seq[ConversionAddress] = {
+//    conversionDatabase.withDynSession {
+//      val tableName = importOptions.conversionTable
+//      sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
+//           TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss'),  ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
+//           loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
+//           WHERE aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL AND linkid IN (SELECT linkid FROM  #$tableName where ajorataid > $minRoadwayNumber AND ajorataid <= $maxRoadwayNumber AND  aet >= 0 AND let >= 0) """
+//        .as[ConversionAddress].list
+//    }
+//  }
   protected def fetchValidAddressesFromConversionTable(minRoadwayNumber: Long, maxRoadwayNumber: Long): Seq[ConversionAddress] = {
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
            TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss'),  ely, tietyyppi, linkid, kayttaja, alkux, alkuy, loppux,
            loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
-           WHERE aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL AND linkid IN (SELECT linkid FROM  #$tableName where ajorataid > $minRoadwayNumber AND ajorataid <= $maxRoadwayNumber AND  aet >= 0 AND let >= 0) """
+           WHERE aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL AND linkid IN (SELECT linkid FROM  #$tableName where tie = 70900 AND aosa > 889 AND aosa < 891 AND aet >= 0 AND let >= 0) """
         .as[ConversionAddress].list
     }
   }
@@ -195,8 +205,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   def importRoadAddress(): Unit = {
-    val chunks = fetchChunkRoadwayNumbersFromConversionTable()
-    chunks.foreach {
+//    val chunks = fetchChunkRoadwayNumbersFromConversionTable()
+//    chunks.foreach {
       case (min, max) =>
         print(s"${DateTime.now()} - ")
         println(s"Processing chunk ($min, $max)")
@@ -204,9 +214,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
         print(s"\n${DateTime.now()} - ")
         println("Read %d rows from conversion database".format(conversionAddresses.size))
-        val conversionAddressesFromChunk = conversionAddresses.filter(address => (min + 1 to max).contains(address.roadwayNumber))
-        importAddresses(conversionAddressesFromChunk, conversionAddresses)
-    }
+//        val conversionAddressesFromChunk = conversionAddresses.filter(address => (min + 1 to max).contains(address.roadwayNumber))
+        importAddresses(conversionAddresses, conversionAddresses)
+//    }
 
     val terminatedAddresses = fetchAllTerminatedAddressesFromConversionTable()
     importTerminatedAddresses(terminatedAddresses)
