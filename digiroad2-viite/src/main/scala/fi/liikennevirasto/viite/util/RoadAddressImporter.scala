@@ -41,11 +41,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   val dateFormatter = ISODateTimeFormat.basicDate()
 
-  def printConversionAddress(r: ConversionAddress): String = {
-    s"""linkid: %d, alku: %.2f, loppu: %.2f, tie: %d, aosa: %d, ajr: %d, ely: %d, tietyyppi: %d, jatkuu: %d, aet: %d, let: %d, alkupvm: %s, loppupvm: %s, kayttaja: %s, muutospvm or rekisterointipvm: %s, ajorataId: %s, kalibrointpiste: %s""".
-      format(r.linkId, r.startM, r.endM, r.roadNumber, r.roadPartNumber, r.trackCode, r.ely, r.roadType, r.discontinuity, r.startAddressM, r.endAddressM, r.startDate, r.endDate, r.userId, r.validFrom, r.roadwayNumber, r.calibrationCode)
-  }
-
   private def roadwayStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "insert into ROADWAY (id, ROADWAY_NUMBER, road_number, road_part_number, TRACK, start_addr_m, end_addr_m, reversed, start_date, end_date, created_by, road_type, ely, valid_from, valid_to, discontinuity, terminated) " +
       "values (ROADWAY_SEQ.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)")
@@ -305,18 +300,18 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def handlePoints(roadwayPointPs: PreparedStatement, calibrationPointPs: PreparedStatement, startCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)], endCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)]): Unit = {
-    if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id == NewRoadwayPointId) {
+    if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id == NewIdValue) {
       val roadwayPointId = insertRoadwayPoint(roadwayPointPs, startCalibrationPoint.get._1)
       insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2.copy(roadwayPointId = roadwayPointId))
     }
-    else if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id != NewRoadwayPointId && startCalibrationPoint.get._2.id == NewCalibrationPointId) {
+    else if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id != NewIdValue && startCalibrationPoint.get._2.id == NewIdValue) {
       insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2)
     }
-    if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id == NewRoadwayPointId) {
+    if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id == NewIdValue) {
       val roadwayPointId = insertRoadwayPoint(roadwayPointPs, endCalibrationPoint.get._1)
       insertCalibrationPoint(calibrationPointPs, endCalibrationPoint.get._2.copy(roadwayPointId = roadwayPointId))
     }
-    else if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id != NewRoadwayPointId && endCalibrationPoint.get._2.id == NewCalibrationPointId) {
+    else if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id != NewIdValue && endCalibrationPoint.get._2.id == NewIdValue) {
       insertCalibrationPoint(calibrationPointPs, endCalibrationPoint.get._2)
     }
   }
@@ -360,7 +355,6 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     roadwayPs.close()
   }
 
-
   private def getStartCalibrationPoint(convertedAddress: ConversionAddress): Option[(RoadwayPoint, CalibrationPoint)] = {
     convertedAddress.calibrationCode match {
       case AtBeginning | AtBoth => {
@@ -371,9 +365,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
             if (existingCalibrationPoint.isDefined)
               Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
             else
-              Some((existingRoadwayPoint.get, CalibrationPoint(NewCalibrationPointId, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, 0, CalibrationPointType.Mandatory, createdBy = "import")))
+              Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, 0, CalibrationPointType.Mandatory, createdBy = "import")))
           case _ =>
-            Some(RoadwayPoint(NewRoadwayPointId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, "import"), CalibrationPoint(NewCalibrationPointId, NewRoadwayPointId, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, 0, CalibrationPointType.Mandatory, createdBy = "import"))
+            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.startAddressM, "import"), CalibrationPoint(NewIdValue, NewIdValue, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, 0, CalibrationPointType.Mandatory, createdBy = "import"))
         }
       }
       case _ => None
@@ -391,9 +385,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
             if (existingCalibrationPoint.isDefined)
               Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
             else
-              Some((existingRoadwayPoint.get, CalibrationPoint(NewCalibrationPointId, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, 1, CalibrationPointType.Mandatory, createdBy = "import")))
+              Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, 1, CalibrationPointType.Mandatory, createdBy = "import")))
           case _ =>
-            Some(RoadwayPoint(NewRoadwayPointId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, "import"), CalibrationPoint(NewCalibrationPointId, NewRoadwayPointId, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, 1, CalibrationPointType.Mandatory, createdBy = "import"))
+            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.endAddressM, "import"), CalibrationPoint(NewIdValue, NewIdValue, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, 1, CalibrationPointType.Mandatory, createdBy = "import"))
         }
       case _ => None
     }
@@ -455,5 +449,45 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       }
     }
   }
+}
+
+class NodeImporter(conversionDatabase: DatabaseDef) {
+
+  case class ConversionNode(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: Long, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime],
+                            validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
+
+  def importNodes(): Unit = {
+    println("\nFetching all nodes from conversion database")
+    val conversionNodes = fetchNodesFromConversionTable()
+    conversionNodes.foreach{
+      conversionNode =>
+
+    }
+  }
+
+  protected def fetchNodesFromConversionTable(): Seq[ConversionNode] = {
+    conversionDatabase.withDynSession {
+      sql"""SELECT SOLMUNRO, X, Y, NIMI, ID_SOLMUN_TYYPPI, TO_CHAR(VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
+            TO_CHAR(MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), KAYTTAJA, TO_CHAR(REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss') FROM SOLMU """
+        .as[ConversionNode].list
+    }
+  }
+
+  implicit val getConversionNode: GetResult[ConversionNode] = new GetResult[ConversionNode] {
+    def apply(r: PositionedResult): ConversionNode = {
+      val nodeNumber = r.nextLong()
+      val xValue = r.nextLong()
+      val yValue = r.nextLong()
+      val name = r.nextStringOption()
+      val nodeType = r.nextLong()
+      val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val endDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val createdBy = r.nextString()
+      val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      ConversionNode(NewIdValue, nodeNumber, new Point(xValue, yValue), name, nodeType, startDate, endDate, validFrom, None, createdBy, createdTime)
+    }
+  }
+
 }
 

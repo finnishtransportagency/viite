@@ -135,6 +135,8 @@ class DataImporter {
       sqlu"""DELETE FROM JUNCTION_POINT""".execute
       sqlu"""DELETE FROM NODE_POINT""".execute
       sqlu"""DELETE FROM ROADWAY_POINT""".execute
+      sqlu"""DELETE FROM JUNCTION""".execute
+      sqlu"""DELETE FROM NODE""".execute
       sqlu"""DELETE FROM LINK""".execute
       sqlu"""DELETE FROM ROADWAY""".execute
 
@@ -163,6 +165,19 @@ class DataImporter {
     }
   }
 
+  def importNodes(conversionDatabase: DatabaseDef) = {
+    withDynTransaction{
+      sqlu"""DELETE FROM JUNCTION_POINT""".execute
+      sqlu"""DELETE FROM NODE_POINT""".execute
+      sqlu"""DELETE FROM JUNCTION""".execute
+      sqlu"""DELETE FROM NODE""".execute
+
+      println(s"${DateTime.now()} - Old nodes and junctions data removed")
+      val nodeImporter = getNodeImporter(conversionDatabase)
+      nodeImporter.importNodes()
+    }
+  }
+
   def enableRoadwayTriggers = {
     sqlu"""ALTER TABLE ROADWAY ENABLE ALL TRIGGERS""".execute
   }
@@ -184,12 +199,16 @@ class DataImporter {
     new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
   }
 
+  protected def getNodeImporter(conversionDatabase: DatabaseDef) : NodeImporter = {
+    new NodeImporter(conversionDatabase)
+  }
+
   // TODO This is not used and should probably be removed.
   def splitRoadAddresses(roadAddress: RoadAddress, addrMToSplit: Long, roadTypeBefore: RoadType, roadTypeAfter: RoadType, elyCode: Long): Seq[RoadAddress] = {
     // mValue at split point on a TowardsDigitizing road address:
     val splitMValue = roadAddress.startMValue + (roadAddress.endMValue - roadAddress.startMValue) / (roadAddress.endAddrMValue - roadAddress.startAddrMValue) * (addrMToSplit - roadAddress.startAddrMValue)
     println(s"Splitting roadway id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on AddrMValue = $addrMToSplit")
-    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadway, roadType = roadTypeBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, roadType = roadTypeBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             roadAddress.endMValue - splitMValue
           else
             0.0, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
@@ -197,7 +216,7 @@ class DataImporter {
           else
             splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode) // TODO Check roadway_number
 
-    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewRoadway, roadType = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, roadType = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
             0.0
           else
             splitMValue, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
