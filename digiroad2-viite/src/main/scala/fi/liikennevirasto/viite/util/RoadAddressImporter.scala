@@ -155,7 +155,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 //        .as[ConversionAddress].list
 //    }
 //  }
-  protected def fetchValidAddressesFromConversionTable(minRoadwayNumber: Long, maxRoadwayNumber: Long): Seq[ConversionAddress] = {
+  protected def fetchValidAddressesFromConversionTable: Seq[ConversionAddress] = {
     conversionDatabase.withDynSession {
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
@@ -210,7 +210,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
       case (min, max) =>
         print(s"${DateTime.now()} - ")
         println(s"Processing chunk ($min, $max)")
-        val conversionAddresses = fetchValidAddressesFromConversionTable(min, max)
+        val conversionAddresses = fetchValidAddressesFromConversionTable
 
         print(s"\n${DateTime.now()} - ")
         println("Read %d rows from conversion database".format(conversionAddresses.size))
