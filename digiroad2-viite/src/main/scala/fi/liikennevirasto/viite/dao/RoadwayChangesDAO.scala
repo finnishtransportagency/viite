@@ -388,7 +388,7 @@ class RoadwayChangesDAO {
           val numbering = ProjectDeltaCalculator.partition(delta.numbering.mapping)
 
           val adjustedUnchanged = ProjectDeltaCalculator.adjustStartSourceAddressValues(unchanged.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
-          val adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(transferred.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
+          val adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(transferred.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections ++ terminated.originalSections)
           val adjustedNumbering = ProjectDeltaCalculator.adjustStartSourceAddressValues(numbering.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
 
           adjustedUnchanged._1.foreach { case (roadwaySection1, roadwaySection2) =>
