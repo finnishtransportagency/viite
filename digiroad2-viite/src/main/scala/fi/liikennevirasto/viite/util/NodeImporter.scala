@@ -123,7 +123,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
   implicit val getConversionNodePoint: GetResult[ConversionNodePoint] = new GetResult[ConversionNodePoint] {
     def apply(r: PositionedResult): ConversionNodePoint = {
       val id = r.nextLong()
-      val beforeOrAfter = r.nextString().toLong
+      val beforeOrAfterString = r.nextString()
       val roadwayPointId = r.nextLong()
       val nodeId = r.nextLong()
       val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
@@ -133,6 +133,11 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
       val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val roadwayNumberInTR = r.nextLong()
       val addressMValueInTR = r.nextLong()
+      val beforeOrAfter = beforeOrAfterString match {
+        case "E" => 1
+        case "J" => 2
+        case _ => 0
+      }
       ConversionNodePoint(id, beforeOrAfter, roadwayPointId, nodeId, startDate, endDate, validFrom, None, createdBy, createdTime, roadwayNumberInTR, addressMValueInTR)
     }
   }
