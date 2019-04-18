@@ -339,7 +339,7 @@ object DataFixture {
         "| import_complementary_road_address " +
         "| update_road_addresses_geometry | import_road_address_change_test_data " +
         "| apply_change_information_to_road_address_links | import_road_names | check_road_network" +
-        "| test | flyway_init")
+        "| test | flyway_init | import_nodes_and_junctions")
     }
   }
 

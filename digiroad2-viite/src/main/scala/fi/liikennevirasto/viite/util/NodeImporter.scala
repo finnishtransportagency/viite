@@ -1,25 +1,13 @@
 package fi.liikennevirasto.viite.util
 
-import java.sql.{PreparedStatement, Types}
-
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import java.sql.PreparedStatement
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
-import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
-import fi.liikennevirasto.viite.dao.{CalibrationCode, TerminationCode}
-import fi.liikennevirasto.viite.dao.RoadwayPointDAO.RoadwayPoint
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
-import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPoint, CalibrationPointType}
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -56,14 +44,16 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     val nodePs = insertNodeStatement()
     conversionNodes.foreach{
       conversionNode =>
-        println(s"Inserting node with id = ${conversionNode.id} and node_number = ${conversionNode.nodeNumber}")
+        println(s"Inserting node with TR id = ${conversionNode.id} and node_number = ${conversionNode.nodeNumber}")
         insertNode(nodePs, conversionNode)
     }
+    nodePs.executeBatch()
+    nodePs.close()
   }
 
   protected def fetchNodesFromConversionTable(): Seq[ConversionNode] = {
     conversionDatabase.withDynSession {
-      sql"""SELECT SOLMUNRO, X, Y, NIMI, ID_SOLMUN_TYYPPI, TO_CHAR(VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
+      sql"""SELECT ID SOLMUNRO, X, Y, NIMI, ID_SOLMUN_TYYPPI, TO_CHAR(VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
             TO_CHAR(MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), KAYTTAJA, TO_CHAR(REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss') FROM SOLMU """
         .as[ConversionNode].list
     }
@@ -71,6 +61,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
 
   implicit val getConversionNode: GetResult[ConversionNode] = new GetResult[ConversionNode] {
     def apply(r: PositionedResult): ConversionNode = {
+      val id = r.nextLong()
       val nodeNumber = r.nextLong()
       val xValue = r.nextLong()
       val yValue = r.nextLong()
@@ -81,7 +72,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
       val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextString()
       val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      ConversionNode(NewIdValue, nodeNumber, Point(xValue, yValue), name, nodeType, startDate, endDate, validFrom, None, createdBy, createdTime)
+      ConversionNode(id, nodeNumber, Point(xValue, yValue), name, nodeType, startDate, endDate, validFrom, None, createdBy, createdTime)
     }
   }
 
