@@ -22,7 +22,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
 
   private def insertNodeStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
-      "(?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      " (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)")
 
 
   def insertNode(nodeStatement: PreparedStatement, conversionNode: ConversionNode): Unit ={
