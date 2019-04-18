@@ -33,7 +33,6 @@ pipeline {
                                        'import_road_address_history',
                                        'fuse_multi_segment_road_addresses',
                                        'check_road_network',
-                                       'check_lrm_position',
                                        'fuse_road_address_with_history',
                                        'import_road_names',
                                        'test_integration_api_all_municipalities'
