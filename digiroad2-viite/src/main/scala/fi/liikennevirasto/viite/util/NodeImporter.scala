@@ -53,7 +53,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
 
   protected def fetchNodesFromConversionTable(): Seq[ConversionNode] = {
     conversionDatabase.withDynSession {
-      sql"""SELECT ID SOLMUNRO, X, Y, NIMI, ID_SOLMUN_TYYPPI, TO_CHAR(VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
+      sql"""SELECT ID, SOLMUNRO, X, Y, NIMI, ID_SOLMUN_TYYPPI, TO_CHAR(VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
             TO_CHAR(MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), KAYTTAJA, TO_CHAR(REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss') FROM SOLMU """
         .as[ConversionNode].list
     }
