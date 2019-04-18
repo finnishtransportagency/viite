@@ -207,9 +207,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   def importRoadAddress(): Unit = {
 //    val chunks = fetchChunkRoadwayNumbersFromConversionTable()
 //    chunks.foreach {
-      case (min, max) =>
+//      case (min, max) =>
         print(s"${DateTime.now()} - ")
-        println(s"Processing chunk ($min, $max)")
+//        println(s"Processing chunk ($min, $max)")
         val conversionAddresses = fetchValidAddressesFromConversionTable
 
         print(s"\n${DateTime.now()} - ")
