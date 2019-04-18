@@ -31,7 +31,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, new UnaddressedRoadLinkDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -94,9 +94,9 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val project = Project(1, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
         DateTime.now(), DateTime.now(), "info", List(
-          ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)), None)
+          ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)), List(), None)
       projectDAO.create(project)
-      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely) Values(1,1,6,1,1,0,10.5,1,1,8) """.execute
+      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely,roadway_change_id) Values(1,1,6,1,1,0,10.5,1,1,8,1) """.execute
       //Assuming that there is data to show
       val responses = projectService.getRoadwayChangesAndSendToTR(Set(1))
       responses.projectId should be(1)
@@ -108,7 +108,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     val savedState = ProjectState.apply(5)
     val projectId = 0
     val addresses = List(ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-    val roadAddressProject = Project(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
+    val roadAddressProject = Project(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), List(), None)
     runWithRollback {
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       val stateAfterCheck = projectService.updateProjectStatusIfNeeded(sent2TRState, savedState, "", saved.id)
@@ -121,7 +121,7 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     val savedState = ProjectState.apply(3)
     val projectId = 0
     val addresses = List(ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-    val roadAddressProject = Project(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
+    val roadAddressProject = Project(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), List(), None)
     runWithRollback {
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       val stateAfterCheck = projectService.updateProjectStatusIfNeeded(sent2TRState, savedState, "failed", saved.id)

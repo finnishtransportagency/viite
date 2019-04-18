@@ -163,20 +163,20 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
   }
 
   test("Test minimumDistance When measuring the distance from point (0.0, 0.0, 0.0) to segment ((-1.0, 1.0, 0.0), (1.0, 1.0, 0.0))Then return the calculated Minimum distance to line segment.") {
-    val distance = minimumDistance(Point(0,0,0), (Point(-1,1,0), Point(1,1,0)))
+    val distance = minimumDistance(Point(0,0), (Point(-1,1), Point(1,1)))
     distance should be (1.0)
   }
 
   test("Test minimumDistance When measuring the distance from point (0.0, 0.0, 0.0) to segment ((-1.0, -1.0, 0.0), (-0.5, -0.5, 0.0))Then return the calculated Minimum distance to line segment.") {
-    val distance = minimumDistance(Point(0,0,0), (Point(-1,-1,0), Point(-.5,-.5,0)))
+    val distance = minimumDistance(Point(0,0), (Point(-1,-1), Point(-.5,-.5)))
     distance should be > .707
     distance should be < .70711
   }
 
   test("Test minimumDistance When measuring the distance from point (0, 0, 0) to the result of segmentByMinimumDistance of point (0,0,0) to (-1, -1, 0), (0, 0.9, 0), (1, 1, 0)) Then return the calculated Minimum distance to line segment." +
     "Get minimum distance from point to segment midpoint") {
-    val distance = minimumDistance(Point(0,0,0),
-      segmentByMinimumDistance(Point(0,0,0), Seq(Point(-1,1,0), Point(0,.9,0), Point(1,1,0))))
+    val distance = minimumDistance(Point(0,0),
+      segmentByMinimumDistance(Point(0,0), Seq(Point(-1,1), Point(0,.9), Point(1,1))))
     distance should be(0.9)
   }
 
@@ -211,7 +211,7 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
   }
 
   test("Test truncateGeometry3D When using a 3 dimensional geometry Then return the truncated geometry") {
-    val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0, 0.0), Point(5.0, 0.0, 5.0), Point(10.0, 0.0, 2.0)), 6, 10)
+    val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0, 5.0), Point(10.0, 0.0, 2.0)), 6, 10)
     truncatedGeometry.map(_.copy(z = 0.0)) should be (Seq(Point(6.0, 0.0), Point(10.0, 0.0)))
   }
 

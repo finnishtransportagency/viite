@@ -3,17 +3,31 @@
 
     var roadInfoList=[{endAddressM:1,endRoadPartNumber:0,roadNumber:0,startAddressM:0,startRoadPartNumber:0,trackCode:0}];
     var changesInfo=[{changetype:0,discontinuity:"jatkuva",roadType:9,source:roadInfoList,target:roadInfoList,reversed: false}];
-    var projectChanges={id:0,name:"templateproject", user:"templateuser",ely:0,changeDate:"1980-01-28",changeInfoSeq:changesInfo};
+    var changeTable={id:0,name:"templateproject", user:"templateuser",changeDate:"1980-01-28",changeInfoSeq:changesInfo};
+    var projectChanges={changeTable:changeTable, validationErrors:[]};
 
+    function loadChanges(changeData) {
+      if (!_.isUndefined(changeData) && changeData.discontinuity !== null) {
+        eventbus.trigger('projectChanges:fetched', changeData);
+      }
+    }
 
-
-    function getChanges(projectID){
-      backend.getChangeTable(projectID, function(changedata) {
-        var parsedResult = roadChangeAPIResultParser(changedata);
-        if (!_.isUndefined(parsedResult) && parsedResult.discontinuity !== null) {
-          eventbus.trigger('projectChanges:fetched', parsedResult);
-        }
+    function getChanges(projectID, sortFn){
+      backend.getChangeTable(projectID, function(changeData) {
+        loadChanges(roadChangeAPIResultParser(changeData));
+        sortFn();
       });
+    }
+
+    function sortChanges(side, reverse) {
+        projectChanges.changeTable.changeInfoSeq =
+          _.sortBy(_.sortBy(_.sortBy(_.sortBy(projectChanges.changeTable.changeInfoSeq,
+            side + '.trackCode'),
+            side + '.startAddressM'),
+            side + '.startRoadPartNumber'),
+            side + '.roadNumber');
+        if (reverse) projectChanges.changeTable.changeInfoSeq.reverse();
+        loadChanges(projectChanges);
     }
 
     function roadChangeAPIResultParser(changeData) {
@@ -22,8 +36,8 @@
     }
 
     return{
-      roadChangeAPIResultParser: roadChangeAPIResultParser,
-      getChanges: getChanges
+      getChanges: getChanges,
+      sortChanges: sortChanges
     };
   };
 })(this);

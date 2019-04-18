@@ -287,8 +287,9 @@
                 '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
               '</div>' +
               '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Geometrian Lähde: ' + linkProperties.roadLinkSource + '</p>' +
+                '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + '</p>' +
               '</div>' +
+              showLinkId(selectedLinkProperty, linkProperties) +
             '</div>' +
             staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) +
             staticField('TIEOSANUMERO', firstSelectedLinkProperty.roadPartNumber) +
@@ -322,8 +323,9 @@
                 '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
               '</div>' +
               '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Geometrian Lähde: ' + linkProperties.roadLinkSource + '</p>' +
+                '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + '</p>' +
               '</div>' +
+              showLinkId(selectedLinkProperty, linkProperties) +
             '</div>' +
             staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) +
             staticField('TIEOSANUMERO', firstSelectedLinkProperty.roadPartNumber) +
@@ -355,8 +357,9 @@
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
             '</div>' +
             '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Geometrian Lähde: ' + linkProperties.roadLinkSource + '</p>' +
+              '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + '</p>' +
             '</div>' +
+            showLinkId(selectedLinkProperty, linkProperties) +
            '</div>' +
             staticField('TIENUMERO',firstSelectedLinkProperty.roadNumber) +
             staticField('TIEOSANUMERO', firstSelectedLinkProperty.roadPartNumber) +
@@ -369,6 +372,17 @@
           '</div>' +
         '</div>' +
         '<footer>' + editButtons + '</footer> </div>');
+    };
+
+    var showLinkId = function(selectedLinkProperty, linkProperties){
+        if (selectedLinkProperty.count () === 1) {
+            return '' +
+                '<div class="form-group">' +
+                    '<p class="form-control-static asset-log-info">Linkin ID: ' + linkProperties.linkId + '</p>' +
+                '</div>';
+        } else {
+            return '';
+        }
     };
 
     var additionalSourceEventTriggering = function(rootElement, floatingToAdd, value, id) {

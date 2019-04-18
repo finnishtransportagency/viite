@@ -42,11 +42,11 @@
         (link.endAddressM !== 0 ? addSmallLabel('JATKUU'): '') +
         '</div>' +
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
-        addSmallInputNumber('tie', (roadNumber !== 0 ? roadNumber : ''), !projectEditable) +
-        addSmallInputNumber('osa', (part !== 0 ? part : ''), !projectEditable) +
+        addSmallInputNumber('tie', (roadNumber !== 0 ? roadNumber : ''), !projectEditable, 5) +
+        addSmallInputNumber('osa', (part !== 0 ? part : ''), !projectEditable, 3) +
         addTrackCodeDropdown((track !== Track.Unknown.value ? track :
           (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
-        addSmallInputNumber('ely', link.elyCode, !projectEditable) +
+        addSmallInputNumber('ely', link.elyCode, !projectEditable, 2) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
           roadTypeDropdown() + '<br>' +
@@ -104,12 +104,12 @@
       return '<label class="control-label-small" style="word-wrap: break-word;max-width: 250px">'+label+'</label>';
     };
 
-    var addSmallInputNumber = function(id, value, isDisabled) {
+    var addSmallInputNumber = function(id, value, isDisabled, maxLength) {
       //Validate only number characters on "onkeypress" including TAB and backspace
       var disabled = isDisabled ? ' readonly="readonly" ': '';
       return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
         '" class="' + prefix + 'form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value)? '' : value ) + '" ' +
-        disabled + ' onclick=""/>';
+        disabled + (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
     };
 
     var addSmallInputNumberDisabled = function(id, value) {
@@ -304,6 +304,9 @@
       var buttonIndex = 0;
       var errorLines = '';
       projectCollection.clearCoordinates();
+      projectErrors.sort(function(a, b) {
+        return a.priority - b.priority; // Sort by priority ascending
+      });
       _.each(projectErrors, function (error) {
         var button = '';
         var coordinates = getErrorCoordinates(error, links);
@@ -312,7 +315,7 @@
           projectCollection.pushCoordinates(button);
           buttonIndex++;
         }
-        errorLines += '<div class="form-project-errors-list">' +
+        errorLines += '<div class="form-project-errors-list' + (error.priority === 1 ? ' warning' : '') + '">' +
           addSmallLabelTopped('LINKIDS: ') + ' ' + addSmallLabelWrapped(error.linkIds) + '</br>' +
           addSmallLabel('VIRHE: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
           addSmallLabel('INFO: ') + ' ' + addSmallLabelLowercase((error.info ? error.info: 'N/A')) + '</br>' +
@@ -341,7 +344,7 @@
       sendRoadAddressChangeButton: sendRoadAddressChangeButton,
       distanceValue: distanceValue,
       title: title,
-        titleWithEditingTool: titleWithEditingTool,
+      titleWithEditingTool: titleWithEditingTool,
       projectButtons: projectButtons,
       staticField: staticField,
       getProjectErrors:getProjectErrors

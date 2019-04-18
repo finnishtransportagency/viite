@@ -8,7 +8,6 @@ import fi.liikennevirasto.viite.Dummies.dummyRoadwayChangeSection
 import fi.liikennevirasto.viite.{ProjectService, RoadType}
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process._
 import org.joda.time.DateTime
@@ -39,7 +38,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
     runWithRollback{
       //inserts one case
       val addresses = List(ProjectReservedPart(5:Long, 203:Long, 203:Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
-      val project = Project(100,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",DateTime.now(),DateTime.now(),"info",addresses, None)
+      val project = Project(100,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",DateTime.now(),DateTime.now(),"info",addresses,Seq(),None)
       projectDAO.create(project)
       sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely, ROADWAY_CHANGE_ID) Values(100,1,6,1,1,0,10.5,1,1,8, 1) """.execute
       val projectId = sql"""Select p.id From Project p Inner Join ROADWAY_CHANGES rac on p.id = rac.project_id""".as[Long].first
@@ -51,19 +50,19 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
 
   test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When inserting the results of the delta calculation for a project Then when querying directly the roadway_changes it should confirm data insertion.") {
     val newProjectLink = ProjectLink(1, 1, 1, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0,
-      SideCode.Unknown, (None, None), NoFloating, List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false,
+      SideCode.Unknown, (None, None), List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false,
       None, 748800L)
     val delta = Delta(DateTime.now(), Seq(newProjectLink), Termination(Seq()), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {
       addprojects()
       new RoadwayChangesDAO().insertDeltaToRoadChangeTable(delta, 1)
-      sql"""Select Project_Id From ROADWAY_CHANGES Where Project_Id In (1)""".as[Long].firstOption.get should be(1)
+      sql"""Select Project_Id From ROADWAY_CHANGES Where Project_Id In (1)""".as[Long].firstOption.getOrElse(0) should be(1)
     }
   }
 
   test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When inserting the results of the delta calculation for a project, the inserted ely code should be the roadway ely instead of project ely") {
     val newProjectLink = ProjectLink(1, 1, 1, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0,
-      SideCode.Unknown, (None, None), NoFloating, List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false,
+      SideCode.Unknown, (None, None),  List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false,
       None, 748800L)
     val delta = Delta(DateTime.now(), Seq(newProjectLink), Termination(Seq()), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {

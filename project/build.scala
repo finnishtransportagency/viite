@@ -1,6 +1,6 @@
 import org.scalatra.sbt._
 import sbt.Keys._
-import sbt._
+import sbt.{Def, _}
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin.MergeStrategy
 
@@ -11,8 +11,8 @@ object Digiroad2Build extends Build {
   val Version = "0.1.0-SNAPSHOT"
   val ScalaVersion = "2.11.7"
   val ScalatraVersion = "2.6.3"
-  val env = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "dev"
-  val testEnv = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "test"
+  val env: String = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "dev"
+  val testEnv: String = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "test"
   lazy val geoJar = Project (
     Digiroad2GeoName,
     file(Digiroad2GeoName),
@@ -74,7 +74,7 @@ object Digiroad2Build extends Build {
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
     )
-  ) dependsOn(geoJar)
+  ) dependsOn geoJar
 
   val Digiroad2ViiteName = "digiroad2-viite"
   lazy val viiteJar = Project (
@@ -140,7 +140,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-servlets" % "9.2.10.v20150310" % "compile",
         "org.eclipse.jetty" % "jetty-proxy" % "9.2.10.v20150310" % "compile",
         "org.eclipse.jetty" % "jetty-jmx" % "9.2.10.v20150310" % "compile",
-        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
+        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts Artifact("javax.servlet", "jar", "jar")
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
@@ -218,7 +218,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-webapp" % "9.2.10.v20150310" % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % "9.2.10.v20150310" % "container;compile",
         "org.eclipse.jetty" % "jetty-proxy" % "9.2.10.v20150310" % "container;compile",
-        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
+        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts Artifact("javax.servlet", "jar", "jar")
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
@@ -226,10 +226,10 @@ object Digiroad2Build extends Build {
   ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar) aggregate
     (geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar)
 
-  val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
+  val assemblySettings: Seq[Def.Setting[_]] = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
     test in assembly := {},
-    mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+    mergeStrategy in assembly <<= (mergeStrategy in assembly) { old =>
     {
       case x if x.endsWith("about.html") => MergeStrategy.discard
       case x => old(x)
