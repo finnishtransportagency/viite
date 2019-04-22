@@ -53,6 +53,11 @@ class ProjectValidator {
       if (!projectReservedPartDAO.fetchReservedRoadParts(currentProject.id).exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart)) {
         throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
       }
+    } else if (LinkStatus.Transfer.value == linkStatus.value){
+      val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(newRoadNumber, newRoadPart, currentProject.id)
+      if (roadPartLinks.exists(rpl => rpl.status == Numbering)) {
+        throw new ProjectValidationException(ErrorOtherActionWithTransfer)
+      }
     }
   }
 
