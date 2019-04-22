@@ -1482,6 +1482,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
 
           case LinkStatus.Transfer =>
+            val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId)
+            if (roadPartLinks.exists(rpl => rpl.status == Numbering)) {
+              throw new ProjectValidationException(ErrorOtherActionWithTransfer)
+            }
             val (replaceable, road, part) = checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Transfer, toUpdateLinks)
             val updated = toUpdateLinks.map(l => {
               l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode),
