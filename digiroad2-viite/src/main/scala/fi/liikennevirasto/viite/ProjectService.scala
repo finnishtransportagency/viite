@@ -1186,6 +1186,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectValidator.checkReservedExistence(project, newRoadNumber, newRoadPart, linkStatus, projectLinks)
     projectValidator.checkAvailable(newRoadNumber, newRoadPart, project)
     projectValidator.checkNotReserved(newRoadNumber, newRoadPart, project)
+    projectValidator.checkFormationInOtherProject(project, newRoadNumber, newRoadPart, linkStatus)
     project
   }
 

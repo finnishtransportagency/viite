@@ -61,6 +61,14 @@ class ProjectValidator {
     }
   }
 
+  def checkFormationInOtherProject(currentProject: Project, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus): Unit = {
+    if (LinkStatus.New.value == linkStatus.value) {
+      val formedPartsOtherProjects = projectReservedPartDAO.fetchFormedRoadParts(currentProject.id, withProjectId = false)
+      if(formedPartsOtherProjects.nonEmpty && formedPartsOtherProjects.exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart))
+        throw new ProjectValidationException(ErrorRoadFormedInOtherProject)
+      }
+  }
+
   def checkAvailable(number: Long, part: Long, currentProject: Project): Unit = {
     if (projectReservedPartDAO.isNotAvailableForProject(number, part, currentProject.id)) {
       val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
