@@ -74,6 +74,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
       conversionNodePoint => {
         val existingRoadwayPoint = RoadwayPointDAO.fetch(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR)
         val node = NodeDAO.fetchByNodeNumber(conversionNodePoint.nodeNumber)
+        println(s"Inserting node point with TR id = ${conversionNodePoint.id} and node_id = ${conversionNodePoint.nodeId} for node_number = ${node.get.nodeNumber}")
         if(existingRoadwayPoint.isEmpty){
           val newRoadwayPoint = RoadwayPointDAO.create(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR, createdBy = "node_import")
           insertNodePoint(nodePointPs, conversionNodePoint, node, newRoadwayPoint)
