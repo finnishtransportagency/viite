@@ -418,7 +418,6 @@
         var rootElement = $('#feature-attributes');
         rootElement.empty();
         var emptyFormDiv =
-          '<p class="center"><a id="floating-list-link" class="floating-stops" href="#work-list/floatingRoadAddress">KORJATTAVIEN LINKKIEN LISTA</a></p>' +
           '<p class="center"><a id="error-list-link" class="floating-stops" href="#work-list/roadAddressErrors">TIEOSOITEVERKON VIRHEET</a></p>' +
           '<p class="form form-horizontal"></p>' +
           '<div class="form-initial-state" id="emptyFormDiv">' +
