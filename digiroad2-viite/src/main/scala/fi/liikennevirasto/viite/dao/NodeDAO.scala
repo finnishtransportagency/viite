@@ -33,7 +33,7 @@ object NodeDAO {
 
   def fetchByNodeNumber(nodeNumber: Long): Option[Node] = {
     sql"""
-      SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_TO, CREATED_BY, CREATED_TIME, VALID_FROM
+      SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       from NODE
       where NODE_NUMBER = $nodeNumber
       """.as[Node].firstOption
