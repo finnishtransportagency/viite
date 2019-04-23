@@ -35,7 +35,7 @@ object NodeDAO {
     sql"""
       SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_TO, CREATED_BY, CREATED_TIME, VALID_FROM
       from NODE
-      where id = $nodeNumber
+      where NODE_NUMBER = $nodeNumber
       """.as[Node].firstOption
   }
 }
