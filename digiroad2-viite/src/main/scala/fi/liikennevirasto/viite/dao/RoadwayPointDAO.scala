@@ -5,14 +5,12 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-import scala.collection.immutable
-
 object RoadwayPointDAO {
 
   case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, createdBy: String, createdTime: Option[DateTime] = None, modifiedBy: Option[String] = None, modifiedTime: Option[DateTime] = None)
 
   implicit val getRoadwayPointRow = new GetResult[RoadwayPoint] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): RoadwayPoint = {
       val roadwayPointId = r.nextLong()
       val roadwayNumber = r.nextLong()
       val addrMValue = r.nextLong()
