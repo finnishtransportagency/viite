@@ -1,13 +1,14 @@
 package fi.liikennevirasto.viite.util
 
 import java.sql.PreparedStatement
+
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.dao.RoadwayPointDAO
+import fi.liikennevirasto.viite.dao.{Node, NodeDAO, RoadwayPointDAO}
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -20,8 +21,8 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
   case class ConversionNode(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: Long, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime],
                             validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
-  case class ConversionNodePoint(id: Long, beforeOrAfter: Long, roadwayPointTRId: Long, nodeId: Long, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime],
-                                 validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime], roadwayNumberTR: Long, addressMValueTR: Long)
+  case class ConversionNodePoint(id: Long, beforeOrAfter: Long, nodeId: Long, nodeNumber: Long, roadwayNumberTR: Long, addressMValueTR: Long,
+                                 startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
   private def insertNodeStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
@@ -45,11 +46,11 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodeStatement.addBatch()
   }
 
-  def insertNodePoint(nodePointStatement: PreparedStatement, nodePoint: ConversionNodePoint, roadwayPointId: Long): Unit = {
+  def insertNodePoint(nodePointStatement: PreparedStatement, nodePoint: ConversionNodePoint, node: Option[Node], roadwayPointId: Long): Unit = {
     nodePointStatement.setLong(1, Sequences.nextNodePointId)
     nodePointStatement.setLong(2, nodePoint.beforeOrAfter)
     nodePointStatement.setLong(3, roadwayPointId)
-    nodePointStatement.setLong(4, nodePoint.nodeId)
+    nodePointStatement.setLong(4, node.get.id)
     nodePointStatement.setString(5, datePrinter(nodePoint.startDate))
     nodePointStatement.setString(6, datePrinter(nodePoint.endDate))
     nodePointStatement.setString(7, datePrinter(nodePoint.validFrom))
@@ -72,12 +73,13 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     conversionNodePoints.foreach{
       conversionNodePoint => {
         val existingRoadwayPoint = RoadwayPointDAO.fetch(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR)
+        val node = NodeDAO.fetchByNodeNumber(conversionNodePoint.nodeNumber)
         if(existingRoadwayPoint.isEmpty){
           val newRoadwayPoint = RoadwayPointDAO.create(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR, createdBy = "node_import")
-          insertNodePoint(nodePointPs, conversionNodePoint, newRoadwayPoint)
+          insertNodePoint(nodePointPs, conversionNodePoint, node, newRoadwayPoint)
         }
         else
-          insertNodePoint(nodePointPs, conversionNodePoint, existingRoadwayPoint.get.id)
+          insertNodePoint(nodePointPs, conversionNodePoint, node, existingRoadwayPoint.get.id)
       }
     }
     nodePointPs.executeBatch()
@@ -96,8 +98,11 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
 
   protected def fetchNodePointsFromConversionTable(): Seq[ConversionNodePoint] = {
     conversionDatabase.withDynSession {
-      sql"""SELECT NP.ID, NP.EJ, NP.ID_TIEOSOITE, NP.ID_SOLMU, TO_CHAR(NP.VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(NP.VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
-            TO_CHAR(np.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), NP.KAYTTAJA, TO_CHAR(NP.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss'), AP.ID_AJORATA, AP.ETAISYYS FROM SOLMUKOHTA NP JOIN AJORADAN_PISTE AP ON (ID_TIEOSOITE = AP.ID) """
+      sql"""SELECT NP.ID, NP.EJ, NP.ID_SOLMU, SOLMU.SOLMUNRO, AP.ID_AJORATA, AP.ETAISYYS, TO_CHAR(NP.VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(NP.VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
+            TO_CHAR(np.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), NP.KAYTTAJA, TO_CHAR(NP.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
+            FROM SOLMUKOHTA NP
+            JOIN AJORADAN_PISTE AP ON (ID_TIEOSOITE = AP.ID)
+            JOIN SOLMU ON (ID_SOLMU = SOLMU.ID) """
         .as[ConversionNodePoint].list
     }
   }
@@ -124,21 +129,21 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     def apply(r: PositionedResult): ConversionNodePoint = {
       val id = r.nextLong()
       val beforeOrAfterString = r.nextString()
-      val roadwayPointId = r.nextLong()
       val nodeId = r.nextLong()
+      val nodeNumber = r.nextLong()
+      val roadwayNumberInTR = r.nextLong()
+      val addressMValueInTR = r.nextLong()
       val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val endDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextString()
       val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val roadwayNumberInTR = r.nextLong()
-      val addressMValueInTR = r.nextLong()
       val beforeOrAfter = beforeOrAfterString match {
         case "E" => 1
         case "J" => 2
         case _ => 0
       }
-      ConversionNodePoint(id, beforeOrAfter, roadwayPointId, nodeId, startDate, endDate, validFrom, None, createdBy, createdTime, roadwayNumberInTR, addressMValueInTR)
+      ConversionNodePoint(id, beforeOrAfter, nodeId, nodeNumber, roadwayNumberInTR, addressMValueInTR, startDate, endDate, validFrom, None, createdBy, createdTime)
     }
   }
 
