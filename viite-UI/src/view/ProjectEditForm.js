@@ -248,9 +248,9 @@
         formCommon.replaceAddressInfo(backend, selectedProjectLink, currentProject.project.id);
         checkInputs('.project-');
         changeDropDownValue(selectedProjectLink[0].status);
-        editDropDown(_.filter(currentProject.getF, function(formedLink) {
+        editDropDown(_.filter(currentProject.getFormedParts(), function(formedLink) {
           return formedLink.roadNumber === selectedProjectLink[0].roadNumber && formedLink.roadPartNumber === selectedProjectLink[0].roadPartNumber;
-        }).length);
+        }).size());
         disableFormInputs();
         var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
           return projectLink.endAddressM;
