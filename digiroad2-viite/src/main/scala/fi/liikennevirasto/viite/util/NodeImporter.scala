@@ -55,6 +55,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodePointStatement.setString(6, datePrinter(nodePoint.endDate))
     nodePointStatement.setString(7, datePrinter(nodePoint.validFrom))
     nodePointStatement.setString(8, nodePoint.createdBy)
+    nodePointStatement.addBatch()
   }
 
   def importNodes(): Unit = {
@@ -83,8 +84,8 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
           insertNodePoint(nodePointPs, conversionNodePoint, node, existingRoadwayPoint.get.id)
       }
     }
-    nodePointPs.executeBatch()
 
+    nodePointPs.executeBatch()
     nodePs.close()
     nodePointPs.close()
   }
