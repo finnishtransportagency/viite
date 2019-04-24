@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
+import com.github.nscala_time.time.OrderingImplicits.DateTimeOrdering
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
@@ -126,9 +127,14 @@ class RoadNetworkService {
       withDynTransaction {
         try {
           val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
-          val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(roadsInChunk.map(_.roadwayNumber).distinct.toSet).groupBy(_.roadwayNumber)
-          val roadways = roadsInChunk.groupBy(g => (g.roadNumber, g.roadPartNumber))
+          val distinctDateRoads = roadsInChunk.groupBy(_.roadPartNumber).flatMap{ p =>
+            p._2.groupBy(o => (o.track, o.startAddrMValue)).map{ t =>
+             t._2.minBy(_.startDate)
+            }.toSeq
+          }.toSeq
 
+          val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(distinctDateRoads.map(_.roadwayNumber).distinct.toSet).groupBy(_.roadwayNumber)
+          val roadways = distinctDateRoads.groupBy(g => (g.roadNumber, g.roadPartNumber, g.startAddrMValue))
           val errors = roadways.flatMap { group =>
             val (section, roadway) = group
 
