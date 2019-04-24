@@ -53,25 +53,25 @@ class RoadNetworkService {
         if (allLocations.isEmpty)
           Seq.empty[RoadNetworkError]
         else {
-          val firstOpt = Some(allLocations.filter(loc => loc.orderNumber == 1 && loc.calibrationPoints._1.nonEmpty).minBy(_.calibrationPoints._1))
-          val lastOpt = Some(allLocations.maxBy(_.calibrationPoints._2))
+          val sortedLocations = allLocations.sortBy(_.orderNumber)
 
-          if (firstOpt.isEmpty && lastOpt.isEmpty) {
-            allLocations.map(loc =>
-              RoadNetworkError(0, roadways.find(_.roadwayNumber == loc.roadwayNumber).get.id, loc.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
-            )
+          val startLocationError = if(sortedLocations.head.orderNumber != 1){
+            Seq(RoadNetworkError(0, roadways.find(_.roadwayNumber == sortedLocations.head.roadwayNumber).get.id, sortedLocations.head.id, AddressError.MissingStartingLink, System.currentTimeMillis(), options.currNetworkVersion))
           } else {
-            val first = firstOpt.get
-            val last = lastOpt.get
-            val edgeCalibrationPointsError: Seq[LinearLocation] = Seq(first, last).filter(edge =>
-              edge.id == first.id && edge.calibrationPoints._1.isEmpty || edge.id == last.id && edge.calibrationPoints._2.isEmpty
-            )
-
-            edgeCalibrationPointsError.map { loc =>
-              RoadNetworkError(0, roadways.find(_.roadwayNumber == loc.roadwayNumber).get.id, loc.id, AddressError.Inconsistent2TrackCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
+            if(sortedLocations.head.calibrationPoints._1.isEmpty){
+              Seq(RoadNetworkError(0, roadways.find(_.roadwayNumber == sortedLocations.head.roadwayNumber).get.id, sortedLocations.head.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
+            } else {
+              Seq.empty[RoadNetworkError]
             }
           }
 
+          val endLocationError =  if (sortedLocations.last.calibrationPoints._2.isEmpty) {
+              Seq(RoadNetworkError(0, roadways.find(_.roadwayNumber == sortedLocations.last.roadwayNumber).get.id, sortedLocations.last.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
+          } else {
+            Seq.empty[RoadNetworkError]
+          }
+
+          startLocationError++endLocationError
         }
       errors
     }
