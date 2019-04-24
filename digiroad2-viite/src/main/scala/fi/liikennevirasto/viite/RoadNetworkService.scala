@@ -134,7 +134,7 @@ class RoadNetworkService {
           }.toSeq
 
           val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(distinctDateRoads.map(_.roadwayNumber).distinct.toSet).groupBy(_.roadwayNumber)
-          val roadways = distinctDateRoads.groupBy(g => (g.roadNumber, g.roadPartNumber, g.startAddrMValue))
+          val roadways = distinctDateRoads.groupBy(g => (g.roadNumber, g.roadPartNumber))
           val errors = roadways.flatMap { group =>
             val (section, roadway) = group
 
