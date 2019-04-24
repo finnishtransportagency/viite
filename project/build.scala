@@ -98,7 +98,8 @@ object Digiroad2Build extends Build {
         "commons-io" % "commons-io" % "2.4",
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
-        "org.scalatra" %% "scalatra-swagger"  % "2.6.3"
+        "org.scalatra" %% "scalatra-swagger"  % "2.6.3",
+        "com.github.nscala-time" %% "nscala-time" % "2.22.0"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
