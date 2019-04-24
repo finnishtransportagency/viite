@@ -132,7 +132,7 @@ class RoadNetworkService {
              t._2.minBy(_.startDate)
             }.toSeq
           }.toSeq
-
+          logger.info(s" Found links ${distinctDateRoads.filter(_.roadNumber == 70900).map(l => (l.roadNumber, l.roadPartNumber))} ")
           val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(distinctDateRoads.map(_.roadwayNumber).distinct.toSet).groupBy(_.roadwayNumber)
           val roadways = distinctDateRoads.groupBy(g => (g.roadNumber, g.roadPartNumber))
           val errors = roadways.flatMap { group =>
