@@ -127,7 +127,7 @@ class RoadNetworkService {
       withDynTransaction {
         try {
           val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
-          val distinctDateRoads = roadsInChunk.groupBy(_.roadPartNumber).flatMap{ p =>
+          val distinctDateRoads = roadsInChunk.groupBy(r => (r.roadNumber, r.roadPartNumber)).flatMap{ p =>
             p._2.groupBy(o => (o.track, o.startAddrMValue)).map{ t =>
              t._2.minBy(_.startDate)
             }.toSeq
