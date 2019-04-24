@@ -31,16 +31,6 @@
       '</div>');
 
     var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
-
-    var floatingLegend = $('' +
-      '<div class="legend-entry">' +
-      '<div class="label">Irti geometriasta</div>' +
-      '</div>' +
-      '<div class="floating-flag-with-stick-image"></div>'+
-      '<div class="legend-entry">' +
-      '<div class="symbol linear linear-asset-12" /></div>' +
-      '</div>');
-
     var calibrationPointPicture = $('' +
       '<div class="legend-entry">' +
       '<div class="label">Etäisyyslukema</div>' +
@@ -150,7 +140,6 @@
 
     roadClassLegend.append(roadClassLegendEntries);
     roadClassLegend.append(constructionTypeLegendEntries);
-    roadClassLegend.append(floatingLegend);
     roadClassLegend.append(calibrationPointPicture);
 
     var Tool = function(toolName, icon) {
@@ -279,7 +268,6 @@
       container.empty();
       roadClassLegend.append(roadClassLegendEntries);
       roadClassLegend.append(constructionTypeLegendEntries);
-      roadClassLegend.append(floatingLegend);
       roadClassLegend.append(calibrationPointPicture);
     });
 
@@ -308,7 +296,6 @@
         container.empty();
         roadClassLegend.append(roadClassLegendEntries);
         roadClassLegend.append(constructionTypeLegendEntries);
-        roadClassLegend.append(floatingLegend);
         roadClassLegend.append(calibrationPointPicture);
       }
     }
