@@ -645,21 +645,6 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  private def withRoadNumbersInValidDate2(roadNumbers: Set[Long])(query: String): String = {
-    if (roadNumbers.size > 1000) {
-      MassQuery.withIds(roadNumbers) {
-        idTableName =>
-          s"""
-            $query
-            join $idTableName i on i.id = a.ROAD_NUMBER
-            where a.valid_to is null AND (a.end_date is null or a.end_date >= sysdate) and a.road_number = 70900 order by a.road_number, a.road_part_number, a.start_date
-          """.stripMargin
-      }
-    } else {
-      s"""$query where a.valid_to is null AND (a.end_date is null or a.end_date >= sysdate) AND a.road_number in (${roadNumbers.mkString(",")}) order by a.road_number, a.road_part_number, a.start_date"""
-    }
-  }
-
   /**
     * Defines the portion of the query that will filter the results based on the given road number, road part number and if it should include history roadways or fetch only their end parts.
     * Will return the completed SQL query.
