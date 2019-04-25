@@ -726,6 +726,11 @@ object AddressConsistencyValidator {
       def message: String = ErrorInconsistentAddressValues
     }
 
+    case object MissingStartingLink extends AddressError {
+      def value = 8
+      def message: String = ErrorMissingStartingLink
+    }
+
     def apply(intValue: Int): AddressError = {
       values.find(_.value == intValue).get
     }
