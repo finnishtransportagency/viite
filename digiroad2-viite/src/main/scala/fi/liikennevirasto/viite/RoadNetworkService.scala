@@ -55,23 +55,23 @@ class RoadNetworkService {
         else {
           val sortedLocations = allLocations.sortBy(_.orderNumber)
 
-          val startLocationError = if(sortedLocations.head.orderNumber != 1){
+          val startLocationError = if (sortedLocations.head.orderNumber != 1) {
             Seq(RoadNetworkError(0, roadways.find(_.roadwayNumber == sortedLocations.head.roadwayNumber).get.id, sortedLocations.head.id, AddressError.MissingStartingLink, System.currentTimeMillis(), options.currNetworkVersion))
           } else {
-            if(sortedLocations.head.calibrationPoints._1.isEmpty){
+            if (sortedLocations.head.calibrationPoints._1.isEmpty) {
               Seq(RoadNetworkError(0, roadways.find(_.roadwayNumber == sortedLocations.head.roadwayNumber).get.id, sortedLocations.head.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
             } else {
               Seq.empty[RoadNetworkError]
             }
           }
 
-          val endLocationError =  if (sortedLocations.last.calibrationPoints._2.isEmpty) {
-              Seq(RoadNetworkError(0, roadways.find(_.roadwayNumber == sortedLocations.last.roadwayNumber).get.id, sortedLocations.last.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
+          val endLocationError = if (sortedLocations.last.calibrationPoints._2.isEmpty) {
+            Seq(RoadNetworkError(0, roadways.find(_.roadwayNumber == sortedLocations.last.roadwayNumber).get.id, sortedLocations.last.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
           } else {
             Seq.empty[RoadNetworkError]
           }
 
-          startLocationError++endLocationError
+          startLocationError ++ endLocationError
         }
       errors
     }
