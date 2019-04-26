@@ -109,7 +109,7 @@ _Karttanäkymä._
 
 Karttaa liikutetaan raahaamalla pitämällä hiiren vasenta painiketta pohjassa ja liikuttamalla samalla hiirtä.
 
-#### Hakukenttä####
+#### Hakukenttä
 
 Käyttöliittymässä on hakukenttä (1), jossa voi hakea koordinaateilla ja katuosoitteella tai tieosoitteella. Haku suoritetaan kirjoittamalla hakuehto hakukenttään ja klikkaamalla Hae. Hakutulos tulee listaan hakukentän alle. Hakutuloslistassa ylimpänä on maantieteellisesti kartan nykyistä keskipistettä lähimpänä oleva kohde. Mikäli hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, täytyy listalta valita tulos, johon kartta keskittyy. Tyhjennä tulokset -painike tyhjentää hakutuloslistan.
 
