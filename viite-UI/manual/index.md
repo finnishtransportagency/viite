@@ -535,16 +535,16 @@ Viitteessä teillä, joiden tienumero on suurempi kuin 70 000, tienimi on pakoll
 
 Jos annettu tienimi täytyy vaihtaa tai sitä pitää muokata esim. kirjoitusvirheen vuoksi, käytetään Tiennimen ylläpito -työkalua, joka avataan Tieosoiteprojektit-painikkeen alta näytön oikeasta reunasta (kuva 6.1).
 
-Muokattavat tienimet haetaan tienumeron perusteella kirjoittamalla tien numero lomakkeen syöttökenttään (1) (Kuva 8.1). Tiennimen ylläpito -ikkuna suljetaan klikkaamalla oikeasta yläkulmasta löytyvästä rastista (2). Lomakkeen alareunassa on huomautus (3), että tallennetut muutokset päivittyvät tierekisteriin tunnin sisällä.
+Muokattavat tienimet haetaan tienumeron perusteella kirjoittamalla tien numero lomakkeen syöttökenttään (1) (kuva 8.1). Tiennimen ylläpito -ikkuna suljetaan klikkaamalla oikeasta yläkulmasta löytyvästä rastista (2). Lomakkeen alareunassa on huomautus (3), että tallennetut muutokset päivittyvät tierekisteriin tunnin sisällä.
 
 ![Tienimen ylläpito](k53.JPG) 
 
-_Kuva8.1: Tienimen ylläpito -työkalun lomakkeen etusivu._
+_Kuva 8.1: Tienimen ylläpito -työkalun lomakkeen etusivu._
 
 8.1 Tien nimen muokkaaminen, kun tiellä on jo nimi
 --------------------------
 
-Kun tienumero on kirjoitettu syöttökenttään, painetaan Hae-painiketta, ja hakutulokset listautuvat hakukentän alapuolelle otsikkorivien alle (1) (kuva 8.2). Listalla näkyvät tien aiemmat nimet alku- ja loppupäivämäärineen. Voimassa oleva nimi on listassa alimpana (2). Sitä voi muokata (syöttökenttä on valkoinen). Rivin lopussa on [+] –painike (3), jos haettu tie on voimassa oleva. Voimassa olevalla nimellä ei ole loppupäivämäärää (4). Hakukenttä ei tyhjene, mutta uuden haun voi tehdä kirjoittamalla uuden tienumeron hakukenttään.
+Kun tienumero on kirjoitettu syöttökenttään, painetaan Hae-painiketta, ja hakutulokset listautuvat hakukentän alapuolelle otsikkorivien alle (1). Listalla näkyvät tien aiemmat nimet alku- ja loppupäivämäärineen. Voimassa oleva nimi on listassa alimpana (2). Sitä voi muokata (syöttökenttä on valkoinen). Rivin lopussa on [+] –painike (3), jos haettu tie on voimassa oleva. Voimassa olevalla nimellä ei ole loppupäivämäärää (4). Hakukenttä ei tyhjene, mutta uuden haun voi tehdä kirjoittamalla uuden tienumeron hakukenttään.
 
 ![Listaus tienimistä ja uudelleenhaku](k54.JPG)
 
