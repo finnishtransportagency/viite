@@ -545,9 +545,9 @@ Kun tienumero on kirjoitettu syöttökenttään, painetaan Hae-painiketta, ja ha
 
 ![Listaus tienimistä ja uudelleenhaku](k54.JPG)
 
-_Kuva8.2: Listaus tienimistä ja uudelleenhaku._
+_Kuva 8.2: Listaus tienimistä ja uudelleenhaku._
 
-Jos tie on lakkautettu, tien nimi näkyy harmaana (kuva xx) eikä [+] -painiketta ole. 
+Jos tie on lakkautettu, tien nimi näkyy harmaana (kuva 8.3) eikä [+] -painiketta ole. 
 
 ![Tienimeä ei voi muuttaa](k55.JPG)
 
