@@ -196,17 +196,25 @@
 
     var fillDistanceValues = function (selectedLinks) {
       if (selectedLinks.length === 1 && selectedLinks[0].calibrationCode === CalibrationCode.AtBoth.value) {
-        $('#beginDistance').prop("disabled", false).val(selectedLinks[0].startAddressM);
-        $('#endDistance').prop("disabled", false).val(selectedLinks[0].endAddressM);
+        $('#beginDistance').val(selectedLinks[0].startAddressM);
+        if(isProjectEditable()){
+            $('#endDistance').prop("readonly", false).val(selectedLinks[0].endAddressM);
+        } else {
+            $('#endDistance').val(selectedLinks[0].endAddressM);
+        }
       } else {
         var orderedByStartM = _.sortBy(selectedLinks, function (l) {
           return l.startAddressM;
         });
         if (orderedByStartM[0].calibrationCode === CalibrationCode.AtBeginning.value) {
-          $('#beginDistance').prop("disabled", false).val(orderedByStartM[0].startAddressM);
+          $('#beginDistance').val(orderedByStartM[0].startAddressM);
         }
         if (orderedByStartM[orderedByStartM.length - 1].calibrationCode === CalibrationCode.AtEnd.value) {
-          $('#endDistance').prop("disabled", false).val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
+          if(isProjectEditable()){
+              $('#endDistance').prop("readonly", false).val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
+          } else {
+              $('#endDistance').val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
+          }
           endDistanceOriginalValue = orderedByStartM[orderedByStartM.length - 1].endAddressM;
         }
       }
