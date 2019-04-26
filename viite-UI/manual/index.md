@@ -541,6 +541,9 @@ Muokattavat tienimet haetaan tienumeron perusteella kirjoittamalla tien numero l
 
 _Kuva8.1: Tienimen ylläpito -työkalun lomakkeen etusivu._
 
+8.1 Tien nimen muokkaaminen, kun tiellä on jo nimi
+--------------------------
+
 Kun tienumero on kirjoitettu syöttökenttään, painetaan Hae-painiketta, ja hakutulokset listautuvat hakukentän alapuolelle otsikkorivien alle (1) (kuva 8.2). Listalla näkyvät tien aiemmat nimet alku- ja loppupäivämäärineen. Voimassa oleva nimi on listassa alimpana (2). Sitä voi muokata (syöttökenttä on valkoinen). Rivin lopussa on [+] –painike (3), jos haettu tie on voimassa oleva. Voimassa olevalla nimellä ei ole loppupäivämäärää (4). Hakukenttä ei tyhjene, mutta uuden haun voi tehdä kirjoittamalla uuden tienumeron hakukenttään.
 
 ![Listaus tienimistä ja uudelleenhaku](k54.JPG)
@@ -552,9 +555,6 @@ Jos tie on lakkautettu, tien nimi näkyy harmaana (kuva 8.3) eikä [+] -painiket
 ![Tienimeä ei voi muuttaa](k55.JPG)
 
 _Kuva 8.3: Lakkautettu tie. Tienimeä ei voi enää muuttaa._
-
-8.1 Tien nimen muokkaaminen, kun tiellä on jo nimi
---------------------------
 
 Voimassa olevaa nimeä voi muokata suoraan Tien nimi -kentässä (2) (Kuva 8.2). Tallenna-painike (5) aktivoituu, kun nimeä muokataan. Tallennuksen jälkeen tulee ilmoitus jo olemasta olevasta nimestä (kuva 8.4). Kun nimeä muokkaa, se ei saa uutta loppupäivämäärää eikä uutta riviä muodostu listalle.
 
