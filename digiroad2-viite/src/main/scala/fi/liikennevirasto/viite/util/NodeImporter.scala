@@ -34,7 +34,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
 
 
   def insertNode(nodeStatement: PreparedStatement, conversionNode: ConversionNode): Unit ={
-    nodeStatement.setLong(1, Sequences.nextNodeId)
+    nodeStatement.setLong(1, conversionNode.id)
     nodeStatement.setLong(2, conversionNode.nodeNumber)
     nodeStatement.setObject(3, OracleDatabase.createRoadsJGeometry(Seq(conversionNode.coordinates), dynamicSession.conn, endMValue = 0))
     nodeStatement.setString(4, conversionNode.name.getOrElse(""))
@@ -46,11 +46,11 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodeStatement.addBatch()
   }
 
-  def insertNodePoint(nodePointStatement: PreparedStatement, nodePoint: ConversionNodePoint, nodeNumber: Long, roadwayPointId: Long): Unit = {
+  def insertNodePoint(nodePointStatement: PreparedStatement, nodePoint: ConversionNodePoint, nodeId: Long, roadwayPointId: Long): Unit = {
     nodePointStatement.setLong(1, Sequences.nextNodePointId)
     nodePointStatement.setLong(2, nodePoint.beforeOrAfter)
     nodePointStatement.setLong(3, roadwayPointId)
-    nodePointStatement.setLong(4, nodeNumber)
+    nodePointStatement.setLong(4, nodeId)
     nodePointStatement.setString(5, datePrinter(nodePoint.startDate))
     nodePointStatement.setString(6, datePrinter(nodePoint.endDate))
     nodePointStatement.setString(7, datePrinter(nodePoint.validFrom))
@@ -71,17 +71,18 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodesWithPoints.foreach{
       conversionNode =>
         println(s"Inserting node with TR id = ${conversionNode._1.id} and node_number = ${conversionNode._1.nodeNumber}")
-        insertNode(nodePs, conversionNode._1)
+        val newNodeId = Sequences.nextNodeId
+        insertNode(nodePs, conversionNode._1.copy(id = newNodeId))
         conversionNode._2.foreach{
           conversionNodePoint =>{
             val existingRoadwayPoint = RoadwayPointDAO.fetch(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR)
             println(s"Inserting node point with TR id = ${conversionNodePoint.id} and node_id = ${conversionNodePoint.nodeId} for node_number = ${conversionNode._1.nodeNumber}")
             if(existingRoadwayPoint.isEmpty){
               val newRoadwayPoint = RoadwayPointDAO.create(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR, createdBy = "node_import")
-              insertNodePoint(nodePointPs, conversionNodePoint, conversionNode._1.nodeNumber, newRoadwayPoint)
+              insertNodePoint(nodePointPs, conversionNodePoint, newNodeId, newRoadwayPoint)
             }
             else
-              insertNodePoint(nodePointPs, conversionNodePoint, conversionNode._1.nodeNumber, existingRoadwayPoint.get.id)
+              insertNodePoint(nodePointPs, conversionNodePoint, newNodeId, existingRoadwayPoint.get.id)
           }
         }
     }
