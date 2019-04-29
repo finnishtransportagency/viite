@@ -39,7 +39,6 @@ class RoadNetworkDAO {
     networkErrorPS.setLong(3, linearLocationId)
     networkErrorPS.setLong(4, addressError.value)
     networkErrorPS.setDouble(5, timestamp)
-    logger.info(s"networkversion: "+ networkVersion)
     networkVersion match {
       case Some(v) => networkErrorPS.setLong(6, v)
       case _ => networkErrorPS.setNull(6, java.sql.Types.BIGINT)
