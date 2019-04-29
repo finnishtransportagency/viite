@@ -571,7 +571,7 @@ class RoadwayDAO extends BaseDAO {
       sql"""
 			select distinct (ra.id)
       from ROADWAY ra
-      where ra.valid_to is null and (ra.end_date is null or ra.end_date >= sysdate) order by road_number, road_part_number, start_date
+      where ra.valid_to is null and (ra.end_date is null or ra.end_date >= sysdate)
 		  """.as[Long].list.toSet
     }
   }
