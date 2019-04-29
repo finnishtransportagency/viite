@@ -46,11 +46,11 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodeStatement.addBatch()
   }
 
-  def insertNodePoint(nodePointStatement: PreparedStatement, nodePoint: ConversionNodePoint, node: Option[Node], roadwayPointId: Long): Unit = {
+  def insertNodePoint(nodePointStatement: PreparedStatement, nodePoint: ConversionNodePoint, nodeNumber: Long, roadwayPointId: Long): Unit = {
     nodePointStatement.setLong(1, Sequences.nextNodePointId)
     nodePointStatement.setLong(2, nodePoint.beforeOrAfter)
     nodePointStatement.setLong(3, roadwayPointId)
-    nodePointStatement.setLong(4, node.get.id)
+    nodePointStatement.setLong(4, nodeNumber)
     nodePointStatement.setString(5, datePrinter(nodePoint.startDate))
     nodePointStatement.setString(6, datePrinter(nodePoint.endDate))
     nodePointStatement.setString(7, datePrinter(nodePoint.validFrom))
@@ -64,27 +64,28 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     val conversionNodePoints = fetchNodePointsFromConversionTable()
     val nodePs = insertNodeStatement()
     val nodePointPs = insertNodePointStatement()
-    conversionNodes.foreach{
+    val nodesWithPoints = conversionNodes.map(
+      conversionNode => (conversionNode, conversionNodePoints.filter(_.nodeNumber == conversionNode.nodeNumber))
+    )
+
+    nodesWithPoints.foreach{
       conversionNode =>
-        println(s"Inserting node with TR id = ${conversionNode.id} and node_number = ${conversionNode.nodeNumber}")
-        insertNode(nodePs, conversionNode)
+        println(s"Inserting node with TR id = ${conversionNode._1.id} and node_number = ${conversionNode._1.nodeNumber}")
+        insertNode(nodePs, conversionNode._1)
+        conversionNode._2.foreach{
+          conversionNodePoint =>{
+            val existingRoadwayPoint = RoadwayPointDAO.fetch(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR)
+            println(s"Inserting node point with TR id = ${conversionNodePoint.id} and node_id = ${conversionNodePoint.nodeId} for node_number = ${conversionNode._1.nodeNumber}")
+            if(existingRoadwayPoint.isEmpty){
+              val newRoadwayPoint = RoadwayPointDAO.create(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR, createdBy = "node_import")
+              insertNodePoint(nodePointPs, conversionNodePoint, conversionNode._1.nodeNumber, newRoadwayPoint)
+            }
+            else
+              insertNodePoint(nodePointPs, conversionNodePoint, conversionNode._1.nodeNumber, existingRoadwayPoint.get.id)
+          }
+        }
     }
     nodePs.executeBatch()
-
-    conversionNodePoints.foreach{
-      conversionNodePoint => {
-        val existingRoadwayPoint = RoadwayPointDAO.fetch(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR)
-        val node = NodeDAO.fetchByNodeNumber(conversionNodePoint.nodeNumber)
-        println(s"Inserting node point with TR id = ${conversionNodePoint.id} and node_id = ${conversionNodePoint.nodeId} for node_number = ${node.get.nodeNumber}")
-        if(existingRoadwayPoint.isEmpty){
-          val newRoadwayPoint = RoadwayPointDAO.create(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR, createdBy = "node_import")
-          insertNodePoint(nodePointPs, conversionNodePoint, node, newRoadwayPoint)
-        }
-        else
-          insertNodePoint(nodePointPs, conversionNodePoint, node, existingRoadwayPoint.get.id)
-      }
-    }
-
     nodePointPs.executeBatch()
     nodePs.close()
     nodePointPs.close()

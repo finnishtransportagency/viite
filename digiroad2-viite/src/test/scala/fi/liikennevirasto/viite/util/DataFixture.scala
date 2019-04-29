@@ -93,7 +93,7 @@ object DataFixture {
   def importNodesAndJunctions(): Unit = {
     println("\nImporting nodes and junctions started at time: ")
     println(DateTime.now())
-    dataImporter.importNodes(Conversion.database())
+    dataImporter.importNodesAndJunctions(Conversion.database())
   }
 
   def updateLinearLocationGeometry(): Unit = {
