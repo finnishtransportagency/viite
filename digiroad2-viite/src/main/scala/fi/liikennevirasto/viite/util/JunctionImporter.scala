@@ -17,7 +17,7 @@ import slick.jdbc._
 class JunctionImporter(conversionDatabase: DatabaseDef) {
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
-  case class ConversionJunction(id: Long, junctionNumber: Long, rampNumber: Option[String], trafficLights: Option[Long], nodeId: Long, startDate: Option[DateTime],
+  case class ConversionJunction(id: Long, junctionNumber: Long, rampNumber: Option[String], trafficLights: Option[Long], nodeNumber: Long, startDate: Option[DateTime],
                                 endDate: Option[DateTime], lightsStartDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime],
                                 createdBy: String, createdTime: Option[DateTime])
 
@@ -33,12 +33,12 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
       " (?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?) ")
 
 
-  def insertJunction(junctionStatement: PreparedStatement, conversionJunction: ConversionJunction): Unit ={
+  def insertJunction(junctionStatement: PreparedStatement, conversionJunction: ConversionJunction, nodeId: Long): Unit ={
     junctionStatement.setLong(1, conversionJunction.id)
     junctionStatement.setLong(2, conversionJunction.junctionNumber)
     junctionStatement.setString(3, conversionJunction.rampNumber.getOrElse(""))
     junctionStatement.setLong(4, conversionJunction.trafficLights.getOrElse(0))
-    junctionStatement.setLong(5, conversionJunction.nodeId)
+    junctionStatement.setLong(5, nodeId)
     junctionStatement.setString(6, datePrinter(conversionJunction.startDate))
     junctionStatement.setString(7, datePrinter(conversionJunction.endDate))
     junctionStatement.setString(8, datePrinter(conversionJunction.lightsStartDate))
@@ -76,7 +76,8 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
     junctionsWithPoints.foreach{
       conversionJunction =>
         println(s"Inserting junction with TR id = ${conversionJunction._1.id} ")
-        insertJunction(junctionPs, conversionJunction._1)
+        val nodeId = NodeDAO.fetchId(conversionJunction._1.nodeNumber)
+        insertJunction(junctionPs, conversionJunction._1, nodeId.get)
 
         conversionJunction._2.foreach{
           conversionJunctionPoint =>
@@ -131,9 +132,9 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
       val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextString()
       val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val nodeViiteId = NodeDAO.fetchByNodeNumber(nodeNumber)
+      val nodeViiteId = NodeDAO.fetchId(nodeNumber)
 
-      ConversionJunction(id, junctionNumber, rampNumber, trafficLights, nodeViiteId.get.id, startDate, endDate, lightsStartDate, validFrom, None, createdBy, createdTime)
+      ConversionJunction(id, junctionNumber, rampNumber, trafficLights, nodeNumber, startDate, endDate, lightsStartDate, validFrom, None, createdBy, createdTime)
     }
   }
 
