@@ -93,17 +93,9 @@ class RoadNetworkService {
 
     def checkCombinedLinearLocations(allLocations: Seq[LinearLocation], roadways: Seq[Roadway]): Seq[RoadNetworkError] = {
       val errors: Seq[RoadNetworkError] =
-        if (allLocations.isEmpty) {
+        if (allLocations.isEmpty)
           Seq.empty[RoadNetworkError]
-        } else if (allLocations.size == 1) {
-          val optHeadRoadway = roadways.find(_.roadwayNumber == allLocations.head.roadwayNumber)
-          val locationsError: Seq[LinearLocation] = allLocations.filter(loc =>
-            allLocations.head.calibrationPoints._1.isEmpty || allLocations.head.calibrationPoints._2.isEmpty
-          )
-          locationsError.map { loc =>
-            RoadNetworkError(0, if(optHeadRoadway.nonEmpty) optHeadRoadway.get.id else 0L, loc.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
-          }
-        } else {
+          else {
           val sortedLocations = allLocations.sortBy(_.orderNumber)
 
           val optHeadRoadway = roadways.find(_.roadwayNumber == sortedLocations.head.roadwayNumber)
