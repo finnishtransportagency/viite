@@ -205,14 +205,23 @@
         projectCollection.setReservedParts(_.filter(projectCollection.getReservedParts(), function (part) {
           return part.roadNumber.toString() !== roadNumber || part.roadPartNumber.toString() !== roadPartNumber;
         }));
+        removeRenumberedPart(roadNumber, roadPartNumber);
         fillForm(projectCollection.getReservedParts(), projectCollection.getFormedParts());
+      };
+
+      var removeRenumberedPart = function (roadNumber, roadPartNumber) {
+        projectCollection.setFormedParts(_.filter(projectCollection.getFormedParts(), function (part) {
+          return _.filter(part.roadAddresses, function (ra) {
+            return ra.roadAddressNumber === roadNumber && p.roadAddressPartNumber === roadPartNumber;
+          }).length > 0;
+        }));
       };
 
       var removeFormedPart = function (roadNumber, roadPartNumber) {
         currentProject.isDirty = true;
-        _.each(projectCollection.getRoadPartsFromFormedRoadParts(roadNumber, roadPartNumber), function (part) {
-          _.each(part, function (part) {
-            removeFormedPart(part.roadAddressNumber.toString(), part.roadAddressPartNumber.toString());
+        _.each(projectCollection.getRoadAddressesFromFormedRoadPart(roadNumber, roadPartNumber), function (roadAddresses) {
+          _.each(roadAddresses, function (ra) {
+            removeFormedPart(ra.roadAddressNumber, ra.roadAddressPartNumber);
           });
         });
         projectCollection.setFormedParts(_.filter(projectCollection.getFormedParts(), function (part) {

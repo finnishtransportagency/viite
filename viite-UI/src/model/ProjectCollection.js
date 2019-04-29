@@ -697,7 +697,7 @@
       return formedParts;
     };
 
-    this.getRoadPartsFromFormedRoadParts = function (roadNumber, roadPartNumber) {
+    this.getRoadAddressesFromFormedRoadPart = function (roadNumber, roadPartNumber) {
       return _.filter(formedParts, function (part) {
         return part.roadNumber.toString() === roadNumber && part.roadPartNumber.toString() === roadPartNumber;
       }).map(function (part) { return part.parts; });
