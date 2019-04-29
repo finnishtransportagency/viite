@@ -99,7 +99,7 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
 
   protected def fetchJunctionsFromConversionTable(): Seq[ConversionJunction] = {
     conversionDatabase.withDynSession {
-      sql"""SELECT L.ID, LIITTYMANRO, ERITASO, VALO_OHJAUS, ID_SOLMU, solmunro, TO_CHAR(L.VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(L.VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
+      sql"""SELECT L.ID, LIITTYMANRO, ERITASO, VALO_OHJAUS, solmunro, TO_CHAR(L.VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(L.VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
            TO_CHAR(L.VALOALKUPVM, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(L.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), L.KAYTTAJA, TO_CHAR(L.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
            FROM LIITTYMA L JOIN SOLMU S ON (ID_SOLMU = S.id)  """
         .as[ConversionJunction].list
