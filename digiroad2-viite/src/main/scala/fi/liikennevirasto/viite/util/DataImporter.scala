@@ -165,7 +165,7 @@ class DataImporter {
     }
   }
 
-  def importNodes(conversionDatabase: DatabaseDef) = {
+  def importNodesAndJunctions(conversionDatabase: DatabaseDef) = {
     withDynTransaction{
       sqlu"""DELETE FROM JUNCTION_POINT""".execute
       sqlu"""DELETE FROM NODE_POINT""".execute
@@ -175,6 +175,8 @@ class DataImporter {
       println(s"${DateTime.now()} - Old nodes and junctions data removed")
       val nodeImporter = getNodeImporter(conversionDatabase)
       nodeImporter.importNodes()
+      val junctionImporter = getJunctionImporter(conversionDatabase)
+      junctionImporter.importJunctions()
     }
   }
 
@@ -201,6 +203,10 @@ class DataImporter {
 
   protected def getNodeImporter(conversionDatabase: DatabaseDef) : NodeImporter = {
     new NodeImporter(conversionDatabase)
+  }
+
+  protected def getJunctionImporter(conversionDatabase: DatabaseDef) : JunctionImporter = {
+    new JunctionImporter(conversionDatabase)
   }
 
   // TODO This is not used and should probably be removed.
