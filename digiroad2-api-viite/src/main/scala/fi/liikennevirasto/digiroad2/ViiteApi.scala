@@ -1239,7 +1239,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     "newLength" -> formedRoadPart.newLength,
     "newDiscontinuity" -> formedRoadPart.newDiscontinuity.map(_.description),
     "startingLinkId" -> formedRoadPart.startingLinkId,
-    "parts" -> {
+    "roadAddresses" -> {
       projectId match {
         case None => Seq.empty
         case _ => projectService.getRoadAddressesFromFormedRoadPart(formedRoadPart.roadNumber, formedRoadPart.roadPartNumber, projectId.get)
