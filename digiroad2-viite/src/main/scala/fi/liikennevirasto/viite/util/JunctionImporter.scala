@@ -109,11 +109,10 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
 
   protected def fetchJunctionPointsFromConversionTable(): Seq[ConversionJunctionPoint] = {
     conversionDatabase.withDynSession {
-      sql"""SELECT NP.ID, NP.EJ, NP.ID_SOLMU, SOLMU.SOLMUNRO, AP.ID_AJORATA, AP.ETAISYYS, TO_CHAR(NP.VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(NP.VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
-            TO_CHAR(np.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), NP.KAYTTAJA, TO_CHAR(NP.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
-            FROM SOLMUKOHTA NP
-            JOIN AJORADAN_PISTE AP ON (ID_TIEOSOITE = AP.ID)
-            JOIN SOLMU ON (ID_SOLMU = SOLMU.ID) """
+      sql"""SELECT JP.ID, JP.EJ, AP.ID_AJORATA, AP.ETAISYYS, JP.ID_LIITTYMA, TO_CHAR(JP.VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'),
+           TO_CHAR(JP.VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(JP.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), JP.KAYTTAJA, TO_CHAR(JP.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
+           FROM LIITTYMAKOHTA JP
+           JOIN AJORADAN_PISTE AP ON (ID_AJORADAN_PISTE = AP.ID) """
         .as[ConversionJunctionPoint].list
     }
   }
