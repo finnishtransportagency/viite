@@ -313,7 +313,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val firstAddress: Map[String, Any] =
           fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
         Map("project" -> roadAddressProjectToApi(fetched, projectService.getProjectEly(fetched.id)), "publishedNetworkDate" -> formatDateTimeToString(latestPublishedNetwork),
-          "reservedInfo" -> fetched.reservedParts.map(projectPartToApi), "formedInfo" -> fetched.formedParts.map(projectPartToApi),
+          "reservedInfo" -> fetched.reservedParts.map(projectReservedPartToApi), "formedInfo" -> fetched.formedParts.map(projectFormedPartToApi(Some(fetched.id))),
           "success" -> true) ++ firstAddress
       } catch {
         case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
@@ -347,7 +347,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val projectSaved = projectService.saveProject(roadAddressProject)
         val firstLink = projectService.getFirstProjectLink(projectSaved)
         Map("project" -> roadAddressProjectToApi(projectSaved, projectService.getProjectEly(projectSaved.id)), "projectAddresses" -> firstLink,
-          "reservedInfo" -> projectSaved.reservedParts.map(projectPartToApi), "formedInfo" -> projectSaved.formedParts.map(projectPartToApi),
+          "reservedInfo" -> projectSaved.reservedParts.map(projectReservedPartToApi), "formedInfo" -> projectSaved.formedParts.map(projectFormedPartToApi(Some(projectSaved.id))),
           "success" -> true, "projectErrors" -> projectService.validateProjectById(project.id).map(errorPartsToApi))
       } catch {
         case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
@@ -483,8 +483,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         projectService.getSingleProjectById(projectId) match {
           case Some(project) =>
             val projectMap = roadAddressProjectToApi(project, projectService.getProjectEly(project.id))
-            val reservedparts = project.reservedParts.map(projectPartToApi)
-            val formedparts = project.formedParts.map(projectPartToApi)
+            val reservedparts = project.reservedParts.map(projectReservedPartToApi)
+            val formedparts = project.formedParts.map(projectFormedPartToApi(Some(project.id)))
             val errorParts = projectService.validateProjectById(project.id)
             val publishable = errorParts.isEmpty
             val latestPublishedNetwork = roadNetworkService.getLatestPublishedNetworkDate
@@ -524,8 +524,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/ (roadNumber: $roadNumber, startPart: $startPart, endPart: $endPart, projDate: $projDate)") {
         projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate) match {
           case Left(err) => Map("success" -> err)
-          case Right((reservedparts, formedparts)) => Map("success" -> "ok", "reservedInfo" -> reservedparts.map(projectPartToApi),
-            "formedInfo" -> formedparts.map(projectPartToApi))
+          case Right((reservedparts, formedparts)) => Map("success" -> "ok", "reservedInfo" -> reservedparts.map(projectReservedPartToApi),
+            "formedInfo" -> formedparts.map(projectFormedPartToApi()))
         }
       }
     } catch {
@@ -1214,7 +1214,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
   }
 
-  def projectPartToApi(reservedRoadPart: ProjectReservedPart): Map[String, Any] = {
+  def projectReservedPartToApi(reservedRoadPart: ProjectReservedPart): Map[String, Any] = {
     Map("roadNumber" -> reservedRoadPart.roadNumber,
       "roadPartNumber" -> reservedRoadPart.roadPartNumber,
       "id" -> reservedRoadPart.id,
@@ -1227,6 +1227,26 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "startingLinkId" -> reservedRoadPart.startingLinkId
     )
   }
+
+  def projectFormedPartToApi(projectId: Option[Long] = None)(formedRoadPart: ProjectReservedPart): Map[String, Any] = {
+    Map("roadNumber" -> formedRoadPart.roadNumber,
+    "roadPartNumber" -> formedRoadPart.roadPartNumber,
+    "id" -> formedRoadPart.id,
+    "currentEly" -> formedRoadPart.ely,
+    "currentLength" -> formedRoadPart.addressLength,
+    "currentDiscontinuity" -> formedRoadPart.discontinuity.map(_.description),
+    "newEly" -> formedRoadPart.newEly,
+    "newLength" -> formedRoadPart.newLength,
+    "newDiscontinuity" -> formedRoadPart.newDiscontinuity.map(_.description),
+    "startingLinkId" -> formedRoadPart.startingLinkId,
+    "parts" -> {
+      projectId match {
+        case None => Seq.empty
+        case _ => projectService.getRoadAddressesFromFormedRoadPart(formedRoadPart.roadNumber, formedRoadPart.roadPartNumber, projectId.get)
+      }
+    }
+  )
+}
 
   def errorPartsToApi(errorParts: projectService.projectValidator.ValidationErrorDetails): Map[String, Any] = {
     Map("ids" -> errorParts.affectedIds,

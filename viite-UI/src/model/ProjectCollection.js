@@ -647,13 +647,13 @@
       return listContent;
     };
 
-    this.getDeleteButton = function (index, roadNumber, roadPartNumber) {
-      return deleteButton(index, roadNumber, roadPartNumber);
+    this.getDeleteButton = function (index, roadNumber, roadPartNumber, selector) {
+      return deleteButton(index, roadNumber, roadPartNumber, selector);
     };
 
-    var deleteButton = function (index, roadNumber, roadPartNumber) {
+    var deleteButton = function (index, roadNumber, roadPartNumber, selector) {
       var disabledInput = !_.isUndefined(currentProject) && (currentProject.project.statusCode === ProjectStatus.ErrorInTR.value || currentProject.project.statusCode === ProjectStatus.SendingToTR.value);
-      return '<i roadNumber="' + roadNumber + '" roadPartNumber="' + roadPartNumber + '" id="' + index + '" class="delete btn-delete fas fa-trash-alt fa-lg" ' + (disabledInput ? 'disabled' : '') + '></i>';
+      return '<i roadNumber="' + roadNumber + '" roadPartNumber="' + roadPartNumber + '" id="' + index + '" class="delete btn-delete ' + selector + ' fas fa-trash-alt fa-lg" ' + (disabledInput ? 'disabled' : '') + '></i>';
     };
 
 
@@ -697,16 +697,18 @@
       return formedParts;
     };
 
+    this.getRoadPartsFromFormedRoadParts = function (roadNumber, roadPartNumber) {
+      return _.filter(formedParts, function (part) {
+        return part.roadNumber.toString() === roadNumber && part.roadPartNumber.toString() === roadPartNumber;
+      }).map(function (part) { return part.parts; });
+    };
+
     this.setReservedParts = function (list) {
         reservedParts = list;
     };
 
-      this.setFormedParts = function (list) {
-          formedParts = list;
-      };
-
-    this.getAllReservedParts = function () {
-      return self.getReservedParts().concat(self.getFormedParts());
+    this.setFormedParts = function (list) {
+      formedParts = list;
     };
 
     this.setProjectErrors = function (errors) {
