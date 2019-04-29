@@ -196,7 +196,9 @@ class RoadNetworkService {
           val (combinedRoadways, twoTrackRoadways) = roadway.partition(_.track == Combined)
           val (leftRoadways, rightRoadways) = twoTrackRoadways.partition(_.track == LeftSide)
 
-          logger.info(s"linearLocationsInChunk size: " + linearLocationsInChunk.size)
+          if(linearLocationsInChunk.isEmpty)
+          logger.info(s"linearLocationsInChunk size is empty")
+
           val leftTrackLinearLocations = leftRoadways.flatMap(r => linearLocationsInChunk.get(r.roadwayNumber)).flatten
           val rightTrackLinearLocations = rightRoadways.flatMap(r => linearLocationsInChunk.get(r.roadwayNumber)).flatten
           val combinedLinearLocations = combinedRoadways.flatMap(r => linearLocationsInChunk.get(r.roadwayNumber)).flatten
