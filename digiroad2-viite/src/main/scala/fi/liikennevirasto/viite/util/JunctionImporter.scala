@@ -131,9 +131,9 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
       val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextString()
       val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val nodeViiteId = NodeDAO.fetchId(nodeNumber)
+      val nodeViiteId = NodeDAO.fetchByNodeNumber(nodeNumber)
 
-      ConversionJunction(id, junctionNumber, rampNumber, trafficLights, nodeViiteId.get, startDate, endDate, lightsStartDate, validFrom, None, createdBy, createdTime)
+      ConversionJunction(id, junctionNumber, rampNumber, trafficLights, nodeViiteId.get.id, startDate, endDate, lightsStartDate, validFrom, None, createdBy, createdTime)
     }
   }
 

@@ -38,11 +38,4 @@ object NodeDAO {
       where NODE_NUMBER = $nodeNumber
       """.as[Node].firstOption
   }
-
-  def fetchId(nodeNumber: Long): Option[Long] = {
-    sql"""
-      SELECT ID from NODE
-      where NODE_NUMBER = $nodeNumber
-      """.as[Long].firstOption
-  }
 }
