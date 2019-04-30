@@ -69,7 +69,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   private def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
                           roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L, linearLocationId: Long = 0L) = {
     val startDate = if (status !== LinkStatus.New) Some(DateTime.now()) else None
-    ProjectLink(NewRoadway, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startAddrM, endAddrM, startDate, None,
+    ProjectLink(NewIdValue, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startAddrM, endAddrM, startDate, None,
       Some("User"), startAddrM, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
        Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
       LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
@@ -466,7 +466,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       projectReservedPartDAO.reserveRoadPart(project.id, 1999L, 2L, "u")
-      projectLinkDAO.create(projectLinks.map(l => l.copy(id = NewRoadway, roadPartNumber = 2L, createdBy = Some("User"),
+      projectLinkDAO.create(projectLinks.map(l => l.copy(id = NewIdValue, roadPartNumber = 2L, createdBy = Some("User"),
         geometry = l.geometry.map(_ + Vector3d(0.0, 40.0, 0.0)))))
       val updProject = projectDAO.fetchById(project.id).get
 
@@ -1388,7 +1388,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(project.id, 39999L, 20L, "u")
 
       projectLinkDAO.create((starting ++ last.map(_.copy(discontinuity = Discontinuity.EndOfRoad)))
-        .map(_.copy(id = NewRoadway, roadPartNumber = 20L, createdBy = Some("I"))))
+        .map(_.copy(id = NewIdValue, roadPartNumber = 20L, createdBy = Some("I"))))
 
       val updProject = projectDAO.fetchById(project.id).get
 
@@ -1942,7 +1942,7 @@ Left|      |Right
       projectReservedPartDAO.reserveRoadPart(project.id, 39999L, 20L, "u")
 
       projectLinkDAO.create((starting ++ last.map(_.copy(discontinuity = Discontinuity.EndOfRoad)))
-        .map(_.copy(id = NewRoadway, roadPartNumber = 20L, createdBy = Some("I"))))
+        .map(_.copy(id = NewIdValue, roadPartNumber = 20L, createdBy = Some("I"))))
       val updProject = projectDAO.fetchById(project.id).get
       mockEmptyRoadAddressServiceCalls()
       projectValidator.checkRoadContinuityCodes(updProject,

@@ -566,7 +566,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           }
       }
 
-      linearLocationDAO.create(changeSet.newLinearLocations.map(l => l.copy(id = NewLinearLocation)))
+      linearLocationDAO.create(changeSet.newLinearLocations.map(l => l.copy(id = NewIdValue)))
       handleCalibrationPoints(changeSet.newLinearLocations, createdBy = "applyChanges")
       //TODO Implement the missing at user story VIITE-1596
     }
