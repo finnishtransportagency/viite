@@ -212,7 +212,7 @@
       var removeRenumberedPart = function (roadNumber, roadPartNumber) {
         projectCollection.setFormedParts(_.filter(projectCollection.getFormedParts(), function (part) {
           return _.filter(part.roadAddresses, function (ra) {
-            return ra.roadAddressNumber === roadNumber && p.roadAddressPartNumber === roadPartNumber;
+            return ra.roadAddressNumber !== roadNumber || ra.roadAddressPartNumber !== roadPartNumber;
           }).length > 0;
         }));
       };
