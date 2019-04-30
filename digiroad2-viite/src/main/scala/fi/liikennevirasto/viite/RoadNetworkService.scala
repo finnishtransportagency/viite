@@ -131,30 +131,6 @@ class RoadNetworkService {
             }
 
           startLocationErrors ++ middleCalibrationPointsErrors ++ endLocationErrors
-          //          val firstOpt = allLocations.find(loc => loc.orderNumber == 1 && loc.calibrationPoints._1.nonEmpty && loc.calibrationPoints._1.get == 0)
-          //          val lastOpt = Some(allLocations.maxBy(_.calibrationPoints._2))
-          //          if (firstOpt.isEmpty || lastOpt.get.endCalibrationPoint.isEmpty || !lastOpt.get.endCalibrationPoint.contains(Some(roadways.maxBy(_.endAddrMValue)).get.endAddrMValue)) {
-          //            allLocations.map(loc =>
-          //              RoadNetworkError(0, roadways.find(_.roadwayNumber == loc.roadwayNumber).get.id, loc.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
-          //            )
-          //          } else {
-          //            val first = firstOpt.get
-          //            val last = lastOpt.get
-          //            val edgeCalibrationPointsError: Seq[LinearLocation] = Seq(first, last).filter(edge =>
-          //              edge.id == first.id && edge.calibrationPoints._1.isEmpty || edge.id == last.id && edge.calibrationPoints._2.isEmpty
-          //            )
-          //
-          //            val middleCalibrationPointsError: Seq[LinearLocation] =
-          //              allLocations.filter(loc =>
-          //                !allLocations.exists(l => (loc.calibrationPoints._2 == l.calibrationPoints._1) && l.id != loc.id) && loc.id != last.id
-          //                  ||
-          //                  !allLocations.exists(l => (loc.calibrationPoints._1 == l.calibrationPoints._2) && l.id != loc.id) && loc.id != first.id
-          //              )
-          //
-          //            (middleCalibrationPointsError ++ edgeCalibrationPointsError).map { loc =>
-          //              RoadNetworkError(0, roadways.find(_.roadwayNumber == loc.roadwayNumber).get.id, loc.id, AddressError.InconsistentContinuityCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
-          //            }
-          //          }
         }
       errors
     }
