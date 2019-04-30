@@ -129,6 +129,7 @@ package object viite {
   val ErrorInconsistentContinuityCalibrationPoints = "Missing relative connecting starting/ending point."
   val ErrorMissingEdgeCalibrationPoints = "Missing edge calibration points."
   val ErrorInconsistentAddressValues = "Error in continuity by address m values between connected links."
+  val ErrorMissingStartingLink = "Missing start link in roadway."
   val InconsistentAddressValues = "Wrong address values between links."
 
   val RampsMinBound = 20001
