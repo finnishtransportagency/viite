@@ -2121,14 +2121,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def getRoadAddressesFromFormedRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long): Set[Map[String, String]] = {
+  def getRoadAddressesFromFormedRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long) = {
     withDynSession {
-      val roadAddresses: Seq[Map[String, String]] = projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
+      val roadAddresses = projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
         .filter(part => part.roadAddressRoadNumber.isDefined && part.roadAddressRoadPart.isDefined
           && (part.roadAddressRoadNumber.get != roadNumber || part.roadAddressRoadPart.get != roadPartNumber))
-        .map(roadAddress => (roadAddress.roadAddressRoadNumber.get, roadAddress.roadAddressRoadPart.get))
+        .map(roadAddress => (roadAddress.roadAddressRoadNumber.get, roadAddress.roadAddressRoadPart.get, roadAddress.status == LinkStatus.Numbering))
         .map {
-          i => Map("roadAddressNumber" -> i._1.toString, "roadAddressPartNumber" -> i._2.toString)
+          ra => Map("roadAddressNumber" -> ra._1.toString, "roadAddressPartNumber" -> ra._2.toString, "isNumbering" -> ra._3)
         }
       roadAddresses.toSet
     }
