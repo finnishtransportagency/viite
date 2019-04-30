@@ -185,19 +185,21 @@ class RoadNetworkService {
 
     withDynTransaction {
       try {
+        logger.info(s"before roadwayDAO.fetchAllByRoadNumbers")
         val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
         val distinctDateRoads = roadsInChunk.groupBy(r => (r.roadNumber, r.roadPartNumber)).flatMap { p =>
           p._2.groupBy(o => (o.track, o.startAddrMValue)).map { t =>
             t._2.minBy(_.startDate)
           }.toSeq
         }.toSeq
-
+        logger.info(s"before linearLocationDAO.fetchByRoadways")
         val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(distinctDateRoads.map(_.roadwayNumber).distinct.toSet).groupBy(_.roadwayNumber)
         val roadways = distinctDateRoads.groupBy(g => (g.roadNumber, g.roadPartNumber))
         val errors = roadways.flatMap { group =>
           val (section, roadway) = group
 
           val (combinedLeft, combinedRight) = (roadway.filter(t => t.track != Track.RightSide).sortBy(_.startAddrMValue), roadway.filter(t => t.track != Track.LeftSide).sortBy(_.startAddrMValue))
+          logger.info(s"before checkRoadways")
           val roadwaysErrors = checkRoadways(combinedLeft, combinedRight)
           logger.info(s" Found ${roadwaysErrors.size} roadway errors for RoadNumber ${section._1} and Part ${section._2}")
 
