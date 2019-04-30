@@ -604,7 +604,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val (roadLinks, vvhHistoryLinks) = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(previousSplit.map(_.linkId).toSet)
     val (suravage, original) = previousSplit.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
-    revertLinks(projectId, previousSplit.head.roadNumber, previousSplit.head.roadPartNumber,
+    revertSortedLinks(projectId, previousSplit.head.roadNumber, previousSplit.head.roadPartNumber,
       suravage.map(link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)),
       original.map(link => LinkToRevert(link.id, link.linkId, link.status.value, getGeometryWithTimestamp(link.linkId,
         link.linkGeometryTimeStamp, roadLinks, vvhHistoryLinks))),
@@ -1196,11 +1196,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param userName: String - User name
     * @return
     */
-  def revertLinks(links: Iterable[ProjectLink], userName: String): Option[String] = {
+  def revertFetchedLinks(links: Iterable[ProjectLink], userName: String): Option[String] = {
     if (links.groupBy(l => (l.projectId, l.roadNumber, l.roadPartNumber)).keySet.size != 1)
       throw new IllegalArgumentException("Reverting links from multiple road parts at once is not allowed")
     val l = links.head
-    revertLinks(l.projectId, l.roadNumber, l.roadPartNumber, links.map(
+    revertLinksByRoadParts(l.projectId, l.roadNumber, l.roadPartNumber, links.map(
       link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)), userName)
   }
 
@@ -1237,7 +1237,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param userName: String - User name
     * @param recalculate: Boolean - Will tell if we recalculate the whole project links or not
     */
-  private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
+  private def revertSortedLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
                           modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     val modifiedLinkIds = modified.map(_.linkId).toSet
     projectLinkDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
@@ -1295,17 +1295,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param userName: String - User name
     * @return
     */
-  def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert], userName: String): Option[String] = {
+  def revertLinksByRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert], userName: String): Option[String] = {
     val (added, modified) = links.partition(_.status == LinkStatus.New.value)
     if (modified.exists(_.status == LinkStatus.Numbering.value)) {
       logger.info(s"Reverting whole road part in $projectId ($roadNumber/$roadPartNumber)")
       // Numbering change affects the whole road part
-      revertLinks(projectId, roadNumber, roadPartNumber, added,
+      revertSortedLinks(projectId, roadNumber, roadPartNumber, added,
         projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId).map(
           link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)),
         userName)
     } else {
-      revertLinks(projectId, roadNumber, roadPartNumber, added, modified, userName)
+      revertSortedLinks(projectId, roadNumber, roadPartNumber, added, modified, userName)
     }
     None
   }
@@ -1328,7 +1328,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val (added, modified) = links.partition(_.status == LinkStatus.New.value)
         projectWritableCheckInSession(projectId) match {
           case None =>
-            revertLinks(projectId, roadNumber, roadPartNumber, added, modified, userName)
+            if (modified.exists(_.status == LinkStatus.Numbering.value)) {
+              logger.info(s"Reverting whole road part in $projectId ($roadNumber/$roadPartNumber)")
+              // Numbering change affects the whole road part
+              revertSortedLinks(projectId, roadNumber, roadPartNumber, added,
+                projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId).map(
+                  link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)),
+                userName)
+            } else {
+              revertSortedLinks(projectId, roadNumber, roadPartNumber, added, modified, userName)
+            }
             saveProjectCoordinates(projectId, coordinates)
             None
           case Some(error) => Some(error)
@@ -1346,7 +1355,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       projectReservedPartDAO.removeReservedRoadPartAndChanges(projectId, roadNumber, roadPartNumber)
     } else {
       val links = projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
-      revertLinks(links, userName)
+      revertFetchedLinks(links, userName)
     }
   }
 
