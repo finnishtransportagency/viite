@@ -19,7 +19,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
   val linearLocationDAO = new LinearLocationDAO
   val roadwayDAO = new RoadwayDAO
 
-  val testLinearLocation = LinearLocation(NewLinearLocation, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
+  val testLinearLocation = LinearLocation(NewIdValue, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
     (Some(0l), None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
 
   def runWithRollback(f: => Unit): Unit = {
@@ -31,7 +31,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test create When creating linear location with new roadway id and no calibration points Then return new linear location") {
     runWithRollback {
-      linearLocationDAO.create(Seq(testLinearLocation.copy(roadwayNumber = NewRoadwayNumber, calibrationPoints = (None, None))))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(roadwayNumber = NewIdValue, calibrationPoints = (None, None))))
     }
   }
 
@@ -638,11 +638,11 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber1, linkId = linkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber2, linkId = linkId3)))
 
-      roadwayDAO.create(Seq(Roadway(NewRoadway, roadwayNumber1, 100, 1, RoadType.PublicRoad, Combined,
+      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, 100, 1, RoadType.PublicRoad, Combined,
         Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test",
         Some("ROAD 1"), 1, TerminationCode.NoTermination)))
 
-      roadwayDAO.create(Seq(Roadway(NewRoadway, roadwayNumber2, 101, 1, RoadType.PublicRoad, Combined,
+      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber2, 101, 1, RoadType.PublicRoad, Combined,
         Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test",
         Some("ROAD 2"), 1, TerminationCode.NoTermination)))
 

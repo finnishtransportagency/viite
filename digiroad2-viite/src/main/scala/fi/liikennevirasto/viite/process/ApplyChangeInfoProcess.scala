@@ -117,7 +117,7 @@ object ApplyChangeInfoProcess {
         //VVH change api doesn't seems to support multiple changes for the same day in the same link id
         val linearLocations = applicableProjections.groupBy(_.vvhTimeStamp).toSeq.sortBy(_._1).foldLeft(Seq(linearLocation)) {
           case (adjustedLinearLocations, (_, groupedProjections)) =>
-            val (news, existing) = adjustedLinearLocations.partition(_.id == NewLinearLocation)
+            val (news, existing) = adjustedLinearLocations.partition(_.id == NewIdValue)
             groupedProjections.flatMap {
               projection =>
                 existing.filter(projection.intercepts).map(l => projectLinearLocation(l, projection, mappedRoadLinks))
@@ -159,7 +159,7 @@ object ApplyChangeInfoProcess {
     val newId = if (projection.oldLinkId == projection.newLinkId) {
       linearLocation.id
     } else {
-      NewLinearLocation
+      NewIdValue
     }
 
     val geometry = mappedRoadLinks.get(projection.newLinkId).map(

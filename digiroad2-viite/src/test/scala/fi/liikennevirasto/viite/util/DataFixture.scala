@@ -88,7 +88,12 @@ object DataFixture {
       }
       println(s"Road address import complete at time: ${DateTime.now()}")
     }
+  }
 
+  def importNodesAndJunctions(): Unit = {
+    println("\nImporting nodes and junctions started at time: ")
+    println(DateTime.now())
+    dataImporter.importNodesAndJunctions(Conversion.database())
   }
 
   def updateLinearLocationGeometry(): Unit = {
@@ -328,12 +333,13 @@ object DataFixture {
         flywayInit()
       case Some("test_integration_api_all_municipalities") =>
         testIntegrationAPIWithAllMunicipalities()
-
+      case Some("import_nodes_and_junctions") =>
+        importNodesAndJunctions()
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | update_missing " +
         "| import_complementary_road_address " +
         "| update_road_addresses_geometry | import_road_address_change_test_data " +
         "| apply_change_information_to_road_address_links | import_road_names | check_road_network" +
-        "| test | flyway_init")
+        "| test | flyway_init | import_nodes_and_junctions")
     }
   }
 

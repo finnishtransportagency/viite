@@ -358,7 +358,7 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
   }
 
   def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    val calibrationPointSource = if (id == noRoadwayId || id == NewRoadway) ProjectLinkSource else RoadAddressSource
+    val calibrationPointSource = if (id == noRoadwayId || id == NewIdValue) ProjectLinkSource else RoadAddressSource
     calibrationPoints match {
       case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
       case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)))
@@ -912,13 +912,13 @@ class RoadwayDAO extends BaseDAO {
         road_type, ely, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, ?,
         TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, ?)
       """)
-    val (ready, idLess) = roadways.partition(_.id != NewRoadway)
+    val (ready, idLess) = roadways.partition(_.id != NewIdValue)
     val plIds = Sequences.fetchRoadwayIds(idLess.size)
     val createRoadways = ready ++ idLess.zip(plIds).map(x =>
       x._1.copy(id = x._2)
     )
     createRoadways.foreach { case address =>
-      val roadwayNumber = if (address.roadwayNumber == NewRoadwayNumber) {
+      val roadwayNumber = if (address.roadwayNumber == NewIdValue) {
         Sequences.nextRoadwayNumber
       } else {
         address.roadwayNumber

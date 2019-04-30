@@ -38,19 +38,7 @@ package object viite {
 
   val noReservedPartId: Long = 0L
 
-  val NewRoadway,
-
-  NewLinearLocation,
-
-  NewRoadwayNumber,
-
-  NewCalibrationPointId,
-
-  NewRoadNameId,
-
-  NewProjectLink,
-
-  NewRoadwayPointId: Long = -1000L
+  val NewIdValue: Long = -1000L
 
   val MaxDistanceForConnectedLinks = 0.1
   /* Used for small jumps on discontinuity or self-crossing tracks */
