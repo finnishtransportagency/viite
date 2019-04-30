@@ -699,7 +699,8 @@ object AddressConsistencyValidator {
   }
 
   object AddressError {
-    val values = Set(OverlappingRoadAddresses, InconsistentTopology, InconsistentLrmHistory)
+    val values = Set(OverlappingRoadAddresses, InconsistentTopology, InconsistentLrmHistory, Inconsistent2TrackCalibrationPoints, InconsistentContinuityCalibrationPoints, MissingEdgeCalibrationPoints,
+      InconsistentAddressValues, MissingStartingLink)
 
     case object OverlappingRoadAddresses extends AddressError {
       def value = 1
@@ -734,6 +735,11 @@ object AddressConsistencyValidator {
     case object InconsistentAddressValues extends AddressError {
       def value = 7
       def message: String = ErrorInconsistentAddressValues
+    }
+
+    case object MissingStartingLink extends AddressError {
+      def value = 8
+      def message: String = ErrorMissingStartingLink
     }
 
     def apply(intValue: Int): AddressError = {

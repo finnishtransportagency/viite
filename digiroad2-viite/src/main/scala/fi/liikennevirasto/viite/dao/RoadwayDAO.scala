@@ -637,11 +637,11 @@ class RoadwayDAO extends BaseDAO {
           s"""
             $query
             join $idTableName i on i.id = a.ROAD_NUMBER
-            where a.valid_to is null AND (a.end_date is null or a.end_date >= sysdate) AND a.terminated = 0
+            where a.valid_to is null AND (a.end_date is null or a.end_date >= sysdate) order by a.road_number, a.road_part_number, a.start_date
           """.stripMargin
       }
     } else {
-      s"""$query where a.valid_to is null AND (a.end_date is null or a.end_date >= sysdate) AND a.terminated = 0 AND a.road_number in (${roadNumbers.mkString(",")})"""
+      s"""$query where a.valid_to is null AND (a.end_date is null or a.end_date >= sysdate) AND a.road_number in (${roadNumbers.mkString(",")}) order by a.road_number, a.road_part_number, a.start_date"""
     }
   }
 
@@ -888,15 +888,7 @@ class RoadwayDAO extends BaseDAO {
     sql"""
        select distinct road_number
               from ROADWAY
-              where valid_to IS NULL AND end_date is NULL AND terminated = 0 order by road_number
-      """.as[Long].list
-  }
-
-  def getValidRoadNumbersByProject(projectId: Long): List[Long] = {
-    sql"""
-       select distinct road_number
-              from ROADWAY
-              where valid_to IS NULL AND project
+              where valid_to IS NULL AND (end_date is NULL or end_date >= sysdate) order by road_number
       """.as[Long].list
   }
 
@@ -904,7 +896,7 @@ class RoadwayDAO extends BaseDAO {
     sql"""
        select distinct road_number
               from ROADWAY
-              where valid_to IS NULL AND end_date is NULL AND terminated = 0 AND road_number BETWEEN ${roadNumbers._1} AND ${roadNumbers._2}
+              where valid_to IS NULL AND (end_date is NULL or end_date >= sysdate) AND road_number BETWEEN ${roadNumbers._1} AND ${roadNumbers._2}
       """.as[Long].list
   }
 
