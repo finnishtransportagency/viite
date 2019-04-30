@@ -255,10 +255,10 @@ class RoadNetworkService {
         case e: SQLIntegrityConstraintViolationException => logger.error("A road network check is already running")
         case e: SQLException =>
           logger.info("SQL Exception")
-          logger.error(e.getMessage)
+          println(s"\n" + e.getMessage + s"\n"+ e.printStackTrace)
           dynamicSession.rollback()
         case e: Exception =>
-          logger.error(e.getMessage)
+          println(s"\n" + e.getMessage + s"\n"+ e.printStackTrace)
           dynamicSession.rollback()
       }
     }
