@@ -82,7 +82,6 @@ class RoadNetworkDAO {
 
     Q.queryNA[(Long, Long, Long, Int, Long, Option[Long])](query).list.map {
       case (id, roadwayId, linearLocationId, errorCode, timestamp, version) =>
-        logger.info(s"id "+id+ " roadwayId "+roadwayId + " linearLocationId "+linearLocationId + " errorCode " +errorCode)
         RoadNetworkError(id, roadwayId, linearLocationId, AddressError.apply(errorCode), timestamp, version)
     }
   }
