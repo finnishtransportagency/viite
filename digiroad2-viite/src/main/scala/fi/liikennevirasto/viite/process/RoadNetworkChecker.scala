@@ -32,7 +32,9 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
         val nextNetworkVersion = Sequences.nextPublishedRoadNetworkId
         chunks.foreach {
           case (min, max) =>
+            logger.info(s"before checkRoadways")
             val roads = roadwayDAO.getValidBetweenRoadNumbers((min.toLong, max.toLong))
+            logger.info(s"check roadNumber between "+min+ " and " +max)
             roadNetworkService.checkRoadAddressNetwork(RoadCheckOptions(Seq(), roads.toSet, currNetworkVersion, nextNetworkVersion, throughActor = false))
         }
         if (!roadNetworkDAO.hasCurrentNetworkErrors) {
