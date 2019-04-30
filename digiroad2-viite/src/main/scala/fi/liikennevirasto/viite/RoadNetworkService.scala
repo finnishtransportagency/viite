@@ -57,13 +57,9 @@ class RoadNetworkService {
 
           val optHeadRoadway = roadways.find(_.roadwayNumber == sortedLocations.head.roadwayNumber)
           val startLocationErrors = if (sortedLocations.head.orderNumber != 1) {
-            if (optHeadRoadway.isEmpty)
-              logger.info(s"optHeadRoadway1: " + optHeadRoadway)
             Seq(RoadNetworkError(0, if (optHeadRoadway.nonEmpty) optHeadRoadway.get.id else 0L, sortedLocations.head.id, AddressError.MissingStartingLink, System.currentTimeMillis(), options.currNetworkVersion))
           } else {
             if (sortedLocations.head.calibrationPoints._1.isEmpty) {
-              if (optHeadRoadway.isEmpty)
-                logger.info(s"optHeadRoadway2: " + optHeadRoadway)
               Seq(RoadNetworkError(0, if (optHeadRoadway.nonEmpty) optHeadRoadway.get.id else 0L, sortedLocations.head.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
             } else {
               Seq.empty[RoadNetworkError]
@@ -72,8 +68,6 @@ class RoadNetworkService {
 
           val endLocationErrors = if (sortedLocations.last.calibrationPoints._2.isEmpty) {
             val optlastRoadway = roadways.find(_.roadwayNumber == sortedLocations.last.roadwayNumber)
-            if (optlastRoadway.isEmpty)
-              logger.info(s"optHeadRoadway3: " + optlastRoadway)
             Seq(RoadNetworkError(0, if (optlastRoadway.nonEmpty) optlastRoadway.get.id else 0L, sortedLocations.last.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
           } else {
             Seq.empty[RoadNetworkError]
@@ -89,8 +83,6 @@ class RoadNetworkService {
                 !allLocations.exists(l => (loc.calibrationPoints._1 == l.calibrationPoints._2) && l.id != loc.id) && loc.id != first.id
             ).map { loc =>
               val optMidRoadway = roadways.find(_.roadwayNumber == loc.roadwayNumber)
-              if (optMidRoadway.isEmpty)
-                logger.info(s"optHeadRoadway4: " + optMidRoadway)
               RoadNetworkError(0, if (optMidRoadway.nonEmpty) optMidRoadway.get.id else 0L, loc.id, AddressError.InconsistentContinuityCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
             }
 
@@ -109,13 +101,9 @@ class RoadNetworkService {
           val optHeadRoadway = roadways.find(_.roadwayNumber == sortedLocations.head.roadwayNumber)
 
           val startLocationErrors = if (sortedLocations.head.orderNumber != 1) {
-            if (optHeadRoadway.isEmpty)
-              logger.info(s"optHeadRoadway5: " + optHeadRoadway)
             Seq(RoadNetworkError(0, if (optHeadRoadway.nonEmpty) optHeadRoadway.get.id else 0L, sortedLocations.head.id, AddressError.MissingStartingLink, System.currentTimeMillis(), options.currNetworkVersion))
           } else {
             if (sortedLocations.head.calibrationPoints._1.isEmpty) {
-              if (optHeadRoadway.isEmpty)
-                logger.info(s"optHeadRoadway6: " + optHeadRoadway)
               Seq(RoadNetworkError(0, if (optHeadRoadway.nonEmpty) optHeadRoadway.get.id else 0L, sortedLocations.head.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
             } else {
               Seq.empty[RoadNetworkError]
@@ -124,8 +112,6 @@ class RoadNetworkService {
 
           val endLocationErrors = if (sortedLocations.last.calibrationPoints._2.isEmpty) {
             val optlastRoadway = roadways.find(_.roadwayNumber == sortedLocations.last.roadwayNumber)
-            if (optlastRoadway.isEmpty)
-              logger.info(s"optHeadRoadway7: " + optlastRoadway)
             Seq(RoadNetworkError(0, if (optlastRoadway.nonEmpty) optlastRoadway.get.id else 0L, sortedLocations.last.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
           } else {
             Seq.empty[RoadNetworkError]
@@ -141,8 +127,6 @@ class RoadNetworkService {
                 !allLocations.exists(l => (loc.calibrationPoints._1 == l.calibrationPoints._2) && l.id != loc.id) && loc.id != first.id
             ).map { loc =>
               val optMidRoadway = roadways.find(_.roadwayNumber == loc.roadwayNumber)
-              if (optMidRoadway.isEmpty)
-                logger.info(s"optHeadRoadway8: " + optMidRoadway)
               RoadNetworkError(0, if (optMidRoadway.nonEmpty) optMidRoadway.get.id else 0L, loc.id, AddressError.InconsistentContinuityCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
             }
 
@@ -185,29 +169,23 @@ class RoadNetworkService {
 
     withDynTransaction {
       try {
-        logger.info(s"before roadwayDAO.fetchAllByRoadNumbers")
         val roadsInChunk = roadwayDAO.fetchAllByRoadNumbers(options.roadNumbers)
         val distinctDateRoads = roadsInChunk.groupBy(r => (r.roadNumber, r.roadPartNumber)).flatMap { p =>
           p._2.groupBy(o => (o.track, o.startAddrMValue)).map { t =>
             t._2.minBy(_.startDate)
           }.toSeq
         }.toSeq
-        logger.info(s"before linearLocationDAO.fetchByRoadways")
         val linearLocationsInChunk = linearLocationDAO.fetchByRoadways(distinctDateRoads.map(_.roadwayNumber).distinct.toSet).groupBy(_.roadwayNumber)
         val roadways = distinctDateRoads.groupBy(g => (g.roadNumber, g.roadPartNumber))
         val errors = roadways.flatMap { group =>
           val (section, roadway) = group
 
           val (combinedLeft, combinedRight) = (roadway.filter(t => t.track != Track.RightSide).sortBy(_.startAddrMValue), roadway.filter(t => t.track != Track.LeftSide).sortBy(_.startAddrMValue))
-          logger.info(s"before checkRoadways")
           val roadwaysErrors = checkRoadways(combinedLeft, combinedRight)
           logger.info(s" Found ${roadwaysErrors.size} roadway errors for RoadNumber ${section._1} and Part ${section._2}")
 
           val (combinedRoadways, twoTrackRoadways) = roadway.partition(_.track == Combined)
           val (leftRoadways, rightRoadways) = twoTrackRoadways.partition(_.track == LeftSide)
-
-          if (linearLocationsInChunk.isEmpty)
-            logger.info(s"linearLocationsInChunk size is empty")
 
           val leftTrackLinearLocations = leftRoadways.flatMap(r => linearLocationsInChunk.get(r.roadwayNumber)).flatten
           val rightTrackLinearLocations = rightRoadways.flatMap(r => linearLocationsInChunk.get(r.roadwayNumber)).flatten
@@ -244,7 +222,6 @@ class RoadNetworkService {
             roadNetworkDAO.expireRoadNetwork
             roadNetworkDAO.createPublishedRoadNetwork(options.nextNetworkVersion)
             val newId = roadNetworkDAO.getLatestRoadNetworkVersionId
-            logger.info(s"newId: " + newId)
             roadwayDAO.fetchAllCurrentAndValidRoadwayIds.foreach(id => roadNetworkDAO.createPublishedRoadway(newId.get, id))
           } else {
             logger.info(s"Network errors found or current network version not found. Check road_network_error and published_road_network tables")

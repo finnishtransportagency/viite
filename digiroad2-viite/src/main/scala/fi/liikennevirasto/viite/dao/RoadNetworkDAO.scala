@@ -78,10 +78,11 @@ class RoadNetworkDAO {
   def getRoadNetworkErrors: List[RoadNetworkError] = {
     val query =
       s"""SELECT id, roadway_id, linear_location_id, error_code, error_timestamp, road_network_version
-         FROM road_network_error order by road_network_version desc"""
+         FROM road_network_error order by road_network_version desc""".stripMargin
 
     Q.queryNA[(Long, Long, Long, Int, Long, Option[Long])](query).list.map {
       case (id, roadwayId, linearLocationId, errorCode, timestamp, version) =>
+        logger.info(s"id "+id+ " roadwayId "+roadwayId + " linearLocationId "+linearLocationId + " errorCode " +errorCode)
         RoadNetworkError(id, roadwayId, linearLocationId, AddressError.apply(errorCode), timestamp, version)
     }
   }
