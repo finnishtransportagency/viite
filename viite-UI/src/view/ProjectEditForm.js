@@ -194,19 +194,33 @@
       $('#roadTypeDropdown').val(selectedProjectLink[0].roadTypeId);
     };
 
+    var editDropDown = function (roadModified) {
+      if (roadModified) {
+        $("#dropDown_0").children("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").remove();
+      }
+    };
+
     var fillDistanceValues = function (selectedLinks) {
       if (selectedLinks.length === 1 && selectedLinks[0].calibrationCode === CalibrationCode.AtBoth.value) {
-        $('#beginDistance').prop("disabled", false).val(selectedLinks[0].startAddressM);
-        $('#endDistance').prop("disabled", false).val(selectedLinks[0].endAddressM);
+        $('#beginDistance').val(selectedLinks[0].startAddressM);
+        if (isProjectEditable()) {
+          $('#endDistance').prop("readonly", false).val(selectedLinks[0].endAddressM);
+        } else {
+          $('#endDistance').val(selectedLinks[0].endAddressM);
+        }
       } else {
         var orderedByStartM = _.sortBy(selectedLinks, function (l) {
           return l.startAddressM;
         });
         if (orderedByStartM[0].calibrationCode === CalibrationCode.AtBeginning.value) {
-          $('#beginDistance').prop("disabled", false).val(orderedByStartM[0].startAddressM);
+          $('#beginDistance').val(orderedByStartM[0].startAddressM);
         }
         if (orderedByStartM[orderedByStartM.length - 1].calibrationCode === CalibrationCode.AtEnd.value) {
-          $('#endDistance').prop("disabled", false).val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
+          if (isProjectEditable()) {
+            $('#endDistance').prop("readonly", false).val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
+          } else {
+            $('#endDistance').val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
+          }
           endDistanceOriginalValue = orderedByStartM[orderedByStartM.length - 1].endAddressM;
         }
       }
@@ -242,6 +256,9 @@
         formCommon.replaceAddressInfo(backend, selectedProjectLink, currentProject.project.id);
         checkInputs('.project-');
         changeDropDownValue(selectedProjectLink[0].status);
+        editDropDown(_.filter(currentProject.formedInfo, function(formedLink) {
+          return formedLink.roadNumber === selectedProjectLink[0].roadNumber && formedLink.roadPartNumber === selectedProjectLink[0].roadPartNumber;
+        }).length);
         disableFormInputs();
         var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
           return projectLink.endAddressM;
@@ -265,6 +282,9 @@
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
         checkInputs('.project-');
         changeDropDownValue(selectedProjectLink[0].status);
+        editDropDown(_.filter(currentProject.getFormedParts(), function(part) {
+          return part.roadNumber === selectedProjectLink[0].roadNumber && part.roadPartNumber === selectedProjectLink[0].roadPartNumber;
+        }).length);
         disableFormInputs();
         var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
           return projectLink.endAddressM;
