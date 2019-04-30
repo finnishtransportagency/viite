@@ -613,7 +613,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         if(calibrationPoint.isDefined)
           RoadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
         else{
-          val roadwayPointId = RoadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
+          val roadwayPointId =
+            RoadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
+              case Some(roadwayPoint) =>
+                roadwayPoint.id
+              case _ => RoadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
+            }
           CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = createdBy)
         }
     }
@@ -623,7 +628,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         if(calibrationPoint.isDefined)
           RoadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.endCalibrationPoint.get, createdBy)
         else{
-          val roadwayPointId = RoadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, createdBy)
+          val roadwayPointId =
+            RoadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
+              case Some(roadwayPoint) =>
+                roadwayPoint.id
+              case _ => RoadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
+            }
           CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 1, calType = CalibrationPointType.Mandatory, createdBy = createdBy)
         }
     }
