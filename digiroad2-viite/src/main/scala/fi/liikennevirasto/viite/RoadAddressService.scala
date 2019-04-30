@@ -629,10 +629,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           RoadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.endCalibrationPoint.get, createdBy)
         else{
           val roadwayPointId =
-            RoadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
+            RoadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.get) match {
               case Some(roadwayPoint) =>
                 roadwayPoint.id
-              case _ => RoadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
+              case _ => RoadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, createdBy)
             }
           CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 1, calType = CalibrationPointType.Mandatory, createdBy = createdBy)
         }
