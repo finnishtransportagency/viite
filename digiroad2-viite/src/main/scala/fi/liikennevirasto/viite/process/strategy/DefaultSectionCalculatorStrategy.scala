@@ -88,7 +88,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       }
 
       def adjustTwoTrackRoadwayNumbers(firstRight: Seq[ProjectLink], restRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink], restLeft: Seq[ProjectLink])
-      : (Seq[ProjectLink], Seq[ProjectLink], Seq[ProjectLink], Seq[ProjectLink]) = {
+      : ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
         val (transferLinks, newLinks) = if(firstRight.exists(_.status == LinkStatus.Transfer)) (firstRight, firstLeft) else (firstLeft, firstRight)
         val groupedTransfer = transferLinks.groupBy(_.roadwayNumber)
 
@@ -102,7 +102,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         }._1
 
         val (right, left) = if(adjustedNewLinks.exists(_.track == Track.RightSide)) (adjustedNewLinks, transferLinks) else (transferLinks, adjustedNewLinks)
-        (right, restRight, left, restLeft)
+        ((right, restRight), (left, restLeft))
       }
 
         val right = continuousWOutRoadwaySection(rightLinks)
