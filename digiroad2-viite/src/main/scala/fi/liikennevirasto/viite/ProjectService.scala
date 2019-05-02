@@ -1200,7 +1200,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (links.groupBy(l => (l.projectId, l.roadNumber, l.roadPartNumber)).keySet.size != 1)
       throw new IllegalArgumentException("Reverting links from multiple road parts at once is not allowed")
     val l = links.head
-    revertLinksByRoadParts(l.projectId, l.roadNumber, l.roadPartNumber, links.map(
+    revertLinksByRoadPart(l.projectId, l.roadNumber, l.roadPartNumber, links.map(
       link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)), userName)
   }
 
@@ -1255,7 +1255,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           checkAndReserve(projectDAO.fetchById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
           projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
       })
-
     revertRoadName(projectId, roadNumber)
 
     if (recalculate)
