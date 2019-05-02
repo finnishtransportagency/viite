@@ -65,7 +65,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     val nodePs = insertNodeStatement()
     val nodePointPs = insertNodePointStatement()
     val nodesWithPoints = conversionNodes.map(
-      conversionNode => (conversionNode, conversionNodePoints.filter(_.nodeNumber == conversionNode.nodeNumber))
+      conversionNode => (conversionNode, conversionNodePoints.filter(_.nodeId == conversionNode.id))
     )
 
     nodesWithPoints.foreach{
