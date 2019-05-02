@@ -1245,18 +1245,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchRoadwayByLinkId(modifiedLinkIds))
     roadAddresses.foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
-        case Some(mod) if mod.geometry.nonEmpty =>
+        case Some(mod) =>
           checkAndReserve(projectDAO.fetchById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
-          val vvhGeometry = vvhRoadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
-          val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
-          projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
-
+          if (mod.geometry.nonEmpty) {
+            val vvhGeometry = vvhRoadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
+            val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
+            projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
+          } else {
+            projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
+          }
         case _ =>
-          checkAndReserve(projectDAO.fetchById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
-          projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
       })
     revertRoadName(projectId, roadNumber)
-
     if (recalculate)
       try {
         recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
