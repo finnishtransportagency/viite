@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
@@ -62,7 +63,14 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     }.toSeq
   }
 
-  private def getContinuousSection(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  private def continuousWOutRoadwaySection(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+    val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
+    val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
+    val continuousProjectLinks = seq.takeWhile(pl => (pl.track == track && pl.track == Track.Combined) || (pl.track == track && pl.track != Track.Combined && pl.roadType.value == roadType))
+    (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+  }
+
+  private def continuousRoadwaySection(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
     val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(0)
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
@@ -74,12 +82,37 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
                                             userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[CombinedSection] = {
 
     def adjustTracksToMatch(leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-      if (rightLinks.isEmpty && leftLinks.isEmpty) {
-        (Seq(), Seq())
-      } else {
+      def adjustableToRoadwayNumberAttribution(firstRight: Seq[ProjectLink], restRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink], restLeft: Seq[ProjectLink]): Boolean = {
+        ((firstRight.forall(_.status == LinkStatus.New) && firstLeft.forall(_.status == LinkStatus.Transfer))
+          || (firstRight.forall(_.status == LinkStatus.Transfer) && firstLeft.forall(_.status == LinkStatus.New))) && firstRight.size == firstLeft.size
+      }
 
-        val (firstRight, restRight) = getContinuousSection(rightLinks)
-        val (firstLeft, restLeft) = getContinuousSection(leftLinks)
+      def adjustTwoTrackRoadwayNumbers(firstRight: Seq[ProjectLink], restRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink], restLeft: Seq[ProjectLink])
+      : (Seq[ProjectLink], Seq[ProjectLink], Seq[ProjectLink], Seq[ProjectLink]) = {
+        val (transferLinks, newLinks) = if(firstRight.exists(_.status == LinkStatus.Transfer)) (firstRight, firstLeft) else (firstLeft, firstRight)
+        val groupedTransfer = transferLinks.groupBy(_.roadwayNumber)
+
+        val adjustedNewLinks = groupedTransfer.foldLeft(Seq.empty[ProjectLink], newLinks) {
+          case ((adjustedLinks, linksToProcess), group) =>
+
+            val newRoadwayNumber = Sequences.nextRoadwayNumber
+            val links = linksToProcess.take(group._2.size).map(_.copy(roadwayNumber = newRoadwayNumber))
+            val linksLeft = linksToProcess.drop(group._2.size)
+            (adjustedLinks++links, linksLeft)
+        }._1
+
+        val (right, left) = if(adjustedNewLinks.exists(_.track == Track.RightSide)) (adjustedNewLinks, transferLinks) else (transferLinks, adjustedNewLinks)
+        (right, restRight, left, restLeft)
+      }
+
+        val right = continuousWOutRoadwaySection(rightLinks)
+        val left = continuousWOutRoadwaySection(leftLinks)
+
+        val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)){
+          adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
+        } else {
+          (continuousRoadwaySection(rightLinks), continuousRoadwaySection(leftLinks))
+        }
 
         if (firstRight.isEmpty || firstLeft.isEmpty)
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
@@ -93,7 +126,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
         (adjustedLeft ++ adjustedRestRight, adjustedRight ++ adjustedRestLeft)
       }
-    }
 
     val rightSections = sections.flatMap(_.right.links)
     val leftSections = sections.flatMap(_.left.links)

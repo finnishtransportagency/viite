@@ -132,8 +132,8 @@ object RoadwayFiller {
 
   private def applyNew(change: ProjectRoadwayChange, projectLinks: Seq[ProjectLink]): Seq[(Seq[Roadway], Seq[LinearLocation])] = {
     val changeTarget = change.changeInfo.target
-    val newRoadwayNumber = Sequences.nextRoadwayNumber
-    val roadway = Roadway(NewIdValue, newRoadwayNumber, changeTarget.roadNumber.get, changeTarget.startRoadPartNumber.get, changeTarget.roadType.get, Track.apply(changeTarget.trackCode.get.toInt), changeTarget.discontinuity.get,
+    val roadwayNumber = if(projectLinks.head.roadwayNumber == NewIdValue) Sequences.nextRoadwayNumber else projectLinks.head.roadwayNumber
+    val roadway = Roadway(NewIdValue, roadwayNumber, changeTarget.roadNumber.get, changeTarget.startRoadPartNumber.get, changeTarget.roadType.get, Track.apply(changeTarget.trackCode.get.toInt), changeTarget.discontinuity.get,
       changeTarget.startAddressM.get, changeTarget.endAddressM.get, change.changeInfo.reversed, startDate = projectLinks.head.startDate.get, endDate = projectLinks.head.endDate, createdBy = projectLinks.head.createdBy.get, projectLinks.head.roadName,
       projectLinks.head.ely, NoTermination)
     Seq((Seq(roadway), roadwayAddressMapper.mapLinearLocations(roadway, projectLinks)))
