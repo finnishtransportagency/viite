@@ -312,7 +312,7 @@ class ProjectLinkDAO {
       val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
         "road_number, road_part_number, " +
         "TRACK, discontinuity_type, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, created_by, " +
-        "calibration_points, status, road_type, roadway_id, linear_location_id, connected_link_id, ely, reversed, geometry, " +
+        "calibration_points, status, road_type, roadway_id, linear_location_id, connected_link_id, ely, roadway_number, reversed, geometry, " +
         "link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
         "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
       val (ready, idLess) = links.partition(_.id != NewIdValue)
@@ -321,6 +321,11 @@ class ProjectLinkDAO {
         x._1.copy(id = x._2)
       )
       projectLinks.toList.foreach { pl =>
+        val roadwayNumber = if (pl.roadwayNumber == NewIdValue) {
+          Sequences.nextRoadwayNumber
+        } else {
+          pl.roadwayNumber
+        }
         addressPS.setLong(1, pl.id)
         addressPS.setLong(2, pl.projectId)
         addressPS.setLong(3, pl.roadNumber)
@@ -348,15 +353,16 @@ class ProjectLinkDAO {
         else
           addressPS.setString(17, null)
         addressPS.setLong(18, pl.ely)
-        addressPS.setBoolean(19, pl.reversed)
-        addressPS.setObject(20, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
-        addressPS.setLong(21, pl.linkId)
-        addressPS.setLong(22, pl.sideCode.value)
-        addressPS.setDouble(23, pl.startMValue)
-        addressPS.setDouble(24, pl.endMValue)
-        addressPS.setDouble(25, pl.linkGeometryTimeStamp)
-        addressPS.setInt(26, pl.linkGeomSource.value)
-        addressPS.setInt(27, pl.calibrationPointsSourcesToDB.value)
+        addressPS.setLong(19, roadwayNumber)
+        addressPS.setBoolean(20, pl.reversed)
+        addressPS.setObject(21, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
+        addressPS.setLong(22, pl.linkId)
+        addressPS.setLong(23, pl.sideCode.value)
+        addressPS.setDouble(24, pl.startMValue)
+        addressPS.setDouble(25, pl.endMValue)
+        addressPS.setDouble(26, pl.linkGeometryTimeStamp)
+        addressPS.setInt(27, pl.linkGeomSource.value)
+        addressPS.setInt(28, pl.calibrationPointsSourcesToDB.value)
         addressPS.addBatch()
       }
       addressPS.executeBatch()
@@ -383,9 +389,14 @@ class ProjectLinkDAO {
       val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK = ?, " +
         "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, ORIGINAL_START_ADDR_M=?, ORIGINAL_END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
         "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
-        "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ? WHERE id = ?")
+        "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ?, ROADWAY_NUMBER = ? WHERE id = ?")
 
       for (projectLink <- links) {
+        val roadwayNumber = if (projectLink.roadwayNumber == NewIdValue) {
+          Sequences.nextRoadwayNumber
+        } else {
+          projectLink.roadwayNumber
+        }
         projectLinkPS.setLong(1, projectLink.roadNumber)
         projectLinkPS.setLong(2, projectLink.roadPartNumber)
         projectLinkPS.setInt(3, projectLink.track.value)
@@ -408,6 +419,7 @@ class ProjectLinkDAO {
         projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB.value)
         projectLinkPS.setLong(21, projectLink.ely)
         projectLinkPS.setLong(22, projectLink.id)
+        projectLinkPS.setLong(23, roadwayNumber)
         projectLinkPS.addBatch()
       }
       projectLinkPS.executeBatch()
@@ -795,7 +807,7 @@ class ProjectLinkDAO {
             ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE,
             MODIFIED_DATE, STATUS, CALIBRATION_POINTS, ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY,
             REVERSED, SIDE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
-            LINK_SOURCE, CALIBRATION_POINTS_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M
+            LINK_SOURCE, CALIBRATION_POINTS_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER
           FROM PROJECT_LINK WHERE PROJECT_ID = $projectId)""".execute
     sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
     sqlu"""DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId""".execute
