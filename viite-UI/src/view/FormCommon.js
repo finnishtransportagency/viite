@@ -263,9 +263,9 @@
         '</div>' +
         '<div class="'+prefix+'form-group">' +
         '<label class="control-label-small" style="float: left; margin-top: 10px">ALUSSA</label>' +
-        addSmallInputNumber('beginDistance', '--', true) +
+        addSmallInputNumber('beginDistance', '--', true, 5) +
         '<label class="control-label-small" style="float: left;margin-top: 10px">LOPUSSA</label>' +
-        addSmallInputNumber('endDistance', '--', true) +
+        addSmallInputNumber('endDistance', '--', true, 5) +
         '<span id="manualCPWarning" class="manualCPWarningSpan">!</span>' +
         '</div></div>';
     };
