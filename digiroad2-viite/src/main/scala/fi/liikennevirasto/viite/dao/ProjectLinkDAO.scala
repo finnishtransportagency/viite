@@ -316,7 +316,7 @@ class ProjectLinkDAO {
         "TRACK, discontinuity_type, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, created_by, " +
         "calibration_points, status, road_type, roadway_id, linear_location_id, connected_link_id, ely, roadway_number, reversed, geometry, " +
         "link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
-        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
       val (ready, idLess) = links.partition(_.id != NewIdValue)
       val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
       val projectLinks = ready ++ idLess.zip(plIds).map(x =>
