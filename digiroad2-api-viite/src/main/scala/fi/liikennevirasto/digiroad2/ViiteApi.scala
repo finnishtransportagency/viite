@@ -59,6 +59,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val projectService: ProjectService,
                val roadNetworkService: RoadNetworkService,
                val roadNameService: RoadNameService,
+               val nodesAndJunctionsService: NodesAndJunctionsService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date,
                implicit val swagger: Swagger
@@ -977,6 +978,32 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         }
       } catch {
         case _: NumberFormatException => BadRequest("'projectId' or 'linkId' parameter given could not be parsed as an integer number")
+      }
+    }
+  }
+
+  val getNodesByRoadAttributes = (
+    apiOperation[Map[String, Any]]("getNodesByRoadAttributes")
+      .parameters(
+        queryParam[Long]("road").description("Road Number of a road address"),
+        queryParam[Long]("part").description("Road Part Number of a road address"),
+        queryParam[Long]("minAddrM").description("Min address M Value of a road address"),
+        queryParam[Long]("maxAddrM").description("Max address M Value of a road address")
+      )
+      tags "ViiteAPI - Nodes"
+      summary "Returns all the nodes belonging to the road number and possibly road part number and in the given address range."
+      notes ""
+    )
+  get("/nodes", operation(getNodesByRoadAttributes)) {
+    val roadNumber = params.get("road").map(_.toLong)
+    val roadPartNumber = params.get("part").map(_.toLong)
+    val minAddrM = params.get("minAddrM").map(_.toLong)
+    val maxAddrM = params.get("maxAddrM").map(_.toLong)
+    time(logger, s"GET request for /nodes (road: $roadNumber, part: $roadPartNumber, minAddrM: $minAddrM, maxAddrM: $maxAddrM)") {
+      if (roadNumber.isDefined) {
+        nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, roadPartNumber, minAddrM, maxAddrM)
+      } else {
+        BadRequest("Missing mandatory 'road' parameter.")
       }
     }
   }

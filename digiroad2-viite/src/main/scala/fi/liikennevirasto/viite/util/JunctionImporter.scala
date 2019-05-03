@@ -5,10 +5,8 @@ import java.sql.PreparedStatement
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.dao.{Node, NodeDAO, RoadwayPointDAO}
+import fi.liikennevirasto.viite.dao.{NodeDAO, RoadwayPointDAO}
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -16,6 +14,8 @@ import slick.jdbc._
 
 class JunctionImporter(conversionDatabase: DatabaseDef) {
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
+
+  val nodeDAO = new NodeDAO
 
   case class ConversionJunction(id: Long, junctionNumber: Long, rampNumber: Option[String], trafficLights: Option[Long], nodeNumber: Long, startDate: Option[DateTime],
                                 endDate: Option[DateTime], lightsStartDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime],
@@ -76,7 +76,7 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
     junctionsWithPoints.foreach{
       conversionJunction =>
         println(s"Inserting junction with TR id = ${conversionJunction._1.id} ")
-        val nodeId = NodeDAO.fetchId(conversionJunction._1.nodeNumber)
+        val nodeId = nodeDAO.fetchId(conversionJunction._1.nodeNumber)
         insertJunction(junctionPs, conversionJunction._1, nodeId.get)
 
         conversionJunction._2.foreach{
