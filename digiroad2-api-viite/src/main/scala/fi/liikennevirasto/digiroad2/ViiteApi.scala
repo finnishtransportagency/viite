@@ -985,25 +985,24 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val getNodesByRoadAttributes = (
     apiOperation[Map[String, Any]]("getNodesByRoadAttributes")
       .parameters(
-        queryParam[Long]("road").description("Road Number of a road address"),
-        queryParam[Long]("part").description("Road Part Number of a road address"),
-        queryParam[Long]("minAddrM").description("Min address M Value of a road address"),
-        queryParam[Long]("maxAddrM").description("Max address M Value of a road address")
+        queryParam[Long]("roadNumber").description("Road Number of a road address"),
+        queryParam[Long]("startRoadPartNumber").description("Road Part Number of a road address"),
+        queryParam[Long]("endRoadPartNumber").description("Road Part Number of a road address")
       )
       tags "ViiteAPI - Nodes"
       summary "Returns all the nodes belonging to the road number and possibly road part number and in the given address range."
       notes ""
     )
-  get("/nodes", operation(getNodesByRoadAttributes)) {
-    val roadNumber = params.get("road").map(_.toLong)
-    val roadPartNumber = params.get("part").map(_.toLong)
-    val minAddrM = params.get("minAddrM").map(_.toLong)
-    val maxAddrM = params.get("maxAddrM").map(_.toLong)
-    time(logger, s"GET request for /nodes (road: $roadNumber, part: $roadPartNumber, minAddrM: $minAddrM, maxAddrM: $maxAddrM)") {
+
+  get("/nodesearch", operation(getNodesByRoadAttributes)) {
+    val roadNumber = params.get("roadNumber").map(_.toLong)
+    val startRoadPartNumber = params.get("startRoadPartNumber").map(_.toLong)
+    val endRoadPartNumber = params.get("endRoadPartNumber").map(_.toLong)
+    time(logger, s"GET request for /nodesearch (roadNumber: $roadNumber, startRoadPartNumber: $startRoadPartNumber, endRoadPartNumber: $endRoadPartNumber") {
       if (roadNumber.isDefined) {
-        nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, roadPartNumber, minAddrM, maxAddrM)
+        nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, startRoadPartNumber, startRoadPartNumber)
       } else {
-        BadRequest("Missing mandatory 'road' parameter.")
+        BadRequest("Missing mandatory 'roadNumber' parameter.")
       }
     }
   }

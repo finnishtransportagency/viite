@@ -4,19 +4,21 @@
     var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
     var projectCollection = new ProjectCollection(backend);
-      var roadNameCollection = new RoadNameCollection(backend);
+    var roadNameCollection = new RoadNameCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
+    var nodeCollection = new NodeCollection(backend);
 
     var models = {
       roadCollection: roadCollection,
       projectCollection: projectCollection,
       selectedLinkProperty: selectedLinkProperty,
       linkPropertiesModel: linkPropertiesModel,
-      selectedProjectLinkProperty : selectedProjectLinkProperty
+      selectedProjectLinkProperty : selectedProjectLinkProperty,
+      nodeCollection: nodeCollection
     };
 
     bindEvents();
@@ -114,7 +116,7 @@
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
 
-    new NodeSearchForm();
+    new NodeSearchForm(models.nodeCollection);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
