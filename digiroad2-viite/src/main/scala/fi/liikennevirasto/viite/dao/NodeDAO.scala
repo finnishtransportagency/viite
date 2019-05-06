@@ -47,30 +47,20 @@ class NodeDAO {
       """.as[Long].firstOption
   }
 
-  def fetchByRoadAttributes(roadNumber: Long, roadPartNumber: Option[Long], minAddrM: Option[Long], maxAddrM: Option[Long]): List[Node] = {
-    val roadPartCondition = if (roadPartNumber.isDefined) {
-      s"AND ROAD_PART_NUMBER = ${roadPartNumber.get}"
+  def fetchByRoadAttributes(roadNumber: Long, startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long]): List[Node] = {
+    val roadPartCondition = if (startRoadPartNumber.isDefined) {
+      s"AND ROAD_PART_NUMBER >= ${startRoadPartNumber.get} AND ROAD_PART_NUMBER <= ${endRoadPartNumber.get}"
     } else {
       ""
     }
-    val minAddrMCondition = if (minAddrM.isDefined) {
-      s"AND ADDR_M >= ${minAddrM.get}"
-    } else {
-      ""
-    }
-    val maxAddrMCondition = if (maxAddrM.isDefined) {
-      s"AND ADDR_M <= ${maxAddrM.get}"
-    } else {
-      ""
-    }
+
     sql"""
       SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
         from NODE
         where ID IN (
           SELECT node_id FROM node_point WHERE ROADWAY_POINT_ID IN (
             SELECT id FROM roadway_point WHERE ROADWAY_NUMBER IN (
-              SELECT roadway_number FROM roadway WHERE ROAD_NUMBER = $roadNumber $roadPartCondition)
-                $minAddrMCondition $maxAddrMCondition)
+              SELECT roadway_number FROM roadway WHERE ROAD_NUMBER = $roadNumber $roadPartCondition))
         )
       """.as[Node].list
   }

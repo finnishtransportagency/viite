@@ -14,9 +14,9 @@ class NodesAndJunctionsService() {
 
   val nodeDAO = new NodeDAO
 
-  def getNodesByRoadAttributes(roadNumber: Long, roadPartNumber: Option[Long], minAddrM: Option[Long], maxAddrM: Option[Long]): List[Node] = {
+  def getNodesByRoadAttributes(roadNumber: Long, startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long]): List[Node] = {
     withDynSession {
-      nodeDAO.fetchByRoadAttributes(roadNumber, roadPartNumber, minAddrM, maxAddrM)
+      nodeDAO.fetchByRoadAttributes(roadNumber, startRoadPartNumber, endRoadPartNumber)
     }
   }
 

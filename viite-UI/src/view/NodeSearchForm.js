@@ -1,5 +1,5 @@
 (function (root) {
-  root.NodeSearchForm = function () {
+  root.NodeSearchForm = function (nodeCollection) {
     var container = $('#legendDiv');
     var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
     var header = function() {
@@ -26,20 +26,22 @@
       return _.template('' +
         header() +
         '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark">' +
+        '<div class="form form-horizontal form-dark" style="margin-left: auto;">' +
         '<div class="edit-control-group">' +
         '<div class="form-group editable">' +
         '<form id="node-search" class="input-unit-combination form-group form-horizontal node-search">' +
         '<div class="form-group">' +
-        label('Solmu') + label('Tie') + label('Aosa') + label('Losa') +
+        label('Tie') + label('Aosa') + label('Losa') +
         '</div>' +
-        '<div class="form-group">' +
-        inputField('solmu', '') + inputField('tie', '') + inputField('aosa', '') + inputField('losa', '') +
+        '<div id= "roadAttributes" class="form-group">' +
+        inputField('tie', '', 5) + inputField('aosa', '', 3) + inputField('losa', '', 3) +
         searchButton() +
         '</div>' +
         '</form>' +
         '</div>' +
         '</div>' +
+        '</div>' +
+        '<div id="form-result">' +
         '</div>' +
         '</div>'
       );
@@ -47,6 +49,15 @@
 
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
+
+      eventbus.on('nodesAndJunctions:failed', function (result) {
+        // TODO - not sure if this is necessary - to be analysed and discussed.
+      });
+
+      eventbus.on('nodesAndJunctions:fetched', function(result) {
+        applicationModel.removeSpinner();
+        alert('fetched!! ' + result.toString());
+      });
 
       eventbus.on('nodesAndJunctions:open', function () {
         rootElement.html(searchNodesTemplate());
@@ -58,12 +69,16 @@
         });
 
         var searchButton = $('#node-search-btn');
-        searchButton[0].disabled = false; // TODO when at least one search field is filled, then enable
-        searchButton.click(function() {
-          alert("Hakua ei ole vielä toteutettu."); // TODO
-          return false;
+        rootElement.on('change', '.small-input', searchButton, function () {
+          var startRoadPart = $("#aosa").val();
+          var endRoadPart = $("#losa").val();
+          var roadPartChecker = (!startRoadPart && !endRoadPart) || (startRoadPart && endRoadPart);
+          searchButton[0].disabled = !($("#tie").val() && roadPartChecker);
         });
 
+        searchButton.click(function() {
+          nodeCollection.getNodesByRoadAttributes($("#tie").val(), $("#aosa").val(), $("#losa").val());
+        });
       });
 
     };

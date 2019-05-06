@@ -626,5 +626,17 @@
       });
     }, 1000);
 
+    this.getNodesByRoadAttributes = _.throttle(function (roadAttributes, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "GET",
+        url: "api/viite/nodesearch",
+        data: roadAttributes,
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
   };
 }(this));
