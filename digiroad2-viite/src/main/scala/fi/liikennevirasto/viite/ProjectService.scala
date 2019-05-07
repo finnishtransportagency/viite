@@ -2130,6 +2130,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def getRoadAddressesFromFormedRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long) = {
+    withDynSession {
+      val roadAddresses = projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
+        .filter(part => part.roadAddressRoadNumber.isDefined && part.roadAddressRoadPart.isDefined
+          && (part.roadAddressRoadNumber.get != roadNumber || part.roadAddressRoadPart.get != roadPartNumber))
+        .map(roadAddress => (roadAddress.roadAddressRoadNumber.get, roadAddress.roadAddressRoadPart.get, roadAddress.status == LinkStatus.Numbering))
+        .map {
+          ra => Map("roadAddressNumber" -> ra._1.toString, "roadAddressPartNumber" -> ra._2.toString, "isNumbering" -> ra._3)
+        }
+      roadAddresses.toSet
+    }
+  }
+
   case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])
 
 }
