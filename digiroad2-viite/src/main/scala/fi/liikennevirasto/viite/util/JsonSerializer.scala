@@ -6,7 +6,7 @@ import java.nio.file.Files.copy
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHNodeType, VVHRoadNodes}
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.util.{Track, VVHSerializer}
 import fi.liikennevirasto.viite.RoadType
@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
 class JsonSerializer extends VVHSerializer {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
-    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer + NodeTypeSerializer +
+    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +
   DiscontinuitySerializer + TrackSerializer + PointSerializer
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {
@@ -33,10 +33,6 @@ class JsonSerializer extends VVHSerializer {
     read[Seq[ChangeInfo]](json)
   }
 
-  override def readCachedNodes(file: File): Seq[VVHRoadNodes] = {
-    val json = new FileReader(file)
-    read[Seq[VVHRoadNodes]](json)
-  }
   override def writeCache(file: File, objects: Seq[Object]): Boolean = {
 
     def writeObjects(objects: Seq[Object], fw: FileWriter): Unit = {
@@ -80,7 +76,7 @@ class JsonSerializer extends VVHSerializer {
 }
 object DigiroadSerializers {
   val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
-    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer + NodeTypeSerializer +
+    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +
     DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + RoadTypeSerializer
 }
 
@@ -128,13 +124,6 @@ case object ConstructionTypeSerializer extends CustomSerializer[ConstructionType
 }, {
   case constructionType: ConstructionType =>
     JInt(BigInt(constructionType.value))
-}))
-
-case object NodeTypeSerializer extends CustomSerializer[VVHNodeType](format => ( {
-  case JInt(typeInt) => VVHNodeType(typeInt.toInt)
-}, {
-  case nodeType: VVHNodeType =>
-    JInt(BigInt(nodeType.value))
 }))
 
 case object DiscontinuitySerializer extends CustomSerializer[Discontinuity](format => ( {
