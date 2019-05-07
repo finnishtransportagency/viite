@@ -6,7 +6,7 @@ import java.nio.file.Files.copy
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, NodeType, VVHRoadNodes}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHNodeType, VVHRoadNodes}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.util.{Track, VVHSerializer}
 import fi.liikennevirasto.viite.RoadType
@@ -130,10 +130,10 @@ case object ConstructionTypeSerializer extends CustomSerializer[ConstructionType
     JInt(BigInt(constructionType.value))
 }))
 
-case object NodeTypeSerializer extends CustomSerializer[NodeType](format => ( {
-  case JInt(typeInt) => NodeType(typeInt.toInt)
+case object NodeTypeSerializer extends CustomSerializer[VVHNodeType](format => ( {
+  case JInt(typeInt) => VVHNodeType(typeInt.toInt)
 }, {
-  case nodeType: NodeType =>
+  case nodeType: VVHNodeType =>
     JInt(BigInt(nodeType.value))
 }))
 
