@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
@@ -8,8 +9,113 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: Long, startDate: Option[DateTime], endDate: Option[DateTime],
-                validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
+sealed trait NodeType {
+  def value: Long
+
+  def displayValue: String
+}
+
+object NodeType {
+  val values: Set[NodeType] = Set(NormalIntersection, Roundabout, YIntersection, Interchange, RoadBoundary, ELYBoarder, MultitrackIntersection,
+                                  DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnkownNodeType)
+
+  def apply(intValue: Long): NodeType = {
+    values.find(_.value == intValue).getOrElse(UnkownNodeType)
+  }
+
+  case object NormalIntersection extends NodeType {
+    def value = 1
+
+    def displayValue = "Normaali tasoliittymä"
+  }
+
+  case object Roundabout extends NodeType {
+    def value = 3
+
+    def displayValue = "Kiertoliittymä"
+  }
+
+  case object YIntersection	 extends NodeType {
+    def value = 4
+
+    def displayValue = "Y-liittymä"
+  }
+
+  case object Interchange extends NodeType {
+    def value = 5
+
+    def displayValue = "Eritasoliittymä"
+  }
+
+  case object RoadBoundary extends NodeType {
+    def value = 7
+
+    def displayValue = "Maantien/kadun raja"
+  }
+
+  case object ELYBoarder extends NodeType {
+    def value = 8
+
+    def displayValue = "ELY-raja"
+  }
+
+  case object MultitrackIntersection extends NodeType {
+    def value = 10
+
+    def displayValue = "Moniajoratainen liittymä"
+  }
+
+  case object DropIntersection extends NodeType {
+    def value = 11
+
+    def displayValue = "Pisaraliittymä"
+  }
+
+  case object AccessRoad extends NodeType {
+    def value = 12
+
+    def displayValue = "Liityntätie"
+  }
+
+  case object EndOfRoad extends NodeType {
+    def value = 13
+
+    def displayValue = "Tien loppu"
+  }
+
+  case object Bridge extends NodeType {
+    def value = 14
+
+    def displayValue = "Silta"
+  }
+
+  case object MaintenanceOpening extends NodeType {
+    def value = 15
+
+    def displayValue = "Huoltoaukko"
+  }
+
+  case object PrivateRoad extends NodeType {
+    def value = 16
+
+    def displayValue = "Yksityistie-tai katuliittymä"
+  }
+
+  case object StaggeredIntersection extends NodeType {
+    def value = 17
+
+    def displayValue = "Porrastettu liittymä"
+  }
+
+  case object UnkownNodeType extends NodeType {
+    def value = 99
+
+    def displayValue = "Ei määritelty"
+  }
+}
+
+case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime],
+                createdBy: Option[String], createdTime: Option[DateTime], roadNumber: Option[Long] = None, roadPartNumber: Option[Long] = None, track: Option[Long] = None, startAddrMValue: Option[Long] = None)
 
 class NodeDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
@@ -19,7 +125,7 @@ class NodeDAO {
       val nodeNumber = r.nextLong()
       val coordinates = OracleDatabase.loadRoadsJGeometryToGeometry(r.nextObjectOption())
       val name = r.nextStringOption()
-      val nodeType = r.nextLong()
+      val nodeType = NodeType.apply(r.nextLong())
       val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
@@ -47,22 +153,33 @@ class NodeDAO {
       """.as[Long].firstOption
   }
 
-  def fetchByRoadAttributes(roadNumber: Long, startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long]): List[Node] = {
-    val roadPartCondition = if (startRoadPartNumber.isDefined) {
+  def fetchByRoadAttributes(road_number: Long, startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long]): Seq[Node] = {
+    val road_condition = if (startRoadPartNumber.isDefined) { // if startRoadNumber is defined then endRoadNumber is mandatory
       s"AND ROAD_PART_NUMBER >= ${startRoadPartNumber.get} AND ROAD_PART_NUMBER <= ${endRoadPartNumber.get}"
     } else {
       ""
     }
+    val query = s"""
+      SELECT DISTINCT node.ID, node.NODE_NUMBER, t.X, t.Y, node.NAME, node."TYPE", node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
+                      node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rw.START_ADDR_M
+        FROM NODE node
+        CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(node.COORDINATES)) t
+        LEFT JOIN NODE_POINT np ON node.ID = np.NODE_ID
+        LEFT JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
+        LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
+         		AND ROAD_NUMBER = $road_number $road_condition
+        ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rw.START_ADDR_M, node.ID
+      """
+    Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Long], Option[DateTime], Option[DateTime], Option[DateTime], Option[DateTime],
+      Option[String], Option[DateTime], Option[Long], Option[Long], Option[Long], Option[Long])](query).list.map {
 
-    sql"""
-      SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-        from NODE
-        where ID IN (
-          SELECT node_id FROM node_point WHERE ROADWAY_POINT_ID IN (
-            SELECT id FROM roadway_point WHERE ROADWAY_NUMBER IN (
-              SELECT roadway_number FROM roadway WHERE ROAD_NUMBER = $roadNumber $roadPartCondition))
-        )
-      """.as[Node].list
+      case (id, nodeNumber, coordX, coordY, name, nodeType, startDate, endDate, validFrom, validTo,
+            createdBy, createdTime, roadNumber, roadPartNumber, track, startAddrMValue) =>
+
+        val coordinates = Point(coordX, coordY)
+
+        Node(id, nodeNumber, coordinates, name, NodeType.apply(nodeType.getOrElse(NodeType.UnkownNodeType.value)), startDate, endDate, validFrom, validTo,
+             createdBy, createdTime, roadNumber, roadPartNumber, track, startAddrMValue)
+    }
   }
-
 }

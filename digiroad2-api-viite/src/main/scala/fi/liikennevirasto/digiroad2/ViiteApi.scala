@@ -1000,7 +1000,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val endRoadPartNumber = params.get("endRoadPartNumber").map(_.toLong)
     time(logger, s"GET request for /nodesearch (roadNumber: $roadNumber, startRoadPartNumber: $startRoadPartNumber, endRoadPartNumber: $endRoadPartNumber") {
       if (roadNumber.isDefined) {
-        nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, startRoadPartNumber, startRoadPartNumber)
+        nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, startRoadPartNumber, startRoadPartNumber).map(nodeSearchToApi)
       } else {
         BadRequest("Missing mandatory 'roadNumber' parameter.")
       }
@@ -1315,6 +1315,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           ))
       }
     }
+  }
+
+  def nodeSearchToApi(node: Node): Map[String, Any] = {
+    Map("id" -> node.id,
+      "nodeNumber" -> node.nodeNumber,
+      "coordX" -> node.coordinates.x,
+      "coordY" -> node.coordinates.y,
+      "name" -> node.name,
+      "type" -> node.nodeType,
+      "roadNumber" -> node.roadNumber,
+      "roadPartNumber" -> node.roadPartNumber,
+      "track" -> node.track)
   }
 
   /**
