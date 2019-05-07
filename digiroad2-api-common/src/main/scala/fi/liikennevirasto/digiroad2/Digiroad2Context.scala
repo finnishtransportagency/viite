@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.JsonSerializer
+import fi.liikennevirasto.viite.util.JsonSerializer
 import fi.liikennevirasto.viite.dao.{LinearLocationDAO, _}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.{ChangeSet, LinearLocationAdjustment}
 import fi.liikennevirasto.viite._
