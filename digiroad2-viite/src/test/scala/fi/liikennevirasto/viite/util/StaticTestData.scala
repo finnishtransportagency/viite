@@ -299,9 +299,4 @@ class RoadLinkDeserializer extends VVHSerializer {
   override def writeCache(file: File, objects: Seq[Object]): Boolean = {
     false
   }
-
-  override def readCachedNodes(file: File): Seq[VVHRoadNodes] = {
-    val json = new FileReader(file)
-    read[Seq[VVHRoadNodes]](json)
-  }
 }
