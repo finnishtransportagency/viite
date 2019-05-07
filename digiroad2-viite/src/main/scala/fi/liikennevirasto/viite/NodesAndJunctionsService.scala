@@ -14,10 +14,9 @@ class NodesAndJunctionsService() {
 
   val nodeDAO = new NodeDAO
 
-  def getNodesByRoadAttributes(roadNumber: Long, startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long]): List[Node] = {
+  def getNodesByRoadAttributes(roadNumber: Long, startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long]): Seq[Node] = {
     withDynSession {
       nodeDAO.fetchByRoadAttributes(roadNumber, startRoadPartNumber, endRoadPartNumber)
     }
   }
-
 }
