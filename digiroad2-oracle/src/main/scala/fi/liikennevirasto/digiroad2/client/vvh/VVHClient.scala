@@ -33,28 +33,28 @@ object FeatureClass {
   case object AllOthers extends FeatureClass
 }
 
-sealed trait NodeType {
+sealed trait VVHNodeType {
   def value: Int
 }
 
-object NodeType {
-  val values: Set[NodeType] = Set[NodeType](ClosedTrafficArea, Intersection, RailwayCrossing, PseudoNode, EndOfTheRoad,
+object VVHNodeType {
+  val values: Set[VVHNodeType] = Set[VVHNodeType](ClosedTrafficArea, Intersection, RailwayCrossing, PseudoNode, EndOfTheRoad,
     RoundaboutNodeType, TrafficedSquare, RoadServiceArea, LightTrafficJunction, UnknownNodeType)
 
-  def apply(value: Int): NodeType = {
+  def apply(value: Int): VVHNodeType = {
     values.find(_.value == value).getOrElse(UnknownNodeType)
   }
 
-  case object ClosedTrafficArea extends NodeType { def value = 1 }
-  case object Intersection extends NodeType { def value = 2 }
-  case object RailwayCrossing extends NodeType { def value = 3 }
-  case object PseudoNode extends NodeType { def value = 4 }
-  case object EndOfTheRoad extends NodeType { def value = 5 }
-  case object RoundaboutNodeType extends NodeType { def value = 6 }
-  case object TrafficedSquare extends NodeType { def value = 7 }
-  case object RoadServiceArea extends NodeType { def value = 8 }
-  case object LightTrafficJunction extends NodeType { def value = 9 }
-  case object UnknownNodeType extends NodeType { def value = 99 }
+  case object ClosedTrafficArea extends VVHNodeType { def value = 1 }
+  case object Intersection extends VVHNodeType { def value = 2 }
+  case object RailwayCrossing extends VVHNodeType { def value = 3 }
+  case object PseudoNode extends VVHNodeType { def value = 4 }
+  case object EndOfTheRoad extends VVHNodeType { def value = 5 }
+  case object RoundaboutNodeType extends VVHNodeType { def value = 6 }
+  case object TrafficedSquare extends VVHNodeType { def value = 7 }
+  case object RoadServiceArea extends VVHNodeType { def value = 8 }
+  case object LightTrafficJunction extends VVHNodeType { def value = 9 }
+  case object UnknownNodeType extends VVHNodeType { def value = 99 }
   }
 case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
@@ -84,7 +84,7 @@ case class VVHHistoryRoadLink(linkId: Long, municipalityCode: Int, geometry: Seq
   val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
 }
 
-case class VVHRoadNodes(objectId: Long, geometry: Point, nodeId: Long, formOfNode: NodeType, municipalityCode: Int, subtype: Int)
+case class VVHRoadNodes(objectId: Long, geometry: Point, nodeId: Long, formOfNode: VVHNodeType, municipalityCode: Int, subtype: Int)
 
 /**
   * Numerical values for change types from VVH ChangeInfo Api
@@ -979,11 +979,11 @@ class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations
     VVHRoadNodes(objectId, nodeGeometry, nodeId, extractNodeType(attributes), municipalityCode, subtype)
   }
 
-  protected def extractNodeType(attributes: Map[String, Any]): NodeType = {
+  protected def extractNodeType(attributes: Map[String, Any]): VVHNodeType = {
     Option(attributes("FORMOFNODE").asInstanceOf[BigInt])
       .map(_.toInt)
-      .map(NodeType.apply)
-      .getOrElse(NodeType.UnknownNodeType)
+      .map(VVHNodeType.apply)
+      .getOrElse(VVHNodeType.UnknownNodeType)
   }
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadNodes] = {
