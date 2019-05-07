@@ -1,6 +1,8 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.client.vvh.NodeType
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -8,8 +10,11 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: Long, startDate: Option[DateTime], endDate: Option[DateTime],
+case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: Option[DateTime], endDate: Option[DateTime],
                 validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
+
+case class NodePoint(id: Long, beforeOrAfter: Long, roadwayPointId: Long, nodeId: Long, startDate: Option[DateTime], endDate: Option[DateTime],
+                     validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
 
 class NodeDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
@@ -29,6 +34,36 @@ class NodeDAO {
 
       Node(id, nodeNumber, coordinates.head, name, nodeType, startDate, endDate, validFrom, validTo, createdBy, createdTime)
     }
+  }
+
+  implicit val getNodePoint: GetResult[NodePoint] = new GetResult[NodePoint] {
+    def apply(r: PositionedResult) : NodePoint = {
+      val id = r.nextLong()
+      val beforeOrAfter = r.nextLong()
+      val roadwayPointId = r.nextLong()
+      val nodeId = r.nextLong()
+      val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val createdBy = r.nextStringOption()
+      val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      NodePoint(id, beforeOrAfter, roadwayPointId, nodeId, startDate, endDate, validFrom, validTo, createdBy, createdTime)
+    }
+  }
+
+  private def queryNodeList(query: String): List[Node] = {
+    Q.queryNA[Node](query).list.groupBy(_.id).map {
+      case (_, list) =>
+        list.head
+    }.toList
+  }
+
+  private def queryNodePointList(query: String): List[NodePoint] = {
+    Q.queryNA[NodePoint](query).list.groupBy(_.id).map {
+      case (_, list) =>
+        list.head
+    }.toList
   }
 
   def fetchByNodeNumber(nodeNumber: Long): Option[Node] = {
@@ -63,16 +98,32 @@ class NodeDAO {
     } else {
       ""
     }
-    sql"""
-      SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-        from NODE
-        where ID IN (
-          SELECT node_id FROM node_point WHERE ROADWAY_POINT_ID IN (
-            SELECT id FROM roadway_point WHERE ROADWAY_NUMBER IN (
-              SELECT roadway_number FROM roadway WHERE ROAD_NUMBER = $roadNumber $roadPartCondition)
-                $minAddrMCondition $maxAddrMCondition)
+    val query =
+      s"""
+        SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+          from NODE
+          where ID IN (
+            SELECT node_id FROM node_point WHERE ROADWAY_POINT_ID IN (
+              SELECT id FROM roadway_point WHERE ROADWAY_NUMBER IN (
+                SELECT roadway_number FROM roadway WHERE ROAD_NUMBER = $roadNumber $roadPartCondition)
+                  $minAddrMCondition $maxAddrMCondition)
         )
-      """.as[Node].list
+      """
+    queryNodeList(query)
+  }
+
+  def fetchByBoundingBox(boundingRectangle: BoundingRectangle) : Seq[Node] = {
+    val extendedBoundingBoxRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(scalar = .15),
+      boundingRectangle.rightTop - boundingRectangle.diagonal.scale(scalar = .15))
+    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingBoxRectangle, geometryColumn = "coordinates")
+    val query =
+      s"""
+         SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+         FROM NODE
+         WHERE $boundingBoxFilter
+         AND END_DATE IS NULL AND VALID_TO IS NULL
+       """
+    queryNodeList(query)
   }
 
 }
