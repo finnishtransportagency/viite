@@ -39,7 +39,7 @@ class ProjectReservedPartDAO {
            (EXISTS (SELECT 1 FROM ROADWAY RA, LINEAR_LOCATION LC WHERE RA.ID = ROADWAY_ID AND
            RA.ROAD_NUMBER = $roadNumber AND RA.ROAD_PART_NUMBER = $roadPartNumber))
            OR (ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber
-           AND (STATUS = ${LinkStatus.New.value} OR STATUS = ${LinkStatus.Numbering.value}))
+           AND (STATUS != ${LinkStatus.NotHandled.value}))
            """.execute
       sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber""".execute
     }
@@ -95,50 +95,6 @@ class ProjectReservedPartDAO {
       }
     }
   }
-
-  /*
-  def fetchReservedRoadParts(projectId: Long): Seq[ProjectReservedPart] = {
-    time(logger, s"Fetch reserved road parts for project: $projectId") {
-      val sql =
-        s"""
-        SELECT id, road_number, road_part_number, length, length_new,
-          ely, ely_new,
-          (SELECT DISCONTINUITY FROM ROADWAY ra WHERE ra.road_number = gr.road_number AND
-            ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
-            AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
-          (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
-            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-            AND PL.STATUS != 5 AND PL.TRACK IN (0,1)
-            AND END_ADDR_M = gr.length_new AND ROWNUM < 2) as discontinuity_new,
-          (SELECT LINK_ID FROM PROJECT_LINK pl
-            WHERE pl.project_id = gr.project_id
-            AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-            AND PL.STATUS != 5 AND PL.TRACK IN (0,1) AND pl.START_ADDR_M = 0
-            AND pl.END_ADDR_M > 0 AND ROWNUM < 2) as first_link
-          FROM (
-            SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
-              MAX(ra.END_ADDR_M) as length,
-              MAX(pl.END_ADDR_M) as length_new,
-              MAX(ra.ely) as ELY,
-              MAX(pl.ely) as ELY_NEW
-              FROM PROJECT_RESERVED_ROAD_PART rp LEFT JOIN
-              PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
-              pl.road_part_number = rp.road_part_number AND pl.status != 5)
-              LEFT JOIN Roadway ra ON (ra.Id = pl.Roadway_Id OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
-              LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
-              WHERE
-                rp.project_id = $projectId
-                GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
-            ) gr order by gr.road_number, gr.road_part_number """
-      Q.queryNA[(Long, Long, Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
-        Option[Long], Option[Long])](sql).list.map {
-        case (id, road, part, length, newLength, ely, newEly, discontinuity, newDiscontinuity, startingLinkId) =>
-          ProjectReservedPart(id, road, part, length, discontinuity.map(Discontinuity.apply), ely, newLength,
-            newDiscontinuity.map(Discontinuity.apply), newEly, startingLinkId)
-      }
-    }
-  }
-  */
 
   def fetchReservedRoadParts(projectId: Long): Seq[ProjectReservedPart] = {
     time(logger, s"Fetch reserved road parts for project: $projectId") {

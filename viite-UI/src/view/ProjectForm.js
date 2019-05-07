@@ -200,10 +200,32 @@
 
       var rootElement = $('#feature-attributes');
 
-      var removePart = function (roadNumber, roadPartNumber) {
+      var removeReservedPart = function (roadNumber, roadPartNumber) {
         currentProject.isDirty = true;
-        projectCollection.setReservedParts(_.filter(projectCollection.getAllReservedParts(), function (part) {
-          return part.roadNumber != roadNumber || part.roadPartNumber != roadPartNumber;
+        projectCollection.setReservedParts(_.filter(projectCollection.getReservedParts(), function (part) {
+          return part.roadNumber.toString() !== roadNumber || part.roadPartNumber.toString() !== roadPartNumber;
+        }));
+        removeRenumberedPart(roadNumber, roadPartNumber);
+        fillForm(projectCollection.getReservedParts(), projectCollection.getFormedParts());
+      };
+
+      var removeRenumberedPart = function (roadNumber, roadPartNumber) {
+        projectCollection.setFormedParts(_.filter(projectCollection.getFormedParts(), function (part) {
+          return _.filter(part.roadAddresses, function (ra) {
+            return (ra.roadAddressNumber == roadNumber && ra.roadAddressPartNumber == roadPartNumber) && !ra.isNumbering;
+          }).length > 0
+        }));
+      };
+
+      var removeFormedPart = function (roadNumber, roadPartNumber) {
+        currentProject.isDirty = true;
+        _.each(projectCollection.getRoadAddressesFromFormedRoadPart(roadNumber, roadPartNumber), function (roadAddresses) {
+          _.each(roadAddresses, function (ra) {
+            removeFormedPart(ra.roadAddressNumber, ra.roadAddressPartNumber);
+          });
+        });
+        projectCollection.setFormedParts(_.filter(projectCollection.getFormedParts(), function (part) {
+          return part.roadNumber.toString() !== roadNumber || part.roadPartNumber.toString() !== roadPartNumber;
         }));
         fillForm(projectCollection.getReservedParts(), projectCollection.getFormedParts());
       };
@@ -213,7 +235,7 @@
         var formedParts = $("#newReservedRoads");
 
         reservedParts.append(reservedParts.html(currParts));
-          formedParts.append(formedParts.html(newParts));
+        formedParts.append(formedParts.html(newParts));
       };
 
         var reservedHtmlList = function (list) {
@@ -221,7 +243,7 @@
             var index = 0;
             _.each(list, function (line) {
                 if (!_.isUndefined(line.currentLength)) {
-                    text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber) +
+                    text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList') +
                         addSmallLabel(line.roadNumber) +
                         addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
                         addSmallLabelWithIds((line.currentLength), 'reservedRoadLength') +
@@ -238,7 +260,7 @@
         var index = 0;
         _.each(list, function (line) {
           if (!_.isUndefined(line.newLength)) {
-            text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber) +
+            text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'formedList') +
               addSmallLabel(line.roadNumber) +
               addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
               addSmallLabelWithIds((line.newLength), 'reservedRoadLength') +
@@ -556,30 +578,48 @@
         return false;
       });
 
-      rootElement.on('click', '.btn-delete', function () {
+      rootElement.on('click', '.btn-delete.reservedList', function () {
         var id = this.id;
         var roadNumber = this.attributes.roadNumber.value;
         var roadPartNumber = this.attributes.roadPartNumber.value;
 
-          if (!currentProject) {
-            projectCollection.setReservedParts(projectCollection.deleteRoadPartFromList(projectCollection.getReservedParts(), roadNumber, roadPartNumber));
-            $('#reservedRoads').html(reservedHtmlList(projectCollection.getReservedParts()));
+        if (isProjectEditable()) {
+          if (currentProject && projectCollection.getReservedParts()[id]) {
+            new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
+              successCallback: function () {
+                removeReservedPart(roadNumber, roadPartNumber);
+                removeFormedPart(roadNumber, roadPartNumber);
+                _.defer(function () {
+                  textFieldChangeHandler({removedReserved: true});
+                });
+              }
+            });
+          } else {
+            removeReservedPart(roadNumber, roadPartNumber);
+            removeFormedPart(roadNumber, roadPartNumber);
           }
-          if (isProjectEditable()) {
-            if (currentProject && projectCollection.getAllReservedParts()[id]) {
-              new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
-                successCallback: function () {
-                  removePart(roadNumber, roadPartNumber);
-                  _.defer(function () {
-                    textFieldChangeHandler({removedReserved: true});
-                  });
-                }
-              });
-            } else {
-              removePart(roadNumber, roadPartNumber);
-            }
-          }
+        }
+      });
 
+      rootElement.on('click', '.btn-delete.formedList', function () {
+        var id = this.id;
+        var roadNumber = this.attributes.roadNumber.value;
+        var roadPartNumber = this.attributes.roadPartNumber.value;
+
+        if (isProjectEditable()) {
+          if (currentProject && projectCollection.getFormedParts()[id]) {
+            new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
+              successCallback: function () {
+                removeFormedPart(roadNumber, roadPartNumber);
+                _.defer(function () {
+                  textFieldChangeHandler({removedReserved: true});
+                });
+              }
+            });
+          } else {
+            removeFormedPart(roadNumber, roadPartNumber);
+          }
+        }
       });
 
       rootElement.on('change', '.form-group', function () {
