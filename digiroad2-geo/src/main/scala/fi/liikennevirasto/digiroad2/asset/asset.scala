@@ -11,12 +11,12 @@ sealed trait LinkGeomSource{
 //LINKIN LÄHDE (1 = tielinkkien rajapinta, 2 = täydentävien linkkien rajapinta, 3 = suunnitelmalinkkien rajapinta, 4 = jäädytettyjen linkkien rajapinta, 5 = historialinkkien rajapinta)
 
 object LinkGeomSource{
-  val values = Set(NormalLinkInterface, ComplimentaryLinkInterface , SuravageLinkInterface, FrozenLinkInterface, HistoryLinkInterface)
+  val values = Set(NormalLinkInterface, ComplementaryLinkInterface , SuravageLinkInterface, FrozenLinkInterface, HistoryLinkInterface)
 
   def apply(intValue: Int): LinkGeomSource = values.find(_.value == intValue).getOrElse(Unknown)
 
   case object NormalLinkInterface extends LinkGeomSource {def value = 1;}
-  case object ComplimentaryLinkInterface extends LinkGeomSource {def value = 2;}
+  case object ComplementaryLinkInterface extends LinkGeomSource {def value = 2;}
   case object SuravageLinkInterface extends LinkGeomSource {def value = 3;}
   case object FrozenLinkInterface extends LinkGeomSource {def value = 4;}
   case object HistoryLinkInterface extends LinkGeomSource {def value = 5;}

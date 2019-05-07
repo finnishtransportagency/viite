@@ -999,7 +999,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
 
   protected override val restApiEndPoint: String = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_complimentary"
-  protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
+  protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.ComplementaryLinkInterface
   protected override val disableGeometry = false
 
   override def defaultOutFields(): String = {
