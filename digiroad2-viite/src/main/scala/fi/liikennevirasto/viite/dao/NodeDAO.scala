@@ -153,9 +153,12 @@ class NodeDAO {
       """.as[Long].firstOption
   }
 
-  def fetchByRoadAttributes(road_number: Long, startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long]): Seq[Node] = {
-    val road_condition = if (startRoadPartNumber.isDefined) { // if startRoadNumber is defined then endRoadNumber is mandatory
-      s"AND ROAD_PART_NUMBER >= ${startRoadPartNumber.get} AND ROAD_PART_NUMBER <= ${endRoadPartNumber.get}"
+  def fetchByRoadAttributes(road_number: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[Node] = {
+    val road_condition = if (minRoadPartNumber.isDefined) { // if startRoadNumber is defined then endRoadNumber is mandatory
+      if (!maxRoadPartNumber.isDefined) {
+        throw new IllegalArgumentException(s"""When the min road part number is specified, also the max road part number is required.""")
+      }
+      s"AND ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
     } else {
       ""
     }
