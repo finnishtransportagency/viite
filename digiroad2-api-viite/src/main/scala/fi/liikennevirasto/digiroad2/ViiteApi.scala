@@ -997,14 +997,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/nodesearch", operation(getNodesByRoadAttributes)) {
     val roadNumber = params.get("roadNumber").map(_.toLong)
+    if (roadNumber.isEmpty) { BadRequest("Missing mandatory 'roadNumber' parameter."); }
     val startRoadPartNumber = params.get("startRoadPartNumber").map(_.toLong)
     val endRoadPartNumber = params.get("endRoadPartNumber").map(_.toLong)
-    time(logger, s"GET request for /nodesearch (roadNumber: $roadNumber, startRoadPartNumber: $startRoadPartNumber, endRoadPartNumber: $endRoadPartNumber") {
-      if (roadNumber.isDefined) {
-        nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, startRoadPartNumber, startRoadPartNumber).map(nodeSearchToApi)
-      } else {
-        BadRequest("Missing mandatory 'roadNumber' parameter.")
-      }
+    time(logger, s"GET request for /nodesearch (roadNumber: ${roadNumber.get}, startRoadPartNumber: $startRoadPartNumber, endRoadPartNumber: $endRoadPartNumber") {
+        nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, startRoadPartNumber, endRoadPartNumber) match {
+          case Right(nodes) => Map("success" -> true, "nodes" -> nodes.map(nodeSearchToApi))
+          case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
+        }
     }
   }
 
