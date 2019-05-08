@@ -78,6 +78,7 @@ class NodeDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       roadwayDAO.create(Seq(testRoadway1))
       dao.create(Seq(testNode1))
+      // TODO create NodePoint and RoadwayPoint
       val nodes = dao.fetchByRoadAttributes(roadNumber1, None, None)
       nodes.isEmpty should be(false)
     }
