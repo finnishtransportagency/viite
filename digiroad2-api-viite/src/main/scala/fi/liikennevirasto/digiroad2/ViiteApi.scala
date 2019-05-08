@@ -160,13 +160,27 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-//  get("/nodesAndJunctions", operation(getNodesAndJunctions)) {
-//    response.setHeader("Access-Control-Allow-Headers", "*")
-//    time(logger, s"GET request for /nodesAndJunctions") {
-//      params.get("bbox")
-//        .map(getNodesAndJunctions)
-//    }
-//  }
+  private val getNodesAndJunctions: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Seq[Seq[Map[String, Any]]]]("getNodesAndJunctions")
+      .parameters(
+        queryParam[Int]("zoom").description("Current zoom level of the map"),
+        queryParam[String]("bbox").description("String containing the 4 vertexes of a square, is akin to the viewport.\r\n" +
+          "Format: Number,Number,Number,Number")
+      )
+      tags "ViiteAPI - NodesAndJunctions"
+      summary "Returns all the road nodes that fit inside the viewport."
+      notes getRoadAddressNotes
+    )
+
+  get("/nodesjunctions", operation(getNodesAndJunctions)) {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+    val zoom = chooseDrawType(params.getOrElse("zoom", "5"))
+    time(logger, s"GET request for /nodesAndJunctions") {
+      params.get("bbox")
+        .map(getNodesAndJunctions(zoomLevel = zoom))
+        .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+    }
+  }
 
   private val getRoadAddressErrors: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[Long, List[Map[String, Long]]]]("getRoadAddressErrors")
@@ -1038,21 +1052,22 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-//  private def getNodesAndJunctions(zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
-//    val boundingRectangle = constructBoundingRectangle(bbox)
-//    zoomLevel match {
-//      case DrawLinearPublicRoads | DrawLinearPublicRoads => time(logger, operationName = "nodes fetch ")
-//      {
-//        Seq(
-//          Seq(Map[String, Any] ("type", "node")),
-//          nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi))
-//      }
-//      case _ => time(logger, operationName = "nodes with junctions fetch") {
-//        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).map(_.)
-//      }
-//    }
-//
-//  }
+  private def getNodesAndJunctions(zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    zoomLevel match {
+      case DrawLinearPublicRoads | DrawLinearPublicRoads => time(logger, operationName = "nodes fetch ")
+      {
+        Seq(
+          Seq(Map("type" -> "node")),
+          nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi))
+      }
+      case _ => time(logger, operationName = "nodes with junctions fetch") {
+        Seq(
+          Seq(Map("type" -> "nodesWithJunctions")),
+        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi))
+      }
+    }
+  }
 
   private def getProjectLinks(projectId: Long, zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
@@ -1191,6 +1206,35 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "createdBy" -> node.createdBy,
       "createdTime" -> node.createdTime
       )
+  }
+
+  def nodePointToApi(nodePoint: NodePoint) : Map[String, Any] = {
+    //TODO
+    Map("id" -> nodePoint.id,
+        "nodeId" -> nodePoint.nodeId)
+  }
+
+  def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
+    Map("id" -> junction._1.id,
+        "junctionNumber" -> junction._1.junctionNumber,
+         "nodeId" -> junction._1.nodeId,
+        "junctionPoints" -> junction._2.map(junctionPointToApi))
+  }
+
+  def junctionPointToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
+    Map("id" -> junctionPoint.id,
+        "junctionId" -> junctionPoint.junctionId,
+        "roadwayNumber" -> junctionPoint.roadwayNumber,
+        "addrM" -> junctionPoint.addrM)
+  }
+
+  def nodeToApi(node: (Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]))) : Map[String, Any] = {
+
+      Map("node" -> {
+        if(node._1.isDefined){simpleNodeToApi(node._1.get)} else ""
+      } ,
+        "nodePoints" -> node._2._1.map(nodePointToApi),
+        "junctions" -> node._2._2.map(junctionToApi))
   }
 
   def roadNameToApi(roadName: RoadName): Map[String, Any] = {
