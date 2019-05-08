@@ -167,7 +167,7 @@ class NodeDAO {
         LEFT JOIN NODE_POINT np ON node.ID = np.NODE_ID
         LEFT JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
-         		AND ROAD_NUMBER = $road_number $road_condition
+        WHERE ROAD_NUMBER = $road_number $road_condition
         ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rw.START_ADDR_M, node.ID
       """
     Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Long], Option[DateTime], Option[DateTime], Option[DateTime], Option[DateTime],

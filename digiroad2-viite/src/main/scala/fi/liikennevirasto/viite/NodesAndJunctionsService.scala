@@ -4,6 +4,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao.{Node, NodeDAO}
 import org.slf4j.LoggerFactory
 
+import scala.util.control.NonFatal
+
 class NodesAndJunctionsService() {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -14,9 +16,17 @@ class NodesAndJunctionsService() {
 
   val nodeDAO = new NodeDAO
 
-  def getNodesByRoadAttributes(roadNumber: Long, startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long]): Seq[Node] = {
+  def getNodesByRoadAttributes(roadNumber: Long, startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long]): Either[String, Seq[Node]] = {
     withDynSession {
-      nodeDAO.fetchByRoadAttributes(roadNumber, startRoadPartNumber, endRoadPartNumber)
+      try {
+        val nodes = nodeDAO.fetchByRoadAttributes(roadNumber, startRoadPartNumber, endRoadPartNumber)
+        Right(nodes)
+      } catch {
+        case e if NonFatal(e) => {
+          logger.error("Failed to fetch nodes.", e)
+          Left(e.getMessage)
+        }
+      }
     }
   }
 }
