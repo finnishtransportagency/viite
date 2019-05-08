@@ -73,7 +73,7 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
       }
     )
 
-    junctionsWithPoints.foreach{
+    junctionsWithPoints.par.foreach{
       conversionJunction =>
         println(s"Inserting junction with TR id = ${conversionJunction._1.id} ")
         val nodeId = nodeDAO.fetchId(conversionJunction._1.nodeNumber)

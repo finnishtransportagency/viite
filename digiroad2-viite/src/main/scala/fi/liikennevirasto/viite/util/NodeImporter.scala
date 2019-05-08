@@ -68,7 +68,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
       conversionNode => (conversionNode, conversionNodePoints.filter(_.nodeId == conversionNode.id))
     )
 
-    nodesWithPoints.foreach{
+    nodesWithPoints.par.foreach{
       conversionNode =>
         println(s"Inserting node with TR id = ${conversionNode._1.id} and node_number = ${conversionNode._1.nodeNumber}")
         val newNodeId = Sequences.nextNodeId
