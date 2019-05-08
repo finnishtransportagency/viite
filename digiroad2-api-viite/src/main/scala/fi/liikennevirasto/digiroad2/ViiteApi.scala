@@ -160,13 +160,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/nodesAndJunctions", operation(getNodesAndJunctions)) {
-    response.setHeader("Access-Control-Allow-Headers", "*")
-    time(logger, s"GET request for /nodesAndJunctions") {
-      params.get("bbox")
-        .map(getNodesAndJunctions)
-    }
-  }
+//  get("/nodesAndJunctions", operation(getNodesAndJunctions)) {
+//    response.setHeader("Access-Control-Allow-Headers", "*")
+//    time(logger, s"GET request for /nodesAndJunctions") {
+//      params.get("bbox")
+//        .map(getNodesAndJunctions)
+//    }
+//  }
 
   private val getRoadAddressErrors: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[Long, List[Map[String, Long]]]]("getRoadAddressErrors")
@@ -1038,19 +1038,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private def getNodesAndJunctions(zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
-    val boundingRectangle = constructBoundingRectangle(bbox)
-    zoomLevel match {
-      case DrawLinearPublicRoads | DrawLinearPublicRoads => time(logger, operationName = "nodes fetch ")
-      {
-        nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle)
-      }
-      case _ => time(logger, operationName = "nodes with junctions fetch") {
-        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle)
-      }
-    }
-
-  }
+//  private def getNodesAndJunctions(zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+//    val boundingRectangle = constructBoundingRectangle(bbox)
+//    zoomLevel match {
+//      case DrawLinearPublicRoads | DrawLinearPublicRoads => time(logger, operationName = "nodes fetch ")
+//      {
+//        Seq(
+//          Seq(Map[String, Any] ("type", "node")),
+//          nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi))
+//      }
+//      case _ => time(logger, operationName = "nodes with junctions fetch") {
+//        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).map(_.)
+//      }
+//    }
+//
+//  }
 
   private def getProjectLinks(projectId: Long, zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
@@ -1179,12 +1181,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
   }
 
-  def nodeToApi(node: Node): Map[String, Any] = {
+  def simpleNodeToApi(node: Node): Map[String, Any] = {
     Map("id" -> node.id,
       "nodeNumber" -> node.nodeNumber,
+      "nodeName" -> node.name,
       "coordX" -> node.coordinates.x,
       "coordY" -> node.coordinates.y,
-      "type" -> node.nodeType)
+      "type" -> node.nodeType,
+      "createdBy" -> node.createdBy,
+      "createdTime" -> node.createdTime
+      )
   }
 
   def roadNameToApi(roadName: RoadName): Map[String, Any] = {
