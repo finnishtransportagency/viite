@@ -2,7 +2,6 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.client.vvh.NodeType
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -10,11 +9,11 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: Option[DateTime], endDate: Option[DateTime],
+case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: Long, startDate: Option[DateTime], endDate: Option[DateTime],
                 validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
 
-case class NodePoint(id: Long, beforeOrAfter: Long, roadwayPointId: Long, nodeId: Long, startDate: Option[DateTime], endDate: Option[DateTime],
-                     validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
+case class NodePoint(id: Long, beforeOrAfter: Long, roadwayPointId: Long, nodeId: Option[Long], startDate: Option[DateTime], endDate: Option[DateTime],
+                     validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM: Long)
 
 class NodeDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
@@ -41,14 +40,16 @@ class NodeDAO {
       val id = r.nextLong()
       val beforeOrAfter = r.nextLong()
       val roadwayPointId = r.nextLong()
-      val nodeId = r.nextLong()
+      val nodeId = r.nextLongOption()
       val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val createdBy = r.nextStringOption()
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      NodePoint(id, beforeOrAfter, roadwayPointId, nodeId, startDate, endDate, validFrom, validTo, createdBy, createdTime)
+      val roadwayNumber = r.nextLong()
+      val addrM = r.nextLong()
+      NodePoint(id, beforeOrAfter, roadwayPointId, nodeId, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM)
     }
   }
 
@@ -125,5 +126,17 @@ class NodeDAO {
        """
     queryNodeList(query)
   }
+
+  def fetchNodePointsByNodeId(nodeIds: Seq[Long]): Seq[NodePoint] = {
+    val query =
+      s"""
+         SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_ID, NP.START_DATE, NP.END_DATE, NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY,
+         NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M FROM NODE_POINT NP
+         JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+         where NP.ID in (${nodeIds.mkString(",")})
+       """
+    queryNodePointList(query)
+  }
+
 
 }
