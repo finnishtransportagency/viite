@@ -11,21 +11,14 @@
       nodes = list;
     };
 
-    this.getNodesByRoadAttributes = function(roadNumber, startRoadPartNumber, endRoadPartNumber) {
+    this.getNodesByRoadAttributes = function(roadNumber, minRoadPartNumber, maxRoadPartNumber) {
       applicationModel.addSpinner();
       var roadAttributes = {
         roadNumber: roadNumber,
-        startRoadPartNumber: startRoadPartNumber,
-        endRoadPartNumber: endRoadPartNumber
+        minRoadPartNumber: minRoadPartNumber,
+        maxRoadPartNumber: maxRoadPartNumber
       };
-      backend.getNodesByRoadAttributes(roadAttributes, function (result) {
-        if (result.success) {
-          eventbus.trigger('nodesAndJunctions:fetched', result);
-        } else {
-          eventbus.trigger('nodesAndJunctions:failed', result.errorMessage);
-          applicationModel.removeSpinner();
-        }
-      });
+      backend.getNodesByRoadAttributes(roadAttributes);
     };
 
   };

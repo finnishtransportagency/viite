@@ -626,17 +626,12 @@
       });
     }, 1000);
 
-    this.getNodesByRoadAttributes = _.throttle(function (roadAttributes, success, failure) {
-      $.ajax({
-        contentType: "application/json",
-        type: "GET",
-        url: "api/viite/nodesearch",
-        data: roadAttributes,
-        dataType: "json",
-        success: success,
-        error: failure
-      });
-    }, 1000);
+    this.getNodesByRoadAttributes = function (roadAttributes) {
+      $.get('api/viite/nodesearch', roadAttributes)
+        .then(function (result) {
+          eventbus.trigger('nodesAndJunctions:fetched', result);
+        });
+    };
 
   };
 }(this));
