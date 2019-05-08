@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.{NewIdValue, RoadType}
@@ -30,6 +31,10 @@ class NodeDAOSpec extends FunSuite with Matchers {
   private val roadPartNumber1 = 1
   val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+
+  val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
+    Some(DateTime.parse("2019-01-01")), None, Some(DateTime.parse("2019-01-01")), None, Some("Test"), None,
+    Some(roadNumber1), Some(roadPartNumber1), Some(testRoadway1.track.value), Some(testRoadway1.startAddrMValue))
 
 
   test("Test fetchByRoadAttributes When non-existing road number Then return None") {
@@ -66,6 +71,15 @@ class NodeDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val nodes = dao.fetchByRoadAttributes(existingRoadNumber, Some(nonExistingRoadPartNumber), Some(nonExistingRoadPartNumber))
       nodes.isEmpty should be(true)
+    }
+  }
+
+  test("Test fetchByRoadAttributes When existing road number with related nodes Then return nodes") {
+    runWithRollback {
+      roadwayDAO.create(Seq(testRoadway1))
+      dao.create(Seq(testNode1))
+      val nodes = dao.fetchByRoadAttributes(roadNumber1, None, None)
+      nodes.isEmpty should be(false)
     }
   }
 
