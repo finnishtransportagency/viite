@@ -16,10 +16,10 @@ class NodesAndJunctionsService() {
 
   val nodeDAO = new NodeDAO
 
-  def getNodesByRoadAttributes(roadNumber: Long, startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long]): Either[String, Seq[Node]] = {
+  def getNodesByRoadAttributes(roadNumber: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[Node] = {
     withDynSession {
       try {
-        val nodes = nodeDAO.fetchByRoadAttributes(roadNumber, startRoadPartNumber, endRoadPartNumber)
+        val nodes = nodeDAO.fetchByRoadAttributes(roadNumber, minRoadPartNumber, maxRoadPartNumber)
         Right(nodes)
       } catch {
         case e if NonFatal(e) => {

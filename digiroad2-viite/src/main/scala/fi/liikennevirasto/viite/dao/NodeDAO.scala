@@ -153,9 +153,12 @@ class NodeDAO {
       """.as[Long].firstOption
   }
 
-  def fetchByRoadAttributes(road_number: Long, startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long]): Seq[Node] = {
-    val road_condition = if (startRoadPartNumber.isDefined) { // if startRoadNumber is defined then endRoadNumber is mandatory
-      s"AND ROAD_PART_NUMBER >= ${startRoadPartNumber.get} AND ROAD_PART_NUMBER <= ${endRoadPartNumber.get}"
+  def fetchByRoadAttributes(road_number: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[Node] = {
+    val road_condition = if (minRoadPartNumber.isDefined) { // if startRoadNumber is defined then endRoadNumber is mandatory
+      if (maxRoadPartNumber.isEmpty) {
+        throw new IllegalArgumentException(s"""When the min road part number is specified, also the max road part number is required.""")
+      }
+      s"AND ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
     } else {
       ""
     }
@@ -167,7 +170,7 @@ class NodeDAO {
         LEFT JOIN NODE_POINT np ON node.ID = np.NODE_ID
         LEFT JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
-        WHERE ROAD_NUMBER = $road_number $road_condition
+         		WHERE ROAD_NUMBER = $road_number $road_condition
         ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rw.START_ADDR_M, node.ID
       """
     Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Long], Option[DateTime], Option[DateTime], Option[DateTime], Option[DateTime],

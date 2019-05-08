@@ -987,24 +987,31 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     apiOperation[Map[String, Any]]("getNodesByRoadAttributes")
       .parameters(
         queryParam[Long]("roadNumber").description("Road Number of a road address"),
-        queryParam[Long]("startRoadPartNumber").description("Road Part Number of a road address"),
-        queryParam[Long]("endRoadPartNumber").description("Road Part Number of a road address")
+        queryParam[Long]("minRoadPartNumber").description("Road Part Number of a road address"),
+        queryParam[Long]("maxRoadPartNumber").description("Road Part Number of a road address")
       )
       tags "ViiteAPI - Nodes"
-      summary "Returns all the nodes belonging to the road number and possibly road part number and in the given address range."
+      summary "Returns all the nodes belonging to the road number and possibly withing the given range of road part numbers."
       notes ""
     )
 
   get("/nodesearch", operation(getNodesByRoadAttributes)) {
     val roadNumber = params.get("roadNumber").map(_.toLong)
-    if (roadNumber.isEmpty) { BadRequest("Missing mandatory 'roadNumber' parameter."); }
-    val startRoadPartNumber = params.get("startRoadPartNumber").map(_.toLong)
-    val endRoadPartNumber = params.get("endRoadPartNumber").map(_.toLong)
-    time(logger, s"GET request for /nodesearch (roadNumber: ${roadNumber.get}, startRoadPartNumber: $startRoadPartNumber, endRoadPartNumber: $endRoadPartNumber") {
-        nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, startRoadPartNumber, endRoadPartNumber) match {
-          case Right(nodes) => Map("success" -> true, "nodes" -> nodes.map(nodeSearchToApi))
-          case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
+    val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
+    val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
+    time(logger, s"GET request for /nodesearch (roadNumber: ${roadNumber.get}, startRoadPartNumber: $minRoadPartNumber, endRoadPartNumber: $maxRoadPartNumber") {
+      if (roadNumber.isDefined) {
+        if (minRoadPartNumber.isDefined != maxRoadPartNumber.isDefined) {
+          BadRequest("When the 'minRoadPartNumber' is defined, also the 'maxRoadPartNumber' must be defined.")
+        } else {
+          nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, minRoadPartNumber, maxRoadPartNumber) match {
+            case Right(nodes) => Map("success" -> true, "nodes" -> nodes.map(nodeSearchToApi))
+            case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
+          }
         }
+      } else {
+        BadRequest("Missing mandatory 'roadNumber' parameter.")
+      }
     }
   }
 
