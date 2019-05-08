@@ -2,12 +2,14 @@ package fi.liikennevirasto.viite.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import fi.liikennevirasto.viite._
 
 sealed trait NodeType {
   def value: Long
@@ -117,8 +119,10 @@ object NodeType {
 case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime],
                 createdBy: Option[String], createdTime: Option[DateTime], roadNumber: Option[Long] = None, roadPartNumber: Option[Long] = None, track: Option[Long] = None, startAddrMValue: Option[Long] = None)
 
-class NodeDAO {
-  val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
+class NodeDAO extends BaseDAO {
+
+  val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
+
   implicit val getNode: GetResult[Node] = new GetResult[Node] {
     def apply(r: PositionedResult): Node = {
       val id = r.nextLong()
@@ -184,5 +188,51 @@ class NodeDAO {
         Node(id, nodeNumber, coordinates, name, NodeType.apply(nodeType.getOrElse(NodeType.UnkownNodeType.value)), startDate, endDate, validFrom, validTo,
              createdBy, createdTime, roadNumber, roadPartNumber, track, startAddrMValue)
     }
+  }
+
+  def create(nodes: Iterable[Node], createdBy: String = "-"): Seq[Long] = {
+
+    val ps = dynamicSession.prepareStatement(
+      """insert into NODE (ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, CREATED_BY)
+      values (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""".stripMargin)
+
+    // Set ids for the nodes without one
+    val (ready, idLess) = nodes.partition(_.id != NewIdValue)
+    val newIds = Sequences.fetchNodeIds(idLess.size)
+    val createNodes = ready ++ idLess.zip(newIds).map(x =>
+      x._1.copy(id = x._2)
+    )
+
+    createNodes.foreach {
+      node =>
+        val nodeNumber = if (node.nodeNumber == NewIdValue) {
+          Sequences.nextNodeNumber
+        } else {
+          node.nodeNumber
+        }
+        ps.setLong(1, node.id)
+        ps.setLong(2, nodeNumber)
+        ps.setObject(3, OracleDatabase.createPointJGeometry(node.coordinates))
+        if (node.name.isDefined) {
+          ps.setString(4, node.name.get)
+        } else {
+          ps.setNull(4, java.sql.Types.VARCHAR)
+        }
+        ps.setLong(5, node.nodeType.value)
+        if (node.startDate.isDefined) {
+          ps.setString(6, dateFormatter.print(node.startDate.get))
+        } else {
+          throw new IllegalStateException("Failed to create a new Node. Start date is not set.")
+        }
+        ps.setString(7, node.endDate match {
+          case Some(date) => dateFormatter.print(date)
+          case None => ""
+        })
+        ps.setString(8, if (createdBy == null) "-" else createdBy)
+        ps.addBatch()
+    }
+    ps.executeBatch()
+    ps.close()
+    createNodes.map(_.id).toSeq
   }
 }
