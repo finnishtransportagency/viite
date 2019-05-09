@@ -13,6 +13,11 @@
       var cachedMarker = null;
       var roadLinkStyler = new RoadLinkStyler();
 
+      var SelectionType = LinkValues.SelectionType;
+      var Anomaly = LinkValues.Anomaly;
+      var SideCode = LinkValues.SideCode;
+      var RoadZIndex = LinkValues.RoadZIndex;
+
       var indicatorLayer = new ol.layer.Vector({
         source: indicatorVector,
         name: 'indicatorLayer',
