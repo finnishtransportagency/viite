@@ -4,7 +4,8 @@
     var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
     var projectCollection = new ProjectCollection(backend);
-      var roadNameCollection = new RoadNameCollection(backend);
+    var roadNameCollection = new RoadNameCollection(backend);
+    var nodeCollection = new NodeCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
@@ -14,6 +15,7 @@
     var models = {
       roadCollection: roadCollection,
       projectCollection: projectCollection,
+      nodeCollection: nodeCollection,
       selectedLinkProperty: selectedLinkProperty,
       linkPropertiesModel: linkPropertiesModel,
       selectedProjectLinkProperty : selectedProjectLinkProperty
@@ -110,6 +112,8 @@
 
     var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
+    var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
+    var nodeLayer = new NodeLayer(map, roadLayer, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
@@ -123,7 +127,8 @@
     var layers = _.merge({
       road: roadLayer,
       roadAddressProject: projectLinkLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel)
+      linkProperty: linkPropertyLayer,
+      nodeLayer: nodeLayer
     });
 
     var mapPluginsContainer = jQuery('#map-plugins');

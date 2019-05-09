@@ -498,7 +498,6 @@
 
     var redraw = function() {
       var marker;
-      var cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
       var suravageLinks = roadCollection.getSuravageLinks();
@@ -546,7 +545,7 @@
         }), 'startAddressM');
         _.each(floatingGroups, function(floatGroup) {
             _.each(floatGroup, function(floating){
-                marker = cachedLinkPropertyMarker.createMarker(floating);
+                marker = cachedMarker.createMarker(floating);
                 if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
                     floatingMarkerLayer.getSource().addFeature(marker);
             });

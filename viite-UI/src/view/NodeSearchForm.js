@@ -50,7 +50,7 @@
 
       eventbus.on('nodesAndJunctions:open', function () {
         rootElement.html(searchNodesTemplate());
-
+        applicationModel.selectLayer('node', true);
         $('#close-node-search').click(function () {
           applicationModel.selectLayer('linkProperty', true);
           eventbus.trigger('nodesAndJunctions:close');
