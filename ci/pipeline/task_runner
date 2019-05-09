@@ -35,7 +35,8 @@ pipeline {
                                        'check_road_network',
                                        'fuse_road_address_with_history',
                                        'import_road_names',
-                                       'test_integration_api_all_municipalities'
+                                       'test_integration_api_all_municipalities',
+                                       'import_nodes_and_junctions'
                                        ])
 
     }
