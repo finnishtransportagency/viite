@@ -117,7 +117,7 @@ object NodeType {
   }
 }
 
-case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime],
+case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: DateTime, endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
                 createdBy: Option[String], createdTime: Option[DateTime], roadNumber: Option[Long] = None, roadPartNumber: Option[Long] = None, track: Option[Long] = None, startAddrMValue: Option[Long] = None)
 
 class NodeDAO extends BaseDAO {
@@ -131,9 +131,9 @@ class NodeDAO extends BaseDAO {
       val coordinates = OracleDatabase.loadRoadsJGeometryToGeometry(r.nextObjectOption())
       val name = r.nextStringOption()
       val nodeType = NodeType.apply(r.nextLong())
-      val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val startDate = formatter.parseDateTime(r.nextDate.toString)
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val validFrom = formatter.parseDateTime(r.nextDate.toString)
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val createdBy = r.nextStringOption()
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
@@ -186,7 +186,7 @@ class NodeDAO extends BaseDAO {
          		AND node.VALID_TO IS NULL AND node.END_DATE IS NULL
         ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rw.START_ADDR_M, node.ID
       """
-    Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Long], Option[DateTime], Option[DateTime], Option[DateTime], Option[DateTime],
+    Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Long], DateTime, Option[DateTime], DateTime, Option[DateTime],
       Option[String], Option[DateTime], Option[Long], Option[Long], Option[Long], Option[Long])](query).list.map {
 
       case (id, nodeNumber, coordX, coordY, name, nodeType, startDate, endDate, validFrom, validTo,
@@ -228,11 +228,7 @@ class NodeDAO extends BaseDAO {
           ps.setNull(4, java.sql.Types.VARCHAR)
         }
         ps.setLong(5, node.nodeType.value)
-        if (node.startDate.isDefined) {
-          ps.setString(6, dateFormatter.print(node.startDate.get))
-        } else {
-          throw new IllegalStateException("Failed to create a new Node. Start date is not set.")
-        }
+        ps.setString(6, dateFormatter.print(node.startDate))
         ps.setString(7, node.endDate match {
           case Some(date) => dateFormatter.print(date)
           case None => ""
