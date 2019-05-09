@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.{NewIdValue, RoadType}
@@ -24,7 +25,9 @@ class NodeDAOSpec extends FunSuite with Matchers {
   private val nonExistingRoadPartNumber = -1
 
   val dao = new NodeDAO
+  val nodePointDAO = new NodePointDAO
   val roadwayDAO = new RoadwayDAO
+  val roadwayPointDAO = new RoadwayPointDAO
 
   private val roadNumber1 = 990
   private val roadwayNumber1 = 1000000000l
@@ -32,10 +35,14 @@ class NodeDAOSpec extends FunSuite with Matchers {
   val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
+  val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadPartNumber1, 0, "Test", None, None, None)
+
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
     Some(DateTime.parse("2019-01-01")), None, Some(DateTime.parse("2019-01-01")), None, Some("Test"), None,
     Some(roadNumber1), Some(roadPartNumber1), Some(testRoadway1.track.value), Some(testRoadway1.startAddrMValue))
 
+  val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None)
 
   test("Test fetchByRoadAttributes When non-existing road number Then return None") {
     runWithRollback {
@@ -77,8 +84,11 @@ class NodeDAOSpec extends FunSuite with Matchers {
   test("Test fetchByRoadAttributes When existing road number with related nodes Then return nodes") {
     runWithRollback {
       roadwayDAO.create(Seq(testRoadway1))
-      dao.create(Seq(testNode1))
-      // TODO create NodePoint and RoadwayPoint
+      val nodeId = Sequences.nextNodeId
+      dao.create(Seq(testNode1.copy(id = nodeId)))
+      val roadwayPointId = Sequences.nextRoadwayPointId
+      roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId))
+      nodePointDAO.create(Seq(testNodePoint1.copy(nodeId = Some(nodeId), roadwayPointId = roadwayPointId)))
       val nodes = dao.fetchByRoadAttributes(roadNumber1, None, None)
       nodes.isEmpty should be(false)
     }
