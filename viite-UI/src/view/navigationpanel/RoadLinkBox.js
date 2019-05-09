@@ -253,22 +253,14 @@
       toolSelection.hide();
     });
 
-    eventbus.on('layer:selected roadAddressProject', toggleProjectLegends);
+    eventbus.on('layer:selected', toggleLegends);
 
     eventbus.on('nodesAndJunctions:open', function () {
-      eventbus.trigger('roadAddressProject:deactivateAllSelections');
-      $('#legendDiv').empty();
-      roadClassLegend.append(nodesLegendEntries);
+      eventbus.trigger('linkProperties:deactivateAllSelections');
     });
 
     eventbus.on('nodesAndJunctions:close', function () {
-      eventbus.trigger('roadAddressProject:enableInteractions');
-      var container = $('#legendDiv');
-      $('.panel-actions').hide();
-      container.empty();
-      roadClassLegend.append(roadClassLegendEntries);
-      roadClassLegend.append(constructionTypeLegendEntries);
-      roadClassLegend.append(calibrationPointPicture);
+      eventbus.trigger('linkProperties:enableInteractions');
     });
 
     bindExternalEventHandlers();
@@ -285,12 +277,16 @@
       element.hide();
     }
 
-    function toggleProjectLegends() {
+    function toggleLegends() {
       var container = $('#legendDiv');
-      if(applicationModel.getSelectedLayer() !== "linkProperty") {
+      if(applicationModel.getSelectedLayer() === "roadAddressProject") {
         container.empty();
         container.append(roadProjectOperations());
         container.append(calibrationPointPicture);
+      }
+      else if(applicationModel.getSelectedLayer() === "node"){
+        container.empty();
+        roadClassLegend.append(nodesLegendEntries);
       } else {
         $('.panel-actions').hide();
         container.empty();
