@@ -53,84 +53,64 @@ class RoadNetworkService {
         if (allLocations.isEmpty)
           Seq.empty[RoadNetworkError]
         else {
-          val sortedLocations = allLocations.sortBy(_.orderNumber)
+          val firstOpt = Some(allLocations.filter(loc => loc.orderNumber == 1 && loc.calibrationPoints._1.nonEmpty).minBy(_.calibrationPoints._1))
+          val lastOpt = Some(allLocations.maxBy(_.calibrationPoints._2))
 
-          val optHeadRoadway = roadways.find(_.roadwayNumber == sortedLocations.head.roadwayNumber)
-          val startLocationErrors = if (sortedLocations.head.orderNumber != 1) {
-            Seq(RoadNetworkError(0, if (optHeadRoadway.nonEmpty) optHeadRoadway.get.id else 0L, sortedLocations.head.id, AddressError.MissingStartingLink, System.currentTimeMillis(), options.currNetworkVersion))
+          if (firstOpt.isEmpty && lastOpt.isEmpty) {
+            allLocations.map(loc =>
+              RoadNetworkError(0, roadways.find(_.roadwayNumber == loc.roadwayNumber).get.id, loc.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
+            )
           } else {
-            if (sortedLocations.head.calibrationPoints._1.isEmpty) {
-              Seq(RoadNetworkError(0, if (optHeadRoadway.nonEmpty) optHeadRoadway.get.id else 0L, sortedLocations.head.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
-            } else {
-              Seq.empty[RoadNetworkError]
+            val first = firstOpt.get
+            val last = lastOpt.get
+            val edgeCalibrationPointsError: Seq[LinearLocation] = Seq(first, last).filter(edge =>
+              edge.id == first.id && edge.calibrationPoints._1.isEmpty || edge.id == last.id && edge.calibrationPoints._2.isEmpty
+            )
+
+            edgeCalibrationPointsError.map { loc =>
+              RoadNetworkError(0, roadways.find(_.roadwayNumber == loc.roadwayNumber).get.id, loc.id, AddressError.Inconsistent2TrackCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
             }
           }
-
-          val endLocationErrors = if (sortedLocations.last.calibrationPoints._2.isEmpty) {
-            val optlastRoadway = roadways.find(_.roadwayNumber == sortedLocations.last.roadwayNumber)
-            Seq(RoadNetworkError(0, if (optlastRoadway.nonEmpty) optlastRoadway.get.id else 0L, sortedLocations.last.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
-          } else {
-            Seq.empty[RoadNetworkError]
-          }
-
-          val first = sortedLocations.head
-          val last = sortedLocations.last
-
-          val middleCalibrationPointsErrors: Seq[RoadNetworkError] =
-            allLocations.filter(loc =>
-              !allLocations.exists(l => (loc.calibrationPoints._2 == l.calibrationPoints._1) && l.id != loc.id) && loc.id != last.id
-                ||
-                !allLocations.exists(l => (loc.calibrationPoints._1 == l.calibrationPoints._2) && l.id != loc.id) && loc.id != first.id
-            ).map { loc =>
-              val optMidRoadway = roadways.find(_.roadwayNumber == loc.roadwayNumber)
-              RoadNetworkError(0, if (optMidRoadway.nonEmpty) optMidRoadway.get.id else 0L, loc.id, AddressError.InconsistentContinuityCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
-            }
-
-          startLocationErrors ++ middleCalibrationPointsErrors ++ endLocationErrors
         }
       errors
     }
 
     def checkCombinedLinearLocations(allLocations: Seq[LinearLocation], roadways: Seq[Roadway]): Seq[RoadNetworkError] = {
       val errors: Seq[RoadNetworkError] =
-        if (allLocations.isEmpty)
+        if (allLocations.isEmpty) {
           Seq.empty[RoadNetworkError]
-        else {
-          val sortedLocations = allLocations.sortBy(_.orderNumber)
-
-          val optHeadRoadway = roadways.find(_.roadwayNumber == sortedLocations.head.roadwayNumber)
-
-          val startLocationErrors = if (sortedLocations.head.orderNumber != 1) {
-            Seq(RoadNetworkError(0, if (optHeadRoadway.nonEmpty) optHeadRoadway.get.id else 0L, sortedLocations.head.id, AddressError.MissingStartingLink, System.currentTimeMillis(), options.currNetworkVersion))
+        } else if (allLocations.size == 1) {
+          val locationsError: Seq[LinearLocation] = allLocations.filter(loc =>
+            allLocations.head.calibrationPoints._1.isEmpty || allLocations.head.calibrationPoints._2.isEmpty
+          )
+          locationsError.map { loc =>
+            RoadNetworkError(0, roadways.find(_.roadwayNumber == loc.roadwayNumber).get.id, loc.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
+          }
+        } else {
+          val firstOpt = allLocations.find(loc => loc.orderNumber == 1 && loc.calibrationPoints._1.nonEmpty && loc.calibrationPoints._1.get == 0)
+          val lastOpt = Some(allLocations.maxBy(_.calibrationPoints._2))
+          if (firstOpt.isEmpty || lastOpt.get.endCalibrationPoint.isEmpty || !lastOpt.get.endCalibrationPoint.contains(Some(roadways.maxBy(_.endAddrMValue)).get.endAddrMValue)) {
+            allLocations.map(loc =>
+              RoadNetworkError(0, roadways.find(_.roadwayNumber == loc.roadwayNumber).get.id, loc.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
+            )
           } else {
-            if (sortedLocations.head.calibrationPoints._1.isEmpty) {
-              Seq(RoadNetworkError(0, if (optHeadRoadway.nonEmpty) optHeadRoadway.get.id else 0L, sortedLocations.head.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
-            } else {
-              Seq.empty[RoadNetworkError]
+            val first = firstOpt.get
+            val last = lastOpt.get
+            val edgeCalibrationPointsError: Seq[LinearLocation] = Seq(first, last).filter(edge =>
+              edge.id == first.id && edge.calibrationPoints._1.isEmpty || edge.id == last.id && edge.calibrationPoints._2.isEmpty
+            )
+
+            val middleCalibrationPointsError: Seq[LinearLocation] =
+              allLocations.filter(loc =>
+                !allLocations.exists(l => (loc.calibrationPoints._2 == l.calibrationPoints._1) && l.id != loc.id) && loc.id != last.id
+                  ||
+                  !allLocations.exists(l => (loc.calibrationPoints._1 == l.calibrationPoints._2) && l.id != loc.id) && loc.id != first.id
+              )
+
+            (middleCalibrationPointsError ++ edgeCalibrationPointsError).map { loc =>
+              RoadNetworkError(0, roadways.find(_.roadwayNumber == loc.roadwayNumber).get.id, loc.id, AddressError.InconsistentContinuityCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
             }
           }
-
-          val endLocationErrors = if (sortedLocations.last.calibrationPoints._2.isEmpty) {
-            val optlastRoadway = roadways.find(_.roadwayNumber == sortedLocations.last.roadwayNumber)
-            Seq(RoadNetworkError(0, if (optlastRoadway.nonEmpty) optlastRoadway.get.id else 0L, sortedLocations.last.id, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
-          } else {
-            Seq.empty[RoadNetworkError]
-          }
-
-          val first = sortedLocations.head
-          val last = sortedLocations.last
-
-          val middleCalibrationPointsErrors: Seq[RoadNetworkError] =
-            allLocations.filter(loc =>
-              !allLocations.exists(l => (loc.calibrationPoints._2 == l.calibrationPoints._1) && l.id != loc.id) && loc.id != last.id
-                ||
-                !allLocations.exists(l => (loc.calibrationPoints._1 == l.calibrationPoints._2) && l.id != loc.id) && loc.id != first.id
-            ).map { loc =>
-              val optMidRoadway = roadways.find(_.roadwayNumber == loc.roadwayNumber)
-              RoadNetworkError(0, if (optMidRoadway.nonEmpty) optMidRoadway.get.id else 0L, loc.id, AddressError.InconsistentContinuityCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
-            }
-
-          startLocationErrors ++ middleCalibrationPointsErrors ++ endLocationErrors
         }
       errors
     }
