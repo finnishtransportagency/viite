@@ -49,11 +49,31 @@ class ProjectValidator {
   private def distanceToPoint = 10.0
 
   def checkReservedExistence(currentProject: Project, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): Unit = {
-    if (LinkStatus.New.value == linkStatus.value && roadAddressService.getRoadAddressesFiltered(newRoadNumber, newRoadPart).nonEmpty) {
-      if (!projectReservedPartDAO.fetchReservedRoadParts(currentProject.id).exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart)) {
-        throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
+    if (LinkStatus.New.value == linkStatus.value) {
+      if (roadAddressService.getRoadAddressesFiltered(newRoadNumber, newRoadPart).nonEmpty) {
+        if (!projectReservedPartDAO.fetchReservedRoadParts(currentProject.id).exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart)) {
+          throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
+        }
+      } else {
+        val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(newRoadNumber, newRoadPart, currentProject.id)
+        if (roadPartLinks.exists(rpl => rpl.status == Numbering)) {
+          throw new ProjectValidationException(ErrorNewActionWithNumbering)
+        }
+      }
+    } else if (LinkStatus.Transfer.value == linkStatus.value){
+      val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(newRoadNumber, newRoadPart, currentProject.id)
+      if (roadPartLinks.exists(rpl => rpl.status == Numbering)) {
+        throw new ProjectValidationException(ErrorTransferActionWithNumbering)
       }
     }
+  }
+
+  def checkFormationInOtherProject(currentProject: Project, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus): Unit = {
+    if (LinkStatus.New.value == linkStatus.value) {
+      val formedPartsOtherProjects = projectReservedPartDAO.fetchFormedRoadParts(currentProject.id, withProjectId = false)
+      if(formedPartsOtherProjects.nonEmpty && formedPartsOtherProjects.exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart))
+        throw new ProjectValidationException(ErrorRoadFormedInOtherProject)
+      }
   }
 
   def checkAvailable(number: Long, part: Long, currentProject: Project): Unit = {

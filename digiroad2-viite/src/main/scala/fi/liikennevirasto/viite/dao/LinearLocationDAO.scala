@@ -135,7 +135,7 @@ class LinearLocationDAO {
       values (?, ?, ?, ?, ?, ?, ?, ?, ?)""".stripMargin)
 
     // Set ids for the linear locations without one
-    val (ready, idLess) = linearLocations.partition(_.id != NewLinearLocation)
+    val (ready, idLess) = linearLocations.partition(_.id != NewIdValue)
     val newIds = Sequences.fetchLinearLocationIds(idLess.size)
     val createLinearLocations = ready ++ idLess.zip(newIds).map(x =>
       x._1.copy(id = x._2)
@@ -144,7 +144,7 @@ class LinearLocationDAO {
     createLinearLocations.foreach {
       location =>
         LinkDAO.createIfEmptyFetch(location.linkId)
-        val roadwayNumber = if (location.roadwayNumber == NewRoadwayNumber) {
+        val roadwayNumber = if (location.roadwayNumber == NewIdValue) {
           Sequences.nextRoadwayNumber
         } else {
           location.roadwayNumber
@@ -420,21 +420,21 @@ class LinearLocationDAO {
     if (geometry.isEmpty) {
       (startM, endM) match {
         case (Some(s), Some(e)) =>
-          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, startMValue = s, endMValue = e)), createdBy)
+          create(Seq(expired.copy(id = NewIdValue, linkId = adjustment.linkId, startMValue = s, endMValue = e)), createdBy)
         case (_, Some(e)) =>
-          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, endMValue = e)), createdBy)
+          create(Seq(expired.copy(id = NewIdValue, linkId = adjustment.linkId, endMValue = e)), createdBy)
         case (Some(s), _) =>
-          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, startMValue = s)), createdBy)
+          create(Seq(expired.copy(id = NewIdValue, linkId = adjustment.linkId, startMValue = s)), createdBy)
         case _ =>
       }
     } else {
       (startM, endM) match {
         case (Some(s), Some(e)) =>
-          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, geometry = geometry, startMValue = s, endMValue = e)), createdBy)
+          create(Seq(expired.copy(id = NewIdValue, linkId = adjustment.linkId, geometry = geometry, startMValue = s, endMValue = e)), createdBy)
         case (_, Some(e)) =>
-          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, geometry = geometry, endMValue = e)), createdBy)
+          create(Seq(expired.copy(id = NewIdValue, linkId = adjustment.linkId, geometry = geometry, endMValue = e)), createdBy)
         case (Some(s), _) =>
-          create(Seq(expired.copy(id = NewLinearLocation, linkId = adjustment.linkId, geometry = geometry, startMValue = s)), createdBy)
+          create(Seq(expired.copy(id = NewIdValue, linkId = adjustment.linkId, geometry = geometry, startMValue = s)), createdBy)
         case _ =>
       }
     }
@@ -470,7 +470,7 @@ class LinearLocationDAO {
         expired.sideCode
       }
 
-      create(Seq(expired.copy(id = NewLinearLocation, geometry = geometry, sideCode = sideCode)), createdBy)
+      create(Seq(expired.copy(id = NewIdValue, geometry = geometry, sideCode = sideCode)), createdBy)
     }
   }
 
