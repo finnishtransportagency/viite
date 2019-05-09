@@ -113,37 +113,39 @@
       };
 
       var redraw = function () {
-        cachedMarker = new LinkPropertyMarker();
-        var suravageLinks = roadCollection.getSuravageLinks();
-        var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
-          return _.contains(_.map(suravageLinks, function (sl) {
-            return sl.linkId;
-          }), rl.linkId);
-        });
-        me.clearLayers([anomalousMarkerLayer, directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer]);
-
-        if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForAssets) {
-
-          var directionRoadMarker = _.filter(roadLinks, function (roadLink) {
-            return roadLink.floating !== SelectionType.Floating.value && roadLink.anomaly !== Anomaly.NoAddressGiven.value && roadLink.anomaly !== Anomaly.GeometryChanged.value && (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
+        if(applicationModel.getSelectedLayer() === 'node') {
+          cachedMarker = new LinkPropertyMarker();
+          var suravageLinks = roadCollection.getSuravageLinks();
+          var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
+            return _.contains(_.map(suravageLinks, function (sl) {
+              return sl.linkId;
+            }), rl.linkId);
           });
-          _.each(directionRoadMarker, function (directionLink) {
-            var marker = cachedMarker.createMarker(directionLink);
-            if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
-              directionMarkerLayer.getSource().addFeature(marker);
-          });
+          me.clearLayers([anomalousMarkerLayer, directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer]);
 
-          var anomalousRoadMarkers = _.filter(roadLinks, function (roadLink) {
-            return roadLink.anomaly !== Anomaly.None.value;
-          });
-          _.each(anomalousRoadMarkers, function (anomalousLink) {
-            var marker = cachedMarker.createMarker(anomalousLink);
-            anomalousMarkerLayer.getSource().addFeature(marker);
-          });
+          if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForAssets) {
 
-        }
-        if (applicationModel.getCurrentAction() === -1) {
-          applicationModel.removeSpinner();
+            var directionRoadMarker = _.filter(roadLinks, function (roadLink) {
+              return roadLink.floating !== SelectionType.Floating.value && roadLink.anomaly !== Anomaly.NoAddressGiven.value && roadLink.anomaly !== Anomaly.GeometryChanged.value && (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
+            });
+            _.each(directionRoadMarker, function (directionLink) {
+              var marker = cachedMarker.createMarker(directionLink);
+              if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
+                directionMarkerLayer.getSource().addFeature(marker);
+            });
+
+            var anomalousRoadMarkers = _.filter(roadLinks, function (roadLink) {
+              return roadLink.anomaly !== Anomaly.None.value;
+            });
+            _.each(anomalousRoadMarkers, function (anomalousLink) {
+              var marker = cachedMarker.createMarker(anomalousLink);
+              anomalousMarkerLayer.getSource().addFeature(marker);
+            });
+
+          }
+          if (applicationModel.getCurrentAction() === -1) {
+            applicationModel.removeSpinner();
+          }
         }
       };
 
@@ -174,9 +176,9 @@
         eventListener.listenTo(eventListener, 'map:clearLayers', me.clearLayers);
       };
 
-      me.eventListener.listenTo(eventbus, 'linkProperty:fetch', function () {
+      me.eventListener.listenTo(eventbus, 'nodeLayer:fetch', function () {
         map.getView().setZoom(Math.round(zoomlevels.getViewZoom(map)));
-        roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1);
+        roadCollection.fetchWithNodes(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1);
       });
 
       me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
@@ -184,12 +186,10 @@
         me.clearLayers();
         if (previouslySelectedLayer === 'node') {
           hideLayer();
-        } else if (previouslySelectedLayer === 'roadAddressProject') {
+        } else if (previouslySelectedLayer === 'linkProperty') {
           setGeneralOpacity(1);
           showLayer();
-          _.defer(function () {
-            roadCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map));
-          });
+          eventbus.trigger('nodeLayer:fetch');
         }
         me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
       });

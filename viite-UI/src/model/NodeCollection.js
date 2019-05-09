@@ -1,6 +1,7 @@
 (function (root) {
   root.NodeCollection = function (backend) {
     var me = this;
+    var groupedNodes = [];
     var nodes = [];
 
     this.getNodes = function() {
@@ -20,6 +21,10 @@
       };
       backend.getNodesByRoadAttributes(roadAttributes);
     };
+
+    eventbus.on('node:addNodesToMap', function(nodes){
+
+    })
 
   };
 })(this);

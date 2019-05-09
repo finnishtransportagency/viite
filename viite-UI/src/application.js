@@ -128,7 +128,7 @@
       road: roadLayer,
       roadAddressProject: projectLinkLayer,
       linkProperty: linkPropertyLayer,
-      nodeLayer: nodeLayer
+      node: nodeLayer
     });
 
     var mapPluginsContainer = jQuery('#map-plugins');
