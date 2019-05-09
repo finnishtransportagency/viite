@@ -38,7 +38,7 @@ class NodeDAOSpec extends FunSuite with Matchers {
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadwayNumber1, 0, "Test", None, None, None)
 
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
-    Some(DateTime.parse("2019-01-01")), None, Some(DateTime.parse("2019-01-01")), None, Some("Test"), None,
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None,
     Some(roadNumber1), Some(roadPartNumber1), Some(testRoadway1.track.value), Some(testRoadway1.startAddrMValue))
 
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
@@ -91,6 +91,8 @@ class NodeDAOSpec extends FunSuite with Matchers {
       nodePointDAO.create(Seq(testNodePoint1.copy(nodeId = Some(nodeId), roadwayPointId = roadwayPointId)))
       val nodes = dao.fetchByRoadAttributes(roadNumber1, None, None)
       nodes.isEmpty should be(false)
+      nodes.size should be(1)
+      nodes.head.id should be(nodeId)
     }
   }
 
