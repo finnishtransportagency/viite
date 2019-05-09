@@ -9,7 +9,7 @@ object Digiroad2Build extends Build {
   val Digiroad2Name = "viite"
   val Digiroad2GeoName = "digiroad2-geo"
   val Version = "0.1.0-SNAPSHOT"
-  
+
   val ScalaVersion = "2.11.12"
   val ScalatraVersion = "2.6.5"
   val ScalaTestVersion = "3.2.0-SNAP10"
@@ -24,7 +24,7 @@ object Digiroad2Build extends Build {
   val MockitoCoreVersion = "2.27.0"
   val LogbackClassicVersion = "1.2.3"
   val JettyVersion = "9.3.27.v20190418"
-  
+
   val env: String = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "dev"
   val testEnv: String = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "test"
   lazy val geoJar = Project (
@@ -143,7 +143,7 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "compile,test",
+        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
