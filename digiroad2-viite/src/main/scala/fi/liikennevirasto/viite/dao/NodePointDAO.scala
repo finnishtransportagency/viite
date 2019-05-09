@@ -83,7 +83,7 @@ class NodePointDAO extends BaseDAO {
       """insert into NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_ID, START_DATE, END_DATE, CREATED_BY)
       values (?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""".stripMargin)
 
-    // Set ids for the nodes points without one
+    // Set ids for the node points without one
     val (ready, idLess) = nodePoints.partition(_.id != NewIdValue)
     val newIds = Sequences.fetchNodePointIds(idLess.size)
     val createNodePoints = ready ++ idLess.zip(newIds).map(x =>
@@ -94,7 +94,7 @@ class NodePointDAO extends BaseDAO {
       nodePoint =>
         ps.setLong(1, nodePoint.id)
         ps.setLong(2, nodePoint.beforeAfter.value)
-        ps.setObject(3, nodePoint.roadwayPointId)
+        ps.setLong(3, nodePoint.roadwayPointId)
         if (nodePoint.nodeId.isDefined) {
           ps.setLong(4, nodePoint.nodeId.get)
         } else {
