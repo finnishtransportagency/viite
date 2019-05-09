@@ -150,7 +150,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
 
       val roadNames = Seq(
         RoadNameRow(search.get.id, "VICTORY RD.", "25.3.2018", Some("27.3.2018")),
-        RoadNameRow(NewRoadNameId, "Victory Road", "27.3.2018", None)
+        RoadNameRow(NewIdValue, "Victory Road", "27.3.2018", None)
       )
       val afterInsert = roadNameService.addOrUpdateRoadNamesInTX(roadNumber, roadNames, "user")
       afterInsert should be(None)

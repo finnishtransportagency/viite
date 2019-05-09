@@ -61,4 +61,20 @@ object Sequences {
   def nextCalibrationPointId: Long = {
     Queries.nextCalibrationPointId.as[Long].first
   }
+
+  def nextNodeId: Long = {
+    Queries.nextNodeId.as[Long].first
+  }
+
+  def nextNodePointId: Long = {
+    Queries.nextNodePointId.as[Long].first
+  }
+
+  def nextJunctionId: Long = {
+    Queries.nextJunctionId.as[Long].first
+  }
+
+  def nextJunctionPointId: Long = {
+    Queries.nextJunctionPointId.as[Long].first
+  }
 }

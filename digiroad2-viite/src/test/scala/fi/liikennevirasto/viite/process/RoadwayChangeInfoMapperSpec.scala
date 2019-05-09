@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.{LinkRoadAddressHistory, NewRoadway, RoadType}
+import fi.liikennevirasto.viite.{LinkRoadAddressHistory, NewIdValue, RoadType}
 import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
