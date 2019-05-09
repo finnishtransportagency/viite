@@ -162,7 +162,7 @@ class NodeDAO extends BaseDAO {
       if (maxRoadPartNumber.isEmpty) {
         throw new IllegalArgumentException(s"""When the min road part number is specified, also the max road part number is required.""")
       }
-      s"AND ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
+      s"AND rw.ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND rw.ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
     } else {
       ""
     }
@@ -171,10 +171,11 @@ class NodeDAO extends BaseDAO {
                       node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rw.START_ADDR_M
         FROM NODE node
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(node.COORDINATES)) t
-        LEFT JOIN NODE_POINT np ON node.ID = np.NODE_ID
+        LEFT JOIN NODE_POINT np ON node.ID = np.NODE_ID AND np.VALID_TO IS NULL AND np.END_DATE IS NULL
         LEFT JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
-        LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
-         		WHERE ROAD_NUMBER = $road_number $road_condition
+        LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+         		WHERE rw.ROAD_NUMBER = $road_number $road_condition
+         		AND node.VALID_TO IS NULL AND node.END_DATE IS NULL
         ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rw.START_ADDR_M, node.ID
       """
     Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Long], Option[DateTime], Option[DateTime], Option[DateTime], Option[DateTime],
