@@ -12,7 +12,7 @@ object Digiroad2Build extends Build {
 
   val ScalaVersion = "2.11.12"
   val ScalatraVersion = "2.6.5"
-  val ScalaTestVersion = "3.2.0-SNAP10"
+  val ScalaTestVersion = "3.2.0-SNAP7"
   val JodaConvertVersion = "2.2.0"
   val JodaTimeVersion = "2.10.1"
   val AkkaVersion = "2.5.22"
@@ -143,7 +143,7 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
+        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "compile, test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
