@@ -3,8 +3,10 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.dao.{Junction, JunctionDAO, JunctionPoint, Node, NodeDAO, NodePoint}
+import fi.liikennevirasto.viite.dao.{Junction, JunctionDAO, JunctionPoint, JunctionPointDAO, Node, NodeDAO, NodePoint, NodePointDAO}
 import org.slf4j.LoggerFactory
+
+import scala.util.control.NonFatal
 
 class NodesAndJunctionsService() {
   case class CompleteNode(node: Option[Node], nodePoints: Seq[NodePoint], junctions: Map[Junction, Seq[JunctionPoint]])
@@ -16,12 +18,21 @@ class NodesAndJunctionsService() {
   private val logger = LoggerFactory.getLogger(getClass)
 
   val nodeDAO = new NodeDAO
-
   val junctionDAO = new JunctionDAO
+  val nodePointDAO = new NodePointDAO
+  val junctionPointDAO = new JunctionPointDAO
 
-  def getNodesByRoadAttributes(roadNumber: Long, roadPartNumber: Option[Long], minAddrM: Option[Long], maxAddrM: Option[Long]): List[Node] = {
+  def getNodesByRoadAttributes(roadNumber: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Either[String, Seq[Node]] = {
     withDynSession {
-      nodeDAO.fetchByRoadAttributes(roadNumber, roadPartNumber, minAddrM, maxAddrM)
+      try {
+        val nodes = nodeDAO.fetchByRoadAttributes(roadNumber, minRoadPartNumber, maxRoadPartNumber)
+        Right(nodes)
+      } catch {
+        case e if NonFatal(e) => {
+          logger.error("Failed to fetch nodes.", e)
+          Left(e.getMessage)
+        }
+      }
     }
   }
 
@@ -37,10 +48,10 @@ class NodesAndJunctionsService() {
     withDynSession {
       time(logger, "Fetch nodes with junctions") {
         val nodes = nodeDAO.fetchByBoundingBox(boundingRectangle)
-        val nodePoints = nodeDAO.fetchNodePointsByNodeId(nodes.map(_.id))
+        val nodePoints = nodePointDAO.fetchNodePointsByNodeId(nodes.map(_.id))
         val junctions = junctionDAO.fetchJunctionByNodeIds(nodes.map(_.id))
-        val junctionPoints = junctionDAO.fetchJunctionPointsByJunctionIds(junctions.map(_.id))
-        (nodes.map {
+        val junctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(junctions.map(_.id))
+        nodes.map {
           node =>
             (Option(node),
               (
@@ -53,21 +64,10 @@ class NodesAndJunctionsService() {
                 }.toMap
               )
             )
-        } ++
-          Seq(
-            (
-            None,
-            (
-              nodePoints.filter(_.nodeId.isEmpty),
-              junctions.filter(j => j.nodeId.isEmpty).map {
-                junction => (junction, junctionPoints.filter(_.junctionId == junction.id))
-              }.toMap
-            )
-          )
-          )
-          ).toMap
+        }.toMap
       }
     }
   }
+
 
 }

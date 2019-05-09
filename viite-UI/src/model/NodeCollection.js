@@ -13,18 +13,23 @@
     };
 
     this.getNodesByRoadAttributes = function(roadNumber, minRoadPartNumber, maxRoadPartNumber) {
-      applicationModel.addSpinner();
+      // applicationModel.addSpinner();
       var roadAttributes = {
         roadNumber: roadNumber,
         minRoadPartNumber: minRoadPartNumber,
         maxRoadPartNumber: maxRoadPartNumber
       };
-      backend.getNodesByRoadAttributes(roadAttributes);
+      backend.getNodesByRoadAttributes(roadAttributes, function (response) {
+        if (response.success) {
+          alert('server responded!');
+          nodes = response.nodes;
+          eventbus.trigger('nodesAndJunctions:fetched', nodes);
+        }
+      });
     };
 
     eventbus.on('node:addNodesToMap', function(nodes){
 
     })
-
   };
 })(this);
