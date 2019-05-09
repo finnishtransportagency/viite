@@ -133,7 +133,8 @@ class NodeDAO {
          SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_ID, NP.START_DATE, NP.END_DATE, NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY,
          NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M FROM NODE_POINT NP
          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-         where NP.ID in (${nodeIds.mkString(",")})
+         JOIN NODE N ON (N.id = np.NODE_ID)
+         where N.id in (${nodeIds.mkString(",")})
        """
     queryNodePointList(query)
   }

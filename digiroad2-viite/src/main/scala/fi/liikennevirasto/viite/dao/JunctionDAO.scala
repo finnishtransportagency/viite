@@ -78,7 +78,7 @@ class JunctionDAO {
       s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       FROM JUNCTION
-      where NODE_ID in ${nodeIds.mkString(",")}
+      where NODE_ID in (${nodeIds.mkString(",")})
       """
     queryJunctionList(query)
   }
@@ -97,7 +97,8 @@ class JunctionDAO {
        SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
        RP.ROADWAY_NUMBER, RP.ADDR_M FROM JUNCTION_POINT JP
        JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-       where NP.ID in (${junctionIds.mkString(",")})
+       JOIN JUNCTION J on (J.ID = JP.JUNCTION_ID)
+       where J.ID in (${junctionIds.mkString(",")})
      """
     queryJunctionPointList(query)
   }
