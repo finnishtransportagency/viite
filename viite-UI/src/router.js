@@ -8,7 +8,7 @@
         });
 
         this.route(/^([A-Za-z]+)\/?$/, function (layer) {
-          if (layer != 'roadAddressProject') {
+          if (layer !== 'roadAddressProject') {
             applicationModel.selectLayer(layer);
           } else {
             applicationModel.selectLayer('linkProperty');

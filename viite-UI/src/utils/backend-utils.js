@@ -23,6 +23,14 @@
         };
     });
 
+    this.getNodes = createCallbackRequestor(function(params) {
+      var zoom = params.zoom;
+      var boundingBox = params.boundingBox;
+      return {
+        url: 'api/viite/nodesjunctions?zoom=' + zoom + '&bbox=' + boundingBox
+      };
+    });
+
     this.abortLoadingProject = (function () {
       if (loadingProject) {
         loadingProject.abort();
@@ -82,12 +90,6 @@
       });
     }, 1000);
 
-    this.getRoadAddressMiddlePoint = _.throttle(function (linkId, callback) {
-      return $.getJSON('api/viite/roadlinks/midpoint/' + linkId, function (data) {
-        return _.isFunction(callback) && callback(data);
-        });
-    }, 1000);
-
       this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
           return $.getJSON('api/viite/roadlinks/project/prefillfromvvh?linkId=' + linkId +'&currentProjectId=' + currentProjectId, function (data) {
               return _.isFunction(callback) && callback(data);
@@ -113,33 +115,6 @@
           $('#roadName').prop('disabled', false);
         }
       }, 500);
-
-
-    this.getFloatingAdjacent = _.throttle(function (roadData, callback) {
-      return $.getJSON('api/viite/roadlinks/adjacent?roadData=' + JSON.stringify(roadData), function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-
-    this.getTargetAdjacent = _.throttle(function (roadData, callback) {
-      return $.getJSON('api/viite/roadlinks/adjacent/target?roadData=' + JSON.stringify(roadData), function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-
-    this.getAdjacentsFromMultipleSources = _.throttle(function (roadData, callback) {
-      return $.getJSON('api/viite/roadlinks/adjacent/multiSource?roadData=' + JSON.stringify(roadData), function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-
-    this.getTransferResult = _.throttle(function (dataTransfer, callback) {
-      return $.getJSON('api/viite/roadlinks/transferRoadLink?data=' + JSON.stringify(dataTransfer), function (data) {
-        return _.isFunction(callback) && callback(data);
-      }).fail(function (obj) {
-        eventbus.trigger('linkProperties:transferFailed', obj.status);
-      });
-    }, 1000);
 
     this.createRoadAddress = _.throttle(function (data, errorCallback) {
       $.ajax({
