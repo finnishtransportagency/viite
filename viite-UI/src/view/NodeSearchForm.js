@@ -50,13 +50,8 @@
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
 
-      eventbus.on('nodesAndJunctions:failed', function (result) {
-        // TODO - not sure if this is necessary - to be analysed and discussed.
-      });
-
       eventbus.on('nodesAndJunctions:fetched', function(result) {
-        applicationModel.removeSpinner();
-        alert('fetched!! ' + result.toString());
+        alert('fetched is beeing called!');
       });
 
       eventbus.on('nodesAndJunctions:open', function () {
@@ -80,9 +75,7 @@
           nodeCollection.getNodesByRoadAttributes($("#tie").val(), $("#aosa").val(), $("#losa").val());
         });
       });
-
     };
-
     bindEvents();
   };
 })(this);

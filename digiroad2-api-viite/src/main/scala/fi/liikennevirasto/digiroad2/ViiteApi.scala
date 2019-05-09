@@ -995,22 +995,29 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       notes ""
     )
 
-  get("/nodesearch", operation(getNodesByRoadAttributes)) {
+  get("/nodes", operation(getNodesByRoadAttributes)) {
     val roadNumber = params.get("roadNumber").map(_.toLong)
     val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
     val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
-    time(logger, s"GET request for /nodesearch (roadNumber: ${roadNumber.get}, startRoadPartNumber: $minRoadPartNumber, endRoadPartNumber: $maxRoadPartNumber") {
-      if (roadNumber.isDefined) {
-        if (minRoadPartNumber.isDefined != maxRoadPartNumber.isDefined) {
-          BadRequest("When the 'minRoadPartNumber' is defined, also the 'maxRoadPartNumber' must be defined.")
-        } else {
-          nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, minRoadPartNumber, maxRoadPartNumber) match {
-            case Right(nodes) => Map("success" -> true, "nodes" -> nodes.map(nodeSearchToApi))
-            case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
+    time(logger, s"GET request for /nodes (roadNumber: ${roadNumber.get}, startRoadPartNumber: $minRoadPartNumber, endRoadPartNumber: $maxRoadPartNumber") {
+      try{
+        if (roadNumber.isDefined) {
+          if (minRoadPartNumber.isDefined != maxRoadPartNumber.isDefined) {
+            throw new RoadAddressException("When the 'minRoadPartNumber' is defined, also the 'maxRoadPartNumber' must be defined.")
+          } else {
+            nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, minRoadPartNumber, maxRoadPartNumber) match {
+              case Right(nodes) => Map("success" -> true, "nodes" -> nodes.map(nodeSearchToApi))
+              case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
+              case _ =>
+                throw new RoadAddressException("When the 'minRoadPartNumber' is defined, also the 'maxRoadPartNumber' must be defined.")
+            }
           }
+        } else {
+          throw new RoadAddressException("When the 'minRoadPartNumber' is defined, also the 'maxRoadPartNumber' must be defined.")
         }
-      } else {
-        BadRequest("Missing mandatory 'roadNumber' parameter.")
+      } catch {
+        case e: RoadAddressException =>
+          Map("success" -> false, "reason" -> e.getMessage)
       }
     }
   }
