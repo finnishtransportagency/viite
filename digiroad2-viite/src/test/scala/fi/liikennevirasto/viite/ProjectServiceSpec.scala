@@ -1028,7 +1028,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linksToRevert = links.map(l => {
         LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
       })
-      projectService.revertLinks(project.id, 99999L, 1L, linksToRevert, "Test User")
+      projectService.revertLinksByRoadPart(project.id, 99999L, 1L, linksToRevert, "Test User")
       ProjectLinkNameDAO.get(99999L, project.id) should be(None)
     }
   }
@@ -1067,7 +1067,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       })
       val roadLinks = links.map(toRoadLink)
       when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
-      projectService.revertLinks(project.id, 99999L, 1L, linksToRevert, "Test User")
+      projectService.revertLinksByRoadPart(project.id, 99999L, 1L, linksToRevert, "Test User")
       projectLinkDAO.fetchProjectLinks(project.id).count(_.roadPartNumber == 2L) should be(2)
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
     }
@@ -1086,7 +1086,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linksToRevert = links.map(l => {
         LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
       })
-      projectService.revertLinks(project.id, 99999L, 1L, linksToRevert, "Test User")
+      projectService.revertLinksByRoadPart(project.id, 99999L, 1L, linksToRevert, "Test User")
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("test name")
     }
   }
@@ -2201,7 +2201,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
      val roadLinks = projectLinks.map(toRoadLink).head.copy(geometry = roadGeom)
      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinks))
 
-     projectService.revertLinks(projectId, newRoadNumber, newRoadPart, linksToRevert, user)
+     projectService.revertLinksByRoadPart(projectId, newRoadNumber, newRoadPart, linksToRevert, user)
      val geomAfterRevert = GeometryUtils.truncateGeometry3D(roadGeom, projectLinksFromRoadAddresses.head.startMValue, projectLinksFromRoadAddresses.head.endMValue)
      val linksAfterRevert = projectLinkDAO.fetchProjectLinks(projectId)
      linksAfterRevert.map(_.geometry).contains(geomAfterRevert) should be(true)
@@ -2738,17 +2738,17 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linearLocations = Seq(
 //        part1
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 15.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, None), Seq(Point(0.0, 0.0), Point(0.0, 15.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          (None, None), Seq(Point(0.0, 0.0), Point(0.0, 15.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
         LinearLocation(linearLocationId + 1, 2, 2000l, 0.0, 5.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, None),  Seq(Point(0.0, 15.0), Point(0.0, 20.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          (None, None),  Seq(Point(0.0, 15.0), Point(0.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
         //part2
         LinearLocation(linearLocationId + 2, 1, 3000l, 0.0, 5.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, None), Seq(Point(0.0, 20.0), Point(0.0, 25.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          (None, None), Seq(Point(0.0, 20.0), Point(0.0, 25.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None),
         LinearLocation(linearLocationId + 3, 2, 4000l, 0.0, 45.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, None), Seq(Point(0.0, 25.0), Point(0.0, 70.0)), LinkGeomSource.ComplimentaryLinkInterface,
+          (None, None), Seq(Point(0.0, 25.0), Point(0.0, 70.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
