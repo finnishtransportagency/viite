@@ -4,6 +4,7 @@
     var loadingProject;
     var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
     var gettingRoadLinks;
+    var gettingNodes;
     moment.locale('fi');
 
     this.getRoadLinks = createCallbackRequestor(function (params) {
@@ -626,12 +627,15 @@
       });
     }, 1000);
 
-    this.getNodesByRoadAttributes = function (roadAttributes) {
-      $.get('api/viite/nodesearch', roadAttributes)
-        .then(function (result) {
-          eventbus.trigger('nodesAndJunctions:fetched', result);
-        });
-    };
+    this.getNodesByRoadAttributes = _.throttle(function (roadAttributes, callback) {
+      return $.get('api/viite/nodes', roadAttributes, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+    //
+    // this.getNodesByRoadAttributes = function (roadAttributes, callback) {
+    //   return $.getJSON('api/viite/nodes', roadAttributes, callback);
+    // };
 
   };
 }(this));
