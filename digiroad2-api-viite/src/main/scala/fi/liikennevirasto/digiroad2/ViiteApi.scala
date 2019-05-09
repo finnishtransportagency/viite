@@ -9,7 +9,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadPartReservedException, Track}
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
+import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
@@ -1001,25 +1002,31 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val getNodesByRoadAttributes = (
     apiOperation[Map[String, Any]]("getNodesByRoadAttributes")
       .parameters(
-        queryParam[Long]("road").description("Road Number of a road address"),
-        queryParam[Long]("part").description("Road Part Number of a road address"),
-        queryParam[Long]("minAddrM").description("Min address M Value of a road address"),
-        queryParam[Long]("maxAddrM").description("Max address M Value of a road address")
+        queryParam[Long]("roadNumber").description("Road Number of a road address"),
+        queryParam[Long]("minRoadPartNumber").description("Road Part Number of a road address"),
+        queryParam[Long]("maxRoadPartNumber").description("Road Part Number of a road address")
       )
       tags "ViiteAPI - Nodes"
-      summary "Returns all the nodes belonging to the road number and possibly road part number and in the given address range."
+      summary "Returns all the nodes belonging to the road number and possibly withing the given range of road part numbers."
       notes ""
     )
+
   get("/nodes", operation(getNodesByRoadAttributes)) {
-    val roadNumber = params.get("road").map(_.toLong)
-    val roadPartNumber = params.get("part").map(_.toLong)
-    val minAddrM = params.get("minAddrM").map(_.toLong)
-    val maxAddrM = params.get("maxAddrM").map(_.toLong)
-    time(logger, s"GET request for /nodes (road: $roadNumber, part: $roadPartNumber, minAddrM: $minAddrM, maxAddrM: $maxAddrM)") {
+    val roadNumber = params.get("roadNumber").map(_.toLong)
+    val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
+    val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
+    time(logger, s"GET request for /nodes (roadNumber: ${roadNumber.get}, startRoadPartNumber: $minRoadPartNumber, endRoadPartNumber: $maxRoadPartNumber") {
       if (roadNumber.isDefined) {
-        nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, roadPartNumber, minAddrM, maxAddrM)
+        if (minRoadPartNumber.isDefined != maxRoadPartNumber.isDefined) {
+          BadRequest("When the 'minRoadPartNumber' is defined, also the 'maxRoadPartNumber' must be defined.")
+        } else {
+          nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, minRoadPartNumber, maxRoadPartNumber) match {
+            case Right(nodes) => Map("success" -> true, "nodes" -> nodes.map(nodeSearchToApi))
+            case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
+          }
+        }
       } else {
-        BadRequest("Missing mandatory 'road' parameter.")
+        BadRequest("Missing mandatory 'roadNumber' parameter.")
       }
     }
   }
@@ -1377,6 +1384,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "roadLinkSource" -> splittedLinks.linkGeomSource.value
           ))
     }
+  }
+
+  def nodeSearchToApi(node: Node): Map[String, Any] = {
+    Map("id" -> node.id,
+      "nodeNumber" -> node.nodeNumber,
+      "coordX" -> node.coordinates.x,
+      "coordY" -> node.coordinates.y,
+      "name" -> node.name,
+      "type" -> node.nodeType,
+      "roadNumber" -> node.roadNumber,
+      "roadPartNumber" -> node.roadPartNumber,
+      "track" -> node.track)
   }
 
   /**

@@ -17,6 +17,8 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
 
   val nodeDAO = new NodeDAO
 
+  val roadwayPointDAO = new RoadwayPointDAO
+
   case class ConversionJunction(id: Long, junctionNumber: Long, nodeNumber: Long, startDate: Option[DateTime],
                                 endDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime],
                                 createdBy: String, createdTime: Option[DateTime])
@@ -79,9 +81,9 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
         conversionJunction._2.foreach{
           conversionJunctionPoint =>
             println(s"Inserting junction point with TR id = ${conversionJunctionPoint.id} ")
-            val existingRoadwayPoint = RoadwayPointDAO.fetch(conversionJunctionPoint.roadwayNumberTR, conversionJunctionPoint.addressMValueTR)
+            val existingRoadwayPoint = roadwayPointDAO.fetch(conversionJunctionPoint.roadwayNumberTR, conversionJunctionPoint.addressMValueTR)
             if(existingRoadwayPoint.isEmpty){
-              val newRoadwayPoint = RoadwayPointDAO.create(conversionJunctionPoint.roadwayNumberTR, conversionJunctionPoint.addressMValueTR, createdBy = "junction_import")
+              val newRoadwayPoint = roadwayPointDAO.create(conversionJunctionPoint.roadwayNumberTR, conversionJunctionPoint.addressMValueTR, createdBy = "junction_import")
               insertJunctionPoint(junctionPointPs, conversionJunctionPoint, conversionJunction._1.id, newRoadwayPoint)
             }
             else

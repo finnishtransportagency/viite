@@ -31,6 +31,8 @@ object Queries {
 
   def nextNodeId = sql"select NODE_SEQ.nextval from dual"
 
+  def nextNodeNumber = sql"select NODE_NUMBER_SEQ.nextval from dual"
+
   def nextNodePointId = sql"select NODE_POINT_SEQ.nextval from dual"
 
   def nextJunctionId = sql"select JUNCTION_SEQ.nextval from dual"
@@ -43,6 +45,14 @@ object Queries {
 
   def fetchRoadwayIds(len: Int) = {
     sql"""select ROADWAY_SEQ.nextval from dual connect by level <= $len""".as[Long].list
+  }
+
+  def fetchNodeIds(len: Int) = {
+    sql"""select NODE_SEQ.nextval from dual connect by level <= $len""".as[Long].list
+  }
+
+  def fetchNodePointIds(len: Int) = {
+    sql"""select NODE_POINT_SEQ.nextval from dual connect by level <= $len""".as[Long].list
   }
 
   def fetchLinearLocationIds(len: Int) = {
