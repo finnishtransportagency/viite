@@ -128,8 +128,8 @@ object OracleDatabase {
   }
 
   def createPointJGeometry(point: Point): STRUCT = {
-    val coordinates = Array(GeometryUtils.roundN(point.x), GeometryUtils.roundN(point.y))
-    val dim = 2
+    val coordinates = Array(GeometryUtils.roundN(point.x), GeometryUtils.roundN(point.y), 0, 0)
+    val dim = 4
     val srid = 3067
     val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
     JGeometry.store(JGeometry.createPoint(coordinates, dim, srid), oracleConn)

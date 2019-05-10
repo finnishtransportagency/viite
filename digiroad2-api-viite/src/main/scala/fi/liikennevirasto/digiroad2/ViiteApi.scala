@@ -1382,16 +1382,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  def nodeSearchToApi(node: Node): Map[String, Any] = {
+  def nodeSearchToApi(nodeAndRoadAttr: (Node, RoadAttributes)): Map[String, Any] = {
+    val (node, roadAttr) = nodeAndRoadAttr
     Map("id" -> node.id,
       "nodeNumber" -> node.nodeNumber,
       "coordX" -> node.coordinates.x,
       "coordY" -> node.coordinates.y,
       "name" -> node.name,
       "type" -> node.nodeType,
-      "roadNumber" -> node.roadNumber,
-      "roadPartNumber" -> node.roadPartNumber,
-      "track" -> node.track)
+      "roadNumber" -> roadAttr.roadNumber,
+      "roadPartNumber" -> roadAttr.roadPartNumber,
+      "track" -> roadAttr.track,
+      "startAddrMValue" -> roadAttr.startAddrMValue)
   }
 
   /**
