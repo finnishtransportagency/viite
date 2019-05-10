@@ -118,7 +118,9 @@ object NodeType {
 }
 
 case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime],
-                createdBy: Option[String], createdTime: Option[DateTime], roadNumber: Option[Long] = None, roadPartNumber: Option[Long] = None, track: Option[Long] = None, startAddrMValue: Option[Long] = None)
+                createdBy: Option[String], createdTime: Option[DateTime])
+
+case class RoadAttributes(roadNumber: Long, roadPartNumber: Long, track: Long, startAddrMValue: Long)
 
 class NodeDAO extends BaseDAO {
 
@@ -165,7 +167,7 @@ class NodeDAO extends BaseDAO {
       """.as[Long].firstOption
   }
 
-  def fetchByRoadAttributes(road_number: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[Node] = {
+  def fetchByRoadAttributes(road_number: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[(Node, RoadAttributes)] = {
     val road_condition = if (minRoadPartNumber.isDefined) { // if startRoadNumber is defined then endRoadNumber is mandatory
       if (maxRoadPartNumber.isEmpty) {
         throw new IllegalArgumentException(s"""When the min road part number is specified, also the max road part number is required.""")
@@ -187,15 +189,16 @@ class NodeDAO extends BaseDAO {
         ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rw.START_ADDR_M, node.ID
       """
     Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Long], Option[DateTime], Option[DateTime], Option[DateTime], Option[DateTime],
-      Option[String], Option[DateTime], Option[Long], Option[Long], Option[Long], Option[Long])](query).list.map {
+      Option[String], Option[DateTime], Long, Long, Long, Long)](query).list.map {
 
       case (id, nodeNumber, coordX, coordY, name, nodeType, startDate, endDate, validFrom, validTo,
             createdBy, createdTime, roadNumber, roadPartNumber, track, startAddrMValue) =>
 
         val coordinates = Point(coordX, coordY)
 
-        Node(id, nodeNumber, coordinates, name, NodeType.apply(nodeType.getOrElse(NodeType.UnkownNodeType.value)), startDate, endDate, validFrom, validTo,
-             createdBy, createdTime, roadNumber, roadPartNumber, track, startAddrMValue)
+        (Node(id, nodeNumber, coordinates, name, NodeType.apply(nodeType.getOrElse(NodeType.UnkownNodeType.value)), startDate, endDate, validFrom, validTo,
+            createdBy, createdTime),
+          RoadAttributes(roadNumber, roadPartNumber, track, startAddrMValue))
     }
   }
 

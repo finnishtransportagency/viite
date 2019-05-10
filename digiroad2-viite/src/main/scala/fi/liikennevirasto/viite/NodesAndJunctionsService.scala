@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.dao.{Junction, JunctionDAO, JunctionPoint, JunctionPointDAO, Node, NodeDAO, NodePoint, NodePointDAO}
+import fi.liikennevirasto.viite.dao._
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
@@ -22,10 +22,10 @@ class NodesAndJunctionsService() {
   val nodePointDAO = new NodePointDAO
   val junctionPointDAO = new JunctionPointDAO
 
-  def getNodesByRoadAttributes(roadNumber: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Either[String, Seq[Node]] = {
+  def getNodesByRoadAttributes(roadNumber: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Either[String, Seq[(Node, RoadAttributes)]] = {
     withDynSession {
       try {
-        val nodes = nodeDAO.fetchByRoadAttributes(roadNumber, minRoadPartNumber, maxRoadPartNumber)
+        val nodes: Seq[(Node, RoadAttributes)] = nodeDAO.fetchByRoadAttributes(roadNumber, minRoadPartNumber, maxRoadPartNumber)
         Right(nodes)
       } catch {
         case e if NonFatal(e) => {
