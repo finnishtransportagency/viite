@@ -121,7 +121,7 @@
               return sl.linkId;
             }), rl.linkId);
           });
-          me.clearLayers([anomalousMarkerLayer, directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer]);
+          me.clearLayers([anomalousMarkerLayer, directionMarkerLayer]);
 
           if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForAssets) {
 
@@ -152,13 +152,28 @@
       this.refreshView = function () {
         //Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
         roadCollection.reset();
-        roadCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map));
+        roadCollection.fetchWithNodes(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map));
         roadLayer.layer.changed();
       };
 
       this.layerStarted = function (eventListener) {
-        eventListener.listenTo(eventbus, 'roadLinks:fetched', function (eventData, reselection, selectedIds) {
-          redraw();
+        eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
+          if(applicationModel.getSelectedLayer() === 'node') {
+            redraw();
+          }
+        });
+
+        eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, zoom){
+          //if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode){
+
+            _.each(nodes, function(node) {
+              var nodeMarker = new NodeMarker();
+              nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node.node))
+            });
+          /* }
+           else{
+
+           }*/
         });
 
         eventListener.listenTo(eventbus, 'linkProperties:clearIndicators', function () {

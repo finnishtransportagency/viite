@@ -1059,19 +1059,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private def getNodesAndJunctions(zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+  private def getNodesAndJunctions(zoomLevel: Int)(bbox: String): Seq[Map[String, Any]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     zoomLevel match {
       case DrawLinearPublicRoads | DrawLinearPublicRoads => time(logger, operationName = "nodes fetch ")
       {
-        Seq(
-          Seq(Map("type" -> "node")),
-          nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi))
+        nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi)
       }
       case _ => time(logger, operationName = "nodes with junctions fetch") {
-        Seq(
-          Seq(Map("type" -> "nodesWithJunctions")),
-        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi))
+        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi)
       }
     }
   }
@@ -1209,7 +1205,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "nodeName" -> node.name,
       "coordX" -> node.coordinates.x,
       "coordY" -> node.coordinates.y,
-      "type" -> node.nodeType,
+      "type" -> node.nodeType.value,
       "createdBy" -> node.createdBy,
       "createdTime" -> node.createdTime
       )

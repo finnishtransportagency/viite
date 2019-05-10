@@ -1,7 +1,6 @@
 (function (root) {
   root.NodeCollection = function (backend) {
     var me = this;
-    var groupedNodes = [];
     var nodes = [];
 
     this.getNodes = function() {
@@ -28,8 +27,9 @@
       });
     };
 
-    eventbus.on('node:addNodesToMap', function(nodes){
-
-    })
+    eventbus.on('node:fetched', function(nodes, zoom){
+      me.setNodes(nodes);
+      eventbus.trigger('node:addNodesToMap', nodes, zoom)
+    });
   };
 })(this);
