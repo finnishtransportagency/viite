@@ -38,24 +38,25 @@ class NodeDAOSpec extends FunSuite with Matchers {
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadPartNumber1, 0, "Test", None, None, None)
 
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
-    Some(DateTime.parse("2019-01-01")), None, Some(DateTime.parse("2019-01-01")), None, Some("Test"), None,
-    Some(roadNumber1), Some(roadPartNumber1), Some(testRoadway1.track.value), Some(testRoadway1.startAddrMValue))
+    Some(DateTime.parse("2019-01-01")), None, Some(DateTime.parse("2019-01-01")), None, Some("Test"), None)
+
+  val testRoadAttributes1 = RoadAttributes(roadNumber1, roadPartNumber1, testRoadway1.track.value, testRoadway1.startAddrMValue)
 
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0)
 
   test("Test fetchByRoadAttributes When non-existing road number Then return None") {
     runWithRollback {
-      val nodes = dao.fetchByRoadAttributes(nonExistingRoadNumber, None, None)
-      nodes.isEmpty should be(true)
+      val nodesAndRoadAttributes = dao.fetchByRoadAttributes(nonExistingRoadNumber, None, None)
+      nodesAndRoadAttributes.isEmpty should be(true)
     }
   }
 
   test("Test fetchByRoadAttributes When existing road number but no nodes Then return None") {
     runWithRollback {
       roadwayDAO.create(Seq(testRoadway1))
-      val nodes = dao.fetchByRoadAttributes(roadNumber1, None, None)
-      nodes.isEmpty should be(true)
+      val nodesAndRoadAttributes = dao.fetchByRoadAttributes(roadNumber1, None, None)
+      nodesAndRoadAttributes.isEmpty should be(true)
     }
   }
 
@@ -69,15 +70,15 @@ class NodeDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchByRoadAttributes When existing road number but invalid road part number range Then return None") {
     runWithRollback {
-      val nodes = dao.fetchByRoadAttributes(existingRoadNumber, Some(2), Some(1))
-      nodes.isEmpty should be(true)
+      val nodesAndRoadAttributes = dao.fetchByRoadAttributes(existingRoadNumber, Some(2), Some(1))
+      nodesAndRoadAttributes.isEmpty should be(true)
     }
   }
 
   test("Test fetchByRoadAttributes When existing road number but non existing road part number range Then return None") {
     runWithRollback {
-      val nodes = dao.fetchByRoadAttributes(existingRoadNumber, Some(nonExistingRoadPartNumber), Some(nonExistingRoadPartNumber))
-      nodes.isEmpty should be(true)
+      val nodeAndRoadAttr = dao.fetchByRoadAttributes(existingRoadNumber, Some(nonExistingRoadPartNumber), Some(nonExistingRoadPartNumber))
+      nodeAndRoadAttr.isEmpty should be(true)
     }
   }
 
@@ -89,8 +90,8 @@ class NodeDAOSpec extends FunSuite with Matchers {
       val roadwayPointId = Sequences.nextRoadwayPointId
       roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId))
       nodePointDAO.create(Seq(testNodePoint1.copy(nodeId = Some(nodeId), roadwayPointId = roadwayPointId)))
-      val nodes = dao.fetchByRoadAttributes(roadNumber1, None, None)
-      nodes.isEmpty should be(false)
+      val nodesAndRoadAttributes = dao.fetchByRoadAttributes(roadNumber1, None, None)
+      nodesAndRoadAttributes.isEmpty should be(false)
     }
   }
 
