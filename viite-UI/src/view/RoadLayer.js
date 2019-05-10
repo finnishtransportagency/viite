@@ -111,7 +111,7 @@
             eventbus.trigger('roadAddressProject:fetch');
             break;
           case 'node':
-            eventbus.trigger('linkProperty:fetch');
+            eventbus.trigger('nodeLayer:fetch');
         }
         handleRoadsVisibility();
       }
