@@ -1,5 +1,6 @@
 (function (root) {
   root.NodeSearchForm = function (nodeCollection) {
+    var formCommon = new FormCommon('');
     var container = $('#legendDiv');
     var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
     var header = function() {
@@ -33,7 +34,7 @@
         '<div class="form-group">' +
         label('Tie') + label('Aosa') + label('Losa') +
         '</div>' +
-        '<div id= "roadAttributes" class="form-group">' +
+        '<div id= "road-attributes" class="form-group">' +
         inputField('tie', '', 5) + inputField('aosa', '', 3) + inputField('losa', '', 3) +
         searchButton() +
         '</div>' +
@@ -41,17 +42,30 @@
         '</div>' +
         '</div>' +
         '</div>' +
-        '<div id="form-result">' +
+        '<div id="nodes-and-junctions-content">' +
         '</div>' +
         '</div>'
       );
     };
 
+    var nodesAndRoadAttributesHtmlList = function () {
+      var text = '';
+      var index = 0;
+      var nodes = nodeCollection.getNodesWithAttributes();
+      _.each(nodes, function (nodeWithAttributes) {
+        text += ' ' + '</br>' +
+          formCommon.addSmallLabelLowercase('Solmutyyppi: ') + ' ' + formCommon.addSmallLabelLowercase(nodeWithAttributes.type) + '</br>' +
+          formCommon.addSmallLabelLowercase('Solmun nimi: ') + ' ' + formCommon.addSmallLabelLowercase(nodeWithAttributes.name) + '</br>';
+      });
+      return text;
+    };
+
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
 
-      eventbus.on('nodesAndJunctions:fetched', function(result) {
-        alert('fetched is beeing called!');
+      eventbus.on('nodesAndRoadAttributes:fetched', function() {
+        $('#nodes-and-junctions-content').html(nodesAndRoadAttributesHtmlList());
+        applicationModel.removeSpinner();
       });
 
       eventbus.on('nodesAndJunctions:open', function () {
@@ -67,13 +81,19 @@
         rootElement.on('change', '.small-input', searchButton, function () {
           var startRoadPart = $("#aosa").val();
           var endRoadPart = $("#losa").val();
-          var roadPartChecker = (!startRoadPart && !endRoadPart) || (startRoadPart && endRoadPart);
-          searchButton[0].disabled = !($("#tie").val() && roadPartChecker);
+          searchButton[0].disabled = !($("#tie").val() &&
+            (!startRoadPart && !endRoadPart) || (startRoadPart && endRoadPart));
         });
 
-        searchButton.click(function() {
-          nodeCollection.getNodesByRoadAttributes($("#tie").val(), $("#aosa").val(), $("#losa").val());
+        rootElement.on('click', '.node-search-btn', function () {
+          applicationModel.addSpinner();
+          nodeCollection.getNodesByRoadAttributes({
+            roadNumber: $("#tie").val(),
+            minRoadPartNumber: $("#aosa").val(),
+            maxRoadPartNumber: $("#losa").val()
+          });
         });
+
       });
     };
     bindEvents();

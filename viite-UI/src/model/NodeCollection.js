@@ -2,6 +2,7 @@
   root.NodeCollection = function (backend) {
     var me = this;
     var nodes = [];
+    var nodesWithAttributes = [];
 
     this.getNodes = function() {
       return nodes;
@@ -11,25 +12,28 @@
       nodes = list;
     };
 
-    this.getNodesByRoadAttributes = function(roadNumber, minRoadPartNumber, maxRoadPartNumber) {
-      // applicationModel.addSpinner();
-      var roadAttributes = {
-        roadNumber: roadNumber,
-        minRoadPartNumber: minRoadPartNumber,
-        maxRoadPartNumber: maxRoadPartNumber
-      };
-      backend.getNodesByRoadAttributes(roadAttributes, function (response) {
-        if (response.success) {
-          alert('server responded!');
-          nodes = response.nodes;
-          eventbus.trigger('nodesAndJunctions:fetched', nodes);
+    this.getNodesWithAttributes = function() {
+      return nodesWithAttributes;
+    };
+
+    this.setNodesWithAttributes = function(list) {
+      nodesWithAttributes = list;
+    };
+
+
+    this.getNodesByRoadAttributes = function(roadAttributes) {
+      return backend.getNodesByRoadAttributes(roadAttributes, function (result) {
+        if (result.success) {
+          me.setNodesWithAttributes(result.nodes);
+          eventbus.trigger('nodesAndRoadAttributes:fetched');
         }
       });
     };
 
     eventbus.on('node:fetched', function(nodes, zoom){
       me.setNodes(nodes);
-      eventbus.trigger('node:addNodesToMap', nodes, zoom)
+      eventbus.trigger('node:addNodesToMap', nodes, zoom);
     });
+
   };
 })(this);
