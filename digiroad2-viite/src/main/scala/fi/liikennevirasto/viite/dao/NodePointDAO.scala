@@ -1,10 +1,12 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.viite._
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
@@ -39,6 +41,12 @@ class NodePointDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
+  val selectFromNodePoint = """SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_ID, NP.START_DATE, NP.END_DATE,
+                             NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M
+                             FROM NODE_POINT NP
+                             JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+                             JOIN NODE N ON (N.id = np.NODE_ID)"""
+
   implicit val getNodePoint: GetResult[NodePoint] = new GetResult[NodePoint] {
     def apply(r: PositionedResult): NodePoint = {
       val id = r.nextLong()
@@ -58,7 +66,7 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
-  private def queryNodePointList(query: String): List[NodePoint] = {
+  private def queryList(query: String): List[NodePoint] = {
     Q.queryNA[NodePoint](query).list.groupBy(_.id).map {
       case (_, list) =>
         list.head
@@ -68,13 +76,30 @@ class NodePointDAO extends BaseDAO {
   def fetchNodePointsByNodeId(nodeIds: Seq[Long]): Seq[NodePoint] = {
     val query =
       s"""
-         SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_ID, NP.START_DATE, NP.END_DATE, NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY,
-         NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M FROM NODE_POINT NP
-         JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-         JOIN NODE N ON (N.id = np.NODE_ID)
-         where N.id in (${nodeIds.mkString(",")})
+         $selectFromNodePoint
+         where N.id in (${nodeIds.mkString(",")}) and NP.valid_to is null and NP.end_date is null
        """
-    queryNodePointList(query)
+    queryList(query)
+  }
+
+  def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
+    time(logger, "Fetch NodePoint templates by bounding box") {
+      val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
+        boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
+
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "LL.geometry")
+
+      val query =
+        s"""
+          SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NULL AS NODE_ID, NP.START_DATE, NP.END_DATE,
+            NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M
+          FROM NODE_POINT NP
+          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+          JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
+          where $boundingBoxFilter and NP.valid_to is null and NP.end_date is null and NP.node_id is null
+        """
+      queryList(query)
+    }
   }
 
   def create(nodePoints: Iterable[NodePoint], createdBy: String = "-"): Seq[Long] = {

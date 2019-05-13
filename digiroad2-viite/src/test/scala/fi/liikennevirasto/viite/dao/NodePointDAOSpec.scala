@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.NewIdValue
 import org.joda.time.DateTime
@@ -21,6 +22,7 @@ class NodePointDAOSpec extends FunSuite with Matchers {
   val dao = new NodePointDAO
   val nodeDAO = new NodeDAO
   val roadwayPointDAO = new RoadwayPointDAO
+  val linearLocationDAO = new LinearLocationDAO
 
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
 
@@ -31,6 +33,10 @@ class NodePointDAOSpec extends FunSuite with Matchers {
 
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None)
+
+  val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l,
+    (None, None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
+
 
   test("Test create When nothing to create Then return empty Seq") {
     runWithRollback {
@@ -75,6 +81,34 @@ class NodePointDAOSpec extends FunSuite with Matchers {
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
       val nodePoints = dao.fetchNodePointsByNodeId(Seq(nodeId))
       nodePoints.size should be(2)
+      nodePoints.filter(n => n.nodeId == Some(nodeId)).size should be(2)
+    }
+  }
+
+  test("Test fetchTemplatesByBoundingBox When no matches Then return empty Seq") {
+    runWithRollback {
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
+      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = None),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = None)))
+      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
+      val nodePoints = dao.fetchTemplatesByBoundingBox(BoundingRectangle(Point(0, 0), Point(1, 1)))
+      nodePoints.isEmpty should be(true)
+    }
+  }
+
+  test("Test fetchTemplatesByBoundingBox When matches Then return node points") {
+    runWithRollback {
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
+      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = None),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = None)), "Test")
+      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
+      val nodePoints = dao.fetchTemplatesByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
+      nodePoints.size should be(2)
+      nodePoints.filter(n => n.roadwayNumber == roadwayNumber).size should be(2)
+      nodePoints.filter(n => n.addrM == testRoadwayPoint1.addrMValue).size should be(2)
+      nodePoints.filter(n => n.createdBy == Some("Test")).size should be(2)
     }
   }
 

@@ -155,7 +155,7 @@ class NodeDAO extends BaseDAO {
     sql"""
       SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       from NODE
-      where NODE_NUMBER = $nodeNumber
+      where NODE_NUMBER = $nodeNumber and valid_to is null and end_date is null
       """.as[Node].firstOption
   }
 
@@ -163,7 +163,7 @@ class NodeDAO extends BaseDAO {
     sql"""
       SELECT ID
       from NODE
-      where NODE_NUMBER = $nodeNumber
+      where NODE_NUMBER = $nodeNumber and valid_to is null and end_date is null
       """.as[Long].firstOption
   }
 
