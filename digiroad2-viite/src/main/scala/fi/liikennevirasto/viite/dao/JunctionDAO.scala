@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
@@ -9,8 +8,8 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 case class Junction(id: Long, junctionNumber: Long, nodeId: Option[Long], startDate: Option[DateTime], endDate: Option[DateTime],
                     validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
 
-class JunctionDAO {
-  val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
+class JunctionDAO extends BaseDAO {
+
   implicit val getJunction: GetResult[Junction] = new GetResult[Junction] {
     def apply(r: PositionedResult): Junction = {
       val id = r.nextLong()
@@ -26,7 +25,7 @@ class JunctionDAO {
     }
   }
 
-  private def queryJunctionList(query: String): List[Junction] = {
+  private def queryList(query: String): List[Junction] = {
     Q.queryNA[Junction](query).list.groupBy(_.id).map {
       case (_, list) =>
         list.head
@@ -40,7 +39,7 @@ class JunctionDAO {
         FROM JUNCTION
         where NODE_ID = $nodeId
       """
-    queryJunctionList(query)
+    queryList(query)
   }
 
   def fetchJunctionByNodeIds(nodeIds: Seq[Long]): Seq[Junction] = {
@@ -48,9 +47,9 @@ class JunctionDAO {
       s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       FROM JUNCTION
-      where NODE_ID in (${nodeIds.mkString(",")})
+      where NODE_ID in (${nodeIds.mkString(", ")})
       """
-    queryJunctionList(query)
+    queryList(query)
   }
 
   def fetchJunctionId(nodeNumber: Long): Option[Long] = {
@@ -60,4 +59,14 @@ class JunctionDAO {
       where NODE_NUMBER = $nodeNumber
       """.as[Long].firstOption
   }
+
+  def fetchByIds(ids: Seq[Long]): Seq[Junction] = {
+    val query = s"""
+      SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      FROM JUNCTION
+      WHERE ID IN (${ids.mkString(", ")})
+      """
+    queryList(query)
+  }
+
 }
