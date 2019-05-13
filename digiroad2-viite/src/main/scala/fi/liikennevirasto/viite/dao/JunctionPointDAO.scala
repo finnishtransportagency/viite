@@ -62,8 +62,9 @@ class JunctionPointDAO extends BaseDAO {
           JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M
           FROM JUNCTION_POINT JP
           JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
+          JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID AND J.NODE_ID IS NULL)
           JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-          where $boundingBoxFilter and NP.valid_to is null and NP.end_date is null and NP.node_id is null
+          where $boundingBoxFilter and NP.valid_to is null and NP.end_date is null
         """
       queryList(query)
     }
