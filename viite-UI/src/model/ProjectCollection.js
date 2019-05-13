@@ -635,7 +635,7 @@
       var listContent = '';
       var index = 0;
       _.each(self.getReservedParts(), function (row) {
-          var button = deleteButton(index++, row.roadNumber, row.roadPartNumber);
+          var button = deleteButton(index++, row.roadNumber, row.roadPartNumber, 'reservedList');
           listContent += '<div class="form-reserved-roads-list">' + button +
             addSmallLabelWithIds(row.roadNumber, 'reservedRoadNumber') +
             addSmallLabelWithIds(row.roadPartNumber, 'reservedRoadPartNumber') +
