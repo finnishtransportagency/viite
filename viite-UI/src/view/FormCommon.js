@@ -330,6 +330,7 @@
       replaceAddressInfo: replaceAddressInfo,
       roadTypeDropdown: roadTypeDropdown,
       addSmallLabel: addSmallLabel,
+      addSmallLabelLowercase: addSmallLabelLowercase,
       addSmallInputNumber: addSmallInputNumber,
       addSmallInputNumberDisabled: addSmallInputNumberDisabled,
       addDiscontinuityDropdown: addDiscontinuityDropdown,
