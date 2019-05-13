@@ -72,7 +72,7 @@ class ProjectValidator {
     if (LinkStatus.New.value == linkStatus.value) {
       val formedPartsOtherProjects = projectReservedPartDAO.fetchFormedRoadParts(currentProject.id, withProjectId = false)
       if(formedPartsOtherProjects.nonEmpty && formedPartsOtherProjects.exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart))
-        throw new ProjectValidationException(RoadNotAvailableMessage)
+        throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
       }
   }
 
@@ -84,7 +84,7 @@ class ProjectValidator {
   }
 
   def checkReservedPartInProject(number: Long, part: Long, currentProject: Project, linkStatus: LinkStatus): Unit = {
-    if (LinkStatus.Transfer.value == linkStatus.value) {
+    if (LinkStatus.Transfer.value == linkStatus.value && !currentProject.formedParts.map(fp => (fp.roadNumber, fp.roadPartNumber)).contains((number, part))) {
       val project = projectReservedPartDAO.fetchReservedPartInProject(number, part, currentProject.id, withProjectId = true)
       if (project.isEmpty) {
         throw new ProjectValidationException(RoadPartNotReservedInProjectMessage.format(number, part, currentProject.name))
