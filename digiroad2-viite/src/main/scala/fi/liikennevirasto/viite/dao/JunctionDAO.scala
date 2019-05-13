@@ -1,8 +1,5 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -50,7 +47,7 @@ class JunctionDAO extends BaseDAO {
       s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       FROM JUNCTION
-      where NODE_ID in (${nodeIds.mkString(",")})
+      where NODE_ID in (${nodeIds.mkString(", ")})
       """
     queryList(query)
   }
@@ -61,6 +58,15 @@ class JunctionDAO extends BaseDAO {
       from NODE
       where NODE_NUMBER = $nodeNumber
       """.as[Long].firstOption
+  }
+
+  def fetchByIds(ids: Seq[Long]): Seq[Junction] = {
+    val query = s"""
+      SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      FROM JUNCTION
+      WHERE ID IN (${ids.mkString(", ")})
+      """
+    queryList(query)
   }
 
 }
