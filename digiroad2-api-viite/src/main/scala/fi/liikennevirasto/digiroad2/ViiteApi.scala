@@ -1144,6 +1144,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map(
       "success" -> true,
       "roadwayId" -> roadAddressLink.id,
+      "roadwayNumber" -> roadAddressLink.roadwayNumber,
       "linearLocationId" -> roadAddressLink.linearLocationId,
       "linkId" -> roadAddressLink.linkId,
       "mmlId" -> roadAddressLink.attributes.get("MTKID"),
@@ -1228,7 +1229,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("id" -> junctionPoint.id,
         "junctionId" -> junctionPoint.junctionId,
         "roadwayNumber" -> junctionPoint.roadwayNumber,
-        "addrM" -> junctionPoint.addrM)
+        "addrM" -> junctionPoint.addrM,
+        "beforeOrAfter" -> junctionPoint.beforeAfter.value)
   }
 
   def nodeToApi(node: (Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]))) : Map[String, Any] = {

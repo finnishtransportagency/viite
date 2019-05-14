@@ -10,32 +10,20 @@
         '<div class="legend-container no-copy"></div>' +
       '</div>');
 
-    var administrativeClassLegend = $('' +
-      '<div class="panel-section panel-legend road-link-legend">' +
-        '<div class="legend-entry">' +
-          '<div class="label">Valtion omistama</div>' +
-            '<div class="symbol linear road"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Kunnan omistama</div>' +
-            '<div class="symbol linear street"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Yksityisen omistama</div>' +
-            '<div class="symbol linear private-road"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Ei tiedossa tai kevyen liikenteen väylä</div>' +
-          '<div class="symbol linear unknown"/>' +
-        '</div>' +
-      '</div>');
-
     var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
     var calibrationPointPicture = $('' +
       '<div class="legend-entry">' +
       '<div class="label">Etäisyyslukema</div>' +
       '</div>' +
       '<div class="calibration-point-image"></div>');
+
+    var junctionPicture = $('' +
+      '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
+      '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px">\n' +
+      '    <param name="number" value="99"/>\n' +
+      '</object>' +
+      '<div class="label">Liittyma</div>' +
+      '</div>');
 
     var roadClasses = [
       [1, 'Valtatie (1-39)'],
@@ -287,6 +275,7 @@
       else if(applicationModel.getSelectedLayer() === "node"){
         container.empty();
         roadClassLegend.append(nodesLegendEntries);
+        roadClassLegend.append(junctionPicture);
       } else {
         $('.panel-actions').hide();
         container.empty();

@@ -74,12 +74,15 @@ class NodePointDAO extends BaseDAO {
   }
 
   def fetchNodePointsByNodeId(nodeIds: Seq[Long]): Seq[NodePoint] = {
-    val query =
-      s"""
+    if(nodeIds.isEmpty) Seq()
+    else{
+      val query =
+        s"""
          $selectFromNodePoint
          where N.id in (${nodeIds.mkString(",")}) and NP.valid_to is null and NP.end_date is null
        """
-    queryList(query)
+      queryList(query)
+    }
   }
 
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
