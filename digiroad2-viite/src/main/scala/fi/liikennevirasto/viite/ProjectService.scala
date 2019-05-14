@@ -1301,16 +1301,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def revertLinksByRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert], userName: String): Option[String] = {
     val (added, modified) = links.partition(_.status == LinkStatus.New.value)
-    if (modified.exists(_.status == LinkStatus.Numbering.value)) {
-      logger.info(s"Reverting whole road part in $projectId ($roadNumber/$roadPartNumber)")
-      // Numbering change affects the whole road part
-      revertSortedLinks(projectId, roadNumber, roadPartNumber, added,
-        projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId).map(
-          link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)),
-        userName)
-    } else {
-      revertSortedLinks(projectId, roadNumber, roadPartNumber, added, modified, userName)
-    }
+    revertSortedLinks(projectId, roadNumber, roadPartNumber, added, modified, userName)
     None
   }
 
