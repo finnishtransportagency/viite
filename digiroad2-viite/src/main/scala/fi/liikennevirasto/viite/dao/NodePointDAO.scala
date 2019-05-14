@@ -110,7 +110,7 @@ class NodePointDAO extends BaseDAO {
 
     // Set ids for the node points without one
     val (ready, idLess) = nodePoints.partition(_.id != NewIdValue)
-    val newIds = Sequences.fetchNodePointIds(idLess.size)
+    val newIds = Sequences.fetchJunctionPointIds(idLess.size)
     val createNodePoints = ready ++ idLess.zip(newIds).map(x =>
       x._1.copy(id = x._2)
     )
