@@ -82,9 +82,31 @@
       overlay.setPosition(coordinate);
     };
 
+    var displayNodeInfo = function (event, pixel) {
+      var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature) {
+        return feature;
+      });
+      var coordinate;
+      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.nodeInfo)) {
+        var nodeData = featureAtPixel.nodeInfo;
+        coordinate = map.getEventCoordinate(event.originalEvent);
+        if (infoContent !== null) {
+          infoContent.innerHTML = '<p>' +
+            'ID: ' + nodeData.id + '<br>' +
+            'Number: ' + nodeData.nodeNumber + '<br>' +
+            'Name: ' + nodeData.nodeName + '<br>'+'</p>'
+          ;
+        }
+        overlay.setPosition(coordinate);
+      }
+
+    };
+
     //Listen pointerMove and get pixel for displaying roadAddress feature info
     me.eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
       displayRoadAddressInfo(event, pixel);
+      displayNodeInfo(event, pixel);
+
     });
 
     var handleRoadsVisibility = function () {

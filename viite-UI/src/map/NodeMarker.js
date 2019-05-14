@@ -13,6 +13,7 @@
       });
 
       marker.setStyle(nodeMarkerStyle);
+      marker.nodeInfo = node;
       return marker;
     };
 
