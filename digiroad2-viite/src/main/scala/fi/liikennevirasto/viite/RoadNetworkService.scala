@@ -101,11 +101,11 @@ class RoadNetworkService {
           val last = sortedLocations.last
 
           val middleCalibrationPointsErrors: Seq[RoadNetworkError] =
-            allLocations.filter(loc =>
-              !allLocations.exists(l => (loc.calibrationPoints._2 == l.calibrationPoints._1) && l.linearLocationId != loc.linearLocationId) && loc.linearLocationId != last.linearLocationId
-                ||
-                !allLocations.exists(l => (loc.calibrationPoints._1 == l.calibrationPoints._2) && l.linearLocationId != loc.linearLocationId) && loc.linearLocationId != first.linearLocationId
-            ).map { loc =>
+          allLocations.filter(loc =>
+            loc.endCalibrationPoint.nonEmpty && (loc.linearLocationId != last.linearLocationId) && !allLocations.exists(l => l.startCalibrationPoint.nonEmpty && l.startCalibrationPoint.get.addressMValue == loc.endCalibrationPoint.get.addressMValue && (l.linearLocationId != loc.linearLocationId))
+              ||
+            loc.startCalibrationPoint.nonEmpty && (loc.linearLocationId != first.linearLocationId) && !allLocations.exists(l => l.endCalibrationPoint.nonEmpty && l.endCalibrationPoint.get.addressMValue == loc.startCalibrationPoint.get.addressMValue && (l.linearLocationId != loc.linearLocationId))
+          ).map { loc =>
               RoadNetworkError(0, loc.id, loc.linearLocationId, AddressError.InconsistentContinuityCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion)
             }
 
