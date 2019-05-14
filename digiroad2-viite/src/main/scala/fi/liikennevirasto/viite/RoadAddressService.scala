@@ -427,7 +427,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   /**
     * Returns all of our road addresses (combination of roadway + linear location information) that share the same roadwayId as those supplied.
     *
-    * @param roadwayIds      : Seq[Long] - The roadway Id's to fetch
+    * @param roadwayIds : Seq[Long] - The roadway Id's to fetch
     * @return
     */
   def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long]): Seq[RoadAddress] = {
@@ -604,15 +604,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   }
 
-  def handleCalibrationPoints(linearLocations: Iterable[LinearLocation], createdBy : String = "-"): Unit = {
+  def handleCalibrationPoints(linearLocations: Iterable[LinearLocation], createdBy: String = "-"): Unit = {
     val startCalibrationPointsToCheck = linearLocations.filter(_.startCalibrationPoint.isDefined)
     val endCalibrationPointsToCheck = linearLocations.filter(_.endCalibrationPoint.isDefined)
-    startCalibrationPointsToCheck.foreach{
+    startCalibrationPointsToCheck.foreach {
       cal =>
         val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 0)
-        if(calibrationPoint.isDefined)
+        if (calibrationPoint.isDefined)
           RoadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
-        else{
+        else {
           val roadwayPointId =
             RoadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
               case Some(roadwayPoint) =>
@@ -622,12 +622,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = createdBy)
         }
     }
-    endCalibrationPointsToCheck.foreach{
+    endCalibrationPointsToCheck.foreach {
       cal =>
         val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 1)
-        if(calibrationPoint.isDefined)
+        if (calibrationPoint.isDefined)
           RoadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.endCalibrationPoint.get, createdBy)
-        else{
+        else {
           val roadwayPointId =
             RoadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.get) match {
               case Some(roadwayPoint) =>
