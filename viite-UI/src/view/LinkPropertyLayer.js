@@ -571,7 +571,7 @@
             newLinkData.points = newLinkData.newGeometry;
 
             var marker = cachedMarker.createMarker(newLinkData);
-          geometryChangedLayer.getSource().addFeature(marker);
+            geometryChangedLayer.getSource().addFeature(marker);
 
             var points = _.map(newLinkData.newGeometry, function (point) {
             return [point.x, point.y];

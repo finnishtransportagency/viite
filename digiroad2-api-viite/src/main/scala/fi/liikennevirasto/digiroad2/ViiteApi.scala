@@ -1149,8 +1149,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "mmlId" -> roadAddressLink.attributes.get("MTKID"),
       "points" -> roadAddressLink.geometry,
       "calibrationCode" -> CalibrationCode.getFromAddressLinkLike(roadAddressLink).value,
-      "calibrationPoints" -> Seq(calibrationPoint(roadAddressLink.geometry, roadAddressLink.startCalibrationPoint),
-        calibrationPoint(roadAddressLink.geometry, roadAddressLink.endCalibrationPoint)),
+      "calibrationPoints" -> Seq(calibrationPointToApi(roadAddressLink.geometry, roadAddressLink.startCalibrationPoint),
+        calibrationPointToApi(roadAddressLink.geometry, roadAddressLink.endCalibrationPoint)),
       "administrativeClass" -> roadAddressLink.administrativeClass.toString,
       "roadClass" -> RoadClass.get(roadAddressLink.roadNumber.toInt),
       "roadTypeId" -> roadAddressLink.roadType.value,
@@ -1441,7 +1441,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private def formatDateTimeToString(dateOption: Option[DateTime]): Option[String] =
     dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy, HH:mm:ss")) }
 
-  private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
+  private def calibrationPointToApi(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]): Option[Map[String, Any]] = {
     calibrationPoint match {
       case Some(point) =>
         val calculatedPoint = GeometryUtils.calculatePointFromLinearReference(geometry, point.segmentMValue)

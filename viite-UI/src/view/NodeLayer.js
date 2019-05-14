@@ -165,11 +165,17 @@
 
         eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, zoom){
           //if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode){
+          var suravageLinks = roadCollection.getSuravageLinks();
+          var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
+            return _.contains(_.map(suravageLinks, function (sl) {
+              return sl.linkId;
+            }), rl.linkId);
+          });
 
-            _.each(nodes, function(node) {
-              var nodeMarker = new NodeMarker();
-              nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node.node))
-            });
+          _.each(nodes, function(node) {
+            var nodeMarker = new NodeMarker();
+            nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node.node));
+          });
           /* }
            else{
 
