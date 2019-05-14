@@ -11,7 +11,6 @@
       var junctionTemplateVector = new ol.source.Vector({});
       var isActiveLayer = false;
       var cachedMarker = null;
-      var roadLinkStyler = new RoadLinkStyler();
 
       var SelectionType = LinkValues.SelectionType;
       var Anomaly = LinkValues.Anomaly;
@@ -28,42 +27,42 @@
       var anomalousMarkerLayer = new ol.layer.Vector({
         source: anomalousMarkerVector,
         name: 'anomalousMarkerLayer',
-        zIndex: RoadZIndex.IndicatorLayer.value
+        zIndex: RoadZIndex.VectorLayer.value
       });
       anomalousMarkerLayer.set('name', 'anomalousMarkerLayer');
 
       var directionMarkerLayer = new ol.layer.Vector({
         source: directionMarkerVector,
         name: 'directionMarkerLayer',
-        zIndex: RoadZIndex.DirectionMarkerLayer.value
+        zIndex: RoadZIndex.VectorLayer.value
       });
       directionMarkerLayer.set('name', 'directionMarkerLayer');
 
       var nodeMarkerLayer = new ol.layer.Vector({
         source: nodeMarkerVector,
         name: 'nodeMarkerLayer',
-        zIndex: RoadZIndex.DirectionMarkerLayer.value
+        zIndex: RoadZIndex.CalibrationPointLayer.value
       });
       nodeMarkerLayer.set('name', 'nodeMarkerLayer');
 
       var junctionMarkerLayer = new ol.layer.Vector({
         source: junctionMarkerVector,
         name: 'junctionMarkerLayer',
-        zIndex: RoadZIndex.DirectionMarkerLayer.value
+        zIndex: RoadZIndex.CalibrationPointLayer.value - 1
       });
       junctionMarkerLayer.set('name', 'junctionMarkerLayer');
 
       var nodePointTemplateLayer = new ol.layer.Vector({
         source: nodePointTemplateVector,
         name: 'nodePointTemplateLayer',
-        zIndex: RoadZIndex.DirectionMarkerLayer.value
+        zIndex: RoadZIndex.CalibrationPointLayer.value - 1
       });
       nodePointTemplateLayer.set('name', 'nodePointTemplateLayer');
 
       var junctionTemplateLayer = new ol.layer.Vector({
         source: junctionTemplateVector,
         name: 'junctionTemplateLayer',
-        zIndex: RoadZIndex.DirectionMarkerLayer.value
+        zIndex: RoadZIndex.CalibrationPointLayer.value - 1
       });
       junctionTemplateLayer.set('name', 'junctionTemplateLayer');
 
@@ -78,38 +77,6 @@
         junctionMarkerLayer.setOpacity(opacity);
         nodePointTemplateLayer.setOpacity(opacity);
         junctionTemplateLayer.setOpacity(opacity);
-      };
-
-      var drawIndicators = function (links) {
-        var features = [];
-
-        var markerContainer = function (link, position) {
-          var style = new ol.style.Style({
-            image: new ol.style.Icon({
-              src: 'images/center-marker2.svg'
-            }),
-            text: new ol.style.Text({
-              text: link.marker,
-              fill: new ol.style.Fill({
-                color: '#ffffff'
-              }),
-              font: '12px sans-serif'
-            })
-          });
-          var marker = new ol.Feature({
-            geometry: new ol.geom.Point([position.x, position.y])
-          });
-          marker.setStyle(style);
-          features.push(marker);
-        };
-
-        var indicators = function () {
-          return me.mapOverLinkMiddlePoints(links, function (link, middlePoint) {
-            markerContainer(link, middlePoint);
-          });
-        };
-        indicators();
-        indicatorLayer.getSource().addFeatures(features);
       };
 
       var redraw = function () {
@@ -164,22 +131,53 @@
         });
 
         eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, zoom){
-          //if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode){
-          var suravageLinks = roadCollection.getSuravageLinks();
-          var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
-            return _.contains(_.map(suravageLinks, function (sl) {
-              return sl.linkId;
-            }), rl.linkId);
-          });
-
           _.each(nodes, function(node) {
             var nodeMarker = new NodeMarker();
             nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node.node));
           });
-          /* }
-           else{
 
-           }*/
+          if (parseInt(zoom, 10) >= zoomlevels.minZoomForEditMode){
+            var suravageLinks = roadCollection.getSuravageLinks();
+            var roadLinksWithValues = _.reject(roadCollection.getAll(), function (rl) {
+              return _.contains(_.map(suravageLinks, function (sl) {
+                return sl.linkId;
+              }), rl.linkId) || rl.roadNumber === 0;
+            });
+            var junctions = [];
+            var junctionPoints = [];
+            var junctionPointsWithRoadlinks = [];
+            _.map(nodes, function(node){
+              junctions =  junctions.concat(node.junctions);
+            });
+
+            _.map(junctions, function (junction) {
+              junctionPoints = junctionPoints.concat(junction.junctionPoints);
+            });
+
+            junctionPointsWithRoadlinks = _.map(junctionPoints, function (junctionPoint) {
+                return {
+                  junctionPoint: junctionPoint,
+                  roadLinks:_.filter(roadLinksWithValues, function (roadLink) {
+                    return (roadLink.startAddressM === junctionPoint.addrM || roadLink.endAddressM === junctionPoint.addrM) && roadLink.roadwayNumber === junctionPoint.roadwayNumber;
+                  }),
+                  junction: _.find(junctions, function (junction) {
+                    return junction.id === junctionPoint.junctionId;
+                  })
+                };
+              }
+            );
+
+            _.each(junctionPointsWithRoadlinks, function (junctionPoint) {
+              _.each(junctionPoint.roadLinks, function (roadLink) {
+               var junctionMarker = new JunctionMarker();
+               junctionMarkerLayer.getSource().addFeature(junctionMarker.createJunctionMarker(junctionPoint.junctionPoint, junctionPoint.junction, roadLink));
+              });
+            });
+
+            // var nodeMarker = new NodeMarker();
+            // nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node.node));
+
+          }
         });
 
         eventListener.listenTo(eventbus, 'linkProperties:clearIndicators', function () {
