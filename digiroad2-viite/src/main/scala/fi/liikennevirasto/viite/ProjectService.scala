@@ -1250,8 +1250,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           checkAndReserve(projectDAO.fetchById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
           if (mod.geometry.nonEmpty) {
             val vvhGeometry = vvhRoadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
-            val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
-            projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
+            if (vvhGeometry.nonEmpty) {
+              val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
+              projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
+            } else {
+              projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
+            }
           } else {
             projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
           }
