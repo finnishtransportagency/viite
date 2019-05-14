@@ -54,15 +54,12 @@ class RoadNetworkService {
           Seq.empty[RoadNetworkError]
         else {
           val sortedLocations = allLocations.sortBy(_.startAddrMValue)
-          val startLocationErrors = if (sortedLocations.head.startAddrMValue != 0) {
-            Seq(RoadNetworkError(0, sortedLocations.head.id, sortedLocations.head.linearLocationId, AddressError.MissingStartingLink, System.currentTimeMillis(), options.currNetworkVersion))
-          } else {
+          val startLocationErrors =
             if (sortedLocations.head.calibrationPoints._1.isEmpty) {
               Seq(RoadNetworkError(0, sortedLocations.head.id, sortedLocations.head.linearLocationId, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
             } else {
               Seq.empty[RoadNetworkError]
             }
-          }
 
           val endLocationErrors = if (sortedLocations.last.calibrationPoints._2.isEmpty) {
             Seq(RoadNetworkError(0, sortedLocations.head.id, sortedLocations.head.linearLocationId, AddressError.MissingEdgeCalibrationPoints, System.currentTimeMillis(), options.currNetworkVersion))
