@@ -191,6 +191,17 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
       }
   }
 
+  /**
+    * Map roadway address into road addresses using given linear locations
+    *
+    * @param roadway         The current roadway address
+    * @param linearLocations The roadway linear locations
+    * @return Returns the mapped road addresses
+    */
+  def mapRoadNetworkAddresses(roadway: Roadway, linearLocations: Seq[LinearLocation]): Seq[RoadAddress] = {
+    recursiveMapRoadAddresses(roadway, linearLocations)
+  }
+
   //TODO may be a good idea mode this method to road address service
   /**
     * Uses the RoadwayDAO to get the roadway information that is connected to the entries of given linearLocations.
