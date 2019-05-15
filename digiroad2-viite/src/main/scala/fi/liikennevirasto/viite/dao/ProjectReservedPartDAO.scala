@@ -314,9 +314,14 @@ class ProjectReservedPartDAO {
     }
   }
 
-  def roadPartReservedByProject(roadNumber: Long, roadPart: Long, projectId: Long = 0, withoutProjectId: Boolean = false): Option[String] = {
-    time(logger, "Road part reserved by project") {
-      val filter = if (withoutProjectId && projectId != 0) s" AND prj.ID != $projectId " else ""
+  def fetchProjectReservedPart(roadNumber: Long, roadPart: Long, projectId: Long = 0, withProjectId: Option[Boolean] = None): Option[String] = {
+    time(logger, "Road part reserved by other project") {
+      val filter = (withProjectId, projectId != 0) match {
+        case (_, false) => ""
+        case (Some(inProject), true) => if(inProject) s" AND prj.ID = $projectId " else s" AND prj.ID != $projectId "
+        case _ => ""
+      }
+
       val query =
         s"""SELECT prj.NAME FROM PROJECT prj
             JOIN PROJECT_RESERVED_ROAD_PART res ON res.PROJECT_ID = prj.ID
