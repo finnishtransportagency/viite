@@ -123,6 +123,9 @@ package object viite {
   val ErrorMissingStartingLink = "Missing start link in roadway."
   val InconsistentAddressValues = "Wrong address values between links."
 
+  // Nodes and Junctions error messages
+  val ReturnedTooManyNodesErrorMessage = "Hakusi palauttaa yli 50 kohdetta, rajaa hakua pienemmäksi."
+
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 
