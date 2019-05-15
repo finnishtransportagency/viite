@@ -29,11 +29,5 @@
         }
       });
     };
-
-    eventbus.on('node:fetched', function(nodes, zoom){
-      me.setNodes(nodes);
-      eventbus.trigger('node:addNodesToMap', nodes, zoom);
-    });
-
   };
 })(this);

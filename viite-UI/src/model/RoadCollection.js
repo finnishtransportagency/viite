@@ -117,7 +117,7 @@
         currentAllRoadLinks = fetchedRoadLinks;
         backend.getNodes({boundingBox: boundingBox, zoom: zoom}, function(nodes){
           fetchProcess(fetchedRoadLinks, zoom);
-          eventbus.trigger('node:fetched', nodes, zoom);
+          eventbus.trigger('node:addNodesToMap', nodes, zoom);
         });
       });
     };
