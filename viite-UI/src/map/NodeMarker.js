@@ -7,7 +7,8 @@
 
       var nodeMarkerStyle = new ol.style.Style({
         image: new ol.style.Icon({
-          src: 'images/node-sprite.svg#' + node.type
+          src: 'images/node-sprite.svg#' + node.type,
+          scale: 1.5
         })
       });
 

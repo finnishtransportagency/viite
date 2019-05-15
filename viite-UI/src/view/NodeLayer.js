@@ -3,7 +3,6 @@
       Layer.call(this, map);
       var me = this;
       var indicatorVector = new ol.source.Vector({});
-      var anomalousMarkerVector = new ol.source.Vector({});
       var directionMarkerVector = new ol.source.Vector({});
       var nodeMarkerVector = new ol.source.Vector({});
       var junctionMarkerVector = new ol.source.Vector({});
@@ -23,13 +22,6 @@
         zIndex: RoadZIndex.IndicatorLayer.value
       });
       indicatorLayer.set('name', 'indicatorLayer');
-
-      var anomalousMarkerLayer = new ol.layer.Vector({
-        source: anomalousMarkerVector,
-        name: 'anomalousMarkerLayer',
-        zIndex: RoadZIndex.VectorLayer.value
-      });
-      anomalousMarkerLayer.set('name', 'anomalousMarkerLayer');
 
       var directionMarkerLayer = new ol.layer.Vector({
         source: directionMarkerVector,
@@ -66,12 +58,11 @@
       });
       junctionTemplateLayer.set('name', 'junctionTemplateLayer');
 
-      var layers = [roadLayer.layer, indicatorLayer, anomalousMarkerLayer, directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer];
+      var layers = [nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer];
 
       var setGeneralOpacity = function (opacity) {
         roadLayer.layer.setOpacity(opacity);
         indicatorLayer.setOpacity(opacity);
-        anomalousMarkerLayer.setOpacity(opacity);
         directionMarkerLayer.setOpacity(opacity);
         nodeMarkerLayer.setOpacity(opacity);
         junctionMarkerLayer.setOpacity(opacity);
@@ -88,7 +79,7 @@
               return sl.linkId;
             }), rl.linkId);
           });
-          me.clearLayers([anomalousMarkerLayer, directionMarkerLayer]);
+          me.clearLayers([directionMarkerLayer]);
 
           if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForAssets) {
 
@@ -100,16 +91,8 @@
               if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
                 directionMarkerLayer.getSource().addFeature(marker);
             });
-
-            var anomalousRoadMarkers = _.filter(roadLinks, function (roadLink) {
-              return roadLink.anomaly !== Anomaly.None.value;
-            });
-            _.each(anomalousRoadMarkers, function (anomalousLink) {
-              var marker = cachedMarker.createMarker(anomalousLink);
-              anomalousMarkerLayer.getSource().addFeature(marker);
-            });
-
           }
+
           if (applicationModel.getCurrentAction() === -1) {
             applicationModel.removeSpinner();
           }
@@ -173,26 +156,14 @@
                junctionMarkerLayer.getSource().addFeature(junctionMarker.createJunctionMarker(junctionPoint.junctionPoint, junctionPoint.junction, roadLink));
               });
             });
-
-            // var nodeMarker = new NodeMarker();
-            // nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node.node));
-
           }
-        });
-
-        eventListener.listenTo(eventbus, 'linkProperties:clearIndicators', function () {
-          clearIndicators();
         });
 
         eventListener.listenTo(eventbus, 'roadLinks:refreshView', function () {
           me.refreshView();
         });
 
-        var clearIndicators = function () {
-          indicatorLayer.getSource().clear();
-        };
-
-        eventListener.listenTo(eventListener, 'map:clearLayers', me.clearLayers);
+        eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers);
       };
 
       me.eventListener.listenTo(eventbus, 'nodeLayer:fetch', function () {
@@ -224,7 +195,6 @@
 
       me.toggleLayersVisibility(layers, true);
       me.addLayers(layers);
-      me.layerStarted(me.eventListener);
 
       return {
         show: showLayer,
