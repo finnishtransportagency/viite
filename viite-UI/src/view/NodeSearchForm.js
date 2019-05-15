@@ -1,6 +1,5 @@
 (function (root) {
-  root.NodeSearchForm = function (nodeCollection) {
-    var formCommon = new FormCommon('');
+  root.NodeSearchForm = function (map, nodeCollection) {
     var container = $('#legendDiv');
     var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
     var header = function() {
@@ -16,7 +15,7 @@
     var inputField = function (id, value, maxLength) {
       var lengthLimit = '';
       if (maxLength) lengthLimit = ' maxlength="' + maxLength + '"';
-      return '<input type="text" class="form-control small-input" id = "' + id + '"' + lengthLimit + ' value="' + value + '"/>';
+      return '<input type="text" class="form-control node-input" id = "' + id + '"' + lengthLimit + ' value="' + value + '"/>';
     };
 
     var searchButton = function () {
@@ -48,24 +47,53 @@
       );
     };
 
+    var addNodeAttributeLabel = function (label) {
+      return '<label class="control-label-small" style="text-transform:none;color:#f4b183">'+label+'</label>';
+    };
+
+    var roadAddressLink = function (index, nodeWithAttributes) {
+      return '<a id="' + index + '" class="node-link" href="#node/' + nodeWithAttributes.id + '" style="font-weight:bold;cursor:pointer;">' +
+        nodeWithAttributes.roadNumber + '/' +
+        nodeWithAttributes.track + '/' +
+        nodeWithAttributes.roadPartNumber + '/' +
+        nodeWithAttributes.startAddrMValue + '</a>';
+    };
+
     var nodesAndRoadAttributesHtmlList = function () {
-      var text = '';
+      var text = '<label class="control-label-small" style="text-transform:none;color:white;font-weight:bold">TIE / AJR / OSA / ET</label></br>';
       var index = 0;
       var nodes = nodeCollection.getNodesWithAttributes();
       _.each(nodes, function (nodeWithAttributes) {
-        text += ' ' + '</br>' +
-          formCommon.addSmallLabelLowercase('Solmutyyppi: ') + ' ' + formCommon.addSmallLabelLowercase(nodeWithAttributes.type) + '</br>' +
-          formCommon.addSmallLabelLowercase('Solmun nimi: ') + ' ' + formCommon.addSmallLabelLowercase(nodeWithAttributes.name) + '</br>';
+        text += roadAddressLink(index++, nodeWithAttributes) + '</br>' +
+          addNodeAttributeLabel('Solmutyyppi: ') + addNodeAttributeLabel(nodeWithAttributes.type) + '</br>' +
+          addNodeAttributeLabel('Solmun nimi: ') + addNodeAttributeLabel(nodeWithAttributes.name) + '</br></br>';
       });
       return text;
+    };
+
+    var checkInputs = function (selector, disabled) {
+      var rootElement = $('#feature-attributes');
+      var startRoadPart = $("#aosa").val();
+      var endRoadPart = $("#losa").val();
+      if (disabled || !(!startRoadPart && !endRoadPart || startRoadPart && endRoadPart)) {
+        rootElement.find(selector).prop('disabled', true);
+      } else {
+        rootElement.find(selector).prop('disabled', false);
+      }
     };
 
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
 
-      eventbus.on('nodesAndRoadAttributes:fetched', function() {
+      eventbus.on('nodeSearchTool:fetched', function() {
         $('#nodes-and-junctions-content').html(nodesAndRoadAttributesHtmlList());
         applicationModel.removeSpinner();
+        eventbus.trigger('nodeSearchTool:refreshView', map);
+      });
+
+      eventbus.on('nodeSearchTool:failed', function(errorMessage) {
+        applicationModel.removeSpinner();
+        new ModalConfirm(errorMessage);
       });
 
       eventbus.on('nodesAndJunctions:open', function () {
@@ -77,21 +105,24 @@
           return false;
         });
 
-        var searchButton = $('#node-search-btn');
-        rootElement.on('change', '.small-input', searchButton, function () {
-          var startRoadPart = $("#aosa").val();
-          var endRoadPart = $("#losa").val();
-          searchButton[0].disabled = !($("#tie").val() &&
-            (!startRoadPart && !endRoadPart) || (startRoadPart && endRoadPart));
+        rootElement.on('keyup, input', '.node-input', function () {
+          checkInputs('#node-search-btn', !$("#tie").val());
         });
 
         rootElement.on('click', '.node-search-btn', function () {
           applicationModel.addSpinner();
-          nodeCollection.getNodesByRoadAttributes({
-            roadNumber: $("#tie").val(),
-            minRoadPartNumber: $("#aosa").val(),
-            maxRoadPartNumber: $("#losa").val()
-          });
+          var data = {
+            roadNumber: $("#tie").val()
+          };
+          var minPart = $("#aosa").val();
+          var maxPart = $("#losa").val();
+          if (minPart) { data.minRoadPartNumber = minPart; }
+          if (maxPart) { data.maxRoadPartNumber = maxPart; }
+          nodeCollection.getNodesByRoadAttributes(data);
+        });
+
+        rootElement.on('click', '.node-link', function (event) {
+          eventbus.trigger('nodeSearchTool:clickNode', event.currentTarget.id, map);
         });
 
       });

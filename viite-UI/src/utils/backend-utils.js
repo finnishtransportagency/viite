@@ -629,10 +629,20 @@
     }, 1000);
 
     this.getNodesByRoadAttributes = _.throttle(function (roadAttributes, callback) {
-      return $.get('api/viite/nodes', roadAttributes, function (data) {
-        return _.isFunction(callback) && callback(data);
+      return $.get('api/viite/nodes', roadAttributes).then(function (data) {
+        callback(data);
       });
-    }, 1000);
+    });
+    //
+    // return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
+    //   roadNumber: roadNumber,
+    //   startPart: startPart,
+    //   endPart: endPart,
+    //   projDate: convertDatetoSimpleDate(projDate)
+    // })
+    //   .then(function (x) {
+    //     eventbus.trigger('roadPartsValidation:checkRoadParts', x);
+    //   });
 
   };
 }(this));

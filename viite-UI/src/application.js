@@ -118,7 +118,7 @@
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
 
-    new NodeSearchForm(models.nodeCollection);
+    new NodeSearchForm(map, models.nodeCollection);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
