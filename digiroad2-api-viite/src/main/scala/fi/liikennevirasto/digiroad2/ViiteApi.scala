@@ -1021,8 +1021,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           BadRequest("When the 'minRoadPartNumber' is defined, also the 'maxRoadPartNumber' must be defined.")
         } else {
           nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber.get, minRoadPartNumber, maxRoadPartNumber) match {
-            case Right(nodes) => Map("success" -> true, "nodes" -> nodes.map(nodeSearchToApi))
-            case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
+            // if the result set has more than 50 rows but the road attributes can't be narrowed down, it shows the results anyway
+            case Right(nodes)
+              if nodes.size <= 50 ||
+                minRoadPartNumber.isDefined && maxRoadPartNumber.isDefined && minRoadPartNumber.get == maxRoadPartNumber.get => Map("success" -> true, "nodes" -> nodes.map(nodeSearchToApi))
+            case Right(nodes) if nodes.size > 50 => Map("success" -> false, "errorMessage" -> ReturnedTooManyNodesErrorMessage)
+            case Left(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
           }
         }
       } else {
@@ -1393,8 +1397,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "name" -> node.name,
       "type" -> node.nodeType.displayValue,
       "roadNumber" -> roadAttr.roadNumber,
-      "roadPartNumber" -> roadAttr.roadPartNumber,
       "track" -> roadAttr.track,
+      "roadPartNumber" -> roadAttr.roadPartNumber,
       "startAddrMValue" -> roadAttr.startAddrMValue)
   }
 
