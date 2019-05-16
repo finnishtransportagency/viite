@@ -89,7 +89,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
       def adjustTwoTrackRoadwayNumbers(firstRight: Seq[ProjectLink], restRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink], restLeft: Seq[ProjectLink])
       : ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
-        val (transferLinks, newLinks) = if(firstRight.exists(_.status == LinkStatus.Transfer)) (firstRight, firstLeft) else (firstLeft, firstRight)
+        val (transferLinks, newLinks) = if (firstRight.exists(_.status == LinkStatus.Transfer)) (firstRight, firstLeft) else (firstLeft, firstRight)
         val groupedTransfer = transferLinks.groupBy(_.roadwayNumber)
 
         val adjustedNewLinks = groupedTransfer.foldLeft(Seq.empty[ProjectLink], newLinks) {
@@ -98,10 +98,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val newRoadwayNumber = Sequences.nextRoadwayNumber
             val links = linksToProcess.take(group._2.size).map(_.copy(roadwayNumber = newRoadwayNumber))
             val linksLeft = linksToProcess.drop(group._2.size)
-            (adjustedLinks++links, linksLeft)
+            (adjustedLinks ++ links, linksLeft)
         }._1
 
-        val (right, left) = if(adjustedNewLinks.exists(_.track == Track.RightSide)) (adjustedNewLinks, transferLinks) else (transferLinks, adjustedNewLinks)
+        val (right, left) = if (adjustedNewLinks.exists(_.track == Track.RightSide)) (adjustedNewLinks, transferLinks) else (transferLinks, adjustedNewLinks)
         ((right, restRight), (left, restLeft))
       }
 
@@ -112,7 +112,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val right = continuousWOutRoadwayNumberSection(rightLinks)
             val left = continuousWOutRoadwayNumberSection(leftLinks)
 
-            val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)){
+            val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
               adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
             } else {
               (continuousRoadwaySection(rightLinks), continuousRoadwaySection(leftLinks))
