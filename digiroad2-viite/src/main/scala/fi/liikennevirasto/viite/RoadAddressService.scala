@@ -609,7 +609,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val endCalibrationPointsToCheck = linearLocations.filter(_.endCalibrationPoint.isDefined)
 
     // Fetch current linear locations and check which calibration points should be expired
-    //val currentLinearLocations = linearLocationDAO.fetchByRoadwayNumber(linearLocations.map(l => l.roadwayNumber))
     val currentCPs = CalibrationPointDAO.fetchByLinkId(linearLocations.map(l => l.linkId))
     val currentStartCP = currentCPs.filter(_.startOrEnd == 0)
     val currentEndCP = currentCPs.filter(_.startOrEnd == 1)
