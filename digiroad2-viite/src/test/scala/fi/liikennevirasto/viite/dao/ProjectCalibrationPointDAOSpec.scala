@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplementaryLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
