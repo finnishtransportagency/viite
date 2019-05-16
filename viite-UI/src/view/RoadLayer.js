@@ -102,10 +102,36 @@
 
     };
 
+    var displayJunctionInfo = function (event, pixel) {
+      var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature) {
+        return feature;
+      });
+      var coordinate;
+      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.junction) && !_.isUndefined(featureAtPixel.junctionPoint)) {
+        var junctionData = featureAtPixel.junction;
+        var junctionPointData = featureAtPixel.junctionPoint;
+        var roadLink = featureAtPixel.roadLink;
+        coordinate = map.getEventCoordinate(event.originalEvent);
+        if (infoContent !== null) {
+          infoContent.innerHTML = '<p>' +
+            'JunctionID: ' + junctionData.id + '<br>' +
+            'JunctionPointID: ' + junctionPointData.id + '<br>' +
+            'NodeID: ' + junctionData.nodeId + '<br>' +
+            'roadNumber: ' + roadLink.roadNumber + '<br>' +
+            'roadPartNumber: ' + roadLink.roadPartNumber + '<br>'+
+            'addrM: ' + junctionPointData.addrM + '<br>'+'</p>'
+          ;
+        }
+        overlay.setPosition(coordinate);
+      }
+
+    };
+
     //Listen pointerMove and get pixel for displaying roadAddress feature info
     me.eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
       displayRoadAddressInfo(event, pixel);
       displayNodeInfo(event, pixel);
+      displayJunctionInfo(event, pixel);
 
     });
 

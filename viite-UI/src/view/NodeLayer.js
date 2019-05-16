@@ -40,7 +40,7 @@
       var junctionMarkerLayer = new ol.layer.Vector({
         source: junctionMarkerVector,
         name: 'junctionMarkerLayer',
-        zIndex: RoadZIndex.CalibrationPointLayer.value - 1
+        zIndex: RoadZIndex.CalibrationPointLayer.value + 1
       });
       junctionMarkerLayer.set('name', 'junctionMarkerLayer');
 
@@ -58,7 +58,7 @@
       });
       junctionTemplateLayer.set('name', 'junctionTemplateLayer');
 
-      var layers = [nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer];
+      var layers = [directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer];
 
       var setGeneralOpacity = function (opacity) {
         roadLayer.layer.setOpacity(opacity);
@@ -72,6 +72,7 @@
 
       var redraw = function () {
         if(applicationModel.getSelectedLayer() === 'node') {
+
           cachedMarker = new LinkPropertyMarker();
           var suravageLinks = roadCollection.getSuravageLinks();
           var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
@@ -79,9 +80,9 @@
               return sl.linkId;
             }), rl.linkId);
           });
-          me.clearLayers([directionMarkerLayer]);
+          me.clearLayers([directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer]);
 
-          if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForAssets) {
+          if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
             var directionRoadMarker = _.filter(roadLinks, function (roadLink) {
               return roadLink.floating !== SelectionType.Floating.value && roadLink.anomaly !== Anomaly.NoAddressGiven.value && roadLink.anomaly !== Anomaly.GeometryChanged.value && (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
@@ -114,12 +115,14 @@
         });
 
         eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, zoom){
-          _.each(nodes, function(node) {
-            var nodeMarker = new NodeMarker();
-            nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node.node));
-          });
+          if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
+            _.each(nodes, function (node) {
+              var nodeMarker = new NodeMarker();
+              nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node.node));
+            });
+          }
 
-          if (parseInt(zoom, 10) >= zoomlevels.minZoomForEditMode){
+          if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions){
             var suravageLinks = roadCollection.getSuravageLinks();
             var roadLinksWithValues = _.reject(roadCollection.getAll(), function (rl) {
               return _.contains(_.map(suravageLinks, function (sl) {
