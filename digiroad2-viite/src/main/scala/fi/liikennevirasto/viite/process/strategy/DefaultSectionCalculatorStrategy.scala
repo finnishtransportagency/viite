@@ -10,6 +10,8 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import org.slf4j.LoggerFactory
 
+import scala.collection.immutable.ListMap
+
 class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
 
   private val logger = LoggerFactory.getLogger(getClass)
@@ -90,7 +92,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       def adjustTwoTrackRoadwayNumbers(firstRight: Seq[ProjectLink], restRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink], restLeft: Seq[ProjectLink])
       : ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
         val (transferLinks, newLinks) = if(firstRight.exists(_.status == LinkStatus.Transfer)) (firstRight, firstLeft) else (firstLeft, firstRight)
-        val groupedTransfer = transferLinks.groupBy(_.roadwayNumber)
+        val groupedTransfer: ListMap[Long, Seq[ProjectLink]] = ListMap(transferLinks.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue):_*)
 
         val adjustedNewLinks = groupedTransfer.foldLeft(Seq.empty[ProjectLink], newLinks) {
           case ((adjustedLinks, linksToProcess), group) =>
