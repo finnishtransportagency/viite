@@ -98,7 +98,7 @@
 
       eventbus.on('nodesAndJunctions:open', function () {
         rootElement.html(searchNodesTemplate());
-        applicationModel.selectLayer('node', true);
+        applicationModel.selectLayer('node');
         $('#close-node-search').click(function () {
           applicationModel.selectLayer('linkProperty', true);
           eventbus.trigger('nodesAndJunctions:close');
@@ -109,17 +109,17 @@
           checkInputs('#node-search-btn', !$("#tie").val());
         });
 
-        rootElement.on('click', '.node-search-btn', function () {
-          applicationModel.addSpinner();
-          var data = {
-            roadNumber: $("#tie").val()
-          };
-          var minPart = $("#aosa").val();
-          var maxPart = $("#losa").val();
-          if (minPart) { data.minRoadPartNumber = minPart; }
-          if (maxPart) { data.maxRoadPartNumber = maxPart; }
-          nodeCollection.getNodesByRoadAttributes(data);
-        });
+        // rootElement.on('click', '#node-search-btn', function () {
+        //   applicationModel.addSpinner();
+        //   var data = {
+        //     roadNumber: $("#tie").val()
+        //   };
+        //   var minPart = $("#aosa").val();
+        //   var maxPart = $("#losa").val();
+        //   if (minPart) { data.minRoadPartNumber = minPart; }
+        //   if (maxPart) { data.maxRoadPartNumber = maxPart; }
+        //   nodeCollection.getNodesByRoadAttributes(data);
+        // });
 
         rootElement.on('click', '.node-link', function (event) {
           eventbus.trigger('nodeSearchTool:clickNode', event.currentTarget.id, map);

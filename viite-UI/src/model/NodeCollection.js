@@ -51,7 +51,6 @@
       _.each(nodesWithAttributes, function(node) {
         coords.push([node.coordX, node.coordY]);
       });
-      // coords.push([nodesWithAttributes[0].coordX, nodesWithAttributes[1].coordY]);
       map.getView().fit(new ol.geom.Polygon([coords]), map.getSize());
     });
 
