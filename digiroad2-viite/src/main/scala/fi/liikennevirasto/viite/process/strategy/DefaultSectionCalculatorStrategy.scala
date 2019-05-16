@@ -63,7 +63,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     }.toSeq
   }
 
-  private def continuousWOutRoadwaySection(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  private def continuousWOutRoadwayNumberSection(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
     val continuousProjectLinks = seq.takeWhile(pl => (pl.track == track && pl.track == Track.Combined) || (pl.track == track && pl.track != Track.Combined && pl.roadType.value == roadType))
@@ -105,27 +105,32 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         ((right, restRight), (left, restLeft))
       }
 
-        val right = continuousWOutRoadwaySection(rightLinks)
-        val left = continuousWOutRoadwaySection(leftLinks)
-
-        val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)){
-          adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
+        if (rightLinks.isEmpty && leftLinks.isEmpty) {
+          (Seq(), Seq())
         } else {
-          (continuousRoadwaySection(rightLinks), continuousRoadwaySection(leftLinks))
+
+            val right = continuousWOutRoadwayNumberSection(rightLinks)
+            val left = continuousWOutRoadwayNumberSection(leftLinks)
+
+            val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)){
+              adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
+            } else {
+              (continuousRoadwaySection(rightLinks), continuousRoadwaySection(leftLinks))
+            }
+
+          if (firstRight.isEmpty || firstLeft.isEmpty)
+            throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
+
+          val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
+          val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, userDefinedCalibrationPoint)
+
+          val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
+
+          val (adjustedLeft, adjustedRight) = strategy.setCalibrationPoints(trackCalcResult, userDefinedCalibrationPoint)
+
+          (adjustedLeft ++ adjustedRestRight, adjustedRight ++ adjustedRestLeft)
         }
-
-        if (firstRight.isEmpty || firstLeft.isEmpty)
-          throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
-
-        val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
-        val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, userDefinedCalibrationPoint)
-
-        val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
-
-        val (adjustedLeft, adjustedRight) = strategy.setCalibrationPoints(trackCalcResult, userDefinedCalibrationPoint)
-
-        (adjustedLeft ++ adjustedRestRight, adjustedRight ++ adjustedRestLeft)
-      }
+    }
 
     val rightSections = sections.flatMap(_.right.links)
     val leftSections = sections.flatMap(_.left.links)
