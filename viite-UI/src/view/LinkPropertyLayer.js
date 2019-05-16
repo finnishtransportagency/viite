@@ -507,7 +507,7 @@
       var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
       me.clearLayers([floatingMarkerLayer, anomalousMarkerLayer, geometryChangedLayer, suravageMarkerLayer, directionMarkerLayer, calibrationPointLayer]);
 
-      if(zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForAssets) {
+      if(zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
         var directionRoadMarker = _.filter(roadLinks, function(roadlink) {
           return roadlink.floating !== SelectionType.Floating.value && roadlink.anomaly !== Anomaly.NoAddressGiven.value && roadlink.anomaly !== Anomaly.GeometryChanged.value && (roadlink.sideCode === SideCode.AgainstDigitizing.value || roadlink.sideCode === SideCode.TowardsDigitizing.value);
