@@ -62,7 +62,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def linkStatement(): PreparedStatement = {
-    dynamicSession.prepareStatement(sql = "Insert into LINK (ID) values(?)")
+    dynamicSession.prepareStatement(sql = "Insert into LINK (ID, SOURCE) values(?, ?)")
   }
 
   def datePrinter(date: Option[DateTime]): String = {
@@ -241,7 +241,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     val roadwayPointPs = roadwayPointStatement()
     val calibrationPointPs = calibrationPointStatement()
     val linkPs = linkStatement()
-    insertLinks(linkPs, linkIds)
+    insertLinks(linkPs, mappedRoadLinks.values ++ mappedHistoryRoadLinks.values)
     currentMappedConversionAddresses.mapValues {
       case address =>
         address.sortBy(_.startAddressM).zip(1 to address.size)
@@ -318,11 +318,12 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     }
   }
 
-  private def insertLinks(statement: PreparedStatement, links: Set[Long]): Unit = {
+  private def insertLinks(statement: PreparedStatement, links: Iterable[RoadLinkLike]): Unit = {
     links.foreach {
       link =>
-        if (LinkDAO.fetch(link).isEmpty) {
-          statement.setLong(1, link)
+        if (LinkDAO.fetch(link.linkId).isEmpty) {
+          statement.setLong(1, link.linkId)
+          statement.setLong(2, link.linkSource.value)
           statement.addBatch()
         }
     }
