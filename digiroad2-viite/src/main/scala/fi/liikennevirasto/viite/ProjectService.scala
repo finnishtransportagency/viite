@@ -1251,8 +1251,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           checkAndReserve(projectDAO.fetchById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
           if (mod.geometry.nonEmpty) {
             val vvhGeometry = vvhRoadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
-            val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
-            projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
+            if (vvhGeometry.nonEmpty) {
+              val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
+              projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
+            } else {
+              projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
+            }
           } else {
             projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
           }
@@ -1298,16 +1302,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def revertLinksByRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert], userName: String): Option[String] = {
     val (added, modified) = links.partition(_.status == LinkStatus.New.value)
-    if (modified.exists(_.status == LinkStatus.Numbering.value)) {
-      logger.info(s"Reverting whole road part in $projectId ($roadNumber/$roadPartNumber)")
-      // Numbering change affects the whole road part
-      revertSortedLinks(projectId, roadNumber, roadPartNumber, added,
-        projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId).map(
-          link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)),
-        userName)
-    } else {
-      revertSortedLinks(projectId, roadNumber, roadPartNumber, added, modified, userName)
-    }
+    revertSortedLinks(projectId, roadNumber, roadPartNumber, added, modified, userName)
     None
   }
 
