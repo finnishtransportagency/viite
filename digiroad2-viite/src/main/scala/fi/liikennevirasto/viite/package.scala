@@ -49,6 +49,8 @@ package object viite {
   val MaxSuravageToleranceToGeometry = 0.5
   val MaxRoadNumberDemandingRoadName = 70000
 
+  val MaxAllowedNodes = 50
+
   //TODO: remove after Suravage change following messages (4):
   val ErrorNoMatchingProjectLinkForSplit = "Suravage-linkkiä vastaavaa käsittelemätöntä tieosoitelinkkiä ei löytynyt projektista."
   val ErrorSuravageLinkNotFound = "Suravage-linkkiä ei löytynyt."
