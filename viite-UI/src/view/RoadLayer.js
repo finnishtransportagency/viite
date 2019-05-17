@@ -93,8 +93,8 @@
         if (infoContent !== null) {
           infoContent.innerHTML = '<p>' +
             'ID: ' + nodeData.id + '<br>' +
-            'Number: ' + nodeData.nodeNumber + '<br>' +
-            'Name: ' + nodeData.nodeName + '<br>'+'</p>'
+            'Solmunumero: ' + nodeData.nodeNumber + '<br>' +
+            'Nimi: ' + nodeData.nodeName + '<br>'+'</p>'
           ;
         }
         overlay.setPosition(coordinate);
@@ -114,11 +114,10 @@
         coordinate = map.getEventCoordinate(event.originalEvent);
         if (infoContent !== null) {
           infoContent.innerHTML = '<p>' +
-            'JunctionID: ' + junctionData.id + '<br>' +
-            'JunctionPointID: ' + junctionPointData.id + '<br>' +
-            'NodeID: ' + junctionData.nodeId + '<br>' +
-            'roadNumber: ' + roadLink.roadNumber + '<br>' +
-            'roadPartNumber: ' + roadLink.roadPartNumber + '<br>'+
+            'Liittymä ID: ' + junctionData.id + '<br>' +
+            'Solmu ID: ' + junctionData.nodeId + '<br>' +
+            'Tienumero: ' + roadLink.roadNumber + '<br>' +
+            'Tieosanumero: ' + roadLink.roadPartNumber + '<br>'+
             'addrM: ' + junctionPointData.addrM + '<br>'+'</p>'
           ;
         }
