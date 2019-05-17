@@ -25,8 +25,13 @@ class NodesAndJunctionsService() {
   def getNodesByRoadAttributes(roadNumber: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Either[String, Seq[(Node, RoadAttributes)]] = {
     withDynSession {
       try {
-        val nodes: Seq[(Node, RoadAttributes)] = nodeDAO.fetchByRoadAttributes(roadNumber, minRoadPartNumber, maxRoadPartNumber)
-        Right(nodes)
+        // if the result set has more than 50 rows but the road attributes can't be narrowed down, it shows the results anyway
+        nodeDAO.fetchByRoadAttributes(roadNumber, minRoadPartNumber, maxRoadPartNumber) match {
+          case nodes
+            if nodes.size <= MaxAllowedNodes ||
+              minRoadPartNumber.isDefined && maxRoadPartNumber.isDefined && minRoadPartNumber.get == maxRoadPartNumber.get => Right(nodes)
+          case _ => Left(ReturnedTooManyNodesErrorMessage)
+        }
       } catch {
         case e if NonFatal(e) => {
           logger.error("Failed to fetch nodes.", e)
