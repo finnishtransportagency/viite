@@ -13,9 +13,9 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.swagger.{Swagger, SwaggerSupport}
+import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
 import org.scalatra.{BadRequest, ScalatraBase}
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.control.NonFatal
 
@@ -26,23 +26,23 @@ trait ViiteAuthenticationSupport extends ScentrySupport[BasicAuthUser] with Basi
 
   val dateFormat = "dd.MM.yyyy"
 
-  protected def fromSession = {
+  protected def fromSession: PartialFunction[String, BasicAuthUser] = {
     case id: String => BasicAuthUser(id)
   }
 
-  protected def toSession = {
+  protected def toSession: PartialFunction[BasicAuthUser, String] = {
     case user: BasicAuthUser => user.username
   }
 
-  protected val scentryConfig = (new ScentryConfig {}).asInstanceOf[ScentryConfiguration]
+  protected val scentryConfig: ScentryConfiguration = new ScentryConfig {}.asInstanceOf[ScentryConfiguration]
 
-  override protected def configureScentry = {
+  override protected def configureScentry: Unit = {
     scentry.unauthenticated {
       scentry.strategies("Basic").unauthenticated()
     }
   }
 
-  override protected def registerAuthStrategies = {
+  override protected def registerAuthStrategies: Unit = {
     scentry.register("Basic", app => new IntegrationAuthStrategy(app, realm))
   }
 }
@@ -52,7 +52,7 @@ import org.scalatra.ScalatraServlet
 class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameService: RoadNameService, implicit val swagger: Swagger) extends ScalatraServlet
   with JacksonJsonSupport with ViiteAuthenticationSupport with SwaggerSupport {
 
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger: Logger = LoggerFactory.getLogger(getClass)
 
   protected val applicationDescription = "The integration API "
 
@@ -60,7 +60,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
-  def clearCache() = {
+  def clearCache(): Int = {
     roadLinkService.clearCache()
   }
 
@@ -68,7 +68,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     basicAuth
   }
 
-  val getRoadAddressesByMunicipality =
+  val getRoadAddressesByMunicipality: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadAddressesByMunicipality")
       tags "Integration (kalpa)"
       summary "Shows all the road address non floating for a given municipalities."
@@ -103,7 +103,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   }
 
 
-  val getRoadNameChanges =
+  val getRoadNameChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadNameChanges")
       tags "Integration (kalpa)"
       summary "Returns all the changes to road names between given dates."
@@ -124,7 +124,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           val since = DateTime.parse(sinceUnformatted)
           fetchUpdatedRoadNames(since, untilUnformatted)
         } catch {
-          case e: IllegalArgumentException =>
+          case _: IllegalArgumentException =>
             val message = "The since /until parameter of the service should be in the form ISO8601"
             logger.warn(message)
             BadRequest(message)
@@ -136,7 +136,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  val getRoadwayChanges =
+  val getRoadwayChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadwayChanges")
       tags "Integration (kalpa)"
       summary "Returns all the changes to roadways after the given date (including the given date)."
@@ -175,7 +175,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
             "createdBy" -> r.createdBy
           ))
         } catch {
-          case e: IllegalArgumentException =>
+          case _: IllegalArgumentException =>
             val message = "The since parameter of the service should be in the form ISO8601"
             logger.warn(message)
             BadRequest(message)
@@ -187,7 +187,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  val getLinearLocationChanges =
+  val getLinearLocationChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getLinearLocationChanges")
       tags "Integration (kalpa)"
       summary "Returns all the changes to roadways after the given date (including the given date)."
@@ -221,7 +221,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
             "adjustedTimestamp" -> l.adjustedTimestamp
           ))
         } catch {
-          case e: IllegalArgumentException =>
+          case _: IllegalArgumentException =>
             val message = "The since parameter of the service should be in the form ISO8601"
             logger.warn(message)
             BadRequest(message)
@@ -325,7 +325,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   private def fetchUpdatedRoadways(since: DateTime): Seq[Roadway] = {
     val result = roadAddressService.getUpdatedRoadways(since)
     if (result.isLeft) {
-      throw new ViiteException(result.left.getOrElse("Error fetching updated roadways."))
+      throw ViiteException(result.left.getOrElse("Error fetching updated roadways."))
     } else if (result.isRight) {
       result.right.get
     } else {
@@ -336,7 +336,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   private def fetchUpdatedLinearLocations(since: DateTime): Seq[LinearLocation] = {
     val result = roadAddressService.getUpdatedLinearLocations(since)
     if (result.isLeft) {
-      throw new ViiteException(result.left.getOrElse("Error fetching updated linear locations."))
+      throw ViiteException(result.left.getOrElse("Error fetching updated linear locations."))
     } else if (result.isRight) {
       result.right.get
     } else {
