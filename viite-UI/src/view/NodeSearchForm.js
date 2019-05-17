@@ -12,10 +12,10 @@
       return '<label class="control-label-small">' + label + '</label>';
     };
 
-    var inputField = function (id, value, maxLength) {
-      var lengthLimit = '';
-      if (maxLength) lengthLimit = ' maxlength="' + maxLength + '"';
-      return '<input type="text" class="form-control node-input" id = "' + id + '"' + lengthLimit + ' value="' + value + '"/>';
+    var inputNumber = function (id, maxLength) {
+      return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)' +
+        '" class="form-control node-input" id = "' + id + '"' +
+        (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + '/>';
     };
 
     var searchButton = function () {
@@ -34,7 +34,7 @@
         label('Tie') + label('Aosa') + label('Losa') +
         '</div>' +
         '<div id= "road-attributes" class="form-group">' +
-        inputField('tie', '', 5) + inputField('aosa', '', 3) + inputField('losa', '', 3) +
+        inputNumber('tie', 5) + inputNumber('aosa', 3) + inputNumber('losa', 3) +
         searchButton() +
         '</div>' +
         '</form>' +
@@ -73,13 +73,10 @@
 
     var checkInputs = function (selector, disabled) {
       var rootElement = $('#feature-attributes');
-      var startRoadPart = $("#aosa").val();
-      var endRoadPart = $("#losa").val();
-      if (disabled || !(!startRoadPart && !endRoadPart || startRoadPart && endRoadPart)) {
-        rootElement.find(selector).prop('disabled', true);
-      } else {
-        rootElement.find(selector).prop('disabled', false);
-      }
+      var minRoadPartNumber = $("#aosa").val();
+      var maxRoadPartNumber = $("#losa").val();
+      rootElement.find(selector).prop('disabled',
+        !!(disabled || (!minRoadPartNumber && maxRoadPartNumber || minRoadPartNumber && !maxRoadPartNumber) || minRoadPartNumber > maxRoadPartNumber));
     };
 
     var bindEvents = function () {
