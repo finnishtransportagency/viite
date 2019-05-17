@@ -24,10 +24,16 @@
     this.getNodesByRoadAttributes = function(roadAttributes) {
       return backend.getNodesByRoadAttributes(roadAttributes, function (result) {
         if (result.success) {
-          me.setNodesWithAttributes(result.nodes);
-          eventbus.trigger('nodeSearchTool:fetched');
+          var searchResult = result.nodes;
+          if (searchResult.length) {
+            me.setNodesWithAttributes(searchResult);
+            eventbus.trigger('nodeSearchTool:fetched');
+          } else {
+            eventbus.trigger('nodeSearchTool:failed');
+          }
         } else {
-          eventbus.trigger('nodeSearchTool:failed', result.errorMessage);
+          applicationModel.removeSpinner();
+          new ModalConfirm(result.errorMessage);
         }
       });
     };

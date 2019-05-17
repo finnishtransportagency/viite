@@ -1,5 +1,5 @@
 (function (root) {
-  root.NodeSearchForm = function (map, nodeCollection) {
+  root.NodeSearchForm = function (instructionsPopup, map, nodeCollection) {
     var container = $('#legendDiv');
     var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
     var header = function() {
@@ -91,9 +91,9 @@
         eventbus.trigger('nodeSearchTool:refreshView', map);
       });
 
-      eventbus.on('nodeSearchTool:failed', function(errorMessage) {
+      eventbus.on('nodeSearchTool:failed', function() {
         applicationModel.removeSpinner();
-        new ModalConfirm(errorMessage);
+        instructionsPopup.show('Ei tuloksia', 3000);
       });
 
       eventbus.on('nodesAndJunctions:open', function () {
@@ -111,6 +111,7 @@
 
         rootElement.on('click', '#node-search-btn', function () {
           applicationModel.addSpinner();
+          $('#nodes-and-junctions-content').html("");
           var data = {
             roadNumber: $("#tie").val()
           };
