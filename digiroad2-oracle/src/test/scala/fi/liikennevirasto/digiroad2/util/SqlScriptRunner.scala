@@ -26,7 +26,7 @@ object SqlScriptRunner {
     println("Running " + stmts.length + " statements...")
     var i = 0
     OracleDatabase.withDynTransaction {
-      stmts.foreach { stmt =>
+      stmts.par.foreach { stmt =>
         try {
           (Q.u + stmt).execute
           i = i+1
@@ -34,7 +34,7 @@ object SqlScriptRunner {
             println("" + i + " / " + stmts.length)
         } catch {
           case e: Exception => {
-            e.printStackTrace
+            e.printStackTrace()
             println("failed statement: " + stmt.replaceAll("\\)", ")\n"))
             println("CONTINUING WITH NEXT STATEMENT...")
             return
