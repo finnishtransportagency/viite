@@ -10,16 +10,16 @@ import fi.liikennevirasto.viite.dao.RoadAddress
 import org.json4s.Formats
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraServlet}
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 
 class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport {
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
-  def clearCache() = {
+  def clearCache(): Int = {
     roadLinkService.clearCache()
   }
 
