@@ -168,7 +168,7 @@ class NodeDAO extends BaseDAO {
   }
 
   def fetchByRoadAttributes(road_number: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[(Node, RoadAttributes)] = {
-    val road_condition = if (minRoadPartNumber.isDefined) { // if startRoadNumber is defined then endRoadNumber is mandatory
+    val road_condition = if (minRoadPartNumber.isDefined) {
       if (maxRoadPartNumber.isEmpty) {
         throw new IllegalArgumentException(s"""When the min road part number is specified, also the max road part number is required.""")
       }
