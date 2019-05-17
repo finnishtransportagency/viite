@@ -65,6 +65,11 @@ class ProjectValidator {
       if (roadPartLinks.exists(rpl => rpl.status == Numbering)) {
         throw new ProjectValidationException(ErrorTransferActionWithNumbering)
       }
+    } else if(LinkStatus.Numbering.value == linkStatus.value){
+      val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(newRoadNumber, newRoadPart, currentProject.id)
+      if (roadPartLinks.exists(rpl => rpl.status != Numbering)) {
+        throw new ProjectValidationException(ErrorOtherActionWithNumbering)
+      }
     }
   }
 
