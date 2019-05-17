@@ -562,7 +562,7 @@ Voimassa olevaa nimeä voi muokata suoraan Tien nimi -kentässä (2) (Kuva 8.2).
 
 _Kuva 8.4: Varmistusilmoitus tienimen muuttamisesta._ 
 
-8.1 Uuden tienimen antaminen tielle, jolla on jo nimi
+8.2 Uuden tienimen antaminen tielle, jolla on jo nimi
 --------------------------
 
 Tielle on mahdollista antaa uusi nimi esimerkiksi tien alku- tai loppupaikkakunnan muuttuessa. Uusi nimi annetaan painamalla voimassa olevan nimen perässä olevaa [+] -painiketta (3) (kuva 8.2) . Lomakkeelle ilmestyy uusi rivi (1), johon tiedot syötetään (kuva 8.5). Tielle annetaan uusi nimi (2), joka  voi olla enintään 50 merkkiä pitkä, ja alkupäivämäärä (3). Alkupäivämäärä voi olla aikaisintaan edellistä alkupäivämäärää seuraava päivä.
