@@ -131,7 +131,7 @@
             });
             var junctions = [];
             var junctionPoints = [];
-            var junctionPointsWithRoadlinks = [];
+            var junctionPointsWithRoadlinks;
             _.map(nodes, function(node){
               junctions =  junctions.concat(node.junctions);
             });

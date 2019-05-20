@@ -14,7 +14,7 @@
     minZoomForEditMode: 10,
     minZoomForDirectionalMarkers: 11,
     minZoomForLinkSearch: 12,
-    minZoomForJunctions: 13,
+    minZoomForJunctions: 12,
     maxZoomLevel: 15
   };
 })();
