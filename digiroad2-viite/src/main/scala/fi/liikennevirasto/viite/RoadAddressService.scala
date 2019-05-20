@@ -429,7 +429,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   /**
     * Returns all of our road addresses (combination of roadway + linear location information) that share the same roadwayId as those supplied.
     *
-    * @param roadwayIds      : Seq[Long] - The roadway Id's to fetch
+    * @param roadwayIds : Seq[Long] - The roadway Id's to fetch
     * @return
     */
   def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long]): Seq[RoadAddress] = {
@@ -606,15 +606,44 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   }
 
-  def handleCalibrationPoints(linearLocations: Iterable[LinearLocation], createdBy : String = "-"): Unit = {
+  def handleCalibrationPoints(linearLocations: Iterable[LinearLocation], createdBy: String = "-"): Unit = {
     val startCalibrationPointsToCheck = linearLocations.filter(_.startCalibrationPoint.isDefined)
     val endCalibrationPointsToCheck = linearLocations.filter(_.endCalibrationPoint.isDefined)
-    startCalibrationPointsToCheck.foreach{
+
+    // Fetch current linear locations and check which calibration points should be expired
+    val currentCPs = CalibrationPointDAO.fetchByLinkId(linearLocations.map(l => l.linkId))
+    val currentStartCP = currentCPs.filter(_.startOrEnd == 0)
+    val currentEndCP = currentCPs.filter(_.startOrEnd == 1)
+    val startCPsToBeExpired = currentStartCP.filter(c => startCalibrationPointsToCheck.filter(sc => sc.linkId == c.linkId).isEmpty)
+    val endCPsToBeExpired = currentEndCP.filter(c => endCalibrationPointsToCheck.filter(sc => sc.linkId == c.linkId).isEmpty)
+
+    // Expire calibration points
+    startCPsToBeExpired.foreach {
+      ll =>
+        val cal = CalibrationPointDAO.fetch(ll.linkId, startOrEnd = 0)
+        if (cal.isDefined) {
+          CalibrationPointDAO.expireById(Set(cal.get.id))
+        } else {
+          logger.error(s"Failed to expire start calibration point for link id: ${ll.linkId}")
+        }
+    }
+    endCPsToBeExpired.foreach {
+      ll =>
+        val cal = CalibrationPointDAO.fetch(ll.linkId, startOrEnd = 1)
+        if (cal.isDefined) {
+          CalibrationPointDAO.expireById(Set(cal.get.id))
+        } else {
+          logger.error(s"Failed to expire end calibration point for link id: ${ll.linkId}")
+        }
+    }
+
+    // Check other calibration points
+    startCalibrationPointsToCheck.foreach {
       cal =>
         val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 0)
-        if(calibrationPoint.isDefined)
-          roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
-        else{
+        if (calibrationPoint.isDefined)
+          RoadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
+        else {
           val roadwayPointId =
             roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
               case Some(roadwayPoint) =>
@@ -624,12 +653,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = createdBy)
         }
     }
-    endCalibrationPointsToCheck.foreach{
+    endCalibrationPointsToCheck.foreach {
       cal =>
         val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 1)
-        if(calibrationPoint.isDefined)
-          roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.endCalibrationPoint.get, createdBy)
-        else{
+        if (calibrationPoint.isDefined)
+          RoadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.endCalibrationPoint.get, createdBy)
+        else {
           val roadwayPointId =
             roadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.get) match {
               case Some(roadwayPoint) =>
@@ -658,21 +687,92 @@ object RoadClass {
     values.find(_.roads contains roadNumber).getOrElse(NoClass).value
   }
 
-  case object HighwayClass extends RoadClass { def value = 1; def roads: Range.Inclusive = 1 to 39;}
-  case object MainRoadClass extends RoadClass { def value = 2; def roads: Range.Inclusive = 40 to 99;}
-  case object RegionalClass extends RoadClass { def value = 3; def roads: Range.Inclusive = 100 to 999;}
-  case object ConnectingClass extends RoadClass { def value = 4; def roads: Range.Inclusive = 1000 to 9999;}
-  case object MinorConnectingClass extends RoadClass { def value = 5; def roads: Range.Inclusive = 10000 to 19999;}
-  case object StreetClass extends RoadClass { def value = 6; def roads: Range.Inclusive = 40000 to 49999;}
-  case object RampsAndRoundAboutsClass extends RoadClass { def value = 7; def roads: Range.Inclusive = 20001 to 39999;}
-  case object PedestrianAndBicyclesClassA extends RoadClass { def value = 8; def roads: Range.Inclusive = 70001 to 89999;}
-  case object PedestrianAndBicyclesClassB extends RoadClass { def value = 8; def roads: Range.Inclusive = 90001 to 99999;}
-  case object WinterRoadsClass extends RoadClass { def value = 9; def roads: Range.Inclusive = 60001 to 61999;}
-  case object PathsClass extends RoadClass { def value = 10; def roads: Range.Inclusive = 62001 to 62999;}
-  case object ConstructionSiteTemporaryClass extends RoadClass { def value = 11; def roads: Range.Inclusive = 9900 to 9999;}
-  case object PrivateRoadClass extends RoadClass { def value = 12; def roads: Range.Inclusive = 50001 to 59999;}
-  case object NoClass extends RoadClass { def value = 99; def roads: Range.Inclusive = 0 to 0;}
+  case object HighwayClass extends RoadClass {
+    def value = 1;
+
+    def roads: Range.Inclusive = 1 to 39;
+  }
+
+  case object MainRoadClass extends RoadClass {
+    def value = 2;
+
+    def roads: Range.Inclusive = 40 to 99;
+  }
+
+  case object RegionalClass extends RoadClass {
+    def value = 3;
+
+    def roads: Range.Inclusive = 100 to 999;
+  }
+
+  case object ConnectingClass extends RoadClass {
+    def value = 4;
+
+    def roads: Range.Inclusive = 1000 to 9999;
+  }
+
+  case object MinorConnectingClass extends RoadClass {
+    def value = 5;
+
+    def roads: Range.Inclusive = 10000 to 19999;
+  }
+
+  case object StreetClass extends RoadClass {
+    def value = 6;
+
+    def roads: Range.Inclusive = 40000 to 49999;
+  }
+
+  case object RampsAndRoundAboutsClass extends RoadClass {
+    def value = 7;
+
+    def roads: Range.Inclusive = 20001 to 39999;
+  }
+
+  case object PedestrianAndBicyclesClassA extends RoadClass {
+    def value = 8;
+
+    def roads: Range.Inclusive = 70001 to 89999;
+  }
+
+  case object PedestrianAndBicyclesClassB extends RoadClass {
+    def value = 8;
+
+    def roads: Range.Inclusive = 90001 to 99999;
+  }
+
+  case object WinterRoadsClass extends RoadClass {
+    def value = 9;
+
+    def roads: Range.Inclusive = 60001 to 61999;
+  }
+
+  case object PathsClass extends RoadClass {
+    def value = 10;
+
+    def roads: Range.Inclusive = 62001 to 62999;
+  }
+
+  case object ConstructionSiteTemporaryClass extends RoadClass {
+    def value = 11;
+
+    def roads: Range.Inclusive = 9900 to 9999;
+  }
+
+  case object PrivateRoadClass extends RoadClass {
+    def value = 12;
+
+    def roads: Range.Inclusive = 50001 to 59999;
+  }
+
+  case object NoClass extends RoadClass {
+    def value = 99;
+
+    def roads: Range.Inclusive = 0 to 0;
+  }
+
 }
+
 //TODO check if this is needed
 class Contains(r: Range) {
   def unapply(i: Int): Boolean = r contains i
@@ -697,6 +797,7 @@ object AddressConsistencyValidator {
 
   sealed trait AddressError {
     def value: Int
+
     def message: String
   }
 
@@ -706,41 +807,49 @@ object AddressConsistencyValidator {
 
     case object OverlappingRoadAddresses extends AddressError {
       def value = 1
+
       def message: String = ErrorOverlappingRoadAddress
     }
 
     case object InconsistentTopology extends AddressError {
       def value = 2
+
       def message: String = ErrorInconsistentTopology
     }
 
     case object InconsistentLrmHistory extends AddressError {
       def value = 3
+
       def message: String = ErrorInconsistentLrmHistory
     }
 
     case object Inconsistent2TrackCalibrationPoints extends AddressError {
       def value = 4
+
       def message: String = ErrorInconsistent2TrackCalibrationPoints
     }
 
     case object InconsistentContinuityCalibrationPoints extends AddressError {
       def value = 5
+
       def message: String = ErrorInconsistentContinuityCalibrationPoints
     }
 
     case object MissingEdgeCalibrationPoints extends AddressError {
       def value = 6
+
       def message: String = ErrorMissingEdgeCalibrationPoints
     }
 
     case object InconsistentAddressValues extends AddressError {
       def value = 7
+
       def message: String = ErrorInconsistentAddressValues
     }
 
     case object MissingStartingLink extends AddressError {
       def value = 8
+
       def message: String = ErrorMissingStartingLink
     }
 

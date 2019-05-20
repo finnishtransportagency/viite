@@ -4,7 +4,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 object MassQuery {
-  def withIds[T](ids: Set[Long])(f: String => T): T = {
+  def withIds[T](ids: Iterable[Long])(f: String => T): T = {
     sqlu"""DELETE FROM temp_id""".execute
     val insertLinkIdPS = dynamicSession.prepareStatement("insert into temp_id (id) values (?)")
     try {
