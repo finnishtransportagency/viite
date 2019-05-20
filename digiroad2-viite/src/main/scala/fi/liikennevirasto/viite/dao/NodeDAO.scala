@@ -168,14 +168,16 @@ class NodeDAO extends BaseDAO {
   }
 
   def fetchByRoadAttributes(road_number: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[(Node, RoadAttributes)] = {
-    val road_condition = if (minRoadPartNumber.isDefined) {
-      if (maxRoadPartNumber.isEmpty) {
-        throw new IllegalArgumentException(s"""When the min road part number is specified, also the max road part number is required.""")
-      }
+    val road_condition = if (minRoadPartNumber.isDefined && maxRoadPartNumber.isDefined) {
       s"AND rw.ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND rw.ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
+    } else if (minRoadPartNumber.isDefined) {
+      s"AND rw.ROAD_PART_NUMBER = ${minRoadPartNumber.get}"
+    } else if (maxRoadPartNumber.isDefined) {
+      s"AND rw.ROAD_PART_NUMBER = ${maxRoadPartNumber.get}"
     } else {
       ""
     }
+
     val query = s"""
       SELECT DISTINCT node.ID, node.NODE_NUMBER, t.X, t.Y, node.NAME, node."TYPE", node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
                       node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rw.START_ADDR_M
