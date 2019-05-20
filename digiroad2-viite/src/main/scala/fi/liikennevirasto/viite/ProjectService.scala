@@ -558,11 +558,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         validateReservations(reserved, projectLinks, roadways) match {
           case Some(error) => throw new RoadPartReservedException(error)
           case _ =>
-            val (suravageSource, regular) = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
-            val suravageMapping = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageSource.map(_.linkId).toSet).map(sm => sm.linkId -> sm).toMap
+            val roadwaysByLinkSource = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).groupBy(_.linkGeomSource)
+            val suravage = if (roadwaysByLinkSource.contains(LinkGeomSource.SuravageLinkInterface)) roadwaysByLinkSource(LinkGeomSource.SuravageLinkInterface) else Seq()
+            val regular = if (roadwaysByLinkSource.contains(LinkGeomSource.NormalLinkInterface)) roadwaysByLinkSource(LinkGeomSource.NormalLinkInterface) else Seq()
+            val complementary = if (roadwaysByLinkSource.contains(LinkGeomSource.ComplementaryLinkInterface)) roadwaysByLinkSource(LinkGeomSource.ComplementaryLinkInterface) else Seq()
+            val suravageMapping = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravage.map(_.linkId).toSet).map(sm => sm.linkId -> sm).toMap
             val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet, frozenTimeVVHAPIServiceEnabled).map(rm => rm.linkId -> rm).toMap
-            val fullMapping = regularMapping ++ suravageMapping
-            val addresses = roadways.flatMap(r => roadwayAddressMapper.mapRoadAddresses(r, (suravageSource ++ regular).groupBy(_.roadwayNumber)(r.roadwayNumber)))
+            val complementaryMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(complementary.map(_.linkId).toSet, frozenTimeVVHAPIServiceEnabled).map(rm => rm.linkId -> rm).toMap
+            val fullMapping = regularMapping ++ suravageMapping ++ complementaryMapping
+            val addresses = roadways.flatMap(r => roadwayAddressMapper.mapRoadAddresses(r, (suravage ++ regular ++ complementary).groupBy(_.roadwayNumber)(r.roadwayNumber)))
             checkAndReserve(project, reserved)
             logger.debug(s"Reserve done")
             addresses.map(ra => newProjectTemplate(fullMapping(ra.linkId), ra, project))
