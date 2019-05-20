@@ -65,15 +65,18 @@ class ProjectValidator {
       if (roadPartLinks.exists(rpl => rpl.status == Numbering)) {
         throw new ProjectValidationException(ErrorTransferActionWithNumbering)
       }
+    } else if(LinkStatus.Numbering.value == linkStatus.value){
+      val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(newRoadNumber, newRoadPart, currentProject.id)
+      if (roadPartLinks.exists(rpl => rpl.status != Numbering)) {
+        throw new ProjectValidationException(ErrorOtherActionWithNumbering)
+      }
     }
   }
 
   def checkFormationInOtherProject(currentProject: Project, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus): Unit = {
-    if (LinkStatus.New.value == linkStatus.value) {
       val formedPartsOtherProjects = projectReservedPartDAO.fetchFormedRoadParts(currentProject.id, withProjectId = false)
       if(formedPartsOtherProjects.nonEmpty && formedPartsOtherProjects.exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart))
         throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
-      }
   }
 
   def checkAvailable(number: Long, part: Long, currentProject: Project): Unit = {
@@ -84,7 +87,7 @@ class ProjectValidator {
   }
 
   def checkReservedPartInProject(number: Long, part: Long, currentProject: Project, linkStatus: LinkStatus): Unit = {
-    if (LinkStatus.Transfer.value == linkStatus.value && !currentProject.formedParts.map(fp => (fp.roadNumber, fp.roadPartNumber)).contains((number, part))) {
+    if (LinkStatus.Transfer.value == linkStatus.value && roadAddressService.getRoadAddressesFiltered(number, part).nonEmpty && !currentProject.formedParts.map(fp => (fp.roadNumber, fp.roadPartNumber)).contains((number, part))) {
       val partInCurrentProject = projectReservedPartDAO.fetchProjectReservedPart(number, part, currentProject.id, withProjectId = Some(true))
       if (partInCurrentProject.isEmpty) {
         throw new ProjectValidationException(RoadPartNotReservedInProjectMessage.format(number, part, currentProject.name))
