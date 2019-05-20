@@ -19,7 +19,7 @@ sealed trait NodeType {
 }
 
 object NodeType {
-  val values: Set[NodeType] = Set(NormalIntersection, Roundabout, YIntersection, Interchange, RoadBoundary, ELYBoarder, MultitrackIntersection,
+  val values: Set[NodeType] = Set(NormalIntersection, Roundabout, YIntersection, Interchange, RoadBoundary, ELYBorder, MultitrackIntersection,
                                   DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnkownNodeType)
 
   def apply(intValue: Long): NodeType = {
@@ -56,7 +56,7 @@ object NodeType {
     def displayValue = "Maantien/kadun raja"
   }
 
-  case object ELYBoarder extends NodeType {
+  case object ELYBorder extends NodeType {
     def value = 8
 
     def displayValue = "ELY-raja"
