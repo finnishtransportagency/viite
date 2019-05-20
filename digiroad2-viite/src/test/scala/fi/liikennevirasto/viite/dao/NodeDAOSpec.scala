@@ -60,14 +60,6 @@ class NodeDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchByRoadAttributes When existing road number and valid min road part number but missing max road part number Then throw exception") {
-    runWithRollback {
-      intercept[IllegalArgumentException] {
-        dao.fetchByRoadAttributes(existingRoadNumber, Some(1), None)
-      }
-    }
-  }
-
   test("Test fetchByRoadAttributes When existing road number but invalid road part number range Then return None") {
     runWithRollback {
       val nodesAndRoadAttributes = dao.fetchByRoadAttributes(existingRoadNumber, Some(2), Some(1))
