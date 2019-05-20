@@ -168,14 +168,11 @@ class NodeDAO extends BaseDAO {
   }
 
   def fetchByRoadAttributes(road_number: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[(Node, RoadAttributes)] = {
-    val road_condition = if (minRoadPartNumber.isDefined && maxRoadPartNumber.isDefined) {
-      s"AND rw.ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND rw.ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
-    } else if (minRoadPartNumber.isDefined) {
-      s"AND rw.ROAD_PART_NUMBER = ${minRoadPartNumber.get}"
-    } else if (maxRoadPartNumber.isDefined) {
-      s"AND rw.ROAD_PART_NUMBER = ${maxRoadPartNumber.get}"
-    } else {
-      ""
+    val road_condition = (minRoadPartNumber.isDefined, maxRoadPartNumber.isDefined) match {
+      case (true, true) => s"AND rw.ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND rw.ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
+      case (true, _) => s"AND rw.ROAD_PART_NUMBER = ${minRoadPartNumber.get}"
+      case (_, true) => s"AND rw.ROAD_PART_NUMBER = ${maxRoadPartNumber.get}"
+      case _ =>""
     }
 
     val query = s"""
@@ -193,12 +190,10 @@ class NodeDAO extends BaseDAO {
     Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Long], DateTime, Option[DateTime], DateTime, Option[DateTime],
       Option[String], Option[DateTime], Long, Long, Long, Long)](query).list.map {
 
-      case (id, nodeNumber, coordX, coordY, name, nodeType, startDate, endDate, validFrom, validTo,
+      case (id, nodeNumber, x, y, name, nodeType, startDate, endDate, validFrom, validTo,
             createdBy, createdTime, roadNumber, track, roadPartNumber, startAddrMValue) =>
 
-        val coordinates = Point(coordX, coordY)
-
-        (Node(id, nodeNumber, coordinates, name, NodeType.apply(nodeType.getOrElse(NodeType.UnkownNodeType.value)), startDate, endDate, validFrom, validTo,
+        (Node(id, nodeNumber, Point(x, y), name, NodeType.apply(nodeType.getOrElse(NodeType.UnkownNodeType.value)), startDate, endDate, validFrom, validTo,
             createdBy, createdTime),
           RoadAttributes(roadNumber, track, roadPartNumber, startAddrMValue))
     }
