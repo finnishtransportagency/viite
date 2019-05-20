@@ -562,6 +562,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val suravage = if (roadwaysByLinkSource.contains(LinkGeomSource.SuravageLinkInterface)) roadwaysByLinkSource(LinkGeomSource.SuravageLinkInterface) else Seq()
             val regular = if (roadwaysByLinkSource.contains(LinkGeomSource.NormalLinkInterface)) roadwaysByLinkSource(LinkGeomSource.NormalLinkInterface) else Seq()
             val complementary = if (roadwaysByLinkSource.contains(LinkGeomSource.ComplementaryLinkInterface)) roadwaysByLinkSource(LinkGeomSource.ComplementaryLinkInterface) else Seq()
+            if (!complementary.isEmpty) {
+              logger.debug(s"Adding ${complementary.size} complementary links in project.")
+            }
             val suravageMapping = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravage.map(_.linkId).toSet).map(sm => sm.linkId -> sm).toMap
             val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet, frozenTimeVVHAPIServiceEnabled).map(rm => rm.linkId -> rm).toMap
             val complementaryMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(complementary.map(_.linkId).toSet, frozenTimeVVHAPIServiceEnabled).map(rm => rm.linkId -> rm).toMap
