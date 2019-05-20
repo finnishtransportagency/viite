@@ -29,7 +29,8 @@ class NodesAndJunctionsService() {
         nodeDAO.fetchByRoadAttributes(roadNumber, minRoadPartNumber, maxRoadPartNumber) match {
           case nodes
             if nodes.size <= MaxAllowedNodes ||
-              minRoadPartNumber.isDefined && maxRoadPartNumber.isDefined && minRoadPartNumber.get == maxRoadPartNumber.get => Right(nodes)
+              minRoadPartNumber.isDefined && maxRoadPartNumber.isDefined && minRoadPartNumber.get == maxRoadPartNumber.get ||
+              minRoadPartNumber.isDefined && maxRoadPartNumber.isEmpty || minRoadPartNumber.isEmpty && maxRoadPartNumber.isDefined => Right(nodes)
           case _ => Left(ReturnedTooManyNodesErrorMessage)
         }
       } catch {
