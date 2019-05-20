@@ -385,9 +385,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber, linkStatus, newLinks)
 
       if (!project.isReserved(newRoadNumber, newRoadPartNumber) && !project.isFormed(newRoadNumber, newRoadPartNumber))
-        projectReservedPartDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
       if (GeometryUtils.isNonLinear(newLinks))
         throw new ProjectValidationException(ErrorGeometryContainsBranches)
+      projectReservedPartDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
       // Determine address value scheme (ramp, roundabout, all others)
       val createLinks =
         if (newLinks.headOption.exists(isRamp)) {
