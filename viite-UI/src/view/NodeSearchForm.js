@@ -73,10 +73,7 @@
 
     var checkInputs = function (selector, disabled) {
       var rootElement = $('#feature-attributes');
-      var minRoadPartNumber = $("#aosa").val();
-      var maxRoadPartNumber = $("#losa").val();
-      rootElement.find(selector).prop('disabled',
-        !!(disabled || (!minRoadPartNumber && maxRoadPartNumber || minRoadPartNumber && !maxRoadPartNumber) || minRoadPartNumber > maxRoadPartNumber));
+      rootElement.find(selector).prop('disabled', disabled);
     };
 
     var bindEvents = function () {
