@@ -1,3 +1,4 @@
+import java.net.URI
 def get_environment() {
     return "testing"
 }
@@ -27,7 +28,9 @@ pipeline {
             steps {
                 script {
 
-                       def java_opts = [
+                        def sbt_proxy = new URI(http_proxy)
+
+                        def java_opts = [
                             "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
                             "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
                             "-Dhttp.nonProxyHosts=*.vally.local",
