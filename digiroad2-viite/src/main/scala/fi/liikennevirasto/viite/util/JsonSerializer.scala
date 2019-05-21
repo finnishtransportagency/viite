@@ -6,7 +6,7 @@ import java.nio.file.Files.copy
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.util.{Track, VVHSerializer}
 import fi.liikennevirasto.viite.RoadType
@@ -16,12 +16,11 @@ import org.json4s.jackson.Serialization.{read, write}
 import org.json4s._
 import org.slf4j.LoggerFactory
 
-//TODO reorganize so it can be used in common api module
 class JsonSerializer extends VVHSerializer {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +
-  DiscontinuitySerializer + TrackSerializer + PointSerializer
+    DiscontinuitySerializer + TrackSerializer + PointSerializer + ChangeTypeSerializer
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {
     val json = new FileReader(file)
@@ -49,10 +48,13 @@ class JsonSerializer extends VVHSerializer {
     tmpFile.deleteOnExit()
 
     val fw = new FileWriter(tmpFile)
-    fw.write("[")
-    writeObjects(objects, fw)
-    fw.write("]")
-    fw.close()
+    try {
+      fw.write("[")
+      writeObjects(objects, fw)
+      fw.write("]")
+    } finally {
+      fw.close()
+    }
 
     if (file.exists())
       file.delete()
@@ -77,9 +79,14 @@ class JsonSerializer extends VVHSerializer {
 object DigiroadSerializers {
   val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +
-    DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + RoadTypeSerializer
+    DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + RoadTypeSerializer + ChangeTypeSerializer
 }
 
+case object ChangeTypeSerializer extends CustomSerializer[ChangeType](format => ( {
+  case JInt(changeType) => ChangeType.apply(changeType.toInt)
+}, {
+  case s: ChangeType => JInt(s.value)
+}))
 
 case object SideCodeSerializer extends CustomSerializer[SideCode](format => ( {
   null
