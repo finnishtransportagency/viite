@@ -79,15 +79,14 @@
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
 
-      eventbus.on('nodeSearchTool:fetched', function() {
-        $('#nodes-and-junctions-content').html(nodesAndRoadAttributesHtmlList());
+      eventbus.on('nodeSearchTool:fetched', function(hasResults) {
         applicationModel.removeSpinner();
-        eventbus.trigger('nodeSearchTool:refreshView', map);
-      });
-
-      eventbus.on('nodeSearchTool:failed', function() {
-        applicationModel.removeSpinner();
-        instructionsPopup.show('Ei tuloksia', 3000);
+        if (hasResults) {
+          $('#nodes-and-junctions-content').html(nodesAndRoadAttributesHtmlList());
+          eventbus.trigger('nodeSearchTool:refreshView', map);
+        } else {
+          instructionsPopup.show('Ei tuloksia', 3000);
+        }
       });
 
       eventbus.on('nodesAndJunctions:open', function () {
@@ -100,7 +99,8 @@
         });
 
         rootElement.on('keyup, input', '.node-input', function () {
-          checkInputs('#node-search-btn', !$("#tie").val());
+          checkInputs('#node-search-btn',
+            !$("#tie").val() || ((parseInt($("#aosa").val()) || 0) > (parseInt($("#losa").val()) || 999)));
         });
 
         rootElement.on('click', '#node-search-btn', function () {
