@@ -169,8 +169,7 @@ pipeline {
                 }
             }
             steps {
-                echo "Build and run backend tests"
-                sh STAGE_SETUP_ORACLE
+                echo "Build backend"
                 sh STAGE_BACKEND_BUILD_CMD
             }
             post {
