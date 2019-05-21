@@ -100,7 +100,8 @@
         });
 
         rootElement.on('keyup, input', '.node-input', function () {
-          checkInputs('#node-search-btn', !$("#tie").val());
+          checkInputs('#node-search-btn',
+            !$("#tie").val() || ((parseInt($("#aosa").val()) || 0) > (parseInt($("#losa").val()) || 999)));
         });
 
         rootElement.on('click', '#node-search-btn', function () {
