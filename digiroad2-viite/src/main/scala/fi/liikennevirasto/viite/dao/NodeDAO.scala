@@ -167,6 +167,14 @@ class NodeDAO extends BaseDAO {
       """.as[Long].firstOption
   }
 
+  def fetchIdWithHistory(nodeNumber: Long): Option[Long] = {
+    sql"""
+      SELECT ID
+      from NODE
+      where NODE_NUMBER = $nodeNumber
+      """.as[Long].firstOption
+  }
+
   def fetchByRoadAttributes(road_number: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[(Node, RoadAttributes)] = {
     val road_condition = (minRoadPartNumber.isDefined, maxRoadPartNumber.isDefined) match {
       case (true, true) => s"AND rw.ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND rw.ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
