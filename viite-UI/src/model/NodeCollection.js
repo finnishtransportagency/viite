@@ -25,12 +25,8 @@
       return backend.getNodesByRoadAttributes(roadAttributes, function (result) {
         if (result.success) {
           var searchResult = result.nodes;
-          if (searchResult.length) {
-            me.setNodesWithAttributes(searchResult);
-            eventbus.trigger('nodeSearchTool:fetched');
-          } else {
-            eventbus.trigger('nodeSearchTool:failed');
-          }
+          me.setNodesWithAttributes(searchResult);
+          eventbus.trigger('nodeSearchTool:fetched', searchResult.length);
         } else {
           applicationModel.removeSpinner();
           new ModalConfirm(result.errorMessage);
