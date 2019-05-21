@@ -567,7 +567,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
             val suravageMapping = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravage.map(_.linkId).toSet).map(sm => sm.linkId -> sm).toMap
             val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet, frozenTimeVVHAPIServiceEnabled).map(rm => rm.linkId -> rm).toMap
-            val complementaryMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(complementary.map(_.linkId).toSet, frozenTimeVVHAPIServiceEnabled).map(rm => rm.linkId -> rm).toMap
+            val complementaryMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(complementary.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
             val fullMapping = regularMapping ++ suravageMapping ++ complementaryMapping
             val addresses = roadways.flatMap(r => roadwayAddressMapper.mapRoadAddresses(r, (suravage ++ regular ++ complementary).groupBy(_.roadwayNumber)(r.roadwayNumber)))
             checkAndReserve(project, reserved)
