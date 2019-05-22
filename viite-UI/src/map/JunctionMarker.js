@@ -69,8 +69,3 @@
     };
   };
 }(this));
-
-//
-// '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px">\n' +
-// '    <param name="number" value="99"/>\n' +
-// '</object>' +
