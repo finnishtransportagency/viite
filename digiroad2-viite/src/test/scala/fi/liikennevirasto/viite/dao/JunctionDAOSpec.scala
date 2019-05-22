@@ -16,13 +16,14 @@ class JunctionDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  val dao = new JunctionPointDAO
-  val junctionDAO = new JunctionDAO
+  val dao = new JunctionDAO
 
   val testJunction1 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-01"), None,
     DateTime.parse("2019-01-01"), None, None, None)
 
-  /* TODO
+  val testJunction2 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-02"), None,
+    DateTime.parse("2019-01-02"), None, None, None)
+
   test("Test create When nothing to create Then return empty Seq") {
     runWithRollback {
       val ids = dao.create(Seq())
@@ -32,45 +33,16 @@ class JunctionDAOSpec extends FunSuite with Matchers {
 
   test("Test create When one created Then return Seq with one id") {
     runWithRollback {
-      val roadwayPointId = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
-      val junctionId = junctionDAO.create(Seq(testJunction1)).head
-      val ids = dao.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
+      val ids = dao.create(Seq(testJunction1))
       ids.size should be(1)
     }
   }
 
   test("Test create When two created Then return Seq with two ids") {
     runWithRollback {
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
-      val junctionId = junctionDAO.create(Seq(testJunction1)).head
-      val ids = dao.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId1),
-        testJunctionPoint2.copy(junctionId = junctionId, roadwayPointId = roadwayPointId1)))
+      val ids = dao.create(Seq(testJunction1, testJunction2))
       ids.size should be(2)
     }
   }
 
-  test("Test fetchJunctionPointsByJunctionIds When non-existing junctionId Then return empty Seq") {
-    runWithRollback {
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
-      val junctionId = junctionDAO.create(Seq(testJunction1)).head
-      dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
-        testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
-      val junctionPoints = dao.fetchJunctionPointsByJunctionIds(Seq(-1))
-      junctionPoints.isEmpty should be(true)
-    }
-  }
-
-  test("Test fetchJunctionPointsByJunctionIds When existing junctionId Then return junction points") {
-    runWithRollback {
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
-      val junctionId = junctionDAO.create(Seq(testJunction1)).head
-      dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
-        testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
-      val junctionPoints = dao.fetchJunctionPointsByJunctionIds(Seq(junctionId))
-      junctionPoints.size should be(2)
-      junctionPoints.filter(jp => jp.beforeAfter == testJunctionPoint1.beforeAfter).head.addrM should be(testJunctionPoint1.addrM)
-      junctionPoints.filter(jp => jp.beforeAfter == testJunctionPoint2.beforeAfter).head.addrM should be(testJunctionPoint2.addrM)
-    }
-  }
-*/
 }
