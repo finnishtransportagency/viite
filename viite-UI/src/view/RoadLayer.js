@@ -82,9 +82,56 @@
       overlay.setPosition(coordinate);
     };
 
+    var displayNodeInfo = function (event, pixel) {
+      var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature) {
+        return feature;
+      });
+      var coordinate;
+      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.nodeInfo)) {
+        var nodeData = featureAtPixel.nodeInfo;
+        coordinate = map.getEventCoordinate(event.originalEvent);
+        if (infoContent !== null) {
+          infoContent.innerHTML = '<p>' +
+            'ID: ' + nodeData.id + '<br>' +
+            'Solmunumero: ' + nodeData.nodeNumber + '<br>' +
+            'Nimi: ' + nodeData.nodeName + '<br>'+'</p>'
+          ;
+        }
+        overlay.setPosition(coordinate);
+      }
+
+    };
+
+    var displayJunctionInfo = function (event, pixel) {
+      var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature) {
+        return feature;
+      });
+      var coordinate;
+      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.junction) && !_.isUndefined(featureAtPixel.junctionPoint)) {
+        var junctionData = featureAtPixel.junction;
+        var junctionPointData = featureAtPixel.junctionPoint;
+        var roadLink = featureAtPixel.roadLink;
+        coordinate = map.getEventCoordinate(event.originalEvent);
+        if (infoContent !== null) {
+          infoContent.innerHTML = '<p>' +
+            'Liittymä ID: ' + junctionData.id + '<br>' +
+            'Solmu ID: ' + junctionData.nodeId + '<br>' +
+            'Tienumero: ' + roadLink.roadNumber + '<br>' +
+            'Tieosanumero: ' + roadLink.roadPartNumber + '<br>'+
+            'addrM: ' + junctionPointData.addrM + '<br>'+'</p>'
+          ;
+        }
+        overlay.setPosition(coordinate);
+      }
+
+    };
+
     //Listen pointerMove and get pixel for displaying roadAddress feature info
     me.eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
       displayRoadAddressInfo(event, pixel);
+      displayNodeInfo(event, pixel);
+      displayJunctionInfo(event, pixel);
+
     });
 
     var handleRoadsVisibility = function () {
@@ -109,6 +156,9 @@
             break;
           case 'roadAddressProject':
             eventbus.trigger('roadAddressProject:fetch');
+            break;
+          case 'node':
+            eventbus.trigger('nodeLayer:fetch');
         }
         handleRoadsVisibility();
       }
