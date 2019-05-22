@@ -471,7 +471,6 @@ class ProjectValidator {
       checkProjectContinuity,
       checkForNotHandledLinks,
       checkTrackCodePairing,
-      checkTrackRoadTypePairing,
       checkRemovedEndOfRoadParts,
       checkActionsInRoadsNotInProject
     )
@@ -575,14 +574,11 @@ class ProjectValidator {
     }
 
     def checkMinMaxTrackRoadTypes(trackInterval: Seq[ProjectLink]): Option[ProjectLink] = {
-        val minTrackLink = trackInterval.minBy(_.startAddrMValue)
-        val maxTrackLink = trackInterval.maxBy(_.endAddrMValue)
-        val notCombinedLinksInRoadPart = notCombinedLinks.filter(l => l.roadNumber == minTrackLink.roadNumber && l.roadPartNumber == minTrackLink.roadPartNumber)
-        if (!notCombinedLinksInRoadPart.exists(l => l.startAddrMValue == minTrackLink.startAddrMValue && l.track != minTrackLink.track)) {
-          Some(minTrackLink)
-        }
-        else if (!notCombinedLinksInRoadPart.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
-          Some(maxTrackLink)
+        val (left, right) = trackInterval.partition(_.track == Track.LeftSide)
+        val leftRoadTypes = left.map(_.roadType).distinct.sortBy(_.value).toSet
+        val rightRoadTypes = right.map(_.roadType).distinct.sortBy(_.value).toSet
+        if (leftRoadTypes != rightRoadTypes) {
+          Some(left.head)
         } else None
     }
 
@@ -603,17 +599,16 @@ class ProjectValidator {
     }
 
     def validateTrackRoadTypes(groupInterval: Seq[(Long, Seq[ProjectLink])]): Seq[ProjectLink] = {
-      val groupedErrors = groupInterval.map{ interval =>
-        val (headerAddr, trackInterval) = interval
-        val validTrackInterval = trackInterval.filterNot(r => r.status == Terminated || r.track == Track.Combined)
+      groupInterval.groupBy(_._1).flatMap{ interval =>
+        val leftrRightTracks = interval._2.flatMap(_._2)
+        val validTrackInterval = leftrRightTracks.filterNot(r => r.status == Terminated || r.track == Track.Combined)
         if (validTrackInterval.nonEmpty) {
           checkMinMaxTrackRoadTypes(validTrackInterval) match {
             case Some(link) => Seq(link)
             case _ => Seq.empty[ProjectLink]
           }
         } else Seq.empty[ProjectLink]
-      }
-      groupedErrors.flatten
+      }.toSeq
     }
 
     def recursiveCheckTrackChange(links: Seq[ProjectLink], errorLinks: Seq[ProjectLink] = Seq()): Option[ValidationErrorDetails] = {
@@ -639,13 +634,9 @@ class ProjectValidator {
     }
 
     def checkTrackRoadType(links: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
-//      if (links.isEmpty) {
-//        error(project.id, ValidationErrorList.DistinctRoadTypesBetweenTracks)(errorLinks)
-//      } else {
       val trackIntervals = getTwoTrackInterval(links, Seq())
       val errorLinks = validateTrackRoadTypes(trackIntervals)
       error(project.id, ValidationErrorList.DistinctRoadTypesBetweenTracks)(errorLinks)
-//      }
     }
 
     val groupedLinks = notCombinedLinks.filterNot(_.status == LinkStatus.Terminated).groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
@@ -661,17 +652,6 @@ class ProjectValidator {
       }
       trackCoverageErrors ++ RoadTypePairingErrors
     }).headOption.getOrElse(Seq())
-  }
-
-
-  def checkTrackRoadTypePairing(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-    val (left, right) = projectLinks.filterNot(_.track == Track.Combined).partition(_.track == Track.LeftSide)
-    val leftTrackInterval = getTrackInterval(left.sortBy(o => (o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)), LeftSide)
-    val rightTrackInterval = getTrackInterval(right.sortBy(o => (o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)), RightSide)
-    val errorLinks = ""
-//
-//    error(project.id, ValidationErrorList.InsufficientTrackCoverage)(errorLinks)
-    Seq()
   }
 
   /**
