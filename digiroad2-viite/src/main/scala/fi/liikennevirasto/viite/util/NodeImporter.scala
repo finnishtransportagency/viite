@@ -38,7 +38,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
   def insertNode(nodeStatement: PreparedStatement, conversionNode: ConversionNode): Unit ={
     nodeStatement.setLong(1, conversionNode.id)
     nodeStatement.setLong(2, conversionNode.nodeNumber)
-    nodeStatement.setObject(3, OracleDatabase.createPointJGeometry(conversionNode.coordinates))
+    nodeStatement.setObject(3, OracleDatabase.createRoadsJGeometry(Seq(conversionNode.coordinates), dynamicSession.conn, endMValue = 0))
     nodeStatement.setString(4, conversionNode.name.getOrElse(""))
     nodeStatement.setLong(5, conversionNode.nodeType)
     nodeStatement.setString(6, datePrinter(conversionNode.startDate))
