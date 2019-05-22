@@ -44,12 +44,12 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
       ids.isEmpty should be(true)
     }
   }
-/*
+
   test("Test create When one created Then return Seq with one id") {
     runWithRollback {
       val roadwayPointId = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
-      val junctionId = junctionDAO.create(testJunction1)
-      val ids = dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId)))
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      val ids = dao.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
       ids.size should be(1)
     }
   }
@@ -57,60 +57,35 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
   test("Test create When two created Then return Seq with two ids") {
     runWithRollback {
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
-      val ids = dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1),
-        testNodePoint2.copy(roadwayPointId = roadwayPointId1)))
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      val ids = dao.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId1),
+        testJunctionPoint2.copy(junctionId = junctionId, roadwayPointId = roadwayPointId1)))
       ids.size should be(2)
     }
   }
 
-  test("Test fetchNodePointsByNodeId When non-existing nodeId Then return empty Seq") {
+  test("Test fetchJunctionPointsByJunctionIds When non-existing junctionId Then return empty Seq") {
     runWithRollback {
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
-      val nodeId = nodeDAO.create(Seq(testJunction1)).head
-      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId)),
-        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
-      val nodePoints = dao.fetchNodePointsByNodeId(Seq(-1))
-      nodePoints.isEmpty should be(true)
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
+        testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
+      val junctionPoints = dao.fetchJunctionPointsByJunctionIds(Seq(-1))
+      junctionPoints.isEmpty should be(true)
     }
   }
 
-  test("Test fetchNodePointsByNodeId When existing nodeId Then return node points") {
+  test("Test fetchJunctionPointsByJunctionIds When existing junctionId Then return junction points") {
     runWithRollback {
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
-      val nodeId = nodeDAO.create(Seq(testJunction1)).head
-      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId)),
-        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
-      val nodePoints = dao.fetchNodePointsByNodeId(Seq(nodeId))
-      nodePoints.size should be(2)
-      nodePoints.filter(n => n.nodeId == Some(nodeId)).size should be(2)
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
+        testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
+      val junctionPoints = dao.fetchJunctionPointsByJunctionIds(Seq(junctionId))
+      junctionPoints.size should be(2)
+      junctionPoints.filter(jp => jp.beforeAfter == testJunctionPoint1.beforeAfter).head.addrM should be(testJunctionPoint1.addrM)
+      junctionPoints.filter(jp => jp.beforeAfter == testJunctionPoint2.beforeAfter).head.addrM should be(testJunctionPoint2.addrM)
     }
   }
 
-  test("Test fetchTemplatesByBoundingBox When no matches Then return empty Seq") {
-    runWithRollback {
-      val roadwayNumber = Sequences.nextRoadwayNumber
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
-      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = None),
-        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = None)))
-      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
-      val nodePoints = dao.fetchTemplatesByBoundingBox(BoundingRectangle(Point(0, 0), Point(1, 1)))
-      nodePoints.isEmpty should be(true)
-    }
-  }
-
-  test("Test fetchTemplatesByBoundingBox When matches Then return node points") {
-    runWithRollback {
-      val roadwayNumber = Sequences.nextRoadwayNumber
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
-      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = None),
-        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = None)), "Test")
-      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
-      val nodePoints = dao.fetchTemplatesByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
-      nodePoints.size should be(2)
-      nodePoints.filter(n => n.roadwayNumber == roadwayNumber).size should be(2)
-      nodePoints.filter(n => n.addrM == testRoadwayPoint1.addrMValue).size should be(2)
-      nodePoints.filter(n => n.createdBy == Some("Test")).size should be(2)
-    }
-  }
-*/
 }
