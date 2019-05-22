@@ -5,10 +5,8 @@ import java.sql.PreparedStatement
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.dao.{Node, NodeDAO, RoadwayPointDAO}
+import fi.liikennevirasto.viite.dao.{NodeDAO, RoadwayPointDAO}
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -17,16 +15,20 @@ import slick.jdbc._
 class JunctionImporter(conversionDatabase: DatabaseDef) {
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
-  case class ConversionJunction(id: Long, junctionNumber: Long, rampNumber: Option[String], trafficLights: Option[Long], nodeNumber: Long, startDate: Option[DateTime],
-                                endDate: Option[DateTime], lightsStartDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime],
+  val nodeDAO = new NodeDAO
+
+  val roadwayPointDAO = new RoadwayPointDAO
+
+  case class ConversionJunction(id: Long, junctionNumber: Long, nodeNumber: Long, startDate: Option[DateTime],
+                                endDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime],
                                 createdBy: String, createdTime: Option[DateTime])
 
   case class ConversionJunctionPoint(id: Long, beforeOrAfter: Long, roadwayNumberTR: Long, addressMValueTR: Long, junctionTRId: Long,
                                  startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
   private def insertJunctionStatement(): PreparedStatement =
-    dynamicSession.prepareStatement(sql = "INSERT INTO JUNCTION (ID, JUNCTION_NUMBER, RAMP_NUMBER, TRAFFIC_LIGHTS, NODE_ID, START_DATE, END_DATE, LIGHTS_START_DATE, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)")
+    dynamicSession.prepareStatement(sql = "INSERT INTO JUNCTION (ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
+      " (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)")
 
   private def insertJunctionPointStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO JUNCTION_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, JUNCTION_ID, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
@@ -36,14 +38,11 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
   def insertJunction(junctionStatement: PreparedStatement, conversionJunction: ConversionJunction, nodeId: Long): Unit ={
     junctionStatement.setLong(1, conversionJunction.id)
     junctionStatement.setLong(2, conversionJunction.junctionNumber)
-    junctionStatement.setString(3, conversionJunction.rampNumber.getOrElse(""))
-    junctionStatement.setLong(4, conversionJunction.trafficLights.getOrElse(0))
-    junctionStatement.setLong(5, nodeId)
-    junctionStatement.setString(6, datePrinter(conversionJunction.startDate))
-    junctionStatement.setString(7, datePrinter(conversionJunction.endDate))
-    junctionStatement.setString(8, datePrinter(conversionJunction.lightsStartDate))
-    junctionStatement.setString(9, datePrinter(conversionJunction.validFrom))
-    junctionStatement.setString(10, conversionJunction.createdBy)
+    junctionStatement.setLong(3, nodeId)
+    junctionStatement.setString(4, datePrinter(conversionJunction.startDate))
+    junctionStatement.setString(5, datePrinter(conversionJunction.endDate))
+    junctionStatement.setString(6, datePrinter(conversionJunction.validFrom))
+    junctionStatement.setString(7, conversionJunction.createdBy)
     junctionStatement.addBatch()
   }
 
@@ -76,15 +75,15 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
     junctionsWithPoints.foreach{
       conversionJunction =>
         println(s"Inserting junction with TR id = ${conversionJunction._1.id} ")
-        val nodeId = NodeDAO.fetchId(conversionJunction._1.nodeNumber)
+        val nodeId = nodeDAO.fetchIdWithHistory(conversionJunction._1.nodeNumber)
         insertJunction(junctionPs, conversionJunction._1, nodeId.get)
 
         conversionJunction._2.foreach{
           conversionJunctionPoint =>
             println(s"Inserting junction point with TR id = ${conversionJunctionPoint.id} ")
-            val existingRoadwayPoint = RoadwayPointDAO.fetch(conversionJunctionPoint.roadwayNumberTR, conversionJunctionPoint.addressMValueTR)
+            val existingRoadwayPoint = roadwayPointDAO.fetch(conversionJunctionPoint.roadwayNumberTR, conversionJunctionPoint.addressMValueTR)
             if(existingRoadwayPoint.isEmpty){
-              val newRoadwayPoint = RoadwayPointDAO.create(conversionJunctionPoint.roadwayNumberTR, conversionJunctionPoint.addressMValueTR, createdBy = "junction_import")
+              val newRoadwayPoint = roadwayPointDAO.create(conversionJunctionPoint.roadwayNumberTR, conversionJunctionPoint.addressMValueTR, createdBy = "junction_import")
               insertJunctionPoint(junctionPointPs, conversionJunctionPoint, conversionJunction._1.id, newRoadwayPoint)
             }
             else
@@ -100,8 +99,8 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
 
   protected def fetchJunctionsFromConversionTable(): Seq[ConversionJunction] = {
     conversionDatabase.withDynSession {
-      sql"""SELECT L.ID, LIITTYMANRO, ERITASO, VALO_OHJAUS, solmunro, TO_CHAR(L.VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(L.VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
-           TO_CHAR(L.VALOALKUPVM, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(L.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), L.KAYTTAJA, TO_CHAR(L.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
+      sql"""SELECT L.ID, LIITTYMANRO, solmunro, TO_CHAR(L.VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(L.VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
+           TO_CHAR(L.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), L.KAYTTAJA, TO_CHAR(L.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
            FROM LIITTYMA L JOIN SOLMU S ON (ID_SOLMU = S.id)  """
         .as[ConversionJunction].list
     }
@@ -122,17 +121,14 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
     def apply(r: PositionedResult): ConversionJunction = {
       val id = r.nextLong()
       val junctionNumber = r.nextLong()
-      val rampNumber = r.nextStringOption()
-      val trafficLights = r.nextLongOption()
       val nodeNumber = r.nextLong()
       val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val endDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val lightsStartDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextString()
       val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      ConversionJunction(id, junctionNumber, rampNumber, trafficLights, nodeNumber, startDate, endDate, lightsStartDate, validFrom, None, createdBy, createdTime)
+      ConversionJunction(id, junctionNumber, nodeNumber, startDate, endDate, validFrom, None, createdBy, createdTime)
     }
   }
 

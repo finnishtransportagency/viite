@@ -37,6 +37,7 @@ trait RoadAddressLinkLike extends PolyLine {
   def startCalibrationPoint: Option[CalibrationPoint]
   def endCalibrationPoint: Option[CalibrationPoint]
   def anomaly: Anomaly
+  def roadwayNumber: Long
 }
 
 case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: Long, geometry: Seq[Point],

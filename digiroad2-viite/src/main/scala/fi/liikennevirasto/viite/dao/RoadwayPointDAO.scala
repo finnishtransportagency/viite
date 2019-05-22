@@ -1,13 +1,15 @@
 package fi.liikennevirasto.viite.dao
+
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import fi.liikennevirasto.viite._
 
-object RoadwayPointDAO {
+case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, createdBy: String, createdTime: Option[DateTime] = None, modifiedBy: Option[String] = None, modifiedTime: Option[DateTime] = None)
 
-  case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, createdBy: String, createdTime: Option[DateTime] = None, modifiedBy: Option[String] = None, modifiedTime: Option[DateTime] = None)
+class RoadwayPointDAO extends BaseDAO {
 
   implicit val getRoadwayPointRow = new GetResult[RoadwayPoint] {
     def apply(r: PositionedResult): RoadwayPoint = {
@@ -24,7 +26,11 @@ object RoadwayPointDAO {
   }
 
   def create(roadwayPoint: RoadwayPoint): Long = {
-    val id = Sequences.nextRoadwayPointId
+    val id = if (roadwayPoint.id == NewIdValue) {
+      Sequences.nextRoadwayPointId
+    } else {
+      roadwayPoint.id
+    }
     sqlu"""
       Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) Values
       ($id, ${roadwayPoint.roadwayNumber}, ${roadwayPoint.addrMValue}, ${roadwayPoint.createdBy}, ${roadwayPoint.createdBy})
@@ -34,7 +40,7 @@ object RoadwayPointDAO {
 
   def create(roadwayNumber: Long, addrMValue: Long, createdBy: String): Long = {
     val id = Sequences.nextRoadwayPointId
-        sqlu"""
+    sqlu"""
       Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) Values
       ($id, $roadwayNumber, $addrMValue, $createdBy, $createdBy)
       """.execute
@@ -53,7 +59,7 @@ object RoadwayPointDAO {
       """.execute
   }
 
-  def fetch(id:Long) : RoadwayPoint = {
+  def fetch(id: Long): RoadwayPoint = {
     sql"""
       SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
       from ROADWAY_POINT
@@ -61,7 +67,7 @@ object RoadwayPointDAO {
      """.as[RoadwayPoint].first
   }
 
-  def fetch(roadwayNumber: Long, addrM: Long) : Option[RoadwayPoint] = {
+  def fetch(roadwayNumber: Long, addrM: Long): Option[RoadwayPoint] = {
     sql"""
       SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
       from ROADWAY_POINT
@@ -71,7 +77,8 @@ object RoadwayPointDAO {
 
   def fetch(points: Seq[(Long, Long)]): Seq[RoadwayPoint] = {
     val whereClause = points.map(p => s" (roadway_number = ${p._1} and addr_m = ${p._2})").mkString(" where ", " or ", "")
-    val query = s"""
+    val query =
+      s"""
       SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
       from ROADWAY_POINT $whereClause
        """

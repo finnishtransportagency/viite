@@ -12,9 +12,9 @@
 
     var minZoomForContent = function() {
       if (applicationModel.getSelectedLayer()) {
-        return layers[applicationModel.getSelectedLayer()].minZoomForContent || zoomlevels.minZoomForAssets;
+        return layers[applicationModel.getSelectedLayer()].minZoomForContent || zoomlevels.minZoomForRoadNetwork;
       }
-      return zoomlevels.minZoomForAssets;
+      return zoomlevels.minZoomForRoadNetwork;
     };
 
     var refreshMap = function(mapState) {
@@ -56,9 +56,7 @@
     eventbus.on('application:initialized layer:fetched', function() {
       var zoom = zoomlevels.getViewZoom(map);
       applicationModel.setZoomLevel(zoom);
-      if (!zoomlevels.isInAssetZoomLevel(zoom)) {
-        showAssetZoomDialog();
-      }
+
       new CrosshairToggle($('.mapplugin.coordinates'));
       isInitialized = true;
       eventbus.trigger('map:initialized', map);
