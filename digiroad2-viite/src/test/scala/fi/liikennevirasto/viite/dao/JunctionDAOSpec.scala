@@ -1,5 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.NewIdValue
@@ -20,6 +22,7 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
   val dao = new JunctionPointDAO
   val junctionDAO = new JunctionDAO
   val roadwayPointDAO = new RoadwayPointDAO
+  val linearLocationDAO = new LinearLocationDAO
 
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
 
@@ -30,6 +33,10 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
 
   val testJunction1 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-01"), None,
     DateTime.parse("2019-01-01"), None, None, None)
+
+  val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l,
+    (None, None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
+
 
   test("Test create When nothing to create Then return empty Seq") {
     runWithRollback {
