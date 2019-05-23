@@ -48,10 +48,10 @@ class JunctionDAO extends BaseDAO {
   }
 
   def fetchJunctionByNodeIds(nodeIds: Seq[Long]): Seq[Junction] = {
-    if(nodeIds.isEmpty) {
+    if (nodeIds.isEmpty) {
       Seq()
     }
-    else{
+    else {
       val query =
         s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
@@ -70,14 +70,18 @@ class JunctionDAO extends BaseDAO {
       """.as[Long].firstOption
   }
 
-  def fetchByIds(ids: Seq[Long]): Seq[Junction] = {
-    val query =
-      s"""
+  def fetchByIds(ids: Iterable[Long]): Seq[Junction] = {
+    if (ids.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       FROM JUNCTION
       WHERE ID IN (${ids.mkString(", ")})
       """
-    queryList(query)
+      queryList(query)
+    }
   }
 
   def create(junctions: Iterable[Junction], createdBy: String = "-"): Seq[Long] = {

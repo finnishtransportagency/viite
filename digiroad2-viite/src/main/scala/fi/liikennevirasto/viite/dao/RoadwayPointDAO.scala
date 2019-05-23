@@ -76,13 +76,17 @@ class RoadwayPointDAO extends BaseDAO {
   }
 
   def fetch(points: Seq[(Long, Long)]): Seq[RoadwayPoint] = {
-    val whereClause = points.map(p => s" (roadway_number = ${p._1} and addr_m = ${p._2})").mkString(" where ", " or ", "")
-    val query =
-      s"""
+    if (points.isEmpty) {
+      Seq()
+    } else {
+      val whereClause = points.map(p => s" (roadway_number = ${p._1} and addr_m = ${p._2})").mkString(" where ", " or ", "")
+      val query =
+        s"""
       SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
       from ROADWAY_POINT $whereClause
        """
-    queryList(query)
+      queryList(query)
+    }
   }
 
   private def queryList(query: String): Seq[RoadwayPoint] = {
