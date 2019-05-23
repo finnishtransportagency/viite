@@ -57,7 +57,7 @@ class NodesAndJunctionsService() {
         val nodePoints = nodePointDAO.fetchNodePointsByNodeId(nodes.map(_.id))
         val junctions = junctionDAO.fetchJunctionByNodeIds(nodes.map(_.id))
         val junctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(junctions.map(_.id))
-        nodes.map {
+        val nodesAndJunctions = nodes.map {
           node =>
             (Option(node),
               (
@@ -70,10 +70,21 @@ class NodesAndJunctionsService() {
                 }.toMap
               )
             )
-        }.toMap
+        } ++ Seq((None, getTemplatesByBoundingBox(boundingRectangle)))
+        nodesAndJunctions.toMap
       }
     }
   }
 
+  def getTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]) = {
+    withDynSession {
+      time(logger, "Fetch NodePoint and Junction + JunctionPoint templates") {
+        val junctionPoints = junctionPointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+        val junctions = junctionDAO.fetchByIds(junctionPoints.map(_.junctionId))
+        val nodePoints = nodePointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+        (nodePoints, junctions.map {junction => (junction, junctionPoints.filter(_.junctionId == junction.id))}.toMap)
+      }
+    }
+  }
 
 }

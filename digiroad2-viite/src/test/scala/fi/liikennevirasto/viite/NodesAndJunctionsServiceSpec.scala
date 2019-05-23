@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
@@ -21,6 +22,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
   val nodePointDAO = new NodePointDAO
+  val junctionDAO = new JunctionDAO
+  val junctionPointDAO = new JunctionPointDAO
+  val linearLocationDAO = new LinearLocationDAO
 
   val nodesAndJunctionsService = new NodesAndJunctionsService() {
     override def withDynSession[T](f: => T): T = f
@@ -41,6 +45,15 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0)
+
+  val testJunction1 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-01"), None,
+    DateTime.parse("2019-01-01"), None, None, None)
+
+  val testJunctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1,
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10)
+
+  val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l,
+    (None, None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
 
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
@@ -112,6 +125,43 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         case Left(errorMessage) => errorMessage should be(ReturnedTooManyNodesErrorMessage)
         case _ => fail()
       }
+    }
+  }
+
+  test("Test getTemplatesByBoundingBox When no matching templates Then return nothing") {
+    runWithRollback {
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber)))
+      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
+      val roadwayPointId = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
+      nodePointDAO.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId)))
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
+
+      val templates = nodesAndJunctionsService.getTemplatesByBoundingBox(BoundingRectangle(Point(96, 96), Point(98, 98)))
+      templates._1.size should be(0)
+      templates._2.size should be(0)
+    }
+  }
+
+  test("Test getTemplatesByBoundingBox When matching templates Then return them") {
+    runWithRollback {
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber)))
+      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
+      val roadwayPointId = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
+      nodePointDAO.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId)))
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
+
+      val templates = nodesAndJunctionsService.getTemplatesByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
+      templates._1.size should be(1)
+      templates._2.size should be(1)
+      templates._2.head._2.size should be(1)
+      templates._1.head.roadwayNumber should be(roadwayNumber)
+      templates._2.head._1.id should be(junctionId)
+      templates._2.head._1.nodeId should be(None)
+      templates._2.head._2.head.junctionId should be(junctionId)
     }
   }
 

@@ -44,10 +44,10 @@ class JunctionPointDAO extends BaseDAO {
   }
 
   def fetchJunctionPointsByJunctionIds(junctionIds: Seq[Long]): Seq[JunctionPoint] = {
-    if(junctionIds.isEmpty){
+    if (junctionIds.isEmpty) {
       Seq()
     }
-    else{
+    else {
       val query =
         s"""
        SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
@@ -75,7 +75,7 @@ class JunctionPointDAO extends BaseDAO {
           JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
           JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID AND J.NODE_ID IS NULL)
           JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-          where $boundingBoxFilter and NP.valid_to is null and NP.end_date is null
+          where $boundingBoxFilter and JP.valid_to is null and JP.end_date is null
         """
       queryList(query)
     }
