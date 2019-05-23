@@ -665,10 +665,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
+              val project = projectService.getSingleProjectById(links.projectId).get
               val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
               Map("success" -> true, "id" -> links.projectId,
                 "publishable" -> projectErrors.isEmpty,
-                "projectErrors" -> projectErrors)
+                "projectErrors" -> projectErrors,
+                "formedInfo" -> project.formedParts.map(projectFormedPartToApi(Some(project.id))))
           }
         } else {
           Map("success" -> false, "errorMessage" -> "Ajoratakoodi puuttuu")
