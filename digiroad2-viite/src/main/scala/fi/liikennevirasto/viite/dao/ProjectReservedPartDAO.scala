@@ -184,7 +184,7 @@ class ProjectReservedPartDAO {
             FROM linear_location lc, roadway rw, project_link pl, project_reserved_road_part rp WHERE
             rw.roadway_number = lc.ROADWAY_NUMBER AND
             rw.road_Number = pl.road_number AND rw.road_part_number = pl.road_part_number AND rp.project_id = pl.project_id AND
-            rp.road_number = pl.road_number AND rp.road_part_number = pl.road_part_number AND
+            rp.road_number = pl.road_number AND rp.road_part_number = pl.road_part_number AND rw.END_DATE IS NULL AND rw.VALID_TO IS NULL AND
             lc.id NOT IN (select pl2.linear_location_id from project_link pl2 WHERE pl2.road_number = rw.road_number AND pl2.road_part_number = rw.road_part_number)
             AND $filter AND pl.status = ${LinkStatus.NotHandled.value}
             GROUP BY rp.id, pl.project_id, rw.road_number, rw.road_part_number) gr ORDER BY gr.road_number, gr.road_part_number"""
