@@ -207,16 +207,20 @@ trait TrackCalculatorStrategy {
           val raCPs = Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), startCP = true, endCP = pls.tail.head.calibrationPoints._1.isDefined, calPointSource1)) ++ pls.init.tail ++
             Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), pls.init.last.calibrationPoints._2.isDefined, endCP = true, calPointSource2))
 
-          val roadTypeCPs: Seq[ProjectLink] = raCPs.sortBy(_.startAddrMValue).sliding(2, 2).flatMap {
-            case Seq(curr, next) =>
-            if(curr.roadType != next.roadType)
-              Seq(curr, next)
-            else {
-              Seq(setCalibrationPoint(curr, None, false, true, ProjectLinkSource),
-              setCalibrationPoint(next, None, true, false, ProjectLinkSource))
+          val roadTypeCPs: Seq[ProjectLink] = raCPs.foldLeft(Seq.empty[ProjectLink]) {(lista, i) =>
+            if(lista.isEmpty){
+              Seq(i)
+            } else {
+              if(lista.last.roadType != i.roadType){
+                val last = lista.last
+                lista.dropRight(1)++Seq(setCalibrationPoint(last, None, last.calibrationPoints._1.nonEmpty, true, ProjectLinkSource),
+                  setCalibrationPoint(i, None, true, i.calibrationPoints._2.nonEmpty, ProjectLinkSource))
+              } else {
+                lista :+i
+              }
             }
-          }.toSeq
-          raCPs ++ roadTypeCPs
+          }
+          roadTypeCPs
       }
   }
 
