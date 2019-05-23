@@ -117,6 +117,8 @@
           publishable: result.publishable
         };
         projectErrors = result.projectErrors;
+        reservedParts = result.reservedInfo;
+        formedParts = result.formedInfo;
         publishableProject = result.publishable;
         eventbus.trigger('roadAddressProject:projectFetched', projectInfo);
       });
@@ -196,10 +198,11 @@
             startDate: result.project.startDate,
             publishable: false
           };
-          projectErrors = result.projectErrors;
-          eventbus.trigger('roadAddress:projectSaved', result);
-          reservedPartList = result.reservedInfo;
           currentProject = result;
+          projectErrors = result.projectErrors;
+          reservedParts = result.reservedInfo;
+          formedParts = result.formedInfo;
+          eventbus.trigger('roadAddress:projectSaved', result);
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result.errorMessage);
@@ -279,6 +282,7 @@
                 } else {
                   publishableProject = successObject.publishable;
                   projectErrors = successObject.projectErrors;
+                  formedParts = successObject.formedInfo;
                   eventbus.trigger('projectLink:projectLinksCreateSuccess');
                   eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
                 }
@@ -288,6 +292,7 @@
                 if (successObject.success) {
                   publishableProject = successObject.publishable;
                   projectErrors = successObject.projectErrors;
+                  formedParts = successObject.formedInfo;
                   eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
                 } else {
                   new ModalConfirm(successObject.errorMessage);
@@ -671,12 +676,6 @@
       });
       _.each(qRoadParts, function (row) {
         reservedParts.push(row);
-      });
-    };
-
-    this.deleteRoadPartFromList = function (list, roadNumber, roadPartNumber) {
-      return _.filter(list, function (dirty) {
-        return !(dirty.roadNumber.toString() === roadNumber && dirty.roadPartNumber.toString() === roadPartNumber);
       });
     };
 
