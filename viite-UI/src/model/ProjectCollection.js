@@ -1,5 +1,6 @@
 (function (root) {
   root.ProjectCollection = function (backend) {
+    var me = this;
     var roadAddressProjects = [];
     var projectErrors = [];
     var reservedParts = [];
@@ -115,9 +116,9 @@
           id: result.project.id,
           publishable: result.publishable
         };
-        projectErrors = result.projectErrors;
-        reservedParts = result.reservedInfo;
-        formedParts = result.formedInfo;
+        me.setProjectErrors(result.projectErrors);
+        me.setReservedParts(result.reservedInfo);
+        me.setFormedParts(result.formedInfo);
         publishableProject = result.publishable;
         eventbus.trigger('roadAddressProject:projectFetched', projectInfo);
       });
@@ -198,9 +199,9 @@
             publishable: false
           };
           currentProject = result;
-          projectErrors = result.projectErrors;
-          reservedParts = result.reservedInfo;
-          formedParts = result.formedInfo;
+          me.setProjectErrors(result.projectErrors);
+          me.setReservedParts(result.reservedInfo);
+          me.setFormedParts(result.formedInfo);
           eventbus.trigger('roadAddress:projectSaved', result);
         }
         else {
@@ -228,8 +229,8 @@
           if (response.success) {
             dirtyProjectLinkIds = [];
             publishableProject = response.publishable;
-            projectErrors = response.projectErrors;
-            formedParts = response.formedInfo;
+            me.setProjectErrors(response.projectErrors);
+            me.setFormedParts(response.formedInfo);
             eventbus.trigger('projectLink:revertedChanges');
           } else {
             if (response.status == INTERNAL_SERVER_ERROR_500 || response.status == BAD_REQUEST_400) {
@@ -282,8 +283,8 @@
                 applicationModel.removeSpinner();
               } else {
                 publishableProject = successObject.publishable;
-                projectErrors = successObject.projectErrors;
-                formedParts = successObject.formedInfo;
+                me.setProjectErrors(successObject.projectErrors);
+                me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('projectLink:projectLinksCreateSuccess');
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
               }
@@ -295,8 +296,8 @@
                 applicationModel.removeSpinner();
               } else {
                 publishableProject = successObject.publishable;
-                projectErrors = successObject.projectErrors;
-                formedParts = successObject.formedInfo;
+                me.setProjectErrors(successObject.projectErrors);
+                me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
               }
             });
@@ -501,7 +502,7 @@
       applicationModel.addSpinner();
       backend.saveProjectLinkSplit(dataJson, linkId, function (successObject) {
         if (successObject.success) {
-          projectErrors = successObject.projectErrors;
+          me.setProjectErrors(successObject.projectErrors);
           eventbus.trigger('projectLink:projectLinksSplitSuccess');
           eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
         } else {
@@ -554,7 +555,6 @@
     this.deleteProject = function (projectId) {
       backend.deleteRoadAddressProject(projectId, function (result) {
         if (result.success) {
-          reservedPartList = [];
           currentProject = undefined;
         }
         else {
@@ -584,7 +584,7 @@
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
           applicationModel.removeSpinner();
         } else {
-          projectErrors = successObject.projectErrors;
+          me.setProjectErrors(successObject.projectErrors);
           eventbus.trigger('changeProjectDirection:clicked');
         }
       });
