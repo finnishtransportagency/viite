@@ -229,6 +229,7 @@
             dirtyProjectLinkIds = [];
             publishableProject = response.publishable;
             projectErrors = response.projectErrors;
+            formedParts = response.formedInfo;
             eventbus.trigger('projectLink:revertedChanges');
           } else {
             if (response.status == INTERNAL_SERVER_ERROR_500 || response.status == BAD_REQUEST_400) {
