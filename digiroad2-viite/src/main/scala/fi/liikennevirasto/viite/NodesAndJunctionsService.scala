@@ -75,5 +75,19 @@ class NodesAndJunctionsService() {
     }
   }
 
+  /*
+
+  1)  The nodes are created only for tracks 0 and 1
+  2)  A node template is always created if :
+    2.1)  road number is < 20000 or between 40000-70000
+    2.2)  and at the beginning/end of each road part, ely borders, or when road type changes
+   */
+  def handleNodePointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
+    val filteredLinks = projectLinks.filter(pl => RoadClass.nodeRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt))
+    filteredLinks.groupBy(l=> (l.roadNumber, l.roadPartNumber)).map{ group=>
+
+    }
+  }
+
 
 }

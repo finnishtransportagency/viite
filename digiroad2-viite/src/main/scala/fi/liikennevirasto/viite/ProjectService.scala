@@ -84,6 +84,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val roadwayChangesDAO = new RoadwayChangesDAO
   val projectValidator = new ProjectValidator
+  val nodesNJunctionsService = new NodesAndJunctionsService
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
   val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, projectLinkDAO)
