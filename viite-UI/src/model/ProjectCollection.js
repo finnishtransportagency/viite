@@ -115,9 +115,9 @@
           id: result.project.id,
           publishable: result.publishable
         };
-        projectErrors = result.projectErrors;
-        reservedParts = result.reservedInfo;
-        formedParts = result.formedInfo;
+        setProjectErrors(result.projectErrors);
+        setReservedParts(result.reservedInfo);
+        setFormedParts(result.formedInfo);
         publishableProject = result.publishable;
         eventbus.trigger('roadAddressProject:projectFetched', projectInfo);
       });
@@ -198,9 +198,9 @@
             publishable: false
           };
           currentProject = result;
-          projectErrors = result.projectErrors;
-          reservedParts = result.reservedInfo;
-          formedParts = result.formedInfo;
+          setProjectErrors(result.projectErrors);
+          setReservedParts(result.reservedInfo);
+          setFormedParts(result.formedInfo);
           eventbus.trigger('roadAddress:projectSaved', result);
         }
         else {
@@ -228,8 +228,8 @@
           if (response.success) {
             dirtyProjectLinkIds = [];
             publishableProject = response.publishable;
-            projectErrors = response.projectErrors;
-            formedParts = response.formedInfo;
+            setProjectErrors(response.projectErrors);
+            setFormedParts(response.formedInfo);
             eventbus.trigger('projectLink:revertedChanges');
           } else {
             if (response.status == INTERNAL_SERVER_ERROR_500 || response.status == BAD_REQUEST_400) {
@@ -282,8 +282,8 @@
                 applicationModel.removeSpinner();
               } else {
                 publishableProject = successObject.publishable;
-                projectErrors = successObject.projectErrors;
-                formedParts = successObject.formedInfo;
+                setProjectErrors(successObject.projectErrors);
+                setFormedParts(successObject.formedInfo);
                 eventbus.trigger('projectLink:projectLinksCreateSuccess');
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
               }
@@ -295,8 +295,8 @@
                 applicationModel.removeSpinner();
               } else {
                 publishableProject = successObject.publishable;
-                projectErrors = successObject.projectErrors;
-                formedParts = successObject.formedInfo;
+                setProjectErrors(successObject.projectErrors);
+                setFormedParts(successObject.formedInfo);
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
               }
             });
@@ -501,7 +501,7 @@
       applicationModel.addSpinner();
       backend.saveProjectLinkSplit(dataJson, linkId, function (successObject) {
         if (successObject.success) {
-          projectErrors = successObject.projectErrors;
+          setProjectErrors(successObject.projectErrors);
           eventbus.trigger('projectLink:projectLinksSplitSuccess');
           eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
         } else {
@@ -554,7 +554,6 @@
     this.deleteProject = function (projectId) {
       backend.deleteRoadAddressProject(projectId, function (result) {
         if (result.success) {
-          reservedPartList = [];
           currentProject = undefined;
         }
         else {
@@ -584,7 +583,7 @@
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
           applicationModel.removeSpinner();
         } else {
-          projectErrors = successObject.projectErrors;
+          setProjectErrors(successObject.projectErrors);
           eventbus.trigger('changeProjectDirection:clicked');
         }
       });
@@ -702,15 +701,15 @@
       }), "roadAddresses");
     };
 
-    this.setReservedParts = function (list) {
+    var setReservedParts = function (list) {
       reservedParts = list;
     };
 
-    this.setFormedParts = function (list) {
+    var setFormedParts = function (list) {
       formedParts = list;
     };
 
-    this.setProjectErrors = function (errors) {
+    var setProjectErrors = function (errors) {
       projectErrors = errors;
     };
 
@@ -828,6 +827,9 @@
       };
 
       return {
+        setProjectErrors: setProjectErrors,
+        setReservedParts: setReservedParts,
+        setFormedParts: setFormedParts,
         getData: getData
       };
     };
