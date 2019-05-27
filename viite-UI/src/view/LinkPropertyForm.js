@@ -287,10 +287,13 @@
                 '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
               '</div>' +
               '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + '</p>' +
+                '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + '; ' +
+                  'MTKID: ' + linkProperties.mmlId + '</p>' +
               '</div>' +
+              showMunicipality(selectedLinkProperty, linkProperties) +
               showLinkId(selectedLinkProperty, linkProperties) +
             '</div>' +
+            staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) +
             staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) +
             staticField('TIEOSANUMERO', firstSelectedLinkProperty.roadPartNumber) +
             staticField('AJORATA', firstSelectedLinkProperty.trackCode) +
@@ -323,10 +326,13 @@
                 '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
               '</div>' +
               '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + '</p>' +
+                '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + '; ' +
+                  'MTKID: ' + linkProperties.mmlId + '</p>' +
               '</div>' +
               showLinkId(selectedLinkProperty, linkProperties) +
+              showMunicipality(selectedLinkProperty, linkProperties) +
             '</div>' +
+            staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) +
             staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) +
             staticField('TIEOSANUMERO', firstSelectedLinkProperty.roadPartNumber) +
             staticField('AJORATA', firstSelectedLinkProperty.trackCode) +
@@ -357,10 +363,16 @@
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
             '</div>' +
             '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + '</p>' +
+              '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + '; ' +
+                'MTKID: ' + linkProperties.mmlId + '</p>' +
             '</div>' +
+            '<div class="form-group">' +
+              '<p id="municipality" class="form-control-static asset-log-info"></p>' +
+            '</div>' +
+            showMunicipality(selectedLinkProperty, linkProperties) +
             showLinkId(selectedLinkProperty, linkProperties) +
            '</div>' +
+            staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) +
             staticField('TIENUMERO',firstSelectedLinkProperty.roadNumber) +
             staticField('TIEOSANUMERO', firstSelectedLinkProperty.roadPartNumber) +
             startAddress +
@@ -374,7 +386,7 @@
         '<footer>' + editButtons + '</footer> </div>');
     };
 
-    var showLinkId = function(selectedLinkProperty, linkProperties){
+    var showLinkId = function(selectedLinkProperty, linkProperties) {
         if (selectedLinkProperty.count () === 1) {
             return '' +
                 '<div class="form-group">' +
@@ -383,6 +395,18 @@
         } else {
             return '';
         }
+    };
+
+    var showMunicipality = function(selectedLinkProperty, linkProperties) {
+      // TODO add the case for same municipality in all the lnks
+      if (selectedLinkProperty.count() === 1) {
+        return '' +
+          '<div class="form-group">' +
+            '<p class="form-control-static asset-log-info">Kunta: ' + linkProperties.municipalityName + '</p>' +
+          '</div>';
+      } else {
+        return '';
+      }
     };
 
     var additionalSourceEventTriggering = function(rootElement, floatingToAdd, value, id) {

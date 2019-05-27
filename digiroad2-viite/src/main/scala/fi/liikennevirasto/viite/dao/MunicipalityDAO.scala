@@ -14,4 +14,8 @@ object MunicipalityDAO {
   def getMunicipalityRoadMaintainers = {
     Q.queryNA[(Long, Long)]("""SELECT id, ROAD_MAINTAINER_ID FROM MUNICIPALITY""").list.map(x => x._1 -> x._2).toMap
   }
+
+  def getMunicipalityNames = {
+    Q.queryNA[(Long, String)]("""SELECT ID, NAME_FI FROM MUNICIPALITY""").list.map(x => x._1 -> x._2).toMap
+  }
 }
