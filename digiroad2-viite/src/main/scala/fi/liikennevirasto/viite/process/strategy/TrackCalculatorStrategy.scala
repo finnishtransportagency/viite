@@ -196,7 +196,7 @@ trait TrackCalculatorStrategy {
           val pls = projectLinks.map {
             pl =>
               val (raCalibrationCode, raSideCode) = raCalibrationPointsNSide.getOrElse(pl.linearLocationId, (CalibrationCode.No, SideCode.Unknown))
-              val adjustedCalibrationCode = if(raSideCode != pl.sideCode) CalibrationCode.switch(raCalibrationCode)
+              val adjustedCalibrationCode = if (raSideCode != pl.sideCode) CalibrationCode.switch(raCalibrationCode)
               val raStartCP = adjustedCalibrationCode == CalibrationCode.AtBeginning || adjustedCalibrationCode == CalibrationCode.AtBoth
               val raEndCP = adjustedCalibrationCode == CalibrationCode.AtEnd || adjustedCalibrationCode == CalibrationCode.AtBoth
               setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), raStartCP, raEndCP, RoadAddressSource)
@@ -204,8 +204,23 @@ trait TrackCalculatorStrategy {
 
           val calPointSource1 = if (pls.tail.head.calibrationPoints._1.isDefined) pls.tail.head.calibrationPoints._1.get.source else ProjectLinkSource
           val calPointSource2 = if (pls.init.last.calibrationPoints._2.isDefined) pls.init.last.calibrationPoints._2.get.source else ProjectLinkSource
-          Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), startCP = true, endCP = pls.tail.head.calibrationPoints._1.isDefined, calPointSource1)) ++ pls.init.tail ++
+          val raCPs = Seq(setCalibrationPoint(pls.head, userCalibrationPoint.get(pls.head.id), startCP = true, endCP = pls.tail.head.calibrationPoints._1.isDefined, calPointSource1)) ++ pls.init.tail ++
             Seq(setCalibrationPoint(pls.last, userCalibrationPoint.get(pls.last.id), pls.init.last.calibrationPoints._2.isDefined, endCP = true, calPointSource2))
+
+          val roadTypeCPs: Seq[ProjectLink] = raCPs.foldLeft(Seq.empty[ProjectLink]) {(lista, i) =>
+            if (lista.isEmpty) {
+              Seq(i)
+            } else {
+              if (lista.last.roadType != i.roadType) {
+                val last = lista.last
+                lista.dropRight(1) ++ Seq(setCalibrationPoint(last, None, last.calibrationPoints._1.nonEmpty, true, ProjectLinkSource),
+                  setCalibrationPoint(i, None, true, i.calibrationPoints._2.nonEmpty, ProjectLinkSource))
+              } else {
+                lista :+ i
+              }
+            }
+          }
+          roadTypeCPs
       }
   }
 
