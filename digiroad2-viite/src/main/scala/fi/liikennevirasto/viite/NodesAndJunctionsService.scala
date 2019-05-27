@@ -3,7 +3,9 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
@@ -17,6 +19,7 @@ class NodesAndJunctionsService() {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
+  val roadwayPointDAO = new RoadwayPointDAO
   val nodeDAO = new NodeDAO
   val junctionDAO = new JunctionDAO
   val nodePointDAO = new NodePointDAO
@@ -73,6 +76,42 @@ class NodesAndJunctionsService() {
         }.toMap
       }
     }
+  }
+
+  /*
+
+  1)  The nodes are created only for tracks 0 and 1
+  2)  A node template is always created if :
+    2.1)  road number is < 20000 or between 40000-70000
+    2.2)  and at the beginning/end of each road part, ely borders, or when road type changes
+
+    if there is no roadwaypoint linked to the roadwayNumber and addr
+   */
+  def handleNodePointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
+    val filteredLinks = projectLinks.filter(pl => RoadClass.nodeRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt))
+    filteredLinks.filterNot(_.track == Track.LeftSide).groupBy(l=> (l.roadNumber, l.roadPartNumber, l.roadType)).map{ group =>
+      val headLink = group._2.head
+      val lastLink = group._2.last
+    val headNodeId = {
+      val existingRoadwayPoint = roadwayPointDAO.fetch(headLink.roadwayNumber, headLink.startAddrMValue)
+      if(existingRoadwayPoint.nonEmpty)
+        existingRoadwayPoint.get.id
+      else roadwayPointDAO.create(headLink.roadwayNumber, headLink.startAddrMValue, headLink.createdBy.getOrElse("-"))
+    }
+
+      val lastNodeId = {
+        val existingRoadwayPoint = roadwayPointDAO.fetch(lastLink.roadwayNumber, lastLink.startAddrMValue)
+        if(existingRoadwayPoint.nonEmpty)
+          existingRoadwayPoint.get.id
+        else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.startAddrMValue, lastLink.createdBy.getOrElse("-"))
+      }
+
+      val nodePoints = Seq(NodePoint(NewIdValue, BeforeAfter.Before, headNodeId, None, DateTime.now(), None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue),
+        NodePoint(NewIdValue, BeforeAfter.After, lastNodeId, None, DateTime.now(), None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.startAddrMValue)
+      )
+      nodePointDAO.create(nodePoints)
+
+    }.toSeq
   }
 
 
