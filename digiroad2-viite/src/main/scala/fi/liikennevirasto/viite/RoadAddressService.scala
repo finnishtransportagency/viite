@@ -683,92 +683,96 @@ object RoadClass {
   val values = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass, StreetClass
     , RampsAndRoundAboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass, ConstructionSiteTemporaryClass, PrivateRoadClass, NoClass)
 
+  val nodeRoadClass = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass,
+    StreetClass, PrivateRoadClass, WinterRoadsClass, PathsClass)
+
+
   def get(roadNumber: Int): Int = {
     values.find(_.roads contains roadNumber).getOrElse(NoClass).value
   }
 
   case object HighwayClass extends RoadClass {
-    def value = 1;
+    def value = 1
 
-    def roads: Range.Inclusive = 1 to 39;
+    def roads: Range.Inclusive = 1 to 39
   }
 
   case object MainRoadClass extends RoadClass {
-    def value = 2;
+    def value = 2
 
-    def roads: Range.Inclusive = 40 to 99;
+    def roads: Range.Inclusive = 40 to 99
   }
 
   case object RegionalClass extends RoadClass {
-    def value = 3;
+    def value = 3
 
-    def roads: Range.Inclusive = 100 to 999;
+    def roads: Range.Inclusive = 100 to 999
   }
 
   case object ConnectingClass extends RoadClass {
-    def value = 4;
+    def value = 4
 
-    def roads: Range.Inclusive = 1000 to 9999;
+    def roads: Range.Inclusive = 1000 to 9999
   }
 
   case object MinorConnectingClass extends RoadClass {
-    def value = 5;
+    def value = 5
 
-    def roads: Range.Inclusive = 10000 to 19999;
+    def roads: Range.Inclusive = 10000 to 19999
   }
 
   case object StreetClass extends RoadClass {
-    def value = 6;
+    def value = 6
 
-    def roads: Range.Inclusive = 40000 to 49999;
+    def roads: Range.Inclusive = 40000 to 49999
   }
 
   case object RampsAndRoundAboutsClass extends RoadClass {
-    def value = 7;
+    def value = 7
 
-    def roads: Range.Inclusive = 20001 to 39999;
+    def roads: Range.Inclusive = 20001 to 39999
   }
 
   case object PedestrianAndBicyclesClassA extends RoadClass {
-    def value = 8;
+    def value = 8
 
-    def roads: Range.Inclusive = 70001 to 89999;
+    def roads: Range.Inclusive = 70001 to 89999
   }
 
   case object PedestrianAndBicyclesClassB extends RoadClass {
-    def value = 8;
+    def value = 8
 
-    def roads: Range.Inclusive = 90001 to 99999;
+    def roads: Range.Inclusive = 90001 to 99999
   }
 
   case object WinterRoadsClass extends RoadClass {
-    def value = 9;
+    def value = 9
 
-    def roads: Range.Inclusive = 60001 to 61999;
+    def roads: Range.Inclusive = 60001 to 61999
   }
 
   case object PathsClass extends RoadClass {
-    def value = 10;
+    def value = 10
 
-    def roads: Range.Inclusive = 62001 to 62999;
+    def roads: Range.Inclusive = 62001 to 62999
   }
 
   case object ConstructionSiteTemporaryClass extends RoadClass {
-    def value = 11;
+    def value = 11
 
-    def roads: Range.Inclusive = 9900 to 9999;
+    def roads: Range.Inclusive = 9900 to 9999
   }
 
   case object PrivateRoadClass extends RoadClass {
-    def value = 12;
+    def value = 12
 
-    def roads: Range.Inclusive = 50001 to 59999;
+    def roads: Range.Inclusive = 50001 to 59999
   }
 
   case object NoClass extends RoadClass {
-    def value = 99;
+    def value = 99
 
-    def roads: Range.Inclusive = 0 to 0;
+    def roads: Range.Inclusive = 0 to 0
   }
 
 }
