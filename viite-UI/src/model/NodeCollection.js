@@ -54,6 +54,10 @@
         coords.push([node.coordX, node.coordY]);
       });
       map.getView().fit(new ol.geom.Polygon([coords]), map.getSize());
+      if (zoomlevels.getViewZoom(map) < zoomlevels.minZoomForNodes) {
+        map.getView().setZoom(zoomlevels.minZoomForNodes);
+      }
+
     });
 
   };
