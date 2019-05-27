@@ -21,10 +21,10 @@ import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.swagger.Swagger
+import org.scalatra.swagger.{Swagger, _}
 import org.scalatra.{NotFound, _}
 import org.slf4j.{Logger, LoggerFactory}
-import org.scalatra.swagger._
+
 import scala.util.parsing.json.JSON._
 import scala.util.{Left, Right}
 
@@ -1154,6 +1154,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "modifiedAt" -> roadAddressLink.modifiedAt,
       "modifiedBy" -> roadAddressLink.modifiedBy,
       "municipalityCode" -> roadAddressLink.attributes.get("MUNICIPALITYCODE"),
+      "municipalityName" -> roadAddressLink.municipalityName,
       "roadNameFi" -> roadAddressLink.attributes.get("ROADNAME_FI"),
       "roadNameSe" -> roadAddressLink.attributes.get("ROADNAME_SE"),
       "roadNameSm" -> roadAddressLink.attributes.get("ROADNAME_SM"),
