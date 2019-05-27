@@ -629,7 +629,7 @@ class ProjectValidator {
         val trackToCheck = links.head.track
         val trackInterval = getTrackInterval(links.sortBy(o => (o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)), trackToCheck)
         val headerAddr = trackInterval.minBy(_.startAddrMValue).startAddrMValue
-        getTwoTrackInterval(links.filterNot(l => trackInterval.exists(lt => lt.id == l.id)), interval++Seq(headerAddr -> trackInterval.filterNot(_.track == Track.Combined)))
+        getTwoTrackInterval(links.filterNot(l => trackInterval.exists(lt => lt.id == l.id)), interval ++ Seq(headerAddr -> trackInterval.filterNot(_.track == Track.Combined)))
       }
     }
 
