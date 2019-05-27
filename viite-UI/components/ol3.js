@@ -1,83 +1,1466 @@
 // OpenLayers 3. See https://openlayers.org/
 // License: https://raw.githubusercontent.com/openlayers/ol3/master/LICENSE.md
-(function(){var COMPILED=!0,goog=goog||{};goog.global=this;goog.isDef=function(a){return void 0!==a};goog.exportPath_=function(a,b,c){a=a.split(".");c=c||goog.global;a[0]in c||!c.execScript||c.execScript("var "+a[0]);for(var d;a.length&&(d=a.shift());)!a.length&&goog.isDef(b)?c[d]=b:c=c[d]?c[d]:c[d]={}};
-goog.define=function(a,b){var c=b;COMPILED||(goog.global.CLOSURE_UNCOMPILED_DEFINES&&Object.prototype.hasOwnProperty.call(goog.global.CLOSURE_UNCOMPILED_DEFINES,a)?c=goog.global.CLOSURE_UNCOMPILED_DEFINES[a]:goog.global.CLOSURE_DEFINES&&Object.prototype.hasOwnProperty.call(goog.global.CLOSURE_DEFINES,a)&&(c=goog.global.CLOSURE_DEFINES[a]));goog.exportPath_(a,c)};goog.DEBUG=!0;goog.LOCALE="en";goog.TRUSTED_SITE=!0;goog.STRICT_MODE_COMPATIBLE=!1;goog.DISALLOW_TEST_ONLY_CODE=COMPILED&&!goog.DEBUG;
-goog.ENABLE_CHROME_APP_SAFE_SCRIPT_LOADING=!1;goog.provide=function(a){if(goog.isInModuleLoader_())throw Error("goog.provide can not be used within a goog.module.");if(!COMPILED&&goog.isProvided_(a))throw Error('Namespace "'+a+'" already declared.');goog.constructNamespace_(a)};goog.constructNamespace_=function(a,b){if(!COMPILED){delete goog.implicitNamespaces_[a];for(var c=a;(c=c.substring(0,c.lastIndexOf(".")))&&!goog.getObjectByName(c);)goog.implicitNamespaces_[c]=!0}goog.exportPath_(a,b)};
-goog.VALID_MODULE_RE_=/^[a-zA-Z_$][a-zA-Z0-9._$]*$/;goog.module=function(a){if(!goog.isString(a)||!a||-1==a.search(goog.VALID_MODULE_RE_))throw Error("Invalid module identifier");if(!goog.isInModuleLoader_())throw Error("Module "+a+" has been loaded incorrectly.");if(goog.moduleLoaderState_.moduleName)throw Error("goog.module may only be called once per module.");goog.moduleLoaderState_.moduleName=a;if(!COMPILED){if(goog.isProvided_(a))throw Error('Namespace "'+a+'" already declared.');delete goog.implicitNamespaces_[a]}};
-goog.module.get=function(a){return goog.module.getInternal_(a)};goog.module.getInternal_=function(a){if(!COMPILED)return goog.isProvided_(a)?a in goog.loadedModules_?goog.loadedModules_[a]:goog.getObjectByName(a):null};goog.moduleLoaderState_=null;goog.isInModuleLoader_=function(){return null!=goog.moduleLoaderState_};
-goog.module.declareLegacyNamespace=function(){if(!COMPILED&&!goog.isInModuleLoader_())throw Error("goog.module.declareLegacyNamespace must be called from within a goog.module");if(!COMPILED&&!goog.moduleLoaderState_.moduleName)throw Error("goog.module must be called prior to goog.module.declareLegacyNamespace.");goog.moduleLoaderState_.declareLegacyNamespace=!0};
-goog.setTestOnly=function(a){if(goog.DISALLOW_TEST_ONLY_CODE)throw a=a||"",Error("Importing test-only code into non-debug environment"+(a?": "+a:"."));};goog.forwardDeclare=function(a){};COMPILED||(goog.isProvided_=function(a){return a in goog.loadedModules_||!goog.implicitNamespaces_[a]&&goog.isDefAndNotNull(goog.getObjectByName(a))},goog.implicitNamespaces_={"goog.module":!0});
-goog.getObjectByName=function(a,b){for(var c=a.split("."),d=b||goog.global,e;e=c.shift();)if(goog.isDefAndNotNull(d[e]))d=d[e];else return null;return d};goog.globalize=function(a,b){var c=b||goog.global,d;for(d in a)c[d]=a[d]};
-goog.addDependency=function(a,b,c,d){if(goog.DEPENDENCIES_ENABLED){var e;a=a.replace(/\\/g,"/");var f=goog.dependencies_;d&&"boolean"!==typeof d||(d=d?{module:"goog"}:{});for(var g=0;e=b[g];g++)f.nameToPath[e]=a,f.loadFlags[a]=d;for(d=0;b=c[d];d++)a in f.requires||(f.requires[a]={}),f.requires[a][b]=!0}};goog.ENABLE_DEBUG_LOADER=!0;goog.logToConsole_=function(a){goog.global.console&&goog.global.console.error(a)};
-goog.require=function(a){if(!COMPILED){goog.ENABLE_DEBUG_LOADER&&goog.IS_OLD_IE_&&goog.maybeProcessDeferredDep_(a);if(goog.isProvided_(a))return goog.isInModuleLoader_()?goog.module.getInternal_(a):null;if(goog.ENABLE_DEBUG_LOADER){var b=goog.getPathFromDeps_(a);if(b)return goog.writeScripts_(b),null}a="goog.require could not find: "+a;goog.logToConsole_(a);throw Error(a);}};goog.basePath="";goog.nullFunction=function(){};
-goog.abstractMethod=function(){throw Error("unimplemented abstract method");};goog.addSingletonGetter=function(a){a.getInstance=function(){if(a.instance_)return a.instance_;goog.DEBUG&&(goog.instantiatedSingletons_[goog.instantiatedSingletons_.length]=a);return a.instance_=new a}};goog.instantiatedSingletons_=[];goog.LOAD_MODULE_USING_EVAL=!0;goog.SEAL_MODULE_EXPORTS=goog.DEBUG;goog.loadedModules_={};goog.DEPENDENCIES_ENABLED=!COMPILED&&goog.ENABLE_DEBUG_LOADER;goog.TRANSPILE="detect";
-goog.TRANSPILER="transpile.js";
-goog.DEPENDENCIES_ENABLED&&(goog.dependencies_={loadFlags:{},nameToPath:{},requires:{},visited:{},written:{},deferred:{}},goog.inHtmlDocument_=function(){var a=goog.global.document;return null!=a&&"write"in a},goog.findBasePath_=function(){if(goog.isDef(goog.global.CLOSURE_BASE_PATH))goog.basePath=goog.global.CLOSURE_BASE_PATH;else if(goog.inHtmlDocument_())for(var a=goog.global.document.getElementsByTagName("SCRIPT"),b=a.length-1;0<=b;--b){var c=a[b].src,d=c.lastIndexOf("?"),d=-1==d?c.length:d;if("base.js"==
-c.substr(d-7,7)){goog.basePath=c.substr(0,d-7);break}}},goog.importScript_=function(a,b){(goog.global.CLOSURE_IMPORT_SCRIPT||goog.writeScriptTag_)(a,b)&&(goog.dependencies_.written[a]=!0)},goog.IS_OLD_IE_=!(goog.global.atob||!goog.global.document||!goog.global.document.all),goog.importProcessedScript_=function(a,b,c){goog.importScript_("",'goog.retrieveAndExec_("'+a+'", '+b+", "+c+");")},goog.queuedModules_=[],goog.wrapModule_=function(a,b){return goog.LOAD_MODULE_USING_EVAL&&goog.isDef(goog.global.JSON)?
-"goog.loadModule("+goog.global.JSON.stringify(b+"\n//# sourceURL="+a+"\n")+");":'goog.loadModule(function(exports) {"use strict";'+b+"\n;return exports});\n//# sourceURL="+a+"\n"},goog.loadQueuedModules_=function(){var a=goog.queuedModules_.length;if(0<a){var b=goog.queuedModules_;goog.queuedModules_=[];for(var c=0;c<a;c++)goog.maybeProcessDeferredPath_(b[c])}},goog.maybeProcessDeferredDep_=function(a){goog.isDeferredModule_(a)&&goog.allDepsAreAvailable_(a)&&(a=goog.getPathFromDeps_(a),goog.maybeProcessDeferredPath_(goog.basePath+
-a))},goog.isDeferredModule_=function(a){var b=(a=goog.getPathFromDeps_(a))&&goog.dependencies_.loadFlags[a]||{};return a&&("goog"==b.module||goog.needsTranspile_(b.lang))?goog.basePath+a in goog.dependencies_.deferred:!1},goog.allDepsAreAvailable_=function(a){if((a=goog.getPathFromDeps_(a))&&a in goog.dependencies_.requires)for(var b in goog.dependencies_.requires[a])if(!goog.isProvided_(b)&&!goog.isDeferredModule_(b))return!1;return!0},goog.maybeProcessDeferredPath_=function(a){if(a in goog.dependencies_.deferred){var b=
-goog.dependencies_.deferred[a];delete goog.dependencies_.deferred[a];goog.globalEval(b)}},goog.loadModuleFromUrl=function(a){goog.retrieveAndExec_(a,!0,!1)},goog.writeScriptSrcNode_=function(a){goog.global.document.write('<script type="text/javascript" src="'+a+'">\x3c/script>')},goog.appendScriptSrcNode_=function(a){var b=goog.global.document,c=b.createElement("script");c.type="text/javascript";c.src=a;c.defer=!1;c.async=!1;b.head.appendChild(c)},goog.writeScriptTag_=function(a,b){if(goog.inHtmlDocument_()){var c=
-goog.global.document;if(!goog.ENABLE_CHROME_APP_SAFE_SCRIPT_LOADING&&"complete"==c.readyState){if(/\bdeps.js$/.test(a))return!1;throw Error('Cannot write "'+a+'" after document load');}if(void 0===b)if(goog.IS_OLD_IE_){var d=" onreadystatechange='goog.onScriptLoad_(this, "+ ++goog.lastNonModuleScriptIndex_+")' ";c.write('<script type="text/javascript" src="'+a+'"'+d+">\x3c/script>")}else goog.ENABLE_CHROME_APP_SAFE_SCRIPT_LOADING?goog.appendScriptSrcNode_(a):goog.writeScriptSrcNode_(a);else c.write('<script type="text/javascript">'+
-b+"\x3c/script>");return!0}return!1},goog.needsTranspile_=function(a){if("always"==goog.TRANSPILE)return!0;if("never"==goog.TRANSPILE)return!1;if(!goog.transpiledLanguages_){goog.transpiledLanguages_={es5:!0,es6:!0,"es6-impl":!0};try{goog.transpiledLanguages_.es5=eval("[1,].length!=1"),eval('(()=>{"use strict";let a={};const X=class{constructor(){}x(z){return new Map([...arguments]).get(z[0])==3}};return new X().x([a,3])})()')&&(goog.transpiledLanguages_["es6-impl"]=!1),eval('(()=>{"use strict";class X{constructor(){if(new.target!=String)throw 1;this.x=42}}let q=Reflect.construct(X,[],String);if(q.x!=42||!(q instanceof String))throw 1;for(const a of[2,3]){if(a==2)continue;function f(z={a}){let a=0;return z.a}{function f(){return 0;}}return f()==3}})()')&&
-(goog.transpiledLanguages_.es6=!1)}catch(b){}}return!!goog.transpiledLanguages_[a]},goog.transpiledLanguages_=null,goog.lastNonModuleScriptIndex_=0,goog.onScriptLoad_=function(a,b){"complete"==a.readyState&&goog.lastNonModuleScriptIndex_==b&&goog.loadQueuedModules_();return!0},goog.writeScripts_=function(a){function b(a){if(!(a in e.written||a in e.visited)){e.visited[a]=!0;if(a in e.requires)for(var f in e.requires[a])if(!goog.isProvided_(f))if(f in e.nameToPath)b(e.nameToPath[f]);else throw Error("Undefined nameToPath for "+
-f);a in d||(d[a]=!0,c.push(a))}}var c=[],d={},e=goog.dependencies_;b(a);for(a=0;a<c.length;a++){var f=c[a];goog.dependencies_.written[f]=!0}var g=goog.moduleLoaderState_;goog.moduleLoaderState_=null;for(a=0;a<c.length;a++)if(f=c[a]){var h=e.loadFlags[f]||{},k=goog.needsTranspile_(h.lang);"goog"==h.module||k?goog.importProcessedScript_(goog.basePath+f,"goog"==h.module,k):goog.importScript_(goog.basePath+f)}else throw goog.moduleLoaderState_=g,Error("Undefined script input");goog.moduleLoaderState_=
-g},goog.getPathFromDeps_=function(a){return a in goog.dependencies_.nameToPath?goog.dependencies_.nameToPath[a]:null},goog.findBasePath_(),goog.global.CLOSURE_NO_DEPS||goog.importScript_(goog.basePath+"deps.js"));
-goog.loadModule=function(a){var b=goog.moduleLoaderState_;try{goog.moduleLoaderState_={moduleName:void 0,declareLegacyNamespace:!1};var c;if(goog.isFunction(a))c=a.call(void 0,{});else if(goog.isString(a))c=goog.loadModuleFromSource_.call(void 0,a);else throw Error("Invalid module definition");var d=goog.moduleLoaderState_.moduleName;if(!goog.isString(d)||!d)throw Error('Invalid module name "'+d+'"');goog.moduleLoaderState_.declareLegacyNamespace?goog.constructNamespace_(d,c):goog.SEAL_MODULE_EXPORTS&&
-Object.seal&&Object.seal(c);goog.loadedModules_[d]=c}finally{goog.moduleLoaderState_=b}};goog.loadModuleFromSource_=function(a){eval(a);return{}};goog.normalizePath_=function(a){a=a.split("/");for(var b=0;b<a.length;)"."==a[b]?a.splice(b,1):b&&".."==a[b]&&a[b-1]&&".."!=a[b-1]?a.splice(--b,2):b++;return a.join("/")};
-goog.loadFileSync_=function(a){if(goog.global.CLOSURE_LOAD_FILE_SYNC)return goog.global.CLOSURE_LOAD_FILE_SYNC(a);try{var b=new goog.global.XMLHttpRequest;b.open("get",a,!1);b.send();return 0==b.status||200==b.status?b.responseText:null}catch(c){return null}};
-goog.retrieveAndExec_=function(a,b,c){if(!COMPILED){var d=a;a=goog.normalizePath_(a);var e=goog.global.CLOSURE_IMPORT_SCRIPT||goog.writeScriptTag_,f=goog.loadFileSync_(a);if(null==f)throw Error('Load of "'+a+'" failed');c&&(f=goog.transpile_.call(goog.global,f,a));f=b?goog.wrapModule_(a,f):f+("\n//# sourceURL="+a);goog.IS_OLD_IE_?(goog.dependencies_.deferred[d]=f,goog.queuedModules_.push(d)):e(a,f)}};
-goog.transpile_=function(a,b){var c=goog.global.$jscomp;c||(goog.global.$jscomp=c={});var d=c.transpile;if(!d){var e=goog.basePath+goog.TRANSPILER,f=goog.loadFileSync_(e);f&&(eval(f+"\n//# sourceURL="+e),c=goog.global.$jscomp,d=c.transpile)}d||(d=c.transpile=function(a,b){goog.logToConsole_(b+" requires transpilation but no transpiler was found.");return a});return d(a,b)};
-goog.typeOf=function(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";
-else if("function"==b&&"undefined"==typeof a.call)return"object";return b};goog.isNull=function(a){return null===a};goog.isDefAndNotNull=function(a){return null!=a};goog.isArray=function(a){return"array"==goog.typeOf(a)};goog.isArrayLike=function(a){var b=goog.typeOf(a);return"array"==b||"object"==b&&"number"==typeof a.length};goog.isDateLike=function(a){return goog.isObject(a)&&"function"==typeof a.getFullYear};goog.isString=function(a){return"string"==typeof a};
-goog.isBoolean=function(a){return"boolean"==typeof a};goog.isNumber=function(a){return"number"==typeof a};goog.isFunction=function(a){return"function"==goog.typeOf(a)};goog.isObject=function(a){var b=typeof a;return"object"==b&&null!=a||"function"==b};goog.getUid=function(a){return a[goog.UID_PROPERTY_]||(a[goog.UID_PROPERTY_]=++goog.uidCounter_)};goog.hasUid=function(a){return!!a[goog.UID_PROPERTY_]};
-goog.removeUid=function(a){null!==a&&"removeAttribute"in a&&a.removeAttribute(goog.UID_PROPERTY_);try{delete a[goog.UID_PROPERTY_]}catch(b){}};goog.UID_PROPERTY_="closure_uid_"+(1E9*Math.random()>>>0);goog.uidCounter_=0;goog.getHashCode=goog.getUid;goog.removeHashCode=goog.removeUid;goog.cloneObject=function(a){var b=goog.typeOf(a);if("object"==b||"array"==b){if(a.clone)return a.clone();var b="array"==b?[]:{},c;for(c in a)b[c]=goog.cloneObject(a[c]);return b}return a};
-goog.bindNative_=function(a,b,c){return a.call.apply(a.bind,arguments)};goog.bindJs_=function(a,b,c){if(!a)throw Error();if(2<arguments.length){var d=Array.prototype.slice.call(arguments,2);return function(){var c=Array.prototype.slice.call(arguments);Array.prototype.unshift.apply(c,d);return a.apply(b,c)}}return function(){return a.apply(b,arguments)}};
-goog.bind=function(a,b,c){Function.prototype.bind&&-1!=Function.prototype.bind.toString().indexOf("native code")?goog.bind=goog.bindNative_:goog.bind=goog.bindJs_;return goog.bind.apply(null,arguments)};goog.partial=function(a,b){var c=Array.prototype.slice.call(arguments,1);return function(){var b=c.slice();b.push.apply(b,arguments);return a.apply(this,b)}};goog.mixin=function(a,b){for(var c in b)a[c]=b[c]};goog.now=goog.TRUSTED_SITE&&Date.now||function(){return+new Date};
-goog.globalEval=function(a){if(goog.global.execScript)goog.global.execScript(a,"JavaScript");else if(goog.global.eval){if(null==goog.evalWorksForGlobals_)if(goog.global.eval("var _evalTest_ = 1;"),"undefined"!=typeof goog.global._evalTest_){try{delete goog.global._evalTest_}catch(d){}goog.evalWorksForGlobals_=!0}else goog.evalWorksForGlobals_=!1;if(goog.evalWorksForGlobals_)goog.global.eval(a);else{var b=goog.global.document,c=b.createElement("SCRIPT");c.type="text/javascript";c.defer=!1;c.appendChild(b.createTextNode(a));
-b.body.appendChild(c);b.body.removeChild(c)}}else throw Error("goog.globalEval not available");};goog.evalWorksForGlobals_=null;goog.getCssName=function(a,b){var c=function(a){return goog.cssNameMapping_[a]||a},d=function(a){a=a.split("-");for(var b=[],d=0;d<a.length;d++)b.push(c(a[d]));return b.join("-")},d=goog.cssNameMapping_?"BY_WHOLE"==goog.cssNameMappingStyle_?c:d:function(a){return a};return b?a+"-"+d(b):d(a)};
-goog.setCssNameMapping=function(a,b){goog.cssNameMapping_=a;goog.cssNameMappingStyle_=b};!COMPILED&&goog.global.CLOSURE_CSS_NAME_MAPPING&&(goog.cssNameMapping_=goog.global.CLOSURE_CSS_NAME_MAPPING);goog.getMsg=function(a,b){b&&(a=a.replace(/\{\$([^}]+)}/g,function(a,d){return null!=b&&d in b?b[d]:a}));return a};goog.getMsgWithFallback=function(a,b){return a};goog.exportSymbol=function(a,b,c){goog.exportPath_(a,b,c)};goog.exportProperty=function(a,b,c){a[b]=c};
-goog.inherits=function(a,b){function c(){}c.prototype=b.prototype;a.superClass_=b.prototype;a.prototype=new c;a.prototype.constructor=a;a.base=function(a,c,f){for(var g=Array(arguments.length-2),h=2;h<arguments.length;h++)g[h-2]=arguments[h];return b.prototype[c].apply(a,g)}};
-goog.base=function(a,b,c){var d=arguments.callee.caller;if(goog.STRICT_MODE_COMPATIBLE||goog.DEBUG&&!d)throw Error("arguments.caller not defined.  goog.base() cannot be used with strict mode code. See http://www.ecma-international.org/ecma-262/5.1/#sec-C");if(d.superClass_){for(var e=Array(arguments.length-1),f=1;f<arguments.length;f++)e[f-1]=arguments[f];return d.superClass_.constructor.apply(a,e)}e=Array(arguments.length-2);for(f=2;f<arguments.length;f++)e[f-2]=arguments[f];for(var f=!1,g=a.constructor;g;g=
-g.superClass_&&g.superClass_.constructor)if(g.prototype[b]===d)f=!0;else if(f)return g.prototype[b].apply(a,e);if(a[b]===d)return a.constructor.prototype[b].apply(a,e);throw Error("goog.base called from a method of one name to a method of a different name");};goog.scope=function(a){if(goog.isInModuleLoader_())throw Error("goog.scope is not supported within a goog.module.");a.call(goog.global)};COMPILED||(goog.global.COMPILED=COMPILED);
-goog.defineClass=function(a,b){var c=b.constructor,d=b.statics;c&&c!=Object.prototype.constructor||(c=function(){throw Error("cannot instantiate an interface (no constructor defined).");});c=goog.defineClass.createSealingConstructor_(c,a);a&&goog.inherits(c,a);delete b.constructor;delete b.statics;goog.defineClass.applyProperties_(c.prototype,b);null!=d&&(d instanceof Function?d(c):goog.defineClass.applyProperties_(c,d));return c};goog.defineClass.SEAL_CLASS_INSTANCES=goog.DEBUG;
-goog.defineClass.createSealingConstructor_=function(a,b){if(!goog.defineClass.SEAL_CLASS_INSTANCES)return a;var c=!goog.defineClass.isUnsealable_(b),d=function(){var b=a.apply(this,arguments)||this;b[goog.UID_PROPERTY_]=b[goog.UID_PROPERTY_];this.constructor===d&&c&&Object.seal instanceof Function&&Object.seal(b);return b};return d};goog.defineClass.isUnsealable_=function(a){return a&&a.prototype&&a.prototype[goog.UNSEALABLE_CONSTRUCTOR_PROPERTY_]};goog.defineClass.OBJECT_PROTOTYPE_FIELDS_="constructor hasOwnProperty isPrototypeOf propertyIsEnumerable toLocaleString toString valueOf".split(" ");
-goog.defineClass.applyProperties_=function(a,b){for(var c in b)Object.prototype.hasOwnProperty.call(b,c)&&(a[c]=b[c]);for(var d=0;d<goog.defineClass.OBJECT_PROTOTYPE_FIELDS_.length;d++)c=goog.defineClass.OBJECT_PROTOTYPE_FIELDS_[d],Object.prototype.hasOwnProperty.call(b,c)&&(a[c]=b[c])};goog.tagUnsealableClass=function(a){!COMPILED&&goog.defineClass.SEAL_CLASS_INSTANCES&&(a.prototype[goog.UNSEALABLE_CONSTRUCTOR_PROPERTY_]=!0)};goog.UNSEALABLE_CONSTRUCTOR_PROPERTY_="goog_defineClass_legacy_unsealable";var ol={DEBUG:!0,ASSUME_TOUCH:!1,DEFAULT_MAX_ZOOM:42,DEFAULT_MIN_ZOOM:0,DEFAULT_RASTER_REPROJECTION_ERROR_THRESHOLD:.5,DEFAULT_TILE_SIZE:256,DEFAULT_WMS_VERSION:"1.3.0",DRAG_BOX_HYSTERESIS_PIXELS:8,ENABLE_CANVAS:!0,ENABLE_IMAGE:!0,ENABLE_PROJ4JS:!0,ENABLE_RASTER_REPROJECTION:!0,ENABLE_TILE:!0,ENABLE_VECTOR:!0,ENABLE_VECTOR_TILE:!0,ENABLE_WEBGL:!0,INITIAL_ATLAS_SIZE:256,MAX_ATLAS_SIZE:-1,MOUSEWHEELZOOM_MAXDELTA:1,OVERVIEWMAP_MAX_RATIO:.75,OVERVIEWMAP_MIN_RATIO:.1,RASTER_REPROJECTION_MAX_SOURCE_TILES:100,
-RASTER_REPROJECTION_MAX_SUBDIVISION:10,RASTER_REPROJECTION_MAX_TRIANGLE_WIDTH:.25,SIMPLIFY_TOLERANCE:.5,WEBGL_TEXTURE_CACHE_HIGH_WATER_MARK:1024,VERSION:"",inherits:function(a,b){a.prototype=Object.create(b.prototype);a.prototype.constructor=a},nullFunction:function(){},getUid:function(a){return a.ol_uid||(a.ol_uid=++ol.uidCounter_)},uidCounter_:0};ol.AssertionError=function(a){this.message="Assertion failed. See "+(ol.VERSION?"https://openlayers.org/en/"+ol.VERSION.split("-")[0]:"")+"/doc/errors/#"+a+" for details.";this.code=a;this.name="AssertionError"};ol.inherits(ol.AssertionError,Error);ol.asserts={};ol.asserts.assert=function(a,b){if(!a)throw new ol.AssertionError(b);};ol.math={};ol.math.clamp=function(a,b,c){return Math.min(Math.max(a,b),c)};ol.math.cosh=function(){return"cosh"in Math?Math.cosh:function(a){a=Math.exp(a);return(a+1/a)/2}}();ol.math.roundUpToPowerOfTwo=function(a){ol.asserts.assert(0<a,29);return Math.pow(2,Math.ceil(Math.log(a)/Math.LN2))};ol.math.squaredSegmentDistance=function(a,b,c,d,e,f){var g=e-c,h=f-d;if(0!==g||0!==h){var k=((a-c)*g+(b-d)*h)/(g*g+h*h);1<k?(c=e,d=f):0<k&&(c+=g*k,d+=h*k)}return ol.math.squaredDistance(a,b,c,d)};
-ol.math.squaredDistance=function(a,b,c,d){a=c-a;b=d-b;return a*a+b*b};
-ol.math.solveLinearSystem=function(a){var b=a.length;if(ol.DEBUG)for(var c=0;c<b;c++)console.assert(a[c].length==b+1,"every row should have correct number of columns");for(c=0;c<b;c++){for(var d=c,e=Math.abs(a[c][c]),f=c+1;f<b;f++){var g=Math.abs(a[f][c]);g>e&&(e=g,d=f)}if(0===e)return null;e=a[d];a[d]=a[c];a[c]=e;for(d=c+1;d<b;d++)for(e=-a[d][c]/a[c][c],f=c;f<b+1;f++)a[d][f]=c==f?0:a[d][f]+e*a[c][f]}c=Array(b);for(d=b-1;0<=d;d--)for(c[d]=a[d][b]/a[d][d],e=d-1;0<=e;e--)a[e][b]-=a[e][d]*c[d];return c};
-ol.math.toDegrees=function(a){return 180*a/Math.PI};ol.math.toRadians=function(a){return a*Math.PI/180};ol.math.modulo=function(a,b){var c=a%b;return 0>c*b?c+b:c};ol.math.lerp=function(a,b,c){return a+c*(b-a)};ol.CenterConstraint={};ol.CenterConstraint.createExtent=function(a){return function(b){if(b)return[ol.math.clamp(b[0],a[0],a[2]),ol.math.clamp(b[1],a[1],a[3])]}};ol.CenterConstraint.none=function(a){return a};ol.Constraints=function(a,b,c){this.center=a;this.resolution=b;this.rotation=c};ol.obj={};ol.obj.assign="function"===typeof Object.assign?Object.assign:function(a,b){if(void 0===a||null===a)throw new TypeError("Cannot convert undefined or null to object");for(var c=Object(a),d=1,e=arguments.length;d<e;++d){var f=arguments[d];if(void 0!==f&&null!==f)for(var g in f)f.hasOwnProperty(g)&&(c[g]=f[g])}return c};ol.obj.clear=function(a){for(var b in a)delete a[b]};ol.obj.getValues=function(a){var b=[],c;for(c in a)b.push(a[c]);return b};
-ol.obj.isEmpty=function(a){for(var b in a)return!1;return!b};ol.events={};ol.events.bindListener_=function(a){var b=function(b){var d=a.listener,e=a.bindTo||a.target;a.callOnce&&ol.events.unlistenByKey(a);return d.call(e,b)};return a.boundListener=b};ol.events.findListener_=function(a,b,c,d){for(var e,f=0,g=a.length;f<g;++f)if(e=a[f],e.listener===b&&e.bindTo===c)return d&&(e.deleteIndex=f),e};ol.events.getListeners=function(a,b){var c=a.ol_lm;return c?c[b]:void 0};ol.events.getListenerMap_=function(a){var b=a.ol_lm;b||(b=a.ol_lm={});return b};
-ol.events.removeListeners_=function(a,b){var c=ol.events.getListeners(a,b);if(c){for(var d=0,e=c.length;d<e;++d)a.removeEventListener(b,c[d].boundListener),ol.obj.clear(c[d]);c.length=0;if(c=a.ol_lm)delete c[b],0===Object.keys(c).length&&delete a.ol_lm}};
-ol.events.listen=function(a,b,c,d,e){var f=ol.events.getListenerMap_(a),g=f[b];g||(g=f[b]=[]);(f=ol.events.findListener_(g,c,d,!1))?e||(f.callOnce=!1):(f={bindTo:d,callOnce:!!e,listener:c,target:a,type:b},a.addEventListener(b,ol.events.bindListener_(f)),g.push(f));return f};ol.events.listenOnce=function(a,b,c,d){return ol.events.listen(a,b,c,d,!0)};ol.events.unlisten=function(a,b,c,d){(a=ol.events.getListeners(a,b))&&(c=ol.events.findListener_(a,c,d,!0))&&ol.events.unlistenByKey(c)};
-ol.events.unlistenByKey=function(a){if(a&&a.target){a.target.removeEventListener(a.type,a.boundListener);var b=ol.events.getListeners(a.target,a.type);if(b){var c="deleteIndex"in a?a.deleteIndex:b.indexOf(a);-1!==c&&b.splice(c,1);0===b.length&&ol.events.removeListeners_(a.target,a.type)}ol.obj.clear(a)}};ol.events.unlistenAll=function(a){var b=ol.events.getListenerMap_(a),c;for(c in b)ol.events.removeListeners_(a,c)};ol.Disposable=function(){};ol.Disposable.prototype.disposed_=!1;ol.Disposable.prototype.dispose=function(){this.disposed_||(this.disposed_=!0,this.disposeInternal())};ol.Disposable.prototype.disposeInternal=ol.nullFunction;ol.events.Event=function(a){this.type=a;this.target=null};ol.events.Event.prototype.preventDefault=ol.events.Event.prototype.stopPropagation=function(){this.propagationStopped=!0};ol.events.Event.stopPropagation=function(a){a.stopPropagation()};ol.events.Event.preventDefault=function(a){a.preventDefault()};ol.events.EventTarget=function(){ol.Disposable.call(this);this.pendingRemovals_={};this.dispatching_={};this.listeners_={}};ol.inherits(ol.events.EventTarget,ol.Disposable);ol.events.EventTarget.prototype.addEventListener=function(a,b){var c=this.listeners_[a];c||(c=this.listeners_[a]=[]);-1===c.indexOf(b)&&c.push(b)};
-ol.events.EventTarget.prototype.dispatchEvent=function(a){var b="string"===typeof a?new ol.events.Event(a):a;a=b.type;b.target=this;var c=this.listeners_[a],d;if(c){a in this.dispatching_||(this.dispatching_[a]=0,this.pendingRemovals_[a]=0);++this.dispatching_[a];for(var e=0,f=c.length;e<f;++e)if(!1===c[e].call(this,b)||b.propagationStopped){d=!1;break}--this.dispatching_[a];if(0===this.dispatching_[a]){b=this.pendingRemovals_[a];for(delete this.pendingRemovals_[a];b--;)this.removeEventListener(a,
-ol.nullFunction);delete this.dispatching_[a]}return d}};ol.events.EventTarget.prototype.disposeInternal=function(){ol.events.unlistenAll(this)};ol.events.EventTarget.prototype.getListeners=function(a){return this.listeners_[a]};ol.events.EventTarget.prototype.hasListener=function(a){return a?a in this.listeners_:0<Object.keys(this.listeners_).length};
-ol.events.EventTarget.prototype.removeEventListener=function(a,b){var c=this.listeners_[a];if(c){var d=c.indexOf(b);ol.DEBUG&&console.assert(-1!=d,"listener not found");a in this.pendingRemovals_?(c[d]=ol.nullFunction,++this.pendingRemovals_[a]):(c.splice(d,1),0===c.length&&delete this.listeners_[a])}};ol.events.EventType={CHANGE:"change",CLICK:"click",DBLCLICK:"dblclick",DRAGENTER:"dragenter",DRAGOVER:"dragover",DROP:"drop",ERROR:"error",KEYDOWN:"keydown",KEYPRESS:"keypress",LOAD:"load",MOUSEDOWN:"mousedown",MOUSEMOVE:"mousemove",MOUSEOUT:"mouseout",MOUSEUP:"mouseup",MOUSEWHEEL:"mousewheel",MSPOINTERDOWN:"mspointerdown",RESIZE:"resize",TOUCHSTART:"touchstart",TOUCHMOVE:"touchmove",TOUCHEND:"touchend",WHEEL:"wheel"};ol.Observable=function(){ol.events.EventTarget.call(this);this.revision_=0};ol.inherits(ol.Observable,ol.events.EventTarget);ol.Observable.unByKey=function(a){if(Array.isArray(a))for(var b=0,c=a.length;b<c;++b)ol.events.unlistenByKey(a[b]);else ol.events.unlistenByKey(a)};ol.Observable.prototype.changed=function(){++this.revision_;this.dispatchEvent(ol.events.EventType.CHANGE)};ol.Observable.prototype.getRevision=function(){return this.revision_};
-ol.Observable.prototype.on=function(a,b,c){if(Array.isArray(a)){for(var d=a.length,e=Array(d),f=0;f<d;++f)e[f]=ol.events.listen(this,a[f],b,c);return e}return ol.events.listen(this,a,b,c)};ol.Observable.prototype.once=function(a,b,c){if(Array.isArray(a)){for(var d=a.length,e=Array(d),f=0;f<d;++f)e[f]=ol.events.listenOnce(this,a[f],b,c);return e}return ol.events.listenOnce(this,a,b,c)};
-ol.Observable.prototype.un=function(a,b,c){if(Array.isArray(a))for(var d=0,e=a.length;d<e;++d)ol.events.unlisten(this,a[d],b,c);else ol.events.unlisten(this,a,b,c)};ol.Observable.prototype.unByKey=ol.Observable.unByKey;ol.Object=function(a){ol.Observable.call(this);ol.getUid(this);this.values_={};void 0!==a&&this.setProperties(a)};ol.inherits(ol.Object,ol.Observable);ol.Object.changeEventTypeCache_={};ol.Object.getChangeEventType=function(a){return ol.Object.changeEventTypeCache_.hasOwnProperty(a)?ol.Object.changeEventTypeCache_[a]:ol.Object.changeEventTypeCache_[a]="change:"+a};ol.Object.prototype.get=function(a){var b;this.values_.hasOwnProperty(a)&&(b=this.values_[a]);return b};ol.Object.prototype.getKeys=function(){return Object.keys(this.values_)};
-ol.Object.prototype.getProperties=function(){return ol.obj.assign({},this.values_)};ol.Object.prototype.notify=function(a,b){var c;c=ol.Object.getChangeEventType(a);this.dispatchEvent(new ol.Object.Event(c,a,b));c=ol.Object.EventType.PROPERTYCHANGE;this.dispatchEvent(new ol.Object.Event(c,a,b))};ol.Object.prototype.set=function(a,b,c){c?this.values_[a]=b:(c=this.values_[a],this.values_[a]=b,c!==b&&this.notify(a,c))};ol.Object.prototype.setProperties=function(a,b){for(var c in a)this.set(c,a[c],b)};
-ol.Object.prototype.unset=function(a,b){if(a in this.values_){var c=this.values_[a];delete this.values_[a];b||this.notify(a,c)}};ol.Object.EventType={PROPERTYCHANGE:"propertychange"};ol.Object.Event=function(a,b,c){ol.events.Event.call(this,a);this.key=b;this.oldValue=c};ol.inherits(ol.Object.Event,ol.events.Event);ol.array={};ol.array.binarySearch=function(a,b,c){for(var d,e=c||ol.array.numberSafeCompareFunction,f=0,g=a.length,h=!1;f<g;)c=f+(g-f>>1),d=+e(a[c],b),0>d?f=c+1:(g=c,h=!d);return h?f:~f};ol.array.numberSafeCompareFunction=function(a,b){return a>b?1:a<b?-1:0};ol.array.includes=function(a,b){return 0<=a.indexOf(b)};
-ol.array.linearFindNearest=function(a,b,c){var d=a.length;if(a[0]<=b)return 0;if(!(b<=a[d-1]))if(0<c)for(c=1;c<d;++c){if(a[c]<b)return c-1}else if(0>c)for(c=1;c<d;++c){if(a[c]<=b)return c}else for(c=1;c<d;++c){if(a[c]==b)return c;if(a[c]<b)return a[c-1]-b<b-a[c]?c-1:c}return d-1};
-ol.array.reverseSubArray=function(a,b,c){ol.DEBUG&&console.assert(0<=b,"Array begin index should be equal to or greater than 0");for(ol.DEBUG&&console.assert(c<a.length,"Array end index should be less than the array length");b<c;){var d=a[b];a[b]=a[c];a[c]=d;++b;--c}};ol.array.flatten=function(a){return a.reduce(function(a,c){return Array.isArray(c)?a.concat(ol.array.flatten(c)):a.concat(c)},[])};ol.array.extend=function(a,b){var c,d=Array.isArray(b)?b:[b],e=d.length;for(c=0;c<e;c++)a[a.length]=d[c]};
-ol.array.remove=function(a,b){var c=a.indexOf(b),d=-1<c;d&&a.splice(c,1);return d};ol.array.find=function(a,b){for(var c=a.length>>>0,d,e=0;e<c;e++)if(d=a[e],b(d,e,a))return d;return null};ol.array.equals=function(a,b){var c=a.length;if(c!==b.length)return!1;for(var d=0;d<c;d++)if(a[d]!==b[d])return!1;return!0};
-ol.array.stableSort=function(a,b){var c=a.length,d=Array(a.length),e;for(e=0;e<c;e++)d[e]={index:e,value:a[e]};d.sort(function(a,c){return b(a.value,c.value)||a.index-c.index});for(e=0;e<a.length;e++)a[e]=d[e].value};ol.array.findIndex=function(a,b){var c;return a.every(function(d,e){c=e;return!b(d,e,a)})?-1:c};ol.array.isSorted=function(a,b,c){var d=b||ol.array.numberSafeCompareFunction;return a.every(function(b,f){if(0===f)return!0;var g=d(a[f-1],b);return!(0<g||c&&0===g)})};ol.ResolutionConstraint={};ol.ResolutionConstraint.createSnapToResolutions=function(a){return function(b,c,d){if(void 0!==b)return b=ol.array.linearFindNearest(a,b,d),b=ol.math.clamp(b+c,0,a.length-1),c=Math.floor(b),b!=c&&c<a.length-1?a[c]/Math.pow(a[c]/a[c+1],b-c):a[c]}};ol.ResolutionConstraint.createSnapToPower=function(a,b,c){return function(d,e,f){if(void 0!==d)return d=Math.max(Math.floor(Math.log(b/d)/Math.log(a)+(-f/2+.5))+e,0),void 0!==c&&(d=Math.min(d,c)),b/Math.pow(a,d)}};ol.RotationConstraint={};ol.RotationConstraint.disable=function(a,b){if(void 0!==a)return 0};ol.RotationConstraint.none=function(a,b){if(void 0!==a)return a+b};ol.RotationConstraint.createSnapToN=function(a){var b=2*Math.PI/a;return function(a,d){if(void 0!==a)return a=Math.floor((a+d)/b+.5)*b}};ol.RotationConstraint.createSnapToZero=function(a){var b=a||ol.math.toRadians(5);return function(a,d){if(void 0!==a)return Math.abs(a+d)<=b?0:a+d}};ol.string={};ol.string.padNumber=function(a,b,c){a=void 0!==c?a.toFixed(c):""+a;c=a.indexOf(".");c=-1===c?a.length:c;return c>b?a:Array(1+b-c).join("0")+a};ol.string.compareVersions=function(a,b){for(var c=(""+a).split("."),d=(""+b).split("."),e=0;e<Math.max(c.length,d.length);e++){var f=parseInt(c[e]||"0",10),g=parseInt(d[e]||"0",10);if(f>g)return 1;if(g>f)return-1}return 0};ol.coordinate={};ol.coordinate.add=function(a,b){a[0]+=b[0];a[1]+=b[1];return a};ol.coordinate.closestOnSegment=function(a,b){var c=a[0],d=a[1],e=b[0],f=b[1],g=e[0],e=e[1],h=f[0],f=f[1],k=h-g,l=f-e,c=0===k&&0===l?0:(k*(c-g)+l*(d-e))/(k*k+l*l||0);0>=c||(1<=c?(g=h,e=f):(g+=c*k,e+=c*l));return[g,e]};ol.coordinate.createStringXY=function(a){return function(b){return ol.coordinate.toStringXY(b,a)}};
-ol.coordinate.degreesToStringHDMS_=function(a,b,c){a=ol.math.modulo(a+180,360)-180;var d=Math.abs(3600*a);c=c||0;return Math.floor(d/3600)+"\u00b0 "+ol.string.padNumber(Math.floor(d/60%60),2)+"\u2032 "+ol.string.padNumber(d%60,2,c)+"\u2033 "+b.charAt(0>a?1:0)};ol.coordinate.format=function(a,b,c){return a?b.replace("{x}",a[0].toFixed(c)).replace("{y}",a[1].toFixed(c)):""};ol.coordinate.equals=function(a,b){for(var c=!0,d=a.length-1;0<=d;--d)if(a[d]!=b[d]){c=!1;break}return c};
-ol.coordinate.rotate=function(a,b){var c=Math.cos(b),d=Math.sin(b),e=a[1]*c+a[0]*d;a[0]=a[0]*c-a[1]*d;a[1]=e;return a};ol.coordinate.scale=function(a,b){a[0]*=b;a[1]*=b;return a};ol.coordinate.sub=function(a,b){a[0]-=b[0];a[1]-=b[1];return a};ol.coordinate.squaredDistance=function(a,b){var c=a[0]-b[0],d=a[1]-b[1];return c*c+d*d};ol.coordinate.squaredDistanceToSegment=function(a,b){return ol.coordinate.squaredDistance(a,ol.coordinate.closestOnSegment(a,b))};
-ol.coordinate.toStringHDMS=function(a,b){return a?ol.coordinate.degreesToStringHDMS_(a[1],"NS",b)+" "+ol.coordinate.degreesToStringHDMS_(a[0],"EW",b):""};ol.coordinate.toStringXY=function(a,b){return ol.coordinate.format(a,"{x}, {y}",b)};ol.easing={};ol.easing.easeIn=function(a){return Math.pow(a,3)};ol.easing.easeOut=function(a){return 1-ol.easing.easeIn(1-a)};ol.easing.inAndOut=function(a){return 3*a*a-2*a*a*a};ol.easing.linear=function(a){return a};ol.easing.upAndDown=function(a){return.5>a?ol.easing.inAndOut(2*a):1-ol.easing.inAndOut(2*(a-.5))};ol.extent={};ol.extent.Corner={BOTTOM_LEFT:"bottom-left",BOTTOM_RIGHT:"bottom-right",TOP_LEFT:"top-left",TOP_RIGHT:"top-right"};ol.extent.Relationship={UNKNOWN:0,INTERSECTING:1,ABOVE:2,RIGHT:4,BELOW:8,LEFT:16};ol.extent.boundingExtent=function(a){for(var b=ol.extent.createEmpty(),c=0,d=a.length;c<d;++c)ol.extent.extendCoordinate(b,a[c]);return b};ol.extent.boundingExtentXYs_=function(a,b,c){ol.DEBUG&&console.assert(0<a.length,"xs length should be larger than 0");ol.DEBUG&&console.assert(0<b.length,"ys length should be larger than 0");var d=Math.min.apply(null,a),e=Math.min.apply(null,b);a=Math.max.apply(null,a);b=Math.max.apply(null,b);return ol.extent.createOrUpdate(d,e,a,b,c)};
-ol.extent.buffer=function(a,b,c){return c?(c[0]=a[0]-b,c[1]=a[1]-b,c[2]=a[2]+b,c[3]=a[3]+b,c):[a[0]-b,a[1]-b,a[2]+b,a[3]+b]};ol.extent.clone=function(a,b){return b?(b[0]=a[0],b[1]=a[1],b[2]=a[2],b[3]=a[3],b):a.slice()};ol.extent.closestSquaredDistanceXY=function(a,b,c){b=b<a[0]?a[0]-b:a[2]<b?b-a[2]:0;a=c<a[1]?a[1]-c:a[3]<c?c-a[3]:0;return b*b+a*a};ol.extent.containsCoordinate=function(a,b){return ol.extent.containsXY(a,b[0],b[1])};
-ol.extent.containsExtent=function(a,b){return a[0]<=b[0]&&b[2]<=a[2]&&a[1]<=b[1]&&b[3]<=a[3]};ol.extent.containsXY=function(a,b,c){return a[0]<=b&&b<=a[2]&&a[1]<=c&&c<=a[3]};
-ol.extent.coordinateRelationship=function(a,b){var c=a[1],d=a[2],e=a[3],f=b[0],g=b[1],h=ol.extent.Relationship.UNKNOWN;f<a[0]?h|=ol.extent.Relationship.LEFT:f>d&&(h|=ol.extent.Relationship.RIGHT);g<c?h|=ol.extent.Relationship.BELOW:g>e&&(h|=ol.extent.Relationship.ABOVE);h===ol.extent.Relationship.UNKNOWN&&(h=ol.extent.Relationship.INTERSECTING);return h};ol.extent.createEmpty=function(){return[Infinity,Infinity,-Infinity,-Infinity]};
-ol.extent.createOrUpdate=function(a,b,c,d,e){return e?(e[0]=a,e[1]=b,e[2]=c,e[3]=d,e):[a,b,c,d]};ol.extent.createOrUpdateEmpty=function(a){return ol.extent.createOrUpdate(Infinity,Infinity,-Infinity,-Infinity,a)};ol.extent.createOrUpdateFromCoordinate=function(a,b){var c=a[0],d=a[1];return ol.extent.createOrUpdate(c,d,c,d,b)};ol.extent.createOrUpdateFromCoordinates=function(a,b){var c=ol.extent.createOrUpdateEmpty(b);return ol.extent.extendCoordinates(c,a)};
-ol.extent.createOrUpdateFromFlatCoordinates=function(a,b,c,d,e){e=ol.extent.createOrUpdateEmpty(e);return ol.extent.extendFlatCoordinates(e,a,b,c,d)};ol.extent.createOrUpdateFromRings=function(a,b){var c=ol.extent.createOrUpdateEmpty(b);return ol.extent.extendRings(c,a)};ol.extent.equals=function(a,b){return a[0]==b[0]&&a[2]==b[2]&&a[1]==b[1]&&a[3]==b[3]};ol.extent.extend=function(a,b){b[0]<a[0]&&(a[0]=b[0]);b[2]>a[2]&&(a[2]=b[2]);b[1]<a[1]&&(a[1]=b[1]);b[3]>a[3]&&(a[3]=b[3]);return a};
-ol.extent.extendCoordinate=function(a,b){b[0]<a[0]&&(a[0]=b[0]);b[0]>a[2]&&(a[2]=b[0]);b[1]<a[1]&&(a[1]=b[1]);b[1]>a[3]&&(a[3]=b[1])};ol.extent.extendCoordinates=function(a,b){var c,d;c=0;for(d=b.length;c<d;++c)ol.extent.extendCoordinate(a,b[c]);return a};ol.extent.extendFlatCoordinates=function(a,b,c,d,e){for(;c<d;c+=e)ol.extent.extendXY(a,b[c],b[c+1]);return a};ol.extent.extendRings=function(a,b){var c,d;c=0;for(d=b.length;c<d;++c)ol.extent.extendCoordinates(a,b[c]);return a};
-ol.extent.extendXY=function(a,b,c){a[0]=Math.min(a[0],b);a[1]=Math.min(a[1],c);a[2]=Math.max(a[2],b);a[3]=Math.max(a[3],c)};ol.extent.forEachCorner=function(a,b,c){var d;return(d=b.call(c,ol.extent.getBottomLeft(a)))||(d=b.call(c,ol.extent.getBottomRight(a)))||(d=b.call(c,ol.extent.getTopRight(a)))?d:(d=b.call(c,ol.extent.getTopLeft(a)))?d:!1};ol.extent.getArea=function(a){var b=0;ol.extent.isEmpty(a)||(b=ol.extent.getWidth(a)*ol.extent.getHeight(a));return b};
-ol.extent.getBottomLeft=function(a){return[a[0],a[1]]};ol.extent.getBottomRight=function(a){return[a[2],a[1]]};ol.extent.getCenter=function(a){return[(a[0]+a[2])/2,(a[1]+a[3])/2]};ol.extent.getCorner=function(a,b){var c;b===ol.extent.Corner.BOTTOM_LEFT?c=ol.extent.getBottomLeft(a):b===ol.extent.Corner.BOTTOM_RIGHT?c=ol.extent.getBottomRight(a):b===ol.extent.Corner.TOP_LEFT?c=ol.extent.getTopLeft(a):b===ol.extent.Corner.TOP_RIGHT?c=ol.extent.getTopRight(a):ol.asserts.assert(!1,13);return c};
-ol.extent.getEnlargedArea=function(a,b){return(Math.max(a[2],b[2])-Math.min(a[0],b[0]))*(Math.max(a[3],b[3])-Math.min(a[1],b[1]))};ol.extent.getForViewAndSize=function(a,b,c,d,e){var f=b*d[0]/2;d=b*d[1]/2;b=Math.cos(c);var g=Math.sin(c);c=f*b;f*=g;b*=d;var h=d*g,k=a[0],l=a[1];a=k-c+h;d=k-c-h;g=k+c-h;c=k+c+h;var h=l-f-b,k=l-f+b,m=l+f+b,f=l+f-b;return ol.extent.createOrUpdate(Math.min(a,d,g,c),Math.min(h,k,m,f),Math.max(a,d,g,c),Math.max(h,k,m,f),e)};ol.extent.getHeight=function(a){return a[3]-a[1]};
-ol.extent.getIntersectionArea=function(a,b){var c=ol.extent.getIntersection(a,b);return ol.extent.getArea(c)};ol.extent.getIntersection=function(a,b,c){c=c?c:ol.extent.createEmpty();ol.extent.intersects(a,b)&&(c[0]=a[0]>b[0]?a[0]:b[0],c[1]=a[1]>b[1]?a[1]:b[1],c[2]=a[2]<b[2]?a[2]:b[2],c[3]=a[3]<b[3]?a[3]:b[3]);return c};ol.extent.getMargin=function(a){return ol.extent.getWidth(a)+ol.extent.getHeight(a)};ol.extent.getSize=function(a){return[a[2]-a[0],a[3]-a[1]]};
-ol.extent.getTopLeft=function(a){return[a[0],a[3]]};ol.extent.getTopRight=function(a){return[a[2],a[3]]};ol.extent.getWidth=function(a){return a[2]-a[0]};ol.extent.intersects=function(a,b){return a[0]<=b[2]&&a[2]>=b[0]&&a[1]<=b[3]&&a[3]>=b[1]};ol.extent.isEmpty=function(a){return a[2]<a[0]||a[3]<a[1]};ol.extent.returnOrUpdate=function(a,b){return b?(b[0]=a[0],b[1]=a[1],b[2]=a[2],b[3]=a[3],b):a};
-ol.extent.scaleFromCenter=function(a,b){var c=(a[2]-a[0])/2*(b-1),d=(a[3]-a[1])/2*(b-1);a[0]-=c;a[2]+=c;a[1]-=d;a[3]+=d};
-ol.extent.intersectsSegment=function(a,b,c){var d=!1,e=ol.extent.coordinateRelationship(a,b),f=ol.extent.coordinateRelationship(a,c);if(e===ol.extent.Relationship.INTERSECTING||f===ol.extent.Relationship.INTERSECTING)d=!0;else{var g=a[0],h=a[1],k=a[2];a=a[3];var l=c[0];c=c[1];b=(c-b[1])/(l-b[0]);f&ol.extent.Relationship.ABOVE&&!(e&ol.extent.Relationship.ABOVE)&&(d=l-(c-a)/b,d=d>=g&&d<=k);d||!(f&ol.extent.Relationship.RIGHT)||e&ol.extent.Relationship.RIGHT||(d=c-(l-k)*b,d=d>=h&&d<=a);d||!(f&ol.extent.Relationship.BELOW)||
-e&ol.extent.Relationship.BELOW||(d=l-(c-h)/b,d=d>=g&&d<=k);d||!(f&ol.extent.Relationship.LEFT)||e&ol.extent.Relationship.LEFT||(d=c-(l-g)*b,d=d>=h&&d<=a)}return d};ol.extent.applyTransform=function(a,b,c){a=[a[0],a[1],a[0],a[3],a[2],a[1],a[2],a[3]];b(a,a,2);return ol.extent.boundingExtentXYs_([a[0],a[2],a[4],a[6]],[a[1],a[3],a[5],a[7]],c)};ol.geom={};ol.geom.GeometryLayout={XY:"XY",XYZ:"XYZ",XYM:"XYM",XYZM:"XYZM"};ol.geom.GeometryType={POINT:"Point",LINE_STRING:"LineString",LINEAR_RING:"LinearRing",POLYGON:"Polygon",MULTI_POINT:"MultiPoint",MULTI_LINE_STRING:"MultiLineString",MULTI_POLYGON:"MultiPolygon",GEOMETRY_COLLECTION:"GeometryCollection",CIRCLE:"Circle"};ol.functions={};ol.functions.TRUE=function(){return!0};ol.functions.FALSE=function(){return!1};/*
+(function() {
+  var COMPILED = !0,
+    goog = goog || {};
+  goog.global = this;
+  goog.isDef = function(a) {
+    return void 0 !== a
+  };
+  goog.exportPath_ = function(a, b, c) {
+    a = a.split(".");
+    c = c || goog.global;
+    a[0] in c || !c.execScript || c.execScript("var " + a[0]);
+    for (var d; a.length && (d = a.shift());) !a.length && goog.isDef(b) ? c[d] = b : c = c[d] ? c[d] : c[d] = {}
+  };
+  goog.define = function(a, b) {
+    var c = b;
+    COMPILED || (goog.global.CLOSURE_UNCOMPILED_DEFINES && Object.prototype.hasOwnProperty.call(goog.global.CLOSURE_UNCOMPILED_DEFINES, a) ? c = goog.global.CLOSURE_UNCOMPILED_DEFINES[a] : goog.global.CLOSURE_DEFINES && Object.prototype.hasOwnProperty.call(goog.global.CLOSURE_DEFINES, a) && (c = goog.global.CLOSURE_DEFINES[a]));
+    goog.exportPath_(a, c)
+  };
+  goog.DEBUG = !0;
+  goog.LOCALE = "en";
+  goog.TRUSTED_SITE = !0;
+  goog.STRICT_MODE_COMPATIBLE = !1;
+  goog.DISALLOW_TEST_ONLY_CODE = COMPILED && !goog.DEBUG;
+  goog.ENABLE_CHROME_APP_SAFE_SCRIPT_LOADING = !1;
+  goog.provide = function(a) {
+    if (goog.isInModuleLoader_()) throw Error("goog.provide can not be used within a goog.module.");
+    if (!COMPILED && goog.isProvided_(a)) throw Error('Namespace "' + a + '" already declared.');
+    goog.constructNamespace_(a)
+  };
+  goog.constructNamespace_ = function(a, b) {
+    if (!COMPILED) {
+      delete goog.implicitNamespaces_[a];
+      for (var c = a;
+           (c = c.substring(0, c.lastIndexOf("."))) && !goog.getObjectByName(c);) goog.implicitNamespaces_[c] = !0
+    }
+    goog.exportPath_(a, b)
+  };
+  goog.VALID_MODULE_RE_ = /^[a-zA-Z_$][a-zA-Z0-9._$]*$/;
+  goog.module = function(a) {
+    if (!goog.isString(a) || !a || -1 == a.search(goog.VALID_MODULE_RE_)) throw Error("Invalid module identifier");
+    if (!goog.isInModuleLoader_()) throw Error("Module " + a + " has been loaded incorrectly.");
+    if (goog.moduleLoaderState_.moduleName) throw Error("goog.module may only be called once per module.");
+    goog.moduleLoaderState_.moduleName = a;
+    if (!COMPILED) {
+      if (goog.isProvided_(a)) throw Error('Namespace "' + a + '" already declared.');
+      delete goog.implicitNamespaces_[a]
+    }
+  };
+  goog.module.get = function(a) {
+    return goog.module.getInternal_(a)
+  };
+  goog.module.getInternal_ = function(a) {
+    if (!COMPILED) return goog.isProvided_(a) ? a in goog.loadedModules_ ? goog.loadedModules_[a] : goog.getObjectByName(a) : null
+  };
+  goog.moduleLoaderState_ = null;
+  goog.isInModuleLoader_ = function() {
+    return null != goog.moduleLoaderState_
+  };
+  goog.module.declareLegacyNamespace = function() {
+    if (!COMPILED && !goog.isInModuleLoader_()) throw Error("goog.module.declareLegacyNamespace must be called from within a goog.module");
+    if (!COMPILED && !goog.moduleLoaderState_.moduleName) throw Error("goog.module must be called prior to goog.module.declareLegacyNamespace.");
+    goog.moduleLoaderState_.declareLegacyNamespace = !0
+  };
+  goog.setTestOnly = function(a) {
+    if (goog.DISALLOW_TEST_ONLY_CODE) throw a = a || "", Error("Importing test-only code into non-debug environment" + (a ? ": " + a : "."));
+  };
+  goog.forwardDeclare = function(a) {};
+  COMPILED || (goog.isProvided_ = function(a) {
+    return a in goog.loadedModules_ || !goog.implicitNamespaces_[a] && goog.isDefAndNotNull(goog.getObjectByName(a))
+  }, goog.implicitNamespaces_ = {
+    "goog.module": !0
+  });
+  goog.getObjectByName = function(a, b) {
+    for (var c = a.split("."), d = b || goog.global, e; e = c.shift();)
+      if (goog.isDefAndNotNull(d[e])) d = d[e];
+      else return null;
+    return d
+  };
+  goog.globalize = function(a, b) {
+    var c = b || goog.global,
+      d;
+    for (d in a) c[d] = a[d]
+  };
+  goog.addDependency = function(a, b, c, d) {
+    if (goog.DEPENDENCIES_ENABLED) {
+      var e;
+      a = a.replace(/\\/g, "/");
+      var f = goog.dependencies_;
+      d && "boolean" !== typeof d || (d = d ? {
+        module: "goog"
+      } : {});
+      for (var g = 0; e = b[g]; g++) f.nameToPath[e] = a, f.loadFlags[a] = d;
+      for (d = 0; b = c[d]; d++) a in f.requires || (f.requires[a] = {}), f.requires[a][b] = !0
+    }
+  };
+  goog.ENABLE_DEBUG_LOADER = !0;
+  goog.logToConsole_ = function(a) {
+    goog.global.console && goog.global.console.error(a)
+  };
+  goog.require = function(a) {
+    if (!COMPILED) {
+      goog.ENABLE_DEBUG_LOADER && goog.IS_OLD_IE_ && goog.maybeProcessDeferredDep_(a);
+      if (goog.isProvided_(a)) return goog.isInModuleLoader_() ? goog.module.getInternal_(a) : null;
+      if (goog.ENABLE_DEBUG_LOADER) {
+        var b = goog.getPathFromDeps_(a);
+        if (b) return goog.writeScripts_(b), null
+      }
+      a = "goog.require could not find: " + a;
+      goog.logToConsole_(a);
+      throw Error(a);
+    }
+  };
+  goog.basePath = "";
+  goog.nullFunction = function() {};
+  goog.abstractMethod = function() {
+    throw Error("unimplemented abstract method");
+  };
+  goog.addSingletonGetter = function(a) {
+    a.getInstance = function() {
+      if (a.instance_) return a.instance_;
+      goog.DEBUG && (goog.instantiatedSingletons_[goog.instantiatedSingletons_.length] = a);
+      return a.instance_ = new a
+    }
+  };
+  goog.instantiatedSingletons_ = [];
+  goog.LOAD_MODULE_USING_EVAL = !0;
+  goog.SEAL_MODULE_EXPORTS = goog.DEBUG;
+  goog.loadedModules_ = {};
+  goog.DEPENDENCIES_ENABLED = !COMPILED && goog.ENABLE_DEBUG_LOADER;
+  goog.TRANSPILE = "detect";
+  goog.TRANSPILER = "transpile.js";
+  goog.DEPENDENCIES_ENABLED && (goog.dependencies_ = {
+    loadFlags: {},
+    nameToPath: {},
+    requires: {},
+    visited: {},
+    written: {},
+    deferred: {}
+  }, goog.inHtmlDocument_ = function() {
+    var a = goog.global.document;
+    return null != a && "write" in a
+  }, goog.findBasePath_ = function() {
+    if (goog.isDef(goog.global.CLOSURE_BASE_PATH)) goog.basePath = goog.global.CLOSURE_BASE_PATH;
+    else if (goog.inHtmlDocument_())
+      for (var a = goog.global.document.getElementsByTagName("SCRIPT"), b = a.length - 1; 0 <= b; --b) {
+        var c = a[b].src,
+          d = c.lastIndexOf("?"),
+          d = -1 == d ? c.length : d;
+        if ("base.js" ==
+          c.substr(d - 7, 7)) {
+          goog.basePath = c.substr(0, d - 7);
+          break
+        }
+      }
+  }, goog.importScript_ = function(a, b) {
+    (goog.global.CLOSURE_IMPORT_SCRIPT || goog.writeScriptTag_)(a, b) && (goog.dependencies_.written[a] = !0)
+  }, goog.IS_OLD_IE_ = !(goog.global.atob || !goog.global.document || !goog.global.document.all), goog.importProcessedScript_ = function(a, b, c) {
+    goog.importScript_("", 'goog.retrieveAndExec_("' + a + '", ' + b + ", " + c + ");")
+  }, goog.queuedModules_ = [], goog.wrapModule_ = function(a, b) {
+    return goog.LOAD_MODULE_USING_EVAL && goog.isDef(goog.global.JSON) ?
+      "goog.loadModule(" + goog.global.JSON.stringify(b + "\n//# sourceURL=" + a + "\n") + ");" : 'goog.loadModule(function(exports) {"use strict";' + b + "\n;return exports});\n//# sourceURL=" + a + "\n"
+  }, goog.loadQueuedModules_ = function() {
+    var a = goog.queuedModules_.length;
+    if (0 < a) {
+      var b = goog.queuedModules_;
+      goog.queuedModules_ = [];
+      for (var c = 0; c < a; c++) goog.maybeProcessDeferredPath_(b[c])
+    }
+  }, goog.maybeProcessDeferredDep_ = function(a) {
+    goog.isDeferredModule_(a) && goog.allDepsAreAvailable_(a) && (a = goog.getPathFromDeps_(a), goog.maybeProcessDeferredPath_(goog.basePath +
+      a))
+  }, goog.isDeferredModule_ = function(a) {
+    var b = (a = goog.getPathFromDeps_(a)) && goog.dependencies_.loadFlags[a] || {};
+    return a && ("goog" == b.module || goog.needsTranspile_(b.lang)) ? goog.basePath + a in goog.dependencies_.deferred : !1
+  }, goog.allDepsAreAvailable_ = function(a) {
+    if ((a = goog.getPathFromDeps_(a)) && a in goog.dependencies_.requires)
+      for (var b in goog.dependencies_.requires[a])
+        if (!goog.isProvided_(b) && !goog.isDeferredModule_(b)) return !1;
+    return !0
+  }, goog.maybeProcessDeferredPath_ = function(a) {
+    if (a in goog.dependencies_.deferred) {
+      var b =
+        goog.dependencies_.deferred[a];
+      delete goog.dependencies_.deferred[a];
+      goog.globalEval(b)
+    }
+  }, goog.loadModuleFromUrl = function(a) {
+    goog.retrieveAndExec_(a, !0, !1)
+  }, goog.writeScriptSrcNode_ = function(a) {
+    goog.global.document.write('<script type="text/javascript" src="' + a + '">\x3c/script>')
+  }, goog.appendScriptSrcNode_ = function(a) {
+    var b = goog.global.document,
+      c = b.createElement("script");
+    c.type = "text/javascript";
+    c.src = a;
+    c.defer = !1;
+    c.async = !1;
+    b.head.appendChild(c)
+  }, goog.writeScriptTag_ = function(a, b) {
+    if (goog.inHtmlDocument_()) {
+      var c =
+        goog.global.document;
+      if (!goog.ENABLE_CHROME_APP_SAFE_SCRIPT_LOADING && "complete" == c.readyState) {
+        if (/\bdeps.js$/.test(a)) return !1;
+        throw Error('Cannot write "' + a + '" after document load');
+      }
+      if (void 0 === b)
+        if (goog.IS_OLD_IE_) {
+          var d = " onreadystatechange='goog.onScriptLoad_(this, " + ++goog.lastNonModuleScriptIndex_ + ")' ";
+          c.write('<script type="text/javascript" src="' + a + '"' + d + ">\x3c/script>")
+        } else goog.ENABLE_CHROME_APP_SAFE_SCRIPT_LOADING ? goog.appendScriptSrcNode_(a) : goog.writeScriptSrcNode_(a);
+      else c.write('<script type="text/javascript">' +
+        b + "\x3c/script>");
+      return !0
+    }
+    return !1
+  }, goog.needsTranspile_ = function(a) {
+    if ("always" == goog.TRANSPILE) return !0;
+    if ("never" == goog.TRANSPILE) return !1;
+    if (!goog.transpiledLanguages_) {
+      goog.transpiledLanguages_ = {
+        es5: !0,
+        es6: !0,
+        "es6-impl": !0
+      };
+      try {
+        goog.transpiledLanguages_.es5 = eval("[1,].length!=1"), eval('(()=>{"use strict";let a={};const X=class{constructor(){}x(z){return new Map([...arguments]).get(z[0])==3}};return new X().x([a,3])})()') && (goog.transpiledLanguages_["es6-impl"] = !1), eval('(()=>{"use strict";class X{constructor(){if(new.target!=String)throw 1;this.x=42}}let q=Reflect.construct(X,[],String);if(q.x!=42||!(q instanceof String))throw 1;for(const a of[2,3]){if(a==2)continue;function f(z={a}){let a=0;return z.a}{function f(){return 0;}}return f()==3}})()') &&
+        (goog.transpiledLanguages_.es6 = !1)
+      } catch (b) {}
+    }
+    return !!goog.transpiledLanguages_[a]
+  }, goog.transpiledLanguages_ = null, goog.lastNonModuleScriptIndex_ = 0, goog.onScriptLoad_ = function(a, b) {
+    "complete" == a.readyState && goog.lastNonModuleScriptIndex_ == b && goog.loadQueuedModules_();
+    return !0
+  }, goog.writeScripts_ = function(a) {
+    function b(a) {
+      if (!(a in e.written || a in e.visited)) {
+        e.visited[a] = !0;
+        if (a in e.requires)
+          for (var f in e.requires[a])
+            if (!goog.isProvided_(f))
+              if (f in e.nameToPath) b(e.nameToPath[f]);
+              else throw Error("Undefined nameToPath for " +
+                f);
+        a in d || (d[a] = !0, c.push(a))
+      }
+    }
+    var c = [],
+      d = {},
+      e = goog.dependencies_;
+    b(a);
+    for (a = 0; a < c.length; a++) {
+      var f = c[a];
+      goog.dependencies_.written[f] = !0
+    }
+    var g = goog.moduleLoaderState_;
+    goog.moduleLoaderState_ = null;
+    for (a = 0; a < c.length; a++)
+      if (f = c[a]) {
+        var h = e.loadFlags[f] || {},
+          k = goog.needsTranspile_(h.lang);
+        "goog" == h.module || k ? goog.importProcessedScript_(goog.basePath + f, "goog" == h.module, k) : goog.importScript_(goog.basePath + f)
+      } else throw goog.moduleLoaderState_ = g, Error("Undefined script input");
+    goog.moduleLoaderState_ =
+      g
+  }, goog.getPathFromDeps_ = function(a) {
+    return a in goog.dependencies_.nameToPath ? goog.dependencies_.nameToPath[a] : null
+  }, goog.findBasePath_(), goog.global.CLOSURE_NO_DEPS || goog.importScript_(goog.basePath + "deps.js"));
+  goog.loadModule = function(a) {
+    var b = goog.moduleLoaderState_;
+    try {
+      goog.moduleLoaderState_ = {
+        moduleName: void 0,
+        declareLegacyNamespace: !1
+      };
+      var c;
+      if (goog.isFunction(a)) c = a.call(void 0, {});
+      else if (goog.isString(a)) c = goog.loadModuleFromSource_.call(void 0, a);
+      else throw Error("Invalid module definition");
+      var d = goog.moduleLoaderState_.moduleName;
+      if (!goog.isString(d) || !d) throw Error('Invalid module name "' + d + '"');
+      goog.moduleLoaderState_.declareLegacyNamespace ? goog.constructNamespace_(d, c) : goog.SEAL_MODULE_EXPORTS &&
+        Object.seal && Object.seal(c);
+      goog.loadedModules_[d] = c
+    } finally {
+      goog.moduleLoaderState_ = b
+    }
+  };
+  goog.loadModuleFromSource_ = function(a) {
+    eval(a);
+    return {}
+  };
+  goog.normalizePath_ = function(a) {
+    a = a.split("/");
+    for (var b = 0; b < a.length;) "." == a[b] ? a.splice(b, 1) : b && ".." == a[b] && a[b - 1] && ".." != a[b - 1] ? a.splice(--b, 2) : b++;
+    return a.join("/")
+  };
+  goog.loadFileSync_ = function(a) {
+    if (goog.global.CLOSURE_LOAD_FILE_SYNC) return goog.global.CLOSURE_LOAD_FILE_SYNC(a);
+    try {
+      var b = new goog.global.XMLHttpRequest;
+      b.open("get", a, !1);
+      b.send();
+      return 0 == b.status || 200 == b.status ? b.responseText : null
+    } catch (c) {
+      return null
+    }
+  };
+  goog.retrieveAndExec_ = function(a, b, c) {
+    if (!COMPILED) {
+      var d = a;
+      a = goog.normalizePath_(a);
+      var e = goog.global.CLOSURE_IMPORT_SCRIPT || goog.writeScriptTag_,
+        f = goog.loadFileSync_(a);
+      if (null == f) throw Error('Load of "' + a + '" failed');
+      c && (f = goog.transpile_.call(goog.global, f, a));
+      f = b ? goog.wrapModule_(a, f) : f + ("\n//# sourceURL=" + a);
+      goog.IS_OLD_IE_ ? (goog.dependencies_.deferred[d] = f, goog.queuedModules_.push(d)) : e(a, f)
+    }
+  };
+  goog.transpile_ = function(a, b) {
+    var c = goog.global.$jscomp;
+    c || (goog.global.$jscomp = c = {});
+    var d = c.transpile;
+    if (!d) {
+      var e = goog.basePath + goog.TRANSPILER,
+        f = goog.loadFileSync_(e);
+      f && (eval(f + "\n//# sourceURL=" + e), c = goog.global.$jscomp, d = c.transpile)
+    }
+    d || (d = c.transpile = function(a, b) {
+      goog.logToConsole_(b + " requires transpilation but no transpiler was found.");
+      return a
+    });
+    return d(a, b)
+  };
+  goog.typeOf = function(a) {
+    var b = typeof a;
+    if ("object" == b)
+      if (a) {
+        if (a instanceof Array) return "array";
+        if (a instanceof Object) return b;
+        var c = Object.prototype.toString.call(a);
+        if ("[object Window]" == c) return "object";
+        if ("[object Array]" == c || "number" == typeof a.length && "undefined" != typeof a.splice && "undefined" != typeof a.propertyIsEnumerable && !a.propertyIsEnumerable("splice")) return "array";
+        if ("[object Function]" == c || "undefined" != typeof a.call && "undefined" != typeof a.propertyIsEnumerable && !a.propertyIsEnumerable("call")) return "function"
+      } else return "null";
+    else if ("function" == b && "undefined" == typeof a.call) return "object";
+    return b
+  };
+  goog.isNull = function(a) {
+    return null === a
+  };
+  goog.isDefAndNotNull = function(a) {
+    return null != a
+  };
+  goog.isArray = function(a) {
+    return "array" == goog.typeOf(a)
+  };
+  goog.isArrayLike = function(a) {
+    var b = goog.typeOf(a);
+    return "array" == b || "object" == b && "number" == typeof a.length
+  };
+  goog.isDateLike = function(a) {
+    return goog.isObject(a) && "function" == typeof a.getFullYear
+  };
+  goog.isString = function(a) {
+    return "string" == typeof a
+  };
+  goog.isBoolean = function(a) {
+    return "boolean" == typeof a
+  };
+  goog.isNumber = function(a) {
+    return "number" == typeof a
+  };
+  goog.isFunction = function(a) {
+    return "function" == goog.typeOf(a)
+  };
+  goog.isObject = function(a) {
+    var b = typeof a;
+    return "object" == b && null != a || "function" == b
+  };
+  goog.getUid = function(a) {
+    return a[goog.UID_PROPERTY_] || (a[goog.UID_PROPERTY_] = ++goog.uidCounter_)
+  };
+  goog.hasUid = function(a) {
+    return !!a[goog.UID_PROPERTY_]
+  };
+  goog.removeUid = function(a) {
+    null !== a && "removeAttribute" in a && a.removeAttribute(goog.UID_PROPERTY_);
+    try {
+      delete a[goog.UID_PROPERTY_]
+    } catch (b) {}
+  };
+  goog.UID_PROPERTY_ = "closure_uid_" + (1E9 * Math.random() >>> 0);
+  goog.uidCounter_ = 0;
+  goog.getHashCode = goog.getUid;
+  goog.removeHashCode = goog.removeUid;
+  goog.cloneObject = function(a) {
+    var b = goog.typeOf(a);
+    if ("object" == b || "array" == b) {
+      if (a.clone) return a.clone();
+      var b = "array" == b ? [] : {},
+        c;
+      for (c in a) b[c] = goog.cloneObject(a[c]);
+      return b
+    }
+    return a
+  };
+  goog.bindNative_ = function(a, b, c) {
+    return a.call.apply(a.bind, arguments)
+  };
+  goog.bindJs_ = function(a, b, c) {
+    if (!a) throw Error();
+    if (2 < arguments.length) {
+      var d = Array.prototype.slice.call(arguments, 2);
+      return function() {
+        var c = Array.prototype.slice.call(arguments);
+        Array.prototype.unshift.apply(c, d);
+        return a.apply(b, c)
+      }
+    }
+    return function() {
+      return a.apply(b, arguments)
+    }
+  };
+  goog.bind = function(a, b, c) {
+    Function.prototype.bind && -1 != Function.prototype.bind.toString().indexOf("native code") ? goog.bind = goog.bindNative_ : goog.bind = goog.bindJs_;
+    return goog.bind.apply(null, arguments)
+  };
+  goog.partial = function(a, b) {
+    var c = Array.prototype.slice.call(arguments, 1);
+    return function() {
+      var b = c.slice();
+      b.push.apply(b, arguments);
+      return a.apply(this, b)
+    }
+  };
+  goog.mixin = function(a, b) {
+    for (var c in b) a[c] = b[c]
+  };
+  goog.now = goog.TRUSTED_SITE && Date.now || function() {
+    return +new Date
+  };
+  goog.globalEval = function(a) {
+    if (goog.global.execScript) goog.global.execScript(a, "JavaScript");
+    else if (goog.global.eval) {
+      if (null == goog.evalWorksForGlobals_)
+        if (goog.global.eval("var _evalTest_ = 1;"), "undefined" != typeof goog.global._evalTest_) {
+          try {
+            delete goog.global._evalTest_
+          } catch (d) {}
+          goog.evalWorksForGlobals_ = !0
+        } else goog.evalWorksForGlobals_ = !1;
+      if (goog.evalWorksForGlobals_) goog.global.eval(a);
+      else {
+        var b = goog.global.document,
+          c = b.createElement("SCRIPT");
+        c.type = "text/javascript";
+        c.defer = !1;
+        c.appendChild(b.createTextNode(a));
+        b.body.appendChild(c);
+        b.body.removeChild(c)
+      }
+    } else throw Error("goog.globalEval not available");
+  };
+  goog.evalWorksForGlobals_ = null;
+  goog.getCssName = function(a, b) {
+    var c = function(a) {
+        return goog.cssNameMapping_[a] || a
+      },
+      d = function(a) {
+        a = a.split("-");
+        for (var b = [], d = 0; d < a.length; d++) b.push(c(a[d]));
+        return b.join("-")
+      },
+      d = goog.cssNameMapping_ ? "BY_WHOLE" == goog.cssNameMappingStyle_ ? c : d : function(a) {
+        return a
+      };
+    return b ? a + "-" + d(b) : d(a)
+  };
+  goog.setCssNameMapping = function(a, b) {
+    goog.cssNameMapping_ = a;
+    goog.cssNameMappingStyle_ = b
+  };
+  !COMPILED && goog.global.CLOSURE_CSS_NAME_MAPPING && (goog.cssNameMapping_ = goog.global.CLOSURE_CSS_NAME_MAPPING);
+  goog.getMsg = function(a, b) {
+    b && (a = a.replace(/\{\$([^}]+)}/g, function(a, d) {
+      return null != b && d in b ? b[d] : a
+    }));
+    return a
+  };
+  goog.getMsgWithFallback = function(a, b) {
+    return a
+  };
+  goog.exportSymbol = function(a, b, c) {
+    goog.exportPath_(a, b, c)
+  };
+  goog.exportProperty = function(a, b, c) {
+    a[b] = c
+  };
+  goog.inherits = function(a, b) {
+    function c() {}
+    c.prototype = b.prototype;
+    a.superClass_ = b.prototype;
+    a.prototype = new c;
+    a.prototype.constructor = a;
+    a.base = function(a, c, f) {
+      for (var g = Array(arguments.length - 2), h = 2; h < arguments.length; h++) g[h - 2] = arguments[h];
+      return b.prototype[c].apply(a, g)
+    }
+  };
+  goog.base = function(a, b, c) {
+    var d = arguments.callee.caller;
+    if (goog.STRICT_MODE_COMPATIBLE || goog.DEBUG && !d) throw Error("arguments.caller not defined.  goog.base() cannot be used with strict mode code. See http://www.ecma-international.org/ecma-262/5.1/#sec-C");
+    if (d.superClass_) {
+      for (var e = Array(arguments.length - 1), f = 1; f < arguments.length; f++) e[f - 1] = arguments[f];
+      return d.superClass_.constructor.apply(a, e)
+    }
+    e = Array(arguments.length - 2);
+    for (f = 2; f < arguments.length; f++) e[f - 2] = arguments[f];
+    for (var f = !1, g = a.constructor; g; g =
+      g.superClass_ && g.superClass_.constructor)
+      if (g.prototype[b] === d) f = !0;
+      else if (f) return g.prototype[b].apply(a, e);
+    if (a[b] === d) return a.constructor.prototype[b].apply(a, e);
+    throw Error("goog.base called from a method of one name to a method of a different name");
+  };
+  goog.scope = function(a) {
+    if (goog.isInModuleLoader_()) throw Error("goog.scope is not supported within a goog.module.");
+    a.call(goog.global)
+  };
+  COMPILED || (goog.global.COMPILED = COMPILED);
+  goog.defineClass = function(a, b) {
+    var c = b.constructor,
+      d = b.statics;
+    c && c != Object.prototype.constructor || (c = function() {
+      throw Error("cannot instantiate an interface (no constructor defined).");
+    });
+    c = goog.defineClass.createSealingConstructor_(c, a);
+    a && goog.inherits(c, a);
+    delete b.constructor;
+    delete b.statics;
+    goog.defineClass.applyProperties_(c.prototype, b);
+    null != d && (d instanceof Function ? d(c) : goog.defineClass.applyProperties_(c, d));
+    return c
+  };
+  goog.defineClass.SEAL_CLASS_INSTANCES = goog.DEBUG;
+  goog.defineClass.createSealingConstructor_ = function(a, b) {
+    if (!goog.defineClass.SEAL_CLASS_INSTANCES) return a;
+    var c = !goog.defineClass.isUnsealable_(b),
+      d = function() {
+        var b = a.apply(this, arguments) || this;
+        b[goog.UID_PROPERTY_] = b[goog.UID_PROPERTY_];
+        this.constructor === d && c && Object.seal instanceof Function && Object.seal(b);
+        return b
+      };
+    return d
+  };
+  goog.defineClass.isUnsealable_ = function(a) {
+    return a && a.prototype && a.prototype[goog.UNSEALABLE_CONSTRUCTOR_PROPERTY_]
+  };
+  goog.defineClass.OBJECT_PROTOTYPE_FIELDS_ = "constructor hasOwnProperty isPrototypeOf propertyIsEnumerable toLocaleString toString valueOf".split(" ");
+  goog.defineClass.applyProperties_ = function(a, b) {
+    for (var c in b) Object.prototype.hasOwnProperty.call(b, c) && (a[c] = b[c]);
+    for (var d = 0; d < goog.defineClass.OBJECT_PROTOTYPE_FIELDS_.length; d++) c = goog.defineClass.OBJECT_PROTOTYPE_FIELDS_[d], Object.prototype.hasOwnProperty.call(b, c) && (a[c] = b[c])
+  };
+  goog.tagUnsealableClass = function(a) {
+    !COMPILED && goog.defineClass.SEAL_CLASS_INSTANCES && (a.prototype[goog.UNSEALABLE_CONSTRUCTOR_PROPERTY_] = !0)
+  };
+  goog.UNSEALABLE_CONSTRUCTOR_PROPERTY_ = "goog_defineClass_legacy_unsealable";
+  var ol = {
+    DEBUG: !0,
+    ASSUME_TOUCH: !1,
+    DEFAULT_MAX_ZOOM: 42,
+    DEFAULT_MIN_ZOOM: 0,
+    DEFAULT_RASTER_REPROJECTION_ERROR_THRESHOLD: .5,
+    DEFAULT_TILE_SIZE: 256,
+    DEFAULT_WMS_VERSION: "1.3.0",
+    DRAG_BOX_HYSTERESIS_PIXELS: 8,
+    ENABLE_CANVAS: !0,
+    ENABLE_IMAGE: !0,
+    ENABLE_PROJ4JS: !0,
+    ENABLE_RASTER_REPROJECTION: !0,
+    ENABLE_TILE: !0,
+    ENABLE_VECTOR: !0,
+    ENABLE_VECTOR_TILE: !0,
+    ENABLE_WEBGL: !0,
+    INITIAL_ATLAS_SIZE: 256,
+    MAX_ATLAS_SIZE: -1,
+    MOUSEWHEELZOOM_MAXDELTA: 1,
+    OVERVIEWMAP_MAX_RATIO: .75,
+    OVERVIEWMAP_MIN_RATIO: .1,
+    RASTER_REPROJECTION_MAX_SOURCE_TILES: 100,
+    RASTER_REPROJECTION_MAX_SUBDIVISION: 10,
+    RASTER_REPROJECTION_MAX_TRIANGLE_WIDTH: .25,
+    SIMPLIFY_TOLERANCE: .5,
+    WEBGL_TEXTURE_CACHE_HIGH_WATER_MARK: 1024,
+    VERSION: "",
+    inherits: function(a, b) {
+      a.prototype = Object.create(b.prototype);
+      a.prototype.constructor = a
+    },
+    nullFunction: function() {},
+    getUid: function(a) {
+      return a.ol_uid || (a.ol_uid = ++ol.uidCounter_)
+    },
+    uidCounter_: 0
+  };
+  ol.AssertionError = function(a) {
+    this.message = "Assertion failed. See " + (ol.VERSION ? "https://openlayers.org/en/" + ol.VERSION.split("-")[0] : "") + "/doc/errors/#" + a + " for details.";
+    this.code = a;
+    this.name = "AssertionError"
+  };
+  ol.inherits(ol.AssertionError, Error);
+  ol.asserts = {};
+  ol.asserts.assert = function(a, b) {
+    if (!a) throw new ol.AssertionError(b);
+  };
+  ol.math = {};
+  ol.math.clamp = function(a, b, c) {
+    return Math.min(Math.max(a, b), c)
+  };
+  ol.math.cosh = function() {
+    return "cosh" in Math ? Math.cosh : function(a) {
+      a = Math.exp(a);
+      return (a + 1 / a) / 2
+    }
+  }();
+  ol.math.roundUpToPowerOfTwo = function(a) {
+    ol.asserts.assert(0 < a, 29);
+    return Math.pow(2, Math.ceil(Math.log(a) / Math.LN2))
+  };
+  ol.math.squaredSegmentDistance = function(a, b, c, d, e, f) {
+    var g = e - c,
+      h = f - d;
+    if (0 !== g || 0 !== h) {
+      var k = ((a - c) * g + (b - d) * h) / (g * g + h * h);
+      1 < k ? (c = e, d = f) : 0 < k && (c += g * k, d += h * k)
+    }
+    return ol.math.squaredDistance(a, b, c, d)
+  };
+  ol.math.squaredDistance = function(a, b, c, d) {
+    a = c - a;
+    b = d - b;
+    return a * a + b * b
+  };
+  ol.math.solveLinearSystem = function(a) {
+    var b = a.length;
+    if (ol.DEBUG)
+      for (var c = 0; c < b; c++) console.assert(a[c].length == b + 1, "every row should have correct number of columns");
+    for (c = 0; c < b; c++) {
+      for (var d = c, e = Math.abs(a[c][c]), f = c + 1; f < b; f++) {
+        var g = Math.abs(a[f][c]);
+        g > e && (e = g, d = f)
+      }
+      if (0 === e) return null;
+      e = a[d];
+      a[d] = a[c];
+      a[c] = e;
+      for (d = c + 1; d < b; d++)
+        for (e = -a[d][c] / a[c][c], f = c; f < b + 1; f++) a[d][f] = c == f ? 0 : a[d][f] + e * a[c][f]
+    }
+    c = Array(b);
+    for (d = b - 1; 0 <= d; d--)
+      for (c[d] = a[d][b] / a[d][d], e = d - 1; 0 <= e; e--) a[e][b] -= a[e][d] * c[d];
+    return c
+  };
+  ol.math.toDegrees = function(a) {
+    return 180 * a / Math.PI
+  };
+  ol.math.toRadians = function(a) {
+    return a * Math.PI / 180
+  };
+  ol.math.modulo = function(a, b) {
+    var c = a % b;
+    return 0 > c * b ? c + b : c
+  };
+  ol.math.lerp = function(a, b, c) {
+    return a + c * (b - a)
+  };
+  ol.CenterConstraint = {};
+  ol.CenterConstraint.createExtent = function(a) {
+    return function(b) {
+      if (b) return [ol.math.clamp(b[0], a[0], a[2]), ol.math.clamp(b[1], a[1], a[3])]
+    }
+  };
+  ol.CenterConstraint.none = function(a) {
+    return a
+  };
+  ol.Constraints = function(a, b, c) {
+    this.center = a;
+    this.resolution = b;
+    this.rotation = c
+  };
+  ol.obj = {};
+  ol.obj.assign = "function" === typeof Object.assign ? Object.assign : function(a, b) {
+    if (void 0 === a || null === a) throw new TypeError("Cannot convert undefined or null to object");
+    for (var c = Object(a), d = 1, e = arguments.length; d < e; ++d) {
+      var f = arguments[d];
+      if (void 0 !== f && null !== f)
+        for (var g in f) f.hasOwnProperty(g) && (c[g] = f[g])
+    }
+    return c
+  };
+  ol.obj.clear = function(a) {
+    for (var b in a) delete a[b]
+  };
+  ol.obj.getValues = function(a) {
+    var b = [],
+      c;
+    for (c in a) b.push(a[c]);
+    return b
+  };
+  ol.obj.isEmpty = function(a) {
+    for (var b in a) return !1;
+    return !b
+  };
+  ol.events = {};
+  ol.events.bindListener_ = function(a) {
+    var b = function(b) {
+      var d = a.listener,
+        e = a.bindTo || a.target;
+      a.callOnce && ol.events.unlistenByKey(a);
+      return d.call(e, b)
+    };
+    return a.boundListener = b
+  };
+  ol.events.findListener_ = function(a, b, c, d) {
+    for (var e, f = 0, g = a.length; f < g; ++f)
+      if (e = a[f], e.listener === b && e.bindTo === c) return d && (e.deleteIndex = f), e
+  };
+  ol.events.getListeners = function(a, b) {
+    var c = a.ol_lm;
+    return c ? c[b] : void 0
+  };
+  ol.events.getListenerMap_ = function(a) {
+    var b = a.ol_lm;
+    b || (b = a.ol_lm = {});
+    return b
+  };
+  ol.events.removeListeners_ = function(a, b) {
+    var c = ol.events.getListeners(a, b);
+    if (c) {
+      for (var d = 0, e = c.length; d < e; ++d) a.removeEventListener(b, c[d].boundListener), ol.obj.clear(c[d]);
+      c.length = 0;
+      if (c = a.ol_lm) delete c[b], 0 === Object.keys(c).length && delete a.ol_lm
+    }
+  };
+  ol.events.listen = function(a, b, c, d, e) {
+    var f = ol.events.getListenerMap_(a),
+      g = f[b];
+    g || (g = f[b] = []);
+    (f = ol.events.findListener_(g, c, d, !1)) ? e || (f.callOnce = !1): (f = {
+      bindTo: d,
+      callOnce: !!e,
+      listener: c,
+      target: a,
+      type: b
+    }, a.addEventListener(b, ol.events.bindListener_(f)), g.push(f));
+    return f
+  };
+  ol.events.listenOnce = function(a, b, c, d) {
+    return ol.events.listen(a, b, c, d, !0)
+  };
+  ol.events.unlisten = function(a, b, c, d) {
+    (a = ol.events.getListeners(a, b)) && (c = ol.events.findListener_(a, c, d, !0)) && ol.events.unlistenByKey(c)
+  };
+  ol.events.unlistenByKey = function(a) {
+    if (a && a.target) {
+      a.target.removeEventListener(a.type, a.boundListener);
+      var b = ol.events.getListeners(a.target, a.type);
+      if (b) {
+        var c = "deleteIndex" in a ? a.deleteIndex : b.indexOf(a); - 1 !== c && b.splice(c, 1);
+        0 === b.length && ol.events.removeListeners_(a.target, a.type)
+      }
+      ol.obj.clear(a)
+    }
+  };
+  ol.events.unlistenAll = function(a) {
+    var b = ol.events.getListenerMap_(a),
+      c;
+    for (c in b) ol.events.removeListeners_(a, c)
+  };
+  ol.Disposable = function() {};
+  ol.Disposable.prototype.disposed_ = !1;
+  ol.Disposable.prototype.dispose = function() {
+    this.disposed_ || (this.disposed_ = !0, this.disposeInternal())
+  };
+  ol.Disposable.prototype.disposeInternal = ol.nullFunction;
+  ol.events.Event = function(a) {
+    this.type = a;
+    this.target = null
+  };
+  ol.events.Event.prototype.preventDefault = ol.events.Event.prototype.stopPropagation = function() {
+    this.propagationStopped = !0
+  };
+  ol.events.Event.stopPropagation = function(a) {
+    a.stopPropagation()
+  };
+  ol.events.Event.preventDefault = function(a) {
+    a.preventDefault()
+  };
+  ol.events.EventTarget = function() {
+    ol.Disposable.call(this);
+    this.pendingRemovals_ = {};
+    this.dispatching_ = {};
+    this.listeners_ = {}
+  };
+  ol.inherits(ol.events.EventTarget, ol.Disposable);
+  ol.events.EventTarget.prototype.addEventListener = function(a, b) {
+    var c = this.listeners_[a];
+    c || (c = this.listeners_[a] = []); - 1 === c.indexOf(b) && c.push(b)
+  };
+  ol.events.EventTarget.prototype.dispatchEvent = function(a) {
+    var b = "string" === typeof a ? new ol.events.Event(a) : a;
+    a = b.type;
+    b.target = this;
+    var c = this.listeners_[a],
+      d;
+    if (c) {
+      a in this.dispatching_ || (this.dispatching_[a] = 0, this.pendingRemovals_[a] = 0);
+      ++this.dispatching_[a];
+      for (var e = 0, f = c.length; e < f; ++e)
+        if (!1 === c[e].call(this, b) || b.propagationStopped) {
+          d = !1;
+          break
+        }-- this.dispatching_[a];
+      if (0 === this.dispatching_[a]) {
+        b = this.pendingRemovals_[a];
+        for (delete this.pendingRemovals_[a]; b--;) this.removeEventListener(a,
+          ol.nullFunction);
+        delete this.dispatching_[a]
+      }
+      return d
+    }
+  };
+  ol.events.EventTarget.prototype.disposeInternal = function() {
+    ol.events.unlistenAll(this)
+  };
+  ol.events.EventTarget.prototype.getListeners = function(a) {
+    return this.listeners_[a]
+  };
+  ol.events.EventTarget.prototype.hasListener = function(a) {
+    return a ? a in this.listeners_ : 0 < Object.keys(this.listeners_).length
+  };
+  ol.events.EventTarget.prototype.removeEventListener = function(a, b) {
+    var c = this.listeners_[a];
+    if (c) {
+      var d = c.indexOf(b);
+      ol.DEBUG && console.assert(-1 != d, "listener not found");
+      a in this.pendingRemovals_ ? (c[d] = ol.nullFunction, ++this.pendingRemovals_[a]) : (c.splice(d, 1), 0 === c.length && delete this.listeners_[a])
+    }
+  };
+  ol.events.EventType = {
+    CHANGE: "change",
+    CLICK: "click",
+    DBLCLICK: "dblclick",
+    DRAGENTER: "dragenter",
+    DRAGOVER: "dragover",
+    DROP: "drop",
+    ERROR: "error",
+    KEYDOWN: "keydown",
+    KEYPRESS: "keypress",
+    LOAD: "load",
+    MOUSEDOWN: "mousedown",
+    MOUSEMOVE: "mousemove",
+    MOUSEOUT: "mouseout",
+    MOUSEUP: "mouseup",
+    MOUSEWHEEL: "mousewheel",
+    MSPOINTERDOWN: "mspointerdown",
+    RESIZE: "resize",
+    TOUCHSTART: "touchstart",
+    TOUCHMOVE: "touchmove",
+    TOUCHEND: "touchend",
+    WHEEL: "wheel"
+  };
+  ol.Observable = function() {
+    ol.events.EventTarget.call(this);
+    this.revision_ = 0
+  };
+  ol.inherits(ol.Observable, ol.events.EventTarget);
+  ol.Observable.unByKey = function(a) {
+    if (Array.isArray(a))
+      for (var b = 0, c = a.length; b < c; ++b) ol.events.unlistenByKey(a[b]);
+    else ol.events.unlistenByKey(a)
+  };
+  ol.Observable.prototype.changed = function() {
+    ++this.revision_;
+    this.dispatchEvent(ol.events.EventType.CHANGE)
+  };
+  ol.Observable.prototype.getRevision = function() {
+    return this.revision_
+  };
+  ol.Observable.prototype.on = function(a, b, c) {
+    if (Array.isArray(a)) {
+      for (var d = a.length, e = Array(d), f = 0; f < d; ++f) e[f] = ol.events.listen(this, a[f], b, c);
+      return e
+    }
+    return ol.events.listen(this, a, b, c)
+  };
+  ol.Observable.prototype.once = function(a, b, c) {
+    if (Array.isArray(a)) {
+      for (var d = a.length, e = Array(d), f = 0; f < d; ++f) e[f] = ol.events.listenOnce(this, a[f], b, c);
+      return e
+    }
+    return ol.events.listenOnce(this, a, b, c)
+  };
+  ol.Observable.prototype.un = function(a, b, c) {
+    if (Array.isArray(a))
+      for (var d = 0, e = a.length; d < e; ++d) ol.events.unlisten(this, a[d], b, c);
+    else ol.events.unlisten(this, a, b, c)
+  };
+  ol.Observable.prototype.unByKey = ol.Observable.unByKey;
+  ol.Object = function(a) {
+    ol.Observable.call(this);
+    ol.getUid(this);
+    this.values_ = {};
+    void 0 !== a && this.setProperties(a)
+  };
+  ol.inherits(ol.Object, ol.Observable);
+  ol.Object.changeEventTypeCache_ = {};
+  ol.Object.getChangeEventType = function(a) {
+    return ol.Object.changeEventTypeCache_.hasOwnProperty(a) ? ol.Object.changeEventTypeCache_[a] : ol.Object.changeEventTypeCache_[a] = "change:" + a
+  };
+  ol.Object.prototype.get = function(a) {
+    var b;
+    this.values_.hasOwnProperty(a) && (b = this.values_[a]);
+    return b
+  };
+  ol.Object.prototype.getKeys = function() {
+    return Object.keys(this.values_)
+  };
+  ol.Object.prototype.getProperties = function() {
+    return ol.obj.assign({}, this.values_)
+  };
+  ol.Object.prototype.notify = function(a, b) {
+    var c;
+    c = ol.Object.getChangeEventType(a);
+    this.dispatchEvent(new ol.Object.Event(c, a, b));
+    c = ol.Object.EventType.PROPERTYCHANGE;
+    this.dispatchEvent(new ol.Object.Event(c, a, b))
+  };
+  ol.Object.prototype.set = function(a, b, c) {
+    c ? this.values_[a] = b : (c = this.values_[a], this.values_[a] = b, c !== b && this.notify(a, c))
+  };
+  ol.Object.prototype.setProperties = function(a, b) {
+    for (var c in a) this.set(c, a[c], b)
+  };
+  ol.Object.prototype.unset = function(a, b) {
+    if (a in this.values_) {
+      var c = this.values_[a];
+      delete this.values_[a];
+      b || this.notify(a, c)
+    }
+  };
+  ol.Object.EventType = {
+    PROPERTYCHANGE: "propertychange"
+  };
+  ol.Object.Event = function(a, b, c) {
+    ol.events.Event.call(this, a);
+    this.key = b;
+    this.oldValue = c
+  };
+  ol.inherits(ol.Object.Event, ol.events.Event);
+  ol.array = {};
+  ol.array.binarySearch = function(a, b, c) {
+    for (var d, e = c || ol.array.numberSafeCompareFunction, f = 0, g = a.length, h = !1; f < g;) c = f + (g - f >> 1), d = +e(a[c], b), 0 > d ? f = c + 1 : (g = c, h = !d);
+    return h ? f : ~f
+  };
+  ol.array.numberSafeCompareFunction = function(a, b) {
+    return a > b ? 1 : a < b ? -1 : 0
+  };
+  ol.array.includes = function(a, b) {
+    return 0 <= a.indexOf(b)
+  };
+  ol.array.linearFindNearest = function(a, b, c) {
+    var d = a.length;
+    if (a[0] <= b) return 0;
+    if (!(b <= a[d - 1]))
+      if (0 < c)
+        for (c = 1; c < d; ++c) {
+          if (a[c] < b) return c - 1
+        } else if (0 > c)
+        for (c = 1; c < d; ++c) {
+          if (a[c] <= b) return c
+        } else
+        for (c = 1; c < d; ++c) {
+          if (a[c] == b) return c;
+          if (a[c] < b) return a[c - 1] - b < b - a[c] ? c - 1 : c
+        }
+    return d - 1
+  };
+  ol.array.reverseSubArray = function(a, b, c) {
+    ol.DEBUG && console.assert(0 <= b, "Array begin index should be equal to or greater than 0");
+    for (ol.DEBUG && console.assert(c < a.length, "Array end index should be less than the array length"); b < c;) {
+      var d = a[b];
+      a[b] = a[c];
+      a[c] = d;
+      ++b;
+      --c
+    }
+  };
+  ol.array.flatten = function(a) {
+    return a.reduce(function(a, c) {
+      return Array.isArray(c) ? a.concat(ol.array.flatten(c)) : a.concat(c)
+    }, [])
+  };
+  ol.array.extend = function(a, b) {
+    var c, d = Array.isArray(b) ? b : [b],
+      e = d.length;
+    for (c = 0; c < e; c++) a[a.length] = d[c]
+  };
+  ol.array.remove = function(a, b) {
+    var c = a.indexOf(b),
+      d = -1 < c;
+    d && a.splice(c, 1);
+    return d
+  };
+  ol.array.find = function(a, b) {
+    for (var c = a.length >>> 0, d, e = 0; e < c; e++)
+      if (d = a[e], b(d, e, a)) return d;
+    return null
+  };
+  ol.array.equals = function(a, b) {
+    var c = a.length;
+    if (c !== b.length) return !1;
+    for (var d = 0; d < c; d++)
+      if (a[d] !== b[d]) return !1;
+    return !0
+  };
+  ol.array.stableSort = function(a, b) {
+    var c = a.length,
+      d = Array(a.length),
+      e;
+    for (e = 0; e < c; e++) d[e] = {
+      index: e,
+      value: a[e]
+    };
+    d.sort(function(a, c) {
+      return b(a.value, c.value) || a.index - c.index
+    });
+    for (e = 0; e < a.length; e++) a[e] = d[e].value
+  };
+  ol.array.findIndex = function(a, b) {
+    var c;
+    return a.every(function(d, e) {
+      c = e;
+      return !b(d, e, a)
+    }) ? -1 : c
+  };
+  ol.array.isSorted = function(a, b, c) {
+    var d = b || ol.array.numberSafeCompareFunction;
+    return a.every(function(b, f) {
+      if (0 === f) return !0;
+      var g = d(a[f - 1], b);
+      return !(0 < g || c && 0 === g)
+    })
+  };
+  ol.ResolutionConstraint = {};
+  ol.ResolutionConstraint.createSnapToResolutions = function(a) {
+    return function(b, c, d) {
+      if (void 0 !== b) return b = ol.array.linearFindNearest(a, b, d), b = ol.math.clamp(b + c, 0, a.length - 1), c = Math.floor(b), b != c && c < a.length - 1 ? a[c] / Math.pow(a[c] / a[c + 1], b - c) : a[c]
+    }
+  };
+  ol.ResolutionConstraint.createSnapToPower = function(a, b, c) {
+    return function(d, e, f) {
+      if (void 0 !== d) return d = Math.max(Math.floor(Math.log(b / d) / Math.log(a) + (-f / 2 + .5)) + e, 0), void 0 !== c && (d = Math.min(d, c)), b / Math.pow(a, d)
+    }
+  };
+  ol.RotationConstraint = {};
+  ol.RotationConstraint.disable = function(a, b) {
+    if (void 0 !== a) return 0
+  };
+  ol.RotationConstraint.none = function(a, b) {
+    if (void 0 !== a) return a + b
+  };
+  ol.RotationConstraint.createSnapToN = function(a) {
+    var b = 2 * Math.PI / a;
+    return function(a, d) {
+      if (void 0 !== a) return a = Math.floor((a + d) / b + .5) * b
+    }
+  };
+  ol.RotationConstraint.createSnapToZero = function(a) {
+    var b = a || ol.math.toRadians(5);
+    return function(a, d) {
+      if (void 0 !== a) return Math.abs(a + d) <= b ? 0 : a + d
+    }
+  };
+  ol.string = {};
+  ol.string.padNumber = function(a, b, c) {
+    a = void 0 !== c ? a.toFixed(c) : "" + a;
+    c = a.indexOf(".");
+    c = -1 === c ? a.length : c;
+    return c > b ? a : Array(1 + b - c).join("0") + a
+  };
+  ol.string.compareVersions = function(a, b) {
+    for (var c = ("" + a).split("."), d = ("" + b).split("."), e = 0; e < Math.max(c.length, d.length); e++) {
+      var f = parseInt(c[e] || "0", 10),
+        g = parseInt(d[e] || "0", 10);
+      if (f > g) return 1;
+      if (g > f) return -1
+    }
+    return 0
+  };
+  ol.coordinate = {};
+  ol.coordinate.add = function(a, b) {
+    a[0] += b[0];
+    a[1] += b[1];
+    return a
+  };
+  ol.coordinate.closestOnSegment = function(a, b) {
+    var c = a[0],
+      d = a[1],
+      e = b[0],
+      f = b[1],
+      g = e[0],
+      e = e[1],
+      h = f[0],
+      f = f[1],
+      k = h - g,
+      l = f - e,
+      c = 0 === k && 0 === l ? 0 : (k * (c - g) + l * (d - e)) / (k * k + l * l || 0);
+    0 >= c || (1 <= c ? (g = h, e = f) : (g += c * k, e += c * l));
+    return [g, e]
+  };
+  ol.coordinate.createStringXY = function(a) {
+    return function(b) {
+      return ol.coordinate.toStringXY(b, a)
+    }
+  };
+  ol.coordinate.degreesToStringHDMS_ = function(a, b, c) {
+    a = ol.math.modulo(a + 180, 360) - 180;
+    var d = Math.abs(3600 * a);
+    c = c || 0;
+    return Math.floor(d / 3600) + "\u00b0 " + ol.string.padNumber(Math.floor(d / 60 % 60), 2) + "\u2032 " + ol.string.padNumber(d % 60, 2, c) + "\u2033 " + b.charAt(0 > a ? 1 : 0)
+  };
+  ol.coordinate.format = function(a, b, c) {
+    return a ? b.replace("{x}", a[0].toFixed(c)).replace("{y}", a[1].toFixed(c)) : ""
+  };
+  ol.coordinate.equals = function(a, b) {
+    for (var c = !0, d = a.length - 1; 0 <= d; --d)
+      if (a[d] != b[d]) {
+        c = !1;
+        break
+      } return c
+  };
+  ol.coordinate.rotate = function(a, b) {
+    var c = Math.cos(b),
+      d = Math.sin(b),
+      e = a[1] * c + a[0] * d;
+    a[0] = a[0] * c - a[1] * d;
+    a[1] = e;
+    return a
+  };
+  ol.coordinate.scale = function(a, b) {
+    a[0] *= b;
+    a[1] *= b;
+    return a
+  };
+  ol.coordinate.sub = function(a, b) {
+    a[0] -= b[0];
+    a[1] -= b[1];
+    return a
+  };
+  ol.coordinate.squaredDistance = function(a, b) {
+    var c = a[0] - b[0],
+      d = a[1] - b[1];
+    return c * c + d * d
+  };
+  ol.coordinate.squaredDistanceToSegment = function(a, b) {
+    return ol.coordinate.squaredDistance(a, ol.coordinate.closestOnSegment(a, b))
+  };
+  ol.coordinate.toStringHDMS = function(a, b) {
+    return a ? ol.coordinate.degreesToStringHDMS_(a[1], "NS", b) + " " + ol.coordinate.degreesToStringHDMS_(a[0], "EW", b) : ""
+  };
+  ol.coordinate.toStringXY = function(a, b) {
+    return ol.coordinate.format(a, "{x}, {y}", b)
+  };
+  ol.easing = {};
+  ol.easing.easeIn = function(a) {
+    return Math.pow(a, 3)
+  };
+  ol.easing.easeOut = function(a) {
+    return 1 - ol.easing.easeIn(1 - a)
+  };
+  ol.easing.inAndOut = function(a) {
+    return 3 * a * a - 2 * a * a * a
+  };
+  ol.easing.linear = function(a) {
+    return a
+  };
+  ol.easing.upAndDown = function(a) {
+    return .5 > a ? ol.easing.inAndOut(2 * a) : 1 - ol.easing.inAndOut(2 * (a - .5))
+  };
+  ol.extent = {};
+  ol.extent.Corner = {
+    BOTTOM_LEFT: "bottom-left",
+    BOTTOM_RIGHT: "bottom-right",
+    TOP_LEFT: "top-left",
+    TOP_RIGHT: "top-right"
+  };
+  ol.extent.Relationship = {
+    UNKNOWN: 0,
+    INTERSECTING: 1,
+    ABOVE: 2,
+    RIGHT: 4,
+    BELOW: 8,
+    LEFT: 16
+  };
+  ol.extent.boundingExtent = function(a) {
+    for (var b = ol.extent.createEmpty(), c = 0, d = a.length; c < d; ++c) ol.extent.extendCoordinate(b, a[c]);
+    return b
+  };
+  ol.extent.boundingExtentXYs_ = function(a, b, c) {
+    ol.DEBUG && console.assert(0 < a.length, "xs length should be larger than 0");
+    ol.DEBUG && console.assert(0 < b.length, "ys length should be larger than 0");
+    var d = Math.min.apply(null, a),
+      e = Math.min.apply(null, b);
+    a = Math.max.apply(null, a);
+    b = Math.max.apply(null, b);
+    return ol.extent.createOrUpdate(d, e, a, b, c)
+  };
+  ol.extent.buffer = function(a, b, c) {
+    return c ? (c[0] = a[0] - b, c[1] = a[1] - b, c[2] = a[2] + b, c[3] = a[3] + b, c) : [a[0] - b, a[1] - b, a[2] + b, a[3] + b]
+  };
+  ol.extent.clone = function(a, b) {
+    return b ? (b[0] = a[0], b[1] = a[1], b[2] = a[2], b[3] = a[3], b) : a.slice()
+  };
+  ol.extent.closestSquaredDistanceXY = function(a, b, c) {
+    b = b < a[0] ? a[0] - b : a[2] < b ? b - a[2] : 0;
+    a = c < a[1] ? a[1] - c : a[3] < c ? c - a[3] : 0;
+    return b * b + a * a
+  };
+  ol.extent.containsCoordinate = function(a, b) {
+    return ol.extent.containsXY(a, b[0], b[1])
+  };
+  ol.extent.containsExtent = function(a, b) {
+    return a[0] <= b[0] && b[2] <= a[2] && a[1] <= b[1] && b[3] <= a[3]
+  };
+  ol.extent.containsXY = function(a, b, c) {
+    return a[0] <= b && b <= a[2] && a[1] <= c && c <= a[3]
+  };
+  ol.extent.coordinateRelationship = function(a, b) {
+    var c = a[1],
+      d = a[2],
+      e = a[3],
+      f = b[0],
+      g = b[1],
+      h = ol.extent.Relationship.UNKNOWN;
+    f < a[0] ? h |= ol.extent.Relationship.LEFT : f > d && (h |= ol.extent.Relationship.RIGHT);
+    g < c ? h |= ol.extent.Relationship.BELOW : g > e && (h |= ol.extent.Relationship.ABOVE);
+    h === ol.extent.Relationship.UNKNOWN && (h = ol.extent.Relationship.INTERSECTING);
+    return h
+  };
+  ol.extent.createEmpty = function() {
+    return [Infinity, Infinity, -Infinity, -Infinity]
+  };
+  ol.extent.createOrUpdate = function(a, b, c, d, e) {
+    return e ? (e[0] = a, e[1] = b, e[2] = c, e[3] = d, e) : [a, b, c, d]
+  };
+  ol.extent.createOrUpdateEmpty = function(a) {
+    return ol.extent.createOrUpdate(Infinity, Infinity, -Infinity, -Infinity, a)
+  };
+  ol.extent.createOrUpdateFromCoordinate = function(a, b) {
+    var c = a[0],
+      d = a[1];
+    return ol.extent.createOrUpdate(c, d, c, d, b)
+  };
+  ol.extent.createOrUpdateFromCoordinates = function(a, b) {
+    var c = ol.extent.createOrUpdateEmpty(b);
+    return ol.extent.extendCoordinates(c, a)
+  };
+  ol.extent.createOrUpdateFromFlatCoordinates = function(a, b, c, d, e) {
+    e = ol.extent.createOrUpdateEmpty(e);
+    return ol.extent.extendFlatCoordinates(e, a, b, c, d)
+  };
+  ol.extent.createOrUpdateFromRings = function(a, b) {
+    var c = ol.extent.createOrUpdateEmpty(b);
+    return ol.extent.extendRings(c, a)
+  };
+  ol.extent.equals = function(a, b) {
+    return a[0] == b[0] && a[2] == b[2] && a[1] == b[1] && a[3] == b[3]
+  };
+  ol.extent.extend = function(a, b) {
+    b[0] < a[0] && (a[0] = b[0]);
+    b[2] > a[2] && (a[2] = b[2]);
+    b[1] < a[1] && (a[1] = b[1]);
+    b[3] > a[3] && (a[3] = b[3]);
+    return a
+  };
+  ol.extent.extendCoordinate = function(a, b) {
+    b[0] < a[0] && (a[0] = b[0]);
+    b[0] > a[2] && (a[2] = b[0]);
+    b[1] < a[1] && (a[1] = b[1]);
+    b[1] > a[3] && (a[3] = b[1])
+  };
+  ol.extent.extendCoordinates = function(a, b) {
+    var c, d;
+    c = 0;
+    for (d = b.length; c < d; ++c) ol.extent.extendCoordinate(a, b[c]);
+    return a
+  };
+  ol.extent.extendFlatCoordinates = function(a, b, c, d, e) {
+    for (; c < d; c += e) ol.extent.extendXY(a, b[c], b[c + 1]);
+    return a
+  };
+  ol.extent.extendRings = function(a, b) {
+    var c, d;
+    c = 0;
+    for (d = b.length; c < d; ++c) ol.extent.extendCoordinates(a, b[c]);
+    return a
+  };
+  ol.extent.extendXY = function(a, b, c) {
+    a[0] = Math.min(a[0], b);
+    a[1] = Math.min(a[1], c);
+    a[2] = Math.max(a[2], b);
+    a[3] = Math.max(a[3], c)
+  };
+  ol.extent.forEachCorner = function(a, b, c) {
+    var d;
+    return (d = b.call(c, ol.extent.getBottomLeft(a))) || (d = b.call(c, ol.extent.getBottomRight(a))) || (d = b.call(c, ol.extent.getTopRight(a))) ? d : (d = b.call(c, ol.extent.getTopLeft(a))) ? d : !1
+  };
+  ol.extent.getArea = function(a) {
+    var b = 0;
+    ol.extent.isEmpty(a) || (b = ol.extent.getWidth(a) * ol.extent.getHeight(a));
+    return b
+  };
+  ol.extent.getBottomLeft = function(a) {
+    return [a[0], a[1]]
+  };
+  ol.extent.getBottomRight = function(a) {
+    return [a[2], a[1]]
+  };
+  ol.extent.getCenter = function(a) {
+    return [(a[0] + a[2]) / 2, (a[1] + a[3]) / 2]
+  };
+  ol.extent.getCorner = function(a, b) {
+    var c;
+    b === ol.extent.Corner.BOTTOM_LEFT ? c = ol.extent.getBottomLeft(a) : b === ol.extent.Corner.BOTTOM_RIGHT ? c = ol.extent.getBottomRight(a) : b === ol.extent.Corner.TOP_LEFT ? c = ol.extent.getTopLeft(a) : b === ol.extent.Corner.TOP_RIGHT ? c = ol.extent.getTopRight(a) : ol.asserts.assert(!1, 13);
+    return c
+  };
+  ol.extent.getEnlargedArea = function(a, b) {
+    return (Math.max(a[2], b[2]) - Math.min(a[0], b[0])) * (Math.max(a[3], b[3]) - Math.min(a[1], b[1]))
+  };
+  ol.extent.getForViewAndSize = function(a, b, c, d, e) {
+    var f = b * d[0] / 2;
+    d = b * d[1] / 2;
+    b = Math.cos(c);
+    var g = Math.sin(c);
+    c = f * b;
+    f *= g;
+    b *= d;
+    var h = d * g,
+      k = a[0],
+      l = a[1];
+    a = k - c + h;
+    d = k - c - h;
+    g = k + c - h;
+    c = k + c + h;
+    var h = l - f - b,
+      k = l - f + b,
+      m = l + f + b,
+      f = l + f - b;
+    return ol.extent.createOrUpdate(Math.min(a, d, g, c), Math.min(h, k, m, f), Math.max(a, d, g, c), Math.max(h, k, m, f), e)
+  };
+  ol.extent.getHeight = function(a) {
+    return a[3] - a[1]
+  };
+  ol.extent.getIntersectionArea = function(a, b) {
+    var c = ol.extent.getIntersection(a, b);
+    return ol.extent.getArea(c)
+  };
+  ol.extent.getIntersection = function(a, b, c) {
+    c = c ? c : ol.extent.createEmpty();
+    ol.extent.intersects(a, b) && (c[0] = a[0] > b[0] ? a[0] : b[0], c[1] = a[1] > b[1] ? a[1] : b[1], c[2] = a[2] < b[2] ? a[2] : b[2], c[3] = a[3] < b[3] ? a[3] : b[3]);
+    return c
+  };
+  ol.extent.getMargin = function(a) {
+    return ol.extent.getWidth(a) + ol.extent.getHeight(a)
+  };
+  ol.extent.getSize = function(a) {
+    return [a[2] - a[0], a[3] - a[1]]
+  };
+  ol.extent.getTopLeft = function(a) {
+    return [a[0], a[3]]
+  };
+  ol.extent.getTopRight = function(a) {
+    return [a[2], a[3]]
+  };
+  ol.extent.getWidth = function(a) {
+    return a[2] - a[0]
+  };
+  ol.extent.intersects = function(a, b) {
+    return a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1]
+  };
+  ol.extent.isEmpty = function(a) {
+    return a[2] < a[0] || a[3] < a[1]
+  };
+  ol.extent.returnOrUpdate = function(a, b) {
+    return b ? (b[0] = a[0], b[1] = a[1], b[2] = a[2], b[3] = a[3], b) : a
+  };
+  ol.extent.scaleFromCenter = function(a, b) {
+    var c = (a[2] - a[0]) / 2 * (b - 1),
+      d = (a[3] - a[1]) / 2 * (b - 1);
+    a[0] -= c;
+    a[2] += c;
+    a[1] -= d;
+    a[3] += d
+  };
+  ol.extent.intersectsSegment = function(a, b, c) {
+    var d = !1,
+      e = ol.extent.coordinateRelationship(a, b),
+      f = ol.extent.coordinateRelationship(a, c);
+    if (e === ol.extent.Relationship.INTERSECTING || f === ol.extent.Relationship.INTERSECTING) d = !0;
+    else {
+      var g = a[0],
+        h = a[1],
+        k = a[2];
+      a = a[3];
+      var l = c[0];
+      c = c[1];
+      b = (c - b[1]) / (l - b[0]);
+      f & ol.extent.Relationship.ABOVE && !(e & ol.extent.Relationship.ABOVE) && (d = l - (c - a) / b, d = d >= g && d <= k);
+      d || !(f & ol.extent.Relationship.RIGHT) || e & ol.extent.Relationship.RIGHT || (d = c - (l - k) * b, d = d >= h && d <= a);
+      d || !(f & ol.extent.Relationship.BELOW) ||
+      e & ol.extent.Relationship.BELOW || (d = l - (c - h) / b, d = d >= g && d <= k);
+      d || !(f & ol.extent.Relationship.LEFT) || e & ol.extent.Relationship.LEFT || (d = c - (l - g) * b, d = d >= h && d <= a)
+    }
+    return d
+  };
+  ol.extent.applyTransform = function(a, b, c) {
+    a = [a[0], a[1], a[0], a[3], a[2], a[1], a[2], a[3]];
+    b(a, a, 2);
+    return ol.extent.boundingExtentXYs_([a[0], a[2], a[4], a[6]], [a[1], a[3], a[5], a[7]], c)
+  };
+  ol.geom = {};
+  ol.geom.GeometryLayout = {
+    XY: "XY",
+    XYZ: "XYZ",
+    XYM: "XYM",
+    XYZM: "XYZM"
+  };
+  ol.geom.GeometryType = {
+    POINT: "Point",
+    LINE_STRING: "LineString",
+    LINEAR_RING: "LinearRing",
+    POLYGON: "Polygon",
+    MULTI_POINT: "MultiPoint",
+    MULTI_LINE_STRING: "MultiLineString",
+    MULTI_POLYGON: "MultiPolygon",
+    GEOMETRY_COLLECTION: "GeometryCollection",
+    CIRCLE: "Circle"
+  };
+  ol.functions = {};
+  ol.functions.TRUE = function() {
+    return !0
+  };
+  ol.functions.FALSE = function() {
+    return !1
+  };
+  /*
 
  Latitude/longitude spherical geodesy formulae taken from
  http://www.movable-type.co.uk/scripts/latlong.html
