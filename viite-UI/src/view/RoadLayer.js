@@ -64,23 +64,46 @@
         coordinate = map.getEventCoordinate(event.originalEvent);
         //TODO roadData !== null is there for test having no info ready (race condition where hover often loses) should be somehow resolved
         if (infoContent !== null) {
-          if (roadData !== null || (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0 )) {
-            infoContent.innerHTML = '<p>' +
-              'Tienumero: ' + roadData.roadNumber + '<br>' +
+          if (roadData !== null && (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0 )) {
+            infoContent.innerHTML = 'Tienumero: ' + roadData.roadNumber + '<br>' +
               'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
               'Ajorata: ' + roadData.trackCode + '<br>' +
               'AET: ' + roadData.startAddressM + '<br>' +
               'LET: ' + roadData.endAddressM + '<br>' +
-              'Linkin ID: ' + roadData.linkId + '<br>' +'</p>'
+              'Tietyyppi: ' + displayRoadType(roadData.roadTypeId) + '<br>'
             ;
           } else {
-            infoContent.innerHTML = '<p>' +
-              'Tuntematon tien segmentti' + '</p>';
+            infoContent.innerHTML = 'Linkillä ' + '<br>' + 'ei ole tieosoitetta';
           }
         }
       }
       overlay.setPosition(coordinate);
     };
+
+      var displayRoadType = function (roadTypeCode) {
+          var roadType;
+          switch (roadTypeCode) {
+              case LinkValues.RoadTypeShort.PublicRoad.value:
+                  roadType = LinkValues.RoadTypeShort.PublicRoad.description;
+                  break;
+              case LinkValues.RoadTypeShort.FerryRoad.value:
+                  roadType = LinkValues.RoadTypeShort.FerryRoad.description;
+                  break;
+              case LinkValues.RoadTypeShort.MunicipalityStreetRoad.value:
+                  roadType = LinkValues.RoadTypeShort.MunicipalityStreetRoad.description;
+                  break;
+              case LinkValues.RoadTypeShort.PublicUnderConstructionRoad.value:
+                  roadType = LinkValues.RoadTypeShort.PublicUnderConstructionRoad.description;
+                  break;
+              case LinkValues.RoadTypeShort.PrivateRoadType.value:
+                  roadType = LinkValues.RoadTypeShort.PrivateRoadType.description;
+                  break;
+              case roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.value:
+                  roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.description;
+                  break;
+          }
+          return roadType;
+      }
 
     var displayNodeInfo = function (event, pixel) {
       var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature) {
