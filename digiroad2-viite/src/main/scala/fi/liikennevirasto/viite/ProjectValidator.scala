@@ -578,7 +578,10 @@ class ProjectValidator {
         val leftRoadTypes = left.map(_.roadType).distinct.sortBy(_.value).toSet
         val rightRoadTypes = right.map(_.roadType).distinct.sortBy(_.value).toSet
         if (leftRoadTypes != rightRoadTypes) {
-          Some(left.head)
+          if(left.nonEmpty)
+            Some(left.head)
+          else
+            Some(right.head)
         } else None
     }
 

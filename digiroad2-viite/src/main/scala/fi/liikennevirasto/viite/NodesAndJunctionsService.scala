@@ -100,10 +100,10 @@ class NodesAndJunctionsService() {
     }
 
       val lastNodeId = {
-        val existingRoadwayPoint = roadwayPointDAO.fetch(lastLink.roadwayNumber, lastLink.startAddrMValue)
+        val existingRoadwayPoint = roadwayPointDAO.fetch(lastLink.roadwayNumber, lastLink.endAddrMValue)
         if(existingRoadwayPoint.nonEmpty)
           existingRoadwayPoint.get.id
-        else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.startAddrMValue, lastLink.createdBy.getOrElse("-"))
+        else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
       }
 
       val nodePoints = Seq(NodePoint(NewIdValue, BeforeAfter.Before, headNodeId, None, DateTime.now(), None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue),
