@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.RoadwayPointDAO
 import fi.liikennevirasto.viite.dao.RoadwayPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
 import fi.liikennevirasto.viite.dao._
@@ -564,12 +565,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           if (roadwayCheckSum.getOrElse(roadwayNumber, -1) != roadwayLinearLocations.map(_.orderNumber).sum) {
             linearLocationDAO.expireByIds(existingLinearLocations.map(_.id).toSet)
             linearLocationDAO.create(roadwayLinearLocations)
-            handleCalibrationPoints(roadwayLinearLocations, createdBy = "applyChanges")
+            handleCalibrationPoints(roadwayLinearLocations, username = "applyChanges")
           }
       }
 
       linearLocationDAO.create(changeSet.newLinearLocations.map(l => l.copy(id = NewIdValue)))
-      handleCalibrationPoints(changeSet.newLinearLocations, createdBy = "applyChanges")
+      handleCalibrationPoints(changeSet.newLinearLocations, username = "applyChanges")
       //TODO Implement the missing at user story VIITE-1596
     }
 
@@ -606,7 +607,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   }
 
-  def handleCalibrationPoints(linearLocations: Iterable[LinearLocation], createdBy: String = "-"): Unit = {
+  def handleCalibrationPoints(linearLocations: Iterable[LinearLocation], username: String = "-"): Unit = {
     val startCalibrationPointsToCheck = linearLocations.filter(_.startCalibrationPoint.isDefined)
     val endCalibrationPointsToCheck = linearLocations.filter(_.endCalibrationPoint.isDefined)
 
@@ -614,8 +615,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val currentCPs = CalibrationPointDAO.fetchByLinkId(linearLocations.map(l => l.linkId))
     val currentStartCP = currentCPs.filter(_.startOrEnd == 0)
     val currentEndCP = currentCPs.filter(_.startOrEnd == 1)
-    val startCPsToBeExpired = currentStartCP.filter(c => startCalibrationPointsToCheck.filter(sc => sc.linkId == c.linkId).isEmpty)
-    val endCPsToBeExpired = currentEndCP.filter(c => endCalibrationPointsToCheck.filter(sc => sc.linkId == c.linkId).isEmpty)
+    val startCPsToBeExpired = currentStartCP.filter(c => !startCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId))
+    val endCPsToBeExpired = currentEndCP.filter(c => !endCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId))
 
     // Expire calibration points
     startCPsToBeExpired.foreach {
@@ -642,34 +643,50 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       cal =>
         val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 0)
         if (calibrationPoint.isDefined)
-          roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
+          roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.startCalibrationPoint.get, username)
         else {
           val roadwayPointId =
             roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
               case Some(roadwayPoint) =>
                 roadwayPoint.id
-              case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
+              case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, username)
             }
-          CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = createdBy)
+          CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = username)
         }
     }
     endCalibrationPointsToCheck.foreach {
       cal =>
         val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 1)
         if (calibrationPoint.isDefined)
-          roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.endCalibrationPoint.get, createdBy)
+          roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.endCalibrationPoint.get, username)
         else {
           val roadwayPointId =
             roadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.get) match {
               case Some(roadwayPoint) =>
                 roadwayPoint.id
-              case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, createdBy)
+              case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, username)
             }
-          CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 1, calType = CalibrationPointType.Mandatory, createdBy = createdBy)
+          CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 1, calType = CalibrationPointType.Mandatory, createdBy = username)
         }
     }
   }
 
+  def updateRoadwayPoints(projectLinks: Seq[ProjectLink], username: String = "-"): Unit = {
+    projectLinks.groupBy(_.roadwayNumber).foreach {
+      case (roadwayNumber, projectLinksOnRoadway) =>
+        val currentRoadwayPoints = roadwayPointDAO.fetchByRoadwayNumber(roadwayNumber)
+        projectLinksOnRoadway.foreach {
+          pl =>
+            val startPoint = currentRoadwayPoints.find(rwp => rwp.addrMValue == pl.originalStartAddrMValue)
+            val endPoint = currentRoadwayPoints.find(rwp => rwp.addrMValue == pl.originalEndAddrMValue)
+            if (startPoint.isDefined && pl.startAddrMValue != pl.originalStartAddrMValue) {
+              roadwayPointDAO.update(startPoint.get.id, if (pl.reversed) pl.endAddrMValue else pl.startAddrMValue, username)
+            } else if (endPoint.isDefined && pl.endAddrMValue != pl.originalEndAddrMValue) {
+              roadwayPointDAO.update(endPoint.get.id, if (pl.reversed) pl.startAddrMValue else pl.endAddrMValue, username)
+            }
+        }
+    }
+  }
 
 }
 
@@ -680,95 +697,82 @@ sealed trait RoadClass {
 }
 
 object RoadClass {
-  val values = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass, StreetClass
-    , RampsAndRoundAboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass, ConstructionSiteTemporaryClass, PrivateRoadClass, NoClass)
+  val values: Set[RoadClass] = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass, StreetClass,
+    RampsAndRoundAboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass, ConstructionSiteTemporaryClass,
+    PrivateRoadClass, NoClass)
 
   def get(roadNumber: Int): Int = {
     values.find(_.roads contains roadNumber).getOrElse(NoClass).value
   }
 
   case object HighwayClass extends RoadClass {
-    def value = 1;
-
-    def roads: Range.Inclusive = 1 to 39;
+    def value = 1
+    def roads: Range.Inclusive = 1 to 39
   }
 
   case object MainRoadClass extends RoadClass {
-    def value = 2;
-
-    def roads: Range.Inclusive = 40 to 99;
+    def value = 2
+    def roads: Range.Inclusive = 40 to 99
   }
 
   case object RegionalClass extends RoadClass {
-    def value = 3;
-
-    def roads: Range.Inclusive = 100 to 999;
+    def value = 3
+    def roads: Range.Inclusive = 100 to 999
   }
 
   case object ConnectingClass extends RoadClass {
-    def value = 4;
-
-    def roads: Range.Inclusive = 1000 to 9999;
+    def value = 4
+    def roads: Range.Inclusive = 1000 to 9999
   }
 
   case object MinorConnectingClass extends RoadClass {
-    def value = 5;
-
-    def roads: Range.Inclusive = 10000 to 19999;
+    def value = 5
+    def roads: Range.Inclusive = 10000 to 19999
   }
 
   case object StreetClass extends RoadClass {
-    def value = 6;
-
-    def roads: Range.Inclusive = 40000 to 49999;
+    def value = 6
+    def roads: Range.Inclusive = 40000 to 49999
   }
 
   case object RampsAndRoundAboutsClass extends RoadClass {
-    def value = 7;
-
-    def roads: Range.Inclusive = 20001 to 39999;
+    def value = 7
+    def roads: Range.Inclusive = 20001 to 39999
   }
 
   case object PedestrianAndBicyclesClassA extends RoadClass {
-    def value = 8;
-
-    def roads: Range.Inclusive = 70001 to 89999;
+    def value = 8
+    def roads: Range.Inclusive = 70001 to 89999
   }
 
   case object PedestrianAndBicyclesClassB extends RoadClass {
-    def value = 8;
-
-    def roads: Range.Inclusive = 90001 to 99999;
+    def value = 8
+    def roads: Range.Inclusive = 90001 to 99999
   }
 
   case object WinterRoadsClass extends RoadClass {
-    def value = 9;
-
-    def roads: Range.Inclusive = 60001 to 61999;
+    def value = 9
+    def roads: Range.Inclusive = 60001 to 61999
   }
 
   case object PathsClass extends RoadClass {
-    def value = 10;
-
-    def roads: Range.Inclusive = 62001 to 62999;
+    def value = 10
+    def roads: Range.Inclusive = 62001 to 62999
   }
 
   case object ConstructionSiteTemporaryClass extends RoadClass {
-    def value = 11;
-
-    def roads: Range.Inclusive = 9900 to 9999;
+    def value = 11
+    def roads: Range.Inclusive = 9900 to 9999
   }
 
   case object PrivateRoadClass extends RoadClass {
-    def value = 12;
-
-    def roads: Range.Inclusive = 50001 to 59999;
+    def value = 12
+    def roads: Range.Inclusive = 50001 to 59999
   }
 
   case object NoClass extends RoadClass {
-    def value = 99;
-
-    def roads: Range.Inclusive = 0 to 0;
+    def value = 99
+    def roads: Range.Inclusive = 0 to 0
   }
 
 }
@@ -802,7 +806,7 @@ object AddressConsistencyValidator {
   }
 
   object AddressError {
-    val values = Set(OverlappingRoadAddresses, InconsistentTopology, InconsistentLrmHistory, Inconsistent2TrackCalibrationPoints, InconsistentContinuityCalibrationPoints, MissingEdgeCalibrationPoints,
+    val values: Set[AddressError] = Set(OverlappingRoadAddresses, InconsistentTopology, InconsistentLrmHistory, Inconsistent2TrackCalibrationPoints, InconsistentContinuityCalibrationPoints, MissingEdgeCalibrationPoints,
       InconsistentAddressValues, MissingStartingLink)
 
     case object OverlappingRoadAddresses extends AddressError {
