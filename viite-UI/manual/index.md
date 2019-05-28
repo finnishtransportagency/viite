@@ -277,13 +277,6 @@ Keskeneräisen projektin voi poistaa Poista projekti –painikkeella (9), jolloi
 
 _Kuva 6.4: Kun tieosa on varattu projektiin, Viite kohdistaa kartan siten, että tieosa näkyy kartalla kokonaisuudessaan._  
 
-Varauksen yhteydessä järjestelmä tekee varattaville tieosille tarkastukset:
-
-- Onko varattava tieosa olemassa projektin voimaantulopäivänä
-- Onko varattava tieosa vapaana vai onko se jo varattu toiseen projektiin
-
-Virheellisistä varausyrityksistä järjestelmä antaa virheilmoituksen.  __Käyttäjän tulee huomioida, että varauksen yhteydessä kaikki kentät (TIE, AOSA, LOSA) tulee täyttää, tai käyttäjä saa virheilmoituksen!__
-
 6.2 Olemassa oleva tieosoiteprojekti
 --------------------------
 
