@@ -252,6 +252,13 @@ _kuva 6.2: Tieosoiteprojektin perustietojen täyttäminen._
 
 Projektin tieosat lisätään täydentämällä niiden tiedot kenttiin TIE, AOSA sekä LOSA ja painamalla painiketta Varaa (6). __Kaikki kentät tulee täyttää, jos haluaa varata tieosan!__ 
 
+Varauksen yhteydessä järjestelmä tekee varattaville tieosille tarkastukset:
+
+- Onko varattava tieosa olemassa projektin voimaantulopäivänä
+- Onko varattava tieosa vapaana vai onko se jo varattu toiseen projektiin
+
+Virheellisistä varausyrityksistä järjestelmä antaa virheilmoituksen.  __Käyttäjän tulee huomioida, että varauksen yhteydessä kaikki kentät (TIE, AOSA, LOSA) tulee täyttää, tai käyttäjä saa virheilmoituksen!__
+
 Varaa-painikkeen klikkauksen jälkeen tieosan tiedot tulevat näkyviin lomakkeelle (7).
 
 ![Uusi tieosoiteprojekti](k22.jpg)
@@ -261,6 +268,8 @@ _kuva 6.3: Tieosan tiedot lomakkeella Varaa-painikkeen painamisen jälkeen._
 Tieosoiteprojekti tallentuu automaattisesti painikkeesta Jatka toimenpiteisiin, jolloin tiedot tallentuvat tietokantaan ja sovellus siirtyy toimenpidenäytölle. Varaamisen yhteydessä Viite kohdistaa kartan varatun tieosan alkuun. Poistu-painikkeesta projekti suljetaan ja käyttäjältä varmistetaan, halutaanko tallentamattomat muutokset tallentaa. Projektiin pääsee palaamaan Tieosoiteprojektit-listan kautta. 
 
 Käyttäjä voi poistaa varattuja tieosia klikkaamalla Roskakori-kuvaketta (8) valitsemansa tieosan kohdalla Projektiin varatut tieosat -listalla. Mikäli tieosille ei ole tehty muutoksia, vaan ne on vain varattu projektiin, varaus poistetaan projektista. Jos tieosille on tehty muutoksia, Viite pyytää käyttäjää vahvistamaan poiston.
+
+Käyttäjä voi poistaa projektissa muodostettuja tieosia klikkaamalla Roskakori-kuvaketta valitsemiensa tieosien kohdalla Projektissa muodostetut tieosat -listalla. Käyttäjää pyydetään vahvistamaan poisto.  
 
 Keskeneräisen projektin voi poistaa Poista projekti –painikkeella (9), jolloin projekti ja sen varaamat aihiot ja tehdyt muutokset poistetaan. Viite pyytää käyttäjää vahvistamaan poiston. 
 
