@@ -84,6 +84,7 @@ class NodesAndJunctionsService() {
   2)  A node template is always created if :
     2.1)  road number is < 20000 or between 40000-70000
     2.2)  and at the beginning/end of each road part, ely borders, or when road type changes
+    2.3)  on each junction with a road number (except number over 70 000)
 
     if there is no roadwaypoint linked to the roadwayNumber and addr
    */
@@ -106,10 +107,12 @@ class NodesAndJunctionsService() {
         else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
       }
 
-      val nodePoints = Seq(NodePoint(NewIdValue, BeforeAfter.Before, headNodeId, None, DateTime.now(), None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue),
+      val edgeNodePoints = Seq(NodePoint(NewIdValue, BeforeAfter.Before, headNodeId, None, DateTime.now(), None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue),
         NodePoint(NewIdValue, BeforeAfter.After, lastNodeId, None, DateTime.now(), None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.startAddrMValue)
       )
-      nodePointDAO.create(nodePoints)
+
+      //TODO wait for junction templates algorithm to be done in VIITE-1938
+      nodePointDAO.create(edgeNodePoints)
 
     }.toSeq
   }
