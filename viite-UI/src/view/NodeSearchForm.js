@@ -60,8 +60,7 @@
     };
 
     var nodesAndRoadAttributesHtmlList = function () {
-      var text = '<label class="control-label-small" style="text-transform:none;color:yellow;">TIE / AJR / OSA / ET</label></br>';
-      // var text = '';
+      var text = '<label class="control-label-small" style="text-transform:none;color:white;">TIE / AJR / OSA / ET</label></br>';
       var index = 0;
       var nodes = nodeCollection.getNodesWithAttributes();
       _.each(nodes, function (nodeWithAttributes) {
