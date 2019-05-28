@@ -75,5 +75,23 @@ class NodesAndJunctionsService() {
     }
   }
 
+  def getNodeTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
+    withDynSession {
+      time(logger, "Fetch nodes point templates") {
+        nodePointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+      }
+    }
+  }
+
+  def getJunctionTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionPoint] = {
+    withDynSession {
+      time(logger, "Fetch nodes point templates") {
+        junctionPointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+      }
+    }
+  }
+
+
+
 
 }
