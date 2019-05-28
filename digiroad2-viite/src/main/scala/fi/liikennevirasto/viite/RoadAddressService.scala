@@ -641,9 +641,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     startCalibrationPointsToCheck.foreach {
       cal =>
         val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 0)
-        if (calibrationPoint.isDefined)
-          roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
-        else {
+        if (calibrationPoint.isDefined){
+          if(roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get).isEmpty)
+            roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.startCalibrationPoint.get, createdBy)
+        } else {
           val roadwayPointId =
             roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
               case Some(roadwayPoint) =>
