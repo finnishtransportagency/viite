@@ -73,19 +73,26 @@
       function addDistance(item) {
         var currentLocation = applicationModel.getCurrentLocation();
 
-        var distance = GeometryUtils.distanceOfPoints({
-          x: currentLocation.lon,
-          y: currentLocation.lat
-        }, {
-          x: item.lon,
-          y: item.lat
-        });
+        var distance = GeometryUtils.distanceOfPoints(
+          [currentLocation[0], currentLocation[1]],
+          [item.lon, item.lat]);
         return _.assign(item, {
           distance: distance
         });
       }
 
-      var input = LocationInputParser.parse(searchString);
+//       if (centerLonLat) {
+//         container.find('.cbValue[axis="lat"]').text(Math.round(centerLonLat[1]));
+//         container.find('.cbValue[axis="lon"]').text(Math.round(centerLonLat[0]));
+//       }
+//     });    eventbus.on('map:moved', function(event) {
+//   centerLonLat = event.bbox.getCenterLonLat();
+//   container.find('.cbValue[axis="lat"]').text(Math.round(centerLonLat.lat));
+//   container.find('.cbValue[axis="lon"]').text(Math.round(centerLonLat.lon));
+// });
+
+
+var input = LocationInputParser.parse(searchString);
       var resultByInputType = {
         coordinate: resultFromCoordinates,
         street: geocode,
