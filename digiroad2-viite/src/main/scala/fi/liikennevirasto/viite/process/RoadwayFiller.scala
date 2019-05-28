@@ -10,8 +10,6 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 object RoadwayFiller {
-
-  private val logger = LoggerFactory.getLogger(getClass)
   private val roadwayAddressMapper = new RoadwayAddressMapper(new RoadwayDAO, new LinearLocationDAO)
 
   def generateNewRoadwaysWithHistory(changeSource: RoadwayChangeSection, changeTarget: RoadwayChangeSection, projectLinks: Seq[ProjectLink], currentRoadway: Roadway, newRoadwayNumber: Boolean, projectStartDate: DateTime): Seq[Roadway] = {
@@ -77,8 +75,7 @@ object RoadwayFiller {
           && projectLink.roadPartNumber == changeTarget.startRoadPartNumber.get)
         .sortBy(_.startAddrMValue)
       val roadways =
-        if (changeSource.roadNumber == changeTarget.roadNumber && changeSource.startRoadPartNumber == changeTarget.startRoadPartNumber && changeSource.trackCode == changeTarget.trackCode &&
-          (projectLinksInRoadway.last.endAddrMValue - projectLinksInRoadway.head.startAddrMValue) == (currentRoadway.endAddrMValue - currentRoadway.startAddrMValue)) {
+        if ((projectLinksInRoadway.last.endAddrMValue - projectLinksInRoadway.head.startAddrMValue) == (currentRoadway.endAddrMValue - currentRoadway.startAddrMValue)) {
           Seq(Roadway(NewIdValue, currentRoadway.roadwayNumber, changeTarget.roadNumber.get, changeTarget.startRoadPartNumber.get, changeTarget.roadType.get, Track.apply(changeTarget.trackCode.get.toInt), changeTarget.discontinuity.get,
             projectLinks.head.startAddrMValue, projectLinks.last.endAddrMValue, projectLinks.head.reversed, projectLinks.head.startDate.get, None, createdBy = projectLinks.head.createdBy.get, currentRoadway.roadName,
             changeTarget.ely.get, NoTermination))
