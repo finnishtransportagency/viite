@@ -81,18 +81,7 @@
         });
       }
 
-//       if (centerLonLat) {
-//         container.find('.cbValue[axis="lat"]').text(Math.round(centerLonLat[1]));
-//         container.find('.cbValue[axis="lon"]').text(Math.round(centerLonLat[0]));
-//       }
-//     });    eventbus.on('map:moved', function(event) {
-//   centerLonLat = event.bbox.getCenterLonLat();
-//   container.find('.cbValue[axis="lat"]').text(Math.round(centerLonLat.lat));
-//   container.find('.cbValue[axis="lon"]').text(Math.round(centerLonLat.lon));
-// });
-
-
-var input = LocationInputParser.parse(searchString);
+      var input = LocationInputParser.parse(searchString);
       var resultByInputType = {
         coordinate: resultFromCoordinates,
         street: geocode,
