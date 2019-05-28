@@ -2461,4 +2461,22 @@ Left|      |Right
     }
   }
 
+  test("Test checkTrackRoadType When there are different Road Types in each Track Then ProjectValidator should show DistinctRoadTypesBetweenTracks") {
+    runWithRollback {
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
+      val (left, right) = projectLinks.partition(_.track == LeftSide)
+      val endOfRoadLeft = left.init :+ left.last.copy(discontinuity = EndOfRoad)
+      val endOfRoadRight = right.init :+ right.last.copy(discontinuity = EndOfRoad)
+      val endOfRoadSet = endOfRoadLeft ++ endOfRoadRight
+
+      mockEmptyRoadAddressServiceCalls()
+
+      projectValidator.checkRoadContinuityCodes(project, endOfRoadSet).distinct should have size 0
+      val brokenContinuity = endOfRoadSet.tail :+ endOfRoadSet.head.copy(roadType = RoadType.FerryRoad)
+      val errors = projectValidator.checkTrackCodePairing(project, brokenContinuity).distinct
+      errors should have size 1
+      errors.head.validationError should be(projectValidator.ValidationErrorList.DistinctRoadTypesBetweenTracks)
+    }
+  }
+
 }
