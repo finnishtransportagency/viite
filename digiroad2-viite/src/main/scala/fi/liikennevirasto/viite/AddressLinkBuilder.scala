@@ -31,7 +31,7 @@ trait AddressLinkBuilder {
       MunicipalityDAO.getMunicipalityRoadMaintainers
     }
 
-  lazy  val municipalityNamesMapping: Map[Long, String] = if (OracleDatabase.isWithinSession)
+  lazy val municipalityNamesMapping: Map[Long, String] = if (OracleDatabase.isWithinSession)
     MunicipalityDAO.getMunicipalityNames
   else
     OracleDatabase.withDynSession {
