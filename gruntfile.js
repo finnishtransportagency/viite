@@ -12,6 +12,9 @@ module.exports = function(grunt) {
       staging: {
         NODE_ENV: 'STAGING'
       },
+      kmtkdevtest: {
+        NODE_ENV: 'KMTKDEVTEST'
+      },
       testing: {
         NODE_ENV: 'PRODUCTION'
       },
