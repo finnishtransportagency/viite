@@ -620,7 +620,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val linkId = 222222222l
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber, linkId = linkId, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = 2222l, linkId = 333333333l)))
-      val locations = linearLocationDAO.fetchRoadwayByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), Seq())
+      val locations = linearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), Seq())
       locations.size should be(2)
       locations.count(l => l.id == id1) should be(1)
       locations.count(l => l.id == id2) should be(1)
@@ -648,7 +648,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
         Some("ROAD 2"), 1, TerminationCode.NoTermination)))
 
       val roadNumberFilter = Seq((100, 100))
-      val locations = linearLocationDAO.fetchRoadwayByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), roadNumberFilter)
+      val locations = linearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), roadNumberFilter)
       locations.size should be(2)
       locations.count(l => l.id == id1) should be(1)
       locations.count(l => l.id == id2) should be(1)

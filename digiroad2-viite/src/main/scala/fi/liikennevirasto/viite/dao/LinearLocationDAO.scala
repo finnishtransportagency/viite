@@ -98,6 +98,14 @@ case class LinearLocation(id: Long, orderNumber: Double, linkId: Long, startMVal
     this.copy(geometry = newGeometry)
   }
 
+  def getFirstPoint: Point = {
+    if (sideCode == SideCode.TowardsDigitizing) geometry.head else geometry.last
+  }
+
+  def getLastPoint: Point = {
+    if (sideCode == SideCode.TowardsDigitizing) geometry.last else geometry.head
+  }
+
 }
 
 //TODO Rename all the method names to follow a rule like fetchById instead of have fetchById and QueryById
@@ -539,7 +547,7 @@ class LinearLocationDAO {
     }
   }
 
-  def fetchRoadwayByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[LinearLocation] = {
+  def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[LinearLocation] = {
     time(logger, "Fetch all the linear locations of the matching roadways by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
