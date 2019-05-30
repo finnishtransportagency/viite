@@ -99,7 +99,7 @@ class NodesAndJunctionsService() {
           junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue)))
       }
 
-      //check existing of junction points connecting to head point of project link
+      //check existing of project link points connecting to head point of project link
       roadsOutTail.foreach { r =>
         if (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(r.roadwayNumber, r.endAddrMValue).isEmpty)
           junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.startAddrMValue)))
@@ -107,8 +107,8 @@ class NodesAndJunctionsService() {
         if (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue).isEmpty)
           junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue)))
       }
-      }
     }
+  }
 
   /*
   1)  The nodes are created only for tracks 0 and 1
@@ -138,13 +138,11 @@ class NodesAndJunctionsService() {
         else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
       }
 
-      val edgeNodePoints = Seq(NodePoint(NewIdValue, BeforeAfter.Before, headNodeId, None, DateTime.now(), None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue),
-        NodePoint(NewIdValue, BeforeAfter.After, lastNodeId, None, DateTime.now(), None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.startAddrMValue)
+      val nodePoints = Seq(NodePoint(NewIdValue, BeforeAfter.After, headNodeId, None, DateTime.now(), None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue),
+        NodePoint(NewIdValue, BeforeAfter.Before, lastNodeId, None, DateTime.now(), None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue)
       )
 
-      //TODO wait for junction templates algorithm to be done in VIITE-1938
-      nodePointDAO.create(edgeNodePoints)
-
+      nodePointDAO.create(nodePoints)
     }.toSeq
   }
 
