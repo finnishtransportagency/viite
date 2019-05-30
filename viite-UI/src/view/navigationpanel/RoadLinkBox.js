@@ -35,7 +35,7 @@
 
     var nodeTemplatePicture = $('' +
       '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-      '<object type="image/svg+xml" data="images/node-template.svg" style="margin-right: 5px; margin-top: 5px">\n' +
+      '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin-right: 5px; margin-top: 5px">\n' +
       '    <param name="number" value="99"/>\n' +
       '</object>' +
       '<div class="label">Solmukohta-aihio</div>' +

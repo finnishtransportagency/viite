@@ -3,9 +3,19 @@
     var me = this;
     var nodes = [];
     var nodesWithAttributes = [];
+    var nodePointTemplates = [];
+    var junctionTemplates = [];
 
     this.getNodes = function() {
       return nodes;
+    };
+
+    this.setNodePointTemplates = function(list) {
+      nodePointTemplates = list;
+    };
+
+    this.setJunctionTemplates = function(list) {
+      junctionTemplates = list;
     };
 
     this.setNodes = function(list) {
@@ -34,9 +44,22 @@
       });
     };
 
-    eventbus.on('node:fetched', function(nodes, zoom) {
+    eventbus.on('node:fetched', function(fetchResult, zoom) {
+      var nodes = _.filter(fetchResult, function(node){
+        return !_.isUndefined(node.node) ;
+      });
+      var nodePointTemplates = _.map(_.filter(fetchResult, function(node){
+        return !_.isUndefined(node.nodePointTemplate) ;
+      }), function (nodePointTemp) {
+        return nodePointTemp.nodePointTemplate;
+      });
+      var junctionTemplates = _.filter(fetchResult, function(node){
+        return !_.isUndefined(node.junctionTemplate) ;
+      });
       me.setNodes(nodes);
-      eventbus.trigger('node:addNodesToMap', nodes, zoom);
+      me.setNodePointTemplates(nodePointTemplates);
+      me.setJunctionTemplates(junctionTemplates);
+      eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionTemplates, zoom);
     });
 
     eventbus.on('nodeSearchTool:clickNode', function (index, map) {
