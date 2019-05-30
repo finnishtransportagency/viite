@@ -4,6 +4,7 @@ import java.io.IOException
 import java.sql.SQLException
 import java.util.Date
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
@@ -2024,8 +2025,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadwayDAO.create(roadwaysToInsert)
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, createdBy = project.createdBy)
-      nodesNJunctionsService.handleJunctionPointTemplates(projectLinks)
-      nodesNJunctionsService.handleNodePointTemplates(projectLinks)
+//      nodesNJunctionsService.handleJunctionPointTemplates(generatedRoadways.flatMap(_._3))
+      nodesNJunctionsService.handleNodePointTemplates(generatedRoadways.flatMap(_._3))
       handleNewRoadNames(roadwayChanges, project)
       handleTransferAndNumbering(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)

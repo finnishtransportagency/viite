@@ -87,26 +87,43 @@ class NodesAndJunctionsService() {
     val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt))
     filteredLinks.foreach{ link =>
       val roadNumberLimits = Seq((0, 19999), (40001, 69999))
-      val roadsInHead = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(link.getFirstPoint, link.getFirstPoint), roadNumberLimits).filterNot(rw => rw.roadNumber == link.roadNumber && rw.roadPartNumber == link.roadPartNumber).filter(_.connected(link.getFirstPoint))
-      val roadsOutTail = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(link.getLastPoint, link.getLastPoint), roadNumberLimits).filterNot(rw => rw.roadNumber == link.roadNumber && rw.roadPartNumber == link.roadPartNumber).filter(ra => link.connected(ra.getFirstPoint))
+      val headRoads = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(link.getFirstPoint, link.getFirstPoint), roadNumberLimits).filterNot(rw => rw.roadNumber == link.roadNumber && rw.roadPartNumber == link.roadPartNumber)
+      val tailRoads = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(link.getLastPoint, link.getLastPoint), roadNumberLimits).filterNot(rw => rw.roadNumber == link.roadNumber && rw.roadPartNumber == link.roadPartNumber)
 
-      //check existance of junction points connecting to head point of project link
-      roadsInHead.foreach { r =>
+      val roadsToHead = headRoads.filter(_.connected(link.getFirstPoint))
+      val roadsFromHead = headRoads.filter(r => link.getFirstPoint.connected(r.getFirstPoint))
+
+      val roadsFromTail = tailRoads.filter(r => link.getLastPoint.connected(r.getFirstPoint))
+      val roadsToTail = tailRoads.filter(_.getLastPoint.connected(link.getLastPoint))
+
+
+      //check existence of roads connecting to head point of project link
+      /*
+      R:road
+      L:project link
+      |--R-->|
+
+       */
+      roadsToHead.foreach { r =>
         if (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(r.roadwayNumber, r.endAddrMValue).isEmpty)
-          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue)))
+          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue)))
 
         if (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue).isEmpty)
-          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue)))
+          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue)))
       }
 
-      //check existing of project link points connecting to head point of project link
-      roadsOutTail.foreach { r =>
-        if (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(r.roadwayNumber, r.endAddrMValue).isEmpty)
-          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.startAddrMValue)))
+      //check existing of project link tail point connecting to head point of roads
+      roadsFromHead.foreach { r =>
+        if (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(r.roadwayNumber, r.startAddrMValue).isEmpty)
+          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.startAddrMValue)))
 
         if (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue).isEmpty)
-          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue)))
+          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue)))
       }
+
+
+
+
     }
   }
 
