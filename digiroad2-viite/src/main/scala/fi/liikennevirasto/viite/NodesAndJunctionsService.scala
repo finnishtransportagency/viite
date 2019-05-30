@@ -1,10 +1,12 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -19,7 +21,10 @@ class NodesAndJunctionsService() {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
+  val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
+  val linearLocationDAO = new LinearLocationDAO
+  val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val nodeDAO = new NodeDAO
   val junctionDAO = new JunctionDAO
   val nodePointDAO = new NodePointDAO
@@ -78,8 +83,34 @@ class NodesAndJunctionsService() {
     }
   }
 
-  /*
+  def handleJunctionPointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
+    val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt))
+    filteredLinks.foreach{ link =>
+      val roadNumberLimits = Seq((0, 19999), (40001, 69999))
+      val roadsInHead = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(link.getFirstPoint, link.getFirstPoint), roadNumberLimits).filterNot(rw => rw.roadNumber == link.roadNumber && rw.roadPartNumber == link.roadPartNumber).filter(_.connected(link.getFirstPoint))
+      val roadsOutTail = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(link.getLastPoint, link.getLastPoint), roadNumberLimits).filterNot(rw => rw.roadNumber == link.roadNumber && rw.roadPartNumber == link.roadPartNumber).filter(ra => link.connected(ra.getFirstPoint))
 
+      //check existance of junction points connecting to head point of project link
+      roadsInHead.foreach { r =>
+        if (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(r.roadwayNumber, r.endAddrMValue).isEmpty)
+          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue)))
+
+        if (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue).isEmpty)
+          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue)))
+      }
+
+      //check existing of junction points connecting to head point of project link
+      roadsOutTail.foreach { r =>
+        if (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(r.roadwayNumber, r.endAddrMValue).isEmpty)
+          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.startAddrMValue)))
+
+        if (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue).isEmpty)
+          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, Sequences.nextRoadwayPointId, 0L, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue)))
+      }
+      }
+    }
+
+  /*
   1)  The nodes are created only for tracks 0 and 1
   2)  A node template is always created if :
     2.1)  road number is < 20000 or between 40000-70000
@@ -89,7 +120,7 @@ class NodesAndJunctionsService() {
     if there is no roadwaypoint linked to the roadwayNumber and addr
    */
   def handleNodePointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
-    val filteredLinks = projectLinks.filter(pl => RoadClass.nodeRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt))
+    val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt))
     filteredLinks.filterNot(_.track == Track.LeftSide).groupBy(l=> (l.roadNumber, l.roadPartNumber, l.roadType)).map{ group =>
       val headLink = group._2.head
       val lastLink = group._2.last
