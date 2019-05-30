@@ -1,16 +1,13 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, UnknownSource}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.liikennevirasto.viite
-import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
+import fi.liikennevirasto.{GeometryUtils, viite}
 import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
 
 /**
   * Calculate the effective change between the project and the current road address data

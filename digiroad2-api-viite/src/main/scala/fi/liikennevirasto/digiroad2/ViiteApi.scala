@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import java.text.SimpleDateFormat
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -25,6 +26,7 @@ import org.scalatra.swagger.Swagger
 import org.scalatra.{NotFound, _}
 import org.slf4j.{Logger, LoggerFactory}
 import org.scalatra.swagger._
+
 import scala.util.parsing.json.JSON._
 import scala.util.{Left, Right}
 
