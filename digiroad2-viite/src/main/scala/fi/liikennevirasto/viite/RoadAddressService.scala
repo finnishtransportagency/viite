@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite
 import java.net.ConnectException
 import java.util.concurrent.TimeUnit
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
