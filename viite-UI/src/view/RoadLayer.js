@@ -65,12 +65,12 @@
         //TODO roadData !== null is there for test having no info ready (race condition where hover often loses) should be somehow resolved
         if (infoContent !== null) {
           if (roadData !== null && (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0)) {
-            infoContent.innerHTML = 'Tienumero: ' + roadData.roadNumber + '<br>' +
-              'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
-              'Ajorata: ' + roadData.trackCode + '<br>' +
-              'AET: ' + roadData.startAddressM + '<br>' +
-              'LET: ' + roadData.endAddressM + '<br>' +
-              'Tietyyppi: ' + displayRoadType(roadData.roadTypeId) + '<br>'
+            infoContent.innerHTML = 'Tienumero:&nbsp;' + roadData.roadNumber + '<br>' +
+              'Tieosanumero:&nbsp;' + roadData.roadPartNumber + '<br>' +
+              'Ajorata:&nbsp;' + roadData.trackCode + '<br>' +
+              'AET:&nbsp;' + roadData.startAddressM + '<br>' +
+              'LET:&nbsp;' + roadData.endAddressM + '<br>' +
+              'Tietyyppi:&nbsp;' + displayRoadType(roadData.roadTypeId) + '<br>'
             ;
           } else {
             infoContent.innerHTML = 'Linkillä ' + '<br>' + 'ei ole tieosoitetta';
