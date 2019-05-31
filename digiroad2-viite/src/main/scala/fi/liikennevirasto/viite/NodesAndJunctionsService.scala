@@ -204,7 +204,6 @@ class NodesAndJunctionsService() {
     2.2)  and at the beginning/end of each road part, ely borders, or when road type changes
     2.3)  on each junction with a road number (except number over 70 000)
 
-    if there is no roadwaypoint linked to the roadwayNumber and addr
    */
   def handleNodePointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
     val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt))

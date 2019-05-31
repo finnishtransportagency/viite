@@ -85,6 +85,15 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
+  def fetchNodePoint(roadwayNumber: Long): Option[NodePoint] = {
+      val query =
+        s"""
+         $selectFromNodePoint
+         where NP.roadway_number = $roadwayNumber and NP.valid_to is null and NP.end_date is null
+       """
+    queryList(query).headOption
+  }
+
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
     time(logger, "Fetch NodePoint templates by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),

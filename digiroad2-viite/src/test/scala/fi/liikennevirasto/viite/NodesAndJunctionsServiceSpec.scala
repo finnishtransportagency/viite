@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
@@ -47,6 +48,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       f
       dynamicSession.rollback()
     }
+  }
+
+  def dummyProjectLink(roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuityType: Discontinuity, startAddrM: Long, endAddrM: Long, startDate: Option[DateTime], endDate: Option[DateTime] = None, linkId: Long = 0, startMValue: Double = 0,
+                       endMValue: Double = 0, sideCode: SideCode = SideCode.Unknown, status: LinkStatus, projectId: Long = 0, roadType: RoadType = RoadType.PublicRoad, geometry: Seq[Point] = Seq(), roadwayNumber: Long) = {
+    ProjectLink(0L, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startAddrM, endAddrM, startDate, endDate,
+      Some("user"), linkId, startMValue, endMValue, sideCode, (None, None), geometry, projectId,
+      status, roadType, LinkGeomSource.NormalLinkInterface, geometryLength = 0.0, roadwayId = 0, linearLocationId = 0, ely = 8, reversed = false, None, linkGeometryTimeStamp = 0, roadwayNumber)
   }
 
   test("Test nodesAndJunctionsService.getNodesByRoadAttributes When there are less than 50 nodes in the given road Then should return the list of those nodes") {
@@ -112,6 +120,42 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         case Left(errorMessage) => errorMessage should be(ReturnedTooManyNodesErrorMessage)
         case _ => fail()
       }
+    }
+  }
+
+  test("Test nodesAndJunctionsService.handleNodePointTemplates When creating road address from projectlinks Then node template should be handled/created properly") {
+    runWithRollback {
+      /*
+      |--L-->|
+              |0--C1-->0|0--C2-->0|
+      |0--R-->0|
+       */
+
+      val leftGeom = Seq(Point(0.0, 10.0), Point(50.0, 5.0))
+      val rightGeom = Seq(Point(0.0, 0.0), Point(50.0, 5.0))
+      val combGeom1 = Seq(Point(50.0, 5.0), Point(100.0, 5.0))
+      val combGeom2 = Seq(Point(100.0, 5.0), Point(150.0, 5.0))
+
+      val roadwayNumber = Sequences.nextRoadwayNumber
+
+      val left = dummyProjectLink(1, 1, Track.LeftSide, Discontinuity.Continuous, 0 , 50, Some(DateTime.now()), None, 12345, 0, 50, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.PublicRoad, leftGeom, roadwayNumber)
+      val right = dummyProjectLink(1, 1, Track.RightSide, Discontinuity.Continuous, 0 , 50, Some(DateTime.now()), None, 12346, 0, 50, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.PublicRoad, rightGeom,roadwayNumber+1)
+      val combined1 = dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous, 50 , 100, Some(DateTime.now()), None, 12347, 0, 50, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.FerryRoad, combGeom1, roadwayNumber+2)
+      val combined2 = dummyProjectLink(1, 1, Track.Combined, Discontinuity.EndOfRoad, 100 , 150, Some(DateTime.now()), None, 12348, 0, 50, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.PublicRoad, combGeom2, roadwayNumber+3)
+
+      val pls = Seq(left, right, combined1, combined2)
+      nodesAndJunctionsService.handleNodePointTemplates(pls)
+
+      val fetchedNodes = pls.flatMap(pl => nodePointDAO.fetchNodePoint(pl.roadwayNumber))
+
+      fetchedNodes.exists(n => n.roadwayNumber == left.roadwayNumber && n.addrM == left.startAddrMValue && n.beforeAfter == BeforeAfter.After)  should be (false)
+      fetchedNodes.exists(n => n.roadwayNumber == left.roadwayNumber && n.addrM == left.endAddrMValue && n.beforeAfter == BeforeAfter.Before)  should be (false)
+
+      fetchedNodes.exists(n => n.roadwayNumber == right.roadwayNumber && n.addrM == right.startAddrMValue && n.beforeAfter == BeforeAfter.After) should be (true)
+      fetchedNodes.exists(n => n.roadwayNumber == right.roadwayNumber && n.addrM == right.endAddrMValue && n.beforeAfter == BeforeAfter.Before) should be (true)
+
+      fetchedNodes.exists(n => n.roadwayNumber == combined1.roadwayNumber && n.addrM == combined1.startAddrMValue && n.beforeAfter == BeforeAfter.After) should be (true)
+      fetchedNodes.exists(n => n.roadwayNumber == combined2.roadwayNumber && n.addrM == combined2.endAddrMValue && n.beforeAfter == BeforeAfter.Before) should be (true)
     }
   }
 
