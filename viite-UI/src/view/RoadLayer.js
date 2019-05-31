@@ -103,7 +103,7 @@
           break;
       }
       return roadType;
-    }
+    };
 
     var displayNodeInfo = function (event, pixel) {
       var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature) {
