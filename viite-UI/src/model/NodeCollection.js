@@ -51,7 +51,7 @@
       var nodePointTemplates = _.map(_.filter(fetchResult, function(node){
         return !_.isUndefined(node.nodePointTemplate) ;
       }), function (nodePointTemp) {
-        return nodePointTemp.nodePointTemplate; 
+        return nodePointTemp.nodePointTemplate;
       });
       var junctionTemplates = _.filter(fetchResult, function(node){
         return !_.isUndefined(node.junctionTemplate) ;
