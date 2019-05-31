@@ -2,9 +2,10 @@ package fi.liikennevirasto.viite.dao
 
 import java.sql.SQLIntegrityConstraintViolationException
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
