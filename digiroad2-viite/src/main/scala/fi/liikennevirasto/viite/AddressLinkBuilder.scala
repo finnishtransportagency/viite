@@ -25,11 +25,18 @@ trait AddressLinkBuilder {
     }
 
   lazy val municipalityRoadMaintainerMapping: Map[Long, Long] = if (OracleDatabase.isWithinSession)
+    MunicipalityDAO.getMunicipalityRoadMaintainers
+  else
+    OracleDatabase.withDynSession {
       MunicipalityDAO.getMunicipalityRoadMaintainers
-    else
-      OracleDatabase.withDynSession {
-        MunicipalityDAO.getMunicipalityRoadMaintainers
-      }
+    }
+
+  lazy val municipalityNamesMapping: Map[Long, String] = if (OracleDatabase.isWithinSession)
+    MunicipalityDAO.getMunicipalityNames
+  else
+    OracleDatabase.withDynSession {
+      MunicipalityDAO.getMunicipalityNames
+    }
 
   def getRoadType(administrativeClass: AdministrativeClass, linkType: LinkType): RoadType = {
     (administrativeClass, linkType) match {
