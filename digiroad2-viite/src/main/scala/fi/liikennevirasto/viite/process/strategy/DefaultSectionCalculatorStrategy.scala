@@ -79,7 +79,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
     val continuousProjectLinks = seq.takeWhile(pl => (pl.track == track && pl.track == Track.Combined) || (pl.track == track && pl.track != Track.Combined && pl.roadwayNumber == roadwayNumber && pl.roadType.value == roadType))
-    (continuousProjectLinks.map(pl => if(pl.roadwayNumber == NewIdValue) pl.copy(roadwayNumber = newRoadwayNumber) else pl), seq.drop(continuousProjectLinks.size))
+    (continuousProjectLinks.map(pl => if (pl.roadwayNumber == NewIdValue) pl.copy(roadwayNumber = newRoadwayNumber) else pl), seq.drop(continuousProjectLinks.size))
   }
 
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
@@ -118,11 +118,11 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
                 adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
               } else {
-                if(rightLinks.exists(_.status == New) || leftLinks.exists(_.status == New)){
+                if (rightLinks.exists(_.status == New) || leftLinks.exists(_.status == New)){
                   val newRoadwayNumber1 = Sequences.nextRoadwayNumber
-                  val newRoadwayNumber2 = if(rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
-                  (continuousRoadwaySection(rightLinks.map(pl => if(pl.status == New) pl.copy(roadwayNumber = NewIdValue) else pl), newRoadwayNumber1),
-                    continuousRoadwaySection(leftLinks.map(pl => if(pl.status == New) pl.copy(roadwayNumber = NewIdValue) else pl), newRoadwayNumber2))
+                  val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
+                  (continuousRoadwaySection(rightLinks.map(pl => if (pl.status == New) pl.copy(roadwayNumber = NewIdValue) else pl), newRoadwayNumber1),
+                    continuousRoadwaySection(leftLinks.map(pl => if (pl.status == New) pl.copy(roadwayNumber = NewIdValue) else pl), newRoadwayNumber2))
                 }
                 (continuousRoadwaySection(rightLinks, 0), continuousRoadwaySection(leftLinks, 0))
               }
