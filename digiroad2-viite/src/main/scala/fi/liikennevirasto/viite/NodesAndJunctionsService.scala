@@ -207,9 +207,12 @@ class NodesAndJunctionsService() {
    */
   def handleNodePointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
     val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt))
-    filteredLinks.filterNot(_.track == Track.LeftSide).groupBy(l=> (l.roadNumber, l.roadPartNumber, l.roadType)).map{ group =>
-      val headLink = group._2.head
-      val lastLink = group._2.last
+    val groups = filteredLinks.filterNot(_.track == Track.LeftSide).groupBy(l=> (l.roadNumber, l.roadPartNumber, l.track, l.roadType))
+
+    groups.mapValues{ group =>
+      val sortedGroup = group.sortBy(s => (s.roadNumber, s.roadPartNumber, s.startAddrMValue, s.track.value))
+      val headLink = sortedGroup.head
+      val lastLink = sortedGroup.last
     val headRoadwayPointId = {
       val existingRoadwayPoint = roadwayPointDAO.fetch(headLink.roadwayNumber, headLink.startAddrMValue)
       if(existingRoadwayPoint.nonEmpty)
