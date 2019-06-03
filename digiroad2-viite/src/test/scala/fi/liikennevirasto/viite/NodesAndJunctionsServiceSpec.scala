@@ -43,6 +43,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0)
 
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       f
@@ -146,16 +148,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val pls = Seq(left, right, combined1, combined2)
       nodesAndJunctionsService.handleNodePointTemplates(pls)
 
-      val fetchedNodes = pls.flatMap(pl => nodePointDAO.fetchNodePoint(pl.roadwayNumber))
-
-      fetchedNodes.exists(n => n.roadwayNumber == left.roadwayNumber && n.addrM == left.startAddrMValue && n.beforeAfter == BeforeAfter.After)  should be (false)
-      fetchedNodes.exists(n => n.roadwayNumber == left.roadwayNumber && n.addrM == left.endAddrMValue && n.beforeAfter == BeforeAfter.Before)  should be (false)
-
-      fetchedNodes.exists(n => n.roadwayNumber == right.roadwayNumber && n.addrM == right.startAddrMValue && n.beforeAfter == BeforeAfter.After) should be (true)
-      fetchedNodes.exists(n => n.roadwayNumber == right.roadwayNumber && n.addrM == right.endAddrMValue && n.beforeAfter == BeforeAfter.Before) should be (true)
-
-      fetchedNodes.exists(n => n.roadwayNumber == combined1.roadwayNumber && n.addrM == combined1.startAddrMValue && n.beforeAfter == BeforeAfter.After) should be (true)
-      fetchedNodes.exists(n => n.roadwayNumber == combined2.roadwayNumber && n.addrM == combined2.endAddrMValue && n.beforeAfter == BeforeAfter.Before) should be (true)
+      val fetchedNodesPoints = pls.flatMap(pl => nodePointDAO.fetchNodePointTemplate(pl.roadwayNumber))
+      fetchedNodesPoints.exists(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.After)  should be (false)
+      fetchedNodesPoints.exists(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.Before)  should be (false)
+      fetchedNodesPoints.exists(n => n.roadwayNumber == right.roadwayNumber && n.beforeAfter == BeforeAfter.After) should be (true)
+      fetchedNodesPoints.exists(n => n.roadwayNumber == right.roadwayNumber && n.beforeAfter == BeforeAfter.Before) should be (true)
+      fetchedNodesPoints.exists(n => n.roadwayNumber == combined1.roadwayNumber && n.beforeAfter == BeforeAfter.After) should be (true)
+      fetchedNodesPoints.exists(n => n.roadwayNumber == combined2.roadwayNumber && n.beforeAfter == BeforeAfter.Before) should be (true)
     }
   }
 

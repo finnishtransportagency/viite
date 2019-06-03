@@ -89,10 +89,22 @@ class NodePointDAO extends BaseDAO {
       val query =
         s"""
          $selectFromNodePoint
-         where NP.roadway_number = $roadwayNumber and NP.valid_to is null and NP.end_date is null
+         where RP.roadway_number = $roadwayNumber and NP.valid_to is null and NP.end_date is null
        """
     queryList(query).headOption
   }
+
+  def fetchNodePointTemplate(roadwayNumber: Long): List[NodePoint] = {
+    val query =
+      s"""SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_ID, NP.START_DATE, NP.END_DATE,
+                             NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M
+                             FROM NODE_POINT NP
+                             JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+         where RP.roadway_number = $roadwayNumber and NP.valid_to is null and NP.end_date is null
+       """
+    queryList(query)
+  }
+
 
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
     time(logger, "Fetch NodePoint templates by bounding box") {
