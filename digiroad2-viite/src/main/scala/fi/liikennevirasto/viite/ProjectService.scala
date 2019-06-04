@@ -2025,7 +2025,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadwayDAO.create(roadwaysToInsert)
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, createdBy = project.createdBy)
-//      nodesNJunctionsService.handleJunctionPointTemplates(generatedRoadways.flatMap(_._3))
+      nodesNJunctionsService.handleJunctionPointTemplates(generatedRoadways.flatMap(_._3))
       nodesNJunctionsService.handleNodePointTemplates(generatedRoadways.flatMap(_._3))
       handleNewRoadNames(roadwayChanges, project)
       handleTransferAndNumbering(roadwayChanges)
