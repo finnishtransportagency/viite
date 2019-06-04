@@ -314,7 +314,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
               "end_date" -> {
                 if (name.endDate.isDefined) name.endDate.get.toString else null
               },
-              "user" -> name.createdBy
+              "created_by" -> name.createdBy
             )
           ))
       )
