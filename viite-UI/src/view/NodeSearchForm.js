@@ -56,7 +56,7 @@
         nodeWithAttributes.roadNumber + '/' +
         nodeWithAttributes.track + '/' +
         nodeWithAttributes.roadPartNumber + '/' +
-        nodeWithAttributes.startAddrMValue + '</a>';
+        nodeWithAttributes.addrMValue + '</a>';
     };
 
     var nodesAndRoadAttributesHtmlList = function () {
