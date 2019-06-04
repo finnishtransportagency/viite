@@ -5,6 +5,8 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.viite.NewIdValue
+import fi.liikennevirasto.viite.dao.LinkStatus.New
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
@@ -72,12 +74,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
   }
 
-  private def continuousRoadwaySection(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  private def continuousRoadwaySection(seq: Seq[ProjectLink], newRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-    val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(0)
+    val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
     val continuousProjectLinks = seq.takeWhile(pl => (pl.track == track && pl.track == Track.Combined) || (pl.track == track && pl.track != Track.Combined && pl.roadwayNumber == roadwayNumber && pl.roadType.value == roadType))
-    (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+    (continuousProjectLinks.map(pl => if (pl.roadwayNumber == NewIdValue) pl.copy(roadwayNumber = newRoadwayNumber) else pl), seq.drop(continuousProjectLinks.size))
   }
 
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
@@ -96,7 +98,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
         val adjustedNewLinks = groupedTransfer.foldLeft(Seq.empty[ProjectLink], newLinks) {
           case ((adjustedLinks, linksToProcess), group) =>
-
             val newRoadwayNumber = Sequences.nextRoadwayNumber
             val links = linksToProcess.take(group._2.size).map(_.copy(roadwayNumber = newRoadwayNumber))
             val linksLeft = linksToProcess.drop(group._2.size)
@@ -110,15 +111,22 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         if (rightLinks.isEmpty && leftLinks.isEmpty) {
           (Seq(), Seq())
         } else {
-
             val right = continuousWOutRoadwayNumberSection(rightLinks)
             val left = continuousWOutRoadwayNumberSection(leftLinks)
 
-            val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
-              adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
-            } else {
-              (continuousRoadwaySection(rightLinks), continuousRoadwaySection(leftLinks))
-            }
+            val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
+              if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
+                adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
+              } else {
+                if (rightLinks.exists(_.status == New) || leftLinks.exists(_.status == New)) {
+                  val newRoadwayNumber1 = Sequences.nextRoadwayNumber
+                  val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
+                  (continuousRoadwaySection(rightLinks.map(pl => if (pl.status == New) pl.copy(roadwayNumber = NewIdValue) else pl), newRoadwayNumber1),
+                    continuousRoadwaySection(leftLinks.map(pl => if (pl.status == New) pl.copy(roadwayNumber = NewIdValue) else pl), newRoadwayNumber2))
+                }
+                (continuousRoadwaySection(rightLinks, 0), continuousRoadwaySection(leftLinks, 0))
+              }
+
 
           if (firstRight.isEmpty || firstLeft.isEmpty)
             throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")

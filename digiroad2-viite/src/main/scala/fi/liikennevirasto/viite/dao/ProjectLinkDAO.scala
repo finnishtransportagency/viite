@@ -294,11 +294,12 @@ class ProjectLinkDAO {
       val roadAddressRoadPart = r.nextLongOption()
       val roadwayNumber = r.nextLong()
       val calibrationPointsSource = CalibrationPointSource.apply(r.nextIntOption().getOrElse(99))
+      val projectRoadwayNumber = r.nextLong()
 
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddrMValue, originalEndAddrMValue, startDate, endDate,
         modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), OracleDatabase.loadJGeometryToGeometry(geom), projectId,
-        status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, roadwayNumber, Some(roadName),
+        status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, if (roadwayNumber != 0) roadwayNumber else projectRoadwayNumber, Some(roadName),
         roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
         roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack,
         roadAddressRoadNumber, roadAddressRoadPart)
@@ -323,11 +324,6 @@ class ProjectLinkDAO {
         x._1.copy(id = x._2)
       )
       projectLinks.toList.foreach { pl =>
-        val roadwayNumber = if (pl.roadwayNumber == NewIdValue) {
-          Sequences.nextRoadwayNumber
-        } else {
-          pl.roadwayNumber
-        }
         addressPS.setLong(1, pl.id)
         addressPS.setLong(2, pl.projectId)
         addressPS.setLong(3, pl.roadNumber)
@@ -355,7 +351,7 @@ class ProjectLinkDAO {
         else
           addressPS.setString(17, null)
         addressPS.setLong(18, pl.ely)
-        addressPS.setLong(19, roadwayNumber)
+        addressPS.setLong(19, pl.roadwayNumber)
         addressPS.setBoolean(20, pl.reversed)
         addressPS.setObject(21, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
         addressPS.setLong(22, pl.linkId)
