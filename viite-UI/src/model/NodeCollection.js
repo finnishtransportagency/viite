@@ -53,13 +53,13 @@
       }), function (nodePointTemp) {
         return nodePointTemp.nodePointTemplate;
       });
-      var junctionTemplates = _.filter(fetchResult, function(node){
-        return !_.isUndefined(node.junctionTemplate) ;
+      var junctionPointTemplates = _.filter(fetchResult, function(node){
+        return !_.isUndefined(node.junctionPointTemplate) ;
       });
       me.setNodes(nodes);
       me.setNodePointTemplates(nodePointTemplates);
       me.setJunctionTemplates(junctionTemplates);
-      eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionTemplates, zoom);
+      eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionPointTemplates, zoom);
     });
 
     eventbus.on('nodeSearchTool:clickNode', function (index, map) {

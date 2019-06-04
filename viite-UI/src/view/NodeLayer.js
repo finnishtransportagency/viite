@@ -80,8 +80,7 @@
               return sl.linkId;
             }), rl.linkId);
           });
-          me.clearLayers([directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer
-          ]);
+          me.clearLayers([directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer]);
 
           if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
@@ -115,7 +114,7 @@
           }
         });
 
-        eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, nodePointTemplates, junctionTemplates, zoom){
+        eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, nodePointTemplates, junctionPointTemplates, zoom){
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
             _.each(nodes, function (node) {
               var nodeMarker = new NodeMarker();
@@ -168,6 +167,16 @@
               });
               if(!_.isUndefined(roadLinkForPoint)){
                 nodePointTemplateLayer.getSource().addFeature(nodePointTemplateMarker.createNodePointTemplateMarker(nodePointTemplate, roadLinkForPoint));
+              }
+            });
+
+            _.each(junctionPointTemplates, function (junctionPointTemplate) {
+              var junctionPointTemplateMarker = new JunctionPointTemplateMarker();
+              var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
+                return (roadLink.startAddressM === junctionPointTemplate.addrM || roadLink.endAddressM === junctionPointTemplate.addrM) && roadLink.roadwayNumber === junctionPointTemplate.roadwayNumber;
+              });
+              if(!_.isUndefined(roadLinkForPoint)){
+                junctionTemplateLayer.getSource().addFeature(junctionPointTemplateMarker.createNodePointTemplateMarker(junctionPointTemplate, roadLinkForPoint));
               }
             });
           }
