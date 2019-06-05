@@ -70,9 +70,9 @@
             '<p class="form-control-static-floating">' + decodedRoadTypes + '</p>' +
             '</div>' ;
       } else {
-        field = '<div class="form-group">' +
-            '<label class="control-label">TIETYYPPI</label>' +
-            '<p class="form-control-static">' + decodedRoadTypes + '</p>' +
+        field = '<div class="form-group" style="margin-bottom: 0">' +
+            '<label class="control-label-short">TIETYYPPI</label>' +
+            '<p class="form-control-static-short">' + decodedRoadTypes + '</p>' +
             '</div>';
       }
       return field;
@@ -223,9 +223,9 @@
           '<p class="form-control-static-floating">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
           '</div>';
       } else {
-        field = '<div class="form-group">' +
-          '<label class="control-label">' + labelText + '</label>' +
-          '<p class="form-control-static">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
+        field = '<div class="form-group" style="margin-bottom: 0;">' +
+          '<label class="control-label-short">' + labelText + '</label>' +
+          '<p class="form-control-static-short">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
           '</div>';
       }
       return field;
@@ -282,14 +282,14 @@
         '<div class="wrapper read-only">' +
           '<div class="form form-horizontal form-dark">' +
             '<div>' +
-              '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+              '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
               '</div>' +
-              '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+              '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
               '</div>' +
-              '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + mtkId + '</p>' +
+              '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Geometrian lähde: ' + linkProperties.roadLinkSource + mtkId + '</p>' +
               '</div>' +
               showMunicipality() +
               showLinkId(selectedLinkProperty, linkProperties) +
@@ -322,14 +322,14 @@
         '<div class="wrapper read-only-floating">' +
           '<div class="form form-horizontal form-dark">' +
             '<div>' +
-              '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+              '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
               '</div>' +
-              '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+              '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
               '</div>' +
-              '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + mtkId + '</p>' +
+              '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Geometrian lähde: ' + linkProperties.roadLinkSource + mtkId + '</p>' +
               '</div>' +
               showMunicipality() +
               showLinkId(selectedLinkProperty, linkProperties) +
@@ -360,17 +360,14 @@
         '<div class="wrapper edit-mode-floating">' +
           '<div class="form form-horizontal form-dark">' +
           '<div>' +
-            '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+            '<div class="form-group-metadata">' +
+              '<p class="form-control-static asset-log-info-metadata">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
             '</div>' +
-            '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+            '<div class="form-group-metadata">' +
+              '<p class="form-control-static asset-log-info-metadata">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
             '</div>' +
-            '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + mtkId + '</p>' +
-            '</div>' +
-            '<div class="form-group">' +
-              '<p id="municipality" class="form-control-static asset-log-info"></p>' +
+            '<div class="form-group-metadata">' +
+              '<p class="form-control-static asset-log-info-metadata">Geometrian lähde: ' + linkProperties.roadLinkSource + mtkId + '</p>' +
             '</div>' +
             showMunicipality() +
             showLinkId(selectedLinkProperty, linkProperties) +
@@ -392,8 +389,8 @@
     var showLinkId = function(selectedLinkProperty, linkProperties) {
         if (selectedLinkProperty.count () === 1) {
             return '' +
-                '<div class="form-group">' +
-                    '<p class="form-control-static asset-log-info">Linkin ID: ' + linkProperties.linkId + '</p>' +
+                '<div class="form-group-metadata">' +
+                    '<p class="form-control-static asset-log-info-metadata">Linkin ID: ' + linkProperties.linkId + '</p>' +
                 '</div>';
         } else {
             return '';
@@ -409,8 +406,8 @@
       });
       if ((selectedLinkProperty.count() === 1 || municipalityValue.valid) && municipalityValue.municipalityName) {
         return '' +
-          '<div class="form-group">' +
-            '<p class="form-control-static asset-log-info">Kunta: ' + municipalityValue.municipalityName + '</p>' +
+          '<div class="form-group-metadata">' +
+            '<p class="form-control-static asset-log-info-metadata">Kunta: ' + municipalityValue.municipalityName + '</p>' +
           '</div>';
       } else {
         return '';
