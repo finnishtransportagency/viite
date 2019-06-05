@@ -175,18 +175,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val link1 = dummyProjectLink(1, 2, Track.Combined, Discontinuity.EndOfRoad, 0 , 10, Some(DateTime.now()), None, 12346, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.PublicRoad, geom2, roadwayNumber+1)
 
       val pls = Seq(link1)
-      val jcIds = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadway.roadwayNumber, roadway.endAddrMValue, BeforeAfter.Before)
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
 
       nodesAndJunctionsService.handleJunctionPointTemplates(pls)
 
-      val junctionPointsInHead = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadway.roadwayNumber, roadway.endAddrMValue, BeforeAfter.Before)
-      val junction1 = junctionDAO.fetchByIds(Seq(junctionPointsInHead.head.junctionId))
+      val roadJunctionPoints = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadway.roadwayNumber, roadway.endAddrMValue, BeforeAfter.Before)
+      val junction1 = junctionDAO.fetchByIds(Seq(roadJunctionPoints.head.junctionId))
 
-      val junctionPointsInHead2 = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link1.roadwayNumber, link1.startAddrMValue, BeforeAfter.After)
-      val junction2 = junctionDAO.fetchByIds(Seq(junctionPointsInHead2.head.junctionId))
+      val linkJunctionPoints = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link1.roadwayNumber, link1.startAddrMValue, BeforeAfter.After)
+      val junction2 = junctionDAO.fetchByIds(Seq(linkJunctionPoints.head.junctionId))
 
       junction1 should be (junction2)
 
@@ -196,12 +195,54 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       roadwayPoint1.head.addrMValue should be (roadway.endAddrMValue)
       roadwayPoint2.head.addrMValue should be (link1.startAddrMValue)
 
-      junctionPointsInHead.isDefined should be (true)
-      junctionPointsInHead.head.beforeAfter should be (dao.BeforeAfter.Before)
-      junctionPointsInHead.head.roadwayNumber should be (roadway.roadwayNumber)
-      junctionPointsInHead2.isDefined should be (true)
-      junctionPointsInHead2.head.beforeAfter should be (dao.BeforeAfter.After)
-      junctionPointsInHead2.head.roadwayNumber should be (link1.roadwayNumber)
+      roadJunctionPoints.isDefined should be (true)
+      roadJunctionPoints.head.beforeAfter should be (dao.BeforeAfter.Before)
+      roadJunctionPoints.head.roadwayNumber should be (roadway.roadwayNumber)
+      linkJunctionPoints.isDefined should be (true)
+      linkJunctionPoints.head.beforeAfter should be (dao.BeforeAfter.After)
+      linkJunctionPoints.head.roadwayNumber should be (link1.roadwayNumber)
+    }
+  }
+
+  test("Test nodesAndJunctionsService.handleJunctionPointTemplates roadsFromHead case When creating projectLinks Then junction template and junctions points should be handled/created properly") {
+    runWithRollback {
+      /*
+     <--R--0|0--L-->
+       */
+      val geom1 = Seq(Point(0.0, 0.0), Point(10.0, 0.0))
+      val geom2 = Seq(Point(10.0, 0.0), Point(20.0, 0.0))
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, roadwayNumber, 1, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,0L, 10L, reversed = false, DateTime.now,None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      val linearLocation = LinearLocation(NewIdValue, 1, 12345, 0L, 10L, SideCode.AgainstDigitizing, 0L, calibrationPoints = (None, Some(10)), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
+      val link1 = dummyProjectLink(1, 2, Track.Combined, Discontinuity.EndOfRoad, 0 , 10, Some(DateTime.now()), None, 12346, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.PublicRoad, geom2, roadwayNumber+1)
+
+      val pls = Seq(link1)
+
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
+
+      nodesAndJunctionsService.handleJunctionPointTemplates(pls)
+
+      val roadJunctionPoints = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadway.roadwayNumber, roadway.startAddrMValue, BeforeAfter.After)
+      val junction1 = junctionDAO.fetchByIds(Seq(roadJunctionPoints.head.junctionId))
+
+      val linkJunctionPoints = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link1.roadwayNumber, link1.startAddrMValue, BeforeAfter.After)
+      val junction2 = junctionDAO.fetchByIds(Seq(linkJunctionPoints.head.junctionId))
+
+      junction1 should be (junction2)
+
+      val roadwayPoint1 = roadwayPointDAO.fetch(roadway.roadwayNumber, roadway.startAddrMValue)
+      val roadwayPoint2 = roadwayPointDAO.fetch(link1.roadwayNumber, link1.startAddrMValue)
+
+      roadwayPoint1.head.addrMValue should be (roadway.startAddrMValue)
+      roadwayPoint2.head.addrMValue should be (link1.startAddrMValue)
+
+      roadJunctionPoints.isDefined should be (true)
+      roadJunctionPoints.head.beforeAfter should be (dao.BeforeAfter.After)
+      roadJunctionPoints.head.roadwayNumber should be (roadway.roadwayNumber)
+      linkJunctionPoints.isDefined should be (true)
+      linkJunctionPoints.head.beforeAfter should be (dao.BeforeAfter.After)
+      linkJunctionPoints.head.roadwayNumber should be (link1.roadwayNumber)
     }
   }
 
