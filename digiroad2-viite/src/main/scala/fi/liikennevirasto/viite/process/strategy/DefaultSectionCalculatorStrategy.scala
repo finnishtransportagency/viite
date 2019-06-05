@@ -124,7 +124,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
                   (continuousRoadwaySection(rightLinks.map(pl => if (pl.status == New) pl.copy(roadwayNumber = NewIdValue) else pl), newRoadwayNumber1),
                     continuousRoadwaySection(leftLinks.map(pl => if (pl.status == New) pl.copy(roadwayNumber = NewIdValue) else pl), newRoadwayNumber2))
                 }
-                (continuousRoadwaySection(rightLinks, 0), continuousRoadwaySection(leftLinks, 0))
+                else{
+                  (continuousRoadwaySection(rightLinks, 0), continuousRoadwaySection(leftLinks, 0))
+                }
               }
 
 
