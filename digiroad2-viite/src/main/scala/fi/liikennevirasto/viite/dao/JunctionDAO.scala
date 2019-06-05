@@ -74,6 +74,9 @@ class JunctionDAO extends BaseDAO {
   }
 
   def fetchByIds(ids: Seq[Long]): Seq[Junction] = {
+    if (ids.isEmpty)
+      List()
+    else {
     val query =
       s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
@@ -81,6 +84,7 @@ class JunctionDAO extends BaseDAO {
       WHERE ID IN (${ids.mkString(", ")})
       """
     queryList(query)
+    }
   }
 
 
