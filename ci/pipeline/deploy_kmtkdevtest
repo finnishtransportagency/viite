@@ -29,7 +29,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'),
                                 string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE'),
-                                string(credentialsId: 'JENKINS_DB', variable: 'JENKINS_DB')]) {
+                                string(credentialsId: 'JENKINS_KMTK_DB', variable: 'JENKINS_KMTK_DB')]) {
                     script {
 
                         def ojdbc = 'ojdbc6'
@@ -49,13 +49,13 @@ pipeline {
                         STAGE_SETUP_ORACLE = [
                             "mkdir digiroad2-oracle/conf/",
                             "mkdir digiroad2-oracle/conf/lib/",
-                            "mkdir digiroad2-oracle/conf/ci-vahti/",
+                            "mkdir digiroad2-oracle/conf/ci-vahti-kmtk/",
                             "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output digiroad2-oracle/conf/lib/${ojdbc}.jar",
                             "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output digiroad2-oracle/conf/lib/${sdoapl}.jar",
                             "curl ${ORACLE_LIBS}/${sdoutl}/${version}/${sdoutl}-${version}.jar --output digiroad2-oracle/conf/lib/${sdoutl}.jar",
-                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/ci-vahti/bonecp.properties",
-                            "echo 'bonecp.username='${JENKINS_DB} >> digiroad2-oracle/conf/ci-vahti/bonecp.properties",
-                            "echo 'bonecp.password='${JENKINS_DB} >> digiroad2-oracle/conf/ci-vahti/bonecp.properties"
+                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/ci-vahti-kmtk/bonecp.properties",
+                            "echo 'bonecp.username='${JENKINS_KMTK_DB} >> digiroad2-oracle/conf/ci-vahti-kmtk/bonecp.properties",
+                            "echo 'bonecp.password='${JENKINS_KMTK_DB} >> digiroad2-oracle/conf/ci-vahti-kmtk/bonecp.properties"
                          ].join(" && ")
 
 
@@ -70,8 +70,8 @@ pipeline {
 
                         STAGE_BACKEND_BUILD_CMD = [
                             "~/sbt/bin/./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
-                            "./sbt -Ddigiroad2.env=ci-vahti $java_opts 'project digiroad2-viite' 'test:run-main fi.liikennevirasto.viite.util.DataFixture test'", // Fixture reset
-                            "java -Ddigiroad2.env=ci-vahti $java_opts -XX:MaxPermSize=512M -Dfile.encoding=UTF8 -jar ${WORKSPACE}/sbt-launch.jar test", // Run tests
+                            "./sbt -Ddigiroad2.env=ci-vahti-kmtk $java_opts 'project digiroad2-viite' 'test:run-main fi.liikennevirasto.viite.util.DataFixture test'", // Fixture reset
+                            "java -Ddigiroad2.env=ci-vahti-kmtk $java_opts -XX:MaxPermSize=512M -Dfile.encoding=UTF8 -jar ${WORKSPACE}/sbt-launch.jar test", // Run tests
                             "cp -r ${WORKSPACE}/target/scala-2.11/viite-assembly-0.1.0-SNAPSHOT.jar ~/package/"
                         ].join(" && ")
 
