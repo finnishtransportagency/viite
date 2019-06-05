@@ -1,12 +1,14 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -17,21 +19,22 @@ import scala.util.{Left, Right}
 class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
-
-  val nodeDAO = new NodeDAO
+  private val roadNumber1 = 990
+  private val roadwayNumber1 = 1000000000l
+  private val roadPartNumber1 = 1
+  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
+  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
+  val nodeDAO = new NodeDAO
   val nodePointDAO = new NodePointDAO
-
-  val nodesAndJunctionsService = new NodesAndJunctionsService() {
+  val junctionDAO = new JunctionDAO
+  val junctionPointDAO = new JunctionPointDAO
+  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
-
-  private val roadNumber1 = 990
-  private val roadwayNumber1 = 1000000000l
-  private val roadPartNumber1 = 1
   val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
@@ -125,7 +128,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleNodePointTemplates When creating road address from projectlinks Then node template should be handled/created properly") {
+  test("Test nodesAndJunctionsService.handleNodePointTemplates When creating projectlinks Then node points template should be handled/created properly") {
     runWithRollback {
       /*
       |--L-->|
@@ -155,6 +158,41 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       fetchedNodesPoints.exists(n => n.roadwayNumber == right.roadwayNumber && n.beforeAfter == BeforeAfter.Before) should be (true)
       fetchedNodesPoints.exists(n => n.roadwayNumber == combined1.roadwayNumber && n.beforeAfter == BeforeAfter.After) should be (true)
       fetchedNodesPoints.exists(n => n.roadwayNumber == combined2.roadwayNumber && n.beforeAfter == BeforeAfter.Before) should be (true)
+    }
+  }
+
+  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating projectlinks Then junction template and junctions points should be handled/created properly") {
+    runWithRollback {
+      /*
+     |--R-->0|0--L-->
+       */
+      val geom1 = Seq(Point(0.0, 0.0), Point(10.0, 0.0))
+      val geom2 = Seq(Point(10.0, 0.0), Point(20.0, 0.0))
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, roadwayNumber, 1, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,0L, 10L, reversed = false, DateTime.now,None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      val linearLocation = LinearLocation(NewIdValue, 1, 12345, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (None, Some(10)), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
+      val link2 = dummyProjectLink(1, 2, Track.Combined, Discontinuity.EndOfRoad, 0 , 10, Some(DateTime.now()), None, 12346, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.PublicRoad, geom2, roadwayNumber+1)
+
+      val pls = Seq(link2)
+      val jcIds = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadway.roadwayNumber, roadway.endAddrMValue, BeforeAfter.Before)
+
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
+
+      nodesAndJunctionsService.handleJunctionPointTemplates(pls)
+
+      val junctionsInHead1 = Seq(roadway).flatMap { rh =>
+        val jcIds = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.endAddrMValue, BeforeAfter.Before).map(_.junctionId).toSeq
+        junctionDAO.fetchByIds(jcIds)
+      }
+      val junctionsInHead2 = junctionsInHead1 ++ Seq(link2).flatMap { rh =>
+        val jcIds = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.startAddrMValue, BeforeAfter.After).map(_.junctionId).toSeq
+        junctionDAO.fetchByIds(jcIds)
+      }
+
+      val roadwayPoint1 = roadwayPointDAO.fetch(roadway.roadwayNumber, roadway.endAddrMValue)
+      val roadwayPoint2 = roadwayPointDAO.fetch(link2.roadwayNumber, link2.startAddrMValue)
+
     }
   }
 
