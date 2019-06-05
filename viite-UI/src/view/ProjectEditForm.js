@@ -194,10 +194,8 @@
       $('#roadTypeDropdown').val(selectedProjectLink[0].roadTypeId);
     };
 
-    var editDropDown = function (roadModified) {
-      if (roadModified) {
-        $("#dropDown_0").children("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").remove();
-      }
+    var removeNumberingFromDropdown = function () {
+      $("#dropDown_0").children("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").remove();
     };
 
     var fillDistanceValues = function (selectedLinks) {
@@ -256,9 +254,11 @@
         formCommon.replaceAddressInfo(backend, selectedProjectLink, currentProject.project.id);
         checkInputs('.project-');
         changeDropDownValue(selectedProjectLink[0].status);
-        editDropDown(_.filter(projectCollection.getFormedParts(), function(formedLink) {
+        if (selectedProjectLink[0].status !== LinkStatus.Numbering.value && _.filter(projectCollection.getFormedParts(), function (formedLink) {
           return formedLink.roadNumber === selectedProjectLink[0].roadNumber && formedLink.roadPartNumber === selectedProjectLink[0].roadPartNumber;
-        }).length);
+        }).length !== 0) {
+          removeNumberingFromDropdown();
+        }
         disableFormInputs();
         var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
           return projectLink.endAddressM;
@@ -282,9 +282,11 @@
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
         checkInputs('.project-');
         changeDropDownValue(selectedProjectLink[0].status);
-        editDropDown(_.filter(projectCollection.getFormedParts(), function(part) {
-          return part.roadNumber === selectedProjectLink[0].roadNumber && part.roadPartNumber === selectedProjectLink[0].roadPartNumber;
-        }).length);
+        if (selectedProjectLink[0].status !== LinkStatus.Numbering.value && _.filter(projectCollection.getFormedParts(), function (formedLink) {
+          return formedLink.roadNumber === selectedProjectLink[0].roadNumber && formedLink.roadPartNumber === selectedProjectLink[0].roadPartNumber;
+        }).length !== 0) {
+          removeNumberingFromDropdown();
+        }
         disableFormInputs();
         var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
           return projectLink.endAddressM;
