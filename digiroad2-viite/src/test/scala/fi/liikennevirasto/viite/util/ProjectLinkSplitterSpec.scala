@@ -449,7 +449,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       //TODO this roadAddressLink have linearLocationId equal to zero, just to compile.
       val suravageAddressLink = RoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 0, 2, Seq(Point(0, 0), Point(0, 45.3), Point(0, 123)), 123,
         AdministrativeClass.apply(1), LinkType.apply(1), ConstructionType.Planned, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, Some("testRoad"), None,
-        8, None, None, null, 1, 1, Track.Combined.value, 8, Discontinuity.Continuous.value, 0, 123, "", "", 0, 123, SideCode.Unknown, None, None, Anomaly.None)
+        8, "", None, None, null, 1, 1, Track.Combined.value, 8, Discontinuity.Continuous.value, 0, 123, "", "", 0, 123, SideCode.Unknown, None, None, Anomaly.None)
 
       when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
       when(mockRoadLinkService.getRoadLinksAndComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))

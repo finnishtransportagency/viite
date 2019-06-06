@@ -73,13 +73,9 @@
       function addDistance(item) {
         var currentLocation = applicationModel.getCurrentLocation();
 
-        var distance = GeometryUtils.distanceOfPoints({
-          x: currentLocation.lon,
-          y: currentLocation.lat
-        }, {
-          x: item.lon,
-          y: item.lat
-        });
+        var distance = GeometryUtils.distanceOfPoints(
+          [currentLocation[0], currentLocation[1]],
+          [item.lon, item.lat]);
         return _.assign(item, {
           distance: distance
         });

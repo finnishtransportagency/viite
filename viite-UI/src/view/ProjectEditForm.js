@@ -54,7 +54,7 @@
         return s.roadLinkSource;
       }).uniq().map(function(a) {
         var linkGeom = _.find(LinkSources, function (source) {
-            return source.value === parseInt(a);
+          return source.value === parseInt(a);
         });
         if(_.isUndefined(linkGeom))
           return LinkSources.Unknown.descriptionFI;
@@ -90,9 +90,9 @@
     var showLinkId = function(selected){
       if (selected.length === 1){
         return '' +
-            formCommon.staticField('Linkin ID', selected[0].linkId);
-        } else {
-           return '';}
+          formCommon.staticField('Linkin ID', selected[0].linkId);
+      } else {
+        return '';}
     };
 
     var selectionForm = function(project, selection, selected, road) {
@@ -122,7 +122,7 @@
     };
 
     var addSmallLabelLowercase = function(label){
-        return '<label class="control-label-small" style="text-transform: none">'+label+'</label>';
+      return '<label class="control-label-small" style="text-transform: none">'+label+'</label>';
     };
 
     var emptyTemplate = function(project) {
@@ -232,10 +232,10 @@
         $('#roadAddressProjectFormCut select').prop('disabled',true);
         $('.update').prop('disabled', true);
         $('.btn-edit-project').prop('disabled', true);
-          if (projectCollection.getCurrentProject().project.statusCode === ProjectStatus.SendingToTR.value) {
-              $(":input").prop('disabled',true);
-              $(".project-form button.cancelLink").prop('disabled',false);
-          }
+        if (projectCollection.getCurrentProject().project.statusCode === ProjectStatus.SendingToTR.value) {
+          $(":input").prop('disabled',true);
+          $(".project-form button.cancelLink").prop('disabled',false);
+        }
       }
     };
 
@@ -256,7 +256,7 @@
         formCommon.replaceAddressInfo(backend, selectedProjectLink, currentProject.project.id);
         checkInputs('.project-');
         changeDropDownValue(selectedProjectLink[0].status);
-        editDropDown(_.filter(currentProject.formedInfo, function(formedLink) {
+        editDropDown(_.filter(projectCollection.getFormedParts(), function(formedLink) {
           return formedLink.roadNumber === selectedProjectLink[0].roadNumber && formedLink.roadPartNumber === selectedProjectLink[0].roadPartNumber;
         }).length);
         disableFormInputs();
@@ -265,12 +265,12 @@
         }).discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
         _.defer(function() {
-            $('#beginDistance').on("change", function(changedData) {
-                eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
-            });
-            $('#endDistance').on("change", function(changedData) {
-                eventbus.trigger('projectLink:editedEndDistance', changedData.target.value);
-            });
+          $('#beginDistance').on("change", function(changedData) {
+            eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
+          });
+          $('#endDistance').on("change", function(changedData) {
+            eventbus.trigger('projectLink:editedEndDistance', changedData.target.value);
+          });
         });
       });
 
@@ -282,7 +282,7 @@
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
         checkInputs('.project-');
         changeDropDownValue(selectedProjectLink[0].status);
-        editDropDown(_.filter(currentProject.getFormedParts(), function(part) {
+        editDropDown(_.filter(projectCollection.getFormedParts(), function(part) {
           return part.roadNumber === selectedProjectLink[0].roadNumber && part.roadPartNumber === selectedProjectLink[0].roadPartNumber;
         }).length);
         disableFormInputs();
@@ -312,7 +312,7 @@
         }
       });
 
-      eventbus.on('roadAddress:projectLinksUpdated',function(data){
+      eventbus.on('roadAddress:projectLinksUpdated', function(data) {
         eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
@@ -322,6 +322,7 @@
         selectedProjectLinkProperty.cleanIds();
         rootElement.html(emptyTemplate(projectCollection.getCurrentProject().project));
         formCommon.toggleAdditionalControls();
+        applicationModel.removeSpinner();
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         } else {
@@ -386,7 +387,7 @@
         }
       };
 
-      var saveChanges = function(){
+      var saveChanges = function() {
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
         var isValidEly = _.find(ValidElys, function(ely){
           return ely.value == $('#ely')[0].value;
@@ -589,19 +590,19 @@
         $(this).empty();
         projectChangeTable.show();
         var projectChangesButton = showProjectChangeButton();
-          if (isProjectPublishable() && isProjectEditable()) {
+        if (isProjectPublishable() && isProjectEditable()) {
           formCommon.setInformationContent();
           $('footer').html(formCommon.sendRoadAddressChangeButton('project-', projectCollection.getCurrentProject()));
-          } else {
+        } else {
           $('footer').html(projectChangesButton);
-          }
+        }
       });
 
       rootElement.on('change input', '.form-control.small-input', function (event) {
-      var dropdown_0 = $('#dropDown_0');
-      var roadNameField =$('#roadName');
-      checkInputs('.project-');
-      setFormDirty();
+        var dropdown_0 = $('#dropDown_0');
+        var roadNameField =$('#roadName');
+        checkInputs('.project-');
+        setFormDirty();
         if (event.target.id === "tie" && (dropdown_0.val() === 'New' || dropdown_0.val() === 'Transfer' || dropdown_0.val() === 'Numbering')) {
           backend.getRoadName($(this).val(), projectCollection.getCurrentProject().project.id, function (data) {
             if (!_.isUndefined(data.roadName)) {
@@ -624,10 +625,10 @@
         }
       });
 
-        rootElement.on('keyup, input', '#roadName', function () {
-            checkInputs('.project-');
-            editedNameByUser = $('#roadName').val !== '';
-        });
+      rootElement.on('keyup, input', '#roadName', function () {
+        checkInputs('.project-');
+        editedNameByUser = $('#roadName').val !== '';
+      });
 
       rootElement.on('click', '.projectErrorButton', function (event) {
         var error = projectCollection.getProjectErrors()[event.currentTarget.id];

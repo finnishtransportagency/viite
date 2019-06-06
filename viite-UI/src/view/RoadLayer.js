@@ -1,19 +1,19 @@
-(function(root) {
-  root.RoadLayer = function(map, roadCollection, selectedLinkProperty) {
+(function (root) {
+  root.RoadLayer = function (map, roadCollection, selectedLinkProperty) {
 
     Layer.call(this, map);
     var me = this;
     var roadLinkStyler = new RoadLinkStyler();
 
     var roadVector = new ol.source.Vector({
-      loader: function(extent, resolution, projection) {
-        var zoom = Math.log(1024/resolution) / Math.log(2);
-        eventbus.once('roadLinks:fetched', function() {
-          var features = _.map(roadCollection.getAll(), function(roadLink) {
-            var points = _.map(roadLink.points, function(point) {
+      loader: function (extent, resolution, projection) {
+        var zoom = Math.log(1024 / resolution) / Math.log(2);
+        eventbus.once('roadLinks:fetched', function () {
+          var features = _.map(roadCollection.getAll(), function (roadLink) {
+            var points = _.map(roadLink.points, function (point) {
               return [point.x, point.y];
             });
-            var feature =  new ol.Feature({
+            var feature = new ol.Feature({
               geometry: new ol.geom.LineString(points)
             });
             feature.linkData = roadLink;
@@ -33,8 +33,8 @@
     roadLayer.set('name', 'roadLayer');
 
     function vectorLayerStyle(feature) {
-      return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}), roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
-          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})];
+      return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}), roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
+        roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
     }
 
     var loadFeatures = function (features) {
@@ -64,22 +64,45 @@
         coordinate = map.getEventCoordinate(event.originalEvent);
         //TODO roadData !== null is there for test having no info ready (race condition where hover often loses) should be somehow resolved
         if (infoContent !== null) {
-          if (roadData !== null || (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0 )) {
-            infoContent.innerHTML = '<p>' +
-              'Tienumero: ' + roadData.roadNumber + '<br>' +
-              'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
-              'Ajorata: ' + roadData.trackCode + '<br>' +
-              'AET: ' + roadData.startAddressM + '<br>' +
-              'LET: ' + roadData.endAddressM + '<br>' +
-              'Linkin ID: ' + roadData.linkId + '<br>' +'</p>'
+          if (roadData !== null && (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0)) {
+            infoContent.innerHTML = 'Tienumero:&nbsp;' + roadData.roadNumber + '<br>' +
+              'Tieosanumero:&nbsp;' + roadData.roadPartNumber + '<br>' +
+              'Ajorata:&nbsp;' + roadData.trackCode + '<br>' +
+              'AET:&nbsp;' + roadData.startAddressM + '<br>' +
+              'LET:&nbsp;' + roadData.endAddressM + '<br>' +
+              'Tietyyppi:&nbsp;' + displayRoadType(roadData.roadTypeId) + '<br>'
             ;
           } else {
-            infoContent.innerHTML = '<p>' +
-              'Tuntematon tien segmentti' + '</p>';
+            infoContent.innerHTML = 'Linkillä ' + '<br>' + 'ei ole tieosoitetta';
           }
         }
       }
       overlay.setPosition(coordinate);
+    };
+
+    var displayRoadType = function (roadTypeCode) {
+      var roadType;
+      switch (roadTypeCode) {
+        case LinkValues.RoadTypeShort.PublicRoad.value:
+          roadType = LinkValues.RoadTypeShort.PublicRoad.description;
+          break;
+        case LinkValues.RoadTypeShort.FerryRoad.value:
+          roadType = LinkValues.RoadTypeShort.FerryRoad.description;
+          break;
+        case LinkValues.RoadTypeShort.MunicipalityStreetRoad.value:
+          roadType = LinkValues.RoadTypeShort.MunicipalityStreetRoad.description;
+          break;
+        case LinkValues.RoadTypeShort.PublicUnderConstructionRoad.value:
+          roadType = LinkValues.RoadTypeShort.PublicUnderConstructionRoad.description;
+          break;
+        case LinkValues.RoadTypeShort.PrivateRoadType.value:
+          roadType = LinkValues.RoadTypeShort.PrivateRoadType.description;
+          break;
+        case roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.value:
+          roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.description;
+          break;
+      }
+      return roadType;
     };
 
     var displayNodeInfo = function (event, pixel) {
@@ -94,7 +117,7 @@
           infoContent.innerHTML = '<p>' +
             'ID: ' + nodeData.id + '<br>' +
             'Solmunumero: ' + nodeData.nodeNumber + '<br>' +
-            'Nimi: ' + nodeData.nodeName + '<br>'+'</p>'
+            'Nimi: ' + nodeData.nodeName + '<br>' + '</p>'
           ;
         }
         overlay.setPosition(coordinate);
@@ -117,8 +140,8 @@
             'Liittymä ID: ' + junctionData.id + '<br>' +
             'Solmu ID: ' + junctionData.nodeId + '<br>' +
             'Tienumero: ' + roadLink.roadNumber + '<br>' +
-            'Tieosanumero: ' + roadLink.roadPartNumber + '<br>'+
-            'addrM: ' + junctionPointData.addrM + '<br>'+'</p>'
+            'Tieosanumero: ' + roadLink.roadPartNumber + '<br>' +
+            'addrM: ' + junctionPointData.addrM + '<br>' + '</p>'
           ;
         }
         overlay.setPosition(coordinate);
@@ -140,7 +163,7 @@
 
     this.refreshMap = function (mapState) {
       //if ((applicationModel.getSelectedTool() === 'Cut' && selectSingleClick.getFeatures().getArray().length > 0))
-        //return;
+      //return;
       if (mapState.zoom < zoomlevels.minZoomForRoadLinks) {
         roadLayer.getSource().clear();
         eventbus.trigger('map:clearLayers');
@@ -150,7 +173,7 @@
          This could be implemented also with eventbus.trigger(applicationModel.getSelectedLayer() + ':fetch');
          but this implementation makes it easier to find the eventbus call when needed.
         */
-        switch(applicationModel.getSelectedLayer()) {
+        switch (applicationModel.getSelectedLayer()) {
           case 'linkProperty':
             eventbus.trigger('linkProperty:fetch');
             break;
@@ -166,7 +189,7 @@
 
     this.eventListener.listenTo(eventbus, 'map:refresh', me.refreshMap, this);
 
-    var clear = function() {
+    var clear = function () {
       roadLayer.getSource().clear();
     };
 
