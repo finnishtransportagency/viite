@@ -1,10 +1,10 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import com.vividsolutions.jts.geom.LineSegment
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
 import org.geotools.graph.structure.basic.BasicEdge
+import org.locationtech.jts.geom.LineSegment
 import scala.collection.JavaConversions._
 
 trait GraphPartitioner {
