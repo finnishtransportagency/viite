@@ -5,7 +5,7 @@
 
             <!-- Shape of the node -->
             <path id="outline" stroke="none" d="M 1,15 L 12,29 23,15 12,1 1,15 Z" />
-            <path id="fill" stroke-width="1" stroke="white" d="M 4.2,15 L 12,25 19.8,15 12,5 4.2,15 Z" />
+            <path id="fill" stroke-width="1" stroke="white" d="M 5,15 L 12,24 19,15 12,6 5,15 Z" />
 
             <!-- Colors of the nodes -->
             <g id="node1"><use href="#outline" fill="#B75F29" /><use href="#fill" fill="#E9B389" /></g>
