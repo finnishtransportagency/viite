@@ -10,8 +10,6 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 object RoadwayFiller {
-
-  private val logger = LoggerFactory.getLogger(getClass)
   private val roadwayAddressMapper = new RoadwayAddressMapper(new RoadwayDAO, new LinearLocationDAO)
 
   def generateNewRoadwaysWithHistory(changeSource: RoadwayChangeSection, changeTarget: RoadwayChangeSection, projectLinks: Seq[ProjectLink], currentRoadway: Roadway, newRoadwayNumber: Boolean, projectStartDate: DateTime): Seq[Roadway] = {
@@ -77,11 +75,8 @@ object RoadwayFiller {
           && projectLink.roadPartNumber == changeTarget.startRoadPartNumber.get)
         .sortBy(_.startAddrMValue)
       val roadways =
-        if (changeSource.roadNumber == changeTarget.roadNumber && changeSource.startRoadPartNumber == changeTarget.startRoadPartNumber && changeSource.trackCode == changeTarget.trackCode &&
-          (projectLinksInRoadway.last.endAddrMValue - projectLinksInRoadway.head.startAddrMValue) == (currentRoadway.endAddrMValue - currentRoadway.startAddrMValue)) {
-          Seq(Roadway(NewIdValue, currentRoadway.roadwayNumber, changeTarget.roadNumber.get, changeTarget.startRoadPartNumber.get, changeTarget.roadType.get, Track.apply(changeTarget.trackCode.get.toInt), changeTarget.discontinuity.get,
-            projectLinks.head.startAddrMValue, projectLinks.last.endAddrMValue, projectLinks.head.reversed, projectLinks.head.startDate.get, None, createdBy = projectLinks.head.createdBy.get, currentRoadway.roadName,
-            changeTarget.ely.get, NoTermination))
+        if ((projectLinksInRoadway.last.endAddrMValue - projectLinksInRoadway.head.startAddrMValue) == (currentRoadway.endAddrMValue - currentRoadway.startAddrMValue)) {
+          generateNewRoadwaysWithHistory(changeSource, changeTarget, projectLinksInRoadway, currentRoadway, newRoadwayNumber = false, change.projectStartDate)
         }
         else {
           generateNewRoadwaysWithHistory(changeSource, changeTarget, projectLinksInRoadway, currentRoadway, newRoadwayNumber = true, change.projectStartDate)
@@ -132,8 +127,8 @@ object RoadwayFiller {
 
   private def applyNew(change: ProjectRoadwayChange, projectLinks: Seq[ProjectLink]): Seq[(Seq[Roadway], Seq[LinearLocation], Seq[ProjectLink])] = {
     val changeTarget = change.changeInfo.target
-    val newRoadwayNumber = Sequences.nextRoadwayNumber
-    val roadway = Roadway(NewIdValue, newRoadwayNumber, changeTarget.roadNumber.get, changeTarget.startRoadPartNumber.get, changeTarget.roadType.get, Track.apply(changeTarget.trackCode.get.toInt), changeTarget.discontinuity.get,
+    val roadwayNumber = if (projectLinks.head.roadwayNumber == NewIdValue) Sequences.nextRoadwayNumber else projectLinks.head.roadwayNumber
+    val roadway = Roadway(NewIdValue, roadwayNumber, changeTarget.roadNumber.get, changeTarget.startRoadPartNumber.get, changeTarget.roadType.get, Track.apply(changeTarget.trackCode.get.toInt), changeTarget.discontinuity.get,
       changeTarget.startAddressM.get, changeTarget.endAddressM.get, change.changeInfo.reversed, startDate = projectLinks.head.startDate.get, endDate = projectLinks.head.endDate, createdBy = projectLinks.head.createdBy.get, projectLinks.head.roadName,
       projectLinks.head.ely, NoTermination)
     Seq((Seq(roadway), roadwayAddressMapper.mapLinearLocations(roadway, projectLinks), projectLinks.map(_.copy(roadwayNumber = roadway.roadwayNumber))))

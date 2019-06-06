@@ -122,6 +122,15 @@
         Unknown:                        {value:99, description:"Ei määritelty"}
     };
 
+    root.RoadTypeShort = {
+        PublicRoad:                     {value:1, description:"tie"},
+        FerryRoad:                      {value:2, description:"lautta"},
+        MunicipalityStreetRoad:         {value:3, description:"katu"},
+        PublicUnderConstructionRoad:    {value:4, description:"työmaa"},
+        PrivateRoadType:                {value:5, description:"yks"},
+        UnknownOwnerRoad:               {value:9, description:"omist=?"}
+    };
+
     root.RoadLinkType = {
         UnknownRoadLinkType:        {value: 0, description: "UnknownRoadLinkType"},
         NormalRoadLinkType:         {value: 1, description: "NormalRoadLinkType"},

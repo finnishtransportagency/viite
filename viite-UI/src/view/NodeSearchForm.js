@@ -60,13 +60,13 @@
     };
 
     var nodesAndRoadAttributesHtmlList = function () {
-      var text = '<label class="control-label-small" style="text-transform:none;color:white;font-weight:bold">TIE / AJR / OSA / ET</label></br>';
+      var text = '<label class="control-label-small" style="text-transform:none;color:white;">TIE / AJR / OSA / ET</label></br>';
       var index = 0;
       var nodes = nodeCollection.getNodesWithAttributes();
       _.each(nodes, function (nodeWithAttributes) {
         text += roadAddressLink(index++, nodeWithAttributes) + '</br>' +
-          addNodeAttributeLabel('Solmutyyppi: ') + addNodeAttributeLabel(nodeWithAttributes.type) + '</br>' +
-          addNodeAttributeLabel('Solmun nimi: ') + addNodeAttributeLabel(nodeWithAttributes.name) + '</br></br>';
+          addNodeAttributeLabel('Solmutyyppi:&nbsp;') + addNodeAttributeLabel(nodeWithAttributes.type) + '</br>' +
+          addNodeAttributeLabel('Solmun nimi:&nbsp;') + addNodeAttributeLabel(nodeWithAttributes.name) + '</br></br>';
       });
       return text;
     };

@@ -532,7 +532,7 @@ class ProjectValidator {
     val invalidUnchangedLinks: Seq[ProjectLink] = projectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
       val (unchanged, others) = g._2.partition(_.status == UnChanged)
       //foreach number and part and foreach UnChanged found in that group, we will check if there is some link in some other different action, that is connected by geometry and addressM values to the UnChanged link starting point
-      unchanged.filter(u => others.exists(o => u.startAddrMValue >= o.startAddrMValue))
+      unchanged.filter(u => others.filterNot(_.status == LinkStatus.NotHandled).exists(o => u.startAddrMValue >= o.startAddrMValue))
     }.toSeq
 
     if (invalidUnchangedLinks.nonEmpty) {
@@ -576,9 +576,9 @@ class ProjectValidator {
 
     def checkMinMaxTrackRoadTypes(trackInterval: Seq[ProjectLink]): Option[ProjectLink] = {
         val (left, right) = trackInterval.partition(_.track == Track.LeftSide)
-        val leftRoadTypes = left.map(_.roadType).distinct.sortBy(_.value).toSet
-        val rightRoadTypes = right.map(_.roadType).distinct.sortBy(_.value).toSet
-        if (leftRoadTypes != rightRoadTypes) {
+        val leftRoadTypes = left.sortBy(_.startAddrMValue).map(_.roadType.value).distinct.toSet
+        val rightRoadTypes = right.sortBy(_.startAddrMValue).map(_.roadType.value).distinct.toSet
+        if (!(leftRoadTypes sameElements rightRoadTypes)) {
           if(left.nonEmpty)
             Some(left.head)
           else
@@ -633,7 +633,7 @@ class ProjectValidator {
         val trackToCheck = links.head.track
         val trackInterval = getTrackInterval(links.sortBy(o => (o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)), trackToCheck)
         val headerAddr = trackInterval.minBy(_.startAddrMValue).startAddrMValue
-        getTwoTrackInterval(links.filterNot(l => trackInterval.exists(lt => lt.id == l.id)), interval++Seq(headerAddr -> trackInterval.filterNot(_.track == Track.Combined)))
+        getTwoTrackInterval(links.filterNot(l => trackInterval.exists(lt => lt.id == l.id)), interval ++ Seq(headerAddr -> trackInterval.filterNot(_.track == Track.Combined)))
       }
     }
 
