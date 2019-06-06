@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.viite.RoadType.FerryRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinearLocationDAO, _}
@@ -2466,6 +2467,24 @@ Left|      |Right
       projectValidator.checkRoadContinuityCodes(project, endOfRoadSet).distinct should have size 0
       val brokenContinuity = endOfRoadSet.tail :+ endOfRoadSet.head.copy(roadType = RoadType.FerryRoad)
       val errors = projectValidator.checkTrackCodePairing(project, brokenContinuity).distinct
+      errors should have size 1
+      errors.head.validationError should be(projectValidator.ValidationErrorList.DistinctRoadTypesBetweenTracks)
+    }
+  }
+
+  test("Test checkTrackRoadType When there are same Road Types in each Track but in different order Then ProjectValidator should show DistinctRoadTypesBetweenTracks") {
+    runWithRollback {
+      val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
+      val (left, right) = projectLinks.partition(_.track == LeftSide)
+      val endOfRoadLeft = left.init :+ left.last.copy(discontinuity = EndOfRoad)
+      val endOfRoadRight = right.init :+ right.last.copy(discontinuity = EndOfRoad)
+      val leftRoadType = endOfRoadLeft.init :+ endOfRoadLeft.last.copy(roadType = FerryRoad)
+      val rightRoadType = endOfRoadRight.head.copy(roadType = FerryRoad) +: endOfRoadRight.tail
+      val endOfRoadSet = leftRoadType ++ rightRoadType
+
+      mockEmptyRoadAddressServiceCalls()
+
+      val errors = projectValidator.checkTrackCodePairing(project, endOfRoadSet).distinct
       errors should have size 1
       errors.head.validationError should be(projectValidator.ValidationErrorList.DistinctRoadTypesBetweenTracks)
     }
