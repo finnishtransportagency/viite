@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
         xmlns="http://www.w3.org/2000/svg"
-        xmlns:xlink="http://www.w3.org/1999/xlink"
         width="24"
         height="24"
         viewBox="0 0 24 24"
@@ -23,5 +22,5 @@
           y="17"
           style="font-size:14px;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;">
     </text>
-    <script type="text/ecmascript" xlink:href="param.js" />
+    <script type="text/ecmascript" href="param.js" />
 </svg>
