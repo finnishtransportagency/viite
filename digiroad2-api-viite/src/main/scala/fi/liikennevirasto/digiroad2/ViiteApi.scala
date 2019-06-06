@@ -22,10 +22,11 @@ import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.swagger.{Swagger, _}
+import org.scalatra.swagger.Swagger
 import org.scalatra.{NotFound, _}
 import org.slf4j.{Logger, LoggerFactory}
 import org.scalatra.swagger._
+
 import scala.util.parsing.json.JSON._
 import scala.util.{Left, Right}
 
@@ -575,11 +576,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           projectService.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, linksToRevert.coordinates, user) match {
             case None =>
               val projectErrors = projectService.validateProjectById(linksToRevert.projectId).map(errorPartsToApi)
-              val project = projectService.getSingleProjectById(linksToRevert.projectId).get
               Map("success" -> true,
                 "publishable" -> projectErrors.isEmpty,
-                "projectErrors" -> projectErrors,
-                "formedInfo" -> project.formedParts.map(projectFormedPartToApi(Some(project.id))))
+                "projectErrors" -> projectErrors)
             case Some(s) => Map("success" -> false, "errorMessage" -> s)
           }
         }
@@ -668,12 +667,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
-              val project = projectService.getSingleProjectById(links.projectId).get
               val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
               Map("success" -> true, "id" -> links.projectId,
                 "publishable" -> projectErrors.isEmpty,
-                "projectErrors" -> projectErrors,
-                "formedInfo" -> project.formedParts.map(projectFormedPartToApi(Some(project.id))))
+                "projectErrors" -> projectErrors)
           }
         } else {
           Map("success" -> false, "errorMessage" -> "Ajoratakoodi puuttuu")
@@ -1068,9 +1065,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi)
       }
       case _ => time(logger, operationName = "nodes with junctions fetch") {
-        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi) ++
-        nodesAndJunctionsService.getNodeTemplatesByBoundingBox(boundingRectangle).map(nodePointTemplateToApi) ++
-        nodesAndJunctionsService.getJunctionTemplatesByBoundingBox(boundingRectangle).map(junctionPointTemplateToApi)
+        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi)
       }
     }
   }
@@ -1161,7 +1156,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "modifiedAt" -> roadAddressLink.modifiedAt,
       "modifiedBy" -> roadAddressLink.modifiedBy,
       "municipalityCode" -> roadAddressLink.attributes.get("MUNICIPALITYCODE"),
-      "municipalityName" -> roadAddressLink.municipalityName,
       "roadNameFi" -> roadAddressLink.attributes.get("ROADNAME_FI"),
       "roadNameSe" -> roadAddressLink.attributes.get("ROADNAME_SE"),
       "roadNameSm" -> roadAddressLink.attributes.get("ROADNAME_SM"),
@@ -1220,42 +1214,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     //TODO
     Map("id" -> nodePoint.id,
         "nodeId" -> nodePoint.nodeId)
-  }
-
-  def nodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
-    Map("nodePointTemplate" -> {
-        Map("id" -> nodePoint.id,
-          "nodeId" -> nodePoint.nodeId,
-          "beforeAfter" -> nodePoint.beforeAfter.value,
-          "roadwayPointId" -> nodePoint.roadwayPointId,
-          "startDate" -> formatDateTimeToString(Some(nodePoint.startDate)),
-          "endDate" -> formatDateTimeToString(nodePoint.endDate),
-          "validFrom" -> formatDateTimeToString(Some(nodePoint.validFrom)),
-          "validTo" -> formatDateTimeToString(nodePoint.validTo),
-          "createdBy" -> nodePoint.createdBy,
-          "roadwayNumber" -> nodePoint.roadwayNumber,
-          "addrM" -> nodePoint.addrM
-        )
-      }
-    )
-  }
-
-  def junctionPointTemplateToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
-    Map("junctionPointTemplate" -> {
-      Map("id" -> junctionPoint.id,
-        "junctionId" -> junctionPoint.junctionId,
-        "beforeAfter" -> junctionPoint.beforeAfter.value,
-        "roadwayPointId" -> junctionPoint.roadwayPointId,
-        "startDate" -> formatDateTimeToString(Some(junctionPoint.startDate)),
-        "endDate" -> formatDateTimeToString(junctionPoint.endDate),
-        "validFrom" -> formatDateTimeToString(Some(junctionPoint.validFrom)),
-        "validTo" -> formatDateTimeToString(junctionPoint.validTo),
-        "createdBy" -> junctionPoint.createdBy,
-        "roadwayNumber" -> junctionPoint.roadwayNumber,
-        "addrM" -> junctionPoint.addrM
-      )
-    }
-    )
   }
 
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
