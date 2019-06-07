@@ -3,22 +3,23 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService
 import fi.liikennevirasto.digiroad2.asset.{Modification, TimeStamps}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, Track}
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.json4s.Formats
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraServlet}
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 
 class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport {
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
-  def clearCache() = {
+  def clearCache(): Int = {
     roadLinkService.clearCache()
   }
 
@@ -108,8 +109,7 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
       "linkId" -> roadAddress.linkId,
       "startMValue" -> roadAddress.startMValue,
       "endMValue" -> roadAddress.endMValue,
-      "sideCode" -> roadAddress.sideCode.value,
-      "floating" -> roadAddress.isFloating
+      "sideCode" -> roadAddress.sideCode.value
     )
   }
 }

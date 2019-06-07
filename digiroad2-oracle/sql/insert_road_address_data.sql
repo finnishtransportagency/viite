@@ -6,6 +6,8 @@
 -- To: values (nextval('viite_general_seq')
 -- Also replaced ';' with '; insert into PUBLISHED_ROADWAY values ((select max(id) from PUBLISHED_ROAD_NETWORK), viite_general_seq.currval);'
 --------------------------------------------------------
+-- TODO This is just an example and should be removed when the changes are done in the correct file.
+
 insert into PUBLISHED_ROAD_NETWORK values (nextval('PUBLISHED_ROAD_NETWORK_SEQ'), current_date, current_date);
 
 ALTER TABLE ROADWAY DISABLE TRIGGER ALL;

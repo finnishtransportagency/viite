@@ -14,6 +14,7 @@ import org.eclipse.jetty.webapp.WebAppContext
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
+import scala.util.matching.Regex
 
 trait DigiroadServer {
   val viiteContextPath: String
@@ -30,7 +31,7 @@ trait DigiroadServer {
     server.join()
   }
 
-  def createViiteContext() = {
+  def createViiteContext(): WebAppContext = {
     val appContext = new WebAppContext()
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
@@ -54,7 +55,7 @@ trait DigiroadServer {
 
 class OAGProxyServlet extends ProxyServlet {
 
-  def regex = "/(viite)".r
+  def regex: Regex = "/(viite)".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
@@ -70,7 +71,7 @@ class OAGProxyServlet extends ProxyServlet {
 class OAGRasterServiceProxyServlet extends ProxyServlet {
 
   private val logger = LoggerFactory.getLogger(getClass)
-  def regex = "/(viite)".r
+  def regex: Regex = "/(viite)".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
@@ -123,7 +124,7 @@ class ArcGisProxyServlet extends ProxyServlet {
 }
 
 class VKMProxyServlet extends ProxyServlet {
-  def regex = "/(digiroad|viite)".r
+  def regex: Regex = "/(digiroad|viite)".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val properties = new Properties()
@@ -142,7 +143,7 @@ class VKMProxyServlet extends ProxyServlet {
 }
 
 class VKMUIProxyServlet extends ProxyServlet {
-  def regex = "/(digiroad|viite)/viitekehysmuunnin/".r
+  def regex: Regex = "/(digiroad|viite)/viitekehysmuunnin/".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     java.net.URI.create("http://localhost:3000" + regex.replaceFirstIn(req.getRequestURI, ""))

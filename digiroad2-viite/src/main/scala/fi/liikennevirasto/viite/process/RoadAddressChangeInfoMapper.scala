@@ -1,158 +1,16 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
-import fi.liikennevirasto.viite.{LinkRoadAddressHistory, MinAllowedRoadAddressLength, RoadType, switchSideCode}
-import fi.liikennevirasto.viite.dao.{FloatingReason, LinearLocation, RoadAddress}
-import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import org.slf4j.LoggerFactory
 
-//TODO The all class and specs can be deleted after VIITE-1537
-trait BaseRoadAddressMapper {
-
-  //TODO this is no longer needed
-  //  /** Used when road address span is larger than mapping: road address must be split into smaller parts
-  //    *
-  //    * @param roadAddress Road address to split
-  //    * @param mapping     Mapping entry that may or may not have smaller or larger span than road address
-  //    * @return A pair of address start and address end values this mapping and road address applies to
-  //    */
-  //  private def splitRoadAddressValues(roadAddress: RoadAddress, mapping: LinearLocationMapping): (Long, Long) = {
-  //    if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM)) {
-  //      (roadAddress.startAddrMValue, roadAddress.endAddrMValue)
-  //    } else {
-  //      val (startM, endM) =
-  //        if (Math.abs((roadAddress.endMValue - roadAddress.startMValue) - (mapping.sourceEndM - mapping.sourceStartM)) <= MaxAllowedMValueError)
-  //          (roadAddress.startMValue, roadAddress.endMValue)
-  //        else
-  //          (mapping.sourceStartM, mapping.sourceEndM)
-  //
-  //      val (startAddrM, endAddrM) = roadAddress.addressBetween(startM, endM)
-  //      (Math.max(startAddrM, roadAddress.startAddrMValue), Math.min(endAddrM, roadAddress.endAddrMValue))
-  //    }
-  //  }
-
-  /**
-    * Partitioning for transfer checks. Stops at calibration points, changes of road part etc.
-    *
-    * @param roadAddresses
-    * @return
-    */
-  protected def partition(roadAddresses: Iterable[RoadAddress]): Seq[RoadwaySection] = {
-    def combineTwo(r1: RoadAddress, r2: RoadAddress): Seq[RoadAddress] = {
-      if (r1.endAddrMValue == r2.startAddrMValue && r1.endCalibrationPoint.isEmpty)
-        Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue))
-      else
-        Seq(r2, r1)
-    }
-    def combine(roadAddressSeq: Seq[RoadAddress], result: Seq[RoadAddress] = Seq()): Seq[RoadAddress] = {
-      if (roadAddressSeq.isEmpty)
-        result.reverse
-      else if (result.isEmpty)
-        combine(roadAddressSeq.tail, Seq(roadAddressSeq.head))
-      else
-        combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
-    }
-    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadwayNumber))
-    grouped.mapValues(v => combine(v.toSeq.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
-      RoadwaySection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, RoadType.Unknown, ra.ely, ra.reversed, ra.roadwayNumber, Seq())
-    ).toSeq
-  }
-
-  def withinTolerance(mValue1: Double, mValue2: Double) = {
-    Math.abs(mValue1 - mValue2) < MinAllowedRoadAddressLength
-  }
-
-  def isDirectionMatch(r: LinearLocationMapping): Boolean = {
-    ((r.sourceStartM - r.sourceEndM) * (r.targetStartM - r.targetEndM)) > 0
-  }
-
-  def calculateMeasures(linearLocation: LinearLocation, adjMap: LinearLocationMapping): (Double, Double) = {
-    val coef = adjMap.targetLen / adjMap.sourceLen
-    val (sourceStartM, sourceEndM) = (Math.min(adjMap.sourceStartM, adjMap.sourceEndM), Math.max(adjMap.sourceStartM, adjMap.sourceEndM))
-    val (targetStartM, targetEndM) = (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
-    val startM = if ((linearLocation.startMValue - sourceStartM) > MinAllowedRoadAddressLength) {
-      targetStartM + linearLocation.startMValue * coef
-    } else {
-      targetStartM
-    }
-    val endM = if ((sourceEndM - linearLocation.endMValue) > MinAllowedRoadAddressLength) {
-      targetStartM + linearLocation.endMValue * coef
-    } else {
-      targetEndM
-    }
-    (startM, endM)
-  }
-
-  def mapRoadAddresses(linearLocationMapping: Seq[LinearLocationMapping], allLinerLocations : Seq[LinearLocation])(linearLocation: LinearLocation): Seq[LinearLocation] = {
-    //Find the linear locations that should be applied here
-
-    linearLocationMapping.filter(_.matches(linearLocation, allLinerLocations)).map(adjMap => {
-
-      val (sideCode, mappedGeom) =
-        if (isDirectionMatch(adjMap)) {
-          (linearLocation.sideCode, truncateGeometriesWithAddressValues(linearLocation, adjMap))
-        } else {
-          (switchSideCode(linearLocation.sideCode), truncateGeometriesWithAddressValues(linearLocation, adjMap).reverse)
-        }
-
-      val (startM, endM) = calculateMeasures(linearLocation, adjMap)
-
-      //      val startCP = linearLocation.startCalibrationPoint match {
-      //        case None => None
-      //        case Some(cp) => if (cp.addressMValue == mappedStartAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
-      //          segmentMValue = if (sideCode == SideCode.AgainstDigitizing) endM - startM else 0.0)) else None
-      //      }
-      //      val endCP = ra.endCalibrationPoint match {
-      //        case None => None
-      //        case Some(cp) => if (cp.addressMValue == mappedEndAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
-      //          segmentMValue = if (sideCode == SideCode.TowardsDigitizing) endM - startM else 0.0)) else None
-      //      }
-      //TODO just missing the order number after changes
-      linearLocation.copy(id = -1000/*NewLinearLocation*/, linkId = adjMap.targetLinkId,
-        startMValue = startM, endMValue = endM, sideCode = sideCode, adjustedTimestamp = VVHClient.createVVHTimeStamp(),
-        floating = NoFloating, geometry = if(mappedGeom.isEmpty) linearLocation.geometry else mappedGeom)
-    })
-  }
-
-  private def truncateGeometriesWithAddressValues(linearLocation: LinearLocation, mapping: LinearLocationMapping): Seq[Point] = {
-    def truncate(geometry: Seq[Point], d1: Double, d2: Double) = {
-      // When operating with fake geometries (automatic change tables) the geometry may not have correct length
-      val startM = Math.min(Math.max(Math.min(d1, d2), 0.0), GeometryUtils.geometryLength(geometry))
-      val endM = Math.min(Math.max(d1, d2), GeometryUtils.geometryLength(geometry))
-      GeometryUtils.truncateGeometry3D(geometry, startM, endM)
-    }
-
-    if (withinTolerance(linearLocation.startMValue, mapping.sourceStartM) && withinTolerance(linearLocation.endMValue, mapping.sourceEndM))
-      truncate(linearLocation.geometry, linearLocation.startMValue, linearLocation.endMValue )
-    else if(mapping.sourceLinkId == mapping.targetLinkId) {
-      truncate(linearLocation.geometry, mapping.targetStartM, mapping.targetEndM)
-    }
-    else{
-      val (startM, endM) = if (Math.abs((linearLocation.endMValue - linearLocation.startMValue) - (mapping.sourceEndM - mapping.sourceStartM)) <= 0.001 /*MaxAllowedMValueError*/)
-        (linearLocation.startMValue, linearLocation.endMValue)
-      else
-        (mapping.sourceStartM, mapping.sourceEndM)
-
-      truncate(linearLocation.geometry, startM, endM )
-    }
-  }
-}
 
 object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   private val logger = LoggerFactory.getLogger(getClass)
 
   private def isLengthChange(ci: ChangeInfo) = {
     Set(LengthenedCommonPart.value, LengthenedNewPart.value, ShortenedCommonPart.value, ShortenedRemovedPart.value).contains(ci.changeType.value)
-  }
-
-  private def isFloatingChange(ci: ChangeInfo) = {
-    Set(Removed.value, ReplacedCommonPart.value, ReplacedNewPart.value, ReplacedRemovedPart.value).contains(ci.changeType.value)
   }
 
   private def max(doubles: Double*) = {
@@ -164,14 +22,14 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   }
 
   private def fuseLengthChanges(sources: Seq[ChangeInfo]) = {
-    val (lengthened, rest) = sources.partition(ci => ci.changeType == LengthenedCommonPart.value ||
-      ci.changeType == LengthenedNewPart.value)
-    val (shortened, others) = rest.partition(ci => ci.changeType == ShortenedRemovedPart.value ||
-      ci.changeType == ShortenedCommonPart.value)
+    val (lengthened, rest) = sources.partition(ci => ci.changeType.value == LengthenedCommonPart.value ||
+      ci.changeType.value == LengthenedNewPart.value)
+    val (shortened, others) = rest.partition(ci => ci.changeType.value == ShortenedRemovedPart.value ||
+      ci.changeType.value == ShortenedCommonPart.value)
     others ++
       lengthened.groupBy(ci => (ci.newId, ci.vvhTimeStamp)).mapValues { s =>
-        val common = s.find(_.changeType == LengthenedCommonPart.value)
-        val added = s.find(st => st.changeType == LengthenedNewPart.value)
+        val common = s.find(_.changeType.value == LengthenedCommonPart.value)
+        val added = s.find(st => st.changeType.value == LengthenedNewPart.value)
         (common, added) match {
           case (Some(c), Some(a)) =>
             val (expStart, expEnd) = if (c.newStartMeasure.get > c.newEndMeasure.get)
@@ -183,8 +41,8 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
         }
       }.values.flatten.toSeq ++
       shortened.groupBy(ci => (ci.oldId, ci.vvhTimeStamp)).mapValues { s =>
-        val common = s.find(_.changeType == ShortenedCommonPart.value)
-        val toRemove = s.filter(_.changeType == ShortenedRemovedPart.value)
+        val common = s.find(_.changeType.value == ShortenedCommonPart.value)
+        val toRemove = s.filter(_.changeType.value == ShortenedRemovedPart.value)
         val fusedRemove = if (toRemove.lengthCompare(0) > 0) {
           Some(toRemove.head.copy(oldStartMeasure = toRemove.minBy(_.oldStartMeasure).oldStartMeasure, oldEndMeasure = toRemove.maxBy(_.oldEndMeasure).oldEndMeasure))
         } else None
@@ -200,22 +58,22 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       }.values.flatten.toSeq
   }
 
-  private def createAddressMap(sources: Seq[ChangeInfo]): Seq[LinearLocationMapping] = {
-    val pseudoGeom = Seq(Point(0.0, 0.0), Point(1.0, 0.0))
-    fuseLengthChanges(sources).map(ci => {
-      ci.changeType match {
-        case CombinedModifiedPart | CombinedRemovedPart | DividedModifiedPart | DividedNewPart =>
-          logger.debug("Change info> oldId: " + ci.oldId + " newId: " + ci.newId + " changeType: " + ci.changeType)
-          Some(LinearLocationMapping(ci.oldId.get, ci.newId.get, 0, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
-            ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
-        case LengthenedCommonPart | LengthenedNewPart | ShortenedCommonPart | ShortenedRemovedPart =>
-          logger.debug("Change info, length change > oldId: " + ci.oldId + " newId: " + ci.newId + " changeType: " + ci.changeType + s" $ci")
-          Some(LinearLocationMapping(ci.oldId.get, ci.newId.get, 0, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
-            ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
-        case _ => None
-      }
-    }).filter(c => c.isDefined).map(_.get)
-  }
+//  private def createAddressMap(sources: Seq[ChangeInfo]): Seq[LinearLocationMapping] = {
+//    val pseudoGeom = Seq(Point(0.0, 0.0), Point(1.0, 0.0))
+//    fuseLengthChanges(sources).map(ci => {
+//      ci.changeType match {
+//        case CombinedModifiedPart | CombinedRemovedPart | DividedModifiedPart | DividedNewPart =>
+//          logger.debug("Change info> oldId: " + ci.oldId + " newId: " + ci.newId + " changeType: " + ci.changeType)
+//          Some(LinearLocationMapping(ci.oldId.get, ci.newId.get, 0, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
+//            ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
+//        case LengthenedCommonPart | LengthenedNewPart | ShortenedCommonPart | ShortenedRemovedPart =>
+//          logger.debug("Change info, length change > oldId: " + ci.oldId + " newId: " + ci.newId + " changeType: " + ci.changeType + s" $ci")
+//          Some(LinearLocationMapping(ci.oldId.get, ci.newId.get, 0, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
+//            ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
+//        case _ => None
+//      }
+//    }).filter(c => c.isDefined).map(_.get)
+//  }
 
 //  private def applyChanges(changes: Seq[Seq[ChangeInfo]], roadAddresses: Map[(Long, Long), Seq[RoadAddress]]): Map[(Long, Long), Seq[RoadAddress]] = {
 //    changes.foldLeft(roadAddresses) { case (addresses, changeInfo) =>

@@ -10,11 +10,10 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
-import fi.liikennevirasto.viite.dao.FloatingReason.NoFloating
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
@@ -86,7 +85,7 @@ object Discontinuity {
     def description = "Parallel Link"
   }
 
-  def replaceParallelLink(currentDiscontinuity: Discontinuity) : Discontinuity = {
+  def replaceParallelLink(currentDiscontinuity: Discontinuity): Discontinuity = {
     if (currentDiscontinuity == ParallelLink)
       Continuous
     else currentDiscontinuity
@@ -208,8 +207,6 @@ trait BaseRoadAddress {
 
   def calibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint])
 
-  def floating: FloatingReason
-
   def geometry: Seq[Point]
 
   def ely: Long
@@ -219,8 +216,6 @@ trait BaseRoadAddress {
   def reversed: Boolean
 
   def roadwayNumber: Long
-
-  def isFloating: Boolean = floating.isFloating
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
@@ -290,21 +285,15 @@ trait BaseRoadAddress {
       val direction = if (geometry.head.y == geometry.last.y) Vector3d(1.0, 0.0, 0.0) else Vector3d(0.0, 1.0, 0.0)
       Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
     } else {
-      val startingPoint: Point = sideCode == SideCode.TowardsDigitizing match {
-        case true =>
-          //reversed for both SideCodes
-          geometry.head
-        case false =>
-          //NOT reversed for both SideCodes
-          geometry.last
+      val startingPoint: Point = if (sideCode == SideCode.TowardsDigitizing) {
+        geometry.head
+      } else {
+        geometry.last
       }
-      val endPoint: Point = sideCode == SideCode.TowardsDigitizing match {
-        case true =>
-          //reversed for both SideCodes
-          geometry.last
-        case false =>
-          //NOT reversed for both SideCodes
-          geometry.head
+      val endPoint: Point = if (sideCode == SideCode.TowardsDigitizing) {
+        geometry.last
+      } else {
+        geometry.head
       }
       (startingPoint, endPoint)
     }
@@ -318,7 +307,7 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
                        startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None,
                        linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
-                       floating: FloatingReason = NoFloating, geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
+                       geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
                        terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
                        roadName: Option[String] = None) extends BaseRoadAddress {
 
@@ -369,7 +358,7 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
   }
 
   def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    val calibrationPointSource = if (id == noRoadwayId || id == NewRoadway) ProjectLinkSource else RoadAddressSource
+    val calibrationPointSource = if (id == noRoadwayId || id == NewIdValue) ProjectLinkSource else RoadAddressSource
     calibrationPoints match {
       case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
       case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)))
@@ -487,10 +476,11 @@ class RoadwayDAO extends BaseDAO {
   /**
     * Will get a collection of Roadways from our database based on the road number, road part number given.
     * Also has query modifiers that will inform if it should return history roadways (default value no) or if should get only the end parts (max end address m value, default value no).
-    * @param roadNumber: Long - Road Number
-    * @param roadPart: Long - Road Part Number
-    * @param withHistory: Boolean - Query modifier, indicates if should fetch history roadways or not
-    * @param fetchOnlyEnd: Boolean - Query modifier, indicates if should fetch only the end parts or not
+    *
+    * @param roadNumber   : Long - Road Number
+    * @param roadPart     : Long - Road Part Number
+    * @param withHistory  : Boolean - Query modifier, indicates if should fetch history roadways or not
+    * @param fetchOnlyEnd : Boolean - Query modifier, indicates if should fetch only the end parts or not
     * @return
     */
   def fetchAllByRoadAndPart(roadNumber: Long, roadPart: Long, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[Roadway] = {
@@ -647,11 +637,11 @@ class RoadwayDAO extends BaseDAO {
           s"""
             $query
             join $idTableName i on i.id = a.ROAD_NUMBER
-            where a.valid_to is null AND (a.end_date is null or a.end_date >= current_date) AND a.terminated = 0
+            where a.valid_to is null AND (a.end_date is null or a.end_date >= current_date) order by a.road_number, a.road_part_number, a.start_date
           """.stripMargin
       }
     } else {
-      s"""$query where a.valid_to is null AND (a.end_date is null or a.end_date >= current_date) AND a.terminated = 0 AND a.road_number in (${roadNumbers.mkString(",")})"""
+      s"""$query where a.valid_to is null AND (a.end_date is null or a.end_date >= current_date) AND a.road_number in (${roadNumbers.mkString(",")}) order by a.road_number, a.road_part_number, a.start_date"""
     }
   }
 
@@ -659,11 +649,11 @@ class RoadwayDAO extends BaseDAO {
     * Defines the portion of the query that will filter the results based on the given road number, road part number and if it should include history roadways or fetch only their end parts.
     * Will return the completed SQL query.
     *
-    * @param roadNumber: Long - Road Number
-    * @param roadPart: Long - Road Part Number
-    * @param includeHistory: Boolean - Query modifier, indicates if should fetch history roadways or not
-    * @param fetchOnlyEnd: Boolean - Query modifier, indicates if should fetch only the end parts or not
-    * @param query: String - The actual SQL query string
+    * @param roadNumber     : Long - Road Number
+    * @param roadPart       : Long - Road Part Number
+    * @param includeHistory : Boolean - Query modifier, indicates if should fetch history roadways or not
+    * @param fetchOnlyEnd   : Boolean - Query modifier, indicates if should fetch only the end parts or not
+    * @param query          : String - The actual SQL query string
     * @return
     */
   private def withRoadAndPart(roadNumber: Long, roadPart: Long, includeHistory: Boolean = false, fetchOnlyEnd: Boolean = false)(query: String): String = {
@@ -698,8 +688,7 @@ class RoadwayDAO extends BaseDAO {
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
     if (roadwayNumbers.size > 1000) {
       val groupsOf1000 = roadwayNumbers.grouped(1000).toSeq
-      val groupedRoadwayNumbers = groupsOf1000.map(group =>
-      {
+      val groupedRoadwayNumbers = groupsOf1000.map(group => {
         s"""in (${group.mkString(",")})"""
       }).mkString("", " or a.roadway_number ", "")
 
@@ -719,8 +708,9 @@ class RoadwayDAO extends BaseDAO {
   private def withRoadwayNumbersAndDate(roadwayNumbers: Set[Long], searchDate: DateTime)(query: String): String = {
     def dateFilter(table: String): String = {
       val strDate = dateFormatter.print(searchDate)
-      s" ($table.start_date <= to_date('$strDate', 'yyyymmdd') and (to_date('$strDate', 'yyyymmdd') < $table.end_date or $table.end_date is null))"
+      s" ($table.start_date <= to_date('$strDate', 'yyyymmdd') and (to_date('$strDate', 'yyyymmdd') <= $table.end_date or $table.end_date is null))"
     }
+
     if (roadwayNumbers.size > 1000) {
       MassQuery.withIds(roadwayNumbers) {
         idTableName =>
@@ -731,7 +721,8 @@ class RoadwayDAO extends BaseDAO {
           """.stripMargin
       }
     }
-    else s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
+    else
+      s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
   }
 
   private def withSectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
@@ -782,23 +773,25 @@ class RoadwayDAO extends BaseDAO {
     s"""$query where valid_to is null and road_number BETWEEN  ${roadNumbers._1} AND ${roadNumbers._2}"""
   }
 
-  // TODO What about end_date?
   private def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
-    s"""$query where valid_to is null and start_date >= to_date('${sinceDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
-          AND start_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')"""
+    s"""$query where valid_to is null
+          AND start_date >= to_date('${sinceDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
+          AND start_date <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD')
+    """
   }
 
   private def withUpdatedSince(sinceDate: DateTime)(query: String): String = {
     val sinceString = sinceDate.toString("yyyy-MM-dd")
     s"""$query
-        where valid_from >= to_date('${sinceString}', 'YYYY-MM-DD')
-          OR (valid_to IS NOT NULL AND valid_to >= to_date('${sinceString}', 'YYYY-MM-DD'))"""
+        where valid_from >= to_date('$sinceString', 'YYYY-MM-DD')
+          OR (valid_to IS NOT NULL AND valid_to >= to_date('$sinceString', 'YYYY-MM-DD'))"""
   }
 
   /**
     * Composes the original SQL fetch query the the where clause filtering by roadwayId.
-    * @param roadwayIds: Seq[Long] - Collection of the roadway id's to return
-    * @param query: String - The original SQL fetch query
+    *
+    * @param roadwayIds : Seq[Long] - Collection of the roadway id's to return
+    * @param query      : String - The original SQL fetch query
     * @return
     */
   private def withRoadWayIds(roadwayIds: Seq[Long])(query: String): String = {
@@ -834,13 +827,14 @@ class RoadwayDAO extends BaseDAO {
 
   /**
     * Full SQL query to return, if existing, a road part number that is < than the supplied current one.
-    * @param roadNumber: Long - Roadway Road Number
-    * @param current: Long - Roadway Road Part Number
+    *
+    * @param roadNumber : Long - Roadway Road Number
+    * @param current    : Long - Roadway Road Part Number
     * @return
     */
-    def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long): Option[Long] = {
-      val query =
-        s"""
+  def fetchPreviousRoadPartNumber(roadNumber: Long, current: Long): Option[Long] = {
+    val query =
+      s"""
             SELECT * FROM (
               SELECT ra.road_part_number
               FROM ROADWAY ra
@@ -865,7 +859,8 @@ class RoadwayDAO extends BaseDAO {
 
   /**
     * Expires roadways (set their valid to to the current system date) to all the roadways that have the supplied ids.
-    * @param ids: Seq[Long] - The ids of the roadways to expire.
+    *
+    * @param ids : Seq[Long] - The ids of the roadways to expire.
     * @return
     */
   def expireById(ids: Set[Long]): Int = {
@@ -894,15 +889,7 @@ class RoadwayDAO extends BaseDAO {
     sql"""
        select distinct road_number
               from ROADWAY
-              where valid_to IS NULL AND end_date is NULL AND terminated = 0 order by road_number
-      """.as[Long].list
-  }
-
-  def getValidRoadNumbersByProject(projectId: Long): List[Long] = {
-    sql"""
-       select distinct road_number
-              from ROADWAY
-              where valid_to IS NULL AND project
+              where valid_to IS NULL AND (end_date is NULL or end_date >= sysdate) order by road_number
       """.as[Long].list
   }
 
@@ -910,7 +897,7 @@ class RoadwayDAO extends BaseDAO {
     sql"""
        select distinct road_number
               from ROADWAY
-              where valid_to IS NULL AND end_date is NULL AND terminated = 0 AND road_number BETWEEN ${roadNumbers._1} AND ${roadNumbers._2}
+              where valid_to IS NULL AND (end_date is NULL or end_date >= sysdate) AND road_number BETWEEN ${roadNumbers._1} AND ${roadNumbers._2}
       """.as[Long].list
   }
 
@@ -926,13 +913,13 @@ class RoadwayDAO extends BaseDAO {
         road_type, ely, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, ?,
         TO_DATE(?, 'YYYYMMDD'), TO_DATE(?, 'YYYYMMDD'), ?, ?, ?, ?)
       """)
-    val (ready, idLess) = roadways.partition(_.id != NewRoadway)
+    val (ready, idLess) = roadways.partition(_.id != NewIdValue)
     val plIds = Sequences.fetchRoadwayIds(idLess.size)
     val createRoadways = ready ++ idLess.zip(plIds).map(x =>
       x._1.copy(id = x._2)
     )
     createRoadways.foreach { case address =>
-      val roadwayNumber = if (address.roadwayNumber == NewRoadwayNumber) {
+      val roadwayNumber = if (address.roadwayNumber == NewIdValue) {
         Sequences.nextRoadwayNumber
       } else {
         address.roadwayNumber
@@ -963,8 +950,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   // TODO Instead of returning Option[(Long, Long, ...)] return Option[RoadPartInfo]
-  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Long,Long,Long,Option[DateTime],Option[DateTime])] =
-  {
+  def getRoadPartInfo(roadNumber: Long, roadPart: Long): Option[(Long, Long, Long, Long, Long, Option[DateTime], Option[DateTime])] = {
     val query =
       s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity, r.ely,
             (Select Max(ra.start_date) from ROADWAY ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,

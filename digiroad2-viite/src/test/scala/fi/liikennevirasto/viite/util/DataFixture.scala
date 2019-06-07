@@ -47,11 +47,9 @@ object DataFixture {
   val roadAddressDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
 
   lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer))
-
-  private lazy val hms = new PeriodFormatterBuilder() minimumPrintedDigits (2) printZeroAlways() appendHours() appendSeparator (":") appendMinutes() appendSuffix (":") appendSeconds() toFormatter
 
   private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
 
@@ -90,15 +88,12 @@ object DataFixture {
       }
       println(s"Road address import complete at time: ${DateTime.now()}")
     }
-
   }
 
-  def updateUnaddressedRoadLink(): Unit = {
-    println(s"\nUpdating unaddressed road link table at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    dataImporter.updateUnaddressedRoadLinks(vvhClient)
-    println(s"Unaddressed road link update complete at time: ${DateTime.now()}")
-    println()
+  def importNodesAndJunctions(): Unit = {
+    println("\nImporting nodes and junctions started at time: ")
+    println(DateTime.now())
+    dataImporter.importNodesAndJunctions(Conversion.database())
   }
 
   def updateLinearLocationGeometry(): Unit = {
@@ -108,25 +103,6 @@ object DataFixture {
     println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
   }
-
-  //  def findFloatingRoadAddresses(): Unit = {
-  //    println(s"\nFinding road addresses that are floating at time: ${DateTime.now()}")
-  //    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-  //    val username = properties.getProperty("bonecp.username")
-  //    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-  //    val roadAddressDAO = new RoadwayDAO
-  //    val linearLocationDAO = new LinearLocationDAO
-  //    val roadNetworkDAO = new RoadNetworkDAO
-  //    val roadAddressService = new RoadAddressService(roadLinkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new UnaddressedRoadLinkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), new DummyEventBus)
-  //    OracleDatabase.withDynTransaction {
-  //      val checker = new RoadNetworkChecker(roadLinkService)
-  //      val roads = checker.checkRoadNetwork(username)
-  //      println(s"${roads.size} segment(s) found")
-  //      roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet, float = true)
-  //    }
-  //    println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
-  //    println()
-  //  }
 
   def checkRoadNetwork(): Unit = {
     println(s"\nstart checking road network at time: ${DateTime.now()}")
@@ -287,9 +263,11 @@ object DataFixture {
     SqlScriptRunner.runScripts(List(
       "insert_users.sql",
       "test_fixture_sequences.sql",
-      "insert_road_address_data.sql",
-      "insert_floating_road_addresses.sql",
-      "insert_overlapping_road_addresses.sql", // Test data for OverLapDataFixture (VIITE-1518)
+      "insert_roadways.sql",
+      "insert_links.sql",
+      "insert_roadway_points.sql",
+      "insert_calibration_points.sql",
+      "insert_linear_locations.sql",
       "insert_project_link_data.sql",
       "insert_road_names.sql"
     ))
@@ -327,10 +305,6 @@ object DataFixture {
     }
 
     operation match {
-      /*case Some("find_floating_road_addresses") if geometryFrozen =>
-        showFreezeInfo()*/
-      //      case Some("find_floating_road_addresses") =>
-      //        findFloatingRoadAddresses()
       case Some("check_road_network") =>
         checkRoadNetwork()
       case Some("import_road_addresses") =>
@@ -342,8 +316,6 @@ object DataFixture {
         importComplementaryRoadAddress()
       /*case Some("update_missing") if geometryFrozen =>
         showFreezeInfo()*/
-      case Some("update_missing") =>
-        updateUnaddressedRoadLink()
       case Some("update_road_addresses_geometry") =>
         updateLinearLocationGeometry()
       case Some("import_road_address_change_test_data") =>
@@ -363,12 +335,13 @@ object DataFixture {
         flywayInit()
       case Some("test_integration_api_all_municipalities") =>
         testIntegrationAPIWithAllMunicipalities()
-
+      case Some("import_nodes_and_junctions") =>
+        importNodesAndJunctions()
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | update_missing " +
         "| import_complementary_road_address " +
         "| update_road_addresses_geometry | import_road_address_change_test_data " +
         "| apply_change_information_to_road_address_links | import_road_names | check_road_network" +
-        "| test | flyway_init")
+        "| test | flyway_init | import_nodes_and_junctions")
     }
   }
 

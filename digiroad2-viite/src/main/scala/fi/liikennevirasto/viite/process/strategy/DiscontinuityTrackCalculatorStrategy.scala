@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.viite.MaxDistanceForSearchDiscontinuityOnOppositeTrack
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectLink}
 

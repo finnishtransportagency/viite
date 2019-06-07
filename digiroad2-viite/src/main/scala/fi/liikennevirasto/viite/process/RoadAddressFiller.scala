@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
+import fi.liikennevirasto.viite.process.RoadAddressFiller.generateUnaddressedSegments
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
 import org.slf4j.LoggerFactory
 
@@ -18,12 +19,11 @@ object RoadAddressFiller {
   val roadAddressLinkBuilder = new RoadAddressLinkBuilder(new RoadwayDAO, new LinearLocationDAO, new ProjectLinkDAO)
 
   case class LinearLocationAdjustment(linearLocationId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], geometry: Seq[Point])
+
   case class ChangeSet(
                       droppedSegmentIds: Set[Long],
                       adjustedMValues: Seq[LinearLocationAdjustment],
-                      newLinearLocations: Seq[LinearLocation],
-                      //TODO check if this will be needed here at VIITE-1596
-                      unaddressedRoadLink: Seq[UnaddressedRoadLink])
+                      newLinearLocations: Seq[LinearLocation])
 
   private def extendToGeometry(roadLink: RoadLinkLike, segments: Seq[ProjectAddressLink]): Seq[ProjectAddressLink] = {
     if (segments.isEmpty || segments.exists(_.connectedLinkId.nonEmpty))
@@ -54,43 +54,12 @@ object RoadAddressFiller {
 
   private def generateUnknownLink(roadLink: RoadLinkLike) = {
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
-    Seq(UnaddressedRoadLink(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), isPublicRoad(roadLink) match {
-      case true => Anomaly.NoAddressGiven
-      case false => Anomaly.None
+    Seq(UnaddressedRoadLink(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), if (isPublicRoad(roadLink)) {
+      Anomaly.NoAddressGiven
+    } else {
+      Anomaly.None
     }, geom))
   }
-
-  //TODO will be implemented at VIITE-1542
-  private def buildUnaddressedRoadLink(rl: RoadLinkLike, roadAddrSeq: Seq[UnaddressedRoadLink]): Seq[RoadAddressLink] = {
-    roadAddrSeq.map(mra => roadAddressLinkBuilder.build(rl, mra))
-  }
-
-//  def fillTopology(roadLinks: Seq[RoadLinkLike], roadAddressMap: Map[Long, Seq[RoadAddressLink]]): (Seq[RoadAddressLink], AddressChangeSet) = {
-//    time(logger, "Fill topology") {
-//      val fillOperations: Seq[(RoadLinkLike, Seq[RoadAddressLink], AddressChangeSet) => (Seq[RoadAddressLink], AddressChangeSet)] = Seq(
-//        dropSegmentsOutsideGeometry,
-//        capToGeometry,
-//        extendToGeometry,
-//        dropShort
-//        generateNonExistingRoadAddress
-//      )
-//      val initialChangeSet = AddressChangeSet(Set.empty, Nil, Nil)
-//      roadLinks.foldLeft(Seq.empty[RoadAddressLink], initialChangeSet) { case (acc, roadLink) =>
-//        val (existingSegments, changeSet) = acc
-//        val segments = roadAddressMap.getOrElse(roadLink.linkId, Nil)
-//        val validSegments = segments.filterNot { segment => changeSet.toFloatingAddressIds.contains(segment.id) }
-//
-//        val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
-//          operation(roadLink, currentSegments, currentAdjustments)
-//        }
-//        val generatedRoadAddresses = generateUnknownRoadAddressesForRoadLink(roadLink, adjustedSegments)
-//        val generatedLinks = buildUnaddressedRoadLink(roadLink, generatedRoadAddresses)
-//        (existingSegments ++ adjustedSegments ++ generatedLinks,
-//          segmentAdjustments.copy(unaddressedRoadLinks = segmentAdjustments.unaddressedRoadLinks ++
-//            generatedRoadAddresses.filterNot(_.anomaly == Anomaly.None)))
-//      }
-//    }
-//  }
 
   def fillProjectTopology(roadLinks: Seq[RoadLinkLike], roadAddressMap: Map[Long, Seq[ProjectAddressLink]]): Seq[ProjectAddressLink] = {
     val fillOperations: Seq[(RoadLinkLike, Seq[ProjectAddressLink]) => Seq[ProjectAddressLink]] = Seq(
@@ -112,7 +81,7 @@ object RoadAddressFiller {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val (overflowingSegments, passThroughSegments) = segments.partition(x => x.startMValue + Epsilon > linkLength)
 
-    val droppedSegmentIds = overflowingSegments.map (s => s.id)
+    val droppedSegmentIds = overflowingSegments.map(s => s.id)
 
     (passThroughSegments, changeSet.copy(droppedSegmentIds = changeSet.droppedSegmentIds ++ droppedSegmentIds))
   }
@@ -120,6 +89,7 @@ object RoadAddressFiller {
   /**
     * If the linear location segment end measure is bigger that the geometry length + ${MaxDistanceDiffAllowed},
     * the linear location segment is cut to fit the all road link geometry
+    *
     * @param roadLink
     * @param segments
     * @param changeSet
@@ -145,7 +115,7 @@ object RoadAddressFiller {
     val lastSegment = sorted.last
     val restSegments = sorted.init
 
-    val (extendedSegments, adjustments) = if((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed ){
+    val (extendedSegments, adjustments) = if ((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed) {
       val newGeom = GeometryUtils.geometrySeqEndPoints(GeometryUtils.truncateGeometry3D(roadLink.geometry, lastSegment.startMValue, linkLength))
       (restSegments ++ Seq(lastSegment.copy(endMValue = linkLength, geometry = newGeom)),
         Seq(LinearLocationAdjustment(lastSegment.id, lastSegment.linkId, None, Option(linkLength), newGeom)))
@@ -158,8 +128,9 @@ object RoadAddressFiller {
 
   /**
     * Drops all the linear locations with length less than ${MinAllowedRoadAddressLength}
-    * @param roadLink The vvh road link
-    * @param segments The linear location on the given road link
+    *
+    * @param roadLink  The vvh road link
+    * @param segments  The linear location on the given road link
     * @param changeSet The resume of changes applied on all the adjust operations
     * @return
     */
@@ -167,7 +138,7 @@ object RoadAddressFiller {
     if (segments.size < 2)
       return (segments, changeSet)
 
-    val (droppedSegments, passThroughSegments) = segments.partition (s => (s.endMValue - s.startMValue) < MinAllowedRoadAddressLength)
+    val (droppedSegments, passThroughSegments) = segments.partition(s => (s.endMValue - s.startMValue) < MinAllowedRoadAddressLength)
 
     val droppedSegmentIds = droppedSegments.map(_.id).toSet
 
@@ -175,7 +146,7 @@ object RoadAddressFiller {
   }
 
   //TODO can also be done here the fuse of linear locations when thr roadway id of the linear location is the same and no calibration points in the middle
-  def adjustToTopology(topology: Seq[RoadLinkLike], linearLocations: Seq[LinearLocation], initialChangeSet: ChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty)): (Seq[LinearLocation], ChangeSet) = {
+  def adjustToTopology(topology: Seq[RoadLinkLike], linearLocations: Seq[LinearLocation], initialChangeSet: ChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty)): (Seq[LinearLocation], ChangeSet) = {
     time(logger, "Adjust linear location to topology") {
       val adjustOperations: Seq[(RoadLinkLike, Seq[LinearLocation], ChangeSet) => (Seq[LinearLocation], ChangeSet)] = Seq(
         dropSegmentsOutsideGeometry,
@@ -190,8 +161,7 @@ object RoadAddressFiller {
       linearLocationMap.foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
         case ((existingSegments, changeSet), (linkId, roadLinkSegments)) =>
           val roadLinkOption = topologyMap.getOrElse(linkId, Seq()).headOption
-          //If there is on segment floating any adjustment should be done for the road link
-          if(roadLinkOption.isEmpty || roadLinkSegments.exists(_.isFloating)){
+          if (roadLinkOption.isEmpty) {
             (existingSegments ++ roadLinkSegments, changeSet)
           } else {
             val (ajustedSegments, adjustments) = adjustOperations.foldLeft(roadLinkSegments, changeSet) {
@@ -215,9 +185,10 @@ object RoadAddressFiller {
   private def generateUnaddressedSegments(roadLink: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     //TODO check if its needed to create unaddressed road link for part after VIITE-1536
     if (roadAddresses.isEmpty) {
-      val anomaly = isPublicRoad(roadLink) match {
-        case true => Anomaly.NoAddressGiven
-        case false => Anomaly.None
+      val anomaly = if (isPublicRoad(roadLink)) {
+        Anomaly.NoAddressGiven
+      } else {
+        Anomaly.None
       }
       val unaddressedRoadLink =
         UnaddressedRoadLink(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), anomaly,
@@ -233,16 +204,6 @@ object RoadAddressFiller {
     roadAddresses.map(ra => roadAddressLinkBuilder.build(topology, ra))
   }
 
-  def fillTopologyWithFloating(topology: Seq[RoadLinkLike], historyTopology: Seq[VVHHistoryRoadLink], roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-    val (floatingRoadAddresses, nonFloatingRoadAddresses) = roadAddresses.partition(_.isFloating)
-
-    val floatingRoadAddressLinks = floatingRoadAddresses.flatMap{ra =>
-      historyTopology.find(rl => rl.linkId == ra.linkId).map(rl => roadAddressLinkBuilder.build(rl, ra))
-    }
-
-    floatingRoadAddressLinks ++ fillTopology(topology, nonFloatingRoadAddresses)
-  }
-
   def fillTopology(topology: Seq[RoadLinkLike], roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     val fillOperations: Seq[(RoadLinkLike, Seq[RoadAddress]) => Seq[RoadAddressLink]] = Seq(
       generateUnaddressedSegments,
@@ -253,7 +214,7 @@ object RoadAddressFiller {
     topology.flatMap {
       roadLink =>
         val segments = roadAddressesMap.getOrElse(roadLink.linkId, Seq())
-        fillOperations.flatMap(operation =>  operation(roadLink, segments))
+        fillOperations.flatMap(operation => operation(roadLink, segments))
     }
   }
 }

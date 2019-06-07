@@ -12,13 +12,7 @@ import org.slf4j.LoggerFactory
 class RoadNetworkChecker(roadLinkService: RoadLinkService) {
   val logger = LoggerFactory.getLogger(getClass)
 
-  private def pretty(ra: RoadAddress): String = {
-    val (startM, endM) = (BigDecimal(ra.startMValue).setScale(3), BigDecimal(ra.endMValue).setScale(3))
-    s"${ra.roadNumber}/${ra.roadPartNumber}/${ra.track.value}/${ra.startAddrMValue}-${ra.endAddrMValue} " +
-      s"($startM - $endM, ${ra.sideCode})"
-  }
-
-  def checkRoadNetwork(username: String = "") = {
+  def checkRoadNetwork(username: String = ""): Unit = {
     time(logger, "Validation of road network") {
       val roadNetworkService = new RoadNetworkService {
         override def withDynTransaction[T](f: => T): T = f
@@ -91,17 +85,6 @@ class RoadNetworkChecker(roadLinkService: RoadLinkService) {
       movedAddresses.nonEmpty || checkMaxMovedDistance
     }
 
-  }
-
-  private def checkGeometryChangeOfSegments(roadAddressList: Seq[RoadAddress], roadLinks: Map[Long, Seq[RoadLinkLike]]): Seq[RoadAddress] = {
-    val sortedRoadAddresses = roadAddressList.groupBy(ra => ra.linkId).map(g => g._1 -> g._2.sortBy(_.endAddrMValue))
-    val movedRoadAddresses = sortedRoadAddresses.filter(ra =>
-      roadLinks.getOrElse(ra._1, Seq()).isEmpty || isGeometryChange(roadLinks.getOrElse(ra._1, Seq()).head, ra._2)).flatMap(_._2).toSeq
-    movedRoadAddresses.foreach { ra => {
-      println(s"${pretty(ra)} moved to floating, geometry has changed")
-    }
-    }
-    movedRoadAddresses
   }
 
   private def generateChunks(roadNumbers: List[Long], chunkNumber: Long): Seq[(Long, Long)] = {

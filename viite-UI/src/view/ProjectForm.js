@@ -72,7 +72,7 @@
         '</div>' +
         '<div class="form-group">' +
         '<label class="control-label">Tieosat</label>' +
-        addSmallInputNumber('tie') + addSmallInputNumber('aosa') + addSmallInputNumber('losa') + addReserveButton() +
+        addSmallInputNumber('tie', '', 5) + addSmallInputNumber('aosa', '', 3) + addSmallInputNumber('losa', '', 3) + addReserveButton() +
         '</div>' +
         '</form>' +
         '</div>' +
@@ -108,7 +108,7 @@
         '</div>' +
         '<div class="form-group">' +
         '<label class="control-label">Tieosat</label>' +
-        addSmallInputNumber('tie') + addSmallInputNumber('aosa') + addSmallInputNumber('losa') + addReserveButton() +
+        addSmallInputNumber('tie', '', 5) + addSmallInputNumber('aosa', '', 3) + addSmallInputNumber('losa', '', 3) + addReserveButton() +
         '</div>' +
         '</form>' +
         '</div>' +
@@ -171,10 +171,11 @@
       return '<label class="control-label-small" id=' + id + '>' + label + '</label>';
     };
 
-    var addSmallInputNumber = function (id, value) {
+    var addSmallInputNumber = function (id, value, maxLength) {
       //Validate only number characters on "onkeypress" including TAB and backspace
       var smallNumberImput = '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-        '" class="form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value ) + '" onclick=""/>';
+        '" class="form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value ) + '"' +
+        (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
       return smallNumberImput;
     };
 
@@ -199,33 +200,72 @@
 
       var rootElement = $('#feature-attributes');
 
-      var removePart = function (roadNumber, roadPartNumber) {
+      var removeReservedPart = function (roadNumber, roadPartNumber) {
         currentProject.isDirty = true;
-        projectCollection.setReservedParts(_.filter(projectCollection.getAllReservedParts(), function (part) {
-          return part.roadNumber != roadNumber || part.roadPartNumber != roadPartNumber;
+        projectCollection.setReservedParts(_.filter(projectCollection.getReservedParts(), function (part) {
+          return part.roadNumber.toString() !== roadNumber || part.roadPartNumber.toString() !== roadPartNumber;
         }));
-        fillForm(projectCollection.getCurrentReservedParts(), projectCollection.getNewReservedParts());
+        removeRenumberedPart(roadNumber, roadPartNumber);
+        fillForm(projectCollection.getReservedParts(), projectCollection.getFormedParts());
+      };
+
+      var removeRenumberedPart = function (roadNumber, roadPartNumber) {
+        projectCollection.setFormedParts(_.filter(projectCollection.getFormedParts(), function (part) {
+          return _.filter(part.roadAddresses, function (ra) {
+            return (ra.roadAddressNumber === roadNumber && ra.roadAddressPartNumber === roadPartNumber) && !ra.isNumbering;
+          }).length > 0;
+        }));
+      };
+
+      var removeFormedPart = function (roadNumber, roadPartNumber) {
+        currentProject.isDirty = true;
+        _.each(projectCollection.getRoadAddressesFromFormedRoadPart(roadNumber, roadPartNumber), function (roadAddresses) {
+          _.each(roadAddresses, function (ra) {
+            removeFormedPart(ra.roadAddressNumber, ra.roadAddressPartNumber);
+          });
+        });
+        projectCollection.setFormedParts(_.filter(projectCollection.getFormedParts(), function (part) {
+          return part.roadNumber.toString() !== roadNumber || part.roadPartNumber.toString() !== roadPartNumber;
+        }));
+        fillForm(projectCollection.getReservedParts(), projectCollection.getFormedParts());
       };
 
       var updateReservedParts = function (currParts, newParts) {
         var reservedParts = $("#reservedRoads");
-        var newReservedParts = $("#newReservedRoads");
+        var formedParts = $("#newReservedRoads");
 
         reservedParts.append(reservedParts.html(currParts));
-        newReservedParts.append(newReservedParts.html(newParts));
+        formedParts.append(formedParts.html(newParts));
       };
 
-      var writeHtmlList = function (list) {
+        var reservedHtmlList = function (list) {
+            var text = '';
+            var index = 0;
+            _.each(list, function (line) {
+                if (!_.isUndefined(line.currentLength)) {
+                    text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList') +
+                        addSmallLabel(line.roadNumber) +
+                        addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
+                        addSmallLabelWithIds((line.currentLength), 'reservedRoadLength') +
+                        addSmallLabelWithIds((line.currentDiscontinuity), 'reservedDiscontinuity') +
+                        addSmallLabelWithIds((line.currentEly), 'reservedEly') +
+                        '</div>';
+                }
+            });
+            return text;
+        };
+
+      var formedHtmlList = function (list) {
         var text = '';
         var index = 0;
         _.each(list, function (line) {
           if (!_.isUndefined(line.newLength)) {
-            text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber) +
+            text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'formedList') +
               addSmallLabel(line.roadNumber) +
               addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
-              addSmallLabelWithIds((line.newLength ? line.newLength : line.currentLength), 'reservedRoadLength') +
-              addSmallLabelWithIds((line.newDiscontinuity ? line.newDiscontinuity : line.currentDiscontinuity), 'reservedDiscontinuity') +
-              addSmallLabelWithIds((line.newEly ? line.newEly : line.currentEly), 'reservedEly') +
+              addSmallLabelWithIds((line.newLength), 'reservedRoadLength') +
+              addSmallLabelWithIds((line.newDiscontinuity), 'reservedDiscontinuity') +
+              addSmallLabelWithIds((line.newEly), 'reservedEly') +
               '</div>';
           }
         });
@@ -263,9 +303,9 @@
           currentProject.isDirty = false;
           var text = '';
           var index = 0;
-          projectCollection.setReservedParts(result.formInfo);
-          _.each(result.formInfo, function (line) {
-            var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber);
+          projectCollection.setReservedParts(result.reservedInfo);
+          _.each(result.reservedInfo, function (line) {
+            var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList');
             text += '<div class="form-reserved-roads-list">' + button +
               addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) +
               '</div>';
@@ -320,7 +360,7 @@
         if (newParts.length === 0 && currParts.length === 0) {
           hasReservedRoadParts = false;
         }
-        updateReservedParts(writeHtmlList(currParts), writeHtmlList(newParts));
+        updateReservedParts(reservedHtmlList(currParts), formedHtmlList(newParts));
         applicationModel.setProjectButton(true);
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
@@ -338,6 +378,12 @@
         }
       };
 
+      var disableAutoComplete = function () {
+        $('[id=nimi]').attr('autocomplete', 'false');
+        $('[id=alkupvm]').attr('autocomplete', 'false');
+        $('[id=lisatiedot]').attr('autocomplete', 'false');
+      };
+
       eventbus.on('roadAddress:newProject', function () {
         currentProject = {
           id: 0,
@@ -351,6 +397,7 @@
         activeLayer = true;
         projectCollection.clearRoadAddressProjects();
         $('#generalNext').prop('disabled', true);
+        disableAutoComplete();
       });
 
       eventbus.on('roadAddress:openProject', function (result) {
@@ -359,10 +406,12 @@
         projectCollection.setProjectErrors(result.projectErrors);
         currentProject.isDirty = false;
         projectCollection.clearRoadAddressProjects();
+        disableAutoComplete();
         projectCollection.setCurrentProject(result);
-        projectCollection.setReservedParts(result.projectLinks);
-        var currentReserved = writeHtmlList(projectCollection.getCurrentReservedParts());
-        var newReserved = writeHtmlList(projectCollection.getNewReservedParts());
+        projectCollection.setReservedParts(result.reservedInfo);
+        projectCollection.setFormedParts(result.formedInfo);
+        var currentReserved = reservedHtmlList(projectCollection.getReservedParts());
+        var newReserved = formedHtmlList(projectCollection.getFormedParts());
         rootElement.html(openProjectTemplate(currentProject, currentPublishedNetworkDate, currentReserved, newReserved));
         jQuery('#projectList').remove();
         if (!_.isUndefined(currentProject)) {
@@ -529,30 +578,48 @@
         return false;
       });
 
-      rootElement.on('click', '.btn-delete', function () {
+      rootElement.on('click', '.btn-delete.reservedList', function () {
         var id = this.id;
         var roadNumber = this.attributes.roadNumber.value;
         var roadPartNumber = this.attributes.roadPartNumber.value;
 
-          if (!currentProject) {
-            projectCollection.setReservedParts(projectCollection.deleteRoadPartFromList(projectCollection.getCurrentReservedParts(), roadNumber, roadPartNumber));
-            $('#reservedRoads').html(writeHtmlList(projectCollection.getCurrentReservedParts()));
+        if (isProjectEditable()) {
+          if (currentProject && projectCollection.getReservedParts()[id]) {
+            new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
+              successCallback: function () {
+                removeReservedPart(roadNumber, roadPartNumber);
+                removeFormedPart(roadNumber, roadPartNumber);
+                _.defer(function () {
+                  textFieldChangeHandler({removedReserved: true});
+                });
+              }
+            });
+          } else {
+            removeReservedPart(roadNumber, roadPartNumber);
+            removeFormedPart(roadNumber, roadPartNumber);
           }
-          if (isProjectEditable()) {
-            if (currentProject && projectCollection.getAllReservedParts()[id]) {
-              new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
-                successCallback: function () {
-                  removePart(roadNumber, roadPartNumber);
-                  _.defer(function () {
-                    textFieldChangeHandler({removedReserved: true});
-                  });
-                }
-              });
-            } else {
-              removePart(roadNumber, roadPartNumber);
-            }
-          }
+        }
+      });
 
+      rootElement.on('click', '.btn-delete.formedList', function () {
+        var id = this.id;
+        var roadNumber = this.attributes.roadNumber.value;
+        var roadPartNumber = this.attributes.roadPartNumber.value;
+
+        if (isProjectEditable()) {
+          if (currentProject && projectCollection.getFormedParts()[id]) {
+            new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
+              successCallback: function () {
+                removeFormedPart(roadNumber, roadPartNumber);
+                _.defer(function () {
+                  textFieldChangeHandler({removedReserved: true});
+                });
+              }
+            });
+          } else {
+            removeFormedPart(roadNumber, roadPartNumber);
+          }
+        }
       });
 
       rootElement.on('change', '.form-group', function () {

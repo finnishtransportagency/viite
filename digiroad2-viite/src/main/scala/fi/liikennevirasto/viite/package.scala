@@ -2,16 +2,9 @@ package fi.liikennevirasto
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHHistoryRoadLink}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, LinkStatus}
 import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, EndOfRoad}
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
-import org.slf4j.Logger
-
-import scala.util.matching.Regex.Match
 
 package object viite {
   /* Tolerance in which we can allow MValues to be equal */
@@ -45,17 +38,7 @@ package object viite {
 
   val noReservedPartId: Long = 0L
 
-  val NewRoadway,
-
-  NewLinearLocation,
-
-  NewRoadwayNumber,
-
-  NewCalibrationPointId,
-
-  NewRoadNameId,
-
-  NewProjectLink: Long = -1000L
+  val NewIdValue: Long = -1000L
 
   val MaxDistanceForConnectedLinks = 0.1
   /* Used for small jumps on discontinuity or self-crossing tracks */
@@ -66,12 +49,14 @@ package object viite {
   val MaxSuravageToleranceToGeometry = 0.5
   val MaxRoadNumberDemandingRoadName = 70000
 
+  val MaxAllowedNodes = 50
+
   //TODO: remove after Suravage change following messages (4):
   val ErrorNoMatchingProjectLinkForSplit = "Suravage-linkkiä vastaavaa käsittelemätöntä tieosoitelinkkiä ei löytynyt projektista."
   val ErrorSuravageLinkNotFound = "Suravage-linkkiä ei löytynyt."
   val ErrorRoadLinkNotFound = "Tielinkkiä ei löytynyt."
   val ErrorSplitSuravageNotUpdatable = "Valitut linkit sisältävät jaetun Suravage-linkin eikä sitä voi päivittää."
-  val ErrorRenumberingValuesAlreadyInUse = "Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot."
+  val ErrorRoadAlreadyExistsOrInUse = "Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot."
   val ErrorFollowingRoadPartsNotFoundInDB = "Projektiin yritettiin varata tieosia joita ei ole olemassa, tarkista tieosoitteet:"
   val ErrorRoadLinkNotFoundInProject = "Tielinkkiä ei löytynyt projektista. Tekninen virhe, ota yhteys pääkäyttäjään."
   val ErrorRenumberingToOriginalNumber = "Numeroinnissa sekä tie- että  tieosanumero ei voi olla sama kuin alkuperäisellä tieosalla."
@@ -82,6 +67,9 @@ package object viite {
   val ErrorReversingUnchangedLinks = "Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan."
   val ErrorSavingFailed = "Päivitys ei onnistunut."
   val ErrorMultipleRoadNumbersOrParts = "Useita tieosia valittuna. Numerointi tulee tehdä jokaiselle tieosalle erikseen."
+  val ErrorOtherActionWithNumbering = "Numeroinnin yhteydessä samalle tieosalle ei voi tehdä muita toimenpiteitä. Numerointia ei tehty."
+  val ErrorTransferActionWithNumbering = "Numeroinnin yhteydessä samalle tieosalle ei voi tehdä muita toimenpiteitä. Siirtoa ei tehty."
+  val ErrorNewActionWithNumbering = "Numeroinnin yhteydessä samalla tieosalle ei voi tehdä muita toimenpiteitä. Uutta tieosaa ei tehty."
   val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), tieosan viimeiselle linkille."
   val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), vaikka tieosan jälkeen on olemassa tieosa."
   val MinorDiscontinuityFoundMessage = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
@@ -100,13 +88,16 @@ package object viite {
   val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tiellä %d tieosalla %d."
   val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosan sisällä on epäjatkuvuuksia. Tarkista Jatkuu-koodit."
+  val DiscontinuityInsideRoadPartMessage = "Epäjatkuvuus (2) voi olla vain tieosan lopussa."
+  val DistinctRoadTypesBetweenTracksMessage = "Rinnakkaisilla ajoradoilla eri tietyyppi."
   val RoadNotEndingInElyBorderMessage = "Tien lopussa pitää olla jatkuu-koodi 1. Korjaa jatkuu-koodi."
   val RoadContinuesInAnotherElyMessage = "Jatkuu-koodi %s on virheellinen, koska tie jatkuu toisessa ELY:ssa. "
   val MinorDiscontinuousWhenRoadConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
   val WrongDiscontinuityWhenAdjacentToTerminatedRoad = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}). Muuta jatkuvuuskoodiksi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tieosoitteelle %s."
   val DoubleEndOfRoadMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."
   val EndOfRoadMiddleOfPartMessage = s"Tieosan keskellä olevalla linkillä on jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value})."
-  val RoadNotAvailableMessage = s"Varattujen tieosien haku tietokannasta epäonnistui. Tie %d osa %d ei ole varattavissa, koska se ei ole voimassa projektin alkupvm:llä %s tai se on varattu toiseen projektiin."
+  val RoadNotAvailableMessage = s"Tieosaa ei ole varattu projektiin tai se on varattuna toisessa projektissa."
+  val RoadPartNotReservedInProjectMessage = s"Tieosaa ei ole varattu projektiin."
   val RoadReservedOtherProjectMessage = s"Tie %d osa %d on jo varattuna projektissa %s, tarkista tiedot."
   val ProjectNotFoundMessage = "Projektia ei löytynyt, ota yhteys pääkäyttäjään."
   val FailedToSendToTRMessage = s"Lähetys tierekisteriin epäonnistui, ota yhteys pääkäyttäjään."
@@ -132,7 +123,11 @@ package object viite {
   val ErrorInconsistentContinuityCalibrationPoints = "Missing relative connecting starting/ending point."
   val ErrorMissingEdgeCalibrationPoints = "Missing edge calibration points."
   val ErrorInconsistentAddressValues = "Error in continuity by address m values between connected links."
+  val ErrorMissingStartingLink = "Missing start link in roadway."
   val InconsistentAddressValues = "Wrong address values between links."
+
+  // Nodes and Junctions error messages
+  val ReturnedTooManyNodesErrorMessage = "Hakusi palauttaa yli 50 kohdetta, rajaa hakua pienemmäksi."
 
   val RampsMinBound = 20001
   val RampsMaxBound = 39999

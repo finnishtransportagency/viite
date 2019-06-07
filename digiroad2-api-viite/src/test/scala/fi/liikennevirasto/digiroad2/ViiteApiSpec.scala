@@ -2,7 +2,8 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, Track}
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectCoordinates}
 import fi.liikennevirasto.viite.util.SplitOptions
@@ -16,18 +17,18 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
 
   test("Test json.extract[RoadAddressProjectExtractor] When sending a list of 1 road part link coded in a JSON format Then return the decoded Road Address Project list with 1 element.") {
-    val str = "{\"id\":0,\"status\":1,\"name\":\"erwgerg\",\"startDate\":\"22.4.2017\",\"additionalInfo\":\"\",\"projectEly\":5,\"roadPartList\":[{\"roadPartNumber\":205,\"roadNumber\":5,\"ely\":5,\"roadLength\":6730,\"roadPartId\":30,\"discontinuity\":\"Jatkuva\"}],\"resolution\":8}"
+    val str = "{\"id\":0,\"status\":1,\"name\":\"erwgerg\",\"startDate\":\"22.4.2017\",\"additionalInfo\":\"\",\"projectEly\":5,\"reservedPartList\":[{\"roadPartNumber\":205,\"roadNumber\":5,\"ely\":5,\"roadLength\":6730,\"roadPartId\":30,\"discontinuity\":\"Jatkuva\"}],\"resolution\":8}"
     val json = parse(str)
-    json.extract[RoadAddressProjectExtractor].roadPartList should have size(1)
+      json.extract[RoadAddressProjectExtractor].reservedPartList should have size 1
   }
 
   test("Test json.extract[RoadAddressProjectExtractor] When sending am excessively big name in JSON format Then return the decoded name but with some loss of letters.") {
-    val str = "{\"id\":0,\"projectEly\":5,\"status\":1,\"name\":\"ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890\",\"startDate\":\"22.4.2017\",\"additionalInfo\":\"\",\"roadPartList\":[],\"resolution\":8}"
+    val str = "{\"id\":0,\"projectEly\":5,\"status\":1,\"name\":\"ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890\",\"startDate\":\"22.4.2017\",\"additionalInfo\":\"\",\"reservedPartList\":[],\"resolution\":8}"
     val json = parse(str)
     val extracted = json.extract[RoadAddressProjectExtractor]
-    extracted.name should have length(37)
+    extracted.name should have length 37
     val project = ProjectConverter.toRoadAddressProject(extracted, User(1, "user", Configuration()))
-    project.name should have length(32)
+    project.name should have length 32
   }
 
   test("Test json.extract[SplitOptions] When using a serialized version of a \"SplitObject\" data Then return the exact data that was encoded.") {

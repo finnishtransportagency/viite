@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinkPropertyMarker = function(data) {
+  root.LinkPropertyMarker = function() {
     var createMarker = function(roadlink) {
       var middlePoint = calculateMiddlePoint(roadlink);
       var box = new ol.Feature({

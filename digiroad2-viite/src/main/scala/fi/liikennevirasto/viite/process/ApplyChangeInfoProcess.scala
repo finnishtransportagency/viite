@@ -70,7 +70,7 @@ object ApplyChangeInfoProcess {
     val maxNewMeasure = Math.max(projection.newStart, projection.newEnd)
 
     // Test if the direction has changed -> side code will be also affected
-    val (newStartMeasure, newEndMeasure, newSideCode) = if (isDirectionChangeProjection(projection)) {
+    val (newStartMeasure, newEndMeasure, _) = if (isDirectionChangeProjection(projection)) {
       val newStart = projection.newStart - (linearLocation.endMValue - projection.oldStart) * Math.abs(newLength / oldLength)
       val newEnd = projection.newEnd - (linearLocation.startMValue - projection.oldEnd) * Math.abs(newLength / oldLength)
       (newStart, newEnd, SideCode.switch(linearLocation.sideCode))
@@ -117,7 +117,7 @@ object ApplyChangeInfoProcess {
         //VVH change api doesn't seems to support multiple changes for the same day in the same link id
         val linearLocations = applicableProjections.groupBy(_.vvhTimeStamp).toSeq.sortBy(_._1).foldLeft(Seq(linearLocation)) {
           case (adjustedLinearLocations, (_, groupedProjections)) =>
-            val (news, existing) = adjustedLinearLocations.partition(_.id == NewLinearLocation)
+            val (news, existing) = adjustedLinearLocations.partition(_.id == NewIdValue)
             groupedProjections.flatMap {
               projection =>
                 existing.filter(projection.intercepts).map(l => projectLinearLocation(l, projection, mappedRoadLinks))
@@ -156,9 +156,10 @@ object ApplyChangeInfoProcess {
 
     //TODO check if it's a good idea to generate here the database identifier
     //PROS: Then we are using the right identifier on the next fill topology adjustments
-    val newId = projection.oldLinkId == projection.newLinkId match {
-      case true => linearLocation.id
-      case _ => NewLinearLocation
+    val newId = if (projection.oldLinkId == projection.newLinkId) {
+      linearLocation.id
+    } else {
+      NewIdValue
     }
 
     val geometry = mappedRoadLinks.get(projection.newLinkId).map(
@@ -267,16 +268,15 @@ object ApplyChangeInfoProcess {
 
     //If contains some unsupported change type there is no need to apply any change
     //because the linear locations will be set as floating
-    changes.isEmpty || changes.exists(nonSupportedChange) match {
-      case true =>
-        (linearLocations, changeSet)
-      case _ =>
-        val projections = generateProjections(changes)
-        linearLocations.foldLeft((Seq[LinearLocation](), changeSet)) {
-          case ((cLinearLocations, cChangeSet), linearLocation) =>
-            val (adjustedLinearLocations, resultChangeSet) = projectLinearLocation(linearLocation, projections, cChangeSet, mappedRoadLinks)
-            (cLinearLocations ++ adjustedLinearLocations, resultChangeSet)
-        }
+    if (changes.isEmpty || changes.exists(nonSupportedChange)) {
+      (linearLocations, changeSet)
+    } else {
+      val projections = generateProjections(changes)
+      linearLocations.foldLeft((Seq[LinearLocation](), changeSet)) {
+        case ((cLinearLocations, cChangeSet), linearLocation) =>
+          val (adjustedLinearLocations, resultChangeSet) = projectLinearLocation(linearLocation, projections, cChangeSet, mappedRoadLinks)
+          (cLinearLocations ++ adjustedLinearLocations, resultChangeSet)
+      }
     }
   }
 
@@ -288,7 +288,7 @@ object ApplyChangeInfoProcess {
 
     val mappedRoadLinks = roadLinks.groupBy(_.linkId).mapValues(_.head)
 
-    val initialChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty, Seq.empty)
+    val initialChangeSet = ChangeSet(Set.empty, Seq.empty, Seq.empty)
 
     linearLocations.groupBy(_.linkId).foldLeft(Seq.empty[LinearLocation], initialChangeSet) {
       case ((existingSegments, changeSet), (linkId, linearLocations)) =>

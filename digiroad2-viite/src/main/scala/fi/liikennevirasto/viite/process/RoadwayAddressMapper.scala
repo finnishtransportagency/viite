@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.NewLinearLocation
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -85,7 +85,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
             startAddr + Math.round((location.endMValue - location.startMValue) * coef) + increment
 
         if (depth > 100) {
-          val message = s"mappedAddressValues got in infinite recursion. Roadway number = ${roadway.roadwayNumber}, location.id = ${location.id}, startMValue = ${location.startMValue}, endMValue = ${location.endMValue}, previewValue = ${previewValue}, remaining = ${remaining.length}"
+          val message = s"mappedAddressValues got in infinite recursion. Roadway number = ${roadway.roadwayNumber}, location.id = ${location.id}, startMValue = ${location.startMValue}, endMValue = ${location.endMValue}, previewValue = $previewValue, remaining = ${remaining.length}"
           logger.error(message)
           if (depth > 105) throw new RuntimeException(message)
         }
@@ -122,7 +122,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
         RoadAddress(roadway.id, linearLocation.id, roadway.roadNumber, roadway.roadPartNumber, roadway.roadType, roadway.track, Discontinuity.Continuous, st, en,
           Some(roadway.startDate), roadway.endDate, Some(roadway.createdBy), linearLocation.linkId, linearLocation.startMValue, linearLocation.endMValue, linearLocation.sideCode,
-          linearLocation.adjustedTimestamp, calibrationPoints, linearLocation.floating, linearLocation.geometry, linearLocation.linkGeomSource, roadway.ely, roadway.terminated,
+          linearLocation.adjustedTimestamp, calibrationPoints, linearLocation.geometry, linearLocation.linkGeomSource, roadway.ely, roadway.terminated,
           roadway.roadwayNumber, linearLocation.validFrom, linearLocation.validTo, roadway.roadName)
     }
   }
@@ -186,9 +186,20 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
             case (None, Some(_)) => (None, Some(projectLink.endAddrMValue))
             case (Some(_), Some(_)) => (Some(projectLink.startAddrMValue), Some(projectLink.endAddrMValue))
           }
-          LinearLocation(NewLinearLocation, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
-            calibrationPoints, projectLink.floating, projectLink.geometry, projectLink.linkGeomSource, roadway.roadwayNumber, Some(DateTime.now()))
+          LinearLocation(NewIdValue, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
+            calibrationPoints, projectLink.geometry, projectLink.linkGeomSource, roadway.roadwayNumber, Some(DateTime.now()))
       }
+  }
+
+  /**
+    * Map roadway address into road addresses using given linear locations
+    *
+    * @param roadway         The current roadway address
+    * @param linearLocations The roadway linear locations
+    * @return Returns the mapped road addresses
+    */
+  def mapRoadNetworkAddresses(roadway: Roadway, linearLocations: Seq[LinearLocation]): Seq[RoadAddress] = {
+    recursiveMapRoadAddresses(roadway, linearLocations)
   }
 
   //TODO may be a good idea mode this method to road address service

@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import oracle.spatial.geometry.JGeometry
 import oracle.sql.STRUCT
 import org.postgis.PGgeometry
@@ -109,6 +109,24 @@ object OracleDatabase {
     s"""LINESTRING(${points.map(p => s"""${p._1.x} ${p._1.y} ${p._1.z} ${p._2}""").mkString(", ")})"""
   }
 
+  // TODO Postgis: Maybe this can be removed? If not then convert it.
+  def createRoadsJGeometry(points: Seq[Point], con: java.sql.Connection, endMValue:Double): STRUCT = {
+    val ordinates = points.flatMap(p => Seq(GeometryUtils.roundN(p.x), GeometryUtils.roundN(p.y), GeometryUtils.roundN(p.z), GeometryUtils.roundN(endMValue))).toArray
+    val dim = 4
+    val srid = 3067
+    val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
+    JGeometry.store(JGeometry.createLinearLineString(ordinates, dim, srid), oracleConn)
+  }
+
+  // TODO Postgis: Change this.
+  def createPointJGeometry(point: Point): STRUCT = {
+    val coordinates = Array(GeometryUtils.roundN(point.x), GeometryUtils.roundN(point.y), 0, 0)
+    val dim = 4
+    val srid = 3067
+    val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
+    JGeometry.store(JGeometry.createPoint(coordinates, dim, srid), oracleConn)
+  }
+
   // TODO Maybe this should be optimized
   def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
     if (geometry.nonEmpty) {
@@ -121,6 +139,17 @@ object OracleDatabase {
         points = points :+ Point(point.x, point.y, point.z)
       }
       points
+    } else {
+      Seq()
+    }
+  }
+
+  def loadRoadsJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
+    // Convert STRUCT into geometry
+    val geom = geometry.map(g => g.asInstanceOf[STRUCT])
+    if (geom.nonEmpty) {
+      val jgeom: JGeometry = JGeometry.load(geom.get)
+      jgeom.getOrdinatesArray.toList.sliding(4, 4).toList.map(p => Point(p.head, p.tail.head, p.tail.tail.head))
     } else {
       Seq()
     }
