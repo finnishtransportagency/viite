@@ -5,7 +5,7 @@
 -- Regexp: values [(]'[0-9]+'
 -- To: values (nextval('viite_general_seq')
 --------------------------------------------------------
--- TODO: This is just an example and when the changes in the right file are done, this can be removed!
+-- TODO: This is just an example and when the changes in the correct file is done, this can be removed!
 ----------
 Insert into LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,CAL_START_ADDR_M,CAL_END_ADDR_M,LINK_SOURCE,ADJUSTED_TIMESTAMP,FLOATING,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATE_TIME) values (nextval('LINEAR_LOCATION_SEQ'),49492936,1,3719293,0,9.283,3,0,9,1,1514851200000,1,ST_GeomFromText('LINESTRING(435803.988 7216268.244 0.0 0.0, 435809.284 7216260.624 0.0 9.283)', 3067),to_date('09-NOV-12','DD-MON-RR'),null,'import',to_timestamp('21-SEP-18 12.17.37.462582000','DD-MON-RR HH24.MI.SSXFF'));
 Insert into LINEAR_LOCATION (ID,ROADWAY_NUMBER,ORDER_NUMBER,LINK_ID,START_MEASURE,END_MEASURE,SIDE,CAL_START_ADDR_M,CAL_END_ADDR_M,LINK_SOURCE,ADJUSTED_TIMESTAMP,FLOATING,GEOMETRY,VALID_FROM,VALID_TO,CREATED_BY,CREATE_TIME) values (nextval('LINEAR_LOCATION_SEQ'),49492936,2,3719294,0,12.206,3,9,null,1,1514851200000,1,ST_GeomFromText('LINESTRING(435809.284 7216260.624 0.0 0.0, 435816.968 7216251.149 0.0 12.206)', 3067),to_date('09-NOV-12','DD-MON-RR'),null,'import',to_timestamp('21-SEP-18 12.17.37.462582000','DD-MON-RR HH24.MI.SSXFF'));
