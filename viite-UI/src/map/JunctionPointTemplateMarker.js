@@ -17,7 +17,7 @@
       var junctionPointMarkerStyle = new ol.style.Style({
         image: new ol.style.Icon({
           src: 'images/junction-template.svg',
-          scale: 2
+          scale: 1
         })
       });
 

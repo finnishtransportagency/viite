@@ -176,7 +176,7 @@
                 return (roadLink.startAddressM === junctionPointTemplate.addrM || roadLink.endAddressM === junctionPointTemplate.addrM) && roadLink.roadwayNumber === junctionPointTemplate.roadwayNumber;
               });
               if(!_.isUndefined(roadLinkForPoint)){
-                junctionTemplateLayer.getSource().addFeature(junctionPointTemplateMarker.createNodePointTemplateMarker(junctionPointTemplate, roadLinkForPoint));
+                junctionTemplateLayer.getSource().addFeature(junctionPointTemplateMarker.createJunctionPointTemplateMarker(junctionPointTemplate, roadLinkForPoint));
               }
             });
           }

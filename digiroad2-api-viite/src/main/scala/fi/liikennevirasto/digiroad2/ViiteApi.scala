@@ -1065,7 +1065,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi)
       }
       case _ => time(logger, operationName = "nodes with junctions fetch") {
-        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi)
+        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi) ++
+          nodesAndJunctionsService.getNodeTemplatesByBoundingBox(boundingRectangle).map(nodePointTemplateToApi) ++
+          nodesAndJunctionsService.getJunctionTemplatesByBoundingBox(boundingRectangle).map(junctionPointTemplateToApi)
       }
     }
   }
@@ -1214,6 +1216,42 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     //TODO
     Map("id" -> nodePoint.id,
         "nodeId" -> nodePoint.nodeId)
+  }
+
+  def nodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
+    Map("nodePointTemplate" -> {
+      Map("id" -> nodePoint.id,
+        "nodeId" -> nodePoint.nodeId,
+        "beforeAfter" -> nodePoint.beforeAfter.value,
+        "roadwayPointId" -> nodePoint.roadwayPointId,
+        "startDate" -> formatDateTimeToString(Some(nodePoint.startDate)),
+        "endDate" -> formatDateTimeToString(nodePoint.endDate),
+        "validFrom" -> formatDateTimeToString(Some(nodePoint.validFrom)),
+        "validTo" -> formatDateTimeToString(nodePoint.validTo),
+        "createdBy" -> nodePoint.createdBy,
+        "roadwayNumber" -> nodePoint.roadwayNumber,
+        "addrM" -> nodePoint.addrM
+      )
+    }
+    )
+  }
+
+  def junctionPointTemplateToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
+    Map("junctionPointTemplate" -> {
+      Map("id" -> junctionPoint.id,
+        "junctionId" -> junctionPoint.junctionId,
+        "beforeAfter" -> junctionPoint.beforeAfter.value,
+        "roadwayPointId" -> junctionPoint.roadwayPointId,
+        "startDate" -> formatDateTimeToString(Some(junctionPoint.startDate)),
+        "endDate" -> formatDateTimeToString(junctionPoint.endDate),
+        "validFrom" -> formatDateTimeToString(Some(junctionPoint.validFrom)),
+        "validTo" -> formatDateTimeToString(junctionPoint.validTo),
+        "createdBy" -> junctionPoint.createdBy,
+        "roadwayNumber" -> junctionPoint.roadwayNumber,
+        "addrM" -> junctionPoint.addrM
+      )
+    }
+    )
   }
 
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
