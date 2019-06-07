@@ -119,17 +119,11 @@ class LinearLocationDAO {
       select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.SIDE,
       (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_addr_m,
       (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_addr_m,
-      link.SOURCE, link.ADJUSTED_TIMESTAMP, geometry, loc.valid_from, loc.valid_to
+      link.SOURCE, link.ADJUSTED_TIMESTAMP, ST_X(ST_StartPoint(loc.geometry)), ST_Y(ST_StartPoint(loc.geometry)), ST_X(ST_EndPoint(loc.geometry)), ST_Y(ST_EndPoint(loc.geometry)), loc.valid_from, loc.valid_to
       from LINEAR_LOCATION loc
       JOIN LINK ON (link.id = loc.link_id)
     """
-/* TODO convert to Postgis
-    select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.SIDE,
-      loc.cal_start_addr_m, loc.cal_end_addr_m, loc.link_source, loc.adjusted_timestamp, loc.floating,
-      ST_X(ST_StartPoint(loc.geometry)), ST_Y(ST_StartPoint(loc.geometry)), ST_X(ST_EndPoint(loc.geometry)), ST_Y(ST_EndPoint(loc.geometry)),
-      loc.valid_from, loc.valid_to
-    from LINEAR_LOCATION loc
- */
+
   def getNextLinearLocationId: Long = {
     Queries.nextLinearLocationId.as[Long].first
   }
@@ -138,12 +132,7 @@ class LinearLocationDAO {
 
     val ps = dynamicSession.prepareStatement(
       """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by)
-      values (?, ?, ?, ?, ?, ?, ?, ?, ?)""".stripMargin)
-      /* TODO Convert to Postgis
-      """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE,
-        cal_start_addr_m, cal_end_addr_m, link_source, adjusted_timestamp, floating, geometry, created_by)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-        ST_GeomFromText(?, 3067), ?)""")*/
+      values (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?, 3067), ?)""".stripMargin)
 
     // Set ids for the linear locations without one
     val (ready, idLess) = linearLocations.partition(_.id != NewIdValue)

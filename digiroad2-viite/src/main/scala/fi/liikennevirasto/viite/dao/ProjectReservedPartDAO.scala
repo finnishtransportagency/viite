@@ -102,11 +102,11 @@ class ProjectReservedPartDAO {
         s"""SELECT id, road_number, road_part_number, length, ely,
           (SELECT DISCONTINUITY FROM ROADWAY ra WHERE ra.road_number = gr.road_number AND
             ra.road_part_number = gr.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL
-            AND END_ADDR_M = gr.length and ROWNUM < 2) as discontinuity,
+            AND END_ADDR_M = gr.length LIMIT 1) as discontinuity,
           (SELECT LINK_ID FROM PROJECT_LINK pl
             WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-            AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) AND ROWNUM < 2) as first_link
+            AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) LIMIT 1) as first_link
           FROM (
             SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
               (SELECT MAX(ra.end_addr_m) FROM roadway ra WHERE ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND ra.end_date IS NULL AND ra.valid_to IS NULL) as length,
@@ -120,7 +120,7 @@ class ProjectReservedPartDAO {
                 rp.project_id = $projectId
                 GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
             ) gr order by gr.road_number, gr.road_part_number"""
-      /* TODO Convert to Postgis something like this:
+      /* TODO Convert to Postgis something like this: (maybe already converted (LIMIT 1) - have to test!)
               s"""
         SELECT id, road_number, road_part_number, length, length_new,
           ely, ely_new,
@@ -172,11 +172,11 @@ class ProjectReservedPartDAO {
           (SELECT DISCONTINUITY_TYPE FROM PROJECT_LINK pl WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
             AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
-            AND END_ADDR_M = length_new AND ROWNUM < 2) as discontinuity_new,
+            AND END_ADDR_M = length_new LIMIT 1) as discontinuity_new,
           (SELECT LINK_ID FROM PROJECT_LINK pl
             WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number AND pl.road_part_number = gr.road_part_number
-            AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) AND ROWNUM < 2) as first_link
+            AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) LIMIT 1) as first_link
           FROM (
             SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
           MAX(pl.end_addr_m) as length_new,
@@ -189,7 +189,7 @@ class ProjectReservedPartDAO {
           WHERE $filter AND pl.status != ${LinkStatus.NotHandled.value}
           GROUP BY rp.id, rp.project_id, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER
           ) gr order by gr.road_number, gr.road_part_number"""
-      /* TODO: Convert to Postgis something like this:
+      /* TODO: Convert to Postgis something like this: (maybe done already (LIMIT 1) - have to test!)
               s"""
         SELECT id, road_number, road_part_number, length, length_new,
           ely, ely_new,
