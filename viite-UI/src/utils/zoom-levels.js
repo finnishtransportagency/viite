@@ -1,11 +1,5 @@
 (function() {
   window.zoomlevels = {
-    isInRoadLinkZoomLevel: function(zoom) {
-      return zoom >= this.minZoomForRoadLinks;
-    },
-    isInAssetZoomLevel: function(zoom) {
-      return zoom >= this.minZoomForAssets;
-    },
     getAssetZoomLevelIfNotCloser: function(zoom) {
       return zoom < 10 ? 10 : zoom;
     },
@@ -14,11 +8,13 @@
     } ,
 
     minZoomForRoadLinks: 5,
-    minZoomForAssets: 6,
+    minZoomForRoadNetwork: 6,
     minZoomLevelForCalibrationPoints: 8,
+    minZoomForNodes: 9,
     minZoomForEditMode: 10,
     minZoomForDirectionalMarkers: 11,
     minZoomForLinkSearch: 12,
+    minZoomForJunctions: 12,
     maxZoomLevel: 15
   };
 })();

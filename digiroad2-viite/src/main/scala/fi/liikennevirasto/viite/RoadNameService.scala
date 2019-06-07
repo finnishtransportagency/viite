@@ -34,9 +34,9 @@ class RoadNameService() {
 
   def addOrUpdateRoadNamesInTX(roadNumber: Long, roadNameRows: Seq[RoadNameRow], username: String): Option[String] = {
     try {
-      roadNameRows.map {
+      roadNameRows.foreach {
         roadNameRow =>
-          val roadNameOption = if (roadNameRow.id == NewRoadNameId) None else RoadNameDAO.getRoadNamesById(roadNameRow.id)
+          val roadNameOption = if (roadNameRow.id == NewIdValue) None else RoadNameDAO.getRoadNamesById(roadNameRow.id)
           val endDate = roadNameRow.endDate match {
             case Some(dt) => Some(new DateTime(formatter.parseDateTime(dt)))
             case _ => None
@@ -47,7 +47,7 @@ class RoadNameService() {
               roadName.copy(createdBy = username, roadName = roadNameRow.name, endDate = endDate)
             case _ =>
               val startDate = new DateTime(formatter.parseDateTime(roadNameRow.startDate))
-              RoadName(NewRoadNameId, roadNumber, roadNameRow.name, Some(startDate), endDate, createdBy = username)
+              RoadName(NewIdValue, roadNumber, roadNameRow.name, Some(startDate), endDate, createdBy = username)
           }
 
           RoadNameDAO.create(Seq(newRoadName))

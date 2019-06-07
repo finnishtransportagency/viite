@@ -26,10 +26,10 @@ case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: Validi
 
     if (endTotalMinutes > startTotalMinutes) {
       val duration = endTotalMinutes - startTotalMinutes
-      ((duration / 60).toInt, duration % 60)
+      ((duration / 60), duration % 60)
     } else {
       val duration = 1440 - startTotalMinutes + endTotalMinutes
-      ((duration / 60).toInt, duration % 60)
+      ((duration / 60), duration % 60)
     }
   }
 

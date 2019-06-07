@@ -82,7 +82,7 @@
               "projectId": 454604,
               "status": {}
           },
-          "formInfo": [{
+          "reservedInfo": [{
               "startingLinkId": 1717275,
               "projectId": 454604,
               "roadNumber": 1130,
@@ -129,7 +129,7 @@
               "projectId": 454756,
               "status": {}
           },
-          "formInfo": [{
+          "reservedInfo": [{
               "startingLinkId": 1718137,
               "projectId": 454756,
               "roadNumber": 1130,

@@ -23,6 +23,14 @@
         };
     });
 
+    this.getNodes = createCallbackRequestor(function(params) {
+      var zoom = params.zoom;
+      var boundingBox = params.boundingBox;
+      return {
+        url: 'api/viite/nodesjunctions?zoom=' + zoom + '&bbox=' + boundingBox
+      };
+    });
+
     this.abortLoadingProject = (function () {
       if (loadingProject) {
         loadingProject.abort();
@@ -80,12 +88,6 @@
       return $.getJSON('api/viite/roadaddress/' + id, function (data) {
         return _.isFunction(callback) && callback(data);
       });
-    }, 1000);
-
-    this.getRoadAddressMiddlePoint = _.throttle(function (linkId, callback) {
-      return $.getJSON('api/viite/roadlinks/midpoint/' + linkId, function (data) {
-        return _.isFunction(callback) && callback(data);
-        });
     }, 1000);
 
       this.getNonOverridenVVHValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
@@ -623,6 +625,12 @@
         dataType: "json",
         success: success,
         error: failure
+      });
+    }, 1000);
+
+    this.getNodesByRoadAttributes = _.throttle(function (roadAttributes, callback) {
+      return $.get('api/viite/nodes', roadAttributes, function (data) {
+        return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 

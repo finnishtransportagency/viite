@@ -61,7 +61,10 @@ class RoadNetworkDAO {
   }
 
   def hasCurrentNetworkErrorsForOtherNumbers(roads: Set[Long]): Boolean = {
-    sql"""SELECT COUNT(*) FROM road_network_error where ROAD_NETWORK_VERSION = (SELECT MAX(id) FROM published_road_network WHERE valid_to is NULL) and roadway_id not in (select id from roadway where road_number in (${roads.mkString(",")})) """.as[Long].first > 0
+    val query =
+      s"""SELECT COUNT(*) FROM road_network_error where ROAD_NETWORK_VERSION = (SELECT MAX(id) FROM published_road_network WHERE valid_to is NULL)
+          and roadway_id not in (select id from roadway where road_number in (${roads.mkString(", ")})) """
+    Q.queryNA[Long](query).list.head > 0
   }
 
   def getLatestRoadNetworkVersionId: Option[Long] = {
@@ -70,6 +73,17 @@ class RoadNetworkDAO {
 
   def getLatestPublishedNetworkDate: Option[DateTime] = {
     sql"""SELECT MAX(created) as created FROM published_road_network WHERE valid_to is null""".as[Option[DateTime]].first
+  }
+
+  def getRoadNetworkErrors: List[RoadNetworkError] = {
+    val query =
+      s"""SELECT id, roadway_id, linear_location_id, error_code, error_timestamp, road_network_version
+         FROM road_network_error order by road_network_version desc""".stripMargin
+
+    Q.queryNA[(Long, Long, Long, Int, Long, Option[Long])](query).list.map {
+      case (id, roadwayId, linearLocationId, errorCode, timestamp, version) =>
+        RoadNetworkError(id, roadwayId, linearLocationId, AddressError.apply(errorCode), timestamp, version)
+    }
   }
 
   def getRoadNetworkErrors(error: AddressError): List[RoadNetworkError] = {

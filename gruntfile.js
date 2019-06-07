@@ -12,6 +12,9 @@ module.exports = function(grunt) {
       staging: {
         NODE_ENV: 'STAGING'
       },
+      testing: {
+        NODE_ENV: 'PRODUCTION'
+      },
       production: {
         NODE_ENV: 'PRODUCTION'
       }

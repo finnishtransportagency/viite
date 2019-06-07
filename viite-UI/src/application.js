@@ -4,19 +4,21 @@
     var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
     var projectCollection = new ProjectCollection(backend);
-      var roadNameCollection = new RoadNameCollection(backend);
+    var roadNameCollection = new RoadNameCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
+    var nodeCollection = new NodeCollection(backend);
 
     var models = {
       roadCollection: roadCollection,
       projectCollection: projectCollection,
       selectedLinkProperty: selectedLinkProperty,
       linkPropertiesModel: linkPropertiesModel,
-      selectedProjectLinkProperty : selectedProjectLinkProperty
+      selectedProjectLinkProperty : selectedProjectLinkProperty,
+      nodeCollection: nodeCollection
     };
 
     bindEvents();
@@ -103,18 +105,20 @@
     return map;
   };
 
-    var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection){
-      var tileMaps = new TileMapCollection(arcConfig);
+  var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection) {
+    var tileMaps = new TileMapCollection(arcConfig);
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
     var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
+    var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
+    var nodeLayer = new NodeLayer(map, roadLayer, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
 
-    new NodeSearchForm();
+    new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
@@ -123,7 +127,8 @@
     var layers = _.merge({
       road: roadLayer,
       roadAddressProject: projectLinkLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel)
+      linkProperty: linkPropertyLayer,
+      node: nodeLayer
     });
 
     var mapPluginsContainer = jQuery('#map-plugins');

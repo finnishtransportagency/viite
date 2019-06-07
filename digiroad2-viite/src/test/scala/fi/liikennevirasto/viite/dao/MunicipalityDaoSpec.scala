@@ -46,16 +46,16 @@ class MunicipalityDaoSpec extends FunSuite with Matchers{
       municipalityRoadMaintainerMap.isEmpty should be(false)
       municipalityRoadMaintainerMap.contains(selectedMunicipalityId) should be (true)
       selectedElyNro match {
-        case 1 => municipalityRoadMaintainerMap.get(selectedMunicipalityId).get should be (14)
-        case 2 => municipalityRoadMaintainerMap.get(selectedMunicipalityId).get should be (12)
-        case 3 => municipalityRoadMaintainerMap.get(selectedMunicipalityId).get should be (10)
-        case 4 => municipalityRoadMaintainerMap.get(selectedMunicipalityId).get should be (9)
-        case 5 => municipalityRoadMaintainerMap.get(selectedMunicipalityId).get should be (8)
-        case 6 => municipalityRoadMaintainerMap.get(selectedMunicipalityId).get should be (4)
-        case 7 => municipalityRoadMaintainerMap.get(selectedMunicipalityId).get should be (2)
-        case 8 => municipalityRoadMaintainerMap.get(selectedMunicipalityId).get should be (3)
-        case 9 => municipalityRoadMaintainerMap.get(selectedMunicipalityId).get should be (1)
-        case 0 => municipalityRoadMaintainerMap.get(selectedMunicipalityId).get should be (0)
+        case 1 => municipalityRoadMaintainerMap(selectedMunicipalityId) should be (14)
+        case 2 => municipalityRoadMaintainerMap(selectedMunicipalityId) should be (12)
+        case 3 => municipalityRoadMaintainerMap(selectedMunicipalityId) should be (10)
+        case 4 => municipalityRoadMaintainerMap(selectedMunicipalityId) should be (9)
+        case 5 => municipalityRoadMaintainerMap(selectedMunicipalityId) should be (8)
+        case 6 => municipalityRoadMaintainerMap(selectedMunicipalityId) should be (4)
+        case 7 => municipalityRoadMaintainerMap(selectedMunicipalityId) should be (2)
+        case 8 => municipalityRoadMaintainerMap(selectedMunicipalityId) should be (3)
+        case 9 => municipalityRoadMaintainerMap(selectedMunicipalityId) should be (1)
+        case 0 => municipalityRoadMaintainerMap(selectedMunicipalityId) should be (0)
       }
     }
   }

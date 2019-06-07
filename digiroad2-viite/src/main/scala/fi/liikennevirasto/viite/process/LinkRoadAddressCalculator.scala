@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.BaseCalibrationPoint
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectLink, RoadAddress}
 
 trait LinkRoadAddressCalculator {
@@ -36,7 +36,7 @@ object LinkRoadAddressCalculator {
   private def recalculateTrack[T <: BaseRoadAddress](addressList: Seq[T]): Seq[T] = {
     val groupedList = addressList.groupBy(_.roadPartNumber)
     groupedList.mapValues {
-      case (addresses) =>
+      case addresses =>
         val sortedAddresses = addresses.sortBy(_.startAddrMValue)
         segmentize(sortedAddresses, Seq())
     }.values.flatten.toSeq

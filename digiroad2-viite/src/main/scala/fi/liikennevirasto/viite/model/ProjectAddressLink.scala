@@ -17,6 +17,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
 
   def roadName: Option[String]
   def municipalityCode: BigInt
+  def municipalityName: String
   def modifiedAt: Option[String]
   def modifiedBy: Option[String]
   def attributes: Map[String, Any]
@@ -39,17 +40,18 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def partitioningName: String
   def isSplit: Boolean
   def originalGeometry: Option[Seq[Point]]
+  def roadwayNumber: Long
 }
 
 case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                               length: Double, administrativeClass: AdministrativeClass,
                               linkType: LinkType, constructionType: ConstructionType,
-                              roadLinkSource: LinkGeomSource, roadType: RoadType, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, modifiedAt: Option[String], modifiedBy: Option[String],
+                              roadLinkSource: LinkGeomSource, roadType: RoadType, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String],
                               attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                               startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                               startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
                               anomaly: Anomaly = Anomaly.None, status: LinkStatus, roadwayId: Long, linearLocationId: Long, reversed: Boolean = false,
-                              connectedLinkId: Option[Long] = None, originalGeometry: Option[Seq[Point]] = None) extends ProjectAddressLinkLike {
+                              connectedLinkId: Option[Long] = None, originalGeometry: Option[Seq[Point]] = None, roadwayNumber: Long = 0) extends ProjectAddressLinkLike {
   override def partitioningName: String = {
     if (roadNumber > 0)
       s"$roadNumber/$roadPartNumber/$trackCode"
