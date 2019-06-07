@@ -53,9 +53,12 @@
       }), function (nodePointTemp) {
         return nodePointTemp.nodePointTemplate;
       });
-      var junctionPointTemplates = _.filter(fetchResult, function(node){
-        return !_.isUndefined(node.junctionPointTemplate) ;
+      var junctionPointTemplates = _.map(_.filter(fetchResult, function(node){
+          return !_.isUndefined(node.junctionPointTemplate) ;
+      }), function (junctionPointTemp) {
+          return junctionPointTemp.junctionPointTemplate;
       });
+
       me.setNodes(nodes);
       me.setNodePointTemplates(nodePointTemplates);
       me.setJunctionTemplates(junctionTemplates);
