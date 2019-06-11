@@ -127,6 +127,14 @@ object OracleDatabase {
     JGeometry.store(JGeometry.createLinearLineString(ordinates, dim, srid), oracleConn)
   }
 
+  def createPointJGeometry(point: Point): STRUCT = {
+    val coordinates = Array(GeometryUtils.roundN(point.x), GeometryUtils.roundN(point.y), 0, 0)
+    val dim = 4
+    val srid = 3067
+    val oracleConn = dynamicSession.conn.asInstanceOf[ConnectionHandle].getInternalConnection
+    JGeometry.store(JGeometry.createPoint(coordinates, dim, srid), oracleConn)
+  }
+
   def loadJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
     // Convert STRUCT into geometry
     val geom = geometry.map(g => g.asInstanceOf[STRUCT])

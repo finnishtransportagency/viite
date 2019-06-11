@@ -66,12 +66,32 @@ object Sequences {
     Queries.nextNodeId.as[Long].first
   }
 
+  def nextNodeNumber: Long = {
+    Queries.nextNodeNumber.as[Long].first
+  }
+
+  def nextJunctionNumber: Long = {
+    Queries.nextJunctionNumber.as[Long].first
+  }
+
+  def fetchNodeIds(len: Int): List[Long] = {
+    Queries.fetchNodeIds(len)
+  }
+
   def nextNodePointId: Long = {
     Queries.nextNodePointId.as[Long].first
   }
 
+  def fetchJunctionPointIds(len: Int): List[Long] = {
+    Queries.fetchJunctionPointIds(len)
+  }
+
   def nextJunctionId: Long = {
     Queries.nextJunctionId.as[Long].first
+  }
+
+  def fetchJunctionIds(len: Int): List[Long] = {
+    Queries.fetchJunctionIds(len)
   }
 
   def nextJunctionPointId: Long = {

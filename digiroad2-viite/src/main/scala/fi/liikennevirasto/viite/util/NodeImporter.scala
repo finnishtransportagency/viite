@@ -18,6 +18,8 @@ import slick.jdbc._
 class NodeImporter(conversionDatabase: DatabaseDef) {
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
+  val roadwayPointDAO = new RoadwayPointDAO
+
   case class ConversionNode(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: Long, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime],
                             validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
@@ -75,10 +77,10 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
         insertNode(nodePs, conversionNode._1.copy(id = newNodeId))
         conversionNode._2.foreach{
           conversionNodePoint =>{
-            val existingRoadwayPoint = RoadwayPointDAO.fetch(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR)
+            val existingRoadwayPoint = roadwayPointDAO.fetch(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR)
             println(s"Inserting node point with TR id = ${conversionNodePoint.id} and node_id = ${conversionNodePoint.nodeId} for node_number = ${conversionNode._1.nodeNumber}")
             if(existingRoadwayPoint.isEmpty){
-              val newRoadwayPoint = RoadwayPointDAO.create(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR, createdBy = "node_import")
+              val newRoadwayPoint = roadwayPointDAO.create(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR, createdBy = "node_import")
               insertNodePoint(nodePointPs, conversionNodePoint, newNodeId, newRoadwayPoint)
             }
             else

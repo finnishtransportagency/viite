@@ -117,8 +117,8 @@ class LinearLocationDAO {
   val selectFromLinearLocation =
     """
       select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.SIDE,
-      (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 0) AS cal_start_addr_m,
-      (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 1) AS cal_end_addr_m,
+      (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_addr_m,
+      (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_addr_m,
       link.SOURCE, link.ADJUSTED_TIMESTAMP, geometry, loc.valid_from, loc.valid_to
       from LINEAR_LOCATION loc
       JOIN LINK ON (link.id = loc.link_id)
@@ -242,7 +242,7 @@ class LinearLocationDAO {
     }
   }
 
-  def fetchByIdMassQuery(ids: Set[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
+  def fetchByIdMassQuery(ids: Iterable[Long], rejectInvalids: Boolean = true): List[LinearLocation] = {
     time(logger, "Fetch linear locations by id - mass query") {
       MassQuery.withIds(ids) {
         idTableName =>
@@ -301,6 +301,21 @@ class LinearLocationDAO {
             """
           queryList(query)
       }
+    }
+  }
+
+  def fetchByRoadwayNumber(roadwayNumbers: Iterable[Long]): List[LinearLocation] = {
+    time(logger, "Fetch linear locations by roadway numbers") {
+      if (roadwayNumbers.isEmpty) {
+        return List()
+      }
+      val roadwayNumbersString = roadwayNumbers.mkString(", ")
+      val query =
+        s"""
+          $selectFromLinearLocation
+          where loc.roadway_number in ($roadwayNumbersString) and loc.valid_to is null
+        """
+      queryList(query)
     }
   }
 
@@ -647,7 +662,8 @@ class LinearLocationDAO {
              ELSE 0
              END) AS calibrationCode,
              loc.side
-             FROM LINEAR_LOCATION loc JOIN CALIBRATION_POINT cp ON (loc.LINK_ID = cp.LINK_ID) WHERE loc.id in (${linearLocationIds.mkString(",")})"""
+             FROM LINEAR_LOCATION loc JOIN CALIBRATION_POINT cp ON (loc.LINK_ID = cp.LINK_ID AND cp.VALID_TO IS NULL)
+             WHERE loc.id in (${linearLocationIds.mkString(",")}) AND loc.VALID_TO IS NULL"""
       Q.queryNA[(Long, Int, Int)](query).list.map {
         case (id, code, side) => id -> (CalibrationCode(code), SideCode.apply(side))
       }.toMap

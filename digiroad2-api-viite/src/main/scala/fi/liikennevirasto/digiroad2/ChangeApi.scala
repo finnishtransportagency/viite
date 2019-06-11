@@ -4,17 +4,17 @@ import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.viite.{ChangedRoadAddress, RoadAddressService}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import org.scalatra.swagger._
 
 
 class ChangeApi(roadAddressService: RoadAddressService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport  {
-  val logger = LoggerFactory.getLogger(getClass)
-  val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+  val logger: Logger = LoggerFactory.getLogger(getClass)
+  val DateTimePropertyFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 
   protected implicit val jsonFormats: Formats = DefaultFormats
   protected val applicationDescription = "The user interface API "
@@ -24,7 +24,7 @@ class ChangeApi(roadAddressService: RoadAddressService, implicit val swagger: Sw
     contentType = formats("json")
   }
 
-  val roadNumberToGeoJson = (
+  val roadNumberToGeoJson: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("roadNumberToGeoJson")
       .parameters(
         queryParam[String]("since").description("Start date of the road addresses changes"),

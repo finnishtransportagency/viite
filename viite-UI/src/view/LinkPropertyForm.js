@@ -70,9 +70,9 @@
             '<p class="form-control-static-floating">' + decodedRoadTypes + '</p>' +
             '</div>' ;
       } else {
-        field = '<div class="form-group">' +
-            '<label class="control-label">TIETYYPPI</label>' +
-            '<p class="form-control-static">' + decodedRoadTypes + '</p>' +
+        field = '<div class="form-group" style="margin-bottom: 0">' +
+            '<label class="control-label-short">TIETYYPPI</label>' +
+            '<p class="form-control-static-short">' + decodedRoadTypes + '</p>' +
             '</div>';
       }
       return field;
@@ -223,9 +223,9 @@
           '<p class="form-control-static-floating">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
           '</div>';
       } else {
-        field = '<div class="form-group">' +
-          '<label class="control-label">' + labelText + '</label>' +
-          '<p class="form-control-static">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
+        field = '<div class="form-group" style="margin-bottom: 0;">' +
+          '<label class="control-label-short">' + labelText + '</label>' +
+          '<p class="form-control-static-short">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
           '</div>';
       }
       return field;
@@ -273,6 +273,8 @@
       var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : staticField('ALKUETÄISYYS', linkProperties.startAddressM);
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : staticField('LOPPUETÄISYYS', linkProperties.endAddressM);
+      var mtkId = selectedLinkProperty.count() === 1 ? '; MTKID: ' + linkProperties.mmlId : '';
+      var roadName = firstSelectedLinkProperty.roadName ? staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) : '';
       return _.template('' +
         '<header>' +
           title() +
@@ -280,17 +282,19 @@
         '<div class="wrapper read-only">' +
           '<div class="form form-horizontal form-dark">' +
             '<div>' +
-              '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+              '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
               '</div>' +
-              '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+              '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
               '</div>' +
-              '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + '</p>' +
+              '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Geometrian lähde: ' + linkProperties.roadLinkSource + mtkId + '</p>' +
               '</div>' +
+              showMunicipality() +
               showLinkId(selectedLinkProperty, linkProperties) +
             '</div>' +
+            roadName +
             staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) +
             staticField('TIEOSANUMERO', firstSelectedLinkProperty.roadPartNumber) +
             staticField('AJORATA', firstSelectedLinkProperty.trackCode) +
@@ -309,6 +313,8 @@
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : measureDynamicField('ALKUETÄISYYS', 'startAddressM');
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : measureDynamicField('LOPPUETÄISYYS', 'endAddressM');
       var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
+      var mtkId = selectedLinkProperty.count() === 1 ? '; MTKID: ' + linkProperties.mmlId : '';
+      var roadName = firstSelectedLinkProperty.roadName ? staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) : '';
       return _.template('' +
         '<header>' +
           title() +
@@ -316,17 +322,19 @@
         '<div class="wrapper read-only-floating">' +
           '<div class="form form-horizontal form-dark">' +
             '<div>' +
-              '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+              '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
               '</div>' +
-              '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+              '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
               '</div>' +
-              '<div class="form-group">' +
-                '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + '</p>' +
+              '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Geometrian lähde: ' + linkProperties.roadLinkSource + mtkId + '</p>' +
               '</div>' +
+              showMunicipality() +
               showLinkId(selectedLinkProperty, linkProperties) +
             '</div>' +
+            roadName +
             staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) +
             staticField('TIEOSANUMERO', firstSelectedLinkProperty.roadPartNumber) +
             staticField('AJORATA', firstSelectedLinkProperty.trackCode) +
@@ -343,6 +351,8 @@
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : measureDynamicField('ALKUETÄISYYS', 'startAddressM');
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : measureDynamicField('LOPPUETÄISYYS', 'endAddressM');
       var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
+      var mtkId = selectedLinkProperty.count() === 1 ? '; MTKID: ' + linkProperties.mmlId : '';
+      var roadName = firstSelectedLinkProperty.roadName ? staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) : '';
       return _.template('<div style="display: none" id="floatingEditModeForm">' +
         '<header>' +
           title() +
@@ -350,17 +360,19 @@
         '<div class="wrapper edit-mode-floating">' +
           '<div class="form form-horizontal form-dark">' +
           '<div>' +
-            '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+            '<div class="form-group-metadata">' +
+              '<p class="form-control-static asset-log-info-metadata">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
             '</div>' +
-            '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+            '<div class="form-group-metadata">' +
+              '<p class="form-control-static asset-log-info-metadata">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
             '</div>' +
-            '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Geometrian lähde: ' + linkProperties.roadLinkSource + '</p>' +
+            '<div class="form-group-metadata">' +
+              '<p class="form-control-static asset-log-info-metadata">Geometrian lähde: ' + linkProperties.roadLinkSource + mtkId + '</p>' +
             '</div>' +
+            showMunicipality() +
             showLinkId(selectedLinkProperty, linkProperties) +
            '</div>' +
+            roadName +
             staticField('TIENUMERO',firstSelectedLinkProperty.roadNumber) +
             staticField('TIEOSANUMERO', firstSelectedLinkProperty.roadPartNumber) +
             startAddress +
@@ -374,15 +386,32 @@
         '<footer>' + editButtons + '</footer> </div>');
     };
 
-    var showLinkId = function(selectedLinkProperty, linkProperties){
+    var showLinkId = function(selectedLinkProperty, linkProperties) {
         if (selectedLinkProperty.count () === 1) {
             return '' +
-                '<div class="form-group">' +
-                    '<p class="form-control-static asset-log-info">Linkin ID: ' + linkProperties.linkId + '</p>' +
+                '<div class="form-group-metadata">' +
+                    '<p class="form-control-static asset-log-info-metadata">Linkin ID: ' + linkProperties.linkId + '</p>' +
                 '</div>';
         } else {
             return '';
         }
+    };
+
+    var showMunicipality = function() {
+      var municipalityValue = _.reduce(selectedLinkProperty.get(), function (acc, link) {
+        return {
+          municipalityName: acc.municipalityName,
+          valid: acc.municipalityName === link.municipalityName
+        };
+      });
+      if ((selectedLinkProperty.count() === 1 || municipalityValue.valid) && municipalityValue.municipalityName) {
+        return '' +
+          '<div class="form-group-metadata">' +
+            '<p class="form-control-static asset-log-info-metadata">Kunta: ' + municipalityValue.municipalityName + '</p>' +
+          '</div>';
+      } else {
+        return '';
+      }
     };
 
     var additionalSourceEventTriggering = function(rootElement, floatingToAdd, value, id) {
