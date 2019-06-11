@@ -313,8 +313,7 @@ class DataImporter {
       )
       val length = GeometryUtils.geometryLength(geometry)
       sqlu"""UPDATE LINEAR_LOCATION
-          SET geometry = MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1),
-               MDSYS.SDO_ORDINATE_ARRAY($x1, $y1, 0.0, 0.0, $x2, $y2, 0.0, $length))
+          SET geometry = ST_GeomFromText('LINESTRING($x1 $y1 0.0 0.0, $x2 $y2 0.0 $length)', 3067)
           WHERE id = $linearLocationId""".execute
     }
   }
