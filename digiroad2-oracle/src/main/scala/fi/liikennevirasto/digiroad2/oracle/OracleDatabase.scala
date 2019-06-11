@@ -144,8 +144,22 @@ object OracleDatabase {
     }
   }
 
+  // TODO PostGIS conversion: This might be unnecessary after fixing NodeDAO
   def loadRoadsJGeometryToGeometry(geometry: Option[Object]): Seq[Point] = {
-    // Convert STRUCT into geometry
+    if (geometry.nonEmpty) {
+      val pgObject = geometry.get.asInstanceOf[PGobject]
+      val geom = PGgeometry.geomFromString(pgObject.getValue)
+      val n = geom.numPoints()
+      var points: Seq[Point] = Seq()
+      for (i <- 1 to n) {
+        val point = geom.getPoint(i - 1)
+        points = points :+ Point(point.x, point.y, point.z)
+      }
+      points
+    } else {
+      Seq()
+    }
+/*    // Convert STRUCT into geometry
     val geom = geometry.map(g => g.asInstanceOf[STRUCT])
     if (geom.nonEmpty) {
       val jgeom: JGeometry = JGeometry.load(geom.get)
@@ -153,6 +167,7 @@ object OracleDatabase {
     } else {
       Seq()
     }
+*/
   }
 
 }

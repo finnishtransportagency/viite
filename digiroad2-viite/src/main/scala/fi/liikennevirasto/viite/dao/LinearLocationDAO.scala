@@ -183,12 +183,15 @@ class LinearLocationDAO {
       val calEndM = r.nextLongOption()
       val linkSource = r.nextInt()
       val adjustedTimestamp = r.nextLong()
-      val geom = OracleDatabase.loadRoadsJGeometryToGeometry(r.nextObjectOption())
+      val x1 = r.nextDouble()
+      val y1 = r.nextDouble()
+      val x2 = r.nextDouble()
+      val y2 = r.nextDouble()
       val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 
       LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
-        (calStartM, calEndM), geom, LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
+        (calStartM, calEndM), Seq(Point(x1, y1), Point(x2, y2)), LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
     }
   }
 
