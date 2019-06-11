@@ -6,8 +6,11 @@
 -- Find:    RRRR
 -- Replace: YYYY
 --
+-- Find:    RR
+-- Replace: YY
+--
 
-Insert into PROJECT (ID,STATE,NAME,CREATED_BY,CREATED_DATE,MODIFIED_BY,MODIFIED_DATE,ADD_INFO,START_DATE,STATUS_INFO) values ('7081807','1','ProjectOne','testUser',to_date('17.08.08','RR.MM.DD'),'-',to_date('17.08.08','RR.MM.DD'),null,to_date('17.08.31','RR.MM.DD'),null);
+Insert into PROJECT (ID,STATE,NAME,CREATED_BY,CREATED_DATE,MODIFIED_BY,MODIFIED_DATE,ADD_INFO,START_DATE,STATUS_INFO) values ('7081807','1','ProjectOne','testUser',to_date('17.08.08','YY.MM.DD'),'-',to_date('17.08.08','YY.MM.DD'),null,to_date('17.08.31','YY.MM.DD'),null);
 
 Insert into PROJECT_RESERVED_ROAD_PART (ID,ROAD_NUMBER,ROAD_PART_NUMBER,PROJECT_ID,CREATED_BY) values ('7081807','77997','1','7081807','testUser');
 

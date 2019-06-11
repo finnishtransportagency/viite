@@ -123,12 +123,12 @@ package object util {
       val linearLocationId = Sequences.nextLinearLocationId
       val endMeasure = end - start
       sqlu"""INSERT INTO ROADWAY VALUES ($roadwayId, 1000000000, $roadNumber, $roadPartNumber, $track, $start, $end, 0, ${discontinuity.value},
-            current_date, NULL, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-RR HH24.MI.SSXFF','nls_numeric_characters=''. '''), 0, $ely, 0, current_date, NULL)""".execute
+            current_date, NULL, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-YY HH24.MI.SSXFF','nls_numeric_characters=''. '''), 0, $ely, 0, current_date, NULL)""".execute
 
       sqlu"""INSERT INTO LINK (ID) VALUES ($nextLinkId)""".execute
 
       sqlu""" INSERT INTO LINEAR_LOCATION VALUES ($linearLocationId, 1000000000, 0, $nextLinkId, 0, $endMeasure, 0, ST_GeomFromText('LINESTRING($start 0 0 0, $end 0 0 $endMeasure)', 3067),
-            current_date, null, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-RR HH24.MI.SSXFF','nls_numeric_characters=''. '''))""".execute
+            current_date, null, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-YY HH24.MI.SSXFF','nls_numeric_characters=''. '''))""".execute
       (roadwayId, nextLinkId)
     }
 
