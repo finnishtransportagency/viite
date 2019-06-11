@@ -333,8 +333,8 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //      sqlu"""Insert into ROADWAY (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
   //            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,
   //            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
-  //            ($roadwayId,'6591','1','0','5','0','85',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
-  //            to_date('16.10.1998','DD.MM.RRRR'),'0','0', ST_GeomFromText('LINESTRING(445889.442 7004298.67 0 0, 445956.884 7004244.253 0 85)', 3067),null,
+  //            ($roadwayId,'6591','1','0','5','0','85',to_date('01.01.1996','DD.MM.YYYY'),null,'tr',
+  //            to_date('16.10.1998','DD.MM.YYYY'),'0','0', ST_GeomFromText('LINESTRING(445889.442 7004298.67 0 0, 445956.884 7004244.253 0 85)', 3067),null,
   //            '3','0',86.818,'6550673','1476392565000',current_date,'1')""".execute
   //
   //      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
@@ -342,7 +342,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //            CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,CONNECTED_LINK_ID, GEOMETRY,
   //            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
   //            values (${ids(1)},${project.id},'0','5','6591','1','0','62','silari',null,
-  //            to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.UnChanged.value},'0','1',${ids(0)},'6550673','',
+  //            to_date('20.10.2017','DD.MM.YYYY'),null,${LinkStatus.UnChanged.value},'0','1',${ids(0)},'6550673','',
   //            '3','0',63.926,'499972936','0','3')""".execute
   //
   //      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
@@ -350,7 +350,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //            CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,CONNECTED_LINK_ID, GEOMETRY,
   //            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
   //            values (${ids(2)},${project.id},'0','5','6591','1','62','85','silari',null,
-  //            to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.New.value},'0','1',${ids(0)},'6550673','',
+  //            to_date('20.10.2017','DD.MM.YYYY'),null,${LinkStatus.New.value},'0','1',${ids(0)},'6550673','',
   //            '3',63.926,307.99,'499972936','0','3')""".execute
   //
   //      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
@@ -358,7 +358,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //            CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,CONNECTED_LINK_ID, GEOMETRY,
   //            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
   //            values (${ids(3)},${project.id},'0','5','6591','1','62','85','silari',null,
-  //            to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.Terminated.value},'2','9',${ids(0)},'499972936','',
+  //            to_date('20.10.2017','DD.MM.YYYY'),null,${LinkStatus.Terminated.value},'2','9',${ids(0)},'499972936','',
   //            '3',63.752,86.818,'6550673','0','1')""".execute
   //
   //      val delta = ProjectDeltaCalculator.delta(project)
@@ -476,8 +476,8 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //      sqlu"""Insert into ROADWAY (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
   //            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,
   //            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
-  //            ($roadwayId,'6591','1','0','5','0','85',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
-  //            to_date('16.10.1998','DD.MM.RRRR'),'0','0', ST_GeomFromText('LINESTRING(445889.442 7004298.67 0 0, 445956.884 7004244.253 0 85)', 3067),null,
+  //            ($roadwayId,'6591','1','0','5','0','85',to_date('01.01.1996','DD.MM.YYYY'),null,'tr',
+  //            to_date('16.10.1998','DD.MM.YYYY'),'0','0', ST_GeomFromText('LINESTRING(445889.442 7004298.67 0 0, 445956.884 7004244.253 0 85)', 3067),null,
   //            '3','0',86.818,'6550673','1476392565000',current_date,'1')""".execute
   //
   //      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
@@ -485,7 +485,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //            CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,CONNECTED_LINK_ID, GEOMETRY,
   //            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
   //            values (${ids(1)},${project.id},'0','5','6591','1','0','62','silari',null,
-  //            to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.UnChanged.value},'0','1',${ids(0)},'6550673','',
+  //            to_date('20.10.2017','DD.MM.YYYY'),null,${LinkStatus.UnChanged.value},'0','1',${ids(0)},'6550673','',
   //            '3','0',63.926,'499972936','0','3')""".execute
   //
   //      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
@@ -493,7 +493,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //            CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,CONNECTED_LINK_ID, GEOMETRY,
   //            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
   //            values (${ids(2)},${project.id},'0','5','6591','1','62','85','silari',null,
-  //            to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.New.value},'0','1',${ids(0)},'6550673','',
+  //            to_date('20.10.2017','DD.MM.YYYY'),null,${LinkStatus.New.value},'0','1',${ids(0)},'6550673','',
   //            '3',63.926,307.99,'499972936','0','3')""".execute
   //
   //      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
@@ -501,7 +501,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //            CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,CONNECTED_LINK_ID, GEOMETRY,
   //            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
   //            values (${ids(3)},${project.id},'0','5','6591','1','62','85','silari',null,
-  //            to_date('20.10.2017','DD.MM.RRRR'),null,${LinkStatus.Terminated.value},'2','9',${ids(0)},'499972936','',
+  //            to_date('20.10.2017','DD.MM.YYYY'),null,${LinkStatus.Terminated.value},'2','9',${ids(0)},'499972936','',
   //            '3',63.752,86.818,'6550673','0','1')""".execute
   //
   //      val delta = ProjectDeltaCalculator.delta(project)
