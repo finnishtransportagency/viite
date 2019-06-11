@@ -68,7 +68,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyRoadLink(linkId = 124L, Seq(0.0, 10.0), NormalLinkInterface)
     )
 
-    when(mockLinearLocationDAO.fetchRoadwayByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
+    when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
 
     when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
 
@@ -108,7 +108,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyRoadLink(linkId = 124L, Seq(0.0, 10.0), NormalLinkInterface)
     )
 
-    when(mockLinearLocationDAO.fetchRoadwayByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
+    when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
 
     when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
 
@@ -135,7 +135,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
     )
 
-    when(mockLinearLocationDAO.fetchRoadwayByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
+    when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
 
     when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
 

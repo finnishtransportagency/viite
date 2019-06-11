@@ -60,6 +60,18 @@ class JunctionPointDAO extends BaseDAO {
     }
   }
 
+  def fetchJunctionPointsByRoadwayPoints(roadwayNumber: Long, addrM: Long, beforeAfter: BeforeAfter): Option[JunctionPoint] = {
+      val query =
+        s"""
+       SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
+       RP.ROADWAY_NUMBER, RP.ADDR_M FROM JUNCTION_POINT JP
+       JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
+       where JP.valid_to is null and (JP.end_date is null or JP.end_date >= sysdate) and
+       RP.ROADWAY_NUMBER = $roadwayNumber and RP.ADDR_M = $addrM and JP.before_after = ${beforeAfter.value}
+     """
+      queryList(query).headOption
+  }
+
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionPoint] = {
     time(logger, "Fetch JunctionPoint templates by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
@@ -75,7 +87,7 @@ class JunctionPointDAO extends BaseDAO {
           JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
           JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID AND J.NODE_ID IS NULL)
           JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-          where $boundingBoxFilter and NP.valid_to is null and NP.end_date is null
+          where $boundingBoxFilter and JP.valid_to is null and (JP.end_date is null or JP.end_date >= sysdate)
         """
       queryList(query)
     }

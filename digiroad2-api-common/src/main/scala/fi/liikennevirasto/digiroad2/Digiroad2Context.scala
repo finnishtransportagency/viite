@@ -125,8 +125,8 @@ object Digiroad2Context {
     new RoadNameService
   }
 
-  lazy val nodesAndJunctionsService : NodesAndJunctionsService = {
-    new NodesAndJunctionsService
+    lazy val nodesAndJunctionsService : NodesAndJunctionsService = {
+    new NodesAndJunctionsService(new RoadwayDAO, new RoadwayPointDAO, new LinearLocationDAO, new NodeDAO, new NodePointDAO, new JunctionDAO, new JunctionPointDAO)
   }
 
   lazy val authenticationTestModeEnabled: Boolean = {
