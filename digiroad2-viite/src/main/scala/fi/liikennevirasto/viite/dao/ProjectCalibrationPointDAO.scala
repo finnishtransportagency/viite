@@ -96,7 +96,7 @@ object ProjectCalibrationPointDAO {
   }
 
   def createCalibrationPoint(calibrationPoint: UserDefinedCalibrationPoint): Long = {
-    val nextCalibrationPointId = sql"""select PROJECT_CAL_POINT_ID_SEQ.nextval from dual""".as[Long].first
+    val nextCalibrationPointId = sql"""select nextval('PROJECT_CAL_POINT_ID_SEQ')""".as[Long].first
     sqlu"""
       Insert Into PROJECT_CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M) Values
       ($nextCalibrationPointId, ${calibrationPoint.projectLinkId}, ${calibrationPoint.projectId}, ${calibrationPoint.segmentMValue}, ${calibrationPoint.addressMValue})
@@ -105,7 +105,7 @@ object ProjectCalibrationPointDAO {
   }
 
   def createCalibrationPoint(projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long): Long = {
-    val nextCalibrationPointId = sql"""select PROJECT_CAL_POINT_ID_SEQ.nextval from dual""".as[Long].first
+    val nextCalibrationPointId = sql"""select nextval('PROJECT_CAL_POINT_ID_SEQ')""".as[Long].first
     sqlu"""
       Insert Into PROJECT_CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M) Values
       ($nextCalibrationPointId, $projectLinkId, $projectId, $segmentMValue, $addressMValue)
