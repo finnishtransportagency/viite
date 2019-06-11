@@ -21,6 +21,8 @@
       var populateSearchResults = function(results) {
         var resultItems = _.chain(results)
           .sortBy('distance')
+          .sortBy('title')
+          .sortBy(function (item) { return item.title.split(', ')[1]; })
           .map(function(result) {
             return $('<li></li>').text(result.title).on('click', function() {
               eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });

@@ -106,6 +106,22 @@
       });
     };
 
+    this.fetchWithNodes = function(boundingBox, zoom) {
+      var withHistory = date.length !== 0;
+      var day = withHistory ? date[0] : -1;
+      var month = withHistory ? date[1] : -1;
+      var year = withHistory ? date[2] : -1;
+      currentZoom = zoom;
+      backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom,
+        withHistory: withHistory, day: day, month: month, year: year}, function(fetchedRoadLinks) {
+        currentAllRoadLinks = fetchedRoadLinks;
+        backend.getNodes({boundingBox: boundingBox, zoom: zoom}, function(nodes){
+          fetchProcess(fetchedRoadLinks, zoom);
+          eventbus.trigger('node:addNodesToMap', nodes, zoom);
+        });
+      });
+    };
+
       eventbus.on("linkProperties:drawUnknowns", function () {
         fetchProcess(currentAllRoadLinks, currentZoom, true);
       });
