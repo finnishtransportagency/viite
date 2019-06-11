@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import java.text.SimpleDateFormat
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -21,9 +22,10 @@ import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.swagger.{Swagger, _}
+import org.scalatra.swagger.Swagger
 import org.scalatra.{NotFound, _}
 import org.slf4j.{Logger, LoggerFactory}
+import org.scalatra.swagger._
 
 import scala.util.parsing.json.JSON._
 import scala.util.{Left, Right}
@@ -667,8 +669,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
-              val project = projectService.getSingleProjectById(links.projectId).get
               val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
+              val project = projectService.getSingleProjectById(links.projectId).get
               Map("success" -> true, "id" -> links.projectId,
                 "publishable" -> projectErrors.isEmpty,
                 "projectErrors" -> projectErrors,
@@ -1067,7 +1069,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi)
       }
       case _ => time(logger, operationName = "nodes with junctions fetch") {
-        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi)
+        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi) ++
+          nodesAndJunctionsService.getNodeTemplatesByBoundingBox(boundingRectangle).map(nodePointTemplateToApi) ++
+          nodesAndJunctionsService.getJunctionTemplatesByBoundingBox(boundingRectangle).map(junctionPointTemplateToApi)
       }
     }
   }
@@ -1217,6 +1221,42 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     //TODO
     Map("id" -> nodePoint.id,
       "nodeId" -> nodePoint.nodeId)
+  }
+
+  def nodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
+    Map("nodePointTemplate" -> {
+      Map("id" -> nodePoint.id,
+        "nodeId" -> nodePoint.nodeId,
+        "beforeAfter" -> nodePoint.beforeAfter.value,
+        "roadwayPointId" -> nodePoint.roadwayPointId,
+        "startDate" -> formatDateTimeToString(Some(nodePoint.startDate)),
+        "endDate" -> formatDateTimeToString(nodePoint.endDate),
+        "validFrom" -> formatDateTimeToString(Some(nodePoint.validFrom)),
+        "validTo" -> formatDateTimeToString(nodePoint.validTo),
+        "createdBy" -> nodePoint.createdBy,
+        "roadwayNumber" -> nodePoint.roadwayNumber,
+        "addrM" -> nodePoint.addrM
+      )
+    }
+    )
+  }
+
+  def junctionPointTemplateToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
+    Map("junctionPointTemplate" -> {
+      Map("id" -> junctionPoint.id,
+        "junctionId" -> junctionPoint.junctionId,
+        "beforeAfter" -> junctionPoint.beforeAfter.value,
+        "roadwayPointId" -> junctionPoint.roadwayPointId,
+        "startDate" -> formatDateTimeToString(Some(junctionPoint.startDate)),
+        "endDate" -> formatDateTimeToString(junctionPoint.endDate),
+        "validFrom" -> formatDateTimeToString(Some(junctionPoint.validFrom)),
+        "validTo" -> formatDateTimeToString(junctionPoint.validTo),
+        "createdBy" -> junctionPoint.createdBy,
+        "roadwayNumber" -> junctionPoint.roadwayNumber,
+        "addrM" -> junctionPoint.addrM
+      )
+    }
+    )
   }
 
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {

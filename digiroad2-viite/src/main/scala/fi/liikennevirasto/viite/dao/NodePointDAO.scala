@@ -85,6 +85,27 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
+  def fetchNodePoint(roadwayNumber: Long): Option[NodePoint] = {
+      val query =
+        s"""
+         $selectFromNodePoint
+         where RP.roadway_number = $roadwayNumber and NP.valid_to is null and NP.end_date is null
+       """
+    queryList(query).headOption
+  }
+
+  def fetchNodePointTemplate(roadwayNumber: Long): List[NodePoint] = {
+    val query =
+      s"""SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_ID, NP.START_DATE, NP.END_DATE,
+                             NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M
+                             FROM NODE_POINT NP
+                             JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+         where RP.roadway_number = $roadwayNumber and NP.valid_to is null and NP.end_date is null
+       """
+    queryList(query)
+  }
+
+
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
     time(logger, "Fetch NodePoint templates by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
@@ -111,16 +132,10 @@ class NodePointDAO extends BaseDAO {
       """insert into NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_ID, START_DATE, END_DATE, CREATED_BY)
       values (?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""".stripMargin)
 
-    // Set ids for the node points without one
-    val (ready, idLess) = nodePoints.partition(_.id != NewIdValue)
-    val newIds = Sequences.fetchJunctionPointIds(idLess.size)
-    val createNodePoints = ready ++ idLess.zip(newIds).map(x =>
-      x._1.copy(id = x._2)
-    )
-
-    createNodePoints.foreach {
+    nodePoints.foreach {
       nodePoint =>
-        ps.setLong(1, nodePoint.id)
+        val id = if(nodePoint.id == NewIdValue) Sequences.nextNodePointId else nodePoint.id
+        ps.setLong(1, id)
         ps.setLong(2, nodePoint.beforeAfter.value)
         ps.setLong(3, nodePoint.roadwayPointId)
         if (nodePoint.nodeId.isDefined) {
@@ -138,7 +153,7 @@ class NodePointDAO extends BaseDAO {
     }
     ps.executeBatch()
     ps.close()
-    createNodePoints.map(_.id).toSeq
+    nodePoints.map(_.id).toSeq
   }
 
 }

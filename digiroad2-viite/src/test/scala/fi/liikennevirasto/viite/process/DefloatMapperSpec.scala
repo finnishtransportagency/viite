@@ -1,16 +1,16 @@
 package fi.liikennevirasto.viite.process
 
-import java.util.Date
-
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddress}
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
-import org.joda.time.DateTime
+//import java.util.Date
+//
+//import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+//import fi.liikennevirasto.digiroad2.Point
+//import fi.liikennevirasto.digiroad2.asset._
+//import fi.liikennevirasto.digiroad2.util.Track
+//import fi.liikennevirasto.viite.RoadType
+//import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+//import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddress}
+//import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
+//import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 
 class DefloatMapperSpec extends FunSuite with Matchers{

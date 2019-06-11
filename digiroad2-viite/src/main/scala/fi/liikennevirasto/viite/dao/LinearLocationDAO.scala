@@ -2,12 +2,13 @@ package fi.liikennevirasto.viite.dao
 
 import java.sql.{Timestamp, Types}
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
@@ -96,6 +97,14 @@ case class LinearLocation(id: Long, orderNumber: Double, linkId: Long, startMVal
 
   def copyWithGeometry(newGeometry: Seq[Point]): LinearLocation = {
     this.copy(geometry = newGeometry)
+  }
+
+  def getFirstPoint: Point = {
+    if (sideCode == SideCode.TowardsDigitizing) geometry.head else geometry.last
+  }
+
+  def getLastPoint: Point = {
+    if (sideCode == SideCode.TowardsDigitizing) geometry.last else geometry.head
   }
 
 }
@@ -539,7 +548,7 @@ class LinearLocationDAO {
     }
   }
 
-  def fetchRoadwayByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[LinearLocation] = {
+  def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[LinearLocation] = {
     time(logger, "Fetch all the linear locations of the matching roadways by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))

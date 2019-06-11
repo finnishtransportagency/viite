@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import java.util.Locale
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time

@@ -4,6 +4,7 @@ import java.io.IOException
 import java.sql.SQLException
 import java.util.Date
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
@@ -78,12 +79,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private val logger = LoggerFactory.getLogger(getClass)
   val roadwayDAO = new RoadwayDAO
+  val roadwayPointDAO = new RoadwayPointDAO
   val linearLocationDAO = new LinearLocationDAO
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
+  val nodeDAO = new NodeDAO
+  val nodePointDAO = new NodePointDAO
+  val junctionDAO = new JunctionDAO
+  val junctionPointDAO = new JunctionPointDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val roadwayChangesDAO = new RoadwayChangesDAO
   val projectValidator = new ProjectValidator
+  val nodesNJunctionsService = new NodesAndJunctionsService(roadwayDAO, roadwayPointDAO, linearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO)
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
   val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, projectLinkDAO)
@@ -2024,6 +2031,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       roadAddressService.updateRoadwayPoints(projectLinks.filter(_.roadwayNumber != NewIdValue), username = project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
+      nodesNJunctionsService.handleJunctionPointTemplates(generatedRoadways.flatMap(_._3))
+      nodesNJunctionsService.handleNodePointTemplates(generatedRoadways.flatMap(_._3))
       handleNewRoadNames(roadwayChanges, project)
       handleTransferAndNumbering(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)

@@ -81,7 +81,7 @@ class NodePointDAOSpec extends FunSuite with Matchers {
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
       val nodePoints = dao.fetchNodePointsByNodeId(Seq(nodeId))
       nodePoints.size should be(2)
-      nodePoints.filter(n => n.nodeId == Some(nodeId)).size should be(2)
+      nodePoints.count(n => n.nodeId.contains(nodeId)) should be(2)
     }
   }
 
@@ -106,9 +106,9 @@ class NodePointDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
       val nodePoints = dao.fetchTemplatesByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
       nodePoints.size should be(2)
-      nodePoints.filter(n => n.roadwayNumber == roadwayNumber).size should be(2)
-      nodePoints.filter(n => n.addrM == testRoadwayPoint1.addrMValue).size should be(2)
-      nodePoints.filter(n => n.createdBy == Some("Test")).size should be(2)
+      nodePoints.count(n => n.roadwayNumber == roadwayNumber) should be(2)
+      nodePoints.count(n => n.addrM == testRoadwayPoint1.addrMValue) should be(2)
+      nodePoints.count(n => n.createdBy.contains("Test")) should be(2)
     }
   }
 
