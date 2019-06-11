@@ -656,8 +656,8 @@ class ProjectLinkDAO {
   def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true): Unit = {
 
     time(logger, "Update project link values") {
-      val points: Seq[Double] = roadAddress.geometry.flatMap(p => Seq(p.x, p.y, p.z))
-      val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
+      val points: Seq[Double] = roadAddress.geometry.flatMap(p => Seq(p.x, p.y, p.z)) // TODO PostGIS: Shouldn't we have also the m-value here as 4th?
+      val geometryQuery = s"ST_GeomFromText('LINESTRING(${points.mkString(", ")})', 3067)" // TODO PostGIS: x1 y1 z1 m1, x2 y2 z2 m2, ...
       val updateGeometry = if (updateGeom) s", GEOMETRY = $geometryQuery" else s""
 
       val updateProjectLink = s"UPDATE PROJECT_LINK SET ROAD_NUMBER = ${roadAddress.roadNumber}, " +

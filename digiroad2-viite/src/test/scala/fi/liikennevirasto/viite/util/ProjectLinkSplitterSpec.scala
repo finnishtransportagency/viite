@@ -455,8 +455,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long])).thenReturn(Some(roadLink))
       val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       projectDAO.create(rap)
-      val points = Seq(Point(0.0, 0.0), Point(0.0, 45.3), Point(0.0, 123.5), Point(0.5, 140.0)).flatMap(p => Seq(p.x, p.y, p.z))
-      val templateGeom = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
+      val points = Seq(Point(0.0, 0.0), Point(0.0, 45.3), Point(0.0, 123.5), Point(0.5, 140.0)).flatMap(p => Seq(p.x, p.y, p.z)) // TODO PostGIS: Shouldn't we have also the m-value here as 4th?
+      val templateGeom = s"ST_GeomFromText('LINESTRING(${points.mkString(",")})', 3067))" // TODO PostGIS: x1 y1 z1 m1, x2 y2 z2 m2, ...
       sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},1,1,$projectId,'""')""".execute
       sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, GEOMETRY,
             start_Measure, end_Measure, Link_id, side)

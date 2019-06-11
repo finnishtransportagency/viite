@@ -2235,8 +2235,8 @@ Left|      |Right
       //Should return MAJOR DISCONTINUITY to both Project Links, part number = 1
       val discontinuousGeom = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
       val geometry = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
-      val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z))
-      val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
+      val points: Seq[Double] = geometry.flatMap(p => Seq(p.x, p.y, p.z)) // TODO PostGIS: Shouldn't we have also the m-value here as 4th?
+      val geometryQuery = s"ST_GeomFromText('LINESTRING(${points.mkString(",")}', 3067)" // TODO PostGIS: x1 y1 z1 m1, x2 y2 z2 m2, ...
       sqlu"""UPDATE PROJECT_LINK Set GEOMETRY = #$geometryQuery Where PROJECT_ID = ${project.id} AND ROAD_PART_NUMBER = 2""".execute
       val errorsAtEnd = projectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks.map(pl => {
         if (pl.roadPartNumber == 2L)

@@ -127,7 +127,7 @@ package object util {
 
       sqlu"""INSERT INTO LINK (ID) VALUES ($nextLinkId)""".execute
 
-      sqlu""" INSERT INTO LINEAR_LOCATION VALUES ($linearLocationId, 1000000000, 0, $nextLinkId, 0, $endMeasure, 0, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY($start, 0, 0, 0, $end, 0, 0, $endMeasure)),
+      sqlu""" INSERT INTO LINEAR_LOCATION VALUES ($linearLocationId, 1000000000, 0, $nextLinkId, 0, $endMeasure, 0, ST_GeomFromText('LINESTRING($start 0 0 0, $end 0 0 $endMeasure)', 3067),
             current_date, null, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-RR HH24.MI.SSXFF','nls_numeric_characters=''. '''))""".execute
       (roadwayId, nextLinkId)
     }

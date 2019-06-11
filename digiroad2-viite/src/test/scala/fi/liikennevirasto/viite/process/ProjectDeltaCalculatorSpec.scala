@@ -334,8 +334,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,
   //            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
   //            ($roadwayId,'6591','1','0','5','0','85',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
-  //            to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-  //            MDSYS.SDO_ORDINATE_ARRAY(445889.442,7004298.67,0,0,445956.884,7004244.253,0,85)),null,
+  //            to_date('16.10.1998','DD.MM.RRRR'),'0','0', ST_GeomFromText('LINESTRING(445889.442 7004298.67 0 0, 445956.884 7004244.253 0 85)', 3067),null,
   //            '3','0',86.818,'6550673','1476392565000',current_date,'1')""".execute
   //
   //      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
@@ -478,8 +477,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   //            START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO,
   //            SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE) values
   //            ($roadwayId,'6591','1','0','5','0','85',to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
-  //            to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-  //            MDSYS.SDO_ORDINATE_ARRAY(445889.442,7004298.67,0,0,445956.884,7004244.253,0,85)),null,
+  //            to_date('16.10.1998','DD.MM.RRRR'),'0','0', ST_GeomFromText('LINESTRING(445889.442 7004298.67 0 0, 445956.884 7004244.253 0 85)', 3067),null,
   //            '3','0',86.818,'6550673','1476392565000',current_date,'1')""".execute
   //
   //      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
