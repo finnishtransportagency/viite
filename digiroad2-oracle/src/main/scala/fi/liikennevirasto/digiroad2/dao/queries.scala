@@ -25,21 +25,21 @@ object Queries {
 
   def nextPublishedRoadNetworkId = sql"select nextval('PUBLISHED_ROAD_NETWORK_SEQ')"
 
-  def nextRoadwayPointId = sql"select ROADWAY_POINT_SEQ.nextval from dual"
+  def nextRoadwayPointId = sql"select nextval('ROADWAY_POINT_SEQ')"
 
-  def nextCalibrationPointId = sql"select CALIBRATION_POINT_SEQ.nextval from dual"
+  def nextCalibrationPointId = sql"select nextval('CALIBRATION_POINT_SEQ')"
 
-  def nextNodeId = sql"select NODE_SEQ.nextval from dual"
+  def nextNodeId = sql"select nextval('NODE_SEQ')"
 
-  def nextNodeNumber = sql"select NODE_NUMBER_SEQ.nextval from dual"
+  def nextNodeNumber = sql"select nextval('NODE_NUMBER_SEQ')"
 
-  def nextJunctionNumber = sql"select JUNCTION_NUMBER_SEQ.nextval from dual"
+  def nextJunctionNumber = sql"select nextval('JUNCTION_NUMBER_SEQ')"
 
-  def nextNodePointId = sql"select NODE_POINT_SEQ.nextval from dual"
+  def nextNodePointId = sql"select nextval('NODE_POINT_SEQ')"
 
-  def nextJunctionId = sql"select JUNCTION_SEQ.nextval from dual"
+  def nextJunctionId = sql"select nextval('JUNCTION_SEQ')"
 
-  def nextJunctionPointId = sql"select JUNCTION_POINT_SEQ.nextval from dual"
+  def nextJunctionPointId = sql"select nextval('JUNCTION_POINT_SEQ')"
 
   def fetchViitePrimaryKeyId(len: Int) = {
     sql"""select nextval('viite_general_seq') from generate_series(1, $len)""".as[Long].list
@@ -50,19 +50,19 @@ object Queries {
   }
 
   def fetchNodeIds(len: Int) = {
-    sql"""select NODE_SEQ.nextval from dual connect by level <= $len""".as[Long].list
+    sql"""select nextval('NODE_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
   def fetchNodePointIds(len: Int) = {
-    sql"""select NODE_POINT_SEQ.nextval from dual connect by level <= $len""".as[Long].list
+    sql"""select nextval('NODE_POINT_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
   def fetchJunctionPointIds(len: Int) = {
-    sql"""select JUNCTION_POINT_SEQ.nextval from dual connect by level <= $len""".as[Long].list
+    sql"""select nextval('JUNCTION_POINT_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
   def fetchJunctionIds(len: Int) = {
-    sql"""select JUNCTION_SEQ.nextval from dual connect by level <= $len""".as[Long].list
+    sql"""select nextval('JUNCTION_SEQ') from from generate_series(1, $len)""".as[Long].list
   }
 
   def fetchLinearLocationIds(len: Int) = {
