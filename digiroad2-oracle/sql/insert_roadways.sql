@@ -1,5 +1,9 @@
 -- PUBLISHED_ROAD_NETWORK
-insert into PUBLISHED_ROAD_NETWORK values (PUBLISHED_ROAD_NETWORK_SEQ.nextval, sysdate, sysdate);
+--
+-- PostGIS conversions:
+-- Search:  PUBLISHED_ROAD_NETWORK_SEQ.nextval
+-- Replace: nextval('PUBLISHED_ROAD_NETWORK_SEQ')
+insert into PUBLISHED_ROAD_NETWORK values (nextval('PUBLISHED_ROAD_NETWORK_SEQ'), current_date, current_date);
 --
 -- Roadway and PUBLISHED_ROADWAY -table rows
 --
