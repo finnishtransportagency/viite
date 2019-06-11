@@ -51,8 +51,10 @@ class ProjectValidator {
   def checkReservedExistence(currentProject: Project, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): Unit = {
     if (LinkStatus.New.value == linkStatus.value) {
       if (roadAddressService.getRoadAddressesFiltered(newRoadNumber, newRoadPart).nonEmpty) {
-        if (!projectReservedPartDAO.fetchReservedRoadParts(currentProject.id).exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart)) {
+        if(projectReservedPartDAO.fetchProjectReservedPart(newRoadNumber, newRoadPart, currentProject.id, withProjectId = Some(false)).nonEmpty){
           throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
+        } else if (!projectReservedPartDAO.fetchReservedRoadParts(currentProject.id).exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart)) {
+          throw new ProjectValidationException(RoadNotAvailableMessage)
         }
       } else {
         val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(newRoadNumber, newRoadPart, currentProject.id)
