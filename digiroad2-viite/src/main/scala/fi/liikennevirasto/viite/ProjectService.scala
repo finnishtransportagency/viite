@@ -548,45 +548,56 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * insert the new project links and remove the ones that were unreserved
     */
   private def addLinksToProject(project: Project): Option[String] = {
-    logger.info(s"Adding reserved road parts with links to project ${project.id}")
-    val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
-    logger.debug(s"${projectLinks.size} links fetched")
-    val projectLinkOriginalParts = if (projectLinks.nonEmpty) roadwayDAO.fetchAllByRoadwayId(projectLinks.map(_.roadwayId)).map(ra => (ra.roadNumber, ra.roadPartNumber)) else Seq()
-    val newProjectLinks = project.reservedParts.filterNot(res =>
-      projectLinkOriginalParts.contains((res.roadNumber, res.roadPartNumber))).flatMap {
-      reserved => {
-        val roadways = roadwayDAO.fetchAllBySection(reserved.roadNumber, reserved.roadPartNumber)
-        validateReservations(reserved, projectLinks, roadways) match {
-          case Some(error) => throw new RoadPartReservedException(error)
-          case _ =>
-            val roadwaysByLinkSource = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).groupBy(_.linkGeomSource)
-            val suravage = if (roadwaysByLinkSource.contains(LinkGeomSource.SuravageLinkInterface)) roadwaysByLinkSource(LinkGeomSource.SuravageLinkInterface) else Seq()
-            val regular = if (roadwaysByLinkSource.contains(LinkGeomSource.NormalLinkInterface)) roadwaysByLinkSource(LinkGeomSource.NormalLinkInterface) else Seq()
-            val complementary = if (roadwaysByLinkSource.contains(LinkGeomSource.ComplementaryLinkInterface)) roadwaysByLinkSource(LinkGeomSource.ComplementaryLinkInterface) else Seq()
-            if (!complementary.isEmpty) {
-              logger.debug(s"Adding ${complementary.size} complementary links in project.")
-            }
-            val suravageMapping = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravage.map(_.linkId).toSet).map(sm => sm.linkId -> sm).toMap
-            val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet, frozenTimeVVHAPIServiceEnabled).map(rm => rm.linkId -> rm).toMap
-            val complementaryMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(complementary.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
-            val fullMapping = regularMapping ++ suravageMapping ++ complementaryMapping
-            val addresses = roadways.flatMap(r => roadwayAddressMapper.mapRoadAddresses(r, (suravage ++ regular ++ complementary).groupBy(_.roadwayNumber)(r.roadwayNumber)))
-            checkAndReserve(project, reserved)
-            logger.debug(s"Reserve done")
-            addresses.map(ra => newProjectTemplate(fullMapping(ra.linkId), ra, project))
+    try {
+      logger.info(s"Adding reserved road parts with links to project ${project.id}")
+      val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
+      logger.debug(s"${projectLinks.size} links fetched")
+      val projectLinkOriginalParts = if (projectLinks.nonEmpty) roadwayDAO.fetchAllByRoadwayId(projectLinks.map(_.roadwayId)).map(ra => (ra.roadNumber, ra.roadPartNumber)) else Seq()
+      val newProjectLinks = project.reservedParts.filterNot(res =>
+        projectLinkOriginalParts.contains((res.roadNumber, res.roadPartNumber))).flatMap {
+        reserved => {
+          val roadways = roadwayDAO.fetchAllBySection(reserved.roadNumber, reserved.roadPartNumber)
+          validateReservations(reserved, projectLinks, roadways) match {
+            case Some(error) => throw new RoadPartReservedException(error)
+            case _ =>
+              val roadwaysByLinkSource = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).groupBy(_.linkGeomSource)
+              val suravage = if (roadwaysByLinkSource.contains(LinkGeomSource.SuravageLinkInterface)) roadwaysByLinkSource(LinkGeomSource.SuravageLinkInterface) else Seq()
+              val regular = if (roadwaysByLinkSource.contains(LinkGeomSource.NormalLinkInterface)) roadwaysByLinkSource(LinkGeomSource.NormalLinkInterface) else Seq()
+              val complementary = if (roadwaysByLinkSource.contains(LinkGeomSource.ComplementaryLinkInterface)) roadwaysByLinkSource(LinkGeomSource.ComplementaryLinkInterface) else Seq()
+              if (!complementary.isEmpty) {
+                logger.debug(s"Adding ${complementary.size} complementary links in project.")
+              }
+              val suravageMapping = roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravage.map(_.linkId).toSet).map(sm => sm.linkId -> sm).toMap
+              val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet, frozenTimeVVHAPIServiceEnabled).map(rm => rm.linkId -> rm).toMap
+              val complementaryMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(complementary.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
+              val fullMapping = regularMapping ++ suravageMapping ++ complementaryMapping
+              val addresses = roadways.flatMap(r => roadwayAddressMapper.mapRoadAddresses(r, (suravage ++ regular ++ complementary).groupBy(_.roadwayNumber)(r.roadwayNumber)))
+              checkAndReserve(project, reserved)
+              logger.debug(s"Reserve done")
+              addresses.map(ra =>
+                if (fullMapping.contains(ra.linkId)) {
+                  newProjectTemplate(fullMapping(ra.linkId), ra, project)
+                } else {
+                  throw new Exception(s"Failed to add link with id ${ra.linkId} to the project.")
+                })
+          }
         }
       }
-    }
 
-    projectLinkDAO.create(newProjectLinks.filterNot(ad => projectLinks.exists(pl => pl.roadAddressRoadNumber.getOrElse(pl.roadNumber) == ad.roadNumber && pl.roadAddressRoadPart.getOrElse(pl.roadPartNumber) == ad.roadPartNumber)))
-    logger.debug(s"New links created ${newProjectLinks.size}")
-    val linksOnRemovedParts = projectLinks.filterNot(pl => (project.reservedParts ++ project.formedParts).exists(_.holds(pl)))
-    roadwayChangesDAO.clearRoadChangeTable(project.id)
-    projectLinkDAO.removeProjectLinksById(linksOnRemovedParts.map(_.id).toSet)
-    val road = newProjectLinks.headOption
-    if (road.nonEmpty)
-      recalculateProjectLinks(project.id, project.createdBy, Set((road.get.roadNumber, road.get.roadPartNumber)))
-    None
+      projectLinkDAO.create(newProjectLinks.filterNot(ad => projectLinks.exists(pl => pl.roadAddressRoadNumber.getOrElse(pl.roadNumber) == ad.roadNumber && pl.roadAddressRoadPart.getOrElse(pl.roadPartNumber) == ad.roadPartNumber)))
+      logger.debug(s"New links created ${newProjectLinks.size}")
+      val linksOnRemovedParts = projectLinks.filterNot(pl => (project.reservedParts ++ project.formedParts).exists(_.holds(pl)))
+      roadwayChangesDAO.clearRoadChangeTable(project.id)
+      projectLinkDAO.removeProjectLinksById(linksOnRemovedParts.map(_.id).toSet)
+      val road = newProjectLinks.headOption
+      if (road.nonEmpty)
+        recalculateProjectLinks(project.id, project.createdBy, Set((road.get.roadNumber, road.get.roadPartNumber)))
+      None
+    } catch {
+      case NonFatal(e) =>
+        logger.warn(e.getMessage)
+        Some(e.getMessage)
+    }
   }
 
   def revertSplit(projectId: Long, linkId: Long, userName: String): Option[String] = {

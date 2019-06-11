@@ -2236,7 +2236,7 @@ Left|      |Right
       val discontinuousGeom = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
       val geometry = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
       val lineString: String = OracleDatabase.createJGeometry(geometry)
-      val geometryQuery = s"ST_GeomFromText('LINESTRING(${lineString})', 3067)"
+      val geometryQuery = s"ST_GeomFromText('${lineString}', 3067)"
       sqlu"""UPDATE PROJECT_LINK Set GEOMETRY = #$geometryQuery Where PROJECT_ID = ${project.id} AND ROAD_PART_NUMBER = 2""".execute
       val errorsAtEnd = projectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks.map(pl => {
         if (pl.roadPartNumber == 2L)

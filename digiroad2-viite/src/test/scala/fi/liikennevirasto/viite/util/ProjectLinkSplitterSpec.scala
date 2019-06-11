@@ -456,7 +456,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
       val rap = Project(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       projectDAO.create(rap)
       val lineString: String = OracleDatabase.createJGeometry(Seq(Point(0.0, 0.0), Point(0.0, 45.3), Point(0.0, 123.5), Point(0.5, 140.0)))
-      val templateGeom = s"ST_GeomFromText('LINESTRING(${lineString})', 3067))"
+      val templateGeom = s"ST_GeomFromText('${lineString}', 3067))"
       sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY) VALUES (${Sequences.nextViitePrimaryKeySeqValue},1,1,$projectId,'""')""".execute
       sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, CREATED_BY, CREATED_DATE, STATUS, GEOMETRY,
             start_Measure, end_Measure, Link_id, side)
