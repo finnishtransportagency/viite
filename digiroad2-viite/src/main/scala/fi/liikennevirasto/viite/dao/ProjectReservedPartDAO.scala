@@ -238,11 +238,11 @@ class ProjectReservedPartDAO {
             AND pl.road_number = road_number AND pl.road_part_number = road_part_number
             AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
             AND END_ADDR_M = length_new
-            AND ROWNUM < 2) AS discontinuity_new,
+            LIMIT 1) AS discontinuity_new,
             (SELECT LINK_ID FROM PROJECT_LINK pl
             WHERE pl.project_id = projectid
             AND pl.road_number = road_number AND pl.road_part_number = road_part_number
-            AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) AND ROWNUM < 2) AS first_link
+            AND PL.STATUS != ${LinkStatus.Terminated.value} AND PL.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value}) LIMIT 1) AS first_link
             FROM
             (SELECT DISTINCT rp.id, pl.project_id AS projectid, rw.road_number AS road_number, rw.road_part_number AS road_part_number, MAX(pl.end_addr_m) AS length_new,
             MAX(pl.ely) AS ELY_NEW
@@ -271,14 +271,14 @@ class ProjectReservedPartDAO {
             AND ra.END_DATE IS NULL
             AND ra.VALID_TO IS NULL
             AND END_ADDR_M = gr.LENGTH
-            AND ROWNUM < 2) AS discontinuity,
+            LIMIT 1) AS discontinuity,
         (SELECT LINK_ID FROM PROJECT_LINK pl
           WHERE pl.PROJECT_ID = gr.PROJECT_ID
             AND pl.ROAD_NUMBER = gr.ROAD_NUMBER
             AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
             AND pl.STATUS != ${LinkStatus.Terminated.value}
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
-            AND ROWNUM < 2) AS first_link FROM
+            LIMIT 1) AS first_link FROM
           (SELECT rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER,
             (SELECT MAX(ra.end_addr_m) FROM roadway ra WHERE ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND ra.end_date IS NULL AND ra.valid_to IS NULL) as length,
             (SELECT MAX(ra.ely) FROM roadway ra WHERE ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND ra.end_date IS NULL AND ra.valid_to IS NULL) as ely
@@ -324,14 +324,14 @@ class ProjectReservedPartDAO {
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
             AND END_ADDR_M = (SELECT MAX(pl2.end_addr_m) FROM project_link pl2 where pl2.road_number = gr.road_number AND pl2.road_part_number = gr.road_part_number
             AND pl2.status != ${LinkStatus.Terminated.value} AND pl2.track IN (${Track.Combined.value}, ${Track.RightSide.value}))
-            AND ROWNUM < 2) AS discontinuity_new,
+            LIMIT 1) AS discontinuity_new,
         (SELECT LINK_ID FROM PROJECT_LINK pl
           WHERE pl.PROJECT_ID = gr.PROJECT_ID
             AND pl.ROAD_NUMBER = gr.ROAD_NUMBER
             AND pl.ROAD_PART_NUMBER = gr.ROAD_PART_NUMBER
             AND pl.STATUS != ${LinkStatus.Terminated.value}
             AND pl.TRACK IN (${Track.Combined.value}, ${Track.RightSide.value})
-            AND ROWNUM < 2) AS first_link FROM
+            LIMIT 1) AS first_link FROM
           (SELECT rp.ID, rp.PROJECT_ID, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER,
             MAX(pl.END_ADDR_M) AS length_new,
             MAX(pl.ELY) AS ely_new FROM PROJECT_RESERVED_ROAD_PART rp
