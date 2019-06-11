@@ -183,6 +183,7 @@ class NodeDAO extends BaseDAO {
       case _ =>""
     }
 
+    // TODO PostGIS conversion for getting the coordinates
     val query = s"""
     SELECT DISTINCT node.ID, node.NODE_NUMBER, coords.X, coords.Y, node.NAME, node."TYPE", node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
            node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M
