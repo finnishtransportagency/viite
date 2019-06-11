@@ -149,7 +149,6 @@ class LinearLocationDAO {
         } else {
           location.roadwayNumber
         }
-        val (p1, p2) = (location.geometry.head, location.geometry.last)
         ps.setLong(1, location.id)
         ps.setLong(2, roadwayNumber)
         ps.setLong(3, location.orderNumber.toLong)
@@ -157,7 +156,7 @@ class LinearLocationDAO {
         ps.setDouble(5, location.startMValue)
         ps.setDouble(6, location.endMValue)
         ps.setInt(7, location.sideCode.value)
-        ps.setObject(8, OracleDatabase.createRoadsJGeometry(Seq(p1, p2), dynamicSession.conn, location.endMValue))
+        ps.setString(8, OracleDatabase.createXYZMGeometry(Seq((location.geometry.head, location.startMValue), (location.geometry.last, location.endMValue))))
         ps.setString(9, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }

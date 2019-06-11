@@ -28,7 +28,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
 
   private def insertNodeStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)")
+      " (?, ?, ST_GeomFromText('POINT(? ? 0.0)', 3067), ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)")
 
   private def insertNodePointStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_ID, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
@@ -38,13 +38,14 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
   def insertNode(nodeStatement: PreparedStatement, conversionNode: ConversionNode): Unit ={
     nodeStatement.setLong(1, conversionNode.id)
     nodeStatement.setLong(2, conversionNode.nodeNumber)
-    nodeStatement.setObject(3, OracleDatabase.createRoadsJGeometry(Seq(conversionNode.coordinates), dynamicSession.conn, endMValue = 0))
-    nodeStatement.setString(4, conversionNode.name.getOrElse(""))
-    nodeStatement.setLong(5, conversionNode.nodeType)
-    nodeStatement.setString(6, datePrinter(conversionNode.startDate))
-    nodeStatement.setString(7, datePrinter(conversionNode.endDate))
-    nodeStatement.setString(8, datePrinter(conversionNode.validFrom))
-    nodeStatement.setString(9, conversionNode.createdBy)
+    nodeStatement.setDouble(3, conversionNode.coordinates.x)
+    nodeStatement.setDouble(4, conversionNode.coordinates.y)
+    nodeStatement.setString(5, conversionNode.name.getOrElse(""))
+    nodeStatement.setLong(6, conversionNode.nodeType)
+    nodeStatement.setString(7, datePrinter(conversionNode.startDate))
+    nodeStatement.setString(8, datePrinter(conversionNode.endDate))
+    nodeStatement.setString(9, datePrinter(conversionNode.validFrom))
+    nodeStatement.setString(10, conversionNode.createdBy)
     nodeStatement.addBatch()
   }
 
