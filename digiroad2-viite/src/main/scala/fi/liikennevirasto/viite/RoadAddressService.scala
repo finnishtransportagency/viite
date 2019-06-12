@@ -712,12 +712,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
            road_part_number = :roadway_changes.new_road_part_number and track = :roadway_changes.new_track) and addr_m >= :roadway_changes.old_start_addr_m
            and addr_m <= :roadway_changes.old_end_addr_m;
           */
-
-          val source = rwc.changeInfo.target
-          val target = rwc.changeInfo.target
+          val change = rwc.changeInfo
+          val source = change.source
+          val target = change.target
           val roadwayNumbers = roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber)
+          val roadwayPoints = roadwayNumbers.flatMap(rn=> roadwayPointDAO.fetchByRoadwayNumberAndAddresses(rn, source.startAddressM.get, source.endAddressM.get))
 
-          if(rwc.changeInfo.changeType == Transfer){
+          if(change.changeType == Transfer){
             /*
             Logic for Transfer cases
 
@@ -744,8 +745,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             WHERE id = roadway_point.id;
             */
 
-            val roadwayPoints = roadwayNumbers.flatMap(rn=> roadwayPointDAO.fetchByRoadwayNumberAndAddresses(rn, source.startAddressM.get, source.endAddressM.get))
-            if(!rwc.changeInfo.reversed){
+            if(!change.reversed){
               roadwayPoints.foreach{ rwp=>
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
                 roadwayPointDAO.update(rwp.id, newAddrM, username)
@@ -756,7 +756,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
                 roadwayPointDAO.update(rwp.id, newAddrM, username)
               }
             }
-          } else if (rwc.changeInfo.changeType == ReNumeration){
+          } else if (change.changeType == ReNumeration){
 
 
           } else {
