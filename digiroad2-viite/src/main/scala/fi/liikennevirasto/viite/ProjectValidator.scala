@@ -65,7 +65,7 @@ class ProjectValidator {
       if (roadPartLinks.exists(rpl => rpl.status == Numbering)) {
         throw new ProjectValidationException(ErrorTransferActionWithNumbering)
       }
-    } else if(LinkStatus.Numbering.value == linkStatus.value){
+    } else if (LinkStatus.Numbering.value == linkStatus.value) {
       val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(newRoadNumber, newRoadPart, currentProject.id)
       if (roadPartLinks.exists(rpl => rpl.status != Numbering)) {
         throw new ProjectValidationException(ErrorOtherActionWithNumbering)
@@ -75,7 +75,7 @@ class ProjectValidator {
 
   def checkFormationInOtherProject(currentProject: Project, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus): Unit = {
       val formedPartsOtherProjects = projectReservedPartDAO.fetchFormedRoadParts(currentProject.id, withProjectId = false)
-      if(formedPartsOtherProjects.nonEmpty && formedPartsOtherProjects.exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart))
+      if (formedPartsOtherProjects.nonEmpty && formedPartsOtherProjects.exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart))
         throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
   }
 
@@ -574,15 +574,28 @@ class ProjectValidator {
     }
 
     def checkMinMaxTrackRoadTypes(trackInterval: Seq[ProjectLink]): Option[ProjectLink] = {
-        val (left, right) = trackInterval.partition(_.track == Track.LeftSide)
-        val leftRoadTypes = left.sortBy(_.startAddrMValue).map(_.roadType.value).distinct.toSet
-        val rightRoadTypes = right.sortBy(_.startAddrMValue).map(_.roadType.value).distinct.toSet
-        if (!(leftRoadTypes sameElements rightRoadTypes)) {
-          if(left.nonEmpty)
-            Some(left.head)
-          else
-            Some(right.head)
-        } else None
+      val (left, right) = trackInterval.partition(_.track == Track.LeftSide)
+
+      val leftRoadTypes = left.sortBy(_.startAddrMValue).map(_.roadType.value).foldLeft(Seq.empty[Int]) { case (list, next) =>
+        if (list.nonEmpty && list.last == next)
+          list
+        else
+          list :+ next
+      }
+
+      val rightRoadTypes = right.sortBy(_.startAddrMValue).map(_.roadType.value).foldLeft(Seq.empty[Int]) { case (list, next) =>
+        if (list.nonEmpty && list.last == next)
+          list
+        else
+          list :+ next
+      }
+
+      if (!(leftRoadTypes sameElements rightRoadTypes)) {
+        if (left.nonEmpty)
+          Some(left.head)
+        else
+          Some(right.head)
+      } else None
     }
 
     def validateTrackTopology(trackInterval: Seq[ProjectLink]): Seq[ProjectLink] = {
