@@ -1,5 +1,5 @@
 (function (root) {
-  root.RoadLayer = function (map, roadCollection, selectedLinkProperty) {
+  root.RoadLayer = function (map, roadCollection, selectedLinkProperty, backend) {
 
     Layer.call(this, map);
     var me = this;
@@ -184,18 +184,20 @@
         var roadLink = featureAtPixel.roadLink;
         coordinate = map.getEventCoordinate(event.originalEvent);
         if (infoContent !== null) {
-          infoContent.innerHTML = '<p>' +
-            'Liittymä ID: ' + junctionData.id + '<br>' +
-            'Solmu ID: ' + junctionData.nodeId + '<br>' +
-            'Tienumero: ' + roadLink.roadNumber + '<br>' +
-            'Tieosanumero: ' + roadLink.roadPartNumber + '<br>' +
-            'addrM: ' + junctionPointData.addrM + '<br>' + '</p>'
+          infoContent.innerHTML =
+            'Tieosoite:&nbsp;' + roadLink.roadNumber + '/'+ roadLink.trackCode + '/' + roadLink.roadPartNumber + '/' + junctionPointData.addrM + '<br>' +
+            'Solmun nimi:&nbsp;' + displayNodeName(junction.Node) + '<br>'
           ;
         }
         overlay.setPosition(coordinate);
       }
 
     };
+
+    var displayNodeName = function (nodeId) {
+
+      return nodeName;
+    }
 
     //Listen pointerMove and get pixel for displaying roadAddress feature info
     me.eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
