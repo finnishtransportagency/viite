@@ -20,6 +20,8 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import org.joda.time.format.DateTimeFormat
 
+import scala.collection.GenIterable
+
 class ProjectValidator {
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -577,27 +579,25 @@ class ProjectValidator {
 
     def checkMinMaxTrackRoadTypes(trackInterval: Seq[ProjectLink]): Option[ProjectLink] = {
       val (left, right) = trackInterval.partition(_.track == Track.LeftSide)
+      val sortedLeft = left.sortBy(_.startAddrMValue)
+      val sortedRight = right.sortBy(_.startAddrMValue)
 
-      val leftRoadTypes = left.sortBy(_.startAddrMValue).map(_.roadType.value).foldLeft(Seq.empty[Int]) { case (list, next) =>
-        if (list.nonEmpty && list.last == next)
-          list
-        else
-          list :+ next
+      val leftIter = sortedLeft.iterator
+      val rightIter = sortedRight.iterator
+      while (leftIter.hasNext && rightIter.hasNext) {
+        val leftLink = leftIter.next
+        val rightLink = rightIter.next
+        if (leftLink.roadType != rightLink.roadType)
+          return Some(leftLink)
+      }
+      if (!leftIter.hasNext && !rightIter.hasNext) {
+        None
+      } else if (sortedLeft.size > sortedRight.size) {
+        Some(right.last)
+      } else {
+        Some(left.last)
       }
 
-      val rightRoadTypes = right.sortBy(_.startAddrMValue).map(_.roadType.value).foldLeft(Seq.empty[Int]) { case (list, next) =>
-        if (list.nonEmpty && list.last == next)
-          list
-        else
-          list :+ next
-      }
-
-      if (!(leftRoadTypes sameElements rightRoadTypes)) {
-        if (left.nonEmpty)
-          Some(left.head)
-        else
-          Some(right.head)
-      } else None
     }
 
     def validateTrackTopology(trackInterval: Seq[ProjectLink]): Seq[ProjectLink] = {
