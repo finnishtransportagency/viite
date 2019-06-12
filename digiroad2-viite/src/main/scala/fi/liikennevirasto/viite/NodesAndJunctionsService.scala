@@ -75,5 +75,12 @@ class NodesAndJunctionsService() {
     }
   }
 
+  def getNodeById(nodeId: Long): Option[Node] = {
+    withDynSession{
+      time(logger, "Fetch node by ID") {
+        nodeDAO.fetchById(nodeId)
+      }
+    }
+  }
 
 }
