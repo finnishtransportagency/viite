@@ -712,14 +712,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
            road_part_number = :roadway_changes.new_road_part_number and track = :roadway_changes.new_track) and addr_m >= :roadway_changes.old_start_addr_m
            and addr_m <= :roadway_changes.old_end_addr_m;
           */
-          val change = rwc.changeInfo
-          val source = change.source
-          val target = change.target
-          val roadwayNumbers = roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber)
-          val roadwayPoints = roadwayNumbers.flatMap(rn=> roadwayPointDAO.fetchByRoadwayNumberAndAddresses(rn, source.startAddressM.get, source.endAddressM.get))
 
-          if(change.changeType == Transfer){
-            /*
+          /*
             Logic for Transfer cases
 
             Go through all roadway_points rows
@@ -745,6 +739,40 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             WHERE id = roadway_point.id;
             */
 
+          /*Logic for ReNumeration cases
+
+          If (roadway_changes.reversed):
+
+              Get all roadway_points for this particular row:
+              Select * from roadway_point where roadway_number in (select roadway_number from roadway where road_number = :roadway_changes.new_road_number, road_part_number = :roadway_changes.new_road_part_number and track = :roadway_changes.new_track) and addr_m >= :roadway_changes.old_start_addr_m and and addr_m <= :roadway_changes.old_end_addr_m;
+
+            2. Update addr_m value:
+
+              new_addr_m = roadway_changes.max_end_addr - roadway_point.addr_m;
+
+            *TR: Lu_etaisyys := Lmaxlet - Lajrprivi.etaisyys;
+
+            SELECT MAX(let) INTO Lmaxlet  --käännettävän tieosan pituus
+
+            FROM ajorata
+
+            WHERE tie = Ltie AND     --Lrivi1.u_tie AND
+
+            osa = Losa AND
+
+            tila = 'E' AND  --TIEREK-121: K/U tilojen poisto
+
+            id_projekti = Lid_projekti;
+        */
+          val change = rwc.changeInfo
+          val source = change.source
+          val target = change.target
+          val roadwayNumbers = roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber)
+          val roadwayPoints = roadwayNumbers.flatMap(rn=> roadwayPointDAO.fetchByRoadwayNumberAndAddresses(rn, source.startAddressM.get, source.endAddressM.get))
+
+          if(change.changeType == Transfer){
+
+
             if(!change.reversed){
               roadwayPoints.foreach{ rwp=>
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
@@ -757,8 +785,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               }
             }
           } else if (change.changeType == ReNumeration){
-
-
+            if(change.reversed){
+              roadwayPoints.foreach{ rwp=>
+                val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
+                roadwayPointDAO.update(rwp.id, newAddrM, username)
+              }
+            }
           } else {
             //TODO IF NEED IN FUTURE remove filter from top and add roadwayChange Termination cases/expire roadwaypoint cases
           }
