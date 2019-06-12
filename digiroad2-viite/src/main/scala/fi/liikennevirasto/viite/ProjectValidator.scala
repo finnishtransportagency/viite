@@ -20,8 +20,6 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import org.joda.time.format.DateTimeFormat
 
-import scala.collection.GenIterable
-
 class ProjectValidator {
 
   val logger = LoggerFactory.getLogger(getClass)
