@@ -55,7 +55,7 @@
       return '<a id="' + index + '" class="node-link" href="#node/' + nodeWithAttributes.id + '" style="font-weight:bold;cursor:pointer;">' +
         nodeWithAttributes.roadNumber + '/' +
         nodeWithAttributes.roadPartNumber + '/' +
-        nodeWithAttributes.startAddrMValue + '</a>';
+        nodeWithAttributes.addrMValue + '</a>';
     };
 
     var nodesAndRoadAttributesHtmlList = function () {

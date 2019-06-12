@@ -40,7 +40,7 @@ class NodeDAOSpec extends FunSuite with Matchers {
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None)
 
-  val testRoadAttributes1 = RoadAttributes(roadNumber1, roadPartNumber1, testRoadway1.track.value, testRoadway1.startAddrMValue)
+  val testRoadAttributes1 = RoadAttributes(roadNumber1, roadPartNumber1, testRoadway1.track.value, 0)
 
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0)
@@ -90,6 +90,4 @@ class NodeDAOSpec extends FunSuite with Matchers {
       roadAttribute.roadNumber should be(roadNumber1)
     }
   }
-
-
 }
