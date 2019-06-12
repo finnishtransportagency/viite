@@ -2029,7 +2029,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
       roadwayDAO.create(roadwaysToInsert)
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
-      roadAddressService.updateRoadwayPoints(projectLinks.filter(_.roadwayNumber != NewIdValue), username = project.createdBy)
+      roadAddressService.updateRoadwayPoints(generatedRoadways.flatMap(_._3), project.id, username = project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
       nodesNJunctionsService.handleJunctionPointTemplates(generatedRoadways.flatMap(_._3))
       nodesNJunctionsService.handleNodePointTemplates(generatedRoadways.flatMap(_._3))
