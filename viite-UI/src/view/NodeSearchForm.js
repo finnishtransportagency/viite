@@ -54,19 +54,18 @@
     var roadAddressLink = function (index, nodeWithAttributes) {
       return '<a id="' + index + '" class="node-link" href="#node/' + nodeWithAttributes.id + '" style="font-weight:bold;cursor:pointer;">' +
         nodeWithAttributes.roadNumber + '/' +
-        nodeWithAttributes.track + '/' +
         nodeWithAttributes.roadPartNumber + '/' +
-        nodeWithAttributes.startAddrMValue + '</a>';
+        nodeWithAttributes.addrMValue + '</a>';
     };
 
     var nodesAndRoadAttributesHtmlList = function () {
-      var text = '<label class="control-label-small" style="text-transform:none;color:white;font-weight:bold">TIE / AJR / OSA / ET</label></br>';
+      var text = '<label class="control-label-small" style="text-transform:none;color:white;">TIE / OSA / ET</label></br>';
       var index = 0;
       var nodes = nodeCollection.getNodesWithAttributes();
       _.each(nodes, function (nodeWithAttributes) {
-        text += roadAddressLink(index++, nodeWithAttributes) + '</br>' +
-          addNodeAttributeLabel('Solmutyyppi: ') + addNodeAttributeLabel(nodeWithAttributes.type) + '</br>' +
-          addNodeAttributeLabel('Solmun nimi: ') + addNodeAttributeLabel(nodeWithAttributes.name) + '</br></br>';
+        text += roadAddressLink(index++, nodeWithAttributes) + '&nbsp;&nbsp;' + addNodeAttributeLabel(nodeWithAttributes.name) + '</br>' +
+          addNodeAttributeLabel('Solmutyyppi:&nbsp;') + addNodeAttributeLabel(nodeWithAttributes.type) + '</br>' +
+          addNodeAttributeLabel('Solmunumero:&nbsp;') + addNodeAttributeLabel(nodeWithAttributes.nodeNumber) + '</br></br>';
       });
       return text;
     };

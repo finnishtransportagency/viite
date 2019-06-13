@@ -384,10 +384,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     try {
       val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber, linkStatus, newLinks)
 
-      if (!project.isReserved(newRoadNumber, newRoadPartNumber) && !project.isFormed(newRoadNumber, newRoadPartNumber))
-        projectReservedPartDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
       if (GeometryUtils.isNonLinear(newLinks))
         throw new ProjectValidationException(ErrorGeometryContainsBranches)
+
+      if (!project.isReserved(newRoadNumber, newRoadPartNumber) && !project.isFormed(newRoadNumber, newRoadPartNumber))
+        projectReservedPartDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
       // Determine address value scheme (ramp, roundabout, all others)
       val createLinks =
         if (newLinks.headOption.exists(isRamp)) {
@@ -2021,7 +2022,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
       roadwayDAO.create(roadwaysToInsert)
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
-      roadAddressService.handleCalibrationPoints(linearLocationsToInsert, createdBy = project.createdBy)
+      roadAddressService.updateRoadwayPoints(projectLinks.filter(_.roadwayNumber != NewIdValue), username = project.createdBy)
+      roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
       handleNewRoadNames(roadwayChanges, project)
       handleTransferAndNumbering(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
