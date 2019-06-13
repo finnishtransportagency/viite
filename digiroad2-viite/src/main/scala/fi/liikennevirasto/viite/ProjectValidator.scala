@@ -51,8 +51,10 @@ class ProjectValidator {
   def checkReservedExistence(currentProject: Project, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): Unit = {
     if (LinkStatus.New.value == linkStatus.value) {
       if (roadAddressService.getRoadAddressesFiltered(newRoadNumber, newRoadPart).nonEmpty) {
-        if (!projectReservedPartDAO.fetchReservedRoadParts(currentProject.id).exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart)) {
+        if (projectReservedPartDAO.fetchProjectReservedPart(newRoadNumber, newRoadPart, currentProject.id, withProjectId = Some(false)).nonEmpty) {
           throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
+        } else if (!projectReservedPartDAO.fetchReservedRoadParts(currentProject.id).exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart)) {
+          throw new ProjectValidationException(RoadNotAvailableMessage)
         }
       } else {
         val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(newRoadNumber, newRoadPart, currentProject.id)
@@ -60,12 +62,12 @@ class ProjectValidator {
           throw new ProjectValidationException(ErrorNewActionWithNumbering)
         }
       }
-    } else if (LinkStatus.Transfer.value == linkStatus.value){
+    } else if (LinkStatus.Transfer.value == linkStatus.value) {
       val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(newRoadNumber, newRoadPart, currentProject.id)
       if (roadPartLinks.exists(rpl => rpl.status == Numbering)) {
         throw new ProjectValidationException(ErrorTransferActionWithNumbering)
       }
-    } else if(LinkStatus.Numbering.value == linkStatus.value){
+    } else if (LinkStatus.Numbering.value == linkStatus.value) {
       val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(newRoadNumber, newRoadPart, currentProject.id)
       if (roadPartLinks.exists(rpl => rpl.status != Numbering)) {
         throw new ProjectValidationException(ErrorOtherActionWithNumbering)
@@ -75,7 +77,7 @@ class ProjectValidator {
 
   def checkFormationInOtherProject(currentProject: Project, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus): Unit = {
       val formedPartsOtherProjects = projectReservedPartDAO.fetchFormedRoadParts(currentProject.id, withProjectId = false)
-      if(formedPartsOtherProjects.nonEmpty && formedPartsOtherProjects.exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart))
+      if (formedPartsOtherProjects.nonEmpty && formedPartsOtherProjects.exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPart))
         throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
   }
 
@@ -140,7 +142,7 @@ class ProjectValidator {
       IncompatibleDiscontinuityCodes, EndOfRoadNotOnLastPart, ElyCodeChangeDetected, DiscontinuityOnRamp, DiscontinuityInsideRoadPart,
       ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
       MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
-      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved)
+      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DiscontinuityInsideRoadPart, DistinctRoadTypesBetweenTracks)
 
     // Viite-942
     case object MissingEndOfRoad extends ValidationError {
@@ -395,6 +397,14 @@ class ProjectValidator {
       def notification = true
     }
 
+    case object DistinctRoadTypesBetweenTracks extends ValidationError {
+      def value = 29
+
+      def message: String = DistinctRoadTypesBetweenTracksMessage
+
+      def notification = true
+    }
+
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
     }
@@ -523,7 +533,7 @@ class ProjectValidator {
     val invalidUnchangedLinks: Seq[ProjectLink] = projectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
       val (unchanged, others) = g._2.partition(_.status == UnChanged)
       //foreach number and part and foreach UnChanged found in that group, we will check if there is some link in some other different action, that is connected by geometry and addressM values to the UnChanged link starting point
-      unchanged.filter(u => others.exists(o => u.startAddrMValue >= o.startAddrMValue))
+      unchanged.filter(u => others.filterNot(_.status == LinkStatus.NotHandled).exists(o => u.startAddrMValue >= o.startAddrMValue))
     }.toSeq
 
     if (invalidUnchangedLinks.nonEmpty) {
@@ -533,25 +543,24 @@ class ProjectValidator {
     }
   }
 
+  def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
+    previous.track == currentLink.track && previous.endAddrMValue == currentLink.startAddrMValue
+  }
+
+  def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
+    links.foldLeft(Seq.empty[ProjectLink]) { (linkSameTrack, current) => {
+      if (current.track == track && (linkSameTrack.isEmpty || isSameTrack(linkSameTrack.last, current))) {
+        linkSameTrack :+ current
+      } else {
+        linkSameTrack
+      }
+    }
+    }.sortBy(_.startAddrMValue)
+  }
+
   def checkTrackCodePairing(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     val notCombinedLinks = projectLinks.filterNot(_.track == Track.Combined)
-
-    def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
-      previous.track == currentLink.track && previous.endAddrMValue == currentLink.startAddrMValue
-    }
-
-    def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
-      links.foldLeft(Seq.empty[ProjectLink]) { (linkSameTrack, current) => {
-        if (current.track == track && (linkSameTrack.isEmpty || isSameTrack(linkSameTrack.last, current))) {
-          linkSameTrack :+ current
-        } else {
-          linkSameTrack
-        }
-      }
-      }.sortBy(_.startAddrMValue)
-    }
-
     def checkMinMaxTrack(trackInterval: Seq[ProjectLink]): Option[ProjectLink] = {
       if (trackInterval.head.track != Combined) {
         val minTrackLink = trackInterval.minBy(_.startAddrMValue)
@@ -563,6 +572,31 @@ class ProjectValidator {
         else if (!notCombinedLinksInRoadPart.exists(l => l.endAddrMValue == maxTrackLink.endAddrMValue && l.track != maxTrackLink.track)) {
           Some(maxTrackLink)
         } else None
+      } else None
+    }
+
+    def checkMinMaxTrackRoadTypes(trackInterval: Seq[ProjectLink]): Option[ProjectLink] = {
+      val (left, right) = trackInterval.partition(_.track == Track.LeftSide)
+
+      val leftRoadTypes = left.sortBy(_.startAddrMValue).map(_.roadType.value).foldLeft(Seq.empty[Int]) { case (list, next) =>
+        if (list.nonEmpty && list.last == next)
+          list
+        else
+          list :+ next
+      }
+
+      val rightRoadTypes = right.sortBy(_.startAddrMValue).map(_.roadType.value).foldLeft(Seq.empty[Int]) { case (list, next) =>
+        if (list.nonEmpty && list.last == next)
+          list
+        else
+          list :+ next
+      }
+
+      if (!(leftRoadTypes sameElements rightRoadTypes)) {
+        if (left.nonEmpty)
+          Some(left.head)
+        else
+          Some(right.head)
       } else None
     }
 
@@ -582,6 +616,19 @@ class ProjectValidator {
       } else Seq.empty[ProjectLink]
     }
 
+    def validateTrackRoadTypes(groupInterval: Seq[(Long, Seq[ProjectLink])]): Seq[ProjectLink] = {
+      groupInterval.groupBy(_._1).flatMap{ interval =>
+        val leftrRightTracks = interval._2.flatMap(_._2)
+        val validTrackInterval = leftrRightTracks.filterNot(r => r.status == Terminated || r.track == Track.Combined)
+        if (validTrackInterval.nonEmpty) {
+          checkMinMaxTrackRoadTypes(validTrackInterval) match {
+            case Some(link) => Seq(link)
+            case _ => Seq.empty[ProjectLink]
+          }
+        } else Seq.empty[ProjectLink]
+      }.toSeq
+    }
+
     def recursiveCheckTrackChange(links: Seq[ProjectLink], errorLinks: Seq[ProjectLink] = Seq()): Option[ValidationErrorDetails] = {
       if (links.isEmpty) {
         error(project.id, ValidationErrorList.InsufficientTrackCoverage)(errorLinks)
@@ -593,12 +640,35 @@ class ProjectValidator {
       }
     }
 
+    def getTwoTrackInterval(links: Seq[ProjectLink], interval: Seq[(Long, Seq[ProjectLink])]): Seq[(Long, Seq[ProjectLink])] = {
+      if (links.isEmpty) {
+        interval
+      } else {
+        val trackToCheck = links.head.track
+        val trackInterval = getTrackInterval(links.sortBy(o => (o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)), trackToCheck)
+        val headerAddr = trackInterval.minBy(_.startAddrMValue).startAddrMValue
+        getTwoTrackInterval(links.filterNot(l => trackInterval.exists(lt => lt.id == l.id)), interval ++ Seq(headerAddr -> trackInterval.filterNot(_.track == Track.Combined)))
+      }
+    }
+
+    def checkTrackRoadType(links: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
+      val trackIntervals = getTwoTrackInterval(links, Seq())
+      val errorLinks = validateTrackRoadTypes(trackIntervals)
+      error(project.id, ValidationErrorList.DistinctRoadTypesBetweenTracks)(errorLinks)
+    }
+
     val groupedLinks = notCombinedLinks.filterNot(_.status == LinkStatus.Terminated).groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
     groupedLinks.map(roadPart => {
-      recursiveCheckTrackChange(roadPart._2) match {
+      val trackCoverageErrors = recursiveCheckTrackChange(roadPart._2) match {
         case Some(errors) => Seq(errors)
         case _ => Seq()
       }
+
+      val RoadTypePairingErrors = checkTrackRoadType(roadPart._2) match {
+        case Some(errors) => Seq(errors)
+        case _ => Seq()
+      }
+      trackCoverageErrors ++ RoadTypePairingErrors
     }).headOption.getOrElse(Seq())
   }
 
