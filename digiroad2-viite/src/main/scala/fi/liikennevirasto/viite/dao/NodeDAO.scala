@@ -144,7 +144,7 @@ class NodeDAO extends BaseDAO {
     }
   }
 
-  private def queryNodeList(query: String): List[Node] = {
+  private def queryList(query: String): List[Node] = {
     Q.queryNA[Node](query).list.groupBy(_.id).map {
       case (_, list) =>
         list.head
@@ -268,7 +268,7 @@ class NodeDAO extends BaseDAO {
          WHERE $boundingBoxFilter
          AND END_DATE IS NULL AND VALID_TO IS NULL
        """
-    queryNodeList(query)
+    queryList(query)
   }
 
   /**
@@ -286,6 +286,24 @@ class NodeDAO extends BaseDAO {
       0
     else
       Q.updateNA(query).first
+  }
+
+  def fetchEmptyNodes(ids: Iterable[Long]): Seq[Node] = {
+    if (ids.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+        SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+        FROM NODE N
+        WHERE END_DATE IS NULL AND VALID_TO IS NULL AND ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
+          SELECT NULL FROM JUNCTION J WHERE N.id = J.NODE_ID AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
+        ) AND NOT EXISTS (
+          SELECT NULL FROM NODE_POINT NP WHERE N.id = NP.NODE_ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL
+        )
+      """
+      queryList(query)
+    }
   }
 
 }
