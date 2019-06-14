@@ -114,15 +114,63 @@
         var nodeData = featureAtPixel.nodeInfo;
         coordinate = map.getEventCoordinate(event.originalEvent);
         if (infoContent !== null) {
-          infoContent.innerHTML = '<p>' +
-            'ID: ' + nodeData.id + '<br>' +
-            'Solmunumero: ' + nodeData.nodeNumber + '<br>' +
-            'Nimi: ' + nodeData.nodeName + '<br>' + '</p>'
+          infoContent.innerHTML =
+            'Nimi:&nbsp;' + nodeData.nodeName + '<br>' +
+            'Solmutyyppi:&nbsp;' + displayNodeType(nodeData.type) + '<br>'
           ;
         }
         overlay.setPosition(coordinate);
       }
 
+    };
+
+    var displayNodeType = function (nodeTypeCode) {
+      var nodeType;
+      switch (nodeTypeCode) {
+        case LinkValues.NodeType.NormalIntersection.value:
+          nodeType = LinkValues.NodeType.NormalIntersection.description;
+          break;
+        case LinkValues.NodeType.Roundabout.value:
+          nodeType = LinkValues.NodeType.Roundabout.description;
+          break;
+        case LinkValues.NodeType.YIntersection.value:
+          nodeType = LinkValues.NodeType.YIntersection.description;
+          break;
+        case LinkValues.NodeType.Interchange.value:
+          nodeType = LinkValues.NodeType.Interchange.description;
+          break;
+        case LinkValues.NodeType.RoadBoundary.value:
+          nodeType = LinkValues.NodeType.RoadBoundary.description;
+          break;
+        case LinkValues.NodeType.MultitrackIntersection.value:
+          nodeType = LinkValues.NodeType.MultitrackIntersection.description;
+          break;
+        case LinkValues.NodeType.DropIntersection.value:
+          nodeType = LinkValues.NodeType.DropIntersection.description;
+          break;
+        case LinkValues.NodeType.AccessRoad.value:
+          nodeType = LinkValues.NodeType.AccessRoad.description;
+          break;
+        case LinkValues.NodeType.EndOfRoad.value:
+          nodeType = LinkValues.NodeType.EndOfRoad.description;
+          break;
+        case LinkValues.NodeType.Bridge.value:
+          nodeType = LinkValues.NodeType.Bridge.description;
+          break;
+        case LinkValues.NodeType.MaintenanceOpening.value:
+          nodeType = LinkValues.NodeType.MaintenanceOpening.description;
+          break;
+        case LinkValues.NodeType.PrivateRoad.value:
+          nodeType = LinkValues.NodeType.PrivateRoad.description;
+          break;
+        case LinkValues.NodeType.StaggeredIntersection.value:
+          nodeType = LinkValues.NodeType.StaggeredIntersection.description;
+          break;
+        case LinkValues.NodeType.UnkownNodeType.value:
+          nodeType = LinkValues.NodeType.UnkownNodeType.description;
+          break;
+      }
+      return nodeType;
     };
 
     var displayJunctionInfo = function (event, pixel) {

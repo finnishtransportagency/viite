@@ -210,10 +210,12 @@
       var showLayer = function () {
         me.start();
         me.layerStarted(me.eventListener);
+        $('#projectListButton').hide();
       };
 
       var hideLayer = function () {
         me.clearLayers(layers);
+        $('#projectListButton').show();
       };
 
       me.toggleLayersVisibility(layers, true);
