@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
@@ -58,7 +57,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val nodePoints = nodePointDAO.fetchNodePointsByNodeId(nodes.map(_.id))
         val junctions = junctionDAO.fetchJunctionByNodeIds(nodes.map(_.id))
         val junctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(junctions.map(_.id))
-        nodes.map {
+        val nodesAndJunctions = nodes.map {
           node =>
             (Option(node),
               (
@@ -71,7 +70,19 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                 }.toMap
               )
             )
-        }.toMap
+        } ++ Seq((None, getTemplatesByBoundingBox(boundingRectangle)))
+        nodesAndJunctions.toMap
+      }
+    }
+  }
+
+  def getTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]) = {
+    withDynSession {
+      time(logger, "Fetch NodePoint and Junction + JunctionPoint templates") {
+        val junctionPoints = junctionPointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+        val junctions = junctionDAO.fetchByIds(junctionPoints.map(_.junctionId))
+        val nodePoints = nodePointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+        (nodePoints, junctions.map {junction => (junction, junctionPoints.filter(_.junctionId == junction.id))}.toMap)
       }
     }
   }
@@ -331,6 +342,36 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         junctionPointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
       }
     }
+  }
+
+  def removeObsoleteJunctions(projectLinks: Seq[ProjectLink], username: String = "-"): Unit = {
+    val endDate = projectLinks.head.endDate
+    val terminatedLinks = projectLinks.filter(pl => pl.endDate.isDefined)
+    val terminatedRoadwayNumbers = terminatedLinks.map(_.roadwayNumber).distinct
+    val currentRoadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(terminatedRoadwayNumbers)
+    val obsoleteJunctionPoints = junctionPointDAO.fetchByRoadwayPointIds(currentRoadwayPoints.map(_.id))
+
+    // Expire current junction point rows
+    junctionPointDAO.expireById(obsoleteJunctionPoints.map(_.id))
+
+    // Remove junctions without junction points
+    val obsoleteJunctions = junctionDAO.fetchWithoutJunctionPointsById(obsoleteJunctionPoints.map(_.junctionId).distinct)
+    junctionDAO.expireById(obsoleteJunctions.map(_.id))
+
+    // Handle obsolete junction points of valid and obsolete junctions separately
+    val (obsoleteJunctionPointsOfValidJunctions, obsoleteJunctionPointsOfObsoleteJunctions) = obsoleteJunctionPoints.partition(
+      jp => obsoleteJunctions.filter(j => j.id == jp.junctionId).isEmpty)
+
+    // Create junction rows with end date and junction point rows with end date and new junction id
+    obsoleteJunctions.foreach(j => {
+      val newJunctionId = junctionDAO.create(Seq(j.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
+      junctionPointDAO.create(obsoleteJunctionPointsOfObsoleteJunctions.map(_.copy(id = NewIdValue, endDate = endDate,
+        junctionId = newJunctionId, createdBy = Some(username))))
+    })
+
+    // Create junction point rows of the valid junctions with end date
+    junctionPointDAO.create(obsoleteJunctionPointsOfValidJunctions.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
+
   }
 
 }
