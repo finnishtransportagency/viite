@@ -440,7 +440,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
-    withDynTransaction {
+    withDynSession {
       val roadwayAddresses = roadwayDAO.fetchAllByDateRange(sinceDate, untilDate)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
 
