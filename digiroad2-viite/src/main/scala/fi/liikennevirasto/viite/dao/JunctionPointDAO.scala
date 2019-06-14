@@ -44,10 +44,10 @@ class JunctionPointDAO extends BaseDAO {
   }
 
   def fetchJunctionPointsByJunctionIds(junctionIds: Seq[Long]): Seq[JunctionPoint] = {
-    if(junctionIds.isEmpty){
+    if (junctionIds.isEmpty) {
       Seq()
     }
-    else{
+    else {
       val query =
         s"""
        SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
@@ -70,6 +70,21 @@ class JunctionPointDAO extends BaseDAO {
        RP.ROADWAY_NUMBER = $roadwayNumber and RP.ADDR_M = $addrM and JP.before_after = ${beforeAfter.value}
      """
       queryList(query).headOption
+  }
+
+  def fetchByRoadwayPointIds(roadwayPointIds: Seq[Long]): Seq[JunctionPoint] = {
+    if (roadwayPointIds.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+       SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
+       RP.ROADWAY_NUMBER, RP.ADDR_M FROM JUNCTION_POINT JP
+       JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+       where JP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")})
+     """
+      queryList(query)
+    }
   }
 
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionPoint] = {
@@ -123,6 +138,23 @@ class JunctionPointDAO extends BaseDAO {
     ps.executeBatch()
     ps.close()
     createJunctionPoints.map(_.id).toSeq
+  }
+
+  /**
+    * Expires junction points (set their valid_to to the current system date).
+    *
+    * @param ids : Iterable[Long] - The ids of the junction points to expire.
+    * @return
+    */
+  def expireById(ids: Iterable[Long]): Int = {
+    val query =
+      s"""
+        Update JUNCTION_POINT Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(", ")})
+      """
+    if (ids.isEmpty)
+      0
+    else
+      Q.updateNA(query).first
   }
 
 }

@@ -3,7 +3,6 @@ package fi.liikennevirasto.viite.dao
 import java.sql.Date
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -51,10 +50,10 @@ class JunctionDAO extends BaseDAO {
   }
 
   def fetchJunctionByNodeIds(nodeIds: Seq[Long]): Seq[Junction] = {
-    if(nodeIds.isEmpty) {
+    if (nodeIds.isEmpty) {
       Seq()
     }
-    else{
+    else {
       val query =
         s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
@@ -73,26 +72,45 @@ class JunctionDAO extends BaseDAO {
       """.as[Long].firstOption
   }
 
-  def fetchByIds(ids: Seq[Long]): Seq[Junction] = {
-    if (ids.isEmpty)
-      List()
-    else {
-    val query =
-      s"""
+  def fetchByIds(ids: Iterable[Long]): Seq[Junction] = {
+    if (ids.isEmpty) {
+      Seq()
+    } else {
+      if (ids.isEmpty)
+        List()
+      else {
+        val query =
+        s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       FROM JUNCTION
       WHERE ID IN (${ids.mkString(", ")})
       """
-    queryList(query)
+        queryList(query)
+      }
     }
   }
 
+  def fetchWithoutJunctionPointsById(ids: Iterable[Long]): Seq[Junction] = {
+    if (ids.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+      SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      FROM JUNCTION
+      WHERE ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
+        SELECT NULL FROM JUNCTION_POINT JP WHERE J.id = JP.JUNCTION_ID AND VALID_TO IS NULL AND END_DATE IS NULL
+      )
+      """
+      queryList(query)
+    }
+  }
 
   def create(junctions: Iterable[Junction], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
-      """insert into JUNCTION (ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, CREATED_BY, CREATED_TIME, VALID_TO, VALID_FROM)
-      values (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))""".stripMargin)
+      """insert into JUNCTION (ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, CREATED_BY)
+      values (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""".stripMargin)
 
     // Set ids for the junctions without one
     val (ready, idLess) = junctions.partition(_.id != NewIdValue)
@@ -110,24 +128,39 @@ class JunctionDAO extends BaseDAO {
         }
         ps.setLong(1, junction.id)
         ps.setLong(2, junctionNumber)
-        if (junction.nodeId.isEmpty)
-          ps.setString(3, null)
-        else
+        if (junction.nodeId.isDefined) {
           ps.setLong(3, junction.nodeId.get)
-        ps.setDate(4, new Date(junction.startDate.getMillis))
+        } else {
+          ps.setNull(3, java.sql.Types.INTEGER)
+        }
+        ps.setString(4, dateFormatter.print(junction.startDate))
         ps.setString(5, junction.endDate match {
           case Some(date) => dateFormatter.print(date)
           case None => ""
         })
-        ps.setString(6, junction.createdBy.get)
-        ps.setDate(7, new Date(new java.util.Date().getTime))
-        ps.setString(8, "")
-        ps.setDate(9, new Date(new java.util.Date().getTime))
+        ps.setString(6, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
     ps.close()
     createJunctions.map(_.id).toSeq
+  }
+
+  /**
+    * Expires junctions (set their valid_to to the current system date).
+    *
+    * @param ids : Iterable[Long] - The ids of the junctions to expire.
+    * @return
+    */
+  def expireById(ids: Iterable[Long]): Int = {
+    val query =
+      s"""
+        Update JUNCTION Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(", ")})
+      """
+    if (ids.isEmpty)
+      0
+    else
+      Q.updateNA(query).first
   }
 
 }

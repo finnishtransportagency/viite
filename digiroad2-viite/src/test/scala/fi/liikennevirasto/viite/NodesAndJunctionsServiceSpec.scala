@@ -31,6 +31,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val nodePointDAO = new NodePointDAO
   val junctionDAO = new JunctionDAO
   val junctionPointDAO = new JunctionPointDAO
+  val linearLocationDAO = new LinearLocationDAO
+
   val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO) {
     override def withDynSession[T](f: => T): T = f
 
@@ -48,6 +50,15 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0)
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
+  val testJunction1 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-01"), None,
+    DateTime.parse("2019-01-01"), None, None, None)
+
+  val testJunctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1,
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10)
+
+  val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l,
+    (None, None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
 
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
@@ -327,6 +338,64 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       linkJunctionPoints.isDefined should be (true)
       linkJunctionPoints.head.beforeAfter should be (dao.BeforeAfter.Before)
       linkJunctionPoints.head.roadwayNumber should be (link1.roadwayNumber)
+    }
+  }
+
+  test("Test getTemplatesByBoundingBox When no matching templates Then return nothing") {
+    runWithRollback {
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber)))
+      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
+      val roadwayPointId = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
+      nodePointDAO.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId)))
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
+
+      val templates = nodesAndJunctionsService.getTemplatesByBoundingBox(BoundingRectangle(Point(96, 96), Point(98, 98)))
+      templates._1.size should be(0)
+      templates._2.size should be(0)
+    }
+  }
+
+  test("Test getTemplatesByBoundingBox When matching templates Then return them") {
+    runWithRollback {
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber)))
+      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
+      val roadwayPointId = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
+      nodePointDAO.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId)))
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
+
+      val templates = nodesAndJunctionsService.getTemplatesByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
+      templates._1.size should be(1)
+      templates._2.size should be(1)
+      templates._2.head._2.size should be(1)
+      templates._1.head.roadwayNumber should be(roadwayNumber)
+      templates._2.head._1.id should be(junctionId)
+      templates._2.head._1.nodeId should be(None)
+      templates._2.head._2.head.junctionId should be(junctionId)
+    }
+  }
+
+  test("Test getNodesWithJunctionByBoundingBox When matching templates Then return them") {
+    runWithRollback {
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber)))
+      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
+      val roadwayPointId = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
+      nodePointDAO.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId)))
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
+
+      val nodes = nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
+      nodes(None)._1.size should be(1)
+      nodes(None)._2.size should be(1)
+      nodes(None)._2.head._2.size should be(1)
+      nodes(None)._1.head.roadwayNumber should be(roadwayNumber)
+      nodes(None)._2.head._1.id should be(junctionId)
+      nodes(None)._2.head._1.nodeId should be(None)
+      nodes(None)._2.head._2.head.junctionId should be(junctionId)
     }
   }
 
