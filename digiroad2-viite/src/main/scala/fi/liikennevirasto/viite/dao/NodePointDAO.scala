@@ -85,6 +85,19 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
+  def fetchByRoadwayPointIds(roadwayPointIds: Seq[Long]): Seq[NodePoint] = {
+    if (roadwayPointIds.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+       $selectFromNodePoint
+       where NP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")})
+     """
+      queryList(query)
+    }
+  }
+
   def fetchNodePoint(roadwayNumber: Long): Option[NodePoint] = {
       val query =
         s"""

@@ -344,23 +344,34 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def removeObsoleteJunctions(projectLinks: Seq[ProjectLink], username: String = "-"): Unit = {
+  def removeObsoleteNodesAndJunctions(projectLinks: Seq[ProjectLink], username: String = "-"): Unit = {
     val endDate = projectLinks.head.endDate
     val terminatedLinks = projectLinks.filter(pl => pl.endDate.isDefined)
     val terminatedRoadwayNumbers = terminatedLinks.map(_.roadwayNumber).distinct
-    val currentRoadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(terminatedRoadwayNumbers)
-    val obsoleteJunctionPoints = junctionPointDAO.fetchByRoadwayPointIds(currentRoadwayPoints.map(_.id))
+    val obsoleteRoadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(terminatedRoadwayNumbers)
+    val obsoleteNodePoints = nodePointDAO.fetchByRoadwayPointIds(obsoleteRoadwayPoints.map(_.id))
+    val obsoleteJunctionPoints = junctionPointDAO.fetchByRoadwayPointIds(obsoleteRoadwayPoints.map(_.id))
 
-    // Expire current junction point rows
+    // Expire current node and junction point rows
+    nodePointDAO.expireById(obsoleteNodePoints.map(_.id))
     junctionPointDAO.expireById(obsoleteJunctionPoints.map(_.id))
 
     // Remove junctions without junction points
     val obsoleteJunctions = junctionDAO.fetchWithoutJunctionPointsById(obsoleteJunctionPoints.map(_.junctionId).distinct)
     junctionDAO.expireById(obsoleteJunctions.map(_.id))
 
+    // Remove nodes without junctions or node points
+    val obsoleteNodes = nodeDAO.fetchEmptyNodes((obsoleteJunctions.filter(j => j.nodeId.isDefined).map(_.nodeId.get)
+      ++ obsoleteNodePoints.filter(np => np.nodeId.isDefined).map(_.nodeId.get)).distinct)
+    nodeDAO.expireById(obsoleteNodes.map(_.id))
+
     // Handle obsolete junction points of valid and obsolete junctions separately
     val (obsoleteJunctionPointsOfValidJunctions, obsoleteJunctionPointsOfObsoleteJunctions) = obsoleteJunctionPoints.partition(
       jp => obsoleteJunctions.filter(j => j.id == jp.junctionId).isEmpty)
+
+    // Handle obsolete node points of valid and obsolete nodes separately
+    val (obsoleteNodePointsOfValidNodes, obsoleteNodePointsOfObsoleteNodes) = obsoleteNodePoints.partition(
+      np => obsoleteNodes.filter(j => j.id == np.nodeId).isEmpty)
 
     // Create junction rows with end date and junction point rows with end date and new junction id
     obsoleteJunctions.foreach(j => {
@@ -369,8 +380,29 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         junctionId = newJunctionId, createdBy = Some(username))))
     })
 
+    // Create node rows with end date and node point rows with end date and new node id
+    obsoleteNodes.foreach(n => {
+      val newNodeId = nodeDAO.create(Seq(n.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
+      nodePointDAO.create(obsoleteNodePointsOfObsoleteNodes.map(_.copy(id = NewIdValue, endDate = endDate,
+        nodeId = Some(newNodeId), createdBy = Some(username))))
+    })
+
     // Create junction point rows of the valid junctions with end date
     junctionPointDAO.create(obsoleteJunctionPointsOfValidJunctions.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
+
+    // Create node point rows of the valid nodes with end date
+    nodePointDAO.create(obsoleteNodePointsOfValidNodes.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
+
+    // TODO Handle obsolete templates
+
+    // TODO Handle these rules regarding road numbers:
+    /*
+    The node point is expired if it no longer has justification for the current network, that is, it is no longer a point of change of the road part,
+    the point of change of the road type and will no longer be linked to the junctions of the main roads (less than 20,000 road numbers and 40000-70000 road roads).
+
+    The node is expired if no node points or junctions are connected to it. If, after the changes, the node is joined only with ramps,
+    etc. (road number between 20000-40000), those junctions will become junction templates. The user must join junction templates to another existing node.
+     */
 
   }
 

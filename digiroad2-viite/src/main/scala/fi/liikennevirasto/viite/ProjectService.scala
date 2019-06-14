@@ -91,7 +91,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val roadwayChangesDAO = new RoadwayChangesDAO
   val projectValidator = new ProjectValidator
-  val nodesNJunctionsService = new NodesAndJunctionsService(roadwayDAO, roadwayPointDAO, linearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO)
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
   val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, projectLinkDAO)
@@ -2030,11 +2029,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
       roadwayDAO.create(roadwaysToInsert)
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
-      nodesAndJunctionsService.removeObsoleteJunctions(projectLinks, project.createdBy)
+      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(projectLinks, project.createdBy)
       roadAddressService.updateRoadwayPoints(projectLinks.filter(_.roadwayNumber != NewIdValue), username = project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
-      nodesNJunctionsService.handleJunctionPointTemplates(generatedRoadways.flatMap(_._3))
-      nodesNJunctionsService.handleNodePointTemplates(generatedRoadways.flatMap(_._3))
+      nodesAndJunctionsService.handleJunctionPointTemplates(generatedRoadways.flatMap(_._3))
+      nodesAndJunctionsService.handleNodePointTemplates(generatedRoadways.flatMap(_._3))
       handleNewRoadNames(roadwayChanges, project)
       handleTransferAndNumbering(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
