@@ -84,6 +84,22 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
+  def fetchWithoutJunctionPointsById(ids: Iterable[Long]): Seq[Junction] = {
+    if (ids.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+      SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      FROM JUNCTION
+      WHERE ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
+        SELECT NULL FROM JUNCTION_POINT JP WHERE J.id = JP.JUNCTION_ID AND VALID_TO IS NULL AND END_DATE IS NULL
+      )
+      """
+      queryList(query)
+    }
+  }
+
   def create(junctions: Iterable[Junction], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
@@ -127,10 +143,10 @@ class JunctionDAO extends BaseDAO {
   /**
     * Expires junctions (set their valid_to to the current system date).
     *
-    * @param ids : Seq[Long] - The ids of the junctions to expire.
+    * @param ids : Iterable[Long] - The ids of the junctions to expire.
     * @return
     */
-  def expireById(ids: Set[Long]): Int = {
+  def expireById(ids: Iterable[Long]): Int = {
     val query =
       s"""
         Update JUNCTION Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(", ")})

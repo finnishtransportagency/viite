@@ -131,10 +131,10 @@ class JunctionPointDAO extends BaseDAO {
   /**
     * Expires junction points (set their valid_to to the current system date).
     *
-    * @param ids : Seq[Long] - The ids of the junction points to expire.
+    * @param ids : Iterable[Long] - The ids of the junction points to expire.
     * @return
     */
-  def expireById(ids: Set[Long]): Int = {
+  def expireById(ids: Iterable[Long]): Int = {
     val query =
       s"""
         Update JUNCTION_POINT Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(", ")})
