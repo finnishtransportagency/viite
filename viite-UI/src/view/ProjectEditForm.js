@@ -194,10 +194,8 @@
       $('#roadTypeDropdown').val(selectedProjectLink[0].roadTypeId);
     };
 
-    var editDropDown = function (roadModified) {
-      if (roadModified) {
-        $("#dropDown_0").children("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").remove();
-      }
+    var removeNumberingFromDropdown = function () {
+      $("#dropDown_0").children("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").remove();
     };
 
     var fillDistanceValues = function (selectedLinks) {
@@ -254,16 +252,7 @@
         formCommon.clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink, currentProject.project.id);
-        checkInputs('.project-');
-        changeDropDownValue(selectedProjectLink[0].status);
-        editDropDown(_.filter(projectCollection.getFormedParts(), function(formedLink) {
-          return formedLink.roadNumber === selectedProjectLink[0].roadNumber && formedLink.roadPartNumber === selectedProjectLink[0].roadPartNumber;
-        }).length);
-        disableFormInputs();
-        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
-          return projectLink.endAddressM;
-        }).discontinuity;
-        $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
+        updateForm();
         _.defer(function() {
           $('#beginDistance').on("change", function(changedData) {
             eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
@@ -274,22 +263,28 @@
         });
       });
 
+      function updateForm() {
+        checkInputs('.project-');
+        changeDropDownValue(selectedProjectLink[0].status);
+        if (selectedProjectLink[0].status !== LinkStatus.Numbering.value && _.filter(projectCollection.getFormedParts(), function (formedLink) {
+          return formedLink.roadNumber === selectedProjectLink[0].roadNumber && formedLink.roadPartNumber === selectedProjectLink[0].roadPartNumber;
+        }).length !== 0) {
+          removeNumberingFromDropdown();
+        }
+        disableFormInputs();
+        var selectedDiscontinuity = _.max(selectedProjectLink, function (projectLink) {
+          return projectLink.endAddressM;
+        }).discontinuity;
+        $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
+      }
+
       eventbus.on('projectLink:errorClicked', function(selected, errorMessage) {
         selectedProjectLink = [selected[0]];
         var currentProject = projectCollection.getCurrentProject();
         formCommon.clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink, errorMessage));
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
-        checkInputs('.project-');
-        changeDropDownValue(selectedProjectLink[0].status);
-        editDropDown(_.filter(projectCollection.getFormedParts(), function(part) {
-          return part.roadNumber === selectedProjectLink[0].roadNumber && part.roadPartNumber === selectedProjectLink[0].roadPartNumber;
-        }).length);
-        disableFormInputs();
-        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
-          return projectLink.endAddressM;
-        }).discontinuity;
-        $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
+        updateForm();
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -458,7 +453,7 @@
         if(this.value == LinkStatus.Terminated.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
-          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
+          projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
               'linkId': link.linkId,
@@ -467,14 +462,22 @@
               'points': link.points,
               'linearLocationId': link.linearLocationId
             };
-          })));
-          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+          }));
+          projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
         else if (this.value == LinkStatus.New.description) {
-          projectCollection.setTmpDirty(_.filter(projectCollection.getTmpDirty(), function (l) {
-            return l.status !== LinkStatus.Terminated.value;
-          }).concat(selectedProjectLink));
+          projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
+            return {
+              'id': link.id,
+              'linkId': link.linkId,
+              'status': LinkStatus.New.value,
+              'roadLinkSource': link.roadLinkSource,
+              'points': link.points,
+              'linearLocationId': link.linearLocationId
+            };
+          }));
+          projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
           if(selectedProjectLink[0].id !== 0) {
             fillDistanceValues(selectedProjectLink);
@@ -490,7 +493,7 @@
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
           $('#roadTypeDropdown').prop('disabled',false);
-          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
+          projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
               'linkId': link.linkId,
@@ -499,13 +502,11 @@
               'points': link.points,
               'linearLocationId': link.linearLocationId
             };
-          })));
-          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+          }));
+          projectCollection.setTmpDirty(projectCollection.getDirty());
         }
         else if (this.value == LinkStatus.Transfer.description) {
-          projectCollection.setDirty(_.filter(projectCollection.getDirty(), function (dirty) {
-            return dirty.status === LinkStatus.Transfer.value;
-          }).concat(_.map(selectedProjectLink, function (link) {
+          projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
               'linkId': link.linkId,
@@ -514,7 +515,7 @@
               'points': link.points,
               'linearLocationId': link.linearLocationId
             };
-          })));
+          }));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
           canChangeDirection();
@@ -524,7 +525,7 @@
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
           $('#roadTypeDropdown').prop('disabled',true);
-          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
+          projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
               'linkId': link.linkId,
@@ -533,7 +534,7 @@
               'points': link.points,
               'linearLocationId': link.linearLocationId
             };
-          })));
+          }));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
           rootElement.find('.project-form button.update').prop("disabled", false);

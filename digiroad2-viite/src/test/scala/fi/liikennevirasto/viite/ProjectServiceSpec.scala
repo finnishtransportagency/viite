@@ -726,7 +726,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val message1project1 = projectService.addNewLinksToProject(Seq(projectLink), id, "U", p.linkId).getOrElse("")
       val links = projectLinkDAO.fetchProjectLinks(id)
       links.size should be(0)
-      message1project1 should be("Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot.") //check that it is reserved in roadaddress table
+      message1project1 should be(RoadNotAvailableMessage) //check that it is reserved in roadaddress table
 
       val message1project2 = projectService.addNewLinksToProject(Seq(projectLink2), id + 1, "U", p.linkId)
       val links2 = projectLinkDAO.fetchProjectLinks(id + 1)
@@ -899,7 +899,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newLink.map(toRoadLink))
       val response = projectService.createProjectLinks(Seq(12345L), project.id, 5, 206, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       response("success").asInstanceOf[Boolean] should be(false)
-      response("errorMessage").asInstanceOf[String] should be("Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot.")
+      response("errorMessage").asInstanceOf[String] should be(RoadNotAvailableMessage)
     }
   }
 
