@@ -124,4 +124,21 @@ class JunctionDAO extends BaseDAO {
     createJunctions.map(_.id).toSeq
   }
 
+  /**
+    * Expires junctions (set their valid_to to the current system date).
+    *
+    * @param ids : Seq[Long] - The ids of the junctions to expire.
+    * @return
+    */
+  def expireById(ids: Set[Long]): Int = {
+    val query =
+      s"""
+        Update JUNCTION Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(", ")})
+      """
+    if (ids.isEmpty)
+      0
+    else
+      Q.updateNA(query).first
+  }
+
 }
