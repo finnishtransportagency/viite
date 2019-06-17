@@ -439,22 +439,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
-    val roadwayAddresses =
-      withDynSession {
-        roadwayDAO.fetchAllByDateRange(sinceDate, untilDate)
-      }
+    withDynSession {
+      val roadwayAddresses = roadwayDAO.fetchAllByDateRange(sinceDate, untilDate)
 
-    val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
 
-    val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(roadAddresses.map(_.linkId).toSet)
-    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+      val roadLinks = roadLinkService.getRoadLinksAndComplementaryFromVVH(roadAddresses.map(_.linkId).toSet)
+      val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
 
-    roadAddresses.flatMap { roadAddress =>
-      roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
-        ChangedRoadAddress(
-          roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)),
-          link = roadLink
-        )
+      roadAddresses.flatMap { roadAddress =>
+        roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
+          ChangedRoadAddress(
+            roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)),
+            link = roadLink
+          )
+        }
       }
     }
   }
