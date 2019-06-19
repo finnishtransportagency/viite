@@ -608,6 +608,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.linkId), LinkStatus.Terminated, "-", 99, 2, 0, Option.empty[Int])
       projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
 
+      projectService.changeDirection(projectId, 99L, 2L, Seq(LinkToRevert(link2.id, link2.linkId, LinkStatus.Transfer.value, Seq())), ProjectCoordinates(link2.geometry.head.x, link2.geometry.head.y), "testuser")
+
       val afterUpdateProjectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
 
       val newRoads = Seq()
@@ -639,8 +641,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       endRoadwayPoint.head.addrMValue should be (link2.endAddrMValue)
       roadAddressService.updateRoadwayPoints(projectId, "user")
 
-      val newEndRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(afterUpdateProjectLinks.last.roadwayNumber, afterUpdateProjectLinks.last.startAddrMValue, afterUpdateProjectLinks.last.endAddrMValue)
-      newEndRoadwayPoint.head.addrMValue should be (link2.endAddrMValue - link1.endAddrMValue)
+      val newReversedEndRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(afterUpdateProjectLinks.last.roadwayNumber, afterUpdateProjectLinks.last.startAddrMValue, afterUpdateProjectLinks.last.endAddrMValue)
+      newReversedEndRoadwayPoint.find(_.id == endRoadwayPoint.head.id).get.addrMValue should be (0L)
     }
   }
 
