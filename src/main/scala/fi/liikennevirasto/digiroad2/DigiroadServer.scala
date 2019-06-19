@@ -55,7 +55,7 @@ trait DigiroadServer {
 
 class OAGProxyServlet extends ProxyServlet {
 
-  def regex: Regex = "/(viite)".r
+  def regex: Regex = "/(viite|viite-kmtk)".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
@@ -71,7 +71,7 @@ class OAGProxyServlet extends ProxyServlet {
 class OAGRasterServiceProxyServlet extends ProxyServlet {
 
   private val logger = LoggerFactory.getLogger(getClass)
-  def regex: Regex = "/(viite)".r
+  def regex: Regex = "/(viite|viite-kmtk)".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
@@ -90,7 +90,7 @@ class ArcGisProxyServlet extends ProxyServlet {
   private val logger = LoggerFactory.getLogger(getClass)
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    val url = "http://aineistot.esri.fi" + uri.replaceFirst("/viite", "")
+    val url = "http://aineistot.esri.fi" + uri.replaceFirst("/(viite|viite-kmtk)", "")
     logger.info(url)
     java.net.URI.create(url)
   }
@@ -124,7 +124,7 @@ class ArcGisProxyServlet extends ProxyServlet {
 }
 
 class VKMProxyServlet extends ProxyServlet {
-  def regex: Regex = "/(digiroad|viite)".r
+  def regex: Regex = "/(viite|viite-kmtk)".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val properties = new Properties()
@@ -143,7 +143,7 @@ class VKMProxyServlet extends ProxyServlet {
 }
 
 class VKMUIProxyServlet extends ProxyServlet {
-  def regex: Regex = "/(digiroad|viite)/viitekehysmuunnin/".r
+  def regex: Regex = "/(viite|viite-kmtk)/viitekehysmuunnin/".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     java.net.URI.create("http://localhost:3000" + regex.replaceFirstIn(req.getRequestURI, ""))
