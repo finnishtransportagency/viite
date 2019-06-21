@@ -478,7 +478,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     adjustedLinearLocations.size should be (0)
   }
 
-  test("Test updateRoadwayPoints When Terminating one link and Transfer the rest Then roadway points should be handled/created properly") {
+  test("Test handleRoadwayPoints When Terminating one link and Transfer the rest Then roadway points should be handled/created properly") {
     runWithRollback {
 
       val roadwayChangesDAO = new RoadwayChangesDAO
@@ -554,14 +554,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       when(mockRoadwayDAO.fetchAllBySectionAndTracks(any[Long], any[Long], any[Set[Track]])).thenReturn(Seq(rw1WithId, rw2WithId))
       val endRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(link2.roadwayNumber, link2.startAddrMValue, link2.endAddrMValue)
       endRoadwayPoint.head.addrMValue should be (link2.endAddrMValue)
-      roadAddressService.updateRoadwayPoints(projectId, "user")
+      roadAddressService.handleRoadwayPoints(projectId, "user")
 
       val newEndRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(afterUpdateProjectLinks.last.roadwayNumber, afterUpdateProjectLinks.last.startAddrMValue, afterUpdateProjectLinks.last.endAddrMValue)
       newEndRoadwayPoint.find(_.id == endRoadwayPoint.head.id).get.addrMValue should be (link2.endAddrMValue - link1.endAddrMValue)
     }
   }
 
-  test("Test updateRoadwayPoints When Terminating one link and Transfer the rest and reverse it Then roadway points should be handled/created properly") {
+  test("Test handleRoadwayPoints When Terminating one link and Transfer the rest and reverse it Then roadway points should be handled/created properly") {
     runWithRollback {
 
       val roadwayChangesDAO = new RoadwayChangesDAO
@@ -639,14 +639,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       when(mockRoadwayDAO.fetchAllBySectionAndTracks(any[Long], any[Long], any[Set[Track]])).thenReturn(Seq(rw1WithId, rw2WithId))
       val endRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(link2.roadwayNumber, link2.startAddrMValue, link2.endAddrMValue)
       endRoadwayPoint.head.addrMValue should be(link2.endAddrMValue)
-      roadAddressService.updateRoadwayPoints(projectId, "user")
+      roadAddressService.handleRoadwayPoints(projectId, "user")
 
       val newReversedEndRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(afterUpdateProjectLinks.last.roadwayNumber, afterUpdateProjectLinks.last.startAddrMValue, afterUpdateProjectLinks.last.endAddrMValue)
       newReversedEndRoadwayPoint.find(_.id == endRoadwayPoint.head.id).get.addrMValue should be(0L)
     }
   }
 
-    test("Test updateRoadwayPoints When Transfer one road part to another and Transfer the rest Then roadway points should be handled/created properly") {
+    test("Test handleRoadwayPoints When Transfer one road part to another and Transfer the rest Then roadway points should be handled/created properly") {
       runWithRollback {
 
         val roadwayChangesDAO = new RoadwayChangesDAO
@@ -721,7 +721,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         roadwayChangesDAO.insertDeltaToRoadChangeTable(delta, projectId)
 
         when(mockRoadwayDAO.fetchAllBySectionAndTracks(any[Long], any[Long], any[Set[Track]])).thenReturn(Seq(rw1WithId, rw2WithId))
-        roadAddressService.updateRoadwayPoints(projectId, "user")
+        roadAddressService.handleRoadwayPoints(projectId, "user")
 
         val newStartRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(afterUpdateProjectLinks.last.roadwayNumber, afterUpdateProjectLinks.last.startAddrMValue, afterUpdateProjectLinks.last.startAddrMValue)
         val newEndRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(afterUpdateProjectLinks.last.roadwayNumber, afterUpdateProjectLinks.last.endAddrMValue, afterUpdateProjectLinks.last.endAddrMValue)
