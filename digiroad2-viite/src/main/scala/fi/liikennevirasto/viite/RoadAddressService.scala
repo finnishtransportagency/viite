@@ -474,7 +474,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           Left(e.getMessage)
       }
     }
-
   }
 
   def getUpdatedLinearLocations(sinceDate: DateTime): Either[String, Seq[LinearLocation]] = {
@@ -700,7 +699,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 //    }
 //  }
 
-    def updateRoadwayPoints(projectLinks: Seq[ProjectLink], projectId: Long, username: String = "-"): Unit = {
+    def handleRoadwayPoints(projectId: Long, username: String = "-"): Unit = {
         val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
 
         roadwayChanges.filter(rw => List(Transfer, ReNumeration).contains(rw.changeInfo.changeType)).foreach{ rwc =>
@@ -715,11 +714,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             if(!change.reversed){
               roadwayPoints.foreach{ rwp=>
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
+                if(!roadwayPoints.exists(rp => rp.roadwayNumber == rwp.roadwayNumber && rp.addrMValue == newAddrM))
                 roadwayPointDAO.update(rwp.id, newAddrM, username)
               }
             } else {
               roadwayPoints.foreach{ rwp=>
               val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
+                if(!roadwayPoints.exists(rp => rp.roadwayNumber == rwp.roadwayNumber && rp.addrMValue == newAddrM))
                 roadwayPointDAO.update(rwp.id, newAddrM, username)
               }
             }
@@ -727,6 +728,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             if(change.reversed){
               roadwayPoints.foreach{ rwp=>
                 val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
+                if(!roadwayPoints.exists(rp => rp.roadwayNumber == rwp.roadwayNumber && rp.addrMValue == newAddrM))
                 roadwayPointDAO.update(rwp.id, newAddrM, username)
               }
             }
