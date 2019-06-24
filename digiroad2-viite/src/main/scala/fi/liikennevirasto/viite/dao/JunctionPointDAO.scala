@@ -125,4 +125,27 @@ class JunctionPointDAO extends BaseDAO {
     createJunctionPoints.map(_.id).toSeq
   }
 
+  def update(junctionPoints: Iterable[JunctionPoint], updatedBy: String = "-"): Seq[Long] = {
+
+    val ps = dynamicSession.prepareStatement("update JUNCTION_POINT SET BEFORE_AFTER = ?, ROADWAY_POINT_ID = ?, JUNCTION_ID = ?, END_DATE = ? WHERE ID = ?)")
+
+
+    junctionPoints.foreach {
+      junctionPoint =>
+        ps.setLong(1, junctionPoint.beforeAfter.value)
+        ps.setLong(2, junctionPoint.roadwayPointId)
+        ps.setLong(3, junctionPoint.junctionId)
+        ps.setString(4, junctionPoint.endDate match {
+          case Some(date) => dateFormatter.print(date)
+          case None => ""
+        })
+        ps.setLong(5, junctionPoint.id)
+
+        ps.addBatch()
+    }
+    ps.executeBatch()
+    ps.close()
+    junctionPoints.map(_.id).toSeq
+  }
+
 }

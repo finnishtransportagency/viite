@@ -156,4 +156,33 @@ class NodePointDAO extends BaseDAO {
     nodePoints.map(_.id).toSeq
   }
 
+  def update(nodePoints: Iterable[NodePoint], updatedBy: String = "-"): Seq[Long] = {
+
+    val ps = dynamicSession.prepareStatement(
+      "update NODE_POINT SET BEFORE_AFTER = ?, ROADWAY_POINT_ID = ?, NODE_ID = ?, END_DATE = ?, VALID_TO = ? WHERE ID = ?)")
+
+    nodePoints.foreach {
+      nodePoint =>
+        ps.setLong(1, nodePoint.beforeAfter.value)
+        ps.setLong(2, nodePoint.roadwayPointId)
+        ps.setLong(3, nodePoint.nodeId match {
+          case Some(id) => id
+          case None => null
+        })
+        ps.setString(4, nodePoint.endDate match {
+          case Some(date) => dateFormatter.print(date)
+          case None => ""
+        })
+        ps.setString(5, nodePoint.validTo match {
+          case Some(date) => dateFormatter.print(date)
+          case None => ""
+        })
+        ps.setLong(6, nodePoint.id)
+        ps.addBatch()
+    }
+    ps.executeBatch()
+    ps.close()
+    nodePoints.map(_.id).toSeq
+  }
+
 }
