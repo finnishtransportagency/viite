@@ -679,28 +679,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
-//  def updateRoadwayPoints(projectLinks: Seq[ProjectLink], username: String = "-"): Unit = {
-//    projectLinks.groupBy(_.roadwayNumber).foreach{
-//      case (roadwayNumber, projectLinksOnRoadway) =>
-//        val currentRoadwayPoints = roadwayPointDAO.fetchByRoadwayNumber(roadwayNumber)
-//        projectLinksOnRoadway.foreach{
-//          pl =>
-//            val startPoint = currentRoadwayPoints.find(rwp => rwp.addrMValue == pl.originalStartAddrMValue)
-//            val endPoint = currentRoadwayPoints.find(rwp => rwp.addrMValue == pl.originalEndAddrMValue)
-//            if(startPoint.isDefined && pl.startAddrMValue != pl.originalStartAddrMValue) {
-//              roadwayPointDAO.update(startPoint.get.id,  if(pl.reversed) pl.endAddrMValue else pl.startAddrMValue, username)
-//            }
-//            else if(endPoint.isDefined && pl.endAddrMValue != pl.originalEndAddrMValue) {
-//              roadwayPointDAO.update(endPoint.get.id, if(pl.reversed) pl.startAddrMValue else pl.endAddrMValue, username)
-//            }
-//        }
-//
-//
-//    }
-//  }
-
-    def handleRoadwayPoints(projectId: Long, username: String = "-"): Unit = {
-        val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
+    def handleRoadwayPoints(roadwayChanges: List[ProjectRoadwayChange], username: String = "-"): Unit = {
 
         roadwayChanges.filter(rw => List(Transfer, ReNumeration).contains(rw.changeInfo.changeType)).foreach{ rwc =>
 
