@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Date
-
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -97,7 +95,7 @@ class JunctionDAO extends BaseDAO {
       val query =
         s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-      FROM JUNCTION
+      FROM JUNCTION J
       WHERE ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
         SELECT NULL FROM JUNCTION_POINT JP WHERE J.id = JP.JUNCTION_ID AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL
       )
