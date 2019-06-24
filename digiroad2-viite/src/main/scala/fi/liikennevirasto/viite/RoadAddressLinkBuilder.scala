@@ -163,9 +163,9 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
         if (add.linkGeomSource == LinkGeomSource.SuravageLinkInterface) {
           add.track.value
         } else {
-          roadLink.attributes.getOrElse("TRACK", Track.Unknown.value).toString.toInt
+          roadLink.attributes.getOrElse("TRACK", Track.Unknown.value).toString.toInt // TODO Should this be TRACK_CODE?
         }
-      case _ => roadLink.attributes.getOrElse("TRACK", Track.Unknown.value).toString.toInt
+      case _ => roadLink.attributes.getOrElse("TRACK", Track.Unknown.value).toString.toInt // TODO Should this be TRACK_CODE?
     }
 
     val elyCode: Long = headAddress match {
