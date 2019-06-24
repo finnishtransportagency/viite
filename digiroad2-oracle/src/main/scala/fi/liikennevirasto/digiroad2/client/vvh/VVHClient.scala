@@ -657,7 +657,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
         "CREATED_DATE",
         "LAST_EDITED_DATE",
         "SUBTYPE",
-        "TRACK_CODE" // Used only with suravage in viite
+        "TRACK_CODE" // Used only with suravage and complementary in Viite
       ).contains(x)
     }.filter { case (_, value) =>
       value != null
@@ -914,7 +914,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
   protected override val disableGeometry = false
 
   override def defaultOutFields(): String = {
-    "MTKID,LINKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SUBTYPE,CONSTRUCTIONTYPE,GEOMETRYLENGTH"
+    "MTKID,LINKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SUBTYPE,CONSTRUCTIONTYPE,GEOMETRYLENGTH,TRACK_CODE"
   }
 
   private def createFormParams(complementaryFeatures: Map[String, Any]): util.ArrayList[NameValuePair] = {
