@@ -11,6 +11,8 @@
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     var nodeCollection = new NodeCollection(backend);
+    proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
+    ol.proj.proj4.register(proj4);
 
     var models = {
       roadCollection: roadCollection,
