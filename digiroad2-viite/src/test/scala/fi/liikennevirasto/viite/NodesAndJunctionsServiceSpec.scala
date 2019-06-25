@@ -330,4 +330,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  //TODO add test to check handleJunctionPointTemplates creation between new different roadpart links that intersect between them in project
+
 }
