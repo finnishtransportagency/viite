@@ -92,7 +92,7 @@ class NodePointDAO extends BaseDAO {
       val query =
         s"""
        $selectFromNodePoint
-       where NP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")})
+       where NP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")}) and NP.valid_to is null and NP.end_date is null
      """
       queryList(query)
     }
