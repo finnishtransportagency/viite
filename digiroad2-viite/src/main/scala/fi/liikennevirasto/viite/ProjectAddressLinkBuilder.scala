@@ -8,38 +8,22 @@ import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressL
 
 object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
-  def build(pl: ProjectLink, splitPart: Option[ProjectLink] = None): ProjectAddressLink = {
-
+  def build(pl: ProjectLink): ProjectAddressLink = {
     val linkType = UnknownLinkType
-
-    val originalGeometry =
-      if (pl.isSplit)
-        if (splitPart.nonEmpty)
-          combineGeometries(pl, splitPart.get)
-        else
-          // TODO Is this case needed?
-          Some(pl.geometry)
-      else
-        None
-
     val calibrationPoints = pl.toCalibrationPoints
-
     ProjectAddressLink(pl.id, pl.linkId, pl.geometry,
       pl.geometryLength, fi.liikennevirasto.digiroad2.asset.Unknown, linkType, ConstructionType.UnknownConstructionType,
       pl.linkGeomSource, pl.roadType, pl.roadName, pl.roadName, 0L, "", None, Some("vvh_modified"),
       Map(), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value,
       pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, calibrationPoints._1,
       calibrationPoints._2, Anomaly.None, pl.status, pl.roadwayId, pl.linearLocationId,
-      pl.reversed, pl.connectedLinkId, originalGeometry)
+      pl.reversed, pl.connectedLinkId)
   }
 
   @Deprecated
   def build(roadLink: RoadLinkLike, projectLink: ProjectLink): ProjectAddressLink = {
 
-    val geom = if (projectLink.isSplit)
-      GeometryUtils.truncateGeometry3D(roadLink.geometry, projectLink.startMValue, projectLink.endMValue)
-    else
-      roadLink.geometry
+    val geom = roadLink.geometry
     val length = GeometryUtils.geometryLength(geom)
     val roadNumber = projectLink.roadNumber match {
       case 0 => roadLink.attributes.getOrElse(RoadNumber, projectLink.roadNumber).asInstanceOf[Number].longValue()
@@ -62,20 +46,13 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       case _ => UnknownLinkType
     }
 
-    val originalGeometry =
-      if (projectLink.isSplit)
-        Some(roadLink.geometry)
-      else
-        None
-
     val calibrationPoints = projectLink.toCalibrationPoints
 
     build(roadLink, projectLink.id, geom, length, roadNumber, roadPartNumber, trackCode, Some(roadName), municipalityCode,
       linkType, projectLink.roadType, projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
       projectLink.startMValue, projectLink.endMValue, projectLink.sideCode,
       calibrationPoints._1, calibrationPoints._2,
-      Anomaly.None, projectLink.status, projectLink.roadwayId, projectLink.linearLocationId, projectLink.ely, projectLink.reversed, projectLink.connectedLinkId,
-      originalGeometry
+      Anomaly.None, projectLink.status, projectLink.roadwayId, projectLink.linearLocationId, projectLink.ely, projectLink.reversed, projectLink.connectedLinkId
     )
   }
 
@@ -93,8 +70,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
                     roadType: RoadType, discontinuity: Discontinuity,
                     startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double,
                     sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                    anomaly: Anomaly, status: LinkStatus, roadwayId: Long, linearLocationId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[Long],
-                    originalGeometry: Option[Seq[Point]]): ProjectAddressLink = {
+                    anomaly: Anomaly, status: LinkStatus, roadwayId: Long, linearLocationId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[Long]): ProjectAddressLink = {
 
     val linkId =
       if (connectedLinkId.nonEmpty && status == LinkStatus.New)
@@ -108,20 +84,6 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       roadType, Some(roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString), roadName, municipalityCode, municipalityName, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value,
       startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, status, roadwayId, linearLocationId,
-      reversed, connectedLinkId, originalGeometry)
-  }
-
-  private def combineGeometries(split1: ProjectLink, split2: ProjectLink) = {
-    def safeTail(seq: Seq[Point]) = {
-      if (seq.isEmpty)
-        Seq()
-      else
-        seq.tail
-    }
-
-    if (split1.startMValue < split2.startMValue)
-      Some(split1.geometry ++ safeTail(split2.geometry))
-    else
-      Some(split2.geometry ++ safeTail(split1.geometry))
+      reversed, connectedLinkId)
   }
 }

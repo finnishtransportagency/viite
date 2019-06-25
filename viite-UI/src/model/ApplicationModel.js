@@ -182,20 +182,6 @@
         } else if (layer === 'linkProperty' && toggleStart) {
           eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
         }
-        var suravageVisibleCheckbox = $('#suravageVisibleCheckbox')[0];
-        if (layer === 'roadAddressProject') {
-          if (suravageVisibleCheckbox) {
-            $('#suravageVisibleCheckbox')[0].checked = false;
-            $('#suravageVisibleCheckbox')[0].disabled = true;
-          }
-          eventbus.trigger('suravageProjectRoads:toggleVisibility', false);
-        } else {
-          if (suravageVisibleCheckbox) {
-            $('#suravageVisibleCheckbox')[0].checked = true;
-            $('#suravageVisibleCheckbox')[0].disabled = false;
-          }
-          eventbus.trigger('suravageProjectRoads:toggleVisibility', true);
-        }
       },
       getSelectedLayer: function () {
         return selectedLayer;

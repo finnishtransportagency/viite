@@ -126,7 +126,7 @@
 
     //when the map dragging stops the cursor value returns to the initial one
     map.on('pointerup', function(evt) {
-      if(applicationModel.getSelectedTool() == 'Select')
+      if(applicationModel.getSelectedTool() === 'Select')
       map.getViewport().style.cursor = "initial";
     });
 

@@ -4,16 +4,13 @@
     var me = this;
 
     var indicatorVector = new ol.source.Vector({});
-    var floatingMarkerVector = new ol.source.Vector({});
     var anomalousMarkerVector = new ol.source.Vector({});
-    var suravageMarkerVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
     var calibrationPointVector = new ol.source.Vector({});
     var greenRoadLayerVector = new ol.source.Vector({});
     var pickRoadsLayerVector = new ol.source.Vector({});
     var simulationVector = new ol.source.Vector({});
     var geometryChangedVector = new ol.source.Vector({});
-    var suravageRoadLayerVector = new ol.source.Vector({});
     var reservedRoadVector = new ol.source.Vector({});
     var historicRoadsVector = new ol.source.Vector({});
 
@@ -36,25 +33,12 @@
     });
     indicatorLayer.set('name', 'indicatorLayer');
 
-    var floatingMarkerLayer = new ol.layer.Vector({
-      source: floatingMarkerVector,
-      name: 'floatingMarkerLayer'
-    });
-    floatingMarkerLayer.set('name', 'floatingMarkerLayer');
-
     var anomalousMarkerLayer = new ol.layer.Vector({
       source: anomalousMarkerVector,
       name: 'anomalousMarkerLayer',
       zIndex: RoadZIndex.IndicatorLayer.value
     });
     anomalousMarkerLayer.set('name', 'anomalousMarkerLayer');
-
-    var suravageMarkerLayer = new ol.layer.Vector({
-      source: suravageMarkerVector,
-      name: 'suravageMarkerLayer',
-      zIndex: RoadZIndex.DirectionMarkerLayer.value
-    });
-    suravageMarkerLayer.set('name', 'suravageMarkerLayer');
 
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
@@ -146,18 +130,6 @@
     });
     simulatedRoadsLayer.set('name', 'simulatedRoadsLayer');
 
-
-    var suravageRoadLayer = new ol.layer.Vector({
-      source: suravageRoadLayerVector,
-      name: 'suravageRoadLayer',
-      style: function(feature) {
-          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
-              roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})];
-      }
-    });
-    suravageRoadLayer.set('name', 'suravageRoadLayer');
-
-
     var historicRoadsLayer = new ol.layer.Vector({
       source: historicRoadsVector,
       name: 'historicRoadsLayer',
@@ -170,16 +142,13 @@
     historicRoadsLayer.set('name', 'historicRoadsLayer');
 
 
-    var layers = [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, suravageMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
-      indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, suravageRoadLayer, reservedRoadLayer, historicRoadsLayer];
+    var layers = [roadLayer.layer, anomalousMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
+      indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer, historicRoadsLayer];
 
     var setGeneralOpacity = function (opacity){
       roadLayer.layer.setOpacity(opacity);
-      floatingMarkerLayer.setOpacity(opacity);
       anomalousMarkerLayer.setOpacity(opacity);
-      suravageMarkerLayer.setOpacity(opacity);
       directionMarkerLayer.setOpacity(opacity);
-      suravageRoadLayer.setOpacity(opacity);
       historicRoadsLayer.setOpacity(opacity);
       geometryChangedLayer.setOpacity(opacity);
     };
@@ -196,7 +165,7 @@
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
       //multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layer: [roadLayer.layer, geometryChangedLayer, suravageRoadLayer, historicRoadsLayer],
+      layer: [roadLayer.layer, geometryChangedLayer, historicRoadsLayer],
       //Limit this interaction to the doubleClick
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
@@ -214,7 +183,7 @@
      * The event holds the selected features in the events.selected and the deselected in event.deselected.
      */
     selectDoubleClick.on('select',function(event) {
-      var visibleFeatures = getVisibleFeatures(true, true, true, false, false, true, true, true);
+      var visibleFeatures = getVisibleFeatures(true, true, false, false, true, true);
       selectSingleClick.getFeatures().clear();
 
       if(applicationModel.isReadOnly()){
@@ -230,12 +199,7 @@
         });
         if (!_.isUndefined(selectedF)) {
           var selection = selectedF.linkData;
-          if (selection.floating === SelectionType.Floating.value) {
-              selectedLinkProperty.openFloating(selection, true, visibleFeatures);
-              floatingMarkerLayer.setOpacity(1);
-          } else {
-            selectedLinkProperty.open(selection, false, visibleFeatures);
-          }
+          selectedLinkProperty.open(selection, false, visibleFeatures);
         }
       }
     });
@@ -264,15 +228,12 @@
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
       multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layers: [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer, suravageRoadLayer, historicRoadsLayer],
+      layers: [roadLayer.layer, anomalousMarkerLayer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer, historicRoadsLayer],
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
       filter: function(feature) {
         var currentSelectionType = applicationModel.getSelectionType().value;
-        if(currentSelectionType === SelectionType.Floating.value){
-          return feature.linkData.anomaly !== Anomaly.None.value && feature.linkData.floating === SelectionType.Floating.value;
-        }
-        else if (currentSelectionType === SelectionType.Unknown.value) {
+        if (currentSelectionType === SelectionType.Unknown.value) {
           return feature.linkData.anomaly !== Anomaly.None.value && feature.linkData.roadLinkType === RoadLinkType.UnknownRoadLinkType.value;
         } else {
           return currentSelectionType === SelectionType.All.value;
@@ -286,8 +247,6 @@
       }
     });
     selectSingleClick.set('name','selectSingleClickInteractionLPL');
-
-
     /**
      * We now declare what kind of custom actions we want when the interaction happens.
      * Note that 'select' is triggered when a feature is either selected or deselected.
@@ -297,7 +256,7 @@
      * sending them to the selectedLinkProperty.open for further processing.
      */
     selectSingleClick.on('select', function(event) {
-      var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true, true);
+      var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true);
       selectDoubleClick.getFeatures().clear();
       var selectedF =  _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.linkData);
@@ -308,17 +267,7 @@
         if (roadLayer.layer.getOpacity() === 1) {
           setGeneralOpacity(0.2);
         }
-        if (selection.floating === SelectionType.Floating.value && !applicationModel.isReadOnly()) {
-            selectedLinkProperty.close();
-            selectedLinkProperty.openFloating(selection, true, visibleFeatures);
-            floatingMarkerLayer.setOpacity(1);
-            anomalousMarkerLayer.setOpacity(1);
-        } else if (selection.floating !== SelectionType.Floating.value && applicationModel.selectionTypeIs(SelectionType.Floating) && !applicationModel.isReadOnly() && event.deselected.length !== 0) {
-          var floatings = event.deselected;
-          var nonFloatings = event.selected;
-          removeFeaturesFromSelection(nonFloatings);
-          addFeaturesToSelection(floatings);
-        } else if (applicationModel.selectionTypeIs(SelectionType.Unknown) && !applicationModel.isReadOnly()) {
+        if (applicationModel.selectionTypeIs(SelectionType.Unknown) && !applicationModel.isReadOnly()) {
           if ((selection.anomaly === Anomaly.NoAddressGiven.value || selection.anomaly === Anomaly.GeometryChanged.value) && selection.roadLinkType !== SelectionType.Floating.value) {
             selectedLinkProperty.openUnknown(selection, visibleFeatures);
           } else {
@@ -330,7 +279,7 @@
           setGeneralOpacity(0.2);
           selectedLinkProperty.open(selection, true, visibleFeatures);
         }
-        if (applicationModel.selectionTypeIs(SelectionType.Unknown) && selection.floating !== SelectionType.Floating.value && (selection.anomaly === Anomaly.NoAddressGiven.value || selection.anomaly === Anomaly.GeometryChanged.value)) {
+        if (applicationModel.selectionTypeIs(SelectionType.Unknown) && (selection.anomaly === Anomaly.NoAddressGiven.value || selection.anomaly === Anomaly.GeometryChanged.value)) {
           greenRoadLayer.setOpacity(1);
           var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (ft) {
               return ft.anomaly === Anomaly.NoAddressGiven.value;
@@ -401,17 +350,14 @@
       addFeaturesToSelection(ol3Features);
     });
 
-    var getVisibleFeatures = function(withRoads, withAnomalyMarkers, withFloatingMarkers, withGreenRoads, withPickRoads, withDirectionalMarkers, withSuravageRoads, withGeometryChanged){
+    var getVisibleFeatures = function(withRoads, withAnomalyMarkers, withGreenRoads, withPickRoads, withDirectionalMarkers, withGeometryChanged){
       var extent = map.getView().calculateExtent(map.getSize());
       var visibleRoads = withRoads ? roadLayer.layer.getSource().getFeaturesInExtent(extent) : [];
       var visibleAnomalyMarkers =  withAnomalyMarkers ? anomalousMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
-      var visibleFloatingMarkers =  withFloatingMarkers ? floatingMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleGreenRoadLayer = withGreenRoads ? greenRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
-      var visibleSuravageMarkers = withDirectionalMarkers ? suravageMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
-      var visibleSuravageRoads = withSuravageRoads ? suravageRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleGeometryChanged = withGeometryChanged ? geometryChangedLayer.getSource().getFeaturesInExtent(extent) : [];
-      return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleFloatingMarkers).concat(visibleGreenRoadLayer).concat(visibleDirectionalMarkers).concat(visibleSuravageRoads).concat(visibleSuravageMarkers).concat(visibleGeometryChanged);
+      return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleGreenRoadLayer).concat(visibleDirectionalMarkers).concat(visibleGeometryChanged);
     };
 
     /**
@@ -500,26 +446,19 @@
       var marker;
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
-      var suravageLinks = roadCollection.getSuravageLinks();
-      var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
-        return _.contains(_.map(suravageLinks, function(sl){ return sl.linkId;}), rl.linkId);
-      });
+      var roadLinks = roadCollection.getAll();
       var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
-      me.clearLayers([floatingMarkerLayer, anomalousMarkerLayer, geometryChangedLayer, suravageMarkerLayer, directionMarkerLayer, calibrationPointLayer]);
+      me.clearLayers([anomalousMarkerLayer, geometryChangedLayer, directionMarkerLayer, calibrationPointLayer]);
 
       if(zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
         var directionRoadMarker = _.filter(roadLinks, function(roadlink) {
-          return roadlink.floating !== SelectionType.Floating.value && roadlink.anomaly !== Anomaly.NoAddressGiven.value && roadlink.anomaly !== Anomaly.GeometryChanged.value && (roadlink.sideCode === SideCode.AgainstDigitizing.value || roadlink.sideCode === SideCode.TowardsDigitizing.value);
+          return roadlink.anomaly !== Anomaly.NoAddressGiven.value && roadlink.anomaly !== Anomaly.GeometryChanged.value && (roadlink.sideCode === SideCode.AgainstDigitizing.value || roadlink.sideCode === SideCode.TowardsDigitizing.value);
         });
-        _.each(directionRoadMarker, function(directionlink) {
-          var marker = cachedMarker.createMarker(directionlink);
+        _.each(directionRoadMarker, function(directionLink) {
+          var marker = cachedMarker.createMarker(directionLink);
           if(zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
             directionMarkerLayer.getSource().addFeature(marker);
-        });
-
-        var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
-          return roadlink.floating === SelectionType.Floating.value;
         });
 
         var anomalousRoadMarkers = _.filter(roadLinks, function(roadlink) {
@@ -528,27 +467,6 @@
         _.each(anomalousRoadMarkers, function(anomalouslink) {
           var marker = cachedMarker.createMarker(anomalouslink);
           anomalousMarkerLayer.getSource().addFeature(marker);
-        });
-
-        var suravageRoadMarkers = _.filter(suravageLinks, function(roadlink) {
-          return roadlink.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
-        });
-        _.each(suravageRoadMarkers, function(directionLink) {
-          var marker = cachedMarker.createMarker(directionLink);
-          if(zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
-            suravageMarkerLayer.getSource().addFeature(marker);
-        });
-
-
-        var floatingGroups = _.sortBy(_.groupBy(floatingRoadMarkers, function(value){
-          return value.linkId;
-        }), 'startAddressM');
-        _.each(floatingGroups, function(floatGroup) {
-            _.each(floatGroup, function(floating){
-                marker = cachedMarker.createMarker(floating);
-                if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
-                    floatingMarkerLayer.getSource().addFeature(marker);
-            });
         });
 
         var geometryChangedRoadMarkers = _.filter(roadLinks, function(roadlink){
@@ -602,7 +520,6 @@
       //Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
       roadCollection.reset();
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map));
-      suravageRoadLayer.changed();
       roadLayer.layer.changed();
     };
 
@@ -611,14 +528,14 @@
     };
 
     var reselectRoadLink = function(targetFeature, adjacents) {
-      var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true);
+      var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true);
       var indicators = adjacents;
       indicatorLayer.getSource().clear();
       if(indicators.length !== 0){
         drawIndicators(indicators);
       }
 
-      if (applicationModel.selectionTypeIs(SelectionType.Unknown) && targetFeature.linkData.floating !== SelectionType.Floating.value && targetFeature.linkData.anomaly === Anomaly.NoAddressGiven.value) {
+      if (applicationModel.selectionTypeIs(SelectionType.Unknown) && targetFeature.linkData.anomaly === Anomaly.NoAddressGiven.value) {
         if (applicationModel.isReadOnly()) {
           greenRoadLayer.setOpacity(1);
           var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (ft) {
@@ -654,12 +571,10 @@
       var linkPropertyEditConclusion = _.partial(concludeLinkPropertyEdit, eventListener);
       eventListener.listenTo(eventbus, 'linkProperties:changed', linkPropertyChangeHandler);
       eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', linkPropertyEditConclusion);
-      eventListener.listenTo(eventbus, 'linkProperties:closed', refreshViewAfterClosingFloating);
-
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function (link) {
         var selectedLink = (_.isUndefined(link) ? link : (_.isArray(link) ? link : [link]));
         var isUnknown = _.every(selectedLink, function(sl) {
-          return sl.anomaly !== Anomaly.None.value && sl.floating !== SelectionType.Floating.value && sl.roadLinkSource !== LinkGeomSource.SuravageLinkInterface.descriptionFI;
+          return sl.anomaly !== Anomaly.None.value;
         });
         var roads = isUnknown ? geometryChangedLayer.getSource().getFeatures() : roadLayer.layer.getSource().getFeatures();
         var features = [];
@@ -684,215 +599,18 @@
 
       eventListener.listenTo(eventbus, 'linkProperties:reselect', reselectRoadLink);
 
-      eventListener.listenTo(eventbus, 'roadLinks:fetched', function (eventData, reselection, selectedIds) {
-        if(applicationModel.getSelectedLayer() === 'linkProperty'){
+      eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
+        if(applicationModel.getSelectedLayer() === 'linkProperty') {
           redraw();
-          if (reselection && !applicationModel.selectionTypeIs(SelectionType.Unknown)) {
-            _.defer(function(){
-              var currentGreenFeatures = greenRoadLayer.getSource().getFeatures();
-              var floatingsIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function (feature) {
-                return feature.id;
-              }).uniq().value();
-              var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function(feature){
-                return feature.linkId;
-              }).uniq().value();
-              var visibleFeatures = getVisibleFeatures(true,false,true);
-              var featuresToReSelect = function() {
-                if (floatingsIds.length !== 0) {
-                  return _.filter(visibleFeatures, function (feature) {
-                    return _.contains(floatingsIds, feature.linkData.id);
-                  });
-                } else {
-                  return _.filter(visibleFeatures, function (feature) {
-                    return _.contains(floatingsLinkIds, feature.linkData.linkId);
-                  });
-                }
-              };
-              var filteredFeaturesToReselect = _.reject(featuresToReSelect(), function (feat) {
-                return _.some(currentGreenFeatures, function (green) {
-                  return green.linkData.id === feat.linkData.id;
-                });
-              });
-              if (filteredFeaturesToReselect.length !== 0){
-                addFeaturesToSelection(filteredFeaturesToReselect);
-              }
-
-              var fetchedDataInSelection = _.map(_.filter(roadLayer.layer.getSource().getFeatures(), function(feature){
-                return _.contains(_.unique(selectedIds), feature.linkData.linkId);
-              }), function (feat) {
-                return feat.linkData;
-              });
-
-              var groups = _.flatten(eventData);
-              var fetchedLinksInSelection = _.filter(groups, function (group) {
-                return _.contains(_.pluck(fetchedDataInSelection, 'linkId'), group.getData().linkId);
-              });
-              if (fetchedLinksInSelection.length > 0) {
-                eventbus.trigger('linkProperties:deselectFeaturesSelected');
-                selectedLinkProperty.setCurrent(fetchedLinksInSelection);
-                if (applicationModel.getCurrentAction() !== applicationModel.actionCalculating)
-                  eventbus.trigger('linkProperties:selected', selectedLinkProperty.extractDataForDisplay(fetchedDataInSelection));
-              }
-            }, reselection);
-          }
         }
+      });
 
-      });
-      eventListener.listenTo(eventbus, 'suravageRoadLinks:fetched', function(suravageRoads){
-        var ol3SuravageRoads = _.map(_.flatten(suravageRoads), function(road) {
-          var roadData = road.getData();
-          var points = _.map(roadData.points, function (point) {
-            return [point.x, point.y];
-          });
-          var feature = new ol.Feature({
-            geometry: new ol.geom.LineString(points)
-          });
-            feature.linkData = roadData;
-          return feature;
-        });
-        suravageRoadLayer.getSource().addFeatures(ol3SuravageRoads);
-      });
-      eventListener.listenTo(eventbus, 'suravageRoads:toggleVisibility', function(visibility){
-        suravageRoadLayer.setVisible(visibility);
-        suravageMarkerLayer.setVisible(visibility);
-      });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
-        //Exclude suravage layers from toggle
-        me.toggleLayersVisibility([roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
+        me.toggleLayersVisibility([roadLayer.layer, anomalousMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
           indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer, historicRoadsLayer], applicationModel.getRoadVisibility());
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
-      eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, adjacents, targets) {
-        applicationModel.addSpinner();
-        if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated) {
-          drawIndicators(adjacents);
-          selectedLinkProperty.addTargets(targets, adjacents);
-        }
-        redrawNextSelectedTarget(targets, adjacents);
-      });
-      eventListener.listenTo(eventbus, 'adjacents:added', function(sources, targets) {
-        clearIndicators();
-        drawIndicators(targets);
-        _.map(_.filter(selectedLinkProperty.getFeaturesToKeep(), function(link) {
-          return link.roadNumber === 0;
-        }), function (roads) {
-          editFeatureDataForGreen(roads);
-        });
-      });
-
-      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(sources, targets) {
-          clearIndicators();
-          drawIndicators(targets);
-      });
-
-      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(floatings) {
-        var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true,true);
-        selectedLinkProperty.processOL3Features(visibleFeatures);
-        drawIndicators(floatings);
-      });
-      eventListener.listenTo(eventbus, 'adjacents:roadTransfer', function(newRoads,changedIds) {
-
-        var floatingsLinkIds = _.map(selectedLinkProperty.getFeaturesToKeepFloatings(), function (f) {
-          return f.linkId;
-        });
-        var roadLinks = _.reject(roadCollection.getAll(),function (rl) {
-          return _.contains(floatingsLinkIds, rl.linkId);
-        });
-        var afterTransferLinks=  _.filter(roadLinks, function(roadlink) {
-          return !_.contains(changedIds, roadlink.linkId.toString());
-        });
-        var simulatedOL3Features = [];
-        _.map(newRoads, function(road){
-          var points = _.map(road.points, function(point) {
-            return [point.x, point.y];
-          });
-          var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
-          });
-          feature.linkData = road;
-          simulatedOL3Features.push(feature);
-          afterTransferLinks.push(road);
-          var marker = cachedMarker.createMarker(feature.linkData);
-          if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers) {
-            simulatedRoadsLayer.getSource().addFeature(marker);
-          }
-        });
-
-        var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, newRoads);
-        _.each(actualPoints, function(actualPoint) {
-          var calMarker = new CalibrationPoint(actualPoint);
-          simulatedRoadsLayer.getSource().addFeature(calMarker.getMarker(true));
-        });
-
-        indicatorLayer.getSource().clear();
-        roadCollection.setTmpRoadAddresses(afterTransferLinks);
-        roadCollection.setChangedIds(changedIds);
-        applicationModel.setCurrentAction(applicationModel.actionCalculated);
-        selectedLinkProperty.cancelAfterDefloat(applicationModel.actionCalculated, changedIds);
-
-        clearHighlights();
-        greenRoadLayer.getSource().clear();
-        setGeneralOpacity(0.2);
-
-        _.each(simulatedOL3Features, function(elem) {
-          roadLayer.layer.getSource().getFeatures().filter( function(item){
-              if (item.linkData.linkId === elem.linkData.linkId)
-                roadLayer.layer.getSource().removeFeature(item);
-          });
-        });
-        simulatedRoadsLayer.getSource().addFeatures(simulatedOL3Features);
-        roadLayer.layer.getSource().addFeatures(simulatedRoadsLayer);
-      });
-
-      eventListener.listenTo(eventbus, 'roadLink:editModeAdjacents', function() {
-        if (applicationModel.isReadOnly() && !applicationModel.isActiveButtons()) {
-          indicatorLayer.getSource().clear();
-          var floatingsLinkIds = _.map(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (feature) {
-            return feature.floating === SelectionType.Floating.value;
-          }), function (floating) {
-            return floating.linkId;
-          });
-          _.defer(function () {
-            _.map(roadLayer.layer.features, function (feature) {
-              if (_.contains(floatingsLinkIds, feature.attributes.linkId)) {
-                selectControl.select(feature);
-              }
-            });
-          });
-        } else {
-          var selectedFloatings = _.filter(selectedLinkProperty.get(), function (features) {
-            return features.floating === SelectionType.Floating.value;
-          });
-          _.each(selectedFloatings, function(sf){
-            selectedLinkProperty.addToFeaturesToKeep(sf);
-          });
-        }
-      });
-
-      eventListener.listenTo(eventbus, 'roadLinks:unSelectIndicators', function (originalFeature) {
-        var visibleFeatures = getVisibleFeatures(true,true,true,true);
-        clearIndicators();
-        greenRoadLayerVector.clear();
-        clearHighlights();
-        if (!applicationModel.selectionTypeIs(SelectionType.Floating)) {
-          var features = [];
-          var extractedLinkIds = _.map(originalFeature,function(of){
-            return of.linkId;
-          });
-          _.each(roadLayer.layer.getSource().getFeatures(), function (feature) {
-              if (!_.contains(extractedLinkIds, feature.linkData.linkId) && feature.linkData.floating === SelectionType.Floating.value) {
-              features.push(feature);
-            }
-          });
-
-          if (!_.isEmpty(features)) {
-            //currentRenderIntent = 'select';
-            var featureToSelect = _.first(features);
-              selectedLinkProperty.openFloating(featureToSelect.linkData, false, visibleFeatures);
-            highlightFeatures();
-          }
-        }
-      });
 
       eventListener.listenTo(eventbus, 'linkProperties:clearIndicators', function(){
         clearIndicators();
@@ -914,68 +632,6 @@
         selectedLinkProperty.cancel();
         selectedLinkProperty.close();
         unselectRoadLink();
-      }
-    };
-
-    var refreshViewAfterClosingFloating = function() {
-      selectedLinkProperty.setDirty(false);
-      selectedLinkProperty.resetTargets();
-      selectedLinkProperty.clearFeaturesToKeep();
-      applicationModel.resetCurrentAction();
-      applicationModel.setActiveButtons(false);
-      applicationModel.setContinueButton(false);
-      eventbus.trigger('layer:enableButtons', true);
-      eventbus.trigger('form:showPropertyForm');
-      me.clearLayers();
-      me.refreshView();
-      toggleSelectInteractions(true, true);
-      applicationModel.setSelectionType(SelectionType.All);
-      selectedLinkProperty.clearFeaturesToKeep();
-      greenRoadLayer.getSource().clear();
-      simulatedRoadsLayer.getSource().clear();
-      me.eventListener.listenToOnce(eventbus, 'roadLinks:fetched', function(){
-        applicationModel.removeSpinner();
-        geometryChangedLayer.setVisible(true);
-      });
-    };
-
-    var redrawNextSelectedTarget = function(targets, adjacents) {
-      _.find(roadLayer.layer.getSource().getFeatures(), function(feature) {
-          return targets !== 0 && feature.linkData.linkId === parseInt(targets);
-      }).linkData.gapTransfering = true;
-      var targetFeature = _.find(geometryChangedLayer.getSource().getFeatures(), function(feature) {
-          return targets !== 0 && feature.linkData.linkId === parseInt(targets);
-      });
-      if(_.isUndefined(targetFeature))
-      {
-        targetFeature = _.find(roadLayer.layer.getSource().getFeatures(), function (feature) {
-            return targets !== 0 && feature.linkData.linkId === parseInt(targets);
-        });
-      }
-      reselectRoadLink(targetFeature, adjacents);
-      redraw();
-      reHighlightGreen();
-    };
-
-    var reHighlightGreen = function() {
-      var greenFeaturesLinkId = _.map(greenRoadLayer.getSource().getFeatures(), function(gf){
-          return gf.linkData.linkId;
-      });
-
-      if (greenFeaturesLinkId.length !== 0) {
-        var features =[];
-        _.each(roadLayer.layer.getSource().getFeatures(), function (feature) {
-            if (_.contains(greenFeaturesLinkId, feature.linkData.linkId)) {
-
-                feature.linkData.prevAnomaly = feature.linkData.anomaly;
-                feature.linkData.gapTransfering = true;
-                var greenRoadStyle = roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)});
-            feature.setStyle(greenRoadStyle);
-            features.push(feature);
-          }
-        });
-        greenRoads(features,true);
-        addFeaturesToSelection(features);
       }
     };
 
@@ -1051,210 +707,6 @@
       geometryChangedLayer.setVisible(true);
     });
 
-    me.eventListener.listenTo(eventbus, 'linkProperties:highlightAnomalousByFloating', function(){
-      highlightAnomalousFeaturesByFloating();
-    });
-
-    me.eventListener.listenTo(eventbus, 'linkProperties:highlightSelectedFloatingFeatures', function(){
-      highlightSelectedFloatingFeatures();
-      geometryChangedLayer.setOpacity(1);
-    });
-
-    var highlightAnomalousFeaturesByFloating = function() {
-      var allFeatures = roadLayer.layer.getSource().getFeatures().concat(anomalousMarkerLayer.getSource().getFeatures()).concat(floatingMarkerLayer.getSource().getFeatures());
-      _.each(allFeatures, function(feature){
-          if (feature.linkData.anomaly === Anomaly.NoAddressGiven.value || feature.linkData.anomaly === Anomaly.GeometryChanged.value || feature.linkData.floating === SelectionType.Floating.value)
-          pickRoadsLayer.getSource().addFeature(feature);
-      });
-      pickRoadsLayer.setOpacity(1);
-      setGeneralOpacity(0.2);
-    };
-
-    var highlightSelectedFloatingFeatures = function() {
-      var allFeatures = roadLayer.layer.getSource().getFeatures().concat(anomalousMarkerLayer.getSource().getFeatures()).concat(floatingMarkerLayer.getSource().getFeatures());
-      var selectedFloatingIds = _.pluck(selectedLinkProperty.getFeaturesToKeepFloatings(), 'linkId');
-
-      _.each(allFeatures, function(feature){
-          if (feature.linkData.anomaly === Anomaly.NoAddressGiven.value || (_.contains(selectedFloatingIds, feature.linkData.linkId) && feature.linkData.floating === SelectionType.Floating.value))
-          pickRoadsLayer.getSource().addFeature(feature);
-      });
-      pickRoadsLayer.setOpacity(1);
-      setGeneralOpacity(0.2);
-    };
-
-    me.eventListener.listenTo(eventbus, 'linkProperties:cleanFloatingsAfterDefloat', function(){
-      cleanFloatingsAfterDefloat();
-      cleanUnknownsAfterDefloat();
-    });
-
-    var cleanFloatingsAfterDefloat = function() {
-      var floatingRoadMarker = [];
-      /*
-       * Clean from pickLayer floatings selected
-       */
-      var FeaturesToKeepFloatings = _.reject(_.map(selectedLinkProperty.getFeaturesToKeepFloatings(), function (featureToKeep){
-        if(featureToKeep.floating === SelectionType.Floating.value && featureToKeep.anomaly === Anomaly.None.value) {
-          return featureToKeep.linkId;
-        } else return undefined;
-      }), function(featuresNotToKeep){
-        return _.isUndefined(featuresNotToKeep);
-      });
-
-      var olUids = _.reject(_.map(pickRoadsLayer.getSource().getFeatures(), function(pickFeature){
-          if (_.contains(FeaturesToKeepFloatings, pickFeature.linkData.linkId))
-          return pickFeature.ol_uid;
-        else return undefined;
-      }), function(featuresNotToKeep){
-        return _.isUndefined(featuresNotToKeep);
-      });
-      var PickFeaturesToRemove = _.filter(pickRoadsLayer.getSource().getFeatures(), function (pickFeatureToRemove){
-        return !_.contains(olUids, pickFeatureToRemove.ol_uid);
-      });
-
-      pickRoadsLayer.getSource().clear();
-      pickRoadsLayer.getSource().addFeatures(PickFeaturesToRemove );
-
-      /*
-       * Clean from calibrationPoints layer selected
-       */
-
-      _.map(selectedLinkProperty.getFeaturesToKeepFloatings(), function(featureToKeep){
-        if(featureToKeep.calibrationPoints.length > 0) {
-          _.each(featureToKeep.calibrationPoints, function (cPoint) {
-            var newPoint = new CalibrationPoint({points:cPoint.point, calibrationCode:unknownCalibrationPointValue}).getMarker(true);
-            _.each(calibrationPointLayer.getSource().getFeatures(), function (feature) {
-              if (newPoint.values_.geometry.flatCoordinates[0] === feature.values_.geometry.flatCoordinates[0] &&
-                newPoint.values_.geometry.flatCoordinates[1] === feature.values_.geometry.flatCoordinates[1]) {
-                calibrationPointLayer.getSource().removeFeature(feature);
-              }
-            });
-          });
-        }
-      });
-
-      /*
-       * Clean from roadLayer floatings selected
-       */
-      var olUidsRoadLayer = _.reject(_.map(roadLayer.layer.getSource().getFeatures(), function(featureRoadLayer){
-          if (_.contains(FeaturesToKeepFloatings, featureRoadLayer.linkData.linkId))
-          return featureRoadLayer.ol_uid;
-        else return undefined;
-      }), function(featuresNotToKeep){
-        return _.isUndefined(featuresNotToKeep);
-      });
-      var featuresRoadLayerToKeep = _.filter(roadLayer.layer.getSource().getFeatures(), function (featureRoadLayer){
-        return !_.contains(olUidsRoadLayer, featureRoadLayer.ol_uid);
-      });
-      var featuresRoadLayerToRemove = _.filter(roadLayer.layer.getSource().getFeatures(), function (featureRoadLayer){
-        return _.contains(olUidsRoadLayer, featureRoadLayer.ol_uid);
-      });
-
-      roadLayer.layer.getSource().clear();
-      roadLayer.layer.getSource().addFeatures(featuresRoadLayerToKeep);
-      floatingRoadMarker = floatingRoadMarker.concat(featuresRoadLayerToRemove);
-
-      /*
-       * Clean from floatingMarkerLayer markers from selected floatings
-       */
-      var olUidsFloatingLayer = _.reject(_.map(floatingMarkerLayer.getSource().getFeatures(), function(feature){
-          if (_.contains(FeaturesToKeepFloatings, feature.linkData.linkId))
-          return feature.ol_uid;
-        else return undefined;
-      }), function(featuresNotToKeep){
-        return _.isUndefined(featuresNotToKeep);
-      });
-      var featuresFloatingLayerToKeep = _.filter(floatingMarkerLayer.getSource().getFeatures(), function (featureFloatMarker){
-        return !_.contains(olUidsFloatingLayer, featureFloatMarker.ol_uid);
-      });
-
-      var featuresFloatingLayerToRemove = _.filter(floatingMarkerLayer.getSource().getFeatures(), function (featureFloatMarker){
-        return _.contains(olUidsFloatingLayer, featureFloatMarker.ol_uid);
-      });
-
-      floatingMarkerLayer.getSource().clear();
-      floatingMarkerLayer.getSource().addFeatures(featuresFloatingLayerToKeep);
-      floatingRoadMarker = floatingRoadMarker.concat(featuresFloatingLayerToRemove);
-      /*
-       * Add to FloatingRoadMarker to keep in the case of clicking cancel (peruuta).
-       */
-      selectedLinkProperty.setFloatingRoadMarker(floatingRoadMarker);
-      geometryChangedLayer.setVisible(false);
-    };
-
-    var cleanUnknownsAfterDefloat = function(){
-      var unknownRoadMarkers =[];
-
-      var unknownFeaturesToKeep = _.reject(_.map(selectedLinkProperty.getFeaturesToKeepUnknown(), function(feature){
-        if(feature.anomaly === Anomaly.NoAddressGiven.value){
-          return feature.linkId;
-        } else return undefined;
-      }), function(featureNotToKeep){
-        return _.isUndefined(featureNotToKeep);
-      });
-
-      //Clean from anomalousMarkerLayer
-
-      var olUidsAnomalousMarkerLayer = _.reject(_.map(anomalousMarkerLayer.getSource().getFeatures(),function(anomalousMarkerLayerFeature){
-          if (_.contains(unknownFeaturesToKeep, anomalousMarkerLayerFeature.linkData.linkId)) {
-          return anomalousMarkerLayerFeature.ol_uid;
-        } else return undefined;
-      }), function(featuresNotToKeep){
-        return _.isUndefined(featuresNotToKeep);
-      });
-
-      var anomalousMarkerLayerFeaturesToKeep = _.filter(anomalousMarkerLayer.getSource().getFeatures(), function(pf){
-        return !_.contains(olUidsAnomalousMarkerLayer, pf.ol_uid);
-      });
-
-      var anomalousMarkerLayerFeaturesToRemove = _.filter(anomalousMarkerLayer.getSource().getFeatures(), function(pf){
-        return _.contains(olUidsAnomalousMarkerLayer, pf.ol_uid);
-      });
-      anomalousMarkerLayer.getSource().clear();
-      anomalousMarkerLayer.getSource().addFeatures(anomalousMarkerLayerFeaturesToKeep);
-      unknownRoadMarkers = unknownRoadMarkers.concat(anomalousMarkerLayerFeaturesToRemove);
-      selectedLinkProperty.setAnomalousMarkers(unknownRoadMarkers);
-    };
-
-    me.eventListener.listenTo(eventbus, 'linkProperties:floatingRoadMarkerPreviousSelected', function(){
-      addSelectedFloatings();
-      addSelectedUnknowns();
-    });
-
-    var addSelectedFloatings = function() {
-      var floatingRoadMarker = selectedLinkProperty.getFloatingRoadMarker();
-      var floatingRoad = [];
-      var floatingMarker = [];
-      _.each(floatingRoadMarker, function(floating){
-        if (floating.getGeometry().getType() === 'LineString') {
-          floatingRoad.push(floating);
-        } else {
-          floatingMarker.push(floating);
-        }
-      });
-
-      _.each(floatingMarker, function(marker){
-        floatingMarkerLayer.getSource().addFeature(marker);
-      });
-
-      _.each(floatingRoad, function(road){
-        roadLayer.layer.getSource().addFeature(road);
-      });
-    };
-
-    var addSelectedUnknowns = function(){
-      var anomalousRoadMarker = selectedLinkProperty.getAnomalousMarkers();
-      var anomalousMarker = [];
-      _.each(anomalousRoadMarker, function(anomalous){
-        if(anomalous.getGeometry().getType() !== 'LineString'){
-          anomalousMarker.push(anomalous);
-        }
-      });
-
-      _.each(anomalousMarker, function(marker){
-        anomalousMarkerLayer.getSource().addFeature(marker);
-      });
-    };
-
     me.eventListener.listenTo(eventbus, 'linkProperty:fetch', function() {
       map.getView().setZoom(Math.round(zoomlevels.getViewZoom(map)));
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','),zoomlevels.getViewZoom(map) + 1);
@@ -1296,28 +748,10 @@
       if(indicatorLayer.getSource().getFeatures().length !== 0){
         indicatorLayer.getSource().clear();
       }
-      if (applicationModel.selectionTypeIs(SelectionType.Floating)) {
-        setGeneralOpacity(0.2);
-        floatingMarkerLayer.setOpacity(1);
-      } else if (applicationModel.selectionTypeIs(SelectionType.Unknown)) {
+      if (applicationModel.selectionTypeIs(SelectionType.Unknown)) {
         setGeneralOpacity(0.2);
         anomalousMarkerLayer.setOpacity(1);
       }
-    });
-
-    me.eventListener.listenTo(eventbus, 'linkProperties:clearHighlights', function(){
-      unselectRoadLink();
-      geometryChangedLayer.setVisible(false);
-      if(pickRoadsLayer.getSource().getFeatures().length !== 0){
-        pickRoadsLayer.getSource().clear();
-      }
-      clearHighlights();
-      if(simulatedRoadsLayer.getSource().getFeatures().length !== 0){
-        simulatedRoadsLayer.getSource().clear();
-      }
-      var featureToReOpen = _.cloneDeep(_.first(selectedLinkProperty.getFeaturesToKeepFloatings()));
-      var visibleFeatures = getVisibleFeatures(true,true,true);
-      selectedLinkProperty.openFloating(featureToReOpen, false, visibleFeatures);
     });
 
     me.eventListener.listenTo(eventbus, 'linkProperties:deactivateDoubleClick', function(){

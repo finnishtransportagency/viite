@@ -13,11 +13,6 @@
           '<label><input type="checkbox" name="propertyBoundariesVisible" value="propertyBoundariesVisible"  id="propertyBoundariesVisibleCheckbox">Näytä kiinteistörajat</label>' +
         '</div>' +
       '</div>' +
-      '<div class="suravage-visible-wrapper">' +
-        '<div class="checkbox">' +
-          '<label><input type="checkbox" name="suravageVisible" value="suravageVisible" checked="true" id="suravageVisibleCheckbox">Näytä Suravage-Linkit</label>' +
-        '</div>' +
-      '</div>' +
         '<div class="roads-visible-wrapper">' +
         '<div class="checkbox">' +
         '<label><input type="checkbox" name="roadsVisible" value="roadsVisible" checked="true" id="roadsVisibleCheckbox">Näytä tieosoiteverkko</label>' +
@@ -34,11 +29,6 @@
     });
     $('#propertyBoundariesVisibleCheckbox').change(function () {
       eventbus.trigger('tileMap:togglepropertyBorder', this.checked);
-    });
-
-    $('#suravageVisibleCheckbox').change(function() {
-      eventbus.trigger('suravageRoads:toggleVisibility', this.checked);
-      eventbus.trigger("suravageProjectRoads:toggleVisibility", this.checked);
     });
     $('#roadsVisibleCheckbox').change(function () {
       applicationModel.toggleRoadVisibility();

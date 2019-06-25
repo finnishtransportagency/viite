@@ -38,7 +38,6 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def roadwayId: Long
   def connectedLinkId: Option[Long]
   def partitioningName: String
-  def isSplit: Boolean
   def originalGeometry: Option[Seq[Point]]
   def roadwayNumber: Long
 }
@@ -57,10 +56,6 @@ case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
       s"$roadNumber/$roadPartNumber/$trackCode"
     else
       VVHRoadName.getOrElse("")
-  }
-
-  override def isSplit: Boolean = {
-    connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
   }
 
   val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()

@@ -20,7 +20,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
-import fi.liikennevirasto.viite.util.{SplitOptions, StaticTestData, _}
+import fi.liikennevirasto.viite.util._
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.scalatest.mockito.MockitoSugar
@@ -233,7 +233,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val roadAddressProject = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("2017-01-01"), DateTime.now(), "Some additional info", Seq(), Seq(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(saved.id, roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 206).map(_.roadwayNumber).toSet)).map(toProjectLink(saved)))
-      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
       projectService.saveProject(saved.copy(reservedParts = addresses))
       val countAfterInsertProjects = projectService.getAllProjects
       count = countCurrentProjects.size + 1
@@ -264,7 +263,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         "TestUser", DateTime.parse("1962-11-02"), DateTime.now(), "Some additional info", Seq(), Seq(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       mockForProject(saved.id, roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 207).map(_.roadwayNumber).toSet)).map(toProjectLink(saved)))
-      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
       projectService.saveProject(saved.copy(reservedParts = addresses))
       val countAfterInsertProjects = projectService.getAllProjects
       count = countCurrentProjects.size + 1
@@ -280,28 +278,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       afterNumberingLinks.foreach(l => (l.roadNumber == 99999 && l.roadPartNumber == 1) should be(true))
     }
 
-  }
-
-  private def checkSplit(projectLinks: Seq[ProjectLink], splitMValue: Double, startAddrMValue: Long,
-                         splitAddrMValue: Long, endAddrMValue: Long, survageEndMValue: Double) = {
-    projectLinks.count(x => x.connectedLinkId.isDefined) should be(3)
-    val unchangedLink = projectLinks.filter(x => x.status == LinkStatus.UnChanged || x.status == LinkStatus.Transfer).head
-    val newLink = projectLinks.filter(x => x.status == LinkStatus.New).head
-    val templateLink = projectLinks.filter(x => x.linkGeomSource != LinkGeomSource.SuravageLinkInterface).head
-    newLink.connectedLinkId should be(Some(templateLink.linkId))
-    unchangedLink.connectedLinkId should be(Some(templateLink.linkId))
-    templateLink.connectedLinkId should be(Some(newLink.linkId))
-    newLink.startMValue should be(splitMValue)
-    newLink.startAddrMValue should be(splitAddrMValue)
-    newLink.endAddrMValue should be > splitAddrMValue
-    newLink.endMValue should be(survageEndMValue)
-    unchangedLink.startMValue should be(0)
-    unchangedLink.startAddrMValue should be(startAddrMValue)
-    unchangedLink.endAddrMValue should be(splitAddrMValue)
-    unchangedLink.endMValue should be(splitMValue)
-    templateLink.status should be(LinkStatus.Terminated)
-    templateLink.startAddrMValue should be(newLink.startAddrMValue)
-    templateLink.roadwayId should be(newLink.roadwayId)
   }
 
   test("Test projectService.addNewLinksToProject() When adding a nonexistent roadlink to project Then when querying for it it should return that one project link was entered.") {
@@ -473,7 +449,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val links = (address1 ++ address2).map(address => {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
       })
-      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(links.map(toRoadLink))
       val project = projectService.createRoadLinkProject(rap)
@@ -518,7 +493,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val links = (address1 ++ address2).map(address => {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
       })
-      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(links.map(toRoadLink))
       val project = projectService.createRoadLinkProject(rap)
@@ -546,7 +520,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val reservedRoadPart = ProjectReservedPart(addresses.head.id, addresses.head.roadNumber, addresses.head.roadPartNumber,
         Some(addresses.last.endAddrMValue), Some(addresses.head.discontinuity), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
       val rap = Project(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(), Seq(), None, None)
-      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
       val project = projectService.createRoadLinkProject(rap)
       mockForProject(project.id, addresses.map(toProjectLink(project)))
       projectService.saveProject(project.copy(reservedParts = Seq(reservedRoadPart)))
@@ -627,32 +600,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-
-  //TODO Will be implemented with SPLIT
-  //  test("Splitting link test") {
-  //    runWithRollback {
-  //      val roadLink = RoadLink(1, Seq(Point(0, 0), Point(0, 45.3), Point(0, 87))
-  //        , 87.0, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"),
-  //        Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-  //        InUse, NormalLinkInterface)
-  //      val suravageAddressLink = RoadLink(2, Seq(Point(0, 0), Point(0, 45.3), Point(0, 123)), 123,
-  //        State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"),
-  //        Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-  //        InUse, LinkGeomSource.SuravageLinkInterface)
-  //      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
-  //      when(mockRoadLinkService.getRoadLinksAndComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))
-  //      when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long])).thenReturn(Some(roadLink))
-  //      val rap = createProjectDataForSplit()
-  //      val options = SplitOptions(Point(0, 45.3), LinkStatus.UnChanged, LinkStatus.New, 1, 1, Track.Combined, Discontinuity.Continuous,
-  //        1, LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, rap.id, ProjectCoordinates(0,0,0))
-  //      val errorOpt = projectServiceWithRoadAddressMock.splitSuravageLinkInTX(suravageAddressLink.linkId, "testUser", options)
-  //      errorOpt should be(None)
-  //      val projectLinks = ProjectDAO.getProjectLinks(rap.id)
-  //      checkSplit(projectLinks, 45.3, 0, 45, 87, 123.0)
-  //    }
-  //  }
-
-
   //TODO this will be implemented at VIITE-1541
   //  test("Reserve road part, renumber it and revert it; reservation should be freed") {
   //    runWithRollback {
@@ -687,7 +634,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   //      val mockRoadLinks = createdRoadAddresses.map(ra => {
   //        addressToRoadLink(ra)
   //      })
-  //      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(mockRoadLinks)
+  //      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(mockRoadLinks)
   //      projectService.revertLinks(renumberedLinks, "user") should be(None)
   //
   //      val revertedProject = projectService.getRoadAddressSingleProject(project.id)
@@ -1250,71 +1197,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   //    runWithRollback {
   //      projectService.getRoadAddressAllProjects
   //    } should have size (count - 1)
-  //  }
-
-  //TODO Will be implemented with SPLIT
-  //  test("Split and revert links") {
-  //    runWithRollback {
-  //      val roadLink = RoadLink(1, Seq(Point(0, 0), Point(0, 45.3), Point(0, 87))
-  //        , 87.0, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"),
-  //        Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-  //        InUse, NormalLinkInterface)
-  //      val suravageAddressLink = RoadLink(2, Seq(Point(0, 0), Point(0, 45.3), Point(0, 123)), 123,
-  //        State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"),
-  //        Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-  //        InUse, LinkGeomSource.SuravageLinkInterface)
-  //      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
-  //      when(mockRoadLinkService.getRoadLinksAndComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))
-  //      when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn((Seq(roadLink), Seq()))
-  //      when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long])).thenReturn(Some(roadLink))
-  //      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink, suravageAddressLink))
-  //      val rap = createProjectDataForSplit()
-  //      val options = SplitOptions(Point(0, 25.3), LinkStatus.UnChanged, LinkStatus.New, 1, 1, Track.Combined, Discontinuity.Continuous,
-  //        1, LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, rap.id, ProjectCoordinates(0,0,0))
-  //      val errorOpt = projectServiceWithRoadAddressMock.splitSuravageLinkInTX(suravageAddressLink.linkId, "testUser", options)
-  //      errorOpt should be(None)
-  //      val projectLinks = ProjectDAO.getProjectLinks(rap.id)
-  //      checkSplit(projectLinks, 25.3, 0, 25, 87, 123.0)
-  //      val options2 = SplitOptions(Point(0, 65.3), LinkStatus.Transfer, LinkStatus.New, 1, 1, Track.Combined,
-  //        Discontinuity.Continuous, 1, LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, rap.id, ProjectCoordinates(0,0,0))
-  //      val preSplitData = projectServiceWithRoadAddressMock.preSplitSuravageLinkInTX(suravageAddressLink.linkId, "testUser", options2)._1.map(rs => rs.toSeqWithMergeTerminated).getOrElse(Seq())
-  //      preSplitData should have size (3)
-  //      // Test that the transfer is not returned back in pre-split for already split suravage but the old values are
-  //      preSplitData.exists(_.status == Transfer) should be (false)
-  //      projectServiceWithRoadAddressMock.revertSplit(rap.id, 1, "user") should be (None)
-  //      ProjectDAO.getProjectLinks(rap.id) should have size (1)
-  //    }
-  //  }
-
-  //TODO Will be implemented with SPLIT
-  //  test("Updating split link test") {
-  //    runWithRollback {
-  //      val roadLink = RoadLink(1, Seq(Point(0, 0), Point(0, 45.3), Point(0, 87))
-  //        , 87.0, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"),
-  //        Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-  //        InUse, NormalLinkInterface)
-  //      val suravageAddressLink = RoadLink(2, Seq(Point(0, 0), Point(0, 45.3), Point(0, 123)), 123,
-  //        State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"),
-  //        Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-  //        InUse, LinkGeomSource.SuravageLinkInterface)
-  //      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
-  //      when(mockRoadLinkService.getRoadLinksAndComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))
-  //      when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn((Seq(roadLink), Seq()))
-  //      when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long])).thenReturn(Some(roadLink))
-  //      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink, suravageAddressLink))
-  //      val rap = createProjectDataForSplit()
-  //      val options = SplitOptions(Point(0, 25.3), LinkStatus.UnChanged, LinkStatus.New, 1, 1, Track.Combined, Discontinuity.Continuous,
-  //        1, LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, rap.id, ProjectCoordinates(0,0,0))
-  //      val errorOpt = projectServiceWithRoadAddressMock.splitSuravageLinkInTX(suravageAddressLink.linkId, "testUser", options)
-  //      errorOpt should be(None)
-  //      val projectLinks = ProjectDAO.getProjectLinks(rap.id)
-  //      checkSplit(projectLinks, 25.3, 0, 25, 87, 123.0)
-  //      val options2 = SplitOptions(Point(0, 45.3), LinkStatus.UnChanged, LinkStatus.New, 1, 1, Track.Combined,
-  //        Discontinuity.Continuous, 1, LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad, rap.id, ProjectCoordinates(0,0,0))
-  //      projectServiceWithRoadAddressMock.splitSuravageLinkInTX(suravageAddressLink.linkId, "testUser", options2) should be (None)
-  //      checkSplit(ProjectDAO.getProjectLinks(rap.id), 45.3, 0, 45, 87, 123.0)
-  //      ProjectDAO.getProjectLinks(rap.id).exists(_.status == LinkStatus.Transfer) should be (false)
-  //    }
   //  }
 
   test("Test projectService.updateProjectLinks() When the project link to update already has a calibration point associated with it Then no user defined calibration points should be created.") {

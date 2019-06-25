@@ -54,7 +54,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         $('[id^=aosa]').val('4').trigger("change");
         $('[id^=losa]').val('4').trigger("change");
         eventbus.on('roadPartsValidation:checkRoadParts', function(validationResult){
-          if(validationResult.success == "ok"){
+          if(validationResult.success === "ok"){
             $('#reservedRoadLength').text('50');
             $('#reservedDiscontinuity').text('5');
             $('#reservedEly').text('1');

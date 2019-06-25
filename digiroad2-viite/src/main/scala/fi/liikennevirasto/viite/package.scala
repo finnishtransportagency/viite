@@ -45,17 +45,12 @@ package object viite {
   val MaxJumpForSection = 50.0
   /* Maximum distance to consider the tracks to go side by side */
   val MaxDistanceBetweenTracks = 50
-  /* Maximum distance of regular road link geometry to suravage geometry difference where splitting is allowed */
-  val MaxSuravageToleranceToGeometry = 0.5
+
   val MaxRoadNumberDemandingRoadName = 70000
 
   val MaxAllowedNodes = 50
 
-  //TODO: remove after Suravage change following messages (4):
-  val ErrorNoMatchingProjectLinkForSplit = "Suravage-linkkiä vastaavaa käsittelemätöntä tieosoitelinkkiä ei löytynyt projektista."
-  val ErrorSuravageLinkNotFound = "Suravage-linkkiä ei löytynyt."
   val ErrorRoadLinkNotFound = "Tielinkkiä ei löytynyt."
-  val ErrorSplitSuravageNotUpdatable = "Valitut linkit sisältävät jaetun Suravage-linkin eikä sitä voi päivittää."
   val ErrorRoadAlreadyExistsOrInUse = "Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot."
   val ErrorFollowingRoadPartsNotFoundInDB = "Projektiin yritettiin varata tieosia joita ei ole olemassa, tarkista tieosoitteet:"
   val ErrorRoadLinkNotFoundInProject = "Tielinkkiä ei löytynyt projektista. Tekninen virhe, ota yhteys pääkäyttäjään."
@@ -269,7 +264,7 @@ package object viite {
   val cutLineExtractorStructure = "" +
     "|  Field Name  | Field Type |         Description        |                   Notes                   |\n" +
     "|:------------:|:----------:|:--------------------------:|:-----------------------------------------:|\n" +
-    "|    linkId    |    Long    |  LinkId of a project link. | It should be a linkId of a Suravage link. |\n" +
+    "|    linkId    |    Long    |  LinkId of a project link. |      It should be a linkId of a link.     |\n" +
     "| splitedPoint |    Point   | Point of the actual split. |        Simple 3 dimensional point.        |"
 
 

@@ -4,7 +4,7 @@
 .content-box {
 	border-radius: @border-radius-base;
 	background-color: @gray-lighter;
-	box-shadow: 0px 2px 1px 0px rgba(red(@gray-darkest), green(@gray-darkest), blue(@gray-darkest), .25);
+	box-shadow: 0 2px 1px 0 rgba(red(@gray-darkest), green(@gray-darkest), blue(@gray-darkest), .25);
 
 	header {
 	    padding: @line-height-modifier * 2;
@@ -23,8 +23,7 @@
 
 //## Separate styles if the box is holding a form
 .form-box {
-	.form-group,
-	.split-form-group {
+	.form-group {
 		margin-bottom: 0;
 		padding: @line-height-modifier * 2;
 		border-bottom: 1px solid @gray-light-2;
@@ -46,8 +45,7 @@
 			.box-sizing(border-box);
 		}
 
-		.form-control,
-		.split-form-control {
+		.form-control {
 			width: 75%;
 		}
 
@@ -59,8 +57,7 @@
 	}
 
 	.form-dark {
-		.form-group,
-		.split-form-group {
+		.form-group {
 			border-color: @gray-darker-2;
 		}
 	}

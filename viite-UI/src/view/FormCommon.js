@@ -292,7 +292,7 @@
         return error.coordinates;
       }
       var linkCoords = _.find(links, function (link) {
-        return link.linkId == error.linkIds[0];
+        return link.linkId === error.linkIds[0];
       });
       if (!_.isUndefined(linkCoords)){
         return linkCoords.points[0];

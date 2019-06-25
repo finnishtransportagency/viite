@@ -232,10 +232,9 @@
     var geom1LastPoint = _.last(geometry1);
     var geom2FirstPoint = _.first(geometry2);
     var geom2LastPoint = _.last(geometry2);
-    var connectedEndPoint = _.find([geom1FirstPoint, geom1LastPoint], function (point) {
+    return _.find([geom1FirstPoint, geom1LastPoint], function (point) {
       return arePointsAdjacent(point, geom2FirstPoint) || arePointsAdjacent(point, geom2LastPoint);
     });
-    return connectedEndPoint;
   };
 
   root.geometryLength = function (geometry) {

@@ -122,7 +122,6 @@
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
-    new SplitForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
 
     var layers = _.merge({
       road: roadLayer,

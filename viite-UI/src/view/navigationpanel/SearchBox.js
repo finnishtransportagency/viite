@@ -47,7 +47,7 @@
       };
 
       coordinatesText.keypress(function(event) {
-        if (event.keyCode == 13) {
+        if (event.keyCode === 13) {
           moveToLocation();
         }
       });

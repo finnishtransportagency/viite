@@ -2,8 +2,6 @@
   root.RoadLinkBox = function(selectedProjectLinkProperty) {
     var className = 'road-link';
     var title = 'Selite';
-    var selectToolIcon = '<img src="images/select-tool.svg"/>';
-    var cutToolIcon = '<img src="images/cut-tool.svg"/>';
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
@@ -135,8 +133,6 @@
         '<div class="legend-entry">' +
         '<div class="label">Käsittelemätön</div>' +
         '<div class="symbol linear operation-type-unhandeled" />' +
-        '<div class="label">Suravage-linkit</div>' +
-        '<div class="symbol linear operation-type-suravage" />' +
         '<div class="label">Muu tieverkko, rakenteilla</div>' +
         '<div class="symbol linear construction-type-0" />' +
         '</div>';
@@ -198,7 +194,7 @@
       };
       eventbus.on('tool:changed', function(name) {
         _.each(tools, function(tool) {
-          if (tool.name != name) {
+          if (tool.name !== name) {
             tool.deactivate();
           } else {
             tool.activate();
@@ -216,15 +212,6 @@
       };
     };
 
-    var toolSelection = new ToolSelection([
-      new Tool('Select', selectToolIcon),
-      new Tool('Cut', cutToolIcon)
-    ]);
-
-    var editModeToggle = new EditModeToggleButton(
-      toolSelection
-    );
-
     var templateAttributes = {
       className: className,
       title: title
@@ -237,25 +224,10 @@
     var bindExternalEventHandlers = function() {
       eventbus.on('userData:fetched', function (userData) {
         if (_.contains(userData.roles, 'viite')) {
-          elements.expanded.append(editModeToggle.element);
           $('#projectListButton').removeAttr('style');
         }
       });
     };
-
-    eventbus.on('editMode:setReadOnly', function(mode) {
-      editModeToggle.toggleEditMode(mode);
-      elements.expanded.append(toolSelection.element);
-    });
-
-    eventbus.on('application:readOnly', function() {
-      if(applicationModel.getSelectedLayer() != "linkProperty")
-      elements.expanded.append(toolSelection.element);
-    });
-
-    eventbus.on('roadAddressProject:clearTool', function(){
-      toolSelection.hide();
-    });
 
     eventbus.on('layer:selected', toggleLegends);
 
@@ -273,7 +245,6 @@
     var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
 
     function show() {
-      editModeToggle.toggleEditMode(applicationModel.isReadOnly());
       element.show();
     }
 

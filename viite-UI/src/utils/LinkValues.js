@@ -20,7 +20,6 @@
     root.LinkGeomSource = {
         NormalLinkInterface:        {value: 1,  descriptionFI: "MML",            description: "NormalLinkInterface"},
         ComplimentaryLinkInterface: {value: 2,  descriptionFI: "Täydentävä",     description: "ComplimentaryLinkInterface"},
-        SuravageLinkInterface:      {value: 3,  descriptionFI: "Suravage",       description: "SuravageLinkInterface"},
         FrozenLinkInterface:        {value: 4,  descriptionFI: "MML jäädytetty", description: "FrozenLinkInterface"},
         HistoryLinkInterface:       {value: 5,  descriptionFI: "MML historia",   description: "HistoryLinkInterface"},
         Unknown:                    {value: 99, descriptionFI: "Tuntematon",     description: "Unknown"}
@@ -101,7 +100,6 @@
 
     root.RoadZIndex = {
         VectorLayer:                {value: 1},
-        SuravageLayer:              {value: 4},
         AnomalousMarkerLayer:       {value: 2},
         CalibrationPointLayer:      {value: 3},
         GeometryChangedLayer:       {value: 5},
@@ -135,8 +133,7 @@
         UnknownRoadLinkType:        {value: 0, description: "UnknownRoadLinkType"},
         NormalRoadLinkType:         {value: 1, description: "NormalRoadLinkType"},
         ComplementaryRoadLinkType:  {value: 3, description: "ComplementaryRoadLinkType"},
-        FloatingRoadLinkType:       {value: -1, description: "FloatingRoadLinkType"},
-        SuravageRoadLink:           {value: 4, description: "SuravageRoadLink"}
+        FloatingRoadLinkType:       {value: -1, description: "FloatingRoadLinkType"}
     };
 
     root.RoadNameSource = {

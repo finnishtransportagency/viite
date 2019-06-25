@@ -37,55 +37,23 @@ object ProjectDeltaCalculator {
     Delta(project.startDate, newCreations, terminations, unChanged, transferred, numbering)
   }
 
-  private def adjustIfSplit(pl: ProjectLink, ra: Option[RoadAddress], connectedLink: Option[ProjectLink] = None): Option[RoadAddress] = {
-    // Test if this link was a split case: if not, return original address, otherwise return a copy that is adjusted
-    if (!pl.isSplit) {
-      ra
-    } else {
-      ra.map(address => {
-        val geom = GeometryUtils.truncateGeometry2D(address.geometry, pl.startMValue, pl.endMValue)
-        pl.status match {
-          case Transfer =>
-            val termAddress = connectedLink.map(l => (l.startAddrMValue, l.endAddrMValue))
-            termAddress.map { case (start, end) =>
-              address.copy(startAddrMValue = if (start == address.startAddrMValue) end else address.startAddrMValue,
-                endAddrMValue = if (end == address.endAddrMValue) start else address.endAddrMValue,
-                startMValue = pl.startMValue,
-                endMValue = pl.endMValue,
-                geometry = geom)
-            }.getOrElse(address)
-          case Terminated =>
-            address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue,
-              endMValue = pl.endMValue, geometry = geom)
-          case UnChanged =>
-            address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue,
-              endMValue = pl.endMValue, geometry = geom)
-          case _ =>
-            address
-        }
-      })
-    }
-  }
-
   private def findTerminations(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]): Seq[(RoadAddress, ProjectLink)] = {
     val terminations = projectLinks.filter(_.status == LinkStatus.Terminated)
     terminations.map(pl =>
-        adjustIfSplit(pl, currentAddresses.get(pl.linearLocationId)).get -> pl
+        currentAddresses(pl.linearLocationId) -> pl
     )
   }
 
   private def findUnChanged(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]): Seq[(RoadAddress, ProjectLink)] = {
     projectLinks.filter(_.status == LinkStatus.UnChanged).map(pl =>
-      adjustIfSplit(pl, currentAddresses.get(pl.linearLocationId)).get -> pl)
+      currentAddresses(pl.linearLocationId) -> pl
+    )
   }
 
   private def findTransfers(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]): Seq[(RoadAddress, ProjectLink)] = {
-    val (split, nonSplit) = projectLinks.filter(_.status == LinkStatus.Transfer).partition(_.isSplit)
-    split.map(pl =>
-      adjustIfSplit(pl, currentAddresses.get(pl.linearLocationId),
-        projectLinks.sortBy(_.endAddrMValue).reverse.find(_.linkId == pl.connectedLinkId.get)).get -> pl) ++
-      nonSplit.map(pl =>
-        adjustIfSplit(pl, currentAddresses.get(pl.linearLocationId)).get -> pl)
+    val transferredLinks = projectLinks.filter(_.status == LinkStatus.Transfer)
+    transferredLinks.map(pl =>
+        currentAddresses(pl.linearLocationId) -> pl)
   }
 
   private def findNumbering(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]): Seq[(RoadAddress, ProjectLink)] = {

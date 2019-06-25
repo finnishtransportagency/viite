@@ -75,8 +75,6 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
 
-  lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
-
   def oppositeEndPoint(point: Point) : Point = {
     if (GeometryUtils.areAdjacent(point, geometry.head)) geometry.last else geometry.head
   }
@@ -97,10 +95,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
 
   def addrMLength(): Long = {
-    if (isSplit)
-      endAddrMValue - startAddrMValue
-    else
-      roadAddressLength.getOrElse(endAddrMValue - startAddrMValue)
+    roadAddressLength.getOrElse(endAddrMValue - startAddrMValue)
   }
 
   def getFirstPoint: Point = {
@@ -375,7 +370,7 @@ class ProjectLinkDAO {
         val nonUpdatingStatus = Set[LinkStatus](NotHandled)
         val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
         val links = projectLinks.map { pl =>
-          if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
+          if (nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
             val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
             // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
             pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
@@ -825,13 +820,6 @@ class ProjectLinkDAO {
       removeProjectLinks(projectId, None, None, linkIds)
     else
       0
-  }
-
-  def fetchSplitLinks(projectId: Long, linkId: Long): Seq[ProjectLink] = {
-    val query =
-      s"""$projectLinkQueryBase
-                where PROJECT_LINK.PROJECT_ID = $projectId AND (PROJECT_LINK.LINK_ID = $linkId OR PROJECT_LINK.CONNECTED_LINK_ID = $linkId)"""
-    listQuery(query)
   }
 
   implicit val getDiscontinuity: GetResult[Option[Discontinuity]] = new GetResult[Option[Discontinuity]] {

@@ -25,22 +25,19 @@
         mod = '';
       else
         mod = 'disabled hidden';
-      if (currentStatus == targetStatus.value)
+      if (currentStatus === targetStatus.value)
         return mod + ' selected';
       else
         return mod;
     };
 
     var defineOptionModifiers = function(option, selection) {
-      var isSplitMode = selection.length === 2 && selection[0].linkId === selection[1].linkId && applicationModel.getSelectedTool() === 'Cut';
       var linkStatus = selection[0].status;
       var targetLinkStatus = _.find(LinkStatus, function (ls) {
         return ls.description === option || (option === '' && ls.value === 99);
       });
-      if (isSplitMode)
-        console.log("NOT A SPLIT FORM!");
-      else
-        return transitionModifiers(targetLinkStatus, linkStatus);
+
+      return transitionModifiers(targetLinkStatus, linkStatus);
     };
 
     var selectedProjectLinkTemplate = function(project, selected, errorMessage) {
@@ -227,7 +224,6 @@
     var disableFormInputs = function () {
       if (!isProjectEditable()) {
         $('#roadAddressProjectForm select').prop('disabled',true);
-        $('#roadAddressProjectFormCut select').prop('disabled',true);
         $('.update').prop('disabled', true);
         $('.btn-edit-project').prop('disabled', true);
         if (projectCollection.getCurrentProject().project.statusCode === ProjectStatus.SendingToTR.value) {
@@ -385,7 +381,7 @@
       var saveChanges = function() {
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
         var isValidEly = _.find(ValidElys, function(ely){
-          return ely.value == $('#ely')[0].value;
+          return ely.value === $('#ely')[0].value;
         });
         if(!isValidEly){
           return new ModalConfirm("Tarkista antamasi ELY-koodi. Annettu arvo on virheellinen.");
@@ -450,7 +446,7 @@
         $('#trackCodeDropdown').prop('disabled',false);
         $('#discontinuityDropdown').prop('disabled',false);
         $('#roadTypeDropdown').prop('disabled',false);
-        if(this.value == LinkStatus.Terminated.description) {
+        if(this.value === LinkStatus.Terminated.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
@@ -466,7 +462,7 @@
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
-        else if (this.value == LinkStatus.New.description) {
+        else if (this.value === LinkStatus.New.description) {
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -485,7 +481,7 @@
             rootElement.find('#distanceValue').prop("hidden", false);
           }
         }
-        else if (this.value == LinkStatus.Unchanged.description) {
+        else if (this.value === LinkStatus.Unchanged.description) {
           rootElement.find('.new-road-address').prop("hidden", false);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           $('#tie').prop('disabled',true);
@@ -505,7 +501,7 @@
           }));
           projectCollection.setTmpDirty(projectCollection.getDirty());
         }
-        else if (this.value == LinkStatus.Transfer.description) {
+        else if (this.value === LinkStatus.Transfer.description) {
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -520,7 +516,7 @@
           rootElement.find('.new-road-address').prop("hidden", false);
           canChangeDirection();
         }
-        else if (this.value == LinkStatus.Numbering.description) {
+        else if (this.value === LinkStatus.Numbering.description) {
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
@@ -540,7 +536,7 @@
           rootElement.find('.project-form button.update').prop("disabled", false);
           canChangeDirection();
         }
-        else if (this.value == LinkStatus.Revert.description) {
+        else if (this.value === LinkStatus.Revert.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           rootElement.find('.project-form button.update').prop("disabled", false);

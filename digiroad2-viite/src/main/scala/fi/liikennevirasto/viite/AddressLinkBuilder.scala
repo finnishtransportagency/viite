@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
@@ -48,7 +48,7 @@ trait AddressLinkBuilder {
     }
   }
 
-  def getLinkType(roadLink: VVHRoadlink): LinkType ={  //similar logic used in roadLinkService
+  def getLinkType(roadLink: VVHRoadLink): LinkType ={  //similar logic used in roadLinkService
     roadLink.featureClass match {
       case FeatureClass.TractorRoad => TractorRoad
       case FeatureClass.DrivePath => SingleCarriageway

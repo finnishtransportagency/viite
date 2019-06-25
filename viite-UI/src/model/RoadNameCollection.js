@@ -11,7 +11,7 @@
 
         var findCurrentRoadName = function (id) {
             var roadName = _.find(currentRoadNameData, function (roadData) {
-                return roadData.id == id;
+                return roadData.id === id;
             });
             roadName = roadName ? roadName : newRoadName;
             changedIds.push(roadName.id);
@@ -24,7 +24,7 @@
             backend.getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
                 currentRoadNumber = roadNumber;
                 var sortedRoadData = _.chain(roadData.roadNameInfo).filter(function (rd) {
-                    return rd.roadNumber == roadNumber;
+                    return rd.roadNumber === roadNumber;
                 }).map(function (road) {
                     var roadCopy = road;
                     if (road.endDate)
@@ -34,7 +34,6 @@
                     return roadCopy;
                 }).sortBy('startDate').value();
                 currentRoadNameData = sortedRoadData;
-                var lastRoadName = _.last(sortedRoadData);
                 eventbus.trigger("roadNameTool:roadsFetched", sortedRoadData);
             });
         };
@@ -66,7 +65,7 @@
         this.undoNewRoadName = function () {
             newRoadName = {id: newId};
             changedIds = _.filter(changedIds, function (id) {
-                return id != newId;
+                return id !== newId;
             });
         };
 

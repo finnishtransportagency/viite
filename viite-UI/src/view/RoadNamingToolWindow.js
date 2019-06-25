@@ -43,11 +43,11 @@
             var leftMargin = (writable ? "margin-left: 8px;" : "");
             if ((fieldName === "startDate" || fieldName === "endDate") && writable) {
                 field = '<div id="datePicker" value="' + dataField + '" data-roadId="' + roadId + '" data-FieldName="' + fieldName + '">' +
-                    '<input id="datePickerInput" class="' + inputClass + ' date-picker-input" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%">' +
+                    '<input id="datePickerInput" class="' + inputClass + ' date-picker-input" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0; ' + leftMargin + ' width: 85%">' +
                     '</div>';
             } else {
                 field = '<div>' +
-                    '<input class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%">' +
+                    '<input class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0; ' + leftMargin + ' width: 85%">' +
                     '</div>';
             }
             return field;
@@ -79,8 +79,11 @@
         var retroactivelyAddDatePickers = function (originalStartDate) {
             var inputs = $('.form-control[data-fieldName=startDate]:not([placeholder])');
             inputs.each(function (index, input) {
-                if (input.dataset.roadid == newId) {
-                    var datePicker = _.isUndefined(originalStartDate) ? dateutil.addSingleDatePicker($(input)) : dateutil.addSingleDatePickerWithStartDate($(input), originalStartDate);
+                if (input.dataset.roadid === newId) {
+                    if(_.isUndefined(originalStartDate))
+                      dateutil.addSingleDatePicker($(input));
+                    else
+                      dateutil.addSingleDatePickerWithStartDate($(input), originalStartDate);
                 }
             });
             $('.pika-single.is-bound').css("width", "auto");
@@ -156,7 +159,7 @@
                     roadNameCollection.setRoadName(roadId, fieldValue);
                     break;
                 case "startDate":
-                    if (roadId == newId) {
+                    if (roadId === newId) {
                         $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]').val(fieldValue);
                         roadNameCollection.setEndDate(originalRoadId, fieldValue);
                     }

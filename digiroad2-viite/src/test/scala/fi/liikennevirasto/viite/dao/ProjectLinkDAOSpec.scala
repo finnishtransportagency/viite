@@ -696,28 +696,6 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchSplitLinks When creating three projectLinks by splitted origin and fetching by linkId should get all of them") {
-    runWithRollback {
-      val roadwayIds = roadwayDAO.create(splittedDummyRoadways)
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val projectLinkId1 = id + 1
-      val projectLinkId2 = id + 2
-      val projectLinkId3 = id + 3
-      val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
-      projectDAO.create(rap)
-      projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
-      val projectLinks = Seq(
-        dummyProjectLink(projectLinkId3, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0),
-        dummyProjectLink(projectLinkId1, id, linkId2, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 40, 0.0, 40.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0, Some(linkId1)),
-        dummyProjectLink(projectLinkId2, id, linkId3, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 40, 100, 0.0, 60.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0, Some(linkId1))
-      )
-      projectLinkDAO.create(projectLinks)
-      projectLinkDAO.fetchSplitLinks(id, linkId1)
-      val result = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(Set(), Set(linkId1, linkId2, linkId3), id)
-      result.size should be(3)
-    }
-  }
-
   test("Test removeProjectLinksByProjectAndRoadNumber When creating two projectLinks and deleting roadNumber1 by project and road number Then link with roadNumber2 should be returned") {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)

@@ -203,21 +203,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
             createRoadAddressProject: RoadAddressProjectTestData.generateCreateRoadAddressProject(),
             splitData: {}
           };
-
-        case 'projectThree': //Suravage project
-          return {
-            floatingAdjacents: {},
-            targetAdjacent: {},
-            transferResult: {},
-            projectData: {},
-            roadLinkById: {},
-            projectsWithLinks: SplittingTestData.generateProjectData(),
-            partReserved: SplittingTestData.generateReservedPart(),
-            projectLinks: SplittingTestData.generateProjectRoadLinks(),
-            projects: SplittingTestData.generateProjectData(),
-            createRoadAddressProject: SplittingTestData.generateProject(),
-            splitData: SplittingTestData.generatePreSplitData()
-          };
       }
     };
 
@@ -243,8 +228,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
           return RoadAddressProjectTestData.generateProjectLinkData();
         case 'terminatedProjectLinks':
           return RoadAddressProjectTestData.generateTerminatedProjectLinkData();
-        case 'suravageProjectLinks':
-          return SplittingTestData.generateProjectRoadLinks();
       }
     };
 
@@ -254,8 +237,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
     };
 
   var getLayer = function(map, layerName){
-      var layer = getLayerByName(map, layerName);
-      return layer;
+    return getLayerByName(map, layerName);
   };
 
       var getFeaturesLinkData = function (map, layerName) {

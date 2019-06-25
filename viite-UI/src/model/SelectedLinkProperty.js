@@ -729,32 +729,6 @@
       }
     };
 
-    var cancelAfterDefloat = function(action, changedTargetIds) {
-      dirty = false;
-      var originalData = _.filter(featuresToKeep, function(feature){
-        return feature.roadLinkType === RoadLinkType.FloatingRoadLinkType.value;
-      });
-      if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
-        clearFeaturesToKeep();
-      if(_.isEmpty(changedTargetIds)) {
-        clearAndReset(true);
-        eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
-      }
-      $('#adjacentsData').remove();
-      if(applicationModel.isActiveButtons() || action === -1){
-        if(action !== applicationModel.actionCalculated){
-          applicationModel.setActiveButtons(false);
-          eventbus.trigger('roadLinks:unSelectIndicators', originalData);
-        }
-        if (action){
-          applicationModel.setContinueButton(false);
-          eventbus.trigger('roadLinks:deleteSelection');
-        }
-        eventbus.trigger('roadLinks:fetched', action, !changedTargetIds);
-        applicationModel.setContinueButton(true);
-      }
-    };
-
     var setLinkProperty = function(key, value) {
       dirty = true;
       _.each(current, function(selected) { selected.setLinkProperty(key, value); });
@@ -767,18 +741,6 @@
     var get = function() {
       return _.map(current, function(roadLink) {
         return roadLink.getData();
-      });
-    };
-
-    var getCurrentFloatings = function(){
-      return _.filter(current, function(curr){
-        return curr.getData().floating === SelectionType.Floating.value;
-      });
-    };
-
-    var getFeaturesToKeepFloatings = function() {
-      return _.filter(getFeaturesToKeep(), function (fk) {
-        return fk.floating === SelectionType.Floating.value;
       });
     };
 
@@ -833,7 +795,7 @@
     };
 
     var linkIdsToExclude = function(){
-      return _.chain(getFeaturesToKeepFloatings().concat(getFeaturesToKeepUnknown()).concat(getFeaturesToKeep()).concat(roadCollection.getSuravageLinks())).map(function(feature){
+      return _.chain(getFeaturesToKeepUnknown().concat(getFeaturesToKeep())).map(function(feature){
         return feature.linkId;
       }).uniq().value();
     };
@@ -857,8 +819,6 @@
       setDirty: setDirty,
       saveTransfer: saveTransfer,
       cancel: cancel,
-      cancelAfterDefloat: cancelAfterDefloat,
-      cancelAndReselect: cancelAndReselect,
       clearAndReset: clearAndReset,
       setTrafficDirection: setTrafficDirection,
       setFunctionalClass: setFunctionalClass,
@@ -869,7 +829,6 @@
       setAnomalousMarkers: setAnomalousMarkers,
       get: get,
       count: count,
-      getFeaturesToKeepFloatings: getFeaturesToKeepFloatings,
       getFeaturesToKeepUnknown: getFeaturesToKeepUnknown,
       filterFeaturesAfterSimulation: filterFeaturesAfterSimulation,
       linkIdsToExclude: linkIdsToExclude,

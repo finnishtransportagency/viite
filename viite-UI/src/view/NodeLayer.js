@@ -74,12 +74,7 @@
         if(applicationModel.getSelectedLayer() === 'node') {
 
           cachedMarker = new LinkPropertyMarker();
-          var suravageLinks = roadCollection.getSuravageLinks();
-          var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
-            return _.contains(_.map(suravageLinks, function (sl) {
-              return sl.linkId;
-            }), rl.linkId);
-          });
+          var roadLinks = roadCollection.getAll();
           me.clearLayers([directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer]);
 
           if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
@@ -123,12 +118,7 @@
           }
 
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions){
-            var suravageLinks = roadCollection.getSuravageLinks();
-            var roadLinksWithValues = _.reject(roadCollection.getAll(), function (rl) {
-              return _.contains(_.map(suravageLinks, function (sl) {
-                return sl.linkId;
-              }), rl.linkId) || rl.roadNumber === 0;
-            });
+            var roadLinksWithValues = roadCollection.getAll();
             var junctions = [];
             var junctionPoints = [];
             var junctionPointsWithRoadlinks;

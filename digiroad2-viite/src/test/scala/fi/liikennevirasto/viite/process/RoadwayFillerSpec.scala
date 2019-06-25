@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.process
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHComplementaryClient, VVHRoadLinkClient, VVHSuravageClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHComplementaryClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
@@ -40,7 +40,6 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val mockVVHSuravageClient: VVHSuravageClient = MockitoSugar.mock[VVHSuravageClient]
   val mockVVHComplementaryClient: VVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
   val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
