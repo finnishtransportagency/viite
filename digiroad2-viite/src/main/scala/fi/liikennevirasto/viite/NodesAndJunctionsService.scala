@@ -344,17 +344,20 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def removeObsoleteNodesAndJunctions(projectLinks: Seq[ProjectLink], username: String = "-"): Unit = {
-    val endDate = projectLinks.head.endDate
+  def removeObsoleteNodesAndJunctions(projectLinks: Seq[ProjectLink], endDate: Option[DateTime], username: String = "-"): Unit = {
     val terminatedLinks = projectLinks.filter(pl => pl.endDate.isDefined)
     val terminatedRoadwayNumbers = terminatedLinks.map(_.roadwayNumber).distinct
     val obsoleteRoadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(terminatedRoadwayNumbers)
     val obsoleteNodePoints = nodePointDAO.fetchByRoadwayPointIds(obsoleteRoadwayPoints.map(_.id))
+    val obsoleteNodePointsTemplates = terminatedRoadwayNumbers.flatMap(roadwayNumber => nodePointDAO.fetchNodePointTemplate(roadwayNumber))
     val obsoleteJunctionPoints = junctionPointDAO.fetchByRoadwayPointIds(obsoleteRoadwayPoints.map(_.id))
 
     // Expire current node and junction point rows
     nodePointDAO.expireById(obsoleteNodePoints.map(_.id))
     junctionPointDAO.expireById(obsoleteJunctionPoints.map(_.id))
+
+    // Expire current node point template
+    nodePointDAO.expireById(obsoleteNodePointsTemplates.map(_.id))
 
     // Remove junctions without junction points
     val obsoleteJunctions = junctionDAO.fetchWithoutJunctionPointsById(obsoleteJunctionPoints.map(_.junctionId).distinct)
@@ -393,7 +396,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     // Create node point rows of the valid nodes with end date
     nodePointDAO.create(obsoleteNodePointsOfValidNodes.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
 
-    // TODO Handle obsolete templates
+    // TODO Handle obsolete templates -> node points templates done !
 
     // TODO Handle these rules regarding road numbers:
     /*
