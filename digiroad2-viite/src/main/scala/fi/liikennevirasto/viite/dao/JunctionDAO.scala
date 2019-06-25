@@ -42,7 +42,7 @@ class JunctionDAO extends BaseDAO {
       s"""
         SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
         FROM JUNCTION
-        where NODE_ID = $nodeId
+        where NODE_ID = $nodeId AND VALID_TO IS NULL AND END_DATE IS NULL
       """
     queryList(query)
   }
@@ -56,7 +56,7 @@ class JunctionDAO extends BaseDAO {
         s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       FROM JUNCTION
-      where NODE_ID in (${nodeIds.mkString(", ")})
+      where NODE_ID in (${nodeIds.mkString(", ")}) AND VALID_TO IS NULL AND END_DATE IS NULL
       """
       queryList(query)
     }
@@ -66,7 +66,7 @@ class JunctionDAO extends BaseDAO {
     sql"""
       SELECT ID
       from NODE
-      where NODE_NUMBER = $nodeNumber
+      where NODE_NUMBER = $nodeNumber AND VALID_TO IS NULL AND END_DATE IS NULL
       """.as[Long].firstOption
   }
 
@@ -81,7 +81,7 @@ class JunctionDAO extends BaseDAO {
         s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       FROM JUNCTION
-      WHERE ID IN (${ids.mkString(", ")})
+      WHERE ID IN (${ids.mkString(", ")}) AND VALID_TO IS NULL
       """
         queryList(query)
       }
@@ -98,7 +98,7 @@ class JunctionDAO extends BaseDAO {
       FROM JUNCTION J
       WHERE ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
         SELECT NULL FROM JUNCTION_POINT JP WHERE J.id = JP.JUNCTION_ID AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL
-      )
+      ) AND VALID_TO IS NULL AND END_DATE IS NULL
       """
       queryList(query)
     }

@@ -54,7 +54,7 @@ class JunctionPointDAO extends BaseDAO {
        RP.ROADWAY_NUMBER, RP.ADDR_M FROM JUNCTION_POINT JP
        JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
        JOIN JUNCTION J on (J.ID = JP.JUNCTION_ID)
-       where J.ID in (${junctionIds.mkString(",")})
+       where J.ID in (${junctionIds.mkString(",")}) AND VALID_TO IS NULL AND END_DATE IS NULL
      """
       queryList(query)
     }
@@ -66,7 +66,7 @@ class JunctionPointDAO extends BaseDAO {
        SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
        RP.ROADWAY_NUMBER, RP.ADDR_M FROM JUNCTION_POINT JP
        JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
-       where JP.valid_to is null and (JP.end_date is null or JP.end_date >= sysdate) and
+       where JP.valid_to is null and JP.end_date is null and
        RP.ROADWAY_NUMBER = $roadwayNumber and RP.ADDR_M = $addrM and JP.before_after = ${beforeAfter.value}
      """
       queryList(query).headOption
@@ -81,7 +81,7 @@ class JunctionPointDAO extends BaseDAO {
        SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
        RP.ROADWAY_NUMBER, RP.ADDR_M FROM JUNCTION_POINT JP
        JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-       where JP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")})
+       where JP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")}) AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL
      """
       queryList(query)
     }
@@ -102,7 +102,7 @@ class JunctionPointDAO extends BaseDAO {
           JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
           JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID AND J.NODE_ID IS NULL)
           JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-          where $boundingBoxFilter and JP.valid_to is null and (JP.end_date is null or JP.end_date >= sysdate)
+          where $boundingBoxFilter and JP.valid_to is null and JP.end_date is null
         """
       queryList(query)
     }
