@@ -165,10 +165,11 @@ class NodePointDAO extends BaseDAO {
       nodePoint =>
         ps.setLong(1, nodePoint.beforeAfter.value)
         ps.setLong(2, nodePoint.roadwayPointId)
-        ps.setLong(3, nodePoint.nodeId match {
-          case Some(id) => id
-          case None => null
-        })
+        if (nodePoint.nodeId.isDefined) {
+          ps.setLong(3, nodePoint.nodeId.get)
+        } else {
+          ps.setNull(3, java.sql.Types.INTEGER)
+        }
         ps.setString(4, nodePoint.endDate match {
           case Some(date) => dateFormatter.print(date)
           case None => ""
