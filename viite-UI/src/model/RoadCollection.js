@@ -34,7 +34,7 @@
     };
 
     var isCarTrafficRoad = function() {
-      return !_.isUndefined(data.linkType) && !_.contains([8, 9, 21, 99], data.linkType);
+      return !_.isUndefined(data.linkType) && !_.includes([8, 9, 21, 99], data.linkType);
     };
 
     var cancel = function() {
@@ -154,7 +154,7 @@
                   var allGroups = _.map(_.flatten(fetchedRoadLinkModels), function (group) {
                       return group.getData();
                   });
-                  return _.contains(_.pluck(allGroups, 'linkId'), selected.getData().linkId);
+                  return _.includes(_.map(allGroups, 'linkId'), selected.getData().linkId);
               });
               roadLinkGroups.concat(nonFetchedLinksInSelection);
           }
@@ -346,7 +346,7 @@
         var notHandledLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
           return link.status ===  LinkStatus.NotHandled.value;
         }).uniq().value();
-        var notHandledOL3Features = _.map(notHandledLinks, function(road) {
+        var notHandledFeatures = _.map(notHandledLinks, function(road) {
           var points = _.map(road.points, function (point) {
             return [point.x, point.y];
           });
@@ -357,7 +357,7 @@
           feature.projectId = projectId;
           return feature;
         });
-        eventbus.trigger('linkProperties:highlightReservedRoads', notHandledOL3Features);
+        eventbus.trigger('linkProperties:highlightReservedRoads', notHandledFeatures);
       });
     };
 

@@ -112,7 +112,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
           return sf.id;
         }).uniq().value();
         expect(featuresIds.length).to.equals(1);
-        expect(_.first(featuresIds)).to.equals(-1000);
+        expect(_.head(featuresIds)).to.equals(-1000);
       });
     });
 
@@ -130,9 +130,9 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
           return rld.linkId === unknownRoadLinkId;
         });
         expect(linkData.length).to.equals(1);
-        expect(_.first(linkData).anomaly).to.equals(0);
-        expect(_.first(linkData).id).to.not.equals(-1000);
-        expect(_.first(linkData).roadLinkType).to.not.equals(-1);
+        expect(_.head(linkData).anomaly).to.equals(0);
+        expect(_.head(linkData).id).to.not.equals(-1000);
+        expect(_.head(linkData).roadLinkType).to.not.equals(-1);
       });
     });*/
   });

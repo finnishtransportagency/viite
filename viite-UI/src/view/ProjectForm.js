@@ -498,7 +498,7 @@
 
       var isProjectEditable = function () {
         return _.isUndefined(projectCollection.getCurrentProject()) ||
-          _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
+          _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
       };
 
       rootElement.on('click', '#generalNext', function () {

@@ -170,7 +170,7 @@
             //check if show all TR projects checkbox is checked or the project has been sent to TR less than two days ago
             return $('#TRProjectsVisibleCheckbox')[0].checked || (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
           }
-          return _.contains(statusToDisplay, proj.statusCode);
+          return _.includes(statusToDisplay, proj.statusCode);
         });
 
         var sortedProjects = unfinishedProjects.sort(function (a, b) {
@@ -294,7 +294,7 @@
       });
 
       projectList.on('click', 'button.close', function () {
-        $('#project-list').find('table').remove();
+        $('#project-list').find('table').hide();
         $('.project-item').remove();
         $('#TRProjectsVisibleCheckbox').prop('checked', false);
         hide();

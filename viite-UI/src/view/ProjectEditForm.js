@@ -21,7 +21,7 @@
 
     var transitionModifiers = function(targetStatus, currentStatus) {
       var mod;
-      if (_.contains(targetStatus.transitionFrom, currentStatus))
+      if (_.includes(targetStatus.transitionFrom, currentStatus))
         mod = '';
       else
         mod = 'disabled hidden';
@@ -143,7 +143,7 @@
     };
 
     var isProjectEditable = function(){
-      return _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
+      return _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
     };
 
     var checkInputs = function () {
@@ -260,7 +260,7 @@
           return formedLink.roadNumber === selectedProjectLink[0].roadNumber && formedLink.roadPartNumber === selectedProjectLink[0].roadPartNumber;
         }).length);
         disableFormInputs();
-        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
+        var selectedDiscontinuity = _.maxBy(selectedProjectLink, function(projectLink){
           return projectLink.endAddressM;
         }).discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
@@ -286,7 +286,7 @@
           return part.roadNumber === selectedProjectLink[0].roadNumber && part.roadPartNumber === selectedProjectLink[0].roadPartNumber;
         }).length);
         disableFormInputs();
-        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
+        var selectedDiscontinuity = _.maxBy(selectedProjectLink, function(projectLink){
           return projectLink.endAddressM;
         }).discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
@@ -636,7 +636,7 @@
           LinkValues.ProjectError.DoubleEndOfRoad.value,
           LinkValues.ProjectError.RoadNotReserved.value
         ];
-        if (_.contains(roadPartErrors, error.errorCode)) {
+        if (_.includes(roadPartErrors, error.errorCode)) {
           var rootElement = $('#feature-attributes');
           rootElement.find('#editProjectSpan').click();
         } else {

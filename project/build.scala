@@ -23,7 +23,7 @@ object Digiroad2Build extends Build {
   val JsonJacksonVersion = "3.6.5"
   val MockitoCoreVersion = "2.27.0"
   val LogbackClassicVersion = "1.2.3"
-  val JettyVersion = "9.2.10.v20150310"
+  val JettyVersion = "9.2.28.v20190418"
 
   val env: String = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "dev"
   val testEnv: String = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "test"
