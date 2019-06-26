@@ -74,17 +74,13 @@ class JunctionDAO extends BaseDAO {
     if (ids.isEmpty) {
       Seq()
     } else {
-      if (ids.isEmpty)
-        List()
-      else {
-        val query =
+      val query =
         s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       FROM JUNCTION
       WHERE ID IN (${ids.mkString(", ")}) AND VALID_TO IS NULL
-      """
-        queryList(query)
-      }
+        """
+      queryList(query)
     }
   }
 
@@ -96,9 +92,9 @@ class JunctionDAO extends BaseDAO {
         s"""
       SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       FROM JUNCTION J
-      WHERE ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
-        SELECT NULL FROM JUNCTION_POINT JP WHERE J.id = JP.JUNCTION_ID AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL
-      ) AND VALID_TO IS NULL AND END_DATE IS NULL
+      WHERE ID IN (${ids.mkString(", ")})
+      AND (SELECT COUNT(*) FROM JUNCTION_POINT JP WHERE JP.JUNCTION_ID = J.id AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL) < 2
+      AND VALID_TO IS NULL AND END_DATE IS NULL
       """
       queryList(query)
     }
