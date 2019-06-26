@@ -127,7 +127,7 @@ class JunctionPointDAO extends BaseDAO {
 
   def update(junctionPoints: Iterable[JunctionPoint], updatedBy: String = "-"): Seq[Long] = {
 
-    val ps = dynamicSession.prepareStatement("""update JUNCTION_POINT SET BEFORE_AFTER = ?, ROADWAY_POINT_ID = ?, JUNCTION_ID = ?, END_DATE = TO_DATE(?, 'YYYY-MM-DD') WHERE ID = ?""")
+    val ps = dynamicSession.prepareStatement("update JUNCTION_POINT SET BEFORE_AFTER = ?, ROADWAY_POINT_ID = ?, JUNCTION_ID = ?, END_DATE = TO_DATE(?, 'YYYY-MM-DD') WHERE ID = ?")
 
     junctionPoints.foreach {
       junctionPoint =>
