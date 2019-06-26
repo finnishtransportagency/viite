@@ -132,14 +132,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val junctionIdentifier = if (roadJunctionPoint.isEmpty) {
           val junctionId = if(junctionsInHead.isEmpty)
             junctionDAO.create(Seq(Junction(NewIdValue, NewIdValue, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
-            else junctionsInHead.head.id
-            val existingRoadwayPoint = roadwayPointDAO.fetch(r.roadwayNumber, r.endAddrMValue)
-            val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-              existingRoadwayPoint.get.id
-            } else {
-              roadwayPointDAO.create(r.roadwayNumber, r.endAddrMValue, r.createdBy.getOrElse("-"))
-            }
-            junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue))).head
+          else junctionsInHead.head.id
+          val existingRoadwayPoint = roadwayPointDAO.fetch(r.roadwayNumber, r.endAddrMValue)
+          val rwPoint = if (existingRoadwayPoint.nonEmpty) {
+            existingRoadwayPoint.get.id
+          } else {
+            roadwayPointDAO.create(r.roadwayNumber, r.endAddrMValue, r.createdBy.getOrElse("-"))
+          }
+          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue))).head
           Some(junctionId)
         } else None
 
@@ -204,13 +204,13 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           val junctionId = if(junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
             junctionDAO.create(Seq(Junction(NewIdValue, NewIdValue, None, link.startDate.get, link.endDate, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
           else junctionIdentifier.getOrElse(junctionsInHead.head.id)
-            val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.startAddrMValue)
-            val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-              existingRoadwayPoint.get.id
-            } else {
-              roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, r.createdBy.getOrElse("-"))
-            }
-            junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue))).head
+          val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.startAddrMValue)
+          val rwPoint = if (existingRoadwayPoint.nonEmpty) {
+            existingRoadwayPoint.get.id
+          } else {
+            roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, r.createdBy.getOrElse("-"))
+          }
+          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue))).head
         }
       }
 
@@ -307,24 +307,24 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val sortedGroup = group.sortBy(s => (s.roadNumber, s.roadPartNumber, s.startAddrMValue, s.track.value))
       val headLink = sortedGroup.head
       val lastLink = sortedGroup.last
-    val headRoadwayPointId = {
-      val existingRoadwayPoint = roadwayPointDAO.fetch(headLink.roadwayNumber, headLink.startAddrMValue)
-      if(existingRoadwayPoint.nonEmpty)
-        existingRoadwayPoint.get.id
-      else roadwayPointDAO.create(headLink.roadwayNumber, headLink.startAddrMValue, headLink.createdBy.getOrElse("-"))
-    }
-    val lastRoadwayPointId = {
-      val existingRoadwayPoint = roadwayPointDAO.fetch(lastLink.roadwayNumber, lastLink.endAddrMValue)
-      if(existingRoadwayPoint.nonEmpty)
-        existingRoadwayPoint.get.id
-      else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
-    }
+      val headRoadwayPointId = {
+        val existingRoadwayPoint = roadwayPointDAO.fetch(headLink.roadwayNumber, headLink.startAddrMValue)
+        if(existingRoadwayPoint.nonEmpty)
+          existingRoadwayPoint.get.id
+        else roadwayPointDAO.create(headLink.roadwayNumber, headLink.startAddrMValue, headLink.createdBy.getOrElse("-"))
+      }
+      val lastRoadwayPointId = {
+        val existingRoadwayPoint = roadwayPointDAO.fetch(lastLink.roadwayNumber, lastLink.endAddrMValue)
+        if(existingRoadwayPoint.nonEmpty)
+          existingRoadwayPoint.get.id
+        else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
+      }
 
-    val nodePoints = Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue),
-      NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue)
-    )
+      val nodePoints = Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue),
+        NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue)
+      )
 
-    nodePointDAO.create(nodePoints)
+      nodePointDAO.create(nodePoints)
     }.toSeq
   }
 
@@ -345,6 +345,15 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def removeObsoleteNodesAndJunctions(projectLinks: Seq[ProjectLink], endDate: Option[DateTime], username: String = "-"): Unit = {
+    /*
+      // TODO Handle these rules regarding road numbers:
+      The node point is expired if it no longer has justification for the current network, that is, it is no longer a point of change of the road part,
+      the point of change of the road type and will no longer be linked to the junctions of the main roads (less than 20,000 road numbers and 40000-70000 road roads).
+
+      The node is expired if no node points or junctions are connected to it. If, after the changes, the node is joined only with ramps,
+      etc. (road number between 20000-40000), those junctions will become junction templates. The user must join junction templates to another existing node.
+    */
+
     val terminatedLinks = projectLinks.filter(pl => pl.endDate.isDefined)
     val terminatedRoadwayNumbers = terminatedLinks.map(_.roadwayNumber).distinct
     val obsoleteRoadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(terminatedRoadwayNumbers)
@@ -359,9 +368,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     // Expire current node point template
     nodePointDAO.expireById(obsoleteNodePointsTemplates.map(_.id))
 
-    // Remove junctions without junction points
+    // Remove junctions without at least two junction points
     val obsoleteJunctions = junctionDAO.fetchWithoutJunctionPointsById(obsoleteJunctionPoints.map(_.junctionId).distinct)
     junctionDAO.expireById(obsoleteJunctions.map(_.id))
+    val obsoleteJunctionPointsOfExpiredJunctions = junctionPointDAO.fetchJunctionPointsByJunctionIds(obsoleteJunctions.map(_.id))
+    junctionPointDAO.expireById(obsoleteJunctionPointsOfExpiredJunctions.map(_.id))
 
     // Remove nodes without junctions or node points
     val obsoleteNodes = nodeDAO.fetchEmptyNodes((obsoleteJunctions.filter(j => j.nodeId.isDefined).map(_.nodeId.get)
@@ -396,17 +407,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     // Create node point rows of the valid nodes with end date
     nodePointDAO.create(obsoleteNodePointsOfValidNodes.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
 
-    // TODO Handle obsolete templates -> node points templates done !
-
-    // TODO Handle these rules regarding road numbers:
-    /*
-    The node point is expired if it no longer has justification for the current network, that is, it is no longer a point of change of the road part,
-    the point of change of the road type and will no longer be linked to the junctions of the main roads (less than 20,000 road numbers and 40000-70000 road roads).
-
-    The node is expired if no node points or junctions are connected to it. If, after the changes, the node is joined only with ramps,
-    etc. (road number between 20000-40000), those junctions will become junction templates. The user must join junction templates to another existing node.
-     */
-
+    // Create node point template rows with end date
+    nodePointDAO.create(obsoleteNodePointsTemplates.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
   }
 
 }
