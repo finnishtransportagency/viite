@@ -2,13 +2,13 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.NewIdValue
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.digiroad2.dao.Sequences
 
 class NodePointDAOSpec extends FunSuite with Matchers {
 
@@ -112,4 +112,33 @@ class NodePointDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test expireById When two templates created and one expired Then expire one and keep the other") {
+    runWithRollback {
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
+      val ids = dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1)))
+      val fetchedBefore = dao.fetchByIds(ids)
+      fetchedBefore.size should be(2)
+      dao.expireById(Seq(ids.head))
+      val fetched = dao.fetchByIds(ids)
+      fetched.size should be(1)
+      fetched.head.id should be(ids.last)
+      fetched.head.nodeId should be(None)
+    }
+  }
+
+  test("Test expireById When two created and one expired Then expire one and keep the other") {
+    runWithRollback {
+      val nodeId = nodeDAO.create(Seq(testNode1)).head
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
+      val ids = dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId)),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
+      val fetchedBefore = dao.fetchByIds(ids)
+      fetchedBefore.size should be(2)
+      dao.expireById(Seq(ids.head))
+      val fetched = dao.fetchByIds(ids)
+      fetched.size should be(1)
+      fetched.head.id should be(ids.last)
+    }
+  }
 }

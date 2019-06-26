@@ -4,10 +4,10 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.viite._
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.viite._
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 sealed trait BeforeAfter {
@@ -45,7 +45,7 @@ class NodePointDAO extends BaseDAO {
                              NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M
                              FROM NODE_POINT NP
                              JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-                             JOIN NODE N ON (N.id = np.NODE_ID)"""
+                             LEFT OUTER JOIN NODE N ON (N.id = np.NODE_ID)"""
 
   implicit val getNodePoint: GetResult[NodePoint] = new GetResult[NodePoint] {
     def apply(r: PositionedResult): NodePoint = {
@@ -71,6 +71,19 @@ class NodePointDAO extends BaseDAO {
       case (_, list) =>
         list.head
     }.toList
+  }
+
+  def fetchByIds(ids: Seq[Long]): Seq[NodePoint] = {
+    if (ids.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+            $selectFromNodePoint
+            where NP.id in (${ids.mkString(", ")}) and NP.valid_to is null and NP.end_date is null
+         """
+      queryList(query)
+    }
   }
 
   def fetchNodePointsByNodeId(nodeIds: Seq[Long]): Seq[NodePoint] = {
@@ -145,10 +158,16 @@ class NodePointDAO extends BaseDAO {
       """insert into NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_ID, START_DATE, END_DATE, CREATED_BY)
       values (?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""".stripMargin)
 
-    nodePoints.foreach {
+    // Set ids for the node points without one
+    val (ready, idLess) = nodePoints.partition(_.id != NewIdValue)
+    val newIds = Sequences.fetchNodePointIds(idLess.size)
+    val createNodePoints = ready ++ idLess.zip(newIds).map(x =>
+      x._1.copy(id = x._2)
+    )
+
+    createNodePoints.foreach {
       nodePoint =>
-        val id = if(nodePoint.id == NewIdValue) Sequences.nextNodePointId else nodePoint.id
-        ps.setLong(1, id)
+        ps.setLong(1, nodePoint.id)
         ps.setLong(2, nodePoint.beforeAfter.value)
         ps.setLong(3, nodePoint.roadwayPointId)
         if (nodePoint.nodeId.isDefined) {
@@ -166,7 +185,7 @@ class NodePointDAO extends BaseDAO {
     }
     ps.executeBatch()
     ps.close()
-    nodePoints.map(_.id).toSeq
+    createNodePoints.map(_.id).toSeq
   }
 
   /**
