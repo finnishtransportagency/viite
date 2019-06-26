@@ -159,7 +159,7 @@ class NodePointDAO extends BaseDAO {
   def update(nodePoints: Iterable[NodePoint], updatedBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
-      "update NODE_POINT SET BEFORE_AFTER = ?, ROADWAY_POINT_ID = ?, NODE_ID = ?, END_DATE = ?, VALID_TO = ? WHERE ID = ?)")
+      "update NODE_POINT SET BEFORE_AFTER = ?, ROADWAY_POINT_ID = ?, NODE_ID = ?, END_DATE = TO_DATE(?, 'YYYY-MM-DD'), VALID_TO = TO_DATE(?, 'YYYY-MM-DD') WHERE ID = ?")
 
     nodePoints.foreach {
       nodePoint =>
