@@ -679,27 +679,25 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
-    def handleRoadwayPoints(roadwayChanges: List[ProjectRoadwayChange], username: String = "-"): Unit = {
+    def handleRoadwayPointsUpdate(roadwayChanges: List[ProjectRoadwayChange], username: String = "-"): Unit = {
 
         roadwayChanges.filter(rw => List(Transfer, ReNumeration).contains(rw.changeInfo.changeType)).foreach{ rwc =>
 
           val change = rwc.changeInfo
           val source = change.source
           val target = change.target
-          val roadwayNumbers = roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber)
-          val roadwayPoints = roadwayNumbers.flatMap(rwn=> roadwayPointDAO.fetchByRoadwayNumberAndAddresses(rwn, source.startAddressM.get, source.endAddressM.get))
+          val roadwayNumbers = roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber).distinct
+          val roadwayPoints = roadwayNumbers.flatMap(rwn=> roadwayPointDAO.fetchByRoadwayNumberAndAddresses(rwn, source.startAddressM.get, source.endAddressM.get)).distinct
 
           if(change.changeType == Transfer){
             if(!change.reversed){
               roadwayPoints.foreach{ rwp=>
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
-                if(!roadwayPoints.exists(rp => rp.roadwayNumber == rwp.roadwayNumber && rp.addrMValue == newAddrM))
                 roadwayPointDAO.update(rwp.id, newAddrM, username)
               }
             } else {
               roadwayPoints.foreach{ rwp=>
               val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
-                if(!roadwayPoints.exists(rp => rp.roadwayNumber == rwp.roadwayNumber && rp.addrMValue == newAddrM))
                 roadwayPointDAO.update(rwp.id, newAddrM, username)
               }
             }
@@ -707,7 +705,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             if(change.reversed){
               roadwayPoints.foreach{ rwp=>
                 val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
-                if(!roadwayPoints.exists(rp => rp.roadwayNumber == rwp.roadwayNumber && rp.addrMValue == newAddrM))
                 roadwayPointDAO.update(rwp.id, newAddrM, username)
               }
             }

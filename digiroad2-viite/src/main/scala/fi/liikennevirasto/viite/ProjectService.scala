@@ -2030,7 +2030,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadwayDAO.create(roadwaysToInsert)
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(project.id))
-      roadAddressService.handleRoadwayPoints(roadwayChanges, username = project.createdBy)
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, username = project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
       nodesNJunctionsService.handleJunctionPointTemplates(roadwayChanges, generatedRoadways.flatMap(_._3))
       nodesNJunctionsService.handleNodePointTemplates(roadwayChanges, generatedRoadways.flatMap(_._3))
