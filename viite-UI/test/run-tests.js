@@ -2,7 +2,7 @@ require.config({
   paths: {
     'underscore': '../../node_modules/underscore/underscore',
     'jquery': '../../node_modules/jquery/dist/jquery.min',
-    'lodash': '../../node_modules/lodash/index.js',
+    'lodash': '../../node_modules/lodash/lodash.js',
     'moment': '../../node_modules/moment/moment',
     'backbone': '../../node_modules/backbone/backbone',
     'chai': '../../node_modules/chai/chai',

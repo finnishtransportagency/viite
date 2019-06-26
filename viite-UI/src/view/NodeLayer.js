@@ -76,7 +76,7 @@
           cachedMarker = new LinkPropertyMarker();
           var suravageLinks = roadCollection.getSuravageLinks();
           var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
-            return _.contains(_.map(suravageLinks, function (sl) {
+            return _.includes(_.map(suravageLinks, function (sl) {
               return sl.linkId;
             }), rl.linkId);
           });
@@ -125,7 +125,7 @@
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions){
             var suravageLinks = roadCollection.getSuravageLinks();
             var roadLinksWithValues = _.reject(roadCollection.getAll(), function (rl) {
-              return _.contains(_.map(suravageLinks, function (sl) {
+              return _.includes(_.map(suravageLinks, function (sl) {
                 return sl.linkId;
               }), rl.linkId) || rl.roadNumber === 0;
             });

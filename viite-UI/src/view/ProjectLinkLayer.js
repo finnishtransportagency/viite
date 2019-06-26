@@ -164,7 +164,7 @@
           var selectedLinkIds = _.map(selectedProjectLinkProperty.get(), function (selected) {
             return getSelectedId(selected);
           });
-          if (_.contains(selectedLinkIds, getSelectedId(selection.linkData))) {
+          if (_.includes(selectedLinkIds, getSelectedId(selection.linkData))) {
             selectedLinkIds = _.without(selectedLinkIds, clickedIds);
           } else {
             selectedLinkIds = _.union(selectedLinkIds, clickedIds);
@@ -224,7 +224,7 @@
           var selectedLinkIds = _.map(selectedProjectLinkProperty.get(), function (selected) {
             return getSelectedId(selected);
           });
-          if (_.contains(selectedLinkIds, getSelectedId(selection.linkData))) {
+          if (_.includes(selectedLinkIds, getSelectedId(selection.linkData))) {
             selectedLinkIds = _.without(selectedLinkIds, getSelectedId(selection.linkData));
           } else {
             selectedLinkIds = selectedLinkIds.concat(getSelectedId(selection.linkData));
@@ -292,7 +292,7 @@
       if (selectedProjectLinkProperty.get().length === 0) {
         return true;
       }
-      var currentlySelectedSample = _.first(selectedProjectLinkProperty.get());
+      var currentlySelectedSample = _.head(selectedProjectLinkProperty.get());
       return selectionData.roadNumber === currentlySelectedSample.roadNumber &&
         selectionData.roadPartNumber === currentlySelectedSample.roadPartNumber &&
         selectionData.trackCode === currentlySelectedSample.trackCode &&
@@ -324,14 +324,14 @@
 
     /**
      * Simple method that will add various open layers 3 features to a selection.
-     * @param ol3Features
+     * @param features
      */
-    var addFeaturesToSelection = function (ol3Features) {
+    var addFeaturesToSelection = function (features) {
       var olUids = _.map(selectSingleClick.getFeatures().getArray(), function (feature) {
         return feature.ol_uid;
       });
-      _.each(ol3Features, function (feature) {
-        if (!_.contains(olUids, feature.ol_uid)) {
+      _.each(features, function (feature) {
+        if (!_.includes(olUids, feature.ol_uid)) {
           selectSingleClick.getFeatures().push(feature);
           olUids.push(feature.ol_uid); // prevent adding duplicate entries
         }
@@ -605,7 +605,7 @@
 
     var projectLinkStatusIn = function (projectLink, possibleStatus) {
       if (!_.isUndefined(possibleStatus) && !_.isUndefined(projectLink))
-        return _.contains(possibleStatus, projectLink.status);
+        return _.includes(possibleStatus, projectLink.status);
       else return false;
     };
 
@@ -753,13 +753,13 @@
       }
 
       var partitioned = _.partition(features, function (feature) {
-          return (!_.isUndefined(feature.linkData.linkId) && _.contains(_.pluck(editedLinks, 'id'), feature.linkData.linkId));
+          return (!_.isUndefined(feature.linkData.linkId) && _.includes(_.map(editedLinks, 'id'), feature.linkData.linkId));
       });
       features = [];
       _.each(partitioned[0], function (feature) {
-        var editedLink = (!_.isUndefined(feature.linkData.linkId) && _.contains(_.pluck(editedLinks, 'id'), feature.linkData.linkId));
+        var editedLink = (!_.isUndefined(feature.linkData.linkId) && _.includes(_.map(editedLinks, 'id'), feature.linkData.linkId));
         if (editedLink) {
-          if (_.contains( _.pluck(toBeTerminated, 'id'), feature.linkData.linkId)) {
+          if (_.includes( _.map(toBeTerminated, 'id'), feature.linkData.linkId)) {
             feature.linkData.status = LinkStatus.Terminated.value;
             var termination = projectLinkStyler.getStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
             feature.setStyle(termination);

@@ -54,7 +54,7 @@
     var roadTypeDynamicField = function(){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
       var field = '';
-      var uniqRoadTypes = _.uniq(_.pluck(selectedLinkProperty.get(), 'roadTypeId'));
+      var uniqRoadTypes = _.uniq(_.map(selectedLinkProperty.get(), 'roadTypeId'));
       var decodedRoadTypes = "";
       _.each(uniqRoadTypes, function(rt) {
           if (decodedRoadTypes.length === 0) {
@@ -81,7 +81,7 @@
     var measureDynamicField = function(labelText, measure){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
       var field = '';
-      var addressValue =  _.min(_.pluck(selectedLinkProperty.get(), measure));
+      var addressValue =  _.minBy(_.map(selectedLinkProperty.get(), measure));
       if (floatingTransfer) {
         field = '<div class="form-group">' +
           '<label class="control-label-floating">' + labelText + '</label>' +
@@ -238,7 +238,7 @@
             return link.linkId;
         }));
 
-        if(linkIds.length === 1 && _.contains(applicationModel.getSessionUserRoles(), 'operator') && !applicationModel.isReadOnly()){
+        if(linkIds.length === 1 && _.includes(applicationModel.getSessionUserRoles(), 'operator') && !applicationModel.isReadOnly()){
           idToFloating = linkIds[0];
           return '<button id ="revertToFloating-button" class="toFloating btn btn-block btn-toFloating">Irrota geometriasta</button>';
         }
@@ -401,12 +401,12 @@
         return fr.linkId;
       });
       var rootElement = $('#feature-attributes');
-      if (floatingRoadsId.size !== 0 && !_.isUndefined(id) && _.contains(floatingRoadsId, parseInt(id))) {
+      if (floatingRoadsId.size !== 0 && !_.isUndefined(id) && _.includes(floatingRoadsId, parseInt(id))) {
         var floatingToAddById = _.filter(floatingRoads, function(floating){
           return floating.id === parseInt(id);
         });
         additionalSourceEventTriggering(rootElement, floatingToAddById, value, id);
-      } else if (_.contains(floatingRoadsLinkId, parseInt(value))) {
+      } else if (_.includes(floatingRoadsLinkId, parseInt(value))) {
         var floatingToAddByLinkId = _.filter(floatingRoads, function(floating){
           return floating.linkId === parseInt(value);
         });
@@ -450,7 +450,7 @@
       var switchMode = function (readOnly, linkProperties) {
         toggleMode(readOnly, linkProperties);
         var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
-        var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature) {
+        var firstFloatingSelected = _.head(_.filter(uniqFeaturesToKeep,function (feature) {
           return feature.floating === LinkValues.SelectionType.Floating.value;
         }));
         //checks if previousSelected road was not unknown and current select road IS unknown
@@ -468,7 +468,7 @@
           rootElement.find('.form-controls').toggle(!readOnly);
           var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
           var lastFeatureToKeep = _.isUndefined(_.last(_.initial(uniqFeaturesToKeep))) ? _.last(uniqFeaturesToKeep) : _.last(_.initial(uniqFeaturesToKeep));
-          var firstSelectedLinkProperty = _.first(selectedLinkProperty.get());
+          var firstSelectedLinkProperty = _.head(selectedLinkProperty.get());
           if (!_.isEmpty(uniqFeaturesToKeep)) {
             if (readOnly) {
               if (lastFeatureToKeep.floating === LinkValues.SelectionType.Floating.value) {
@@ -517,7 +517,7 @@
       };
 
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
-        var props = _.cloneDeep(_.isArray(linkProperties) ? _.first(linkProperties) : linkProperties);
+        var props = _.cloneDeep(_.isArray(linkProperties) ? _.head(linkProperties) : linkProperties);
         rootElement.empty();
         if (!_.isEmpty(selectedLinkProperty.get()) || !_.isEmpty(props)) {
 

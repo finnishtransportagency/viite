@@ -41,14 +41,14 @@
 
         var getLinkMarker = function(linkList, statusList) {
             var filter = _.filter(linkList, function (link) {
-                return _.contains(statusList,link.status);
+                return _.includes(statusList,link.status);
             });
             if (filter.length > 1) {
-                var min = _.min(_.map(filter, function (template) {
+                var min = _.minBy(_.map(filter, function (template) {
                     return template.startAddressM;
                 }));
 
-                var max = _.max(_.map(filter, function (template) {
+                var max = _.maxBy(_.map(filter, function (template) {
                     return template.endAddressM;
                 }));
 
@@ -129,7 +129,7 @@
                 var added = _.difference(linkIds, me.ids);
                 me.ids = linkIds;
                 current = _.filter(current, function(link) {
-                        return _.contains(linkIds, link.getData().id || link.getData().linkId);
+                        return _.includes(linkIds, link.getData().id || link.getData().linkId);
                     }
                 );
                 current = current.concat(projectLinkCollection.getProjectLink(added));
@@ -189,7 +189,7 @@
         };
 
         var isSelected = function(linkId) {
-            return _.contains(me.ids, linkId);
+            return _.includes(me.ids, linkId);
         };
 
         var clean = function() {
