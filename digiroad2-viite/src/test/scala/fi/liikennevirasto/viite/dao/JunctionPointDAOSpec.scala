@@ -81,4 +81,16 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test expireById When two created and one expired Then expire one and keep the other") {
+    runWithRollback {
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      val ids = dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
+        testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
+      dao.expireById(Seq(ids.head))
+      val fetched = dao.fetchByIds(ids)
+      fetched.size should be(1)
+      fetched.head.id should be(ids.last)
+    }
+  }
 }
