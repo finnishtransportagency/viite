@@ -38,6 +38,16 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
     override def withDynTransaction[T](f: => T): T = f
   }
+
+  def runWithRollback(f: => Unit): Unit = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      f
+      dynamicSession.rollback()
+    }
+  }
+
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
   val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
@@ -49,8 +59,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0)
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-
   val testJunction1 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-01"), None,
     DateTime.parse("2019-01-01"), None, None, None)
 
@@ -59,13 +67,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
   val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l,
     (None, None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
-
-  def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
 
   def dummyProjectLink(roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuityType: Discontinuity, startAddrM: Long, endAddrM: Long, startDate: Option[DateTime], endDate: Option[DateTime] = None, linkId: Long = 0, startMValue: Double = 0,
                        endMValue: Double = 0, sideCode: SideCode = SideCode.Unknown, status: LinkStatus, projectId: Long = 0, roadType: RoadType = RoadType.PublicRoad, geometry: Seq[Point] = Seq(), roadwayNumber: Long) = {
@@ -396,6 +397,42 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodes(None)._2.head._1.id should be(junctionId)
       nodes(None)._2.head._1.nodeId should be(None)
       nodes(None)._2.head._2.head.junctionId should be(junctionId)
+    }
+  }
+
+  test("Test removeObsoleteNodesAndJunctions case When road part is terminated Then also node point templates for terminated road should be expired") {
+    /*
+      |0--R1-->100|0--R2-->150| to |0--R1-->100|TERMINATED
+
+      If the road 2 is terminated, Then also the node point templates for terminated road should be expired.
+     */
+    runWithRollback {
+      val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
+      val roadGeom2 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
+
+      val roadwayNumber = Sequences.nextRoadwayNumber
+
+      val roadLinks1 = dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous, 0, 100, Some(DateTime.now()), None, 12345, 0, 100.0, SideCode.TowardsDigitizing, LinkStatus.New, 0, RoadType.PublicRoad, roadGeom1, roadwayNumber)
+      val roadLinks2 = dummyProjectLink(1, 2, Track.Combined, Discontinuity.Continuous, 0, 150, Some(DateTime.now()), None, 12346, 0, 150.0, SideCode.TowardsDigitizing, LinkStatus.New, 0, RoadType.PublicRoad, roadGeom2, roadwayNumber+1)
+
+      val projectLinks = Seq(roadLinks1, roadLinks2)
+
+      nodesAndJunctionsService.handleNodePointTemplates(projectLinks)
+      val nodePoints = projectLinks.flatMap(pl => nodePointDAO.fetchNodePointTemplate(pl.roadwayNumber))
+      nodePoints.length should be(4)
+      nodePoints.exists(node => node.roadwayNumber == roadLinks1.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == 0) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == roadLinks1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == 100) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == roadLinks2.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == 0) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == roadLinks2.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == 150) should be(true)
+
+      val terminateRoadLinks = roadLinks2.copy(endDate = Some(DateTime.now().minusDays(1)), status = LinkStatus.Terminated, projectId = 1)
+
+      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(Seq(terminateRoadLinks), terminateRoadLinks.endDate)
+
+      val nodePointsAfterTerminationOfRoad = Seq(roadLinks1, terminateRoadLinks).flatMap(pl => nodePointDAO.fetchNodePointTemplate(pl.roadwayNumber))
+      nodePointsAfterTerminationOfRoad.length should be(2)
+      nodePointsAfterTerminationOfRoad.exists(node => node.roadwayNumber == roadLinks1.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == 0) should be(true)
+      nodePointsAfterTerminationOfRoad.exists(node => node.roadwayNumber == roadLinks1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == 100) should be(true)
     }
   }
 
