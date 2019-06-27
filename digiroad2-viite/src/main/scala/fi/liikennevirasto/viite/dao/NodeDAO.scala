@@ -5,12 +5,12 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.viite._
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import fi.liikennevirasto.viite._
 
 sealed trait NodeType {
   def value: Long
@@ -20,7 +20,7 @@ sealed trait NodeType {
 
 object NodeType {
   val values: Set[NodeType] = Set(NormalIntersection, Roundabout, YIntersection, Interchange, RoadBoundary, ELYBorder, MultitrackIntersection,
-                                  DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnkownNodeType)
+    DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnkownNodeType)
 
   def apply(intValue: Long): NodeType = {
     values.find(_.value == intValue).getOrElse(UnkownNodeType)
@@ -38,7 +38,7 @@ object NodeType {
     def displayValue = "Kiertoliittymä"
   }
 
-  case object YIntersection	 extends NodeType {
+  case object YIntersection extends NodeType {
     def value = 4
 
     def displayValue = "Y-liittymä"
@@ -115,6 +115,7 @@ object NodeType {
 
     def displayValue = "Ei määritelty"
   }
+
 }
 
 case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: DateTime, endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
@@ -180,17 +181,18 @@ class NodeDAO extends BaseDAO {
       case (true, true) => s"AND rw.ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND rw.ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
       case (true, _) => s"AND rw.ROAD_PART_NUMBER = ${minRoadPartNumber.get}"
       case (_, true) => s"AND rw.ROAD_PART_NUMBER = ${maxRoadPartNumber.get}"
-      case _ =>""
+      case _ => ""
     }
 
-    val query = s"""
-    SELECT DISTINCT node.ID, node.NODE_NUMBER, coords.X, coords.Y, node.NAME, node."TYPE", node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
-           node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M
-      FROM NODE node
-      CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(node.COORDINATES)) coords
-      LEFT JOIN NODE_POINT np ON node.ID = np.NODE_ID AND np.VALID_TO IS NULL AND np.END_DATE IS NULL
-      LEFT JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
-      LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+    val query =
+      s"""
+        SELECT DISTINCT node.ID, node.NODE_NUMBER, coords.X, coords.Y, node.NAME, node."TYPE", node.START_DATE, node.END_DATE,
+          node.VALID_FROM, node.VALID_TO, node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.TRACK,rw.ROAD_PART_NUMBER, rp.ADDR_M
+        FROM NODE node
+        CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(node.COORDINATES)) coords
+        LEFT JOIN NODE_POINT np ON node.ID = np.NODE_ID AND np.VALID_TO IS NULL AND np.END_DATE IS NULL
+        LEFT JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
+        LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
           WHERE node.VALID_TO IS NULL AND node.END_DATE IS NULL
           AND rw.ROAD_NUMBER = $road_number $road_condition
           AND ((SELECT COUNT(*) FROM NODE_POINT npAux
@@ -201,14 +203,14 @@ class NodeDAO extends BaseDAO {
                 AND npAux.ROADWAY_POINT_ID = np.ROADWAY_POINT_ID AND npAux.BEFORE_AFTER = ${BeforeAfter.After.value}) THEN 1
               ELSE 0
             END = 1)
-      ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M, rw.TRACK
-    """
+        ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M, rw.TRACK
+      """
 
     Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Long], DateTime, Option[DateTime], DateTime, Option[DateTime],
       Option[String], Option[DateTime], Long, Long, Long, Long)](query).list.map {
 
       case (id, nodeNumber, x, y, name, nodeType, startDate, endDate, validFrom, validTo,
-            createdBy, createdTime, roadNumber, track, roadPartNumber, addrMValue) =>
+      createdBy, createdTime, roadNumber, track, roadPartNumber, addrMValue) =>
 
         (Node(id, nodeNumber, Point(x, y), name, NodeType.apply(nodeType.getOrElse(NodeType.UnkownNodeType.value)), startDate, endDate, validFrom, validTo, createdBy, createdTime),
           RoadAttributes(roadNumber, track, roadPartNumber, addrMValue))
@@ -257,17 +259,17 @@ class NodeDAO extends BaseDAO {
     createNodes.map(_.id).toSeq
   }
 
-  def fetchByBoundingBox(boundingRectangle: BoundingRectangle) : Seq[Node] = {
+  def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[Node] = {
     val extendedBoundingBoxRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(scalar = .15),
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(scalar = .15))
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingBoxRectangle, geometryColumn = "coordinates")
     val query =
       s"""
-         SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-         FROM NODE
-         WHERE $boundingBoxFilter
-         AND END_DATE IS NULL AND VALID_TO IS NULL
-       """
+        SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+        FROM NODE
+        WHERE $boundingBoxFilter
+        AND END_DATE IS NULL AND VALID_TO IS NULL
+      """
     queryList(query)
   }
 
@@ -294,14 +296,14 @@ class NodeDAO extends BaseDAO {
     } else {
       val query =
         s"""
-        SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-        FROM NODE N
-        WHERE END_DATE IS NULL AND VALID_TO IS NULL AND ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
-          SELECT NULL FROM JUNCTION J WHERE N.id = J.NODE_ID AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
-        ) AND NOT EXISTS (
-          SELECT NULL FROM NODE_POINT NP WHERE N.id = NP.NODE_ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL
-        )
-      """
+          SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+          FROM NODE N
+          WHERE END_DATE IS NULL AND VALID_TO IS NULL AND ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
+            SELECT NULL FROM JUNCTION J WHERE N.id = J.NODE_ID AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
+          ) AND NOT EXISTS (
+            SELECT NULL FROM NODE_POINT NP WHERE N.id = NP.NODE_ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL
+          )
+        """
       queryList(query)
     }
   }
