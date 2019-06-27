@@ -101,7 +101,7 @@ object NodeType {
   case object PrivateRoad extends NodeType {
     def value = 16
 
-    def displayValue = "Yksityistie-tai katuliittymä"
+    def displayValue = "Yksityistie- tai katuliittymä"
   }
 
   case object StaggeredIntersection extends NodeType {
