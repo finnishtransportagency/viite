@@ -103,9 +103,9 @@
       return field;
     };
 
-    function toggle() {
+    function show() {
       $('.container').append('<div class="modal-overlay confirm-modal" id="projectList"><div class="modal-dialog"></div></div>');
-      $('.modal-dialog').append(projectList.toggle());
+      $('.modal-dialog').append(projectList.show());
       eventbus.trigger("roadAddressProject:deactivateAllSelections");
       bindEvents();
       fetchProjects();
@@ -310,7 +310,7 @@
     }
 
     return {
-      toggle: toggle,
+      show: show,
       hide: hide,
       element: projectList,
       bindEvents: bindEvents

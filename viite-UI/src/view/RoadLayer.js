@@ -139,8 +139,6 @@
     };
 
     this.refreshMap = function (mapState) {
-      //if ((applicationModel.getSelectedTool() === 'Cut' && selectSingleClick.getFeatures().getArray().length > 0))
-        //return;
       if (mapState.zoom < zoomlevels.minZoomForRoadLinks) {
         roadLayer.getSource().clear();
         eventbus.trigger('map:clearLayers');

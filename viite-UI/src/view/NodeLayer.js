@@ -179,7 +179,7 @@
         me.clearLayers();
         if (previouslySelectedLayer === 'node') {
           hideLayer();
-        } else if (previouslySelectedLayer === 'linkProperty') {
+        } else if (previouslySelectedLayer === 'linkProperty' && isActiveLayer) {
           setGeneralOpacity(1);
           showLayer();
           eventbus.trigger('nodeLayer:fetch');
