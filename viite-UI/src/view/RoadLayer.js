@@ -190,7 +190,7 @@
         if (infoContent !== null) {
           infoContent.innerHTML =
             'Tieosoite:&nbsp;' + roadLink.roadNumber + '/'+ roadLink.trackCode + '/' + roadLink.roadPartNumber + '/' + junctionPointData.addrM + '<br>' +
-            'Solmun nimi:&nbsp;' + node.name + '<br>'
+            'Solmun nimi:&nbsp;' + (!_.isUndefined(node) ? node.name : '') + '<br>'
           ;
         }
         overlay.setPosition(coordinate);
