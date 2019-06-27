@@ -1,3 +1,4 @@
+
 drop sequence ROADWAY_SEQ;
 create sequence ROADWAY_SEQ
   minvalue 1
@@ -107,15 +108,6 @@ create sequence NODE_SEQ
 
 drop sequence NODE_NUMBER_SEQ;
 create sequence NODE_NUMBER_SEQ
-  minvalue 1
-  maxvalue 999999999999999999999999999
-  start with 1000000
-  increment by 1
-  cache 100
-  cycle;
-
-drop sequence JUNCTION_NUMBER_SEQ;
-create sequence JUNCTION_NUMBER_SEQ
   minvalue 1
   maxvalue 999999999999999999999999999
   start with 1000000
