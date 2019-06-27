@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
@@ -94,11 +95,34 @@ class NodeDAOSpec extends FunSuite with Matchers {
   test("Test fetchEmptyNodes When one empty Then return one") {
     runWithRollback {
       val nodeIds = dao.create(Seq(testNode1))
-      val emptyNodes = dao.fetchEmptyNodes(nodeIds)
-      emptyNodes.size should be(1)
-      emptyNodes.head.id should be(nodeIds.head)
-      emptyNodes.head.coordinates.x should be(testNode1.coordinates.x)
-      emptyNodes.head.coordinates.y should be(testNode1.coordinates.y)
+      val nodes = dao.fetchEmptyNodes(nodeIds)
+      nodes.size should be(1)
+      nodes.head.id should be(nodeIds.head)
+      nodes.head.coordinates.x should be(testNode1.coordinates.x)
+      nodes.head.coordinates.y should be(testNode1.coordinates.y)
+    }
+  }
+
+  test("Test fetchByBoundingBox When matching Then return them") {
+    runWithRollback {
+      val nodeIds = dao.create(Seq(testNode1))
+      val nodes = dao.fetchByBoundingBox(BoundingRectangle(Point(50, 50), Point(150, 150)))
+      nodes.size should be(1)
+      nodes.head.id should be(nodeIds.head)
+      nodes.head.coordinates.x should be(testNode1.coordinates.x)
+      nodes.head.coordinates.y should be(testNode1.coordinates.y)
+    }
+  }
+
+  test("Test fetchByNodeNumber When matching Then return them") {
+    runWithRollback {
+      val nodeNumber = Sequences.nextNodeNumber
+      val nodeIds = dao.create(Seq(testNode1.copy(nodeNumber = nodeNumber)))
+      val nodes = dao.fetchByNodeNumber(nodeNumber)
+      nodes.size should be(1)
+      nodes.head.id should be(nodeIds.head)
+      nodes.head.coordinates.x should be(testNode1.coordinates.x)
+      nodes.head.coordinates.y should be(testNode1.coordinates.y)
     }
   }
 
