@@ -115,13 +115,8 @@ class JunctionDAO extends BaseDAO {
 
     createJunctions.foreach {
       junction =>
-        val junctionNumber = if (junction.junctionNumber == NewIdValue) {
-          Sequences.nextJunctionNumber
-        } else {
-          junction.junctionNumber
-        }
         ps.setLong(1, junction.id)
-        ps.setLong(2, junctionNumber)
+        ps.setLong(2, junction.junctionNumber)
         if (junction.nodeId.isDefined) {
           ps.setLong(3, junction.nodeId.get)
         } else {
