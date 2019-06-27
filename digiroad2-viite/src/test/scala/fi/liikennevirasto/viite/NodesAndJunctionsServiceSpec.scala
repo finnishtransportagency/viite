@@ -440,7 +440,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test removeObsoleteNodesAndJunctions case When road part is terminated Then also junction point templates should be expired") {
+  test("Test removeObsoleteNodesAndJunctions case When road is terminated Then also junction point templates should be expired") {
     /*
       |0--R1-->100|0--R2-->150| to |0--R1-->100|TERMINATED
 
@@ -483,6 +483,64 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       // Test expired junction points template
       val junctionPointTemplatesAfterTermination = junctionPointDAO.fetchByRoadwayPointIds(
         roadwayPointDAO.fetchByRoadwayNumbers(Seq(roadLink1, terminateRoadLinks).map(_.roadwayNumber)).map(_.id))
+      junctionPointTemplatesAfterTermination.length should be(0)
+
+      // Test expired junction
+      val expiredJunctions = junctionDAO.fetchByIds(junctionPointTemplates.map(_.junctionId))
+      expiredJunctions.length should be(0)
+    }
+  }
+
+  test("Test removeObsoleteNodesAndJunctions case When road is terminated Then also junction and junction point templates should be expired if they are in the same road") {
+    /*
+      |0--R1-->5|5--R1-->10|
+                ^
+                |
+                R2
+                |
+
+      If the road part 2 is terminated, Then also the junction and the junction point templates should be expired, because they are in the same road.
+     */
+    runWithRollback {
+      val roadGeom1Link1 = Seq(Point(0.0, 5.0), Point(5.0, 5.0))
+      val roadGeom1Link2 = Seq(Point(5.0, 5.0), Point(5.0, 10.0))
+      val roadGeom2 = Seq(Point(5.0, 0.0), Point(5.0, 5.0))
+
+      val roadwayNumber = Sequences.nextRoadwayNumber
+
+      val road1Link1 = dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous, 0, 5, Some(DateTime.now()), None, 12345, 0, 5.0, SideCode.TowardsDigitizing, LinkStatus.New, 0, RoadType.PublicRoad, roadGeom1Link1, roadwayNumber)
+      val road1Link2 = dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous, 5, 10, Some(DateTime.now()), None, 12346, 5.0, 10.0, SideCode.TowardsDigitizing, LinkStatus.New, 0, RoadType.PublicRoad, roadGeom1Link2, roadwayNumber)
+      val road2Link = dummyProjectLink(2, 1, Track.Combined, Discontinuity.Continuous, 0, 5, Some(DateTime.now()), None, 12347, 0, 5.0, SideCode.TowardsDigitizing, LinkStatus.New, 0, RoadType.PublicRoad, roadGeom2, roadwayNumber+1)
+
+      val roadways = Seq(
+        Roadway(NewIdValue, road1Link1.roadwayNumber, road1Link1.roadNumber, road1Link1.roadPartNumber, road1Link1.roadType, road1Link1.track, road1Link1.discontinuity, road1Link1.startAddrMValue, road1Link2.endAddrMValue, reversed = false, road1Link1.startDate.get, road1Link1.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None),
+        Roadway(NewIdValue, road2Link.roadwayNumber, road2Link.roadNumber, road2Link.roadPartNumber, road2Link.roadType, road2Link.track, road2Link.discontinuity, road2Link.startAddrMValue, road2Link.endAddrMValue, reversed = false, road2Link.startDate.get, road2Link.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None))
+      val linearLocations = Seq(
+        LinearLocation(NewIdValue, 1, road1Link1.linkId, road1Link1.startAddrMValue, road1Link1.endAddrMValue, road1Link1.sideCode, 0L, calibrationPoints = (Some(road1Link1.startAddrMValue), Some(road1Link1.endAddrMValue)), roadGeom1Link1, LinkGeomSource.NormalLinkInterface, road1Link1.roadwayNumber, Some(DateTime.now), None),
+        LinearLocation(NewIdValue, 2, road1Link2.linkId, road1Link2.startAddrMValue, road1Link2.endAddrMValue, road1Link2.sideCode, 0L, calibrationPoints = (Some(road1Link2.startAddrMValue), Some(road1Link2.endAddrMValue)), roadGeom1Link2, LinkGeomSource.NormalLinkInterface, road1Link2.roadwayNumber, Some(DateTime.now), None),
+        LinearLocation(NewIdValue, 1, road2Link.linkId, road2Link.startAddrMValue, road2Link.endAddrMValue, road2Link.sideCode, 0L, calibrationPoints = (Some(road2Link.startAddrMValue), Some(road2Link.endAddrMValue)), roadGeom2, LinkGeomSource.NormalLinkInterface, road2Link.roadwayNumber, Some(DateTime.now), None))
+
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(linearLocations)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
+
+      val projectLinks = Seq(road1Link1, road1Link1, road2Link)
+
+      // Creation of junction points template
+      nodesAndJunctionsService.handleJunctionPointTemplates(projectLinks)
+      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(
+        roadwayPointDAO.fetchByRoadwayNumbers(projectLinks.map(_.roadwayNumber)).map(_.id))
+      junctionPointTemplates.length should be(3)
+
+      val junctions = junctionDAO.fetchByIds(junctionPointTemplates.map(_.junctionId))
+      junctions.length should be(1)
+
+      val terminateRoadLink = road2Link.copy(endDate = Some(DateTime.now().minusDays(1)), status = LinkStatus.Terminated, projectId = 1)
+
+      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(Seq(terminateRoadLink), terminateRoadLink.endDate)
+
+      // Test expired junction points template
+      val junctionPointTemplatesAfterTermination = junctionPointDAO.fetchByRoadwayPointIds(
+        roadwayPointDAO.fetchByRoadwayNumbers(Seq(road1Link1, road1Link2, terminateRoadLink).map(_.roadwayNumber)).map(_.id))
       junctionPointTemplatesAfterTermination.length should be(0)
 
       // Test expired junction

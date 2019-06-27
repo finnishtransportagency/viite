@@ -369,11 +369,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     // Expire current node point template
     nodePointDAO.expireById(obsoleteNodePointsTemplates.map(_.id))
 
-    // Remove junctions without at least two junction points
-    val obsoleteJunctions = junctionDAO.fetchWithLessThanTwoJunctionPointsById(obsoleteJunctionPoints.map(_.junctionId).distinct)
+    // Remove junctions that no longer have justification for the current network
+    val obsoleteJunctions = junctionDAO.fetchObsoleteById(obsoleteJunctionPoints.map(_.junctionId).distinct)
     junctionDAO.expireById(obsoleteJunctions.map(_.id))
-    val obsoleteJunctionPointsOfExpiredJunctions = junctionPointDAO.fetchJunctionPointsByJunctionIds(obsoleteJunctions.map(_.id))
-    junctionPointDAO.expireById(obsoleteJunctionPointsOfExpiredJunctions.map(_.id))
+    val obsoleteJunctionPointsOfNowExpiredJunctions = junctionPointDAO.fetchJunctionPointsByJunctionIds(obsoleteJunctions.map(_.id))
+    junctionPointDAO.expireById(obsoleteJunctionPointsOfNowExpiredJunctions.map(_.id))
 
     // Remove nodes without junctions or node points
     val obsoleteNodes = nodeDAO.fetchEmptyNodes((obsoleteJunctions.filter(j => j.nodeId.isDefined).map(_.nodeId.get)
@@ -381,12 +381,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     nodeDAO.expireById(obsoleteNodes.map(_.id))
 
     // Handle obsolete junction points of valid and obsolete junctions separately
-    val (obsoleteJunctionPointsOfValidJunctions, obsoleteJunctionPointsOfObsoleteJunctions) = obsoleteJunctionPoints.partition(
-      jp => obsoleteJunctions.filter(j => j.id == jp.junctionId).isEmpty)
+    val (obsoleteJunctionPointsOfObsoleteJunctions, obsoleteJunctionPointsOfValidJunctions) = (obsoleteJunctionPoints ++ obsoleteJunctionPointsOfNowExpiredJunctions)
+      .partition(jp => obsoleteJunctions.exists(j => j.id == jp.junctionId))
 
     // Handle obsolete node points of valid and obsolete nodes separately
-    val (obsoleteNodePointsOfValidNodes, obsoleteNodePointsOfObsoleteNodes) = obsoleteNodePoints.partition(
-      np => obsoleteNodes.filter(j => j.id == np.nodeId).isEmpty)
+    val (obsoleteNodePointsOfObsoleteNodes, obsoleteNodePointsOfValidNodes) = obsoleteNodePoints
+      .partition(np => obsoleteNodes.exists(n => n.id == np.nodeId.getOrElse(-1)))
 
     // Create junction rows with end date and junction point rows with end date and new junction id
     obsoleteJunctions.foreach(j => {
@@ -407,8 +407,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     // Create node point rows of the valid nodes with end date
     nodePointDAO.create(obsoleteNodePointsOfValidNodes.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
-
-    // Create node point template rows with end date
     nodePointDAO.create(obsoleteNodePointsTemplates.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
   }
 
