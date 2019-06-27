@@ -71,4 +71,24 @@ class JunctionDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test fetchJunctionByNodeIds When non-existing node Then return none") {
+    runWithRollback {
+      val nodeId = nodeDAO.create(Seq(testNode1)).head
+      dao.create(Seq(testJunction1.copy(nodeId = Some(nodeId)), testJunction2.copy(nodeId = Some(nodeId))))
+      val fetched = dao.fetchJunctionByNodeIds(Seq(nodeId + 1)) // Non-existing node id
+      fetched.size should be(0)
+    }
+  }
+
+  test("Test fetchJunctionByNodeIds When fetched Then return junctions") {
+    runWithRollback {
+      val nodeId = nodeDAO.create(Seq(testNode1)).head
+      val fetched1 = dao.fetchJunctionByNodeIds(Seq(nodeId))
+      fetched1.size should be(0)
+      dao.create(Seq(testJunction1.copy(nodeId = Some(nodeId)), testJunction2.copy(nodeId = Some(nodeId))))
+      val fetched2 = dao.fetchJunctionByNodeIds(Seq(nodeId))
+      fetched2.size should be(2)
+    }
+  }
+
 }
