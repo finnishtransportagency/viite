@@ -90,4 +90,16 @@ class NodeDAOSpec extends FunSuite with Matchers {
       roadAttribute.roadNumber should be(roadNumber1)
     }
   }
+
+  test("Test fetchEmptyNodes When one empty Then return one") {
+    runWithRollback {
+      val nodeIds = dao.create(Seq(testNode1))
+      val emptyNodes = dao.fetchEmptyNodes(nodeIds)
+      emptyNodes.size should be(1)
+      emptyNodes.head.id should be(nodeIds.head)
+      emptyNodes.head.coordinates.x should be(testNode1.coordinates.x)
+      emptyNodes.head.coordinates.y should be(testNode1.coordinates.y)
+    }
+  }
+
 }

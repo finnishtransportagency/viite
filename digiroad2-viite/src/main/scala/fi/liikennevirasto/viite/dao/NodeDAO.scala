@@ -131,7 +131,8 @@ class NodeDAO extends BaseDAO {
     def apply(r: PositionedResult): Node = {
       val id = r.nextLong()
       val nodeNumber = r.nextLong()
-      val coordinates = OracleDatabase.loadRoadsJGeometryToGeometry(r.nextObjectOption())
+      val coordX = r.nextLong()
+      val coordY = r.nextLong()
       val name = r.nextStringOption()
       val nodeType = NodeType.apply(r.nextLong())
       val startDate = formatter.parseDateTime(r.nextDate.toString)
@@ -141,7 +142,7 @@ class NodeDAO extends BaseDAO {
       val createdBy = r.nextStringOption()
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 
-      Node(id, nodeNumber, coordinates.head, name, nodeType, startDate, endDate, validFrom, validTo, createdBy, createdTime)
+      Node(id, nodeNumber, Point(coordX, coordY), name, nodeType, startDate, endDate, validFrom, validTo, createdBy, createdTime)
     }
   }
 
@@ -154,8 +155,9 @@ class NodeDAO extends BaseDAO {
 
   def fetchByNodeNumber(nodeNumber: Long): Option[Node] = {
     sql"""
-      SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-      from NODE
+      SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      from NODE N
+      CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
       where NODE_NUMBER = $nodeNumber and valid_to is null and end_date is null
       """.as[Node].firstOption
   }
@@ -265,8 +267,9 @@ class NodeDAO extends BaseDAO {
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingBoxRectangle, geometryColumn = "coordinates")
     val query =
       s"""
-        SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-        FROM NODE
+        SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+        FROM NODE N
+        CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
         WHERE $boundingBoxFilter
         AND END_DATE IS NULL AND VALID_TO IS NULL
       """
@@ -296,8 +299,9 @@ class NodeDAO extends BaseDAO {
     } else {
       val query =
         s"""
-          SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+          SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
           FROM NODE N
+          CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
           WHERE END_DATE IS NULL AND VALID_TO IS NULL AND ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
             SELECT NULL FROM JUNCTION J WHERE N.id = J.NODE_ID AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
           ) AND NOT EXISTS (
