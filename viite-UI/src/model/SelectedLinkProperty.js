@@ -62,6 +62,7 @@
         return _.chain(dataToExtract)
           .map(property)
           .uniq()
+          .value()
           .join(', ');
       };
 
@@ -102,8 +103,8 @@
 
         // TODO Check that merge was done correctly
         var discontinuity = {discontinuity: parseInt(extractUniqueValues([endRoadOnSelection], 'discontinuity'))};
-        var startAddressM = {startAddressM: _.minBy(_.chain(selectedData).map('startAddressM').uniq())};
-        var endAddressM = {endAddressM: _.maxBy(_.chain(selectedData).pluck('endAddressM').uniq())};
+        var startAddressM = {startAddressM: _.minBy(_.chain(selectedData).map('startAddressM').uniq().value())};
+        var endAddressM = {endAddressM: _.maxBy(_.chain(selectedData).pluck('endAddressM').uniq().value())};
 
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
