@@ -45,9 +45,8 @@ class JunctionDAO extends BaseDAO {
     if (nodeIds.isEmpty) {
       Seq()
     } else {
-      val query =
-        s"""
-          SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      val query = s"""
+        SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
           FROM JUNCTION
           where NODE_ID in (${nodeIds.mkString(", ")}) AND VALID_TO IS NULL AND END_DATE IS NULL
         """
@@ -58,8 +57,8 @@ class JunctionDAO extends BaseDAO {
   def fetchJunctionId(nodeNumber: Long): Option[Long] = {
     sql"""
       SELECT ID
-      from NODE
-      where NODE_NUMBER = $nodeNumber AND VALID_TO IS NULL AND END_DATE IS NULL
+        FROM NODE
+        WHERE NODE_NUMBER = $nodeNumber AND VALID_TO IS NULL AND END_DATE IS NULL
     """.as[Long].firstOption
   }
 
@@ -67,9 +66,8 @@ class JunctionDAO extends BaseDAO {
     if (ids.isEmpty) {
       Seq()
     } else {
-      val query =
-        s"""
-          SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      val query = s"""
+        SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
           FROM JUNCTION
           WHERE ID IN (${ids.mkString(", ")}) AND VALID_TO IS NULL
         """
@@ -77,16 +75,25 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
-  def fetchWithLessThanTwoJunctionPointsById(ids: Iterable[Long]): Seq[Junction] = {
+  /**
+    * Search for Junctions that no longer have justification for the current network.
+    *
+    * @param ids : Iterable[Long] - The ids of the junctions to verify.
+    * @return
+    */
+  def fetchObsoleteById(ids: Iterable[Long]): Seq[Junction] = {
+    // An Obsolete junction are those that no longer have justification for the current network, and must be expired.
     if (ids.isEmpty) {
       Seq()
     } else {
-      val query =
-        s"""
-          SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      val query = s"""
+        SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
           FROM JUNCTION J
           WHERE ID IN (${ids.mkString(", ")})
-          AND (SELECT COUNT(*) FROM JUNCTION_POINT JP WHERE JP.JUNCTION_ID = J.id AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL) < 2
+          AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER) FROM JUNCTION_POINT JP
+            LEFT JOIN ROADWAY_POINT RP ON JP.ROADWAY_POINT_ID = RP.ID
+            LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
+            WHERE JP.JUNCTION_ID = J.ID AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL) < 2
           AND VALID_TO IS NULL AND END_DATE IS NULL
         """
       queryList(query)
@@ -135,14 +142,11 @@ class JunctionDAO extends BaseDAO {
     * @return
     */
   def expireById(ids: Iterable[Long]): Int = {
-    val query =
-      s"""
-        Update JUNCTION Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(", ")})
-      """
-    if (ids.isEmpty)
-      0
-    else
+    if (ids.isEmpty) 0
+    else {
+      val query = s"""UPDATE JUNCTION SET VALID_TO = SYSDATE WHERE VALID_TO IS NULL AND ID IN (${ids.mkString(", ")})"""
       Q.updateNA(query).first
+    }
   }
 
 }
