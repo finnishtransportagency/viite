@@ -551,10 +551,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val delta = Delta(DateTime.now, newRoads , terminated, unchanged, transferred, renumbered)
       roadwayChangesDAO.insertDeltaToRoadChangeTable(delta, projectId)
 
+      val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
+
       when(mockRoadwayDAO.fetchAllBySectionAndTracks(any[Long], any[Long], any[Set[Track]])).thenReturn(Seq(rw1WithId, rw2WithId))
       val endRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(link2.roadwayNumber, link2.startAddrMValue, link2.endAddrMValue)
       endRoadwayPoint.head.addrMValue should be (link2.endAddrMValue)
-      roadAddressService.handleRoadwayPointsUpdate(List.empty[ProjectRoadwayChange], "user")
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, "user")
 
       val newEndRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(afterUpdateProjectLinks.last.roadwayNumber, afterUpdateProjectLinks.last.startAddrMValue, afterUpdateProjectLinks.last.endAddrMValue)
       newEndRoadwayPoint.find(_.id == endRoadwayPoint.head.id).get.addrMValue should be (link2.endAddrMValue - link1.endAddrMValue)
@@ -636,10 +638,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val delta = Delta(DateTime.now, newRoads, terminated, unchanged, transferred, renumbered)
       roadwayChangesDAO.insertDeltaToRoadChangeTable(delta, projectId)
 
+      val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
+
       when(mockRoadwayDAO.fetchAllBySectionAndTracks(any[Long], any[Long], any[Set[Track]])).thenReturn(Seq(rw1WithId, rw2WithId))
       val endRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(link2.roadwayNumber, link2.startAddrMValue, link2.endAddrMValue)
       endRoadwayPoint.head.addrMValue should be(link2.endAddrMValue)
-      roadAddressService.handleRoadwayPointsUpdate(List.empty[ProjectRoadwayChange], "user")
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, "user")
 
       val newReversedEndRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(afterUpdateProjectLinks.last.roadwayNumber, afterUpdateProjectLinks.last.startAddrMValue, afterUpdateProjectLinks.last.endAddrMValue)
       newReversedEndRoadwayPoint.find(_.id == endRoadwayPoint.head.id).get.addrMValue should be(0L)
@@ -720,8 +724,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         val delta = Delta(DateTime.now, newRoads , terminated, unchanged, transferred, renumbered)
         roadwayChangesDAO.insertDeltaToRoadChangeTable(delta, projectId)
 
+        val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
+
         when(mockRoadwayDAO.fetchAllBySectionAndTracks(any[Long], any[Long], any[Set[Track]])).thenReturn(Seq(rw1WithId, rw2WithId))
-        roadAddressService.handleRoadwayPointsUpdate(List.empty[ProjectRoadwayChange], "user")
+        roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, "user")
 
         val newStartRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(afterUpdateProjectLinks.last.roadwayNumber, afterUpdateProjectLinks.last.startAddrMValue, afterUpdateProjectLinks.last.startAddrMValue)
         val newEndRoadwayPoint = roadwayPointDAO.fetchByRoadwayNumberAndAddresses(afterUpdateProjectLinks.last.roadwayNumber, afterUpdateProjectLinks.last.endAddrMValue, afterUpdateProjectLinks.last.endAddrMValue)
