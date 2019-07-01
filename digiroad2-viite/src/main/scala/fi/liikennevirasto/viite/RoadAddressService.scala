@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.AddressChangeType.{Transfer, ReNumeration}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.RoadwayPointDAO
 import fi.liikennevirasto.viite.dao.RoadwayPoint
@@ -669,20 +670,40 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
-  def updateRoadwayPoints(projectLinks: Seq[ProjectLink], username: String = "-"): Unit = {
-    projectLinks.groupBy(_.roadwayNumber).foreach {
-      case (roadwayNumber, projectLinksOnRoadway) =>
-        val currentRoadwayPoints = roadwayPointDAO.fetchByRoadwayNumber(roadwayNumber)
-        projectLinksOnRoadway.foreach {
-          pl =>
-            val startPoint = currentRoadwayPoints.find(rwp => rwp.addrMValue == pl.originalStartAddrMValue)
-            val endPoint = currentRoadwayPoints.find(rwp => rwp.addrMValue == pl.originalEndAddrMValue)
-            if (startPoint.isDefined && pl.startAddrMValue != pl.originalStartAddrMValue) {
-              roadwayPointDAO.update(startPoint.get.id, if (pl.reversed) pl.endAddrMValue else pl.startAddrMValue, username)
-            } else if (endPoint.isDefined && pl.endAddrMValue != pl.originalEndAddrMValue) {
-              roadwayPointDAO.update(endPoint.get.id, if (pl.reversed) pl.startAddrMValue else pl.endAddrMValue, username)
-            }
+  def handleRoadwayPointsUpdate(roadwayChanges: List[ProjectRoadwayChange], username: String = "-"): Unit = {
+
+    roadwayChanges.filter(rw => List(Transfer, ReNumeration).contains(rw.changeInfo.changeType)).foreach{ rwc =>
+
+      val change = rwc.changeInfo
+      val source = change.source
+      val target = change.target
+      val roadwayNumbers = roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber).distinct
+      val roadwayPoints = roadwayNumbers.flatMap(rwn=> roadwayPointDAO.fetchByRoadwayNumberAndAddresses(rwn, source.startAddressM.get, source.endAddressM.get)).distinct
+
+      if(change.changeType == Transfer){
+        if(!change.reversed){
+          roadwayPoints.foreach{ rwp=>
+            val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
+            roadwayPointDAO.update(rwp.id, newAddrM, username)
+          }
+        } else {
+          roadwayPoints.foreach{ rwp=>
+            val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
+            roadwayPointDAO.update(rwp.id, newAddrM, username)
+          }
         }
+      } else if (change.changeType == ReNumeration){
+        if(change.reversed){
+          roadwayPoints.foreach{ rwp=>
+            val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
+            roadwayPointDAO.update(rwp.id, newAddrM, username)
+          }
+        }
+      } else {
+        //TODO IF NEED IN FUTURE remove filter from top and add roadwayChange Termination cases/expire roadwaypoint cases
+      }
+
+
     }
   }
 
