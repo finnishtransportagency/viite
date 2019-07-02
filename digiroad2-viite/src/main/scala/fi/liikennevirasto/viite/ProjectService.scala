@@ -604,7 +604,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     def getGeometryWithTimestamp(linkId: Long, timeStamp: Long, roadLinks: Seq[RoadLink],
                                  vvhHistoryLinks: Seq[VVHHistoryRoadLink]): Seq[Point] = {
-      val matchingLinksGeometry = (roadLinks ++ vvhHistoryLinks).find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
+      val matchingLinksGeometry = (roadLinks ++ vvhHistoryLinks).find(rl => rl.linkId == linkId && rl.timeStamp == timeStamp).map(_.geometry)
       if (matchingLinksGeometry.nonEmpty) {
         matchingLinksGeometry.get
       } else {
@@ -891,7 +891,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         || x.linkGeomSource == LinkGeomSource.FrozenLinkInterface || x.linkGeomSource == LinkGeomSource.ComplementaryLinkInterface).map(x => x.linkId).toSet)
       val suravageLinks = roadLinkService.getSuravageRoadLinksFromVVH(projectLinks.filter(x => x.linkGeomSource == LinkGeomSource.SuravageLinkInterface).map(x => x.linkId).toSet)
       val vvhLinks = roadLinks ++ suravageLinks
-      val geometryMap = vvhLinks.map(l => l.linkId -> (l.geometry, l.vvhTimeStamp)).toMap
+      val geometryMap = vvhLinks.map(l => l.linkId -> (l.geometry, l.timeStamp)).toMap
       val timeStamp = new Date().getTime
       val updatedProjectLinks = projectLinks.map { pl =>
         val (geometry, time) = geometryMap.getOrElse(pl.linkId, (Seq(), timeStamp))
@@ -1734,7 +1734,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       0L, 0L, 0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length,
       SideCode.Unknown, (None, None), rl.geometry,
       project.id, LinkStatus.New, roadType, rl.linkSource, rl.length,
-      0L, 0L, ely, reversed, None, rl.vvhTimeStamp, roadName = Some(roadName))
+      0L, 0L, ely, reversed, None, rl.timeStamp, roadName = Some(roadName))
   }
 
   private def newProjectLink(rl: RoadLinkLike, project: Project, splitOptions: SplitOptions): ProjectLink = {

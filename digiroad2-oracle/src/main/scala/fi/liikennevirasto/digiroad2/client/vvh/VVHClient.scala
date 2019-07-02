@@ -33,12 +33,12 @@ object FeatureClass {
   case object AllOthers extends FeatureClass
 }
 
-case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
+case class VVHRoadlink(linkId: Long, uuid: String, version: Long, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
                        constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
-  val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+  val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 }
 
 case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: ChangeType,
@@ -53,12 +53,12 @@ case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, cha
   }
 }
 
-case class VVHHistoryRoadLink(linkId: Long, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
+case class VVHHistoryRoadLink(linkId: Long, uuid: String, version: Long, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
                               trafficDirection: TrafficDirection, featureClass: FeatureClass, createdDate: BigInt, endDate: BigInt, attributes: Map[String, Any] = Map(),
                               constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
 
-  val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
+  val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
 }
 
 /**
@@ -602,7 +602,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
       0
     val featureClass = VVHClient.featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
-    VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
+    VVHRoadlink(linkId, "", 0, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes),
       extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes), linkGeomSource, geometryLength)
 
@@ -741,20 +741,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
 
   def fetchByLinkIdsF(linkIds: Set[Long]): Future[Seq[VVHRoadlink]] = {
     Future(fetchByLinkIds(linkIds))
-  }
-
-  /**
-    * Returns VVH road link by mml id.
-    * Used by RoadLinkService.getRoadLinkMiddlePointByMmlId
-    */
-  def fetchByMmlId(mmlId: Long): Option[VVHRoadlink] = fetchByMmlIds(Set(mmlId)).headOption
-
-  /**
-    * Returns VVH road links by mml ids.
-    * Used by VVHClient.fetchByMmlId, LinkIdImporter.updateTable and AssetDataImporter.importRoadAddressData.
-    */
-  def fetchByMmlIds(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
-    queryByLinkIds(mmlIds, None, fetchGeometry = true, extractRoadLinkFeature, withMmlIdFilter)
   }
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
@@ -1022,7 +1008,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
       0
     val featureClass = VVHClient.featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
-    VVHHistoryRoadLink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
+    VVHHistoryRoadLink(linkId, "", 0, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), featureClass, createdDate, endTime, extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)
   }
 

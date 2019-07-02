@@ -5,6 +5,8 @@ import fi.liikennevirasto.digiroad2.asset._
 
 trait RoadLinkLike extends PolyLine{
   def linkId: Long
+  def uuid: String
+  def version: Long
   def municipalityCode: Int
   def length: Double
   def administrativeClass: AdministrativeClass
@@ -13,10 +15,10 @@ trait RoadLinkLike extends PolyLine{
   def linkSource: LinkGeomSource
   def attributes: Map[String, Any]
   def constructionType: ConstructionType
-  def vvhTimeStamp: Long
+  def timeStamp: Long
 }
 
-case class RoadLink(linkId: Long, geometry: Seq[Point],
+case class RoadLink(linkId: Long, uuid: String, version: Long, geometry: Seq[Point],
                     length: Double, administrativeClass: AdministrativeClass,
                     functionalClass: Int, trafficDirection: TrafficDirection,
                     linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
@@ -25,6 +27,6 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
 
   def municipalityCode: Int = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
-  val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+  val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 
 }
