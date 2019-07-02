@@ -97,7 +97,6 @@ package object viite {
   val DoubleEndOfRoadMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."
   val EndOfRoadMiddleOfPartMessage = s"Tieosan keskellä olevalla linkillä on jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value})."
   val RoadNotAvailableMessage = s"Tieosaa ei ole varattu projektiin tai se on varattuna toisessa projektissa."
-  val RoadPartNotReservedInProjectMessage = s"Tieosaa ei ole varattu projektiin."
   val RoadReservedOtherProjectMessage = s"Tie %d osa %d on jo varattuna projektissa %s, tarkista tiedot."
   val ProjectNotFoundMessage = "Projektia ei löytynyt, ota yhteys pääkäyttäjään."
   val FailedToSendToTRMessage = s"Lähetys tierekisteriin epäonnistui, ota yhteys pääkäyttäjään."
