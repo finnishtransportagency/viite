@@ -689,22 +689,26 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
           if(change.changeType == Transfer){
             if(!change.reversed){
-              roadwayPoints.foreach{ rwp=>
+              val updateRoadwayPoints = roadwayPoints.map{ rwp=>
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
-                roadwayPointDAO.update(rwp.id, newAddrM, username)
+                (newAddrM, username, rwp.id)
               }
+              roadwayPointDAO.update(updateRoadwayPoints)
+
             } else {
-              roadwayPoints.foreach{ rwp=>
+              val updateRoadwayPoints = roadwayPoints.map{ rwp=>
               val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
-                roadwayPointDAO.update(rwp.id, newAddrM, username)
+                (newAddrM, username, rwp.id)
               }
+              roadwayPointDAO.update(updateRoadwayPoints)
             }
           } else if (change.changeType == ReNumeration){
             if(change.reversed){
-              roadwayPoints.foreach{ rwp=>
+              val updateRoadwayPoints = roadwayPoints.map{ rwp=>
                 val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
-                roadwayPointDAO.update(rwp.id, newAddrM, username)
+                (newAddrM, username, rwp.id)
               }
+              roadwayPointDAO.update(updateRoadwayPoints)
             }
           } else {
             //TODO IF NEED IN FUTURE remove filter from top and add roadwayChange Termination cases/expire roadwaypoint cases
