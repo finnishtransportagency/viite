@@ -219,6 +219,39 @@ class NodeDAO extends BaseDAO {
     }
   }
 
+  /**
+    * Search for Junctions that no longer have justification for the current network.
+    *
+    * @param ids : Iterable[Long] - The ids of the junctions to verify.
+    * @return
+    */
+  def fetchObsoleteById(ids: Iterable[Long]): Seq[Node] = {
+    // An Obsolete node are those that no longer have justification for the current network, and must be expired.
+    if (ids.isEmpty) {
+      Seq()
+    } else {
+      val query = s"""
+        SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+        FROM NODE N
+        CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
+          WHERE ID IN (${ids.mkString(", ")})
+          AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER) FROM JUNCTION_POINT JP
+            LEFT JOIN JUNCTION J ON JP.JUNCTION_ID = J.ID
+            LEFT JOIN ROADWAY_POINT RP ON JP.ROADWAY_POINT_ID = RP.ID
+            LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
+            WHERE J.NODE_ID = N.ID AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL) < 2
+          AND (SELECT COUNT(*) FROM NODE_POINT NP
+              WHERE NP.NODE_ID = N.ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL) > 1
+          AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER || '-' || RW.ROAD_PART_NUMBER || ',' || RW.ROAD_TYPE) FROM NODE_POINT NP
+              LEFT JOIN ROADWAY_POINT RP ON NP.ROADWAY_POINT_ID = RP.ID
+              LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
+              WHERE NP.NODE_ID = N.ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL) < 2
+          AND VALID_TO IS NULL AND END_DATE IS NULL
+        """
+      queryList(query)
+    }
+  }
+
   def create(nodes: Iterable[Node], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
@@ -241,7 +274,7 @@ class NodeDAO extends BaseDAO {
         }
         ps.setLong(1, node.id)
         ps.setLong(2, nodeNumber)
-        ps.setObject(3, OracleDatabase.createPointJGeometry(node.coordinates))
+        ps.setObject(3, OracleDatabase.createRoadsJGeometry(Seq(node.coordinates), dynamicSession.conn, 0))
         if (node.name.isDefined) {
           ps.setString(4, node.name.get)
         } else {
@@ -265,14 +298,13 @@ class NodeDAO extends BaseDAO {
     val extendedBoundingBoxRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(scalar = .15),
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(scalar = .15))
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingBoxRectangle, geometryColumn = "coordinates")
-    val query =
-      s"""
-        SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-        FROM NODE N
-        CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
+    val query = s"""
+      SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      FROM NODE N
+      CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
         WHERE $boundingBoxFilter
         AND END_DATE IS NULL AND VALID_TO IS NULL
-      """
+    """
     queryList(query)
   }
 
@@ -283,31 +315,30 @@ class NodeDAO extends BaseDAO {
     * @return
     */
   def expireById(ids: Iterable[Long]): Int = {
-    val query =
-      s"""
-        Update NODE Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(", ")})
-      """
     if (ids.isEmpty)
       0
-    else
+    else {
+      val query = s"""
+        UPDATE NODE SET valid_to = sysdate WHERE valid_to IS NULL AND id IN (${ids.mkString(", ")})
+      """
       Q.updateNA(query).first
+    }
   }
 
   def fetchEmptyNodes(ids: Iterable[Long]): Seq[Node] = {
     if (ids.isEmpty) {
       Seq()
     } else {
-      val query =
-        s"""
-          SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-          FROM NODE N
-          CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
+      val query = s"""
+        SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+        FROM NODE N
+        CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
           WHERE END_DATE IS NULL AND VALID_TO IS NULL AND ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
             SELECT NULL FROM JUNCTION J WHERE N.id = J.NODE_ID AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
           ) AND NOT EXISTS (
             SELECT NULL FROM NODE_POINT NP WHERE N.id = NP.NODE_ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL
           )
-        """
+      """
       queryList(query)
     }
   }

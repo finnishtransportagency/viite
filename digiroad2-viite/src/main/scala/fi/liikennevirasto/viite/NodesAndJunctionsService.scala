@@ -345,7 +345,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def removeObsoleteNodesAndJunctions(projectLinks: Seq[ProjectLink], endDate: Option[DateTime], username: String = "-"): Unit = {
+  def removeObsoleteNodesAndJunctions(roadwayChanges: Seq[ProjectRoadwayChange], endDate: Option[DateTime], username: String = "-"): Unit = {
     /*
       // TODO Handle these rules regarding road numbers:
       The node point is expired if it no longer has justification for the current network, that is, it is no longer a point of change of the road part,
@@ -354,20 +354,68 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       The node is expired if no node points or junctions are connected to it. If, after the changes, the node is joined only with ramps,
       etc. (road number between 20000-40000), those junctions will become junction templates. The user must join junction templates to another existing node.
     */
+    def obsoleteNodesAndJunctionsPointsOfTermination(terminatedRoadwayNumbers: Seq[Long]): (Seq[NodePoint], Seq[JunctionPoint]) = {
+      val obsoleteRoadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(terminatedRoadwayNumbers)
+      val obsoleteNodePoints = nodePointDAO.fetchByRoadwayPointIds(obsoleteRoadwayPoints.map(_.id))
+      val obsoleteJunctionPoints = junctionPointDAO.fetchByRoadwayPointIds(obsoleteRoadwayPoints.map(_.id))
+      (obsoleteNodePoints, obsoleteJunctionPoints)
+    }
 
-    val terminatedLinks = projectLinks.filter(pl => pl.endDate.isDefined)
-    val terminatedRoadwayNumbers = terminatedLinks.map(_.roadwayNumber).distinct
-    val obsoleteRoadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(terminatedRoadwayNumbers)
-    val obsoleteNodePoints = nodePointDAO.fetchByRoadwayPointIds(obsoleteRoadwayPoints.map(_.id))
-    val obsoleteNodePointsTemplates = terminatedRoadwayNumbers.flatMap(roadwayNumber => nodePointDAO.fetchNodePointTemplate(roadwayNumber))
-    val obsoleteJunctionPoints = junctionPointDAO.fetchByRoadwayPointIds(obsoleteRoadwayPoints.map(_.id))
+    def obsoleteNodesAndJunctionsPointsOfReNumeration(renumberedRoadwayNumbers: Seq[Long]): (Seq[NodePoint], Seq[JunctionPoint]) = {
+      val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(renumberedRoadwayNumbers)
+      val nodePoints = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id))
+      val junctionPoints = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id))
+
+      val obsoleteJunctions = junctionDAO.fetchObsoleteById(junctionPoints.map(_.junctionId).distinct)
+      val obsoleteJunctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(obsoleteJunctions.map(_.id))
+
+      val obsoleteNodes = nodeDAO.fetchObsoleteById(nodePoints.map(_.nodeId.get).distinct)
+      val obsoleteNodePoints = nodePointDAO.fetchNodePointsByNodeId(obsoleteNodes.map(_.id))
+
+      (obsoleteNodePoints, obsoleteJunctionPoints)
+    }
+
+    def obsoleteNodesAndJunctionsPointsOfNew(newRoadwayNumbers: Seq[Long]): (Seq[NodePoint], Seq[JunctionPoint]) = {
+      val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(newRoadwayNumbers)
+      val obsoleteNodePoints = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id))
+        .groupBy(_.nodeId)
+        .filter(p => {
+          val changes = roadwayChanges
+          val nodePoints = p._2
+          nodePoints.size == 1 &&
+            changes.filter(ch => ch.changeInfo.target.startAddressM.getOrElse(-1L) != nodePoints.head.addrM && ch.changeInfo.target.endAddressM.getOrElse(-1L) != nodePoints.head.addrM)
+              .groupBy(ch => (ch.changeInfo.target.roadNumber, ch.changeInfo.target.startRoadPartNumber, ch.changeInfo.target.roadType)).values.size == 1
+        })
+        .values.toSeq.flatten
+
+      (obsoleteNodePoints, Seq.empty[JunctionPoint])
+    }
+
+    val (obsoleteNodePoints, obsoleteJunctionPoints) = roadwayChanges.foldLeft((Seq.empty[NodePoint],Seq.empty[JunctionPoint])) { case ((onp, ojp), rwc) =>
+      val sourceRoadNumber = rwc.changeInfo.source.roadNumber.getOrElse(-1L)
+      val sourceRoadPartNumber = rwc.changeInfo.source.startRoadPartNumber.getOrElse(-1L)
+      val targetRoadNumber = rwc.changeInfo.target.roadNumber.getOrElse(-1L)
+      val targetRoadPartNumber = rwc.changeInfo.target.startRoadPartNumber.getOrElse(-1L)
+
+      val (nodePoints, junctionPoints) = rwc.changeInfo.changeType match {
+        case AddressChangeType.Termination =>
+          val terminatedRoadwayNumbers = roadwayDAO.fetchAllByRoadAndPart(sourceRoadNumber, sourceRoadPartNumber).map(_.roadwayNumber)
+          obsoleteNodesAndJunctionsPointsOfTermination(terminatedRoadwayNumbers)
+        case AddressChangeType.ReNumeration =>
+          val renumberedRoadwayNumbers = roadwayDAO.fetchAllByRoadAndPart(targetRoadNumber, targetRoadPartNumber).map(_.roadwayNumber)
+          obsoleteNodesAndJunctionsPointsOfReNumeration(renumberedRoadwayNumbers)
+        case AddressChangeType.New => {
+          val newRoadwayNumbers = roadwayDAO.fetchAllByRoadAndPart(targetRoadNumber, targetRoadPartNumber).map(_.roadwayNumber)
+          obsoleteNodesAndJunctionsPointsOfNew(newRoadwayNumbers)
+        }
+        case _ => (onp, ojp)
+      }
+      (onp++nodePoints, ojp++junctionPoints)
+    }
 
     // Expire current node and junction point rows
-    nodePointDAO.expireById(obsoleteNodePoints.map(_.id))
-    junctionPointDAO.expireById(obsoleteJunctionPoints.map(_.id))
-
-    // Expire current node point template
-    nodePointDAO.expireById(obsoleteNodePointsTemplates.map(_.id))
+    nodePointDAO.expireById(obsoleteNodePoints.map(_.id).distinct)
+    junctionPointDAO.expireById(obsoleteJunctionPoints.map(_.id).distinct)
 
     // Remove junctions that no longer have justification for the current network
     val obsoleteJunctions = junctionDAO.fetchObsoleteById(obsoleteJunctionPoints.map(_.junctionId).distinct)
@@ -375,8 +423,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     val obsoleteJunctionPointsOfNowExpiredJunctions = junctionPointDAO.fetchJunctionPointsByJunctionIds(obsoleteJunctions.map(_.id))
     junctionPointDAO.expireById(obsoleteJunctionPointsOfNowExpiredJunctions.map(_.id))
 
-    // Remove nodes without junctions or node points
-    val obsoleteNodes = nodeDAO.fetchEmptyNodes((obsoleteJunctions.filter(j => j.nodeId.isDefined).map(_.nodeId.get)
+    // Remove nodes that no longer have justification for the current network
+    val obsoleteNodes = nodeDAO.fetchObsoleteById((obsoleteJunctions.filter(j => j.nodeId.isDefined).map(_.nodeId.get)
       ++ obsoleteNodePoints.filter(np => np.nodeId.isDefined).map(_.nodeId.get)).distinct)
     nodeDAO.expireById(obsoleteNodes.map(_.id))
 
@@ -407,7 +455,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     // Create node point rows of the valid nodes with end date
     nodePointDAO.create(obsoleteNodePointsOfValidNodes.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
-    nodePointDAO.create(obsoleteNodePointsTemplates.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
   }
 
 }
