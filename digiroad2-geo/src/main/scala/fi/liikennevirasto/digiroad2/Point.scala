@@ -121,4 +121,8 @@ case class Point(x: Double, y: Double, z: Double = 0.0) {
   lazy val toVector: Vector3d = {
     this - Point(0.0, 0.0)
   }
+
+  def connected(ra2: Point): Boolean = {
+    GeometryUtils.areAdjacent(Point(x, y, z), ra2, GeometryUtils.MaxDistanceForConnectedLinks)
+  }
 }

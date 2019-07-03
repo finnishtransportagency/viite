@@ -254,6 +254,15 @@ trait BaseRoadAddress {
     GeometryUtils.areAdjacent(nextStartPoint, currEndPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
   }
 
+  def connected(p: Point): Boolean = {
+    val currEndPoint = sideCode match {
+      case AgainstDigitizing => geometry.head
+      case _ => geometry.last
+    }
+
+    GeometryUtils.areAdjacent(p, currEndPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
+  }
+
   lazy val startingPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
     case (true, true) | (false, false) =>
       //reversed for both SideCodes
@@ -366,6 +375,15 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
       case (Some(cp1), Some(cp2)) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)), Option(ProjectLinkCalibrationPoint(cp2.linkId, cp2.segmentMValue, cp2.addressMValue, calibrationPointSource)))
     }
   }
+
+  def getFirstPoint: Point = {
+    if (sideCode == SideCode.TowardsDigitizing) geometry.head else geometry.last
+  }
+
+  def getLastPoint: Point = {
+    if (sideCode == SideCode.TowardsDigitizing) geometry.last else geometry.head
+  }
+
 }
 
 case class Roadway(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,

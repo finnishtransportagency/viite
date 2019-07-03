@@ -60,6 +60,18 @@ class JunctionPointDAO extends BaseDAO {
     }
   }
 
+  def fetchJunctionPointsByRoadwayPoints(roadwayNumber: Long, addrM: Long, beforeAfter: BeforeAfter): Option[JunctionPoint] = {
+    val query =
+      s"""
+       SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
+       RP.ROADWAY_NUMBER, RP.ADDR_M FROM JUNCTION_POINT JP
+       JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
+       where JP.valid_to is null and (JP.end_date is null or JP.end_date >= sysdate) and
+       RP.ROADWAY_NUMBER = $roadwayNumber and RP.ADDR_M = $addrM and JP.before_after = ${beforeAfter.value}
+     """
+    queryList(query).headOption
+  }
+
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionPoint] = {
     time(logger, "Fetch JunctionPoint templates by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
@@ -111,6 +123,27 @@ class JunctionPointDAO extends BaseDAO {
     ps.executeBatch()
     ps.close()
     createJunctionPoints.map(_.id).toSeq
+  }
+
+  def update(junctionPoints: Iterable[JunctionPoint], updatedBy: String = "-"): Seq[Long] = {
+
+    val ps = dynamicSession.prepareStatement("update JUNCTION_POINT SET BEFORE_AFTER = ?, ROADWAY_POINT_ID = ?, JUNCTION_ID = ?, END_DATE = TO_DATE(?, 'YYYY-MM-DD') WHERE ID = ?")
+
+    junctionPoints.foreach {
+      junctionPoint =>
+        ps.setLong(1, junctionPoint.beforeAfter.value)
+        ps.setLong(2, junctionPoint.roadwayPointId)
+        ps.setLong(3, junctionPoint.junctionId)
+        ps.setString(4, junctionPoint.endDate match {
+          case Some(date) => dateFormatter.print(date)
+          case None => ""
+        })
+        ps.setLong(5, junctionPoint.id)
+        ps.addBatch()
+    }
+    ps.executeBatch()
+    ps.close()
+    junctionPoints.map(_.id).toSeq
   }
 
 }
