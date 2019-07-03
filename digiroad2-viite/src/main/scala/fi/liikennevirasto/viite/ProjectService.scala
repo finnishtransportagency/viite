@@ -29,6 +29,7 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
+import scala.collection.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -2004,7 +2005,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val historyRoadways = roadwayDAO.fetchAllByRoadwayNumbers(currentRoadways.map(_._2.roadwayNumber).toSet, withHistory = true).filter(_.endDate.isDefined).map(roadway => (roadway.id, roadway)).toMap
     val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
     val roadwayProjectLinkIds = roadwayChangesDAO.fetchRoadwayChangesLinks(projectID)
-    val mappedRoadwaysWithLinks = roadwayChanges.map {
+    val mappedRoadwaysWithLinks: immutable.Seq[(ProjectRoadwayChange, Seq[ProjectLink])] = roadwayChanges.map {
       change =>
         val linksRelatedToChange = roadwayProjectLinkIds.filter(link => link._1 == change.changeInfo.orderInChangeTable).map(_._2)
         val projectLinksInChange = projectLinks.filter(pl => linksRelatedToChange.contains(pl.id))
@@ -2029,9 +2030,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
       roadwayDAO.create(roadwaysToInsert)
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
-      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(projectLinks, Some(project.startDate.minusDays(1)), project.createdBy)
       roadAddressService.updateRoadwayPoints(projectLinks.filter(_.roadwayNumber != NewIdValue), username = project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
+      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(roadwayChanges, Some(project.startDate.minusDays(1)), project.createdBy)
       nodesAndJunctionsService.handleJunctionPointTemplates(generatedRoadways.flatMap(_._3))
       nodesAndJunctionsService.handleNodePointTemplates(generatedRoadways.flatMap(_._3))
       handleNewRoadNames(roadwayChanges, project)
