@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
+import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.NewIdValue
@@ -129,7 +129,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
                 }
               }
 
-
           if (firstRight.isEmpty || firstLeft.isEmpty)
             throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
 
@@ -138,9 +137,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
           val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
 
-          val (adjustedLeft, adjustedRight) = strategy.setCalibrationPoints(trackCalcResult, userDefinedCalibrationPoint)
-
-          (adjustedLeft ++ adjustedRestRight, adjustedRight ++ adjustedRestLeft)
+          (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
         }
     }
 
@@ -148,7 +145,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val leftSections = sections.flatMap(_.left.links)
     val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(rightSections, userDefinedCalibrationPoint)
     val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
-    val (left, right) = adjustTracksToMatch(leftLinks.sortBy(_.startAddrMValue), rightLinks.sortBy(_.startAddrMValue), None)
+    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(leftLinks.sortBy(_.startAddrMValue), rightLinks.sortBy(_.startAddrMValue), None)
+    val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint)
     TrackSectionOrder.createCombinedSections(right, left)
   }
 
