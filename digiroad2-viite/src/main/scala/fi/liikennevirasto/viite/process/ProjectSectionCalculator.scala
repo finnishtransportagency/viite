@@ -130,7 +130,7 @@ object ProjectSectionCalculator {
       val leftLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(left, addrSt = 0)
       val rightLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(right, addrSt = 0)
       val (leftAdjusted, rightAdjusted) = adjustTracksToMatch(leftLinks, rightLinks, None)
-      val (completedAdjustedLeft, completedAdjustedRight) = TrackSectionOrder.setCalibrationPoints(leftAdjusted, rightAdjusted, Map())
+      val (completedAdjustedRight, completedAdjustedLeft) = TrackSectionOrder.setCalibrationPoints(leftAdjusted, rightAdjusted, Map())
       val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(completedAdjustedRight), groupIntoSections(completedAdjustedLeft))
       calculatedSections.flatMap { sec =>
         if (sec.right == sec.left)
