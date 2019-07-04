@@ -19,13 +19,17 @@ import org.json4s.jackson.JsonMethods.parse
 import org.json4s.{DefaultFormats, Formats, StreamInput}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-case class KMTKRoadlink(linkId: Long, uuid: String, version: Long, municipalityCode: Int, geometry: Seq[Point],
+case class KMTKID(uuid: String, version: Long)
+
+case class KMTKRoadlink(linkId: Long, kmtkId: KMTKID = KMTKID("", 0), municipalityCode: Int, geometry: Seq[Point],
                         administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                         featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
                         constructionType: ConstructionType = ConstructionType.InUse,
                         linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
+
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
 
   val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
@@ -195,7 +199,7 @@ trait KMTKClientOperations {
         } finally {
           response.close()
           if (response.getStatusLine.getStatusCode >= 300) {
-            return  Right(KMTKError(Map(("KMTK FETCH failure", "KMTK response code was <300 (unsuccessful)")), url))
+            return Right(KMTKError(Map(("KMTK FETCH failure", "KMTK response code was <300 (unsuccessful)")), url))
           }
         }
       } catch {
@@ -292,8 +296,8 @@ class KMTKClient(kmtkRestApiEndPoint: String) {
   lazy val roadLinkData: KMTKRoadLinkClient = new KMTKRoadLinkClient(kmtkRestApiEndPoint)
   lazy val roadLinkChangeInfo: KMTKChangeInfoClient = new KMTKChangeInfoClient(kmtkRestApiEndPoint)
 
-  def fetchRoadLinkByUuidAndVersion(uuid: String, version: Long): Option[KMTKRoadlink] = {
-    roadLinkData.fetchByUuidAndVersion(uuid, version)
+  def fetchRoadLinkByUuidAndVersion(id: KMTKID): Option[KMTKRoadlink] = {
+    roadLinkData.fetchById(id)
   }
 
 }
@@ -356,13 +360,13 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   /**
     * Returns KMTK road links.
     */
-  protected def queryByLinkIds[T](ids: Set[(String, Long)],
-                                  fieldSelection: Option[String],
-                                  fetchGeometry: Boolean,
-                                  resultTransition: (Map[String, Any], List[List[Double]]) => T,
-                                  filter: Set[Long] => String): Seq[T] = {
+  protected def queryByIds[T](ids: Set[KMTKID],
+                              fieldSelection: Option[String],
+                              fetchGeometry: Boolean,
+                              resultTransition: (Map[String, Any], List[List[Double]]) => T,
+                              filter: Set[KMTKID] => String): Seq[T] = {
     val batchSize = 1000
-    val idGroups: List[Set[(String, Long)]] = ids.grouped(batchSize).toList
+    val idGroups: List[Set[KMTKID]] = ids.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
       val url = serviceUrl(definition, queryParameters(fetchGeometry))
@@ -406,7 +410,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
       0
     val featureClass = KMTKClient.featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
-    KMTKRoadlink(linkId, "", 0, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
+    KMTKRoadlink(linkId, KMTKID("", 0), municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes),
       extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes), linkGeomSource, geometryLength)
 
@@ -474,19 +478,23 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     }
   }
 
+  // TODO
   // Query filters methods
   protected def withRoadNumberFilter(roadNumbers: (Int, Int), includeAllPublicRoads: Boolean): String = {
     withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
   }
 
-  protected def withLinkIdFilter(linkIds: Set[Long]): String = {
-    withFilter("LINKID", linkIds)
+  // TODO
+  protected def withIdFilter(ids: Set[KMTKID]): String = {
+    withFilter("UUID", ids)
   }
 
+  // TODO
   protected def withMmlIdFilter(mmlIds: Set[Long]): String = {
     withFilter("MTKID", mmlIds)
   }
 
+  // TODO
   protected def withMtkClassFilter(ids: Set[Long]): String = {
     withFilter("MTKCLASS", ids)
   }
@@ -534,17 +542,17 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   /**
     * Returns KMTK road link by linkid
     */
-  def fetchByUuidAndVersion(uuid: String, version: Long): Option[KMTKRoadlink] = fetchByLinkIds(Set((uuid, version))).headOption
+  def fetchById(kmtkId: KMTKID): Option[KMTKRoadlink] = fetchByIds(Set(kmtkId)).headOption
 
   /**
     * Returns KMTK road links by link ids.
     */
-  def fetchByLinkIds(ids: Set[(String, Long)]): Seq[KMTKRoadlink] = {
-    queryByLinkIds(ids, None, fetchGeometry = true, extractRoadLinkFeature, withLinkIdFilter)
+  def fetchByIds(ids: Set[KMTKID]): Seq[KMTKRoadlink] = {
+    queryByIds(ids, None, fetchGeometry = true, extractRoadLinkFeature, withIdFilter)
   }
 
-  def fetchByLinkIdsF(ids: Set[(String, Long)]): Future[Seq[KMTKRoadlink]] = {
-    Future(fetchByLinkIds(ids))
+  def fetchByIdsF(ids: Set[KMTKID]): Future[Seq[KMTKRoadlink]] = {
+    Future(fetchByIds(ids))
   }
 
   def fetchByMunicipality(municipality: Int): Seq[KMTKRoadlink] = {
@@ -595,11 +603,11 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   /**
     * Returns KMTK road links.
     */
-  def fetchKMTKRoadlinks[T](linkIds: Set[(String, Long)],
-                           fieldSelection: Option[String],
-                           fetchGeometry: Boolean,
-                           resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
-    queryByLinkIds(linkIds, fieldSelection, fetchGeometry, resultTransition, withLinkIdFilter)
+  def fetchKMTKRoadlinks[T](ids: Set[KMTKID],
+                            fieldSelection: Option[String],
+                            fetchGeometry: Boolean,
+                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
+    queryByIds(ids, fieldSelection, fetchGeometry, resultTransition, withIdFilter)
 
 }
 
@@ -657,35 +665,35 @@ class KMTKChangeInfoClient(kmtkRestApiEndPoint: String) extends KMTKClientOperat
     Future(queryByMunicipality(municipality))
   }
 
-  def fetchByLinkIdsF(linkIds: Set[Long]): Future[Seq[ChangeInfo]] = {
-    Future(fetchByLinkIds(linkIds))
+  def fetchByIdsF(ids: Set[KMTKID]): Future[Seq[ChangeInfo]] = {
+    Future(fetchByIds(ids))
   }
 
   /**
     * Fetch change information where given link id is in the old_id list (source)
     *
-    * @param linkIds Link ids to check as sources
+    * @param ids Link ids to check as sources
     * @return ChangeInfo for given links
     */
   // TODO
-  def fetchByLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
-    queryByLinkIds(linkIds, "OLD_ID")
+  def fetchByIds(ids: Set[KMTKID]): Seq[ChangeInfo] = {
+    queryByIds(ids, "OLD_ID")
   }
 
   /**
     * Fetch change information where given link id is in the new_id list (source)
     *
-    * @param linkIds Link ids to check as sources
+    * @param ids Link ids to check as sources
     * @return ChangeInfo for given links
     */
   // TODO
-  def fetchByNewLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
-    queryByLinkIds(linkIds, "NEW_ID")
+  def fetchByNewIds(ids: Set[KMTKID]): Seq[ChangeInfo] = {
+    queryByIds(ids, "NEW_ID")
   }
 
-  protected def queryByLinkIds(linkIds: Set[Long], field: String): Seq[ChangeInfo] = {
+  protected def queryByIds(ids: Set[KMTKID], field: String): Seq[ChangeInfo] = {
     val batchSize = 1000
-    val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
+    val idGroups: List[Set[KMTKID]] = ids.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(withFilter(field, ids))
       val url = serviceUrl(definition, queryParameters(false))
