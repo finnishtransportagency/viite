@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.util.KMTKAuthPropertyReader
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -38,6 +39,8 @@ case class KMTKRoadlink(linkId: Long, kmtkId: KMTKID = KMTKID("", 0), municipali
 trait KMTKClientOperations {
 
   type KMTKType
+
+  private val auth = new KMTKAuthPropertyReader
 
   protected val linkGeomSource: LinkGeomSource
 
@@ -125,13 +128,18 @@ trait KMTKClientOperations {
   }
 
   // TODO
-  protected def serviceUrl: String = restApiEndPoint + serviceName + "/FeatureServer/query"
+  protected def serviceUrl: String = restApiEndPoint + serviceName
 
   // TODO
-  protected def serviceUrl(bounds: BoundingRectangle, definition: String, parameters: String): String = {
+  protected def serviceUrl(bounds: Option[BoundingRectangle], definition: String, parameters: String): String = {
+    val bbox = if (bounds.isDefined)
+      URLEncoder.encode(
+        s"""{"minX":${bounds.get.leftBottom.x},"minY":${bounds.get.leftBottom.y},"maxX":${bounds.get.rightTop.x},"maxY":${bounds.get.rightTop.y}}""",
+        "UTF-8")
+    else
+      ""
     serviceUrl +
-      s"?layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
-      s"&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&$parameters"
+      s"?bbox=$bbox"
 
   }
 
@@ -161,6 +169,7 @@ trait KMTKClientOperations {
   protected def fetchKMTKFeatures(url: String): Either[List[Map[String, Any]], KMTKError] = {
     time(logger, s"Fetch KMTK features with url '$url'") {
       val request = new HttpGet(url)
+      request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
       val client = HttpClientBuilder.create().build()
       try {
         val response = client.execute(request)
@@ -271,7 +280,7 @@ trait KMTKClientOperations {
     */
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[String]): Seq[KMTKType] = {
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter))
-    val url = serviceUrl(bounds, definition, queryParameters())
+    val url = serviceUrl(Some(bounds), definition, queryParameters())
     fetchFeaturesAndLog(url)
   }
 
@@ -307,7 +316,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   override type KMTKType = KMTKRoadlink
 
   protected override val restApiEndPoint: String = kmtkRestApiEndPoint
-  protected override val serviceName = "Roadlink_data"
+  protected override val serviceName = "roadlink"
   protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
   protected override val disableGeometry = false
 
