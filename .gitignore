@@ -13,3 +13,4 @@ project/project/
 yarn.lock
 package-lock.json
 digiroad2.boot.log
+keys.properties
