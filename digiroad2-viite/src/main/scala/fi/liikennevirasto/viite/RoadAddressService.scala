@@ -644,28 +644,34 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         if (calibrationPoint.isDefined)
           roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.startCalibrationPoint.get, username)
         else {
-          val roadwayPointId =
-            roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
-              case Some(roadwayPoint) =>
-                roadwayPoint.id
-              case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, username)
+          if (calibrationPoint.isDefined) {
+            if (roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get).isEmpty) {
+              roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.startCalibrationPoint.get, username)
             }
-          CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = username)
+          } else {
+            val roadwayPointId =
+              roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
+                case Some(roadwayPoint) =>
+                  roadwayPoint.id
+                case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, username)
+              }
+            CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = username)
+          }
         }
-    }
-    endCalibrationPointsToCheck.foreach {
-      cal =>
-        val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 1)
-        if (calibrationPoint.isDefined)
-          roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.endCalibrationPoint.get, username)
-        else {
-          val roadwayPointId =
-            roadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.get) match {
-              case Some(roadwayPoint) =>
-                roadwayPoint.id
-              case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, username)
+        endCalibrationPointsToCheck.foreach {
+          cal =>
+            val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 1)
+            if (calibrationPoint.isDefined)
+              roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.endCalibrationPoint.get, username)
+            else {
+              val roadwayPointId =
+                roadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.get) match {
+                  case Some(roadwayPoint) =>
+                    roadwayPoint.id
+                  case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, username)
+                }
+              CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 1, calType = CalibrationPointType.Mandatory, createdBy = username)
             }
-          CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 1, calType = CalibrationPointType.Mandatory, createdBy = username)
         }
     }
   }
