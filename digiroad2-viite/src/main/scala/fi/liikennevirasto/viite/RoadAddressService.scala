@@ -672,7 +672,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   def handleRoadwayPointsUpdate(roadwayChanges: List[ProjectRoadwayChange], username: String = "-"): Unit = {
 
-    roadwayChanges.filter(rw => List(Transfer, ReNumeration).contains(rw.changeInfo.changeType)).foreach{ rwc =>
+      val affectableChanges = roadwayChanges.filter(rw => List(Transfer, ReNumeration).contains(rw.changeInfo.changeType))
+        val updatableRoadwayPoints: Seq[(Long, String, Long)] = affectableChanges.sortBy(_.changeInfo.target.startAddressM).foldLeft(Seq.empty[(Long, String, Long)]){ (list, rwc) =>
 
       val change = rwc.changeInfo
       val source = change.source
@@ -680,36 +681,37 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       val roadwayNumbers = roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber).distinct
       val roadwayPoints = roadwayNumbers.flatMap(rwn=> roadwayPointDAO.fetchByRoadwayNumberAndAddresses(rwn, source.startAddressM.get, source.endAddressM.get)).distinct
 
-          if(change.changeType == Transfer){
-            if(!change.reversed){
-              val updateRoadwayPoints = roadwayPoints.map{ rwp=>
-                val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
-                (newAddrM, username, rwp.id)
+          if(roadwayPoints.nonEmpty){
+            if(change.changeType == Transfer){
+              if(!change.reversed){
+                roadwayPoints.flatMap{ rwp=>
+                  val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
+                  list :+ (newAddrM, username, rwp.id)
+                }
+              } else {
+                roadwayPoints.flatMap{ rwp=>
+                val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
+                  list :+ (newAddrM, username, rwp.id)
+                }
               }
-              roadwayPointDAO.update(updateRoadwayPoints)
-
+            } else if (change.changeType == ReNumeration){
+              if(change.reversed){
+                roadwayPoints.flatMap{ rwp=>
+                  val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
+                  list :+ (newAddrM, username, rwp.id)
+                }
+              } else {
+                list
+              }
             } else {
-              val updateRoadwayPoints = roadwayPoints.map{ rwp=>
-              val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
-                (newAddrM, username, rwp.id)
-              }
-              roadwayPointDAO.update(updateRoadwayPoints)
+              //TODO IF NEED IN FUTURE remove filter from top and add roadwayChange Termination cases/expire roadwaypoint cases
+              list
             }
-          } else if (change.changeType == ReNumeration){
-            if(change.reversed){
-              val updateRoadwayPoints = roadwayPoints.map{ rwp=>
-                val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
-                (newAddrM, username, rwp.id)
-              }
-              roadwayPointDAO.update(updateRoadwayPoints)
-            }
-          } else {
-            //TODO IF NEED IN FUTURE remove filter from top and add roadwayChange Termination cases/expire roadwaypoint cases
-          }
+          } else list
 
-
+        }.distinct
+      roadwayPointDAO.update(updatableRoadwayPoints)
     }
-  }
 
 }
 
