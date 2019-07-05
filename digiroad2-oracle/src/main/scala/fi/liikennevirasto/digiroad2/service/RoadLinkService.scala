@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.kmtk.{KMTKID, KMTKRoadlink}
+import fi.liikennevirasto.digiroad2.client.kmtk.{KMTKID, KMTKRoadLink}
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -304,7 +304,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param kmtkRoadLinks
     * @return Road links
     */
-  protected def enrichRoadLinksFromKMTK(kmtkRoadLinks: Seq[KMTKRoadlink]): Seq[RoadLink] = {
+  protected def enrichRoadLinksFromKMTK(kmtkRoadLinks: Seq[KMTKRoadLink]): Seq[RoadLink] = {
     val groupedLinks = kmtkRoadLinks.groupBy(_.linkId).mapValues(_.head) // TODO Group by link id or uuid + version?
 
     def autoGenerateProperties(roadLink: RoadLink): RoadLink = {
@@ -339,7 +339,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   /**
     * Passes KMTK road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichRoadLinksFromKMTK.
     */
-  private def getRoadLinkData(kmtkRoadLinks: Seq[KMTKRoadlink]): Seq[RoadLink] = {
+  private def getRoadLinkData(kmtkRoadLinks: Seq[KMTKRoadLink]): Seq[RoadLink] = {
     kmtkRoadLinks.map { link =>
       RoadLink(link.linkId, link.geometry,
         GeometryUtils.geometryLength(link.geometry),
