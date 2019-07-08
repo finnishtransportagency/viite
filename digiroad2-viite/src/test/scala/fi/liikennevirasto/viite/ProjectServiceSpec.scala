@@ -2141,9 +2141,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
        Seq(), Seq(), None)
      projectDAO.create(rap)
-     val projectLinksFromRoadAddresses = roadAddresses.map(ra => toProjectLink(rap)(ra))
-
-      val linearLocation = dummyLinearLocation(roadwayNumber, 1, projectLinksFromRoadAddresses.head.linkId, 0.0, 10.0)
+      val projectLinksFromRoadAddresses = roadAddresses.map(ra => toProjectLink(rap)(ra))
+      val linearLocationId = Sequences.nextLinearLocationId
+      val linearLocation = dummyLinearLocation(roadwayNumber, 1, projectLinksFromRoadAddresses.head.linkId, 0.0, 10.0).copy(id = linearLocationId)
       val roadway = dummyRoadway(roadwayNumber, 9999L, 1, 0, 10, DateTime.now(), None, roadwayId)
 
 
