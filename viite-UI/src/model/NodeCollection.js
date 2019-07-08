@@ -67,8 +67,8 @@
 
     eventbus.on('nodeSearchTool:clickNode', function (index, map) {
       var node = nodesWithAttributes[index];
-      map.getView().setCenter([node.coordX, node.coordY]);
       map.getView().animate({
+        center: [node.coordX, node.coordY],
         zoom: 12,
         duration: 1500
       });

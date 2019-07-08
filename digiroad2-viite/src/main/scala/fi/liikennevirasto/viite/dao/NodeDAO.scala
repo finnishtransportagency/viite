@@ -188,8 +188,8 @@ class NodeDAO extends BaseDAO {
 
     val query =
       s"""
-        SELECT DISTINCT node.ID, node.NODE_NUMBER, coords.X, coords.Y, node.NAME, node."TYPE", node.START_DATE, node.END_DATE,
-          node.VALID_FROM, node.VALID_TO, node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.TRACK,rw.ROAD_PART_NUMBER, rp.ADDR_M
+        SELECT DISTINCT node.ID, node.NODE_NUMBER, coords.X, coords.Y, node.NAME, node."TYPE", node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
+                        node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M
         FROM NODE node
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(node.COORDINATES)) coords
         LEFT JOIN NODE_POINT np ON node.ID = np.NODE_ID AND np.VALID_TO IS NULL AND np.END_DATE IS NULL
@@ -197,14 +197,14 @@ class NodeDAO extends BaseDAO {
         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
           WHERE node.VALID_TO IS NULL AND node.END_DATE IS NULL
           AND rw.ROAD_NUMBER = $road_number $road_condition
-          AND ((SELECT COUNT(*) FROM NODE_POINT npAux
-            WHERE npAux.NODE_ID = np.NODE_ID) = 1
-          OR CASE WHEN EXISTS (
-              SELECT npAux.ID FROM NODE_POINT npAux
-                WHERE npAux.NODE_ID = np.NODE_ID
-                AND npAux.ROADWAY_POINT_ID = np.ROADWAY_POINT_ID AND npAux.BEFORE_AFTER = ${BeforeAfter.After.value}) THEN 1
-              ELSE 0
-            END = 1)
+          AND (np.BEFORE_AFTER = ${BeforeAfter.After.value} OR CASE WHEN EXISTS (
+            SELECT * FROM NODE_POINT np_c
+              LEFT JOIN ROADWAY_POINT rp_c ON np_c.ROADWAY_POINT_ID = rp_c.ID
+              LEFT JOIN ROADWAY rw_c ON rp_c.ROADWAY_NUMBER = rw_c.ROADWAY_NUMBER AND rw_c.VALID_TO IS NULL AND rw_c.END_DATE IS NULL
+                WHERE np_c.VALID_TO IS NULL AND np_c.END_DATE IS NULL AND np_c.NODE_ID = node.ID
+                AND rw_c.ROAD_NUMBER = rw.ROAD_NUMBER AND rw_c.ROAD_PART_NUMBER != rw.ROAD_PART_NUMBER) THEN 0
+            ELSE 1
+          END = 1)
         ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M, rw.TRACK
       """
 
