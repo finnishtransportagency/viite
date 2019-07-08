@@ -402,7 +402,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  // TODO NODES
+  // <editor-fold desc="Nodes">
   /**
     * Test case for Termination:
     * Reserve road number 1 and road part 2
@@ -414,7 +414,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * Node at the end of road part 2 should expire conditionally:
     *   * If there are no more node points nor junctions referenced by this nodeId, then expire the node.
     */
-  test("Test removeObsoleteNodesAndJunctions case When road part is terminated Then also node point templates for terminated road should be expired") {
+  test("Test removeObsoleteNodesAndJunctions case When road part is terminated Then also node points for terminated road should be expired") {
     runWithRollback {
       val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       val roadGeom2 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
@@ -750,8 +750,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink.endAddrMValue) should be(true)
     }
   }
-
-  // TODO JUNCTIONS
+  // </editor-fold>
+  // <editor-fold desc="Junctions">
   /**
     * Test case for Termination:
     * Reserve road number 2 part 1
@@ -763,7 +763,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * Junction at the start of road 2 should expire conditionally:
     *   * If there are no more junction points referenced by this junctionId, then expire the both junction and the junction point at end of road number 1.
     */
-  test("Test removeObsoleteNodesAndJunctions case When road is terminated Then also junction point templates should be expired") {
+  test("Test removeObsoleteNodesAndJunctions case When road is terminated Then also junction points should be expired") {
     runWithRollback {
       val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       val roadGeom2 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
@@ -806,7 +806,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       nodesAndJunctionsService.removeObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(terminatedRoadLink).map(_.projectId).toSet), Some(terminatedRoadLink.endDate.get.minusDays(1)))
 
-      // Test expired junction points template
+      // Test expired junction points
       val junctionPointTemplatesAfterTermination = junctionPointDAO.fetchByRoadwayPointIds(
         roadwayPointDAO.fetchByRoadwayNumbers(Seq(road1Link, terminatedRoadLink).map(_.roadwayNumber)).map(_.id))
       junctionPointTemplatesAfterTermination.length should be(0)
@@ -829,7 +829,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * Junction in the intersection should be expire conditionally:
     *   * If the remaining junction points referenced by this junctionId are all present in the same road number, then all of those junction points and the junction itself should expire.
     */
-  test("Test removeObsoleteNodesAndJunctions case When road is terminated Then also junction and junction point templates should be expired if they are in the same road") {
+  test("Test removeObsoleteNodesAndJunctions case When road is terminated Then also junction and junction points should be expired if they are in the same road") {
     runWithRollback {
       val roadGeom1Link1 = Seq(Point(0.0, 5.0), Point(5.0, 5.0))
       val roadGeom1Link2 = Seq(Point(5.0, 5.0), Point(5.0, 10.0))
@@ -875,7 +875,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       nodesAndJunctionsService.removeObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(terminatedRoadLink).map(_.projectId).toSet), Some(terminatedRoadLink.endDate.get.minusDays(1)))
 
-      // Test expired junction points template
+      // Test expired junction points
       val junctionPointTemplatesAfterTermination = junctionPointDAO.fetchByRoadwayPointIds(
         roadwayPointDAO.fetchByRoadwayNumbers(Seq(road1Link1, road1Link2, terminatedRoadLink).map(_.roadwayNumber)).map(_.id))
       junctionPointTemplatesAfterTermination.length should be(0)
@@ -898,7 +898,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     *   * If the remaining junction points referenced by this junctionId are all present in the same road number
     *     then all of those junction points and the junction itself should expire.
     */
-  test("Test removeObsoleteNodesAndJunctions case when Numbering") {
+  test("Test removeObsoleteNodesAndJunctions case when Numbering a road with different road number to the same road number of the road before Then the junction and the junction points should be expired if they are in the same road") {
     runWithRollback {
       val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       val roadGeom2 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
@@ -942,7 +942,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       nodesAndJunctionsService.removeObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(numberedRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
 
-      // Test expired junction points template
+      // Test expired junction points
       val junctionPointTemplatesAfterNumbering = junctionPointDAO.fetchByRoadwayPointIds(
         roadwayPointDAO.fetchByRoadwayNumbers(Seq(roadLink1, numberedRoadLink).map(_.roadwayNumber)).map(_.id))
       junctionPointTemplatesAfterNumbering.length should be(0)
@@ -952,5 +952,132 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       expiredJunctions.length should be(0)
     }
   }
+  // </editor-fold>
+  // <editor-fold desc="Combined">
+  /**
+    * Test case for Transferring:
+    * Reserve road number 1 part 1
+    * Reserve road number 2 part 1
+    * Transfer last link of road 1 to road 2
+    *
+    * Expected
+    * Node Points should be expired conditionally :
+    *   * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and road type
+    *     then all of those node points and the node itself should expire.
+    * Junction Points should be expired conditionally:
+    *   * If the remaining junction points referenced by this junctionId are all present in the same road number
+    *     then all of those junction points and the junction itself should expire.
+    */
+  test("Test removeObsoleteNodesAndJunctions case when Transferring a link for a different road number Then the nodes/node points and junctions/junction points should be expired if they are in the same road") {
+    runWithRollback {
+      val road1Geom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
+      val road1Geom2 = Seq(Point(100.0, 0.0), Point(150.0, 0.0))
+      val road2Geom = Seq(Point(150.0, 0.0), Point(200.0, 0.0))
 
+      val roadwayNumber = Sequences.nextRoadwayNumber
+
+      val road1Link1 = dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous, 0, 100, Some(DateTime.now()), None, 12345, 0, 100.0, SideCode.TowardsDigitizing, LinkStatus.New, 0, RoadType.PublicRoad, road1Geom1, roadwayNumber)
+      val road1Link2 = dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous, 100, 150, Some(DateTime.now()), None, 12346, 100.0, 150.0, SideCode.TowardsDigitizing, LinkStatus.New, 0, RoadType.PublicRoad, road1Geom2, roadwayNumber)
+      val road2 = dummyProjectLink(2, 1, Track.Combined, Discontinuity.Continuous, 0, 50, Some(DateTime.now()), None, 12347, 0, 50.0, SideCode.TowardsDigitizing, LinkStatus.New, 0, RoadType.PublicRoad, road2Geom, roadwayNumber+1)
+
+      val roadways = Seq(
+        Roadway(NewIdValue, road1Link1.roadwayNumber, road1Link1.roadNumber, road1Link1.roadPartNumber, road1Link1.roadType, road1Link1.track, road1Link1.discontinuity, road1Link1.startAddrMValue, road1Link2.endAddrMValue, reversed = false, road1Link1.startDate.get, road1Link1.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None),
+        Roadway(NewIdValue, road2.roadwayNumber, road2.roadNumber, road2.roadPartNumber, road2.roadType, road2.track, road2.discontinuity, road2.startAddrMValue, road2.endAddrMValue, reversed = false, road2.startDate.get, road2.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None))
+      val linearLocations = Seq(
+        LinearLocation(NewIdValue, 1, road1Link1.linkId, road1Link1.startAddrMValue, road1Link1.endAddrMValue, road1Link1.sideCode, 0L, calibrationPoints = (Some(road1Link1.startAddrMValue), Some(road1Link1.endAddrMValue)), road1Link1.geometry, LinkGeomSource.NormalLinkInterface, road1Link1.roadwayNumber, Some(DateTime.now), None),
+        LinearLocation(NewIdValue, 2, road1Link2.linkId, road1Link2.startAddrMValue, road1Link2.endAddrMValue, road1Link2.sideCode, 0L, calibrationPoints = (Some(road1Link2.startAddrMValue), Some(road1Link2.endAddrMValue)), road1Link2.geometry, LinkGeomSource.NormalLinkInterface, road1Link2.roadwayNumber, Some(DateTime.now), None),
+        LinearLocation(NewIdValue, 1, road2.linkId, road2.startAddrMValue, road2.endAddrMValue, road2.sideCode, 0L, calibrationPoints = (Some(road2.startAddrMValue), Some(road2.endAddrMValue)), road2.geometry, LinkGeomSource.NormalLinkInterface, road2.roadwayNumber, Some(DateTime.now), None))
+
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(linearLocations)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
+
+      val projectLinks = Seq(road1Link1, road1Link2, road2)
+
+      // Creation of junction points template
+      nodesAndJunctionsService.handleJunctionPointTemplates(projectLinks)
+      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(
+        roadwayPointDAO.fetchByRoadwayNumbers(projectLinks.map(_.roadwayNumber)).map(_.id))
+      junctionPointTemplates.length should be(2)
+
+      val junctions = junctionDAO.fetchByIds(junctionPointTemplates.map(_.junctionId))
+      junctions.length should be(1)
+
+      // Creation of node points template
+      nodesAndJunctionsService.handleNodePointTemplates(projectLinks)
+
+      val node1 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, road1Link1.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      val node2 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, road2.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      val node3 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, road2.geometry.last, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+
+      nodeDAO.create(Seq(node1, node2, node3))
+
+      val nodePointTemplates = projectLinks.flatMap(pl => nodePointDAO.fetchNodePointTemplate(pl.roadwayNumber)).distinct
+      nodePointTemplates.length should be(4)
+      nodePointTemplates.foreach(
+        np => {
+          if (np.roadwayNumber == road1Link1.roadwayNumber || np.roadwayNumber == road1Link2.roadwayNumber) {
+            if (np.addrM == road1Link1.startAddrMValue)
+              sqlu"""UPDATE NODE_POINT SET NODE_ID = ${node1.id} WHERE ID = ${np.id}""".execute
+            else if (np.addrM == road1Link2.endAddrMValue)
+              sqlu"""UPDATE NODE_POINT SET NODE_ID = ${node2.id} WHERE ID = ${np.id}""".execute
+          } else if (np.roadwayNumber == road2.roadwayNumber) {
+            if (np.addrM == road2.startAddrMValue)
+              sqlu"""UPDATE NODE_POINT SET NODE_ID = ${node2.id} WHERE ID = ${np.id}""".execute
+            else if (np.addrM == road2.endAddrMValue)
+              sqlu"""UPDATE NODE_POINT SET NODE_ID = ${node3.id} WHERE ID = ${np.id}""".execute
+          }
+        }
+      )
+
+      val nodePoints = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id, node3.id))
+      nodePoints.length should be(4)
+
+      nodePoints.exists(node => node.roadwayNumber == road1Link1.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == road1Link1.startAddrMValue) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == road1Link2.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == road1Link2.endAddrMValue) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == road2.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == road2.startAddrMValue) should be(true)
+      nodePoints.exists(node => node.roadwayNumber == road2.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == road2.endAddrMValue) should be(true)
+
+      val transferredRoadLink = road1Link2.copy(roadNumber = road2.roadNumber, roadPartNumber = road2.roadPartNumber,
+        startAddrMValue = 0, endAddrMValue = 50, originalStartAddrMValue = road1Link2.startAddrMValue, originalEndAddrMValue = road1Link2.endAddrMValue,
+        status = LinkStatus.Transfer, projectId = 1)
+
+      when(mockRoadwayChangesDAO.fetchRoadwayChanges(any[Set[Long]])).thenReturn(List(
+        ProjectRoadwayChange(transferredRoadLink.projectId, None, roadways.head.ely, "user", DateTime.now(),
+          RoadwayChangeInfo(AddressChangeType.Unchanged,
+            RoadwayChangeSection(Some(road1Link1.roadNumber), Some(road1Link1.track.value), Some(road1Link1.roadPartNumber), Some(road1Link1.roadPartNumber), Some(road1Link1.startAddrMValue), Some(road1Link1.endAddrMValue), Some(road1Link1.roadType), None, None),
+            RoadwayChangeSection(None, None, None, None, None, None, None, None, None),
+            Discontinuity.Continuous, RoadType.PublicRoad, false, 0, roadways.head.ely), DateTime.now(), None),
+        ProjectRoadwayChange(transferredRoadLink.projectId, None, roadways.head.ely, "user", DateTime.now(),
+          RoadwayChangeInfo(AddressChangeType.Transfer,
+            RoadwayChangeSection(Some(road1Link2.roadNumber), Some(road1Link2.track.value), Some(road1Link2.roadPartNumber), Some(road1Link2.roadPartNumber), Some(road1Link2.startAddrMValue), Some(road1Link2.endAddrMValue), Some(road1Link2.roadType), None, None),
+            RoadwayChangeSection(Some(transferredRoadLink.roadNumber), Some(transferredRoadLink.track.value), Some(transferredRoadLink.roadPartNumber), Some(transferredRoadLink.roadPartNumber), Some(transferredRoadLink.startAddrMValue), Some(transferredRoadLink.endAddrMValue), Some(transferredRoadLink.roadType), None, None),
+            Discontinuity.Continuous, RoadType.PublicRoad, false, 0, roadways.head.ely), DateTime.now(), None),
+        ProjectRoadwayChange(transferredRoadLink.projectId, None, roadways.head.ely, "user", DateTime.now(),
+          RoadwayChangeInfo(AddressChangeType.Transfer,
+            RoadwayChangeSection(Some(road2.roadNumber), Some(road2.track.value), Some(road2.roadPartNumber), Some(road2.roadPartNumber), Some(road2.startAddrMValue), Some(road2.endAddrMValue), Some(road2.roadType), None, None),
+            RoadwayChangeSection(Some(road2.roadNumber), Some(road2.track.value), Some(road2.roadPartNumber), Some(road2.roadPartNumber), Some(transferredRoadLink.endAddrMValue), Some(transferredRoadLink.endAddrMValue + road2.endAddrMValue), Some(road2.roadType), None, None),
+            Discontinuity.Continuous, RoadType.PublicRoad, false, 0, roadways.head.ely), DateTime.now(), None)))
+
+      when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(roadways)
+
+      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(transferredRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
+
+      // Test expired node and node points
+      val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id, node3.id))
+      nodePointsAfterExpiration.length should be(2)
+      nodePointsAfterExpiration.exists(node => node.roadwayNumber == road1Link1.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.nodeId.getOrElse(0L) == node1.id) should be(true)
+      nodePointsAfterExpiration.exists(node => node.nodeId.getOrElse(0L) == node2.id) should be(false) // expired
+      nodePointsAfterExpiration.exists(node => node.roadwayNumber == road2.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.nodeId.getOrElse(0L) == node3.id) should be(true)
+
+      // Test expired junction points
+      val junctionPointTemplatesAfterNumbering = junctionPointDAO.fetchByRoadwayPointIds(
+        roadwayPointDAO.fetchByRoadwayNumbers(projectLinks.map(_.roadwayNumber)).map(_.id))
+      junctionPointTemplatesAfterNumbering.length should be(0)
+
+      // Test expired junction
+      val expiredJunctions = junctionDAO.fetchByIds(junctionPointTemplates.map(_.junctionId))
+      expiredJunctions.length should be(0)
+    }
+  }
+  // </editor-fold>
 }
