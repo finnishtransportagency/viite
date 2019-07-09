@@ -51,7 +51,6 @@ class RoadwayPointDAO extends BaseDAO {
 
     val ps = dynamicSession.prepareStatement("update ROADWAY_POINT SET ADDR_M = ?, MODIFIED_BY = ?, MODIFIED_TIME = SYSDATE WHERE ID = ?")
 
-    disableRoadwayPoint_UK
     roadwayPoints.foreach {
       rwPoint =>
         ps.setLong(1, rwPoint._1)
@@ -61,7 +60,6 @@ class RoadwayPointDAO extends BaseDAO {
     }
     ps.executeBatch()
     ps.close()
-    enableRoadwayPoint_UK
     roadwayPoints.map(_._1)
   }
 
@@ -71,17 +69,6 @@ class RoadwayPointDAO extends BaseDAO {
       """.execute
   }
 
-  def disableRoadwayPoint_UK = {
-    sqlu"""
-          ALTER TABLE ROADWAY_POINT DISABLE CONSTRAINT ROADWAY_POINT_UK1
-      """.execute
-  }
-
-  def enableRoadwayPoint_UK = {
-    sqlu"""
-          ALTER TABLE ROADWAY_POINT ENABLE CONSTRAINT ROADWAY_POINT_UK1
-      """.execute
-  }
   def fetch(id: Long): RoadwayPoint = {
     sql"""
       SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
