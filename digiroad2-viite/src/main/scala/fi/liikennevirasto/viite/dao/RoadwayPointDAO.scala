@@ -51,7 +51,6 @@ class RoadwayPointDAO extends BaseDAO {
 
     val ps = dynamicSession.prepareStatement("update ROADWAY_POINT SET ADDR_M = ?, MODIFIED_BY = ?, MODIFIED_TIME = SYSDATE WHERE ID = ?")
 
-    //    disableRoadwayPoint_UK
     roadwayPoints.foreach {
       rwPoint =>
         ps.setLong(1, rwPoint._1)
@@ -61,7 +60,6 @@ class RoadwayPointDAO extends BaseDAO {
     }
     ps.executeBatch()
     ps.close()
-    //    enableRoadwayPoint_UK
     roadwayPoints.map(_._1)
   }
 
