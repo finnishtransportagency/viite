@@ -642,16 +642,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     startCalibrationPointsToCheck.foreach {
       cal =>
         val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 0)
-        if (calibrationPoint.isDefined) {
+        if (calibrationPoint.isDefined)
           roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.startCalibrationPoint.get, username)
-        } else {
+        else {
           val roadwayPointId =
             roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
               case Some(roadwayPoint) =>
                 roadwayPoint.id
-              case _ => {
-                roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, username)
-              }
+              case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, username)
             }
           CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = username)
         }
@@ -659,16 +657,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     endCalibrationPointsToCheck.foreach {
       cal =>
         val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, startOrEnd = 1)
-        if (calibrationPoint.isDefined){
+        if (calibrationPoint.isDefined)
           roadwayPointDAO.update(calibrationPoint.get.roadwayPointId, cal.roadwayNumber, cal.endCalibrationPoint.get, username)
-        } else {
+        else {
           val roadwayPointId =
             roadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.get) match {
               case Some(roadwayPoint) =>
                 roadwayPoint.id
-              case _ => {
-                roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, username)
-              }
+              case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, username)
             }
           CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 1, calType = CalibrationPointType.Mandatory, createdBy = username)
         }
