@@ -16,21 +16,24 @@ import scala.util.{Left, Right}
 class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
-
-  val nodeDAO = new NodeDAO
+  private val roadNumber1 = 990
+  private val roadwayNumber1 = 1000000000l
+  private val roadPartNumber1 = 1
+  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
+  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
+  val nodeDAO = new NodeDAO
   val nodePointDAO = new NodePointDAO
+  val junctionDAO = new JunctionDAO
+  val junctionPointDAO = new JunctionPointDAO
 
-  val nodesAndJunctionsService = new NodesAndJunctionsService() {
+  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  private val roadNumber1 = 990
-  private val roadwayNumber1 = 1000000000l
-  private val roadPartNumber1 = 1
   val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
