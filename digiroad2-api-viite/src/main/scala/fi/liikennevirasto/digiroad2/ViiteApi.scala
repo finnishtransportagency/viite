@@ -1076,6 +1076,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  private def getNodeById(nodeId: Long): Option[Node] = {
+    nodesAndJunctionsService.getNodeById(nodeId)
+  }
+
   private def getProjectLinks(projectId: Long, zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val startTime = System.currentTimeMillis()
