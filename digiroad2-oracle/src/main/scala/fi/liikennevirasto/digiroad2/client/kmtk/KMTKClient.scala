@@ -23,33 +23,37 @@ import scala.concurrent.Future
 case class KMTKID(uuid: String, version: Long)
 
 case class KMTKPoint(values: Seq[Double]) {
-  def toPoint: Point = {
-    Point(values(0), values(1), values(2))
+  def toPoint: Option[Point] = {
+    if (values.isEmpty) {
+      None
+    } else {
+      Some(Point(values(0), values(1), values(2)))
+    }
   }
 }
 
-case class KMTKGeometry(/*`type`: String, */coordinates: Seq[KMTKPoint]) {
+case class KMTKGeometry(/*`type`: String, */ coordinates: Seq[KMTKPoint]) {
   def toPoints: Seq[Point] = {
-    coordinates.map(c => c.toPoint)
+    coordinates.map(c => c.toPoint).filter(p => p.isDefined).map(p => p.get)
   }
 }
 
-case class KMTKRoadName(fin: String, swe: String, smn: String, sms: String, sme: String)
+case class KMTKRoadName(fin: Option[String], swe: Option[String], smn: Option[String], sms: Option[String], sme: Option[String])
 
-case class KMTKAddress(fromLeft: Long, toLeft: Long, fromRight: Long, toRight: Long)
+case class KMTKAddress(fromLeft: Option[Long], toLeft: Option[Long], fromRight: Option[Long], toRight: Option[Long])
 
-case class KMTKNode(/*`type`: String, */coordinates: Point)
+case class KMTKNode(/*`type`: String, */ coordinates: KMTKPoint)
 
-case class KMTKProperties(id: KMTKID, adminClass: Int, municipalityCode: Int, roadClass: Int, roadName: KMTKRoadName,
-                          roadNumber: Long, roadPartNumber: Long, surfaceType: Long, lifespanStatus: Long, directionType: Int,
+case class KMTKProperties(id: KMTKID, adminClass: Option[Int], municipalityCode: Int, roadClass: Int, roadName: KMTKRoadName,
+                          roadNumber: Option[Long], roadPartNumber: Option[Long], surfaceType: Long, lifespanStatus: Long, directionType: Int,
                           geometryLength: Double, geometryAttribute: Long, sourceStartDate: String, createdAt: String,
-                          modifiedAt: String, endedAt: String, address: KMTKAddress, sourceInfo: Long, mtkGroup: Long,
+                          modifiedAt: Option[String], endedAt: Option[String], address: KMTKAddress, sourceInfo: Long, mtkGroup: Long,
                           sourceId: String, constructionStatus: Int, geoMetryFlip: Boolean, startNode: KMTKNode,
                           endNode: KMTKNode, xyAccuracy: Long, zAccuracy: Long)
 
 case class KMTKFeature(geometry: KMTKGeometry, properties: KMTKProperties)
 
-case class KMTKFeatureCollection(/*`type`: String, */features: Seq[KMTKFeature])
+case class KMTKFeatureCollection(/*`type`: String, */ features: Seq[KMTKFeature])
 
 case class KMTKRoadLink(linkId: Long, kmtkId: KMTKID = KMTKID("", 0), municipalityCode: Int, geometry: Seq[Point],
                         administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
@@ -199,11 +203,7 @@ trait KMTKClientOperations {
         val response = client.execute(request)
         try {
           val json = parse(StreamInput(response.getEntity.getContent))
-
-          val featureCollection = json.extractOpt[KMTKFeatureCollection] // TODO This one fails now (Probably the reason is that json has duplicate geometry.type value
-          // TODO Null invalid value for a sub-type of AnyVal
-          // (roadnumber, roadnumber, ...)
-
+          val featureCollection = json.extractOpt[KMTKFeatureCollection]
           if (featureCollection.isDefined) {
             Left(featureCollection.get)
           } else {
@@ -231,6 +231,7 @@ trait KMTKClientOperations {
     }
   }
 
+  // TODO Remove or take in use
   protected def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
     def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
       (a, b) match {
@@ -387,9 +388,9 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     val municipalityCode = feature.properties.municipalityCode
     val roadClass = feature.properties.roadClass
     val geometryLength = feature.properties.geometryLength
-    val administrativeClass = AdministrativeClass.apply(feature.properties.adminClass)
+    val administrativeClass = AdministrativeClass.apply(feature.properties.adminClass.getOrElse(0))
     val trafficDirection = TrafficDirection.apply(feature.properties.directionType)
-    val modifiedAt = if (feature.properties.modifiedAt != null) Some(DateTime.parse(feature.properties.modifiedAt)) else None // TODO If null, then should we take value from "createdAt"?
+    val modifiedAt = if (feature.properties.modifiedAt.isDefined) Some(DateTime.parse(feature.properties.modifiedAt.get)) else None // TODO If None, then should we take value from "createdAt"?
     val constructionType = ConstructionType.apply(feature.properties.constructionStatus) // TODO Is construction status same as construction type?
 
     val featureClass = KMTKClient.featureClassCodeToFeatureClass.getOrElse(roadClass, FeatureClass.AllOthers)
@@ -399,11 +400,20 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
 
   }
 
+  private def dateToEpoch(date: String): BigInt = {
+    if (date != null) {
+      val parsed = DateTime.parse(date)
+      parsed.toDate.getTime
+    } else {
+      null
+    }
+  }
+
   protected def extractAttributes(properties: KMTKProperties): Map[String, Any] = {
     val roadName = properties.roadName
-    val roadNameSm = if (roadName.sme != null) {
+    val roadNameSm = if (roadName.sme.isDefined) {
       roadName.sme
-    } else if (roadName.smn != null) {
+    } else if (roadName.smn.isDefined) {
       roadName.smn
     } else {
       roadName.sms
@@ -411,16 +421,16 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     Map[String, Any]("MTKID" -> properties.id, // TODO Do we have MTKID anymore?
       "MTKCLASS" -> properties.roadClass,
       "CONSTRUCTIONTYPE" -> properties.constructionStatus, // TODO Is this same as construction type?
-      "ROADNAME_FI" -> roadName.fin,
-      "ROADNAME_SM" -> roadNameSm,
-      "ROADNAME_SE" -> roadName.swe,
-      "ROADNUMBER" -> properties.roadNumber,
-      "ROADPARTNUMBER" -> properties.roadPartNumber,
+      "ROADNAME_FI" -> roadName.fin.getOrElse(null),
+      "ROADNAME_SM" -> roadNameSm.getOrElse(null),
+      "ROADNAME_SE" -> roadName.swe.getOrElse(null),
+      "ROADNUMBER" -> properties.roadNumber.getOrElse(null),
+      "ROADPARTNUMBER" -> properties.roadPartNumber.getOrElse(null),
       "MUNICIPALITYCODE" -> properties.municipalityCode,
       "VALIDFROM" -> properties.sourceStartDate, // TODO Is this same as VALIDFROM?
-      "GEOMETRY_EDITED_DATE" -> properties.modifiedAt, // TODO From where to get geometry edit date?
-      "CREATED_DATE" -> properties.createdAt,
-      "LAST_EDITED_DATE" -> properties.modifiedAt, // TODO If modifiedAt is null, should we use createdAt?
+      "GEOMETRY_EDITED_DATE" -> properties.modifiedAt.getOrElse(null), // TODO From where to get geometry edit date?
+      "CREATED_DATE" -> dateToEpoch(properties.createdAt),
+      "LAST_EDITED_DATE" -> dateToEpoch(properties.modifiedAt.getOrElse(null)), // TODO If modifiedAt is null, should we use createdAt?
       "SUBTYPE" -> 0 // TODO What to put here?
       // Not including "TRACK_CODE", used only with suravage and complementary in Viite
     ).filter { case (_, value) =>
