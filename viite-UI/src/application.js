@@ -110,7 +110,7 @@
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
-    var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty);
+    var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty, models.nodeCollection);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
     var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var nodeLayer = new NodeLayer(map, roadLayer, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
