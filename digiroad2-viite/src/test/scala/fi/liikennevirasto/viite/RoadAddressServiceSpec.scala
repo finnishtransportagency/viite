@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, SuravageLinkInterface}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -18,6 +18,7 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.viite.Dummies._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -165,10 +166,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyRoadLink(linkId = 124L, Seq(0.0, 10.0), NormalLinkInterface)
     )
 
-    val suravageRoadLinks = Seq(
-      dummyRoadLink(linkId = 126L, Seq(0.0, 10.0, 20.0), SuravageLinkInterface)
-    )
-
     when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
 
     when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Int])).thenReturn(roadways)
@@ -176,7 +173,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
 
     //Road Link service mocks
-    when(mockRoadLinkService.getSuravageRoadLinks(any[Int])).thenReturn(suravageRoadLinks)
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int], any[Boolean])).thenReturn((roadLinks, Seq()))
 
     val roads = roadAddressService.getAllByMunicipality(municipality = 100)
@@ -203,10 +199,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyRoadLink(linkId = 124L, Seq(0.0, 10.0), NormalLinkInterface)
     )
 
-    val suravageRoadLinks = Seq(
-      dummyRoadLink(linkId = 126L, Seq(0.0, 10.0, 20.0), SuravageLinkInterface)
-    )
-
     when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
 
     when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[DateTime])).thenReturn(roadways)
@@ -214,7 +206,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
 
     //Road Link service mocks
-    when(mockRoadLinkService.getSuravageRoadLinks(any[Int])).thenReturn(suravageRoadLinks)
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int], any[Boolean])).thenReturn((roadLinks, Seq()))
 
     val now = DateTime.now
@@ -498,7 +489,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999, useFrozenVVHLinks = false)).thenReturn(roadLinks)
-    when(mockRoadLinkService.getSuravageRoadLinks(99999)).thenReturn(Seq())
     when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
     val roadAddresses = roadAddressService.getAllByMunicipality(99999)
     roadAddresses.size should be (4)

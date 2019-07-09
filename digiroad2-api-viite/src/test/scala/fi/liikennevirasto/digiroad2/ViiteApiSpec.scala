@@ -31,15 +31,6 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
     project.name should have length 32
   }
 
-  test("Test json.extract[SplitOptions] When using a serialized version of a \"SplitObject\" data Then return the exact data that was encoded.") {
-    val options = SplitOptions(Point(123,456,789), LinkStatus.New, LinkStatus.Terminated, 4L, 5L, Track.Combined,
-      Discontinuity.MinorDiscontinuity, 9L, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, 4L, ProjectCoordinates(0, 1, 1))
-    val s = Serialization.write(options)
-    val json=parse(s)
-    val read = json.extract[SplitOptions]
-    read should be (options)
-  }
-
   test("Test json.extract[Point] When using a single point with a XY coordinate Then return exactly the point with the same XY coordinates that was sent..") {
     val point = Point(0.2,5.0)
     val str = "{\"x\":0.2,\"y\":5.0}"
