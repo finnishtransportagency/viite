@@ -34,7 +34,6 @@ class DataImporterSpec extends FunSuite with Matchers {
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
-  val mockVVHSuravageClient = MockitoSugar.mock[VVHSuravageClient]
   val mockVVHHistoryClient = MockitoSugar.mock[VVHHistoryClient]
   val mockVVHFrozenTimeRoadLinkClient = MockitoSugar.mock[VVHFrozenTimeRoadLinkClientServicePoint]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -76,13 +75,11 @@ class DataImporterSpec extends FunSuite with Matchers {
   )
   when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockVVHClient.suravageData).thenReturn(mockVVHSuravageClient)
   when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
   when(mockVVHClient.frozenTimeRoadLinkData)thenReturn mockVVHFrozenTimeRoadLinkClient
   when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
   when(mockVVHComplementaryClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
   when(mockVVHFrozenTimeRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
-  when(mockVVHSuravageClient.fetchSuravageByLinkIds(any[Set[Long]])).thenReturn(Seq())
   when(mockVVHHistoryClient.fetchVVHRoadLinkByLinkIds(any[Set[Long]])).thenReturn(Seq())
 
   val importOptions = ImportOptions(onlyComplementaryLinks = false, useFrozenLinkService = false, 1510790400000L, "MOCK_CONVERSION", onlyCurrentRoads = false)

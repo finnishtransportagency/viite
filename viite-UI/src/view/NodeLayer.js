@@ -74,9 +74,9 @@
         if(applicationModel.getSelectedLayer() === 'node') {
 
           cachedMarker = new LinkPropertyMarker();
-          var suravageLinks = roadCollection.getSuravageLinks();
+          var underConstructionLinks = roadCollection.getUnderConstructionLinks();
           var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
-            return _.contains(_.map(suravageLinks, function (sl) {
+            return _.contains(_.map(underConstructionLinks, function (sl) {
               return sl.linkId;
             }), rl.linkId);
           });
@@ -123,11 +123,8 @@
           }
 
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions){
-            var suravageLinks = roadCollection.getSuravageLinks();
             var roadLinksWithValues = _.reject(roadCollection.getAll(), function (rl) {
-              return _.contains(_.map(suravageLinks, function (sl) {
-                return sl.linkId;
-              }), rl.linkId) || rl.roadNumber === 0;
+              return rl.roadNumber === 0;
             });
             var junctions = [];
             var junctionPoints = [];
