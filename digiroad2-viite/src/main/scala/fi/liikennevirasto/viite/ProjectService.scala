@@ -2019,7 +2019,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectLinkDAO.moveProjectLinksToHistory(projectID)
     logger.info(s"Moving project links to project link history.")
     try {
-      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, username = project.createdBy)
       val generatedRoadways = RoadwayFiller.fillRoadways(currentRoadways, historyRoadways, mappedRoadwaysWithLinks)
       val historyRoadwaysToKeep = generatedRoadways.flatMap(_._1).filter(_.id != NewIdValue).map(_.id)
       val linearLocationsToInsert = generatedRoadways.flatMap(_._2).groupBy(l => (l.roadwayNumber, l.orderNumber, l.linkId, l.startMValue, l.endMValue, l.validTo.map(_.toYearMonthDay), l.startCalibrationPoint, l.endCalibrationPoint, l.sideCode, l.linkGeomSource)).map(_._2.head)
@@ -2030,6 +2029,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
       roadwayDAO.create(roadwaysToInsert)
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, username = project.createdBy)
       val projectLinksAfterChanges = if(generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
       nodesNJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges)
