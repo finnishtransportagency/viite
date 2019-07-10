@@ -14,8 +14,24 @@ class KMTKClientSpec extends FunSuite with Matchers {
     props
   }
 
+  val restEndPoint = properties.getProperty("digiroad2.KMTKRestApiEndPoint")
+
+  val kmtkClient = new KMTKClient(restEndPoint)
+
+  test("Test roadLinkData.serviceUrl When no required parameters given Then should throw KMTKClientException") {
+    val thrown = intercept[KMTKClientException] {
+      kmtkClient.roadLinkData.serviceUrl(None, None, None, "", "")
+    }
+    thrown should not be null
+  }
+
+  test("Test inputStreamToFeatureCollection When got valid json response Then should return FeatureCollection") {
+    val featureCollection = kmtkClient.roadLinkData.inputStreamToFeatureCollection(getClass.getResourceAsStream("/kmtk-roadlink-bbox.json"))
+    featureCollection.isDefined should be(true)
+  }
+
+  // TODO Use mock response data instead of calling real KMTK interface
   test("Test fetchByBounds When giving some bounding box Then should return some data") {
-    val kmtkClient = new KMTKClient(properties.getProperty("digiroad2.KMTKRestApiEndPoint"))
     val result = kmtkClient.roadLinkData.fetchByBounds(BoundingRectangle(Point(445000, 7000000), Point(446000, 7005244)))
     result.size should be > 1
   }

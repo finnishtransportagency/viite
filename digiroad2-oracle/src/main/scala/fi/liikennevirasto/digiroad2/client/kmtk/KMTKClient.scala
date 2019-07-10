@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.kmtk
 
-import java.io.IOException
+import java.io.{IOException, InputStream}
 import java.net.URLEncoder
 
 import fi.liikennevirasto.digiroad2.Point
@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.KMTKAuthPropertyReader
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s.jackson.JsonMethods.parse
@@ -66,6 +66,8 @@ case class KMTKRoadLink(linkId: Long, kmtkId: KMTKID = KMTKID("", 0), municipali
   val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 }
 
+class KMTKClientException(message: String) extends RuntimeException(message)
+
 trait KMTKClientOperations {
 
   type KMTKType
@@ -81,8 +83,6 @@ trait KMTKClientOperations {
   protected val disableGeometry: Boolean
 
   case class KMTKError(url: String, message: String)
-
-  class KMTKClientException(response: String) extends RuntimeException(response)
 
   protected implicit val jsonFormats: Formats = DefaultFormats
 
@@ -156,24 +156,31 @@ trait KMTKClientOperations {
   }
 
   // TODO
-  protected def serviceUrl: String = restApiEndPoint + serviceName
-
-  // TODO
-  protected def serviceUrl(bounds: Option[BoundingRectangle], definition: String, parameters: String): String = {
+  private[kmtk] def serviceUrl(bounds: Option[BoundingRectangle], municipalities: Option[Seq[Long]], kmtkIds: Option[Seq[KMTKID]],
+                               definition: String, parameters: String): String = {
+    if (bounds.isEmpty && municipalities.isEmpty && kmtkIds.isEmpty) {
+      throw new KMTKClientException("One of these query parameters must be defined: bounds, municipalities, kmtkIds")
+    }
     val bbox = if (bounds.isDefined)
       URLEncoder.encode(
         s"""{"minX":${bounds.get.leftBottom.x},"minY":${bounds.get.leftBottom.y},"maxX":${bounds.get.rightTop.x},"maxY":${bounds.get.rightTop.y}}""",
         "UTF-8")
     else
       ""
-    serviceUrl +
-      s"?bbox=$bbox"
+    val mcode = if (municipalities.isDefined) s"""&mcode=${municipalities.get.mkString(",")}""" else ""
+
+
+    // TODO linklist[0]=%7B%22a%22%2C%201%7D&linklist[1]=%7B%22b%22%2C%202%7D
+    val linklist = if (municipalities.isDefined) s"""&linklist=${municipalities.get.mkString(",")}""" else ""
+
+    restApiEndPoint + serviceName +
+      s"?bbox=$bbox$mcode$linklist"
 
   }
 
   // TODO
   protected def serviceUrl(definition: String, parameters: String): String = {
-    serviceUrl +
+    restApiEndPoint + serviceName +
       s"?layerDefs=$definition&" + parameters
   }
 
@@ -194,16 +201,20 @@ trait KMTKClientOperations {
     URLEncoder.encode(layerDefinitionWithoutEncoding(filter, customFieldSelection), "UTF-8")
   }
 
+  protected def createHttpClient: CloseableHttpClient = {
+    HttpClientBuilder.create().build()
+  }
+
   protected def fetchKMTKFeatures(url: String): Either[KMTKFeatureCollection, KMTKError] = {
     time(logger, s"Fetch KMTK features with url '$url'") {
       val request = new HttpGet(url)
       request.addHeader("Authorization", "Basic " + auth.getAuthInBase64)
-      val client = HttpClientBuilder.create().build()
+      val client = createHttpClient
       try {
         val response = client.execute(request)
         try {
-          val json = parse(StreamInput(response.getEntity.getContent))
-          val featureCollection = json.extractOpt[KMTKFeatureCollection]
+          val content = response.getEntity.getContent
+          val featureCollection: Option[KMTKFeatureCollection] = inputStreamToFeatureCollection(content)
           if (featureCollection.isDefined) {
             Left(featureCollection.get)
           } else {
@@ -220,6 +231,11 @@ trait KMTKClientOperations {
         case _: IOException => Right(KMTKError(url, "KMTK FETCH failure. IO Exception during KMTK fetch. Check connection to KMTK"))
       }
     }
+  }
+
+  private[kmtk] def inputStreamToFeatureCollection(content: InputStream): Option[KMTKFeatureCollection] = {
+    val json = parse(StreamInput(content))
+    json.extractOpt[KMTKFeatureCollection]
   }
 
   protected def fetchFeaturesAndLog(url: String): Seq[KMTKFeature] = {
@@ -271,7 +287,7 @@ trait KMTKClientOperations {
     */
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[String]): Seq[KMTKFeature] = {
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter))
-    val url = serviceUrl(Some(bounds), definition, queryParameters())
+    val url = serviceUrl(Some(bounds), None, None, definition, queryParameters())
     fetchFeaturesAndLog(url)
   }
 
@@ -376,8 +392,6 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
       }
     }.toList
   }
-
-  // Extract attributes methods
 
   // TODO
   protected def kmtkFeatureToKMTKRoadLink(feature: KMTKFeature): KMTKRoadLink = {
