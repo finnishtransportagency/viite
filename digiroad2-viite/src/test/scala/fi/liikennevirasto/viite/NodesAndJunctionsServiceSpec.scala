@@ -414,7 +414,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * Node at the end of road part 2 should expire conditionally:
     *   * If there are no more node points nor junctions referenced by this nodeId, then expire the node.
     */
-  test("Test removeObsoleteNodesAndJunctions case When road part is terminated Then also node points for terminated road should be expired") {
+  test("Test expireObsoleteNodesAndJunctions case When road part is terminated Then also node points for terminated road should be expired") {
     runWithRollback {
       val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       val roadGeom2 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
@@ -505,7 +505,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     *  * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and road type
     *    then all of those node points and the node itself should expire.
     */
-  test("Test removeObsoleteNodesAndJunctions case when Numbering two different parts to the same road number, road part and road type") {
+  test("Test expireObsoleteNodesAndJunctions case when Numbering two different parts to the same road number, road part and road type") {
     runWithRollback {
       val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       val roadGeom2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
@@ -601,7 +601,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     *   * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and road type
     *     then all of those node points and the node itself should expire.
     */
-  test("Test removeObsoleteNodesAndJunctions case When road is extended after the existing road") {
+  test("Test expireObsoleteNodesAndJunctions case When road is extended after the existing road") {
     runWithRollback {
       val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
 
@@ -681,7 +681,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     *   * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and road type
     *     then all of those node points and the node itself should expire.
     */
-  test("Test removeObsoleteNodesAndJunctions case When road is extended before the existing road") {
+  test("Test expireObsoleteNodesAndJunctions case When road is extended before the existing road") {
     runWithRollback {
       val roadGeom1 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
 
@@ -763,7 +763,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * Junction at the start of road 2 should expire conditionally:
     *   * If there are no more junction points referenced by this junctionId, then expire the both junction and the junction point at end of road number 1.
     */
-  test("Test removeObsoleteNodesAndJunctions case When road is terminated Then also junction points should be expired") {
+  test("Test expireObsoleteNodesAndJunctions case When road is terminated Then also junction points should be expired") {
     runWithRollback {
       val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       val roadGeom2 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
@@ -829,7 +829,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * Junction in the intersection should be expire conditionally:
     *   * If the remaining junction points referenced by this junctionId are all present in the same road number, then all of those junction points and the junction itself should expire.
     */
-  test("Test removeObsoleteNodesAndJunctions case When road is terminated Then also junction and junction points should be expired if they are in the same road") {
+  test("Test expireObsoleteNodesAndJunctions case When road is terminated Then also junction and junction points should be expired if they are in the same road") {
     runWithRollback {
       val roadGeom1Link1 = Seq(Point(0.0, 5.0), Point(5.0, 5.0))
       val roadGeom1Link2 = Seq(Point(5.0, 5.0), Point(5.0, 10.0))
@@ -898,7 +898,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     *   * If the remaining junction points referenced by this junctionId are all present in the same road number
     *     then all of those junction points and the junction itself should expire.
     */
-  test("Test removeObsoleteNodesAndJunctions case when Numbering a road with different road number to the same road number of the road before Then the junction and the junction points should be expired if they are in the same road") {
+  test("Test expireObsoleteNodesAndJunctions case when Numbering a road with different road number to the same road number of the road before Then the junction and the junction points should be expired if they are in the same road") {
     runWithRollback {
       val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       val roadGeom2 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
@@ -968,7 +968,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     *   * If the remaining junction points referenced by this junctionId are all present in the same road number
     *     then all of those junction points and the junction itself should expire.
     */
-  test("Test removeObsoleteNodesAndJunctions case when Transferring a link for a different road number Then the nodes/node points and junctions/junction points should be expired if they are in the same road") {
+  test("Test expireObsoleteNodesAndJunctions case when Transferring a link for a different road number Then the nodes/node points and junctions/junction points should be expired if they are in the same road") {
     runWithRollback {
       val road1Geom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       val road1Geom2 = Seq(Point(100.0, 0.0), Point(150.0, 0.0))
