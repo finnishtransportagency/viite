@@ -683,7 +683,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           if(change.changeType == Transfer){
             if(!change.reversed){
               roadwayPoints.flatMap{ rwp=>
-                //TODO check if existent roadwaypoint
                 val roadwayNumberInPoint = mappedRoadwayNumbers.filter(mrw => mrw.oldRoadwayNumber == rwp.roadwayNumber && rwp.addrMValue >= mrw.originalStartAddr && rwp.addrMValue <= mrw.originalEndAddr).head.newRoadwayNumber
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
                 list :+ (roadwayNumberInPoint, newAddrM, username, rwp.id)
