@@ -93,18 +93,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
 
         /*
-      handle creation of JUNCTION_POINT in reverse cases
-      */
-        val (startJunctionReversed, endJunctionReversed) = {
-          (roadwayChanges.exists(ch =>
-            ch.changeInfo.target.startAddressM.nonEmpty && link.startAddrMValue == ch.changeInfo.target.startAddressM.get && ch.changeInfo.reversed
-          ),
-          roadwayChanges.exists(ch =>
-            ch.changeInfo.target.endAddressM.nonEmpty && link.endAddrMValue == ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed
-          ))
-        }
-
-        /*
         R:road
         L:project link
         0:junction point
@@ -162,8 +150,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue))).head
               rwPoint
             }
-          } else if (startJunctionReversed) {
-            junctionPointDAO.update(Seq(linkJunctionPoint.head.copy(beforeAfter = if (!startJunctionReversed) BeforeAfter.After else BeforeAfter.Before)))
           }
         }
 
@@ -216,8 +202,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, r.createdBy.getOrElse("-"))
             }
             junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue))).head
-          } else if (startJunctionReversed) {
-            junctionPointDAO.update(Seq(linkJunctionPoint.head.copy(beforeAfter = if (!startJunctionReversed) BeforeAfter.After else BeforeAfter.Before)))
           }
         }
 
@@ -250,8 +234,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               roadwayPointDAO.create(link.roadwayNumber, link.endAddrMValue, r.createdBy.getOrElse("-"))
             }
             junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue))).head
-          } else if (endJunctionReversed) {
-            junctionPointDAO.update(Seq(linkJunctionPoint.head.copy(beforeAfter = if (!endJunctionReversed) BeforeAfter.Before else BeforeAfter.After)))
           }
         }
 
@@ -294,8 +276,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               roadwayPointDAO.create(link.roadwayNumber, link.endAddrMValue, r.createdBy.getOrElse("-"))
             }
             junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue))).head
-          } else if (endJunctionReversed) {
-            junctionPointDAO.update(Seq(linkJunctionPoint.head.copy(beforeAfter = if (!endJunctionReversed) BeforeAfter.Before else BeforeAfter.After)))
           }
         }
       }
