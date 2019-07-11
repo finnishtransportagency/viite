@@ -77,7 +77,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def handleJunctionPointTemplates(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink]): Unit = {
+  def handleJunctionPointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
       val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
       filteredLinks.foreach { link =>
         val roadNumberLimits = Seq((0, 19999), (40001, 69999))
@@ -299,7 +299,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }
     }
 
-    try {
       val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
         .filterNot(_.track == Track.LeftSide)
       val groupSections = filteredLinks.groupBy(l => (l.roadNumber, l.roadPartNumber))
@@ -337,7 +336,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
       }.toSeq
     }
-  }
 
 
 }
