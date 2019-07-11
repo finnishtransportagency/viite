@@ -318,34 +318,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
       }
 
-      /*
-        handle update of NODE_POINT in reverse cases
-      */
-        val (startNodeReversed, endNodeReversed) = {
-          (roadwayChanges.exists( ch =>
-            ch.changeInfo.target.startAddressM.nonEmpty && headLink.startAddrMValue == ch.changeInfo.target.startAddressM.get && ch.changeInfo.reversed
-          ),
-            roadwayChanges.exists( ch =>
-              ch.changeInfo.target.endAddressM.nonEmpty && lastLink.endAddrMValue == ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed
-          ))
-        }
-
         val existingHeadNodePoint = nodePointDAO.fetchNodePointTemplate(headLink.roadwayNumber).filter(np => np.beforeAfter == After && np.addrM == headLink.startAddrMValue)
         val existingLastNodePoint = nodePointDAO.fetchNodePointTemplate(lastLink.roadwayNumber).filter(np => np.beforeAfter == Before && np.addrM == lastLink.endAddrMValue)
 
-        if(existingHeadNodePoint.nonEmpty){
-          if(startNodeReversed)
-            nodePointDAO.update(Seq(existingHeadNodePoint.head.copy(beforeAfter = if(!startNodeReversed) BeforeAfter.After else BeforeAfter.Before)))
-        } else {
+        if(existingHeadNodePoint.isEmpty)
           nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue)))
-        }
 
-        if(existingLastNodePoint.nonEmpty){
-          if(endNodeReversed)
-            nodePointDAO.update(Seq(existingLastNodePoint.head.copy(beforeAfter = if(!endNodeReversed) BeforeAfter.Before else BeforeAfter.After)))
-        } else {
+        if(existingLastNodePoint.isEmpty)
           nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue)))
-        }
 
       }.toSeq
     } catch {
