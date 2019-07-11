@@ -2028,8 +2028,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
       roadwayDAO.create(roadwaysToInsert)
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
-      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, username = project.createdBy)
       val projectLinksAfterChanges = if(generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
+
+      val mappedRoadwayNumberLinks = projectLinks.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).sortBy(_.startAddrMValue).map{ pl =>
+      val targetProjectLink:  Option[ProjectLink] = projectLinksAfterChanges.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).find(rw => rw.startAddrMValue == pl.startAddrMValue && rw.endAddrMValue == pl.endAddrMValue)
+      val targetRoadwayNumber = if(targetProjectLink.nonEmpty) targetProjectLink.get.roadwayNumber else pl.roadwayNumber
+      val targetStartAddr = if(targetProjectLink.nonEmpty) targetProjectLink.get.startAddrMValue else pl.originalStartAddrMValue
+      val targetEndAddr = if(targetProjectLink.nonEmpty) targetProjectLink.get.endAddrMValue else pl.originalEndAddrMValue
+        RoadwayNumbersLinkChange(pl.originalStartAddrMValue, pl.originalEndAddrMValue, targetStartAddr, targetEndAddr, pl.roadwayNumber, targetRoadwayNumber)
+      }
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, mappedRoadwayNumberLinks, username = project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
       nodesNJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges)
       nodesNJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges)
@@ -2181,4 +2189,7 @@ class SplittingException(s: String) extends RuntimeException {
 
 case class ProjectBoundingBoxResult(projectLinkResultF: Future[Seq[ProjectLink]], roadLinkF: Future[Seq[RoadLink]],
                                     complementaryF: Future[Seq[RoadLink]], suravageF: Future[Seq[VVHRoadlink]])
+
+case class RoadwayNumbersLinkChange(originalStartAddr: Long, originalEndAddr: Long, newStartAddr: Long, newEndAddr: Long, oldRoadwayNumber: Long, newRoadwayNumber: Long)
+
 

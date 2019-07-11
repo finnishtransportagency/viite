@@ -47,15 +47,16 @@ class RoadwayPointDAO extends BaseDAO {
     id
   }
 
-  def update(roadwayPoints: Seq[(Long, String, Long)]): Seq[Long] = {
+  def update(roadwayPoints: Seq[(Long, Long, String, Long)]): Seq[Long] = {
 
-    val ps = dynamicSession.prepareStatement("update ROADWAY_POINT SET ADDR_M = ?, MODIFIED_BY = ?, MODIFIED_TIME = SYSDATE WHERE ID = ?")
+    val ps = dynamicSession.prepareStatement("update ROADWAY_POINT SET ROADWAY_NUMBER = ?, ADDR_M = ?, MODIFIED_BY = ?, MODIFIED_TIME = SYSDATE WHERE ID = ?")
 
     roadwayPoints.foreach {
       rwPoint =>
         ps.setLong(1, rwPoint._1)
-        ps.setString(2, rwPoint._2)
-        ps.setLong(3, rwPoint._3)
+        ps.setLong(2, rwPoint._2)
+        ps.setString(3, rwPoint._3)
+        ps.setLong(4, rwPoint._4)
         ps.addBatch()
     }
     ps.executeBatch()
