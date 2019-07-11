@@ -32,9 +32,10 @@ class RoadwayPointDAOSpec extends FunSuite with Matchers {
       points.size should be(2)
       val p1 = points.filter(p => p.addrMValue == 0).head
       val p2 = points.filter(p => p.addrMValue == 100).head
+      val roadwayNumber = 12345L
       p1.addrMValue should be(0)
       p2.addrMValue should be(100)
-      dao.update(Seq((p2.addrMValue, "1b", p1.id), (p1.addrMValue, "2b", p2.id)))
+      dao.update(Seq((roadwayNumber, p2.addrMValue, "1b", p1.id), (roadwayNumber, p1.addrMValue, "2b", p2.id)))
     }
     withDynTransaction {
       val points = dao.fetchByRoadwayNumber(-100)
