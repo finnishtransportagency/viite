@@ -80,7 +80,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def handleJunctionPointTemplates(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink]): Unit = {
-    try {
       val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
       filteredLinks.foreach { link =>
         val roadNumberLimits = Seq((0, 19999), (40001, 69999))
@@ -302,12 +301,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           }
         }
       }
-    } catch {
-      case ex: Exception => {
-        println("Error in junction points handler: ", ex.getMessage)
-        println("Full stack trace: ", ex.getStackTrace)
-      }
-    }
   }
 
   /*
@@ -319,7 +312,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
    */
   def handleNodePointTemplates(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink]): Unit = {
-    try{
       val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status!= LinkStatus.Terminated)
       val groups = filteredLinks.filterNot(_.track == Track.LeftSide).groupBy(l=> (l.roadNumber, l.roadPartNumber, l.roadType))
 
@@ -372,12 +364,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
 
       }.toSeq
-    } catch {
-      case ex: Exception => {
-        println("Error in node points handler: ", ex.getMessage)
-        println("Full stack trace: ", ex.getStackTrace)
-      }
-    }
   }
 
   def getNodeTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
