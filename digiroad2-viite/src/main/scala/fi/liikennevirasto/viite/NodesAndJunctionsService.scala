@@ -287,39 +287,56 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     2.2)  and at the beginning/end of each road part, ely borders, or when road type changes
     2.3)  on each junction with a road number (except number over 70 000)
    */
-  def handleNodePointTemplates(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink]): Unit = {
-      val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status!= LinkStatus.Terminated)
-      val groups = filteredLinks.filterNot(_.track == Track.LeftSide).groupBy(l=> (l.roadNumber, l.roadPartNumber, l.roadType))
+  def handleNodePointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
 
-      groups.mapValues{ group =>
-        val sortedGroup = group.sortBy(s => (s.roadNumber, s.roadPartNumber, s.startAddrMValue))
-        val headLink = sortedGroup.head
-        val lastLink = sortedGroup.last
-
-        //if handleRoadwayPoints is fine, we will always found one existingRoadwayPoint
-      val headRoadwayPointId = {
-        val existingRoadwayPoint = roadwayPointDAO.fetch(headLink.roadwayNumber, headLink.startAddrMValue)
-        if(existingRoadwayPoint.nonEmpty)
-          existingRoadwayPoint.get.id
-        else roadwayPointDAO.create(headLink.roadwayNumber, headLink.startAddrMValue, headLink.createdBy.getOrElse("-"))
+    def continuousNodeSections(seq: Seq[ProjectLink], roadTypesSection: Seq[Seq[ProjectLink]]): (Seq[ProjectLink], Seq[Seq[ProjectLink]]) = {
+      if (seq.isEmpty) {
+        (Seq(), roadTypesSection)
+      } else {
+        val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
+        val continuousProjectLinks = seq.takeWhile(pl => pl.roadType.value == roadType)
+        continuousNodeSections(seq.drop(continuousProjectLinks.size), roadTypesSection :+ continuousProjectLinks)
       }
-      val lastRoadwayPointId = {
-        val existingRoadwayPoint = roadwayPointDAO.fetch(lastLink.roadwayNumber, lastLink.endAddrMValue)
-        if(existingRoadwayPoint.nonEmpty)
-          existingRoadwayPoint.get.id
-        else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
-      }
+    }
 
-        val existingHeadNodePoint = nodePointDAO.fetchNodePointTemplate(headLink.roadwayNumber).filter(np => np.beforeAfter == After && np.addrM == headLink.startAddrMValue)
-        val existingLastNodePoint = nodePointDAO.fetchNodePointTemplate(lastLink.roadwayNumber).filter(np => np.beforeAfter == Before && np.addrM == lastLink.endAddrMValue)
+    try {
+      val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
+        .filterNot(_.track == Track.LeftSide)
+      val groupSections = filteredLinks.groupBy(l => (l.roadNumber, l.roadPartNumber))
 
-        if(existingHeadNodePoint.isEmpty)
-          nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue)))
+      groupSections.mapValues { group =>
+        val roadTypeSections: Seq[Seq[ProjectLink]] = continuousNodeSections(group.sortBy(_.startAddrMValue), Seq.empty[Seq[ProjectLink]])._2
 
-        if(existingLastNodePoint.isEmpty)
-          nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue)))
+        roadTypeSections.foreach { section =>
 
+          val headLink = section.head
+          val lastLink = section.last
+
+          val headRoadwayPointId = {
+            val existingRoadwayPoint = roadwayPointDAO.fetch(headLink.roadwayNumber, headLink.startAddrMValue)
+            if (existingRoadwayPoint.nonEmpty)
+              existingRoadwayPoint.get.id
+            else roadwayPointDAO.create(headLink.roadwayNumber, headLink.startAddrMValue, headLink.createdBy.getOrElse("-"))
+          }
+          val lastRoadwayPointId = {
+            val existingRoadwayPoint = roadwayPointDAO.fetch(lastLink.roadwayNumber, lastLink.endAddrMValue)
+            if (existingRoadwayPoint.nonEmpty)
+              existingRoadwayPoint.get.id
+            else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
+          }
+
+          val existingHeadNodePoint = nodePointDAO.fetchNodePointTemplate(headLink.roadwayNumber).filter(np => np.beforeAfter == After && np.addrM == headLink.startAddrMValue)
+          val existingLastNodePoint = nodePointDAO.fetchNodePointTemplate(lastLink.roadwayNumber).filter(np => np.beforeAfter == Before && np.addrM == lastLink.endAddrMValue)
+
+          if (existingHeadNodePoint.isEmpty)
+            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue)))
+
+          if (existingLastNodePoint.isEmpty)
+            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue)))
+
+        }
       }.toSeq
+    }
   }
 
 
