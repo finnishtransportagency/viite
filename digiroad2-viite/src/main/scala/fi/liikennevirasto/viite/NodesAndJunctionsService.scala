@@ -301,16 +301,30 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     2.3)  on each junction with a road number (except number over 70 000)
    */
   def handleNodePointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
+
+     def continuousNodeSections(seq: Seq[ProjectLink], roadTypesSection: Seq[Seq[ProjectLink]]): (Seq[ProjectLink], Seq[Seq[ProjectLink]]) = {
+      if(seq.isEmpty){
+         (Seq(), roadTypesSection)
+      } else {
+        val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
+        val continuousProjectLinks = seq.takeWhile(pl => pl.roadType.value == roadType)
+        continuousNodeSections(seq.drop(continuousProjectLinks.size), roadTypesSection:+continuousProjectLinks)
+      }
+    }
+
     try{
       val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status!= LinkStatus.Terminated)
-      val groups = filteredLinks.filterNot(_.track == Track.LeftSide).groupBy(l=> (l.roadNumber, l.roadPartNumber, l.roadType))
+        .filterNot(_.track == Track.LeftSide)
+      val groupSections = filteredLinks.groupBy(l=> (l.roadNumber, l.roadPartNumber))
 
-      groups.mapValues{ group =>
-        val sortedGroup = group.sortBy(s => (s.roadNumber, s.roadPartNumber, s.startAddrMValue))
-        val headLink = sortedGroup.head
-        val lastLink = sortedGroup.last
+      groupSections.mapValues{ group =>
+        val roadTypeSections: Seq[Seq[ProjectLink]] = continuousNodeSections(group.sortBy(_.startAddrMValue), Seq.empty[Seq[ProjectLink]])._2
 
-        //if handleRoadwayPoints is fine, we will always found one existingRoadwayPoint
+        roadTypeSections.foreach{ section =>
+
+        val headLink = section.head
+        val lastLink = section.last
+
         val headRoadwayPointId = {
           val existingRoadwayPoint = roadwayPointDAO.fetch(headLink.roadwayNumber, headLink.startAddrMValue)
           if(existingRoadwayPoint.nonEmpty)
@@ -333,6 +347,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         if(existingLastNodePoint.isEmpty)
           nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue)))
 
+        }
       }.toSeq
     } catch {
       case ex: Exception => {
