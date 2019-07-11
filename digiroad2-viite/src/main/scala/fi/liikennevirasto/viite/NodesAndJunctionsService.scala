@@ -4,11 +4,12 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.dao._
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
 
-class NodesAndJunctionsService() {
+class NodesAndJunctionsService(nodeDAO: NodeDAO, junctionDAO: JunctionDAO, nodePointDAO: NodePointDAO, junctionPointDAO: JunctionPointDAO) {
   case class CompleteNode(node: Option[Node], nodePoints: Seq[NodePoint], junctions: Map[Junction, Seq[JunctionPoint]])
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -16,11 +17,6 @@ class NodesAndJunctionsService() {
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
-
-  val nodeDAO = new NodeDAO
-  val junctionDAO = new JunctionDAO
-  val nodePointDAO = new NodePointDAO
-  val junctionPointDAO = new JunctionPointDAO
 
   def getNodesByRoadAttributes(roadNumber: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Either[String, Seq[(Node, RoadAttributes)]] = {
     withDynSession {
@@ -72,6 +68,29 @@ class NodesAndJunctionsService() {
             )
         }.toMap
       }
+    }
+  }
+
+  def getNodesWithTimeInterval(sinceDate: DateTime, untilDate: DateTime) : Map[Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
+    withDynSession {
+      val nodes = nodeDAO.fetchAllByDateRange(sinceDate, untilDate)
+      val nodePoints = nodePointDAO.fetchNodePointsByNodeId(nodes.map(_.id))
+      val junctions = junctionDAO.fetchJunctionByNodeIds(nodes.map(_.id))
+      val junctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(junctions.map(_.id))
+      nodes.map {
+        node =>
+          (Option(node),
+            (
+              nodePoints.filter(np => np.nodeId.isDefined && np.nodeId.get == node.id),
+              junctions.filter(j => j.nodeId.isDefined && j.nodeId.get == node.id).map {
+                junction =>
+                  (
+                    junction, junctionPoints.filter(_.junctionId == junction.id)
+                  )
+              }.toMap
+            )
+          )
+      }.toMap
     }
   }
 
