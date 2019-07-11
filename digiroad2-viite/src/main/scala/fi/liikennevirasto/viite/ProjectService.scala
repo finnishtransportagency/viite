@@ -1992,6 +1992,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     roadwayDAO.expireHistory(Set(roadwayId))
   }
 
+  def mapChangedRoadwayNumbers(projectLinks: Seq[ProjectLink], projectLinksAfterChanges: Seq[ProjectLink]) = {
+    projectLinks.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).sortBy(_.startAddrMValue).map { pl =>
+      val targetProjectLink: Option[ProjectLink] = projectLinksAfterChanges.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).find(rw => rw.startAddrMValue == pl.startAddrMValue && rw.endAddrMValue == pl.endAddrMValue)
+      val targetRoadwayNumber = if (targetProjectLink.nonEmpty) targetProjectLink.get.roadwayNumber else pl.roadwayNumber
+      val targetStartAddr = if (targetProjectLink.nonEmpty) targetProjectLink.get.startAddrMValue else pl.originalStartAddrMValue
+      val targetEndAddr = if (targetProjectLink.nonEmpty) targetProjectLink.get.endAddrMValue else pl.originalEndAddrMValue
+      RoadwayNumbersLinkChange(pl.originalStartAddrMValue, pl.originalEndAddrMValue, targetStartAddr, targetEndAddr, pl.roadwayNumber, targetRoadwayNumber)
+    }
+  }
+
   def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Set[Long] = {
     if (newState != Saved2TR) {
       logger.error(s" Project state not at Saved2TR")
@@ -2029,15 +2039,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadwayDAO.create(roadwaysToInsert)
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       val projectLinksAfterChanges = if(generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
-
-      val mappedRoadwayNumberLinks = projectLinks.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).sortBy(_.startAddrMValue).map{ pl =>
-      val targetProjectLink:  Option[ProjectLink] = projectLinksAfterChanges.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).find(rw => rw.startAddrMValue == pl.startAddrMValue && rw.endAddrMValue == pl.endAddrMValue)
-      val targetRoadwayNumber = if(targetProjectLink.nonEmpty) targetProjectLink.get.roadwayNumber else pl.roadwayNumber
-      val targetStartAddr = if(targetProjectLink.nonEmpty) targetProjectLink.get.startAddrMValue else pl.originalStartAddrMValue
-      val targetEndAddr = if(targetProjectLink.nonEmpty) targetProjectLink.get.endAddrMValue else pl.originalEndAddrMValue
-        RoadwayNumbersLinkChange(pl.originalStartAddrMValue, pl.originalEndAddrMValue, targetStartAddr, targetEndAddr, pl.roadwayNumber, targetRoadwayNumber)
-      }
-      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, mappedRoadwayNumberLinks, username = project.createdBy)
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges), username = project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
       nodesNJunctionsService.handleJunctionPointTemplates(projectLinksAfterChanges)
       nodesNJunctionsService.handleNodePointTemplates(projectLinksAfterChanges)
