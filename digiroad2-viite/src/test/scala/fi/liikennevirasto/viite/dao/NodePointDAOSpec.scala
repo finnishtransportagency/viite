@@ -82,7 +82,7 @@ class NodePointDAOSpec extends FunSuite with Matchers {
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
       val nodePoints = dao.fetchNodePointsByNodeId(Seq(nodeId))
       nodePoints.size should be(2)
-      nodePoints.filter(n => n.nodeId == Some(nodeId)).size should be(2)
+      nodePoints.count(n => n.nodeId.contains(nodeId)) should be(2)
     }
   }
 

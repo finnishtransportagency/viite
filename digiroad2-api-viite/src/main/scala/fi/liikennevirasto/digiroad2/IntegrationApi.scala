@@ -234,22 +234,24 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   }
 
   val nodesToGeoJson: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("roadNumberToGeoJson")
+    apiOperation[Map[String, Any]]("nodesToGeoJson")
       .parameters(
-        queryParam[String]("since").description("Start date of the road addresses changes"),
-        queryParam[String]("until").description("End date of the road addresses changes")
+        queryParam[String]("since").description("Start date of nodes"),
+        queryParam[String]("until").description("End date of the nodes")
       )
       tags "ChangeAPI"
-      summary "This will return all the changes found on the road addresses that are between the period defined by the \"since\" and  \"until\" parameters."
+      summary "This will return all the changes found on the nodes that are between the period defined by the \"since\" and  \"until\" parameters."
       notes ""
     )
   get(transformers = "/nodes_junctions/changes", operation(nodesToGeoJson)) {
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-    val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
-
-    time(logger, s"GET request for /nodesAndJunctions (since: $since, until: $until)") {
-      nodesAndJunctionsService.getNodesWithTimeInterval(since, until).map(node => nodeToApi(node))
+    val untilUnformatted = params.get("until")
+    time(logger, s"GET request for /nodesAndJunctions (since: $since, until: $untilUnformatted)") {
+      untilUnformatted match {
+        case Some(u) => nodesAndJunctionsService.getNodesWithTimeInterval(since, Some(DateTime.parse(u))).map(node => nodeToApi(node))
+        case _ => nodesAndJunctionsService.getNodesWithTimeInterval(since, None).map(node => nodeToApi(node))
+      }
     }
   }
 
@@ -269,8 +271,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       "y" -> node.coordinates.y,
       "name" -> node.name,
       "type" -> node.nodeType.value,
-      "start_date" -> node.startDate.toString,
-      "end_date" -> node.endDate.toString,
+      "start_date" -> formatDate(node.startDate),
+      "end_date" -> (if(node.endDate.isDefined) formatDate(node.endDate) else null),
       "user" -> node.createdBy
     )
   }
@@ -282,8 +284,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       "road_part" -> nodePoint.roadPartNumber,
       "track" -> nodePoint.track.value,
       "distance" -> nodePoint.addrM,
-      "start_date" -> nodePoint.startDate.toString,
-      "end_date" -> nodePoint.endDate.toString,
+      "start_date" -> formatDate(nodePoint.startDate),
+      "end_date" -> (if(nodePoint.endDate.isDefined) formatDate(nodePoint.endDate) else null),
       "user" -> nodePoint.createdBy
     )
   }
@@ -291,8 +293,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
     Map(
       "junction_number" -> junction._1.junctionNumber,
-      "start_date" -> junction._1.startDate.toString,
-      "end_date" -> junction._1.endDate.toString,
+      "start_date" -> formatDate(junction._1.startDate),
+      "end_date" -> (if(junction._1.endDate.isDefined) formatDate(junction._1.endDate) else null),
       "user" -> junction._1.createdBy,
       "junctionPoints" -> junction._2.map(junctionPointToApi))
   }
@@ -304,8 +306,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       "road_part" -> junctionPoint.roadPartNumber,
       "track" -> junctionPoint.track.value,
       "distance" -> junctionPoint.addrM,
-      "start_date" -> junctionPoint.startDate.toString,
-      "end_date" -> junctionPoint.endDate.toString,
+      "start_date" -> formatDate(junctionPoint.startDate),
+      "end_date" -> (if(junctionPoint.endDate.isDefined) formatDate(junctionPoint.endDate) else null),
       "user" -> junctionPoint.createdBy
     )
   }
