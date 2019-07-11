@@ -345,15 +345,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def removeObsoleteNodesAndJunctions(roadwayChanges: Seq[ProjectRoadwayChange], endDate: Option[DateTime], username: String = "-"): Unit = {
-    /*
-      // TODO Handle these rules regarding road numbers:
-      The node point is expired if it no longer has justification for the current network, that is, it is no longer a point of change of the road part,
-      the point of change of the road type and will no longer be linked to the junctions of the main roads (less than 20,000 road numbers and 40000-70000 road roads).
-
-      The node is expired if no node points or junctions are connected to it. If, after the changes, the node is joined only with ramps,
-      etc. (road number between 20000-40000), those junctions will become junction templates. The user must join junction templates to another existing node.
-    */
+  def expireObsoleteNodesAndJunctions(roadwayChanges: Seq[ProjectRoadwayChange], endDate: Option[DateTime], username: String = "-"): Unit = {
     def obsoleteNodesAndJunctionsPointsOfTermination(terminatedRoadwayNumbers: Seq[Long]): (Seq[NodePoint], Seq[JunctionPoint]) = {
       val obsoleteRoadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(terminatedRoadwayNumbers)
       val obsoleteNodePoints = nodePointDAO.fetchByRoadwayPointIds(obsoleteRoadwayPoints.map(_.id))
@@ -394,6 +386,58 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       (obsoleteNodePoints, Seq.empty[JunctionPoint])
     }
 
+    def expireObsoleteJunctions(obsoleteJunctionPoints: Set[JunctionPoint]): Unit = {
+      // Expire current junction points rows
+      junctionPointDAO.expireById(obsoleteJunctionPoints.map(_.id))
+
+      // Remove junctions that no longer have justification for the current network
+      val obsoleteJunctions = junctionDAO.fetchObsoleteById(obsoleteJunctionPoints.map(_.junctionId))
+      junctionDAO.expireById(obsoleteJunctions.map(_.id))
+      val obsoleteJunctionPointsOfNowExpiredJunctions = junctionPointDAO.fetchJunctionPointsByJunctionIds(obsoleteJunctions.map(_.id))
+      junctionPointDAO.expireById(obsoleteJunctionPointsOfNowExpiredJunctions.map(_.id))
+
+      // Handle obsolete junction points of valid and obsolete junctions separately
+      val (obsoleteJunctionPointsOfObsoleteJunctions, obsoleteJunctionPointsOfValidJunctions) = (obsoleteJunctionPoints ++ obsoleteJunctionPointsOfNowExpiredJunctions)
+        .partition(jp => obsoleteJunctions.exists(j => j.id == jp.junctionId))
+
+      // Create junction rows with end date and junction point rows with end date and new junction id
+      obsoleteJunctions.foreach(j => {
+        val newJunctionId = junctionDAO.create(Seq(j.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
+        junctionPointDAO.create(obsoleteJunctionPointsOfObsoleteJunctions.map(_.copy(id = NewIdValue, endDate = endDate,
+          junctionId = newJunctionId, createdBy = Some(username))))
+      })
+
+      // Create junction point rows of the valid junctions with end date
+      junctionPointDAO.create(obsoleteJunctionPointsOfValidJunctions.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
+    }
+
+    def expireNodes(obsoleteNodePoints: Set[NodePoint], obsoleteJunctionPoints: Set[JunctionPoint]): Unit = {
+      val obsoleteJunctions = junctionDAO.fetchObsoleteById(obsoleteJunctionPoints.map(_.junctionId))
+
+      // Expire current node points rows
+      nodePointDAO.expireById(obsoleteNodePoints.map(_.id))
+
+      // Remove nodes that no longer have justification for the current network
+      val obsoleteNodes = nodeDAO.fetchObsoleteById((obsoleteJunctions.filter(j => j.nodeId.isDefined).map(_.nodeId.get)
+        ++ obsoleteNodePoints.filter(np => np.nodeId.isDefined).map(_.nodeId.get)).distinct)
+
+      // Handle obsolete node points of valid and obsolete nodes separately
+      val (obsoleteNodePointsOfObsoleteNodes, obsoleteNodePointsOfValidNodes) = obsoleteNodePoints
+        .partition(np => obsoleteNodes.exists(n => n.id == np.nodeId.getOrElse(-1)))
+
+      // Create node rows with end date and node point rows with end date and new node id
+      obsoleteNodes.foreach(n => {
+        val newNodeId = nodeDAO.create(Seq(n.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
+        nodePointDAO.create(obsoleteNodePointsOfObsoleteNodes.map(_.copy(id = NewIdValue, endDate = endDate,
+          nodeId = Some(newNodeId), createdBy = Some(username))))
+      })
+
+      // Create node point rows of the valid nodes with end date
+      nodePointDAO.create(obsoleteNodePointsOfValidNodes.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
+
+      nodeDAO.expireById(obsoleteNodes.map(_.id))
+    }
+
     val (obsoleteNodePoints, obsoleteJunctionPoints) = roadwayChanges.foldLeft((Set.empty[NodePoint],Set.empty[JunctionPoint])) { case ((onp, ojp), rwc) =>
       val sourceRoadNumber = rwc.changeInfo.source.roadNumber.getOrElse(-1L)
       val sourceRoadPartNumber = rwc.changeInfo.source.startRoadPartNumber.getOrElse(-1L)
@@ -415,48 +459,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       (onp++nodePoints, ojp++junctionPoints)
     }
 
-    // Expire current node and junction point rows
-    nodePointDAO.expireById(obsoleteNodePoints.map(_.id))
-    junctionPointDAO.expireById(obsoleteJunctionPoints.map(_.id))
-
-    // Remove junctions that no longer have justification for the current network
-    val obsoleteJunctions = junctionDAO.fetchObsoleteById(obsoleteJunctionPoints.map(_.junctionId))
-    junctionDAO.expireById(obsoleteJunctions.map(_.id))
-    val obsoleteJunctionPointsOfNowExpiredJunctions = junctionPointDAO.fetchJunctionPointsByJunctionIds(obsoleteJunctions.map(_.id))
-    junctionPointDAO.expireById(obsoleteJunctionPointsOfNowExpiredJunctions.map(_.id))
-
-    // Remove nodes that no longer have justification for the current network
-    val obsoleteNodes = nodeDAO.fetchObsoleteById((obsoleteJunctions.filter(j => j.nodeId.isDefined).map(_.nodeId.get)
-      ++ obsoleteNodePoints.filter(np => np.nodeId.isDefined).map(_.nodeId.get)).distinct)
-    nodeDAO.expireById(obsoleteNodes.map(_.id))
-
-    // Handle obsolete junction points of valid and obsolete junctions separately
-    val (obsoleteJunctionPointsOfObsoleteJunctions, obsoleteJunctionPointsOfValidJunctions) = (obsoleteJunctionPoints ++ obsoleteJunctionPointsOfNowExpiredJunctions)
-      .partition(jp => obsoleteJunctions.exists(j => j.id == jp.junctionId))
-
-    // Handle obsolete node points of valid and obsolete nodes separately
-    val (obsoleteNodePointsOfObsoleteNodes, obsoleteNodePointsOfValidNodes) = obsoleteNodePoints
-      .partition(np => obsoleteNodes.exists(n => n.id == np.nodeId.getOrElse(-1)))
-
-    // Create junction rows with end date and junction point rows with end date and new junction id
-    obsoleteJunctions.foreach(j => {
-      val newJunctionId = junctionDAO.create(Seq(j.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
-      junctionPointDAO.create(obsoleteJunctionPointsOfObsoleteJunctions.map(_.copy(id = NewIdValue, endDate = endDate,
-        junctionId = newJunctionId, createdBy = Some(username))))
-    })
-
-    // Create node rows with end date and node point rows with end date and new node id
-    obsoleteNodes.foreach(n => {
-      val newNodeId = nodeDAO.create(Seq(n.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
-      nodePointDAO.create(obsoleteNodePointsOfObsoleteNodes.map(_.copy(id = NewIdValue, endDate = endDate,
-        nodeId = Some(newNodeId), createdBy = Some(username))))
-    })
-
-    // Create junction point rows of the valid junctions with end date
-    junctionPointDAO.create(obsoleteJunctionPointsOfValidJunctions.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
-
-    // Create node point rows of the valid nodes with end date
-    nodePointDAO.create(obsoleteNodePointsOfValidNodes.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
+    expireObsoleteJunctions(obsoleteJunctionPoints)
+    expireNodes(obsoleteNodePoints, obsoleteJunctionPoints)
   }
 
 }

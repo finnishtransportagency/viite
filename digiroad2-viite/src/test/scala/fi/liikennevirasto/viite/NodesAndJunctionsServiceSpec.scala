@@ -480,7 +480,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(Seq(roadways.last))
 
-      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(terminatedRoadLink).map(_.projectId).toSet), Some(terminatedRoadLink.endDate.get.minusDays(1)))
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(terminatedRoadLink).map(_.projectId).toSet), Some(terminatedRoadLink.endDate.get.minusDays(1)))
 
       // Test expired node and node points
       val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id, node3.id))
@@ -579,7 +579,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(roadways)
 
-      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(numberedRoadLink1).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(numberedRoadLink1).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
 
       // Test expired node and node points
       val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id, node3.id))
@@ -661,7 +661,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(roadways)
 
-      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(newRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(newRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
 
       // Test expired node and node points
       val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id))
@@ -741,7 +741,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(roadways)
 
-      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(newRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(newRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
 
       // Test expired node and node points
       val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id))
@@ -804,7 +804,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(Seq(roadways.last))
 
-      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(terminatedRoadLink).map(_.projectId).toSet), Some(terminatedRoadLink.endDate.get.minusDays(1)))
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(terminatedRoadLink).map(_.projectId).toSet), Some(terminatedRoadLink.endDate.get.minusDays(1)))
 
       // Test expired junction points
       val junctionPointTemplatesAfterTermination = junctionPointDAO.fetchByRoadwayPointIds(
@@ -873,7 +873,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(Seq(roadways.last))
 
-      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(terminatedRoadLink).map(_.projectId).toSet), Some(terminatedRoadLink.endDate.get.minusDays(1)))
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(terminatedRoadLink).map(_.projectId).toSet), Some(terminatedRoadLink.endDate.get.minusDays(1)))
 
       // Test expired junction points
       val junctionPointTemplatesAfterTermination = junctionPointDAO.fetchByRoadwayPointIds(
@@ -940,7 +940,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(Seq(roadways.last))
 
-      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(numberedRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(numberedRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
 
       // Test expired junction points
       val junctionPointTemplatesAfterNumbering = junctionPointDAO.fetchByRoadwayPointIds(
@@ -1060,7 +1060,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(roadways)
 
-      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(transferredRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(transferredRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
 
       // Test expired node and node points
       val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id, node3.id))

@@ -2031,7 +2031,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadwayDAO.create(roadwaysToInsert)
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       roadAddressService.updateRoadwayPoints(projectLinks.filter(_.roadwayNumber != NewIdValue), username = project.createdBy)
-      nodesAndJunctionsService.removeObsoleteNodesAndJunctions(roadwayChanges, Some(project.startDate.minusDays(1)), project.createdBy)
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(roadwayChanges, Some(project.startDate.minusDays(1)), project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
       nodesAndJunctionsService.handleJunctionPointTemplates(generatedRoadways.flatMap(_._3))
       nodesAndJunctionsService.handleNodePointTemplates(generatedRoadways.flatMap(_._3))
