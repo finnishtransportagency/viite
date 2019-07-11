@@ -271,8 +271,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       "y" -> node.coordinates.y,
       "name" -> node.name,
       "type" -> node.nodeType.value,
-      "start_date" -> formatDate(node.startDate),
-      "end_date" -> (if(node.endDate.isDefined) formatDate(node.endDate) else null),
+      "start_date" -> node.startDate.toString,
+      "end_date" -> (if(node.endDate.isDefined) node.endDate.get.toString else null),
       "user" -> node.createdBy
     )
   }
@@ -284,8 +284,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       "road_part" -> nodePoint.roadPartNumber,
       "track" -> nodePoint.track.value,
       "distance" -> nodePoint.addrM,
-      "start_date" -> formatDate(nodePoint.startDate),
-      "end_date" -> (if(nodePoint.endDate.isDefined) formatDate(nodePoint.endDate) else null),
+      "start_date" -> nodePoint.startDate.toString,
+      "end_date" -> (if(nodePoint.endDate.isDefined) nodePoint.endDate.get.toString else null),
       "user" -> nodePoint.createdBy
     )
   }
@@ -293,8 +293,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
     Map(
       "junction_number" -> junction._1.junctionNumber,
-      "start_date" -> formatDate(junction._1.startDate),
-      "end_date" -> (if(junction._1.endDate.isDefined) formatDate(junction._1.endDate) else null),
+      "start_date" -> junction._1.startDate.toString,
+      "end_date" -> (if(junction._1.endDate.isDefined) junction._1.endDate.get.toString else null),
       "user" -> junction._1.createdBy,
       "junctionPoints" -> junction._2.map(junctionPointToApi))
   }
@@ -306,8 +306,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       "road_part" -> junctionPoint.roadPartNumber,
       "track" -> junctionPoint.track.value,
       "distance" -> junctionPoint.addrM,
-      "start_date" -> formatDate(junctionPoint.startDate),
-      "end_date" -> (if(junctionPoint.endDate.isDefined) formatDate(junctionPoint.endDate) else null),
+      "start_date" -> junctionPoint.startDate.toString,
+      "end_date" -> (if(junctionPoint.endDate.isDefined) junctionPoint.endDate.get.toString else null),
       "user" -> junctionPoint.createdBy
     )
   }
