@@ -5,7 +5,7 @@ import java.util.Locale
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinearLocation, Roadway}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, Junction, JunctionPoint, LinearLocation, Node, NodePoint, Roadway}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import org.joda.time.DateTime
@@ -231,6 +231,83 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         }
       }
     }
+  }
+
+  val nodesToGeoJson: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("roadNumberToGeoJson")
+      .parameters(
+        queryParam[String]("since").description("Start date of the road addresses changes"),
+        queryParam[String]("until").description("End date of the road addresses changes")
+      )
+      tags "ChangeAPI"
+      summary "This will return all the changes found on the road addresses that are between the period defined by the \"since\" and  \"until\" parameters."
+      notes ""
+    )
+  get(transformers = "/nodes_junctions/changes", operation(nodesToGeoJson)) {
+    contentType = formats("json")
+    val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
+    val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
+
+    time(logger, s"GET request for /nodesAndJunctions (since: $since, until: $until)") {
+      nodesAndJunctionsService.getNodesWithTimeInterval(since, until).map(node => nodeToApi(node))
+    }
+  }
+
+  def nodeToApi(node: (Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]))) : Map[String, Any] = {
+      simpleNodeToApi(node._1.get) ++
+      Map("nodePoints" -> node._2._1.map(nodePointToApi)) ++
+      Map("junctions" -> node._2._2.map(junctionToApi)
+    )
+
+  }
+
+  def simpleNodeToApi(node: Node): Map[String, Any] = {
+    Map(
+      "node_number" -> node.nodeNumber,
+      "change_date" -> node.publishedTime.get.toString,
+      "x" -> node.coordinates.x,
+      "y" -> node.coordinates.y,
+      "name" -> node.name,
+      "type" -> node.nodeType.value,
+      "start_date" -> node.startDate.toString,
+      "end_date" -> node.endDate.toString,
+      "user" -> node.createdBy
+    )
+  }
+
+  def nodePointToApi(nodePoint: NodePoint) : Map[String, Any] = {
+    Map(
+      "before_after" -> nodePoint.beforeAfter.acronym,
+      "road" -> nodePoint.roadNumber,
+      "road_part" -> nodePoint.roadPartNumber,
+      "track" -> nodePoint.track.value,
+      "distance" -> nodePoint.addrM,
+      "start_date" -> nodePoint.startDate.toString,
+      "end_date" -> nodePoint.endDate.toString,
+      "user" -> nodePoint.createdBy
+    )
+  }
+
+  def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
+    Map(
+      "junction_number" -> junction._1.junctionNumber,
+      "start_date" -> junction._1.startDate.toString,
+      "end_date" -> junction._1.endDate.toString,
+      "user" -> junction._1.createdBy,
+      "junctionPoints" -> junction._2.map(junctionPointToApi))
+  }
+
+  def junctionPointToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
+    Map(
+      "before_after" -> junctionPoint.beforeAfter.acronym,
+      "road" -> junctionPoint.roadNumber,
+      "road_part" -> junctionPoint.roadPartNumber,
+      "track" -> junctionPoint.track.value,
+      "distance" -> junctionPoint.addrM,
+      "start_date" -> junctionPoint.startDate.toString,
+      "end_date" -> junctionPoint.endDate.toString,
+      "user" -> junctionPoint.createdBy
+    )
   }
 
   def geometryWKT(geometry: Seq[Point], startAddr: Long, endAddr: Long): (String, String) = {

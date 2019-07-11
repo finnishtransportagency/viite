@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.util.Track
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -12,6 +13,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 sealed trait BeforeAfter {
   def value: Long
+  def acronym: String
 }
 
 object BeforeAfter {
@@ -23,29 +25,33 @@ object BeforeAfter {
 
   case object Before extends BeforeAfter {
     def value = 1
+    def acronym = "E"
   }
 
   case object After extends BeforeAfter {
     def value = 2
+    def acronym = "J"
   }
 
   case object UnknownBeforeAfter extends BeforeAfter {
     def value = 9
+    def acronym = ""
   }
 }
 
 case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeId: Option[Long], startDate: DateTime, endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
-                     createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long)
+                     createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long, roadNumber: Long, roadPartNumber: Long, track: Track)
 
 class NodePointDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
   val selectFromNodePoint = """SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_ID, NP.START_DATE, NP.END_DATE,
-                             NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M
+                             NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK
                              FROM NODE_POINT NP
                              JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-                             JOIN NODE N ON (N.id = np.NODE_ID)"""
+                             JOIN NODE N ON (N.id = np.NODE_ID)
+                             JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER) """
 
   implicit val getNodePoint: GetResult[NodePoint] = new GetResult[NodePoint] {
     def apply(r: PositionedResult): NodePoint = {
@@ -61,8 +67,11 @@ class NodePointDAO extends BaseDAO {
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val roadwayNumber = r.nextLong()
       val addrM = r.nextLong()
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val track = Track.apply(r.nextLong().toInt)
 
-      NodePoint(id, BeforeAfter.apply(beforeAfter), roadwayPointId, nodeId, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM)
+      NodePoint(id, BeforeAfter.apply(beforeAfter), roadwayPointId, nodeId, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM, roadNumber, roadPartNumber, track)
     }
   }
 
@@ -80,6 +89,7 @@ class NodePointDAO extends BaseDAO {
         s"""
          $selectFromNodePoint
          where N.id in (${nodeIds.mkString(",")}) and NP.valid_to is null and NP.end_date is null
+         and rw.end_date is null
        """
       queryList(query)
     }
@@ -95,11 +105,11 @@ class NodePointDAO extends BaseDAO {
       val query =
         s"""
           SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NULL AS NODE_ID, NP.START_DATE, NP.END_DATE,
-            NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M
+            NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK
           FROM NODE_POINT NP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
           JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-          where $boundingBoxFilter and NP.valid_to is null and NP.end_date is null and NP.node_id is null
+          where $boundingBoxFilter and NP.valid_to is null and NP.end_date is null and NP.node_id is null and RW.end_date is null
         """
       queryList(query)
     }
