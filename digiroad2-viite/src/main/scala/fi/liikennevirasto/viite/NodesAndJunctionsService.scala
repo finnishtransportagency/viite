@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
@@ -298,35 +299,47 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     2.1)  road number is < 20000 or between 40000-70000
     2.2)  and at the beginning/end of each road part, ely borders, or when road type changes
     2.3)  on each junction with a road number (except number over 70 000)
-
    */
   def handleNodePointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
-    val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt))
-    val groups = filteredLinks.filterNot(_.track == Track.LeftSide).groupBy(l => (l.roadNumber, l.roadPartNumber, l.track, l.roadType))
+    try{
+      val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status!= LinkStatus.Terminated)
+      val groups = filteredLinks.filterNot(_.track == Track.LeftSide).groupBy(l=> (l.roadNumber, l.roadPartNumber, l.roadType))
 
-    groups.mapValues { group =>
-      val sortedGroup = group.sortBy(s => (s.roadNumber, s.roadPartNumber, s.startAddrMValue, s.track.value))
-      val headLink = sortedGroup.head
-      val lastLink = sortedGroup.last
-      val headRoadwayPointId = {
-        val existingRoadwayPoint = roadwayPointDAO.fetch(headLink.roadwayNumber, headLink.startAddrMValue)
-        if (existingRoadwayPoint.nonEmpty)
-          existingRoadwayPoint.get.id
-        else roadwayPointDAO.create(headLink.roadwayNumber, headLink.startAddrMValue, headLink.createdBy.getOrElse("-"))
+      groups.mapValues{ group =>
+        val sortedGroup = group.sortBy(s => (s.roadNumber, s.roadPartNumber, s.startAddrMValue))
+        val headLink = sortedGroup.head
+        val lastLink = sortedGroup.last
+
+        //if handleRoadwayPoints is fine, we will always found one existingRoadwayPoint
+        val headRoadwayPointId = {
+          val existingRoadwayPoint = roadwayPointDAO.fetch(headLink.roadwayNumber, headLink.startAddrMValue)
+          if(existingRoadwayPoint.nonEmpty)
+            existingRoadwayPoint.get.id
+          else roadwayPointDAO.create(headLink.roadwayNumber, headLink.startAddrMValue, headLink.createdBy.getOrElse("-"))
+        }
+        val lastRoadwayPointId = {
+          val existingRoadwayPoint = roadwayPointDAO.fetch(lastLink.roadwayNumber, lastLink.endAddrMValue)
+          if(existingRoadwayPoint.nonEmpty)
+            existingRoadwayPoint.get.id
+          else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
+        }
+
+        val existingHeadNodePoint = nodePointDAO.fetchNodePointTemplate(headLink.roadwayNumber).filter(np => np.beforeAfter == After && np.addrM == headLink.startAddrMValue)
+        val existingLastNodePoint = nodePointDAO.fetchNodePointTemplate(lastLink.roadwayNumber).filter(np => np.beforeAfter == Before && np.addrM == lastLink.endAddrMValue)
+
+        if(existingHeadNodePoint.isEmpty)
+          nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue)))
+
+        if(existingLastNodePoint.isEmpty)
+          nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue)))
+
+      }.toSeq
+    } catch {
+      case ex: Exception => {
+        println("Error in node points handler: ", ex.getMessage)
+        println("Full stack trace: ", ex.getStackTrace)
       }
-      val lastRoadwayPointId = {
-        val existingRoadwayPoint = roadwayPointDAO.fetch(lastLink.roadwayNumber, lastLink.endAddrMValue)
-        if (existingRoadwayPoint.nonEmpty)
-          existingRoadwayPoint.get.id
-        else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
-      }
-
-      val nodePoints = Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue),
-        NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue)
-      )
-
-      nodePointDAO.create(nodePoints)
-    }.toSeq
+    }
   }
 
   def getNodeTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
