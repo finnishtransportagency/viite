@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite
 import java.net.ConnectException
 import java.util.concurrent.TimeUnit
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
@@ -470,7 +471,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           Left(e.getMessage)
       }
     }
-
   }
 
   def getUpdatedLinearLocations(sinceDate: DateTime): Either[String, Seq[LinearLocation]] = {
@@ -683,7 +683,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           if(change.changeType == Transfer){
             if(!change.reversed){
               roadwayPoints.flatMap{ rwp=>
-                //TODO check if existent roadwaypoint
                 val roadwayNumberInPoint = mappedRoadwayNumbers.filter(mrw => mrw.oldRoadwayNumber == rwp.roadwayNumber && rwp.addrMValue >= mrw.originalStartAddr && rwp.addrMValue <= mrw.originalEndAddr).head.newRoadwayNumber
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
                 list :+ (roadwayNumberInPoint, newAddrM, username, rwp.id)
@@ -712,7 +711,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         } else list
 
       }.distinct
-      updatableRoadwayPoints.foreach(pl => println("addr: "+pl._1+ " id: "+pl._3+ " user: "+pl._2))
       roadwayPointDAO.update(updatableRoadwayPoints)
   }
 
