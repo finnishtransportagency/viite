@@ -22,19 +22,13 @@ import scala.concurrent.Future
 
 case class KMTKID(uuid: String, version: Long)
 
-case class KMTKPoint(values: Seq[Double]) {
-  def toPoint: Option[Point] = {
-    if (values.isEmpty) {
+case class KMTKGeometry(/*`type`: String, */ coordinates: Seq[Seq[Double]]) {
+  def toPoints: Seq[Point] = {
+    coordinates.map(c => if (c.isEmpty) {
       None
     } else {
-      Some(Point(values(0), values(1), values(2)))
-    }
-  }
-}
-
-case class KMTKGeometry(/*`type`: String, */ coordinates: Seq[KMTKPoint]) {
-  def toPoints: Seq[Point] = {
-    coordinates.map(c => c.toPoint).filter(p => p.isDefined).map(p => p.get)
+      Some(Point(c.head, c(1), c(2)))
+    }).filter(p => p.isDefined).map(p => p.get)
   }
 }
 
@@ -42,14 +36,55 @@ case class KMTKRoadName(fin: Option[String], swe: Option[String], smn: Option[St
 
 case class KMTKAddress(fromLeft: Option[Long], toLeft: Option[Long], fromRight: Option[Long], toRight: Option[Long])
 
-case class KMTKNode(/*`type`: String, */ coordinates: KMTKPoint)
+case class KMTKNode(/*`type`: String, */ coordinates: Seq[Double]) {
+  def toPoint: Option[Point] = {
+    if (coordinates.isEmpty) {
+      None
+    } else {
+      Some(Point(coordinates.head, coordinates(1), coordinates(2)))
+    }
+  }
+}
 
 case class KMTKProperties(id: KMTKID, adminClass: Option[Int], municipalityCode: Int, roadClass: Int, roadName: KMTKRoadName,
                           roadNumber: Option[Long], roadPartNumber: Option[Long], surfaceType: Long, lifespanStatus: Long, directionType: Int,
                           geometryLength: Double, geometryAttribute: Long, sourceStartDate: String, createdAt: String,
                           modifiedAt: Option[String], endedAt: Option[String], address: KMTKAddress, sourceInfo: Long, mtkGroup: Long,
                           sourceId: String, constructionStatus: Int, geoMetryFlip: Boolean, startNode: KMTKNode,
-                          endNode: KMTKNode, xyAccuracy: Long, zAccuracy: Long)
+                          endNode: KMTKNode, xyAccuracy: Long, zAccuracy: Long) {
+
+  def createdAtAsDateTime: Option[DateTime] = {
+    parseDateOption(createdAt)
+  }
+
+  def modifiedAtAsDateTime: Option[DateTime] = {
+    parseDateOption(modifiedAt)
+  }
+
+  def sourceStartDateAsDateTime: Option[DateTime] = {
+    parseDateOption(sourceStartDate)
+  }
+
+  def endedAtAsDateTime: Option[DateTime] = {
+    parseDateOption(endedAt)
+  }
+
+  private def parseDateOption(date: Option[String]): Option[DateTime] = {
+    if (date.isDefined) {
+      parseDateOption(date.get)
+    } else {
+      None
+    }
+  }
+
+  private def parseDateOption(date: String): Option[DateTime] = {
+    try {
+      Some(DateTime.parse(date))
+    } catch {
+      case _: Exception => None
+    }
+  }
+}
 
 case class KMTKFeature(geometry: KMTKGeometry, properties: KMTKProperties)
 
@@ -435,16 +470,16 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     Map[String, Any]("MTKID" -> properties.id, // TODO Do we have MTKID anymore?
       "MTKCLASS" -> properties.roadClass,
       "CONSTRUCTIONTYPE" -> properties.constructionStatus, // TODO Is this same as construction type?
-      "ROADNAME_FI" -> roadName.fin.getOrElse(null),
-      "ROADNAME_SM" -> roadNameSm.getOrElse(null),
-      "ROADNAME_SE" -> roadName.swe.getOrElse(null),
-      "ROADNUMBER" -> properties.roadNumber.getOrElse(null),
-      "ROADPARTNUMBER" -> properties.roadPartNumber.getOrElse(null),
+      "ROADNAME_FI" -> roadName.fin.orNull,
+      "ROADNAME_SM" -> roadNameSm.orNull,
+      "ROADNAME_SE" -> roadName.swe.orNull,
+      "ROADNUMBER" -> properties.roadNumber.orNull,
+      "ROADPARTNUMBER" -> properties.roadPartNumber.orNull,
       "MUNICIPALITYCODE" -> properties.municipalityCode,
       "VALIDFROM" -> properties.sourceStartDate, // TODO Is this same as VALIDFROM?
-      "GEOMETRY_EDITED_DATE" -> properties.modifiedAt.getOrElse(null), // TODO From where to get geometry edit date?
+      "GEOMETRY_EDITED_DATE" -> properties.modifiedAt.orNull, // TODO From where to get geometry edit date?
       "CREATED_DATE" -> dateToEpoch(properties.createdAt),
-      "LAST_EDITED_DATE" -> dateToEpoch(properties.modifiedAt.getOrElse(null)), // TODO If modifiedAt is null, should we use createdAt?
+      "LAST_EDITED_DATE" -> dateToEpoch(properties.modifiedAt.orNull), // TODO If modifiedAt is null, should we use createdAt?
       "SUBTYPE" -> 0 // TODO What to put here?
       // Not including "TRACK_CODE", used only with suravage and complementary in Viite
     ).filter { case (_, value) =>
