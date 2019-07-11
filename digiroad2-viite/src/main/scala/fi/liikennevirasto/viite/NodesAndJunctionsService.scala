@@ -71,7 +71,7 @@ class NodesAndJunctionsService(nodeDAO: NodeDAO, junctionDAO: JunctionDAO, nodeP
     }
   }
 
-  def getNodesWithTimeInterval(sinceDate: DateTime, untilDate: DateTime) : Map[Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
+  def getNodesWithTimeInterval(sinceDate: DateTime, untilDate: Option[DateTime]) : Map[Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
     withDynSession {
       val nodes = nodeDAO.fetchAllByDateRange(sinceDate, untilDate)
       val nodePoints = nodePointDAO.fetchNodePointsByNodeId(nodes.map(_.id))

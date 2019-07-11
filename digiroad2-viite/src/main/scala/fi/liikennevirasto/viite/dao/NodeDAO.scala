@@ -1,5 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
+import java.sql.Timestamp
+
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
@@ -284,15 +286,16 @@ class NodeDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByDateRange(sinceDate: DateTime, untilDate: DateTime): Seq[Node] = {
+  def fetchAllByDateRange(sinceDate: DateTime, untilDate: Option[DateTime]): Seq[Node] = {
     time(logger, "Fetch nodes by date range") {
+      val untilString = if (untilDate.nonEmpty) s"AND PUBLISHED_TIME <= to_timestamp('${new Timestamp(untilDate.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
       val query =
         s"""
          SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
          FROM NODE
          WHERE
-         PUBLISHED_TIME >= to_date('${sinceDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD') AND
-         PUBLISHED_TIME <= to_date('${untilDate.toString("yyyy-MM-dd")}', 'YYYY-MM-DD') AND PUBLISHED_TIME IS NOT NULL
+         PUBLISHED_TIME >= to_timestamp('${new Timestamp(sinceDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
+         $untilString AND PUBLISHED_TIME IS NOT NULL
          AND END_DATE IS NULL AND VALID_TO IS NULL
        """
       queryNodeList(query)
