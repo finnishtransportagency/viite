@@ -2039,8 +2039,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
       roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, mappedRoadwayNumberLinks, username = project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
-      nodesNJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges)
-      nodesNJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges)
+      nodesNJunctionsService.handleJunctionPointTemplates(projectLinksAfterChanges)
+      nodesNJunctionsService.handleNodePointTemplates(projectLinksAfterChanges)
       handleNewRoadNames(roadwayChanges, project)
       handleTransferAndNumbering(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
