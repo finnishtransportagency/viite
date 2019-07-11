@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.NewIdValue
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -27,9 +28,9 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
 
   val testJunctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
   val testJunctionPoint2 = JunctionPoint(NewIdValue, BeforeAfter.After, -1, -1,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
 
   val testJunction1 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-01"), None,
     DateTime.parse("2019-01-01"), None, None, None)

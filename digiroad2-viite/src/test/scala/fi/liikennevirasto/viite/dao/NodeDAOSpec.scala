@@ -43,7 +43,7 @@ class NodeDAOSpec extends FunSuite with Matchers {
   val testRoadAttributes1 = RoadAttributes(roadNumber1, roadPartNumber1, testRoadway1.track.value, 0)
 
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0,0,0, Track.Combined)
 
   test("Test fetchByRoadAttributes When non-existing road number Then return None") {
     runWithRollback {
