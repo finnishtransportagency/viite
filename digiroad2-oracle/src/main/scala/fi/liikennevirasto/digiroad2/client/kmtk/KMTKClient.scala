@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.{DefaultFormats, Formats, StreamInput}
 import org.slf4j.{Logger, LoggerFactory}
@@ -107,6 +107,12 @@ trait KMTKClientOperations {
 
   type KMTKType
 
+  protected implicit val jsonFormats: Formats = DefaultFormats
+
+  protected val dateTimeFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZ" // 2019-06-15T15:22:26.762+03:00
+
+  protected val dateTimeFormatter: DateTimeFormatter = DateTimeFormat.forPattern(dateTimeFormat)
+
   private val auth = new KMTKAuthPropertyReader
 
   protected val linkGeomSource: LinkGeomSource
@@ -115,13 +121,7 @@ trait KMTKClientOperations {
 
   protected def serviceName: String
 
-  protected val disableGeometry: Boolean
-
   case class KMTKError(url: String, message: String)
-
-  protected implicit val jsonFormats: Formats = DefaultFormats
-
-  protected def defaultOutFields(): String
 
   protected def kmtkFeatureToKMTKRoadLink(feature: KMTKFeature): KMTKRoadLink
 
@@ -135,105 +135,47 @@ trait KMTKClientOperations {
     case _ => None
   }
 
-  // TODO
-  protected def withFilter[T](attributeName: String, ids: Set[T]): String = {
-    val filter =
-      if (ids.isEmpty) {
-        ""
-      } else {
-        val query = ids.mkString(",")
-        s""""where":"$attributeName IN ($query)","""
-      }
-    filter
+  private def bboxParam(bounds: BoundingRectangle): String = {
+    "bbox=" + URLEncoder.encode(
+      s"""{"minX":${bounds.leftBottom.x},"minY":${bounds.leftBottom.y},"maxX":${bounds.rightTop.x},"maxY":${bounds.rightTop.y}}""",
+      "UTF-8")
   }
 
-  // TODO
-  protected def withLimitFilter(attributeName: String, low: Int, high: Int, includeAllPublicRoads: Boolean = false): String = {
-    val filter =
-      if (low < 0 || high < 0 || low > high) {
-        ""
-      } else {
-        if (includeAllPublicRoads) {
-          //TODO check if we can remove the adminclass in the future
-          s""""where":"( ADMINCLASS = 1 OR $attributeName >= $low and $attributeName <= $high )","""
-        } else {
-          s""""where":"( $attributeName >= $low and $attributeName <= $high )","""
-        }
-      }
-    filter
+  private def mcodeParam(municipalities: Iterable[Int]): String = {
+    s"""mcode=${municipalities.mkString(",")}"""
   }
 
-  // TODO
-  protected def withMunicipalityFilter(municipalities: Set[Int]): String = {
-    withFilter("MUNICIPALITYCODE", municipalities)
+  private def linklistParam(kmtkIds: Iterable[KMTKID]): String = {
+    "linklist=" + URLEncoder.encode(
+      s"[${kmtkIds.map(k => s""""{"uuid":${k.uuid}","version":${k.version}}""").mkString(",")}]",
+      "UTF-8")
   }
 
-  // TODO
-  protected def combineFiltersWithAnd(filter1: String, filter2: String): String = {
-
-    (filter1.isEmpty, filter2.isEmpty) match {
-      case (true, true) => ""
-      case (true, false) => filter2
-      case (false, true) => filter1
-      case (false, false) => "%s AND %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
-    }
+  private[kmtk] def timespanParam(dateRange: (DateTime, DateTime)): String = {
+    val from = dateRange._1.toString(dateTimeFormatter)
+    val to = dateRange._2.toString(dateTimeFormatter)
+    "timespan=" + URLEncoder.encode(s"""{"from":"$from","to":"$to"}""", "UTF-8")
   }
 
-  // TODO
-  protected def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = {
-    combineFiltersWithAnd(filter2.getOrElse(""), filter1)
+  private def serviceUrlByBoundingBox(bounds: BoundingRectangle): String = {
+    val bbox = bboxParam(bounds)
+    restApiEndPoint + serviceName + s"?$bbox"
   }
 
-  // TODO
-  protected def queryParameters(fetchGeometry: Boolean = true): String = {
-    if (fetchGeometry && !disableGeometry) "returnGeometry=true&returnZ=false&returnM=true&geometryPrecision=3&f=json"
-    else "returnGeometry=false&f=json"
+  private def serviceUrlByMunicipality(municipalities: Iterable[Int]): String = {
+    val mcode = mcodeParam(municipalities)
+    restApiEndPoint + serviceName + s"?$mcode"
   }
 
-  // TODO
-  private[kmtk] def serviceUrl(bounds: Option[BoundingRectangle], municipalities: Option[Seq[Long]], kmtkIds: Option[Seq[KMTKID]],
-                               definition: String, parameters: String): String = {
-    if (bounds.isEmpty && municipalities.isEmpty && kmtkIds.isEmpty) {
-      throw new KMTKClientException("One of these query parameters must be defined: bounds, municipalities, kmtkIds")
-    }
-    val bbox = if (bounds.isDefined)
-      URLEncoder.encode(
-        s"""{"minX":${bounds.get.leftBottom.x},"minY":${bounds.get.leftBottom.y},"maxX":${bounds.get.rightTop.x},"maxY":${bounds.get.rightTop.y}}""",
-        "UTF-8")
-    else
-      ""
-    val mcode = if (municipalities.isDefined) s"""&mcode=${municipalities.get.mkString(",")}""" else ""
-
-
-    // TODO linklist[0]=%7B%22a%22%2C%201%7D&linklist[1]=%7B%22b%22%2C%202%7D
-    val linklist = if (municipalities.isDefined) s"""&linklist=${municipalities.get.mkString(",")}""" else ""
-
-    restApiEndPoint + serviceName +
-      s"?bbox=$bbox$mcode$linklist"
-
+  protected def serviceUrlByIds(kmtkIds: Iterable[KMTKID]): String = {
+    val linklist: String = linklistParam(kmtkIds)
+    restApiEndPoint + serviceName + s"?$linklist"
   }
 
-  // TODO
-  protected def serviceUrl(definition: String, parameters: String): String = {
-    restApiEndPoint + serviceName +
-      s"?layerDefs=$definition&" + parameters
-  }
-
-  // TODO
-  protected def layerDefinitionWithoutEncoding(filter: String, customFieldSelection: Option[String] = None): String = {
-    val definitionStart = "[{"
-    val layerSelection = """"layerId":0,"""
-    val fieldSelection = customFieldSelection match {
-      case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"""" + defaultOutFields + """""""
-    }
-    val definitionEnd = "}]"
-    definitionStart + layerSelection + filter + fieldSelection + definitionEnd
-  }
-
-  // TODO
-  protected def layerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
-    URLEncoder.encode(layerDefinitionWithoutEncoding(filter, customFieldSelection), "UTF-8")
+  private def serviceUrlByBoundingBoxAndMunicipalities(bounds: BoundingRectangle, municipalities: Iterable[Int]): String = {
+    val bbox = bboxParam(bounds)
+    val mcode = if (municipalities.nonEmpty) "&" + mcodeParam(municipalities) else ""
+    restApiEndPoint + serviceName + s"?$bbox$mcode"
   }
 
   protected def createHttpClient: CloseableHttpClient = {
@@ -311,23 +253,28 @@ trait KMTKClientOperations {
   /**
     * Returns KMTK road links by municipality.
     */
-  protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[KMTKFeature] = {
-    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), filter))
-    val url = serviceUrl(definition, queryParameters())
+  protected def queryByMunicipality(municipality: Int): Seq[KMTKFeature] = {
+    val url = serviceUrlByMunicipality(Set(municipality))
+    fetchFeaturesAndLog(url)
+  }
+
+  /**
+    * Returns KMTK road links by bounding box.
+    *
+    * @param bounds BoundingRectangle
+    * @return
+    */
+  protected def queryByBounds(bounds: BoundingRectangle): Seq[KMTKFeature] = {
+    val url = serviceUrlByBoundingBox(bounds)
     fetchFeaturesAndLog(url)
   }
 
   /**
     * Returns KMTK road links in bounding box area. Municipalities are optional.
     */
-  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[String]): Seq[KMTKFeature] = {
-    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter))
-    val url = serviceUrl(Some(bounds), None, None, definition, queryParameters())
-    fetchFeaturesAndLog(url)
-  }
-
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[KMTKFeature] = {
-    queryByMunicipalitiesAndBounds(bounds, municipalities, None)
+    val url = serviceUrlByBoundingBoxAndMunicipalities(bounds, municipalities)
+    fetchFeaturesAndLog(url)
   }
 
 }
@@ -345,6 +292,8 @@ object KMTKClient {
 
 class KMTKClient(kmtkRestApiEndPoint: String) {
   lazy val roadLinkData: KMTKRoadLinkClient = new KMTKRoadLinkClient(kmtkRestApiEndPoint)
+
+  // TODO Change info client
   //lazy val roadLinkChangeInfo: KMTKChangeInfoClient = new KMTKChangeInfoClient(kmtkRestApiEndPoint)
 
   def fetchRoadLinkByUuidAndVersion(id: KMTKID): Option[KMTKRoadLink] = {
@@ -360,12 +309,6 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   protected override val restApiEndPoint: String = kmtkRestApiEndPoint
   protected override val serviceName = "roadlink"
   protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
-  protected override val disableGeometry = false
-
-  // TODO
-  protected override def defaultOutFields(): String = {
-    "MTKID,UUID,VERSION,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,GEOMETRYLENGTH"
-  }
 
   /**
     * Constructions Types Allows to return
@@ -383,42 +326,26 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   /**
     * Returns KMTK road links in bounding box area. Municipalities are optional.
     */
+  // TODO filtering by road number ranges
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[KMTKFeature] = {
-    val roadNumberFilters = if (roadNumbers.nonEmpty || includeAllPublicRoads)
-      Some(withRoadNumbersFilter(roadNumbers, includeAllPublicRoads))
+    /*val roadNumberFilters = */ if (roadNumbers.nonEmpty || includeAllPublicRoads)
+      throw new NotImplementedError("Filtering by road number not supported yet.")
+    // Some(withRoadNumbersFilter(roadNumbers, includeAllPublicRoads))
     else
       None
-    queryByMunicipalitiesAndBounds(bounds, municipalities, roadNumberFilters)
-  }
-
-  /**
-    * Returns KMTK road links by municipality.
-    */
-  def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[KMTKFeature] = {
-    val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = true)
-    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadNumberFilters))
-    val url = serviceUrl(definition, queryParameters())
-    fetchFeaturesAndLog(url)
+    queryByMunicipalitiesAndBounds(bounds, municipalities /*, roadNumberFilters*/)
   }
 
   /**
     * Returns KMTK road links.
     */
-  protected def queryByIds[T](ids: Set[KMTKID],
-                              fieldSelection: Option[String],
-                              fetchGeometry: Boolean,
-                              resultTransition: KMTKFeature => T,
-                              filter: Set[KMTKID] => String): Seq[T] = {
+  protected def queryByIds[T](ids: Set[KMTKID], resultTransition: KMTKFeature => T): Seq[T] = {
     val batchSize = 1000
     val idGroups: List[Set[KMTKID]] = ids.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
-      val definition = layerDefinition(filter(ids), fieldSelection)
-      val url = serviceUrl(definition, queryParameters(fetchGeometry))
-
+      val url = serviceUrlByIds(ids)
       fetchKMTKFeatures(url) match {
         case Left(featureCollection) => featureCollection.features.map { feature =>
-          //          val attributes = extractFeatureAttributes(feature)
-          //          val geometry = if (fetchGeometry) extractFeatureGeometry(feature) else Nil
           resultTransition(feature)
         }
         case Right(error) =>
@@ -451,7 +378,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
 
   private def dateToEpoch(date: String): BigInt = {
     if (date != null) {
-      val parsed = DateTime.parse(date)
+      val parsed = DateTime.parse(date, dateTimeFormatter)
       parsed.toDate.getTime
     } else {
       null
@@ -488,39 +415,6 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   }
 
   // TODO
-  // Query filters methods
-  protected def withRoadNumberFilter(roadNumbers: (Int, Int), includeAllPublicRoads: Boolean): String = {
-    withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
-  }
-
-  // TODO
-  protected def withIdFilter(ids: Set[KMTKID]): String = {
-    withFilter("UUID", ids)
-  }
-
-  // TODO
-  protected def withMmlIdFilter(mmlIds: Set[Long]): String = {
-    withFilter("MTKID", mmlIds)
-  }
-
-  // TODO
-  protected def withMtkClassFilter(ids: Set[Long]): String = {
-    withFilter("MTKCLASS", ids)
-  }
-
-  protected def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
-    withDateLimitFilter("LAST_EDITED_DATE", lowerDate, higherDate)
-  }
-
-  protected def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
-    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
-    val since = formatter.print(lowerDate)
-    val until = formatter.print(higherDate)
-
-    s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
-  }
-
-
   protected def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
     if (roadNumbers.isEmpty)
       return s""""where":"($filter)","""
@@ -543,9 +437,9 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     * Returns KMTK road links. Obtain all RoadLinks changes between two given dates.
     */
   def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[KMTKRoadLink] = {
-    val definition = layerDefinition(withLastEditedDateFilter(lowerDate, higherDate))
-    val url = serviceUrl(definition, queryParameters())
-    fetchFeaturesAndLog(url).map(feature => kmtkFeatureToKMTKRoadLink(feature))
+    throw new NotImplementedError("KMTK doesn't support yet searching only by a date range.")
+    // This feature has been requested from KMTK.
+    // TODO When the KMTK support is ready, implement this.
   }
 
   /**
@@ -557,7 +451,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     * Returns KMTK road links by link ids.
     */
   def fetchByIds(ids: Set[KMTKID]): Seq[KMTKRoadLink] = {
-    queryByIds(ids, None, fetchGeometry = true, kmtkFeatureToKMTKRoadLink, withIdFilter)
+    queryByIds(ids, kmtkFeatureToKMTKRoadLink)
   }
 
   def fetchByIdsF(ids: Set[KMTKID]): Future[Seq[KMTKRoadLink]] = {
@@ -580,7 +474,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   }
 
   def fetchByBounds(bounds: BoundingRectangle): Seq[KMTKRoadLink] = {
-    queryByMunicipalitiesAndBounds(bounds, Set[Int]()).map(feature => kmtkFeatureToKMTKRoadLink(feature))
+    queryByBounds(bounds).map(feature => kmtkFeatureToKMTKRoadLink(feature))
   }
 
   /**
@@ -598,29 +492,22 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     Future(queryByMunicipalitiesAndBounds(bounds, roadNumbers, municipalities, includeAllPublicRoads).map(feature => kmtkFeatureToKMTKRoadLink(feature)))
   }
 
-  /**
-    * Returns a sequence of KMTK Road Links. Uses Scala Future for concurrent operations.
-    */
-  def fetchByMunicipalityAndRoadNumbersF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[KMTKRoadLink]] = {
-    Future(queryByRoadNumbersAndMunicipality(municipality, roadNumbers).map(feature => kmtkFeatureToKMTKRoadLink(feature)))
-  }
+  /* TODO Is this needed?
+    /**
+      * Returns a sequence of KMTK Road Links. Uses Scala Future for concurrent operations.
+      */
+    def fetchByMunicipalityAndRoadNumbersF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[KMTKRoadLink]] = {
+      Future(queryByRoadNumbersAndMunicipality(municipality, roadNumbers).map(feature => kmtkFeatureToKMTKRoadLink(feature)))
+    }
 
-  def fetchByMunicipalityAndRoadNumbers(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[KMTKRoadLink] = {
-    queryByRoadNumbersAndMunicipality(municipality, roadNumbers).map(feature => kmtkFeatureToKMTKRoadLink(feature))
-  }
-
-  /**
-    * Returns KMTK road links.
-    */
-  def fetchKMTKRoadlinks[T](ids: Set[KMTKID],
-                            fieldSelection: Option[String],
-                            fetchGeometry: Boolean,
-                            resultTransition: KMTKFeature => T): Seq[T] =
-    queryByIds(ids, fieldSelection, fetchGeometry, resultTransition, withIdFilter)
+    def fetchByMunicipalityAndRoadNumbers(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[KMTKRoadLink] = {
+      queryByRoadNumbersAndMunicipality(municipality, roadNumbers).map(feature => kmtkFeatureToKMTKRoadLink(feature))
+    }
+  */
 
 }
 
-/*
+/* TODO Change info client
 class KMTKChangeInfoClient(kmtkRestApiEndPoint: String) extends KMTKClientOperations {
 override type KMTKType = ChangeInfo
 

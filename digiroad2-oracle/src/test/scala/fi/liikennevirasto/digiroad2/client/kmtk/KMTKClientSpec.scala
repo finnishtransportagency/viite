@@ -1,9 +1,11 @@
 package fi.liikennevirasto.digiroad2.client.kmtk
 
+import java.net.URLEncoder
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 
 class KMTKClientSpec extends FunSuite with Matchers {
@@ -20,13 +22,6 @@ class KMTKClientSpec extends FunSuite with Matchers {
 
   private def mockFeatureCollection = {
     kmtkClient.roadLinkData.inputStreamToFeatureCollection(getClass.getResourceAsStream("/kmtk-roadlink-bbox.json"))
-  }
-
-  test("Test roadLinkData.serviceUrl When no required parameters given Then should throw KMTKClientException") {
-    val thrown = intercept[KMTKClientException] {
-      kmtkClient.roadLinkData.serviceUrl(None, None, None, "", "")
-    }
-    thrown should not be null
   }
 
   test("Test inputStreamToFeatureCollection When got valid json response Then should return FeatureCollection") {
@@ -52,6 +47,15 @@ class KMTKClientSpec extends FunSuite with Matchers {
     p3.x should be > 0.0
     p3.y should be > 0.0
     p3.z should not be 0.0
+  }
+
+  test("Test roadLinkData.timespanParam When valid given dates Then should return correctly formatted timespan parameter string") {
+    val from = "2019-07-01T01:02:03.123+03:00"
+    val to = "2019-12-31T04:05:06.456+02:00"
+    val fromDateTime = DateTime.parse(from)
+    val toDateTime = DateTime.parse(to)
+    val timespan = kmtkClient.roadLinkData.timespanParam(fromDateTime, toDateTime)
+    timespan should be("timespan=" + URLEncoder.encode(s"""{"from":"$from","to":"$to"}""", "UTF-8"))
   }
 
   test("Test inputStreamToFeatureCollection When got valid json response Then should include dates") {
