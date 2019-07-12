@@ -675,8 +675,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       val target = change.target
       val roadwayNumbers = roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber).distinct
       val roadwayPoints = roadwayNumbers.flatMap{ rwn=>
-        val roadwayNumberInPoint = mappedRoadwayNumbers.filter(mrw => mrw.newRoadwayNumber == rwn && mrw.originalStartAddr >= source.startAddressM.get && mrw.originalEndAddr <= source.endAddressM.get).head.oldRoadwayNumber
-        roadwayPointDAO.fetchByRoadwayNumberAndAddresses(roadwayNumberInPoint, source.startAddressM.get, source.endAddressM.get)
+        val roadwayNumberInPoint = mappedRoadwayNumbers.filter(mrw => mrw.newRoadwayNumber == rwn && mrw.originalStartAddr >= source.startAddressM.get && mrw.originalEndAddr <= source.endAddressM.get)
+          if(roadwayNumberInPoint.nonEmpty){
+            roadwayPointDAO.fetchByRoadwayNumberAndAddresses(roadwayNumberInPoint.head.oldRoadwayNumber, source.startAddressM.get, source.endAddressM.get)
+          } else {
+            Seq()
+          }
       }.distinct
 
         if(roadwayPoints.nonEmpty){
@@ -711,7 +715,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         } else list
 
       }.distinct
-      updatableRoadwayPoints.foreach(pl => println("addr: "+pl._1+ " id: "+pl._3+ " user: "+pl._2))
       roadwayPointDAO.update(updatableRoadwayPoints)
   }
 
