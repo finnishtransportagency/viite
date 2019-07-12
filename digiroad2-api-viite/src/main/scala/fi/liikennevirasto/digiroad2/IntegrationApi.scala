@@ -257,7 +257,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   def nodeToApi(node: (Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]))) : Map[String, Any] = {
       simpleNodeToApi(node._1.get) ++
-      Map("nodePoints" -> node._2._1.map(nodePointToApi)) ++
+      Map("node_points" -> node._2._1.map(nodePointToApi)) ++
       Map("junctions" -> node._2._2.map(junctionToApi)
     )
 
@@ -296,7 +296,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       "start_date" -> junction._1.startDate.toString,
       "end_date" -> (if(junction._1.endDate.isDefined) junction._1.endDate.get.toString else null),
       "user" -> junction._1.createdBy,
-      "junctionPoints" -> junction._2.map(junctionPointToApi))
+      "junction_points" -> junction._2.map(junctionPointToApi))
   }
 
   def junctionPointToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
