@@ -3,12 +3,12 @@ package fi.liikennevirasto.digiroad2.client.kmtk
 import java.io.{IOException, InputStream}
 import java.net.URLEncoder
 
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.KMTKAuthPropertyReader
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.{Point, PointM}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
 import org.joda.time.DateTime
@@ -23,13 +23,34 @@ import scala.concurrent.Future
 case class KMTKID(uuid: String, version: Long)
 
 case class KMTKGeometry(/*`type`: String, */ coordinates: Seq[Seq[Double]]) {
+
   def toPoints: Seq[Point] = {
     coordinates.map(c => if (c.isEmpty) {
       None
     } else {
-      Some(Point(c.head, c(1), c(2)))
+      Some(Point(c.head, c(1))) // Ignore z-value, since that data has errors
     }).filter(p => p.isDefined).map(p => p.get)
   }
+
+  def toPointsWithM: Seq[PointM] = {
+    val points = coordinates.map(c => if (c.isEmpty) {
+      None
+    } else {
+      Some(PointM(c.head, c(1))) // Ignore z-value, since that data has errors
+    }).filter(p => p.isDefined).map(p => p.get)
+
+    // Calculate m-values
+    for (i <- points.indices) {
+      points(i).m = if (i > 0) {
+        points(i - 1).m + points(i - 1).distance2DTo(points(i))
+      } else {
+        0.0
+      }
+    }
+
+    points
+  }
+
 }
 
 case class KMTKRoadName(fin: Option[String], swe: Option[String], smn: Option[String], sms: Option[String], sme: Option[String])
@@ -357,17 +378,18 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
 
   // TODO
   protected def kmtkFeatureToKMTKRoadLink(feature: KMTKFeature): KMTKRoadLink = {
+    val linkGeometryWithM: Seq[PointM] = feature.geometry.toPointsWithM
+    val linkGeometryForApi = Map("points" -> linkGeometryWithM.map(point => Map("x" -> point.x, "y" -> point.y, "z" -> point.z, "m" -> point.m)))
+    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + linkGeometryWithM.map(point => point.x + " " + point.y + " " + point.z + " " + point.m).mkString(", ") + ")"))
     val linkGeometry: Seq[Point] = feature.geometry.toPoints
-    val linkGeometryForApi = Map("points" -> linkGeometry.map(point => Map("x" -> point.x, "y" -> point.y, "z" -> 0.0, "m" -> 0.0))) // TODO We have to calculate m-value
-    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + linkGeometry.map(point => point.x + " " + point.y + " " + point.z + " " + 0.0).mkString(", ") + ")")) // TODO We have to calculate m-value
+    val geometryLength = feature.properties.geometryLength
     val kmtkId = feature.properties.id
     val municipalityCode = feature.properties.municipalityCode
     val roadClass = feature.properties.roadClass
-    val geometryLength = feature.properties.geometryLength
     val administrativeClass = AdministrativeClass.apply(feature.properties.adminClass.getOrElse(0))
     val trafficDirection = TrafficDirection.apply(feature.properties.directionType)
     val modifiedAt = if (feature.properties.modifiedAt.isDefined) Some(DateTime.parse(feature.properties.modifiedAt.get)) else None // TODO If None, then should we take value from "createdAt"?
-    val constructionType = ConstructionType.apply(feature.properties.constructionStatus) // TODO Is construction status same as construction type?
+    val constructionType = ConstructionType.apply(feature.properties.constructionStatus) // TODO Is construction status same as construction type? Probably not?
 
     val featureClass = KMTKClient.featureClassCodeToFeatureClass.getOrElse(roadClass, FeatureClass.AllOthers)
 
