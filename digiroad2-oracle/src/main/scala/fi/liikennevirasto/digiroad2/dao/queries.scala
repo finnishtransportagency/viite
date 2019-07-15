@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.dao
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import slick.jdbc.StaticQuery._
-import slick.jdbc.{StaticQuery => Q}
 
 object Queries {
 
@@ -40,6 +39,8 @@ object Queries {
   def nextJunctionId = sql"select JUNCTION_SEQ.nextval from dual"
 
   def nextJunctionPointId = sql"select JUNCTION_POINT_SEQ.nextval from dual"
+
+  def nextLinkId = sql"select LINK_ID_SEQ.nextval from dual"
 
   def fetchViitePrimaryKeyId(len: Int) = {
     sql"""select viite_general_seq.nextval from dual connect by level <= $len""".as[Long].list
@@ -80,6 +81,10 @@ object Queries {
     sql"""
       select id from municipality where ROAD_MAINTAINER_ID != 0
       """.as[Int].list
+  }
+
+  def fetchLinkIds(len: Int): List[Long] = {
+    sql"""select LINK_ID_SEQ.nextval from dual connect by level <= $len""".as[Long].list
   }
 
 }
