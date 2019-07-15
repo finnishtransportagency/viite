@@ -156,6 +156,15 @@ trait KMTKClientOperations {
     case _ => None
   }
 
+  protected def dateToEpoch(date: String): BigInt = {
+    if (date != null) {
+      val parsed = DateTime.parse(date, dateTimeFormatter)
+      parsed.toDate.getTime
+    } else {
+      null
+    }
+  }
+
   private def bboxParam(bounds: BoundingRectangle): String = {
     "bbox=" + URLEncoder.encode(
       s"""{"minX":${bounds.leftBottom.x},"minY":${bounds.leftBottom.y},"maxX":${bounds.rightTop.x},"maxY":${bounds.rightTop.y}}""",
@@ -243,32 +252,6 @@ trait KMTKClientOperations {
         logger.error("KMTK error: " + error)
         throw new KMTKClientException(error.toString)
     }
-  }
-
-  // TODO Remove or take in use
-  protected def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
-    def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
-      (a, b) match {
-        case (Some(firstModifiedAt), Some(secondModifiedAt)) =>
-          Some(Math.max(firstModifiedAt, secondModifiedAt))
-        case (Some(firstModifiedAt), None) => Some(firstModifiedAt)
-        case (None, Some(secondModifiedAt)) => Some(secondModifiedAt)
-        case (None, None) => None
-      }
-    }
-
-    val validFromDate = Option(attributes("VALIDFROM").asInstanceOf[BigInt]).map(_.toLong)
-    var lastEditedDate: Option[Long] = Option(0)
-    if (attributes.contains("LAST_EDITED_DATE")) {
-      lastEditedDate = Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
-    }
-    var geometryEditedDate: Option[Long] = Option(0)
-    if (attributes.contains("GEOMETRY_EDITED_DATE")) {
-      geometryEditedDate = Option(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
-    }
-
-    val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
-    latestDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
   }
 
   /**
@@ -376,7 +359,6 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     }.toList
   }
 
-  // TODO
   protected def kmtkFeatureToKMTKRoadLink(feature: KMTKFeature): KMTKRoadLink = {
     val linkGeometryWithM: Seq[PointM] = feature.geometry.toPointsWithM
     val linkGeometryForApi = Map("points" -> linkGeometryWithM.map(point => Map("x" -> point.x, "y" -> point.y, "z" -> point.z, "m" -> point.m)))
@@ -388,7 +370,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     val roadClass = feature.properties.roadClass
     val administrativeClass = AdministrativeClass.apply(feature.properties.adminClass.getOrElse(0))
     val trafficDirection = TrafficDirection.apply(feature.properties.directionType)
-    val modifiedAt = if (feature.properties.modifiedAt.isDefined) Some(DateTime.parse(feature.properties.modifiedAt.get)) else None // TODO If None, then should we take value from "createdAt"?
+    val modifiedAt = feature.properties.modifiedAtAsDateTime.orElse(feature.properties.sourceStartDateAsDateTime)
     val constructionType = ConstructionType.apply(feature.properties.constructionStatus) // TODO Is construction status same as construction type? Probably not?
 
     val featureClass = KMTKClient.featureClassCodeToFeatureClass.getOrElse(roadClass, FeatureClass.AllOthers)
@@ -396,15 +378,6 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     KMTKRoadLink(0, kmtkId, municipalityCode, linkGeometry, administrativeClass, trafficDirection, featureClass, modifiedAt,
       extractAttributes(feature.properties) ++ linkGeometryForApi ++ linkGeometryWKTForApi, constructionType, linkGeomSource, geometryLength)
 
-  }
-
-  private def dateToEpoch(date: String): BigInt = {
-    if (date != null) {
-      val parsed = DateTime.parse(date, dateTimeFormatter)
-      parsed.toDate.getTime
-    } else {
-      null
-    }
   }
 
   protected def extractAttributes(properties: KMTKProperties): Map[String, Any] = {
@@ -436,7 +409,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     }
   }
 
-  // TODO
+  // TODO Implement this when KMTK supports filtering with road numbers
   protected def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
     if (roadNumbers.isEmpty)
       return s""""where":"($filter)","""
