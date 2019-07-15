@@ -36,6 +36,7 @@
 
     eventbus.on('node:fetched', function(nodes, zoom) {
       me.setNodes(nodes);
+      me.setNodesWithAttributes(nodes);
       eventbus.trigger('node:addNodesToMap', nodes, zoom);
     });
 
