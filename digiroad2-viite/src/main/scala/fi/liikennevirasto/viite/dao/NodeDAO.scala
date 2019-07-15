@@ -159,6 +159,14 @@ class NodeDAO extends BaseDAO {
       """.as[Node].firstOption
   }
 
+  def fetchById(nodeId: Long): Option[Node] = {
+    sql"""
+      SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      from NODE
+      where ID = $nodeId and valid_to is null and end_date is null
+      """.as[Node].firstOption
+  }
+
   def fetchId(nodeNumber: Long): Option[Long] = {
     sql"""
       SELECT ID
