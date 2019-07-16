@@ -121,8 +121,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
                 if (rightLinks.exists(_.status == New) || leftLinks.exists(_.status == New)) {
                   val newRoadwayNumber1 = Sequences.nextRoadwayNumber
                   val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
-                  (continuousRoadwaySection(rightLinks, newRoadwayNumber1),
-                    continuousRoadwaySection(leftLinks, newRoadwayNumber2))
+                  (continuousRoadwaySection(rightLinks.map(link => if(link.status == New) link.copy(roadwayNumber = 0) else link), newRoadwayNumber1),
+                    continuousRoadwaySection(leftLinks.map(link => if(link.status == New) link.copy(roadwayNumber = 0) else link), newRoadwayNumber2))
                 }
                 else{
                   (continuousRoadwaySection(rightLinks, 0), continuousRoadwaySection(leftLinks, 0))
