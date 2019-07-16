@@ -36,10 +36,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           case _ => Left(ReturnedTooManyNodesErrorMessage)
         }
       } catch {
-        case e if NonFatal(e) => {
+        case e if NonFatal(e) =>
           logger.error("Failed to fetch nodes.", e)
           Left(e.getMessage)
-        }
       }
     }
   }
@@ -147,19 +146,18 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
         val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
         if (linkJunctionPoint.isEmpty) {
-          val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
+          val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty) {
             junctionDAO.create(Seq(Junction(NewIdValue, 0, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
-          else junctionIdentifier.getOrElse(junctionsInHead.head.id)
-          val rwPointId = {
-            val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.startAddrMValue)
-            val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-              existingRoadwayPoint.get.id
-            } else {
-              roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, link.createdBy.getOrElse("-"))
-            }
-            junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue))).head
-            rwPoint
+          } else {
+            junctionIdentifier.getOrElse(junctionsInHead.head.id)
           }
+          val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.startAddrMValue)
+          val rwPoint = if (existingRoadwayPoint.nonEmpty) {
+            existingRoadwayPoint.get.id
+          } else {
+            roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, link.createdBy.getOrElse("-"))
+          }
+          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue))).head
         }
       }
 
@@ -350,10 +348,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
       }.toSeq
     } catch {
-      case ex: Exception => {
+      case ex: Exception =>
         println("Error in node points handler: ", ex.getMessage)
         println("Full stack trace: ", ex.getStackTrace)
-      }
     }
   }
 
