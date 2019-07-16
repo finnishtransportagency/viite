@@ -77,6 +77,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
+  def getNodeById(nodeId: Long): Option[Node] = {
+    withDynSession{
+      time(logger, "Fetch node by ID") {
+        nodeDAO.fetchById(nodeId)
+      }
+    }
+  }
+
   def handleJunctionPointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
       val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
       filteredLinks.foreach { link =>
@@ -336,6 +344,5 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
       }.toSeq
     }
-
 
 }
