@@ -9,6 +9,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.util.Track
 
 class NodePointDAOSpec extends FunSuite with Matchers {
 
@@ -27,9 +28,9 @@ class NodePointDAOSpec extends FunSuite with Matchers {
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
 
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
   val testNodePoint2 = NodePoint(NewIdValue, BeforeAfter.After, -1, None,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
 
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None)
@@ -81,7 +82,7 @@ class NodePointDAOSpec extends FunSuite with Matchers {
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
       val nodePoints = dao.fetchNodePointsByNodeId(Seq(nodeId))
       nodePoints.size should be(2)
-      nodePoints.filter(n => n.nodeId == Some(nodeId)).size should be(2)
+      nodePoints.count(n => n.nodeId.contains(nodeId)) should be(2)
     }
   }
 

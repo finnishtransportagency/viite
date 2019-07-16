@@ -18,11 +18,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
 
   val nodeDAO = new NodeDAO
+  val junctionDAO = new JunctionDAO
+  val nodePointDAO = new NodePointDAO
+  val junctionPointDAO = new JunctionPointDAO
   val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
-  val nodePointDAO = new NodePointDAO
 
-  val nodesAndJunctionsService = new NodesAndJunctionsService() {
+  val nodesAndJunctionsService = new NodesAndJunctionsService(nodeDAO, junctionDAO, nodePointDAO, junctionPointDAO) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -40,7 +42,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadwayNumber1, 0, "Test", None, None, None)
 
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0, 0, 0, Track.Combined)
 
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
