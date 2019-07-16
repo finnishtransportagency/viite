@@ -36,10 +36,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           case _ => Left(ReturnedTooManyNodesErrorMessage)
         }
       } catch {
-        case e if NonFatal(e) => {
+        case e if NonFatal(e) =>
           logger.error("Failed to fetch nodes.", e)
           Left(e.getMessage)
-        }
       }
     }
   }
