@@ -15,17 +15,19 @@ class JunctionDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
-  implicit val getJunction: GetResult[Junction] = (r: PositionedResult) => {
-    val id = r.nextLong()
-    val junctionNumber = r.nextLong()
-    val nodeId = r.nextLongOption()
-    val startDate = formatter.parseDateTime(r.nextDate.toString)
-    val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-    val validFrom = formatter.parseDateTime(r.nextDate.toString)
-    val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-    val createdBy = r.nextStringOption()
-    val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-    Junction(id, junctionNumber, nodeId, startDate, endDate, validFrom, validTo, createdBy, createdTime)
+  implicit val getJunction: GetResult[Junction] = new GetResult[Junction] {
+    def apply(r: PositionedResult): Junction = {
+      val id = r.nextLong()
+      val junctionNumber = r.nextLong()
+      val nodeId = r.nextLongOption()
+      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val validFrom = formatter.parseDateTime(r.nextDate.toString)
+      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val createdBy = r.nextStringOption()
+      val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      Junction(id, junctionNumber, nodeId, startDate, endDate, validFrom, validTo, createdBy, createdTime)
+    }
   }
 
   private def queryList(query: String): List[Junction] = {

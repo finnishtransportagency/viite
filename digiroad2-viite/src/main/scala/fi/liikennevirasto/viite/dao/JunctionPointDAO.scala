@@ -18,20 +18,22 @@ class JunctionPointDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
-  implicit val getJunctionPoint: GetResult[JunctionPoint] = (r: PositionedResult) => {
-    val id = r.nextLong()
-    val beforeOrAfter = r.nextLong()
-    val roadwayPointId = r.nextLong()
-    val junctionId = r.nextLong()
-    val startDate = formatter.parseDateTime(r.nextDate.toString)
-    val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-    val validFrom = formatter.parseDateTime(r.nextDate.toString)
-    val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-    val createdBy = r.nextStringOption()
-    val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-    val roadwayNumber = r.nextLong()
-    val addrM = r.nextLong()
-    JunctionPoint(id, BeforeAfter.apply(beforeOrAfter), roadwayPointId, junctionId, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM)
+  implicit val getJunctionPoint: GetResult[JunctionPoint] = new GetResult[JunctionPoint] {
+    def apply(r: PositionedResult): JunctionPoint = {
+      val id = r.nextLong()
+      val beforeOrAfter = r.nextLong()
+      val roadwayPointId = r.nextLong()
+      val junctionId = r.nextLong()
+      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val validFrom = formatter.parseDateTime(r.nextDate.toString)
+      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val createdBy = r.nextStringOption()
+      val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val roadwayNumber = r.nextLong()
+      val addrM = r.nextLong()
+      JunctionPoint(id, BeforeAfter.apply(beforeOrAfter), roadwayPointId, junctionId, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM)
+    }
   }
 
   private def queryList(query: String): List[JunctionPoint] = {
