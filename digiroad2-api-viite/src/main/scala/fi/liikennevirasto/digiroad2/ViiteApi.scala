@@ -1275,12 +1275,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   def nodeToApi(node: (Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]))) : Map[String, Any] = {
-
+    if(node._1.isDefined)
     Map("node" -> {
-      if(node._1.isDefined){simpleNodeToApi(node._1.get)} else ""
+      simpleNodeToApi(node._1.get)
     } ,
       "nodePoints" -> node._2._1.map(nodePointToApi),
       "junctions" -> node._2._2.map(junctionToApi))
+    else Map()
   }
 
   def roadNameToApi(roadName: RoadName): Map[String, Any] = {
