@@ -3,13 +3,14 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.NewIdValue
+import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 
 class NodePointDAOSpec extends FunSuite with Matchers {
 
@@ -22,6 +23,7 @@ class NodePointDAOSpec extends FunSuite with Matchers {
 
   val dao = new NodePointDAO
   val nodeDAO = new NodeDAO
+  val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
   val linearLocationDAO = new LinearLocationDAO
 
@@ -76,7 +78,11 @@ class NodePointDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchNodePointsByNodeId When existing nodeId Then return node points") {
     runWithRollback {
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.now(), None)
+      roadwayDAO.create(Seq(roadway))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber ))
       val nodeId = nodeDAO.create(Seq(testNode1)).head
       dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId)),
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
