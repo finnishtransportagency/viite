@@ -67,9 +67,9 @@ class NodePointDAO extends BaseDAO {
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val roadwayNumber = r.nextLong()
       val addrM = r.nextLong()
-      val roadNumber = r.nextLong()
-      val roadPartNumber = r.nextLong()
-      val track = Track.apply(r.nextLong().toInt)
+      val roadNumber = r.nextLongOption().map(l => l).getOrElse(0L)
+      val roadPartNumber = r.nextLongOption().map(l => l).getOrElse(0L)
+      val track = r.nextLongOption().map(l => Track.apply(l.toInt)).getOrElse(Track.Unknown)
 
       NodePoint(id, BeforeAfter.apply(beforeAfter), roadwayPointId, nodeId, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM, roadNumber, roadPartNumber, track)
     }
@@ -109,6 +109,7 @@ class NodePointDAO extends BaseDAO {
           FROM NODE_POINT NP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
           JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
+          LEFT JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
           where $boundingBoxFilter and NP.valid_to is null and NP.end_date is null and NP.node_id is null and RW.end_date is null
         """
       queryList(query)
