@@ -165,7 +165,7 @@
               var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
                 return (roadLink.startAddressM === nodePointTemplate.addrM || roadLink.endAddressM === nodePointTemplate.addrM) && roadLink.roadwayNumber === nodePointTemplate.roadwayNumber;
               });
-              if(!_.isUndefined(roadLinkForPoint)){
+              if (!_.isUndefined(roadLinkForPoint)) {
                 nodePointTemplateLayer.getSource().addFeature(nodePointTemplateMarker.createNodePointTemplateMarker(nodePointTemplate, roadLinkForPoint));
               }
             });
@@ -175,7 +175,7 @@
               var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
                 return (roadLink.startAddressM === junctionPointTemplate.addrM || roadLink.endAddressM === junctionPointTemplate.addrM) && roadLink.roadwayNumber === junctionPointTemplate.roadwayNumber;
               });
-              if(!_.isUndefined(roadLinkForPoint)){
+              if (!_.isUndefined(roadLinkForPoint)) {
                 junctionTemplateLayer.getSource().addFeature(junctionPointTemplateMarker.createJunctionPointTemplateMarker(junctionPointTemplate, roadLinkForPoint));
               }
             });
