@@ -174,24 +174,26 @@ class LinearLocationDAO {
     sqlu"""LOCK TABLE linear_location IN SHARE MODE""".execute
   }
 
-  implicit val getLinearLocation: GetResult[LinearLocation] = (r: PositionedResult) => {
-    val id = r.nextLong()
-    val roadwayNumber = r.nextLong()
-    val orderNumber = r.nextLong()
-    val linkId = r.nextLong()
-    val startMeasure = r.nextDouble()
-    val endMeasure = r.nextDouble()
-    val sideCode = r.nextInt()
-    val calStartM = r.nextLongOption()
-    val calEndM = r.nextLongOption()
-    val linkSource = r.nextInt()
-    val adjustedTimestamp = r.nextLong()
-    val geom = OracleDatabase.loadRoadsJGeometryToGeometry(r.nextObjectOption())
-    val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-    val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+  implicit val getLinearLocation: GetResult[LinearLocation] = new GetResult[LinearLocation] {
+    def apply(r: PositionedResult): LinearLocation = {
+      val id = r.nextLong()
+      val roadwayNumber = r.nextLong()
+      val orderNumber = r.nextLong()
+      val linkId = r.nextLong()
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+      val sideCode = r.nextInt()
+      val calStartM = r.nextLongOption()
+      val calEndM = r.nextLongOption()
+      val linkSource = r.nextInt()
+      val adjustedTimestamp = r.nextLong()
+      val geom = OracleDatabase.loadRoadsJGeometryToGeometry(r.nextObjectOption())
+      val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 
-    LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
-      (calStartM, calEndM), geom, LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
+      LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
+        (calStartM, calEndM), geom, LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
+    }
   }
 
   def fetchLinkIdsInChunk(min: Long, max: Long): List[Long] = {
