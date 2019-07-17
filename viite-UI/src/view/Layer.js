@@ -64,6 +64,20 @@
       return calibrationPointsWithValue;
     };
 
+    this.drawProjectCalibrationMarkers = function(layer, roadLinks) {
+      var calibrationPointsWithValue = [];
+      _.filter(roadLinks, function (roadLink) {
+        return roadLink.calibrationPoints.length > 0;
+      }).forEach(function (roadLink) {
+        roadLink.calibrationPoints.forEach(function (currentPoint) {
+          var point = currentPoint.point;
+          if (point)
+            calibrationPointsWithValue.push({points: point, calibrationCode: roadLink.calibrationCode});
+        });
+      });
+      return calibrationPointsWithValue;
+    };
+
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
   };
 })(this);
