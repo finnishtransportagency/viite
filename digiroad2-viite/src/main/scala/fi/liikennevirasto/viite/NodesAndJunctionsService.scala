@@ -374,7 +374,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     def obsoleteNodesAndJunctionsPointsByRoadwayNumbers(affectedRoadwayNumbers: Seq[Long]): (Seq[NodePoint], Seq[JunctionPoint]) = {
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(affectedRoadwayNumbers)
-      val nodePoints = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id))
+      val nodePoints = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id)).filter(_.nodeId.isDefined)
       val junctionPoints = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id))
 
       val obsoleteJunctions = junctionDAO.fetchObsoleteById(junctionPoints.map(_.junctionId).distinct)
@@ -457,27 +457,32 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       nodeDAO.expireById(obsoleteNodes.map(_.id))
     }
 
-    val (obsoleteNodePoints, obsoleteJunctionPoints) = roadwayChanges.foldLeft((Set.empty[NodePoint], Set.empty[JunctionPoint])) { case ((onp, ojp), rwc) =>
-      val sourceRoadNumber = rwc.changeInfo.source.roadNumber.getOrElse(-1L)
-      val sourceRoadPartNumber = rwc.changeInfo.source.startRoadPartNumber.getOrElse(-1L)
-      val targetRoadNumber = rwc.changeInfo.target.roadNumber.getOrElse(-1L)
-      val targetRoadPartNumber = rwc.changeInfo.target.startRoadPartNumber.getOrElse(-1L)
+    val obsoletePoints: Seq[(Seq[NodePoint], Seq[JunctionPoint])] = roadwayChanges.map { rwc =>
+      val source = rwc.changeInfo.source
+      val target = rwc.changeInfo.target
 
-      val (nodePoints, junctionPoints) = rwc.changeInfo.changeType match {
+      rwc.changeInfo.changeType match {
         case AddressChangeType.Termination =>
-          val terminatedRoadwayNumbers = roadwayDAO.fetchAllByRoadAndPart(sourceRoadNumber, sourceRoadPartNumber).map(_.roadwayNumber)
+          val terminatedRoadwayNumbers = roadwayDAO.fetchAllBySectionTrackAndAddresses(
+            source.roadNumber.getOrElse(-1L), source.startRoadPartNumber.getOrElse(-1L), Track.apply(source.trackCode.map(_.toInt).getOrElse(Track.Unknown.value)), source.startAddressM, source.endAddressM
+          ).map(_.roadwayNumber)
           obsoleteNodesAndJunctionsPointsOfTermination(terminatedRoadwayNumbers)
         case AddressChangeType.ReNumeration | AddressChangeType.Transfer =>
-          val affectedRoadwayNumbers = roadwayDAO.fetchAllByRoadAndPart(targetRoadNumber, targetRoadPartNumber).map(_.roadwayNumber)
+          val affectedRoadwayNumbers = roadwayDAO.fetchAllBySectionTrackAndAddresses(
+            target.roadNumber.getOrElse(-1L), target.startRoadPartNumber.getOrElse(-1L), Track.apply(target.trackCode.map(_.toInt).getOrElse(Track.Unknown.value)), target.startAddressM, target.endAddressM
+          ).map(_.roadwayNumber)
           obsoleteNodesAndJunctionsPointsByRoadwayNumbers(affectedRoadwayNumbers)
         case AddressChangeType.New =>
-          val newRoadwayNumbers = roadwayDAO.fetchAllByRoadAndPart(targetRoadNumber, targetRoadPartNumber).map(_.roadwayNumber)
+          val newRoadwayNumbers = roadwayDAO.fetchAllBySectionTrackAndAddresses(
+            target.roadNumber.getOrElse(-1L), target.startRoadPartNumber.getOrElse(-1L), Track.apply(target.trackCode.map(_.toInt).getOrElse(Track.Unknown.value)), target.startAddressM, target.endAddressM
+          ).map(_.roadwayNumber)
           obsoleteNodesAndJunctionsPointsOfNew(newRoadwayNumbers)
-        case _ => (onp, ojp)
+        case _ => (Seq.empty[NodePoint], Seq.empty[JunctionPoint])
       }
-      (onp ++ nodePoints, ojp ++ junctionPoints)
     }
 
+    val obsoleteNodePoints = obsoletePoints.flatMap(_._1).toSet
+    val obsoleteJunctionPoints = obsoletePoints.flatMap(_._2).toSet
     expireObsoleteJunctions(obsoleteJunctionPoints)
     expireNodes(obsoleteNodePoints, obsoleteJunctionPoints)
   }

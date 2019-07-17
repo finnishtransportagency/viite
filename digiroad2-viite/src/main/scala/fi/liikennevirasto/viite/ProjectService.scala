@@ -2005,7 +2005,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val historyRoadways = roadwayDAO.fetchAllByRoadwayNumbers(currentRoadways.map(_._2.roadwayNumber).toSet, withHistory = true).filter(_.endDate.isDefined).map(roadway => (roadway.id, roadway)).toMap
     val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
     val roadwayProjectLinkIds = roadwayChangesDAO.fetchRoadwayChangesLinks(projectID)
-    val mappedRoadwaysWithLinks: immutable.Seq[(ProjectRoadwayChange, Seq[ProjectLink])] = roadwayChanges.map {
+    val mappedRoadwaysWithLinks = roadwayChanges.map {
       change =>
         val linksRelatedToChange = roadwayProjectLinkIds.filter(link => link._1 == change.changeInfo.orderInChangeTable).map(_._2)
         val projectLinksInChange = projectLinks.filter(pl => linksRelatedToChange.contains(pl.id))
