@@ -478,7 +478,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(terminatedRoadLink.roadNumber), Some(terminatedRoadLink.track.value), Some(terminatedRoadLink.roadPartNumber), Some(terminatedRoadLink.roadPartNumber), Some(terminatedRoadLink.startAddrMValue), Some(terminatedRoadLink.endAddrMValue), Some(terminatedRoadLink.roadType), None, None),
             Discontinuity.Continuous, RoadType.PublicRoad, false, 0, terminatedRoadLink.ely), DateTime.now(), None)))
 
-      when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(Seq(roadways.last))
+      when(mockRoadwayDAO.fetchAllBySectionTrackAndAddresses(any[Long], any[Long], any[Track], any[Option[Long]], any[Option[Long]])).thenReturn(Seq(roadways.last))
 
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(terminatedRoadLink).map(_.projectId).toSet), Some(terminatedRoadLink.endDate.get.minusDays(1)))
 
@@ -577,7 +577,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(numberedRoadLink2.roadNumber), Some(numberedRoadLink2.track.value), Some(numberedRoadLink2.roadPartNumber), Some(numberedRoadLink2.roadPartNumber), Some(numberedRoadLink2.startAddrMValue), Some(numberedRoadLink2.endAddrMValue), Some(numberedRoadLink2.roadType), None, None),
             Discontinuity.Continuous, RoadType.PublicRoad, false, 0, roadways.head.ely), DateTime.now(), None)))
 
-      when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(roadways)
+      when(mockRoadwayDAO.fetchAllBySectionTrackAndAddresses(any[Long], any[Long], any[Track], any[Option[Long]], any[Option[Long]])).thenReturn(roadways)
 
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(numberedRoadLink1).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
 
@@ -659,7 +659,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(newRoadLink.roadNumber), Some(newRoadLink.track.value), Some(newRoadLink.roadPartNumber), Some(newRoadLink.roadPartNumber), Some(newRoadLink.startAddrMValue), Some(newRoadLink.endAddrMValue), Some(newRoadLink.roadType), None, None),
             Discontinuity.Continuous, RoadType.PublicRoad, false, 0, roadways.head.ely), DateTime.now(), None)))
 
-      when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(roadways)
+      when(mockRoadwayDAO.fetchAllBySectionTrackAndAddresses(any[Long], any[Long], any[Track], any[Option[Long]], any[Option[Long]])).thenReturn(roadways)
 
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(newRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
 
@@ -739,7 +739,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(newRoadLink.roadNumber), Some(newRoadLink.track.value), Some(newRoadLink.roadPartNumber), Some(newRoadLink.roadPartNumber), Some(newRoadLink.startAddrMValue), Some(roadLink.endAddrMValue + newRoadLink.endAddrMValue), Some(newRoadLink.roadType), None, None),
             Discontinuity.Continuous, RoadType.PublicRoad, false, 0, roadways.head.ely), DateTime.now(), None)))
 
-      when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(roadways)
+      when(mockRoadwayDAO.fetchAllBySectionTrackAndAddresses(any[Long], any[Long], any[Track], any[Option[Long]], any[Option[Long]])).thenReturn(roadways)
 
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(newRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
 
@@ -802,7 +802,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(terminatedRoadLink.roadNumber), Some(terminatedRoadLink.track.value), Some(terminatedRoadLink.roadPartNumber), Some(terminatedRoadLink.roadPartNumber), Some(terminatedRoadLink.startAddrMValue), Some(terminatedRoadLink.endAddrMValue), Some(terminatedRoadLink.roadType), None, None),
             Discontinuity.Continuous, RoadType.PublicRoad, false, 0, roadways.head.ely), DateTime.now(), None)))
 
-      when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(Seq(roadways.last))
+      when(mockRoadwayDAO.fetchAllBySectionTrackAndAddresses(any[Long], any[Long], any[Track], any[Option[Long]], any[Option[Long]])).thenReturn(Seq(roadways.last))
 
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(terminatedRoadLink).map(_.projectId).toSet), Some(terminatedRoadLink.endDate.get.minusDays(1)))
 
@@ -871,7 +871,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(terminatedRoadLink.roadNumber), Some(terminatedRoadLink.track.value), Some(terminatedRoadLink.roadPartNumber), Some(terminatedRoadLink.roadPartNumber), Some(terminatedRoadLink.startAddrMValue), Some(terminatedRoadLink.endAddrMValue), Some(terminatedRoadLink.roadType), None, None),
             Discontinuity.Continuous, RoadType.PublicRoad, false, 0, roadways.head.ely), DateTime.now(), None)))
 
-      when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(Seq(roadways.last))
+      when(mockRoadwayDAO.fetchAllBySectionTrackAndAddresses(any[Long], any[Long], any[Track], any[Option[Long]], any[Option[Long]])).thenReturn(Seq(roadways.last))
 
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(terminatedRoadLink).map(_.projectId).toSet), Some(terminatedRoadLink.endDate.get.minusDays(1)))
 
@@ -938,7 +938,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(numberedRoadLink.roadNumber), Some(numberedRoadLink.track.value), Some(numberedRoadLink.roadPartNumber), Some(numberedRoadLink.roadPartNumber), Some(numberedRoadLink.startAddrMValue), Some(numberedRoadLink.endAddrMValue), Some(numberedRoadLink.roadType), None, None),
             Discontinuity.Continuous, RoadType.PublicRoad, false, 0, roadways.head.ely), DateTime.now(), None)))
 
-      when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(Seq(roadways.last))
+      when(mockRoadwayDAO.fetchAllBySectionTrackAndAddresses(any[Long], any[Long], any[Track], any[Option[Long]], any[Option[Long]])).thenReturn(Seq(roadways.last))
 
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(numberedRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
 
@@ -1058,7 +1058,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
             RoadwayChangeSection(Some(road2.roadNumber), Some(road2.track.value), Some(road2.roadPartNumber), Some(road2.roadPartNumber), Some(transferredRoadLink.endAddrMValue), Some(transferredRoadLink.endAddrMValue + road2.endAddrMValue), Some(road2.roadType), None, None),
             Discontinuity.Continuous, RoadType.PublicRoad, false, 0, roadways.head.ely), DateTime.now(), None)))
 
-      when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(roadways)
+      when(mockRoadwayDAO.fetchAllBySectionTrackAndAddresses(any[Long], any[Long], any[Track], any[Option[Long]], any[Option[Long]])).thenReturn(roadways)
 
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(mockRoadwayChangesDAO.fetchRoadwayChanges(Seq(transferredRoadLink).map(_.projectId).toSet), Some(DateTime.now().minusDays(1)))
 
