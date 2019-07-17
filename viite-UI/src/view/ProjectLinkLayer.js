@@ -745,7 +745,7 @@
       }
 
       if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomLevelForCalibrationPoints) {
-        var actualCalibrationPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks.concat(suravageProjectRoads));
+        var actualCalibrationPoints = me.drawProjectCalibrationMarkers(calibrationPointLayer.source, projectLinks.concat(suravageProjectRoads));
         _.each(actualCalibrationPoints, function (actualPoint) {
           var calMarker = new CalibrationPoint(actualPoint);
           calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
