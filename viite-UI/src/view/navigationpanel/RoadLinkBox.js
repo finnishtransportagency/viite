@@ -13,7 +13,7 @@
     var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
     var calibrationPointPicture = $('' +
       '<div class="legend-entry">' +
-      '<div class="label">Etäisyyslukema</div>' +
+      '<div class="label">Tieosan alku</div>' +
       '</div>' +
       '<div class="calibration-point-image"></div>');
 
