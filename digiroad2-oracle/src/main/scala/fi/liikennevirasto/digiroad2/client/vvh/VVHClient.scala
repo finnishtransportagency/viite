@@ -7,7 +7,7 @@ import java.util
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{Unknown => _, _}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkLike}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -38,7 +38,7 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
                        constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
-  val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+  val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 }
 
 case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: ChangeType,
@@ -58,7 +58,7 @@ case class VVHHistoryRoadLink(linkId: Long, municipalityCode: Int, geometry: Seq
                               constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
 
-  val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
+  val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
 }
 
 /**
@@ -741,20 +741,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
 
   def fetchByLinkIdsF(linkIds: Set[Long]): Future[Seq[VVHRoadlink]] = {
     Future(fetchByLinkIds(linkIds))
-  }
-
-  /**
-    * Returns VVH road link by mml id.
-    * Used by RoadLinkService.getRoadLinkMiddlePointByMmlId
-    */
-  def fetchByMmlId(mmlId: Long): Option[VVHRoadlink] = fetchByMmlIds(Set(mmlId)).headOption
-
-  /**
-    * Returns VVH road links by mml ids.
-    * Used by VVHClient.fetchByMmlId, LinkIdImporter.updateTable and AssetDataImporter.importRoadAddressData.
-    */
-  def fetchByMmlIds(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
-    queryByLinkIds(mmlIds, None, fetchGeometry = true, extractRoadLinkFeature, withMmlIdFilter)
   }
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {

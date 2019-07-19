@@ -85,6 +85,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  // TODO This might be unneeded
   test("Test getCurrentAndComplementaryRoadLinksFromVVH() When asking for info for a specific municipality Then return full municipality info, that includes both complementary and ordinary geometries") {
     val municipalityId = 235
     val linkId = Seq(1l, 2l)

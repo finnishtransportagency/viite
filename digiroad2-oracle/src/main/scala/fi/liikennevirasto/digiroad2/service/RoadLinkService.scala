@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.kmtk.{KMTKID, KMTKRoadLink}
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -294,11 +295,52 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     getRoadLinkDataByLinkIds(vvhRoadLinks).map(autoGenerateProperties)
   }
 
+  /** TODO Take in use
+    * This method performs formatting operations to given KMTK road links:
+    * - auto-generation of functional class and link type by feature class
+    * - information transfer from old link to new link from change data
+    * It also passes updated links and incomplete links to be saved to db by actor.
+    *
+    * @param kmtkRoadLinks
+    * @return Road links
+    */
+  protected def enrichRoadLinksFromKMTK(kmtkRoadLinks: Seq[KMTKRoadLink]): Seq[RoadLink] = {
+    val groupedLinks = kmtkRoadLinks.groupBy(_.linkId).mapValues(_.head) // TODO Group by link id or uuid + version?
+
+    def autoGenerateProperties(roadLink: RoadLink): RoadLink = {
+      val kmtkRoadLink = groupedLinks.get(roadLink.linkId)
+      kmtkRoadLink.get.featureClass match {
+        case FeatureClass.TractorRoad => roadLink.copy(functionalClass = 7, linkType = TractorRoad)
+        case FeatureClass.DrivePath => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway)
+        case FeatureClass.CycleOrPedestrianPath => roadLink.copy(functionalClass = 8, linkType = CycleOrPedestrianPath)
+        case _ => roadLink //similar logic used in RoadAddressBuilder
+      }
+    }
+
+    getRoadLinkData(kmtkRoadLinks).map(autoGenerateProperties)
+  }
+
   /**
     * Passes VVH road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichRoadLinksFromVVH.
     */
   private def getRoadLinkDataByLinkIds(vvhRoadLinks: Seq[VVHRoadlink]): Seq[RoadLink] = {
     vvhRoadLinks.map { link =>
+      RoadLink(link.linkId, link.geometry,
+        GeometryUtils.geometryLength(link.geometry),
+        link.administrativeClass,
+        99,
+        link.trafficDirection,
+        UnknownLinkType,
+        link.modifiedAt.map(DateTimePropertyFormat.print),
+        None, link.attributes, link.constructionType, link.linkSource)
+    }
+  }
+
+  /**
+    * Passes KMTK road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichRoadLinksFromKMTK.
+    */
+  private def getRoadLinkData(kmtkRoadLinks: Seq[KMTKRoadLink]): Seq[RoadLink] = {
+    kmtkRoadLinks.map { link =>
       RoadLink(link.linkId, link.geometry,
         GeometryUtils.geometryLength(link.geometry),
         link.administrativeClass,

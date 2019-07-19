@@ -122,3 +122,7 @@ case class Point(x: Double, y: Double, z: Double = 0.0) {
     this - Point(0.0, 0.0)
   }
 }
+
+case class PointM(x: Double, y: Double, z: Double = 0.0, var m: Double = 0.0) {
+  def distance2DTo(point: PointM): Double = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2))
+}
