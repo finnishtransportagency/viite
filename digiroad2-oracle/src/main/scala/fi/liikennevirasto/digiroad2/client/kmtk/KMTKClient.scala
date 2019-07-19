@@ -5,7 +5,7 @@ import java.net.URLEncoder
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.util.KMTKAuthPropertyReader
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.{Point, PointM}
@@ -19,8 +19,6 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
-case class KMTKID(uuid: String, version: Long)
 
 case class KMTKGeometry(/*`type`: String, */ coordinates: Seq[Seq[Double]]) {
 

@@ -1,14 +1,10 @@
 package fi.liikennevirasto.viite.util
 
-import java.util.Properties
-
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import _root_.oracle.sql.STRUCT
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.client.kmtk.KMTKClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.SequenceResetterDAO
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -16,24 +12,14 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite._
-import org.joda.time.{DateTime, _}
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc._
 
 object DataImporter {
   sealed trait ImportDataSet {
     def database(): DatabaseDef
-  }
-
-  case object TemporaryTables extends ImportDataSet {
-    lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/import.bonecp.properties"))
-      new BoneCPDataSource(cfg)
-    }
-
-    def database() = Database.forDataSource(dataSource)
   }
 
   case object Conversion extends ImportDataSet {
@@ -43,50 +29,18 @@ object DataImporter {
     }
 
     def database() = Database.forDataSource(dataSource)
-    val roadLinkTable: String = "tielinkki"
-    val busStopTable: String = "lineaarilokaatio"
   }
 
-  def humanReadableDurationSince(startTime: DateTime): String = {
-    PeriodFormat.getDefault.print(new Period(startTime, DateTime.now()))
-  }
 }
 
 class DataImporter {
   val logger = LoggerFactory.getLogger(getClass)
-  lazy val ds: DataSource = initDataSource
-
-  val Modifier = "dr1conversion"
 
   def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def withLinkIdChunks(f: (Long, Long) => Unit): Unit = {
     val chunks = withDynSession{ fetchChunkLinkIds()}
     chunks.par.foreach { p => f(p._1, p._2) }
-  }
-
-  implicit object SetStruct extends SetParameter[STRUCT] {
-    def apply(v: STRUCT, pp: PositionedParameters) {
-      pp.setObject(v, java.sql.Types.STRUCT)
-    }
-  }
-
-  def time[A](f: => A) = {
-    val s = System.nanoTime
-    val ret = f
-    println("time for insert " + (System.nanoTime - s) / 1e6 + "ms")
-    ret
-  }
-
-  val dateFormatter = ISODateTimeFormat.basicDate()
-
-  def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
-    if ((m - n) < step) {
-      List((n, m))
-    } else {
-      val x = (n to m by step).sliding(2).map(x => (x(0), x(1) - 1)).toList
-      x :+ (x.last._2 + 1, m)
-    }
   }
 
   case class RoadTypeChangePoints(roadNumber: Long, roadPartNumber: Long, addrM: Long, before: RoadType, after: RoadType, elyCode: Long)
@@ -114,7 +68,7 @@ class DataImporter {
 
   }
 
-  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
+  def importRoadAddressData(conversionDatabase: DatabaseDef, kmtkClient: KMTKClient, vvhClient: VVHClient,
                             importOptions: ImportOptions): Unit = {
 
     withDynTransaction {
@@ -142,7 +96,7 @@ class DataImporter {
 
       println(s"${DateTime.now()} - Old address data removed")
 
-      val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
+      val roadAddressImporter = getRoadAddressImporter(conversionDatabase, kmtkClient, vvhClient, importOptions)
       roadAddressImporter.importRoadAddress()
 
       println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
@@ -197,8 +151,8 @@ class DataImporter {
     }
   }
 
-  protected def getRoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) = {
-    new RoadAddressImporter(conversionDatabase, vvhClient, importOptions)
+  protected def getRoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClient, vvhClient: VVHClient, importOptions: ImportOptions) = {
+    new RoadAddressImporter(conversionDatabase, kmtkClient, vvhClient, importOptions)
   }
 
   protected def getNodeImporter(conversionDatabase: DatabaseDef) : NodeImporter = {
@@ -207,35 +161,6 @@ class DataImporter {
 
   protected def getJunctionImporter(conversionDatabase: DatabaseDef) : JunctionImporter = {
     new JunctionImporter(conversionDatabase)
-  }
-
-  // TODO This is not used and should probably be removed.
-  def splitRoadAddresses(roadAddress: RoadAddress, addrMToSplit: Long, roadTypeBefore: RoadType, roadTypeAfter: RoadType, elyCode: Long): Seq[RoadAddress] = {
-    // mValue at split point on a TowardsDigitizing road address:
-    val splitMValue = roadAddress.startMValue + (roadAddress.endMValue - roadAddress.startMValue) / (roadAddress.endAddrMValue - roadAddress.startAddrMValue) * (addrMToSplit - roadAddress.startAddrMValue)
-    println(s"Splitting roadway id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on AddrMValue = $addrMToSplit")
-    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, roadType = roadTypeBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-            roadAddress.endMValue - splitMValue
-          else
-            0.0, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-            roadAddress.endMValue
-          else
-            splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode) // TODO Check roadway_number
-
-    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, roadType = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-            0.0
-          else
-            splitMValue, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-            roadAddress.endMValue - splitMValue
-          else
-            roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode) // TODO Check roadway_number
-    Seq(roadAddressA, roadAddressB)
-  }
-
-  // TODO This is not used and probably should be removed.
-  def updateRoadWithSingleRoadType(roadNumber:Long, roadPartNumber: Long, roadType : Long, elyCode :Long) = {
-    println(s"Updating road number $roadNumber and part $roadPartNumber with roadType = $roadType and elyCode = $elyCode")
-    sqlu"""UPDATE ROADWAY SET ROAD_TYPE = $roadType, ELY= $elyCode where ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber """.execute
   }
 
   private def generateChunks(linkIds: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {
@@ -319,24 +244,7 @@ class DataImporter {
     }
   }
 
-  private[this] def initDataSource: DataSource = {
-    Class.forName("oracle.jdbc.driver.OracleDriver")
-    val cfg = new BoneCPConfig(localProperties)
-    new BoneCPDataSource(cfg)
-  }
-
-  lazy val localProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load local.properties for env: " + System.getProperty("env"), e)
-    }
-    props
-  }
-
 }
 
-case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, geometryAdjustedTimeStamp: Long, conversionTable: String, onlyCurrentRoads: Boolean)
-case class RoadPart(roadNumber: Long, roadPart: Long, ely: Long)
+case class ImportOptions(onlyComplementaryLinks: Boolean, geometryAdjustedTimeStamp: Long, conversionTable: String, onlyCurrentRoads: Boolean)
 

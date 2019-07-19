@@ -4,6 +4,7 @@ import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.client.kmtk.KMTKClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -68,6 +69,7 @@ object DataFixture {
 
   def importRoadAddresses(importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
+    val kmtkClient = new KMTKClient(dr2properties.getProperty("digiroad2.KMTKRestApiEndPoint"))
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val geometryAdjustedTimeStamp = dr2properties.getProperty("digiroad2.viite.importTimeStamp", "")
     if (geometryAdjustedTimeStamp == "" || geometryAdjustedTimeStamp.toLong == 0L) {
@@ -80,10 +82,9 @@ object DataFixture {
         case Some(tableName) =>
           val importOptions = ImportOptions(
             onlyComplementaryLinks = false,
-            useFrozenLinkService = geometryFrozen,
             geometryAdjustedTimeStamp.toLong, tableName,
             onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
-          dataImporter.importRoadAddressData(Conversion.database(), vvhClient, importOptions)
+          dataImporter.importRoadAddressData(Conversion.database(), kmtkClient, vvhClient, importOptions)
 
       }
       println(s"Road address import complete at time: ${DateTime.now()}")
@@ -235,10 +236,6 @@ object DataFixture {
     }
   }
 
-  /*private def showFreezeInfo(): Unit = {
-    println("Road link geometry freeze is active; exiting without changes")
-  }*/
-
   def flyway: Flyway = {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
@@ -312,14 +309,10 @@ object DataFixture {
           throw new Exception("****** Import failed! conversiontable name required as second input ******")
       case Some("import_complementary_road_address") =>
         importComplementaryRoadAddress()
-      /*case Some("update_missing") if geometryFrozen =>
-        showFreezeInfo()*/
       case Some("update_road_addresses_geometry") =>
         updateLinearLocationGeometry()
       case Some("import_road_address_change_test_data") =>
         importRoadAddressChangeTestData()
-      /*case Some("apply_change_information_to_road_address_links") if geometryFrozen =>
-        showFreezeInfo()*/
       case Some("apply_change_information_to_road_address_links") =>
         val numThreads = if (args.length > 1) toIntNumber(args(1)) else numberThreads
         applyChangeInformationToRoadAddressLinks(numThreads)
