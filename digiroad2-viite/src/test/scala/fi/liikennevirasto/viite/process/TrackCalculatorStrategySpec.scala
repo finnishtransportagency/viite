@@ -93,7 +93,7 @@ class TrackCalculatorStrategySpec extends FunSuite with Matchers {
     val strategy = TrackCalculatorContext.getStrategy(leftSideProjectLinks, rightSideProjectLinks)
     val trackCalcResult = TrackCalculatorResult(leftSideProjectLinks, rightSideProjectLinks, 0L, 0L, Seq(), Seq())
 
-    val (adjustedLeft, adjustedRight) = strategy.setCalibrationPoints(trackCalcResult, Map())
+    val (adjustedLeft, adjustedRight) = TrackSectionOrder.setCalibrationPoints(trackCalcResult.leftProjectLinks, trackCalcResult.rightProjectLinks, Map())
 
     adjustedLeft.foreach{r =>
       r.calibrationPoints._1.nonEmpty should be (true)
