@@ -786,12 +786,10 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     * Returns a sequence of VVH Road Links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality, roadNumbers).
     */
-  // TODO Is this needed anymore?
   def fetchByMunicipalityAndRoadNumbersF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[VVHRoadlink]] = {
     Future(queryByRoadNumbersAndMunicipality(municipality, roadNumbers))
   }
 
-  // TODO Is this needed anymore?
   def fetchByMunicipalityAndRoadNumbers(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
     queryByRoadNumbersAndMunicipality(municipality, roadNumbers)
   }
