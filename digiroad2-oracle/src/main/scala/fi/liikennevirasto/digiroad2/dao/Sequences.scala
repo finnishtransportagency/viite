@@ -97,4 +97,13 @@ object Sequences {
   def nextJunctionPointId: Long = {
     Queries.nextJunctionPointId.as[Long].first
   }
+
+  def nextLinkId: Long = {
+    Queries.nextLinkId.as[Long].first
+  }
+
+  def fetchLinkIds(len: Int): List[Long] = {
+    Queries.fetchLinkIds(len)
+  }
+
 }
