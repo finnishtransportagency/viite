@@ -441,7 +441,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       obsoleteJunctions
     }
 
-    def expireNodes(obsoleteNodePoints: Set[NodePoint], obsoleteJunctionPoints: Set[JunctionPoint], obsoleteJunctions: Seq[Junction]): Unit = {
+    def expireNodes(obsoleteNodePoints: Set[NodePoint], obsoleteJunctions: Seq[Junction]): Unit = {
       // Expire current node points rows
       logger.info(s"Expiring node points : ${obsoleteNodePoints.map(_.id)}")
       nodePointDAO.expireById(obsoleteNodePoints.map(_.id))
@@ -489,7 +489,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     logger.info(s"Obsolete node points : ${obsoleteNodePoints.map(_.id)}")
     logger.info(s"Obsolete junction points : ${obsoleteJunctionPoints.map(_.id)}")
     val obsoleteJunctions = expireObsoleteJunctions(obsoleteJunctionPoints)
-    expireNodes(obsoleteNodePoints, obsoleteJunctionPoints, obsoleteJunctions)
+    expireNodes(obsoleteNodePoints, obsoleteJunctions)
   }
 
 }
