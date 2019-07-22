@@ -34,7 +34,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val junctionPointDAO = new JunctionPointDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadwayChangesDAO = new RoadwayChangesDAO
-
   val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO) {
     override def withDynSession[T](f: => T): T = f
 
@@ -59,13 +58,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadwayNumber1, 0, "Test", None, None, None)
 
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0, 0, 0, Track.Combined)
 
   val testJunction1 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-01"), None,
     DateTime.parse("2019-01-01"), None, None, None)
 
   val testJunctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
 
   val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l,
     (None, None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)

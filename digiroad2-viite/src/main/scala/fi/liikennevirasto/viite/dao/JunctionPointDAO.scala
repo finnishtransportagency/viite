@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite.dao
-
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite._
+import fi.liikennevirasto.digiroad2.util.Track
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -12,7 +12,8 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 
 case class JunctionPoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, junctionId: Long, startDate: DateTime, endDate: Option[DateTime],
-                         validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM: Long)
+                         validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM: Long,
+                         roadNumber: Long, roadPartNumber: Long, track: Track)
 
 class JunctionPointDAO extends BaseDAO {
 
@@ -32,7 +33,11 @@ class JunctionPointDAO extends BaseDAO {
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val roadwayNumber = r.nextLong()
       val addrM = r.nextLong()
-      JunctionPoint(id, BeforeAfter.apply(beforeOrAfter), roadwayPointId, junctionId, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM)
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val track = Track.apply(r.nextLong().toInt)
+
+      JunctionPoint(id, BeforeAfter.apply(beforeOrAfter), roadwayPointId, junctionId, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM, roadNumber, roadPartNumber, track)
     }
   }
 
@@ -65,9 +70,10 @@ class JunctionPointDAO extends BaseDAO {
       val query =
         s"""
           SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
-          RP.ROADWAY_NUMBER, RP.ADDR_M FROM JUNCTION_POINT JP
+          RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK  FROM JUNCTION_POINT JP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
           JOIN JUNCTION J on (J.ID = JP.JUNCTION_ID)
+           |       JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
           where J.ID in (${junctionIds.mkString(",")}) AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL
         """
       queryList(query)
@@ -111,11 +117,12 @@ class JunctionPointDAO extends BaseDAO {
       val query =
         s"""
           SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM,
-          JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M
+          JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK
           FROM JUNCTION_POINT JP
           JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
           JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID AND J.NODE_ID IS NULL)
           JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
+          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = JP.ROADWAY_NUMBER)
           where $boundingBoxFilter and JP.valid_to is null and JP.end_date is null
         """
       queryList(query)

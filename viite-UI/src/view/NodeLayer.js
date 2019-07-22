@@ -118,7 +118,7 @@
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
             _.each(nodes, function (node) {
               var nodeMarker = new NodeMarker();
-              nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node.node));
+              nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node));
             });
           }
 
