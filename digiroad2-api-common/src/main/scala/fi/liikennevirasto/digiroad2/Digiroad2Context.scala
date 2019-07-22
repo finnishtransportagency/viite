@@ -110,7 +110,7 @@ object Digiroad2Context {
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, roadwayAddressMapper, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+    new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayAddressMapper, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   }
 
   lazy val projectService: ProjectService = {
@@ -127,7 +127,7 @@ object Digiroad2Context {
   }
 
     lazy val nodesAndJunctionsService : NodesAndJunctionsService = {
-    new NodesAndJunctionsService(new RoadwayDAO, new RoadwayPointDAO, new LinearLocationDAO, new NodeDAO, new NodePointDAO, new JunctionDAO, new JunctionPointDAO)
+    new NodesAndJunctionsService(roadwayDAO, roadwayPointDAO, linearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO)
   }
 
   lazy val authenticationTestModeEnabled: Boolean = {
@@ -160,6 +160,30 @@ object Digiroad2Context {
 
   lazy val linearLocationDAO: LinearLocationDAO = {
     new LinearLocationDAO
+  }
+
+  lazy val roadwayPointDAO: RoadwayPointDAO = {
+    new RoadwayPointDAO
+  }
+
+  lazy val nodeDAO: NodeDAO = {
+    new NodeDAO
+  }
+
+  lazy val junctionDAO: JunctionDAO = {
+    new JunctionDAO
+  }
+
+  lazy val nodePointDAO: NodePointDAO = {
+    new NodePointDAO
+  }
+
+  lazy val junctionPointDAO: JunctionPointDAO = {
+    new JunctionPointDAO
+  }
+
+  lazy val roadNetworkDAO: RoadNetworkDAO = {
+    new RoadNetworkDAO
   }
 
   lazy val roadwayAddressMapper: RoadwayAddressMapper = {

@@ -5,12 +5,12 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
-import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.{BeforeAfter, Junction, JunctionDAO, JunctionPoint, JunctionPointDAO, LinearLocationDAO, LinkStatus, Node, NodeDAO, NodePoint, NodePointDAO, ProjectLink, RoadAddress, RoadAttributes, RoadwayDAO, RoadwayPointDAO}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
-import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
+import org.joda.time.DateTime
 
 class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO) {
 
@@ -77,6 +77,29 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
+  def getNodesWithTimeInterval(sinceDate: DateTime, untilDate: Option[DateTime]) : Map[Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
+    withDynSession {
+      val nodes = nodeDAO.fetchAllByDateRange(sinceDate, untilDate)
+      val nodePoints = nodePointDAO.fetchNodePointsByNodeId(nodes.map(_.id))
+      val junctions = junctionDAO.fetchJunctionByNodeIds(nodes.map(_.id))
+      val junctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(junctions.map(_.id))
+      nodes.map {
+        node =>
+          (Option(node),
+            (
+              nodePoints.filter(np => np.nodeId.isDefined && np.nodeId.get == node.id),
+              junctions.filter(j => j.nodeId.isDefined && j.nodeId.get == node.id).map {
+                junction =>
+                  (
+                    junction, junctionPoints.filter(_.junctionId == junction.id)
+                  )
+              }.toMap
+            )
+          )
+      }.toMap
+    }
+  }
+
   def getTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]) = {
     time(logger, "Fetch NodePoint and Junction + JunctionPoint templates") {
       val junctionPoints = junctionPointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
@@ -124,7 +147,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else {
           roadwayPointDAO.create(roadAddress.roadwayNumber, roadAddress.endAddrMValue, roadAddress.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now), roadAddress.roadwayNumber, roadAddress.endAddrMValue))).head
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now), roadAddress.roadwayNumber, roadAddress.endAddrMValue, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track))).head
         Some(junctionId)
       } else None
 
@@ -139,7 +162,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else {
           roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, link.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue))).head
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track))).head
       }
     }
 
@@ -155,7 +178,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else {
           roadwayPointDAO.create(roadAddress.roadwayNumber, roadAddress.startAddrMValue, roadAddress.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now), roadAddress.roadwayNumber, roadAddress.startAddrMValue))).head
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now), roadAddress.roadwayNumber, roadAddress.startAddrMValue, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track))).head
         Some(junctionId)
       } else None
 
@@ -170,7 +193,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else {
           roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, roadAddress.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue))).head
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track))).head
       }
     }
 
@@ -186,7 +209,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else {
           roadwayPointDAO.create(roadAddress.roadwayNumber, roadAddress.endAddrMValue, roadAddress.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), roadAddress.roadwayNumber, roadAddress.endAddrMValue))).head
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), roadAddress.roadwayNumber, roadAddress.endAddrMValue, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track))).head
         Some(junctionId)
       } else None
 
@@ -201,7 +224,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else {
           roadwayPointDAO.create(link.roadwayNumber, link.endAddrMValue, roadAddress.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue))).head
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track))).head
       }
     }
 
@@ -217,7 +240,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else {
           roadwayPointDAO.create(roadAddress.roadwayNumber, roadAddress.startAddrMValue, roadAddress.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), roadAddress.roadwayNumber, roadAddress.startAddrMValue))).head
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), roadAddress.roadwayNumber, roadAddress.startAddrMValue, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track))).head
         Some(junctionId)
       } else None
 
@@ -232,7 +255,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else {
           roadwayPointDAO.create(link.roadwayNumber, link.endAddrMValue, roadAddress.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue))).head
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track))).head
       }
     }
 
@@ -334,10 +357,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           val existingLastNodePoint = nodePointDAO.fetchNodePointTemplate(lastLink.roadwayNumber).filter(np => np.beforeAfter == Before && np.addrM == lastLink.endAddrMValue)
 
           if (existingHeadNodePoint.isEmpty)
-            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue)))
+            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue, headLink.roadNumber, headLink.roadPartNumber, headLink.track)))
 
           if (existingLastNodePoint.isEmpty)
-            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue)))
+            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.roadNumber, lastLink.roadPartNumber, lastLink.track)))
 
         }
       }.toSeq

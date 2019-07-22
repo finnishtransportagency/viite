@@ -62,6 +62,7 @@
       me.setNodes(nodes);
       me.setNodePointTemplates(nodePointTemplates);
       me.setJunctionTemplates(junctionTemplates);
+      me.setNodesWithAttributes(nodes);
       eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionPointTemplates, zoom);
     });
 
