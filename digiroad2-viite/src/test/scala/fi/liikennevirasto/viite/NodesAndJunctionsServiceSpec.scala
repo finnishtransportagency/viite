@@ -162,7 +162,14 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val combined1 = dummyProjectLink(999, 999, Track.Combined, Discontinuity.Continuous, 50, 100, Some(DateTime.now()), None, 12347, 0, 50, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.FerryRoad, combGeom1, roadwayNumber + 2)
       val combined2 = dummyProjectLink(999, 999, Track.Combined, Discontinuity.EndOfRoad, 100, 150, Some(DateTime.now()), None, 12348, 0, 50, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.PublicRoad, combGeom2, roadwayNumber + 3)
 
+      val roadway1 = Roadway(NewIdValue, roadwayNumber, 999, 999, RoadType.PublicRoad, Track.LeftSide, Discontinuity.Continuous, 0L, 50L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      val roadway2 = Roadway(NewIdValue, roadwayNumber+1, 999, 999, RoadType.PublicRoad, Track.RightSide, Discontinuity.Continuous, 0L, 50L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      val roadway3 = Roadway(NewIdValue, roadwayNumber+2, 999, 999, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 50L, 100L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      val roadway4 = Roadway(NewIdValue, roadwayNumber+3, 999, 999, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 100L, 150L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+
+
       val pls = Seq(left, right, combined1, combined2)
+      roadwayDAO.create(Seq(roadway1, roadway2, roadway3, roadway4))
       nodesAndJunctionsService.handleNodePointTemplates(pls)
 
       val fetchedNodesPoints = pls.flatMap(pl => nodePointDAO.fetchNodePointTemplate(pl.roadwayNumber))
