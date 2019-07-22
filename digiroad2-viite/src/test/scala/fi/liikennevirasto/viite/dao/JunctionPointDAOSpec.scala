@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.NewIdValue
+import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -20,6 +20,7 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
 
   val dao = new JunctionPointDAO
   val junctionDAO = new JunctionDAO
+  val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
 
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
@@ -71,7 +72,10 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchJunctionPointsByJunctionIds When existing junctionId Then return junction points") {
     runWithRollback {
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      roadwayDAO.create(Seq(roadway))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
       val junctionId = junctionDAO.create(Seq(testJunction1)).head
       dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
         testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
@@ -84,7 +88,10 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
 
   test("Test expireById When two created and one expired Then expire one and keep the other") {
     runWithRollback {
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      roadwayDAO.create(Seq(roadway))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
       val junctionId = junctionDAO.create(Seq(testJunction1)).head
       val ids = dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
         testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
