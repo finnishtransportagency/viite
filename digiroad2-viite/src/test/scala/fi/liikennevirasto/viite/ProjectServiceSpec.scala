@@ -2130,9 +2130,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val (newRoadNumber, newRoadPart) = (9999L, 1L)
     val smallerRoadGeom = Seq(Point(0.0, 0.0), Point(0.0, 5.0))
     val roadGeom = Seq(Point(0.0, 0.0), Point(0.0, 10.0))
-
     runWithRollback {
-      val roadwayNumber = Sequences.nextRoadwayNumber
+      val roadwayNumber = 1
       val roadwayId = Sequences.nextRoadwayId
 
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllBySection(roadNumber, roadPartNumber))
