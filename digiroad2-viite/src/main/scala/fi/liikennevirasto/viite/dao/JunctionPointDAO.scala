@@ -73,7 +73,7 @@ class JunctionPointDAO extends BaseDAO {
           RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK  FROM JUNCTION_POINT JP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
           JOIN JUNCTION J on (J.ID = JP.JUNCTION_ID)
-           |       JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
+          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
           where J.ID in (${junctionIds.mkString(",")}) AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL
         """
       queryList(query)
@@ -122,7 +122,7 @@ class JunctionPointDAO extends BaseDAO {
           JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
           JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID AND J.NODE_ID IS NULL)
           JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = JP.ROADWAY_NUMBER)
+          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
           where $boundingBoxFilter and JP.valid_to is null and JP.end_date is null
         """
       queryList(query)
