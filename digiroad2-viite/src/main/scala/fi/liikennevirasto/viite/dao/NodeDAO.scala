@@ -238,14 +238,13 @@ class NodeDAO extends BaseDAO {
     * @param ids : Iterable[Long] - The ids of the junctions to verify.
     * @return
     */
-//  def fetchObsoleteById(ids: Iterable[Long], startAddrMValue: Long, endAddrMValue: Long): Seq[Node] = {
   def fetchObsoleteById(ids: Iterable[Long]): Seq[Node] = {
     // An Obsolete node are those that no longer have justification for the current network, and must be expired.
     if (ids.isEmpty) {
       Seq()
     } else {
       val query = s"""
-        SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+        SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
         FROM NODE N
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
           WHERE ID IN (${ids.mkString(", ")})
@@ -344,7 +343,7 @@ class NodeDAO extends BaseDAO {
       Seq()
     } else {
       val query = s"""
-        SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+        SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
         FROM NODE N
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
           WHERE END_DATE IS NULL AND VALID_TO IS NULL AND ID IN (${ids.mkString(", ")}) AND NOT EXISTS (

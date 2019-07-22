@@ -121,7 +121,10 @@ class NodePointDAOSpec extends FunSuite with Matchers {
 
   test("Test expireById When two templates created and one expired Then expire one and keep the other") {
     runWithRollback {
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      roadwayDAO.create(Seq(roadway))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
       val ids = dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1),
         testNodePoint2.copy(roadwayPointId = roadwayPointId1)))
       val fetchedBefore = dao.fetchByIds(ids)
@@ -136,8 +139,11 @@ class NodePointDAOSpec extends FunSuite with Matchers {
 
   test("Test expireById When two created and one expired Then expire one and keep the other") {
     runWithRollback {
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      roadwayDAO.create(Seq(roadway))
       val nodeId = nodeDAO.create(Seq(testNode1)).head
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
       val ids = dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId)),
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
       val fetchedBefore = dao.fetchByIds(ids)
