@@ -164,8 +164,9 @@ class NodeDAO extends BaseDAO {
 
   def fetchById(nodeId: Long): Option[Node] = {
     sql"""
-      SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-      from NODE
+      SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      from NODE N
+      CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
       where ID = $nodeId and valid_to is null and end_date is null
       """.as[Node].firstOption
   }
@@ -233,6 +234,7 @@ class NodeDAO extends BaseDAO {
     * @param ids : Iterable[Long] - The ids of the junctions to verify.
     * @return
     */
+//  def fetchObsoleteById(ids: Iterable[Long], startAddrMValue: Long, endAddrMValue: Long): Seq[Node] = {
   def fetchObsoleteById(ids: Iterable[Long]): Seq[Node] = {
     // An Obsolete node are those that no longer have justification for the current network, and must be expired.
     if (ids.isEmpty) {
@@ -248,12 +250,12 @@ class NodeDAO extends BaseDAO {
             LEFT JOIN ROADWAY_POINT RP ON JP.ROADWAY_POINT_ID = RP.ID
             LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
             WHERE J.NODE_ID = N.ID AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL) < 2
-          AND (SELECT COUNT(*) FROM NODE_POINT NP
-              WHERE NP.NODE_ID = N.ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL) > 1
+          AND ((SELECT COUNT(*) FROM NODE_POINT NP
+            WHERE NP.NODE_ID = N.ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL) > 1
           AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER || '-' || RW.ROAD_PART_NUMBER || ',' || RW.ROAD_TYPE) FROM NODE_POINT NP
-              LEFT JOIN ROADWAY_POINT RP ON NP.ROADWAY_POINT_ID = RP.ID
-              LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
-              WHERE NP.NODE_ID = N.ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL) < 2
+            LEFT JOIN ROADWAY_POINT RP ON NP.ROADWAY_POINT_ID = RP.ID
+            LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
+            WHERE NP.NODE_ID = N.ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL) < 2)
           AND VALID_TO IS NULL AND END_DATE IS NULL
         """
       queryList(query)
