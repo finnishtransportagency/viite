@@ -2034,7 +2034,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
       nodesAndJunctionsService.handleJunctionPointTemplates(generatedRoadways.flatMap(_._3))
       nodesAndJunctionsService.handleNodePointTemplates(generatedRoadways.flatMap(_._3))
-      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(roadwayChanges, Some(project.startDate.minusDays(1)), project.createdBy)
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(generatedRoadways.flatMap(_._3), Some(project.startDate.minusDays(1)), project.createdBy)
       handleNewRoadNames(roadwayChanges, project)
       handleTransferAndNumbering(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
