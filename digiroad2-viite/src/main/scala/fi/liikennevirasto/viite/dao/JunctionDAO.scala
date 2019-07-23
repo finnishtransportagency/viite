@@ -104,8 +104,8 @@ class JunctionDAO extends BaseDAO {
   def create(junctions: Iterable[Junction], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
-      """insert into JUNCTION (ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, CREATED_BY, CREATED_TIME, VALID_TO, VALID_FROM)
-      values (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))""".stripMargin)
+      """insert into JUNCTION (ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, CREATED_BY)
+      values (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""".stripMargin)
 
     // Set ids for the junctions without one
     val (ready, idLess) = junctions.partition(_.id != NewIdValue)
