@@ -181,7 +181,7 @@ trait KMTKClientOperations {
 
   private def linklistParam(kmtkIds: Iterable[KMTKID]): String = {
     "linklist=" + URLEncoder.encode(
-      s"[${kmtkIds.map(k => s""""{"uuid":${k.uuid}","version":${k.version}}""").mkString(",")}]",
+      s"[${kmtkIds.map(k => s"""{"uuid":"${k.uuid}","version":${k.version}}""").mkString(",")}]",
       "UTF-8")
   }
 

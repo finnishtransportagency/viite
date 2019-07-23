@@ -148,8 +148,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
       val tableName = importOptions.conversionTable
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'),
            TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss'),  ely, tietyyppi, uuid, version, kayttaja, alkux, alkuy, loppux,
-           loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
-           WHERE aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL AND linkid IN (SELECT linkid FROM  #$tableName where ajorataid > $minRoadwayNumber AND ajorataid <= $maxRoadwayNumber AND  aet >= 0 AND let >= 0) """
+           loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName t1
+           WHERE aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL AND EXISTS (
+             SELECT * FROM #$tableName t2 where t2.ajorataid > $minRoadwayNumber AND t2.ajorataid <= $maxRoadwayNumber AND t2.aet >= 0 AND t2.let >= 0
+               AND t1.uuid = t2.uuid AND t1.version = t2.version
+           ) """
         .as[ConversionAddress].list
     }
   }
@@ -160,7 +163,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
       sql"""select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss') as alkupvm, TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss') as loppupvm,
            TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss') as muutospvm, null as lakkautuspvm, ely, tietyyppi, uuid, version, kayttaja, alkux, alkuy, loppux,
            loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
-           WHERE aet >= 0 AND let >= 0 AND linkid is null AND lakkautuspvm is null"""
+           WHERE aet >= 0 AND let >= 0 AND uuid is null AND lakkautuspvm is null"""
         .as[ConversionAddress].list
     }
   }
@@ -290,7 +293,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
         val kmtkIds = addresses.map(a => KMTKID(a._1.uuid,  a._1.version))
         val currentAddresses = currentConversionAddresses.filter(a => a.roadwayNumber == minAddress.roadwayNumber &&
           kmtkIds.contains(KMTKID(a.uuid, a.version))).sortBy(_.startAddressM)
-        val isReversed = if (currentAddresses.head.uuid == minAddress.uuid && currentAddresses.head.version == minAddress.version
+        val isReversed = if (currentAddresses.nonEmpty && currentAddresses.head.uuid == minAddress.uuid && currentAddresses.head.version == minAddress.version
           && currentAddresses.head.startM == minAddress.startM) 1 else 0
 
         val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber,

@@ -51,7 +51,7 @@ class LinkDAO {
   }
 
   def fetch(kmtkId: KMTKID): Option[Link] = {
-    val sql = s"""SELECT * FROM LINK where uuid = ${kmtkId.uuid} and version = ${kmtkId.version}"""
+    val sql = s"""SELECT * FROM LINK where uuid = '${kmtkId.uuid}' and version = ${kmtkId.version}"""
     Q.queryNA[Link](sql).firstOption
   }
 
