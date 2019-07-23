@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.State
 import fi.liikennevirasto.digiroad2.client.vvh.VVHHistoryRoadLink
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike

@@ -4,6 +4,7 @@ import java.io.IOException
 import java.sql.SQLException
 import java.util.Date
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
@@ -28,6 +29,7 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
+import scala.collection.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -70,7 +72,8 @@ case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt, roadName: String, r
 
 case class LinkToRevert(id: Long, linkId: Long, status: Long, geometry: Seq[Point])
 
-class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
+class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, nodesAndJunctionsService: NodesAndJunctionsService,
+                     eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -78,9 +81,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private val logger = LoggerFactory.getLogger(getClass)
   val roadwayDAO = new RoadwayDAO
+  val roadwayPointDAO = new RoadwayPointDAO
   val linearLocationDAO = new LinearLocationDAO
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
+  val nodeDAO = new NodeDAO
+  val nodePointDAO = new NodePointDAO
+  val junctionDAO = new JunctionDAO
+  val junctionPointDAO = new JunctionPointDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val roadwayChangesDAO = new RoadwayChangesDAO
   val projectValidator = new ProjectValidator
@@ -2024,6 +2032,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       roadAddressService.updateRoadwayPoints(projectLinks.filter(_.roadwayNumber != NewIdValue), username = project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
+      nodesAndJunctionsService.handleJunctionPointTemplates(generatedRoadways.flatMap(_._3))
+      nodesAndJunctionsService.handleNodePointTemplates(generatedRoadways.flatMap(_._3))
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(generatedRoadways.flatMap(_._3), Some(project.startDate.minusDays(1)), project.createdBy)
       handleNewRoadNames(roadwayChanges, project)
       handleTransferAndNumbering(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
