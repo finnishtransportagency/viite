@@ -1,15 +1,14 @@
 package fi.liikennevirasto.viite.dao
-
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import org.joda.time.DateTime
+import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import fi.liikennevirasto.viite._
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 
 
 case class JunctionPoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, junctionId: Long, startDate: DateTime, endDate: Option[DateTime],
@@ -49,20 +48,65 @@ class JunctionPointDAO extends BaseDAO {
     }.toList
   }
 
-  def fetchJunctionPointsByJunctionIds(junctionIds: Seq[Long]): Seq[JunctionPoint] = {
-    if(junctionIds.isEmpty){
+  def fetchByIds(ids: Seq[Long]): Seq[JunctionPoint] = {
+    if (ids.isEmpty) {
       Seq()
-    }
-    else{
+    } else {
       val query =
         s"""
-       SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
-       RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK FROM JUNCTION_POINT JP
-       JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-       JOIN JUNCTION J on (J.ID = JP.JUNCTION_ID)
-       JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
-       where J.ID in (${junctionIds.mkString(",")})
-     """
+          SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
+          RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK
+          FROM JUNCTION_POINT JP
+          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+          where JP.ID in (${ids.mkString(",")}) AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL
+        """
+      queryList(query)
+    }
+  }
+
+  def fetchJunctionPointsByJunctionIds(junctionIds: Seq[Long]): Seq[JunctionPoint] = {
+    if (junctionIds.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+          SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
+          RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK  FROM JUNCTION_POINT JP
+          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+          JOIN JUNCTION J on (J.ID = JP.JUNCTION_ID)
+          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
+          where J.ID in (${junctionIds.mkString(",")}) AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL
+        """
+      queryList(query)
+    }
+  }
+
+  def fetchJunctionPointsByRoadwayPoints(roadwayNumber: Long, addrM: Long, beforeAfter: BeforeAfter): Option[JunctionPoint] = {
+    val query =
+      s"""
+        SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
+        RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK FROM JUNCTION_POINT JP
+        JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
+        JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+        where JP.valid_to is null and JP.end_date is null and
+        RP.ROADWAY_NUMBER = $roadwayNumber and RP.ADDR_M = $addrM and JP.before_after = ${beforeAfter.value}
+      """
+    queryList(query).headOption
+  }
+
+  def fetchByRoadwayPointIds(roadwayPointIds: Seq[Long]): Seq[JunctionPoint] = {
+    if (roadwayPointIds.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+          SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
+          RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK FROM JUNCTION_POINT JP
+          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+          where JP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")}) AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL
+        """
       queryList(query)
     }
   }
@@ -82,8 +126,8 @@ class JunctionPointDAO extends BaseDAO {
           JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
           JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID AND J.NODE_ID IS NULL)
           JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = JP.ROADWAY_NUMBER)
-          where $boundingBoxFilter and NP.valid_to is null and NP.end_date is null
+          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
+          where $boundingBoxFilter and JP.valid_to is null and JP.end_date is null
         """
       queryList(query)
     }
@@ -119,6 +163,23 @@ class JunctionPointDAO extends BaseDAO {
     ps.executeBatch()
     ps.close()
     createJunctionPoints.map(_.id).toSeq
+  }
+
+  /**
+    * Expires junction points (set their valid_to to the current system date).
+    *
+    * @param ids : Iterable[Long] - The ids of the junction points to expire.
+    * @return
+    */
+  def expireById(ids: Iterable[Long]): Int = {
+    val query =
+      s"""
+        Update JUNCTION_POINT Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(", ")})
+      """
+    if (ids.isEmpty)
+      0
+    else
+      Q.updateNA(query).first
   }
 
 }

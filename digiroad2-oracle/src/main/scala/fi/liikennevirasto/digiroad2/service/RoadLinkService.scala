@@ -4,13 +4,14 @@ import java.io.{File, FilenameFilter, IOException}
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.{GetResult, PositionedResult}

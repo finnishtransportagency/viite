@@ -113,10 +113,45 @@ class NodePointDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
       val nodePoints = dao.fetchTemplatesByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
       nodePoints.size should be(2)
-      nodePoints.filter(n => n.roadwayNumber == roadwayNumber).size should be(2)
-      nodePoints.filter(n => n.addrM == testRoadwayPoint1.addrMValue).size should be(2)
-      nodePoints.filter(n => n.createdBy == Some("Test")).size should be(2)
+      nodePoints.count(n => n.roadwayNumber == roadwayNumber) should be(2)
+      nodePoints.count(n => n.addrM == testRoadwayPoint1.addrMValue) should be(2)
+      nodePoints.count(n => n.createdBy.contains("Test")) should be(2)
     }
   }
 
+  test("Test expireById When two templates created and one expired Then expire one and keep the other") {
+    runWithRollback {
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      roadwayDAO.create(Seq(roadway))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
+      val ids = dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1)))
+      val fetchedBefore = dao.fetchByIds(ids)
+      fetchedBefore.size should be(2)
+      dao.expireById(Seq(ids.head))
+      val fetched = dao.fetchByIds(ids)
+      fetched.size should be(1)
+      fetched.head.id should be(ids.last)
+      fetched.head.nodeId should be(None)
+    }
+  }
+
+  test("Test expireById When two created and one expired Then expire one and keep the other") {
+    runWithRollback {
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      roadwayDAO.create(Seq(roadway))
+      val nodeId = nodeDAO.create(Seq(testNode1)).head
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
+      val ids = dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId)),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
+      val fetchedBefore = dao.fetchByIds(ids)
+      fetchedBefore.size should be(2)
+      dao.expireById(Seq(ids.head))
+      val fetched = dao.fetchByIds(ids)
+      fetched.size should be(1)
+      fetched.head.id should be(ids.last)
+    }
+  }
 }
