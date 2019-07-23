@@ -125,7 +125,6 @@ object RoadwayFiller {
     }
   }
 
-
   private def applyNew(change: ProjectRoadwayChange, projectLinks: Seq[ProjectLink]): Seq[(Seq[Roadway], Seq[LinearLocation], Seq[ProjectLink])] = {
     val changeTarget = change.changeInfo.target
     val roadwayNumber = if (projectLinks.head.roadwayNumber == NewIdValue) Sequences.nextRoadwayNumber else projectLinks.head.roadwayNumber

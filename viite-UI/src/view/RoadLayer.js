@@ -115,7 +115,7 @@
         coordinate = map.getEventCoordinate(event.originalEvent);
         if (infoContent !== null) {
           infoContent.innerHTML =
-            'Nimi:&nbsp;' + nodeData.nodeName + '<br>' +
+            'Nimi:&nbsp;' + nodeData.name + '<br>' +
             'Solmutyyppi:&nbsp;' + displayNodeType(nodeData.type) + '<br>'
           ;
         }

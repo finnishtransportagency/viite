@@ -1,12 +1,12 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
-import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
@@ -17,7 +17,6 @@ import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.viite.util.toProjectLink
 import fi.liikennevirasto.viite.util.toTransition
 

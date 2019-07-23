@@ -1,13 +1,14 @@
 package fi.liikennevirasto.viite.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
@@ -383,7 +384,6 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
   def getLastPoint: Point = {
     if (sideCode == SideCode.TowardsDigitizing) geometry.last else geometry.head
   }
-
 }
 
 case class Roadway(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
@@ -772,7 +772,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false)(query: String): String = {
-    val endDateFilter = if (withHistory) "" else "and a.end_date is null"
+    val endDateFilter = if (withHistory) "" else "and (a.end_date is null or a.end_date >= sysdate)"
     if (roadwayNumbers.size > 1000) {
       MassQuery.withIds(roadwayNumbers) {
         idTableName =>

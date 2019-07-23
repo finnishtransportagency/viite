@@ -1,5 +1,6 @@
-package fi.liikennevirasto.digiroad2
+package fi.liikennevirasto
 
+import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 
 object GeometryUtils {
