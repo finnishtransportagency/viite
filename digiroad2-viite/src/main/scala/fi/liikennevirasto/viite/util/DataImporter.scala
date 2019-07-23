@@ -187,16 +187,16 @@ class DataImporter {
     }
 
 
-  def updateLinearLocationGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
+  def updateLinearLocationGeometry(vvhClient: VVHClient, kmtkClient: KMTKClient, customFilter: String = ""): Unit = {
     val eventBus = new DummyEventBus
     val linearLocationDAO = new LinearLocationDAO
-    val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
+    val linkService = new RoadLinkService(vvhClient, kmtkClient, eventBus, new DummySerializer)
     var changed = 0
     withLinkIdChunks {
       case (min, max) =>
         withDynTransaction {
         val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
-        val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
+        val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinks(linkIds)
         val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet)
         val topologyLocation = unGroupedTopology.groupBy(_.linkId)
         roadLinksFromVVH.foreach(roadLink => {

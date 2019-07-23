@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType
@@ -26,7 +26,7 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
       RoadAddress(2L, 1L, 12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 60L, 75L, None, None, None, 123, 54.948, 69.844,
         SideCode.TowardsDigitizing, 0L, (None, None), GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
-    val link = RoadLink(12L, geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
+    val link = RoadLink(12L, KMTKID("UUID", 1), geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
       Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
     networkChecker.isGeometryChange(link, roadAddressSeq) should be(false)
 
@@ -55,7 +55,7 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
       RoadAddress(2L, 1L,  12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 60L, 75L, None, None, None, 123, 54.948, 69.844,
         SideCode.TowardsDigitizing, 0L, (None, None), GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
-    val link = RoadLink(12L, geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
+    val link = RoadLink(12L, KMTKID("UUID", 1), geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
       Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
     networkChecker.isGeometryChange(link, roadAddressSeq) should be(false)
 
@@ -75,7 +75,7 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
       Some(DateTime.parse("2015-08-25T00:00:00.000+03:00")), None, Some("Automatic_merged"), 5515411, 0.0, 69.87700000000001,
       SideCode.TowardsDigitizing, 1476392565000L, (None, None), roadLinkGeometry, LinkGeomSource.NormalLinkInterface, 4, TerminationCode.NoTermination, 0))
 
-    val link = RoadLink(6474047L, roadLinkGeometry, 69.87700000000001, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
+    val link = RoadLink(6474047L, KMTKID("UUID", 1), roadLinkGeometry, 69.87700000000001, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
       Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
     networkChecker.isGeometryChange(link, roadAddressSeq) should be(false)

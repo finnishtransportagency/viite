@@ -9,7 +9,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.kmtk.KMTKClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.dao.{Link, LinkDAO, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
@@ -43,6 +43,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
                                     x2: Option[Double], y2: Option[Double], validFrom: Option[DateTime], validTo: Option[DateTime])
 
   val dateFormatter = ISODateTimeFormat.basicDate()
+
+  val linkDAO = new LinkDAO
 
   val roadwayPointDAO = new RoadwayPointDAO
 
@@ -251,12 +253,12 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
             val kmtkId = KMTKID(converted.uuid, converted.version)
             val roadLink = mappedRoadLinks.getOrElse(kmtkId,
               throw new IllegalStateException(s"Road link not found with KMTKID: ${converted.uuid}, ${converted.version}"))
-            val startCalibrationPoint = getStartCalibrationPoint(converted)
-            val endCalibrationPoint = getEndCalibrationPoint(converted)
+            val link = links.lift(kmtkId).getOrElse(throw new IllegalStateException(s"Link not found with KMTKID: ${converted.uuid}, ${converted.version}"))
+            val startCalibrationPoint = getStartCalibrationPoint(converted, link.id)
+            val endCalibrationPoint = getEndCalibrationPoint(converted, link.id)
             handlePoints(roadwayPointPs, calibrationPointPs, startCalibrationPoint, endCalibrationPoint)
 
-            val linkId = links.lift(kmtkId).getOrElse(throw new IllegalStateException(s"Link not found with KMTKID: ${converted.uuid}, ${converted.version}")).id
-            val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayNumber, add._2, linkId,
+            val linearLocation = adjustLinearLocation(IncomingLinearLocation(converted.roadwayNumber, add._2, link.id,
               converted.startM, converted.endM, converted.sideCode, roadLink.linkSource, createdBy = "import",
               converted.x1, converted.y1, converted.x2, converted.y2, converted.validFrom, None), groupedLinkCoeffs(kmtkId))
             if (add._1.directionFlag == 1) {
@@ -285,10 +287,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
       case (key, addresses) =>
         val minAddress = addresses.head._1
         val maxAddress = addresses.last._1
-        val linkIds = addresses.map(_._1.linkId)
-        val currentAddresses = currentConversionAddresses.filter(add => add.roadwayNumber == minAddress.roadwayNumber &&
-          linkIds.contains(add.linkId)).sortBy(_.startAddressM)
-        val isReversed = if (currentAddresses.head.linkId == minAddress.linkId && currentAddresses.head.startM == minAddress.startM) 1 else 0
+        val kmtkIds = addresses.map(a => KMTKID(a._1.uuid,  a._1.version))
+        val currentAddresses = currentConversionAddresses.filter(a => a.roadwayNumber == minAddress.roadwayNumber &&
+          kmtkIds.contains(KMTKID(a.uuid, a.version))).sortBy(_.startAddressM)
+        val isReversed = if (currentAddresses.head.uuid == minAddress.uuid && currentAddresses.head.version == minAddress.version
+          && currentAddresses.head.startM == minAddress.startM) 1 else 0
 
         val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber,
           minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, isReversed, minAddress.startDate,
@@ -328,7 +331,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
     val links = new ListBuffer[Link]
     roadLinks.foreach {
       link =>
-        val existingLink = LinkDAO.fetch(link.kmtkId)
+        val existingLink = linkDAO.fetch(link.kmtkId)
         if (existingLink.isEmpty) {
           val newLink = Link(Sequences.nextLinkId, link.kmtkId.uuid, link.kmtkId.version, link.linkSource.value, 0, None)
           statement.setLong(1, newLink.id)
@@ -373,7 +376,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
     roadwayPs.close()
   }
 
-  private def getStartCalibrationPoint(convertedAddress: ConversionAddress): Option[(RoadwayPoint, CalibrationPoint)] = {
+  private def getStartCalibrationPoint(convertedAddress: ConversionAddress, linkId: Long): Option[(RoadwayPoint, CalibrationPoint)] = {
     convertedAddress.calibrationCode match {
       case AtBeginning | AtBoth => {
         val existingRoadwayPoint = roadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.startAddressM)
@@ -383,16 +386,16 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
             if (existingCalibrationPoint.isDefined)
               Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
             else
-              Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, 0, CalibrationPointType.Mandatory, createdBy = "import")))
+              Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, linkId, x.roadwayNumber, x.addrMValue, 0, CalibrationPointType.Mandatory, createdBy = "import")))
           case _ =>
-            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.startAddressM, "import"), CalibrationPoint(NewIdValue, NewIdValue, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, 0, CalibrationPointType.Mandatory, createdBy = "import"))
+            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.startAddressM, "import"), CalibrationPoint(NewIdValue, NewIdValue, linkId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, 0, CalibrationPointType.Mandatory, createdBy = "import"))
         }
       }
       case _ => None
     }
   }
 
-  private def getEndCalibrationPoint(convertedAddress: ConversionAddress): Option[(RoadwayPoint, CalibrationPoint)] = {
+  private def getEndCalibrationPoint(convertedAddress: ConversionAddress, linkId: Long): Option[(RoadwayPoint, CalibrationPoint)] = {
     convertedAddress.calibrationCode match {
       case AtEnd | AtBoth =>
 
@@ -403,9 +406,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
             if (existingCalibrationPoint.isDefined)
               Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
             else
-              Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, convertedAddress.linkId, x.roadwayNumber, x.addrMValue, 1, CalibrationPointType.Mandatory, createdBy = "import")))
+              Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, linkId, x.roadwayNumber, x.addrMValue, 1, CalibrationPointType.Mandatory, createdBy = "import")))
           case _ =>
-            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.endAddressM, "import"), CalibrationPoint(NewIdValue, NewIdValue, convertedAddress.linkId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, 1, CalibrationPointType.Mandatory, createdBy = "import"))
+            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.endAddressM, "import"), CalibrationPoint(NewIdValue, NewIdValue, linkId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, 1, CalibrationPointType.Mandatory, createdBy = "import"))
         }
       case _ => None
     }
@@ -427,8 +430,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
       val expirationDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val ely = r.nextLong()
       val roadType = r.nextLong()
-      val uuid = r.nextStringOption()
-      val version = r.nextLongOption()
+      val uuid = r.nextStringOption() // Some historical terminated links might not have geometry
+      val version = r.nextLongOption() // Some historical terminated links might not have geometry
       val userId = r.nextString
       val x1 = r.nextDouble()
       val y1 = r.nextDouble()
@@ -460,11 +463,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
 
       if (startAddrM < endAddrM) {
         ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM, startDate, endDateOption, validFrom, expirationDate, ely, roadType, 0,
-          uuid, version, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.TowardsDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
+          uuid.getOrElse(null), version.getOrElse(0), userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.TowardsDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
       } else {
         //switch startAddrM, endAddrM and set the side code to AgainstDigitizing
         ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, endAddrM, startAddrM, startM, endM, startDate, endDateOption, validFrom, expirationDate, ely, roadType, 0,
-          uuid, version, userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.AgainstDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
+          uuid.getOrElse(null), version.getOrElse(0), userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.AgainstDigitizing, getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
       }
     }
   }

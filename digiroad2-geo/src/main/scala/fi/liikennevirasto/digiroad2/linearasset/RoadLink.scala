@@ -3,7 +3,14 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 
-case class KMTKID(uuid: String, version: Long)
+/**
+ * KMTK ID consists of uuid and version.
+ * Complementary VVH link ids are also saved in uuid and they don't have a version (version = 0).
+ */
+case class KMTKID(uuid: String, version: Long = 0) {
+  def isKMTK: Boolean = uuid.length >= 32
+  def isVVH: Boolean = uuid.length < 32
+}
 
 trait RoadLinkLike extends PolyLine {
   def linkId: Long

@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.client.kmtk.KMTKHistoryRoadLink
 import fi.liikennevirasto.digiroad2.client.vvh._
 import org.json4s.JsonAST.{JInt, JString}
 import org.json4s.jackson.Serialization.read
@@ -20,7 +21,7 @@ object StaticTestData {
   val historyRoadLinkFile = new File(getClass.getResource("/road1130historyLinks.json").toURI)
   // Contains Road 1130 part 4 and 5 links plus some extra that fit the bounding box approx (351714,6674367)-(361946,6681967)
   val road1130Links: Seq[RoadLink] = deserializer.readCachedGeometry(roadLinkFile)
-  val road1130HistoryLinks: Seq[VVHHistoryRoadLink] = deserializer.readCachedHistoryLinks(historyRoadLinkFile)
+  val road1130HistoryLinks: Seq[KMTKHistoryRoadLink] = deserializer.readCachedHistoryLinks(historyRoadLinkFile)
   def mappedGeoms(linkIds: Iterable[Long]): Map[Long, Seq[Point]] = {
     val set = linkIds.toSet
     geometryMap.filterKeys(l => set.contains(l))
@@ -282,9 +283,9 @@ class RoadLinkDeserializer extends VVHSerializer {
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +
     FeatureClassSerializer
 
-  def readCachedHistoryLinks(file: File): Seq[VVHHistoryRoadLink] = {
+  def readCachedHistoryLinks(file: File): Seq[KMTKHistoryRoadLink] = {
     val json = new FileReader(file)
-    read[Seq[VVHHistoryRoadLink]](json)
+    read[Seq[KMTKHistoryRoadLink]](json)
   }
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {

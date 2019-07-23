@@ -4,7 +4,7 @@ import java.sql.{Timestamp, Types}
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{LinkDAO, Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
@@ -105,6 +105,8 @@ class LinearLocationDAO {
 
   private def logger = LoggerFactory.getLogger(getClass)
 
+  val linkDAO: LinkDAO = new LinkDAO
+
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
 
   // TODO If not used, remove
@@ -143,7 +145,7 @@ class LinearLocationDAO {
 
     createLinearLocations.foreach {
       location =>
-        LinkDAO.createIfEmptyFetch(location.linkId)
+        linkDAO.createIfEmptyFetch(location.linkId)
         val roadwayNumber = if (location.roadwayNumber == NewIdValue) {
           Sequences.nextRoadwayNumber
         } else {
