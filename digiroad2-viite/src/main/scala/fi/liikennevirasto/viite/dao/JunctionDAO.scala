@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Date
-
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession

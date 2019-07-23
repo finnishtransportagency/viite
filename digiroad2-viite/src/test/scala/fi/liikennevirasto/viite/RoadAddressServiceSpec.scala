@@ -37,10 +37,17 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val projectDAO = new ProjectDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val projectLinkDAO = new ProjectLinkDAO
+  val roadwayPointDAO = new RoadwayPointDAO
+  val nodeDAO = new NodeDAO
+  val nodePointDAO = new NodePointDAO
+  val junctionDAO = new JunctionDAO
+  val junctionPointDAO = new JunctionPointDAO
   val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, roadwayAddressMappper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }
+
+  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO)
 
     def runWithRollback[T](f: => T): T = {
       Database.forDataSource(OracleDatabase.ds).withDynTransaction {
@@ -556,7 +563,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadwayPointDAO = new RoadwayPointDAO
       val roadwayDAO = new RoadwayDAO
       val linearLocationDAO = new LinearLocationDAO
-      val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockEventBus) {
+      val projectService = new ProjectService(roadAddressService, mockRoadLinkService, nodesAndJunctionsService, mockEventBus) {
         override def withDynSession[T](f: => T): T = f
         override def withDynTransaction[T](f: => T): T = f
       }
@@ -755,7 +762,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadwayPointDAO = new RoadwayPointDAO
       val roadwayDAO = new RoadwayDAO
       val linearLocationDAO = new LinearLocationDAO
-      val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockEventBus) {
+      val projectService = new ProjectService(roadAddressService, mockRoadLinkService, nodesAndJunctionsService, mockEventBus) {
         override def withDynSession[T](f: => T): T = f
         override def withDynTransaction[T](f: => T): T = f
       }
