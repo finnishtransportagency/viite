@@ -125,6 +125,6 @@ case class Point(x: Double, y: Double, z: Double = 0.0) {
   }
 
   def connected(point: Point): Boolean = {
-    GeometryUtils.areAdjacent(Point(x, y, z), point, fi.liikennevirasto.GeometryUtils.MaxDistanceForConnectedLinks)
+    GeometryUtils.areAdjacent(Point(x, y, z), point, GeometryUtils.MaxDistanceForConnectedLinks)
   }
 }

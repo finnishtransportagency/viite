@@ -1,12 +1,12 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.viite._
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 
 case class Junction(id: Long, junctionNumber: Long, nodeId: Option[Long], startDate: DateTime, endDate: Option[DateTime],
                     validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
@@ -62,15 +62,16 @@ class JunctionDAO extends BaseDAO {
     """.as[Long].firstOption
   }
 
-  def fetchByIds(ids: Iterable[Long]): Seq[Junction] = {
-    if (ids.isEmpty) {
-      Seq()
-    } else {
-      val query = s"""
-        SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-          FROM JUNCTION
-          WHERE ID IN (${ids.mkString(", ")}) AND VALID_TO IS NULL
-        """
+  def fetchByIds(ids: Seq[Long]): Seq[Junction] = {
+    if (ids.isEmpty)
+      List()
+    else {
+      val query =
+        s"""
+      SELECT ID, JUNCTION_NUMBER, NODE_ID, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      FROM JUNCTION
+      WHERE ID IN (${ids.mkString(", ")}) AND VALID_TO IS NULL
+      """
       queryList(query)
     }
   }
