@@ -144,7 +144,6 @@ class NodePointDAO extends BaseDAO {
     queryList(query)
   }
 
-
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
     time(logger, "Fetch NodePoint templates by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
@@ -200,6 +199,36 @@ class NodePointDAO extends BaseDAO {
     ps.executeBatch()
     ps.close()
     createNodePoints.map(_.id).toSeq
+  }
+
+  def update(nodePoints: Iterable[NodePoint], updatedBy: String = "-"): Seq[Long] = {
+
+    val ps = dynamicSession.prepareStatement(
+      "update NODE_POINT SET BEFORE_AFTER = ?, ROADWAY_POINT_ID = ?, NODE_ID = ?, END_DATE = TO_DATE(?, 'YYYY-MM-DD'), VALID_TO = TO_DATE(?, 'YYYY-MM-DD') WHERE ID = ?")
+
+    nodePoints.foreach {
+      nodePoint =>
+        ps.setLong(1, nodePoint.beforeAfter.value)
+        ps.setLong(2, nodePoint.roadwayPointId)
+        if (nodePoint.nodeId.isDefined) {
+          ps.setLong(3, nodePoint.nodeId.get)
+        } else {
+          ps.setNull(3, java.sql.Types.INTEGER)
+        }
+        ps.setString(4, nodePoint.endDate match {
+          case Some(date) => dateFormatter.print(date)
+          case None => ""
+        })
+        ps.setString(5, nodePoint.validTo match {
+          case Some(date) => dateFormatter.print(date)
+          case None => ""
+        })
+        ps.setLong(6, nodePoint.id)
+        ps.addBatch()
+    }
+    ps.executeBatch()
+    ps.close()
+    nodePoints.map(_.id).toSeq
   }
 
   /**
