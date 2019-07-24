@@ -97,10 +97,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       */
         val junctionReversed =
           roadwayChanges.exists(ch =>
-            ch.changeInfo.target.startAddressM.nonEmpty && link.startAddrMValue == ch.changeInfo.target.startAddressM.get && ch.changeInfo.reversed
-          ) ||
-          roadwayChanges.exists(ch =>
-            ch.changeInfo.target.endAddressM.nonEmpty && link.endAddrMValue == ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed
+            ch.changeInfo.target.roadNumber.nonEmpty && link.roadNumber == ch.changeInfo.target.roadNumber.get &&
+              ch.changeInfo.target.startRoadPartNumber.nonEmpty && link.roadPartNumber == ch.changeInfo.target.startRoadPartNumber.get&& ch.changeInfo.reversed
           )
 
         val originalLink = mappedRoadwayNumbers.find(mpr => link.startAddrMValue == mpr.newStartAddr && link.endAddrMValue == mpr.newEndAddr && mpr.newRoadwayNumber == link.roadwayNumber)
@@ -192,8 +190,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               }
               val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
               if(linkJunctionPoint.isEmpty)
-              junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue))).head
-              rwPoint
+              junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue)))
             }
         }
 
@@ -246,7 +243,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             }
             val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
             if(linkJunctionPoint.isEmpty)
-            junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue))).head
+            junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue)))
         }
 
         // |--R--0>|<0--L--|
@@ -277,7 +274,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             }
             val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)
             if(linkJunctionPoint.isEmpty)
-            junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue))).head
+            junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue)))
         }
 
         val newJunctionsToTail = roadsToTail.flatMap { rh =>
@@ -318,7 +315,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             }
             val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)
             if(linkJunctionPoint.isEmpty)
-            junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue))).head
+            junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue)))
         }
       }
   }
