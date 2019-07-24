@@ -21,6 +21,14 @@ object BeforeAfter {
     values.find(_.value == intValue).getOrElse(UnknownBeforeAfter)
   }
 
+  def switch(beforeAfter: BeforeAfter): BeforeAfter = {
+    beforeAfter match {
+      case After => Before
+      case Before => After
+      case _ => beforeAfter
+    }
+  }
+
   case object Before extends BeforeAfter {
     def value = 1
   }
@@ -105,6 +113,20 @@ class NodePointDAO extends BaseDAO {
     queryList(query)
   }
 
+  def fetchNodePointsTemplates(roadwayNumbers: Set[Long]): List[NodePoint] = {
+    val query =
+      if (roadwayNumbers.isEmpty) {
+        ""
+      } else {
+        s"""SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_ID, NP.START_DATE, NP.END_DATE,
+                             NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M
+                             FROM NODE_POINT NP
+                             JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+         where RP.roadway_number in ${roadwayNumbers.mkString(", ")} and NP.valid_to is null and NP.end_date is null
+       """
+      }
+    queryList(query)
+  }
 
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
     time(logger, "Fetch NodePoint templates by bounding box") {
