@@ -72,6 +72,18 @@ class JunctionPointDAO extends BaseDAO {
       queryList(query).headOption
   }
 
+  def fetchJunctionPointsByRoadwayPointNumbers(roadwayNumber: Set[Long], addrM: Long, beforeAfter: BeforeAfter): Option[JunctionPoint] = {
+    val query =
+      s"""
+       SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
+       RP.ROADWAY_NUMBER, RP.ADDR_M FROM JUNCTION_POINT JP
+       JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
+       where JP.valid_to is null and (JP.end_date is null or JP.end_date >= sysdate) and
+       RP.ROADWAY_NUMBER in ${roadwayNumber.mkString(",")} and RP.ADDR_M = $addrM and JP.before_after = ${beforeAfter.value}
+     """
+    queryList(query).headOption
+  }
+
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionPoint] = {
     time(logger, "Fetch JunctionPoint templates by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
