@@ -95,11 +95,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         /*
       handle creation of JUNCTION_POINT in reverse cases
       */
-        val junctionReversed =
-          roadwayChanges.exists(ch =>
-            ch.changeInfo.target.roadNumber.nonEmpty && link.roadNumber == ch.changeInfo.target.roadNumber.get &&
-              ch.changeInfo.target.startRoadPartNumber.nonEmpty && link.roadPartNumber == ch.changeInfo.target.startRoadPartNumber.get&& ch.changeInfo.reversed
-          )
+
+        val junctionReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && link.startAddrMValue >= ch.changeInfo.target.startAddressM.get
+              && ch.changeInfo.target.endAddressM.nonEmpty && link.endAddrMValue <= ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed)
 
         val originalLink = mappedRoadwayNumbers.find(mpr => link.startAddrMValue == mpr.newStartAddr && link.endAddrMValue == mpr.newEndAddr && mpr.newRoadwayNumber == link.roadwayNumber)
 
