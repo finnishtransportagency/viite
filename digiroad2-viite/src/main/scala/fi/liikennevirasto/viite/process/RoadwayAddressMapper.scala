@@ -94,7 +94,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
         }
 
         val adjustedList: Seq[Long] = if ((previewValue < endAddress) && (previewValue > startAddr)) {
-          list :+ previewValue.toLong
+          list :+ Math.round(previewValue)
         } else if (previewValue <= startAddr) {
           mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment + 1, depth + 1)
         } else if (previewValue <= endAddress) {
@@ -107,11 +107,11 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
     }
 
-    val coef = (endAddress - startAddress) / linearLocations.map(l => l.endMValue - l.startMValue).sum
+    val coefficient = (endAddress - startAddress) / linearLocations.map(l => l.endMValue - l.startMValue).sum
 
     val sortedLinearLocations = linearLocations.sortBy(_.orderNumber)
 
-    val addresses = mappedAddressValues(sortedLinearLocations.init, Seq(), startAddress, endAddress, coef, Seq(startAddress), 0) :+ endAddress
+    val addresses = mappedAddressValues(sortedLinearLocations.init, Seq(), startAddress, endAddress, coefficient, Seq(startAddress), 0) :+ endAddress
 
     sortedLinearLocations.zip(addresses.zip(addresses.tail)).map {
       case (linearLocation, (st, en)) =>
