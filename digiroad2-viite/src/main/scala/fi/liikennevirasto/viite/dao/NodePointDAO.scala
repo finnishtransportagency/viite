@@ -122,6 +122,15 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
+  def fetchByRoadwayPointId(roadwayPointId: Long): Seq[NodePoint] = {
+    val query =
+      s"""
+     $selectFromNodePoint
+     where NP.ROADWAY_POINT_ID = $roadwayPointId and NP.valid_to is null and NP.end_date is null
+   """
+    queryList(query)
+  }
+
   def fetchNodePoint(roadwayNumber: Long): Option[NodePoint] = {
     val query =
       s"""
@@ -246,6 +255,10 @@ class NodePointDAO extends BaseDAO {
       0
     else
       Q.updateNA(query).first
+  }
+
+  def updateRoadwayPointId(nodePointId: Any, roadwayPointId: Long) = {
+    Q.updateNA(s"UPDATE NODE_POINT SET ROADWAY_POINT_ID = $roadwayPointId WHERE ID = $nodePointId").execute
   }
 
 }
