@@ -364,14 +364,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           /*
       handle update of NODE_POINT in reverse cases
     */
-          val (startNodeReversed, endNodeReversed) = {
+          val (startNodeReversed, endNodeReversed) =
             (roadwayChanges.exists(ch =>
               ch.changeInfo.target.startAddressM.nonEmpty && headLink.startAddrMValue == ch.changeInfo.target.startAddressM.get && ch.changeInfo.reversed
             ),
               roadwayChanges.exists(ch =>
                 ch.changeInfo.target.endAddressM.nonEmpty && lastLink.endAddrMValue == ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed
               ))
-          }
+
 
           val existingHeadNodePoint = {
             val originalLink = mappedRoadwayNumbers.find(mpr => headLink.startAddrMValue == mpr.newStartAddr && headLink.endAddrMValue == mpr.newEndAddr && mpr.newRoadwayNumber == headLink.roadwayNumber)

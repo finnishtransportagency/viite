@@ -1,12 +1,15 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.BeforeAfter.Before
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -25,12 +28,26 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   private val roadPartNumber1 = 1
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
+  val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
+  val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
   val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
   val nodeDAO = new NodeDAO
   val nodePointDAO = new NodePointDAO
   val junctionDAO = new JunctionDAO
   val junctionPointDAO = new JunctionPointDAO
+  val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
+
+    override def withDynTransaction[T](f: => T): T = f
+  }
+  val projectService: ProjectService = new ProjectService(roadAddressService, mockRoadLinkService, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
+
+    override def withDynTransaction[T](f: => T): T = f
+  }
+
   val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO) {
     override def withDynSession[T](f: => T): T = f
 
@@ -149,8 +166,32 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val combined1 = dummyProjectLink(999, 999, Track.Combined, Discontinuity.Continuous, 50 , 100, Some(DateTime.now()), None, 12347, 0, 50, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.FerryRoad, combGeom1, roadwayNumber+2)
       val combined2 = dummyProjectLink(999, 999, Track.Combined, Discontinuity.EndOfRoad, 100 , 150, Some(DateTime.now()), None, 12348, 0, 50, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.PublicRoad, combGeom2, roadwayNumber+3)
 
+      val projectChanges = List(
+        //left
+      ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
+        RoadwayChangeInfo(AddressChangeType.New,
+          RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
+          RoadwayChangeSection(Some(999), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(0L), endAddressM = Some(50L), Some(RoadType.PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
+          Discontinuity.Continuous,RoadType.PublicRoad,  reversed = false, 1, 8)
+        ,DateTime.now,Some(0L)),
+        //right
+        ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
+            RoadwayChangeSection(Some(999), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(0L), endAddressM = Some(50L), Some(RoadType.FerryRoad), Some(Discontinuity.Continuous), Some(8L)),
+            Discontinuity.Continuous,RoadType.PublicRoad,  reversed = false, 1, 8)
+          ,DateTime.now,Some(0L)),
+        //combined
+        ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
+            RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), startAddressM = Some(50L), endAddressM = Some(150L), Some(RoadType.PublicRoad), Some(Discontinuity.EndOfRoad), Some(8L)),
+            Discontinuity.Continuous,RoadType.PublicRoad,  reversed = false, 1, 8)
+          ,DateTime.now,Some(0L))
+      )
+
       val pls = Seq(left, right, combined1, combined2)
-      nodesAndJunctionsService.handleNodePointTemplates(List.empty[ProjectRoadwayChange], pls)
+      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, pls, projectService.mapChangedRoadwayNumbers(pls, pls))
 
       val fetchedNodesPoints = pls.flatMap(pl => nodePointDAO.fetchNodePointTemplate(pl.roadwayNumber))
       fetchedNodesPoints.exists(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.After)  should be (false)
@@ -182,7 +223,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
 
-      nodesAndJunctionsService.handleJunctionPointTemplates(List.empty[ProjectRoadwayChange], pls)
+      nodesAndJunctionsService.handleJunctionPointTemplates(List.empty[ProjectRoadwayChange], pls, projectService.mapChangedRoadwayNumbers(pls, pls))
 
       val roadJunctionPoints = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadway.roadwayNumber, roadway.endAddrMValue, BeforeAfter.Before)
       val junction1 = junctionDAO.fetchByIds(Seq(roadJunctionPoints.head.junctionId))
@@ -227,7 +268,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
 
-      nodesAndJunctionsService.handleJunctionPointTemplates(List.empty[ProjectRoadwayChange], pls)
+      nodesAndJunctionsService.handleJunctionPointTemplates(List.empty[ProjectRoadwayChange], pls, projectService.mapChangedRoadwayNumbers(pls, pls))
 
       val roadJunctionPoints = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadway.roadwayNumber, roadway.startAddrMValue, BeforeAfter.After)
       val junction1 = junctionDAO.fetchByIds(Seq(roadJunctionPoints.head.junctionId))
@@ -272,7 +313,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
 
-      nodesAndJunctionsService.handleJunctionPointTemplates(List.empty[ProjectRoadwayChange], pls)
+      nodesAndJunctionsService.handleJunctionPointTemplates(List.empty[ProjectRoadwayChange], pls, projectService.mapChangedRoadwayNumbers(pls, pls))
 
       val roadJunctionPoints = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadway.roadwayNumber, roadway.endAddrMValue, BeforeAfter.Before)
       val junction1 = junctionDAO.fetchByIds(Seq(roadJunctionPoints.head.junctionId))
@@ -317,7 +358,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
 
-      nodesAndJunctionsService.handleJunctionPointTemplates(List.empty[ProjectRoadwayChange], pls)
+      nodesAndJunctionsService.handleJunctionPointTemplates(List.empty[ProjectRoadwayChange], pls, projectService.mapChangedRoadwayNumbers(pls, pls))
 
       val roadJunctionPoints = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadway.roadwayNumber, roadway.startAddrMValue, BeforeAfter.After)
       val junction1 = junctionDAO.fetchByIds(Seq(roadJunctionPoints.head.junctionId))
