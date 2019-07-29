@@ -121,7 +121,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test getRoadLinksAndComplementaryFromVVH() When submitting a specific bounding box and a municipality Then return regular roadlinks and complementary roadlinks that are in the bounding box and belong to said municipality.") {
+  test("Test getRoadLinksAndComplementaryByBounds() When submitting a specific bounding box and a municipality Then return regular roadlinks and complementary roadlinks that are in the bounding box and belong to said municipality.") {
 
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val mockVVHClient = MockitoSugar.mock[VVHClient]
@@ -145,9 +145,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockKMTKClient.roadLinkData).thenReturn(mockKMTKRoadLinkClient)
       when(mockKMTKClient.roadLinkChangeInfo).thenReturn(mockKMTKChangeInfoClient)
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-      when(mockVVHComplementaryClient.fetchWalkwaysByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(complRoadLink1, complRoadLink2, complRoadLink3, complRoadLink4)))
+      when(mockVVHComplementaryClient.fetchWalkwaysByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(complRoadLink1, complRoadLink2, complRoadLink3, complRoadLink4))
       when(mockKMTKChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
-      when(mockKMTKRoadLinkClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(roadLink1, roadLink2, roadLink3, roadLink4)))
+      when(mockKMTKRoadLinkClient.fetchByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
 
       val roadlinks = service.getRoadLinksAndComplementaryByBounds(boundingBox, Set(91))
 
