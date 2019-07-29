@@ -146,7 +146,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleNodePointTemplates When creating projectlinks Then node points template should be handled/created properly and" +
+  test("Test nodesAndJunctionsService.handleNodePointTemplates When creating projectLinks Then node points template should be handled/created properly and" +
     " When reverse, the node points BeforeAfter should be reversed") {
     runWithRollback {
       /*
@@ -191,7 +191,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           ,DateTime.now,Some(0L))
       )
 
-      val pls = Seq(left, right, combined1, combined2)
+      val pls = Seq(left, right, combined1, combined2).map(_.copy(id = Sequences.nextViitePrimaryKeySeqValue))
       nodesAndJunctionsService.handleNodePointTemplates(projectChanges, pls, projectService.mapChangedRoadwayNumbers(pls, pls))
 
       val fetchedNodesPoints = pls.flatMap(pl => nodePointDAO.fetchNodePointTemplate(pl.roadwayNumber))
@@ -215,10 +215,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
      |0<--R--0|
       */
 
-      val reversedLeft = left.copy(reversed = true, startAddrMValue = 100, endAddrMValue = 150)
-      val reversedRight = right.copy(reversed = true, startAddrMValue = 100, endAddrMValue = 150)
-      val reversedCombined1 = combined1.copy(reversed = true, startAddrMValue = 50, endAddrMValue = 100)
-      val reversedCombined2 = combined2.copy(reversed = true, startAddrMValue = 50, endAddrMValue = 100)
+      val reversedLeft = left.copy(sideCode = SideCode.switch(left.sideCode), reversed = true, startAddrMValue = 100, endAddrMValue = 150)
+      val reversedRight = right.copy(sideCode = SideCode.switch(left.sideCode), reversed = true, startAddrMValue = 100, endAddrMValue = 150)
+      val reversedCombined1 = combined1.copy(sideCode = SideCode.switch(left.sideCode), reversed = true, startAddrMValue = 50, endAddrMValue = 100)
+      val reversedCombined2 = combined2.copy(sideCode = SideCode.switch(left.sideCode), reversed = true, startAddrMValue = 50, endAddrMValue = 100)
 
       val reversedProjectChanges = projectChanges.map(p => p.copy(changeInfo = p.changeInfo.copy(source = p.changeInfo.target, reversed = true)))
       val reversedPls = Seq(reversedCombined1, reversedCombined2, reversedRight, reversedLeft)
@@ -270,15 +270,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           ,DateTime.now,Some(0L))
       )
 
-      val pls = Seq(link1)
-
+      val pls = Seq(link1).map(_.copy(id = Sequences.nextViitePrimaryKeySeqValue))
+      val reversedPls = pls.map(_.copy(reversed = true))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
 
-      val reversedLink = link1.copy(reversed = true)
-
       val reversedProjectChanges = projectChanges.map(p => p.copy(changeInfo = p.changeInfo.copy(source = p.changeInfo.target, reversed = true)))
-      val reversedPls = Seq(reversedLink)
+
 
       nodesAndJunctionsService.handleJunctionPointTemplates(projectChanges, pls, projectService.mapChangedRoadwayNumbers(pls, pls))
 
@@ -337,15 +335,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           ,DateTime.now,Some(0L))
       )
 
-      val pls = Seq(link1)
+      val pls = Seq(link1).map(_.copy(id = Sequences.nextViitePrimaryKeySeqValue))
+      val reversedPls = pls.map(_.copy(reversed = true))
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
 
-      val reversedLink = link1.copy(reversed = true)
-
       val reversedProjectChanges = projectChanges.map(p => p.copy(changeInfo = p.changeInfo.copy(source = p.changeInfo.target, reversed = true)))
-      val reversedPls = Seq(reversedLink)
 
       nodesAndJunctionsService.handleJunctionPointTemplates(projectChanges, pls, projectService.mapChangedRoadwayNumbers(pls, pls))
 
@@ -403,15 +399,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           ,DateTime.now,Some(0L))
       )
 
-      val pls = Seq(link1)
+      val pls = Seq(link1).map(_.copy(id = Sequences.nextViitePrimaryKeySeqValue))
+      val reversedPls = pls.map(_.copy(reversed = true))
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
 
-      val reversedLink = link1.copy(reversed = true)
-
       val reversedProjectChanges = projectChanges.map(p => p.copy(changeInfo = p.changeInfo.copy(source = p.changeInfo.target, reversed = true)))
-      val reversedPls = Seq(reversedLink)
 
       nodesAndJunctionsService.handleJunctionPointTemplates(projectChanges, pls, projectService.mapChangedRoadwayNumbers(pls, pls))
 
@@ -469,16 +463,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           ,DateTime.now,Some(0L))
       )
 
-      val pls = Seq(link1)
+      val pls = Seq(link1).map(_.copy(id = Sequences.nextViitePrimaryKeySeqValue))
+      val reversedPls = pls.map(_.copy(reversed = true))
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
 
-      val reversedLink = link1.copy(reversed = true)
-
       val reversedProjectChanges = projectChanges.map(p => p.copy(changeInfo = p.changeInfo.copy(source = p.changeInfo.target, reversed = true)))
-      val reversedPls = Seq(reversedLink)
-
 
       nodesAndJunctionsService.handleJunctionPointTemplates(projectChanges, pls, projectService.mapChangedRoadwayNumbers(pls, pls))
 
