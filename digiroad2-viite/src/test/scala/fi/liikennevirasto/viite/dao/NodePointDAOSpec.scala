@@ -3,12 +3,14 @@ package fi.liikennevirasto.viite.dao
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.NewIdValue
+import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 
 class NodePointDAOSpec extends FunSuite with Matchers {
 
@@ -21,15 +23,16 @@ class NodePointDAOSpec extends FunSuite with Matchers {
 
   val dao = new NodePointDAO
   val nodeDAO = new NodeDAO
+  val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
   val linearLocationDAO = new LinearLocationDAO
 
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
 
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
   val testNodePoint2 = NodePoint(NewIdValue, BeforeAfter.After, -1, None,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
 
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None)
@@ -75,13 +78,17 @@ class NodePointDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchNodePointsByNodeId When existing nodeId Then return node points") {
     runWithRollback {
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.now(), None)
+      roadwayDAO.create(Seq(roadway))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber ))
       val nodeId = nodeDAO.create(Seq(testNode1)).head
       dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId)),
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
       val nodePoints = dao.fetchNodePointsByNodeId(Seq(nodeId))
       nodePoints.size should be(2)
-      nodePoints.filter(n => n.nodeId == Some(nodeId)).size should be(2)
+      nodePoints.count(n => n.nodeId.contains(nodeId)) should be(2)
     }
   }
 
@@ -106,10 +113,45 @@ class NodePointDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
       val nodePoints = dao.fetchTemplatesByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
       nodePoints.size should be(2)
-      nodePoints.filter(n => n.roadwayNumber == roadwayNumber).size should be(2)
-      nodePoints.filter(n => n.addrM == testRoadwayPoint1.addrMValue).size should be(2)
-      nodePoints.filter(n => n.createdBy == Some("Test")).size should be(2)
+      nodePoints.count(n => n.roadwayNumber == roadwayNumber) should be(2)
+      nodePoints.count(n => n.addrM == testRoadwayPoint1.addrMValue) should be(2)
+      nodePoints.count(n => n.createdBy.contains("Test")) should be(2)
     }
   }
 
+  test("Test expireById When two templates created and one expired Then expire one and keep the other") {
+    runWithRollback {
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      roadwayDAO.create(Seq(roadway))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
+      val ids = dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1)))
+      val fetchedBefore = dao.fetchByIds(ids)
+      fetchedBefore.size should be(2)
+      dao.expireById(Seq(ids.head))
+      val fetched = dao.fetchByIds(ids)
+      fetched.size should be(1)
+      fetched.head.id should be(ids.last)
+      fetched.head.nodeId should be(None)
+    }
+  }
+
+  test("Test expireById When two created and one expired Then expire one and keep the other") {
+    runWithRollback {
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      roadwayDAO.create(Seq(roadway))
+      val nodeId = nodeDAO.create(Seq(testNode1)).head
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
+      val ids = dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId)),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
+      val fetchedBefore = dao.fetchByIds(ids)
+      fetchedBefore.size should be(2)
+      dao.expireById(Seq(ids.head))
+      val fetched = dao.fetchByIds(ids)
+      fetched.size should be(1)
+      fetched.head.id should be(ids.last)
+    }
+  }
 }

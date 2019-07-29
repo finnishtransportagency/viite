@@ -802,7 +802,7 @@
       applicationModel.setContinueButton(false);
       eventbus.trigger('layer:enableButtons', true);
       eventbus.trigger('form:showPropertyForm');
-      me.clearLayers();
+      me.clearLayers(layers );
       me.refreshView();
       toggleSelectInteractions(true, true);
       applicationModel.setSelectionType(SelectionType.All);
@@ -1220,7 +1220,7 @@
       } else {
         removeSelectInteractions();
       }
-      me.clearLayers();
+      me.clearLayers(layers);
       clearHighlights();
       if (previouslySelectedLayer === 'linkProperty') {
         hideLayer();

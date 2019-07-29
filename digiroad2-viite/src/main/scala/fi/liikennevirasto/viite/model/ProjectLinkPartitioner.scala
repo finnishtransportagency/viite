@@ -1,8 +1,9 @@
 package fi.liikennevirasto.viite.model
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.linearasset.GraphPartitioner
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.dao.LinkStatus
 
 object ProjectLinkPartitioner extends GraphPartitioner {
