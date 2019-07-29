@@ -1995,7 +1995,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def mapChangedRoadwayNumbers(projectLinks: Seq[ProjectLink], projectLinksAfterChanges: Seq[ProjectLink]) = {
     projectLinks.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).sortBy(_.startAddrMValue).map { pl =>
-      val targetProjectLink: Option[ProjectLink] = projectLinksAfterChanges.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).find(rw => rw.originalStartAddrMValue == pl.originalStartAddrMValue && rw.originalEndAddrMValue == pl.originalEndAddrMValue)
+      val targetProjectLink: Option[ProjectLink] = projectLinksAfterChanges.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).find(rw => rw.id == pl.id)
       val targetRoadwayNumber = if (targetProjectLink.nonEmpty) targetProjectLink.get.roadwayNumber else pl.roadwayNumber
       val targetStartAddr = if (targetProjectLink.nonEmpty) targetProjectLink.get.startAddrMValue else pl.originalStartAddrMValue
       val targetEndAddr = if (targetProjectLink.nonEmpty) targetProjectLink.get.endAddrMValue else pl.originalEndAddrMValue
