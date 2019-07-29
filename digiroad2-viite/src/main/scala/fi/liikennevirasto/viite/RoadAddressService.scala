@@ -716,6 +716,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         } else list
 
       }.distinct
+      if(updatableRoadwayPoints.nonEmpty)
       roadwayPointDAO.update(updatableRoadwayPoints)
     } catch {
       case ex: Exception => println("Failed roadwaypointsUpdate: ", ex)
