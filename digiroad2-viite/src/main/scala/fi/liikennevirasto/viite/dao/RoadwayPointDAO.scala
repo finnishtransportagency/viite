@@ -118,6 +118,18 @@ class RoadwayPointDAO extends BaseDAO {
     queryList(query)
   }
 
+  def fetchByRoadwayNumbers(roadwayNumber: Iterable[Long]): Seq[RoadwayPoint] = {
+    if (roadwayNumber.isEmpty) {
+      Seq()
+    } else {
+      val query = s"""
+        SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
+          from ROADWAY_POINT where ROADWAY_NUMBER IN (${roadwayNumber.mkString(", ")})
+       """
+      queryList(query)
+    }
+  }
+
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
     def calibrationPoint(cp: Option[ProjectLinkCalibrationPoint]): Option[Long] = {
       cp match {
