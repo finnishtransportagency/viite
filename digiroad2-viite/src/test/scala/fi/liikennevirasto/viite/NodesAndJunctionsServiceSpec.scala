@@ -176,6 +176,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayNumber = Sequences.nextRoadwayNumber
       val id = Sequences.nextViitePrimaryKeySeqValue
+
+      val roadways = Seq(Roadway(NewIdValue, roadwayNumber, 999, 999, RoadType.PublicRoad, Track.LeftSide, Discontinuity.Continuous,
+        0, 50, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination),
+        Roadway(NewIdValue, roadwayNumber+1, 999, 999, RoadType.PublicRoad, Track.RightSide, Discontinuity.Continuous,
+          0, 50, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination),
+        Roadway(NewIdValue, roadwayNumber+2, 999, 999, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+          50, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination),
+        Roadway(NewIdValue, roadwayNumber+3, 999, 999, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
+          100, 150, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      )
+
       val left = dummyProjectLink(999, 999, Track.LeftSide, Discontinuity.Continuous, 0 , 50, Some(DateTime.now()), None, 12345, 0, 50, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.PublicRoad, leftGeom, roadwayNumber).copy(id = id)
       val right = dummyProjectLink(999, 999, Track.RightSide, Discontinuity.Continuous, 0 , 50, Some(DateTime.now()), None, 12346, 0, 50, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.PublicRoad, rightGeom,roadwayNumber+1).copy(id = id+1)
       val combined1 = dummyProjectLink(999, 999, Track.Combined, Discontinuity.Continuous, 50 , 100, Some(DateTime.now()), None, 12347, 0, 50, SideCode.TowardsDigitizing, LinkStatus.Transfer, 0L, RoadType.FerryRoad, combGeom1, roadwayNumber+2).copy(id = id+2)
@@ -213,6 +224,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val pls = Seq(left, right, combined1, combined2)
       nodesAndJunctionsService.handleNodePointTemplates(projectChanges, pls, projectService.mapChangedRoadwayNumbers(pls, pls))
+
+      roadwayDAO.create(roadways)
 
       val fetchedNodesPoints = pls.flatMap(pl => nodePointDAO.fetchNodePointTemplate(pl.roadwayNumber)).sortBy(_.id)
       val node1 = fetchedNodesPoints.find(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.After)
