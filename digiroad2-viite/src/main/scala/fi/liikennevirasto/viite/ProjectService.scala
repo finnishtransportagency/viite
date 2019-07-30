@@ -1996,12 +1996,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def mapChangedRoadwayNumbers(projectLinks: Seq[ProjectLink], projectLinksAfterChanges: Seq[ProjectLink]) = {
-    projectLinks.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).sortBy(_.startAddrMValue).map { pl =>
-      val targetProjectLink: Option[ProjectLink] = projectLinksAfterChanges.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).find(rw => rw.id == pl.id)
-      val targetRoadwayNumber = if (targetProjectLink.nonEmpty) targetProjectLink.get.roadwayNumber else pl.roadwayNumber
-      val targetStartAddr = if (targetProjectLink.nonEmpty) targetProjectLink.get.startAddrMValue else pl.originalStartAddrMValue
-      val targetEndAddr = if (targetProjectLink.nonEmpty) targetProjectLink.get.endAddrMValue else pl.originalEndAddrMValue
-      RoadwayNumbersLinkChange(pl.originalStartAddrMValue, pl.originalEndAddrMValue, targetStartAddr, targetEndAddr, pl.roadwayNumber, targetRoadwayNumber)
+    val filteredOldLinks = projectLinks.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).sortBy(_.id)
+    val filteredNewLinks = projectLinksAfterChanges.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).sortBy(_.id)
+    filteredOldLinks.zip(filteredNewLinks).map { case (oldLink, newLink) =>
+      RoadwayNumbersLinkChange(oldLink.originalStartAddrMValue, oldLink.originalEndAddrMValue, newLink.startAddrMValue, newLink.endAddrMValue, oldLink.roadwayNumber, newLink.roadwayNumber)
     }
   }
 

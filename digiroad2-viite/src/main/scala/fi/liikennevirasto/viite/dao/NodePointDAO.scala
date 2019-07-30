@@ -158,10 +158,11 @@ class NodePointDAO extends BaseDAO {
         ""
       } else {
         s"""SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_ID, NP.START_DATE, NP.END_DATE,
-                             NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M
-                             FROM NODE_POINT NP
-                             JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-         where RP.roadway_number in ${roadwayNumbers.mkString(", ")} and NP.valid_to is null and NP.end_date is null
+          NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, NULL, NULL, NULL
+          FROM NODE_POINT NP
+          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+          where RP.roadway_number in ${roadwayNumbers.mkString(", ")} and NP.valid_to is null and NP.end_date is null
        """
       }
     queryList(query)
