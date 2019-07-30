@@ -576,28 +576,35 @@ class ProjectValidator {
       } else None
     }
 
-    def checkMinMaxTrackRoadTypes(trackInterval: Seq[ProjectLink]): Option[ProjectLink] = {
+    def checkMinMaxTrackRoadTypes(trackInterval: Seq[ProjectLink]): Option[Seq[ProjectLink]] = {
       val (left, right) = trackInterval.partition(_.track == Track.LeftSide)
 
-      val leftRoadTypes = left.sortBy(_.startAddrMValue).map(_.roadType.value).foldLeft(Seq.empty[Int]) { case (list, next) =>
-        if (list.nonEmpty && list.last == next)
-          list
+      val leftRoadTypes = left.sortBy(_.startAddrMValue).foldLeft(Seq.empty[(Int, Long, Long)]) { case (list, next) =>
+        if (list.nonEmpty && list.last._1 == next.roadType.value)
+          list.init :+ list.last.copy(_3 = next.endAddrMValue)
         else
-          list :+ next
+          list :+ (next.roadType.value, next.startAddrMValue, next.endAddrMValue)
       }
 
-      val rightRoadTypes = right.sortBy(_.startAddrMValue).map(_.roadType.value).foldLeft(Seq.empty[Int]) { case (list, next) =>
-        if (list.nonEmpty && list.last == next)
-          list
+      val rightRoadTypes = right.sortBy(_.startAddrMValue).foldLeft(Seq.empty[(Int, Long, Long)]) { case (list, next) =>
+        if (list.nonEmpty && list.last._1 == next.roadType.value)
+          list.init :+ list.last.copy(_3 = next.endAddrMValue)
         else
-          list :+ next
+          list :+ (next.roadType.value, next.startAddrMValue, next.endAddrMValue)
       }
 
-      if (!(leftRoadTypes sameElements rightRoadTypes)) {
-        if (left.nonEmpty)
-          Some(left.head)
-        else
-          Some(right.head)
+      if (!(leftRoadTypes equals rightRoadTypes)) {
+        val diffLinks = trackInterval.groupBy(_.roadType).flatMap { projectLinksByRoadType: (RoadType, Seq[ProjectLink]) =>
+          val (left: Seq[ProjectLink], right: Seq[ProjectLink]) = projectLinksByRoadType._2.partition(_.track == Track.LeftSide)
+          if (left.nonEmpty && right.nonEmpty) {
+            val leftLinks = left.filterNot(link => { right.map(_.startAddrMValue).contains(link.startAddrMValue) || right.map(_.endAddrMValue).contains(link.endAddrMValue) })
+            val rightLinks = right.filterNot(link => { left.map(_.startAddrMValue).contains(link.startAddrMValue) || left.map(_.endAddrMValue).contains(link.endAddrMValue) })
+            leftLinks ++ rightLinks
+          } else left ++ right
+        }.toSeq
+        if (diffLinks.nonEmpty)
+          Some(diffLinks)
+        else None
       } else None
     }
 
@@ -623,7 +630,7 @@ class ProjectValidator {
         val validTrackInterval = leftrRightTracks.filterNot(r => r.status == Terminated || r.track == Track.Combined)
         if (validTrackInterval.nonEmpty) {
           checkMinMaxTrackRoadTypes(validTrackInterval) match {
-            case Some(link) => Seq(link)
+            case Some(links) => links
             case _ => Seq.empty[ProjectLink]
           }
         } else Seq.empty[ProjectLink]
