@@ -329,15 +329,11 @@
         new ModalConfirm("Muutosilmoitus lähetetty Tierekisteriin.");
         //TODO: make more generic layer change/refresh
         applicationModel.selectLayer('linkProperty');
-
-        rootElement.empty();
-        formCommon.clearInformationContent();
-
         selectedProjectLinkProperty.close();
         projectCollection.clearRoadAddressProjects();
         projectCollection.reset();
         applicationModel.setOpenProject(false);
-
+        eventbus.trigger('layer:enableButtons', true);
         eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
         eventbus.trigger('roadLinks:refreshView');
       });
@@ -580,7 +576,8 @@
         rootElement.find('.wrapper').toggle();
         rootElement.find('footer').toggle();
         projectCollection.clearRoadAddressProjects();
-        eventbus.trigger('layer:enableButtons', true);
+        eventbus.trigger('layer:enableButtons', false);
+        eventbus.trigger('form:showPropertyForm');
         if (changeLayerMode) {
           eventbus.trigger('roadAddressProject:clearOnClose');
           applicationModel.selectLayer('linkProperty', true, noSave);
