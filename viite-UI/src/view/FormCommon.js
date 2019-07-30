@@ -39,7 +39,7 @@
       return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  +
-        (link.endAddressM !== 0 ? addSmallLabel('JATKUU'): '') +
+        addSmallLabel('JATKUU') +
         '</div>' +
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
         addSmallInputNumber('tie', (roadNumber !== 0 ? roadNumber : ''), !projectEditable, 5) +
@@ -117,21 +117,15 @@
     };
 
     var addDiscontinuityDropdown = function(link){
-        if (link.endAddressM === 0) {
-        return '<select class="form-select-control" id="discontinuityDropdown" size="1" style="visibility: hidden">'+
-          '<option value = "5" selected disabled hidden>5 Jatkuva</option>'+
-          '</select>';
-        } else {
-        return '<select class="form-select-control" id="discontinuityDropdown" size="1">' +
-          '<option value = "5" selected disabled hidden>5 Jatkuva</option>' +
-          '<option value="1" >1 Tien loppu</option>' +
-          '<option value="2" >2 Epäjatkuva</option>' +
-          '<option value="3" >3 ELY:n raja</option>' +
-          '<option value="4" >4 Lievä epäjatkuvuus</option>' +
-          '<option value="5" >5 Jatkuva</option>' +
-          '<option value="6" >5 Jatkuva (Rinnakkainen linkki)</option>' +
-          '</select>';
-      }
+      return '<select class="form-select-control" id="discontinuityDropdown" size="1">' +
+        '<option value = "5" selected disabled hidden>5 Jatkuva</option>' +
+        '<option value="1" >1 Tien loppu</option>' +
+        '<option value="2" >2 Epäjatkuva</option>' +
+        '<option value="3" >3 ELY:n raja</option>' +
+        '<option value="4" >4 Lievä epäjatkuvuus</option>' +
+        '<option value="5" >5 Jatkuva</option>' +
+        '<option value="6" >5 Jatkuva (Rinnakkainen linkki)</option>' +
+        '</select>';
     };
 
     var addTrackCodeDropdown = function (trackDefaultValue, properties){
