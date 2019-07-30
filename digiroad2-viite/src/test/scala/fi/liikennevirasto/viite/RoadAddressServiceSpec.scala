@@ -60,52 +60,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO)
 
-  def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val t = f
-      dynamicSession.rollback()
-      t
-    }
-  }
   private def dummyProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project ={
     Project(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Seq(), Some("current status info"), coordinates)
-  }
-
-  def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
-    def calibrationPoint(cp: Option[ProjectLinkCalibrationPoint]): Option[Long] = {
-      cp match {
-        case Some(x) =>
-          Some(x.addressMValue)
-        case _ => Option.empty[Long]
-      }
-    }
-
-    val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
-
-    (LinearLocation(-1000, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
-      (calibrationPoint(p.calibrationPoints._1), calibrationPoint(p.calibrationPoints._2)), p.geometry, p.linkGeomSource,
-      p.roadwayNumber, Some(startDate), p.endDate),
-      Roadway(-1000, p.roadwayNumber, p.roadNumber, p.roadPartNumber, p.roadType, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
-        p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
-  }
-
-  private def extractTrafficDirection(sideCode: SideCode, track: Track): TrafficDirection = {
-    (sideCode, track) match {
-      case (_, Track.Combined) => TrafficDirection.BothDirections
-      case (TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
-      case (TowardsDigitizing, Track.LeftSide) => TrafficDirection.AgainstDigitizing
-      case (AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
-      case (AgainstDigitizing, Track.LeftSide) => TrafficDirection.TowardsDigitizing
-      case (_, _) => TrafficDirection.UnknownDirection
-    }
-  }
-
-  private def toRoadLink(ral: ProjectLink): RoadLink = {
-    RoadLink(ral.linkId, ral.geometry, ral.geometryLength, State, 1,
-      extractTrafficDirection(ral.sideCode, ral.track), Motorway, None, None, Map(
-        "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
-        "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
-      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   }
 
   private def extractTrafficDirection(sideCode: SideCode, track: Track): TrafficDirection = {
