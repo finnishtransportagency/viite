@@ -1,7 +1,9 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.util.Track
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -10,6 +12,8 @@ import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 
 case class Junction(id: Long, junctionNumber: Long, nodeId: Option[Long], startDate: DateTime, endDate: Option[DateTime],
                     validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
+
+case class JunctionTemplate(junctionId: Long, junctionPointId: Long, junctionNumber: Long, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long)
 
 class JunctionDAO extends BaseDAO {
 
@@ -98,6 +102,23 @@ class JunctionDAO extends BaseDAO {
           AND VALID_TO IS NULL AND END_DATE IS NULL
         """
       queryList(query)
+    }
+  }
+
+  def fetchTemplates() : Seq[JunctionTemplate] = {
+    val query =
+      s"""
+         SELECT DISTINCT junction.ID, jp.id, junction.JUNCTION_NUMBER, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M
+         FROM JUNCTION junction
+         LEFT JOIN JUNCTION_POINT jp ON junction.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL AND jp.END_DATE IS NULL
+         LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
+         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+            WHERE junction.VALID_TO IS NULL AND junction.END_DATE IS NULL AND junction.NODE_ID IS NULL
+       """
+
+    Q.queryNA[(Long, Long, Long, Long, Long, Long, Long)](query).list.map {
+      case (junctionId, junctionPointId, junctionNumber, roadNumber, track, roadPartNumber, addrM) =>
+        JunctionTemplate(junctionId,junctionPointId, junctionNumber, roadNumber, roadPartNumber, Track.apply(track.toInt), addrM)
     }
   }
 
