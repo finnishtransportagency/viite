@@ -1,5 +1,5 @@
 (function (root) {
-  root.RoadLayer = function (map, roadCollection, selectedLinkProperty) {
+  root.RoadLayer = function (map, roadCollection, selectedLinkProperty, nodeCollection) {
 
     Layer.call(this, map);
     var me = this;
@@ -115,7 +115,7 @@
         coordinate = map.getEventCoordinate(event.originalEvent);
         if (infoContent !== null) {
           infoContent.innerHTML =
-            'Nimi:&nbsp;' + nodeData.nodeName + '<br>' +
+            'Nimi:&nbsp;' + nodeData.name + '<br>' +
             'Solmutyyppi:&nbsp;' + displayNodeType(nodeData.type) + '<br>'
           ;
         }
@@ -181,20 +181,20 @@
       if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.junction) && !_.isUndefined(featureAtPixel.junctionPoint)) {
         var junctionData = featureAtPixel.junction;
         var junctionPointData = featureAtPixel.junctionPoint;
+        var nodes = nodeCollection.getNodesWithAttributes();
+        var node = _.find(nodes, function (node) {
+          return node.id === junctionData.nodeId;
+        });
         var roadLink = featureAtPixel.roadLink;
         coordinate = map.getEventCoordinate(event.originalEvent);
         if (infoContent !== null) {
-          infoContent.innerHTML = '<p>' +
-            'Liittymä ID: ' + junctionData.id + '<br>' +
-            'Solmu ID: ' + junctionData.nodeId + '<br>' +
-            'Tienumero: ' + roadLink.roadNumber + '<br>' +
-            'Tieosanumero: ' + roadLink.roadPartNumber + '<br>' +
-            'addrM: ' + junctionPointData.addrM + '<br>' + '</p>'
+          infoContent.innerHTML =
+            'Tieosoite:&nbsp;' + roadLink.roadNumber + '/'+ roadLink.trackCode + '/' + roadLink.roadPartNumber + '/' + junctionPointData.addrM + '<br>' +
+            'Solmun nimi:&nbsp;' + (!_.isUndefined(node) ? node.name : '') + '<br>'
           ;
         }
         overlay.setPosition(coordinate);
       }
-
     };
 
     //Listen pointerMove and get pixel for displaying roadAddress feature info

@@ -384,8 +384,6 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
   def getLastPoint: Point = {
     if (sideCode == SideCode.TowardsDigitizing) geometry.last else geometry.head
   }
-
-
 }
 
 case class Roadway(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,

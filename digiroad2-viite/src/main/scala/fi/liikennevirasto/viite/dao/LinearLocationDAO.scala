@@ -1,14 +1,14 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.{Timestamp, Types}
+import java.sql.Timestamp
 
 import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
@@ -89,11 +89,6 @@ case class LinearLocation(id: Long, orderNumber: Double, linkId: Long, startMVal
 
   val startCalibrationPoint: Option[Long] = calibrationPoints._1
   val endCalibrationPoint: Option[Long] = calibrationPoints._2
-
-  def isExpire(): Boolean = {
-    validFrom.getOrElse(throw new IllegalStateException("The valid from should be set before call isExpire method")).isAfterNow ||
-      validTo.exists(vt => vt.isEqualNow || vt.isBeforeNow)
-  }
 
   def copyWithGeometry(newGeometry: Seq[Point]): LinearLocation = {
     this.copy(geometry = newGeometry)
@@ -180,7 +175,7 @@ class LinearLocationDAO {
   }
 
   implicit val getLinearLocation: GetResult[LinearLocation] = new GetResult[LinearLocation] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): LinearLocation = {
       val id = r.nextLong()
       val roadwayNumber = r.nextLong()
       val orderNumber = r.nextLong()
@@ -330,6 +325,7 @@ class LinearLocationDAO {
 
   /**
     * Fetch all the linear locations inside roadways with the given link ids
+    *
     * @param linkIds The given road link identifiers
     * @return Returns all the filtered linear locations
     */
@@ -370,7 +366,8 @@ class LinearLocationDAO {
   }
 
   private def fetch(queryFilter: String => String): Seq[LinearLocation] = {
-    val query = s"""
+    val query =
+      s"""
         $selectFromLinearLocation
       """
     val filteredQuery = queryFilter(query)
@@ -395,7 +392,7 @@ class LinearLocationDAO {
   /**
     * Expire Linear Locations. Don't use more than 1000 linear locations at once.
     *
-    * @param ids
+    * @param ids LinearLocation ids
     * @return Number of updated rows
     */
   def expireByIds(ids: Set[Long]): Int = {
@@ -598,7 +595,7 @@ class LinearLocationDAO {
     }
   }
 
-  def fetchCurrentLinearLocationsByEly(ely: Int):Seq[LinearLocation] = {
+  def fetchCurrentLinearLocationsByEly(ely: Int): Seq[LinearLocation] = {
     val query =
       s"""
           $selectFromLinearLocation
@@ -616,7 +613,7 @@ class LinearLocationDAO {
     queryList(query)
   }
 
-  def fetchCurrentLinearLocationsByMunicipality(municipality: Int):Seq[LinearLocation] = {
+  def fetchCurrentLinearLocationsByMunicipality(municipality: Int): Seq[LinearLocation] = {
     val query =
       s"""
           $selectFromLinearLocation
@@ -641,9 +638,10 @@ class LinearLocationDAO {
 
   /**
     * Sets up the query filters of road numbers
-    * @param roadNumbers: Seq[(Int, Int) - list of lowest and highest road numbers
-    * @param alias: String - The alias of the roadway table on the query
-    * @param filter: String - already existing filters
+    *
+    * @param roadNumbers : Seq[(Int, Int) - list of lowest and highest road numbers
+    * @param alias       : String - The alias of the roadway table on the query
+    * @param filter      : String - already existing filters
     * @return
     */
   def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], alias: String, filter: String = ""): String = {

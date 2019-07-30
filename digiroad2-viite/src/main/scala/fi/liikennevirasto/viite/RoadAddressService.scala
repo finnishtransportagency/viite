@@ -1,6 +1,5 @@
 package fi.liikennevirasto.viite
 
-import java.net.ConnectException
 import java.util.concurrent.TimeUnit
 
 import fi.liikennevirasto.GeometryUtils
@@ -10,17 +9,13 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.AddressChangeType.{ReNumeration, Transfer}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.RoadwayPointDAO
-import fi.liikennevirasto.viite.dao.RoadwayPoint
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent}
-import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
-import fi.liikennevirasto.viite.process.RoadAddressFiller.{ChangeSet, LinearLocationAdjustment}
+import fi.liikennevirasto.viite.dao.{RoadwayPointDAO, _}
+import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.process._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
