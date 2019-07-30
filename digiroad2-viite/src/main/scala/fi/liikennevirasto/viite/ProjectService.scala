@@ -1587,7 +1587,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val calculatedLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map(rpl =>
             setReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadwayId != 0L))
           )
-          if(newDiscontinuity.isDefined && roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))){
+          if (newDiscontinuity.isDefined && roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
             calculatedLinks.sortBy(_.endAddrMValue).dropRight(1) :+ calculatedLinks.maxBy(_.endAddrMValue).copy(discontinuity = newDiscontinuity.get)
           }
           else
