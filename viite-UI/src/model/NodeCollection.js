@@ -46,7 +46,7 @@
 
     eventbus.on('node:fetched', function(fetchResult, zoom) {
       var nodes = _.filter(fetchResult, function(node){
-        return !_.isUndefined(node.node) ;
+        return !_.isUndefined(node.name) ;
       });
       var nodePointTemplates = _.map(_.filter(fetchResult, function(node){
         return !_.isUndefined(node.nodePointTemplate) ;
@@ -62,6 +62,7 @@
       me.setNodes(nodes);
       me.setNodePointTemplates(nodePointTemplates);
       me.setJunctionTemplates(junctionTemplates);
+      me.setNodesWithAttributes(nodes);
       eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionPointTemplates, zoom);
     });
 

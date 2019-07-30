@@ -33,8 +33,6 @@ object Queries {
 
   def nextNodeNumber = sql"select NODE_NUMBER_SEQ.nextval from dual"
 
-  def nextJunctionNumber = sql"select JUNCTION_NUMBER_SEQ.nextval from dual"
-
   def nextNodePointId = sql"select NODE_POINT_SEQ.nextval from dual"
 
   def nextJunctionId = sql"select JUNCTION_SEQ.nextval from dual"

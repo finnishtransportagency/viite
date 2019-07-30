@@ -87,13 +87,17 @@ class RoadwayPointDAO extends BaseDAO {
   }
 
   def fetch(points: Seq[(Long, Long)]): Seq[RoadwayPoint] = {
-    val whereClause = points.map(p => s" (roadway_number = ${p._1} and addr_m = ${p._2})").mkString(" where ", " or ", "")
-    val query =
-      s"""
+    if (points.isEmpty) {
+      Seq()
+    } else {
+      val whereClause = points.map(p => s" (roadway_number = ${p._1} and addr_m = ${p._2})").mkString(" where ", " or ", "")
+      val query =
+        s"""
       SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
       from ROADWAY_POINT $whereClause
        """
-    queryList(query)
+      queryList(query)
+    }
   }
 
   def fetchByRoadwayNumber(roadwayNumber: Long): Seq[RoadwayPoint] = {
@@ -112,6 +116,24 @@ class RoadwayPointDAO extends BaseDAO {
       from ROADWAY_POINT where ROADWAY_NUMBER= $roadwayNumber and ADDR_M >= $startAddrM and ADDR_M <= $endAddrM
        """
     queryList(query)
+  }
+
+  def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
+    def calibrationPoint(cp: Option[ProjectLinkCalibrationPoint]): Option[Long] = {
+      cp match {
+        case Some(x) =>
+          Some(x.addressMValue)
+        case _ => Option.empty[Long]
+      }
+    }
+
+    val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
+
+    (LinearLocation(-1000, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
+      (calibrationPoint(p.calibrationPoints._1), calibrationPoint(p.calibrationPoints._2)), p.geometry, p.linkGeomSource,
+      p.roadwayNumber, Some(startDate), p.endDate),
+      Roadway(-1000, p.roadwayNumber, p.roadNumber, p.roadPartNumber, p.roadType, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
+        p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
   }
 
   private def queryList(query: String): Seq[RoadwayPoint] = {

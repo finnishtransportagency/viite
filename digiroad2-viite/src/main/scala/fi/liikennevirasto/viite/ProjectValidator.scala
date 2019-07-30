@@ -93,7 +93,7 @@ class ProjectValidator {
     if (LinkStatus.Transfer.value == linkStatus.value && roadAddressService.getRoadAddressesFiltered(number, part).nonEmpty && !currentProject.formedParts.map(fp => (fp.roadNumber, fp.roadPartNumber)).contains((number, part))) {
       val partInCurrentProject = projectReservedPartDAO.fetchProjectReservedPart(number, part, currentProject.id, withProjectId = Some(true))
       if (partInCurrentProject.isEmpty) {
-        throw new ProjectValidationException(RoadPartNotReservedInProjectMessage.format(number, part, currentProject.name))
+        throw new ProjectValidationException(RoadNotAvailableMessage.format(number, part, currentProject.name))
       }
     }
   }
