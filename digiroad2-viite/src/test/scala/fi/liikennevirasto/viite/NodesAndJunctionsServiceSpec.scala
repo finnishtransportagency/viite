@@ -58,7 +58,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadwayNumber1, 0, "Test", None, None, None)
 
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0, 0, 0, Track.Combined)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0, 0, 0, Track.Combined, 0)
 
   val testJunction1 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-01"), None,
     DateTime.parse("2019-01-01"), None, None, None)
@@ -172,7 +172,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       roadwayDAO.create(Seq(roadway1, roadway2, roadway3, roadway4))
       nodesAndJunctionsService.handleNodePointTemplates(pls)
 
-      val fetchedNodesPoints = pls.flatMap(pl => nodePointDAO.fetchNodePointTemplate(pl.roadwayNumber))
+      val fetchedNodesPoints = pls.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber))
       fetchedNodesPoints.exists(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.After) should be(false)
       fetchedNodesPoints.exists(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.Before) should be(false)
       fetchedNodesPoints.exists(n => n.roadwayNumber == right.roadwayNumber && n.beforeAfter == BeforeAfter.After) should be(true)
@@ -456,7 +456,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       nodeDAO.create(Seq(node1, node2, node3))
 
-      val nodePointTemplates = projectLinks.flatMap(pl => nodePointDAO.fetchNodePointTemplate(pl.roadwayNumber))
+      val nodePointTemplates = projectLinks.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber))
       nodePointTemplates.length should be(4)
       nodePointTemplates.foreach(
         np => {
@@ -531,7 +531,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       nodeDAO.create(Seq(node1, node2))
 
-      val nodePointTemplates = projectLinks.flatMap(pl => nodePointDAO.fetchNodePointTemplate(pl.roadwayNumber))
+      val nodePointTemplates = projectLinks.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber))
       nodePointTemplates.length should be(2)
 
       nodePointTemplates.foreach(
@@ -608,7 +608,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       nodeDAO.create(Seq(node1, node2))
 
-      val nodePointTemplates = projectLinks.flatMap(pl => nodePointDAO.fetchNodePointTemplate(pl.roadwayNumber))
+      val nodePointTemplates = projectLinks.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber))
       nodePointTemplates.length should be(2)
 
       nodePointTemplates.foreach(

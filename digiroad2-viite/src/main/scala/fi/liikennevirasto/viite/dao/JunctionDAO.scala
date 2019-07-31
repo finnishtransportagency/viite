@@ -13,7 +13,7 @@ import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 case class Junction(id: Long, junctionNumber: Long, nodeId: Option[Long], startDate: DateTime, endDate: Option[DateTime],
                     validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
 
-case class JunctionTemplate(junctionId: Long, junctionPointId: Long, junctionNumber: Long, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long)
+case class JunctionTemplate(junctionId: Long, junctionNumber: Long, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long)
 
 class JunctionDAO extends BaseDAO {
 
@@ -108,7 +108,7 @@ class JunctionDAO extends BaseDAO {
   def fetchTemplates() : Seq[JunctionTemplate] = {
     val query =
       s"""
-         SELECT DISTINCT junction.ID, jp.id, junction.JUNCTION_NUMBER, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M
+         SELECT DISTINCT junction.ID, junction.JUNCTION_NUMBER, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M, rw.ELY
          FROM JUNCTION junction
          LEFT JOIN JUNCTION_POINT jp ON junction.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL AND jp.END_DATE IS NULL
          LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
@@ -117,8 +117,8 @@ class JunctionDAO extends BaseDAO {
        """
 
     Q.queryNA[(Long, Long, Long, Long, Long, Long, Long)](query).list.map {
-      case (junctionId, junctionPointId, junctionNumber, roadNumber, track, roadPartNumber, addrM) =>
-        JunctionTemplate(junctionId,junctionPointId, junctionNumber, roadNumber, roadPartNumber, Track.apply(track.toInt), addrM)
+      case (junctionId, junctionNumber, roadNumber, track, roadPartNumber, addrM, ely) =>
+        JunctionTemplate(junctionId, junctionNumber, roadNumber, roadPartNumber, Track.apply(track.toInt), addrM, ely)
     }
   }
 

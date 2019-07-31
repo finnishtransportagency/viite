@@ -6,7 +6,8 @@ case class Configuration(
                         north: Option[Long] = None,
                         municipalityNumber: Option[Int]  = None,
                         authorizedMunicipalities: Set[Int] = Set(),
-                        roles: Set[String] = Set()
+                        roles: Set[String] = Set(),
+                        authorizedElys: Set[Int] = Set()
                         )
 case class User(id: Long, username: String, configuration: Configuration) {
   def hasWriteAccess() = !isViewer()
@@ -31,6 +32,10 @@ case class User(id: Long, username: String, configuration: Configuration) {
 
   private def isAuthorizedFor(municipalityCode: Int): Boolean =
     isOperator() || configuration.authorizedMunicipalities.contains(municipalityCode)
+
+  def getAuthorizedElys : Set[Int] = {
+    configuration.authorizedElys
+  }
 }
 
 object Role {
