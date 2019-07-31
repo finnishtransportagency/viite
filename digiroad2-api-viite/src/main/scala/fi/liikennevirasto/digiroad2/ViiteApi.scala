@@ -86,10 +86,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val DrawPublicRoads = 4
   val DrawAllRoads = 5
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-
   val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
   globalNumberParser = {
@@ -1033,6 +1029,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/templates") {
+    time(logger, s"GET request for /templates"){
+      val authorizedElys = userProvider.getCurrentUser().getAuthorizedElys
+      nodesAndJunctionsService.getNodePointTemplates(authorizedElys.toSeq).map(nodePointTemplateToApi) ++
+      nodesAndJunctionsService.getJunctionTemplates(authorizedElys.toSeq).map(junctionTemplateToApi)
+    }
+  }
+
   private def getRoadAddressLinks(zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val viiteRoadLinks = zoomLevel match {
@@ -1235,7 +1239,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "validTo" -> formatDateTimeToString(nodePoint.validTo),
         "createdBy" -> nodePoint.createdBy,
         "roadwayNumber" -> nodePoint.roadwayNumber,
-        "addrM" -> nodePoint.addrM
+        "addrM" -> nodePoint.addrM,
+        "elyCode" -> nodePoint.elyCode
+      )
+    }
+    )
+  }
+
+  def junctionTemplateToApi(junctionTemplate: JunctionTemplate) : Map[String, Any] = {
+    Map("junctionTemplate" -> {
+      Map("junctionId" -> junctionTemplate.junctionId,
+        "roadNumber" -> junctionTemplate.roadNumber,
+        "roadPartNumber" -> junctionTemplate.roadPartNumber,
+        "track" -> junctionTemplate.track,
+        "addrM" -> junctionTemplate.addrM,
+        "elyCode" -> junctionTemplate.elyCode
       )
     }
     )

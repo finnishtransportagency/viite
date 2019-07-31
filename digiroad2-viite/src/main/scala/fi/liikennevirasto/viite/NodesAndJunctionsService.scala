@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
-import fi.liikennevirasto.viite.dao.{BeforeAfter, Junction, JunctionDAO, JunctionPoint, JunctionPointDAO, LinearLocationDAO, LinkStatus, Node, NodeDAO, NodePoint, NodePointDAO, ProjectLink, RoadAddress, RoadAttributes, RoadwayDAO, RoadwayPointDAO}
+import fi.liikennevirasto.viite.dao.{BeforeAfter, Junction, JunctionDAO, JunctionPoint, JunctionPointDAO, JunctionTemplate, LinearLocationDAO, LinkStatus, Node, NodeDAO, NodePoint, NodePointDAO, ProjectLink, RoadAddress, RoadAttributes, RoadwayDAO, RoadwayPointDAO}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.slf4j.LoggerFactory
 
@@ -97,6 +97,27 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             )
           )
       }.toMap
+    }
+  }
+
+  def getNodePointTemplates(authorizedElys: Seq[Int]): Seq[NodePoint] = {
+    withDynSession{
+      time(logger, "Fetch node point templates") {
+        val allNodePointTemplates = nodePointDAO.fetchTemplates()
+        allNodePointTemplates.filter(template => authorizedElys.contains(template.elyCode))
+      }
+    }
+  }
+
+  def getJunctionTemplates(authorizedElys: Seq[Int]): Seq[JunctionTemplate] = {
+    withDynSession{
+      time(logger, "Fetch Junction templates") {
+        val allJunctionTemplates = junctionDAO.fetchTemplates()
+        allJunctionTemplates.filter(jt => jt.roadNumber != 0 && authorizedElys.contains(jt.elyCode))
+          .groupBy(_.junctionId).map(junctionTemplate => {
+            junctionTemplate._2.minBy(jt => (jt.roadNumber, jt.roadPartNumber, jt.addrM))
+        }).toSeq
+      }
     }
   }
 
@@ -353,14 +374,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
           }
 
-          val existingHeadNodePoint = nodePointDAO.fetchNodePointTemplate(headLink.roadwayNumber).filter(np => np.beforeAfter == After && np.addrM == headLink.startAddrMValue)
-          val existingLastNodePoint = nodePointDAO.fetchNodePointTemplate(lastLink.roadwayNumber).filter(np => np.beforeAfter == Before && np.addrM == lastLink.endAddrMValue)
+          val existingHeadNodePoint = nodePointDAO.fetchTemplatesByRoadwayNumber(headLink.roadwayNumber).filter(np => np.beforeAfter == After && np.addrM == headLink.startAddrMValue)
+          val existingLastNodePoint = nodePointDAO.fetchTemplatesByRoadwayNumber(lastLink.roadwayNumber).filter(np => np.beforeAfter == Before && np.addrM == lastLink.endAddrMValue)
 
           if (existingHeadNodePoint.isEmpty)
-            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue, headLink.roadNumber, headLink.roadPartNumber, headLink.track)))
+            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue, headLink.roadNumber, headLink.roadPartNumber, headLink.track, headLink.ely)))
 
           if (existingLastNodePoint.isEmpty)
-            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.roadNumber, lastLink.roadPartNumber, lastLink.track)))
+            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.roadNumber, lastLink.roadPartNumber, lastLink.track, headLink.ely)))
 
         }
       }.toSeq

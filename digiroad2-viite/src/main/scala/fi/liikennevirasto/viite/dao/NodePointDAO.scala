@@ -41,14 +41,14 @@ object BeforeAfter {
 }
 
 case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeId: Option[Long], startDate: DateTime, endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
-                     createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long, roadNumber: Long, roadPartNumber: Long, track: Track)
+                     createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long, roadNumber: Long, roadPartNumber: Long, track: Track, elyCode: Long)
 
 class NodePointDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
   val selectFromNodePoint = """SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_ID, NP.START_DATE, NP.END_DATE,
-                             NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK
+                             NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.ELY
                              FROM NODE_POINT NP
                              JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
                              LEFT OUTER JOIN NODE N ON (N.id = np.NODE_ID)
@@ -71,8 +71,9 @@ class NodePointDAO extends BaseDAO {
       val roadNumber = r.nextLongOption().map(l => l).getOrElse(0L)
       val roadPartNumber = r.nextLongOption().map(l => l).getOrElse(0L)
       val track = r.nextLongOption().map(l => Track.apply(l.toInt)).getOrElse(Track.Unknown)
+      val ely = r.nextLongOption().map(l => l).getOrElse(0L)
 
-      NodePoint(id, BeforeAfter.apply(beforeAfter), roadwayPointId, nodeId, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM, roadNumber, roadPartNumber, track)
+      NodePoint(id, BeforeAfter.apply(beforeAfter), roadwayPointId, nodeId, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM, roadNumber, roadPartNumber, track, ely)
     }
   }
 
@@ -131,16 +132,30 @@ class NodePointDAO extends BaseDAO {
     queryList(query).headOption
   }
 
-  def fetchNodePointTemplate(roadwayNumber: Long): List[NodePoint] = {
+  def fetchTemplatesByRoadwayNumber(roadwayNumber: Long): List[NodePoint] = {
     val query =
       s"""
         SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_ID, NP.START_DATE, NP.END_DATE,
-        NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, NULL, NULL, NULL
+        NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, NULL, NULL, NULL, NULL
         FROM NODE_POINT NP
         JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
         JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
         where RP.roadway_number = $roadwayNumber and NP.valid_to is null and NP.end_date is null
       """
+    queryList(query)
+  }
+
+  def fetchTemplates() : Seq[NodePoint] = {
+    val query =
+      s"""
+         SELECT DISTINCT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NULL AS NODE_ID, NP.START_DATE, NP.END_DATE,
+         NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, rw.ELY
+         FROM NODE_POINT NP
+         JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+         JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
+         LEFT JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+         where NP.valid_to is null and NP.end_date is null and NP.node_id is null and RW.end_date is NULL
+       """
     queryList(query)
   }
 
@@ -154,7 +169,7 @@ class NodePointDAO extends BaseDAO {
       val query =
         s"""
           SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NULL AS NODE_ID, NP.START_DATE, NP.END_DATE,
-            NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK
+            NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.ELY
           FROM NODE_POINT NP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
           JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
