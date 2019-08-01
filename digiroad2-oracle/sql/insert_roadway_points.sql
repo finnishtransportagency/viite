@@ -319,7 +319,7 @@ insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) v
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (319, 54911, 4898, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (320, 54912, 0, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (321, 54912, 6354, 'import', 'import');
-insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (322, 54913, 0, 'import', 'import');
+--insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (322, 54913, 0, 'import', 'import');
 --insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (323, 54913, 3646, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (324, 54914, 0, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (325, 54915, 6884, 'import', 'import');
@@ -470,7 +470,7 @@ insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) v
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (470, 64823, 0, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (471, 64915, 0, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (472, 64916, 5757, 'import', 'import');
-insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (473, 64922, 5271, 'import', 'import');
+--insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (473, 64922, 5271, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (474, 64923, 5813, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (475, 64946, 13845, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (476, 64947, 0, 'import', 'import');
@@ -588,10 +588,10 @@ insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) v
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (588, 69525, 0, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (589, 69526, 5361, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (590, 69527, 5361, 'import', 'import');
-insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (591, 69528, 0, 'import', 'import');
-insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (592, 69528, 3023, 'import', 'import');
-insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (593, 69529, 0, 'import', 'import');
-insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (594, 69529, 3023, 'import', 'import');
+--insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (591, 69528, 0, 'import', 'import');
+--insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (592, 69528, 3023, 'import', 'import');
+--insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (593, 69529, 0, 'import', 'import');
+--insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (594, 69529, 3023, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (595, 69533, 5045, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (596, 69534, 0, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (597, 69534, 699, 'import', 'import');
@@ -621,8 +621,8 @@ insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) v
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (621, 70999, 95, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (622, 71001, 0, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (623, 71001, 148, 'import', 'import');
-insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (624, 71003, 0, 'import', 'import');
-insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (625, 71003, 46, 'import', 'import');
+--insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (624, 71003, 0, 'import', 'import');
+--insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (625, 71003, 46, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (626, 71004, 0, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (627, 71004, 2764, 'import', 'import');
 insert into roadway_point(ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) values (628, 71008, 0, 'import', 'import');
