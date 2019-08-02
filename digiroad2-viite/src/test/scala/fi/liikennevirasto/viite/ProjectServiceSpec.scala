@@ -949,6 +949,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
       })
       val roadLinks = links.map(toRoadLink)
+      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       projectService.revertLinksByRoadPart(project.id, 99999L, 1L, linksToRevert, "Test User")
       projectLinkDAO.fetchProjectLinks(project.id).count(_.roadPartNumber == 2L) should be(2)
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
@@ -967,6 +968,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linksToRevert = links.map(l => {
         LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
       })
+      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       projectService.revertLinksByRoadPart(project.id, 99999L, 1L, linksToRevert, "Test User")
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("test name")
     }
@@ -2042,7 +2044,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val roadwayNumber = 1
       val roadwayId = Sequences.nextRoadwayId
-
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllBySection(roadNumber, roadPartNumber))
 
       val rap = Project(projectId, ProjectState.apply(1), "TestProject", user, DateTime.parse("1901-01-01"),
@@ -2073,8 +2074,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
      val linksToRevert = projectLinks.filter(_.status != LinkStatus.NotHandled).map(pl => {
        LinkToRevert(pl.id, pl.linkId, pl.status.value, pl.geometry)
      })
-     val roadLinks = projectLinks.map(toRoadLink).head.copy(geometry = roadGeom)
-
+     val roadLinks = projectLinks.updated(0, projectLinks.head.copy(geometry = roadGeom)).map(toRoadLink)
+      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       projectService.revertLinksByRoadPart(projectId, newRoadNumber, newRoadPart, linksToRevert, user)
       val geomAfterRevert = GeometryUtils.truncateGeometry3D(roadGeom, projectLinksFromRoadAddresses.head.startMValue, projectLinksFromRoadAddresses.head.endMValue)
       val linksAfterRevert = projectLinkDAO.fetchProjectLinks(projectId)
