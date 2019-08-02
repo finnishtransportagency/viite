@@ -96,6 +96,17 @@ class ProjectReservedPartDAO {
     }
   }
 
+  def fetchProjectReservedRoadPartsByProjectId(projectId: Long): Seq[ProjectReservedPart] = {
+    time(logger, s"Fetch project reserved road parts for project: $projectId") {
+      val sql = s"""SELECT rp.id, rp.road_number, rp.road_part_number FROM PROJECT_RESERVED_ROAD_PART rp WHERE rp.project_id = $projectId"""
+      Q.queryNA[(Long, Long, Long)](sql).list.map {
+        case (id, road, part) =>
+          ProjectReservedPart(id, road, part, None, None, None, None,
+            None, None, None)
+      }
+    }
+  }
+
   def fetchReservedRoadParts(projectId: Long): Seq[ProjectReservedPart] = {
     time(logger, s"Fetch reserved road parts for project: $projectId") {
       val sql =
