@@ -3,9 +3,19 @@
     var me = this;
     var nodes = [];
     var nodesWithAttributes = [];
+    var nodePointTemplates = [];
+    var junctionTemplates = [];
 
     this.getNodes = function() {
       return nodes;
+    };
+
+    this.setNodePointTemplates = function(list) {
+      nodePointTemplates = list;
+    };
+
+    this.setJunctionTemplates = function(list) {
+      junctionTemplates = list;
     };
 
     this.setNodes = function(list) {
@@ -34,15 +44,32 @@
       });
     };
 
-    eventbus.on('node:fetched', function(nodes, zoom) {
+    eventbus.on('node:fetched', function(fetchResult, zoom) {
+      var nodes = _.filter(fetchResult, function(node){
+        return !_.isUndefined(node.name) ;
+      });
+      var nodePointTemplates = _.map(_.filter(fetchResult, function(node){
+        return !_.isUndefined(node.nodePointTemplate) ;
+      }), function (nodePointTemp) {
+        return nodePointTemp.nodePointTemplate;
+      });
+      var junctionPointTemplates = _.map(_.filter(fetchResult, function(node){
+          return !_.isUndefined(node.junctionPointTemplate) ;
+      }), function (junctionPointTemp) {
+          return junctionPointTemp.junctionPointTemplate;
+      });
+
       me.setNodes(nodes);
-      eventbus.trigger('node:addNodesToMap', nodes, zoom);
+      me.setNodePointTemplates(nodePointTemplates);
+      me.setJunctionTemplates(junctionTemplates);
+      me.setNodesWithAttributes(nodes);
+      eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionPointTemplates, zoom);
     });
 
     eventbus.on('nodeSearchTool:clickNode', function (index, map) {
       var node = nodesWithAttributes[index];
-      map.getView().setCenter([node.coordX, node.coordY]);
       map.getView().animate({
+        center: [node.coordX, node.coordY],
         zoom: 12,
         duration: 1500
       });

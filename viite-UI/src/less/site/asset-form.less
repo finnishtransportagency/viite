@@ -253,7 +253,8 @@
 .form {
   width: 360px;
 
-  .asset-log-info {
+  .asset-log-info,
+  .asset-log-info-metadata {
     font-size: @font-size-small;
     line-height: @line-height-modifier * 3;
     color: @input-color-placeholder-dark;
@@ -290,10 +291,16 @@
 
 .form-horizontal {
   .control-label {
+    margin-top: @control-label-margin;
+  }
+  .control-label-short {
+    margin-top: @control-label-margin-short;
+  }
+  .control-label,
+  .control-label-short {
     width: @control-label-width;
     margin-right: @control-label-margin;
     font-size: @font-size-xs;
-    margin-top: 10px;
   }
 
   .control-label-floating {
@@ -329,10 +336,24 @@
   .checkbox,
   .select,
   .form-control-static,
+  .form-control-static-short,
   .choice-group,
   .btn-block {
     width: 210px;
-    margin-top: 10px;
+  }
+
+  .form-control,
+  .split-form-control,
+  .checkbox,
+  .select,
+  .form-control-static,
+  .choice-group,
+  .btn-block {
+    margin-top: @control-label-margin;
+  }
+
+  .form-control-static-short {
+    margin-top: @control-label-margin-short;
   }
 
   .project-choice-group{
@@ -349,6 +370,15 @@
     width: 100%;
     padding-top: 0;
     padding-bottom: 0;
+  }
+
+  .asset-log-info-metadata {
+    float: none;
+    width: 100%;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
   }
 }
 

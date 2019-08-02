@@ -42,8 +42,6 @@
         var directionMarkerColor= function(roadLink){
             if(roadLink.status === LinkValues.LinkStatus.New.value){
                 return '#ff55dd';
-            } else if (roadLink.roadLinkSource === LinkValues.LinkGeomSource.SuravageLinkInterface.value && roadLink.linearLocationId === 0) {
-                return '#d3aff6';
             }
             else if (roadLink.roadClass in colorMap) {
                 return colorMap[roadLink.roadClass];
@@ -73,8 +71,6 @@
 
       if(roadlink.floating === LinkValues.SelectionType.Floating.value) {
         box.setStyle(boxStyleFloat);
-      } else if(roadlink.roadLinkSource===LinkValues.LinkGeomSource.SuravageLinkInterface.value){
-        box.setStyle(boxStyleDirectional(roadlink));
       } else if(roadlink.linearLocationId===0 && roadlink.roadClass === LinkValues.LinkGeomSource.Unknown.value){
         box.setStyle(boxStyleUnknown);
       } else {

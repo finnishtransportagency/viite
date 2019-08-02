@@ -74,13 +74,13 @@
         if(applicationModel.getSelectedLayer() === 'node') {
 
           cachedMarker = new LinkPropertyMarker();
-          var suravageLinks = roadCollection.getSuravageLinks();
+          var underConstructionLinks = roadCollection.getUnderConstructionLinks();
           var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
-            return _.includes(_.map(suravageLinks, function (sl) {
+            return _.includes(_.map(underConstructionLinks, function (sl) {
               return sl.linkId;
             }), rl.linkId);
           });
-          me.clearLayers([directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer]);
+          me.clearLayers([directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer]);
 
           if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
@@ -114,20 +114,17 @@
           }
         });
 
-        eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, zoom){
+        eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, nodePointTemplates, junctionPointTemplates, zoom){
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
             _.each(nodes, function (node) {
               var nodeMarker = new NodeMarker();
-              nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node.node));
+              nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node));
             });
           }
 
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions){
-            var suravageLinks = roadCollection.getSuravageLinks();
             var roadLinksWithValues = _.reject(roadCollection.getAll(), function (rl) {
-              return _.includes(_.map(suravageLinks, function (sl) {
-                return sl.linkId;
-              }), rl.linkId) || rl.roadNumber === 0;
+              return rl.roadNumber === 0;
             });
             var junctions = [];
             var junctionPoints = [];
@@ -158,6 +155,26 @@
                var junctionMarker = new JunctionMarker();
                junctionMarkerLayer.getSource().addFeature(junctionMarker.createJunctionMarker(junctionPoint.junctionPoint, junctionPoint.junction, roadLink));
               });
+            });
+
+            _.each(nodePointTemplates, function (nodePointTemplate) {
+              var nodePointTemplateMarker = new NodePointTemplateMarker();
+              var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
+                return (roadLink.startAddressM === nodePointTemplate.addrM || roadLink.endAddressM === nodePointTemplate.addrM) && roadLink.roadwayNumber === nodePointTemplate.roadwayNumber;
+              });
+              if (!_.isUndefined(roadLinkForPoint)) {
+                nodePointTemplateLayer.getSource().addFeature(nodePointTemplateMarker.createNodePointTemplateMarker(nodePointTemplate, roadLinkForPoint));
+              }
+            });
+
+            _.each(junctionPointTemplates, function (junctionPointTemplate) {
+              var junctionPointTemplateMarker = new JunctionPointTemplateMarker();
+              var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
+                return (roadLink.startAddressM === junctionPointTemplate.addrM || roadLink.endAddressM === junctionPointTemplate.addrM) && roadLink.roadwayNumber === junctionPointTemplate.roadwayNumber;
+              });
+              if (!_.isUndefined(roadLinkForPoint)) {
+                junctionTemplateLayer.getSource().addFeature(junctionPointTemplateMarker.createJunctionPointTemplateMarker(junctionPointTemplate, roadLinkForPoint));
+              }
             });
           }
         });
@@ -190,10 +207,12 @@
       var showLayer = function () {
         me.start();
         me.layerStarted(me.eventListener);
+        $('#projectListButton').prop('disabled', true);
       };
 
       var hideLayer = function () {
         me.clearLayers(layers);
+        $('#projectListButton').prop('disabled', false);
       };
 
       me.toggleLayersVisibility(layers, true);

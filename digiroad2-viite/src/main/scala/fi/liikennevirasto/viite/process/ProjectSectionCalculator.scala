@@ -1,16 +1,15 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.{RampsMaxBound, RampsMinBound, RoadType}
+import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.{RoadAddressSectionCalculatorContext, TrackCalculatorContext}
 import org.slf4j.LoggerFactory
-
 
 object ProjectSectionCalculator {
 
@@ -115,9 +114,7 @@ object ProjectSectionCalculator {
 
         val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
 
-        val (adjustedLeft, adjustedRight) = strategy.setCalibrationPoints(trackCalcResult, Map())
-
-        (adjustedLeft ++ adjustedRestRight, adjustedRight ++ adjustedRestLeft)
+        (trackCalcResult.leftProjectLinks ++ adjustedRestLeft, trackCalcResult.rightProjectLinks ++ adjustedRestRight)
       }
     }
 
@@ -129,7 +126,8 @@ object ProjectSectionCalculator {
       val leftLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(left, addrSt = 0)
       val rightLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(right, addrSt = 0)
       val (leftAdjusted, rightAdjusted) = adjustTracksToMatch(leftLinks, rightLinks, None)
-      val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(rightAdjusted), groupIntoSections(leftAdjusted))
+      val (completedAdjustedRight, completedAdjustedLeft) = TrackSectionOrder.setCalibrationPoints(leftAdjusted, rightAdjusted, Map())
+      val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(completedAdjustedRight), groupIntoSections(completedAdjustedLeft))
       calculatedSections.flatMap { sec =>
         if (sec.right == sec.left)
           sec.right.links
