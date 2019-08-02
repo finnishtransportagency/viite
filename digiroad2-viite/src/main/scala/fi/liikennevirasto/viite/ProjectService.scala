@@ -1399,14 +1399,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                          reversed: Boolean = false, roadName: Option[String] = None, coordinates: Option[ProjectCoordinates] = None): Option[String] = {
     def isCompletelyNewPart(toUpdateLinks: Seq[ProjectLink]): (Boolean, Long, Long) = {
       val reservedPart = projectReservedPartDAO.fetchReservedRoadPart(toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber).get
-      val newSavedLinks = projectLinkDAO.fetchByProjectRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber, projectId)
+      val newSavedLinks = if (roadwayDAO.fetchAllByRoadAndPart(reservedPart.roadNumber, reservedPart.roadPartNumber).isEmpty) {
+        projectLinkDAO.fetchByProjectRoadPart(reservedPart.roadNumber, reservedPart.roadPartNumber, projectId)
+      } else Seq.empty
       /*
       replaceable -> New link part should replace New existing part if:
         1. Action is LinkStatus.New
         2. New road or part is different from existing one
         3. All New links in existing part are in selected links for New part
        */
-      val replaceable = (linkStatus == New || linkStatus == Transfer) && (reservedPart.roadNumber != newRoadNumber || reservedPart.roadPartNumber != newRoadPartNumber) && newSavedLinks.map(_.id).toSet.subsetOf(ids)
+      val replaceable = (linkStatus == New || linkStatus == Transfer) &&(reservedPart.roadNumber != newRoadNumber || reservedPart.roadPartNumber != newRoadPartNumber) && newSavedLinks.nonEmpty && newSavedLinks.map(_.id).toSet.subsetOf(ids)
       (replaceable, reservedPart.roadNumber, reservedPart.roadPartNumber)
     }
 
@@ -1515,7 +1517,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
 
           case LinkStatus.Transfer =>
-            checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Transfer, toUpdateLinks)
+            val (replaceable, road, part) = checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Transfer, toUpdateLinks)
             val updated = toUpdateLinks.map(l => {
               l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode),
                 status = linkStatus, calibrationPoints = (None, None), ely = ely.getOrElse(l.ely), roadType = RoadType.apply(roadType.toInt))
@@ -1523,6 +1525,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(updated.map(_.roadwayId))
             projectLinkDAO.updateProjectLinks(updated, userName, originalAddresses)
             projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(updated.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
+            //transfer cases should remove the part after the project link table update operation
+            if (replaceable) {
+              projectReservedPartDAO.removeReservedRoadPart(projectId, road.get, part.get)
+            }
             val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
             if (nameError.nonEmpty)
               return nameError
