@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
@@ -19,10 +20,10 @@ import org.scalatra.test.scalatest.ScalatraSuite
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
   when(mockRoadAddressService.getAllByMunicipality(235)).thenReturn(Seq())
 
-  val mockRoadNameService = MockitoSugar.mock[RoadNameService]
+  val mockRoadNameService: RoadNameService = MockitoSugar.mock[RoadNameService]
 
   private val integrationApi = new IntegrationApi(mockRoadAddressService, mockRoadNameService, new ViiteSwagger)
   addServlet(integrationApi, "/*")
@@ -60,12 +61,12 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("Test integrationApi.roadAddressLinksToApi() When supliying a simple Road Address Link Then return a Sequence of a String to Value mappings that represent the Road Address Link.") {
-    val geometry = Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
+    val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
     // This roadAddressLink has linearLocationId equal to zero, just to compile.
     val roadAdressLink = RoadAddressLink(63298, 0, 5171208, geometry, GeometryUtils.geometryLength(geometry), Municipality,
       UnknownLinkType, InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"),
-      None, BigInt(0), None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 6, "2015-01-01",
-      "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(CalibrationPoint(120, 1, 2)), None, Anomaly.None, 0)
+      None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 6, "2015-01-01",
+      "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(CalibrationPoint(120, 1, 2)), None, Anomaly.None)
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)) should be(Seq(Map(
       "muokattu_viimeksi" -> "",
       "geometryWKT" -> "LINESTRING ZM (0.000 0.000 0.000 0.000, 1.000 0.000 0.500 1.000, 4.000 4.000 1.500 6.000)",
@@ -89,7 +90,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   test("Test integrationApi.geometryWKT() When using a 3D sequence of points and a start and end measures that fit in the geometry Then return a proper geometry in LineString format.") {
     val (header, returnTxt) =
-      integrationApi.geometryWKT(Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5)), 0L, 6L)
+      integrationApi.geometryWKT(Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5)), 0L, 6L)
     header should be ("geometryWKT")
     returnTxt should be ("LINESTRING ZM (0.000 0.000 0.000 0.000, 1.000 0.000 0.500 1.000, 4.000 4.000 1.500 6.000)")
   }
@@ -140,7 +141,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     getWithBasicUserAuth("/roadnames/changes?since=2018-01-01", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
-        "[{\"road_number\":2,\"names\":[{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"MYROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}]}]"
+        "[{\"road_number\":2,\"names\":[{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"road_name\":\"MYROAD\",\"end_date\":null,\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\"}]}]"
       )
     }
   }
@@ -157,10 +158,9 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       status should equal(200)
       response.body should equal(
         "[{\"road_number\":2,\"names\":[" +
-          "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"MY ROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}," +
-          "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-01").toString + "\"}," +
-          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-01").toString + "\"}" +
-          "]}]"
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"road_name\":\"MY ROAD\",\"end_date\":null,\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\"}," +
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"road_name\":\"THEROAD\",\"end_date\":\"" + DateTime.parse("2018-02-01").toString + "\",\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\"}," +
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"road_name\":\"OLDROAD\",\"end_date\":\"" + DateTime.parse("2000-02-01").toString + "\",\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\"}]}]"
       )
     }
   }
@@ -179,12 +179,12 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       response.body should equal(
         "[" +
           "{\"road_number\":2,\"names\":[" +
-          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"MY ROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}," +
-          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-01").toString + "\"}," +
-          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-01").toString + "\"}" +
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"road_name\":\"MY ROAD\",\"end_date\":null,\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\"}," +
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"road_name\":\"THEROAD\",\"end_date\":\"" + DateTime.parse("2018-02-01").toString + "\",\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\"}," +
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"road_name\":\"OLDROAD\",\"end_date\":\"" + DateTime.parse("2000-02-01").toString + "\",\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\"}" +
           "]}," +
           "{\"road_number\":3,\"names\":[" +
-          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"ANOTHER ROAD\",\"start_date\":\"" + DateTime.parse("2017-12-12").toString + "\",\"end_date\":null}" +
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2017-12-12").toString + "\",\"road_name\":\"ANOTHER ROAD\",\"end_date\":null,\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\"}" +
           "]}" +
           "]"
       )
@@ -209,7 +209,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     getWithBasicUserAuth("/roadnames/changes?since=2018-01-01&until=2018-01-03", "kalpa", "kalpa") {
       status should equal(200)
       response.body should equal(
-        "[{\"road_number\":2,\"names\":[{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"MYROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}]}]"
+        "[{\"road_number\":2,\"names\":[{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"road_name\":\"MYROAD\",\"end_date\":null,\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\"}]}]"
       )
     }
   }
@@ -226,10 +226,9 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       status should equal(200)
       response.body should equal(
         "[{\"road_number\":2,\"names\":[" +
-          "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"MY ROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}," +
-          "{\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-01").toString + "\"}," +
-          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-01").toString + "\"}" +
-          "]}]"
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"road_name\":\"MY ROAD\",\"end_date\":null,\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\"}," +
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"road_name\":\"THEROAD\",\"end_date\":\"" + DateTime.parse("2018-02-01").toString + "\",\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\"}," +
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"road_name\":\"OLDROAD\",\"end_date\":\"" + DateTime.parse("2000-02-01").toString + "\",\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\"}]}]"
       )
     }
   }
@@ -248,12 +247,12 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       response.body should equal(
         "[" +
           "{\"road_number\":2,\"names\":[" +
-          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"MY ROAD\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"end_date\":null}," +
-          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"THEROAD\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2018-02-01").toString + "\"}," +
-          "{\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\",\"road_name\":\"OLDROAD\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"end_date\":\"" + DateTime.parse("2000-02-01").toString + "\"}" +
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"road_name\":\"MY ROAD\",\"end_date\":null,\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\"}," +
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2000-02-02").toString + "\",\"road_name\":\"THEROAD\",\"end_date\":\"" + DateTime.parse("2018-02-01").toString + "\",\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\"}," +
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("1900-02-02").toString + "\",\"road_name\":\"OLDROAD\",\"end_date\":\"" + DateTime.parse("2000-02-01").toString + "\",\"change_date\":\"" + DateTime.parse("1900-01-01").toString + "\"}" +
           "]}," +
           "{\"road_number\":3,\"names\":[" +
-          "{\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\",\"road_name\":\"ANOTHER ROAD\",\"start_date\":\"" + DateTime.parse("2017-12-12").toString + "\",\"end_date\":null}" +
+          "{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2017-12-12").toString + "\",\"road_name\":\"ANOTHER ROAD\",\"end_date\":null,\"change_date\":\"" + DateTime.parse("2017-12-01").toString + "\"}" +
           "]}" +
           "]"
       )

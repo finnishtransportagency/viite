@@ -8,12 +8,13 @@ import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.SequenceResetterDAO
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite._
 import org.joda.time.{DateTime, _}
@@ -271,7 +272,7 @@ class DataImporter {
       case (min, max) =>
         withDynTransaction {
         val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
-        val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
+        val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(linkIds)
         val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet)
         val topologyLocation = unGroupedTopology.groupBy(_.linkId)
         roadLinksFromVVH.foreach(roadLink => {

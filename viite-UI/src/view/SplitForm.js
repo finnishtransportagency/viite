@@ -239,23 +239,6 @@
         }
       });
 
-      eventbus.on('roadAddress:projectSentSuccess', function () {
-        new ModalConfirm("Muutosilmoitus lähetetty Tierekisteriin.");
-        //TODO: make more generic layer change/refresh
-        applicationModel.selectLayer('linkProperty');
-
-        rootElement.empty();
-        formCommon.clearInformationContent();
-
-        selectedProjectLinkProperty.close();
-        projectCollection.clearRoadAddressProjects();
-        projectCollection.reset();
-        applicationModel.setOpenProject(false);
-
-        eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
-        eventbus.trigger('roadLinks:refreshView');
-      });
-
       eventbus.on('roadAddress:projectSentFailed', function (error) {
         new ModalConfirm(error);
       });

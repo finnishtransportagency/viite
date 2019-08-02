@@ -2,7 +2,7 @@
   root.ProjectSelectBox = function(projectListModel) {
     var groupDiv = $('<div class="panel-group open-projects"/>');
     var projectSelectDiv = $('<div class="panel"/>');
-    var selectProjectButton = $('<button id="projectListButton" class="action-mode-btn btn btn-block btn-primary"">Tieosoiteprojektit</button>');
+    var selectProjectButton = $('<button id="projectListButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>');
     var panelHeader = $('<div class="panel-header"></div>').append(selectProjectButton);
     var addedPanelHeader = groupDiv.append(projectSelectDiv.append(panelHeader));
 

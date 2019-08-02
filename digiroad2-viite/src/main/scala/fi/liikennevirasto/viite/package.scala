@@ -45,17 +45,11 @@ package object viite {
   val MaxJumpForSection = 50.0
   /* Maximum distance to consider the tracks to go side by side */
   val MaxDistanceBetweenTracks = 50
-  /* Maximum distance of regular road link geometry to suravage geometry difference where splitting is allowed */
-  val MaxSuravageToleranceToGeometry = 0.5
   val MaxRoadNumberDemandingRoadName = 70000
 
   val MaxAllowedNodes = 50
 
-  //TODO: remove after Suravage change following messages (4):
-  val ErrorNoMatchingProjectLinkForSplit = "Suravage-linkkiä vastaavaa käsittelemätöntä tieosoitelinkkiä ei löytynyt projektista."
-  val ErrorSuravageLinkNotFound = "Suravage-linkkiä ei löytynyt."
   val ErrorRoadLinkNotFound = "Tielinkkiä ei löytynyt."
-  val ErrorSplitSuravageNotUpdatable = "Valitut linkit sisältävät jaetun Suravage-linkin eikä sitä voi päivittää."
   val ErrorRoadAlreadyExistsOrInUse = "Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot."
   val ErrorFollowingRoadPartsNotFoundInDB = "Projektiin yritettiin varata tieosia joita ei ole olemassa, tarkista tieosoitteet:"
   val ErrorRoadLinkNotFoundInProject = "Tielinkkiä ei löytynyt projektista. Tekninen virhe, ota yhteys pääkäyttäjään."
@@ -69,7 +63,7 @@ package object viite {
   val ErrorMultipleRoadNumbersOrParts = "Useita tieosia valittuna. Numerointi tulee tehdä jokaiselle tieosalle erikseen."
   val ErrorOtherActionWithNumbering = "Numeroinnin yhteydessä samalle tieosalle ei voi tehdä muita toimenpiteitä. Numerointia ei tehty."
   val ErrorTransferActionWithNumbering = "Numeroinnin yhteydessä samalle tieosalle ei voi tehdä muita toimenpiteitä. Siirtoa ei tehty."
-  val ErrorNewActionWithNumbering = "Numeroinnin yhteydessä samalla tieosalle ei voi tehdä muita toimenpiteitä. Uutta tieosaa ei tehty."
+  val ErrorNewActionWithNumbering = "Numeroinnin yhteydessä samalla tieosalle ei voi tehdä muita toimenpiteitä. Toimenpidettä Uusi ei tehty."
   val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), tieosan viimeiselle linkille."
   val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), vaikka tieosan jälkeen on olemassa tieosa."
   val MinorDiscontinuityFoundMessage = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
@@ -89,6 +83,7 @@ package object viite {
   val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosan sisällä on epäjatkuvuuksia. Tarkista Jatkuu-koodit."
   val DiscontinuityInsideRoadPartMessage = "Epäjatkuvuus (2) voi olla vain tieosan lopussa."
+  val DistinctRoadTypesBetweenTracksMessage = "Rinnakkaisilla ajoradoilla eri tietyyppi."
   val RoadNotEndingInElyBorderMessage = "Tien lopussa pitää olla jatkuu-koodi 1. Korjaa jatkuu-koodi."
   val RoadContinuesInAnotherElyMessage = "Jatkuu-koodi %s on virheellinen, koska tie jatkuu toisessa ELY:ssa. "
   val MinorDiscontinuousWhenRoadConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
@@ -96,7 +91,6 @@ package object viite {
   val DoubleEndOfRoadMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."
   val EndOfRoadMiddleOfPartMessage = s"Tieosan keskellä olevalla linkillä on jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value})."
   val RoadNotAvailableMessage = s"Tieosaa ei ole varattu projektiin tai se on varattuna toisessa projektissa."
-  val RoadPartNotReservedInProjectMessage = s"Tieosaa ei ole varattu projektiin."
   val RoadReservedOtherProjectMessage = s"Tie %d osa %d on jo varattuna projektissa %s, tarkista tiedot."
   val ProjectNotFoundMessage = "Projektia ei löytynyt, ota yhteys pääkäyttäjään."
   val FailedToSendToTRMessage = s"Lähetys tierekisteriin epäonnistui, ota yhteys pääkäyttäjään."
@@ -264,20 +258,6 @@ package object viite {
     "|       coordinates      | ProjectCoordinates |  This represents the middle point of all the project links involved in the project  |       |\n" +
     "|        roadName        |   Option[String]   |                Possible road name for all the project links sent here               |       |\n" +
     "|        reversed        |   Option[Boolean]  |                   Defines whether or not these roads are reversed                   |       |"
-
-  val cutLineExtractorStructure = "" +
-    "|  Field Name  | Field Type |         Description        |                   Notes                   |\n" +
-    "|:------------:|:----------:|:--------------------------:|:-----------------------------------------:|\n" +
-    "|    linkId    |    Long    |  LinkId of a project link. | It should be a linkId of a Suravage link. |\n" +
-    "| splitedPoint |    Point   | Point of the actual split. |        Simple 3 dimensional point.        |"
-
-
-  val revertSplitExtractor ="" +
-    "|  Field Name |     Field Type     |        Description        | Notes |\n" +
-    "|:-----------:|:------------------:|:-------------------------:|:-----:|\n" +
-    "|  projectId  |    Option[Long]    |    Possible Project Id    |       |\n" +
-    "|    linkId   |    Option[Long]    |      Possible Link Id     |       |\n" +
-    "| coordinates | ProjectCoordinates | Simple (x, y, zoom) entry |       |"
 
   val defaultProjectEly = -1L
 
