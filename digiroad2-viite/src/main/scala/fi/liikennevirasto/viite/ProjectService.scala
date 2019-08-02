@@ -592,39 +592,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     None
   }
 
-//  def revertSplit(projectId: Long, linkId: Long, userName: String): Option[String] = {
-//    withDynTransaction {
-//      val previousSplit = projectLinkDAO.fetchSplitLinks(projectId, linkId)
-//      if (previousSplit.nonEmpty) {
-//        revertSplitInTX(projectId, previousSplit, userName)
-//        None
-//      } else
-//        Some(s"No split for link id $linkId found!")
-//    }
-//  }
-
-//  private def revertSplitInTX(projectId: Long, previousSplit: Seq[ProjectLink], userName: String): Unit = {
-//
-//    def getGeometryWithTimestamp(linkId: Long, timeStamp: Long, roadLinks: Seq[RoadLink],
-//                                 vvhHistoryLinks: Seq[VVHHistoryRoadLink]): Seq[Point] = {
-//      val matchingLinksGeometry = (roadLinks ++ vvhHistoryLinks).find(rl => rl.linkId == linkId && rl.vvhTimeStamp == timeStamp).map(_.geometry)
-//      if (matchingLinksGeometry.nonEmpty) {
-//        matchingLinksGeometry.get
-//      } else {
-//        (roadLinks ++ vvhHistoryLinks).find(rl => rl.linkId == linkId).map(_.geometry)
-//          .getOrElse(throw new InvalidAddressDataException(s"Geometry with linkId $linkId and timestamp $timeStamp not found!"))
-//      }
-//    }
-//
-//    val (roadLinks, vvhHistoryLinks) = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(previousSplit.map(_.linkId).toSet)
-//    val (suravage, original) = previousSplit.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
-//    revertSortedLinks(projectId, previousSplit.head.roadNumber, previousSplit.head.roadPartNumber,
-//      suravage.map(link => LinkToRevert(link.id, link.linkId, link.status.value, link.geometry)),
-//      original.map(link => LinkToRevert(link.id, link.linkId, link.status.value, getGeometryWithTimestamp(link.linkId,
-//        link.linkGeometryTimeStamp, roadLinks, vvhHistoryLinks))),
-//      userName, recalculate = false)
-//  }
-
   /**
     * Fetches the projectLink name, first from the project link, if that's not available then search for the road address.
     *
