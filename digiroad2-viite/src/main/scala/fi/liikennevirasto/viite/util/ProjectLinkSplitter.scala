@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectCoordinates, ProjectLink}
-import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, MaxSuravageToleranceToGeometry, RoadType, _}
+import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, RoadType, _}
 
 /**
   * Split suravage link together with project link template
@@ -204,36 +204,6 @@ object ProjectLinkSplitter {
     connectTerminatedProjectLinks(normalizedSplits._1, normalizedSplits._2, normalizedSplits._3, templateLink, projectLinksToTerminate.filterNot(_.id == templateLink.id))
   }
 
-  def findMatchingGeometrySegment(suravage: PolyLine, template: PolyLine): Option[Seq[Point]] = {
-    def findMatchingSegment(suravageGeom: Seq[Point], templateGeom: Seq[Point]): Option[Seq[Point]] = {
-      if (GeometryUtils.areAdjacent(suravageGeom.head, templateGeom.head, MaxDistanceForConnectedLinks)) {
-        val boundaries = geometryToBoundaries(suravageGeom)
-        val templateSegments = GeometryUtils.geometryToSegments(templateGeom)
-        val exitPoint = templateSegments.flatMap { seg =>
-          findIntersection(seg, boundaries._1, Some(Epsilon), Some(Epsilon))
-            .orElse(findIntersection(seg, boundaries._2, Some(Epsilon), Some(Epsilon)))
-        }.headOption
-        if (exitPoint.nonEmpty) {
-          // Exits the tunnel -> find point
-          exitPoint.map(ep => GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
-            GeometryUtils.calculateLinearReferenceFromPoint(ep, templateGeom)))
-        } else {
-          if (suravageGeom.forall(p => GeometryUtils.minimumDistance(p, templateGeom) <= MaxSuravageToleranceToGeometry) ||
-            templateGeom.forall(p => GeometryUtils.minimumDistance(p, suravageGeom) <= MaxSuravageToleranceToGeometry))
-            Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
-              Math.max(GeometryUtils.geometryLength(template.geometry), GeometryUtils.geometryLength(suravage.geometry))))
-          else
-            None
-        }
-      } else if (GeometryUtils.areAdjacent(suravageGeom.last, templateGeom.head, MaxDistanceForConnectedLinks)) {
-        findMatchingSegment(suravageGeom.reverse, templateGeom)
-      } else
-        None
-    }
-    findMatchingSegment(suravage.geometry, template.geometry).orElse(
-      findMatchingSegment(suravage.geometry.reverse, template.geometry.reverse).map(_.reverse))
-  }
-
   def findIntersection(geometry1: Seq[Point], geometry2: Seq[Point], maxDistance1: Option[Double] = None,
                        maxDistance2: Option[Double] = None): Option[Point] = {
     val segments1 = geometry1.zip(geometry1.tail)
@@ -283,20 +253,6 @@ object ProjectLinkSplitter {
       else
         Some(Point(x, y))
     }
-  }
-
-  def geometryToBoundaries(suravageGeometry: Seq[Point]): (Seq[Point], Seq[Point]) = {
-    def connectSegments(unConnected: Seq[(Point, Point)]): Seq[Point] = {
-      unConnected.scanLeft(unConnected.head) { case (previous, current) =>
-        val intersection = intersectionPoint(previous, current)
-        (intersection.getOrElse(current._1), current._2)
-      }.map(_._1) ++ Seq(unConnected.last._2)
-    }
-    val (leftUnConnected, rightUnConnected) = suravageGeometry.zip(suravageGeometry.tail).map { case (p1, p2) =>
-      val vecL = (p2 - p1).normalize2D().rotateLeft().scale(MaxSuravageToleranceToGeometry)
-      ((p1 + vecL, p2 + vecL), (p1 - vecL, p2 - vecL))
-    }.unzip
-    (connectSegments(leftUnConnected).tail, connectSegments(rightUnConnected).tail)
   }
 }
 
