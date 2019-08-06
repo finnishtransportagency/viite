@@ -25,7 +25,7 @@ object Dummies {
   }
 
   def dummyLinearLocationWithGeometry(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, geometry: Seq[Point] = Seq()): LinearLocation =
-    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.SuravageLinkInterface, 0, geometry)
+    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface, 0, geometry)
 
   def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, vvhTimestamp: Long): LinearLocation =
     dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface, vvhTimestamp)

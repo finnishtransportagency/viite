@@ -48,7 +48,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val mockVVHSuravageClient = MockitoSugar.mock[VVHSuravageClient]
   val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
   val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
@@ -220,7 +219,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       InUse, NormalLinkInterface)
     val (projectLinks, palinks) = l.partition(_.isInstanceOf[ProjectLink])
     val dbLinks = projectLinkDAO.fetchProjectLinks(id)
-    when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenAnswer(
       toMockAnswer(dbLinks ++ projectLinks.asInstanceOf[Seq[ProjectLink]].filterNot(l => dbLinks.map(_.linkId).contains(l.linkId)),
@@ -670,7 +668,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val rl = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 9.8)), 9.8, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(rl))
       roadwayDAO.create(ra)
       linearLocationDAO.create(Seq(ll))
@@ -723,17 +720,17 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       mockForProject(id, Seq(p))
 
-      val message1project1 = projectService.addNewLinksToProject(Seq(projectLink), id, "U", p.linkId).getOrElse("")
+      val message1project1 = projectService.addNewLinksToProject(Seq(projectLink), id, "U", p.linkId, newTransaction = true, Discontinuous).getOrElse("")
       val links = projectLinkDAO.fetchProjectLinks(id)
       links.size should be(0)
       message1project1 should be(RoadNotAvailableMessage) //check that it is reserved in roadaddress table
 
-      val message1project2 = projectService.addNewLinksToProject(Seq(projectLink2), id + 1, "U", p.linkId)
+      val message1project2 = projectService.addNewLinksToProject(Seq(projectLink2), id + 1, "U", p.linkId, newTransaction = true, Discontinuous)
       val links2 = projectLinkDAO.fetchProjectLinks(id + 1)
       links2.size should be(2)
       message1project2 should be(None)
 
-      val message2project1 = projectService.addNewLinksToProject(Seq(projectLink3), id, "U", p.linkId).getOrElse("")
+      val message2project1 = projectService.addNewLinksToProject(Seq(projectLink3), id, "U", p.linkId, newTransaction = true, Discontinuous).getOrElse("")
       val links3 = projectLinkDAO.fetchProjectLinks(id)
       links3.size should be(0)
       message2project1 should be("Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot.")
@@ -802,89 +799,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val attributes1 = Map("ROADNUMBER" -> BigInt(2))
     val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
     projectService.parsePreFillData(Seq(newRoadLink1)) should be(Left("Link does not contain valid prefill info"))
-  }
-
-  test("Test projectService.createSplitRoadAddress When dealing with a road addresses that were subjected to the transfer and the new operations " +
-    "Then the resulting links should include 1 terminated (the original one) and 3 more (1 new, 2 transferred) with the start dates be either the project start date or the road address start date and no defined end_date.")
-  {
-    val linearLocationId = 1L
-    val road = 5L
-    val roadPart = 205L
-    val origStartM = 1024L
-    val origEndM = 1547L
-    val origStartD = Some(DateTime.now().minusYears(10))
-    val linkId = 1049L
-    val endM = 520.387
-    val suravageLinkId = 5774839L
-    val user = Some("user")
-    val project = Project(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
-      DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None)
-
-    // Original road address: 1024 -> 1547
-    val roadAddress = RoadAddress(1L, linearLocationId, road, roadPart, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
-      None, None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None),  Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
-      LinkGeomSource.NormalLinkInterface, 8L, NoTermination, 123)
-
-    val projectLink = ProjectLink(0, road, roadPart, Track.Combined, Continuous, 0, 0, origStartM, origEndM, Some(DateTime.now()), None, user,
-      0, 0.0, 0.0, SideCode.TowardsDigitizing, (None, None),  Seq(Point(0.0, 0.0), Point(0.0, 0.0)),
-      -1L, null, PublicRoad, null, 0.0, 1L, 8L, linearLocationId, reversed = false, None, 748800L)
-    val transferAndNew = Seq(
-
-      // Transferred road address: 1028 -> 1128
-      projectLink.copy(id = 2, startAddrMValue = origStartM + 4, endAddrMValue = origStartM + 104, linkId = suravageLinkId,
-        startMValue = 0.0, endMValue = 99.384, geometry = Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)), status = LinkStatus.Transfer,
-        linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 99.384, connectedLinkId = Some(linkId)),
-
-      // New road address: 1128 -> 1205
-      projectLink.copy(id = 3, startAddrMValue = origStartM + 104, endAddrMValue = origStartM + 181, linkId = suravageLinkId,
-        startMValue = 99.384, endMValue = 176.495, geometry = Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)), status = LinkStatus.New,
-        linkGeomSource = LinkGeomSource.SuravageLinkInterface, geometryLength = 77.111, connectedLinkId = Some(linkId)),
-
-      // Terminated road address: 1124 -> 1547
-      projectLink.copy(id = 4, startAddrMValue = origStartM + 100, endAddrMValue = origEndM, linkId = linkId,
-        startMValue = 99.384, endMValue = endM, geometry = Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)), status = LinkStatus.Terminated,
-        linkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength = endM - 99.384, connectedLinkId = Some(suravageLinkId))
-
-    )
-    val result = projectService.createSplitRoadAddress(roadAddress, transferAndNew, project)
-    result should have size 4
-    result.count(_.terminated == TerminationCode.Termination) should be(1)
-    result.count(_.startDate == roadAddress.startDate) should be(2)
-    result.count(_.startDate.get == project.startDate) should be(2)
-    result.count(_.endDate.isEmpty) should be(2)
-  }
-
-  test("Test projectService.createSplitRoadAddress When dealing with a road addresses that were subjected to the unchanged and the new operations" +
-    "Then the resulting links should include 1 terminated (the original one) and 2 more (1 new, 1 unchanged) with the start dates be either the project start date or the road address start date and no defined end_date.")
-  {
-    val linearLocationId = 1234L
-    val origStartM = 1024L
-    val origEndM = 1547L
-    val origStartD = Some(DateTime.now().minusYears(10))
-    val linkId = 1049L
-    val endM = 520.387
-    val suravageLinkId = 5774839L
-    val user = Some("user")
-    val project = Project(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
-      DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), Seq(), None, None)
-    val roadAddress = RoadAddress(1L, linearLocationId, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
-      None, None, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None),  Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
-      LinkGeomSource.NormalLinkInterface, 8L, TerminationCode.NoTermination, 0)
-    val unchangedAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, origStartM, origStartM + 100L, origStartM, origEndM, Some(DateTime.now()), None, user,
-      suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None),  Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
-      -1L, LinkStatus.UnChanged, PublicRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, linearLocationId, 8L, reversed = false, Some(linkId), 85088L),
-      ProjectLink(3L, 5, 205, Track.Combined, Continuous, origStartM + 100L, origStartM + 177L, origStartM, origEndM, Some(DateTime.now()), None, user,
-        suravageLinkId, 99.384, 176.495, SideCode.TowardsDigitizing, (None, None),  Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)),
-        -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 77.111, 1L, linearLocationId, 8L, reversed = false, Some(linkId), 85088L),
-      ProjectLink(4L, 5, 205, Track.Combined, Continuous, origStartM + 100L, origEndM, origStartM, origEndM, Some(DateTime.now()), None, user,
-        linkId, 99.384, endM, SideCode.TowardsDigitizing, (None, None),  Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)),
-        -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, linearLocationId, 8L, reversed = false, Some(suravageLinkId), 85088L))
-    val result = projectService.createSplitRoadAddress(roadAddress, unchangedAndNew, project)
-    result should have size 3
-    result.count(_.terminated == TerminationCode.Termination) should be(1)
-    result.count(_.startDate == roadAddress.startDate) should be(2)
-    result.count(_.startDate.get == project.startDate) should be(1)
-    result.count(_.endDate.isEmpty) should be(2)
   }
 
   test("Test createProjectLinks When project link is created for part not reserved Then should return error message") {
@@ -993,7 +907,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val (project, links) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L), roads = Seq(testRoad), discontinuity = Discontinuity.Continuous)
       val roadLinks = links.map(toRoadLink)
-      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
       val linksToRevert = links.map(l => {
         LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
@@ -1036,7 +949,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
       })
       val roadLinks = links.map(toRoadLink)
-      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
+      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       projectService.revertLinksByRoadPart(project.id, 99999L, 1L, linksToRevert, "Test User")
       projectLinkDAO.fetchProjectLinks(project.id).count(_.roadPartNumber == 2L) should be(2)
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
@@ -1050,12 +963,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       }
       val (project, links) = util.setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L), roads = Seq(testRoad), discontinuity = Discontinuity.Continuous)
       val roadLinks = links.map(toRoadLink)
-      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.NEXTVAL, 99999, 'test name', sysdate, null, sysdate, null, 'test user', sysdate)""".execute
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("new name")
       val linksToRevert = links.map(l => {
         LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
       })
+      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       projectService.revertLinksByRoadPart(project.id, 99999L, 1L, linksToRevert, "Test User")
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("test name")
     }
@@ -1466,7 +1379,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val toProjectLinks = (part1 ++ part2).map(toProjectLink(rap))
       val roadLinks = toProjectLinks.map(toRoadLink)
 
-      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       projectService.saveProject(project.copy(reservedParts = Seq(ProjectReservedPart(0L, 9999, 1, null, Some(Continuous), Some(8L), None, None, None, None), ProjectReservedPart(0L, 9999, 2, null, Some(Continuous), Some(8L), None, None, None, None))))
@@ -1592,7 +1504,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val part2 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(9999, 2).map(_.roadwayNumber).toSet))
       val toProjectLinks = (part1 ++ part2).map(toProjectLink(rap))
       val roadLinks = toProjectLinks.map(toRoadLink)
-      when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       projectService.saveProject(project.copy(reservedParts = Seq(ProjectReservedPart(0L, 9999, 1, null, Some(Continuous), Some(8L), None, None, None, None), ProjectReservedPart(0L, 9999, 2, null, Some(Continuous), Some(8L), None, None, None, None))))
@@ -2133,7 +2044,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val roadwayNumber = 1
       val roadwayId = Sequences.nextRoadwayId
-
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllBySection(roadNumber, roadPartNumber))
 
       val rap = Project(projectId, ProjectState.apply(1), "TestProject", user, DateTime.parse("1901-01-01"),
@@ -2160,13 +2070,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val numberingLinks = projectLinkDAO.fetchProjectLinks(projectId, Option(LinkStatus.Numbering))
       numberingLinks.head.geometry should be equals smallerRoadGeom
 
-      val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-      val linksToRevert = projectLinks.filter(_.status != LinkStatus.NotHandled).map(pl => {
-        LinkToRevert(pl.id, pl.linkId, pl.status.value, pl.geometry)
-      })
-      val roadLinks = projectLinks.map(toRoadLink).head.copy(geometry = roadGeom)
-      when(mockRoadLinkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinks))
-
+     val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+     val linksToRevert = projectLinks.filter(_.status != LinkStatus.NotHandled).map(pl => {
+       LinkToRevert(pl.id, pl.linkId, pl.status.value, pl.geometry)
+     })
+     val roadLinks = projectLinks.updated(0, projectLinks.head.copy(geometry = roadGeom)).map(toRoadLink)
+      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       projectService.revertLinksByRoadPart(projectId, newRoadNumber, newRoadPart, linksToRevert, user)
       val geomAfterRevert = GeometryUtils.truncateGeometry3D(roadGeom, projectLinksFromRoadAddresses.head.startMValue, projectLinksFromRoadAddresses.head.endMValue)
       val linksAfterRevert = projectLinkDAO.fetchProjectLinks(projectId)
