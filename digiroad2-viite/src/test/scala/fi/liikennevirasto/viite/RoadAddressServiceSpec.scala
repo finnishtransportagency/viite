@@ -30,7 +30,6 @@ import scala.concurrent.Future
 class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
-//  val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockLinearLocationDAO: LinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayDAO: RoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockRoadNetworkDAO: RoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
