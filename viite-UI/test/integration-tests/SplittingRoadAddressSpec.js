@@ -1,7 +1,7 @@
 define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelpers) {
   var expect = chai.expect;
 
-  describe('when making a split', function () {
+  /*describe('when making a split', function () {
     this.timeout(3000000);
     var openLayersMap;
     before(function (done) {
@@ -67,5 +67,5 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
     });
 
 
-  });
+  });*/
 });
