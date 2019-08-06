@@ -3,7 +3,7 @@
     var className = 'road-link';
     var title = 'Selite';
     var selectToolIcon = '<img src="images/select-tool.svg"/>';
-    var cutToolIcon = '<img src="images/cut-tool.svg"/>';
+    var addToolIcon = '<img src="images/add-tool.svg"/>';
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
@@ -13,9 +13,9 @@
     var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
     var calibrationPointPicture = $('' +
       '<div class="legend-entry">' +
-      '<div class="label">Tieosan alku</div>' +
-      '</div>' +
-      '<div class="calibration-point-image"></div>');
+      '    <div class="label">Tieosan alku</div>' +
+      '    <div class="calibration-point-image"></div>' +
+      '</div>');
 
     var junctionPicture = $('' +
       '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
@@ -185,14 +185,10 @@
       var show = function() {
         element.show();
       };
-      var deactivateAll = function() {
+      var reset = function() {
         _.each(tools, function(tool) {
           tool.deactivate();
         });
-      };
-      var reset = function() {
-        deactivateAll();
-        tools[0].activate();
       };
       eventbus.on('tool:changed', function(name) {
         _.each(tools, function(tool) {
@@ -202,6 +198,9 @@
             tool.activate();
           }
         });
+      });
+      eventbus.on('tool:clear', function () {
+        reset();
       });
 
       hide();
@@ -216,12 +215,8 @@
 
     var toolSelection = new ToolSelection([
       new Tool('Select', selectToolIcon),
-      new Tool('Cut', cutToolIcon)
+      new Tool('Add', addToolIcon)
     ]);
-
-    var editModeToggle = new EditModeToggleButton(
-      toolSelection
-    );
 
     var templateAttributes = {
       className: className,
@@ -235,25 +230,11 @@
     var bindExternalEventHandlers = function() {
       eventbus.on('userData:fetched', function (userData) {
         if (_.contains(userData.roles, 'viite')) {
-          elements.expanded.append(editModeToggle.element);
           $('#projectListButton').removeAttr('style');
+          elements.expanded.append(toolSelection.element);
         }
       });
     };
-
-    eventbus.on('editMode:setReadOnly', function(mode) {
-      editModeToggle.toggleEditMode(mode);
-      elements.expanded.append(toolSelection.element);
-    });
-
-    eventbus.on('application:readOnly', function() {
-      if(applicationModel.getSelectedLayer() != "linkProperty")
-      elements.expanded.append(toolSelection.element);
-    });
-
-    eventbus.on('roadAddressProject:clearTool', function(){
-      toolSelection.hide();
-    });
 
     eventbus.on('layer:selected', toggleLegends);
 
@@ -271,7 +252,6 @@
     var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
 
     function show() {
-      editModeToggle.toggleEditMode(applicationModel.isReadOnly());
       element.show();
     }
 
@@ -285,6 +265,7 @@
         container.empty();
         container.append(roadProjectOperations());
         container.append(calibrationPointPicture);
+        toolSelection.hide();
       }
       else if(applicationModel.getSelectedLayer() === "node"){
         container.empty();
@@ -292,11 +273,14 @@
         roadClassLegend.append(junctionPicture);
         roadClassLegend.append(junctionTemplatePicture);
         roadClassLegend.append(nodeTemplatePicture);
+        toolSelection.reset();
+        toolSelection.show();
       } else {
         container.empty();
         roadClassLegend.append(roadClassLegendEntries);
         roadClassLegend.append(constructionTypeLegendEntries);
         roadClassLegend.append(calibrationPointPicture);
+        toolSelection.hide();
       }
     }
 
