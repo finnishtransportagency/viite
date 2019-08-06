@@ -1660,7 +1660,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case ProjectState.Saved2TR => (true, None)
       case _ =>
         val delta = ProjectDeltaCalculator.delta(project)
-        setProjectDeltaToDB(delta, projectId)
+        setProjectDeltaToDB(delta, projectId, projectOpt)
     }
   }
 
@@ -1764,9 +1764,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def setProjectDeltaToDB(projectDelta: Delta, projectId: Long): (Boolean, Option[String]) = {
+  private def setProjectDeltaToDB(projectDelta: Delta, projectId: Long, project: Option[Project]): (Boolean, Option[String]) = {
     roadwayChangesDAO.clearRoadChangeTable(projectId)
-    roadwayChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
+    roadwayChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId, project)
   }
 
   private def newProjectTemplate(rl: RoadLinkLike, ra: RoadAddress, project: Project): ProjectLink = {
