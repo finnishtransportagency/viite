@@ -105,6 +105,9 @@
       if (tool !== selectedTool) {
         selectedTool = tool;
         eventbus.trigger('tool:changed', tool);
+      } else {
+        selectedTool = '';
+        eventbus.trigger('tool:clear');
       }
     }
 
