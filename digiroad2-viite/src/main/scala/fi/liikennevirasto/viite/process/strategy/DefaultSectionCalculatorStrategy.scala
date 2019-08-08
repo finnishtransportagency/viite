@@ -75,9 +75,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
   }
 
-  private def continuousRoadwaySection(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  private def continuousRoadwaySection(seq: Seq[ProjectLink], newRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-    val newRoadwayNumber = Sequences.nextRoadwayNumber
     val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
     val continuousProjectLinks = seq.takeWhile(pl => (pl.track == track && pl.track == Track.Combined) || (pl.track == track && pl.track != Track.Combined && pl.roadwayNumber == roadwayNumber && pl.roadType.value == roadType))
@@ -120,8 +119,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
                 adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
               } else {
-                  (continuousRoadwaySection(rightLinks),
-                    continuousRoadwaySection(leftLinks))
+                val newRoadwayNumber1 = Sequences.nextRoadwayNumber
+                val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
+                (continuousRoadwaySection(rightLinks, newRoadwayNumber1),
+                  continuousRoadwaySection(leftLinks, newRoadwayNumber2))
               }
 
           if (firstRight.isEmpty || firstLeft.isEmpty)
