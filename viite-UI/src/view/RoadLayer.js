@@ -142,8 +142,8 @@
         case LinkValues.NodeType.RoadBoundary.value:
           nodeType = LinkValues.NodeType.RoadBoundary.description;
           break;
-        case LinkValues.NodeType.MultitrackIntersection.value:
-          nodeType = LinkValues.NodeType.MultitrackIntersection.description;
+        case LinkValues.NodeType.MultiTrackIntersection.value:
+          nodeType = LinkValues.NodeType.MultiTrackIntersection.description;
           break;
         case LinkValues.NodeType.DropIntersection.value:
           nodeType = LinkValues.NodeType.DropIntersection.description;
