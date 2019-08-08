@@ -75,12 +75,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
   }
 
-  private def continuousRoadwaySection(seq: Seq[ProjectLink], newRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  private def continuousRoadwaySection(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
+    val newRoadwayNumber = Sequences.nextRoadwayNumber
     val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
     val continuousProjectLinks = seq.takeWhile(pl => (pl.track == track && pl.track == Track.Combined) || (pl.track == track && pl.track != Track.Combined && pl.roadwayNumber == roadwayNumber && pl.roadType.value == roadType))
-    (continuousProjectLinks.map(pl => if (pl.roadwayNumber == NewIdValue) pl.copy(roadwayNumber = newRoadwayNumber) else pl), seq.drop(continuousProjectLinks.size))
+    (continuousProjectLinks.map(pl => if (pl.roadwayNumber == NewIdValue && pl.status != LinkStatus.New) pl.copy(roadwayNumber = newRoadwayNumber) else pl), seq.drop(continuousProjectLinks.size))
   }
 
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
@@ -119,14 +120,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
                 adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
               } else {
-                if (rightLinks.exists(_.status == New) || leftLinks.exists(_.status == New)) {
-                  val newRoadwayNumber1 = Sequences.nextRoadwayNumber
-                  val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
-                  (continuousRoadwaySection(rightLinks, newRoadwayNumber1),
-                    continuousRoadwaySection(leftLinks, newRoadwayNumber2))
-                } else {
-                  (continuousRoadwaySection(rightLinks, 0), continuousRoadwaySection(leftLinks, 0))
-                }
+                  (continuousRoadwaySection(rightLinks),
+                    continuousRoadwaySection(leftLinks))
               }
 
           if (firstRight.isEmpty || firstLeft.isEmpty)
