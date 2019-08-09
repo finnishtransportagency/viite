@@ -1,5 +1,5 @@
 (function(root) {
-    root.NodeLayer = function (map, roadLayer, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
+    root.NodeLayer = function (map, roadLayer, selectedNode, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
       Layer.call(this, map);
       var me = this;
       var indicatorVector = new ol.source.Vector({});
@@ -69,6 +69,118 @@
         nodePointTemplateLayer.setOpacity(opacity);
         junctionTemplateLayer.setOpacity(opacity);
       };
+
+      /**
+       * Type of interactions we want the map to be able to respond.
+       * A selected feature is moved to a new/temporary layer out of the default roadLayer.
+       * This interaction is restricted to a single click (there is a 250 ms enforced
+       * delay between single clicks in order to differentiate from double click).
+       * @type {ol.interaction.Select}
+       */
+      var selectSingleClick = new ol.interaction.Select({
+        //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
+        multi: false,
+        //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
+        layers: [nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer],
+        //Limit this interaction to the singleClick
+        condition: ol.events.condition.singleClick,
+        //The new/temporary layer needs to have a style function as well, we define it here.
+        style: function(feature) {
+          // TODO
+        }
+      });
+      selectSingleClick.set('name','selectSingleClickInteractionNL');
+
+      /**
+       * We now declare what kind of custom actions we want when the interaction happens.
+       * Note that 'select' is triggered when a feature is either selected or deselected.
+       * The event holds the selected features in the events.selected and the deselected in event.deselected.
+       *
+       * In this particular case we are fetching every node point template marker in view and
+       * sending them to the selectedNode.open for further processing.
+       */
+      selectSingleClick.on('select', function (event) {
+        if (applicationModel.getSelectedTool() === 'Select') {
+          var selected = _.find(event.selected, function (selectionTarget) {
+            return !_.isUndefined(selectionTarget.type);
+          });
+          if (selected.type === LinkValues.SelectedMarkerType.NodeMarker) {
+            selectedNode.open(selected.nodeInfo);
+          }
+        }
+      });
+
+      /**
+       * Simple method that will add various open layers 3 features to a selection.
+       * @param ol3Features
+       */
+      var addFeaturesToSelection = function (ol3Features) {
+        var olUids = _.map(selectSingleClick.getFeatures().getArray(), function(feature){
+          return feature.ol_uid;
+        });
+        _.each(ol3Features, function(feature){
+          if (!_.contains(olUids, feature.ol_uid)) {
+            selectSingleClick.getFeatures().push(feature);
+            olUids.push(feature.ol_uid); // prevent adding duplicate entries
+          }
+        });
+      };
+
+      /**
+       * Simple method that will remove various open layers 3 features from a selection.
+       * @param ol3Features
+       * @param select
+       */
+      var removeFeaturesFromSelection = function (ol3Features) {
+        var olUids = _.map(selectSingleClick.getFeatures().getArray(), function(feature){
+          return feature.ol_uid;
+        });
+        _.each(ol3Features, function(feature){
+          if(_.contains(olUids,feature.ol_uid)){
+            selectSingleClick.getFeatures().remove(feature);
+            olUids.push(feature.ol_uid);
+          }
+        });
+      };
+
+      /**
+       * Event triggered by the selectedNode.open() returning all the open layers 3 features
+       * that need to be included in the selection.
+       */
+      me.eventListener.listenTo(eventbus, 'node:ol3Selected', function(ol3Features){
+        addFeaturesToSelection(ol3Features);
+      });
+
+      // var getVisibleFeatures = function(withRoads, withDirectionalMarkers, withNodeMarkers, withJunctionMarkers, withNodePointTemplateMarkers, withJunctionTemplateMarkers){
+      //   var extent = map.getView().calculateExtent(map.getSize());
+      //   var visibleRoads = withRoads ? roadLayer.layer.getSource().getFeaturesInExtent(extent) : [];
+      //   var visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
+      //   var visibleNodeMarkers = withNodeMarkers ? nodeMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
+      //   var visibleJunctionMarkers = withJunctionMarkers ? junctionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
+      //   var visibleNodePointTemplateMarkers = withNodePointTemplateMarkers ? nodePointTemplateLayer.getSource().getFeaturesInExtent(extent) : [];
+      //   var visibleJunctionTemplateMarkers = withJunctionTemplateMarkers ? junctionTemplateLayer.getSource().getFeaturesInExtent(extent) : [];
+      //   return visibleRoads.concat(visibleDirectionalMarkers).concat(visibleNodeMarkers).concat(visibleJunctionMarkers).concat(visibleNodePointTemplateMarkers).concat(visibleJunctionTemplateMarkers);
+      // };
+
+      /**
+       * This will add all the following interactions from the map:
+       * -selectSingleClick
+       */
+      var addSelectInteractions = function () {
+        map.addInteraction(selectSingleClick);
+      };
+
+      /**
+       * This will remove all the following interactions from the map:
+       * -selectSingleClick
+       */
+      var removeSelectInteractions = function() {
+        map.removeInteraction(selectSingleClick);
+      };
+
+      //We add the defined interactions to the map.
+      addSelectInteractions();
+
 
       var redraw = function () {
         if(applicationModel.getSelectedLayer() === 'node') {
