@@ -22,6 +22,7 @@
 
       marker.setStyle(junctionPointMarkerStyle);
       marker.junctionPointTemplateInfo = junctionPoint;
+      marker.type = LinkValues.SelectedMarkerType.JunctionPointTemplateMarker;
       return marker;
     };
 

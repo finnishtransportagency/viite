@@ -22,6 +22,7 @@
 
       marker.setStyle(nodePointMarkerStyle);
       marker.nodePointTemplateInfo = nodePoint;
+      marker.type = LinkValues.SelectedMarkerType.NodePointTemplateMarker;
       return marker;
     };
 

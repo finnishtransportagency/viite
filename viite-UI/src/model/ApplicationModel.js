@@ -4,7 +4,7 @@
       level: undefined
     };
     var selectedLayer;
-    var selectedTool = 'Select';
+    var selectedTool = '';
     var centerLonLat;
     var minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
     var minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
@@ -180,7 +180,8 @@
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
-          setSelectedTool('Select');
+          var selectedSTool = layer !== 'node' ? 'Select' : '';
+          setSelectedTool(selectedSTool);
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
         } else if (layer === 'linkProperty' && toggleStart) {
           eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);

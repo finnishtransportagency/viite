@@ -11,6 +11,7 @@
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     var nodeCollection = new NodeCollection(backend);
+    var selectedNode = new SelectedNode(nodeCollection);
 
     var models = {
       roadCollection: roadCollection,
@@ -18,7 +19,8 @@
       selectedLinkProperty: selectedLinkProperty,
       linkPropertiesModel: linkPropertiesModel,
       selectedProjectLinkProperty : selectedProjectLinkProperty,
-      nodeCollection: nodeCollection
+      nodeCollection: nodeCollection,
+      selectedNode: selectedNode
     };
 
     bindEvents();
@@ -113,7 +115,7 @@
     var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty, models.nodeCollection);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
     var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
-    var nodeLayer = new NodeLayer(map, roadLayer, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
+    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNode, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
