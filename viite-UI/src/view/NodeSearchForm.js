@@ -169,8 +169,8 @@
 
       eventbus.on('nodeSearchTool:fetched', function(hasResults) {
         applicationModel.removeSpinner();
+        $('#clear-node-search').prop('disabled', false);
         if (hasResults) {
-          $('#clear-node-search').prop('disabled', false);
           $('#nodes-and-junctions-content').html(nodesAndRoadAttributesHtmlList());
           eventbus.trigger('nodeSearchTool:refreshView', map);
         } else {
