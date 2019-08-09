@@ -490,6 +490,7 @@ trait VVHClientOperations {
 
 class VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
   protected override val serviceName = "Roadlink_temp"
+  protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.FrozenLinkInterface
   protected override val disableGeometry = false
 }
 
