@@ -14,7 +14,6 @@
 
       marker.setStyle(nodeMarkerStyle);
       marker.nodeInfo = node;
-      marker.type = LinkValues.SelectedMarkerType.NodeMarker;
       return marker;
     };
 

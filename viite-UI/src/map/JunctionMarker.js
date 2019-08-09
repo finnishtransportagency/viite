@@ -61,7 +61,6 @@
       marker.junctionPoint = junctionPoint;
       marker.junction = junction;
       marker.roadLink = roadLink;
-      marker.type = LinkValues.SelectedMarkerType.JunctionMarker;
       return marker;
     };
 

@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedNode = function(nodeCollection) {
+  root.selectedNodePointTemplate = function(nodeCollection) {
     var current = [];
     var me = this;
 

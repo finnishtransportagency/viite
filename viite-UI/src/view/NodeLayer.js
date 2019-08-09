@@ -1,5 +1,5 @@
 (function(root) {
-    root.NodeLayer = function (map, roadLayer, selectedNode, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
+    root.NodeLayer = function (map, roadLayer, selectedNodePointTemplate, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
       Layer.call(this, map);
       var me = this;
       var indicatorVector = new ol.source.Vector({});
@@ -77,11 +77,11 @@
        * delay between single clicks in order to differentiate from double click).
        * @type {ol.interaction.Select}
        */
-      var selectSingleClick = new ol.interaction.Select({
+      var nodePointTemplateClick = new ol.interaction.Select({
         //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
         multi: false,
         //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-        layers: [nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer],
+        layers: [nodePointTemplateLayer],
         //Limit this interaction to the singleClick
         condition: ol.events.condition.singleClick,
         //The new/temporary layer needs to have a style function as well, we define it here.
@@ -89,7 +89,7 @@
           // TODO
         }
       });
-      selectSingleClick.set('name','selectSingleClickInteractionNL');
+      nodePointTemplateClick.set('name','nodePointTemplateClickInteractionNL');
 
       /**
        * We now declare what kind of custom actions we want when the interaction happens.
@@ -99,14 +99,12 @@
        * In this particular case we are fetching every node point template marker in view and
        * sending them to the selectedNode.open for further processing.
        */
-      selectSingleClick.on('select', function (event) {
-        if (applicationModel.getSelectedTool() === 'Select') {
+      nodePointTemplateClick.on('select', function (event) {
+        if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
           var selected = _.find(event.selected, function (selectionTarget) {
             return !_.isUndefined(selectionTarget.type);
           });
-          if (selected.type === LinkValues.SelectedMarkerType.NodeMarker) {
-            selectedNode.open(selected.nodeInfo);
-          }
+          selectedNodePointTemplate.open(selected.nodeInfo);
         }
       });
 

@@ -199,11 +199,11 @@
         UnkownNodeType:                 {value:99, description:"Ei määritelty"}
     };
 
-    root.SelectedMarkerType = {
-        NodeMarker:                     {value: 1, description: "Node"},
-        NodePointTemplateMarker:        {value: 2, description: "Node Point Template"},
-        JunctionMarker:                 {value: 3, description: "Junction"},
-        JunctionPointTemplateMarker:    {value: 4, description: "Junction Point Template"}
+    root.Tool = {
+        Unknown:            {value: ""},
+        Default:            {value: "Select"},
+        SelectNode:         {value: "Select"},
+        AddNode:            {value: "Add"}
     };
 
 })(window.LinkValues = window.LinkValues || {});
