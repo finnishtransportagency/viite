@@ -102,9 +102,9 @@
       nodePointTemplateClick.on('select', function (event) {
         if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
           var selected = _.find(event.selected, function (selectionTarget) {
-            return !_.isUndefined(selectionTarget.type);
+            return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
           });
-          selectedNodePointTemplate.open(selected.nodeInfo);
+          selectedNodePointTemplate.open(selected.nodePointTemplateInfo);
         }
       });
 
