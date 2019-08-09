@@ -106,7 +106,7 @@
         selectedTool = tool;
         eventbus.trigger('tool:changed', tool);
       } else {
-        selectedTool = layer !== 'node' ? LinkValues.Tool.Default.value : LinkValues.Tool.Unknown.value;
+        selectedTool = selectedLayer !== 'node' ? LinkValues.Tool.Default.value : LinkValues.Tool.Unknown.value;
         eventbus.trigger('tool:clear');
       }
     }
