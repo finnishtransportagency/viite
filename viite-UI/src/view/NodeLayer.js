@@ -112,41 +112,41 @@
        * Simple method that will add various open layers 3 features to a selection.
        * @param ol3Features
        */
-      var addFeaturesToSelection = function (ol3Features) {
-        var olUids = _.map(selectSingleClick.getFeatures().getArray(), function(feature){
+      var addNodeFeaturesToSelection = function (ol3Features) {
+        var olUids = _.map(nodePointTemplateClick.getFeatures().getArray(), function(feature){
           return feature.ol_uid;
         });
         _.each(ol3Features, function(feature){
           if (!_.contains(olUids, feature.ol_uid)) {
-            selectSingleClick.getFeatures().push(feature);
+            nodePointTemplateClick.getFeatures().push(feature);
             olUids.push(feature.ol_uid); // prevent adding duplicate entries
           }
         });
       };
 
-      /**
-       * Simple method that will remove various open layers 3 features from a selection.
-       * @param ol3Features
-       * @param select
-       */
-      var removeFeaturesFromSelection = function (ol3Features) {
-        var olUids = _.map(selectSingleClick.getFeatures().getArray(), function(feature){
-          return feature.ol_uid;
-        });
-        _.each(ol3Features, function(feature){
-          if(_.contains(olUids,feature.ol_uid)){
-            selectSingleClick.getFeatures().remove(feature);
-            olUids.push(feature.ol_uid);
-          }
-        });
-      };
+      // /**
+      //  * Simple method that will remove various open layers 3 features from a selection.
+      //  * @param ol3Features
+      //  * @param select
+      //  */
+      // var removeFeaturesFromSelection = function (ol3Features) {
+      //   var olUids = _.map(selectSingleClick.getFeatures().getArray(), function(feature){
+      //     return feature.ol_uid;
+      //   });
+      //   _.each(ol3Features, function(feature){
+      //     if(_.contains(olUids,feature.ol_uid)){
+      //       selectSingleClick.getFeatures().remove(feature);
+      //       olUids.push(feature.ol_uid);
+      //     }
+      //   });
+      // };
 
       /**
        * Event triggered by the selectedNode.open() returning all the open layers 3 features
        * that need to be included in the selection.
        */
       me.eventListener.listenTo(eventbus, 'node:ol3Selected', function(ol3Features){
-        addFeaturesToSelection(ol3Features);
+        addNodeFeaturesToSelection(ol3Features);
       });
 
       // var getVisibleFeatures = function(withRoads, withDirectionalMarkers, withNodeMarkers, withJunctionMarkers, withNodePointTemplateMarkers, withJunctionTemplateMarkers){
@@ -162,22 +162,22 @@
 
       /**
        * This will add all the following interactions from the map:
-       * -selectSingleClick
+       * - nodePointTemplateClick
        */
-      var addSelectInteractions = function () {
-        map.addInteraction(selectSingleClick);
+      var addClickInteractions = function () {
+        map.addInteraction(nodePointTemplateClick);
       };
 
-      /**
-       * This will remove all the following interactions from the map:
-       * -selectSingleClick
-       */
-      var removeSelectInteractions = function() {
-        map.removeInteraction(selectSingleClick);
-      };
+      // /**
+      //  * This will remove all the following interactions from the map:
+      //  * - nodePointTemplateClick
+      //  */
+      // var removeSelectInteractions = function() {
+      //   map.removeInteraction(nodePointTemplateClick);
+      // };
 
-      //We add the defined interactions to the map.
-      addSelectInteractions();
+      // We add the defined interactions to the map.
+      addClickInteractions();
 
 
       var redraw = function () {
