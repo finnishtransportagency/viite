@@ -2262,7 +2262,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
       )
-      projectService.handleTransferAndNumbering(changes)
+      projectService.handleRoadNames(changes)
       ProjectLinkNameDAO.get(project.id, targetRoadNumber) should be(None)
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
@@ -2310,7 +2310,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
       )
-      projectService.handleTransferAndNumbering(changes)
+      projectService.handleRoadNames(changes)
 
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
@@ -2350,7 +2350,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
       )
-      projectService.handleTransferAndNumbering(changes)
+      projectService.handleRoadNames(changes)
       ProjectLinkNameDAO.get(project.id, targetRoadNumber) should be(None)
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
@@ -2398,7 +2398,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
       )
-      projectService.handleTransferAndNumbering(changes)
+      projectService.handleRoadNames(changes)
 
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
