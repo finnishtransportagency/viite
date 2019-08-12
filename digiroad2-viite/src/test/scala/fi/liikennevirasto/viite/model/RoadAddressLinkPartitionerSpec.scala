@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{ComplementaryLinkInterface, NormalLinkInterface, SuravageLinkInterface}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{ComplementaryLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.RoadType
@@ -148,22 +148,6 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
       0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 123),
       RoadAddressLink(0, 0, 5171208, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)),
       0.0, Municipality, UnknownLinkType, InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad,
-      Some("Vt5"), None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 1, 1, 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01",
-      0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 123)
-    )
-
-    val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(roadLinks)
-    partitionedRoadLinks.size should be (2)
-  }
-
-  test("Test partition When 1 link have LinkGeomSource.SuravageLinkInterface and other one have any other LinkGeomSource Then they will be in different groups of RoadAddressLinks") {
-
-    val roadLinks = Seq(RoadAddressLink(0, 0, 5171208, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)),
-      0.0, Municipality, UnknownLinkType, InUse, SuravageLinkInterface, RoadType.MunicipalityStreetRoad,
-      Some("Vt5"), None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 1, 1, 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01",
-      0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 123),
-      RoadAddressLink(0, 0, 5171208, Seq(Point(532837.14110884, 6993543.6296834), Point(533388.14110884, 6994014.1296834)),
-      0.0, Municipality, UnknownLinkType, InUse, LinkGeomSource.Unknown, RoadType.MunicipalityStreetRoad,
       Some("Vt5"), None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 1, 1, 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01",
       0.0, 0.0, SideCode.Unknown, None, None, Anomaly.None, 123)
     )
