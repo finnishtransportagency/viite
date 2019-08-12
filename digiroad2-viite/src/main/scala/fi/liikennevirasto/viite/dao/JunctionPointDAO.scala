@@ -124,6 +124,18 @@ class JunctionPointDAO extends BaseDAO {
     }
   }
 
+  def fetchByRoadwayPointId(roadwayPointId: Long): Seq[JunctionPoint] = {
+    val query =
+      s"""
+        SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, JP.START_DATE, JP.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
+        RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK FROM JUNCTION_POINT JP
+        JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+        JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+        where JP.ROADWAY_POINT_ID = $roadwayPointId AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL
+      """
+    queryList(query)
+  }
+
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionPoint] = {
     time(logger, "Fetch JunctionPoint templates by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
@@ -214,6 +226,10 @@ class JunctionPointDAO extends BaseDAO {
       0
     else
       Q.updateNA(query).first
+  }
+
+  def updateRoadwayPointId(junctionPointId: Any, roadwayPointId: Long) = {
+    Q.updateNA(s"UPDATE JUNCTION_POINT SET ROADWAY_POINT_ID = $roadwayPointId WHERE ID = $junctionPointId").execute
   }
 
 }
