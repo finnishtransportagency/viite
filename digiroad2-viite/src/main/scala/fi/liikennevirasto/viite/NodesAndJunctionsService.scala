@@ -5,7 +5,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
-import fi.liikennevirasto.viite.dao.{BeforeAfter, Junction, JunctionDAO, JunctionPoint, JunctionPointDAO, LinearLocationDAO, LinkStatus, Node, NodeDAO, NodePoint, NodePointDAO, ProjectLink, RoadAddress, RoadAttributes, RoadwayDAO, RoadwayPointDAO}
+import fi.liikennevirasto.viite.dao.AddressChangeType.{ReNumeration, Transfer}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.slf4j.LoggerFactory
 
@@ -23,6 +24,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   private val logger = LoggerFactory.getLogger(getClass)
 
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
+  val roadwayChangesDAO = new RoadwayChangesDAO
 
   def getNodesByRoadAttributes(roadNumber: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Either[String, Seq[(Node, RoadAttributes)]] = {
     withDynSession {
@@ -109,7 +111,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def handleJunctionPointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
+  def handleJunctionPointTemplates(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange]): Unit = {
     def getJunctionsInHead(link: ProjectLink, roadsToHead: Seq[RoadAddress], roadsFromHead: Seq[RoadAddress]): Seq[Junction] = {
       roadsToHead.flatMap { rh =>
         val jcPoints = (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.endAddrMValue, BeforeAfter.Before) ++
@@ -135,177 +137,216 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }
     }
 
-    def handleRoadsToHead(link: ProjectLink, junctionsInHead: Seq[Junction], roadAddress: RoadAddress): Unit = {
-      val roadJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadAddress.roadwayNumber, roadAddress.endAddrMValue, BeforeAfter.Before)
+    def handleRoadsToHead(link: ProjectLink, junctionsInHead: Seq[Junction], r: RoadAddress): Unit = {
+      val roadJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(r.roadwayNumber, r.endAddrMValue, BeforeAfter.Before)
       val junctionIdentifier = if (roadJunctionPoint.isEmpty) {
         val junctionId = if (junctionsInHead.isEmpty)
-          junctionDAO.create(Seq(Junction(NewIdValue, 0, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
+          junctionDAO.create(Seq(Junction(NewIdValue, junctionNumberTemplate, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
         else junctionsInHead.head.id
-        val existingRoadwayPoint = roadwayPointDAO.fetch(roadAddress.roadwayNumber, roadAddress.endAddrMValue)
+        val existingRoadwayPoint = roadwayPointDAO.fetch(r.roadwayNumber, r.endAddrMValue)
         val rwPoint = if (existingRoadwayPoint.nonEmpty) {
           existingRoadwayPoint.get.id
         } else {
-          roadwayPointDAO.create(roadAddress.roadwayNumber, roadAddress.endAddrMValue, roadAddress.createdBy.getOrElse("-"))
+          roadwayPointDAO.create(r.roadwayNumber, r.endAddrMValue, r.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now), roadAddress.roadwayNumber, roadAddress.endAddrMValue, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track))).head
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue, r.roadNumber, r.roadPartNumber, r.track))).head
         Some(junctionId)
       } else None
 
-      val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
-      if (linkJunctionPoint.isEmpty) {
-        val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
-          junctionDAO.create(Seq(Junction(NewIdValue, 0, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
-        else junctionIdentifier.getOrElse(junctionsInHead.head.id)
+      val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
+        junctionDAO.create(Seq(Junction(NewIdValue, junctionNumberTemplate, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
+      else junctionIdentifier.getOrElse(junctionsInHead.head.id)
+      val rwPointId = {
         val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.startAddrMValue)
         val rwPoint = if (existingRoadwayPoint.nonEmpty) {
           existingRoadwayPoint.get.id
         } else {
           roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, link.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track))).head
+        val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
+        if(linkJunctionPoint.isEmpty)
+          junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track)))
       }
     }
 
-    def handleRoadsFromHead(link: ProjectLink, newJunctionsInHead: Seq[Junction], junctionsInHead: Seq[Junction], roadAddress: RoadAddress): Unit = {
-      val roadJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadAddress.roadwayNumber, roadAddress.startAddrMValue, BeforeAfter.After)
+    def handleRoadsFromHead(link: ProjectLink, newJunctionsInHead: Seq[Junction], junctionsInHead: Seq[Junction], r: RoadAddress): Unit = {
+      val roadJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(r.roadwayNumber, r.startAddrMValue, BeforeAfter.After)
       val junctionIdentifier = if (roadJunctionPoint.isEmpty) {
         val junctionId = if (newJunctionsInHead.isEmpty)
-          junctionDAO.create(Seq(Junction(NewIdValue, 0, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
+          junctionDAO.create(Seq(Junction(NewIdValue, junctionNumberTemplate, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
         else newJunctionsInHead.head.id
-        val existingRoadwayPoint = roadwayPointDAO.fetch(roadAddress.roadwayNumber, roadAddress.startAddrMValue)
+        val existingRoadwayPoint = roadwayPointDAO.fetch(r.roadwayNumber, r.startAddrMValue)
         val rwPoint = if (existingRoadwayPoint.nonEmpty) {
           existingRoadwayPoint.get.id
         } else {
-          roadwayPointDAO.create(roadAddress.roadwayNumber, roadAddress.startAddrMValue, roadAddress.createdBy.getOrElse("-"))
+          roadwayPointDAO.create(r.roadwayNumber, r.startAddrMValue, r.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now), roadAddress.roadwayNumber, roadAddress.startAddrMValue, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track))).head
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.startAddrMValue, r.roadNumber, r.roadPartNumber, r.track))).head
         Some(junctionId)
       } else None
 
-      val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
-      if (linkJunctionPoint.isEmpty) {
-        val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
-          junctionDAO.create(Seq(Junction(NewIdValue, 0, None, link.startDate.get, link.endDate, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
-        else junctionIdentifier.getOrElse(junctionsInHead.head.id)
-        val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.startAddrMValue)
-        val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-          existingRoadwayPoint.get.id
-        } else {
-          roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, roadAddress.createdBy.getOrElse("-"))
-        }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track))).head
+      val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
+        junctionDAO.create(Seq(Junction(NewIdValue, junctionNumberTemplate, None, link.startDate.get, link.endDate, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
+      else junctionIdentifier.getOrElse(junctionsInHead.head.id)
+      val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.startAddrMValue)
+      val rwPoint = if (existingRoadwayPoint.nonEmpty) {
+        existingRoadwayPoint.get.id
+      } else {
+        roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, r.createdBy.getOrElse("-"))
       }
+      val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
+      if(linkJunctionPoint.isEmpty)
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track)))
     }
 
-    def handleRoadsToTail(link: ProjectLink, junctionsToTail: Seq[Junction], junctionsInHead: Seq[Junction], roadAddress: RoadAddress): Unit = {
-      val roadJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadAddress.roadwayNumber, roadAddress.endAddrMValue, BeforeAfter.Before)
+    def handleRoadsToTail(link: ProjectLink, junctionsToTail: Seq[Junction], junctionsInHead: Seq[Junction], r: RoadAddress): Unit = {
+      val roadJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(r.roadwayNumber, r.endAddrMValue, BeforeAfter.Before)
       val junctionIdentifier = if (roadJunctionPoint.isEmpty) {
         val junctionId = if (junctionsToTail.isEmpty)
-          junctionDAO.create(Seq(Junction(NewIdValue, 0, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
+          junctionDAO.create(Seq(Junction(NewIdValue, junctionNumberTemplate, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
         else junctionsToTail.head.id
-        val existingRoadwayPoint = roadwayPointDAO.fetch(roadAddress.roadwayNumber, roadAddress.endAddrMValue)
+        val existingRoadwayPoint = roadwayPointDAO.fetch(r.roadwayNumber, r.endAddrMValue)
         val rwPoint = if (existingRoadwayPoint.nonEmpty) {
           existingRoadwayPoint.get.id
         } else {
-          roadwayPointDAO.create(roadAddress.roadwayNumber, roadAddress.endAddrMValue, roadAddress.createdBy.getOrElse("-"))
+          roadwayPointDAO.create(r.roadwayNumber, r.endAddrMValue, r.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), roadAddress.roadwayNumber, roadAddress.endAddrMValue, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track))).head
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue, r.roadNumber, r.roadPartNumber, r.track))).head
         Some(junctionId)
       } else None
 
-      val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)
-      if (linkJunctionPoint.isEmpty) {
-        val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
-          junctionDAO.create(Seq(Junction(NewIdValue, 0, None, link.startDate.get, link.endDate, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
-        else junctionIdentifier.getOrElse(junctionsInHead.head.id)
-        val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.endAddrMValue)
-        val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-          existingRoadwayPoint.get.id
-        } else {
-          roadwayPointDAO.create(link.roadwayNumber, link.endAddrMValue, roadAddress.createdBy.getOrElse("-"))
-        }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track))).head
+      val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
+        junctionDAO.create(Seq(Junction(NewIdValue, junctionNumberTemplate, None, link.startDate.get, link.endDate, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
+      else junctionIdentifier.getOrElse(junctionsInHead.head.id)
+      val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.endAddrMValue)
+      val rwPoint = if (existingRoadwayPoint.nonEmpty) {
+        existingRoadwayPoint.get.id
+      } else {
+        roadwayPointDAO.create(link.roadwayNumber, link.endAddrMValue, r.createdBy.getOrElse("-"))
       }
+      val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)
+      if(linkJunctionPoint.isEmpty)
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track)))
     }
 
-    def handleRoadsFromTail(link: ProjectLink, newJunctionsToTail: Seq[Junction], junctionsInHead: Seq[Junction], roadAddress: RoadAddress): Unit = {
-      val roadJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadAddress.roadwayNumber, roadAddress.startAddrMValue, BeforeAfter.After)
+    def handleRoadsFromTail(link: ProjectLink, newJunctionsToTail: Seq[Junction], junctionsInHead: Seq[Junction], r: RoadAddress): Unit = {
+      val roadJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(r.roadwayNumber, r.startAddrMValue, BeforeAfter.After)
       val junctionIdentifier = if (roadJunctionPoint.isEmpty) {
         val junctionId = if (newJunctionsToTail.isEmpty)
-          junctionDAO.create(Seq(Junction(NewIdValue, 0, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
+          junctionDAO.create(Seq(Junction(NewIdValue, junctionNumberTemplate, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
         else newJunctionsToTail.head.id
-        val existingRoadwayPoint = roadwayPointDAO.fetch(roadAddress.roadwayNumber, roadAddress.startAddrMValue)
+        val existingRoadwayPoint = roadwayPointDAO.fetch(r.roadwayNumber, r.startAddrMValue)
         val rwPoint = if (existingRoadwayPoint.nonEmpty) {
           existingRoadwayPoint.get.id
         } else {
-          roadwayPointDAO.create(roadAddress.roadwayNumber, roadAddress.startAddrMValue, roadAddress.createdBy.getOrElse("-"))
+          roadwayPointDAO.create(r.roadwayNumber, r.startAddrMValue, r.createdBy.getOrElse("-"))
         }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), roadAddress.roadwayNumber, roadAddress.startAddrMValue, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track))).head
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.startAddrMValue, r.roadNumber, r.roadPartNumber, r.track))).head
         Some(junctionId)
       } else None
 
-      val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)
-      if (linkJunctionPoint.isEmpty) {
-        val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
-          junctionDAO.create(Seq(Junction(NewIdValue, 0, None, link.startDate.get, link.endDate, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
-        else junctionIdentifier.getOrElse(junctionsInHead.head.id)
-        val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.endAddrMValue)
-        val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-          existingRoadwayPoint.get.id
-        } else {
-          roadwayPointDAO.create(link.roadwayNumber, link.endAddrMValue, roadAddress.createdBy.getOrElse("-"))
-        }
-        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track))).head
+      val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
+        junctionDAO.create(Seq(Junction(NewIdValue, junctionNumberTemplate, None, link.startDate.get, link.endDate, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
+      else junctionIdentifier.getOrElse(junctionsInHead.head.id)
+      val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.endAddrMValue)
+      val rwPoint = if (existingRoadwayPoint.nonEmpty) {
+        existingRoadwayPoint.get.id
+      } else {
+        roadwayPointDAO.create(link.roadwayNumber, link.endAddrMValue, r.createdBy.getOrElse("-"))
       }
+      val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)
+      if(linkJunctionPoint.isEmpty)
+        junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track)))
     }
 
-    val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt))
-    filteredLinks.foreach { link =>
-      val roadNumberLimits = Seq((0, 19999), (40001, 69999))
-      val headRoads = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(link.getFirstPoint, link.getFirstPoint), roadNumberLimits).filterNot(rw => rw.roadNumber == link.roadNumber && rw.roadPartNumber == link.roadPartNumber)
-      val tailRoads = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(link.getLastPoint, link.getLastPoint), roadNumberLimits).filterNot(rw => rw.roadNumber == link.roadNumber && rw.roadPartNumber == link.roadPartNumber)
+      val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
+      filteredLinks.foreach { link =>
+        val roadNumberLimits = Seq((0, 19999), (40001, 69999))
+        val headRoads = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(link.getFirstPoint, link.getFirstPoint), roadNumberLimits).filterNot(rw => rw.roadNumber == link.roadNumber)
+        val tailRoads = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(link.getLastPoint, link.getLastPoint), roadNumberLimits).filterNot(rw => rw.roadNumber == link.roadNumber)
 
-      val roadsToHead = headRoads.filter(_.connected(link.getFirstPoint))
-      val roadsFromHead = headRoads.filter(r => link.getFirstPoint.connected(r.getFirstPoint))
+        val roadsToHead = headRoads.filter(_.connected(link.getFirstPoint))
+        val roadsFromHead = headRoads.filter(r => link.getFirstPoint.connected(r.getFirstPoint))
 
-      val roadsFromTail = tailRoads.filter(r => link.getLastPoint.connected(r.getFirstPoint))
-      val roadsToTail = tailRoads.filter(_.getLastPoint.connected(link.getLastPoint))
+        val roadsFromTail = tailRoads.filter(r => link.getLastPoint.connected(r.getFirstPoint))
+        val roadsToTail = tailRoads.filter(_.getLastPoint.connected(link.getLastPoint))
 
-      /*
+        /*
+      handle creation of JUNCTION_POINT in reverse cases
+      */
+
+        val junctionReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && link.startAddrMValue >= ch.changeInfo.target.startAddressM.get
+              && ch.changeInfo.target.endAddressM.nonEmpty && link.endAddrMValue <= ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed)
+
+        val originalLink = mappedRoadwayNumbers.find(mpr => link.startAddrMValue == mpr.newStartAddr && link.endAddrMValue == mpr.newEndAddr && mpr.newRoadwayNumber == link.roadwayNumber)
+
+        val existingHeadJunctionPoint = {
+          if (originalLink.nonEmpty){
+            if (!junctionReversed)
+              junctionPointDAO.fetchJunctionPointsByRoadwayPointNumbers(Set(originalLink.get.oldRoadwayNumber, link.roadwayNumber), link.startAddrMValue, BeforeAfter.After)
+            else {
+              junctionPointDAO.fetchJunctionPointsByRoadwayPointNumbers(Set(originalLink.get.oldRoadwayNumber, link.roadwayNumber), originalLink.get.newStartAddr, BeforeAfter.Before)
+            }
+          } else None
+        }
+
+        val existingLastJunctionPoint = {
+          if (originalLink.nonEmpty){
+            if (!junctionReversed)
+              junctionPointDAO.fetchJunctionPointsByRoadwayPointNumbers(Set(originalLink.get.oldRoadwayNumber, link.roadwayNumber), link.startAddrMValue, BeforeAfter.Before)
+            else {
+              junctionPointDAO.fetchJunctionPointsByRoadwayPointNumbers(Set(originalLink.get.oldRoadwayNumber, link.roadwayNumber), originalLink.get.newEndAddr, BeforeAfter.After)
+            }
+          } else None
+        }
+
+        if (existingHeadJunctionPoint.nonEmpty) {
+          if (junctionReversed) {
+            junctionPointDAO.update(Seq(existingHeadJunctionPoint.head.copy(beforeAfter = BeforeAfter.switch(existingHeadJunctionPoint.head.beforeAfter))))
+          }
+        }
+
+        if (existingLastJunctionPoint.nonEmpty) {
+          if (junctionReversed) {
+            junctionPointDAO.update(Seq(existingLastJunctionPoint.head.copy(beforeAfter = BeforeAfter.switch(existingLastJunctionPoint.head.beforeAfter))))
+          }
+        }
+
+        /*
         R:road
         L:project link
         0:junction point
       */
-      val junctionsInHead: Seq[Junction] = getJunctionsInHead(link, roadsToHead, roadsFromHead)
+        val junctionsInHead: Seq[Junction] = getJunctionsInHead(link, roadsToHead, roadsFromHead)
 
-      val junctionsToTail: Seq[Junction] = getJunctionsToTail(link, roadsToTail, roadsFromTail)
+        val junctionsToTail: Seq[Junction] = getJunctionsToTail(link, roadsToTail, roadsFromTail)
 
-      //  |--R-->0|0--L-->
-      roadsToHead.foreach { roadAddress: RoadAddress => handleRoadsToHead(link, junctionsInHead, roadAddress)}
+        //  |--R-->0|0--L-->
+        roadsToHead.foreach { roadAddress: RoadAddress => handleRoadsToHead(link, junctionsInHead, roadAddress)}
 
-      //need to get all new junctions in junctionInHead places since we can have this kind of cases:
-      /*
+        //need to get all new junctions in junctionInHead places since we can have this kind of cases:
+        /*
              ^
              |
              L
              |
-      |-R1->0|*-R2->|
+      |-R1->0|(*)-R2->|
 
-      not getting again all new created junctions, we would create another junction in the place of *
+      if we dont get again all new created junctions, we would badly create one duplicate junction in the place of (*)
        */
-      val newJunctionsInHead = getJunctionsInHead(link, roadsToHead, roadsFromHead)
+        val newJunctionsInHead = getJunctionsInHead(link, roadsToHead, roadsFromHead)
 
-      // <--R--0|0--L-->
-      roadsFromHead.foreach { roadAddress: RoadAddress => handleRoadsFromHead(link, newJunctionsInHead, junctionsInHead, roadAddress)}
+        // <--R--0|0--L-->
+        roadsFromHead.foreach { roadAddress: RoadAddress => handleRoadsFromHead(link, newJunctionsInHead, junctionsInHead, roadAddress)}
 
-      // |--R--0>|<0--L--|
-      roadsToTail.foreach { roadAddress: RoadAddress => handleRoadsToTail(link, junctionsToTail, junctionsInHead, roadAddress)}
+        // |--R--0>|<0--L--|
+        roadsToTail.foreach { roadAddress: RoadAddress => handleRoadsToTail(link, junctionsToTail, junctionsInHead, roadAddress)}
 
-      val newJunctionsToTail = getJunctionsToTail(link, roadsToTail, roadsFromTail)
+        val newJunctionsToTail = getJunctionsToTail(link, roadsToTail, roadsFromTail)
 
-      // <--R--0|<0--L--|
-      roadsFromTail.foreach { roadAddress: RoadAddress => handleRoadsFromTail(link, newJunctionsToTail, junctionsInHead, roadAddress)}
-    }
+        // <--R--0|<0--L--|
+        roadsFromTail.foreach { roadAddress: RoadAddress => handleRoadsFromTail(link, newJunctionsToTail, junctionsInHead, roadAddress)}
+      }
   }
 
   /*
@@ -315,26 +356,23 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     2.2)  and at the beginning/end of each road part, ely borders, or when road type changes
     2.3)  on each junction with a road number (except number over 70 000)
    */
-  def handleNodePointTemplates(projectLinks: Seq[ProjectLink]): Unit = {
-
-    def continuousNodeSections(seq: Seq[ProjectLink], roadTypesSection: Seq[Seq[ProjectLink]]): (Seq[ProjectLink], Seq[Seq[ProjectLink]]) = {
-      if (seq.isEmpty) {
-        (Seq(), roadTypesSection)
-      } else {
-        val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
-        val continuousProjectLinks = seq.takeWhile(pl => pl.roadType.value == roadType)
-        continuousNodeSections(seq.drop(continuousProjectLinks.size), roadTypesSection :+ continuousProjectLinks)
-      }
-    }
-
+  def handleNodePointTemplates(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange]): Unit = {
     try {
-      val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
-        .filterNot(_.track == Track.LeftSide)
+      def continuousNodeSections(seq: Seq[ProjectLink], roadTypesSection: Seq[Seq[ProjectLink]]): (Seq[ProjectLink], Seq[Seq[ProjectLink]]) = {
+        if (seq.isEmpty) {
+          (Seq(), roadTypesSection)
+        } else {
+          val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
+          val continuousProjectLinks = seq.takeWhile(pl => pl.roadType.value == roadType)
+          continuousNodeSections(seq.drop(continuousProjectLinks.size), roadTypesSection :+ continuousProjectLinks)
+        }
+      }
+
+      val filteredLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated).filterNot(_.track == Track.LeftSide)
       val groupSections = filteredLinks.groupBy(l => (l.roadNumber, l.roadPartNumber))
 
       groupSections.mapValues { group =>
         val roadTypeSections: Seq[Seq[ProjectLink]] = continuousNodeSections(group.sortBy(_.startAddrMValue), Seq.empty[Seq[ProjectLink]])._2
-
         roadTypeSections.foreach { section =>
 
           val headLink = section.head
@@ -353,21 +391,60 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
           }
 
-          val existingHeadNodePoint = nodePointDAO.fetchNodePointTemplate(headLink.roadwayNumber).filter(np => np.beforeAfter == After && np.addrM == headLink.startAddrMValue)
-          val existingLastNodePoint = nodePointDAO.fetchNodePointTemplate(lastLink.roadwayNumber).filter(np => np.beforeAfter == Before && np.addrM == lastLink.endAddrMValue)
+          /*
+      handle update of NODE_POINT in reverse cases
+    */
+          val (startNodeReversed, endNodeReversed) =
+            (roadwayChanges.exists(ch =>
+              ch.changeInfo.target.startAddressM.nonEmpty && headLink.startAddrMValue == ch.changeInfo.target.startAddressM.get && ch.changeInfo.reversed
+            ),
+              roadwayChanges.exists(ch =>
+                ch.changeInfo.target.endAddressM.nonEmpty && lastLink.endAddrMValue == ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed
+              ))
 
-          if (existingHeadNodePoint.isEmpty)
+
+          val existingHeadNodePoint = {
+            val originalLink = mappedRoadwayNumbers.find(mpr => headLink.startAddrMValue == mpr.newStartAddr && headLink.endAddrMValue == mpr.newEndAddr && mpr.newRoadwayNumber == headLink.roadwayNumber)
+            if(originalLink.nonEmpty){
+              if (!startNodeReversed) {
+              nodePointDAO.fetchNodePointsTemplates(Set(originalLink.get.oldRoadwayNumber, headLink.roadwayNumber)).find(np => np.beforeAfter == After && np.addrM == headLink.startAddrMValue)
+              } else {
+                nodePointDAO.fetchNodePointsTemplates(Set(originalLink.get.oldRoadwayNumber, headLink.roadwayNumber)).find(np => np.beforeAfter == Before && np.addrM == originalLink.get.newStartAddr)
+              }
+            } else None
+          }
+
+          val existingLastNodePoint = {
+            val originalLink = mappedRoadwayNumbers.find(mpr => lastLink.startAddrMValue == mpr.newStartAddr && lastLink.endAddrMValue == mpr.newEndAddr && mpr.newRoadwayNumber == lastLink.roadwayNumber)
+            if(originalLink.nonEmpty){
+              if (!endNodeReversed) {
+                nodePointDAO.fetchNodePointsTemplates(Set(originalLink.get.oldRoadwayNumber, lastLink.roadwayNumber)).find(np => np.beforeAfter == Before && np.addrM == lastLink.endAddrMValue)
+              } else {
+                nodePointDAO.fetchNodePointsTemplates(Set(originalLink.get.oldRoadwayNumber, lastLink.roadwayNumber)).find(np => np.beforeAfter == After && np.addrM == originalLink.get.newEndAddr)
+              }
+            } else None
+          }
+
+          if (existingHeadNodePoint.nonEmpty) {
+            if (startNodeReversed) {
+              nodePointDAO.update(Seq(existingHeadNodePoint.head.copy(beforeAfter = BeforeAfter.switch(existingHeadNodePoint.head.beforeAfter))))
+            }
+          } else {
             nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue, headLink.roadNumber, headLink.roadPartNumber, headLink.track)))
+          }
 
-          if (existingLastNodePoint.isEmpty)
+          if (existingLastNodePoint.nonEmpty) {
+            if (endNodeReversed) {
+              nodePointDAO.update(Seq(existingLastNodePoint.head.copy(beforeAfter = BeforeAfter.switch(existingLastNodePoint.head.beforeAfter))))
+            }
+          } else {
             nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.roadNumber, lastLink.roadPartNumber, lastLink.track)))
-
+          }
         }
       }.toSeq
     } catch {
-      case ex: Exception =>
-        println("Error in node points handler: ", ex.getMessage)
-        println("Full stack trace: ", ex.getStackTrace)
+      case ex: Exception => {
+        println("Failed nodepoints: ", ex)}
     }
   }
 

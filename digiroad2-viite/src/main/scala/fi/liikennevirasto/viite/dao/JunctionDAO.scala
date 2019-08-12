@@ -1,5 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
+import java.sql.Date
+
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import org.joda.time.DateTime
@@ -114,7 +116,7 @@ class JunctionDAO extends BaseDAO {
       x._1.copy(id = x._2)
     )
 
-    createJunctions.foreach {
+      createJunctions.foreach {
       junction =>
         ps.setLong(1, junction.id)
         ps.setLong(2, junction.junctionNumber)
