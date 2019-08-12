@@ -47,10 +47,7 @@ object DataFixture {
   val roadAddressDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-  val roadwayPointDAO = new RoadwayPointDAO
-  val nodePointDAO = new NodePointDAO
-  val junctionPointDAO = new JunctionPointDAO
-  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
 
   lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer))
 
