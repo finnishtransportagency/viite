@@ -97,4 +97,8 @@ object Sequences {
   def nextJunctionPointId: Long = {
     Queries.nextJunctionPointId.as[Long].first
   }
+
+  def nextJunctionNumber: Long = {
+    Queries.nextJunctionNumber.as[Long].first
+  }
 }
