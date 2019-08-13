@@ -428,6 +428,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def addNewLinksToProjectInTX(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: Long, discontinuity: Discontinuity): Option[String] = {
     val newRoadNumber = newLinks.head.roadNumber
     val newRoadPartNumber = newLinks.head.roadPartNumber
+    val newTrack = newLinks.head.track
     val linkStatus = newLinks.head.status
     try {
       val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber, linkStatus, newLinks)
@@ -459,7 +460,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         } else
           newLinks
       projectLinkDAO.create(createLinks.map(_.copy(createdBy = Some(user))))
-      recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)), Some(discontinuity))
+      recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)), Some(newTrack), Some(discontinuity))
       newLinks.flatMap(_.roadName).headOption.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
     } catch {
       case ex: ProjectValidationException => Some(ex.getMessage)
@@ -1400,7 +1401,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[(Long, Long)] = Set(), newDiscontinuity: Option[Discontinuity] = None): Unit = {
+  private def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[(Long, Long)] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None): Unit = {
 
     def setReversedFlag(adjustedLink: ProjectLink, before: Option[ProjectLink]): ProjectLink = {
       before.map(_.sideCode) match {
@@ -1423,8 +1424,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val calculatedLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map(rpl =>
             setReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadwayId != 0L))
           )
-          if (newDiscontinuity.isDefined && roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
-            calculatedLinks.sortBy(_.endAddrMValue).dropRight(1) :+ calculatedLinks.maxBy(_.endAddrMValue).copy(discontinuity = newDiscontinuity.get)
+          if (newDiscontinuity.isDefined && newTrack.isDefined && roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
+            val (filtered, rest) = calculatedLinks.sortBy(_.endAddrMValue).partition(_.track == newTrack.get)
+            rest ++ filtered.init :+ filtered.last.copy(discontinuity = newDiscontinuity.get)
           }
           else
             calculatedLinks
