@@ -1829,8 +1829,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def mapChangedRoadwayNumbers(projectLinks: Seq[ProjectLink], projectLinksAfterChanges: Seq[ProjectLink]) = {
-    val filteredOldLinks = projectLinks.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).sortBy(_.id)
-    val filteredNewLinks = projectLinksAfterChanges.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering).contains(rw.status)).sortBy(_.id)
+    val filteredOldLinks = projectLinks.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering, LinkStatus.UnChanged).contains(rw.status)).sortBy(_.id)
+    val filteredNewLinks = projectLinksAfterChanges.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering, LinkStatus.UnChanged).contains(rw.status)).sortBy(_.id)
     filteredOldLinks.zip(filteredNewLinks).map { case (oldLink, newLink) =>
       RoadwayNumbersLinkChange(oldLink.originalStartAddrMValue, oldLink.originalEndAddrMValue, newLink.startAddrMValue, newLink.endAddrMValue, oldLink.roadwayNumber, newLink.roadwayNumber)
     }
