@@ -480,7 +480,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectDAO.create(rap)
         val emptyTrId = projectDAO.fetchTRIdByProjectId(projectId)
         emptyTrId.isEmpty should be(true)
-        val projectNone = projectDAO.fetchById(projectId)
+        val projectNone = projectService.fetchProjectById(projectId)
         projectService.removeRotatingTRId(projectId)
         projectNone.head.statusInfo.getOrElse("").length should be(0)
         projectDAO.assignNewProjectTRId(projectId)
@@ -490,7 +490,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         emptyTrId.isEmpty should be(true)
         projectDAO.assignNewProjectTRId(projectId)
         projectService.removeRotatingTRId(projectId)
-        val project = projectDAO.fetchById(projectId).head
+        val project = projectService.fetchProjectById(projectId).head
         project.status should be(ProjectState.Incomplete)
         project.statusInfo.getOrElse("1").length should be > 2
       }
@@ -545,7 +545,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectDAO.create(rap)
         projectDAO.assignNewProjectTRId(projectId)
         projectService.updateProjectsWaitingResponseFromTR()
-        val project = projectDAO.fetchById(projectId).head
+        val project = projectService.fetchProjectById(projectId).head
         project.statusInfo.getOrElse("").length should be(0)
         projectService.updateProjectsWaitingResponseFromTR()
       }
@@ -559,7 +559,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       runWithRollback {
         projectDAO.create(rap)
         projectService.updateProjectsWaitingResponseFromTR()
-        val project = projectDAO.fetchById(projectId).head
+        val project = projectService.fetchProjectById(projectId).head
         project.statusInfo.getOrElse("") contains "Failed to find TR-ID" should be(true)
       }
     }
