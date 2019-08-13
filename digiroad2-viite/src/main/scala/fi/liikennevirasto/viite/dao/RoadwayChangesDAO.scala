@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import java.sql.PreparedStatement
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.viite.{RoadType, dao}
+import fi.liikennevirasto.viite.{ProjectService, RoadType, dao}
 import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, Discontinuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadwaySection}
 import org.joda.time.DateTime
@@ -264,7 +264,7 @@ class RoadwayChangesDAO {
     sqlu"""DELETE FROM ROADWAY_CHANGES WHERE project_id = $projectId""".execute
   }
 
-  def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): (Boolean, Option[String]) = {
+  def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long, project: Option[Project]): (Boolean, Option[String]) = {
     def addToBatch(roadwaySection: RoadwaySection, addressChangeType: AddressChangeType,
                    roadwayChangePS: PreparedStatement, roadWayChangesLinkPS: PreparedStatement): Unit = {
       val nextChangeOrderLink = Sequences.nextRoadwayChangeLink
@@ -362,7 +362,7 @@ class RoadwayChangesDAO {
 
     val startTime = System.currentTimeMillis()
     logger.info("Begin delta insertion in ChangeTable")
-    projectDAO.fetchById(projectId) match {
+    project match {
       case Some(project) =>
         if (project.reservedParts.nonEmpty || project.formedParts.nonEmpty) {
           val roadwayChangePS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES " +
