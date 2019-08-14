@@ -108,11 +108,6 @@ class ProjectValidator {
     }
   }
 
-  def checkProjectExists(id: Long): Unit = {
-    if (projectDAO.fetchById(id).isEmpty)
-      throw new ProjectValidationException(ProjectNotFoundMessage)
-  }
-
   // Utility method, will return correct GeometryEndpoint
   private def endPoint(b: BaseRoadAddress) = {
     b.sideCode match {

@@ -302,8 +302,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @param fetchOnlyEnd The optional parameter that allows the search for the link with bigger endAddrM value
     * @return Returns all the filtered road addresses
     */
-  def getRoadAddressWithRoadAndPart(road: Long, part: Long, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false): Seq[RoadAddress] = {
-    withDynSession {
+  def getRoadAddressWithRoadAndPart(road: Long, part: Long, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false, newTransaction: Boolean = true): Seq[RoadAddress] = {
+    if (newTransaction)
+      withDynSession {
+      val roadways = roadwayDAO.fetchAllByRoadAndPart(road, part, withHistory, fetchOnlyEnd)
+      roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
+    }
+    else {
       val roadways = roadwayDAO.fetchAllByRoadAndPart(road, part, withHistory, fetchOnlyEnd)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
     }
@@ -645,8 +650,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
 
     def getNewRoadwayNumberInPoint(roadwayPoint: RoadwayPoint, newAddrM: Long): Option[Long] = {
-      mappedRoadwayNumbers.filter(mrw => (mrw.oldRoadwayNumber != mrw.newRoadwayNumber || mrw.originalStartAddr != mrw.newStartAddr || mrw.originalEndAddr != mrw.newEndAddr)
-        && mrw.oldRoadwayNumber == roadwayPoint.roadwayNumber && roadwayPoint.addrMValue >= mrw.originalStartAddr && roadwayPoint.addrMValue <= mrw.originalEndAddr) match {
+      mappedRoadwayNumbers.filter(mrw => roadwayPoint.roadwayNumber == mrw.oldRoadwayNumber && roadwayPoint.addrMValue >= mrw.originalStartAddr && roadwayPoint.addrMValue <= mrw.originalEndAddr) match {
         case linkChanges if linkChanges.size == 2 =>
           val sortedLinkChanges = linkChanges.sortBy(_.originalStartAddr)
           val beforePoint = sortedLinkChanges.head
@@ -659,7 +663,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
 
     try {
-      val affectableChanges = roadwayChanges.filter(rw => List(Transfer, ReNumeration).contains(rw.changeInfo.changeType))
+      val affectableChanges = roadwayChanges.filter(rw => List(Transfer, ReNumeration, Unchanged).contains(rw.changeInfo.changeType))
       val updatableRoadwayPoints: Seq[(Long, Long, String, Long)] = affectableChanges.sortBy(_.changeInfo.target.startAddressM).foldLeft(Seq.empty[(Long, Long, String, Long)]) { (list, rwc) =>
 
         val change = rwc.changeInfo
@@ -676,7 +680,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         }.distinct
 
         if (roadwayPoints.nonEmpty) {
-          if (change.changeType == Transfer) {
+          if (change.changeType == Transfer || change.changeType == Unchanged) {
             if (!change.reversed) {
               roadwayPoints.flatMap { rwp =>
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
@@ -695,9 +699,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           } else if (change.changeType == ReNumeration) {
             if (change.reversed) {
               roadwayPoints.flatMap { rwp =>
-                val roadwayNumberInPoint = mappedRoadwayNumbers.filter(mrw => mrw.oldRoadwayNumber == rwp.roadwayNumber && rwp.addrMValue >= mrw.originalStartAddr && rwp.addrMValue <= mrw.originalEndAddr).head.newRoadwayNumber
                 val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
-                list :+ (roadwayNumberInPoint, newAddrM, username, rwp.id)
+                val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp, newAddrM)
+                if (roadwayNumberInPoint.isDefined) list :+ (roadwayNumberInPoint.get, newAddrM, username, rwp.id)
+                else list
               }
             } else {
               list
@@ -715,6 +720,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       case ex: Exception => println("Failed roadwaypointsUpdate: ", ex)
     }
   }
+
 }
 
 sealed trait RoadClass {
