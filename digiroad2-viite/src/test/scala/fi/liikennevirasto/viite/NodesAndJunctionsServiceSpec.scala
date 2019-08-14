@@ -307,7 +307,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           before.id should be (after.id)
           before.beforeAfter should be (BeforeAfter.switch(after.beforeAfter))
       }
-
     }
   }
 
