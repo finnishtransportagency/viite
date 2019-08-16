@@ -594,7 +594,6 @@ class ProjectValidator {
                 criticalLeftLinks ++ criticalRightLinks
               } else Seq.empty[ProjectLink]
             case (left, right) if left.isEmpty || right.isEmpty => left ++ right
-            case _ => Seq.empty[ProjectLink]
           }
         }.toSeq
         if (diffLinks.nonEmpty)
