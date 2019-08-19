@@ -251,8 +251,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       }
 
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
-      if (addressM > 0)
-        roadAddresses.filter(ra => ra.startAddrMValue < addressM)
+      if (addressM > 0) {
+        roadAddresses.filter(ra => ra.startAddrMValue >= addressM || ra.endAddrMValue == addressM)
+      }
       else Seq(roadAddresses.head)
     }
   }

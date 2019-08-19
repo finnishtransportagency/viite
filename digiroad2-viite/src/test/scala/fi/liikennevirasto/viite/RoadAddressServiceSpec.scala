@@ -9,9 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{ProjectReservedPartDAO, _}
-import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
@@ -50,11 +48,24 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val nodePointDAO = new NodePointDAO
   val junctionDAO = new JunctionDAO
   val junctionPointDAO = new JunctionPointDAO
+  val roadwayChangesDAO = new RoadwayChangesDAO
+  val roadwayDAO = new RoadwayDAO
+  val linearLocationDAO = new LinearLocationDAO
+  val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMappper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }
 
+  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO, roadwayChangesDAO)
+
+  val projectService = new ProjectService(roadAddressService, mockRoadLinkService, nodesAndJunctionsService, roadwayDAO,
+    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
+    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
+    roadwayAddressMapper, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
+    override def withDynTransaction[T](f: => T): T = f
+  }
   def runWithRollback[T](f: => T): T = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val t = f
@@ -62,8 +73,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       t
     }
   }
-
-  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO)
 
   private def dummyProject(id: Long, status: ProjectState, reservedParts: Seq[ProjectReservedPart] = List.empty[ProjectReservedPart], coordinates: Option[ProjectCoordinates] = None): Project ={
     Project(id, status, "testProject", "testUser", DateTime.parse("1901-01-01"), "testUser", DateTime.parse("1901-01-01"), DateTime.now(), "additional info here", reservedParts, Seq(), Some("current status info"), coordinates)
@@ -303,8 +312,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     val result = roadAddressService.getRoadAddress(road = 1, roadPart = 1, addressM = 200, None)
 
-    result.size should be (2)
-    result.count(_.startAddrMValue < 200) should be (2)
+    result.size should be (3)
+    result.count(_.startAddrMValue < 200) should be (1)
   }
 
   test("Test getRoadAddressWithLinkIdAndMeasure When link id, start measure and end measure is given Then returns all the road address in the given link id and in between given measures") {
@@ -555,16 +564,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test handleRoadwayPoints When Terminating one link and Transfer the rest Then roadway points should be handled/created properly") {
     runWithRollback {
-
-      val roadwayChangesDAO = new RoadwayChangesDAO
-      val roadwayPointDAO = new RoadwayPointDAO
-      val roadwayDAO = new RoadwayDAO
-      val linearLocationDAO = new LinearLocationDAO
-      val projectService = new ProjectService(roadAddressService, mockRoadLinkService, nodesAndJunctionsService, mockEventBus) {
-        override def withDynSession[T](f: => T): T = f
-        override def withDynTransaction[T](f: => T): T = f
-      }
-
       val geom1 = Seq(Point(0.0, 0.0), Point(5.0, 0.0))
       val geom2 = Seq(Point(5.0, 0.0), Point(20.0, 0.0))
       val roadwayNumber1 = Sequences.nextRoadwayNumber
@@ -673,16 +672,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test handleRoadwayPoints When Terminating one link and Transfer the rest and reverse it Then roadway points should be handled/created properly") {
     runWithRollback {
-
-      val roadwayChangesDAO = new RoadwayChangesDAO
-      val roadwayPointDAO = new RoadwayPointDAO
-      val roadwayDAO = new RoadwayDAO
-      val linearLocationDAO = new LinearLocationDAO
-      val projectService = new ProjectService(roadAddressService, mockRoadLinkService, nodesAndJunctionsService, mockEventBus) {
-        override def withDynSession[T](f: => T): T = f
-        override def withDynTransaction[T](f: => T): T = f
-      }
-
       val geom1 = Seq(Point(0.0, 0.0), Point(5.0, 0.0))
       val geom2 = Seq(Point(5.0, 0.0), Point(20.0, 0.0))
       val roadwayNumber1 = Sequences.nextRoadwayNumber
