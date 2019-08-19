@@ -23,6 +23,14 @@ object BeforeAfter {
     values.find(_.value == intValue).getOrElse(UnknownBeforeAfter)
   }
 
+  def switch(beforeAfter: BeforeAfter): BeforeAfter = {
+    beforeAfter match {
+      case After => Before
+      case Before => After
+      case _ => beforeAfter
+    }
+  }
+
   case object Before extends BeforeAfter {
     def value = 1
     def acronym = "E"
@@ -123,6 +131,15 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
+  def fetchByRoadwayPointId(roadwayPointId: Long): Seq[NodePoint] = {
+    val query =
+      s"""
+     $selectFromNodePoint
+     where NP.ROADWAY_POINT_ID = $roadwayPointId and NP.valid_to is null and NP.end_date is null
+   """
+    queryList(query)
+  }
+
   def fetchNodePoint(roadwayNumber: Long): Option[NodePoint] = {
     val query =
       s"""
@@ -145,6 +162,22 @@ class NodePointDAO extends BaseDAO {
     queryList(query)
   }
 
+  def fetchNodePointsTemplates(roadwayNumbers: Set[Long]): List[NodePoint] = {
+    val query =
+      if (roadwayNumbers.isEmpty) {
+        ""
+      } else {
+        s"""SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_ID, NP.START_DATE, NP.END_DATE,
+          NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, NULL, NULL, NULL
+          FROM NODE_POINT NP
+          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+          where RP.roadway_number in ${roadwayNumbers.mkString(", ")} and NP.valid_to is null and NP.end_date is null
+       """
+      }
+    queryList(query)
+  }
+
   def fetchTemplates() : Seq[NodePoint] = {
     val query =
       s"""
@@ -154,7 +187,7 @@ class NodePointDAO extends BaseDAO {
          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
          JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
          LEFT JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
-         where NP.valid_to is null and NP.end_date is null and NP.node_id is null and RW.end_date is NULL
+         where NP.valid_to is null and NP.end_date is null and NP.node_id is null and RW.end_date is NULL and RW.valid_to is null
        """
     queryList(query)
   }
@@ -261,6 +294,10 @@ class NodePointDAO extends BaseDAO {
       0
     else
       Q.updateNA(query).first
+  }
+
+  def updateRoadwayPointId(nodePointId: Any, roadwayPointId: Long) = {
+    Q.updateNA(s"UPDATE NODE_POINT SET ROADWAY_POINT_ID = $roadwayPointId WHERE ID = $nodePointId").execute
   }
 
 }

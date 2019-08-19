@@ -64,7 +64,7 @@
 
     var setCursor = function(tool) {
       var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'crosshair', 'Copy': 'copy'};
-      map.getViewport().style.cursor = cursor[tool];
+      map.getViewport().style.cursor = tool ? cursor[tool] : 'default';
     };
 
     eventbus.on('tool:changed', function(tool) {

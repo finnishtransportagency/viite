@@ -7,8 +7,8 @@ require.config({
     RoadAddressTestData:              '../test_data/RoadAddressTestData',
     RoadLinkTestData:                 '../test_data/RoadLinkTestData',
     UserRolesTestData:                '../test_data/UserRolesTestData',
-    RoadAddressProjectTestData:       '../test_data/RoadAddressProjectTestData',
-    SplittingTestData:                '../test_data/SplittingTestData'
+    RoadAddressProjectTestData:       '../test_data/RoadAddressProjectTestData'
+    //SplittingTestData:                '../test_data/SplittingTestData'
   },
   shim: {
     'chai-jquery': ['jquery', 'chai'],
@@ -16,16 +16,16 @@ require.config({
     'RoadAddressTestData': { exports: 'RoadAddressTestData' },
     'RoadAddressProjectTestData': { exports: 'RoadAddressProjectTestData' },
     'RoadLinkTestData': { exports: 'RoadLinkTestData' },
-    'UserRolesTestData': { exports: 'UserRolesTestData' },
-    'SplittingTestData': { exports: 'SplittingTestData' }
+    'UserRolesTestData': { exports: 'UserRolesTestData' }
+    //'SplittingTestData': { exports: 'SplittingTestData' }
   },
   waitSeconds: 10
 });
 require(['chai',
          'chai-jquery',
          'TestHelpers',
-         'integration-tests/FloatingRoadAddressSpec',
-         'integration-tests/SplittingRoadAddressSpec',
+         //'integration-tests/FloatingRoadAddressSpec',
+         //'integration-tests/SplittingRoadAddressSpec',
          'integration-tests/RoadAddressProjectSpec'
         ],
         function(chai, chaiJquery, testHelpers) {
