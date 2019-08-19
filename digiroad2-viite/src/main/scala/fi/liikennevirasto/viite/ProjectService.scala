@@ -72,28 +72,17 @@ case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt, roadName: String, r
 
 case class LinkToRevert(id: Long, linkId: Long, status: Long, geometry: Seq[Point])
 
-class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, nodesAndJunctionsService: NodesAndJunctionsService,
+class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, nodesAndJunctionsService: NodesAndJunctionsService, roadwayDAO: RoadwayDAO,
+                     roadwayPointDAO : RoadwayPointDAO, linearLocationDAO : LinearLocationDAO, projectDAO : ProjectDAO, projectLinkDAO: ProjectLinkDAO,
+                     nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionPointDAO: JunctionPointDAO, projectReservedPartDAO: ProjectReservedPartDAO, roadwayChangesDAO: RoadwayChangesDAO,
+                     roadwayAddressMapper: RoadwayAddressMapper,
                      eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-
   private val logger = LoggerFactory.getLogger(getClass)
-  val roadwayDAO = new RoadwayDAO
-  val roadwayPointDAO = new RoadwayPointDAO
-  val linearLocationDAO = new LinearLocationDAO
-  val projectDAO = new ProjectDAO
-  val projectLinkDAO = new ProjectLinkDAO
-  val nodeDAO = new NodeDAO
-  val nodePointDAO = new NodePointDAO
-  val junctionDAO = new JunctionDAO
-  val junctionPointDAO = new JunctionPointDAO
-  val projectReservedPartDAO = new ProjectReservedPartDAO
-  val roadwayChangesDAO = new RoadwayChangesDAO
   val projectValidator = new ProjectValidator
-  val nodesNJunctionsService = new NodesAndJunctionsService(roadwayDAO, roadwayPointDAO, linearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO)
-  val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
   val roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, projectLinkDAO)
 
@@ -140,8 +129,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * Creates the new project
     * Adds the road addresses from the reserved parts to the project link table
     *
-    * @param roadAddressProject
-    * @return the created project
     */
   def fetchProjectById(projectId: Long, withNullElyFilter: Boolean = false): Option[Project] = {
     projectDAO.fetchById(projectId, withNullElyFilter).map { project =>
@@ -1821,14 +1808,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * Expires roadways (valid_to = sysdate)
     *
-    * @param projectLinks          ProjectLinks
-    * @param expiringRoadAddresses A map of (RoadwayId -> RoadAddress)
+    * @param roadwayId          The roadwayId to expire
     */
   def expireHistoryRows(roadwayId: Long): Int = {
     roadwayDAO.expireHistory(Set(roadwayId))
   }
 
-  def mapChangedRoadwayNumbers(projectLinks: Seq[ProjectLink], projectLinksAfterChanges: Seq[ProjectLink]) = {
+  def mapChangedRoadwayNumbers(projectLinks: Seq[ProjectLink], projectLinksAfterChanges: Seq[ProjectLink]): Seq[RoadwayNumbersLinkChange] = {
     val filteredOldLinks = projectLinks.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering, LinkStatus.UnChanged).contains(rw.status)).sortBy(_.id)
     val filteredNewLinks = projectLinksAfterChanges.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering, LinkStatus.UnChanged).contains(rw.status)).sortBy(_.id)
     filteredOldLinks.zip(filteredNewLinks).map { case (oldLink, newLink) =>
@@ -1875,8 +1861,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val projectLinksAfterChanges = if(generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
       roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges), username = project.createdBy)
       roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
-      nodesNJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges))
-      nodesNJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges))
+      nodesAndJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges))
+      nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges))
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterChanges, Some(project.startDate.minusDays(1)), project.createdBy)
       handleNewRoadNames(roadwayChanges, project)
       handleRoadNames(roadwayChanges)
