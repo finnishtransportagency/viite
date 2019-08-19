@@ -103,7 +103,7 @@ class JunctionPointDAO extends BaseDAO {
        JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
        JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
        where JP.valid_to is null and (JP.end_date is null or JP.end_date >= sysdate) and
-       RP.ROADWAY_NUMBER in ${roadwayNumber.mkString(",")} and RP.ADDR_M = $addrM and JP.before_after = ${beforeAfter.value}
+       RP.ROADWAY_NUMBER in (${roadwayNumber.mkString(",")}) and RP.ADDR_M = $addrM and JP.before_after = ${beforeAfter.value}
      """
     queryList(query).headOption
   }
