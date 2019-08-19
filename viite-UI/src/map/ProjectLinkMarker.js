@@ -42,8 +42,6 @@
       var directionMarkerColor = function (roadLink) {
         if (roadLink.status === LinkValues.LinkStatus.New.value) {
           return '#ff55dd';
-        } else if (roadLink.roadLinkSource === LinkValues.LinkGeomSource.SuravageLinkInterface.value && roadLink.id === 0) {
-          return '#d3aff6';
         }
         else if (roadLink.roadClass in colorMap) {
           return colorMap[roadLink.roadClass];

@@ -35,8 +35,14 @@
       };
       var moveToLocation = function() {
         var showDialog = function(message) {
+          resultsSection.hide();
+          clearSection.hide();
           instructionsPopup.show(message, 3000);
         };
+
+        searchResults.html('Haku käynnissä…');
+        resultsSection.show();
+
         locationSearch.search(coordinatesText.val()).then(function(results) {
           populateSearchResults(results);
           if (results.length === 1) {
