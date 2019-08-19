@@ -172,7 +172,7 @@ class NodePointDAO extends BaseDAO {
           FROM NODE_POINT NP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
           JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
-          where RP.roadway_number in ${roadwayNumbers.mkString(", ")} and NP.valid_to is null and NP.end_date is null
+          where RP.roadway_number in (${roadwayNumbers.mkString(", ")}) and NP.valid_to is null and NP.end_date is null
        """
       }
     queryList(query)
