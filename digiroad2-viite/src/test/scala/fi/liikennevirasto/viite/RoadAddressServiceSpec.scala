@@ -312,8 +312,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     val result = roadAddressService.getRoadAddress(road = 1, roadPart = 1, addressM = 200, None)
 
-    result.size should be (2)
-    result.count(_.startAddrMValue < 200) should be (2)
+    result.size should be (3)
+    result.count(_.startAddrMValue < 200) should be (1)
   }
 
   test("Test getRoadAddressWithLinkIdAndMeasure When link id, start measure and end measure is given Then returns all the road address in the given link id and in between given measures") {
