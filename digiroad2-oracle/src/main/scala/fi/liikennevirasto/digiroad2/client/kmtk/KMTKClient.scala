@@ -148,7 +148,9 @@ trait KMTKClientOperations {
 
   protected def serviceName: String
 
-  case class KMTKError(url: String, message: String)
+  case class KMTKError(url: String, message: String) {
+    override def toString(): String = s"$message URL: '$url'"
+  }
 
   lazy val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -356,7 +358,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     * Returns KMTK road links.
     */
   protected def queryByIds[T](ids: Iterable[KMTKID], resultTransition: KMTKFeature => T): Seq[T] = {
-    val batchSize = 1000
+    val batchSize = 10
     val idGroups: List[Set[KMTKID]] = ids.toSet.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val url = serviceUrlByIds(ids)

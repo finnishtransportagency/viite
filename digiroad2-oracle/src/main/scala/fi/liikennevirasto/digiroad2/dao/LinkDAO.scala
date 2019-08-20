@@ -29,7 +29,7 @@ class LinkDAO {
   }
 
   def fetch(id: Long): Option[Link] = {
-    val sql = s"""SELECT * FROM LINK where id = $id"""
+    val sql = s"""SELECT id, uuid, version, source, adjusted_timestamp, created_time FROM LINK where id = $id"""
     Q.queryNA[Link](sql).firstOption
   }
 
@@ -44,14 +44,14 @@ class LinkDAO {
     } else {
       val query =
         s"""
-          SELECT * FROM LINK where id in (${ids.mkString(", ")})
+          SELECT id, uuid, version, source, adjusted_timestamp, created_time FROM LINK where id in (${ids.mkString(", ")})
          """
       queryList(query)
     }
   }
 
   def fetch(kmtkId: KMTKID): Option[Link] = {
-    val sql = s"""SELECT * FROM LINK where uuid = '${kmtkId.uuid}' and version = ${kmtkId.version}"""
+    val sql = s"""SELECT id, uuid, version, source, adjusted_timestamp, created_time FROM LINK where uuid = '${kmtkId.uuid}' and version = ${kmtkId.version}"""
     Q.queryNA[Link](sql).firstOption
   }
 
