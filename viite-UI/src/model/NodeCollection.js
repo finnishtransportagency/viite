@@ -1,21 +1,36 @@
 (function (root) {
-  root.NodeCollection = function (backend) {
+  root.NodeCollection = function (backend, locationSearch) {
     var me = this;
     var nodes = [];
     var nodesWithAttributes = [];
-    var nodePointTemplates = [];
-    var junctionTemplates = [];
+    var mapNodePointTemplates = [];
+    var mapJunctionTemplates = [];
+    var userNodePointTemplates = [];
+    var userJunctionTemplates = [];
 
     this.getNodes = function() {
       return nodes;
     };
 
-    this.setNodePointTemplates = function(list) {
-      nodePointTemplates = list;
+    this.setMapNodePointTemplates = function(list) {
+      mapNodePointTemplates = list;
     };
 
-    this.setJunctionTemplates = function(list) {
-      junctionTemplates = list;
+    this.setMapJunctionTemplates = function(list) {
+      mapJunctionTemplates = list;
+    };
+
+    this.setUserTemplates = function(list) {
+      userNodePointTemplates = _.map(_.filter(list, function(nodePoint){
+        return !_.isUndefined(nodePoint.nodePointTemplate) ;
+      }), function(template){
+        return template.nodePointTemplate;
+      });
+      userJunctionTemplates = _.map(_.filter(list, function (junction) {
+        return !_.isUndefined(junction.junctionTemplate);
+      }), function(template) {
+        return template.junctionTemplate;
+      });
     };
 
     this.setNodes = function(list) {
@@ -60,9 +75,14 @@
       });
 
       me.setNodes(nodes);
-      me.setNodePointTemplates(nodePointTemplates);
-      me.setJunctionTemplates(junctionTemplates);
+      me.setMapNodePointTemplates(nodePointTemplates);
+      me.setMapJunctionTemplates(mapJunctionTemplates);
+      me.setNodesWithAttributes(nodes);
       eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionPointTemplates, zoom);
+    });
+
+    eventbus.on('templates:fetched', function(data){
+      me.setUserTemplates(data);
     });
 
     eventbus.on('nodeSearchTool:clickNode', function (index, map) {
@@ -74,6 +94,34 @@
       });
     });
 
+    eventbus.on('nodeSearchTool:clickNodePointTemplate', function(id){
+      applicationModel.addSpinner();
+      var nodePointTemplate = _.find(userNodePointTemplates, function (template) {
+        return template.id === parseInt(id);
+      });
+      locationSearch.search(nodePointTemplate.roadNumber + ' ' + nodePointTemplate.roadPartNumber + ' ' + nodePointTemplate.addrM).then(function(results) {
+        if (results.length >= 1) {
+          var result = results[0];
+          eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat, zoom: 12 });
+        }
+        applicationModel.removeSpinner();
+      });
+    });
+
+    eventbus.on('nodeSearchTool:clickJunctionTemplate', function(id){
+      applicationModel.addSpinner();
+      var junctionTemplate = _.find(userJunctionTemplates, function (template) {
+        return template.junctionId === parseInt(id);
+      });
+      locationSearch.search(junctionTemplate.roadNumber + ' ' + junctionTemplate.roadPartNumber + ' ' + junctionTemplate.addrM).then(function(results) {
+        if (results.length >= 1) {
+          var result = results[0];
+          eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat, zoom: 12 });
+        }
+        applicationModel.removeSpinner();
+      });
+    });
+
     eventbus.on('nodeSearchTool:refreshView', function (map) {
       var coords = [];
       _.each(nodesWithAttributes, function(node) {
@@ -81,6 +129,5 @@
       });
       map.getView().fit(new ol.geom.Polygon([coords]), map.getSize());
     });
-
   };
 })(this);

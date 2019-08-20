@@ -43,22 +43,30 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   val mockProjectReservedPartDAO = MockitoSugar.mock[ProjectReservedPartDAO]
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
-
-  val projectValidator = new ProjectValidator {
-    override val roadAddressService = mockRoadAddressService
-  }
-
-  val projectService: ProjectService = new ProjectService(mockRoadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, mockEventBus) {
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
-  }
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
+  val roadwayPointDAO = new RoadwayPointDAO
+  val nodeDAO = new NodeDAO
+  val nodePointDAO = new NodePointDAO
+  val junctionPointDAO = new JunctionPointDAO
+  val roadwayChangesDAO = new RoadwayChangesDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
+
+  val projectValidator = new ProjectValidator {
+    override val roadAddressService = mockRoadAddressService
+  }
+
+  val projectService: ProjectService = new ProjectService(mockRoadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
+    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
+    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
+    roadwayAddressMapper, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
+
+    override def withDynTransaction[T](f: => T): T = f
+  }
 
   private val roadwayNumber1 = 1000000000l
   private val roadwayNumber2 = 2000000000l

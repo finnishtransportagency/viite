@@ -251,8 +251,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       }
 
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
-      if (addressM > 0)
-        roadAddresses.filter(ra => ra.startAddrMValue < addressM)
+      if (addressM > 0) {
+        roadAddresses.filter(ra => ra.startAddrMValue >= addressM || ra.endAddrMValue == addressM)
+      }
       else Seq(roadAddresses.head)
     }
   }
@@ -641,7 +642,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   def handleRoadwayPointsUpdate(roadwayChanges: List[ProjectRoadwayChange], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange], username: String = "-"): Unit = {
     def handleDualRoadwayPoints(oldRoadwayPointId: Long, newRoadwayNumber: Long, newStartAddr: Long): Unit = {
-      val roadwayPointId = roadwayPointDAO.create(newRoadwayNumber, newStartAddr, username)
+      val existingRoadwayPoint = roadwayPointDAO.fetch(newRoadwayNumber, newStartAddr)
+      val roadwayPointId = if (existingRoadwayPoint.nonEmpty) {
+        existingRoadwayPoint.get.id
+      } else {
+        roadwayPointDAO.create(newRoadwayNumber, newStartAddr, username)
+      }
       val nodePointIds = nodePointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After).map(_.id)
       val junctionPointIds = junctionPointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After).map(_.id)
 

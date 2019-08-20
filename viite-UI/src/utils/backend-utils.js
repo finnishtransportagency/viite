@@ -634,5 +634,11 @@
       });
     }, 1000);
 
+    this.getTemplates = _.throttle(function(callback){
+      return $.get('api/viite/templates', function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
   };
 }(this));
