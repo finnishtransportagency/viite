@@ -53,14 +53,11 @@ class RoadwayPointDAO extends BaseDAO {
 
     roadwayPoints.foreach {
       rwPoint => {
-        val roadwayPoint = fetch(rwPoint._1, rwPoint._2)
-        if (roadwayPoint.isEmpty) {
-          ps.setLong(1, rwPoint._1)
-          ps.setLong(2, rwPoint._2)
-          ps.setString(3, rwPoint._3)
-          ps.setLong(4, rwPoint._4)
-          ps.addBatch()
-        }
+        ps.setLong(1, rwPoint._1)
+        ps.setLong(2, rwPoint._2)
+        ps.setString(3, rwPoint._3)
+        ps.setLong(4, rwPoint._4)
+        ps.addBatch()
       }
     }
     ps.executeBatch()
