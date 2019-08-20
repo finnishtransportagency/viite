@@ -52,22 +52,20 @@ class RoadwayPointDAO extends BaseDAO {
     val ps = dynamicSession.prepareStatement("update ROADWAY_POINT SET ROADWAY_NUMBER = ?, ADDR_M = ?, MODIFIED_BY = ?, MODIFIED_TIME = SYSDATE WHERE ID = ?")
 
     roadwayPoints.foreach {
-      rwPoint =>
-        ps.setLong(1, rwPoint._1)
-        ps.setLong(2, rwPoint._2)
-        ps.setString(3, rwPoint._3)
-        ps.setLong(4, rwPoint._4)
-        ps.addBatch()
+      rwPoint => {
+        val roadwayPoint = fetch(rwPoint._1, rwPoint._2)
+        if(roadwayPoint.isEmpty){
+          ps.setLong(1, rwPoint._1)
+          ps.setLong(2, rwPoint._2)
+          ps.setString(3, rwPoint._3)
+          ps.setLong(4, rwPoint._4)
+          ps.addBatch()
+        }
+      }
     }
     ps.executeBatch()
     ps.close()
     roadwayPoints.map(_._1)
-  }
-
-  def update(id: Long, roadwayNumber: Long, addressMValue: Long, modifiedBy: String) = {
-    sqlu"""
-        Update ROADWAY_POINT Set ROADWAY_NUMBER = $roadwayNumber, ADDR_M = $addressMValue, MODIFIED_BY = $modifiedBy, MODIFIED_TIME = SYSDATE Where ID = $id
-      """.execute
   }
 
   def fetch(id: Long): RoadwayPoint = {
