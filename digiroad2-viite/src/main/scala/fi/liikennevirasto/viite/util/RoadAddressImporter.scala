@@ -359,7 +359,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
 
   private def createIncomingRoadway(r: ConversionAddress, terminated: TerminationCode): IncomingRoadway = {
     IncomingRoadway(r.roadwayNumber, r.roadNumber, r.roadPartNumber, r.trackCode, r.startAddressM, r.endAddressM,
-      reversed = 0, r.startDate, r.endDate, "import", r.roadType, r.ely, r.validFrom, r.expirationDate, r.discontinuity,
+      reversed = 0, r.startDate, r.endDate, "import", r.roadType, r.ely, r.validFrom, None, r.discontinuity,
       terminated = terminated.value)
   }
 
