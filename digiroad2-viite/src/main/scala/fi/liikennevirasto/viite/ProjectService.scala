@@ -1870,8 +1870,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ProjectLinkNameDAO.removeByProject(projectID)
       projectLinks.map(_.roadNumber).toSet
     } catch {
-      case e: ProjectValidationException =>
+      case e: ProjectValidationException => {
         logger.error("Failed to validate project message:" + e.getMessage)
+        Set.empty[Long]
+      }
+      case f: SQLException =>
+        println(f.printStackTrace())
         Set.empty[Long]
     }
   }
