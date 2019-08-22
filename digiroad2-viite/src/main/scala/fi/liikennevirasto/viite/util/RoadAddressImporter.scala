@@ -132,10 +132,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
     calibrationPointStatement.addBatch()
   }
 
-  // TODO Complementary links from VVH
   private def fetchRoadLinksFromKMTKAndVVH(kmtkIds: Set[KMTKID]): Map[KMTKID, RoadLinkLike] = {
     kmtkIds.grouped(4000).flatMap(group =>
-      kmtkClient.roadLinkData.fetchByIds(group)// ++ vvhClient.complementaryData.fetchByLinkIds(group)
+      kmtkClient.roadLinkData.fetchByIds(group.filter(id => id.isKMTK)) ++
+        vvhClient.complementaryData.fetchByLinkIds(group.filter(id => id.isVVH).map(_.uuid))
     ).toSeq.groupBy(_.kmtkId).mapValues(_.head)
   }
 
@@ -224,7 +224,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
     val kmtkIds = validConversionAddressesInChunk.map(l => KMTKID(l.uuid, l.version)).toSet
     print(s"${DateTime.now()} - ")
     println("Total of %d link ids".format(kmtkIds.size))
-    val mappedRoadLinks = fetchRoadLinksFromKMTKAndVVH(kmtkIds) // TODO how about fetching from VVH complementary links by linkId?
+    val mappedRoadLinks = fetchRoadLinksFromKMTKAndVVH(kmtkIds)
     print(s"${DateTime.now()} - ")
     println("Read %d road links from KMTK and VVH".format(mappedRoadLinks.size))
 
