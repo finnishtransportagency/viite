@@ -1,15 +1,15 @@
 (function(root) {
-  root.SelectedNodePointTemplate = function(nodeCollection) {
+  root.SelectedNodePoint = function(nodeCollection) {
     var current = [];
-    var me = this;
+    var dirty = false;
 
-    var open = function (node) {
-      setCurrent(node);
-      alert('a node has been clicked! ' + node.node_number);
+    var open = function (nodePoint) {
+      setCurrent(nodePoint);
+      eventbus.trigger('nodePoint:selected', current.nodePointTemplate);
     };
 
-    var setCurrent = function(newSelection) {
-      current = newSelection;
+    var setCurrent = function(nodePointTemplate) {
+      current.nodePointTemplate = nodePointTemplate;
     };
 
     var getCurrent = function () {
@@ -27,11 +27,14 @@
 
     var clean = function() {
       current = [];
+      dirty = false;
     };
 
     var close = function() {
       clean();
-      eventbus.trigger('layer:enableButtons', true);
+      eventbus.trigger('node:unselected');
+      eventbus.trigger('nodesAndJunctions:open');
+      eventbus.trigger('nodeLayer:fetch');
     };
 
     return {

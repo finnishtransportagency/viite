@@ -1,5 +1,5 @@
 (function(root) {
-    root.NodeLayer = function (map, roadLayer, selectedNodePointTemplate, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
+    root.NodeLayer = function (map, roadLayer, selectedNodePoint, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
       Layer.call(this, map);
       var me = this;
       var indicatorVector = new ol.source.Vector({});
@@ -83,11 +83,7 @@
         //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
         layers: [nodePointTemplateLayer],
         //Limit this interaction to the singleClick
-        condition: ol.events.condition.singleClick,
-        //The new/temporary layer needs to have a style function as well, we define it here.
-        style: function(feature) {
-          // TODO
-        }
+        condition: ol.events.condition.singleClick
       });
       nodePointTemplateClick.set('name','nodePointTemplateClickInteractionNL');
 
@@ -100,11 +96,17 @@
        * sending them to the selectedNode.open for further processing.
        */
       nodePointTemplateClick.on('select', function (event) {
-        if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
-          var selected = _.find(event.selected, function (selectionTarget) {
-            return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
-          });
-          selectedNodePointTemplate.open(selected.nodePointTemplateInfo);
+        var selected = _.find(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
+        });
+        // sets selected mode by default - in case a node point is clicked without any mode
+        if (!_.isUndefined(selected) && applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
+          applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+        }
+        if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value) && !_.isUndefined(selected)) {
+          selectedNodePoint.open(selected.nodePointTemplateInfo);
+        } else {
+          selectedNodePoint.close();
         }
       });
 
@@ -124,23 +126,6 @@
         });
       };
 
-      // /**
-      //  * Simple method that will remove various open layers 3 features from a selection.
-      //  * @param ol3Features
-      //  * @param select
-      //  */
-      // var removeFeaturesFromSelection = function (ol3Features) {
-      //   var olUids = _.map(selectSingleClick.getFeatures().getArray(), function(feature){
-      //     return feature.ol_uid;
-      //   });
-      //   _.each(ol3Features, function(feature){
-      //     if(_.contains(olUids,feature.ol_uid)){
-      //       selectSingleClick.getFeatures().remove(feature);
-      //       olUids.push(feature.ol_uid);
-      //     }
-      //   });
-      // };
-
       /**
        * Event triggered by the selectedNode.open() returning all the open layers 3 features
        * that need to be included in the selection.
@@ -148,17 +133,6 @@
       me.eventListener.listenTo(eventbus, 'node:ol3Selected', function(ol3Features){
         addNodeFeaturesToSelection(ol3Features);
       });
-
-      // var getVisibleFeatures = function(withRoads, withDirectionalMarkers, withNodeMarkers, withJunctionMarkers, withNodePointTemplateMarkers, withJunctionTemplateMarkers){
-      //   var extent = map.getView().calculateExtent(map.getSize());
-      //   var visibleRoads = withRoads ? roadLayer.layer.getSource().getFeaturesInExtent(extent) : [];
-      //   var visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
-      //   var visibleNodeMarkers = withNodeMarkers ? nodeMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
-      //   var visibleJunctionMarkers = withJunctionMarkers ? junctionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
-      //   var visibleNodePointTemplateMarkers = withNodePointTemplateMarkers ? nodePointTemplateLayer.getSource().getFeaturesInExtent(extent) : [];
-      //   var visibleJunctionTemplateMarkers = withJunctionTemplateMarkers ? junctionTemplateLayer.getSource().getFeaturesInExtent(extent) : [];
-      //   return visibleRoads.concat(visibleDirectionalMarkers).concat(visibleNodeMarkers).concat(visibleJunctionMarkers).concat(visibleNodePointTemplateMarkers).concat(visibleJunctionTemplateMarkers);
-      // };
 
       /**
        * This will add all the following interactions from the map:
@@ -179,6 +153,11 @@
       // We add the defined interactions to the map.
       addClickInteractions();
 
+      me.eventListener.listenTo(eventbus, 'node:unselected', function() {
+        if(nodePointTemplateLayer.getSource().getFeatures().length !== 0) {
+          nodePointTemplateLayer.getSource().clear();
+        }
+      });
 
       var redraw = function () {
         if(applicationModel.getSelectedLayer() === 'node') {

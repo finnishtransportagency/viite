@@ -12,7 +12,7 @@
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     window.applicationModel = new ApplicationModel([selectedLinkProperty]);
     var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel));
-    var selectedNodePointTemplate = new SelectedNodePointTemplate(nodeCollection);
+    var selectedNodePoint = new SelectedNodePoint(nodeCollection);
 
     var models = {
       roadCollection: roadCollection,
@@ -21,7 +21,7 @@
       linkPropertiesModel: linkPropertiesModel,
       selectedProjectLinkProperty : selectedProjectLinkProperty,
       nodeCollection: nodeCollection,
-      selectedNodePointTemplate: selectedNodePointTemplate
+      selectedNodePoint: selectedNodePoint
     };
 
     bindEvents();
@@ -115,12 +115,13 @@
     var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty, models.nodeCollection);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
     var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
-    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodePointTemplate, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
+    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodePoint, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
+    new NodePointForm(models.selectedNodePoint);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
