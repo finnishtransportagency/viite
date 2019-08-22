@@ -55,13 +55,14 @@
         var template = function (showJunctionTemplateEditForm) {
 
 
+
             return _.template('' +
                 '<header>' +
                 title() +
                 '</header>' +
                 '<div class="wrapper read-only">' +
                 addPicture(showJunctionTemplateEditForm) +
-                '<a id="junction-list-link" class="floating-stops" href="#junction-list/junctionListInfos">Tarkastele liittymäkohtien tietoja</a>' +
+                '<a id="junction-point-link" class="floating-stops" href="#junction-list/junctionListInfos">Tarkastele liittymäkohtien tietoja</a>' +
                 '<div class="form form-horizontal form-dark">' +
                 '<div class="form-group-metadata">' +
                 '<p class="form-control-static asset-log-info-metadata">Alkupvm: + "TODO"</p>' +
@@ -83,7 +84,7 @@
 
         };
         var title = function () {
-            return '<span>Liittymän tiedot</span>';
+            return '<span class="header-orange">Liittymän tiedot</span>';
         };
         var addPicture = function (showJunctionTemplateEditForm) {
             //var s = new XMLSerializer().serializeToString(svg);
@@ -120,6 +121,10 @@
 
             eventbus.on('junctionEdit:selected', function (linkProperties) {
                 toggleMode(true, true);
+            });
+            $('[id=junction-point-link]').click(function () {
+                eventbus.trigger('junctionEditForm-junctionPoint:select');
+                return false;
             });
             var toggleMode = function (readOnly, showJunctionTemplateEditForm) {
                 var firstSelectedLinkProperty = _.first(selectedLinkProperty.get());
