@@ -41,6 +41,7 @@
 
     WorkListView.initialize(backend);
 
+
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
         startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection);
@@ -117,6 +118,7 @@
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
+    new JunctionEditForm(models.selectedLinkProperty, roadNamingTool);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection);
 
