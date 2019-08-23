@@ -22,6 +22,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPoint, CalibrationPointType}
 import org.joda.time._
+import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
@@ -30,11 +31,13 @@ import scala.collection.mutable.ListBuffer
 
 case class ConversionAddress(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
                              startAddressM: Long, endAddressM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime],
-                             validFrom: Option[DateTime], expirationDate: Option[DateTime], ely: Long, roadType: Long,
-                             terminated: Long, uuid: String, version: Long, userId: String, x1: Option[Double], y1: Option[Double],
+                             validFrom: Option[DateTime], ely: Long, roadType: Long,
+                             uuid: String, version: Long, userId: String, x1: Option[Double], y1: Option[Double],
                              x2: Option[Double], y2: Option[Double], roadwayNumber: Long, sideCode: SideCode, calibrationCode: CalibrationCode = CalibrationCode.No, directionFlag: Long = 0)
 
 class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClient, vvhClient: VVHClient, importOptions: ImportOptions) {
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   case class IncomingRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long, startAddrM: Long, endAddrM: Long, reversed: Long,
                              startDate: Option[DateTime], endDate: Option[DateTime], createdBy: String, roadType: Long, ely: Long, validFrom: Option[DateTime], validTo: Option[DateTime], discontinuity: Long, terminated: Long)
@@ -78,6 +81,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
   }
 
   private def insertRoadway(roadwayStatement: PreparedStatement, roadway: IncomingRoadway): Unit = {
+    if (roadway.terminated > 0 && roadway.endDate.isEmpty) logger.error(s"Terminated roadway end date was empty: ${roadway.roadwayNumber}, ${roadway.terminated}, ${roadway.endDate}")
+
     roadwayStatement.setLong(1, roadway.roadwayNumber)
     roadwayStatement.setLong(2, roadway.roadNumber)
     roadwayStatement.setLong(3, roadway.roadPartNumber)
@@ -149,10 +154,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
       sql"""
           select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss'),
             TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss'),
-            null as lakkautuspvm, ely, tietyyppi, uuid, version, kayttaja, alkux, alkuy, loppux,
+            ely, tietyyppi, uuid, version, kayttaja, alkux, alkuy, loppux,
             loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste
           FROM #$tableName t1
-          WHERE aet >= 0 AND let >= 0 AND lakkautuspvm IS NULL AND EXISTS (
+          WHERE aet >= 0 AND let >= 0 AND uuid IS NOT NULL AND EXISTS (
             SELECT * FROM #$tableName t2 where t2.ajorataid > $minRoadwayNumber AND t2.ajorataid <= $maxRoadwayNumber AND t2.aet >= 0 AND t2.let >= 0
               AND t1.uuid = t2.uuid AND t1.version = t2.version
           )
@@ -165,11 +170,11 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
       val tableName = importOptions.conversionTable
       sql"""
           select tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss') as alkupvm,
-            TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss') as loppupvm, TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss') as muutospvm,
-            TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss') as lakkautuspvm, ely, tietyyppi, uuid, version, kayttaja,
+            TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss') as loppupvm, TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss') as muutospvm,
+            ely, tietyyppi, uuid, version, kayttaja,
             alkux, alkuy, loppux, loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste
           FROM #$tableName
-          WHERE aet >= 0 AND let >= 0 AND uuid is null AND lakkautuspvm is not null"""
+          WHERE aet >= 0 AND let >= 0 AND uuid is null AND lakkautuspvm is null"""
         .as[ConversionAddress].list
     }
   }
@@ -233,7 +238,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
       roadwayNumber => println(s"Suppressed ROADWAY_NUMBER $roadwayNumber because it contains NULL KMTKID values ")
     }
 
-    val groupedLinkCoeffs = allConversionAddresses.filter(_.expirationDate.isEmpty).groupBy(l => KMTKID(l.uuid, l.version)).mapValues {
+    val groupedLinkCoeffs = allConversionAddresses.groupBy(l => KMTKID(l.uuid, l.version)).mapValues {
       addresses =>
         val minM = addresses.map(_.startM).min
         val maxM = addresses.map(_.endM).max
@@ -305,7 +310,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
         val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber,
           minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, isReversed, minAddress.startDate,
           minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity,
-          terminated = minAddress.terminated)
+          terminated = NoTermination.value)
 
         insertRoadway(roadwayPs, roadAddress)
     }
@@ -378,8 +383,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
           Seq()
         }
 
-        insertRoadway(roadwayPs, createIncomingRoadway(terminated.copy(endDate = Some(terminated.endDate.get.plusDays(1))), Termination))
-        subsequent.foreach(roadway => insertRoadway(roadwayPs, createIncomingRoadway(roadway, Subsequent)))
+        insertRoadway(roadwayPs, createIncomingRoadway(terminated, Termination))
+        subsequent.foreach(roadway =>
+          insertRoadway(roadwayPs, createIncomingRoadway(roadway, Subsequent)))
     }
     roadwayPs.executeBatch()
     roadwayPs.close()
@@ -436,13 +442,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
       val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val endDateOption = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val expirationDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val ely = r.nextLong()
       val roadType = r.nextLong()
-
-      // TODO Can we have import rows where termination code should be 2 instead of 1?
-      val terminated = if (expirationDate.isDefined) Termination.value else NoTermination.value
-
       val uuid = r.nextStringOption() // Some historical terminated links might not have geometry
       val version = r.nextLongOption() // Some historical terminated links might not have geometry
       val userId = r.nextString
@@ -476,13 +477,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
 
       if (startAddrM < endAddrM) {
         ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, startAddrM, endAddrM, startM, endM,
-          startDate, endDateOption, validFrom, expirationDate, ely, roadType, terminated, uuid.getOrElse(null), version.getOrElse(0),
+          startDate, endDateOption, validFrom, ely, roadType, uuid.getOrElse(null), version.getOrElse(0),
           userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.TowardsDigitizing,
           getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
       } else {
         //switch startAddrM, endAddrM and set the side code to AgainstDigitizing
         ConversionAddress(roadNumber, roadPartNumber, trackCode, discontinuity, endAddrM, startAddrM, startM, endM,
-          startDate, endDateOption, validFrom, expirationDate, ely, roadType, terminated, uuid.getOrElse(null), version.getOrElse(0),
+          startDate, endDateOption, validFrom, ely, roadType, uuid.getOrElse(null), version.getOrElse(0),
           userId, Option(x1), Option(y1), Option(x2), Option(y2), roadwayNumber, SideCode.AgainstDigitizing,
           getCalibrationCode(startCalibrationPoint, endCalibrationPoint, startAddrM, endAddrM), directionFlag)
       }
