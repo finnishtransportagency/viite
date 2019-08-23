@@ -391,11 +391,6 @@ class ProjectLinkDAO {
           "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ?, ROADWAY_NUMBER = ? WHERE id = ?")
 
         for (projectLink <- links) {
-          val roadwayNumber = if (projectLink.roadwayNumber == NewIdValue) {
-            Sequences.nextRoadwayNumber
-          } else {
-            projectLink.roadwayNumber
-          }
           projectLinkPS.setLong(1, projectLink.roadNumber)
           projectLinkPS.setLong(2, projectLink.roadPartNumber)
           projectLinkPS.setInt(3, projectLink.track.value)
@@ -417,7 +412,7 @@ class ProjectLinkDAO {
           projectLinkPS.setDouble(19, projectLink.endMValue)
           projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB.value)
           projectLinkPS.setLong(21, projectLink.ely)
-          projectLinkPS.setLong(22, roadwayNumber)
+          projectLinkPS.setLong(22, projectLink.roadwayNumber)
           projectLinkPS.setLong(23, projectLink.id)
           projectLinkPS.addBatch()
         }

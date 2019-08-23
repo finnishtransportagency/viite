@@ -10,7 +10,8 @@
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
-    var nodeCollection = new NodeCollection(backend);
+    window.applicationModel = new ApplicationModel([selectedLinkProperty]);
+    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel));
 
     var models = {
       roadCollection: roadCollection,
@@ -22,7 +23,6 @@
     };
 
     bindEvents();
-    window.applicationModel = new ApplicationModel([selectedLinkProperty]);
 
     var linkGroups = groupLinks(selectedProjectLinkProperty);
 
@@ -120,7 +120,7 @@
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
     new JunctionEditForm(models.selectedLinkProperty, roadNamingTool);
 
-    new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection);
+    new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
@@ -141,7 +141,7 @@
     // Show environment name next to Viite logo
     var notification = jQuery('#notification');
     notification.append(Environment.localizedName());
-    notification.append(' Päivämäärä: ' + startupParameters.deploy_date);
+    notification.append(' Tielinkkiaineisto : ' + startupParameters.date_of_data);
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {
