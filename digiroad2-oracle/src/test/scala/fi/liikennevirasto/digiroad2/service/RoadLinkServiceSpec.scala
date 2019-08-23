@@ -136,10 +136,10 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val complRoadLink3 = VVHRoadlink(3, KMTKID("3"), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned)
     val complRoadLink4 = VVHRoadlink(4, KMTKID("4"), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
 
-    val roadLink1 = KMTKRoadLink(5, KMTKID("UUID5", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
-    val roadLink2 = KMTKRoadLink(6, KMTKID("UUID6", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.UnderConstruction)
-    val roadLink3 = KMTKRoadLink(7, KMTKID("UUID7", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned)
-    val roadLink4 = KMTKRoadLink(8, KMTKID("UUID8", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
+    val roadLink1 = KMTKRoadLink(5, KMTKID("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
+    val roadLink2 = KMTKRoadLink(6, KMTKID("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.UnderConstruction)
+    val roadLink3 = KMTKRoadLink(7, KMTKID("cccccccccccccccccccccccccccccccc", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned)
+    val roadLink4 = KMTKRoadLink(8, KMTKID("dddddddddddddddddddddddddddddddd", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
 
     OracleDatabase.withDynTransaction {
       when(mockKMTKClient.roadLinkData).thenReturn(mockKMTKRoadLinkClient)
