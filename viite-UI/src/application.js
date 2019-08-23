@@ -40,6 +40,7 @@
     );
 
     WorkListView.initialize(backend);
+    JunctionPointForm.initialize();
 
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
