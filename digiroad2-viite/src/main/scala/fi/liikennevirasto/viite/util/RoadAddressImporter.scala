@@ -30,8 +30,8 @@ import scala.collection.mutable.ListBuffer
 
 
 case class ConversionAddress(roadNumber: Long, roadPartNumber: Long, trackCode: Long, discontinuity: Long,
-                             startAddressM: Long, endAddressM: Long, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime],
-                             validFrom: Option[DateTime], ely: Long, roadType: Long,
+                             startAddressM: Long, endAddressM: Long, startM: Double, endM: Double, startDate: DateTime, endDate: Option[DateTime],
+                             validFrom: DateTime, ely: Long, roadType: Long,
                              uuid: String, version: Long, userId: String, x1: Option[Double], y1: Option[Double],
                              x2: Option[Double], y2: Option[Double], roadwayNumber: Long, sideCode: SideCode, calibrationCode: CalibrationCode = CalibrationCode.No, directionFlag: Long = 0)
 
@@ -40,10 +40,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
   val logger = LoggerFactory.getLogger(getClass)
 
   case class IncomingRoadway(roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long, startAddrM: Long, endAddrM: Long, reversed: Long,
-                             startDate: Option[DateTime], endDate: Option[DateTime], createdBy: String, roadType: Long, ely: Long, validFrom: Option[DateTime], validTo: Option[DateTime], discontinuity: Long, terminated: Long)
+                             startDate: DateTime, endDate: Option[DateTime], createdBy: String, roadType: Long, ely: Long, validFrom: DateTime, validTo: Option[DateTime], discontinuity: Long, terminated: Long)
 
   case class IncomingLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: SideCode, linkGeomSource: LinkGeomSource, createdBy: String, x1: Option[Double], y1: Option[Double],
-                                    x2: Option[Double], y2: Option[Double], validFrom: Option[DateTime], validTo: Option[DateTime])
+                                    x2: Option[Double], y2: Option[Double], validFrom: DateTime, validTo: Option[DateTime])
 
   val dateFormatter = ISODateTimeFormat.basicDate()
 
@@ -90,12 +90,12 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
     roadwayStatement.setLong(5, roadway.startAddrM)
     roadwayStatement.setLong(6, roadway.endAddrM)
     roadwayStatement.setLong(7, roadway.reversed)
-    roadwayStatement.setString(8, datePrinter(roadway.startDate))
+    roadwayStatement.setString(8, datePrinter(Some(roadway.startDate)))
     roadwayStatement.setString(9, datePrinter(roadway.endDate))
     roadwayStatement.setString(10, roadway.createdBy)
     roadwayStatement.setLong(11, roadway.roadType)
     roadwayStatement.setLong(12, roadway.ely)
-    roadwayStatement.setString(13, datePrinter(roadway.validFrom))
+    roadwayStatement.setString(13, datePrinter(Some(roadway.validFrom)))
     roadwayStatement.setString(14, datePrinter(roadway.validTo))
     roadwayStatement.setLong(15, roadway.discontinuity)
     roadwayStatement.setLong(16, roadway.terminated)
@@ -111,7 +111,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
     linearLocationStatement.setLong(6, linearLocation.sideCode.value)
     linearLocationStatement.setObject(7, OracleDatabase.createRoadsJGeometry(Seq(Point(linearLocation.x1.get, linearLocation.y1.get), Point(linearLocation.x2.get, linearLocation.y2.get)), dynamicSession.conn, linearLocation.endMeasure))
     linearLocationStatement.setString(8, linearLocation.createdBy)
-    linearLocationStatement.setString(9, datePrinter(linearLocation.validFrom))
+    linearLocationStatement.setString(9, datePrinter(Some(linearLocation.validFrom)))
     linearLocationStatement.setString(10, datePrinter(linearLocation.validTo))
     linearLocationStatement.addBatch()
   }
@@ -375,7 +375,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
 
     roadways.foreach {
       case (roadwayNumber, roadways) =>
-        val sorted = roadways.sortBy(-_.startDate.get.getMillis)
+        val sorted = roadways.sortBy(-_.startDate.getMillis)
         val terminated = sorted.head
         val subsequent: Seq[ConversionAddress] = if (roadways.size > 1) {
           sorted.tail
@@ -439,9 +439,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
       val endAddrM = r.nextLong()
       val startM = r.nextDouble()
       val endM = r.nextDouble()
-      val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val startDate = new DateTime(r.nextTimestamp)
       val endDateOption = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val validFrom = new DateTime(r.nextTimestamp())
       val ely = r.nextLong()
       val roadType = r.nextLong()
       val uuid = r.nextStringOption() // Some historical terminated links might not have geometry
