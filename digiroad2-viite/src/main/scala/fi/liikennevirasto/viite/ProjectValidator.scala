@@ -35,7 +35,10 @@ class ProjectValidator {
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
-  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean) {
+  val roadwayPointDAO = new RoadwayPointDAO
+  val nodePointDAO = new NodePointDAO
+  val junctionPointDAO = new JunctionPointDAO
+  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -103,11 +106,6 @@ class ProjectValidator {
     if (projectsWithPart.nonEmpty) {
       throw new ProjectValidationException(RoadReservedOtherProjectMessage.format(number, part, currentProject.name))
     }
-  }
-
-  def checkProjectExists(id: Long): Unit = {
-    if (projectDAO.fetchById(id).isEmpty)
-      throw new ProjectValidationException(ProjectNotFoundMessage)
   }
 
   // Utility method, will return correct GeometryEndpoint
@@ -578,12 +576,22 @@ class ProjectValidator {
 
     def checkMinMaxTrackRoadTypes(trackInterval: Seq[ProjectLink]): Option[Seq[ProjectLink]] = {
       val diffLinks = trackInterval.groupBy(_.roadType).flatMap { projectLinksByRoadType: (RoadType, Seq[ProjectLink]) =>
-        val (left: Seq[ProjectLink], right: Seq[ProjectLink]) = projectLinksByRoadType._2.partition(_.track == Track.LeftSide)
-        if (left.nonEmpty && right.nonEmpty) {
-          val leftLinks = left.filterNot(link => { right.map(_.startAddrMValue).contains(link.startAddrMValue) || right.map(_.endAddrMValue).contains(link.endAddrMValue) })
-          val rightLinks = right.filterNot(link => { left.map(_.startAddrMValue).contains(link.startAddrMValue) || left.map(_.endAddrMValue).contains(link.endAddrMValue) })
-          leftLinks ++ rightLinks
-        } else left ++ right
+        projectLinksByRoadType._2.partition(_.track == Track.LeftSide) match {
+          case (left, right) if left.nonEmpty && right.nonEmpty =>
+            val leftSection = (projectLinksByRoadType._1, left.minBy(_.startAddrMValue).startAddrMValue, left.maxBy(_.endAddrMValue).endAddrMValue)
+            val rightSection = (projectLinksByRoadType._1, right.minBy(_.startAddrMValue).startAddrMValue, right.maxBy(_.endAddrMValue).endAddrMValue)
+            val startSectionAdrr = Seq(leftSection._2, rightSection._2).max
+            val endSectionAddr = Seq(leftSection._3, rightSection._3).min
+            if (leftSection != rightSection) {
+              val criticalLeftLinks = left
+                .filterNot(link => {link.startAddrMValue >= startSectionAdrr && link.endAddrMValue <= endSectionAddr})
+                .filterNot(link => {right.map(_.startAddrMValue).contains(link.startAddrMValue) || right.map(_.endAddrMValue).contains(link.endAddrMValue)})
+              val criticalRightLinks = right.filterNot(link => {link.startAddrMValue >= startSectionAdrr && link.endAddrMValue <= endSectionAddr})
+                .filterNot(link => {left.map(_.startAddrMValue).contains(link.startAddrMValue) || left.map(_.endAddrMValue).contains(link.endAddrMValue)})
+              criticalLeftLinks ++ criticalRightLinks
+            } else Seq.empty[ProjectLink]
+          case (left, right) if left.isEmpty || right.isEmpty => left ++ right
+        }
       }.toSeq
       if (diffLinks.nonEmpty)
         Some(diffLinks)

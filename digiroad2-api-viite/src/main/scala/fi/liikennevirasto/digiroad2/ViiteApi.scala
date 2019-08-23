@@ -64,6 +64,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val nodesAndJunctionsService: NodesAndJunctionsService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date,
+               val date_of_data: String = Digiroad2Context.date_of_data,
                implicit val swagger: Swagger
               )
   extends ScalatraServlet
@@ -85,10 +86,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val DrawLinearPublicRoads = 3
   val DrawPublicRoads = 4
   val DrawAllRoads = 5
-
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
@@ -124,7 +121,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val config = userProvider.getCurrentUser().configuration
         (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
       }
-      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date)
+      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date, date_of_data)
     }
   }
 
@@ -917,6 +914,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/templates") {
+    time(logger, s"GET request for /templates"){
+      val authorizedElys = userProvider.getCurrentUser().getAuthorizedElys
+      nodesAndJunctionsService.getNodePointTemplates(authorizedElys.toSeq).map(nodePointTemplateToApi) ++
+      nodesAndJunctionsService.getJunctionTemplates(authorizedElys.toSeq).map(junctionTemplateToApi)
+    }
+  }
+
   private def getRoadAddressLinks(zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val viiteRoadLinks = zoomLevel match {
@@ -1119,7 +1124,25 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "validTo" -> formatDateTimeToString(nodePoint.validTo),
         "createdBy" -> nodePoint.createdBy,
         "roadwayNumber" -> nodePoint.roadwayNumber,
-        "addrM" -> nodePoint.addrM
+        "addrM" -> nodePoint.addrM,
+        "elyCode" -> nodePoint.elyCode,
+        "roadNumber" -> nodePoint.roadNumber,
+        "roadPartNumber" -> nodePoint.roadPartNumber,
+        "track" -> nodePoint.track
+      )
+    }
+    )
+  }
+
+  def junctionTemplateToApi(junctionTemplate: JunctionTemplate) : Map[String, Any] = {
+    Map("junctionTemplate" -> {
+      Map(
+        "junctionId" -> junctionTemplate.junctionId,
+        "roadNumber" -> junctionTemplate.roadNumber,
+        "roadPartNumber" -> junctionTemplate.roadPartNumber,
+        "track" -> junctionTemplate.track,
+        "addrM" -> junctionTemplate.addrM,
+        "elyCode" -> junctionTemplate.elyCode
       )
     }
     )
@@ -1412,7 +1435,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
      projectService
    }*/
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String, date_of_data: String)
   case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
 
 }

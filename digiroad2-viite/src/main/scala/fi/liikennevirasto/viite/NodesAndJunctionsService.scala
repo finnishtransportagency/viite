@@ -5,15 +5,14 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
-import fi.liikennevirasto.viite.dao.AddressChangeType.{ReNumeration, Transfer}
-import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.{BeforeAfter, Junction, JunctionDAO, JunctionPoint, JunctionPointDAO, JunctionTemplate, LinearLocationDAO, LinkStatus, Node, NodeDAO, NodePoint, NodePointDAO, ProjectLink, ProjectRoadwayChange, RoadAddress, RoadAttributes, RoadwayChangesDAO, RoadwayDAO, RoadwayPointDAO}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
 import org.joda.time.DateTime
 
-class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO) {
+class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO, roadwayChangesDAO: RoadwayChangesDAO) {
 
   case class CompleteNode(node: Option[Node], nodePoints: Seq[NodePoint], junctions: Map[Junction, Seq[JunctionPoint]])
 
@@ -24,7 +23,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   private val logger = LoggerFactory.getLogger(getClass)
 
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
-  val roadwayChangesDAO = new RoadwayChangesDAO
 
   def getNodesByRoadAttributes(roadNumber: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Either[String, Seq[(Node, RoadAttributes)]] = {
     withDynSession {
@@ -99,6 +97,27 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             )
           )
       }.toMap
+    }
+  }
+
+  def getNodePointTemplates(authorizedElys: Seq[Int]): Seq[NodePoint] = {
+    withDynSession{
+      time(logger, "Fetch node point templates") {
+        val allNodePointTemplates = nodePointDAO.fetchTemplates()
+        allNodePointTemplates.filter(template => authorizedElys.contains(template.elyCode))
+      }
+    }
+  }
+
+  def getJunctionTemplates(authorizedElys: Seq[Int]): Seq[JunctionTemplate] = {
+    withDynSession{
+      time(logger, "Fetch Junction templates") {
+        val allJunctionTemplates = junctionDAO.fetchTemplates()
+        allJunctionTemplates.filter(jt => jt.roadNumber != 0 && authorizedElys.contains(jt.elyCode))
+          .groupBy(_.junctionId).map(junctionTemplate => {
+            junctionTemplate._2.minBy(jt => (jt.roadNumber, jt.roadPartNumber, jt.addrM))
+        }).toSeq
+      }
     }
   }
 
@@ -430,7 +449,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               nodePointDAO.update(Seq(existingHeadNodePoint.head.copy(beforeAfter = BeforeAfter.switch(existingHeadNodePoint.head.beforeAfter))))
             }
           } else {
-            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue, headLink.roadNumber, headLink.roadPartNumber, headLink.track)))
+            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.After, headRoadwayPointId, None, headLink.startDate.get, None, DateTime.now(), None, headLink.createdBy, Some(DateTime.now()), headLink.roadwayNumber, headLink.startAddrMValue, headLink.roadNumber, headLink.roadPartNumber, headLink.track, headLink.ely)))
           }
 
           if (existingLastNodePoint.nonEmpty) {
@@ -438,13 +457,13 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               nodePointDAO.update(Seq(existingLastNodePoint.head.copy(beforeAfter = BeforeAfter.switch(existingLastNodePoint.head.beforeAfter))))
             }
           } else {
-            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.roadNumber, lastLink.roadPartNumber, lastLink.track)))
+            nodePointDAO.create(Seq(NodePoint(NewIdValue, BeforeAfter.Before, lastRoadwayPointId, None, lastLink.startDate.get, None, DateTime.now(), None, lastLink.createdBy, Some(DateTime.now()), lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.roadNumber, lastLink.roadPartNumber, lastLink.track, lastLink.ely)))
           }
         }
       }.toSeq
     } catch {
       case ex: Exception => {
-        println("Failed nodepoints: ", ex)}
+        println("Failed nodepoints: ", ex.printStackTrace())}
     }
   }
 

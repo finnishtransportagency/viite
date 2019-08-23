@@ -64,7 +64,7 @@
 
     var setCursor = function(tool) {
       var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'crosshair', 'Copy': 'copy'};
-      map.getViewport().style.cursor = cursor[tool];
+      map.getViewport().style.cursor = tool ? cursor[tool] : 'default';
     };
 
     eventbus.on('tool:changed', function(tool) {
@@ -73,8 +73,11 @@
 
     eventbus.on('coordinates:selected', function(position) {
       if (geometrycalculator.isInBounds(map.getView().calculateExtent(map.getSize()), position.lon, position.lat)) {
+        var zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map));
+        if(!_.isUndefined(position.zoom))
+          zoomLevel = position.zoom;
         map.getView().setCenter([position.lon, position.lat]);
-        map.getView().setZoom(zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map)));
+        map.getView().setZoom(zoomLevel);
       } else {
         instructionsPopup.show('Koordinaatit eivät osu kartalle.', 3000);
       }

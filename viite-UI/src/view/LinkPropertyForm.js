@@ -690,9 +690,6 @@
         }
       });
 
-      eventbus.on('application:readOnly', function(toggle){
-        toggleMode(toggle, selectedLinkProperty.extractDataForDisplay(selectedLinkProperty.get()));
-      });
       rootElement.on('click', '.link-properties button.save', function() {
         if (applicationModel.getCurrentAction() === applicationModel.actionCalculated) {
           selectedLinkProperty.saveTransfer();
