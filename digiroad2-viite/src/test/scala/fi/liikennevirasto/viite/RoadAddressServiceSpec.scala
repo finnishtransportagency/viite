@@ -403,10 +403,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     )
 
     val roadLinks = (Seq(
-      RoadLink(123L, KMTKID("123", 1), newGeom0010, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12316))),
-      RoadLink(123L, KMTKID("123", 1), newGeom1020, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12141))),
-      RoadLink(124L, KMTKID("124", 1), newGeom3040, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12314))),
-      RoadLink(125L, KMTKID("125", 1), newGeom4050, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12312)))
+      RoadLink(123L, KMTKID("123", 0), newGeom0010, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12316))),
+      RoadLink(123L, KMTKID("123", 0), newGeom1020, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12141))),
+      RoadLink(124L, KMTKID("124", 0), newGeom3040, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12314))),
+      RoadLink(125L, KMTKID("125", 0), newGeom4050, 17, AdministrativeClass.apply(2), 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None, None, Map("MUNICIPALITYCODE" -> BigInt.apply(99999), "MTKCLASS" -> BigInt.apply(12312)))
     ), Seq.empty[ChangeInfo])
 
     val roadways = Seq(
