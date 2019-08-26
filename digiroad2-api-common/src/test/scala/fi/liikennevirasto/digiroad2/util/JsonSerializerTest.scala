@@ -5,7 +5,7 @@ import java.io.File
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
 import org.scalatest.{FunSuite, Matchers}
 
 class JsonSerializerTest extends FunSuite with Matchers {
@@ -13,9 +13,9 @@ class JsonSerializerTest extends FunSuite with Matchers {
   val serializer = new fi.liikennevirasto.viite.util.JsonSerializer
   test("testWriteReadCachedGeometry") {
     val f = File.createTempFile("test", ".cache")
-    val roadLinks = Seq(RoadLink(1L, Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
+    val roadLinks = Seq(RoadLink(1L, KMTKID("UUID1", 1), Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
       Map()),
-      RoadLink(2L, Seq(Point(2.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
+      RoadLink(2L, KMTKID("UUID2", 1), Seq(Point(2.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
       Map()))
     serializer.writeCache(f, roadLinks) should be (true)
     val result = serializer.readCachedGeometry(f)
@@ -25,7 +25,7 @@ class JsonSerializerTest extends FunSuite with Matchers {
   // Takes some time to run, run manually if needed.
   ignore("testWriteHugeCachedGeometry") {
     val f = File.createTempFile("test", ".cache")
-    val roadLink = RoadLink(1L, Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
+    val roadLink = RoadLink(1L, KMTKID("UUID", 1), Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
       Map("TO_RIGHT"->104,"LAST_EDITED_DATE"->1476468913000L,"FROM_LEFT"->103,"MTKHEREFLIP"->1,"MTKID"->362888804,
         "ROADNAME_FI"->"Evitskogintie","VERTICALACCURACY"->201,"VALIDFROM"->1379548800000L,"CONSTRUCTIONTYPE"->0,
         "SURFACETYPE"->2,"MTKCLASS"->12122,"ROADPARTNUMBER"->4,"TO_LEFT"->103,

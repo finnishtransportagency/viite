@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.linearasset.KMTKID
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
@@ -231,7 +232,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val linkId = params("linkId").toLong
     val currentProjectId = params("currentProjectId").toLong
     time(logger, s"GET request for /roadlinks/project/prefillfromvvh (linkId: $linkId, projectId: $currentProjectId)") {
-      projectService.fetchPreFillFromVVH(linkId, currentProjectId) match {
+      projectService.fetchPreFill(linkId, currentProjectId) match {
         case Right(preFillInfo) =>
           Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.RoadPart, "roadName" -> preFillInfo.roadName, "roadNameSource" -> preFillInfo.roadNameSource.value)
         case Left(failureMessage) => Map("success" -> false, "reason" -> failureMessage)
@@ -239,10 +240,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/midpoint/:linkId") {
-    val linkId = params("linkId").toLong
-    time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
-      roadLinkService.getMidPointByLinkId(linkId)
+  get("/roadlinks/midpoint/:uuid/:version") {
+    val uuid = params("uuid") // TODO Change linkId in ui
+    val version = params("version").toLong // TODO Change linkId in ui
+    time(logger, s"GET request for /roadlinks/midpoint/$uuid/$version") {
+      roadLinkService.getMidPointByLinkId(KMTKID(uuid, version))
     }
   }
 
@@ -1045,10 +1047,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         roadAddressService.getRoadAddressLinksByBoundingBox(boundingRectangle, Seq((1, 19999), (40000, 49999)))
       }
       case DrawAllRoads => time(logger, operationName = "DrawAllRoads") {
-        roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, roadNumberLimits = Seq(), everything = true)
+        roadAddressService.getRoadAddressLinksByBoundingBox(boundingRectangle, roadNumberLimits = Seq())
       }
       case _ => time(logger, operationName = "DrawRoads") {
-        roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, roadNumberLimits = Seq((1, 19999)))
+        roadAddressService.getRoadAddressLinksByBoundingBox(boundingRectangle, roadNumberLimits = Seq((1, 19999)))
       }
     }
     time(logger, operationName = "Partition road links") {

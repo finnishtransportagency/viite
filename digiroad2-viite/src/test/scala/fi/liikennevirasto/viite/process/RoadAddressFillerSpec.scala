@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
@@ -36,7 +36,7 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   private def dummyRoadLink(linkId: Long, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): RoadLink = {
-    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum - yCoordinates.head, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownConstructionType, linkGeomSource)
+    RoadLink(linkId, KMTKID(s"UUID$linkId", 1), yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum - yCoordinates.head, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownConstructionType, linkGeomSource)
   }
 
   test("Test adjustToTopology When there is any exists a linear location to be adjusted Then should not have any change set") {

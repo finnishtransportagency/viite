@@ -56,6 +56,7 @@ object Digiroad2Build extends Build {
         "commons-codec" % "commons-codec" % "1.9",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
+        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "com.typesafe.slick" %% "slick" % "3.0.0",
         "org.json4s"   %% "json4s-jackson" % "3.5.3",
         "org.joda" % "joda-convert" % "1.2",
