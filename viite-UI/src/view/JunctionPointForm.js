@@ -1,5 +1,28 @@
 (function (root) {
 
+
+    var addSaveEvent = function () {
+        var saveButton = '<button id="saveEtaisyys" class="btn btn-primary save btn-save-road-data" disabled>Tallenna</button>';
+        $('#feature-attributes').append(saveButton);
+        $('#aosa').on('click', function (clickEvent) {
+            var saveMessage = ($('#aosa').length > 0 ? "Tiellä on jo nimi. Haluatko varmasti antaa sille uuden nimen?" : "Tiellä on jo nimi. Haluatko varmasti muokata sitä?");
+
+            new GenericConfirmPopup(saveMessage, {
+                successCallback: function () {
+                    roadNameCollection.saveChanges();
+                },
+                closeCallback: function () {
+                }
+            });
+        });
+    };
+
+    var addReturn = function(){
+        var returnButton = '<button id="return" class="btn btn-primary save btn-save-road-data" disabled>Palaa</button>';
+        $('#feature-attributes').append(returnButton);
+
+
+    };
     var template = function () {
         var rootElement = $('#feature-attributes');
         rootElement.empty();
@@ -26,7 +49,7 @@
 
     };
     var title = function () {
-        return '<span class="header-orange">Liittymäkohtien tiedot:</span>';
+        return '<span class="header-link">Liittymäkohtien tiedot:</span>';
     };
     var addSmallLabel = function (label) {
         return '<label class="junction-control-label-small">' + label + '</label>';
@@ -46,9 +69,11 @@
         return field;
     };
     var bindEvents = function () {
-        eventbus.on('junctionEditForm-junctionPoint:select', function (layerName) {
+        eventbus.on('junctionPointForm-junctionPoint:select', function (layerName) {
             template();
-        });
+            addSaveEvent();
+            addReturn();
+});
     };
 
     root.JunctionPointForm = {
