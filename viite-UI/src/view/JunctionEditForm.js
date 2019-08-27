@@ -52,23 +52,27 @@
             '   style="font-size:14px;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;">\n' +
             '       </text>\n' +
             '       </svg>\n';
-        var template = function (showJunctionTemplateEditForm) {
+        var template = function (junctionPointInfo) {
 
+            var showJunctionTemplateEditForm = false;
+            if (!_.isUndefined(junctionPointInfo.junctionPointTemplateInfo)) {
+                junctionPointInfo = junctionPointInfo.junctionPointTemplateInfo;
+                showJunctionTemplateEditForm = true;
 
-
+            }
             return _.template('' +
                 '<header>' +
                 title() +
                 '</header>' +
                 '<div class="wrapper read-only">' +
                 addPicture(showJunctionTemplateEditForm) +
-                '<a id="junction-point-link" class="floating-stops" href="#junction-list/junctionListInfos">Tarkastele liittymäkohtien tietoja</a>' +
+                '<a id="junction-point-link" class="floating-stops" href="#junction/junctionPoints">Tarkastele liittymäkohtien tietoja</a>' +
                 '<div class="form form-horizontal form-dark">' +
                 '<div class="form-group-metadata">' +
-                '<p class="form-control-static asset-log-info-metadata">Alkupvm: + "TODO"</p>' +
+                '<p class="form-control-static asset-log-info-metadata">Alkupvm: ' + junctionPointInfo.startDate + '</p>' +
                 '</div>' +
                 '<div class="form-group-metadata">' +
-                '<p class="form-control-static asset-log-info-metadata">Solmunro: ' + "TODO" + '</p>' +
+                '<p class="form-control-static asset-log-info-metadata">Solmunro: ' + junctionPointInfo.junctionId + '</p>' +
                 '</div>' +
                 '<div class="form-group-metadata">' +
                 '<p class="form-control-static asset-log-info-metadata">Solmunimi: ' + "TODO" + '</p>' +
@@ -119,34 +123,16 @@
         var bindEvents = function () {
             var rootElement = $('#feature-attributes');
 
-            eventbus.on('junctionEdit:selected', function (linkProperties) {
-                toggleMode(true, true);
+            eventbus.on('junctionEdit:selected', function (selected) {
+                toggleMode(selected);
             });
             $('[id=junction-point-link]').click(function () {
-                eventbus.trigger('junctionEditForm-junctionPoint:select');
+                eventbus.trigger('junctionEditForm-junctionPoints:select');
                 return false;
             });
-            var toggleMode = function (readOnly, showJunctionTemplateEditForm) {
-                var firstSelectedLinkProperty = _.first(selectedLinkProperty.get());
-                if (!_.isEmpty(selectedLinkProperty.get())) {
-                    if (readOnly) {
-                        if (firstSelectedLinkProperty.floating === LinkValues.SelectionType.Floating.value) {
-                        } else {
-                            rootElement.html(template(showJunctionTemplateEditForm)(firstSelectedLinkProperty));
-                        }
-                    } else {
-                        if (_.last(selectedLinkProperty.get(showJunctionTemplateEditForm)).floating === LinkValues.SelectionType.Floating.value) {
-
-                        } else {
-                            rootElement.html(template(showJunctionTemplateEditForm)(firstSelectedLinkProperty));
-                        }
-                    }
-                } else {
-                    rootElement.html(template(showJunctionTemplateEditForm)(firstSelectedLinkProperty));
-                }
-
-            };
-
+            var toggleMode = function (selected) {
+                rootElement.html(template(selected));
+            }
         };
 
         bindEvents();
