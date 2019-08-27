@@ -121,12 +121,11 @@ class DataImporter {
       disableRoadwayTriggers
       sqlu"""DELETE FROM PROJECT_LINK_NAME""".execute
       sqlu"""DELETE FROM ROADWAY_CHANGES_LINK""".execute
-      sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
       sqlu"""DELETE FROM PROJECT_LINK""".execute
       sqlu"""DELETE FROM PROJECT_LINK_HISTORY""".execute
-      sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
       sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART""".execute
-      sqlu"""DELETE FROM PROJECT""".execute
+      sqlu"""DELETE FROM PROJECT WHERE STATE != 5""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE project_id NOT IN (SELECT id FROM PROJECT)""".execute
       sqlu"""DELETE FROM ROAD_NETWORK_ERROR""".execute
       sqlu"""DELETE FROM PUBLISHED_ROADWAY""".execute
       sqlu"""DELETE FROM PUBLISHED_ROAD_NETWORK""".execute
