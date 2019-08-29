@@ -1,19 +1,38 @@
 (function(root) {
   root.SelectedNodePoint = function(nodeCollection) {
-    var current = [];
+    var current = {};
     var dirty = false;
 
-    var open = function (nodePoint) {
-      setCurrent(nodePoint);
+    var openNodePointTemplate = function (nodePointTemplate, boundingBox) {
+      setCurrentNodePointTemplate(nodePointTemplate);
+      getNodePointsTemplateInSamePlace(boundingBox);
       eventbus.trigger('nodePoint:selected', current.nodePointTemplate);
     };
 
-    var setCurrent = function(nodePointTemplate) {
+    var getNodePointsTemplateInSamePlace = function (boundingBox) {
+      return nodeCollection.getNodeTemplatesByBoundingBox(boundingBox);
+    };
+
+    var getLowestRoadNumber = function () {
+      return _.head(_.sortBy(getGroupOfNodePoints(), function (nodePoint) {
+        return [nodePoint.roadNumber, nodePoint.roadPartNumber, nodePoint.addrM, nodePoint.beforeAfter];
+      }));
+    };
+
+    var setCurrentNodePointTemplate = function(nodePointTemplate) {
       current.nodePointTemplate = nodePointTemplate;
     };
 
-    var getCurrent = function () {
-      return current;
+    var getCurrentNodePointTemplate = function () {
+      return current.nodePointTemplate;
+    };
+
+    var setGroupOfNodePoints = function (nodePoints) {
+      current.groupOfNodePoints = nodePoints;
+    };
+
+    var getGroupOfNodePoints = function () {
+      return current.groupOfNodePoints;
     };
 
     var isDirty = function() {
@@ -23,7 +42,6 @@
     var setDirty = function(value) {
       dirty = value;
     };
-
 
     var clean = function() {
       current = [];
@@ -38,9 +56,11 @@
     };
 
     return {
-      open: open,
-      setCurrent: setCurrent,
-      getCurrent: getCurrent,
+      openNodePointTemplate: openNodePointTemplate,
+      getCurrentNodePointTemplate: getCurrentNodePointTemplate,
+      setGroupOfNodePoints: setGroupOfNodePoints,
+      getGroupOfNodePoints: getGroupOfNodePoints,
+      getLowestRoadNumber: getLowestRoadNumber,
       isDirty: isDirty,
       setDirty: setDirty,
       clean: clean,

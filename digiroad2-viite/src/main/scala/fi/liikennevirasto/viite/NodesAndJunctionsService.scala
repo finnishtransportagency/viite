@@ -109,6 +109,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
+  def getNodePointTemplateById(id: Long): Option[NodePoint] = {
+    withDynSession {
+      time(logger, "Fetch node point template by id") {
+        nodePointDAO.fetchNodePointTemplateById(id)
+      }
+    }
+  }
+
   def getJunctionTemplates(authorizedElys: Seq[Int]): Seq[JunctionTemplate] = {
     withDynSession{
       time(logger, "Fetch Junction templates") {
