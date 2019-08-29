@@ -1863,10 +1863,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       nodesAndJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges))
       nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges))
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterChanges, Some(project.startDate.minusDays(1)), project.createdBy)
-      roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
       handleNewRoadNames(roadwayChanges, project)
       handleRoadNames(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
+      roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
       ProjectLinkNameDAO.removeByProject(projectID)
       projectLinks.map(_.roadNumber).toSet
     } catch {
