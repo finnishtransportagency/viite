@@ -104,7 +104,9 @@
           applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
         }
         if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value) && !_.isUndefined(selected)) {
-          selectedNodePoint.open(selected.nodePointTemplateInfo);
+          applicationModel.addSpinner();
+          var coordinates = selected.getGeometry().getCoordinates();
+          selectedNodePoint.openNodePointTemplate(selected.nodePointTemplateInfo, [coordinates, coordinates]);
         } else {
           selectedNodePoint.close();
         }
@@ -141,14 +143,6 @@
       var addClickInteractions = function () {
         map.addInteraction(nodePointTemplateClick);
       };
-
-      // /**
-      //  * This will remove all the following interactions from the map:
-      //  * - nodePointTemplateClick
-      //  */
-      // var removeSelectInteractions = function() {
-      //   map.removeInteraction(nodePointTemplateClick);
-      // };
 
       // We add the defined interactions to the map.
       addClickInteractions();

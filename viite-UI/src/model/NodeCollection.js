@@ -45,6 +45,12 @@
       nodesWithAttributes = list;
     };
 
+    this.getNodeTemplatesByBoundingBox = function(boundingBox) {
+      applicationModel.addSpinner();
+      return backend.getNodeTemplatesByBoundingBox(boundingBox, function (result) {
+        eventbus.trigger('nodePoint:fetch', result);
+      });
+    };
 
     this.getNodesByRoadAttributes = function(roadAttributes) {
       return backend.getNodesByRoadAttributes(roadAttributes, function (result) {
@@ -94,17 +100,29 @@
     });
 
     eventbus.on('nodeSearchTool:clickNodePointTemplate', function(id){
+      var moveToLocation = function(nodePoint) {
+        if (!_.isUndefined(nodePoint)) {
+          locationSearch.search(nodePoint.roadNumber + ' ' + nodePoint.roadPartNumber + ' ' + nodePoint.addrM).then(function (results) {
+            if (results.length >= 1) {
+              var result = results[0];
+              eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat, zoom: 12});
+            }
+            applicationModel.removeSpinner();
+          });
+        }
+      };
+
       applicationModel.addSpinner();
       var nodePointTemplate = _.find(userNodePointTemplates, function (template) {
         return template.id === parseInt(id);
       });
-      locationSearch.search(nodePointTemplate.roadNumber + ' ' + nodePointTemplate.roadPartNumber + ' ' + nodePointTemplate.addrM).then(function(results) {
-        if (results.length >= 1) {
-          var result = results[0];
-          eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat, zoom: 12 });
-        }
-        applicationModel.removeSpinner();
-      });
+      if (_.isUndefined(nodePointTemplate)) {
+        backend.getNodePointTemplateById(id, function (results) {
+          moveToLocation(results.nodePointTemplate);
+        });
+      } else {
+        moveToLocation(nodePointTemplate);
+      }
     });
 
     eventbus.on('nodeSearchTool:clickJunctionTemplate', function(id){

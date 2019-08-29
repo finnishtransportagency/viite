@@ -16,6 +16,10 @@
               '<span id="closeProjectSpan" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>';
     };
 
+    var captionTitle = function (title) {
+      return '<span class="caption-title">'+title+'</span>';
+    };
+
     var addRoadNameField = function (name, isBlocked) {
       var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
       var disabled = nameToDisplay !== "" && isBlocked;
@@ -339,6 +343,7 @@
       distanceValue: distanceValue,
       title: title,
       titleWithEditingTool: titleWithEditingTool,
+      captionTitle: captionTitle,
       projectButtons: projectButtons,
       staticField: staticField,
       getProjectErrors:getProjectErrors

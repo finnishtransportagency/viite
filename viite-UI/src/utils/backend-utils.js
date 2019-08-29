@@ -640,5 +640,17 @@
       });
     }, 1000);
 
+    this.getNodeTemplatesByBoundingBox = _.throttle(function (boundingBox, callback) {
+      return $.getJSON('api/viite/nodepointstemplate?bbox=' + boundingBox, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
+    this.getNodePointTemplateById = _.throttle(function (nodePointTemplateId, callback) {
+      return $.getJSON('api/viite/nodepointtemplate/' + nodePointTemplateId, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
   };
 }(this));
