@@ -2,13 +2,14 @@ package fi.liikennevirasto.viite.dao
 
 import java.util.Date
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
@@ -390,11 +391,6 @@ class ProjectLinkDAO {
           "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ?, ROADWAY_NUMBER = ? WHERE id = ?")
 
         for (projectLink <- links) {
-          val roadwayNumber = if (projectLink.roadwayNumber == NewIdValue) {
-            Sequences.nextRoadwayNumber
-          } else {
-            projectLink.roadwayNumber
-          }
           projectLinkPS.setLong(1, projectLink.roadNumber)
           projectLinkPS.setLong(2, projectLink.roadPartNumber)
           projectLinkPS.setInt(3, projectLink.track.value)
@@ -416,7 +412,7 @@ class ProjectLinkDAO {
           projectLinkPS.setDouble(19, projectLink.endMValue)
           projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB.value)
           projectLinkPS.setLong(21, projectLink.ely)
-          projectLinkPS.setLong(22, roadwayNumber)
+          projectLinkPS.setLong(22, projectLink.roadwayNumber)
           projectLinkPS.setLong(23, projectLink.id)
           projectLinkPS.addBatch()
         }

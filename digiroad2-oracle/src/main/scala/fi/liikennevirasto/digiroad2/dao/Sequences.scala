@@ -70,10 +70,6 @@ object Sequences {
     Queries.nextNodeNumber.as[Long].first
   }
 
-  def nextJunctionNumber: Long = {
-    Queries.nextJunctionNumber.as[Long].first
-  }
-
   def fetchNodeIds(len: Int): List[Long] = {
     Queries.fetchNodeIds(len)
   }
@@ -84,6 +80,10 @@ object Sequences {
 
   def fetchJunctionPointIds(len: Int): List[Long] = {
     Queries.fetchJunctionPointIds(len)
+  }
+
+  def fetchNodePointIds(len: Int): List[Long] = {
+    Queries.fetchNodePointIds(len)
   }
 
   def nextJunctionId: Long = {
@@ -106,4 +106,7 @@ object Sequences {
     Queries.fetchLinkIds(len)
   }
 
+  def nextJunctionNumber: Long = {
+    Queries.nextJunctionNumber.as[Long].first
+  }
 }

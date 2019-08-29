@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import java.text.SimpleDateFormat
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -22,9 +23,10 @@ import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.swagger.{Swagger, _}
+import org.scalatra.swagger.Swagger
 import org.scalatra.{NotFound, _}
 import org.slf4j.{Logger, LoggerFactory}
+import org.scalatra.swagger._
 
 import scala.util.parsing.json.JSON._
 import scala.util.{Left, Right}
@@ -63,6 +65,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val nodesAndJunctionsService: NodesAndJunctionsService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date,
+               val date_of_data: String = Digiroad2Context.date_of_data,
                implicit val swagger: Swagger
               )
   extends ScalatraServlet
@@ -84,10 +87,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val DrawLinearPublicRoads = 3
   val DrawPublicRoads = 4
   val DrawAllRoads = 5
-
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
@@ -123,7 +122,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val config = userProvider.getCurrentUser().configuration
         (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
       }
-      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date)
+      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date, date_of_data)
     }
   }
 
@@ -669,8 +668,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
-              val project = projectService.getSingleProjectById(links.projectId).get
               val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
+              val project = projectService.getSingleProjectById(links.projectId).get
               Map("success" -> true, "id" -> links.projectId,
                 "publishable" -> projectErrors.isEmpty,
                 "projectErrors" -> projectErrors,
@@ -802,120 +801,122 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val getSuravageSplitCutLine: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("getSuravageSplitCutLine")
-      .parameters(
-        bodyParam[CutLineExtractor]("CutLine").description("This defines the specific point where a project link should be split in two. \r\n" +
-          "Object Structure: \r\n" + cutLineExtractorStructure)
-      )
-      tags "ViiteAPI - Project - SuravageSplit"
-      summary "This indicates the system what link (identified by the linkId) to split and where the split point occurs."
-      notes ""
-    )
-  post("/project/getCutLine") {
-    time(logger, "POST request for /project/getCutLine") {
-      try {
-        val splitLine = parsedBody.extract[CutLineExtractor]
-        if (splitLine.linkId == 0)
-          BadRequest("Missing mandatory 'linkId' parameter")
-        roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(splitLine.linkId))).headOption match {
-          case Some(suravage) =>
-            val splitGeom = GeometryUtils.calculatePointAndHeadingOnGeometry(suravage.geometry, splitLine.splitedPoint)
-            splitGeom match {
-              case Some(x) => val (p, v) = x
-                val cutGeom = Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
-                Map("success" -> true, "response" -> Map("geometry" -> cutGeom))
-              case _ => Map("success" -> false, "errorMessage" -> "Error during splitting calculation")
-            }
-          case _ => Map("success" -> false, "errorMessage" -> ErrorSuravageLinkNotFound)
-        }
-      } catch {
-        case e: SplittingException => Map("success" -> false, "errorMessage" -> e.getMessage)
-      }
-    }
-  }
+  // TODO This might be needed in the future
+//  private val getSuravageSplitCutLine: SwaggerSupportSyntax.OperationBuilder = (
+//    apiOperation[Map[String, Any]]("getSuravageSplitCutLine")
+//      .parameters(
+//        bodyParam[CutLineExtractor]("CutLine").description("This defines the specific point where a project link should be split in two. \r\n" +
+//          "Object Structure: \r\n" + cutLineExtractorStructure)
+//      )
+//      tags "ViiteAPI - Project - SuravageSplit"
+//      summary "This indicates the system what link (identified by the linkId) to split and where the split point occurs."
+//      notes ""
+//    )
+//  post("/project/getCutLine") {
+//    time(logger, "POST request for /project/getCutLine") {
+//      try {
+//        val splitLine = parsedBody.extract[CutLineExtractor]
+//        if (splitLine.linkId == 0)
+//          BadRequest("Missing mandatory 'linkId' parameter")
+//        roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(splitLine.linkId))).headOption match {
+//          case Some(suravage) =>
+//            val splitGeom = GeometryUtils.calculatePointAndHeadingOnGeometry(suravage.geometry, splitLine.splitedPoint)
+//            splitGeom match {
+//              case Some(x) => val (p, v) = x
+//                val cutGeom = Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
+//                Map("success" -> true, "response" -> Map("geometry" -> cutGeom))
+//              case _ => Map("success" -> false, "errorMessage" -> "Error during splitting calculation")
+//            }
+//          case _ => Map("success" -> false, "errorMessage" -> ErrorSuravageLinkNotFound)
+//        }
+//      } catch {
+//        case e: SplittingException => Map("success" -> false, "errorMessage" -> e.getMessage)
+//      }
+//    }
+//  }
 
-  private val getSuravagePreSplitInfoByLinkId: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("getSuravagePreSplitInfoByLinkId")
-      .parameters(
-        pathParam[Long]("linkID").description("LinkId of a projectLink")
-      )
-      tags "ViiteAPI - Project - SuravageSplit"
-      summary "This should return all the information pertaining to a split of the suravage links, but, without saving any data."
-      notes ""
-    )
+  // TODO This might be needed in the future
+//  private val getSuravagePreSplitInfoByLinkId: SwaggerSupportSyntax.OperationBuilder = (
+//    apiOperation[Map[String, Any]]("getSuravagePreSplitInfoByLinkId")
+//      .parameters(
+//        pathParam[Long]("linkID").description("LinkId of a projectLink")
+//      )
+//      tags "ViiteAPI - Project - SuravageSplit"
+//      summary "This should return all the information pertaining to a split of the suravage links, but, without saving any data."
+//      notes ""
+//    )
+//  put("/project/presplit/:linkID", operation(getSuravagePreSplitInfoByLinkId)) {
+//    val linkID = params.get("linkID")
+//    time(logger, s"PUT request for /project/presplit/$linkID") {
+//      val user = userProvider.getCurrentUser()
+//      linkID.map(_.toLong) match {
+//        case Some(link) =>
+//          try {
+//            val options = parsedBody.extract[SplitOptions]
+//            val (splitLinks, allTerminatedLinks, errorMessage, splitLine) = projectService.preSplitSuravageLink(link, user.username, options)
+//            val cutGeom = splitLine match {
+//              case Some(x) => val (p, v) = x
+//                Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
+//              case _ => Seq()
+//            }
+//            if (errorMessage.nonEmpty) {
+//              Map("success" -> false, "errorMessage" -> errorMessage.get)
+//            } else if (splitLinks.isEmpty) {
+//              Map("success" -> false, "errorMessage" -> "Linkin jako ei onnistunut tuntemattomasta syystä")
+//            } else {
+//              val roadWithInfo = splitLinks.get.filter(_.status == LinkStatus.Terminated).head
+//              val split: Map[String, Any] = Map(
+//                "roadNumber" -> roadWithInfo.roadNumber,
+//                "roadPartNumber" -> roadWithInfo.roadPartNumber,
+//                "trackCode" -> roadWithInfo.track,
+//                "terminatedLinks" -> allTerminatedLinks.map(projectLinkToApi),
+//                "roadLinkSource" -> roadWithInfo.linkGeomSource.value,
+//                "split" -> Map(
+//                  "geometry" -> cutGeom
+//                )
+//              ) ++ splitLinks.get.flatMap(splitToApi)
+//              Map("success" -> splitLinks.nonEmpty, "response" -> split)
+//            }
+//          } catch {
+//            case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
+//            case e: SplittingException => Map("success" -> false, "errorMessage" -> e.getMessage)
+//            case _: NumberFormatException => BadRequest("Missing mandatory data")
+//          }
+//        case _ => BadRequest("Missing Linkid from url")
+//      }
+//    }
+//  }
 
-  put("/project/presplit/:linkID", operation(getSuravagePreSplitInfoByLinkId)) {
-    val linkID = params.get("linkID")
-    time(logger, s"PUT request for /project/presplit/$linkID") {
-      val user = userProvider.getCurrentUser()
-      linkID.map(_.toLong) match {
-        case Some(link) =>
-          try {
-            val options = parsedBody.extract[SplitOptions]
-            val (splitLinks, allTerminatedLinks, errorMessage, splitLine) = projectService.preSplitSuravageLink(link, user.username, options)
-            val cutGeom = splitLine match {
-              case Some(x) => val (p, v) = x
-                Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
-              case _ => Seq()
-            }
-            if (errorMessage.nonEmpty) {
-              Map("success" -> false, "errorMessage" -> errorMessage.get)
-            } else if (splitLinks.isEmpty) {
-              Map("success" -> false, "errorMessage" -> "Linkin jako ei onnistunut tuntemattomasta syystä")
-            } else {
-              val roadWithInfo = splitLinks.get.filter(_.status == LinkStatus.Terminated).head
-              val split: Map[String, Any] = Map(
-                "roadNumber" -> roadWithInfo.roadNumber,
-                "roadPartNumber" -> roadWithInfo.roadPartNumber,
-                "trackCode" -> roadWithInfo.track,
-                "terminatedLinks" -> allTerminatedLinks.map(projectLinkToApi),
-                "roadLinkSource" -> roadWithInfo.linkGeomSource.value,
-                "split" -> Map(
-                  "geometry" -> cutGeom
-                )
-              ) ++ splitLinks.get.flatMap(splitToApi)
-              Map("success" -> splitLinks.nonEmpty, "response" -> split)
-            }
-          } catch {
-            case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
-            case e: SplittingException => Map("success" -> false, "errorMessage" -> e.getMessage)
-            case _: NumberFormatException => BadRequest("Missing mandatory data")
-          }
-        case _ => BadRequest("Missing Linkid from url")
-      }
-    }
-  }
-
-  private val splitSuravageLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")
-      .parameters(
-        pathParam[Long]("linkID").description("LinkId of a projectLink")
-      )
-      tags "ViiteAPI - Project - SuravageSplit"
-      summary "This effectively perform the split and save the results on the database."
-      notes ""
-    )
-
-  put("/project/split/:linkID", operation(splitSuravageLinkByLinkId)) {
-    val linkID = params.get("linkID")
-    time(logger, s"PUT request for /project/split/$linkID") {
-      val user = userProvider.getCurrentUser()
-      linkID.map(_.toLong) match {
-        case Some(link) =>
-          try {
-            val options = parsedBody.extract[SplitOptions]
-            val splitError = projectService.splitSuravageLink(options.trackCode.value, options.projectId, options.coordinates, link, user.username, options)
-            val projectErrors = projectService.validateProjectById(options.projectId).map(errorPartsToApi)
-            Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull, "projectErrors" -> projectErrors)
-          } catch {
-            case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
-            case _: NumberFormatException => BadRequest("Missing mandatory data")
-          }
-        case _ => BadRequest("Missing Linkid from url")
-      }
-    }
-  }
+  // TODO This might be needed in the future
+//  private val splitSuravageLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
+//    apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")
+//      .parameters(
+//        pathParam[Long]("linkID").description("LinkId of a projectLink")
+//      )
+//      tags "ViiteAPI - Project - SuravageSplit"
+//      summary "This effectively perform the split and save the results on the database."
+//      notes ""
+//    )
+//
+//  put("/project/split/:linkID", operation(splitSuravageLinkByLinkId)) {
+//    val linkID = params.get("linkID")
+//    time(logger, s"PUT request for /project/split/$linkID") {
+//      val user = userProvider.getCurrentUser()
+//      linkID.map(_.toLong) match {
+//        case Some(link) =>
+//          try {
+//            val options = parsedBody.extract[SplitOptions]
+//            val splitError = projectService.splitSuravageLink(options.trackCode.value, options.projectId, options.coordinates, link, user.username, options)
+//            val projectErrors = projectService.validateProjectById(options.projectId).map(errorPartsToApi)
+//            Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull, "projectErrors" -> projectErrors)
+//          } catch {
+//            case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
+//            case _: NumberFormatException => BadRequest("Missing mandatory data")
+//          }
+//        case _ => BadRequest("Missing Linkid from url")
+//      }
+//    }
+//  }
 
   private val getRoadNamesByRoadNumberAndProjectId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getRoadNamesByRoadNumberAndProjectId")
@@ -973,37 +974,38 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val revertSplit: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("revertSplit")
-      .parameters(
-        bodyParam[RevertSplitExtractor]("revertSplit").description("Data that identifies what split we need to revert. \r\n" +
-          "Object structure: \r\n" + revertSplitExtractor)
-      )
-      tags "ViiteAPI - Project - SuravageSplit"
-      summary "This effectively reverts the split operation and save the results on the database."
-      notes ""
-    )
-
-  delete("/project/split", operation(revertSplit)) {
-    time(logger, "DELETE request for /project/split") {
-      val user = userProvider.getCurrentUser()
-      try {
-        val data = parsedBody.extract[RevertSplitExtractor]
-        val projectId = data.projectId
-        val linkId = data.linkId
-        val coordinates = data.coordinates
-        (projectId, linkId) match {
-          case (Some(project), Some(link)) =>
-            val error = projectService.revertSplit(project, link, user.username)
-            projectService.saveProjectCoordinates(project, coordinates)
-            Map("success" -> error.isEmpty, "message" -> error)
-          case _ => BadRequest("Missing mandatory 'projectId' or 'linkId' parameter from URI: /project/split/:projectId/:linkId")
-        }
-      } catch {
-        case _: NumberFormatException => BadRequest("'projectId' or 'linkId' parameter given could not be parsed as an integer number")
-      }
-    }
-  }
+  // TODO This might be needed in the future
+//  private val revertSplit: SwaggerSupportSyntax.OperationBuilder = (
+//    apiOperation[Map[String, Any]]("revertSplit")
+//      .parameters(
+//        bodyParam[RevertSplitExtractor]("revertSplit").description("Data that identifies what split we need to revert. \r\n" +
+//          "Object structure: \r\n" + revertSplitExtractor)
+//      )
+//      tags "ViiteAPI - Project - SuravageSplit"
+//      summary "This effectively reverts the split operation and save the results on the database."
+//      notes ""
+//    )
+//
+//  delete("/project/split", operation(revertSplit)) {
+//    time(logger, "DELETE request for /project/split") {
+//      val user = userProvider.getCurrentUser()
+//      try {
+//        val data = parsedBody.extract[RevertSplitExtractor]
+//        val projectId = data.projectId
+//        val linkId = data.linkId
+//        val coordinates = data.coordinates
+//        (projectId, linkId) match {
+//          case (Some(project), Some(link)) =>
+//            val error = projectService.revertSplit(project, link, user.username)
+//            projectService.saveProjectCoordinates(project, coordinates)
+//            Map("success" -> error.isEmpty, "message" -> error)
+//          case _ => BadRequest("Missing mandatory 'projectId' or 'linkId' parameter from URI: /project/split/:projectId/:linkId")
+//        }
+//      } catch {
+//        case _: NumberFormatException => BadRequest("'projectId' or 'linkId' parameter given could not be parsed as an integer number")
+//      }
+//    }
+//  }
 
   val getNodesByRoadAttributes = (
     apiOperation[Map[String, Any]]("getNodesByRoadAttributes")
@@ -1030,6 +1032,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       } else {
         BadRequest("Missing mandatory 'roadNumber' parameter.")
       }
+    }
+  }
+
+  get("/templates") {
+    time(logger, s"GET request for /templates"){
+      val authorizedElys = userProvider.getCurrentUser().getAuthorizedElys
+      nodesAndJunctionsService.getNodePointTemplates(authorizedElys.toSeq).map(nodePointTemplateToApi) ++
+      nodesAndJunctionsService.getJunctionTemplates(authorizedElys.toSeq).map(junctionTemplateToApi)
     }
   }
 
@@ -1069,13 +1079,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi)
       }
       case _ => time(logger, operationName = "nodes with junctions fetch") {
-        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi)
+        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi) ++
+          nodesAndJunctionsService.getNodeTemplatesByBoundingBox(boundingRectangle).map(nodePointTemplateToApi) ++
+          nodesAndJunctionsService.getJunctionTemplatesByBoundingBox(boundingRectangle).map(junctionPointTemplateToApi)
       }
     }
-  }
-
-  private def getNodeById(nodeId: Long): Option[Node] = {
-    nodesAndJunctionsService.getNodeById(nodeId)
   }
 
   private def getProjectLinks(projectId: Long, zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
@@ -1210,7 +1218,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def simpleNodeToApi(node: Node): Map[String, Any] = {
     Map("id" -> node.id,
       "nodeNumber" -> node.nodeNumber,
-      "nodeName" -> node.name,
+      "name" -> node.name,
       "coordX" -> node.coordinates.x,
       "coordY" -> node.coordinates.y,
       "type" -> node.nodeType.value,
@@ -1223,6 +1231,60 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     //TODO
     Map("id" -> nodePoint.id,
       "nodeId" -> nodePoint.nodeId)
+  }
+
+  def nodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
+    Map("nodePointTemplate" -> {
+      Map("id" -> nodePoint.id,
+        "nodeId" -> nodePoint.nodeId,
+        "beforeAfter" -> nodePoint.beforeAfter.value,
+        "roadwayPointId" -> nodePoint.roadwayPointId,
+        "startDate" -> formatDateTimeToString(Some(nodePoint.startDate)),
+        "endDate" -> formatDateTimeToString(nodePoint.endDate),
+        "validFrom" -> formatDateTimeToString(Some(nodePoint.validFrom)),
+        "validTo" -> formatDateTimeToString(nodePoint.validTo),
+        "createdBy" -> nodePoint.createdBy,
+        "roadwayNumber" -> nodePoint.roadwayNumber,
+        "addrM" -> nodePoint.addrM,
+        "elyCode" -> nodePoint.elyCode,
+        "roadNumber" -> nodePoint.roadNumber,
+        "roadPartNumber" -> nodePoint.roadPartNumber,
+        "track" -> nodePoint.track
+      )
+    }
+    )
+  }
+
+  def junctionTemplateToApi(junctionTemplate: JunctionTemplate) : Map[String, Any] = {
+    Map("junctionTemplate" -> {
+      Map(
+        "junctionId" -> junctionTemplate.junctionId,
+        "roadNumber" -> junctionTemplate.roadNumber,
+        "roadPartNumber" -> junctionTemplate.roadPartNumber,
+        "track" -> junctionTemplate.track,
+        "addrM" -> junctionTemplate.addrM,
+        "elyCode" -> junctionTemplate.elyCode
+      )
+    }
+    )
+  }
+
+  def junctionPointTemplateToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
+    Map("junctionPointTemplate" -> {
+      Map("id" -> junctionPoint.id,
+        "junctionId" -> junctionPoint.junctionId,
+        "beforeAfter" -> junctionPoint.beforeAfter.value,
+        "roadwayPointId" -> junctionPoint.roadwayPointId,
+        "startDate" -> formatDateTimeToString(Some(junctionPoint.startDate)),
+        "endDate" -> formatDateTimeToString(junctionPoint.endDate),
+        "validFrom" -> formatDateTimeToString(Some(junctionPoint.validFrom)),
+        "validTo" -> formatDateTimeToString(junctionPoint.validTo),
+        "createdBy" -> junctionPoint.createdBy,
+        "roadwayNumber" -> junctionPoint.roadwayNumber,
+        "addrM" -> junctionPoint.addrM
+      )
+    }
+    )
   }
 
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
@@ -1242,11 +1304,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def nodeToApi(node: (Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]))) : Map[String, Any] = {
 
-    Map("node" -> {
-      if(node._1.isDefined){simpleNodeToApi(node._1.get)} else ""
-    } ,
-      "nodePoints" -> node._2._1.map(nodePointToApi),
-      "junctions" -> node._2._2.map(junctionToApi))
+    (if(node._1.isDefined)
+      simpleNodeToApi(node._1.get)
+    else Map()) ++
+      Map("nodePoints" -> node._2._1.map(nodePointToApi)) ++ Map("junctions" -> node._2._2.map(junctionToApi))
   }
 
   def roadNameToApi(roadName: RoadName): Map[String, Any] = {
@@ -1495,7 +1556,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
      projectService
    }*/
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String, date_of_data: String)
   case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
 
 }

@@ -4,6 +4,7 @@ import java.io.{File, FilenameFilter, IOException}
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kmtk.{KMTKClient, KMTKRoadLink}
@@ -12,13 +13,13 @@ import fi.liikennevirasto.digiroad2.dao.LinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.{GetResult, PositionedResult}
 
-import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
@@ -77,9 +78,8 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     else Seq.empty[VVHRoadlink]
   }
 
-  // TODO UUID / Version
   def getMidPointByLinkId(kmtkId: KMTKID): Option[Point] = {
-    val roadLinkOption = kmtkClient.roadLinkData.fetchById(kmtkId).orElse(vvhClient.complementaryData.fetchByLinkId(kmtkId.uuid))
+    val roadLinkOption = if (kmtkId.isKMTK) kmtkClient.roadLinkData.fetchById(kmtkId) else vvhClient.complementaryData.fetchByLinkId(kmtkId.uuid)
     roadLinkOption.map {
       roadLink =>
         GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, roadLink.length / 2.0).getOrElse(Point(roadLink.geometry.head.x, roadLink.geometry.head.y))
@@ -114,16 +114,6 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     } else {
       Seq.empty[RoadLink]
     }
-  }
-
-  def getSuravageRoadLinksByLinkIdsFromVVH(linkIds: Set[Long]): Seq[RoadLink] = {
-    // TODO Remove
-    throw new NotImplementedError()
-  }
-
-  def getSuravageVVHRoadLinksByLinkIdsFromVVH(linkIds: Set[Long]): Seq[VVHRoadlink] = {
-    // TODO Remove
-    throw new NotImplementedError()
   }
 
   /**
@@ -488,14 +478,13 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
-  def getCurrentAndComplementaryRoadLinksFromVVH(municipality: Int, roadNumbers: Seq[(Int, Int)], frozenTimeVVHAPIServiceEnabled: Boolean = false): Seq[RoadLink] = {
+  def getCurrentAndComplementaryRoadLinksFromVVHByMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)], frozenTimeVVHAPIServiceEnabled: Boolean = false): Seq[RoadLink] = {
     val complementaryF = vvhClient.complementaryData.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers)
     val currentF = kmtkClient.roadLinkData.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers)
     val (compLinks, vvhRoadLinks) = Await.result(complementaryF.zip(currentF), atMost = Duration.create(1, TimeUnit.HOURS))
     enrichRoadLinksFromKMTK(vvhRoadLinks) ++ enrichRoadLinksFromVVH(compLinks)
   }
 
-  // TODO Rename (no suravage)
   def getCurrentAndComplementaryRoadLinks(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled: Boolean = false): Seq[RoadLink] = {
     val links = linkDAO.fetch(linkIds)
     val roadLinks = kmtkClient.roadLinkData.fetchByIds(links.map(_.kmtkId))

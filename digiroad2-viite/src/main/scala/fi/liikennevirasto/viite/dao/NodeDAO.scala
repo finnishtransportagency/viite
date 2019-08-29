@@ -1,16 +1,18 @@
 package fi.liikennevirasto.viite.dao
 
+import java.sql.Timestamp
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import fi.liikennevirasto.viite.NewIdValue
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import fi.liikennevirasto.viite._
 
 sealed trait NodeType {
   def value: Long
@@ -20,7 +22,7 @@ sealed trait NodeType {
 
 object NodeType {
   val values: Set[NodeType] = Set(NormalIntersection, Roundabout, YIntersection, Interchange, RoadBoundary, ELYBorder, MultitrackIntersection,
-                                  DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnkownNodeType)
+    DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnkownNodeType)
 
   def apply(intValue: Long): NodeType = {
     values.find(_.value == intValue).getOrElse(UnkownNodeType)
@@ -38,7 +40,7 @@ object NodeType {
     def displayValue = "Kiertoliittymä"
   }
 
-  case object YIntersection	 extends NodeType {
+  case object YIntersection extends NodeType {
     def value = 4
 
     def displayValue = "Y-liittymä"
@@ -101,7 +103,7 @@ object NodeType {
   case object PrivateRoad extends NodeType {
     def value = 16
 
-    def displayValue = "Yksityistie-tai katuliittymä"
+    def displayValue = "Yksityistie- tai katuliittymä"
   }
 
   case object StaggeredIntersection extends NodeType {
@@ -115,10 +117,11 @@ object NodeType {
 
     def displayValue = "Ei määritelty"
   }
+
 }
 
 case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: DateTime, endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
-                createdBy: Option[String], createdTime: Option[DateTime])
+                createdBy: Option[String], createdTime: Option[DateTime], editor: Option[String] = None, publishedTime: Option[DateTime] = None)
 
 case class RoadAttributes(roadNumber: Long, track: Long, roadPartNumber: Long, addrMValue: Long)
 
@@ -130,7 +133,8 @@ class NodeDAO extends BaseDAO {
     def apply(r: PositionedResult): Node = {
       val id = r.nextLong()
       val nodeNumber = r.nextLong()
-      val coordinates = OracleDatabase.loadRoadsJGeometryToGeometry(r.nextObjectOption())
+      val coordX = r.nextLong()
+      val coordY = r.nextLong()
       val name = r.nextStringOption()
       val nodeType = NodeType.apply(r.nextLong())
       val startDate = formatter.parseDateTime(r.nextDate.toString)
@@ -139,12 +143,14 @@ class NodeDAO extends BaseDAO {
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val createdBy = r.nextStringOption()
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val editor = r.nextStringOption()
+      val publishedTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 
-      Node(id, nodeNumber, coordinates.head, name, nodeType, startDate, endDate, validFrom, validTo, createdBy, createdTime)
+      Node(id, nodeNumber, Point(coordX, coordY), name, nodeType, startDate, endDate, validFrom, validTo, createdBy, createdTime, editor, publishedTime)
     }
   }
 
-  private def queryNodeList(query: String): List[Node] = {
+  private def queryList(query: String): List[Node] = {
     Q.queryNA[Node](query).list.groupBy(_.id).map {
       case (_, list) =>
         list.head
@@ -153,16 +159,18 @@ class NodeDAO extends BaseDAO {
 
   def fetchByNodeNumber(nodeNumber: Long): Option[Node] = {
     sql"""
-      SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-      from NODE
+      SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
+      from NODE N
+      CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
       where NODE_NUMBER = $nodeNumber and valid_to is null and end_date is null
       """.as[Node].firstOption
   }
 
   def fetchById(nodeId: Long): Option[Node] = {
     sql"""
-      SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-      from NODE
+      SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
+      from NODE N
+      CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
       where ID = $nodeId and valid_to is null and end_date is null
       """.as[Node].firstOption
   }
@@ -188,12 +196,13 @@ class NodeDAO extends BaseDAO {
       case (true, true) => s"AND rw.ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND rw.ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
       case (true, _) => s"AND rw.ROAD_PART_NUMBER = ${minRoadPartNumber.get}"
       case (_, true) => s"AND rw.ROAD_PART_NUMBER = ${maxRoadPartNumber.get}"
-      case _ =>""
+      case _ => ""
     }
 
-    val query = s"""
-      SELECT DISTINCT node.ID, node.NODE_NUMBER, coords.X, coords.Y, node.NAME, node."TYPE", node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
-                      node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M
+    val query =
+      s"""
+        SELECT DISTINCT node.ID, node.NODE_NUMBER, coords.X, coords.Y, node.NAME, node."TYPE", node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
+                        node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M
         FROM NODE node
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(node.COORDINATES)) coords
         LEFT JOIN NODE_POINT np ON node.ID = np.NODE_ID AND np.VALID_TO IS NULL AND np.END_DATE IS NULL
@@ -216,10 +225,43 @@ class NodeDAO extends BaseDAO {
       Option[String], Option[DateTime], Long, Long, Long, Long)](query).list.map {
 
       case (id, nodeNumber, x, y, name, nodeType, startDate, endDate, validFrom, validTo,
-            createdBy, createdTime, roadNumber, track, roadPartNumber, addrMValue) =>
+      createdBy, createdTime, roadNumber, track, roadPartNumber, addrMValue) =>
 
-        (Node(id, nodeNumber, Point(x, y), name, NodeType.apply(nodeType.getOrElse(NodeType.UnkownNodeType.value)), startDate, endDate, validFrom, validTo, createdBy, createdTime),
+        (Node(id, nodeNumber, Point(x, y), name, NodeType.apply(nodeType.getOrElse(NodeType.UnkownNodeType.value)), startDate, endDate, validFrom, validTo, createdBy, createdTime, None, None),
           RoadAttributes(roadNumber, track, roadPartNumber, addrMValue))
+    }
+  }
+
+  /**
+    * Search for Junctions that no longer have justification for the current network.
+    *
+    * @param ids : Iterable[Long] - The ids of the junctions to verify.
+    * @return
+    */
+  def fetchObsoleteById(ids: Iterable[Long]): Seq[Node] = {
+    // An Obsolete node are those that no longer have justification for the current network, and must be expired.
+    if (ids.isEmpty) {
+      Seq()
+    } else {
+      val query = s"""
+        SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
+        FROM NODE N
+        CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
+          WHERE ID IN (${ids.mkString(", ")})
+          AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER) FROM JUNCTION_POINT JP
+            LEFT JOIN JUNCTION J ON JP.JUNCTION_ID = J.ID
+            LEFT JOIN ROADWAY_POINT RP ON JP.ROADWAY_POINT_ID = RP.ID
+            LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
+            WHERE J.NODE_ID = N.ID AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL) < 2
+          AND ((SELECT COUNT(*) FROM NODE_POINT NP
+            WHERE NP.NODE_ID = N.ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL) > 1
+          AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER || '-' || RW.ROAD_PART_NUMBER || ',' || RW.ROAD_TYPE) FROM NODE_POINT NP
+            LEFT JOIN ROADWAY_POINT RP ON NP.ROADWAY_POINT_ID = RP.ID
+            LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
+            WHERE NP.NODE_ID = N.ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL) < 2)
+          AND VALID_TO IS NULL AND END_DATE IS NULL
+        """
+      queryList(query)
     }
   }
 
@@ -245,7 +287,7 @@ class NodeDAO extends BaseDAO {
         }
         ps.setLong(1, node.id)
         ps.setLong(2, nodeNumber)
-        ps.setObject(3, OracleDatabase.createPointJGeometry(node.coordinates))
+        ps.setObject(3, OracleDatabase.createRoadsJGeometry(Seq(node.coordinates), dynamicSession.conn, 0))
         if (node.name.isDefined) {
           ps.setString(4, node.name.get)
         } else {
@@ -265,17 +307,68 @@ class NodeDAO extends BaseDAO {
     createNodes.map(_.id).toSeq
   }
 
-  def fetchByBoundingBox(boundingRectangle: BoundingRectangle) : Seq[Node] = {
+  def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[Node] = {
     val extendedBoundingBoxRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(scalar = .15),
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(scalar = .15))
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingBoxRectangle, geometryColumn = "coordinates")
-    val query =
-      s"""
-         SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+    val query = s"""
+      SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
+      FROM NODE N
+      CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
+        WHERE $boundingBoxFilter
+        AND END_DATE IS NULL AND VALID_TO IS NULL
+    """
+    queryList(query)
+  }
+
+  /**
+    * Expires nodes (set their valid_to to the current system date).
+    *
+    * @param ids : Iterable[Long] - The ids of the nodes to expire.
+    * @return
+    */
+  def expireById(ids: Iterable[Long]): Int = {
+    if (ids.isEmpty)
+      0
+    else {
+      val query = s"""
+        UPDATE NODE SET valid_to = sysdate WHERE valid_to IS NULL AND id IN (${ids.mkString(", ")})
+      """
+      Q.updateNA(query).first
+    }
+  }
+
+  def fetchEmptyNodes(ids: Iterable[Long]): Seq[Node] = {
+    if (ids.isEmpty) {
+      Seq()
+    } else {
+      val query = s"""
+        SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
+        FROM NODE N
+        CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
+          WHERE END_DATE IS NULL AND VALID_TO IS NULL AND ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
+            SELECT NULL FROM JUNCTION J WHERE N.id = J.NODE_ID AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
+          ) AND NOT EXISTS (
+            SELECT NULL FROM NODE_POINT NP WHERE N.id = NP.NODE_ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL
+          )
+      """
+      queryList(query)
+    }
+  }
+
+  def fetchAllByDateRange(sinceDate: DateTime, untilDate: Option[DateTime]): Seq[Node] = {
+    time(logger, "Fetch nodes by date range") {
+      val untilString = if (untilDate.nonEmpty) s"AND PUBLISHED_TIME <= to_timestamp('${new Timestamp(untilDate.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
+      val query =
+        s"""
+         SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
          FROM NODE
-         WHERE $boundingBoxFilter
+         WHERE
+         PUBLISHED_TIME >= to_timestamp('${new Timestamp(sinceDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
+         $untilString AND PUBLISHED_TIME IS NOT NULL
          AND END_DATE IS NULL AND VALID_TO IS NULL
        """
-    queryNodeList(query)
+      queryList(query)
+    }
   }
 }

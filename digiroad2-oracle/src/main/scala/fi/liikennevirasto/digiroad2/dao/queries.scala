@@ -10,6 +10,8 @@ object Queries {
 
   def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
 
+  def nextJunctionNumber = sql"select viite_general_seq.nextval from dual"
+
   def nextRoadwayId = sql"select ROADWAY_SEQ.nextval from dual"
 
   def nextLinearLocationId = sql"select LINEAR_LOCATION_SEQ.nextval from dual"
@@ -31,8 +33,6 @@ object Queries {
   def nextNodeId = sql"select NODE_SEQ.nextval from dual"
 
   def nextNodeNumber = sql"select NODE_NUMBER_SEQ.nextval from dual"
-
-  def nextJunctionNumber = sql"select JUNCTION_NUMBER_SEQ.nextval from dual"
 
   def nextNodePointId = sql"select NODE_POINT_SEQ.nextval from dual"
 

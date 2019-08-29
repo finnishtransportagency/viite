@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
-import fi.liikennevirasto.viite.{ChangedRoadAddress, RoadAddressService}
+import fi.liikennevirasto.viite.{ChangedRoadAddress, NodesAndJunctionsService, RoadAddressService}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
@@ -12,7 +12,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import org.scalatra.swagger._
 
 
-class ChangeApi(roadAddressService: RoadAddressService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport  {
+class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService: NodesAndJunctionsService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport  {
   val logger: Logger = LoggerFactory.getLogger(getClass)
   val DateTimePropertyFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 

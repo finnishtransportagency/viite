@@ -220,7 +220,6 @@ class VVHClient(vvhRestApiEndPoint: String) {
   lazy val roadLinkData: VVHRoadLinkClient = new VVHRoadLinkClient(vvhRestApiEndPoint)
   lazy val frozenTimeRoadLinkData: VVHRoadLinkClient = new VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint)
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
-  lazy val suravageData: VVHSuravageClient = new VVHSuravageClient(vvhRestApiEndPoint)
 
   def fetchRoadLinkByLinkId(linkId: String): Option[VVHRoadlink] = {
     roadLinkData.fetchByLinkId(linkId) match {
@@ -872,33 +871,5 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
         case ioe: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
       }
     }
-  }
-}
-
-class VVHSuravageClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
-
-  protected override val restApiEndPoint: String = vvhRestApiEndPoint
-  protected override val serviceName = "Roadlink_suravage"
-  protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.SuravageLinkInterface
-  protected override val disableGeometry = false
-
-  override def defaultOutFields(): String = {
-    "LINKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SUBTYPE,CONSTRUCTIONTYPE,GEOMETRYLENGTH,TRACK_CODE"
-  }
-
-  def fetchSuravageByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, municipalities, None))
-  }
-
-  def fetchSuravageByLinkIdsF(linkIds: Set[String] = Set()): Future[Seq[VVHRoadlink]] = {
-    Future(fetchSuravageByLinkIds(linkIds))
-  }
-
-  def fetchSuravageByLinkIds(linkIds: Set[String] = Set()): Seq[VVHRoadlink] = {
-    queryByLinkIds(linkIds, None, fetchGeometry = true, extractRoadLinkFeature, withLinkIdFilter)
-  }
-
-  def fetchSuravageByMunicipality(municipality: Int): Future[Seq[VVHRoadlink]] = {
-    Future(queryByMunicipality(municipality))
   }
 }

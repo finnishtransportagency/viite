@@ -114,7 +114,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHComplementaryClient.fetchByMunicipalityAndRoadNumbersF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinksComp))
       when(mockKMTKRoadLinkClient.fetchByMunicipalityAndRoadNumbersF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinks))
 
-      val roadLinksList = service.getCurrentAndComplementaryRoadLinksFromVVH(235, Seq())
+      val roadLinksList = service.getCurrentAndComplementaryRoadLinksFromVVHByMunicipality(235, Seq())
 
       roadLinksList should have length (4)
       roadLinksList.filter(_.attributes.contains("SUBTYPE")) should have length(2)
