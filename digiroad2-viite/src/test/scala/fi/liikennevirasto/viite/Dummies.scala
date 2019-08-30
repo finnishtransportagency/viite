@@ -4,8 +4,8 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.kmtk.KMTKHistoryRoadLink
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, FeatureClass}
+import fi.liikennevirasto.digiroad2.client.kmtk.{ChangeInfo, ChangeType, KMTKHistoryRoadLink}
+import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous

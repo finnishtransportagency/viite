@@ -2,8 +2,8 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
+import fi.liikennevirasto.digiroad2.client.kmtk.{ChangeInfo, ChangeType}
+import fi.liikennevirasto.digiroad2.client.kmtk.ChangeType._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.viite.dao.LinearLocation
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet

@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.kmtk.{KMTKClient, KMTKRoadLink}
+import fi.liikennevirasto.digiroad2.client.kmtk.{ChangeInfo, KMTKClient, KMTKRoadLink}
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.LinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}

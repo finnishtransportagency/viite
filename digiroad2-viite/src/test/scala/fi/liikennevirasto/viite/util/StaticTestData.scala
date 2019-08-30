@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.util.RoadLinkSerializer
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.kmtk.KMTKHistoryRoadLink
+import fi.liikennevirasto.digiroad2.client.kmtk.{ChangeInfo, KMTKHistoryRoadLink}
 import fi.liikennevirasto.digiroad2.client.vvh._
 import org.json4s.JsonAST.{JInt, JString}
 import org.json4s.jackson.Serialization.read

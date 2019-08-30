@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.kmtk.{KMTKChangeInfoClient, KMTKClient, KMTKRoadLink, KMTKRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.kmtk._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
