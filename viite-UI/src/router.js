@@ -26,8 +26,7 @@
         'roadAddressProject/:projectId': 'roadAddressProject',
         'historyLayer/:date': 'historyLayer',
         'work-list/floatingRoadAddress' : 'floatingAddressesList',
-        'work-list/roadAddressErrors' : 'roadAddressErrorsList',
-        'junction/junctionPoints' : 'junctionPoints',
+        'work-list/roadAddressErrors' : 'roadAddressErrorsList'
       },
 
       linkProperty: function (linkId) {
@@ -81,9 +80,6 @@
 
       roadAddressErrorsList: function () {
         eventbus.trigger('workList-errors:select', 'linkProperty', backend.getRoadAddressErrors());
-      },
-      junctionPoints: function () {
-        eventbus.trigger('junctionPointForm-junctionPoint:select', 'linkProperty');
       }
     });
 

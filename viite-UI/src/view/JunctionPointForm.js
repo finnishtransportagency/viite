@@ -1,5 +1,5 @@
 (function (root) {
-    root.JunctionPointForm = function (map, nodeCollection, backend) {
+    root.JunctionPointForm = function (backend) {
 
 
         var addSaveEvent = function () {
@@ -18,38 +18,28 @@
             });
         };
 
-        var addReturn = function () {
-            var returnButton = '<button id="return" class="btn btn-primary save btn-save-road-data" disabled>Palaa</button>';
+        var addReturn = function (junctionId) {
+            var returnButton = '<button id="return" class="btn btn-primary save btn-save-road-data">Palaa</button>';
             $('#feature-attributes').append(returnButton);
-
-
+            $('button#return').on('click', function (e) {
+                e.preventDefault();
+                eventbus.trigger('junctionEdit:selected', junctionId);
+                return false;
+            });
         };
-        var template = function () {
+        var template = function (junctionId, junctionNumber) {
             var rootElement = $('#feature-attributes');
             rootElement.empty();
             $('#feature-attributes').append('' +
                 '<p class="center">' + title() + ' </p>' +
                 '<div class="form form-horizontal form-dark">' +
                 '<div class="edit-control-group project-choice-group">' +
-                staticField('Solmunro:', '-') +
-                staticField('Liittymänumero:', '-') +
-                '<div class="form-group editable form-editable-roadAddressProject"> ' +
-                '<form  id="junctionPoint"  class="input-unit-combination form-group form-horizontal roadAddressProject">' +
-                '<div class="form-group">' +
-                addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('ETÄISYYS') +
-                addSmallLabel('E/J') + addSmallLabel('LOPPUPVM') + addSmallLabel('ALKUPVM') +
-                '</div>' +
-                '<div class="form-group">' +
-                addSmallInputNumber('tie', '', 5) + addSmallInputNumber('aosa', '', 3) + addSmallInputNumber('losa', '', 3) + //addReserveButton() +
-                addSmallInputNumber('E/J', '', 2) + addSmallInputNumber('loppupvm', '', 12) + addSmallInputNumber('alkupvm', '', 12) +
-                '</div>' +
-                '</form>' +
-                '</div>' +
+                staticField('Solmunro:', junctionId) +
+                staticField('Liittymänumero:', junctionNumber) +
                 '</div>' +
                 '<div id="junctions-content">' +
                 '</div>' +
                 '<footer>' + '</footer>');
-
         };
         var title = function () {
             return '<span class="header-orange">Liittymäkohtien tiedot:</span>';
@@ -57,10 +47,15 @@
         var addSmallLabel = function (label) {
             return '<label class="junction-control-label-small">' + label + '</label>';
         };
-        var addSmallInputNumber = function (id, value, maxLength) {
-            //Validate only number characters on "onkeypress" including TAB and backspace
+        var addDisabledSmallInputNumber = function (id, value, maxLength) {
             var smallNumberImput = '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-                '" class="form-junction small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '"' +
+                '" class="form-control junction-disabled-small-input" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '"' +
+                (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick="" disabled/>';
+            return smallNumberImput;
+        };
+        var addSmallInputNumber = function (id, value, maxLength) {
+            var smallNumberImput = '<input type="text"  onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
+                '" class="form-control junction-small-input" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '"' +
                 (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
             return smallNumberImput;
         };
@@ -72,48 +67,44 @@
             return field;
         };
         var bindEvents = function () {
-            eventbus.on('junctionPointForm-junctionPoint:select', function (layerName) {
-                template();
-                getDataTemplates();
+            eventbus.on('junctionPointForm-junctionPoint:select', function (junctionId, junctionNumber) {
+                applicationModel.addSpinner();
+                template(junctionId, junctionNumber);
+                getDataTemplates(junctionId);
+                applicationModel.removeSpinner();
                 addSaveEvent();
-                addReturn();
+                addReturn(junctionId);
             });
         };
-        var getDataTemplates = function () {
-            backend.getTemplates(function (data) {
-                eventbus.trigger('templates:fetched', data);
-                var junctionTemplates = _.map(_.filter(data, function (junction) {
-                    return !_.isUndefined(junction.junctionTemplate);
-                }), function (template) {
-                    return template.junctionTemplate;
-                });
-                $('#unctions-content').html(junctionTemplatesHtml(junctionTemplates));
-                //applicationModel.removeSpinner();
+        var getDataTemplates = function (junctionId) {
+            backend.getJunctionPointsByJunctionId(junctionId, function (result) {
+                $('#junctions-content').html(junctionTemplatesHtml(result));
             });
         };
-        var junctionTemplateLink = function (junctionTemplate) {
-            return addSmallInputNumber('tie', '', 5) + addSmallInputNumber('aosa', '', 3) + addSmallInputNumber('losa', '', 3) + //addReserveButton() +
-                addSmallInputNumber('E/J', '', 2) + addSmallInputNumber('loppupvm', '', 12) + addSmallInputNumber('alkupvm', '', 12);
-
+        var junctionDataRow = function (junctionPoint) {
+            text = '<div class="form-group">' +
+                addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('ETÄISYYS') +
+                addSmallLabel('E/J') + addSmallLabel('LOPPUPVM') + addSmallLabel('ALKUPVM') +
+                '</div>' +
+                '<div class="form-group">' +
+                addDisabledSmallInputNumber('tie', junctionPoint.junctionPointTemplate.roadNumber, 5) + addDisabledSmallInputNumber('osa', junctionPoint.junctionPointTemplate.roadPartNumber, 3) + addSmallInputNumber('etaisyys', '', 5) + //addReserveButton() +
+                addDisabledSmallInputNumber('E/J', junctionPoint.junctionPointTemplate.beforeAfter, 2) + addDisabledSmallInputNumber('loppupvm', junctionPoint.junctionPointTemplate.endDate, 12) + addDisabledSmallInputNumber('alkupvm', junctionPoint.junctionPointTemplate.startDate, 12) +
+                '</div>';
+            return text;
         };
         var junctionTemplatesHtml = function (junctionPoints) {
-            var groups = _.groupBy(junctionPoints, function (template) {
-                return template.elyCode;
+            var dataRows = "";
+            _.each(junctionPoints, function (junctionPoint) {
+                dataRows += junctionDataRow(junctionPoint);
             });
             var text = "";
             text +=
-                addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('ETÄISYYS') +
-                addSmallLabel('E/J') + addSmallLabel('LOPPUPVM') + addSmallLabel('ALKUPVM');
-            // text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / OSA / AET)</label></br>';
-
-            _.each(junctionPoints, function (junctionPoint) {
-                text += junctionTemplateLink(junctionPoint) + '</br>';
-            });
-
+                '<div class="form-group editable form-editable-roadAddressProject"> ' +
+                '<form  id="junctionPoint"  class="input-unit-combination form-group form-horizontal roadAddressProject">' + dataRows +
+                '</form>' +
+                '</div>';
             return text;
         };
         bindEvents();
-
-
     };
 })(this);
