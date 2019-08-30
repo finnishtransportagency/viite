@@ -52,30 +52,26 @@
             '   style="font-size:14px;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;">\n' +
             '       </text>\n' +
             '       </svg>\n';
-        var template = function (junctionPointInfo) {
+        var template = function (junctionId) {
 
             var showJunctionTemplateEditForm = false;
-            if (!_.isUndefined(junctionPointInfo.junctionPointTemplateInfo)) {
-                junctionPointInfo = junctionPointInfo.junctionPointTemplateInfo;
-                showJunctionTemplateEditForm = true;
-
-            }
+            var startDate = '';
             return _.template('' +
                 '<header>' +
                 title() +
                 '</header>' +
                 '<div class="wrapper read-only">' +
                 addPicture(showJunctionTemplateEditForm) +
-                '<a id="junction-point-link" class="floating-stops" href="#junction/junctionPoints">Tarkastele liittymäkohtien tietoja</a>' +
+                '<a id="junction-point-link" class="floating-stops">Tarkastele liittymäkohtien tietoja</a>' +
                 '<div class="form form-horizontal form-dark">' +
                 '<div class="form-group-metadata">' +
-                '<p class="form-control-static asset-log-info-metadata">Alkupvm: ' + junctionPointInfo.startDate + '</p>' +
+                '<p class="form-control-static asset-log-info-metadata">Alkupvm: ' + startDate+ '</p>' +
                 '</div>' +
                 '<div class="form-group-metadata">' +
-                '<p class="form-control-static asset-log-info-metadata">Solmunro: ' + junctionPointInfo.junctionId + '</p>' +
+                '<p class="form-control-static asset-log-info-metadata">Solmunro: ' + junctionId + '</p>' +
                 '</div>' +
                 '<div class="form-group-metadata">' +
-                '<p class="form-control-static asset-log-info-metadata">Solmunimi: ' + "TODO" + '</p>' +
+                '<p class="form-control-static asset-log-info-metadata">Solmunimi: ' + '</p>' +
                 '</div>' +
                 '<div>' +
                 '<label class="control-label">Liittymänumero:</label>' + addSmallInputNumber('liittymanro', '', 5) +
@@ -91,14 +87,7 @@
             return '<span class="header-orange">Liittymän tiedot</span>';
         };
         var addPicture = function (showJunctionTemplateEditForm) {
-            //var s = new XMLSerializer().serializeToString(svg);
-            var encodedData = window.btoa(svgJunction);
-            var junctionMarkerStyle = new ol.style.Style({
-                image: new ol.style.Icon({
-                    src: 'data:image/svg+xml;base64,' + encodedData,
-                    scale: 0.75
-                })
-            });
+
             if (showJunctionTemplateEditForm) {
                 return svgJunctionTemplate;
             } else {
@@ -114,7 +103,7 @@
         var addSmallInputNumber = function (id, value, maxLength) {
             //Validate only number characters on "onkeypress" including TAB and backspace
             var smallNumberImput = '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-                '" class="form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '"' +
+                '" class="class="form-control junction-small-input" " id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '"' +
                 (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
             return smallNumberImput;
         };
@@ -123,16 +112,20 @@
         var bindEvents = function () {
             var rootElement = $('#feature-attributes');
 
-            eventbus.on('junctionEdit:selected', function (selected) {
-                toggleMode(selected);
+            eventbus.on('junctionEdit:selected', function (junctionId) {
+                toggleMode(junctionId);
             });
-            $('[id=junction-point-link]').click(function () {
-                eventbus.trigger('junctionEditForm-junctionPoints:select');
-                return false;
-            });
-            var toggleMode = function (selected) {
-                rootElement.html(template(selected));
-            }
+
+            var toggleMode = function (junctionId) {
+                rootElement.html(template(junctionId));
+                $('[id=junction-point-link]').click(function () {
+                    //eventbus.trigger('junctionEditForm-junctionPoints:select', selected);
+                    var junctionNumber= $('[id=liittymanro]').val();
+                    eventbus.trigger('junctionPointForm-junctionPoint:select',  junctionId, junctionNumber);
+                    return false;
+                });
+            };
+
         };
 
         bindEvents();
