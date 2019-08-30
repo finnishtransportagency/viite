@@ -623,8 +623,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           }
         if (calibrationPoint.isEmpty) {
           CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = username)
-        }
-        else{
+        } else {
           CalibrationPointDAO.updateRoadwayPoint(roadwayPointId, cal.linkId, startOrEnd = 0)
         }
     }
@@ -637,10 +636,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               roadwayPoint.id
             case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, username)
           }
-        if (calibrationPoint.isEmpty){
+        if (calibrationPoint.isEmpty) {
           CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 1, calType = CalibrationPointType.Mandatory, createdBy = username)
-        }
-        else{
+        } else {
           CalibrationPointDAO.updateRoadwayPoint(roadwayPointId, cal.linkId, startOrEnd = 1)
         }
     }
