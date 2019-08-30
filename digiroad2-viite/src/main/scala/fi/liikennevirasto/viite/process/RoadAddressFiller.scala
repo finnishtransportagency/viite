@@ -128,7 +128,7 @@ object RoadAddressFiller {
   /**
     * Drops all the linear locations with length less than ${MinAllowedRoadAddressLength}
     *
-    * @param roadLink  The vvh road link
+    * @param roadLink  The road link
     * @param segments  The linear location on the given road link
     * @param changeSet The resume of changes applied on all the adjust operations
     * @return

@@ -90,7 +90,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test getCurrentAndComplementaryRoadLinksFromVVH() When asking for info for a specific municipality Then return full municipality info, that includes both complementary and ordinary geometries") {
+  test("Test getCurrentAndComplementaryRoadLinksByMunicipality() When asking for info for a specific municipality Then return full municipality info, that includes both complementary and ordinary geometries") {
     val municipalityId = 235
     val linkId = Seq(1l, 2l)
     val kmtkId = KMTKID("") // TODO
@@ -114,7 +114,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHComplementaryClient.fetchByMunicipalityAndRoadNumbersF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinksComp))
       when(mockKMTKRoadLinkClient.fetchByMunicipalityAndRoadNumbersF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinks))
 
-      val roadLinksList = service.getCurrentAndComplementaryRoadLinksFromVVHByMunicipality(235, Seq())
+      val roadLinksList = service.getCurrentAndComplementaryRoadLinksByMunicipality(235, Seq())
 
       roadLinksList should have length (4)
       roadLinksList.filter(_.attributes.contains("SUBTYPE")) should have length(2)

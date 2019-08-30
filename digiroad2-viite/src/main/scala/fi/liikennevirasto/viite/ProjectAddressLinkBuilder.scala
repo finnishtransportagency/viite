@@ -27,7 +27,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
     ProjectAddressLink(pl.id, pl.linkId, pl.geometry,
       pl.geometryLength, fi.liikennevirasto.digiroad2.asset.Unknown, linkType, ConstructionType.UnknownConstructionType,
-      pl.linkGeomSource, pl.roadType, pl.roadName, pl.roadName, 0L, "", None, Some("vvh_modified"),
+      pl.linkGeomSource, pl.roadType, pl.roadName, pl.roadName, 0L, "", None, Some("kmtk_modified"),
       Map(), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value,
       pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, calibrationPoints._1,
       calibrationPoints._2, Anomaly.None, pl.status, pl.roadwayId, pl.linearLocationId,
@@ -82,7 +82,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
   def build(ral: RoadAddressLinkLike): ProjectAddressLink = {
     ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType,
-      ral.constructionType, ral.roadLinkSource, ral.roadType, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy,
+      ral.constructionType, ral.roadLinkSource, ral.roadType, ral.kmtkRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy,
       ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
       ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
       ral.anomaly, LinkStatus.Unknown, ral.id, ral.linearLocationId)
@@ -106,7 +106,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
     ProjectAddressLink(id, linkId, geom,
       length, roadLink.administrativeClass, linkType, roadLink.constructionType, roadLink.linkSource,
-      roadType, Some(roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString), roadName, municipalityCode, municipalityName, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      roadType, Some(roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString), roadName, municipalityCode, municipalityName, extractModifiedAtKMTK(roadLink.attributes), Some("kmtk_modified"),
       roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value,
       startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, status, roadwayId, linearLocationId,
       reversed, connectedLinkId, originalGeometry)

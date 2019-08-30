@@ -26,18 +26,18 @@ object Dummies {
   def dummyLinearLocationWithGeometry(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, geometry: Seq[Point] = Seq()): LinearLocation =
     dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface, 0, geometry)
 
-  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, vvhTimestamp: Long): LinearLocation =
-    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface, vvhTimestamp)
+  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, timestamp: Long): LinearLocation =
+    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface, timestamp)
 
   def dummyLinearLocation(roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double): LinearLocation =
     dummyLinearLocation(roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface)
 
   def dummyLinearLocation(roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, linkGeomSource: LinkGeomSource): LinearLocation = {
-    dummyLinearLocation(roadwayNumber + Math.round(orderNumber), roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface, vvhTimestamp = 0L)
+    dummyLinearLocation(roadwayNumber + Math.round(orderNumber), roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface, timestamp = 0L)
   }
 
-  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, linkGeomSource: LinkGeomSource, vvhTimestamp: Long = 0L, geometry: Seq[Point] = Seq()): LinearLocation = {
-    LinearLocation(id, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, vvhTimestamp, (None, None),
+  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, linkGeomSource: LinkGeomSource, timestamp: Long = 0L, geometry: Seq[Point] = Seq()): LinearLocation = {
+    LinearLocation(id, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, timestamp, (None, None),
       if (geometry.isEmpty) Seq(Point(0.0, startMValue), Point(0.0, endMValue)) else geometry, linkGeomSource, roadwayNumber)
   }
 
@@ -58,7 +58,7 @@ object Dummies {
       status, roadType, geometryLength = 0, roadwayId = 0, linearLocationId = 0, ely = 8, reversed = false, linkGeometryTimeStamp = 0, roadwayNumber = roadwayNumber)
   }
 
-  def dummyVvhHistoryRoadLink(linkId: Long, yCoordinates: Seq[Double]): KMTKHistoryRoadLink = {
+  def dummyHistoryRoadLink(linkId: Long, yCoordinates: Seq[Double]): KMTKHistoryRoadLink = {
     val municipalityCode = 0
     KMTKHistoryRoadLink(linkId, KMTKID("UUID", 1), municipalityCode, yCoordinates.map(y => Point(0.0, y)), Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, 0L, 0L, Map(), UnknownConstructionType, NormalLinkInterface, yCoordinates.sum)
   }
@@ -67,15 +67,15 @@ object Dummies {
     RoadLink(linkId, KMTKID("UUID", 1), yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownConstructionType, linkGeomSource)
   }
 
-  def dummyChangeInfo(changeType: ChangeType, oldId: Long, newId: Long, oldStartMeasure: Double, oldEndMeasure: Double, newStartMeasure: Double, newEndMeasure: Double, vvhTimeStamp: Long): ChangeInfo = {
-    ChangeInfo(Some(oldId), Some(newId), oldId + newId, changeType, Some(oldStartMeasure), Some(oldEndMeasure), Some(newStartMeasure), Some(newEndMeasure), vvhTimeStamp)
+  def dummyChangeInfo(changeType: ChangeType, oldId: Long, newId: Long, oldStartMeasure: Double, oldEndMeasure: Double, newStartMeasure: Double, newEndMeasure: Double, timeStamp: Long): ChangeInfo = {
+    ChangeInfo(Some(oldId), Some(newId), oldId + newId, changeType, Some(oldStartMeasure), Some(oldEndMeasure), Some(newStartMeasure), Some(newEndMeasure), timeStamp)
   }
 
-  def dummyNewChangeInfo(changeType: ChangeType, newId: Long, newStartMeasure: Double, newEndMeasure: Double, vvhTimeStamp: Long): ChangeInfo = {
-    ChangeInfo(None, Some(newId), newId, changeType, None, None, Some(newStartMeasure), Some(newEndMeasure), vvhTimeStamp)
+  def dummyNewChangeInfo(changeType: ChangeType, newId: Long, newStartMeasure: Double, newEndMeasure: Double, timeStamp: Long): ChangeInfo = {
+    ChangeInfo(None, Some(newId), newId, changeType, None, None, Some(newStartMeasure), Some(newEndMeasure), timeStamp)
   }
 
-  def dummyOldChangeInfo(changeType: ChangeType, oldId: Long, oldStartMeasure: Double, oldEndMeasure: Double, vvhTimeStamp: Long): ChangeInfo = {
-    ChangeInfo(Some(oldId), None, oldId, changeType, Some(oldStartMeasure), Some(oldEndMeasure), None, None, vvhTimeStamp)
+  def dummyOldChangeInfo(changeType: ChangeType, oldId: Long, oldStartMeasure: Double, oldEndMeasure: Double, timeStamp: Long): ChangeInfo = {
+    ChangeInfo(Some(oldId), None, oldId, changeType, Some(oldStartMeasure), Some(oldEndMeasure), None, None, timeStamp)
   }
 }

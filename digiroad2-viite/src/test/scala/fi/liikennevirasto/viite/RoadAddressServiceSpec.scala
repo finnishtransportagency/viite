@@ -149,7 +149,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
 
     //Road Link service mocks
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, Seq()))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[Int])).thenReturn((roadLinks, Seq()))
 
     val roads = roadAddressService.getAllByMunicipality(municipality = 100)
 
@@ -200,7 +200,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
 
     //Road Link service mocks
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, Seq()))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[Int])).thenReturn((roadLinks, Seq()))
 
     val now = DateTime.now
     roadAddressService.getAllByMunicipality(municipality = 100)
@@ -482,7 +482,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
 
 
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn(roadLinks)
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(99999)).thenReturn(roadLinks)
     val roadAddresses = roadAddressService.getAllByMunicipality(99999)
     roadAddresses.size should be (4)
   }

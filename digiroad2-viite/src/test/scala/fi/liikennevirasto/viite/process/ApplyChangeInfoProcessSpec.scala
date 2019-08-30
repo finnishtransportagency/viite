@@ -18,10 +18,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is lengthened at the start Then linear locations measure should be adjusted") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -30,8 +30,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     )
 
     val changes = Seq(
-      dummyChangeInfo(ChangeType.LengthenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 20.0, newStartMeasure = 5.0, newEndMeasure = 25.0, vvhTimeStamp = 1L),
-      dummyNewChangeInfo(ChangeType.LengthenedNewPart, newId = 123L, newStartMeasure = 0.0, newEndMeasure = 5.0, vvhTimeStamp = 1L)
+      dummyChangeInfo(ChangeType.LengthenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 20.0, newStartMeasure = 5.0, newEndMeasure = 25.0, timeStamp = 1L),
+      dummyNewChangeInfo(ChangeType.LengthenedNewPart, newId = 123L, newStartMeasure = 0.0, newEndMeasure = 5.0, timeStamp = 1L)
     )
 
     val (locations, changeSet): (Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
@@ -56,10 +56,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is lengthened at the end Then linear locations measure should be adjusted") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -68,8 +68,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     )
 
     val changes = Seq(
-      dummyChangeInfo(ChangeType.LengthenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 20.0, vvhTimeStamp = 1L),
-      dummyNewChangeInfo(ChangeType.LengthenedNewPart, newId = 123L, newStartMeasure = 20.0, newEndMeasure = 25.0, vvhTimeStamp = 1L)
+      dummyChangeInfo(ChangeType.LengthenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 20.0, timeStamp = 1L),
+      dummyNewChangeInfo(ChangeType.LengthenedNewPart, newId = 123L, newStartMeasure = 20.0, newEndMeasure = 25.0, timeStamp = 1L)
     )
 
     val (locations, changeSet): (Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
@@ -94,10 +94,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is divided in second linear location Then linear locations measure should be adjusted and also divided") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -107,8 +107,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     )
 
     val changes = Seq(
-      dummyChangeInfo(ChangeType.DividedModifiedPart, oldId = 123L, newId = 126L, oldStartMeasure = 0.0, oldEndMeasure = 12.0, newStartMeasure = 0.0, newEndMeasure = 12.0, vvhTimeStamp = 1L),
-      dummyChangeInfo(ChangeType.DividedNewPart, oldId = 123L, newId = 127L, oldStartMeasure = 12.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 8.0, vvhTimeStamp = 1L)
+      dummyChangeInfo(ChangeType.DividedModifiedPart, oldId = 123L, newId = 126L, oldStartMeasure = 0.0, oldEndMeasure = 12.0, newStartMeasure = 0.0, newEndMeasure = 12.0, timeStamp = 1L),
+      dummyChangeInfo(ChangeType.DividedNewPart, oldId = 123L, newId = 127L, oldStartMeasure = 12.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 8.0, timeStamp = 1L)
     )
 
     val (locations, changeSet): (Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
@@ -148,10 +148,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is divided in first linear location Then linear locations measure should be adjusted and also divided") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -161,8 +161,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     )
 
     val changes = Seq(
-      dummyChangeInfo(ChangeType.DividedModifiedPart, oldId = 123L, newId = 126L, oldStartMeasure = 0.0, oldEndMeasure = 8.0, newStartMeasure = 0.0, newEndMeasure = 8.0, vvhTimeStamp = 1L),
-      dummyChangeInfo(ChangeType.DividedNewPart, oldId = 123L, newId = 127L, oldStartMeasure = 8.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 12.0, vvhTimeStamp = 1L)
+      dummyChangeInfo(ChangeType.DividedModifiedPart, oldId = 123L, newId = 126L, oldStartMeasure = 0.0, oldEndMeasure = 8.0, newStartMeasure = 0.0, newEndMeasure = 8.0, timeStamp = 1L),
+      dummyChangeInfo(ChangeType.DividedNewPart, oldId = 123L, newId = 127L, oldStartMeasure = 8.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 12.0, timeStamp = 1L)
     )
 
     val (locations, changeSet): (Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
@@ -202,10 +202,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is combined Then linear locations measure should be adjusted and also combined") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -214,8 +214,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     )
 
     val changes = Seq(
-      dummyChangeInfo(ChangeType.CombinedModifiedPart, oldId = 124L, newId = 127L, oldStartMeasure = 0.0, oldEndMeasure = 10.0, newStartMeasure = 0.0, newEndMeasure = 10.0, vvhTimeStamp = 1L),
-      dummyChangeInfo(ChangeType.CombinedRemovedPart, oldId = 125L, newId = 127L, oldStartMeasure = 0.0, oldEndMeasure = 10.0, newStartMeasure = 10.0, newEndMeasure = 20.0, vvhTimeStamp = 1L)
+      dummyChangeInfo(ChangeType.CombinedModifiedPart, oldId = 124L, newId = 127L, oldStartMeasure = 0.0, oldEndMeasure = 10.0, newStartMeasure = 0.0, newEndMeasure = 10.0, timeStamp = 1L),
+      dummyChangeInfo(ChangeType.CombinedRemovedPart, oldId = 125L, newId = 127L, oldStartMeasure = 0.0, oldEndMeasure = 10.0, newStartMeasure = 10.0, newEndMeasure = 20.0, timeStamp = 1L)
     )
 
     val (locations, changeSet): (Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
@@ -248,10 +248,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is shortened at the start Then linear locations measure should be adjusted") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -260,8 +260,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     )
 
     val changes = Seq(
-      dummyChangeInfo(ChangeType.ShortenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 5.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 15.0, vvhTimeStamp = 1L),
-      dummyOldChangeInfo(ChangeType.ShortenedRemovedPart, oldId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 5.0, vvhTimeStamp = 1L)
+      dummyChangeInfo(ChangeType.ShortenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 5.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 15.0, timeStamp = 1L),
+      dummyOldChangeInfo(ChangeType.ShortenedRemovedPart, oldId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 5.0, timeStamp = 1L)
     )
 
     val (locations, changeSet): (Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
@@ -288,9 +288,9 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is shortened more than 10 meters Then linear locations should not be adjusted") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 30.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 30.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -299,8 +299,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     )
 
     val changes = Seq(
-      dummyChangeInfo(ChangeType.ShortenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 10.0, oldEndMeasure = 30.0, newStartMeasure = 0.0, newEndMeasure = 20.0, vvhTimeStamp = 1L),
-      dummyOldChangeInfo(ChangeType.ShortenedRemovedPart, oldId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 10.0, vvhTimeStamp = 1L)
+      dummyChangeInfo(ChangeType.ShortenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 10.0, oldEndMeasure = 30.0, newStartMeasure = 0.0, newEndMeasure = 20.0, timeStamp = 1L),
+      dummyOldChangeInfo(ChangeType.ShortenedRemovedPart, oldId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 10.0, timeStamp = 1L)
     )
 
     val (locations, changeSet): (Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
@@ -313,10 +313,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is shortened at the end Then linear locations measure should be adjusted") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -325,8 +325,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     )
 
     val changes = Seq(
-      dummyChangeInfo(ChangeType.ShortenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 15.0, newStartMeasure = 0.0, newEndMeasure = 15.0, vvhTimeStamp = 1L),
-      dummyOldChangeInfo(ChangeType.ShortenedRemovedPart, oldId = 123L, oldStartMeasure = 15.0, oldEndMeasure = 20.0, vvhTimeStamp = 1L)
+      dummyChangeInfo(ChangeType.ShortenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 15.0, newStartMeasure = 0.0, newEndMeasure = 15.0, timeStamp = 1L),
+      dummyOldChangeInfo(ChangeType.ShortenedRemovedPart, oldId = 123L, oldStartMeasure = 15.0, oldEndMeasure = 20.0, timeStamp = 1L)
     )
 
     val (locations, changeSet): (Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
@@ -352,10 +352,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link change is older Then any change should be applied") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 1L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, vvhTimestamp = 1L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 1L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 1L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 1L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 1L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 1L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 1L)
     )
 
     val roadLinks = Seq(
@@ -364,8 +364,8 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     )
 
     val changes = Seq(
-      dummyChangeInfo(ChangeType.LengthenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 20.0, vvhTimeStamp = 0L),
-      dummyNewChangeInfo(ChangeType.LengthenedNewPart, newId = 123L, newStartMeasure = 20.0, newEndMeasure = 25.0, vvhTimeStamp = 0L)
+      dummyChangeInfo(ChangeType.LengthenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 20.0, timeStamp = 0L),
+      dummyNewChangeInfo(ChangeType.LengthenedNewPart, newId = 123L, newStartMeasure = 20.0, newEndMeasure = 25.0, timeStamp = 0L)
     )
 
     val (locations, changeSet): (Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)
@@ -378,10 +378,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When there at least one new road link change not supported Then any change should be applied for that road link") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 1L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, vvhTimestamp = 1L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 1L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, vvhTimestamp = 1L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 1L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 1L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 1L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 1L)
     )
 
     val roadLinks = Seq(
@@ -390,9 +390,9 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
     )
 
     val changes = Seq(
-      dummyChangeInfo(ChangeType.LengthenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 20.0, vvhTimeStamp = 1L),
-      dummyNewChangeInfo(ChangeType.LengthenedNewPart, newId = 123L, newStartMeasure = 20.0, newEndMeasure = 25.0, vvhTimeStamp = 1L),
-      dummyNewChangeInfo(ChangeType.Removed, newId = 123L, newStartMeasure = 20.0, newEndMeasure = 25.0, vvhTimeStamp = 3L)
+      dummyChangeInfo(ChangeType.LengthenedCommonPart, oldId = 123L, newId = 123L, oldStartMeasure = 0.0, oldEndMeasure = 20.0, newStartMeasure = 0.0, newEndMeasure = 20.0, timeStamp = 1L),
+      dummyNewChangeInfo(ChangeType.LengthenedNewPart, newId = 123L, newStartMeasure = 20.0, newEndMeasure = 25.0, timeStamp = 1L),
+      dummyNewChangeInfo(ChangeType.Removed, newId = 123L, newStartMeasure = 20.0, newEndMeasure = 25.0, timeStamp = 3L)
     )
 
     val (locations, changeSet): (Seq[LinearLocation], ChangeSet) = ApplyChangeInfoProcess.applyChanges(linearLocations, roadLinks, changes)

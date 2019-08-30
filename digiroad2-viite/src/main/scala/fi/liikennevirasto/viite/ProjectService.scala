@@ -201,8 +201,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         Left("Link could not be found")
       }
       else {
-        val vvhLink = roadLinks.head
-        (vvhLink.attributes.get("ROADNUMBER"), vvhLink.attributes.get("ROADPARTNUMBER")) match {
+        val roadLink = roadLinks.head
+        (roadLink.attributes.get("ROADNUMBER"), roadLink.attributes.get("ROADPARTNUMBER")) match {
           case (Some(roadNumber: BigInt), Some(roadPartNumber: BigInt)) =>
             val preFilledRoadName =
               RoadNameDAO.getLatestRoadName(roadNumber.toLong) match {
@@ -747,7 +747,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   // TODO This might be needed again in the future
 //  /**
 //    * Main workhorse of the pre-split. This works by fetching the project and suravage links, with the suravage links we create a bounding box.
-//    * Using said bounding box we search for all project links that are inside of it, after we get the project links we get the vvh roadlinks related to them.
+//    * Using said bounding box we search for all project links that are inside of it, after we get the project links we get the roadlinks related to them.
 //    * Afterwards we filter the project links, the filtering criteria is that they must be adjacent to the suravage links then we rank template links near suravage link by how much they overlap with suravage geometry.
 //    * With the ranking in place we chose the best fit and using that we have our split but we do not save it in the DB.
 //    *
@@ -1054,7 +1054,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   /**
     * Main function responsible for fetching and building Project Road Links.
-    * First we fetch all kinds of road addresses, project links and vvh road links inside a bounding box.
+    * First we fetch all kinds of road addresses, project links and road links inside a bounding box.
     * After that we fetch the unaddressed links via bounding box as well.
     * With all the information we have now we start to call the various builders to get the information from multiple sources combined.
     * Once our road information is combined we pass it to the fillTopology in order for it to do some adjustments when needed and to finalize it we filter via the complementaryLinkFilter and evoke the final builder to get the result we need.
@@ -1085,12 +1085,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       addresses.groupBy(_.linkId)
     })
     val fetchProjectLinksF = fetch.projectLinkResultF
-    val fetchVVHStartTime = System.currentTimeMillis()
+    val fetchStartTime = System.currentTimeMillis()
 
     val (regularLinks, complementaryLinks) = awaitRoadLinks(fetch.roadLinkF, fetch.complementaryF)
 
-    val fetchVVHEndTime = System.currentTimeMillis()
-    logger.info("Fetch VVH road links completed in %d ms".format(fetchVVHEndTime - fetchVVHStartTime))
+    val fetchEndTime = System.currentTimeMillis()
+    logger.info("Fetch road links completed in %d ms".format(fetchEndTime - fetchStartTime))
 
     val fetchUnaddressedRoadLinkStartTime = System.currentTimeMillis()
     val (addresses, currentProjectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
@@ -1188,7 +1188,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                         everything: Boolean = false, publicRoads: Boolean = false): ProjectBoundingBoxResult = {
     ProjectBoundingBoxResult(
       Future(withDynSession(projectLinkDAO.fetchProjectLinks(projectId))),
-      Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)),
+      Future(roadLinkService.getRoadLinks(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)),
       Future(
         if (everything) roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
         else Seq())
@@ -1258,7 +1258,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * Last function on the chain, this is the one that will do all the work.
     * Firstly we isolate the unique link id's that were modified and we remove all the project links that have them them from the project.
-    * We use the same link ids we found and fetch the road addresses by combining VVH roadlink information and our roadway+linear location information on the builder.
+    * We use the same link ids we found and fetch the road addresses by combining roadlink information and our roadway+linear location information on the builder.
     * With the road address information we now check that a reservation is possible and reserve them in the project.
     * Afterwards we update the newly reserved project links with the original geometry we obtained previously
     * If we do still have road address information that do not match the original modified links then we check that a reservation is possible and reserve them in the project and we update those reserved links with the information on the road address.
@@ -1278,16 +1278,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                                 modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true): Unit = {
     val modifiedLinkIds = modified.map(_.linkId).toSet
     projectLinkDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
-    val vvhRoadLinks = roadLinkService.getCurrentAndComplementaryRoadLinks(modifiedLinkIds)
+    val roadLinks = roadLinkService.getCurrentAndComplementaryRoadLinks(modifiedLinkIds)
     val roadAddresses = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchRoadwayByLinkId(modifiedLinkIds))
     roadAddresses.foreach(ra =>
       modified.find(mod => mod.linkId == ra.linkId) match {
         case Some(mod) =>
           checkAndReserve(fetchProjectById(projectId).get, toReservedRoadPart(ra.roadNumber, ra.roadPartNumber, ra.ely))
           if (mod.geometry.nonEmpty) {
-            val vvhGeometry = vvhRoadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
-            if (vvhGeometry.nonEmpty) {
-              val geom = GeometryUtils.truncateGeometry3D(vvhGeometry.get.geometry, ra.startMValue, ra.endMValue)
+            val geometry = roadLinks.find(roadLink => roadLink.linkId == mod.linkId && roadLink.linkSource == ra.linkGeomSource)
+            if (geometry.nonEmpty) {
+              val geom = GeometryUtils.truncateGeometry3D(geometry.get.geometry, ra.startMValue, ra.endMValue)
               projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
             } else {
               projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)

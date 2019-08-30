@@ -24,7 +24,7 @@ import scala.concurrent.{Await, Future}
 
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
-case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
+case class ChangedRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
 
 /**
   * This class performs operations related to road links. It uses KMTKClient and VVHClient to get data from KMTK and VVH Rest API.
@@ -124,7 +124,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     * @param municipality
     * @return Road links
     */
-  def getCachedRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
+  def getCachedRoadLinksFromKMTK(municipality: Int): Seq[RoadLink] = {
     getCachedRoadLinksAndChanges(municipality)._1
   }
 
@@ -166,7 +166,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     getCachedRoadLinksAndChanges(municipality)
   }
 
-  def getRoadLinksWithComplementaryAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
+  def getRoadLinksWithComplementaryAndChanges(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     getCachedRoadLinksWithComplementaryAndChanges(municipality)
   }
 
@@ -182,7 +182,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
       Nil
   }
 
-  def getAllVisibleRoadLinksFromVVH(linkIds: Set[Long]): Seq[RoadLink] = {
+  def getAllVisibleRoadLinks(linkIds: Set[Long]): Seq[RoadLink] = {
     val links = linkDAO.fetch(linkIds)
     val fut = for {
       f1Result <- kmtkClient.roadLinkData.fetchByIdsF(links.map(_.kmtkId))
@@ -195,7 +195,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
   }
 
   /**
-    * Returns road links without change data from VVH by bounding box and road numbers and municipalities.
+    * Returns road links without change data by bounding box and road numbers and municipalities.
     */
   private def getRoadLinksFromKMTK(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)],
                                   municipalities: Set[Int] = Set(),
@@ -207,8 +207,8 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     enrichRoadLinksFromKMTK(links)
   }
 
-  def getRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int],
-                          everything: Boolean, publicRoads: Boolean): Seq[RoadLink] =
+  def getRoadLinks(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int],
+                   everything: Boolean, publicRoads: Boolean): Seq[RoadLink] =
     if (bounds.area >= 1E6)
       getRoadLinksFromKMTK(bounds, roadNumbers, municipalities, publicRoads)
     else
@@ -233,7 +233,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
   }
 
   /**
-    * This method performs formatting operations to given vvh road links:
+    * This method performs formatting operations to given road links:
     * - auto-generation of functional class and link type by feature class
     * - information transfer from old link to new link from change data
     * It also passes updated links and incomplete links to be saved to db by actor.
@@ -261,8 +261,8 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     val groupedLinks = kmtkRoadLinks.groupBy(_.kmtkId).mapValues(_.head)
 
     def autoGenerateProperties(roadLink: RoadLink): RoadLink = {
-      val vvhRoadLink = groupedLinks.get(roadLink.kmtkId)
-      vvhRoadLink.get.featureClass match {
+      val kmtkRoadLink = groupedLinks.get(roadLink.kmtkId)
+      kmtkRoadLink.get.featureClass match {
         case FeatureClass.TractorRoad => roadLink.copy(functionalClass = 7, linkType = TractorRoad)
         case FeatureClass.DrivePath => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway)
         case FeatureClass.CycleOrPedestrianPath => roadLink.copy(functionalClass = 8, linkType = CycleOrPedestrianPath)
@@ -406,7 +406,6 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     }
   }
 
-  //getRoadLinksFromVVHFuture expects to get only "normal" roadlinks from getCachedRoadLinksAndChanges  method.
   private def getCachedRoadLinksAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val (roadLinks, changes, _) = getCachedRoadLinks(municipalityCode)
     (roadLinks, changes)
@@ -480,7 +479,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
-  def getCurrentAndComplementaryRoadLinksFromVVHByMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)], frozenTimeVVHAPIServiceEnabled: Boolean = false): Seq[RoadLink] = {
+  def getCurrentAndComplementaryRoadLinksByMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[RoadLink] = {
     val complementaryF = vvhClient.complementaryData.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers)
     val currentF = kmtkClient.roadLinkData.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers)
     val (compLinks, vvhRoadLinks) = Await.result(complementaryF.zip(currentF), atMost = Duration.create(1, TimeUnit.HOURS))

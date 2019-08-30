@@ -10,11 +10,12 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite._
 import org.slf4j.LoggerFactory
 
+// TODO Make this work with KMTK
 object ApplyChangeInfoProcess {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private case class Projection(oldLinkId: Long, newLinkId: Long, oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long, orderIncrement: Int = 0) {
+  private case class Projection(oldLinkId: Long, newLinkId: Long, oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, timeStamp: Long, orderIncrement: Int = 0) {
     /**
       * Check if the given measure is equal the old start measure with {MaxAllowedMValueError} error margin allowed
       *
@@ -103,16 +104,16 @@ object ApplyChangeInfoProcess {
 
   private def projectLinearLocation(linearLocation: LinearLocation, projections: Seq[Projection], changeSet: ChangeSet, mappedRoadLinks: Map[Long, RoadLinkLike]): (Seq[LinearLocation], ChangeSet) = {
 
-    val applicableProjections = projections.filter(_.vvhTimeStamp > linearLocation.adjustedTimestamp).filter(_.intercepts(linearLocation))
+    val applicableProjections = projections.filter(_.timeStamp > linearLocation.adjustedTimestamp).filter(_.intercepts(linearLocation))
 
     applicableProjections match {
       case Seq() =>
         (Seq(linearLocation), changeSet)
       case _ =>
 
-        //Group te changes by created timestamp to support multiple days execution for the same road link identifier.
-        //VVH change api doesn't seems to support multiple changes for the same day in the same link id
-        val linearLocations = applicableProjections.groupBy(_.vvhTimeStamp).toSeq.sortBy(_._1).foldLeft(Seq(linearLocation)) {
+        // Group te changes by created timestamp to support multiple days execution for the same road link identifier.
+        // VVH change api doesn't seems to support multiple changes for the same day in the same link id
+        val linearLocations = applicableProjections.groupBy(_.timeStamp).toSeq.sortBy(_._1).foldLeft(Seq(linearLocation)) {
           case (adjustedLinearLocations, (_, groupedProjections)) =>
             val (news, existing) = adjustedLinearLocations.partition(_.id == NewIdValue)
             groupedProjections.flatMap {
@@ -164,7 +165,7 @@ object ApplyChangeInfoProcess {
     ).getOrElse(linearLocation.geometry)
 
     linearLocation.copy(
-      id = newId, linkId = projection.newLinkId, startMValue = newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, geometry = geometry, adjustedTimestamp = projection.vvhTimeStamp,
+      id = newId, linkId = projection.newLinkId, startMValue = newStartMeasure, endMValue = newEndMeasure, sideCode = newSideCode, geometry = geometry, adjustedTimestamp = projection.timeStamp,
       calibrationPoints = (newStartCalibrationPoint, newEndCalibrationPoint), orderNumber = linearLocation.orderNumber + (projection.orderIncrement.toDouble / decimalPlaces(linearLocation.orderNumber))
     )
   }
@@ -176,7 +177,7 @@ object ApplyChangeInfoProcess {
       false
     } else {
       val oldestLinearLocationTimestamp = changeLocations.map(_.adjustedTimestamp).min
-      change.vvhTimeStamp > oldestLinearLocationTimestamp
+      change.timeStamp > oldestLinearLocationTimestamp
     }
   }
 
@@ -187,20 +188,20 @@ object ApplyChangeInfoProcess {
   private def generateDividedProjections(dividedChanges: Seq[ChangeInfo]): Seq[Projection] = {
     //TODO we can also take alway the min date on the diveded changes and apply that one then the find floating will set those to floatings
     //VVH change api doesn't seems to support multiple changes for the same day in the same link id.
-    dividedChanges.groupBy(ch => ch.vvhTimeStamp).flatMap {
+    dividedChanges.groupBy(ch => ch.timeStamp).flatMap {
       case (_, groupedChanges) =>
         val orderIncrements = 0 to groupedChanges.size
         groupedChanges.sortBy(_.oldStartMeasure).zip(orderIncrements).flatMap {
           case (change, orderIncrement) =>
             logger.debug("Change info, oldId: " + change.oldId + " newId: " + change.newId + " changeType: " + change.changeType)
-            Some(Projection(change.oldId.get, change.newId.get, change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp, orderIncrement))
+            Some(Projection(change.oldId.get, change.newId.get, change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp, orderIncrement))
         }
     }.toSeq
   }
 
   private def generateLengthenedProjections(lengthenedChanges: Seq[ChangeInfo]): Seq[Projection] = {
     //VVH change api doesn't seems to support multiple changes for the same day in the same link id.
-    lengthenedChanges.groupBy(ch => ch.vvhTimeStamp).flatMap {
+    lengthenedChanges.groupBy(ch => ch.timeStamp).flatMap {
       case (_, groupedChanges) =>
         groupedChanges.find(_.changeType == ChangeType.LengthenedCommonPart).map {
           change =>
@@ -208,14 +209,14 @@ object ApplyChangeInfoProcess {
             val maxNewMeasure = groupedChanges.map(c => Math.max(c.newStartMeasure.get, c.newEndMeasure.get)).max
             val (newStartM, newEndM) = if (change.newStartMeasure.get > change.newEndMeasure.get) (maxNewMeasure, minNewMeasure) else (minNewMeasure, maxNewMeasure)
             logger.debug("Change info, oldId: " + change.oldId + " newId: " + change.newId + " changeType: " + change.changeType)
-            Projection(change.oldId.get, change.newId.get, change.oldStartMeasure.get, change.oldEndMeasure.get, newStartM, newEndM, change.vvhTimeStamp)
+            Projection(change.oldId.get, change.newId.get, change.oldStartMeasure.get, change.oldEndMeasure.get, newStartM, newEndM, change.timeStamp)
         }
     }.toSeq
   }
 
   private def generateShortenedProjections(shortenedChanges: Seq[ChangeInfo]): Seq[Projection] = {
     //VVH change api doesn't seems to support multiple changes for the same day in the same link id.
-    shortenedChanges.groupBy(ch => ch.vvhTimeStamp).flatMap {
+    shortenedChanges.groupBy(ch => ch.timeStamp).flatMap {
       case (_, groupedChanges) =>
         groupedChanges.find(_.changeType == ChangeType.ShortenedCommonPart).map {
           change =>
@@ -223,7 +224,7 @@ object ApplyChangeInfoProcess {
             val maxOldMeasure = groupedChanges.map(c => Math.max(c.oldStartMeasure.get, c.oldEndMeasure.get)).max
             val (oldStartM, oldEndM) = if (change.oldStartMeasure.get > change.oldEndMeasure.get) (maxOldMeasure, minOldMeasure) else (minOldMeasure, maxOldMeasure)
             logger.debug("Change info, oldId: " + change.oldId + " newId: " + change.newId + " changeType: " + change.changeType)
-            Projection(change.oldId.get, change.newId.get, oldStartM, oldEndM, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp)
+            Projection(change.oldId.get, change.newId.get, oldStartM, oldEndM, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp)
         }
     }.toSeq
   }
@@ -234,7 +235,7 @@ object ApplyChangeInfoProcess {
         change.changeType match {
           case CombinedModifiedPart | CombinedRemovedPart =>
             logger.debug("Change info, oldId: " + change.oldId + " newId: " + change.newId + " changeType: " + change.changeType)
-            Some(Projection(change.oldId.get, change.newId.get, change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp))
+            Some(Projection(change.oldId.get, change.newId.get, change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp))
           case _ =>
             logger.debug("Change info ignored, oldId: " + change.oldId + " newId: " + change.newId + " changeType: " + change.changeType)
             None

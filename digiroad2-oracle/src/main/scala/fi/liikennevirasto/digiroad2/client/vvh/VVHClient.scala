@@ -40,13 +40,13 @@ case class VVHRoadlink(linkId: Long, kmtkId: KMTKID, municipalityCode: Int, geom
 
 case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: ChangeType,
                       oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double],
-                      newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L) {
+                      newEndMeasure: Option[Double], timeStamp: Long = 0L) {
   def isOldId(id: Long): Boolean = {
     oldId.nonEmpty && oldId.get == id
   }
 
-  def affects(id: Long, assetVvhTimeStamp: Long): Boolean = {
-    isOldId(id) && assetVvhTimeStamp < vvhTimeStamp
+  def affects(id: Long, assetTimeStamp: Long): Boolean = {
+    isOldId(id) && assetTimeStamp < timeStamp
   }
 }
 

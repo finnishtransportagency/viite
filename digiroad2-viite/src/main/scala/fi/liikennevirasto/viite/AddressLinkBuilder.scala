@@ -84,7 +84,8 @@ trait AddressLinkBuilder {
     }
   }
 
-  protected def extractModifiedAtVVH(attributes: Map[String, Any]): Option[String] = {
+  // TODO Make this work with KMTK data
+  protected def extractModifiedAtKMTK(attributes: Map[String, Any]): Option[String] = {
     def toLong(anyValue: Option[Any]) = {
       anyValue.map(_.asInstanceOf[BigInt].toLong)
     }

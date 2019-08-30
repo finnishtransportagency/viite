@@ -129,9 +129,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
   )
 
-  val vvhHistoryRoadLinks = Seq(
-    dummyVvhHistoryRoadLink(linkId = 123L, Seq(0.0, 10.0, 20.0)),
-    dummyVvhHistoryRoadLink(linkId = 125L, Seq(0.0, 10.0))
+  val historyRoadLinks = Seq(
+    dummyHistoryRoadLink(linkId = 123L, Seq(0.0, 10.0, 20.0)),
+    dummyHistoryRoadLink(linkId = 125L, Seq(0.0, 10.0))
   )
 
   val roadLinks = Seq(
@@ -161,7 +161,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
     ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType,
-      ral.constructionType, ral.roadLinkSource, ral.roadType, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy,
+      ral.constructionType, ral.roadLinkSource, ral.roadType, ral.kmtkRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy,
       ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
       ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
       ral.anomaly, LinkStatus.Unknown, ral.id, ral.linearLocationId)
@@ -231,7 +231,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   private def mockForProject[T <: PolyLine](id: Long, l: Seq[T] = Seq()) = {
     val roadLink = RoadLink(1, KMTKID(uuid, 1), Seq(Point(535602.222, 6982200.25, 89.9999), Point(535605.272, 6982204.22, 85.90899999999965))
-      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("kmtk_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     val (projectLinks, palinks) = l.partition(_.isInstanceOf[ProjectLink])
     val dbLinks = projectLinkDAO.fetchProjectLinks(id)
@@ -293,7 +293,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test createRoadLinkProject When creating road link project without valid roadParts Then return project without the invalid parts") {
     val roadlink = RoadLink(5175306, KMTKID(uuid, 1), Seq(Point(535605.272, 6982204.22, 85.90899999999965))
-      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("kmtk_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     when(mockRoadLinkService.getRoadLinksAndComplementaryByLinkIds(Set(5175306L))).thenReturn(Seq(roadlink))
     runWithRollback {
@@ -348,7 +348,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       reset(mockRoadLinkService)
       val roadlink = RoadLink(12345L, KMTKID(uuid, 1), Seq(Point(535605.272, 6982204.22, 85.90899999999965))
-        , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+        , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("kmtk_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
         InUse, NormalLinkInterface)
       val countCurrentProjects = projectService.getAllProjects
       val addresses: List[ProjectReservedPart] = List(ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
@@ -436,7 +436,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val roadStartPart = 1
     val roadEndPart = 2
     val roadLink = RoadLink(12345L, KMTKID(uuid, 1), Seq(Point(535605.272, 6982204.22, 85.90899999999965))
-      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("kmtk_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     when(mockRoadLinkService.getRoadLinksAndComplementaryByLinkIds(any[Set[Long]])).thenReturn(Seq(roadLink))
     runWithRollback {
@@ -451,7 +451,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val roadEndPart = 2
     val roadwayNumber = 8000
     val roadLink = RoadLink(12345L, KMTKID(uuid, 1), Seq(Point(535605.272, 6982204.22, 85.90899999999965))
-      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("kmtk_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     when(mockRoadLinkService.getRoadLinksAndComplementaryByLinkIds(any[Set[Long]])).thenReturn(Seq(roadLink))
     runWithRollback {
@@ -727,7 +727,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val calibrationPoints = projectLink.toCalibrationPoints
       val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geometry,
-        1, AdministrativeClass.apply(1), LinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, "Heinola", Some(""), Some("vvh_modified"),
+        1, AdministrativeClass.apply(1), LinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, "Heinola", Some(""), Some("kmtk_modified"),
         Map(), projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,
         projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
         projectLink.sideCode,
@@ -753,8 +753,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test projectService.parsePreFillData When supplied a empty sequence of VVHRoadLinks Then return a error message.") {
-    projectService.parsePreFillData(Seq.empty[RoadLink]) should be(Left("Link could not be found in VVH"))
+  test("Test projectService.parsePreFillData When supplied a empty sequence of RoadLinks Then return a error message.") {
+    projectService.parsePreFillData(Seq.empty[RoadLink]) should be(Left("Link could not be found"))
   }
 
   test("Test projectService.parsePreFillData When supplied a sequence of one valid RoadLink Then return the correct pre-fill data for that link.") {
@@ -763,7 +763,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test projectService.parsePreFillData When supplied a sequence of one valid VVHRoadLink Then return the correct pre-fill data for that link and it's correct name.") {
+  test("Test projectService.parsePreFillData When supplied a sequence of one valid RoadLink Then return the correct pre-fill data for that link and it's correct name.") {
     runWithRollback {
       sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.nextval, 100, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
       projectService.parsePreFillData(Seq(newRoadLink1)) should be(Right(PreFillInfo(100, 100, "road name test", RoadNameSource.RoadAddressSource)))
@@ -803,7 +803,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test projectService.parsePreFillData When supplied a sequence of one incomplete VVHRoadLink Then return an error message indicating that the information is incomplete.") {
+  test("Test projectService.parsePreFillData When supplied a sequence of one incomplete RoadLink Then return an error message indicating that the information is incomplete.") {
     val attributes1 = Map("ROADNUMBER" -> BigInt(2))
     val newRoadLink2 = newRoadLink1.copy(attributes = attributes1)
     projectService.parsePreFillData(Seq(newRoadLink2)) should be(Left("Link does not contain valid prefill info"))
@@ -1614,7 +1614,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
 
       val roadLink = RoadLink(5170939L, KMTKID(uuid, 1), Seq(Point(535605.272, 6982204.22, 85.90899999999965))
-      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("kmtk_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
 
       val projectId = Sequences.nextProjectId
@@ -1675,7 +1675,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val roadNumber = 5L
     val part = 207L
     val roadLink = RoadLink(5170939L, KMTKID(uuid, 1), Seq(Point(535605.272, 6982204.22, 85.90899999999965)), 540.3960283713503, State,
-      99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"),
+      99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("kmtk_modified"),
       Map("MUNICIPALITYCODE" -> BigInt.apply(749)), InUse, NormalLinkInterface)
     runWithRollback {
       val countCurrentProjects = projectService.getAllProjects
@@ -1873,7 +1873,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test getProjectLinks When doing some operations (Unchanged with termination test, repeats termination update), Then the calibration points are cleared and moved to correct positions") {
     var count = 0
     val roadLink = RoadLink(5170939L, KMTKID(uuid, 1), Seq(Point(535605.272, 6982204.22, 85.90899999999965))
-      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("kmtk_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
     runWithRollback {
       val countCurrentProjects = projectService.getAllProjects
@@ -1925,7 +1925,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test getProjectLinks When doing some operations (Transfer and then Terminate), Then the calibration points are cleared and moved to correct positions") {
       var count = 0
       val roadLink = RoadLink(5170939L, KMTKID(uuid, 1), Seq(Point(535605.272, 6982204.22, 85.90899999999965))
-        , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+        , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("kmtk_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
         InUse, NormalLinkInterface)
       runWithRollback {
         val countCurrentProjects = projectService.getAllProjects
@@ -1986,7 +1986,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test getProjectLinks When doing some operations (Terminate then transfer), Then the calibration points are cleared and moved to correct positions") {
       var count = 0
       val roadLink = RoadLink(5170939L, KMTKID(uuid, 1), Seq(Point(535605.272, 6982204.22, 85.90899999999965))
-        , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+        , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("kmtk_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
         InUse, NormalLinkInterface)
       runWithRollback {
         val countCurrentProjects = projectService.getAllProjects
@@ -2044,7 +2044,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   }
 
-  test("Test revertLinks When reverting the road Then the road address geometry after reverting should be the same as VVH") {
+  test("Test revertLinks When reverting the road Then the road address geometry after reverting should be the same as in KMTK") {
     val projectId = 0L
     val user = "TestUser"
     val (roadNumber, roadPartNumber) = (26020L, 12L)

@@ -27,7 +27,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     val (shortened, others) = rest.partition(ci => ci.changeType.value == ShortenedRemovedPart.value ||
       ci.changeType.value == ShortenedCommonPart.value)
     others ++
-      lengthened.groupBy(ci => (ci.newId, ci.vvhTimeStamp)).mapValues { s =>
+      lengthened.groupBy(ci => (ci.newId, ci.timeStamp)).mapValues { s =>
         val common = s.find(_.changeType.value == LengthenedCommonPart.value)
         val added = s.find(st => st.changeType.value == LengthenedNewPart.value)
         (common, added) match {
@@ -40,7 +40,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
           case _ => None
         }
       }.values.flatten.toSeq ++
-      shortened.groupBy(ci => (ci.oldId, ci.vvhTimeStamp)).mapValues { s =>
+      shortened.groupBy(ci => (ci.oldId, ci.timeStamp)).mapValues { s =>
         val common = s.find(_.changeType.value == ShortenedCommonPart.value)
         val toRemove = s.filter(_.changeType.value == ShortenedRemovedPart.value)
         val fusedRemove = if (toRemove.lengthCompare(0) > 0) {

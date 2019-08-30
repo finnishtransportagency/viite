@@ -111,7 +111,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Returns all road address links (combination between our roadway, linear location and vvh information) based on the limits imposed by the boundingRectangle and the roadNumberLimits.
+    * Returns all road address links (combination between our roadway, linear location and KMTK information) based on the limits imposed by the boundingRectangle and the roadNumberLimits.
     *
     * @param boundingRectangle : BoundingRectangle - The search box
     * @param roadNumberLimits  : Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
@@ -152,7 +152,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road addresses in the given bounding box, without VVH geometry. Also floating road addresses are filtered out.
+    * Gets all the road addresses in the given bounding box, without geometry. Also floating road addresses are filtered out.
     * Indicated to high zoom levels. If the road number limits are given it will also filter all road addresses by those limits.
     *
     * @param boundingRectangle The bounding box
@@ -186,7 +186,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @return Returns all the filtered road addresses
     */
   def getAllByMunicipality(municipality: Int): Seq[RoadAddressLink] = {
-    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChanges(municipality)
 
     val linearLocations = withDynTransaction {
       time(logger, "Fetch addresses") {
@@ -496,7 +496,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     */
   def getRoadAddressLink(linkId: Long): Seq[RoadAddressLink] = {
 
-    val roadlinks = roadLinkService.getAllVisibleRoadLinksFromVVH(Set(linkId))
+    val roadlinks = roadLinkService.getAllVisibleRoadLinks(Set(linkId))
 
     val roadAddresses = withDynSession {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))

@@ -423,7 +423,7 @@ object GeometryUtils {
     overlapAmount(firstPoint, lastPoint) >= 0.95
   }
 
-  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
+  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, timeStamp: Long)
 
   def scaleToThreeDigits(value: Double): Double = {
     BigDecimal(value).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble

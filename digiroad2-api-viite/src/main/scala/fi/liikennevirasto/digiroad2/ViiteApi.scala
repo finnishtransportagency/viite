@@ -227,10 +227,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinks/project/prefillfromvvh") {
+  get("/roadlinks/project/prefill") {
     val linkId = params("linkId").toLong
     val currentProjectId = params("currentProjectId").toLong
-    time(logger, s"GET request for /roadlinks/project/prefillfromvvh (linkId: $linkId, projectId: $currentProjectId)") {
+    time(logger, s"GET request for /roadlinks/project/prefill (linkId: $linkId, projectId: $currentProjectId)") {
       projectService.fetchPreFill(linkId, currentProjectId) match {
         case Right(preFillInfo) =>
           Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.RoadPart, "roadName" -> preFillInfo.roadName, "roadNameSource" -> preFillInfo.roadNameSource.value)

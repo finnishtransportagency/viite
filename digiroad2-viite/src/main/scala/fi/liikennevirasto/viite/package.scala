@@ -155,13 +155,13 @@ package object viite {
     "                                                                                                         " +
     "Returns no road addresses to draw                                                                        " +
     "                                   |\n|         6        |         8         | DrawLinearPublicRoads |   " +
-    "                          Gets all the road addresses in the given bounding box, without VVH geometry.  " +
+    "                          Gets all the road addresses in the given bounding box, without geometry.  " +
     "Also floating road addresses are filtered out.  Will return road numbers from 10000 to 19999 and 40000 to 49999." +
     "                             |\n|         9        |         10        |    DrawPublicRoads    |  " +
-    "Returns all road address links (combination between our roadway, linear location and vvh information) based on the " +
+    "Returns all road address links (combination between our roadway, linear location and KMTK information) based on the " +
     "limits imposed by the boundingRectangle and the roadNumberLimits. Will return road numbers from 10000 to 19999 and 40000 to 49999. |\n|" +
     "        11        |        16+        |      DrawAllRoads     |                                               " +
-    "Returns all road address links (combination between our roadway, linear location and vvh information) based on the limits imposed by the boundingRectangle." +
+    "Returns all road address links (combination between our roadway, linear location and KMTK information) based on the limits imposed by the boundingRectangle." +
     "                                              |"
 
   val roadNameRowStructure = "" +

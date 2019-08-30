@@ -218,7 +218,7 @@ package object util {
 
   def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
     ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType,
-      ral.constructionType, ral.roadLinkSource, ral.roadType, ral.VVHRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy,
+      ral.constructionType, ral.roadLinkSource, ral.roadType, ral.kmtkRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy,
       ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
       ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
       ral.anomaly, LinkStatus.Unknown, ral.id, ral.linearLocationId)
@@ -231,7 +231,7 @@ package object util {
       rl.sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPoints((rl.startCalibrationPoint, rl.endCalibrationPoint), rl.roadwayId), rl.geometry, project.id,
       LinkStatus.NotHandled, RoadType.PublicRoad,
       rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == LinkStatus.New) 0 else rl.id, if (rl.status == LinkStatus.New) 0 else rl.linearLocationId,  rl.elyCode, reversed = false,
-      None, rl.vvhTimeStamp)
+      None, rl.timeStamp)
   }
 
   def addressToProjectLink(project: Project)(rl: ProjectAddressLink): ProjectLink = {
@@ -241,7 +241,7 @@ package object util {
       rl.sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPoints((rl.startCalibrationPoint, rl.endCalibrationPoint), rl.roadwayId), rl.geometry, project.id,
       rl.status, RoadType.PublicRoad,
       rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), 0, 0, rl.elyCode, reversed = false,
-      None, rl.vvhTimeStamp)
+      None, rl.timeStamp)
   }
 
 }

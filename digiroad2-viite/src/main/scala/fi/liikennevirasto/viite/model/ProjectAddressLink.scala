@@ -46,7 +46,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
 case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                               length: Double, administrativeClass: AdministrativeClass,
                               linkType: LinkType, constructionType: ConstructionType,
-                              roadLinkSource: LinkGeomSource, roadType: RoadType, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String],
+                              roadLinkSource: LinkGeomSource, roadType: RoadType, kmtkRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String],
                               attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                               startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                               startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
@@ -56,13 +56,13 @@ case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
     if (roadNumber > 0)
       s"$roadNumber/$roadPartNumber/$trackCode"
     else
-      VVHRoadName.getOrElse("")
+      kmtkRoadName.getOrElse("")
   }
 
   override def isSplit: Boolean = {
     connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
   }
 
-  val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+  val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 
 }

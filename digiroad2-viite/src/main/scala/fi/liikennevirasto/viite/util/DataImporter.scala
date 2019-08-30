@@ -197,10 +197,10 @@ class DataImporter {
       case (min, max) =>
         withDynTransaction {
         val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
-        val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinks(linkIds)
-        val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet)
+        val roadLinks = linkService.getCurrentAndComplementaryRoadLinks(linkIds)
+        val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet)
         val topologyLocation = unGroupedTopology.groupBy(_.linkId)
-        roadLinksFromVVH.foreach(roadLink => {
+        roadLinks.foreach(roadLink => {
           val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
           segmentsOnViiteDatabase.foreach(segment => {
             val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
