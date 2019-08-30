@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
-import fi.liikennevirasto.digiroad2.util.{Track, VVHSerializer}
+import fi.liikennevirasto.digiroad2.util.{Track, RoadLinkSerializer}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
@@ -16,7 +16,7 @@ import org.json4s.jackson.Serialization.{read, write}
 import org.json4s._
 import org.slf4j.LoggerFactory
 
-class JsonSerializer extends VVHSerializer {
+class JsonSerializer extends RoadLinkSerializer {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +

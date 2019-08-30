@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.VVHSerializer
+import fi.liikennevirasto.digiroad2.util.RoadLinkSerializer
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, Point}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -24,12 +24,12 @@ import scala.concurrent.{Await, Future, Promise}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  class TestService(vvhClient: VVHClient, kmtkClient: KMTKClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) extends RoadLinkService(vvhClient, kmtkClient, eventBus, vvhSerializer) {
+  class TestService(vvhClient: VVHClient, kmtkClient: KMTKClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: RoadLinkSerializer = new DummySerializer) extends RoadLinkService(vvhClient, kmtkClient, eventBus, vvhSerializer) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
 
-  class RoadLinkTestService(vvhClient: VVHClient, kmtkClient: KMTKClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) extends RoadLinkService(vvhClient, kmtkClient, eventBus, vvhSerializer) {
+  class RoadLinkTestService(vvhClient: VVHClient, kmtkClient: KMTKClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: RoadLinkSerializer = new DummySerializer) extends RoadLinkService(vvhClient, kmtkClient, eventBus, vvhSerializer) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }

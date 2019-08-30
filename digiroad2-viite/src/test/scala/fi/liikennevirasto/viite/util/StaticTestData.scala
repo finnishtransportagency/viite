@@ -4,7 +4,7 @@ import java.io.{File, FileReader}
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, ValidityPeriodDayOfWeek}
-import fi.liikennevirasto.digiroad2.util.VVHSerializer
+import fi.liikennevirasto.digiroad2.util.RoadLinkSerializer
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.kmtk.KMTKHistoryRoadLink
 import fi.liikennevirasto.digiroad2.client.vvh._
@@ -226,7 +226,7 @@ object StaticTestData {
   private val geometryMap = points.mapValues(v => toGeom(JSON.parseFull(v)))
 }
 
-class RoadLinkDeserializer extends VVHSerializer {
+class RoadLinkDeserializer extends RoadLinkSerializer {
   case object SideCodeSerializer extends CustomSerializer[SideCode](format => ( {
     null
   }, {

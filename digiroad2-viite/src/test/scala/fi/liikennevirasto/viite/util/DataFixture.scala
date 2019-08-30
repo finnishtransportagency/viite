@@ -204,22 +204,22 @@ object DataFixture {
 
     println("Total linearLocations " + linearLocations.size)
 
-    //get All municipalities and group them for ely
+    // Get All municipalities and group them for ely
     OracleDatabase.withDynTransaction {
       MunicipalityDAO.getMunicipalityMapping
     }.groupBy(_._2).foreach {
       case (ely, municipalityEly) =>
 
-        //Get All Municipalities
+        // Get All Municipalities
         val municipalities: ParSet[Long] = municipalityEly.keySet.par
         println("Total municipalities keys for ely " + ely + " -> " + municipalities.size)
 
-        //For each municipality get all VVH Roadlinks
+        // For each municipality get all Roadlinks
         municipalities.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(numThreads))
         municipalities.foreach { municipality =>
           println("Start processing municipality %d".format(municipality))
 
-        //Obtain all RoadLink by municipality and change info from VVH
+        // Obtain all RoadLink by municipality and change info from KMTK
         val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromKMTK(municipality.toInt)
         val allRoadLinks = roadLinks
 
@@ -235,7 +235,7 @@ object DataFixture {
               println(s"${roadsChanges._2.adjustedMValues.size} adjusted m values")
               println(s"${roadsChanges._2.newLinearLocations.size} new linear locations")
             } catch {
-              case e: Exception => println("ERR! -> " + e.getMessage)
+              case e: Exception => println("ERROR! -> " + e.getMessage)
             }
           }
           println("End processing municipality %d".format(municipality))

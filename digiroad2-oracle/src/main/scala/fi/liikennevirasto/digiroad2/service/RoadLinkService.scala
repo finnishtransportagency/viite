@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.LinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.VVHSerializer
+import fi.liikennevirasto.digiroad2.util.RoadLinkSerializer
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
@@ -27,13 +27,13 @@ case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: 
 case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
 
 /**
-  * This class performs operations related to road links. It uses VVHClient to get data from VVH Rest API.
+  * This class performs operations related to road links. It uses KMTKClient and VVHClient to get data from KMTK and VVH Rest API.
   *
   * @param kmtkClient
   * @param eventbus
-  * @param vvhSerializer
+  * @param serializer
   */
-class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val eventbus: DigiroadEventBus, val vvhSerializer: VVHSerializer) {
+class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val eventbus: DigiroadEventBus, val serializer: RoadLinkSerializer) {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   val linkDAO: LinkDAO = new LinkDAO
@@ -77,11 +77,11 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     else Seq.empty[VVHRoadlink]
   }
 
-  def getMidPointByLinkId(kmtkId: KMTKID): Option[Point] = {
-    val roadLinkOption = if (kmtkId.isKMTK)
-      kmtkClient.roadLinkData.fetchById(kmtkId)
+  def getMidPointByLinkId(id: KMTKID): Option[Point] = {
+    val roadLinkOption = if (id.isKMTK)
+      kmtkClient.roadLinkData.fetchById(id)
     else
-      vvhClient.complementaryData.fetchByLinkId(kmtkId.uuid)
+      vvhClient.complementaryData.fetchByLinkId(id.uuid)
     roadLinkOption.map {
       roadLink =>
         GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, roadLink.length / 2.0).getOrElse(Point(roadLink.geometry.head.x, roadLink.geometry.head.y))
@@ -89,9 +89,9 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
   }
 
   def getRoadLinkByLinkId(linkId: Long): Option[RoadLink] = {
-    val kmtkId = linkDAO.fetch(linkId)
-    if (kmtkId.isDefined) {
-      getRoadLinksByIds(Set(kmtkId.get.kmtkId)).headOption
+    val link = linkDAO.fetch(linkId)
+    if (link.isDefined) {
+      getRoadLinksByIds(Set(link.get.kmtkId)).headOption
     } else {
       None
     }
@@ -215,7 +215,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
       getRoadLinksAndChangesFromKMTK(bounds, roadNumbers, municipalities, everything, publicRoads)._1
 
   /**
-    * Returns the road links from VVH by municipality.
+    * Returns the road links from KMTK by municipality.
     *
     * @param municipality A integer, representative of the municipality Id.
     */
@@ -423,25 +423,25 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     cachedFiles match {
       case Some((geometryFile, changesFile, complementaryFile)) =>
         logger.info("Returning cached result")
-        (vvhSerializer.readCachedGeometry(geometryFile), vvhSerializer.readCachedChanges(changesFile), vvhSerializer.readCachedGeometry(complementaryFile))
+        (serializer.readCachedGeometry(geometryFile), serializer.readCachedChanges(changesFile), serializer.readCachedGeometry(complementaryFile))
       case _ =>
         val (roadLinks, changes, complementary) = reloadRoadLinksWithComplementaryAndChanges(municipalityCode)
         if (dir.nonEmpty) {
           try {
             val newGeomFile = new File(dir.get, geometryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-            if (vvhSerializer.writeCache(newGeomFile, roadLinks)) {
+            if (serializer.writeCache(newGeomFile, roadLinks)) {
               logger.info("New cached file created: " + newGeomFile + " containing " + roadLinks.size + " items")
             } else {
               logger.error("Writing cached geom file failed!")
             }
             val newChangeFile = new File(dir.get, changeCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-            if (vvhSerializer.writeCache(newChangeFile, changes)) {
+            if (serializer.writeCache(newChangeFile, changes)) {
               logger.info("New cached file created: " + newChangeFile + " containing " + changes.size + " items")
             } else {
               logger.error("Writing cached changes file failed!")
             }
             val newComplementaryFile = new File(dir.get, complementaryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-            if (vvhSerializer.writeCache(newComplementaryFile, complementary)) {
+            if (serializer.writeCache(newComplementaryFile, complementary)) {
               logger.info("New cached file created: " + newComplementaryFile + " containing " + complementary.size + " items")
             } else {
               logger.error("Writing cached complementary file failed!")

@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 /**
   * Created by venholat on 2.6.2016.
   */
-trait VVHSerializer {
+trait RoadLinkSerializer {
 
   def readCachedGeometry(file: File): Seq[RoadLink]
 
