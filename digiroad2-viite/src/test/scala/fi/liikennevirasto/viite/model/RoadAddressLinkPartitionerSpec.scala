@@ -208,7 +208,7 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     val add2 = makeRoadAddressLink(1536, Anomaly.None.value, 0, 0, 1.0, 11.0)
     val mod2 = add2.copy(geometry = Seq(Point(11.0,21.0), Point(11.0,22.0)),
       newGeometry = Option(Seq(Point(11.0,21.0), Point(11.0,25.0))),
-      roadLinkSource = LinkGeomSource.HistoryLinkInterface,
+      roadLinkSource = LinkGeomSource.NormalLinkInterface,
       startAddressM = 10, endAddressM = 20, roadNumber = 2, roadPartNumber=1, trackCode = 0)
     val partitioned = RoadAddressLinkPartitioner.partition(roadAddressLinks ++ Seq(mod, mod2))
     val group = partitioned.find(_.exists(r => r.roadNumber == 2))

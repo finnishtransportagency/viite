@@ -56,11 +56,9 @@ object DataFixture {
   val roadwayPointDAO = new RoadwayPointDAO
   val nodePointDAO = new NodePointDAO
   val junctionPointDAO = new JunctionPointDAO
-  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus)
 
   lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, kmtkClient, new DummyEventBus, new DummySerializer))
-
-  private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
 
   private lazy val numberThreads: Int = 6
 
@@ -222,7 +220,7 @@ object DataFixture {
           println("Start processing municipality %d".format(municipality))
 
         //Obtain all RoadLink by municipality and change info from VVH
-        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt, geometryFrozen)
+        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromKMTK(municipality.toInt)
         val allRoadLinks = roadLinks
 
           println("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)

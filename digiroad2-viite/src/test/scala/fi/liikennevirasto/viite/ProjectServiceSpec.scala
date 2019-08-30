@@ -915,7 +915,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val (project, links) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L), roads = Seq(testRoad), discontinuity = Discontinuity.Continuous)
       val roadLinks = links.map(toRoadLink)
-      //when(mockRoadLinkService.getCurrentAndComplementaryRoadLinks(any[Set[Long]], any[Boolean])).thenReturn(roadLinks) // TODO Remove?
+      //when(mockRoadLinkService.getCurrentAndComplementaryRoadLinks(any[Set[Long]])).thenReturn(roadLinks) // TODO Remove?
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
       val linksToRevert = links.map(l => {
         LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
@@ -958,7 +958,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
       })
       val roadLinks = links.map(toRoadLink)
-      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinks(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
+      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinks(any[Set[Long]])).thenReturn(roadLinks)
       projectService.revertLinksByRoadPart(project.id, 99999L, 1L, linksToRevert, "Test User")
       projectLinkDAO.fetchProjectLinks(project.id).count(_.roadPartNumber == 2L) should be(2)
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("Test name")
@@ -972,13 +972,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       }
       val (project, links) = util.setUpProjectWithLinks(LinkStatus.Transfer, Seq(0L, 10L, 20L), roads = Seq(testRoad), discontinuity = Discontinuity.Continuous)
       val roadLinks = links.map(toRoadLink)
-      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinks(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
+      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinks(any[Set[Long]])).thenReturn(roadLinks)
       sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.NEXTVAL, 99999, 'test name', sysdate, null, sysdate, null, 'test user', sysdate)""".execute
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("new name")
       val linksToRevert = links.map(l => {
         LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)
       })
-      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinks(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
+      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinks(any[Set[Long]])).thenReturn(roadLinks)
       projectService.revertLinksByRoadPart(project.id, 99999L, 1L, linksToRevert, "Test User")
       ProjectLinkNameDAO.get(99999L, project.id).get.roadName should be("test name")
     }
@@ -2085,7 +2085,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
        LinkToRevert(pl.id, pl.linkId, pl.status.value, pl.geometry)
      })
       val roadLinks = projectLinks.map(toRoadLink).head.copy(geometry = roadGeom)
-      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinks))
+      when(mockRoadLinkService.getCurrentAndComplementaryRoadLinks(any[Set[Long]])).thenReturn(Seq(roadLinks))
       projectService.revertLinksByRoadPart(projectId, newRoadNumber, newRoadPart, linksToRevert, user)
       val geomAfterRevert = GeometryUtils.truncateGeometry3D(roadGeom, projectLinksFromRoadAddresses.head.startMValue, projectLinksFromRoadAddresses.head.endMValue)
       val linksAfterRevert = projectLinkDAO.fetchProjectLinks(projectId)

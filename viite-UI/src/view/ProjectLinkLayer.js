@@ -450,19 +450,183 @@
       });
     };
 
+/* TODO This might be needed in cut tool
+    var SuravageCutter = function (suravageLayer, collection, eventListener) {
+      var scissorFeatures = [];
+      var CUT_THRESHOLD = 20;
+      var self = this;
+
+      var moveTo = function (x, y) {
+        scissorFeatures = [new ol.Feature({
+          geometry: new ol.geom.Point([x, y]),
+          type: 'cutter-crosshair'
+        })];
+        scissorFeatures[0].setStyle(
+          new ol.style.Style({
+            image: new ol.style.Icon({
+              src: 'images/cursor-crosshair.svg'
+            })
+          })
+        );
+        removeFeaturesByType('cutter-crosshair');
+        addFeaturesToSelection(scissorFeatures);
+      };
+
+      var removeFeaturesByType = function (match) {
+        _.each(selectSingleClick.getFeatures().getArray(), function(feature){
+          if (feature && feature.getProperties().type === match) {
+            selectSingleClick.getFeatures().remove(feature);
+          }
+        });
+      };
+
+      this.addCutLine = function (cutGeom) {
+        var points = _.map(cutGeom.geometry, function (point) {
+          return [point.x, point.y];
+        });
+        var cutFeature = new ol.Feature({
+          geometry: new ol.geom.LineString(points),
+          type: 'cut-line'
+        });
+        var style = new ol.style.Style({
+          stroke: new ol.style.Stroke({color: [20, 20, 255, 1], width: 9}),
+          zIndex: 11
+        });
+        cutFeature.setStyle(style);
+        removeFeaturesByType('cut-line');
+        addFeaturesToSelection([cutFeature]);
+      };
+
+      this.addTerminatedFeature = function (terminatedLink) {
+        var points = _.map(terminatedLink.geometry, function (point) {
+          return [point.x, point.y];
+        });
+        var terminatedFeature = new ol.Feature({
+          linkData: terminatedLink,
+          geometry: new ol.geom.LineString(points),
+          type: 'pre-split'
+        });
+        var style = new ol.style.Style({
+          stroke: new ol.style.Stroke({color: '#c6c00f', width: 13, lineCap: 'round'}),
+          zIndex: 11
+        });
+        terminatedFeature.setStyle(style);
+        removeFeaturesByType('pre-split');
+        addFeaturesToSelection([terminatedFeature]);
+      };
+
+      var clickHandler = function (evt) {
+
+        if (applicationModel.getSelectedTool() === 'Cut' && suravageLayer.getVisible()) {
+          $('.wrapper').remove();
+          removeCutterMarkers();
+          self.cut(evt);
+        }
+        eventbus.trigger('projectLink:clickHandled');
+      };
+
+      this.deactivate = function () {
+        eventListener.stopListening(eventbus, 'map:clicked', clickHandler);
+        selectedProjectLinkProperty.setDirty(false);
+      };
+
+      this.activate = function () {
+        eventListener.listenTo(eventbus, 'map:clicked map:dblclicked', clickHandler);
+      };
+
+      var isWithinCutThreshold = function (suravageLink) {
+        return suravageLink !== undefined && suravageLink < CUT_THRESHOLD;
+      };
+
+      var findNearestSuravageLink = function (point) {
+
+        var possibleSplit = _.filter(projectLinkVector.getFeatures().concat(suravageRoadProjectLayer.getSource().getFeatures()), function(feature){
+          return !_.isUndefined(feature.linkData) && (feature.linkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value);
+        });
+        return _.chain(possibleSplit)
+          .map(function (feature) {
+            var closestP = feature.getGeometry().getClosestPoint(point);
+            var distanceBetweenPoints = GeometryUtils.distanceOfPoints(point, closestP);
+            return {
+              feature: feature,
+              point: closestP,
+              distance: distanceBetweenPoints
+            };
+          })
+          .sortBy(function (nearest) {
+            return nearest.distance;
+          })
+          .head()
+          .value();
+      };
+
+      this.updateByPosition = function (mousePoint) {
+        var closestSuravageLink = findNearestSuravageLink(mousePoint);
+        if (!closestSuravageLink) {
+          return;
+        }
+        if (suravageRoadProjectLayer.getVisible() && isWithinCutThreshold(closestSuravageLink.distance)) {
+          moveTo(closestSuravageLink.point[0], closestSuravageLink.point[1]);
+        } else {
+          removeFeaturesByType('cutter-crosshair');
+        }
+      };
+
+      this.cut = function (mousePoint) {
+        var pointsToLineString = function (points) {
+          var coordPoints = _.map(points, function (point) {
+            return [point.x, point.y];
+          });
+          return new ol.geom.LineString(coordPoints);
+        };
+
+        var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
+        if (!nearest || !isWithinCutThreshold(nearest.distance)) {
+          showChangesAndSendButton();
+          selectSingleClick.getFeatures().clear();
+          return;
+        }
+        var nearestSuravage = nearest.feature.linkData;
+        nearestSuravage.points = _.isUndefined(nearestSuravage.originalGeometry) ? nearestSuravage.points : nearestSuravage.originalGeometry;
+        if (!_.isUndefined(nearestSuravage.connectedLinkId)) {
+          nearest.feature.geometry = pointsToLineString(nearestSuravage.originalGeometry);
+        }
+        selectedProjectLinkProperty.setNearestPoint({x: nearest.point[0], y: nearest.point[1]});
+        selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage);
+        projectCollection.setTmpDirty([nearest.feature.linkData]);
+      };
+    };
+*/
     var projectLinkStatusIn = function (projectLink, possibleStatus) {
       if (!_.isUndefined(possibleStatus) && !_.isUndefined(projectLink))
         return _.contains(possibleStatus, projectLink.status);
       else return false;
     };
 
+// TODO This might be needed in cut tool
+//    var suravageCutter = new SuravageCutter(suravageRoadProjectLayer, projectCollection, me.eventListener);
+
     var changeTool = function (tool) {
       if (tool === 'Cut') {
+        //suravageCutter.activate(); // TODO Needed in cut tool
         selectSingleClick.setActive(false);
       } else if (tool === 'Select') {
+        //suravageCutter.deactivate(); // TODO Needed in cut tool
         selectSingleClick.setActive(true);
       }
     };
+
+    // TODO Needed in cut tool
+    /*
+    me.eventListener.listenTo(eventbus, 'split:projectLinks', function (split) {
+      _.defer(function () {
+        drawIndicators(_.filter(split, function (link) {
+          return !_.isUndefined(link.marker);
+        }));
+      });
+      eventbus.trigger('projectLink:split', split);
+    });
+    */
 
     me.eventListener.listenTo(eventbus, 'projectLink:projectLinksCreateSuccess', function () {
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
@@ -618,6 +782,7 @@
     me.eventListener.listenTo(eventbus, 'roadAddressProject:openProject', function (projectSelected) {
       this.project = projectSelected;
       eventbus.trigger('layer:enableButtons', false);
+      // eventbus.trigger('editMode:setReadOnly', false); // TODO Might be needed in cut tool
       eventbus.trigger('roadAddressProject:selected', projectSelected.id, layerName, applicationModel.getSelectedLayer());
       applicationModel.selectLayer(layerName);
     });
@@ -708,6 +873,13 @@
     me.eventListener.listenTo(eventbus, 'roadAddressProject:startAllInteractions', function () {
       toggleSelectInteractions(true, true);
     });
+
+/* TODO Needed in cut tool
+    me.eventListener.listenTo(eventbus, 'split:cutPointFeature', function (cutGeom, terminatedLink) {
+      suravageCutter.addCutLine(cutGeom);
+      suravageCutter.addTerminatedFeature(terminatedLink);
+    });
+*/
 
     me.toggleLayersVisibility(true);
     me.addLayers(layers);

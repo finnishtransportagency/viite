@@ -76,7 +76,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                      roadwayPointDAO : RoadwayPointDAO, linearLocationDAO : LinearLocationDAO, projectDAO : ProjectDAO, projectLinkDAO: ProjectLinkDAO,
                      nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionPointDAO: JunctionPointDAO, projectReservedPartDAO: ProjectReservedPartDAO, roadwayChangesDAO: RoadwayChangesDAO,
                      roadwayAddressMapper: RoadwayAddressMapper,
-                     eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
+                     eventbus: DigiroadEventBus) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -929,7 +929,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId, if (onlyNotHandled) Some(LinkStatus.NotHandled) else None)
       val roadLinks = roadLinkService.getCurrentAndComplementaryRoadLinks(projectLinks.filter(x => x.linkGeomSource == LinkGeomSource.NormalLinkInterface
-        || x.linkGeomSource == LinkGeomSource.FrozenLinkInterface || x.linkGeomSource == LinkGeomSource.ComplementaryLinkInterface).map(x => x.linkId).toSet)
+        || x.linkGeomSource == LinkGeomSource.ComplementaryLinkInterface).map(x => x.linkId).toSet)
       val geometryMap = roadLinks.map(l => l.linkId -> (l.geometry, l.timeStamp)).toMap
       val timeStamp = new Date().getTime
       val updatedProjectLinks = projectLinks.map { pl =>

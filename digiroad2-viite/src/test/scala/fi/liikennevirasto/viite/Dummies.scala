@@ -2,17 +2,15 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, NormalLinkInterface}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.kmtk.{KMTKHistoryRoadLink, KMTKRoadLink}
+import fi.liikennevirasto.digiroad2.client.kmtk.KMTKHistoryRoadLink
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, FeatureClass}
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
-import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 
 object Dummies {

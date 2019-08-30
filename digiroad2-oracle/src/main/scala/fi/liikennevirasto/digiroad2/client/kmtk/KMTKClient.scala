@@ -417,7 +417,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
       "CREATED_DATE" -> dateToEpoch(properties.createdAt),
       "LAST_EDITED_DATE" -> dateToEpoch(properties.modifiedAt.orNull), // TODO If modifiedAt is null, should we use createdAt?
       "SUBTYPE" -> 0 // TODO What to put here?
-      // Not including "TRACK_CODE", used only with suravage and complementary in Viite
+      // Not including "TRACK_CODE", used only with complementary in Viite
     ).filter { case (_, value) =>
       value != null
     }

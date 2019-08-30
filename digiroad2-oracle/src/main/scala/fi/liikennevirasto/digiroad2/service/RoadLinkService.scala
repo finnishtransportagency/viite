@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kmtk.{KMTKClient, KMTKRoadLink}
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.LinkDAO
-import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
@@ -26,7 +26,6 @@ case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeCla
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
 case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
 
-//TODO delete all the references to frozen interface
 /**
   * This class performs operations related to road links. It uses VVHClient to get data from VVH Rest API.
   *
@@ -79,7 +78,10 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
   }
 
   def getMidPointByLinkId(kmtkId: KMTKID): Option[Point] = {
-    val roadLinkOption = if (kmtkId.isKMTK) kmtkClient.roadLinkData.fetchById(kmtkId) else vvhClient.complementaryData.fetchByLinkId(kmtkId.uuid)
+    val roadLinkOption = if (kmtkId.isKMTK)
+      kmtkClient.roadLinkData.fetchById(kmtkId)
+    else
+      vvhClient.complementaryData.fetchByLinkId(kmtkId.uuid)
     roadLinkOption.map {
       roadLink =>
         GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, roadLink.length / 2.0).getOrElse(Point(roadLink.geometry.head.x, roadLink.geometry.head.y))
@@ -122,8 +124,8 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     * @param municipality
     * @return Road links
     */
-  def getCachedRoadLinksFromVVH(municipality: Int, useFrozenVVHLinks: Boolean): Seq[RoadLink] = {
-    getCachedRoadLinksAndChanges(municipality, useFrozenVVHLinks)._1
+  def getCachedRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
+    getCachedRoadLinksAndChanges(municipality)._1
   }
 
   def getRoadLinksByLinkId(linkId: Long): Seq[RoadLink] = {
@@ -160,8 +162,8 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     (enrichRoadLinksFromKMTK(links), changes, enrichRoadLinksFromVVH(complementaryLinks))
   }
 
-  def getRoadLinksAndChangesFromVVH(municipality: Int, useFrozenVVHLinks: Boolean): (Seq[RoadLink], Seq[ChangeInfo]) = {
-    getCachedRoadLinksAndChanges(municipality, useFrozenVVHLinks)
+  def getRoadLinksAndChangesFromKMTK(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
+    getCachedRoadLinksAndChanges(municipality)
   }
 
   def getRoadLinksWithComplementaryAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
@@ -405,7 +407,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
   }
 
   //getRoadLinksFromVVHFuture expects to get only "normal" roadlinks from getCachedRoadLinksAndChanges  method.
-  private def getCachedRoadLinksAndChanges(municipalityCode: Int, useFrozenVVHLinks: Boolean): (Seq[RoadLink], Seq[ChangeInfo]) = {
+  private def getCachedRoadLinksAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val (roadLinks, changes, _) = getCachedRoadLinks(municipalityCode)
     (roadLinks, changes)
   }
@@ -485,7 +487,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     enrichRoadLinksFromKMTK(vvhRoadLinks) ++ enrichRoadLinksFromVVH(compLinks)
   }
 
-  def getCurrentAndComplementaryRoadLinks(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled: Boolean = false): Seq[RoadLink] = {
+  def getCurrentAndComplementaryRoadLinks(linkIds: Set[Long]): Seq[RoadLink] = {
     val links = linkDAO.fetch(linkIds)
     val roadLinks = kmtkClient.roadLinkData.fetchByIds(links.map(_.kmtkId))
     val roadLinksVVH = vvhClient.complementaryData.fetchByLinkIds(linkIds.map(_.toString))

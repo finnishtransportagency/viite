@@ -483,7 +483,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(99999)).thenReturn(roadLinks)
-    when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(99999)).thenReturn(Seq())
     val roadAddresses = roadAddressService.getAllByMunicipality(99999)
     roadAddresses.size should be (4)
   }
@@ -1233,7 +1232,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //
 //
 //    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1))
-//    when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink1, roadLink2), Seq.empty[ChangeInfo]))
 //
 //    runWithRollback {
 //      RoadAddressDAO.create(Seq(ra))
@@ -1247,7 +1245,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      returnedAdjacents1.size should be (1)
 //      returnedAdjacents1.map(_.linkId).head should be (baseLinkId+1L)
 //      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink2))
-//      when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink2, roadLink3), Seq.empty[ChangeInfo]))
 //      val returnedAdjacents2 = roadAddressService.getAdjacent(Set(baseLinkId+1), baseLinkId+1, false)
 //      returnedAdjacents2.size should be (1)
 //      returnedAdjacents2.map(_.linkId).head should be (baseLinkId+2L)
@@ -1305,7 +1302,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //
 //
 //    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1))
-//    when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink1, roadLink2), Seq.empty[ChangeInfo]))
 //
 //    runWithRollback {
 //      RoadAddressDAO.create(Seq(ra,ra2))
@@ -1319,7 +1315,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      returnedAdjacents1.size should be (1)
 //      returnedAdjacents1.map(_.linkId).head should be (baseLinkId+1L)
 //      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink2))
-//      when(mockRoadLinkService.getRoadLinksAndChangesFromVVHWithFrozenAPI(any[BoundingRectangle], any[Boolean])).thenReturn((Seq(roadLink2, roadLink3), Seq.empty[ChangeInfo]))
 //      val returnedAdjacents2 = roadAddressService.getAdjacent(Set(baseLinkId+1), baseLinkId+1, false)
 //      returnedAdjacents2.size should be (1)
 //      returnedAdjacents2.map(_.linkId).head should be (baseLinkId+2L)
