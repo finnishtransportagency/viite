@@ -5,6 +5,7 @@ import java.net.URLEncoder
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.client.kmtk._
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.util.KMTKAuthPropertyReader
 import fi.liikennevirasto.digiroad2.util.LogUtils.time

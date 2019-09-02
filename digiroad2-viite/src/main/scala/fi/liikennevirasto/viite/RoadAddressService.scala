@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.kmtk.ChangeInfo
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase

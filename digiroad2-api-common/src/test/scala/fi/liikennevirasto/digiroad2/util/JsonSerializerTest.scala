@@ -4,7 +4,7 @@ import java.io.File
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
+import fi.liikennevirasto.digiroad2.client.kmtk.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
 import org.scalatest.{FunSuite, Matchers}
 

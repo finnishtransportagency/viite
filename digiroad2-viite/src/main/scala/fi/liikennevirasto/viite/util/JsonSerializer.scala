@@ -6,9 +6,9 @@ import java.nio.file.Files.copy
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
+import fi.liikennevirasto.digiroad2.client.kmtk.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
-import fi.liikennevirasto.digiroad2.util.{Track, RoadLinkSerializer}
+import fi.liikennevirasto.digiroad2.util.{RoadLinkSerializer, Track}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
