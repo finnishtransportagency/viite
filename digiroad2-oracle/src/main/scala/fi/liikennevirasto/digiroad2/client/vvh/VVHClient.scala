@@ -37,12 +37,6 @@ case class VVHRoadlink(linkId: Long, kmtkId: KMTKID, municipalityCode: Int, geom
   val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 }
 
-
-
-
-
-
-
 object VVHClient {
   val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
