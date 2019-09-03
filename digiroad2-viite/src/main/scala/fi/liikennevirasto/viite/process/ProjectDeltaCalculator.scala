@@ -226,9 +226,9 @@ object ProjectDeltaCalculator {
       val matches = matchingTracks(paired, key)
       val target = targetToMap.map(t => t.copy(projectLinks = projectLinks.filter(link => link.roadNumber == t.roadNumber && link.roadPartNumber == t.roadPartNumberEnd && link.track == t.track && link.roadType == t.roadType && link.ely == t.ely &&
         link.startAddrMValue >= t.startMAddr && link.endAddrMValue <= t.endMAddr)))
-      if (matches.nonEmpty && matches.get.lengthCompare(target.length) == 0 && matchesFitOnTarget(target, matches.get))
-        adjustTrack((target, matches.get))
-      else
+      if (matches.nonEmpty && matches.get.lengthCompare(target.length) == 0 && matchesFitOnTarget(target, matches.get)){
+        adjustTrack((target.sortBy(_.startMAddr), matches.get.sortBy(_.startMAddr)))
+      } else
         target
     }.toSeq
     result
