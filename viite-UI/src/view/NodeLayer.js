@@ -105,16 +105,16 @@
         var selected = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.junctionPointTemplateInfo);
         });
-        eventbus.trigger('junctionEdit:selected', selected);
-        if (!_.isUndefined(selected) && applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
-          applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
-        }
-        if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value) && !_.isUndefined(selected)) {
-          //selectedNodePoint.open(selected.junctionPointTemplateInfo);
-          eventbus.trigger('junctionEdit:selected', selected);
-        } else {
-          //selectedNodePoint.close();
-        }
+        eventbus.trigger('junctionEdit:selected', selected.junctionPointTemplateInfo.junctionId);
+        // if (!_.isUndefined(selected) && applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
+        //   applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+        // }
+        // if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value) && !_.isUndefined(selected)) {
+        //   //selectedNodePoint.open(selected.junctionPointTemplateInfo);
+        //   eventbus.trigger('junctionEdit:selected', selected);
+        // } else {
+        //   //selectedNodePoint.close();
+        // }
 
       });
       /**

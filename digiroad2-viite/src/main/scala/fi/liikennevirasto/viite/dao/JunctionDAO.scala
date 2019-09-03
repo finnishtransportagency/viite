@@ -13,6 +13,8 @@ import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 
 case class Junction(id: Long, junctionNumber: Long, nodeId: Option[Long], startDate: DateTime, endDate: Option[DateTime],
                     validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
+case class JunctionInfo(id: Long, junctionNumber: Long, nodeId: Long, startDate: DateTime,
+                     nodeNumber: Long, nodeName: String)
 
 case class JunctionTemplate(junctionId: Long, junctionNumber: Long, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long)
 
@@ -34,6 +36,18 @@ class JunctionDAO extends BaseDAO {
       Junction(id, junctionNumber, nodeId, startDate, endDate, validFrom, validTo, createdBy, createdTime)
     }
   }
+    implicit val getJunctionInfo: GetResult[JunctionInfo] = new GetResult[JunctionInfo] {
+      def apply(r: PositionedResult): JunctionInfo = {
+        val id = r.nextLong()
+        val junctionNumber = r.nextLong()
+        val nodeId = r.nextLong()
+        val startDate = formatter.parseDateTime(r.nextDate.toString)
+        val nodeNumber =r.nextLong()
+        val nodeName = r.nextString()
+
+        JunctionInfo(id, junctionNumber, nodeId, startDate, nodeNumber, nodeName)
+      }
+  }
 
   private def queryList(query: String): List[Junction] = {
     Q.queryNA[Junction](query).list.groupBy(_.id).map {
@@ -41,6 +55,14 @@ class JunctionDAO extends BaseDAO {
         list.head
     }.toList
   }
+  private def queryListInfo(query: String): List[JunctionInfo] = {
+    Q.queryNA[JunctionInfo](query).list.groupBy(_.id).map {
+      case (_, list) =>
+        list.head
+    }.toList
+  }
+
+
 
   def fetchJunctionByNodeId(nodeId: Long): Seq[Junction] = {
     fetchJunctionByNodeIds(Seq(nodeId))
@@ -79,6 +101,15 @@ class JunctionDAO extends BaseDAO {
       """
       queryList(query)
     }
+  }
+  def fetchJunctionInfoByJunctionId(ids: Seq[Long]): Option[JunctionInfo] = {
+    sql"""
+      SELECT junction.ID, junction.JUNCTION_NUMBER, junction.NODE_ID, junction.START_DATE, node.NODE_NUMBER, node.NAME
+      FROM JUNCTION junction
+      LEFT JOIN NODE node ON junction.NODE_ID = node.ID
+      WHERE junction.ID IN (${ids.mkString(", ")})
+      """.as[JunctionInfo].firstOption
+
   }
 
   /**
