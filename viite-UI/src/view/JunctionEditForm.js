@@ -1,5 +1,6 @@
 (function (root) {
-    root.JunctionEditForm = function (selectedLinkProperty, roadNamingTool) {
+    root.JunctionEditForm = function (backend) {
+        var junctionIdForLink = 0;
         var svgJunction =
             '<svg\n' +
             '        xmlns="http://www.w3.org/2000/svg"\n' +
@@ -52,10 +53,15 @@
             '   style="font-size:14px;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;">\n' +
             '       </text>\n' +
             '       </svg>\n';
-        var template = function (junctionId) {
 
-            var showJunctionTemplateEditForm = false;
-            var startDate = '';
+        var getDataTemplates = function (junctionId) {
+            return backend.getJunctionInfoByJunctionId(junctionId, function (junctionInfo) {
+                var showJunctionTemplateEditForm = isJunctionTemplate(junctionInfo);
+                $('#feature-attributes').html(template(junctionInfo, showJunctionTemplateEditForm));
+            });
+        };
+
+        var template = function (junctionInfo, showJunctionTemplateEditForm) {
             return _.template('' +
                 '<header>' +
                 title() +
@@ -65,16 +71,19 @@
                 '<a id="junction-point-link" class="floating-stops">Tarkastele liittymäkohtien tietoja</a>' +
                 '<div class="form form-horizontal form-dark">' +
                 '<div class="form-group-metadata">' +
-                '<p class="form-control-static asset-log-info-metadata">Alkupvm: ' + startDate+ '</p>' +
+                '<p class="form-control-static asset-log-info-metadata">Alkupvm: ' + junctionInfo.startDate + '</p>' +
                 '</div>' +
                 '<div class="form-group-metadata">' +
-                '<p class="form-control-static asset-log-info-metadata">Solmunro: ' + junctionId + '</p>' +
+                '<p class="form-control-static asset-log-info-metadata">Solmunro: ' + checkEmptyAndNullAndZero(junctionInfo.nodeNumber) + '</p>' +
                 '</div>' +
                 '<div class="form-group-metadata">' +
-                '<p class="form-control-static asset-log-info-metadata">Solmunimi: ' + '</p>' +
+                '<p class="form-control-static asset-log-info-metadata">Solmunimi: ' + checkEmptyAndNullAndZero(junctionInfo.nodeName) + '</p>' +
+                '</div>' +
+                '<div class="form-group-metadata">' +
+                '<p class="form-control-static asset-log-info-metadata">Liittymä id: ' + checkEmptyAndNullAndZero(junctionInfo.id) + '</p>' +
                 '</div>' +
                 '<div>' +
-                '<label class="control-label">Liittymänumero:</label>' + addSmallInputNumber('liittymanro', '', 5) +
+                addSmallLabel('Liittymänumero:') + addSmallInputNumber('liittymanro', checkEmptyAndNullAndZero(junctionInfo.junctionNumber), 5) +
                 '</div>' +
                 '</div>' +
                 '</div>' +
@@ -83,11 +92,26 @@
                 '<footer>' + '</footer>');
 
         };
+        var checkEmptyAndNullAndZero = function (value) {
+            if (null === value || '' === value) {
+                return '';
+            } else if (_.isUndefined(value)) {
+                return '';
+            } else if (0 === value) {
+                return '';
+            } else {
+                return value;
+            }
+
+        };
+        var isJunctionTemplate = function (junctionInfo) {
+            if (null === junctionInfo.junctionNumber || '' === junctionInfo.junctionNumber || junctionInfo.junctionNumber === 0)
+                return true;
+        };
         var title = function () {
             return '<span class="header-orange">Liittymän tiedot</span>';
         };
         var addPicture = function (showJunctionTemplateEditForm) {
-
             if (showJunctionTemplateEditForm) {
                 return svgJunctionTemplate;
             } else {
@@ -110,22 +134,21 @@
 
 
         var bindEvents = function () {
-            var rootElement = $('#feature-attributes');
 
             eventbus.on('junctionEdit:selected', function (junctionId) {
-                toggleMode(junctionId);
+                var rootElement = $('#feature-attributes');
+                rootElement.empty();
+                getDataTemplates(junctionId);
+                junctionIdForLink = junctionId;
+                return false;
             });
 
-            var toggleMode = function (junctionId) {
-                rootElement.html(template(junctionId));
-                $('[id=junction-point-link]').click(function () {
-                    //eventbus.trigger('junctionEditForm-junctionPoints:select', selected);
-                    var junctionNumber= $('[id=liittymanro]').val();
-                    eventbus.trigger('junctionPointForm-junctionPoint:select',  junctionId, junctionNumber);
-                    return false;
-                });
-            };
 
+            $('[id=junction-point-link]').click(function () {
+                var junctionNumber = $('[id=liittymanro]').val();
+                eventbus.trigger('junctionPointForm-junctionPoint:select', junctionIdForLink, junctionNumber);
+                return false;
+            });
         };
 
         bindEvents();
