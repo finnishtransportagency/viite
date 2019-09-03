@@ -45,13 +45,6 @@
       nodesWithAttributes = list;
     };
 
-    this.getNodeTemplatesByBoundingBox = function(boundingBox) {
-      applicationModel.addSpinner();
-      return backend.getNodeTemplatesByBoundingBox(boundingBox, function (result) {
-        eventbus.trigger('nodePoint:fetch', result);
-      });
-    };
-
     this.getNodesByRoadAttributes = function(roadAttributes) {
       return backend.getNodesByRoadAttributes(roadAttributes, function (result) {
         if (result.success) {

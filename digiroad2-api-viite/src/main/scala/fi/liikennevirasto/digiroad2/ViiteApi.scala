@@ -922,18 +922,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/nodepointstemplate", operation(getNodesAndJunctions)) {
-    try {
-      time(logger, s"GET request for /nodepointstemplate") {
-        params.get("bbox")
-          .map(getNodeTemplatesByBoundingBox())
-          .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
-      }
-    } catch {
-      case e: IllegalArgumentException => Map("success" -> e.getMessage)
-    }
-  }
-
   get("/nodepointtemplate/:id") {
     val id = params("id").toLong
     time(logger, s"GET request for /nodepointtemplate/$id") {
@@ -985,11 +973,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           nodesAndJunctionsService.getJunctionTemplatesByBoundingBox(boundingRectangle).map(junctionPointTemplateToApi)
       }
     }
-  }
-
-  private def getNodeTemplatesByBoundingBox()(bbox: String): Seq[Map[String, Any]] = {
-    val boundingRectangle = constructBoundingRectangle(bbox)
-    nodesAndJunctionsService.getNodeTemplatesByBoundingBox(boundingRectangle).map(simpleNodePointTemplateToApi)
   }
 
   private def getProjectLinks(projectId: Long, zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
