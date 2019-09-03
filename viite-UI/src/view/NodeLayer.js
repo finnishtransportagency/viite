@@ -69,6 +69,141 @@
         nodePointTemplateLayer.setOpacity(opacity);
         junctionTemplateLayer.setOpacity(opacity);
       };
+      /**
+       * Type of interactions we want the map to be able to respond.
+       * A selected feature is moved to a new/temporary layer out of the default roadLayer.
+       * This interaction is restricted to a single click (there is a 250 ms enforced
+       * delay between single clicks in order to differentiate from double click).
+       * @type {ol.interaction.Select}
+       */
+      var junctionPointTemplateClick = new ol.interaction.Select({
+        //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
+        multi: false,
+        //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
+        layers: [junctionTemplateLayer],
+        //Limit this interaction to the singleClick
+        condition: ol.events.condition.singleClick
+      });
+      junctionPointTemplateClick.set('name','junctionPointTemplateClickInteractionNL');
+
+      // var junctionPointClick = new ol.interaction.Select({
+      //   //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
+      //   multi: false,
+      //   //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
+      //   layers: [junctionMarkerLayer],
+      //   //Limit this interaction to the singleClick
+      //   condition: ol.events.condition.singleClick
+      // });
+      // junctionPointClick.set('name','junctionPointClickInteractionNL');
+
+
+
+      /**
+       * We now declare what kind of custom actions we want when the interaction happens.
+       * Note that 'select' is triggered when a feature is either selected or deselected.
+       * The event holds the selected features in the events.selected and the deselected in event.deselected.
+       *
+       * In this particular case we are fetching every node point template marker in view and
+       * sending them to the selectedNode.open for further processing.
+       */
+
+      junctionPointTemplateClick.on('select', function (event) {
+        // var selected = _.find(event.selected, function (selectionTarget) {
+        //   return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
+        // });
+        // sets selected mode by default - in case a node point is clicked without any mode
+        var selected = _.find(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.junctionPointTemplateInfo);
+        });
+        eventbus.trigger('junctionEdit:selected', selected.junctionPointTemplateInfo.junctionId);
+        // if (!_.isUndefined(selected) && applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
+        //   applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+        // }
+        // if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value) && !_.isUndefined(selected)) {
+        //   //selectedNodePoint.open(selected.junctionPointTemplateInfo);
+        //   eventbus.trigger('junctionEdit:selected', selected);
+        // } else {
+        //   //selectedNodePoint.close();
+        // }
+
+      });
+
+      // junctionPointClick.on('select', function (event) {
+      //   // var selected = _.find(event.selected, function (selectionTarget) {
+      //   //   return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
+      //   // });
+      //   // sets selected mode by default - in case a node point is clicked without any mode
+      //   var selected = _.find(event.selected, function (selectionTarget) {
+      //     return !_.isUndefined(selectionTarget.junctionPoint);
+      //   });
+      //   eventbus.trigger('junctionEdit:selected', selected.junctionPoint.junctionId);
+      //   // if (!_.isUndefined(selected) && applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
+      //   //   applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+      //   // }
+      //   // if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value) && !_.isUndefined(selected)) {
+      //   //   //selectedNodePoint.open(selected.junctionPointTemplateInfo);
+      //   //   eventbus.trigger('junctionEdit:selected', selected);
+      //   // } else {
+      //   //   //selectedNodePoint.close();
+      //   // }
+      //
+      // });
+      /**
+       * Simple method that will add various open layers 3 features to a selection.
+       * @param ol3Features
+       */
+      var addNodeFeaturesToSelection = function (ol3Features) {
+        var olUids = _.map(junctionPointTemplateClick.getFeatures().getArray(), function(feature){
+          return feature.ol_uid;
+        });
+        _.each(ol3Features, function(feature){
+          if (!_.contains(olUids, feature.ol_uid)) {
+            junctionPointTemplateClick.getFeatures().push(feature);
+            olUids.push(feature.ol_uid); // prevent adding duplicate entries
+          }
+        });
+      };
+
+      // var addJunctionPointFeaturesToSelection = function (ol3Features) {
+      //   var olUids = _.map(junctionPointClick.getFeatures().getArray(), function(feature){
+      //     return feature.ol_uid;
+      //   });
+      //   _.each(ol3Features, function(feature){
+      //     if (!_.contains(olUids, feature.ol_uid)) {
+      //       junctionPointClick.getFeatures().push(feature);
+      //       olUids.push(feature.ol_uid); // prevent adding duplicate entries
+      //     }
+      //   });
+      // };
+
+      /**
+       * Event triggered by the selectedNode.open() returning all the open layers 3 features
+       * that need to be included in the selection.
+       */
+      me.eventListener.listenTo(eventbus, 'node:ol3Selected', function(ol3Features){
+        addNodeFeaturesToSelection(ol3Features);
+        //addJunctionPointFeaturesToSelection(ol3Features);
+      });
+
+      /**
+       * This will add all the following interactions from the map:
+       * - nodePointTemplateClick
+       */
+      var addClickInteractions = function () {
+        map.addInteraction(junctionPointTemplateClick);
+        //map.addInteraction(junctionPointClick);
+      };
+
+      // /**
+      //  * This will remove all the following interactions from the map:
+      //  * - nodePointTemplateClick
+      //  */
+      // var removeSelectInteractions = function() {
+      //   map.removeInteraction(nodePointTemplateClick);
+      // };
+
+      // We add the defined interactions to the map.
+      addClickInteractions();
 
       var redraw = function () {
         if(applicationModel.getSelectedLayer() === 'node') {

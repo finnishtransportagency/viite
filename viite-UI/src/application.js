@@ -118,6 +118,7 @@
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
+    new JunctionEditForm(backend);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
 
@@ -140,7 +141,7 @@
     // Show environment name next to Viite logo
     var notification = jQuery('#notification');
     notification.append(Environment.localizedName());
-    notification.append(' Päivämäärä: ' + startupParameters.deploy_date);
+    notification.append(' Tielinkkiaineisto : ' + startupParameters.date_of_data);
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {
