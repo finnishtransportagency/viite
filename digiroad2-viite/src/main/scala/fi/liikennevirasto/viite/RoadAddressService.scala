@@ -657,7 +657,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     def getNewRoadwayNumberInPoint(roadwayPoint: RoadwayPoint, newAddrM: Long): Option[Long] = {
       mappedRoadwayNumbers.filter(mrw => roadwayPoint.roadwayNumber == mrw.oldRoadwayNumber && roadwayPoint.addrMValue >= mrw.originalStartAddr && roadwayPoint.addrMValue <= mrw.originalEndAddr) match {
-        case linkChanges if linkChanges.size == 2 =>
+        case linkChanges if linkChanges.size == 2 && linkChanges.map(_.newRoadwayNumber).distinct.size > 1 =>
           val sortedLinkChanges = linkChanges.sortBy(_.originalStartAddr)
           val beforePoint = sortedLinkChanges.head
           val afterPoint = sortedLinkChanges.last
@@ -723,7 +723,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       if (updatableRoadwayPoints.nonEmpty)
         roadwayPointDAO.update(updatableRoadwayPoints)
     } catch {
-      case ex: Exception => println("Failed roadwaypointsUpdate: ", ex)
+      case ex: Exception => println("Failed roadwaypointsUpdate: ", ex.printStackTrace())
     }
   }
 

@@ -214,6 +214,9 @@ object Digiroad2Context {
   lazy val deploy_date: String = {
     revisionInfo.getProperty("digiroad2.latestDeploy")
   }
+  lazy val date_of_data: String = {
+    revisionInfo.getProperty("digiroad2.dateofData")
+  }
 
   val env: String = System.getProperty("env")
 

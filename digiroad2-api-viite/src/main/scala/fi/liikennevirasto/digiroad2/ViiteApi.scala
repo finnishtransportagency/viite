@@ -64,6 +64,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val nodesAndJunctionsService: NodesAndJunctionsService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date,
+               val date_of_data: String = Digiroad2Context.date_of_data,
                implicit val swagger: Swagger
               )
   extends ScalatraServlet
@@ -120,7 +121,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val config = userProvider.getCurrentUser().configuration
         (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
       }
-      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date)
+      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date, date_of_data)
     }
   }
 
@@ -977,6 +978,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/junctionInfoByJunctionId") {
+    val junctionId = params.get("junctionId").getOrElse(halt(BadRequest("Missing mandatory 'junctionId' parameter")))
+    val x: Seq[Long] = Seq(junctionId.toLong)
+    if (junctionId == "") {
+      val message = "junctionId parameter is empty"
+      logger.info(message)
+      BadRequest(message)
+    } else {
+      time(logger, s"GET request for /junctionInfoByJunctionId + junctionId="+ junctionId){
+        nodesAndJunctionsService.getJunctionInfoByJunctionId(x).map(junctionInfoToApi)
+      }
+    }
+  }
+
   private def getProjectLinks(projectId: Long, zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val startTime = System.currentTimeMillis()
@@ -1196,6 +1211,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
     }
     )
+  }
+
+  def junctionInfoToApi(junctionInfo: JunctionInfo) : Map[String, Any] = {
+      Map("id" -> junctionInfo.id,
+        "junctionNumber" -> junctionInfo.junctionNumber,
+        "nodeId" -> junctionInfo.nodeId,
+        "startDate" -> formatDateTimeToShortPatternString(Some(junctionInfo.startDate)),
+        "nodeNumber" -> junctionInfo.nodeNumber,
+        "nodeName" -> junctionInfo.nodeName)
   }
 
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
@@ -1442,6 +1466,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private def formatDateTimeToString(dateOption: Option[DateTime]): Option[String] =
     dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy, HH:mm:ss")) }
 
+  private def formatDateTimeToShortPatternString(dateOption: Option[DateTime]): Option[String] =
+    dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy")) }
+
   private def calibrationPointToApi(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]): Option[Map[String, Any]] = {
     calibrationPoint match {
       case Some(point) =>
@@ -1467,7 +1494,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
      projectService
    }*/
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String, date_of_data: String)
   case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
 
 }
