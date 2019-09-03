@@ -1,38 +1,19 @@
 (function(root) {
-  root.SelectedNodePoint = function(nodeCollection) {
+  root.SelectedNodePoint = function() {
     var current = {};
     var dirty = false;
 
-    var openNodePointTemplate = function (nodePointTemplate, boundingBox) {
-      setCurrentNodePointTemplate(nodePointTemplate);
-      getNodePointsTemplateInSamePlace(boundingBox);
-      eventbus.trigger('nodePoint:selected', current.nodePointTemplate);
+    var openNodePointTemplates = function (nodePointTemplates) {
+      setCurrentNodePointTemplates(nodePointTemplates);
+      eventbus.trigger('nodePoint:selected');
     };
 
-    var getNodePointsTemplateInSamePlace = function (boundingBox) {
-      return nodeCollection.getNodeTemplatesByBoundingBox(boundingBox);
+    var setCurrentNodePointTemplates = function(nodePointTemplates) {
+      current.nodePointTemplates = nodePointTemplates;
     };
 
-    var getLowestRoadNumber = function () {
-      return _.head(_.sortBy(getGroupOfNodePoints(), function (nodePoint) {
-        return [nodePoint.roadNumber, nodePoint.roadPartNumber, nodePoint.addrM, nodePoint.beforeAfter];
-      }));
-    };
-
-    var setCurrentNodePointTemplate = function(nodePointTemplate) {
-      current.nodePointTemplate = nodePointTemplate;
-    };
-
-    var getCurrentNodePointTemplate = function () {
-      return current.nodePointTemplate;
-    };
-
-    var setGroupOfNodePoints = function (nodePoints) {
-      current.groupOfNodePoints = nodePoints;
-    };
-
-    var getGroupOfNodePoints = function () {
-      return current.groupOfNodePoints;
+    var getCurrentNodePointTemplates = function () {
+      return current.nodePointTemplates;
     };
 
     var isDirty = function() {
@@ -56,11 +37,8 @@
     };
 
     return {
-      openNodePointTemplate: openNodePointTemplate,
-      getCurrentNodePointTemplate: getCurrentNodePointTemplate,
-      setGroupOfNodePoints: setGroupOfNodePoints,
-      getGroupOfNodePoints: getGroupOfNodePoints,
-      getLowestRoadNumber: getLowestRoadNumber,
+      openNodePointTemplates: openNodePointTemplates,
+      getCurrentNodePointTemplates: getCurrentNodePointTemplates,
       isDirty: isDirty,
       setDirty: setDirty,
       clean: clean,

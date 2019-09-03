@@ -12,7 +12,7 @@
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     window.applicationModel = new ApplicationModel([selectedLinkProperty]);
     var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel));
-    var selectedNodePoint = new SelectedNodePoint(nodeCollection);
+    var selectedNodePoint = new SelectedNodePoint();
 
     var models = {
       roadCollection: roadCollection,

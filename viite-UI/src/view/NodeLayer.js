@@ -79,7 +79,7 @@
        */
       var nodePointTemplateClick = new ol.interaction.Select({
         //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
-        multi: false,
+        multi: true,
         //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
         layers: [nodePointTemplateLayer],
         //Limit this interaction to the singleClick
@@ -96,7 +96,7 @@
        * sending them to the selectedNode.open for further processing.
        */
       nodePointTemplateClick.on('select', function (event) {
-        var selected = _.find(event.selected, function (selectionTarget) {
+        var selected = _.filter(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
         });
         // sets selected mode by default - in case a node point is clicked without any mode
@@ -104,9 +104,7 @@
           applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
         }
         if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value) && !_.isUndefined(selected)) {
-          applicationModel.addSpinner();
-          var coordinates = selected.getGeometry().getCoordinates();
-          selectedNodePoint.openNodePointTemplate(selected.nodePointTemplateInfo, [coordinates, coordinates]);
+          selectedNodePoint.openNodePointTemplates(_.unique(_.map(selected, "nodePointTemplateInfo"), "id"));
         } else {
           selectedNodePoint.close();
         }
