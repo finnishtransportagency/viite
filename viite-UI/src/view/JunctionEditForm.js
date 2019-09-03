@@ -83,11 +83,10 @@
                 '<p class="form-control-static asset-log-info-metadata">Liittymä id: ' + checkEmptyAndNullAndZero(junctionInfo.id) + '</p>' +
                 '</div>' +
                 '<div>' +
-                addSmallLabel('Liittymänumero:') + addSmallInputNumber('liittymanro', checkEmptyAndNullAndZero(junctionInfo.junctionNumber), 5) +
+                addSmallLabelYellow('Liittymänumero:') + addSmallInputNumber('liittymanro', checkEmptyAndNullAndZero(junctionInfo.junctionNumber), 5) +
                 '</div>' +
                 '</div>' +
                 '</div>' +
-
                 '</div>' +
                 '<footer>' + '</footer>');
 
@@ -121,8 +120,8 @@
 
         };
 
-        var addSmallLabel = function (label) {
-            return '<label class="control-label-small">' + label + '</label>';
+        var addSmallLabelYellow = function (label) {
+            return '<label class="form-control-static-short-yellow">' + label + '</label>';
         };
         var addSmallInputNumber = function (id, value, maxLength) {
             //Validate only number characters on "onkeypress" including TAB and backspace
