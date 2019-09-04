@@ -4,7 +4,7 @@
 
         var addSaveEvent = function () {
             var saveButton = '<button id="saveEtaisyys" class="btn btn-primary save btn-save-road-data" disabled>Tallenna</button>';
-            $('#feature-attributes').append(saveButton);
+            $('#buttons-div').append(saveButton);
             $('#aosa').on('click', function (clickEvent) {
                 var saveMessage = ($('#aosa').length > 0 ? "Tiellä on jo nimi. Haluatko varmasti antaa sille uuden nimen?" : "Tiellä on jo nimi. Haluatko varmasti muokata sitä?");
 
@@ -20,27 +20,14 @@
 
         var addReturn = function (junctionId) {
             var returnButton = '<button id="return" class="btn btn-primary save btn-save-road-data">Palaa</button>';
-            $('#feature-attributes').append(returnButton);
+            $('#buttons-div').append(returnButton);
             $('button#return').on('click', function (e) {
                 e.preventDefault();
                 eventbus.trigger('junctionEdit:selected', junctionId);
                 return false;
             });
         };
-        var template = function (junctionId, junctionNumber) {
-            var rootElement = $('#feature-attributes');
-            rootElement.empty();
-            $('#feature-attributes').append('' +
-                '<p class="center">' + title() + ' </p>' +
-                '<div class="form form-horizontal form-dark">' +
-                '<div class="edit-control-group project-choice-group">' +
-                staticField('Solmunro:', junctionId) +
-                staticField('Liittymänumero:', junctionNumber) +
-                '</div>' +
-                '<div id="junctions-content">' +
-                '</div>' +
-                '<footer>' + '</footer>');
-        };
+
         var title = function () {
             return '<span class="header-orange">Liittymäkohtien tiedot:</span>';
         };
@@ -67,16 +54,36 @@
             return field;
         };
         var bindEvents = function () {
-            eventbus.on('junctionPointForm-junctionPoint:select', function (junctionId, junctionNumber) {
-                applicationModel.addSpinner();
-                template(junctionId, junctionNumber);
-                getDataTemplates(junctionId);
-                applicationModel.removeSpinner();
-                addSaveEvent();
-                addReturn(junctionId);
+            eventbus.on('junctionPointForm-junctionPoint:select', function (junctionId) {
+                getDataTemplateInfo(junctionId);
+                getDataTemplateForJunctionPoints(junctionId);
+
             });
         };
-        var getDataTemplates = function (junctionId) {
+        var getDataTemplateInfo = function (junctionId) {
+            return backend.getJunctionInfoByJunctionId(junctionId, function (junctionInfo) {
+                //template(junctionInfo);
+                var rootElement = $('#feature-attributes');
+                rootElement.empty();
+                $('#feature-attributes').append('' +
+                    '<p class="center">' + title() + ' </p>' +
+                    '<div class="form form-horizontal form-dark">' +
+                    '<div class="edit-control-group project-choice-group">' +
+                    staticField('Solmunro:', junctionInfo.nodeNumber) +
+                    staticField('Liittymänumero:', junctionInfo.junctionNumber) +
+                    '</div>' +
+                    '<div id="junctions-content">' +
+                    '</div>' +
+                    '<div id="buttons-div">' +
+                    '</div>' +
+                    '</div>' +
+                    '<footer>' + '</footer>');
+                addSaveEvent();
+                addReturn(junctionId);
+
+            });
+        };
+        var getDataTemplateForJunctionPoints = function (junctionId) {
             backend.getJunctionPointsByJunctionId(junctionId, function (result) {
                 $('#junctions-content').html(junctionTemplatesHtml(result));
             });
