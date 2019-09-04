@@ -58,8 +58,7 @@
                 var showJunctionTemplateEditForm = isJunctionTemplate(junctionInfo);
                 $('#feature-attributes').html(template(junctionInfo, showJunctionTemplateEditForm));
                 $('[id=junction-point-link]').click(function () {
-                    var junctionNumber = $('[id=liittymanro]').val();
-                    eventbus.trigger('junctionPointForm-junctionPoint:select', junctionId, junctionNumber);
+                    eventbus.trigger('junctionPointForm-junctionPoint:select', junctionId);
                     return false;
                 });
             });
