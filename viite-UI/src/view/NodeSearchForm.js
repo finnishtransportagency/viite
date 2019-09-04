@@ -103,7 +103,7 @@
             .value();
           text += elyNameLabel(sortedTemplates[0].elyCode);
           text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / AJR / OSA / AET)</label></br>';
-          _.each(sortedTemplates, function(junctionTemplate){
+          _.each(sortedTemplates, function(junctionTemplate) {
             text += junctionTemplateLink(junctionTemplate) + '</br>';
           });
         });
@@ -127,7 +127,7 @@
             .value();
           text += elyNameLabel(sortedTemplates[0].elyCode);
           text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / OSA / AET)</label></br>';
-          _.each(sortedTemplates, function(nodePointTemplate){
+          _.each(sortedTemplates, function(nodePointTemplate) {
             text += nodePointTemplateLink(nodePointTemplate) + '</br>';
           });
         });
