@@ -1196,7 +1196,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("junctionPointTemplate" -> {
       Map("id" -> junctionPoint.id,
         "junctionId" -> junctionPoint.junctionId,
-        "beforeAfter" -> junctionPoint.beforeAfter.value,
+        "beforeAfter" -> formatAfterBeforeToString(junctionPoint.beforeAfter.value ),
         "roadwayPointId" -> junctionPoint.roadwayPointId,
         "startDate" -> formatDateTimeToString(Some(junctionPoint.startDate)),
         "endDate" -> formatDateTimeToString(junctionPoint.endDate),
@@ -1207,7 +1207,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "addrM" -> junctionPoint.addrM,
         //RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER
         "roadNumber" -> junctionPoint.roadNumber,
-        "roadPartNumber" -> junctionPoint.roadPartNumber
+        "roadPartNumber" -> junctionPoint.roadPartNumber,
+        "track" -> junctionPoint.track
       )
     }
     )
@@ -1461,6 +1462,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(entryDate)
     val formattedDate = new SimpleDateFormat("dd.MM.yyyy").format(date)
     formattedDate
+  }
+  def formatAfterBeforeToString(afterBefore: Long): String = {
+
+    if (afterBefore == 0) {
+      val retValue = "E"
+      retValue
+    } else if ( afterBefore == 1) {
+      val otherValue = "J"
+      otherValue
+    } else {
+      val noneValue = ""
+      noneValue
+    }
+
   }
 
   private def formatDateTimeToString(dateOption: Option[DateTime]): Option[String] =

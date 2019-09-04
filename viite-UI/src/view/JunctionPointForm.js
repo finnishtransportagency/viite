@@ -83,12 +83,12 @@
         };
         var junctionDataRow = function (junctionPoint) {
             text = '<div class="form-group">' +
-                addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('ETÄISYYS') +
-                addSmallLabel('E/J') + addSmallLabel('LOPPUPVM') + addSmallLabel('ALKUPVM') +
+                addSmallLabel('TIE') + addSmallLabel('AJR')+ addSmallLabel('OSA') + addSmallLabel('ETÄISYYS') +
+                addSmallLabel('E/J') +
                 '</div>' +
                 '<div class="form-group">' +
-                addDisabledSmallInputNumber('tie', junctionPoint.junctionPointTemplate.roadNumber, 5) + addDisabledSmallInputNumber('osa', junctionPoint.junctionPointTemplate.roadPartNumber, 3) + addSmallInputNumber('etaisyys', '', 5) + //addReserveButton() +
-                addDisabledSmallInputNumber('E/J', junctionPoint.junctionPointTemplate.beforeAfter, 2) + addDisabledSmallInputNumber('loppupvm', junctionPoint.junctionPointTemplate.endDate, 12) + addDisabledSmallInputNumber('alkupvm', junctionPoint.junctionPointTemplate.startDate, 12) +
+                addDisabledSmallInputNumber('tie', junctionPoint.junctionPointTemplate.roadNumber, 5) +addDisabledSmallInputNumber('ajr', junctionPoint.junctionPointTemplate.track, 5)+ addDisabledSmallInputNumber('osa', junctionPoint.junctionPointTemplate.roadPartNumber, 3) + addSmallInputNumber('etaisyys', '', 5) + //addReserveButton() +
+                addDisabledSmallInputNumber('E/J', junctionPoint.junctionPointTemplate.beforeAfter, 2) +
                 '</div>';
             return text;
         };
