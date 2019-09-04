@@ -1,6 +1,5 @@
 (function (root) {
     root.JunctionEditForm = function (backend) {
-        var junctionIdForLink = 0;
         var svgJunction =
             '<svg\n' +
             '        xmlns="http://www.w3.org/2000/svg"\n' +
@@ -58,6 +57,11 @@
             return backend.getJunctionInfoByJunctionId(junctionId, function (junctionInfo) {
                 var showJunctionTemplateEditForm = isJunctionTemplate(junctionInfo);
                 $('#feature-attributes').html(template(junctionInfo, showJunctionTemplateEditForm));
+                $('[id=junction-point-link]').click(function () {
+                    var junctionNumber = $('[id=liittymanro]').val();
+                    eventbus.trigger('junctionPointForm-junctionPoint:select', junctionId, junctionNumber);
+                    return false;
+                });
             });
         };
 
@@ -138,16 +142,11 @@
                 var rootElement = $('#feature-attributes');
                 rootElement.empty();
                 getDataTemplates(junctionId);
-                junctionIdForLink = junctionId;
                 return false;
             });
 
 
-            $('[id=junction-point-link]').click(function () {
-                var junctionNumber = $('[id=liittymanro]').val();
-                eventbus.trigger('junctionPointForm-junctionPoint:select', junctionIdForLink, junctionNumber);
-                return false;
-            });
+
         };
 
         bindEvents();
