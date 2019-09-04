@@ -60,18 +60,19 @@
     };
 
     var nodePointTemplateLink = function(nodePointTemplate){
-      return '<a id=' + nodePointTemplate.id + ' class="node-point-template-link" href="#nodePointTemplate/' + nodePointTemplate.id + '" style="font-weight:bold;cursor:pointer;">' +
+      return '<a id=' + nodePointTemplate.id + ' class="node-point-template-link" href="#nodePointTemplate/' + nodePointTemplate.id + '" style="font-weight:bold;cursor:pointer;color: darkorange;">' +
         nodePointTemplate.roadNumber + ' / ' +
-        nodePointTemplate.track + ' / ' +
         nodePointTemplate.roadPartNumber + ' / ' +
         nodePointTemplate.addrM + '</a>';
     };
 
     var junctionTemplateLink = function(junctionTemplate){
-      return '<a id=' + junctionTemplate.junctionId + ' class="junction-template-link" href="#junctionTemplate/' + junctionTemplate.junctionId + '" style="font-weight:bold;cursor:pointer;color: darkorange;">' +
+      return '<a id=' + junctionTemplate.junctionId + ' class="junction-template-link" href="#junctionTemplate/' + junctionTemplate.junctionId + '" style="font-weight:bold;cursor:pointer;">' +
         junctionTemplate.roadNumber + ' / ' +
+        junctionTemplate.track + ' / ' +
         junctionTemplate.roadPartNumber + ' / ' +
         junctionTemplate.addrM + '</a>';
+
     };
 
     var nodesAndRoadAttributesHtmlList = function () {
@@ -86,8 +87,8 @@
       return text;
     };
 
-    var nodeTemplatesHtml = function (nodePointTemplates) {
-      var groups = _.groupBy(nodePointTemplates, function (template) {
+    var junctionTemplatesHtml = function (junctionTemplates) {
+      var groups = _.groupBy(junctionTemplates, function (template) {
         return template.elyCode;
       });
       var text = "";
@@ -102,16 +103,16 @@
             .value();
           text += elyNameLabel(sortedTemplates[0].elyCode);
           text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / AJR / OSA / AET)</label></br>';
-          _.each(sortedTemplates, function(nodePointTemplate){
-            text += nodePointTemplateLink(nodePointTemplate) + '</br>';
+          _.each(sortedTemplates, function(junctionTemplate) {
+            text += junctionTemplateLink(junctionTemplate) + '</br>';
           });
         });
       }
       return text;
     };
 
-    var junctionTemplatesHtml = function (junctionTemplates) {
-      var groups = _.groupBy(junctionTemplates, function (template) {
+    var nodePointTemplatesHtml = function (nodePointTemplates) {
+      var groups = _.groupBy(nodePointTemplates, function (template) {
         return template.elyCode;
       });
       var text = "";
@@ -126,8 +127,8 @@
             .value();
           text += elyNameLabel(sortedTemplates[0].elyCode);
           text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / OSA / AET)</label></br>';
-          _.each(sortedTemplates, function(junctionTemplate){
-            text += junctionTemplateLink(junctionTemplate) + '</br>';
+          _.each(sortedTemplates, function(nodePointTemplate) {
+            text += nodePointTemplateLink(nodePointTemplate) + '</br>';
           });
         });
       }
@@ -162,7 +163,7 @@
           }), function(template) {
             return template.junctionTemplate;
           });
-          $('#nodes-and-junctions-content').html(nodeTemplatesHtml(nodePointTemplates) + junctionTemplatesHtml(junctionTemplates));
+          $('#nodes-and-junctions-content').html(junctionTemplatesHtml(junctionTemplates) + nodePointTemplatesHtml(nodePointTemplates));
           applicationModel.removeSpinner();
         });
       };
