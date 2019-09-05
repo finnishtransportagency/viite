@@ -1329,7 +1329,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               throw new ProjectValidationException(ErrorRoadLinkNotFoundInProject)
             }
 
-          case LinkStatus.Transfer =>
+          case LinkStatus.Transfer | LinkStatus.UnChanged =>
             val (replaceable, road, part) = checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Transfer, toUpdateLinks)
             val updated = toUpdateLinks.map(l => {
               l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode),
@@ -1346,14 +1346,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             if (nameError.nonEmpty)
               return nameError
 
-          case LinkStatus.UnChanged =>
-            checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.UnChanged, toUpdateLinks)
-            // Reset back to original values
-            val updated = toUpdateLinks.map(l => {
-              l.copy(ely = ely.getOrElse(l.ely))
-            })
-            resetLinkValues(updated)
-            updateRoadTypeDiscontinuity(updated.map(_.copy(roadType = RoadType.apply(roadType.toInt), status = linkStatus)))
+//          case LinkStatus.UnChanged =>
+          //            checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.UnChanged, toUpdateLinks)
+          //            // Reset back to original values
+          //            val updated = toUpdateLinks.map(l => {
+          //              l.copy(ely = ely.getOrElse(l.ely))
+          //            })
+          //            resetLinkValues(updated)
+          //            updateRoadTypeDiscontinuity(updated.map(_.copy(roadType = RoadType.apply(roadType.toInt), status = linkStatus)))
 
           case LinkStatus.New =>
             // Current logic allows only re adding new road addresses within same road/part group
