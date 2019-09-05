@@ -54,7 +54,7 @@ pipeline {
                     //get_server()
                     script {
                         def EXECUTION_TARGET = get_server(params.TARGET)
-                        def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
+                        def IMPORT_TABLE = 'VVH_TIEOSOITE_KESAKUU_2019'
 
                         STAGE_RUN_TASK = [
                             "ssh $EXECUTION_TARGET \'cd /home/web/viite/current && echo YES |",
