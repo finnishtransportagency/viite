@@ -1,4 +1,4 @@
-lock '3.11.0'
+lock '3.11.1'
 set :application, 'viite'
 set :repo_url, 'https://github.com/finnishtransportagency/viite.git'
 set :branch, ENV['REVISION'] || ENV['BRANCH_NAME'] || 'master'
