@@ -285,7 +285,7 @@ object ProjectDeltaCalculator {
       && s._1.track != src.track)
       if (possibleExistingSameEndAddrMValue.nonEmpty) {
         val warningMessage = if (Math.abs(src.endMAddr - possibleExistingSameEndAddrMValue.head._1.endMAddr) > viite.MaxDistanceBetweenTracks)
-          Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
+          Some(viite.MaxDistanceBetweenTracksWarningMessage)
         else
           None
       ((src.copy(endMAddr = adjustAddressValues(src.endMAddr + possibleExistingSameEndAddrMValue.head._1.endMAddr, src.endMAddr, src.track)), target), warningMessage)
@@ -307,7 +307,7 @@ object ProjectDeltaCalculator {
           && s._1.track != possibleExistingSameStartAddrMValue.get._1.track)
         if (oppositePairingTrack.nonEmpty) {
           val warningMessage = if (Math.abs(possibleExistingSameStartAddrMValue.head._1.endMAddr - oppositePairingTrack.head._1.endMAddr) > viite.MaxDistanceBetweenTracks)
-            Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
+            Some(viite.MaxDistanceBetweenTracksWarningMessage)
           else
             None
           ((src.copy(startMAddr = adjustAddressValues(possibleExistingSameStartAddrMValue.head._1.endMAddr + oppositePairingTrack.head._1.endMAddr, possibleExistingSameStartAddrMValue.head._1.endMAddr, src.track)), target), warningMessage)
