@@ -17,6 +17,7 @@
     var RoadClass = LinkValues.RoadClass;
     var SelectionType = LinkValues.SelectionType;
     var RoadLinkType = LinkValues.RoadLinkType;
+    var ConstructionType = LinkValues.ConstructionType;
     var isNotEditingData = true;
     var isActiveLayer = false;
 
@@ -52,12 +53,15 @@
       zIndex: RoadZIndex.DirectionMarkerLayer.value
     });
 
+      function vectorLayerStyle(feature) {
+          return [projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+              projectLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
+      }
+
     var underConstructionRoadProjectLayer = new ol.layer.Vector({
       source: underConstructionRoadVector,
       name: 'underConstructionRoadProjectLayer',
-      style: function (feature) {
-          return projectLinkStyler.getStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
-      },
+      style: vectorLayerStyle,
       zIndex: RoadZIndex.UnderConstructionLayer.value
     });
 
@@ -70,9 +74,7 @@
     var projectLinkLayer = new ol.layer.Vector({
       source: projectLinkVector,
       name: layerName,
-      style: function(feature) {
-          return projectLinkStyler.getStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
-      },
+      style: vectorLayerStyle,
       zIndex: RoadZIndex.VectorLayer.value
     });
 
@@ -514,7 +516,7 @@
       });
 
       var separated = _.partition(projectCollection.getAll(), function (projectRoad) {
-        return projectRoad.constructionType === 1;
+        return projectRoad.constructionType === ConstructionType.UnderConstruction.value;
       });
 
       var toBeTerminated = _.filter(editedLinks, function (link) {
@@ -595,7 +597,7 @@
         if (editedLink) {
           if (_.contains( _.pluck(toBeTerminated, 'id'), feature.linkData.linkId)) {
             feature.linkData.status = LinkStatus.Terminated.value;
-            var termination = projectLinkStyler.getStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
+            var termination = projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
             feature.setStyle(termination);
             features.push(feature);
           }

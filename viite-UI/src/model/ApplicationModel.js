@@ -186,7 +186,7 @@
         if (layer === 'roadAddressProject') {
           if (underConstructionVisibleCheckbox) {
             $('#underConstructionVisibleCheckbox')[0].checked = false;
-            $('#underConstructionVisibleCheckbox')[0].disabled = true;
+            $('#underConstructionVisibleCheckbox')[0].disabled = false;
           }
           eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
         } else {
