@@ -1,5 +1,6 @@
 (function (root) {
     root.JunctionEditForm = function (backend) {
+
         var svgJunction =
             '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 10px; margin-top: 5px"></object>';
 
@@ -46,7 +47,8 @@
                 '</div>' +
                 '</div>' +
                 '</div>' +
-                '<footer>' + '</footer>');
+                '<footer>' +
+                '</footer>');
 
         };
         var checkEmptyAndNullAndZero = function (value) {
