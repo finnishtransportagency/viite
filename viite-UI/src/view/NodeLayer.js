@@ -86,17 +86,6 @@
       });
       junctionPointTemplateClick.set('name','junctionPointTemplateClickInteractionNL');
 
-      // var junctionPointClick = new ol.interaction.Select({
-      //   //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
-      //   multi: false,
-      //   //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      //   layers: [junctionMarkerLayer],
-      //   //Limit this interaction to the singleClick
-      //   condition: ol.events.condition.singleClick
-      // });
-      // junctionPointClick.set('name','junctionPointClickInteractionNL');
-
-
 
       /**
        * We now declare what kind of custom actions we want when the interaction happens.
@@ -108,10 +97,6 @@
        */
 
       junctionPointTemplateClick.on('select', function (event) {
-        // var selected = _.find(event.selected, function (selectionTarget) {
-        //   return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
-        // });
-        // sets selected mode by default - in case a node point is clicked without any mode
         var selected = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.junctionPointTemplateInfo);
         });
@@ -120,34 +105,14 @@
         //   applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
         // }
         // if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value) && !_.isUndefined(selected)) {
-        //   //selectedNodePoint.open(selected.junctionPointTemplateInfo);
-        //   eventbus.trigger('junctionEdit:selected', selected);
+        //   eventbus.trigger('junctionEdit:selected', selected.junctionPointTemplateInfo.junctionId);
         // } else {
-        //   //selectedNodePoint.close();
+        //   selected.close();
         // }
 
       });
 
-      // junctionPointClick.on('select', function (event) {
-      //   // var selected = _.find(event.selected, function (selectionTarget) {
-      //   //   return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
-      //   // });
-      //   // sets selected mode by default - in case a node point is clicked without any mode
-      //   var selected = _.find(event.selected, function (selectionTarget) {
-      //     return !_.isUndefined(selectionTarget.junctionPoint);
-      //   });
-      //   eventbus.trigger('junctionEdit:selected', selected.junctionPoint.junctionId);
-      //   // if (!_.isUndefined(selected) && applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
-      //   //   applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
-      //   // }
-      //   // if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value) && !_.isUndefined(selected)) {
-      //   //   //selectedNodePoint.open(selected.junctionPointTemplateInfo);
-      //   //   eventbus.trigger('junctionEdit:selected', selected);
-      //   // } else {
-      //   //   //selectedNodePoint.close();
-      //   // }
-      //
-      // });
+
       /**
        * Simple method that will add various open layers 3 features to a selection.
        * @param ol3Features
@@ -164,17 +129,6 @@
         });
       };
 
-      // var addJunctionPointFeaturesToSelection = function (ol3Features) {
-      //   var olUids = _.map(junctionPointClick.getFeatures().getArray(), function(feature){
-      //     return feature.ol_uid;
-      //   });
-      //   _.each(ol3Features, function(feature){
-      //     if (!_.contains(olUids, feature.ol_uid)) {
-      //       junctionPointClick.getFeatures().push(feature);
-      //       olUids.push(feature.ol_uid); // prevent adding duplicate entries
-      //     }
-      //   });
-      // };
 
       /**
        * Event triggered by the selectedNode.open() returning all the open layers 3 features
@@ -182,7 +136,6 @@
        */
       me.eventListener.listenTo(eventbus, 'node:ol3Selected', function(ol3Features){
         addNodeFeaturesToSelection(ol3Features);
-        //addJunctionPointFeaturesToSelection(ol3Features);
       });
 
       /**
@@ -191,16 +144,15 @@
        */
       var addClickInteractions = function () {
         map.addInteraction(junctionPointTemplateClick);
-        //map.addInteraction(junctionPointClick);
       };
 
-      // /**
-      //  * This will remove all the following interactions from the map:
-      //  * - nodePointTemplateClick
-      //  */
-      // var removeSelectInteractions = function() {
-      //   map.removeInteraction(nodePointTemplateClick);
-      // };
+      /**
+       * This will remove all the following interactions from the map:
+       * - nodePointTemplateClick
+       */
+      var removeSelectInteractions = function() {
+        map.removeInteraction(junctionPointTemplateClick);
+      };
 
       // We add the defined interactions to the map.
       addClickInteractions();
