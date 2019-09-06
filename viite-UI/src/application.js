@@ -11,8 +11,8 @@
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     window.applicationModel = new ApplicationModel([selectedLinkProperty]);
-    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel));
     var selectedNodePoint = new SelectedNodePoint();
+      var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel), selectedNodePoint);
 
     var models = {
       roadCollection: roadCollection,
