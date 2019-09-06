@@ -220,7 +220,7 @@
           eventbus.trigger('nodeSearchTool:clickNode', event.currentTarget.id, map);
         });
 
-        rootElement.on('click', '.node-point-template-link', function (event) {
+        rootElement.one('click', '.node-point-template-link', function (event) {
           eventbus.trigger('nodeSearchTool:clickNodePointTemplate', event.currentTarget.id, map);
         });
 
