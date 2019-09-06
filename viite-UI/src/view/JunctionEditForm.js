@@ -1,6 +1,14 @@
 (function (root) {
     root.JunctionEditForm = function (backend) {
-
+        var formButtons = function () {
+            return '<div class="form form-controls">' +
+                '<button class="save btn btn-edit-junction-save" disabled>Tallenna</button>' +
+                '<button class="cancel btn btn-edit-junction-cancel" disabled>Peruuta</button>' +
+                '<button class="send btn btn-detach-junction" disabled>Irrota liittyma solmusta</button>' +
+                '<button class="cancel btn btn-return-list-junction">Palaa lista-näkymään</button>' +
+                '<button class="send btn btn-send" disabled>Vie Tierekisteriin</button>' +
+                '</div>';
+        };
         var svgJunction =
             '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 10px; margin-top: 5px"></object>';
 
@@ -48,6 +56,7 @@
                 '</div>' +
                 '</div>' +
                 '<footer>' +
+                formButtons() +
                 '</footer>');
 
         };
