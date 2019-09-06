@@ -201,7 +201,7 @@ class NodePointDAO extends BaseDAO {
          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
          JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
          LEFT JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
-         where NP.id = $id AND NP.node_id is null AND NP.node_id is null and NP.valid_to is null and NP.end_date is null and NP.node_id is null and RW.end_date is null
+         where NP.id = $id AND NP.node_id is null and NP.valid_to is null and NP.end_date is null and RW.end_date is null
        """
     queryList(query).headOption
   }
