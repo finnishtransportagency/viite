@@ -92,23 +92,22 @@
        * Note that 'select' is triggered when a feature is either selected or deselected.
        * The event holds the selected features in the events.selected and the deselected in event.deselected.
        *
-       * In this particular case we are fetching every node point template marker in view and
-       * sending them to the selectedNode.open for further processing.
+       * In this particular case we are fetching every junction point template marker in view and
+       * sending them to the  eventbus.trigger('junctionEdit:selected ...) for further processing.
        */
 
       junctionPointTemplateClick.on('select', function (event) {
         var selected = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.junctionPointTemplateInfo);
         });
-        eventbus.trigger('junctionEdit:selected', selected.junctionPointTemplateInfo.junctionId);
-        // if (!_.isUndefined(selected) && applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
-        //   applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
-        // }
-        // if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value) && !_.isUndefined(selected)) {
-        //   eventbus.trigger('junctionEdit:selected', selected.junctionPointTemplateInfo.junctionId);
-        // } else {
-        //   selected.close();
-        // }
+        if (!_.isUndefined(selected) && applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
+          applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+        }
+        if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value) && !_.isUndefined(selected)) {
+          eventbus.trigger('junctionEdit:selected', selected.junctionPointTemplateInfo.junctionId);
+        } else {
+          selected.close();
+        }
 
       });
 
