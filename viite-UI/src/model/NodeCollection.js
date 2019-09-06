@@ -1,5 +1,5 @@
 (function (root) {
-  root.NodeCollection = function (backend, locationSearch) {
+  root.NodeCollection = function (backend, locationSearch, selectedNodePoint) {
     var me = this;
     var nodes = [];
     var nodesWithAttributes = [];
@@ -62,16 +62,16 @@
       var nodes = _.filter(fetchResult, function(node){
         return !_.isUndefined(node.name) ;
       });
-      var nodePointTemplates = _.map(_.filter(fetchResult, function(node){
+      var nodePointTemplates = _.unique(_.map(_.filter(fetchResult, function(node){
         return !_.isUndefined(node.nodePointTemplate) ;
       }), function (nodePointTemp) {
         return nodePointTemp.nodePointTemplate;
-      });
-      var junctionPointTemplates = _.map(_.filter(fetchResult, function(node){
+      }), "id");
+      var junctionPointTemplates = _.unique(_.map(_.filter(fetchResult, function(node){
           return !_.isUndefined(node.junctionPointTemplate) ;
       }), function (junctionPointTemp) {
           return junctionPointTemp.junctionPointTemplate;
-      });
+      }), "id");
 
       me.setNodes(nodes);
       me.setMapNodePointTemplates(nodePointTemplates);
@@ -112,9 +112,11 @@
       if (_.isUndefined(nodePointTemplate)) {
         backend.getNodePointTemplateById(id, function (results) {
           moveToLocation(results.nodePointTemplate);
+          selectedNodePoint.openNodePointTemplates(_.unique([results.nodePointTemplate], "id"));
         });
       } else {
         moveToLocation(nodePointTemplate);
+        selectedNodePoint.openNodePointTemplates(_.unique([nodePointTemplate], "id"));
       }
     });
 
