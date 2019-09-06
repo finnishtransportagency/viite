@@ -1,57 +1,10 @@
 (function (root) {
     root.JunctionEditForm = function (backend) {
         var svgJunction =
-            '<svg\n' +
-            '        xmlns="http://www.w3.org/2000/svg"\n' +
-            '        xmlns:xlink="http://www.w3.org/1999/xlink"\n' +
-            '        width="24"\n' +
-            '        height="24"\n' +
-            '        viewBox="0 0 24 24"\n' +
-            '>\n' +
-            '    <circle\n' +
-            '            style="opacity:1;fill:#103bae;fill-opacity:1;stroke:none;"\n' +
-            '            id="outline"\n' +
-            '            cx="12"\n' +
-            '            cy="12"\n' +
-            '            r="12"/>\n' +
-            '    <circle\n' +
-            '            style="opacity:1;fill:#235aeb;fill-opacity:1;stroke:none;"\n' +
-            '            id="fill"\n' +
-            '            cx="12"\n' +
-            '            cy="12"\n' +
-            '            r="10"/>\n' +
-            '    <text id="text"\n' +
-            '          x="12"\n' +
-            '          y="17"\n' +
-            '          style="font-size:14px;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;">\n' +
-            '    </text>\n' +
-            '    <script type="text/ecmascript" xlink:href="param.js" />\n' +
-            '</svg>';
+            '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 10px; margin-top: 5px"></object>';
 
         var svgJunctionTemplate =
-            '<svg\n' +
-            '  xmlns="http://www.w3.org/2000/svg"\n' +
-            '  width="24"\n' +
-            '  height="24"\n' +
-            '   viewBox="0 0 24 24" > \n' +
-            '        <circle \n' +
-            '   style="opacity:1;fill:#f2c74b;fill-opacity:1;stroke:none;"\n' +
-            '   id="outline"\n' +
-            '   cx="12"\n' +
-            '   cy="12"\n' +
-            '   r="12"/>\n' +
-            '       <circle\n' +
-            '   style="opacity:1;fill:#235aeb;fill-opacity:1;stroke:none;"\n' +
-            '   id="fill"\n' +
-            '   cx="12"\n' +
-            '   cy="12"\n' +
-            '   r="9"/>\n' +
-            '       <text id="text"\n' +
-            '   x="12"\n' +
-            '   y="17"\n' +
-            '   style="font-size:14px;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;">\n' +
-            '       </text>\n' +
-            '       </svg>\n';
+            '<object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 10px; margin-top: 5px"></object>';
 
         var getDataTemplates = function (junctionId) {
             return backend.getJunctionInfoByJunctionId(junctionId, function (junctionInfo) {
@@ -70,8 +23,10 @@
                 title() +
                 '</header>' +
                 '<div class="wrapper read-only">' +
+                '<div>' +
                 addPicture(showJunctionTemplateEditForm) +
                 '<a id="junction-point-link" class="floating-stops">Tarkastele liittymäkohtien tietoja</a>' +
+                '</div>' +
                 '<div class="form form-horizontal form-dark">' +
                 '<div class="form-group-metadata">' +
                 '<p class="form-control-static asset-log-info-metadata">Alkupvm: ' + junctionInfo.startDate + '</p>' +
@@ -119,8 +74,6 @@
             } else {
                 return svgJunction;
             }
-
-
         };
 
         var addSmallLabelYellow = function (label) {
@@ -143,7 +96,6 @@
                 getDataTemplates(junctionId);
                 return false;
             });
-
 
 
         };
