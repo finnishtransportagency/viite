@@ -975,6 +975,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/junctionInfoByJunctionId") {
+    val junctionId = params.get("junctionId").getOrElse(halt(BadRequest("Missing mandatory 'junctionId' parameter")))
+    val x: Seq[Long] = Seq(junctionId.toLong)
+    if (junctionId == "") {
+      val message = "junctionId parameter is empty"
+      logger.info(message)
+      BadRequest(message)
+    } else {
+      time(logger, s"GET request for /junctionInfoByJunctionId + junctionId="+ junctionId){
+        nodesAndJunctionsService.getJunctionInfoByJunctionId(x).map(junctionInfoToApi)
+      }
+    }
+  }
+
   private def getProjectLinks(projectId: Long, zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val startTime = System.currentTimeMillis()
@@ -1193,6 +1207,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
     }
     )
+  }
+
+  def junctionInfoToApi(junctionInfo: JunctionInfo) : Map[String, Any] = {
+      Map("id" -> junctionInfo.id,
+        "junctionNumber" -> junctionInfo.junctionNumber,
+        "nodeId" -> junctionInfo.nodeId,
+        "startDate" -> formatDateTimeToShortPatternString(Some(junctionInfo.startDate)),
+        "nodeNumber" -> junctionInfo.nodeNumber,
+        "nodeName" -> junctionInfo.nodeName)
   }
 
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
@@ -1438,6 +1461,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   private def formatDateTimeToString(dateOption: Option[DateTime]): Option[String] =
     dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy, HH:mm:ss")) }
+
+  private def formatDateTimeToShortPatternString(dateOption: Option[DateTime]): Option[String] =
+    dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy")) }
 
   private def calibrationPointToApi(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]): Option[Map[String, Any]] = {
     calibrationPoint match {
