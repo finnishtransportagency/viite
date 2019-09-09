@@ -174,6 +174,15 @@
 	}
 }
 
+.btn-edit-junction-save {
+	height: 30px;
+	width: 38%;
+	float: left;
+	margin-left: 40px;
+	margin-bottom: 10px;
+	border-color: @blue-darker;
+	background-color: @blue;
+	box-shadow: inset 0 1px 0 rgba(red(@blue-lightest), green(@blue-lightest), blue(@blue-lightest), .325), @btn-drop-shadow;
 
 .btn-edit-node-save {
 	height: 30px;
@@ -197,6 +206,47 @@
 	}
 }
 
+.btn-save {
+  margin-right:6px !important;
+  width: 60px;
+  height: 30px;
+  border-color: @blue-darker;
+  background-color: @blue;
+  box-shadow: inset 0 1px 0 rgba(red(@blue-lightest), green(@blue-lightest), blue(@blue-lightest), .325), @btn-drop-shadow;
+
+  &:hover,
+  &:focus {
+    background-color: @blue-dark;
+    box-shadow: inset 0 1px 0 rgba(red(@blue-lighter), green(@blue-lighter), blue(@blue-lighter), .325), @btn-drop-shadow-hover;
+  }
+
+  &:active,
+  &.active {
+    box-shadow: inset 0 1px 0 rgba(red(@blue-darker), green(@blue-darker), blue(@blue-darker), .325);
+  }
+}
+
+.btn-edit-junction-cancel {
+	height: 30px;
+	width: 38%;
+	float: right;
+	margin-right: 32px;
+	margin-bottom: 10px;
+	border-color: @gray-darker-2;
+	background-color: @gray-dark;
+	box-shadow: inset 0 1px 0 rgba(red(@gray-lighter), green(@gray-lighter), blue(@gray-lighter), .325), @btn-drop-shadow;
+
+	&:hover,
+	&:focus {
+		background-color: @gray-dark-2;
+		box-shadow: inset 0 1px 0 rgba(red(@gray-lighter), green(@gray-lighter), blue(@gray-lighter), .325), @btn-drop-shadow-hover;
+	}
+
+	&:active,
+	&.active {
+		box-shadow: inset 0 1px 0 rgba(red(@gray-darker-2), green(@gray-darker-2), blue(@gray-darker-2), .325);
+	}
+}
 .btn-cancel {
 	margin-right:6px !important;
 	width: 60px;
@@ -482,6 +532,14 @@
 	margin-top: 20px;
 	background-color: @green;
 }
+.btn-detach-junction {
+	height: 30px;
+	width: 38%;
+	float: left;
+	margin-left: 40px;
+	margin-bottom: 10px;
+	background-color: @green;
+}
 .btn-toFloating {
   height: 30px;
   width: 80%;
@@ -522,7 +580,21 @@
 	padding-left: 5px;
     cursor: pointer;
 }
+.btn-return-list-junction {
+	height: 30px;
+	width: 36%;
+	float: left;
+	margin-left: 16px;
+	margin-bottom: 10px;
+	border-color: @blue-darker;
+	background-color: @blue;
 
+	&:hover,
+	&:focus {
+		background-color: @blue-dark;
+		box-shadow: inset 0 1px 0 rgba(red(@blue-lighter), green(@blue-lighter), blue(@blue-lighter), .325), @btn-drop-shadow-hover;
+	}
+}
 .btn-refresh {
 	border: none;
 	padding-right: 6px !important;
