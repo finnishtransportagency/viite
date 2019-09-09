@@ -116,7 +116,7 @@
        * Simple method that will add various open layers 3 features to a selection.
        * @param ol3Features
        */
-      var addNodeFeaturesToSelection = function (ol3Features) {
+      var addJunctionFeaturesToSelection = function (ol3Features) {
         var olUids = _.map(junctionPointTemplateClick.getFeatures().getArray(), function(feature){
           return feature.ol_uid;
         });
@@ -134,16 +134,8 @@
        * that need to be included in the selection.
        */
       me.eventListener.listenTo(eventbus, 'node:ol3Selected', function(ol3Features){
-        addNodeFeaturesToSelection(ol3Features);
+        addJunctionFeaturesToSelection(ol3Features);
       });
-
-      /**
-       * This will add all the following interactions from the map:
-       * - nodePointTemplateClick
-       */
-      var addClickInteractions = function () {
-        map.addInteraction(junctionPointTemplateClick);
-      };
 
       /**
        * This will remove all the following interactions from the map:
@@ -152,9 +144,6 @@
       var removeSelectInteractions = function() {
         map.removeInteraction(junctionPointTemplateClick);
       };
-
-      // We add the defined interactions to the map.
-      addClickInteractions();
 
       /**
        * Type of interactions we want the map to be able to respond.
@@ -226,6 +215,7 @@
        */
       var addClickInteractions = function () {
         map.addInteraction(nodePointTemplateClick);
+        map.addInteraction(junctionPointTemplateClick);
       };
 
       // We add the defined interactions to the map.
