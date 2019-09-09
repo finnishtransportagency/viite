@@ -16,6 +16,10 @@
               '<span id="closeProjectSpan" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>';
     };
 
+    var captionTitle = function (title) {
+      return '<span class="caption-title">' + title + '</span>';
+    };
+
     var addRoadNameField = function (name, isBlocked) {
       var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
       var disabled = nameToDisplay !== "" && isBlocked;
@@ -255,7 +259,7 @@
         '<img src="images/calibration-point.svg" style="margin-right: 5px" class="calibration-point"/>' +
         '<label class="control-label-small" style="display: inline">ETÄISYYSLUKEMA VALINNAN</label>' +
         '</div>' +
-        '<div class="'+prefix+'form-group">' +
+        '<div class="' + prefix + 'form-group">' +
         '<label class="control-label-small" style="float: left; margin-top: 10px">ALUSSA</label>' +
         addSmallInputNumber('beginDistance', '--', true, 5) +
         '<label class="control-label-small" style="float: left;margin-top: 10px">LOPUSSA</label>' +
@@ -339,6 +343,7 @@
       distanceValue: distanceValue,
       title: title,
       titleWithEditingTool: titleWithEditingTool,
+      captionTitle: captionTitle,
       projectButtons: projectButtons,
       staticField: staticField,
       getProjectErrors:getProjectErrors
