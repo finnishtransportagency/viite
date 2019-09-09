@@ -457,7 +457,7 @@
       });
 
       rootElement.on('click', '#editProjectSpan', currentProject, function () {
-        applicationModel.setSelectedTool("Select");
+        applicationModel.setSelectedTool(LinkValues.Tool.Default.value);
         applicationModel.addSpinner();
         eventbus.trigger('projectChangeTable:hide');
         projectCollection.getProjectsWithLinksById(currentProject.id).then(function (result) {

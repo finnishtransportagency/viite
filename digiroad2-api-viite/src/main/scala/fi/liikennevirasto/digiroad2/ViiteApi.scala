@@ -922,6 +922,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/nodepointtemplate/:id") {
+    val id = params("id").toLong
+    time(logger, s"GET request for /nodepointtemplate/$id") {
+      nodesAndJunctionsService.getNodePointTemplateById(id) match {
+        case None => halt(NotFound("Node Points Template not found"))
+        case Some(nodePoint) => nodePointTemplateToApi(nodePoint)
+      }
+    }
+  }
+
   private def getRoadAddressLinks(zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val viiteRoadLinks = zoomLevel match {
@@ -1112,13 +1122,32 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "nodeId" -> nodePoint.nodeId)
   }
 
+  def simpleNodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
+    Map("id" -> nodePoint.id,
+      "nodeId" -> nodePoint.nodeId,
+      "beforeAfter" -> nodePoint.beforeAfter.value,
+      "roadwayPointId" -> nodePoint.roadwayPointId,
+      "startDate" -> formatToString(nodePoint.startDate.toString),
+      "endDate" -> formatDateTimeToString(nodePoint.endDate),
+      "validFrom" -> formatDateTimeToString(Some(nodePoint.validFrom)),
+      "validTo" -> formatDateTimeToString(nodePoint.validTo),
+      "createdBy" -> nodePoint.createdBy,
+      "roadwayNumber" -> nodePoint.roadwayNumber,
+      "addrM" -> nodePoint.addrM,
+      "elyCode" -> nodePoint.elyCode,
+      "roadNumber" -> nodePoint.roadNumber,
+      "roadPartNumber" -> nodePoint.roadPartNumber,
+      "track" -> nodePoint.track
+    )
+  }
+
   def nodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
     Map("nodePointTemplate" -> {
       Map("id" -> nodePoint.id,
         "nodeId" -> nodePoint.nodeId,
         "beforeAfter" -> nodePoint.beforeAfter.value,
         "roadwayPointId" -> nodePoint.roadwayPointId,
-        "startDate" -> formatDateTimeToString(Some(nodePoint.startDate)),
+        "startDate" -> formatToString(nodePoint.startDate.toString),
         "endDate" -> formatDateTimeToString(nodePoint.endDate),
         "validFrom" -> formatDateTimeToString(Some(nodePoint.validFrom)),
         "validTo" -> formatDateTimeToString(nodePoint.validTo),

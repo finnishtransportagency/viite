@@ -1,5 +1,5 @@
 (function(root) {
-    root.NodeLayer = function (map, roadLayer, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
+    root.NodeLayer = function (map, roadLayer, selectedNodePoint, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
       Layer.call(this, map);
       var me = this;
       var indicatorVector = new ol.source.Vector({});
@@ -69,6 +69,87 @@
         nodePointTemplateLayer.setOpacity(opacity);
         junctionTemplateLayer.setOpacity(opacity);
       };
+
+      /**
+       * Type of interactions we want the map to be able to respond.
+       * A selected feature is moved to a new/temporary layer out of the default roadLayer.
+       * This interaction is restricted to a single click (there is a 250 ms enforced
+       * delay between single clicks in order to differentiate from double click).
+       * @type {ol.interaction.Select}
+       */
+      var nodePointTemplateClick = new ol.interaction.Select({
+        //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
+        multi: true,
+        //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
+        layers: [nodePointTemplateLayer],
+        //Limit this interaction to the singleClick
+        condition: ol.events.condition.singleClick
+      });
+      nodePointTemplateClick.set('name','nodePointTemplateClickInteractionNL');
+
+      /**
+       * We now declare what kind of custom actions we want when the interaction happens.
+       * Note that 'select' is triggered when a feature is either selected or deselected.
+       * The event holds the selected features in the events.selected and the deselected in event.deselected.
+       *
+       * In this particular case we are fetching every node point template marker in view and
+       * sending them to the selectedNode.open for further processing.
+       */
+      nodePointTemplateClick.on('select', function (event) {
+        var selected = _.filter(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
+        });
+        // sets selected mode by default - in case a node point is clicked without any mode
+        if (!_.isUndefined(selected) && applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
+          applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+        }
+        if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value) && !_.isUndefined(selected)) {
+          selectedNodePoint.openNodePointTemplates(_.unique(_.map(selected, "nodePointTemplateInfo"), "id"));
+        } else {
+          selectedNodePoint.close();
+        }
+      });
+
+      /**
+       * Simple method that will add various open layers 3 features to a selection.
+       * @param ol3Features
+       */
+      var addNodeFeaturesToSelection = function (ol3Features) {
+        var olUids = _.map(nodePointTemplateClick.getFeatures().getArray(), function(feature){
+          return feature.ol_uid;
+        });
+        _.each(ol3Features, function(feature){
+          if (!_.contains(olUids, feature.ol_uid)) {
+            nodePointTemplateClick.getFeatures().push(feature);
+            olUids.push(feature.ol_uid); // prevent adding duplicate entries
+          }
+        });
+      };
+
+      /**
+       * Event triggered by the selectedNode.open() returning all the open layers 3 features
+       * that need to be included in the selection.
+       */
+      me.eventListener.listenTo(eventbus, 'node:ol3Selected', function(ol3Features){
+        addNodeFeaturesToSelection(ol3Features);
+      });
+
+      /**
+       * This will add all the following interactions from the map:
+       * - nodePointTemplateClick
+       */
+      var addClickInteractions = function () {
+        map.addInteraction(nodePointTemplateClick);
+      };
+
+      // We add the defined interactions to the map.
+      addClickInteractions();
+
+      me.eventListener.listenTo(eventbus, 'node:unselected', function() {
+        if(nodePointTemplateLayer.getSource().getFeatures().length !== 0) {
+          nodePointTemplateLayer.getSource().clear();
+        }
+      });
 
       var redraw = function () {
         if(applicationModel.getSelectedLayer() === 'node') {
