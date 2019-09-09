@@ -151,6 +151,12 @@
         }
       });
 
+      me.eventListener.listenTo(eventbus, 'map:clicked', function() {
+        if(nodePointTemplateLayer.getSource().getFeatures().length > 0){
+            selectedNodePoint.close();
+        }
+      });
+
       var redraw = function () {
         if(applicationModel.getSelectedLayer() === 'node') {
 
