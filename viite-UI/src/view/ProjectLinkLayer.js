@@ -605,9 +605,6 @@
       if (features.length !== 0)
         addFeaturesToSelection(features);
       features = features.concat(partitioned[1]);
-      _.each(features, function(feature) {
-        return feature;
-      });
       projectLinkVector.clear(true);
       projectLinkVector.addFeatures(features);
       projectLinkLayer.changed();
