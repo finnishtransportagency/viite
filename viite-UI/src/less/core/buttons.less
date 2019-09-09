@@ -499,11 +499,11 @@
 	background-color: @green;
 }
 .btn-detach-junction {
-	display: table-row;
 	height: 30px;
-	width: 40%;
+	width: 38%;
+	float: left;
 	margin-left: 40px;
-	margin-top: 20px;
+	margin-bottom: 10px;
 	background-color: @green;
 }
 .btn-toFloating {
@@ -541,11 +541,11 @@
     cursor: pointer;
 }
 .btn-return-list-junction {
-	display: table-row;
 	height: 30px;
-	width: 40%;
-	margin-top: 20px;
-	margin-left: 40px;
+	width: 36%;
+	float: left;
+	margin-left: 16px;
+	margin-bottom: 10px;
 	border-color: @blue-darker;
 	background-color: @blue;
 
@@ -563,4 +563,10 @@
 	margin-bottom: 0;
 	float: right !important;
 	cursor: pointer;        /* make the cursor like hovering over an <a> element */
+}
+.buttons-alignment {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-arround;
+	align-items: flex-start;
 }
