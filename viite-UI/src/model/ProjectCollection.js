@@ -9,7 +9,6 @@
     var projectInfo;
     var currentProject;
     var fetchedProjectLinks = [];
-    var fetchedUnderConstructionProjectLinks = [];
     var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
     var self = this;
@@ -87,13 +86,7 @@
         });
         publishableProject = isPublishable;
 
-        var separated = _.partition(self.getAll(), function (projectRoad) {
-          return projectRoad.constructionType === ConstructionType.UnderConstruction.value;
-        });
-        fetchedUnderConstructionProjectLinks = separated[0];
-        var nonUnderConstructionProjectRoads = separated[1];
-
-        eventbus.trigger('roadAddressProject:fetched', nonUnderConstructionProjectRoads, fetchedUnderConstructionProjectLinks);
+        eventbus.trigger('roadAddressProject:fetched');
         eventbus.trigger('roadAddressProject:writeProjectErrors');
       });
     };
