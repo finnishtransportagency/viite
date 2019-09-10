@@ -188,10 +188,10 @@
         var underConstructionVisibleCheckbox = $('#underConstructionVisibleCheckbox')[0];
         if (layer === 'roadAddressProject') {
           if (underConstructionVisibleCheckbox) {
-            $('#underConstructionVisibleCheckbox')[0].checked = false;
-            $('#underConstructionVisibleCheckbox')[0].disabled = true;
+            $('#underConstructionVisibleCheckbox')[0].checked = true;
+            $('#underConstructionVisibleCheckbox')[0].disabled = false;
           }
-          eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
+          eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
         } else {
           if (underConstructionVisibleCheckbox) {
             $('#underConstructionVisibleCheckbox')[0].checked = true;
