@@ -25,7 +25,7 @@
 
     var projectLinkVector = new ol.source.Vector({
       loader: function () {
-          var notUnderConstruction = _.filter(projectCollection.getAll(), function(link){
+          var notUnderConstruction = _.filter(projectCollection.getAll(), function(link) {
               return link.constructionType != LinkValues.ConstructionType.UnderConstruction.value;
           });
         var features = _.map(notUnderConstruction, function (projectLink) {
