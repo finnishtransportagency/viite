@@ -6,7 +6,7 @@
                 '<button class="cancel btn btn-edit-junction-cancel" disabled>Peruuta</button>' +
                 '<button class="send btn btn-detach-junction" disabled>Irrota liittyma solmusta</button>' +
                 '<button class="cancel btn btn-return-list-junction">Palaa lista-näkymään</button>' +
-                '<button class="send btn btn-send" disabled>Vie Tierekisteriin</button>' +
+                '<button class="send btn btn-send-junction" disabled>Vie Tierekisteriin</button>' +
                 '</div>';
         };
         var svgJunction =
