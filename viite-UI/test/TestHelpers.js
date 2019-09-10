@@ -1,4 +1,4 @@
-define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAddressProjectTestData', 'SplittingTestData'],
+define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAddressProjectTestData'],
 
   function(RoadAddressTestData,
            RoadLinkTestData,

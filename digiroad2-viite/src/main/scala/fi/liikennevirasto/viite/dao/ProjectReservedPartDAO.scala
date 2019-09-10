@@ -96,6 +96,17 @@ class ProjectReservedPartDAO {
     }
   }
 
+  def fetchProjectReservedRoadPartsByProjectId(projectId: Long): Seq[ProjectReservedPart] = {
+    time(logger, s"Fetch project reserved road parts for project: $projectId") {
+      val sql = s"""SELECT rp.id, rp.road_number, rp.road_part_number FROM PROJECT_RESERVED_ROAD_PART rp WHERE rp.project_id = $projectId"""
+      Q.queryNA[(Long, Long, Long)](sql).list.map {
+        case (id, road, part) =>
+          ProjectReservedPart(id, road, part, None, None, None, None,
+            None, None, None)
+      }
+    }
+  }
+
   def fetchReservedRoadParts(projectId: Long): Seq[ProjectReservedPart] = {
     time(logger, s"Fetch reserved road parts for project: $projectId") {
       val sql =
@@ -153,7 +164,7 @@ class ProjectReservedPartDAO {
           PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
             pl.road_part_number = rp.road_part_number AND pl.status != ${LinkStatus.Terminated.value})
           LEFT JOIN Roadway ra ON (ra.Id = pl.Roadway_Id OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
-          LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
+          LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id AND lc.valid_to IS NULL)
           WHERE $filter AND pl.status != ${LinkStatus.NotHandled.value}
           GROUP BY rp.id, rp.project_id, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER
           ) gr order by gr.road_number, gr.road_part_number"""
@@ -185,6 +196,7 @@ class ProjectReservedPartDAO {
             rw.roadway_number = lc.ROADWAY_NUMBER AND
             rw.road_Number = pl.road_number AND rw.road_part_number = pl.road_part_number AND rp.project_id = pl.project_id AND
             rp.road_number = pl.road_number AND rp.road_part_number = pl.road_part_number AND rw.END_DATE IS NULL AND rw.VALID_TO IS NULL AND
+            lc.valid_to IS NULL AND
             lc.id NOT IN (select pl2.linear_location_id from project_link pl2 WHERE pl2.road_number = rw.road_number AND pl2.road_part_number = rw.road_part_number)
             AND $filter AND pl.status = ${LinkStatus.NotHandled.value}
             GROUP BY rp.id, pl.project_id, rw.road_number, rw.road_part_number) gr ORDER BY gr.road_number, gr.road_part_number"""

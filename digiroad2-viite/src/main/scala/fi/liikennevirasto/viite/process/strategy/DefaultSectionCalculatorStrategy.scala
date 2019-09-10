@@ -80,7 +80,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
     val continuousProjectLinks = seq.takeWhile(pl => (pl.track == track && pl.track == Track.Combined) || (pl.track == track && pl.track != Track.Combined && pl.roadwayNumber == roadwayNumber && pl.roadType.value == roadType))
-    (continuousProjectLinks.map(pl => if (pl.roadwayNumber == NewIdValue) pl.copy(roadwayNumber = newRoadwayNumber) else pl), seq.drop(continuousProjectLinks.size))
+    (continuousProjectLinks.map(pl => if (pl.roadwayNumber == NewIdValue && pl.status != LinkStatus.New) pl.copy(roadwayNumber = newRoadwayNumber) else pl), seq.drop(continuousProjectLinks.size))
   }
 
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
@@ -119,15 +119,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
                 adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
               } else {
-                if (rightLinks.exists(_.status == New) || leftLinks.exists(_.status == New)) {
-                  val newRoadwayNumber1 = Sequences.nextRoadwayNumber
-                  val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
-                  (continuousRoadwaySection(rightLinks, newRoadwayNumber1),
-                    continuousRoadwaySection(leftLinks, newRoadwayNumber2))
-                }
-                else{
-                  (continuousRoadwaySection(rightLinks, 0), continuousRoadwaySection(leftLinks, 0))
-                }
+                val newRoadwayNumber1 = Sequences.nextRoadwayNumber
+                val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
+                (continuousRoadwaySection(rightLinks, newRoadwayNumber1),
+                  continuousRoadwaySection(leftLinks, newRoadwayNumber2))
               }
 
           if (firstRight.isEmpty || firstLeft.isEmpty)
@@ -274,7 +269,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val candidateLeftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).minBy(_._1.distance2DTo(candidateRightStartPoint._1))
             val candidateLeftOppositeEnd = getOppositeEnd(candidateLeftStartPoint._2, candidateLeftStartPoint._1)
             val startingPointsVector = Vector3d(candidateRightOppositeEnd.x - candidateLeftOppositeEnd.x, candidateRightOppositeEnd.y - candidateLeftOppositeEnd.y, candidateRightOppositeEnd.z - candidateLeftOppositeEnd.z)
-            val angle = startingPointsVector.angleXYWithNegativeValues(direction)
+            val angle =
+              if(startingPointsVector == Vector3d(0.0,0.0,0.0)) {
+                val startingPointVector = Vector3d(candidateRightStartPoint._1.x - candidateLeftStartPoint._1.x, candidateRightStartPoint._1.y - candidateLeftStartPoint._1.y, candidateRightStartPoint._1.z - candidateLeftStartPoint._1.z)
+                startingPointVector.angleXYWithNegativeValues(direction)
+              }
+              else startingPointsVector.angleXYWithNegativeValues(direction)
+
             if (angle > 0) {
               chainEndPoints.filterNot(_._1.equals(candidateRightStartPoint._1)).head
             }

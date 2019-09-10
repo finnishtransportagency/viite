@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.viite.dao.AddressChangeType.{Termination, Transfer}
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
-import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
@@ -42,33 +42,44 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
-  val mockProjectService = MockitoSugar.mock[ProjectService]
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
-  val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
+  val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
+  val mockNodesAndJunctionsService: NodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
+  val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
   val roadwayDAO = new RoadwayDAO
   val roadNetworkDAO = new RoadNetworkDAO
   val linearLocationDAO = new LinearLocationDAO
+  val roadwayPointDAO = new RoadwayPointDAO
+  val nodeDAO = new NodeDAO
+  val nodePointDAO = new NodePointDAO
+  val junctionPointDAO = new JunctionPointDAO
+  val roadwayChangesDAO = new RoadwayChangesDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, roadwayAddressMapper, mockEventBus) {
+  val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, mockEventBus) {
+  val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
+    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
+    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
+    roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val projectServiceWithRoadAddressMock = new ProjectService(mockRoadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, mockEventBus) {
+  val projectServiceWithRoadAddressMock = new ProjectService(mockRoadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
+    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
+    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
+    roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -291,7 +302,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5, NoTermination, 0))
       projectDAO.create(rap)
       mockForProject(id, Seq(projectLink))
-      projectService.addNewLinksToProject(Seq(projectLink), id, "U", projectLink.linkId)
+      projectService.addNewLinksToProject(Seq(projectLink), id, "U", projectLink.linkId, newTransaction = true, Discontinuous)
       val links = projectLinkDAO.fetchProjectLinks(id)
       links.size should be(1)
     }
@@ -338,13 +349,13 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         calibrationPoints2._2, Anomaly.None, projectLink2.status, 0, 0)
 
       mockForProject(id, Seq(p1, p2))
-      projectService.addNewLinksToProject(Seq(projectLink1), id, "U", p1.linkId)
+      projectService.addNewLinksToProject(Seq(projectLink1), id, "U", p1.linkId, true, Discontinuous)
       val links = projectLinkDAO.fetchProjectLinks(id)
       links.size should be(1)
       reset(mockRoadLinkService)
       mockForProject(id, Seq(p2))
 
-      projectService.addNewLinksToProject(Seq(projectLink2), id, "U", p2.linkId)
+      projectService.addNewLinksToProject(Seq(projectLink2), id, "U", p2.linkId, true, Discontinuous)
       val linksAfter = projectLinkDAO.fetchProjectLinks(id)
       linksAfter.size should be(2)
     }
@@ -589,7 +600,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0, 0)
       val addresses = Seq(addProjectAddressLink552)
       mockForProject(id, addresses)
-      projectService.addNewLinksToProject(addresses.map(backToProjectLink(rap)), id, "U", addresses.head.linkId) should be(None)
+      projectService.addNewLinksToProject(addresses.map(backToProjectLink(rap)), id, "U", addresses.head.linkId, true, Continuous) should be(None)
       val links = projectLinkDAO.fetchProjectLinks(id)
       projectReservedPartDAO.fetchReservedRoadParts(id) should have size 1
       projectService.updateProjectLinks(id, Set(), links.map(_.linkId), LinkStatus.New, "test", 19999, 1, 0, None,

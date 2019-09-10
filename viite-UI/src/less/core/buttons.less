@@ -116,6 +116,23 @@
   	}
 }
 
+.btn-clean-node-search {
+  border-color: @gray-darker-2;
+  background-color: @gray-dark;
+  box-shadow: inset 0 1px 0 rgba(red(@gray-lighter), green(@gray-lighter), blue(@gray-lighter), .325), @btn-drop-shadow;
+
+  &:hover,
+  &:focus {
+    background-color: @gray-dark-2;
+    box-shadow: inset 0 1px 0 rgba(red(@gray-lighter), green(@gray-lighter), blue(@gray-lighter), .325), @btn-drop-shadow-hover;
+  }
+
+  &:active,
+  &.active {
+    box-shadow: inset 0 1px 0 rgba(red(@gray-darker-2), green(@gray-darker-2), blue(@gray-darker-2), .325);
+  }
+}
+
 
 .btn-save {
 	margin-right:6px !important;
