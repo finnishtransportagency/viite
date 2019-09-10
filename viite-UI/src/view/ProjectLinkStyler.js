@@ -112,7 +112,7 @@
       new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('roadLinkSource').isNot(LinkValues.LinkGeomSource.SuravageLinkInterface.value).use({stroke: {color: '#A4A4A2', lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('roadLinkSource').is(LinkValues.LinkGeomSource.NormalLinkInterface.value).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
       new StyleRule().where('floating').is(1).use({stroke: {color: '#F7FE2E', lineCap: 'round'}}),
-      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.None.value).and('roadLinkSource').is(LinkValues.LinkGeomSource.NormalLinkInterface.value).use({stroke: {color: 'rgba(238, 238, 235, 0.75)', lineCap: 'round'}})
+      new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.None.value).and('roadLinkSource').is(LinkValues.LinkGeomSource.NormalLinkInterface.value).and('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: 'rgba(238, 238, 235, 0.75)', lineCap: 'round'}})
     ];
 
     var projectLinkRules = [

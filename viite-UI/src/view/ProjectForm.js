@@ -441,7 +441,7 @@
       });
 
       eventbus.on('layer:selected', function (layer) {
-        activeLayer = layer === 'linkPropertyLayer';
+        activeLayer = layer === 'linkProperty';
       });
 
       eventbus.on('roadAddress:projectFailed', function () {

@@ -170,7 +170,7 @@
               return groupDataConstructionTypeFilter(sur, ConstructionType.UnderConstruction);
           });
           var nonUnderConstructionRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
-              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) ||groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
+              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
           });
         setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(underConstructionRoadAddresses[0]).concat(floatingRoadLinks));
           eventbus.trigger('roadLinks:fetched', nonUnderConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
@@ -179,6 +179,10 @@
           }
           if (underConstructionRoadAddresses[0].length !== 0)
               eventbus.trigger('underConstructionRoadLinks:fetched', underConstructionRoadAddresses[0]);
+          // if(applicationModel.getSelectedLayer() !== "roadAddressProject") {
+          //     if (underConstructionRoadAddresses[0].length !== 0)
+          //         eventbus.trigger('underConstructionRoadLinks:fetched', underConstructionRoadAddresses[0]);
+          // }
           if (applicationModel.isProjectButton()) {
               eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
               applicationModel.setProjectButton(false);

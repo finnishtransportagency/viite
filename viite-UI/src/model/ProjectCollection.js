@@ -92,10 +92,8 @@
         });
         fetchedUnderConstructionProjectLinks = separated[0];
         var nonUnderConstructionProjectRoads = separated[1];
-        eventbus.trigger('roadAddressProject:fetched', nonUnderConstructionProjectRoads);
-        if (fetchedUnderConstructionProjectLinks.length !== 0) {
-          eventbus.trigger('underConstructionRoadAddressProject:fetched', fetchedUnderConstructionProjectLinks);
-        }
+
+        eventbus.trigger('roadAddressProject:fetched', nonUnderConstructionProjectRoads, fetchedUnderConstructionProjectLinks);
         eventbus.trigger('roadAddressProject:writeProjectErrors');
       });
     };
@@ -119,6 +117,7 @@
         me.setReservedParts(result.reservedInfo);
         me.setFormedParts(result.formedInfo);
         publishableProject = result.publishable;
+          // applicationModel.selectLayer('roadAddressProject');
         eventbus.trigger('roadAddressProject:projectFetched', projectInfo);
       });
     };
