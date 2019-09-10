@@ -101,6 +101,7 @@
       new StyleRule().where('roadClass').is(LinkValues.RoadClass.MinorConnectingClass.value).use({stroke: {color: '#33CCCC',  lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(LinkValues.RoadClass.StreetClass.value).use({stroke: {color: '#E01DD9',  lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(LinkValues.RoadClass.RampsAndRoundAboutsClass.value).use({stroke: {color: '#00CCDD',  lineCap: 'round'}}),
+      new StyleRule().where('roadClass').is(LinkValues.RoadClass.RampsAndRoundAboutsClass.value).use({stroke: {color:'#fff', lineCap: 'butt', lineDash: [10, 10]}}),
       new StyleRule().where('roadClass').is(LinkValues.RoadClass.PedestrianAndBicyclesClass.value).use({stroke: {color: '#FC6DA0', lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(LinkValues.RoadClass.WinterRoadsClass.value).use({stroke: {color: '#FF55DD', lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(LinkValues.RoadClass.PathsClass.value).use({stroke: {color: '#FF55DD', lineCap: 'round'}}),
