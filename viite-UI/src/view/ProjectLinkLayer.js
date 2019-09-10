@@ -25,7 +25,10 @@
 
     var projectLinkVector = new ol.source.Vector({
       loader: function () {
-        var features = _.map(projectCollection.getAll(), function (projectLink) {
+          var notUnderConstruction = _.filter(projectCollection.getAll(), function(link){
+              return link.constructionType != LinkValues.ConstructionType.UnderConstruction.value;
+          });
+        var features = _.map(notUnderConstruction, function (projectLink) {
           var points = _.map(projectLink.points, function (point) {
             return [point.x, point.y];
           });
@@ -411,6 +414,7 @@
     });
 
     var loadFeatures = function (features) {
+      // projectLinkVector.clear();
       projectLinkVector.clear(true);
       projectLinkVector.addFeatures(features);
     };
@@ -494,7 +498,7 @@
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
     });
 
-    me.redraw = function () {
+    me.redraw = function (projectLinkRoads, underConstructionRoads) {
       var checkedBoxLayers = _.filter(layers, function(layer) {
           if ((layer.get('name') === 'underConstructionRoadProjectLayer' || layer.get('name') === 'underConstructionProjectDirectionMarkerLayer') &&
               (!underConstructionRoadProjectLayer.getVisible() || !underConstructionProjectDirectionMarkerLayer.getVisible())){
@@ -515,16 +519,12 @@
         return editedLink;
       });
 
-      var separated = _.partition(projectCollection.getAll(), function (projectRoad) {
-        return projectRoad.constructionType === ConstructionType.UnderConstruction.value;
-      });
-
       var toBeTerminated = _.filter(editedLinks, function (link) {
         return link.status === LinkStatus.Terminated.value;
       });
 
-      var underConstructionProjectRoads = separated[0].filter(function (val) {
-        return _.find(separated[1], function (link) {
+      var underConstructionProjectRoads = _.filter(underConstructionRoads, function (val) {
+        return _.find(projectLinkRoads, function (link) {
           return link.linkId === val.linkId;
         }) !== 0;
       });
@@ -540,7 +540,7 @@
         underConstructionRoadProjectLayer.getSource().addFeatures([feature]);
       });
 
-      var projectLinks = separated[1];
+      var projectLinks = projectLinkRoads;
       var features = [];
       _.map(projectLinks, function (projectLink) {
         var points = _.map(projectLink.points, function (point) {
@@ -607,9 +607,7 @@
       if (features.length !== 0)
         addFeaturesToSelection(features);
       features = features.concat(partitioned[1]);
-      _.each(features, function(feature) {
-        return feature;
-      });
+      // projectLinkVector.clear();
       projectLinkVector.clear(true);
       projectLinkVector.addFeatures(features);
       projectLinkLayer.changed();
@@ -637,8 +635,8 @@
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, projectId, projectCollection.getPublishableStatus());
     });
 
-    me.eventListener.listenTo(eventbus, 'roadAddressProject:fetched', function () {
-      me.redraw();
+    me.eventListener.listenTo(eventbus, 'roadAddressProject:fetched', function (projectLinkRoads, underConstructionRoads) {
+      me.redraw(projectLinkRoads, underConstructionRoads);
       _.defer(function () {
         highlightFeatures();
         if (selectedProjectLinkProperty.isSplit())

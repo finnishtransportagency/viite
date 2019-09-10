@@ -566,6 +566,10 @@
       roadLayer.layer.changed();
     };
 
+      // eventbus.on('roadAddress:openProject', function() {
+      //     me.clearLayers(layers);
+      // });
+
     this.isDirty = function() {
       return selectedLinkProperty.isDirty();
     };
