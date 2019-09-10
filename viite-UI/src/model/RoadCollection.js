@@ -170,7 +170,7 @@
               return groupDataConstructionTypeFilter(sur, ConstructionType.UnderConstruction);
           });
           var nonUnderConstructionRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
-              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) ||groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
+              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
           });
         setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(underConstructionRoadAddresses[0]).concat(floatingRoadLinks));
           eventbus.trigger('roadLinks:fetched', nonUnderConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
@@ -187,18 +187,6 @@
               eventbus.trigger('linkProperties:unknownsTreated');
           }
       };
-
-    var findUnderConstructionRoadAddressInGroup = function(group) {
-      var groupData = _.map(group, function (data) {
-        return data.getData();
-      });
-      var found = _.filter(groupData, function(grp) {
-        var id = grp.id;
-        var roadLinkSource = grp.roadLinkSource;
-        return id !== 0 && roadLinkSource === ConstructionType.UnderConstruction.value;
-      });
-      return found.length !== 0;
-    };
 
     var groupDataSourceFilter = function(group, dataSource){
       if(_.isArray(group)) {
