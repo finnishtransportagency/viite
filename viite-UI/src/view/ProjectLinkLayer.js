@@ -414,7 +414,6 @@
     });
 
     var loadFeatures = function (features) {
-      // projectLinkVector.clear();
       projectLinkVector.clear(true);
       projectLinkVector.addFeatures(features);
     };
@@ -611,7 +610,6 @@
       if (features.length !== 0)
         addFeaturesToSelection(features);
       features = features.concat(partitioned[1]);
-      // projectLinkVector.clear();
       projectLinkVector.clear(true);
       projectLinkVector.addFeatures(features);
       projectLinkLayer.changed();

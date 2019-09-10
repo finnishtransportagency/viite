@@ -110,7 +110,6 @@
         me.setReservedParts(result.reservedInfo);
         me.setFormedParts(result.formedInfo);
         publishableProject = result.publishable;
-          // applicationModel.selectLayer('roadAddressProject');
         eventbus.trigger('roadAddressProject:projectFetched', projectInfo);
       });
     };

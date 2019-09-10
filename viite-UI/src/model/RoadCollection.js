@@ -179,10 +179,6 @@
           }
           if (underConstructionRoadAddresses[0].length !== 0)
               eventbus.trigger('underConstructionRoadLinks:fetched', underConstructionRoadAddresses[0]);
-          // if(applicationModel.getSelectedLayer() !== "roadAddressProject") {
-          //     if (underConstructionRoadAddresses[0].length !== 0)
-          //         eventbus.trigger('underConstructionRoadLinks:fetched', underConstructionRoadAddresses[0]);
-          // }
           if (applicationModel.isProjectButton()) {
               eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
               applicationModel.setProjectButton(false);
