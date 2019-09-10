@@ -422,7 +422,6 @@
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
         activeLayer = true;
-        eventbus.trigger('roadAddressProject:clearTool');
         disableFormInputs();
         applicationModel.removeSpinner();
       });

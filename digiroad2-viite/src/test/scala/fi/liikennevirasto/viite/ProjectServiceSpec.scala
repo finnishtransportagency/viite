@@ -41,14 +41,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
-  val mockProjectService = MockitoSugar.mock[ProjectService]
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
-  val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
+  val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
+  val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val mockNodesAndJunctionsService: NodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
+  val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
+  val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockVVHComplementaryClient: VVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
   val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
   val projectLinkDAO = new ProjectLinkDAO
@@ -56,12 +56,16 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val roadNetworkDAO = new RoadNetworkDAO
   val linearLocationDAO = new LinearLocationDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
+  val roadwayPointDAO = new RoadwayPointDAO
+  val nodePointDAO = new NodePointDAO
+  val junctionPointDAO = new JunctionPointDAO
+  val nodeDAO = new NodeDAO
+  val roadwayChangesDAO = new RoadwayChangesDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
-  val mockwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
-  val mockProjectLinkDAO = MockitoSugar.mock[ProjectLinkDAO]
-  val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
-  val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
-  val mockRoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
+  val mockProjectLinkDAO: ProjectLinkDAO = MockitoSugar.mock[ProjectLinkDAO]
+  val mockRoadwayDAO: RoadwayDAO = MockitoSugar.mock[RoadwayDAO]
+  val mockLinearLocationDAO: LinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
+  val mockRoadwayChangesDAO: RoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
 
   private val roadwayNumber1 = 1000000000l
   private val roadwayNumber2 = 2000000000l
@@ -70,23 +74,29 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
 
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
-  val roadAddressServiceRealRoadwayAddressMapper = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayAddressMapper, mockEventBus) {
+  val roadAddressServiceRealRoadwayAddressMapper: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
-  val projectService = new ProjectService(roadAddressServiceRealRoadwayAddressMapper, mockRoadLinkService, mockNodesAndJunctionsService, mockEventBus) {
+  val projectService: ProjectService = new ProjectService(roadAddressServiceRealRoadwayAddressMapper, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
+    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
+    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
+    roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val projectServiceWithRoadAddressMock = new ProjectService(mockRoadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, mockEventBus) {
+  val projectServiceWithRoadAddressMock: ProjectService = new ProjectService(mockRoadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
+    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
+    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
+    roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -480,7 +490,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectDAO.create(rap)
         val emptyTrId = projectDAO.fetchTRIdByProjectId(projectId)
         emptyTrId.isEmpty should be(true)
-        val projectNone = projectDAO.fetchById(projectId)
+        val projectNone = projectService.fetchProjectById(projectId)
         projectService.removeRotatingTRId(projectId)
         projectNone.head.statusInfo.getOrElse("").length should be(0)
         projectDAO.assignNewProjectTRId(projectId)
@@ -490,7 +500,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         emptyTrId.isEmpty should be(true)
         projectDAO.assignNewProjectTRId(projectId)
         projectService.removeRotatingTRId(projectId)
-        val project = projectDAO.fetchById(projectId).head
+        val project = projectService.fetchProjectById(projectId).head
         project.status should be(ProjectState.Incomplete)
         project.statusInfo.getOrElse("1").length should be > 2
       }
@@ -545,7 +555,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         projectDAO.create(rap)
         projectDAO.assignNewProjectTRId(projectId)
         projectService.updateProjectsWaitingResponseFromTR()
-        val project = projectDAO.fetchById(projectId).head
+        val project = projectService.fetchProjectById(projectId).head
         project.statusInfo.getOrElse("").length should be(0)
         projectService.updateProjectsWaitingResponseFromTR()
       }
@@ -559,7 +569,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       runWithRollback {
         projectDAO.create(rap)
         projectService.updateProjectsWaitingResponseFromTR()
-        val project = projectDAO.fetchById(projectId).head
+        val project = projectService.fetchProjectById(projectId).head
         project.statusInfo.getOrElse("") contains "Failed to find TR-ID" should be(true)
       }
     }
@@ -720,17 +730,17 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       mockForProject(id, Seq(p))
 
-      val message1project1 = projectService.addNewLinksToProject(Seq(projectLink), id, "U", p.linkId).getOrElse("")
+      val message1project1 = projectService.addNewLinksToProject(Seq(projectLink), id, "U", p.linkId, newTransaction = true, Discontinuous).getOrElse("")
       val links = projectLinkDAO.fetchProjectLinks(id)
       links.size should be(0)
       message1project1 should be(RoadNotAvailableMessage) //check that it is reserved in roadaddress table
 
-      val message1project2 = projectService.addNewLinksToProject(Seq(projectLink2), id + 1, "U", p.linkId)
+      val message1project2 = projectService.addNewLinksToProject(Seq(projectLink2), id + 1, "U", p.linkId, newTransaction = true, Discontinuous)
       val links2 = projectLinkDAO.fetchProjectLinks(id + 1)
       links2.size should be(2)
       message1project2 should be(None)
 
-      val message2project1 = projectService.addNewLinksToProject(Seq(projectLink3), id, "U", p.linkId).getOrElse("")
+      val message2project1 = projectService.addNewLinksToProject(Seq(projectLink3), id, "U", p.linkId, newTransaction = true, Discontinuous).getOrElse("")
       val links3 = projectLinkDAO.fetchProjectLinks(id)
       links3.size should be(0)
       message2project1 should be("Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot.")
@@ -2262,7 +2272,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
       )
-      projectService.handleTransferAndNumbering(changes)
+      projectService.handleRoadNames(changes)
       ProjectLinkNameDAO.get(project.id, targetRoadNumber) should be(None)
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
@@ -2310,7 +2320,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
       )
-      projectService.handleTransferAndNumbering(changes)
+      projectService.handleRoadNames(changes)
 
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
@@ -2350,7 +2360,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
       )
-      projectService.handleTransferAndNumbering(changes)
+      projectService.handleRoadNames(changes)
       ProjectLinkNameDAO.get(project.id, targetRoadNumber) should be(None)
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {
@@ -2398,7 +2408,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changes = List(
         ProjectRoadwayChange(project.id, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, project.startDate, Some(0))
       )
-      projectService.handleTransferAndNumbering(changes)
+      projectService.handleRoadNames(changes)
 
       val srcRoadNames = RoadNameDAO.getAllByRoadNumber(srcRoadNumber)
       srcRoadNames.foreach(rn => {

@@ -1,11 +1,11 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.viite._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import fi.liikennevirasto.viite._
 
 case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, createdBy: String, createdTime: Option[DateTime] = None, modifiedBy: Option[String] = None, modifiedTime: Option[DateTime] = None)
 
@@ -62,12 +62,6 @@ class RoadwayPointDAO extends BaseDAO {
     ps.executeBatch()
     ps.close()
     roadwayPoints.map(_._1)
-  }
-
-  def update(id: Long, roadwayNumber: Long, addressMValue: Long, modifiedBy: String) = {
-    sqlu"""
-        Update ROADWAY_POINT Set ROADWAY_NUMBER = $roadwayNumber, ADDR_M = $addressMValue, MODIFIED_BY = $modifiedBy, MODIFIED_TIME = SYSDATE Where ID = $id
-      """.execute
   }
 
   def fetch(id: Long): RoadwayPoint = {
@@ -128,6 +122,24 @@ class RoadwayPointDAO extends BaseDAO {
        """
       queryList(query)
     }
+  }
+
+  def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
+    def calibrationPoint(cp: Option[ProjectLinkCalibrationPoint]): Option[Long] = {
+      cp match {
+        case Some(x) =>
+          Some(x.addressMValue)
+        case _ => Option.empty[Long]
+      }
+    }
+
+    val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
+
+    (LinearLocation(-1000, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
+      (calibrationPoint(p.calibrationPoints._1), calibrationPoint(p.calibrationPoints._2)), p.geometry, p.linkGeomSource,
+      p.roadwayNumber, Some(startDate), p.endDate),
+      Roadway(-1000, p.roadwayNumber, p.roadNumber, p.roadPartNumber, p.roadType, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
+        p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
   }
 
   private def queryList(query: String): Seq[RoadwayPoint] = {
