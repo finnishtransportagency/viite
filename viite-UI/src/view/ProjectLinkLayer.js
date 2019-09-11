@@ -57,8 +57,9 @@
     });
 
       function vectorLayerStyle(feature) {
-          return [projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
-              projectLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
+          return [projectLinkStyler.getUnderConstructionStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+              projectLinkStyler.getProjectLinkStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})
+              ];
       }
 
     var underConstructionRoadProjectLayer = new ol.layer.Vector({
@@ -598,7 +599,7 @@
         if (editedLink) {
           if (_.contains( _.pluck(toBeTerminated, 'id'), feature.linkData.linkId)) {
             feature.linkData.status = LinkStatus.Terminated.value;
-            var termination = projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
+              var termination = projectLinkStyler.getProjectLinkStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
             feature.setStyle(termination);
             features.push(feature);
           }
