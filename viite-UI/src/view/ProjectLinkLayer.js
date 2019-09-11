@@ -57,8 +57,9 @@
     });
 
       function vectorLayerStyle(feature) {
-          return [projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
-              projectLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
+          return [projectLinkStyler.getUnderConstructionStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+              projectLinkStyler.getProjectLinkStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})
+              ];
       }
 
     var underConstructionRoadProjectLayer = new ol.layer.Vector({
@@ -305,7 +306,7 @@
     var highlightFeatures = function () {
       clearHighlights();
       var featuresToHighlight = [];
-      _.each(projectLinkVector.getFeatures(), function (feature) {
+      _.each(projectLinkVector.getFeatures().concat(underConstructionRoadProjectLayer.getSource().getFeatures()), function (feature) {
           var canIHighlight = ((!_.isUndefined(feature.linkData.linkId) && _.isUndefined(feature.linkData.connectedLinkId)) ||
           (!_.isUndefined(feature.linkData.connectedLinkId) && feature.linkData.status === LinkStatus.Terminated.value) ?
               selectedProjectLinkProperty.isSelected(getSelectedId(feature.linkData)) : false);
@@ -510,8 +511,6 @@
       var cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
 
       calibrationPointLayer.getSource().clear();
-      underConstructionProjectDirectionMarkerLayer.getSource().clear();
-      underConstructionRoadProjectLayer.getSource().clear();
       directionMarkerLayer.getSource().clear();
 
       var editedLinks = _.map(projectCollection.getDirty(), function (editedLink) {
@@ -600,7 +599,7 @@
         if (editedLink) {
           if (_.contains( _.pluck(toBeTerminated, 'id'), feature.linkData.linkId)) {
             feature.linkData.status = LinkStatus.Terminated.value;
-            var termination = projectLinkStyler.getProjectLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
+              var termination = projectLinkStyler.getProjectLinkStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
             feature.setStyle(termination);
             features.push(feature);
           }
@@ -696,7 +695,7 @@
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:visibilityChanged', function () {
-      me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
+      me.toggleLayersVisibility([projectLinkLayer, calibrationPointLayer, directionMarkerLayer], applicationModel.getRoadVisibility());
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:toggleEditingRoad', function (notEditingData) {
