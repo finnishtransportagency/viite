@@ -305,7 +305,7 @@
     var highlightFeatures = function () {
       clearHighlights();
       var featuresToHighlight = [];
-      _.each(projectLinkVector.getFeatures(), function (feature) {
+      _.each(projectLinkVector.getFeatures().concat(underConstructionRoadProjectLayer.getSource().getFeatures()), function (feature) {
           var canIHighlight = ((!_.isUndefined(feature.linkData.linkId) && _.isUndefined(feature.linkData.connectedLinkId)) ||
           (!_.isUndefined(feature.linkData.connectedLinkId) && feature.linkData.status === LinkStatus.Terminated.value) ?
               selectedProjectLinkProperty.isSelected(getSelectedId(feature.linkData)) : false);
@@ -510,8 +510,6 @@
       var cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
 
       calibrationPointLayer.getSource().clear();
-      underConstructionProjectDirectionMarkerLayer.getSource().clear();
-      underConstructionRoadProjectLayer.getSource().clear();
       directionMarkerLayer.getSource().clear();
 
       var editedLinks = _.map(projectCollection.getDirty(), function (editedLink) {
