@@ -696,7 +696,7 @@
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:visibilityChanged', function () {
-      me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
+      me.toggleLayersVisibility([projectLinkLayer, calibrationPointLayer, directionMarkerLayer], applicationModel.getRoadVisibility());
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:toggleEditingRoad', function (notEditingData) {
