@@ -307,7 +307,13 @@
       });
     };
 
-    this.getStartupParametersWithCallback = function (callback) {
+      this.getRoadLinkDate = _.throttle(function(callback){
+          return $.get('api/viite/getRoadLinkDate', function (data) {
+              return _.isFunction(callback) && callback(data);
+          });
+      }, 1000);
+
+      this.getStartupParametersWithCallback = function (callback) {
       var url = 'api/viite/startupParameters';
       $.getJSON(url, callback);
     };

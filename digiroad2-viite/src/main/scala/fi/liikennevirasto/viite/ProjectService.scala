@@ -2,6 +2,8 @@ package fi.liikennevirasto.viite
 
 import java.io.IOException
 import java.sql.SQLException
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, ZoneId, ZonedDateTime}
 import java.util.Date
 
 import fi.liikennevirasto.GeometryUtils
@@ -235,7 +237,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
   }
+  def getRoadLinkDate(): String = {
+    withDynSession {
+      val timeInMillis = LinkDAO.fetchMaxAdjustedTimestamp()
 
+      val instant = Instant.ofEpochMilli(timeInMillis)
+
+      val zonedDateTimeUtc = ZonedDateTime.ofInstant(instant, ZoneId.of("UTC"))
+      val dateTimeFormatter = DateTimeFormatter.ofPattern("DD-MM-YYYY HH:MM:ss")
+
+      val retValue =
+        """{ "result":" """ + dateTimeFormatter.format(zonedDateTimeUtc) + """"}"""
+      retValue
+    }
+  }
   /**
     *
     * @param projectId project's id
