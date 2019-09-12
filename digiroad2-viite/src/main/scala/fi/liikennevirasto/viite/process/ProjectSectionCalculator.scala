@@ -114,7 +114,7 @@ object ProjectSectionCalculator {
 
         val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
 
-        (trackCalcResult.leftProjectLinks++adjustedRestRight, trackCalcResult.rightProjectLinks++adjustedRestLeft)
+        (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
       }
     }
 
