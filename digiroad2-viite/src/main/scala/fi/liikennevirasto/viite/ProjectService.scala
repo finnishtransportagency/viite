@@ -2,8 +2,6 @@ package fi.liikennevirasto.viite
 
 import java.io.IOException
 import java.sql.SQLException
-import java.time.format.DateTimeFormatter
-import java.time.{Instant, ZoneId, ZonedDateTime}
 import java.util.Date
 
 import fi.liikennevirasto.GeometryUtils
@@ -29,9 +27,7 @@ import fi.liikennevirasto.viite.util.{ProjectLinkSplitter, SplitOptions, SplitRe
 import org.apache.http.client.ClientProtocolException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
-import scala.collection.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -240,14 +236,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def getRoadLinkDate(): String = {
     withDynSession {
       val timeInMillis = LinkDAO.fetchMaxAdjustedTimestamp()
-
-      val instant = Instant.ofEpochMilli(timeInMillis)
-
-      val zonedDateTimeUtc = ZonedDateTime.ofInstant(instant, ZoneId.of("UTC"))
-      val dateTimeFormatter = DateTimeFormatter.ofPattern("DD-MM-YYYY HH:MM:ss")
-
       val retValue =
-        """{ "result":" """ + dateTimeFormatter.format(zonedDateTimeUtc) + """"}"""
+        """{ "result":" """ + new DateTime(timeInMillis).toString("dd.MM.yyyy HH:mm:ss") + """"}"""
       retValue
     }
   }
