@@ -145,7 +145,7 @@
       // Show environment name next to Viite logo
       var notification = jQuery('#notification');
       notification.append(Environment.localizedName());
-      notification.append(' Tielinkkiaineisto : ' +  versionData.result);
+      notification.append(' Tielinkkiaineisto: ' +  versionData.result);
     };
 
     // Show information modal in integration environment (remove when not needed any more)
