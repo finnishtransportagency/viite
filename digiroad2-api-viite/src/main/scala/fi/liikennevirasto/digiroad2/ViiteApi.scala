@@ -903,7 +903,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
 
   get("/getRoadLinkDate") {
-    time(logger, s"GET request for versionData"){
+    time(logger, s"GET request for getRoadLinkDate"){
       projectService.getRoadLinkDate()
     }
   }
