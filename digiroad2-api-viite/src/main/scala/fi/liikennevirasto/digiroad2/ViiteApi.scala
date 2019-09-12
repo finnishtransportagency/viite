@@ -902,6 +902,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       notes ""
     )
 
+  get("/getRoadLinkDate") {
+    time(logger, s"GET request for versionData"){
+      projectService.getRoadLinkDate()
+    }
+  }
+
   get("/nodes", operation(getNodesByRoadAttributes)) {
     val roadNumber = params.get("roadNumber").map(_.toLong)
     val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
