@@ -27,9 +27,7 @@ import fi.liikennevirasto.viite.util.{ProjectLinkSplitter, SplitOptions, SplitRe
 import org.apache.http.client.ClientProtocolException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
-import scala.collection.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -265,7 +263,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
   }
-
+  def getRoadLinkDate(): String = {
+    withDynSession {
+      val timeInMillis = LinkDAO.fetchMaxAdjustedTimestamp()
+      val retValue =
+        """{ "result":" """ + new DateTime(timeInMillis).toString("dd.MM.yyyy HH:mm:ss") + """"}"""
+      retValue
+    }
+  }
   /**
     *
     * @param projectId project's id
