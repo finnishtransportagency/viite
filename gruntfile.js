@@ -281,9 +281,8 @@ module.exports = function(grunt) {
       });
 
       var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
-      var data2 = ('digiroad2.dateofData=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
       grunt.file.write(options.file, data);
-      grunt.file.write(options.file, data2);
+
 
     }
   );
