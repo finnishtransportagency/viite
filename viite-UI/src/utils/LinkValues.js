@@ -19,7 +19,7 @@
 
     root.LinkGeomSource = {
         NormalLinkInterface:        {value: 1,  descriptionFI: "MML",            description: "NormalLinkInterface"},
-        ComplimentaryLinkInterface: {value: 2,  descriptionFI: "Täydentävä",     description: "ComplimentaryLinkInterface"},
+        ComplementaryLinkInterface: {value: 2,  descriptionFI: "Täydentävä",     description: "ComplementaryLinkInterface"},
         SuravageLinkInterface:      {value: 3,  descriptionFI: "Suravage",       description: "SuravageLinkInterface"},
         FrozenLinkInterface:        {value: 4,  descriptionFI: "MML jäädytetty", description: "FrozenLinkInterface"},
         HistoryLinkInterface:       {value: 5,  descriptionFI: "MML historia",   description: "HistoryLinkInterface"},
