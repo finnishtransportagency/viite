@@ -177,7 +177,7 @@
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color:'#ff9900', lineCap: 'butt', lineDash: [10, 10]}}),
             new StyleRule().where('floating').is(1).use({stroke: {color: '#F7FE2E', lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(99).and('roadLinkSource').is(3).use({stroke: {color: '#D3AFF6', lineCap: 'round'}})
+            new StyleRule().where('roadClass').is(99).and('roadLinkSource').is(LinkValues.LinkGeomSource.ComplementaryLinkInterface.value).use({stroke: {color: '#D3AFF6', lineCap: 'round'}})
         ];
 
         var borderRules = [
