@@ -212,12 +212,21 @@
       var removeRenumberedPart = function (roadNumber, roadPartNumber) {
         /* All rows do not have roadAddresses record, so return value for this filter should handle that
          situation, so always return boolean, otherwise projectCollection.getFormedParts() will be cleared
+
+         There is no way to stop or break a forEach() loop other than by throwing an exception. If you need such
+         behavior, the forEach() method is the wrong tool
+         developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
          */
         projectCollection.setFormedParts(_.filter(projectCollection.getFormedParts(), function (part) {
           var reNumberedPart = false;
-          part.roadAddresses.forEach(function (ra) {
-            reNumberedPart = (ra.roadAddressNumber.toString() === roadNumber.toString() && ra.roadAddressPartNumber.toString() === roadPartNumber.toString()) && ra.isNumbering;
-          });
+          for (var i = 0; i < part.roadAddresses.length; ++i) {
+            var ra = part.roadAddresses[i];
+            reNumberedPart = (ra.roadAddressNumber.toString() === roadNumber.toString() &&
+                ra.roadAddressPartNumber.toString() === roadPartNumber.toString()) && ra.isNumbering;
+            if (reNumberedPart){
+              break;
+            }
+          }
           return !reNumberedPart;
         }));
       };
