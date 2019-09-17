@@ -217,9 +217,8 @@
           var reNumberedPart = false;
           part.roadAddresses.forEach(function (ra) {
             reNumberedPart = (ra.roadAddressNumber.toString() === roadNumber.toString() && ra.roadAddressPartNumber.toString() === roadPartNumber.toString()) && ra.isNumbering;
-
           });
-          return ! reNumberedPart;
+          return !reNumberedPart;
         }));
       };
 
