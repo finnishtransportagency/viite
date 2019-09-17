@@ -223,7 +223,7 @@
             var ra = part.roadAddresses[i];
             reNumberedPart = (ra.roadAddressNumber.toString() === roadNumber.toString() &&
                 ra.roadAddressPartNumber.toString() === roadPartNumber.toString()) && ra.isNumbering;
-            if (reNumberedPart){
+            if (reNumberedPart) {
               break;
             }
           }
