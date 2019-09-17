@@ -210,10 +210,16 @@
       };
 
       var removeRenumberedPart = function (roadNumber, roadPartNumber) {
+        /* All rows do not have roadAddresses record, so return value for this filter should handle that
+         situation, so always return boolean, otherwise projectCollection.getFormedParts() will be cleared
+         */
         projectCollection.setFormedParts(_.filter(projectCollection.getFormedParts(), function (part) {
-          return _.filter(part.roadAddresses, function (ra) {
-            return (ra.roadAddressNumber === roadNumber && ra.roadAddressPartNumber === roadPartNumber) && !ra.isNumbering;
-          }).length > 0;
+          var reNumberedPart = false;
+          part.roadAddresses.forEach(function (ra) {
+            reNumberedPart = (ra.roadAddressNumber.toString() === roadNumber.toString() && ra.roadAddressPartNumber.toString() === roadPartNumber.toString()) && ra.isNumbering;
+
+          });
+          return ! reNumberedPart;
         }));
       };
 
