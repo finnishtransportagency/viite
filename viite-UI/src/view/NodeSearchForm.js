@@ -224,7 +224,7 @@
           eventbus.trigger('nodeSearchTool:clickNodePointTemplate', event.currentTarget.id, map);
         });
 
-        rootElement.on('click', '.junction-template-link', function (event) {
+        rootElement.one('click', '.junction-template-link', function (event) {
           eventbus.trigger('nodeSearchTool:clickJunctionTemplate', event.currentTarget.id, map);
         });
       });
