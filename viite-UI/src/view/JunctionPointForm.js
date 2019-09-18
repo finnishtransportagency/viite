@@ -69,8 +69,8 @@
                     '<p class="center">' + title() + ' </p>' +
                     '<div class="form form-horizontal form-dark">' +
                     '<div class="edit-control-group project-choice-group">' +
-                    staticField('Solmunro:', junctionInfo.nodeNumber) +
-                    staticField('Liittymänumero:', junctionInfo.junctionNumber) +
+                    staticField('Solmunumero: ', junctionInfo.nodeNumber) +
+                    staticField('Liittymänumero: ', junctionInfo.junctionNumber) +
                     '</div>' +
                     '<div id="junctions-content">' +
                     '</div>' +
