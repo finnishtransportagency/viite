@@ -129,7 +129,7 @@
               if(applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
                   applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
               } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)){
-                  selectedNodeAndJunctionPoint.openJunctionPointTemplates(_.unique(_.map(selectedJunction, "junctionPointTemplateInfo"), "junctionId"));
+                  selectedNodeAndJunctionPoint.openJunctionPointTemplates(_.unique(_.map(selectedJunction, "junctionPointTemplateInfo"), "junctionId"), _.first(selectedJunction).junctionPointTemplateInfo.junctionId);
               } else selectedNodeAndJunctionPoint.close();
           } else {
               selectedNodeAndJunctionPoint.close();
