@@ -199,9 +199,15 @@
           }
         });
       });
-      eventbus.on('tool:clear', function () {
-        reset();
-      });
+        var deactivateAll = function() {
+            _.each(tools, function(tool) {
+                tool.deactivate();
+            });
+        };
+        var reset = function() {
+            deactivateAll();
+            tools[0].activate();
+        };
 
       hide();
 
