@@ -50,7 +50,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }
     }
   }
-
+  def getJunctionPointsByJunctionIds(junctionIds: Seq[Long]): Seq[JunctionPoint] = {
+    withDynSession {
+      junctionPointDAO.fetchJunctionPointsByJunctionIds(junctionIds)
+    }
+  }
   def getNodesWithJunctionByBoundingBox(boundingRectangle: BoundingRectangle): Map[Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
     withDynSession {
       time(logger, "Fetch nodes with junctions") {

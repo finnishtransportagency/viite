@@ -258,6 +258,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/junctionPointsByJunctionId") {
+    val junctionId = params.get("junctionId").getOrElse(halt(BadRequest("Missing mandatory 'junctionId' parameter")))
+    val x: Seq[Long] = Seq(junctionId.toLong)
+    if (junctionId == "") {
+      val message = "junctionId parameter is empty"
+      logger.info(message)
+      BadRequest(message)
+    } else {
+      time(logger, s"GET request for /junctionPointsByJunctionId + junctionId="+ junctionId){
+        nodesAndJunctionsService.getJunctionPointsByJunctionIds(x).map(junctionPointsToApi)
+      }
+    }
+  }
   private val saveRoadNamesByRoadNumber: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("saveRoadNamesByRoadNumber")
       .parameters(
@@ -1210,6 +1223,27 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
     )
   }
+  def junctionPointsToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
+    Map("junctionPointTemplate" -> {
+      Map("id" -> junctionPoint.id,
+        "junctionId" -> junctionPoint.junctionId,
+        "beforeAfter" -> formatAfterBeforeToString(junctionPoint.beforeAfter.value ),
+        "roadwayPointId" -> junctionPoint.roadwayPointId,
+        "startDate" -> formatDateTimeToString(Some(junctionPoint.startDate)),
+        "endDate" -> formatDateTimeToString(junctionPoint.endDate),
+        "validFrom" -> formatDateTimeToString(Some(junctionPoint.validFrom)),
+        "validTo" -> formatDateTimeToString(junctionPoint.validTo),
+        "createdBy" -> junctionPoint.createdBy,
+        "roadwayNumber" -> junctionPoint.roadwayNumber,
+        "addrM" -> junctionPoint.addrM,
+        //RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER
+        "roadNumber" -> junctionPoint.roadNumber,
+        "roadPartNumber" -> junctionPoint.roadPartNumber,
+        "track" -> junctionPoint.track
+      )
+    }
+    )
+  }
 
   def junctionInfoToApi(junctionInfo: JunctionInfo) : Map[String, Any] = {
       Map("junctionId" -> junctionInfo.id,
@@ -1459,6 +1493,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(entryDate)
     val formattedDate = new SimpleDateFormat("dd.MM.yyyy").format(date)
     formattedDate
+  }
+  def formatAfterBeforeToString(afterBefore: Long): String = {
+
+    if (afterBefore == 0) {
+      val retValue = "E"
+      retValue
+    } else if ( afterBefore == 1) {
+      val otherValue = "J"
+      otherValue
+    } else {
+      val noneValue = ""
+      noneValue
+    }
+
   }
 
   private def formatDateTimeToString(dateOption: Option[DateTime]): Option[String] =
