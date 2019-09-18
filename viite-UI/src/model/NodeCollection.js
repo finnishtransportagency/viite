@@ -131,7 +131,8 @@
           eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat, zoom: 12 });
         }
         applicationModel.removeSpinner();
-      });
+    });
+        selectedNodePoint.openJunctionPointTemplates(_.unique([junctionTemplate], "id"));
     });
 
     eventbus.on('nodeSearchTool:refreshView', function (map) {
