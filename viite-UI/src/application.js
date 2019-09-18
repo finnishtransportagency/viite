@@ -120,7 +120,7 @@
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
-    new JunctionEditForm(models.selectedNodeAndJunctionPoint);
+    new JunctionEditForm(models.selectedNodeAndJunctionPoint,backend);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
     new NodePointForm(models.selectedNodeAndJunctionPoint);
