@@ -132,7 +132,7 @@
         }
         applicationModel.removeSpinner();
     });
-        selectedNodePoint.openJunctionPointTemplates(_.unique([junctionTemplate], "id"));
+        selectedNodePoint.openJunctionPointTemplates(_.unique([junctionTemplate], "junctionId"));
     });
 
     eventbus.on('nodeSearchTool:refreshView', function (map) {
