@@ -57,7 +57,7 @@
     });
 
       function vectorLayerStyle(feature) {
-          return [projectLinkStyler.getUnderConstructionStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+          return [projectLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}), projectLinkStyler.getUnderConstructionStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
               projectLinkStyler.getProjectLinkStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})
               ];
       }
@@ -118,11 +118,12 @@
     var possibleStatusForSelection = [LinkStatus.NotHandled.value, LinkStatus.New.value, LinkStatus.Terminated.value, LinkStatus.Transfer.value, LinkStatus.Unchanged.value, LinkStatus.Numbering.value];
 
     var selectSingleClick = new ol.interaction.Select({
-      layer: [projectLinkLayer, underConstructionRoadProjectLayer],
+      layer: [projectLinkLayer, underConstructionRoadProjectLayer, underConstructionProjectDirectionMarkerLayer],
       condition: ol.events.condition.singleClick,
       style: function (feature) {
         if (!_.isUndefined(feature.linkData))
-          if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value) {
+          if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value ||
+              feature.linkData.constructionType === ConstructionType.UnderConstruction.value) {
               return projectLinkStyler.getSelectionLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
           }
       }
@@ -141,7 +142,7 @@
           return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
                   projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
                   (selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value && selectionTarget.linkData.floating !== SelectionType.Floating.value) ||
-                  selectionTarget.linkData.roadClass === RoadClass.NoClass.value || (selectionTarget.getProperties().type && selectionTarget.getProperties().type === "marker"))
+                  selectionTarget.linkData.roadClass === RoadClass.NoClass.value || selectionTarget.linkData.constructionType === ConstructionType.UnderConstruction.value)
           );
         else return false;
       });
@@ -190,10 +191,11 @@
     };
 
     var selectDoubleClick = new ol.interaction.Select({
-      layer: [projectLinkLayer, underConstructionRoadProjectLayer],
+      layer: [projectLinkLayer, underConstructionRoadProjectLayer, underConstructionProjectDirectionMarkerLayer],
       condition: ol.events.condition.doubleClick,
       style: function(feature) {
-          if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value) {
+          if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value ||
+              feature.linkData.constructionType === ConstructionType.UnderConstruction.value) {
               return projectLinkStyler.getSelectionLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
         }
       }
@@ -207,7 +209,7 @@
           return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
                   projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
                   (selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value && selectionTarget.linkData.floating !== SelectionType.Floating.value) ||
-                  selectionTarget.linkData.roadClass === RoadClass.NoClass.value || (selectionTarget.getProperties().type && selectionTarget.getProperties().type === "marker"))
+                  selectionTarget.linkData.roadClass === RoadClass.NoClass.value || selectionTarget.linkData.constructionType === ConstructionType.UnderConstruction.value)
         );
       });
       if (isNotEditingData) {
