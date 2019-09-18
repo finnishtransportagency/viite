@@ -185,11 +185,7 @@
       var show = function() {
         element.show();
       };
-      var reset = function() {
-        _.each(tools, function(tool) {
-          tool.deactivate();
-        });
-      };
+
       eventbus.on('tool:changed', function(name) {
         _.each(tools, function(tool) {
           if (tool.name !== name) {
