@@ -1,5 +1,5 @@
 (function (root) {
-    root.JunctionEditForm = function (selectedJunctionPoint) {
+    root.JunctionEditForm = function (selectedJunctionPoint, backend) {
         var formButtons = function () {
             return '<div class="form form-controls">' +
                 '<button class="save btn btn-edit-junction-save" disabled>Tallenna</button>' +
@@ -14,15 +14,6 @@
 
         var svgJunctionTemplate =
             '<object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 10px; margin-top: 5px"></object>';
-
-            // return backend.getJunctionInfoByJunctionId(junctionId, function (junctionInfo) {
-            //     var showJunctionTemplateEditForm = isJunctionTemplate(junctionInfo);
-            //     $('#feature-attributes').html(template(junctionInfo, showJunctionTemplateEditForm));
-            //     $('[id=junction-point-link]').click(function () {
-            //         eventbus.trigger('junctionPointForm-junctionPoint:select', junctionId);
-            //         return false;
-            //     });
-            // });
 
         var template = function (junctionInfo, showJunctionTemplateEditForm) {
             return _.template('' +
@@ -96,21 +87,26 @@
             return smallNumberImput;
         };
 
+        var getJunctionData = function (junctionId) {
+            return backend.getJunctionInfoByJunctionId(junctionId, function (junctionInfo) {
+                var showJunctionTemplateEditForm = isJunctionTemplate(junctionInfo);
+                $('#feature-attributes').html(template(junctionInfo, showJunctionTemplateEditForm));
+                $('[id=junction-point-link]').click(function () {
+                    eventbus.trigger('junctionPointForm-junctionPoint:select', junctionId);
+                    return false;
+                });
+            });
+        };
+
         var bindEvents = function () {
         var rootElement = $('#feature-attributes');
         rootElement.on('click', '.btn-return-list-junction', function () {
             selectedJunctionPoint.close();
         });
 
-        eventbus.on('junctionPoint:selected', function () {
+        eventbus.on('junctionPoint:selected', function (junctionId) {
             rootElement.empty();
-            var templatesList = selectedJunctionPoint.getCurrentJunctionPointTemplates();
-            var showJunctionTemplateEditForm = isJunctionTemplate(_.first(templatesList));
-            $('#feature-attributes').html(template(_.first(templatesList), showJunctionTemplateEditForm));
-            $('[id=junction-point-link]').click(function () {
-                eventbus.trigger('junctionPointForm-junctionPoint:select', _.first(templatesList).junctionId);
-                return false;
-            });
+            getJunctionData(junctionId);
             return false;
         });
         };
