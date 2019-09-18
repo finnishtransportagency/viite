@@ -185,11 +185,7 @@
       var show = function() {
         element.show();
       };
-      var reset = function() {
-        _.each(tools, function(tool) {
-          tool.deactivate();
-        });
-      };
+
       eventbus.on('tool:changed', function(name) {
         _.each(tools, function(tool) {
           if (tool.name !== name) {
@@ -199,9 +195,15 @@
           }
         });
       });
-      eventbus.on('tool:clear', function () {
-        reset();
-      });
+        var deactivateAll = function() {
+            _.each(tools, function(tool) {
+                tool.deactivate();
+            });
+        };
+        var reset = function() {
+            deactivateAll();
+            tools[0].activate();
+        };
 
       hide();
 

@@ -105,9 +105,6 @@
       if (tool !== selectedTool) {
         selectedTool = tool;
         eventbus.trigger('tool:changed', tool);
-      } else {
-        selectedTool = selectedLayer !== 'node' ? LinkValues.Tool.Default.value : LinkValues.Tool.Unknown.value;
-        eventbus.trigger('tool:clear');
       }
     }
 

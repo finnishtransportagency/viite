@@ -111,6 +111,7 @@
        * sending them to the selectedNode.open for further processing.
        */
       nodeAndJunctionPointTemplateClick.on('select', function (event) {
+        applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
         var selectedNode = _.filter(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
         });
