@@ -36,7 +36,7 @@
                 '<p class="form-control-static asset-log-info-metadata">Solmunimi: ' + checkEmptyAndNullAndZero(junctionInfo.nodeName) + '</p>' +
                 '</div>' +
                 '<div class="form-group-metadata">' +
-                '<p class="form-control-static asset-log-info-metadata">Liittymä id: ' + checkEmptyAndNullAndZero(junctionInfo.id) + '</p>' +
+                '<p class="form-control-static asset-log-info-metadata">Liittymä id: ' + checkEmptyAndNullAndZero(junctionInfo.junctionId) + '</p>' +
                 '</div>' +
                 '<div>' +
                 addSmallLabelYellow('Liittymänumero:') + addSmallInputNumber('liittymanro', checkEmptyAndNullAndZero(junctionInfo.junctionNumber), 5) +
@@ -104,9 +104,21 @@
             selectedJunctionPoint.close();
         });
 
-        eventbus.on('junctionPoint:selected', function (junctionId) {
+        eventbus.on('junctionEdit:selected', function (junctionId) {
             rootElement.empty();
             getJunctionData(junctionId);
+            return false;
+        });
+
+        eventbus.on('junctionPoint:selected', function () {
+            rootElement.empty();
+            var templatesList = selectedJunctionPoint.getCurrentJunctionPointTemplates();
+            var showJunctionTemplateEditForm = isJunctionTemplate(_.first(templatesList));
+            $('#feature-attributes').html(template(_.first(templatesList), showJunctionTemplateEditForm));
+            $('[id=junction-point-link]').click(function () {
+                eventbus.trigger('junctionPointForm-junctionPoint:select', _.first(templatesList).junctionId);
+                return false;
+            });
             return false;
         });
         };

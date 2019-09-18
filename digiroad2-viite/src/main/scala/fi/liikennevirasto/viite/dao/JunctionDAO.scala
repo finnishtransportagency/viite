@@ -16,7 +16,7 @@ case class Junction(id: Long, junctionNumber: Long, nodeId: Option[Long], startD
 case class JunctionInfo(id: Long, junctionNumber: Long, nodeId: Long, startDate: DateTime,
                      nodeNumber: Long, nodeName: String)
 
-case class JunctionTemplate(junctionId: Long, junctionNumber: Long, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long)
+case class JunctionTemplate(junctionId: Long, junctionNumber: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long)
 
 class JunctionDAO extends BaseDAO {
 
@@ -36,6 +36,22 @@ class JunctionDAO extends BaseDAO {
       Junction(id, junctionNumber, nodeId, startDate, endDate, validFrom, validTo, createdBy, createdTime)
     }
   }
+
+  implicit val getJunctionTemplate: GetResult[JunctionTemplate] = new GetResult[JunctionTemplate] {
+    def apply(r: PositionedResult): JunctionTemplate = {
+      val junctionId = r.nextLong()
+      val junctionNumber = r.nextLong()
+      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val trackCode = r.nextInt()
+      val addrM = r.nextLong()
+      val ely = r.nextLong()
+
+      JunctionTemplate(junctionId, junctionNumber, startDate, roadNumber, roadPartNumber, Track.apply(trackCode), addrM, ely)
+    }
+  }
+
     implicit val getJunctionInfo: GetResult[JunctionInfo] = new GetResult[JunctionInfo] {
       def apply(r: PositionedResult): JunctionInfo = {
         val id = r.nextLong()
@@ -55,14 +71,13 @@ class JunctionDAO extends BaseDAO {
         list.head
     }.toList
   }
-  private def queryListInfo(query: String): List[JunctionInfo] = {
-    Q.queryNA[JunctionInfo](query).list.groupBy(_.id).map {
+
+  private def queryListTemplate(query: String): List[JunctionTemplate] = {
+    Q.queryNA[JunctionTemplate](query).list.groupBy(_.junctionId).map {
       case (_, list) =>
         list.head
     }.toList
   }
-
-
 
   def fetchJunctionByNodeId(nodeId: Long): Seq[Junction] = {
     fetchJunctionByNodeIds(Seq(nodeId))
@@ -140,18 +155,14 @@ class JunctionDAO extends BaseDAO {
   def fetchTemplates() : Seq[JunctionTemplate] = {
     val query =
       s"""
-         SELECT DISTINCT junction.ID, junction.JUNCTION_NUMBER, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M, rw.ELY
+         SELECT DISTINCT junction.ID, junction.JUNCTION_NUMBER, junction.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
          FROM JUNCTION junction
          LEFT JOIN JUNCTION_POINT jp ON junction.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL AND jp.END_DATE IS NULL
          LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
          LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
             WHERE junction.VALID_TO IS NULL AND junction.END_DATE IS NULL AND junction.NODE_ID IS NULL
        """
-
-    Q.queryNA[(Long, Long, Long, Long, Long, Long, Long)](query).list.map {
-      case (junctionId, junctionNumber, roadNumber, track, roadPartNumber, addrM, ely) =>
-        JunctionTemplate(junctionId, junctionNumber, roadNumber, roadPartNumber, Track.apply(track.toInt), addrM, ely)
-    }
+        queryListTemplate(query)
   }
 
   def create(junctions: Iterable[Junction], createdBy: String = "-"): Seq[Long] = {

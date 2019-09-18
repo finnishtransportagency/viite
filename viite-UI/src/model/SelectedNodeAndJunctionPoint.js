@@ -8,9 +8,9 @@
       eventbus.trigger('nodePoint:selected');
     };
 
-    var openJunctionPointTemplates = function (junctionPointTemplates, junctionId) {
+    var openJunctionPointTemplates = function (junctionPointTemplates) {
       setCurrentJunctionPointTemplates(junctionPointTemplates);
-      eventbus.trigger('junctionPoint:selected', junctionId);
+      eventbus.trigger('junctionPoint:selected');
     };
 
     var setCurrentNodePointTemplates = function(nodePointTemplates) {
@@ -55,6 +55,7 @@
       openJunctionPointTemplates: openJunctionPointTemplates,
       getCurrentNodePointTemplates: getCurrentNodePointTemplates,
       getCurrentJunctionPointTemplates: getCurrentJunctionPointTemplates,
+      setCurrentJunctionPointTemplates: setCurrentJunctionPointTemplates,
       isDirty: isDirty,
       setDirty: setDirty,
       clean: clean,
