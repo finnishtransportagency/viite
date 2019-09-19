@@ -30,9 +30,9 @@
           }
 
           if (side == "source") {
-            return sort(change.source)
+            return sort(change.source);
           } else {
-            return sort(change.target)
+            return sort(change.target);
           }
         });
         if (reverse) projectChanges.changeTable.changeInfoSeq.reverse();
