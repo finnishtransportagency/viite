@@ -32,17 +32,17 @@
             return '<span class="header-orange">Liittymäkohtien tiedot:</span>';
         };
         var addSmallLabel = function (label) {
-            return '<label class="junction-control-label-small">' + label + '</label>';
+            return '<label class="junction-points junction-control-label-small">' + label + '</label>';
         };
         var addDisabledSmallInputNumber = function (id, value, maxLength) {
             var smallNumberImput = '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-                '" class="form-control junction-disabled-small-input" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '"' +
+                '" class="junction-points form-control junction-disabled-small-input" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '"' +
                 (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick="" disabled/>';
             return smallNumberImput;
         };
         var addSmallInputNumber = function (id, value, maxLength) {
             var smallNumberImput = '<input type="text"  onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-                '" class="form-control junction-small-input" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '"' +
+                '" class="junction-points form-control junction-small-input" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '"' +
                 (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
             return smallNumberImput;
         };
@@ -107,7 +107,7 @@
             var text = "";
             text +=
                 '<div class="form-group editable form-editable-roadAddressProject"> ' +
-                '<form  id="junctionPoint"  class="input-unit-combination form-group form-horizontal roadAddressProject">' + dataRows +
+                '<form  id="junctionPoint"  class="input-unit-combination form-group form-horizontal junction-points">' + dataRows +
                 '</form>' +
                 '</div>';
             return text;
