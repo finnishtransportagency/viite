@@ -29,7 +29,7 @@
         };
 
         var title = function () {
-            return '<span class="header-orange">Liittymäkohtien tiedot:</span>';
+            return '<span class="caption-title">Liittymäkohtien tiedot:</span>';
         };
         var addSmallLabel = function (label) {
             return '<label class="junction-points junction-control-label-small">' + label + '</label>';
@@ -66,7 +66,10 @@
                 var rootElement = $('#feature-attributes');
                 rootElement.empty();
                 $('#feature-attributes').append('' +
-                    '<p class="center">' + title() + ' </p>' +
+                    '<header>' +
+                    title() +
+                    '</header>' +
+                    '<div class="wrapper read-only">' +
                     '<div class="form form-horizontal form-dark">' +
                     '<div class="edit-control-group project-choice-group">' +
                     staticField('Solmunumero: ', junctionInfo.nodeNumber) +
@@ -75,6 +78,7 @@
                     '<div id="junctions-content">' +
                     '</div>' +
                     '<div id="buttons-div">' +
+                    '</div>' +
                     '</div>' +
                     '</div>' +
                     '<footer>' + '</footer>');
