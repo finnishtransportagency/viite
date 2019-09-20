@@ -101,9 +101,9 @@
 
     root.RoadZIndex = {
         VectorLayer:                {value: 1},
-        UnderConstructionLayer:     {value: 4},
         AnomalousMarkerLayer:       {value: 2},
         CalibrationPointLayer:      {value: 3},
+        UnderConstructionLayer:     {value: 4},
         GeometryChangedLayer:       {value: 5},
         ReservedRoadLayer:          {value: 6},
         HistoricRoadLayer:          {value: 7},
