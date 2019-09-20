@@ -59,7 +59,7 @@
      */
     var getCoordinatesFromRoadAddress = function (road) {
       return backend.getCoordinatesFromRoadAddress(road.roadNumber, road.section, road.distance).then(function (roadData) {
-          if(!_.isUndefined(roadData) && roadData.length > 0){
+        if(!_.isUndefined(roadData) && roadData.length > 0){
           var sortedRoad = _.sortBy(_.sortBy(roadData, function (addr) {
               return addr.startAddrMValue;
           }), function (road) {
@@ -71,7 +71,7 @@
           } else {
               return searchResult;
           }
-      } else [];
+        } else [{}];
       });
     };
 
