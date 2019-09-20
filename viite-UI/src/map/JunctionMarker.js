@@ -18,41 +18,9 @@
         geometry: new ol.geom.Point([point.x, point.y])
       });
 
-      var svg =
-        '<svg\n' +
-        '        xmlns="http://www.w3.org/2000/svg"\n' +
-        '        xmlns:xlink="http://www.w3.org/1999/xlink"\n' +
-        '        width="24"\n' +
-        '        height="24"\n' +
-        '        viewBox="0 0 24 24"\n' +
-        '>\n' +
-        '    <circle\n' +
-        '            style="opacity:1;fill:#103bae;fill-opacity:1;stroke:none;"\n' +
-        '            id="outline"\n' +
-        '            cx="12"\n' +
-        '            cy="12"\n' +
-        '            r="12"/>\n' +
-        '    <circle\n' +
-        '            style="opacity:1;fill:#235aeb;fill-opacity:1;stroke:none;"\n' +
-        '            id="fill"\n' +
-        '            cx="12"\n' +
-        '            cy="12"\n' +
-        '            r="10"/>\n' +
-        '    <text id="text"\n' +
-        '          x="12"\n' +
-        '          y="17"\n' +
-        '          style="font-size:14px;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;">\n' +
-        junctionNumber +
-        '    </text>\n' +
-        '    <script type="text/ecmascript" xlink:href="param.js" />\n' +
-        '</svg>';
-
-      //var s = new XMLSerializer().serializeToString(svg);
-      var encodedData = window.btoa(svg);
-
       var junctionMarkerStyle = new ol.style.Style({
         image: new ol.style.Icon({
-          src: 'data:image/svg+xml;base64,' + encodedData,
+          src: 'images/junction-template.svg',
           scale: 0.75
         })
       });
