@@ -136,10 +136,25 @@
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 
-    // Show environment name next to Viite logo
-    var notification = jQuery('#notification');
-    notification.append(Environment.localizedName());
-    notification.append(' Tielinkkiaineisto : ' + startupParameters.date_of_data);
+    var toolTip = '<div id="infoTooltip">' +
+        '<i class="fas fa-info-circle" title="Versio: ' + startupParameters.deploy_date + '"></i>\n' +
+        '</div>';
+
+    var pictureTooltip = jQuery('#pictureTooltip');
+    pictureTooltip.empty();
+    pictureTooltip.append(toolTip);
+
+    backend.getRoadLinkDate (function (versionData) {
+      getRoadLinkDateInfo(versionData);
+    });
+
+    var getRoadLinkDateInfo = function (versionData) {
+
+      // Show environment name next to Viite logo
+      var notification = jQuery('#notification');
+      notification.append(Environment.localizedName());
+      notification.append(' Tielinkkiaineisto: ' +  versionData.result);
+    };
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {

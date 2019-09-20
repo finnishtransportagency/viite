@@ -186,18 +186,17 @@
           eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
         }
         var underConstructionVisibleCheckbox = $('#underConstructionVisibleCheckbox')[0];
-        if (layer === 'roadAddressProject') {
-          if (underConstructionVisibleCheckbox) {
-            $('#underConstructionVisibleCheckbox')[0].checked = false;
-            $('#underConstructionVisibleCheckbox')[0].disabled = true;
-          }
-          eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
-        } else {
-          if (underConstructionVisibleCheckbox) {
-            $('#underConstructionVisibleCheckbox')[0].checked = true;
-            $('#underConstructionVisibleCheckbox')[0].disabled = false;
-          }
-          eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
+        if (layer !== selectedLayer || toggleStart) {
+            if (underConstructionVisibleCheckbox) {
+                if (layer === 'roadAddressProject') {
+                    $('#underConstructionVisibleCheckbox')[0].checked = true;
+                    $('#underConstructionVisibleCheckbox')[0].disabled = false;
+                } else {
+                    $('#underConstructionVisibleCheckbox')[0].checked = true;
+                    $('#underConstructionVisibleCheckbox')[0].disabled = false;
+                }
+            }
+            eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
         }
       },
       getSelectedLayer: function () {

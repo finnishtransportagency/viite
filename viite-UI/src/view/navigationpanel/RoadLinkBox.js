@@ -137,6 +137,8 @@
         '<div class="symbol linear operation-type-unhandeled" />' +
         '<div class="label">Muu tieverkko, rakenteilla</div>' +
         '<div class="symbol linear construction-type-0" />' +
+          '<div class="label">Tuntematon, rakenteilla</div>' +
+          '<div class="symbol linear construction-type-1" />' +
         '</div>';
     };
 
