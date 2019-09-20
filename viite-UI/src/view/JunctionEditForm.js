@@ -66,7 +66,7 @@
                 return true;
         };
         var title = function () {
-            return '<span class="caption-title">Liittymän tiedot: (uuden käyttäjän itse muodostaman)</span>';
+            return '<span class="caption-title">Liittymän tiedot:</span>';
         };
         var addPicture = function (showJunctionTemplateEditForm) {
             if (showJunctionTemplateEditForm) {
