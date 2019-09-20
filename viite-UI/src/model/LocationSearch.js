@@ -71,7 +71,7 @@
           } else {
               return searchResult;
           }
-        } else [{}];
+        } else return [];
       });
     };
 

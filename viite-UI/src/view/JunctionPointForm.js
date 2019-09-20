@@ -1,33 +1,6 @@
 (function (root) {
     root.JunctionPointForm = function (backend) {
 
-
-        var addSaveEvent = function () {
-            var saveButton = '<button id="saveEtaisyys" class="btn btn-primary save btn-save-road-data" disabled>Tallenna</button>';
-            $('#buttons-div').append(saveButton);
-            $('#aosa').on('click', function (clickEvent) {
-                var saveMessage = ($('#aosa').length > 0 ? "Tiellä on jo nimi. Haluatko varmasti antaa sille uuden nimen?" : "Tiellä on jo nimi. Haluatko varmasti muokata sitä?");
-
-                new GenericConfirmPopup(saveMessage, {
-                    successCallback: function () {
-                        roadNameCollection.saveChanges();
-                    },
-                    closeCallback: function () {
-                    }
-                });
-            });
-        };
-
-        var addReturn = function (junctionId) {
-            var returnButton = '<button id="return" class="btn btn-primary save btn-save-road-data">Palaa</button>';
-            $('#buttons-div').append(returnButton);
-            $('button#return').on('click', function (e) {
-                e.preventDefault();
-                eventbus.trigger('junctionEdit:selected', junctionId);
-                return false;
-            });
-        };
-
         var title = function () {
             return '<span class="caption-title">Liittymäkohtien tiedot:</span>';
         };
@@ -60,6 +33,35 @@
 
             });
         };
+
+        var formButtons = function () {
+            return '<div class="form form-controls" id="buttons-div">' +
+                '<button id="saveDistance" class="save btn btn-edit-junction-save" disabled>Tallenna</button>' +
+                '<button id="return" class="cancel btn btn-return-list-junction">Palaa</button>' +
+                '</div>';
+        };
+
+        var addSaveEvent = function () {
+            $('#aosa').on('click', function (clickEvent) {
+                var saveMessage = ($('#aosa').length > 0 ? "Tiellä on jo nimi. Haluatko varmasti antaa sille uuden nimen?" : "Tiellä on jo nimi. Haluatko varmasti muokata sitä?");
+                new GenericConfirmPopup(saveMessage, {
+                    successCallback: function () {
+                        //TODO edit or save junction point info
+                    },
+                    closeCallback: function () {
+                    }
+                });
+            });
+        };
+
+        var addReturnEvent = function (junctionId) {
+            $('button#return').on('click', function (e) {
+                e.preventDefault();
+                eventbus.trigger('junctionEdit:selected', junctionId);
+                return false;
+            });
+        };
+
         var getDataTemplateInfo = function (junctionId) {
             return backend.getJunctionInfoByJunctionId(junctionId, function (junctionInfo) {
                 //template(junctionInfo);
@@ -77,13 +79,12 @@
                     '</div>' +
                     '<div id="junctions-content">' +
                     '</div>' +
-                    '<div id="buttons-div">' +
                     '</div>' +
                     '</div>' +
-                    '</div>' +
-                    '<footer>' + '</footer>');
+                    '<footer>' + formButtons() +
+                    '</footer>');
                 addSaveEvent();
-                addReturn(junctionId);
+                addReturnEvent(junctionId);
 
             });
         };
