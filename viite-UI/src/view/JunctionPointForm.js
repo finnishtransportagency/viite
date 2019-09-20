@@ -64,7 +64,6 @@
 
         var getDataTemplateInfo = function (junctionId) {
             return backend.getJunctionInfoByJunctionId(junctionId, function (junctionInfo) {
-                //template(junctionInfo);
                 var rootElement = $('#feature-attributes');
                 rootElement.empty();
                 $('#feature-attributes').append('' +
