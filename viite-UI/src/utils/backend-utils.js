@@ -651,7 +651,7 @@
     }, 1000);
 
     this.getNodePointTemplateById = _.throttle(function (nodePointTemplateId, callback) {
-      return $.getJSON('api/viite/nodepointtemplate/' + nodePointTemplateId, function (data) {
+      return $.getJSON('api/viite/node-point-templates/' + nodePointTemplateId, function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
