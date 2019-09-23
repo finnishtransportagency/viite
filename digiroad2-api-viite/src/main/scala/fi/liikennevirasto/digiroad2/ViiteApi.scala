@@ -983,17 +983,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/junctionInfoByJunctionId") {
-    val junctionId = params.get("junctionId").getOrElse(halt(BadRequest("Missing mandatory 'junctionId' parameter")))
-    val x: Seq[Long] = Seq(junctionId.toLong)
-    if (junctionId == "") {
-      val message = "junctionId parameter is empty"
-      logger.info(message)
-      BadRequest(message)
-    } else {
-      time(logger, s"GET request for /junctionInfoByJunctionId + junctionId="+ junctionId){
-        nodesAndJunctionsService.getJunctionInfoByJunctionId(x).map(junctionInfoToApi)
-      }
+  get("/junction-infos/:id") {
+    val junctionId = params("id").toLong
+    val x: Seq[Long] = Seq(junctionId)
+    time(logger, s"GET request for /junction-infos/$junctionId") {
+      nodesAndJunctionsService.getJunctionInfoByJunctionId(x).map(junctionInfoToApi)
     }
   }
 
