@@ -62,12 +62,12 @@
       var nodes = _.filter(fetchResult, function(node){
         return !_.isUndefined(node.name) ;
       });
-      var nodePointTemplates = _.unique(_.map(_.filter(fetchResult, function(node){
+      var nodePointTemplates = _.unique(_.map(_.filter(fetchResult, function(node) {
         return !_.isUndefined(node.nodePointTemplate) ;
       }), function (nodePointTemp) {
         return nodePointTemp.nodePointTemplate;
       }), "id");
-      var junctionPointTemplates = _.unique(_.map(_.filter(fetchResult, function(node){
+      var junctionPointTemplates = _.unique(_.map(_.filter(fetchResult, function(node) {
           return !_.isUndefined(node.junctionPointTemplate) ;
       }), function (junctionPointTemp) {
           return junctionPointTemp.junctionPointTemplate;
@@ -79,7 +79,7 @@
       eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionPointTemplates, zoom);
     });
 
-    eventbus.on('templates:fetched', function(data){
+    eventbus.on('templates:fetched', function(data) {
       me.setUserTemplates(data);
     });
 
@@ -92,7 +92,7 @@
       });
     });
 
-    eventbus.on('nodeSearchTool:clickNodePointTemplate', function(id){
+    eventbus.on('nodeSearchTool:clickNodePointTemplate', function(id) {
       var moveToLocation = function(nodePoint) {
         if (!_.isUndefined(nodePoint)) {
           locationSearch.search(nodePoint.roadNumber + ' ' + nodePoint.roadPartNumber + ' ' + nodePoint.addrM).then(function (results) {
@@ -120,7 +120,7 @@
       }
     });
 
-    eventbus.on('nodeSearchTool:clickJunctionTemplate', function(id){
+    eventbus.on('nodeSearchTool:clickJunctionTemplate', function(id) {
       applicationModel.addSpinner();
       var junctionTemplate = _.find(userJunctionTemplates, function (template) {
         return template.junctionId === parseInt(id);

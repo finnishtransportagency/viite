@@ -1,5 +1,5 @@
-(function(root) {
-  root.SelectedNodeAndJunctionPoint = function() {
+(function (root) {
+  root.SelectedNodeAndJunctionPoint = function () {
     var current = {};
     var dirty = false;
 
@@ -13,11 +13,11 @@
       eventbus.trigger('junctionPoint:selected');
     };
 
-    var setCurrentNodePointTemplates = function(nodePointTemplates) {
+    var setCurrentNodePointTemplates = function (nodePointTemplates) {
       current.nodePointTemplates = nodePointTemplates;
     };
 
-    var setCurrentJunctionPointTemplates = function(junctionPointTemplates) {
+    var setCurrentJunctionPointTemplates = function (junctionPointTemplates) {
       current.junctionPointTemplates = junctionPointTemplates;
     };
 
@@ -25,24 +25,24 @@
       return current.nodePointTemplates;
     };
 
-      var getCurrentJunctionPointTemplates = function () {
-          return current.junctionPointTemplates;
-      };
+    var getCurrentJunctionPointTemplates = function () {
+      return current.junctionPointTemplates;
+    };
 
-    var isDirty = function() {
+    var isDirty = function () {
       return dirty;
     };
 
-    var setDirty = function(value) {
+    var setDirty = function (value) {
       dirty = value;
     };
 
-    var clean = function() {
+    var clean = function () {
       current = [];
       dirty = false;
     };
 
-    var close = function() {
+    var close = function () {
       clean();
       eventbus.trigger('node:unselected');
       eventbus.trigger('junction:unselected');

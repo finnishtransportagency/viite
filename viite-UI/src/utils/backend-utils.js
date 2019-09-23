@@ -639,12 +639,12 @@
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
-    this.getJunctionPointsByJunctionId = _.throttle(function(junctionId, callback){
-        return $.get('api/viite/junctionPointsByJunctionId?junctionId=' + junctionId, function (data) {
-            return _.isFunction(callback) && callback(data);
-        });
+    this.getJunctionPointsByJunctionId = _.throttle(function (junctionId, callback) {
+      return $.get('api/viite/junctionPointsByJunctionId?junctionId=' + junctionId, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
     }, 1000);
-    this.getJunctionInfoByJunctionId = _.throttle(function(junctionId, callback){
+    this.getJunctionInfoByJunctionId = _.throttle(function (junctionId, callback) {
       return $.get('api/viite/junctionInfoByJunctionId?junctionId=' + junctionId, function (data) {
         return _.isFunction(callback) && callback(data);
       });

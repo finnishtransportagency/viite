@@ -21,9 +21,9 @@
       return '<input type="text" class="form-control node-point-input" disabled id="' + id + '" value="' + value + '"/>';
     };
 
-    var nodePointsInSamePlaceInfo = function(ids) {
+    var nodePointsInSamePlaceInfo = function (ids) {
       return '<div id="node-point-ids" class="form-group-metadata">' +
-      '<p class="form-control-static asset-log-info-metadata">Kaikki aihiot tässä paikassa: ' + ids.join(', ') + '</p></div>';
+        '<p class="form-control-static asset-log-info-metadata">Kaikki aihiot tässä paikassa: ' + ids.join(', ') + '</p></div>';
     };
 
     var nodePointInformation = function (nodePoint) {
@@ -33,7 +33,7 @@
         '</div>' +
         '<div class="form-group">' +
         inputNumber('tie', nodePoint.roadNumber) +
-        inputNumber('osa',  nodePoint.roadPartNumber) +
+        inputNumber('osa', nodePoint.roadPartNumber) +
         inputNumber('etaisyys', nodePoint.addrM) + '</div></form>';
     };
 
@@ -78,7 +78,7 @@
         selectedNodePoint.close();
       });
 
-      eventbus.on('nodePoint:selected', function() {
+      eventbus.on('nodePoint:selected', function () {
         rootElement.empty();
         var templatesList = selectedNodePoint.getCurrentNodePointTemplates();
         var nodePointsList = [];
@@ -86,7 +86,7 @@
         if (!_.isEmpty(templatesList)) {
           rootElement.html(nodePointTemplateForm(templatesList));
         } else if (!_.isEmpty(nodePointsList)) {
-            // build form for node point.
+          // build form for node point.
         } else {
           selectedNodePoint.close();
         }

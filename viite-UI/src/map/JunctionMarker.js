@@ -4,15 +4,14 @@
       var beforeOrAfter = junctionPoint.beforeOrAfter;
       var point = [];
       var junctionNumber = 0;
-        if(junction.junctionNumber !== 99)
-          junctionNumber = junction.junctionNumber;
+      if (junction.junctionNumber !== 99)
+        junctionNumber = junction.junctionNumber;
 
-        if((roadLink.sideCode === LinkValues.SideCode.TowardsDigitizing.value && junctionPoint.addrM === roadLink.endAddressM) ||(roadLink.sideCode === LinkValues.SideCode.AgainstDigitizing.value && junctionPoint.addrM === roadLink.startAddressM)){
-          point = roadLink.points[roadLink.points.length -1];
-        }
-
-        else
-          point = roadLink.points[0];
+      if ((roadLink.sideCode === LinkValues.SideCode.TowardsDigitizing.value && junctionPoint.addrM === roadLink.endAddressM) || (roadLink.sideCode === LinkValues.SideCode.AgainstDigitizing.value && junctionPoint.addrM === roadLink.startAddressM)) {
+        point = roadLink.points[roadLink.points.length - 1];
+      } else {
+        point = roadLink.points[0];
+      }
 
       var marker = new ol.Feature({
         geometry: new ol.geom.Point([point.x, point.y])
