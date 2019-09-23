@@ -640,7 +640,7 @@
       });
     }, 1000);
     this.getJunctionPointsByJunctionId = _.throttle(function (junctionId, callback) {
-      return $.get('api/viite/junctionPointsByJunctionId?junctionId=' + junctionId, function (data) {
+      return $.get('api/viite/junctions/' + junctionId + '/junction-points', function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
