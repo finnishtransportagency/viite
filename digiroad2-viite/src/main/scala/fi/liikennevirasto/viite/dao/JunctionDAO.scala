@@ -119,10 +119,10 @@ class JunctionDAO extends BaseDAO {
   }
   def fetchJunctionInfoByJunctionId(ids: Seq[Long]): Option[JunctionInfo] = {
     sql"""
-      SELECT junction.ID, junction.JUNCTION_NUMBER, junction.NODE_ID, junction.START_DATE, node.NODE_NUMBER, node.NAME
-      FROM JUNCTION junction
-      LEFT JOIN NODE node ON junction.NODE_ID = node.ID
-      WHERE junction.ID IN (${ids.mkString(", ")})
+      SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_ID, j.START_DATE, node.NODE_NUMBER, node.NAME
+      FROM JUNCTION j
+      LEFT JOIN NODE n ON j.NODE_ID = n.ID AND n.valid_to IS NULL
+      WHERE j.ID IN (${ids.mkString(", ")}) AND j.valid_to IS NULL
       """.as[JunctionInfo].firstOption
 
   }
@@ -155,12 +155,12 @@ class JunctionDAO extends BaseDAO {
   def fetchTemplates() : Seq[JunctionTemplate] = {
     val query =
       s"""
-         SELECT DISTINCT junction.ID, junction.JUNCTION_NUMBER, junction.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
-         FROM JUNCTION junction
-         LEFT JOIN JUNCTION_POINT jp ON junction.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL AND jp.END_DATE IS NULL
+         SELECT DISTINCT j.ID, j.JUNCTION_NUMBER, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
+         FROM JUNCTION j
+         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL AND jp.END_DATE IS NULL
          LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
          LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-            WHERE junction.VALID_TO IS NULL AND junction.END_DATE IS NULL AND junction.NODE_ID IS NULL
+            WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_ID IS NULL
        """
         queryListTemplate(query)
   }
