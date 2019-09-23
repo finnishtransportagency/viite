@@ -930,9 +930,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/nodepointtemplate/:id") {
+  get("/node-point-templates/:id") {
     val id = params("id").toLong
-    time(logger, s"GET request for /nodepointtemplate/$id") {
+    time(logger, s"GET request for /node-point-templates/$id") {
       nodesAndJunctionsService.getNodePointTemplateById(id) match {
         case None => halt(NotFound("Node Points Template not found"))
         case Some(nodePoint) => nodePointTemplateToApi(nodePoint)
