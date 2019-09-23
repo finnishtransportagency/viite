@@ -4,7 +4,7 @@
       level: undefined
     };
     var selectedLayer;
-    var selectedTool = 'Select';
+    var selectedTool = LinkValues.Tool.Unknown.value;
     var centerLonLat;
     var minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
     var minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
@@ -44,7 +44,7 @@
       if (readOnly !== newState) {
         readOnly = newState;
         setActiveButtons(false);
-        setSelectedTool('Select');
+        setSelectedTool(LinkValues.Tool.Default.value);
         eventbus.trigger('application:readOnly', newState);
       }
     };
@@ -105,11 +105,12 @@
       if (tool !== selectedTool) {
         selectedTool = tool;
         eventbus.trigger('tool:changed', tool);
-      } else {
-        selectedTool = '';
-        eventbus.trigger('tool:clear');
       }
     }
+
+    var selectedToolIs = function (tool) {
+      return selectedTool === tool;
+    };
 
     var getCurrentAction = function () {
       return currentAction;
@@ -164,6 +165,7 @@
       },
       getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,
+      selectedToolIs: selectedToolIs,
       getSelectedTool: function () {
         return selectedTool;
       },
@@ -180,7 +182,8 @@
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
-          setSelectedTool('Select');
+          var tool = layer !== 'node' ? LinkValues.Tool.Default.value : LinkValues.Tool.Unknown.value;
+          setSelectedTool(tool);
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
         } else if (layer === 'linkProperty' && toggleStart) {
           eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);

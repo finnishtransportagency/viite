@@ -26,7 +26,8 @@
         'roadAddressProject/:projectId': 'roadAddressProject',
         'historyLayer/:date': 'historyLayer',
         'work-list/floatingRoadAddress' : 'floatingAddressesList',
-        'work-list/roadAddressErrors' : 'roadAddressErrorsList'
+        'work-list/roadAddressErrors' : 'roadAddressErrorsList',
+        'node/nodePointTemplate/:id' : 'nodePointTemplate'
       },
 
       linkProperty: function (linkId) {
@@ -80,6 +81,11 @@
 
       roadAddressErrorsList: function () {
         eventbus.trigger('workList-errors:select', 'linkProperty', backend.getRoadAddressErrors());
+      },
+
+      nodePointTemplate: function (nodePointTemplateId) {
+        eventbus.trigger('nodesAndJunctions:open');
+        eventbus.trigger('nodeSearchTool:clickNodePointTemplate', nodePointTemplateId, map);
       }
     });
 
@@ -131,6 +137,10 @@
           applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), newCenter);
         }
       }
+    });
+
+    eventbus.on('nodePointTemplate:selected', function (nodePointTemplateId) {
+      router.navigate('nodePointTemplate/' + nodePointTemplateId);
     });
 
     eventbus.on('layer:selected', function (layer) {
