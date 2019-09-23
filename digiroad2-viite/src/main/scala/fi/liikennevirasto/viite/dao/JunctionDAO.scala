@@ -119,7 +119,7 @@ class JunctionDAO extends BaseDAO {
   }
   def fetchJunctionInfoByJunctionId(ids: Seq[Long]): Option[JunctionInfo] = {
     sql"""
-      SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_ID, j.START_DATE, node.NODE_NUMBER, node.NAME
+      SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_ID, j.START_DATE, n.NODE_NUMBER, n.NAME
       FROM JUNCTION j
       LEFT JOIN NODE n ON j.NODE_ID = n.ID AND n.valid_to IS NULL
       WHERE j.ID IN (${ids.mkString(", ")}) AND j.valid_to IS NULL
