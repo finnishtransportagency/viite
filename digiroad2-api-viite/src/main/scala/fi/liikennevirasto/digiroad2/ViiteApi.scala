@@ -266,7 +266,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       logger.info(message)
       BadRequest(message)
     } else {
-      time(logger, s"GET request for /junctionPointsByJunctionId + junctionId="+ junctionId){
+      time(logger, s"GET request for /junctionPointsByJunctionId?junctionId=$junctionId") {
         nodesAndJunctionsService.getJunctionPointsByJunctionIds(x).map(junctionPointsToApi)
       }
     }

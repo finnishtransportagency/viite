@@ -59,24 +59,24 @@
      */
     var getCoordinatesFromRoadAddress = function (road) {
       return backend.getCoordinatesFromRoadAddress(road.roadNumber, road.section, road.distance).then(function (roadData) {
-        if(!_.isUndefined(roadData) && roadData.length > 0){
+        if (!_.isUndefined(roadData) && roadData.length > 0) {
           var sortedRoad = _.sortBy(_.sortBy(roadData, function (addr) {
-              return addr.startAddrMValue;
+            return addr.startAddrMValue;
           }), function (road) {
-              return road.roadPartNumber;
+            return road.roadPartNumber;
           });
           var searchResult = roadLocationAPIResultParser(sortedRoad[0], road.distance);
           if (searchResult.length === 0) {
-              return $.Deferred().reject('Tuntematon tieosoite');
+            return $.Deferred().reject('Tuntematon tieosoite');
           } else {
-              return searchResult;
+            return searchResult;
           }
         } else return [];
       });
     };
 
-    var resultFromCoordinates = function(coordinates) {
-      var result = _.assign({}, coordinates, { title: coordinates.lat + ',' + coordinates.lon });
+    var resultFromCoordinates = function (coordinates) {
+      var result = _.assign({}, coordinates, {title: coordinates.lat + ',' + coordinates.lon});
       return $.Deferred().resolve([result]);
     };
 

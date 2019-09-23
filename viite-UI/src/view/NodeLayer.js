@@ -74,15 +74,15 @@
        * Event triggered by the selectedNode.open() returning all the open layers 3 features
        * that need to be included in the selection.
        */
-      me.eventListener.listenTo(eventbus, 'node:ol3Selected', function(ol3Features){
-          addNodeFeaturesToSelection(ol3Features);
+      me.eventListener.listenTo(eventbus, 'node:ol3Selected', function (ol3Features) {
+        addNodeFeaturesToSelection(ol3Features);
       });
 
       /**
        * This will remove all the following interactions from the map:
        * - nodeAndJunctionPointTemplateClick
        */
-      var removeSelectInteractions = function() {
+      var removeSelectInteractions = function () {
         map.removeInteraction(nodeAndJunctionPointTemplateClick);
       };
 
@@ -94,11 +94,11 @@
        * @type {ol.interaction.Select}
        */
       var nodeAndJunctionPointTemplateClick = new ol.interaction.Select({
-        //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
-        //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
+        // Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
+        // This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
         layers: [nodePointTemplateLayer, junctionTemplateLayer],
         name: 'nodeAndJunctionPointTemplateClickInteractionNL',
-        //Limit this interaction to the singleClick
+        // Limit this interaction to the singleClick
         condition: ol.events.condition.singleClick
       });
 
@@ -120,23 +120,23 @@
           return !_.isUndefined(selectionTarget.junctionPointTemplateInfo);
         });
 
-          if (!_.isUndefined(selectedNode) && selectedNode.length > 0){
-            if(applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
-                applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
-            } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
-                selectedNodeAndJunctionPoint.openNodePointTemplates(_.unique(_.map(selectedNode, "nodePointTemplateInfo"), "id"));
-            } else selectedNodeAndJunctionPoint.close();
-          } else if (!_.isUndefined(selectedJunction) && selectedJunction.length > 0){
-              if(applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
-                  applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
-              } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)){
-                  var junctionPointTemplates = _.unique(_.map(selectedJunction, "junctionPointTemplateInfo"), "junctionId");
-                  selectedNodeAndJunctionPoint.setCurrentJunctionPointTemplates(junctionPointTemplates);
-                  eventbus.trigger('junctionEdit:selected', _.first(selectedJunction).junctionPointTemplateInfo.junctionId);
-              } else selectedNodeAndJunctionPoint.close();
-          } else {
-              selectedNodeAndJunctionPoint.close();
-          }
+        if (!_.isUndefined(selectedNode) && selectedNode.length > 0) {
+          if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
+            applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+          } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
+            selectedNodeAndJunctionPoint.openNodePointTemplates(_.unique(_.map(selectedNode, "nodePointTemplateInfo"), "id"));
+          } else selectedNodeAndJunctionPoint.close();
+        } else if (!_.isUndefined(selectedJunction) && selectedJunction.length > 0) {
+          if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
+            applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+          } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
+            var junctionPointTemplates = _.unique(_.map(selectedJunction, "junctionPointTemplateInfo"), "junctionId");
+            selectedNodeAndJunctionPoint.setCurrentJunctionPointTemplates(junctionPointTemplates);
+            eventbus.trigger('junctionEdit:selected', _.first(selectedJunction).junctionPointTemplateInfo.junctionId);
+          } else selectedNodeAndJunctionPoint.close();
+        } else {
+          selectedNodeAndJunctionPoint.close();
+        }
       });
 
       /**
@@ -144,12 +144,12 @@
        * @param ol3Features
        */
       var addNodeFeaturesToSelection = function (ol3Features) {
-        var olUids = _.map(nodeAndJunctionPointTemplateClick.getFeatures().getArray(), function(feature){
+        var olUids = _.map(nodeAndJunctionPointTemplateClick.getFeatures().getArray(), function (feature) {
           return feature.ol_uid;
         });
-        _.each(ol3Features, function(feature){
+        _.each(ol3Features, function (feature) {
           if (!_.contains(olUids, feature.ol_uid)) {
-              nodeAndJunctionPointTemplateClick.getFeatures().push(feature);
+            nodeAndJunctionPointTemplateClick.getFeatures().push(feature);
             olUids.push(feature.ol_uid); // prevent adding duplicate entries
           }
         });
@@ -160,27 +160,27 @@
        * - nodeAndJunctionPointTemplateClick
        */
       var addClickInteractions = function () {
-          map.addInteraction(nodeAndJunctionPointTemplateClick);
+        map.addInteraction(nodeAndJunctionPointTemplateClick);
       };
 
       // We add the defined interactions to the map.
       addClickInteractions();
 
-      me.eventListener.listenTo(eventbus, 'node:unselected', function() {
-        if(nodePointTemplateLayer.getSource().getFeatures().length !== 0) {
+      me.eventListener.listenTo(eventbus, 'node:unselected', function () {
+        if (nodePointTemplateLayer.getSource().getFeatures().length !== 0) {
           nodePointTemplateLayer.getSource().clear();
         }
       });
 
-      me.eventListener.listenTo(eventbus, 'junction:unselected', function() {
-        if(junctionTemplateLayer.getSource().getFeatures().length !== 0) {
-            junctionTemplateLayer.getSource().clear();
+      me.eventListener.listenTo(eventbus, 'junction:unselected', function () {
+        if (junctionTemplateLayer.getSource().getFeatures().length !== 0) {
+          junctionTemplateLayer.getSource().clear();
         }
       });
 
-      me.eventListener.listenTo(eventbus, 'map:clicked', function() {
-        if(nodePointTemplateLayer.getSource().getFeatures().concat(junctionTemplateLayer.getSource().getFeatures()).length > 0) {
-            selectedNodeAndJunctionPoint.close();
+      me.eventListener.listenTo(eventbus, 'map:clicked', function () {
+        if (nodePointTemplateLayer.getSource().getFeatures().concat(junctionTemplateLayer.getSource().getFeatures()).length > 0) {
+          selectedNodeAndJunctionPoint.close();
         }
       });
 
