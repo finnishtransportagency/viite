@@ -1,5 +1,5 @@
 (function (root) {
-  root.NodeCollection = function (backend, locationSearch) {
+  root.NodeCollection = function (backend, locationSearch, selectedNodePoint) {
     var me = this;
     var nodes = [];
     var nodesWithAttributes = [];
@@ -45,7 +45,6 @@
       nodesWithAttributes = list;
     };
 
-
     this.getNodesByRoadAttributes = function(roadAttributes) {
       return backend.getNodesByRoadAttributes(roadAttributes, function (result) {
         if (result.success) {
@@ -63,16 +62,16 @@
       var nodes = _.filter(fetchResult, function(node){
         return !_.isUndefined(node.name) ;
       });
-      var nodePointTemplates = _.map(_.filter(fetchResult, function(node){
+      var nodePointTemplates = _.unique(_.map(_.filter(fetchResult, function(node) {
         return !_.isUndefined(node.nodePointTemplate) ;
       }), function (nodePointTemp) {
         return nodePointTemp.nodePointTemplate;
-      });
-      var junctionPointTemplates = _.map(_.filter(fetchResult, function(node){
+      }), "id");
+      var junctionPointTemplates = _.unique(_.map(_.filter(fetchResult, function(node) {
           return !_.isUndefined(node.junctionPointTemplate) ;
       }), function (junctionPointTemp) {
           return junctionPointTemp.junctionPointTemplate;
-      });
+      }), "id");
 
       me.setNodes(nodes);
       me.setMapNodePointTemplates(nodePointTemplates);
@@ -80,7 +79,7 @@
       eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionPointTemplates, zoom);
     });
 
-    eventbus.on('templates:fetched', function(data){
+    eventbus.on('templates:fetched', function(data) {
       me.setUserTemplates(data);
     });
 
@@ -93,21 +92,35 @@
       });
     });
 
-    eventbus.on('nodeSearchTool:clickNodePointTemplate', function(id){
+    eventbus.on('nodeSearchTool:clickNodePointTemplate', function(id) {
+      var moveToLocation = function(nodePoint) {
+        if (!_.isUndefined(nodePoint)) {
+          locationSearch.search(nodePoint.roadNumber + ' ' + nodePoint.roadPartNumber + ' ' + nodePoint.addrM).then(function (results) {
+            if (results.length >= 1) {
+              var result = results[0];
+              eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat, zoom: 12});
+            }
+            applicationModel.removeSpinner();
+          });
+        }
+      };
+
       applicationModel.addSpinner();
       var nodePointTemplate = _.find(userNodePointTemplates, function (template) {
         return template.id === parseInt(id);
       });
-      locationSearch.search(nodePointTemplate.roadNumber + ' ' + nodePointTemplate.roadPartNumber + ' ' + nodePointTemplate.addrM).then(function(results) {
-        if (results.length >= 1) {
-          var result = results[0];
-          eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat, zoom: 12 });
-        }
-        applicationModel.removeSpinner();
-      });
+      if (_.isUndefined(nodePointTemplate)) {
+        backend.getNodePointTemplateById(id, function (results) {
+          moveToLocation(results.nodePointTemplate);
+          selectedNodePoint.openNodePointTemplates(_.unique([results.nodePointTemplate], "id"));
+        });
+      } else {
+        moveToLocation(nodePointTemplate);
+        selectedNodePoint.openNodePointTemplates(_.unique([nodePointTemplate], "id"));
+      }
     });
 
-    eventbus.on('nodeSearchTool:clickJunctionTemplate', function(id){
+    eventbus.on('nodeSearchTool:clickJunctionTemplate', function(id) {
       applicationModel.addSpinner();
       var junctionTemplate = _.find(userJunctionTemplates, function (template) {
         return template.junctionId === parseInt(id);
@@ -118,7 +131,8 @@
           eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat, zoom: 12 });
         }
         applicationModel.removeSpinner();
-      });
+    });
+        selectedNodePoint.openJunctionPointTemplates(_.unique([junctionTemplate], "junctionId"));
     });
 
     eventbus.on('nodeSearchTool:refreshView', function (map) {

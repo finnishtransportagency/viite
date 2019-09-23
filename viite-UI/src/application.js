@@ -11,7 +11,8 @@
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     window.applicationModel = new ApplicationModel([selectedLinkProperty]);
-    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel));
+    var selectedNodeAndJunctionPoint = new SelectedNodeAndJunctionPoint();
+    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel), selectedNodeAndJunctionPoint);
 
     var models = {
       roadCollection: roadCollection,
@@ -19,7 +20,8 @@
       selectedLinkProperty: selectedLinkProperty,
       linkPropertiesModel: linkPropertiesModel,
       selectedProjectLinkProperty : selectedProjectLinkProperty,
-      nodeCollection: nodeCollection
+      nodeCollection: nodeCollection,
+      selectedNodeAndJunctionPoint: selectedNodeAndJunctionPoint
     };
 
     bindEvents();
@@ -40,6 +42,7 @@
     );
 
     WorkListView.initialize(backend);
+
 
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
@@ -113,16 +116,18 @@
     var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty, models.nodeCollection);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
     var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
-    var nodeLayer = new NodeLayer(map, roadLayer, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
+    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodeAndJunctionPoint, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
+    new JunctionEditForm(models.selectedNodeAndJunctionPoint, backend);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
+    new NodePointForm(models.selectedNodeAndJunctionPoint);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
-
+    new JunctionPointForm(backend);
     var layers = _.merge({
       road: roadLayer,
       roadAddressProject: projectLinkLayer,

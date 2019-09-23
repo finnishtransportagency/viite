@@ -187,23 +187,25 @@
       var show = function() {
         element.show();
       };
-      var reset = function() {
-        _.each(tools, function(tool) {
-          tool.deactivate();
-        });
-      };
+
       eventbus.on('tool:changed', function(name) {
         _.each(tools, function(tool) {
-          if (tool.name != name) {
+          if (tool.name !== name) {
             tool.deactivate();
           } else {
             tool.activate();
           }
         });
       });
-      eventbus.on('tool:clear', function () {
-        reset();
-      });
+        var deactivateAll = function() {
+            _.each(tools, function(tool) {
+                tool.deactivate();
+            });
+        };
+        var reset = function() {
+            deactivateAll();
+            tools[0].activate();
+        };
 
       hide();
 
@@ -215,9 +217,9 @@
       };
     };
 
-    var toolSelection = new ToolSelection([
-      new Tool('Select', selectToolIcon),
-      new Tool('Add', addToolIcon)
+    var nodeToolSelection = new ToolSelection([
+      new Tool(LinkValues.Tool.SelectNode.value, selectToolIcon),
+      new Tool(LinkValues.Tool.AddNode.value, addToolIcon)
     ]);
 
     var templateAttributes = {
@@ -233,7 +235,7 @@
       eventbus.on('userData:fetched', function (userData) {
         if (_.contains(userData.roles, 'viite')) {
           $('#projectListButton').removeAttr('style');
-          elements.expanded.append(toolSelection.element);
+          elements.expanded.append(nodeToolSelection.element);
         }
       });
     };
@@ -267,7 +269,7 @@
         container.empty();
         container.append(roadProjectOperations());
         container.append(calibrationPointPicture);
-        toolSelection.hide();
+        nodeToolSelection.hide();
       }
       else if(applicationModel.getSelectedLayer() === "node"){
         container.empty();
@@ -275,14 +277,14 @@
         roadClassLegend.append(junctionPicture);
         roadClassLegend.append(junctionTemplatePicture);
         roadClassLegend.append(nodeTemplatePicture);
-        toolSelection.reset();
-        toolSelection.show();
+        nodeToolSelection.reset();
+        nodeToolSelection.show();
       } else {
         container.empty();
         roadClassLegend.append(roadClassLegendEntries);
         roadClassLegend.append(constructionTypeLegendEntries);
         roadClassLegend.append(calibrationPointPicture);
-        toolSelection.hide();
+        nodeToolSelection.hide();
       }
     }
 

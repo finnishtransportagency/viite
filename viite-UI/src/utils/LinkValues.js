@@ -199,5 +199,12 @@
         UnkownNodeType:                 {value:99, description:"Ei määritelty"}
     };
 
+    root.Tool = {
+        Unknown:            {value: ""},
+        Default:            {value: "Select"},
+        SelectNode:         {value: "Select"},
+        AddNode:            {value: "Add"}
+    };
+
 })(window.LinkValues = window.LinkValues || {});
 

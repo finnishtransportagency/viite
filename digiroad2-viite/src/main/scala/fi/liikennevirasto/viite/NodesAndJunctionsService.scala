@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
-import fi.liikennevirasto.viite.dao.{BeforeAfter, Junction, JunctionDAO, JunctionPoint, JunctionPointDAO, JunctionTemplate, LinearLocationDAO, LinkStatus, Node, NodeDAO, NodePoint, NodePointDAO, ProjectLink, ProjectRoadwayChange, RoadAddress, RoadAttributes, RoadwayChangesDAO, RoadwayDAO, RoadwayPointDAO}
+import fi.liikennevirasto.viite.dao.{BeforeAfter, Junction, JunctionDAO, JunctionInfo, JunctionPoint, JunctionPointDAO, JunctionTemplate, LinearLocationDAO, LinkStatus, Node, NodeDAO, NodePoint, NodePointDAO, ProjectLink, ProjectRoadwayChange, RoadAddress, RoadAttributes, RoadwayChangesDAO, RoadwayDAO, RoadwayPointDAO}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.slf4j.LoggerFactory
 
@@ -50,7 +50,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }
     }
   }
-
+  def getJunctionPointsByJunctionIds(junctionIds: Seq[Long]): Seq[JunctionPoint] = {
+    withDynSession {
+      junctionPointDAO.fetchJunctionPointsByJunctionIds(junctionIds)
+    }
+  }
   def getNodesWithJunctionByBoundingBox(boundingRectangle: BoundingRectangle): Map[Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
     withDynSession {
       time(logger, "Fetch nodes with junctions") {
@@ -105,6 +109,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       time(logger, "Fetch node point templates") {
         val allNodePointTemplates = nodePointDAO.fetchTemplates()
         allNodePointTemplates.filter(template => authorizedElys.contains(template.elyCode))
+      }
+    }
+  }
+
+  def getNodePointTemplateById(id: Long): Option[NodePoint] = {
+    withDynSession {
+      time(logger, "Fetch node point template by id") {
+        nodePointDAO.fetchNodePointTemplateById(id)
       }
     }
   }
@@ -587,5 +599,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     val obsoleteJunctions = expireObsoleteJunctions(obsoleteJunctionPoints)
     expireNodes(obsoleteNodePoints, obsoleteJunctions)
   }
+  def getJunctionInfoByJunctionId(junctionIds: Seq[Long]): Option[JunctionInfo]= {
+    withDynSession {
+      junctionDAO.fetchJunctionInfoByJunctionId(junctionIds)
 
+    }
+  }
 }

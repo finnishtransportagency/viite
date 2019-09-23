@@ -60,14 +60,14 @@
     };
 
     var nodePointTemplateLink = function(nodePointTemplate){
-      return '<a id=' + nodePointTemplate.id + ' class="node-point-template-link" href="#nodePointTemplate/' + nodePointTemplate.id + '" style="font-weight:bold;cursor:pointer;color: darkorange;">' +
+      return '<a id=' + nodePointTemplate.id + ' class="node-point-template-link" href="#node/nodePointTemplate/' + nodePointTemplate.id + '" style="font-weight:bold;cursor:pointer;color: darkorange;">' +
         nodePointTemplate.roadNumber + ' / ' +
         nodePointTemplate.roadPartNumber + ' / ' +
         nodePointTemplate.addrM + '</a>';
     };
 
     var junctionTemplateLink = function(junctionTemplate){
-      return '<a id=' + junctionTemplate.junctionId + ' class="junction-template-link" href="#junctionTemplate/' + junctionTemplate.junctionId + '" style="font-weight:bold;cursor:pointer;">' +
+      return '<a id=' + junctionTemplate.junctionId + ' class="junction-template-link" href="#node/junctionTemplate/' + junctionTemplate.junctionId + '" style="font-weight:bold;cursor:pointer;">' +
         junctionTemplate.roadNumber + ' / ' +
         junctionTemplate.track + ' / ' +
         junctionTemplate.roadPartNumber + ' / ' +
@@ -220,11 +220,11 @@
           eventbus.trigger('nodeSearchTool:clickNode', event.currentTarget.id, map);
         });
 
-        rootElement.on('click', '.node-point-template-link', function (event) {
+        rootElement.one('click', '.node-point-template-link', function (event) {
           eventbus.trigger('nodeSearchTool:clickNodePointTemplate', event.currentTarget.id, map);
         });
 
-        rootElement.on('click', '.junction-template-link', function (event) {
+        rootElement.one('click', '.junction-template-link', function (event) {
           eventbus.trigger('nodeSearchTool:clickJunctionTemplate', event.currentTarget.id, map);
         });
       });
