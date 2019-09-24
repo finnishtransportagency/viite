@@ -123,6 +123,7 @@
     new JunctionEditForm(models.selectedNodeAndJunctionPoint, backend);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
+    new NodeForm(models.selectedNodeAndJunctionPoint);
     new NodePointForm(models.selectedNodeAndJunctionPoint);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);

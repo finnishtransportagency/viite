@@ -1133,6 +1133,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "coordX" -> node.coordinates.x,
       "coordY" -> node.coordinates.y,
       "type" -> node.nodeType.value,
+      "startDate" -> formatToString(node.startDate.toString),
       "createdBy" -> node.createdBy,
       "createdTime" -> node.createdTime
     )
