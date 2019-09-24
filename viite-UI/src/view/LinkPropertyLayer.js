@@ -19,7 +19,6 @@
 
     var SelectionType = LinkValues.SelectionType;
     var Anomaly = LinkValues.Anomaly;
-    var LinkGeomSource = LinkValues.LinkGeomSource;
     var ConstructionType = LinkValues.ConstructionType;
     var SideCode = LinkValues.SideCode;
     var RoadZIndex = LinkValues.RoadZIndex;
@@ -467,7 +466,6 @@
     };
 
     var redraw = function() {
-      var marker;
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
       var underConstructionLinks = roadCollection.getUnderConstructionLinks();
@@ -482,10 +480,11 @@
         var directionRoadMarker = _.filter(roadLinks, function(roadlink) {
           return roadlink.floating !== SelectionType.Floating.value && roadlink.anomaly !== Anomaly.NoAddressGiven.value && roadlink.anomaly !== Anomaly.GeometryChanged.value && (roadlink.sideCode === SideCode.AgainstDigitizing.value || roadlink.sideCode === SideCode.TowardsDigitizing.value);
         });
-        _.each(directionRoadMarker, function(directionlink) {
-          var marker = cachedMarker.createMarker(directionlink);
-          if(zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
-            directionMarkerLayer.getSource().addFeature(marker);
+        _.each(directionRoadMarker, function(directionLink) {
+          cachedMarker.createMarker(directionLink, function (marker) {
+            if(zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
+              directionMarkerLayer.getSource().addFeature(marker);
+          });
         });
 
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
@@ -496,18 +495,20 @@
           return roadlink.anomaly !== Anomaly.None.value;
         });
         _.each(anomalousRoadMarkers, function(anomalouslink) {
-          var marker = cachedMarker.createMarker(anomalouslink);
-          anomalousMarkerLayer.getSource().addFeature(marker);
+          cachedMarker.createMarker(anomalouslink, function (marker) {
+            anomalousMarkerLayer.getSource().addFeature(marker);
+          });
         });
 
         var floatingGroups = _.sortBy(_.groupBy(floatingRoadMarkers, function(value){
           return value.linkId;
         }), 'startAddressM');
         _.each(floatingGroups, function(floatGroup) {
-            _.each(floatGroup, function(floating){
-                marker = cachedMarker.createMarker(floating);
+            _.each(floatGroup, function(floating) {
+              cachedMarker.createMarker(floating, function (marker) {
                 if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove, marker.linkData.linkId))
-                    floatingMarkerLayer.getSource().addFeature(marker);
+                  floatingMarkerLayer.getSource().addFeature(marker);
+              });
             });
         });
 
@@ -530,8 +531,9 @@
             newLinkData.anomaly = Anomaly.NoAddressGiven.value;
             newLinkData.points = newLinkData.newGeometry;
 
-            var marker = cachedMarker.createMarker(newLinkData);
-            geometryChangedLayer.getSource().addFeature(marker);
+            cachedMarker.createMarker(newLinkData, function (marker) {
+              geometryChangedLayer.getSource().addFeature(marker);
+            });
 
             var points = _.map(newLinkData.newGeometry, function (point) {
             return [point.x, point.y];
