@@ -47,8 +47,8 @@
               '   </div>' +
               ' </div>' +
               '<div>' +
-                '<p><a id="node-point-link" class="node-points">Nayta solmukohdat</a></p>' +
-                '<p><a id="junction-link" class="node-points">Nayta liittymat</a></p>' +
+                '<p><a id="node-point-link" class="node-points">Näytä solmukohdat</a></p>' +
+                '<p><a id="junction-link" class="node-points">Näytä liittymat</a></p>' +
               '</div>' +
               '</div>' +
               '<footer>' +
