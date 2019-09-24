@@ -3,6 +3,11 @@
     var current = {};
     var dirty = false;
 
+    var openNode = function (node) {
+      setCurrentNode(node);
+      eventbus.trigger('node:selected');
+    };
+
     var openNodePointTemplates = function (nodePointTemplates) {
       setCurrentNodePointTemplates(nodePointTemplates);
       eventbus.trigger('nodePoint:selected');
@@ -13,12 +18,20 @@
       eventbus.trigger('junctionPoint:selected');
     };
 
+    var setCurrentNode = function (node) {
+      current.node = node;
+    };
+
     var setCurrentNodePointTemplates = function (nodePointTemplates) {
       current.nodePointTemplates = nodePointTemplates;
     };
 
     var setCurrentJunctionPointTemplates = function (junctionPointTemplates) {
       current.junctionPointTemplates = junctionPointTemplates;
+    };
+
+    var getCurrentNodes = function () {
+      return current.node;
     };
 
     var getCurrentNodePointTemplates = function () {
@@ -51,8 +64,10 @@
     };
 
     return {
+      openNode: openNode,
       openNodePointTemplates: openNodePointTemplates,
       openJunctionPointTemplates: openJunctionPointTemplates,
+      getCurrentNodes: getCurrentNodes,
       getCurrentNodePointTemplates: getCurrentNodePointTemplates,
       getCurrentJunctionPointTemplates: getCurrentJunctionPointTemplates,
       setCurrentJunctionPointTemplates: setCurrentJunctionPointTemplates,

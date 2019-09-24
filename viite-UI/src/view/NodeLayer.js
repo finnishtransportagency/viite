@@ -28,35 +28,30 @@
         name: 'directionMarkerLayer',
         zIndex: RoadZIndex.VectorLayer.value
       });
-      directionMarkerLayer.set('name', 'directionMarkerLayer');
 
       var nodeMarkerLayer = new ol.layer.Vector({
         source: nodeMarkerVector,
         name: 'nodeMarkerLayer',
         zIndex: RoadZIndex.CalibrationPointLayer.value
       });
-      nodeMarkerLayer.set('name', 'nodeMarkerLayer');
 
       var junctionMarkerLayer = new ol.layer.Vector({
         source: junctionMarkerVector,
         name: 'junctionMarkerLayer',
         zIndex: RoadZIndex.CalibrationPointLayer.value + 1
       });
-      junctionMarkerLayer.set('name', 'junctionMarkerLayer');
 
       var nodePointTemplateLayer = new ol.layer.Vector({
         source: nodePointTemplateVector,
         name: 'nodePointTemplateLayer',
         zIndex: RoadZIndex.CalibrationPointLayer.value - 1
       });
-      nodePointTemplateLayer.set('name', 'nodePointTemplateLayer');
 
       var junctionTemplateLayer = new ol.layer.Vector({
         source: junctionTemplateVector,
         name: 'junctionTemplateLayer',
         zIndex: RoadZIndex.CalibrationPointLayer.value - 1
       });
-      junctionTemplateLayer.set('name', 'junctionTemplateLayer');
 
       var layers = [directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer];
 
@@ -96,7 +91,7 @@
       var nodeAndJunctionPointTemplateClick = new ol.interaction.Select({
         // Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
         // This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-        layers: [nodePointTemplateLayer, junctionTemplateLayer],
+        layers: [nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer],
         name: 'nodeAndJunctionPointTemplateClickInteractionNL',
         // Limit this interaction to the singleClick
         condition: ol.events.condition.singleClick
@@ -113,6 +108,10 @@
       nodeAndJunctionPointTemplateClick.on('select', function (event) {
         applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
         var selectedNode = _.filter(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.nodeInfo);
+        });
+
+        var selectedNodePoint = _.filter(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
         });
 
@@ -120,11 +119,17 @@
           return !_.isUndefined(selectionTarget.junctionPointTemplateInfo);
         });
 
-        if (!_.isUndefined(selectedNode) && selectedNode.length > 0) {
+        if(!_.isUndefined(selectedNode) && selectedNode.length > 0){
           if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
             applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
           } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
-            selectedNodeAndJunctionPoint.openNodePointTemplates(_.unique(_.map(selectedNode, "nodePointTemplateInfo"), "id"));
+            selectedNodeAndJunctionPoint.openNode(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
+          } else selectedNodeAndJunctionPoint.close();
+        } else if (!_.isUndefined(selectedNodePoint) && selectedNodePoint.length > 0) {
+          if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
+            applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+          } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
+            selectedNodeAndJunctionPoint.openNodePointTemplates(_.unique(_.map(selectedNodePoint, "nodePointTemplateInfo"), "id"));
           } else selectedNodeAndJunctionPoint.close();
         } else if (!_.isUndefined(selectedJunction) && selectedJunction.length > 0) {
           if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
@@ -179,7 +184,7 @@
       });
 
       me.eventListener.listenTo(eventbus, 'map:clicked', function () {
-        if (nodePointTemplateLayer.getSource().getFeatures().concat(junctionTemplateLayer.getSource().getFeatures()).length > 0) {
+        if (nodeMarkerLayer.getSource().getFeatures().concat(nodePointTemplateLayer.getSource().getFeatures()).concat(junctionTemplateLayer.getSource().getFeatures()).length > 0) {
           selectedNodeAndJunctionPoint.close();
         }
       });
@@ -234,6 +239,16 @@
               var nodeMarker = new NodeMarker();
               nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node));
             });
+
+            _.each(nodePointTemplates, function (nodePointTemplate) {
+                var nodePointTemplateMarker = new NodePointTemplateMarker();
+                var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
+                    return (roadLink.startAddressM === nodePointTemplate.addrM || roadLink.endAddressM === nodePointTemplate.addrM) && roadLink.roadwayNumber === nodePointTemplate.roadwayNumber;
+                });
+                if (!_.isUndefined(roadLinkForPoint)) {
+                    nodePointTemplateLayer.getSource().addFeature(nodePointTemplateMarker.createNodePointTemplateMarker(nodePointTemplate, roadLinkForPoint));
+                }
+            });
           }
 
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions){
@@ -244,7 +259,7 @@
             var junctionPoints = [];
             var junctionPointsWithRoadlinks;
             _.map(nodes, function(node){
-              junctions =  junctions.concat(node.junctions);
+              junctions = junctions.concat(node.junctions);
             });
 
             _.map(junctions, function (junction) {
@@ -269,16 +284,6 @@
                var junctionMarker = new JunctionMarker();
                junctionMarkerLayer.getSource().addFeature(junctionMarker.createJunctionMarker(junctionPoint.junctionPoint, junctionPoint.junction, roadLink));
               });
-            });
-
-            _.each(nodePointTemplates, function (nodePointTemplate) {
-              var nodePointTemplateMarker = new NodePointTemplateMarker();
-              var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
-                return (roadLink.startAddressM === nodePointTemplate.addrM || roadLink.endAddressM === nodePointTemplate.addrM) && roadLink.roadwayNumber === nodePointTemplate.roadwayNumber;
-              });
-              if (!_.isUndefined(roadLinkForPoint)) {
-                nodePointTemplateLayer.getSource().addFeature(nodePointTemplateMarker.createNodePointTemplateMarker(nodePointTemplate, roadLinkForPoint));
-              }
             });
 
             _.each(junctionPointTemplates, function (junctionPointTemplate) {
