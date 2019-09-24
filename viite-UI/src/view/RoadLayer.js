@@ -61,18 +61,15 @@
       //Ignore if target feature is marker
       if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.linkData)) {
         var roadData = featureAtPixel.linkData;
-        coordinate = map.getEventCoordinate(event.originalEvent);
-        //TODO roadData !== null is there for test having no info ready (race condition where hover often loses) should be somehow resolved
         if (infoContent !== null) {
           if (roadData !== null && (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0)) {
+            coordinate = map.getEventCoordinate(event.originalEvent);
             infoContent.innerHTML = 'Tienumero:&nbsp;' + roadData.roadNumber + '<br>' +
               'Tieosanumero:&nbsp;' + roadData.roadPartNumber + '<br>' +
               'Ajorata:&nbsp;' + roadData.trackCode + '<br>' +
               'AET:&nbsp;' + roadData.startAddressM + '<br>' +
               'LET:&nbsp;' + roadData.endAddressM + '<br>' +
               'Tietyyppi:&nbsp;' + displayRoadType(roadData.roadTypeId) + '<br>';
-          } else {
-            infoContent.empty();
           }
         }
       }
