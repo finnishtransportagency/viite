@@ -70,7 +70,6 @@
       getCurrentNodes: getCurrentNodes,
       getCurrentNodePointTemplates: getCurrentNodePointTemplates,
       getCurrentJunctionPointTemplates: getCurrentJunctionPointTemplates,
-      setCurrentJunctionPointTemplates: setCurrentJunctionPointTemplates,
       isDirty: isDirty,
       setDirty: setDirty,
       clean: clean,

@@ -106,7 +106,6 @@
        * sending them to the selectedNode.open for further processing.
        */
       nodeAndJunctionPointTemplateClick.on('select', function (event) {
-        applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
         var selectedNode = _.filter(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.nodeInfo);
         });
@@ -119,30 +118,32 @@
           return !_.isUndefined(selectionTarget.junctionPointTemplateInfo);
         });
 
-        if(!_.isUndefined(selectedNode) && selectedNode.length > 0){
-          if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
-            applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
-          } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
-            selectedNodeAndJunctionPoint.openNode(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
-          } else selectedNodeAndJunctionPoint.close();
-        } else if (!_.isUndefined(selectedNodePoint) && selectedNodePoint.length > 0) {
-          if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
-            applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
-          } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
-            selectedNodeAndJunctionPoint.openNodePointTemplates(_.unique(_.map(selectedNodePoint, "nodePointTemplateInfo"), "id"));
-          } else selectedNodeAndJunctionPoint.close();
-        } else if (!_.isUndefined(selectedJunction) && selectedJunction.length > 0) {
-          if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
-            applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
-          } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
-            var junctionPointTemplates = _.unique(_.map(selectedJunction, "junctionPointTemplateInfo"), "junctionId");
-            selectedNodeAndJunctionPoint.setCurrentJunctionPointTemplates(junctionPointTemplates);
-            eventbus.trigger('junctionEdit:selected', _.first(selectedJunction).junctionPointTemplateInfo.junctionId);
-          } else selectedNodeAndJunctionPoint.close();
-        } else {
+        if (!_.isUndefined(selectedNode) && selectedNode.length === 0 && !_.isUndefined(selectedNodePoint) && selectedNodePoint.length === 0 && !_.isUndefined(selectedJunction) && selectedJunction.length === 0) {
           selectedNodeAndJunctionPoint.close();
+        } else if (applicationModel.selectedToolIs(LinkValues.Tool.Select.value)) {
+          if (!_.isUndefined(selectedNode) && selectedNode.length > 0) {
+            nodeClick(selectedNode);
+          } else if (!_.isUndefined(selectedNodePoint) && selectedNodePoint.length > 0) {
+            nodePointClick(selectedNodePoint);
+          } else if (!_.isUndefined(selectedJunction) && selectedJunction.length > 0) {
+            junctionClick(selectedJunction);
+          }
+        } else {
+          // TODO unselect feature.
         }
       });
+
+      var nodeClick = function(selectedNode) {
+        selectedNodeAndJunctionPoint.openNode(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
+      };
+
+      var nodePointClick = function(selectedNodePoint) {
+        selectedNodeAndJunctionPoint.openNodePointTemplates(_.unique(_.map(selectedNodePoint, "nodePointTemplateInfo"), "id"));
+      };
+
+      var junctionClick = function (selectedJunction) {
+        selectedNodeAndJunctionPoint.openJunctionPointTemplates(_.unique(_.map(selectedJunction, "junctionPointTemplateInfo"), "junctionId"));
+      };
 
       /**
        * Simple method that will add various open layers 3 features to a selection.
@@ -180,12 +181,6 @@
       me.eventListener.listenTo(eventbus, 'junction:unselected', function () {
         if (junctionTemplateLayer.getSource().getFeatures().length !== 0) {
           junctionTemplateLayer.getSource().clear();
-        }
-      });
-
-      me.eventListener.listenTo(eventbus, 'map:clicked', function () {
-        if (nodeMarkerLayer.getSource().getFeatures().concat(nodePointTemplateLayer.getSource().getFeatures()).concat(junctionTemplateLayer.getSource().getFeatures()).length > 0) {
-          selectedNodeAndJunctionPoint.close();
         }
       });
 

@@ -181,12 +181,9 @@
       _.each(tools, function(tool) {
         element.append(tool.element);
       });
-      var hide = function() {
-        element.hide();
-      };
-      var show = function() {
-        element.show();
-      };
+
+      var hide = function() { element.hide(); };
+      var show = function() { element.show(); };
 
       eventbus.on('tool:changed', function(name) {
         _.each(tools, function(tool) {
@@ -197,15 +194,16 @@
           }
         });
       });
-        var deactivateAll = function() {
-            _.each(tools, function(tool) {
-                tool.deactivate();
-            });
-        };
-        var reset = function() {
-            deactivateAll();
-            tools[0].activate();
-        };
+
+      eventbus.on('tool:clear', function () {
+        reset();
+      });
+
+      var reset = function() {
+        _.each(tools, function(tool) {
+          tool.deactivate();
+        });
+      };
 
       hide();
 
@@ -218,8 +216,8 @@
     };
 
     var nodeToolSelection = new ToolSelection([
-      new Tool(LinkValues.Tool.SelectNode.value, selectToolIcon),
-      new Tool(LinkValues.Tool.AddNode.value, addToolIcon)
+      new Tool(LinkValues.Tool.Select.value, selectToolIcon),
+      new Tool(LinkValues.Tool.Add.value, addToolIcon)
     ]);
 
     var templateAttributes = {
