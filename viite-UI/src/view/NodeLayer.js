@@ -90,6 +90,7 @@
        * sending them to the selectedNode.open for further processing.
        */
       nodeAndJunctionPointTemplateClick.on('select', function (event) {
+        if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) { applicationModel.setSelectedTool(LinkValues.Tool.Select.value); } // ATTENTION: this needs to be re-designed.
         var selectedNode = _.filter(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.nodeInfo);
         });
@@ -120,6 +121,7 @@
       });
 
       var nodeClick = function(selectedNode) {
+        setGeneralOpacity(0.2);
         selectedNodeAndJunctionPoint.openNode(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
       };
 
