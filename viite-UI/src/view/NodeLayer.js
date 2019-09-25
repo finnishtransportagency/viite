@@ -121,7 +121,6 @@
       });
 
       var nodeClick = function(selectedNode) {
-        setGeneralOpacity(0.2);
         selectedNodeAndJunctionPoint.openNode(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
       };
 
@@ -177,7 +176,12 @@
       // We add the defined interactions to the map.
       addClickInteractions();
 
+      me.eventListener.listenTo(eventbus, 'node:selected', function() {
+        setGeneralOpacity(0.2);
+      });
+
       me.eventListener.listenTo(eventbus, 'node:unselected', function () {
+        setGeneralOpacity(1);
         if (nodePointTemplateLayer.getSource().getFeatures().length !== 0) {
           nodePointTemplateLayer.getSource().clear();
         }
