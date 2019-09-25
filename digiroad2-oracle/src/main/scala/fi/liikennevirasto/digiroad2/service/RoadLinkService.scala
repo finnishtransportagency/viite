@@ -526,7 +526,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def filterComplementaryLinks(links: Seq[VVHRoadlink]): Seq[VVHRoadlink] = {
-    val includedLinks = complementaryFilterDAO.fetchAll()
+    val includedLinks = withDynSession {
+      complementaryFilterDAO.fetchAll()
+    }
     links.filter(l => includedLinks.contains(l.linkId))
   }
 }
