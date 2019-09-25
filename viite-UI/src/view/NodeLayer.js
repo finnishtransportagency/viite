@@ -66,22 +66,6 @@
       };
 
       /**
-       * Event triggered by the selectedNode.open() returning all the open layers 3 features
-       * that need to be included in the selection.
-       */
-      me.eventListener.listenTo(eventbus, 'node:ol3Selected', function (ol3Features) {
-        addNodeFeaturesToSelection(ol3Features);
-      });
-
-      /**
-       * This will remove all the following interactions from the map:
-       * - nodeAndJunctionPointTemplateClick
-       */
-      var removeSelectInteractions = function () {
-        map.removeInteraction(nodeAndJunctionPointTemplateClick);
-      };
-
-      /**
        * Type of interactions we want the map to be able to respond.
        * A selected feature is moved to a new/temporary layer out of the default roadLayer.
        * This interaction is restricted to a single click (there is a 250 ms enforced
@@ -121,6 +105,8 @@
         if (!_.isUndefined(selectedNode) && selectedNode.length === 0 && !_.isUndefined(selectedNodePoint) && selectedNodePoint.length === 0 && !_.isUndefined(selectedJunction) && selectedJunction.length === 0) {
           selectedNodeAndJunctionPoint.close();
         } else if (applicationModel.selectedToolIs(LinkValues.Tool.Select.value)) {
+          removeFeaturesFromSelection(event.deselected);
+          addFeaturesToSelection(event.selected);
           if (!_.isUndefined(selectedNode) && selectedNode.length > 0) {
             nodeClick(selectedNode);
           } else if (!_.isUndefined(selectedNodePoint) && selectedNodePoint.length > 0) {
@@ -129,7 +115,7 @@
             junctionClick(selectedJunction);
           }
         } else {
-          // TODO unselect feature.
+          removeFeaturesFromSelection(event.selected);
         }
       });
 
@@ -149,13 +135,30 @@
        * Simple method that will add various open layers 3 features to a selection.
        * @param ol3Features
        */
-      var addNodeFeaturesToSelection = function (ol3Features) {
+      var addFeaturesToSelection = function (ol3Features) {
         var olUids = _.map(nodeAndJunctionPointTemplateClick.getFeatures().getArray(), function (feature) {
           return feature.ol_uid;
         });
         _.each(ol3Features, function (feature) {
           if (!_.contains(olUids, feature.ol_uid)) {
             nodeAndJunctionPointTemplateClick.getFeatures().push(feature);
+            olUids.push(feature.ol_uid); // prevent adding duplicate entries
+          }
+        });
+      };
+
+      /**
+       * Simple method that will remove various open layers 3 features from a selection.
+       * @param ol3Features
+       * @param select
+       */
+      var removeFeaturesFromSelection = function (ol3Features) {
+        var olUids = _.map(nodeAndJunctionPointTemplateClick.getFeatures().getArray(), function(feature){
+          return feature.ol_uid;
+        });
+        _.each(ol3Features, function(feature){
+          if(_.contains(olUids, feature.ol_uid)){
+            nodeAndJunctionPointTemplateClick.getFeatures().remove(feature);
             olUids.push(feature.ol_uid); // prevent adding duplicate entries
           }
         });
