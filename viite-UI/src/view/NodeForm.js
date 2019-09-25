@@ -17,6 +17,26 @@
       return _.isUndefined(nodeType) ? NodeType.UnkownNodeType : nodeType;
     };
 
+    var staticField = function (labelText, dataField) {
+      var field;
+      field = '<div class="form-group-node-metadata">' +
+        '<p class="form-control-static asset-log-info-metadata">' + labelText + ' : ' + dataField + '</p>' +
+        '</div>';
+      return field;
+    };
+
+    var inputField = function (labelText, id, placeholder, value, maxLength) {
+      var lengthLimit = '';
+      if (maxLength)
+        lengthLimit = 'maxlength="' + maxLength + '"';
+      return '<div class="form-group-node-metadata">' +
+        '<p class="form-control-static asset-node-data">' +
+        '<label>' + labelText + '</label>' +
+        '<input type="text" class="form-control-static asset-input-node-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '" disabled/>' +
+        '</p>' +
+        '</div>';
+    };
+
     var nodeForm = function (nodes) {
       var node = _.sortBy(nodes, function (node) {
         return [node.nodeNumber, node.type];
@@ -29,21 +49,11 @@
         '<div class="wrapper read-only">' +
         ' <div class="form form-horizontal form-dark">' +
         '   <div>' +
-        '       <div class="form-group-metadata">' +
-        '         <p class="form-control-static asset-log-info-metadata">Solmunumero: ' + node.nodeNumber + '</p>' +
-        '       </div>' +'' +
-        '     <div class="form-group-metadata">' +
-        '       <p class="form-control-static asset-log-info-metadata">Solumn nimi: ' + node.name + '</p>' +
-        '     </div>' +
-        '       <div class="form-group-metadata">' +
-        '       <p class="form-control-static asset-log-info-metadata">Solmutyyppi: ' + getNodeType(node.type).description + '</p>' +
-        '     </div>' +
-        '     <div class="form-group-metadata">' +
-        '       <p class="form-control-static asset-log-info-metadata">Alkupvm: ' + node.startDate + '</p>' +
-        '     </div>' +
-        '     <div class="form-group-metadata">' +
-        '       <p class="form-control-static asset-log-info-metadata">Koordinaatit (P, I): ' + node.coordY + ', ' + node.coordX + '</p>' +
-        '     </div>' +
+        staticField('Solmunumero', node.nodeNumber) +
+        inputField('*Solumn nimi:', 'name', '', node.name, 32) +
+        inputField('*Solmutyyppi:', 'type', '', getNodeType(node.type).description) +
+        inputField('*Alkupvm    :', 'date', '', node.startDate) +
+        staticField('Koordinaatit', node.coordY + ', ' + node.coordX) +
         '   </div>' +
         ' </div>' +
         '<div>' +
