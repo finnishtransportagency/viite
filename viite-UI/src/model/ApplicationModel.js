@@ -105,6 +105,9 @@
       if (tool !== selectedTool) {
         selectedTool = tool;
         eventbus.trigger('tool:changed', tool);
+      } else {
+        selectedTool = LinkValues.Tool.Unknown.value;
+        eventbus.trigger('tool:clear');
       }
     }
 
