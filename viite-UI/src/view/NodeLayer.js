@@ -119,7 +119,7 @@
           return !_.isUndefined(selectionTarget.junctionPointTemplateInfo);
         });
 
-        if(!_.isUndefined(selectedNode) && selectedNode.length > 0){
+        if (!_.isUndefined(selectedNode) && selectedNode.length > 0) {
           if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
             applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
           } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
@@ -241,13 +241,13 @@
             });
 
             _.each(nodePointTemplates, function (nodePointTemplate) {
-                var nodePointTemplateMarker = new NodePointTemplateMarker();
-                var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
-                    return (roadLink.startAddressM === nodePointTemplate.addrM || roadLink.endAddressM === nodePointTemplate.addrM) && roadLink.roadwayNumber === nodePointTemplate.roadwayNumber;
-                });
-                if (!_.isUndefined(roadLinkForPoint)) {
-                    nodePointTemplateLayer.getSource().addFeature(nodePointTemplateMarker.createNodePointTemplateMarker(nodePointTemplate, roadLinkForPoint));
-                }
+              var nodePointTemplateMarker = new NodePointTemplateMarker();
+              var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
+                return (roadLink.startAddressM === nodePointTemplate.addrM || roadLink.endAddressM === nodePointTemplate.addrM) && roadLink.roadwayNumber === nodePointTemplate.roadwayNumber;
+              });
+              if (!_.isUndefined(roadLinkForPoint)) {
+                nodePointTemplateLayer.getSource().addFeature(nodePointTemplateMarker.createNodePointTemplateMarker(nodePointTemplate, roadLinkForPoint));
+              }
             });
           }
 
