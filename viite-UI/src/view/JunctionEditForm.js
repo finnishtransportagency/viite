@@ -23,7 +23,7 @@
         '<div class="wrapper read-only">' +
         '<div>' +
         addPicture(showJunctionTemplateEditForm) +
-        '<a id="junction-point-link" class="floating-stops">Tarkastele liittymäkohtien tietoja</a>' +
+        '<a id="junction-point-link" class="junction-point">Tarkastele liittymäkohtien tietoja</a>' +
         '</div>' +
         '<div class="form form-horizontal form-dark">' +
         '<div class="form-group-metadata">' +

@@ -132,6 +132,29 @@ input[type="checkbox"]:focus {
   margin-bottom: @input-margin-short;
 }
 
+.form-group-node-input-metadata {
+  margin-top: @input-margin-short;
+  margin-bottom: @input-margin-short;
+  label {
+    width: 75px;
+    font-size: 11px;
+    line-height: 15px;
+    color: @warning !important;
+    text-transform: none;
+  }
+}
+
+.form-group-node-static-metadata {
+  margin-top: @input-margin-short;
+  margin-bottom: @input-margin-short;
+  label {
+    width: 82px;
+    font-size: 11px;
+    line-height: 15px;
+    text-transform: none;
+  }
+}
+
 // Checkboxes and radios
 //
 // Indent the labels to position radios/checkboxes as hanging controls.
@@ -403,6 +426,23 @@ form.node-point .control-label-small {
 }
 
 form.node-point .form-control.node-point-input {
+  width: 55px !important;
+  margin-right: 11px;
+}
+
+form.node .form-control {
+  margin-top: 6px !important;
+}
+
+form.node .control-label-small {
+  margin-right: 11px;
+  margin-top: 30px;
+  margin-bottom: -10px;
+  width: 55px !important;
+  text-align:center
+}
+
+form.node .form-control.node-input {
   width: 55px !important;
   margin-right: 11px;
 }
