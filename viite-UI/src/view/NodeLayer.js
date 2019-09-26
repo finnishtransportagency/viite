@@ -202,9 +202,10 @@
               return roadLink.floating !== SelectionType.Floating.value && roadLink.anomaly !== Anomaly.NoAddressGiven.value && roadLink.anomaly !== Anomaly.GeometryChanged.value && (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
             });
             _.each(directionRoadMarker, function (directionLink) {
-              var marker = cachedMarker.createMarker(directionLink);
-              if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
-                directionMarkerLayer.getSource().addFeature(marker);
+              cachedMarker.createMarker(directionLink, function (marker) {
+                if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
+                  directionMarkerLayer.getSource().addFeature(marker);
+              });
             });
           }
 
