@@ -53,9 +53,9 @@
         ' <div class="form form-horizontal form-dark">' +
         '   <div>' +
         staticField('Solmunumero:', node.nodeNumber) +
-        inputField('*Solumn nimi:', 'name', '', node.name, 32) +
+        inputField('*Solmun nimi:', 'name', '', node.name, 32) +
         inputField('*Solmutyyppi:', 'type', '', getNodeType(node.type).description) +
-        inputField('*Alkupvm    :', 'date', '', node.startDate) +
+        inputField('*Alkupvm:', 'date', '', node.startDate) +
         staticField('Koordinaatit:', node.coordY + ', ' + node.coordX) +
         '   </div>' +
         ' </div>' +
