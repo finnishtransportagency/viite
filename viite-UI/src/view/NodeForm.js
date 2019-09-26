@@ -19,8 +19,11 @@
 
     var staticField = function (labelText, dataField) {
       var field;
-      field = '<div class="form-group-node-metadata">' +
-        '<p class="form-control-static asset-log-info-metadata">' + labelText + ' : ' + dataField + '</p>' +
+      field = '<div class="form-group-node-static-metadata">' +
+        '<p class="form-control-static asset-log-info-metadata">' +
+        '<label>' + labelText + '</label>' +
+          dataField +
+        '</p>' +
         '</div>';
       return field;
     };
@@ -29,7 +32,7 @@
       var lengthLimit = '';
       if (maxLength)
         lengthLimit = 'maxlength="' + maxLength + '"';
-      return '<div class="form-group-node-metadata">' +
+      return '<div class="form-group-node-input-metadata">' +
         '<p class="form-control-static asset-node-data">' +
         '<label>' + labelText + '</label>' +
         '<input type="text" class="form-control-static asset-input-node-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '" disabled/>' +
@@ -49,11 +52,11 @@
         '<div class="wrapper read-only">' +
         ' <div class="form form-horizontal form-dark">' +
         '   <div>' +
-        staticField('Solmunumero', node.nodeNumber) +
+        staticField('Solmunumero:', node.nodeNumber) +
         inputField('*Solumn nimi:', 'name', '', node.name, 32) +
         inputField('*Solmutyyppi:', 'type', '', getNodeType(node.type).description) +
         inputField('*Alkupvm    :', 'date', '', node.startDate) +
-        staticField('Koordinaatit', node.coordY + ', ' + node.coordX) +
+        staticField('Koordinaatit:', node.coordY + ', ' + node.coordX) +
         '   </div>' +
         ' </div>' +
         '<div>' +
