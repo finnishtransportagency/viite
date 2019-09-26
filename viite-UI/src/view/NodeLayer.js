@@ -106,8 +106,6 @@
         if (!_.isUndefined(selectedNode) && selectedNode.length === 0 && !_.isUndefined(selectedNodePoint) && selectedNodePoint.length === 0 && !_.isUndefined(selectedJunction) && selectedJunction.length === 0) {
           selectedNodeAndJunctionPoint.close();
         } else if (applicationModel.selectedToolIs(LinkValues.Tool.Select.value)) {
-          removeFeaturesFromSelection(event.deselected);
-          addFeaturesToSelection(event.selected);
           if (!_.isUndefined(selectedNode) && selectedNode.length > 0) {
             nodeClick(selectedNode);
           } else if (!_.isUndefined(selectedNodePoint) && selectedNodePoint.length > 0) {
@@ -121,7 +119,7 @@
       });
 
       var nodeClick = function(selectedNode) {
-        selectedNodeAndJunctionPoint.openNode(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
+        selectedNodeAndJunctionPoint.openNode(_.first(_.unique(_.map(selectedNode, "nodeInfo"), "id")));
       };
 
       var nodePointClick = function(selectedNodePoint) {
@@ -177,7 +175,18 @@
       addClickInteractions();
 
       me.eventListener.listenTo(eventbus, 'node:selected', function() {
-        setGeneralOpacity(0.2);
+        var nodeId = selectedNodeAndJunctionPoint.getCurrentNode().id;
+        var junctions = [];
+        _.each(junctionMarkerLayer.getSource().getFeatures(), function (feature) {
+          if (feature.junction.nodeId === nodeId) {
+            junctions.push(feature);
+          }
+        });
+
+        addFeaturesToSelection(junctions);
+        nodeMarkerLayer.setOpacity(0.2);
+        junctionMarkerLayer.setOpacity(0.2);
+        junctionTemplateLayer.setOpacity(0.2);
       });
 
       me.eventListener.listenTo(eventbus, 'node:unselected', function () {
