@@ -11,7 +11,7 @@
     };
 
     var getNodeType = function (nodeValue) {
-      var nodeType =  _.find(NodeType, function(type){
+      var nodeType = _.find(NodeType, function (type) {
         return type.value == nodeValue;
       });
       return _.isUndefined(nodeType) ? NodeType.UnkownNodeType : nodeType;
@@ -22,7 +22,7 @@
       field = '<div class="form-group-node-static-metadata">' +
         '<p class="form-control-static asset-log-info-metadata">' +
         '<label>' + labelText + '</label>' +
-          dataField +
+        dataField +
         '</p>' +
         '</div>';
       return field;
@@ -61,7 +61,7 @@
         ' </div>' +
         '<div>' +
         '<p><a id="node-point-link" class="node-points">Näytä solmukohdat</a></p>' +
-        '<p><a id="junction-link" class="node-points">Näytä liittymat</a></p>' +
+        '<p><a id="junction-link" class="node-points">Näytä liittymät</a></p>' +
         '</div>' +
         '</div>' +
         '<footer>' +
