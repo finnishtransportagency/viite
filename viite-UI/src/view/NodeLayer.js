@@ -95,6 +95,16 @@
           return !_.isUndefined(selectionTarget.nodeInfo);
         });
 
+        // prevent form to close if user clicks on same node
+        var isSameNode = !_.find(event.deselected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.nodeInfo);
+        });
+
+        if (!_.isUndefined(selectedNode) && selectedNode.length === 0 && isSameNode) {
+          eventbus.trigger('node:selected');
+          return;
+        }
+
         var selectedNodePoint = _.filter(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
         });
