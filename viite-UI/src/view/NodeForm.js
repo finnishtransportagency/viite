@@ -40,10 +40,7 @@
         '</div>';
     };
 
-    var nodeForm = function (nodes) {
-      var node = _.sortBy(nodes, function (node) {
-        return [node.nodeNumber, node.type];
-      })[0];
+    var nodeForm = function (node) {
       return _.template('' +
         '<header>' +
         formCommon.captionTitle('Solmun tiedot:') +
@@ -79,7 +76,7 @@
 
       eventbus.on('node:selected', function () {
         rootElement.empty();
-        var currentNodesList = selectedNode.getCurrentNodes();
+        var currentNodesList = selectedNode.getCurrentNode();
 
         if (!_.isEmpty(currentNodesList)) {
           rootElement.html(nodeForm(currentNodesList));

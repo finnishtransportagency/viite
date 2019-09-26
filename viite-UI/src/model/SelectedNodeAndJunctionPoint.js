@@ -30,7 +30,7 @@
       current.junctionPointTemplates = junctionPointTemplates;
     };
 
-    var getCurrentNodes = function () {
+    var getCurrentNode = function () {
       return current.node;
     };
 
@@ -67,7 +67,7 @@
       openNode: openNode,
       openNodePointTemplates: openNodePointTemplates,
       openJunctionPointTemplates: openJunctionPointTemplates,
-      getCurrentNodes: getCurrentNodes,
+      getCurrentNode: getCurrentNode,
       getCurrentNodePointTemplates: getCurrentNodePointTemplates,
       getCurrentJunctionPointTemplates: getCurrentJunctionPointTemplates,
       isDirty: isDirty,
