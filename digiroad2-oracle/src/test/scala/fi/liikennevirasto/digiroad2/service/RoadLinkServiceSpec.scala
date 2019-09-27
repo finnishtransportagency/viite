@@ -62,7 +62,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test getComplementaryRoadLinksFromVVH() When submitting a bounding box as a search area Then return any complimentary geometry that are inside said area") {
+  ignore("Test getComplementaryRoadLinksFromVVH() When submitting a bounding box as a search area Then return any complimentary geometry that are inside said area") {
     val municipalityId = 235
     val linkId = 2l
     val roadLink: VVHRoadlink = VVHRoadlink(linkId, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -85,7 +85,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test getCurrentAndComplementaryRoadLinksFromVVH() When asking for info for a specific municipality Then return full municipality info, that includes both complementary and ordinary geometries") {
+  ignore("Test getCurrentAndComplementaryRoadLinksFromVVH() When asking for info for a specific municipality Then return full municipality info, that includes both complementary and ordinary geometries") {
     val municipalityId = 235
     val linkId = Seq(1l, 2l)
     val roadLinks = linkId.map(id =>
@@ -134,7 +134,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test getRoadLinksAndComplementaryFromVVH() When submitting a specific bounding box and a municipality Then return regular roadlinks and complementary roadlinks that are in the bounding box and belong to said municipality.") {
+  ignore("Test getRoadLinksAndComplementaryFromVVH() When submitting a specific bounding box and a municipality Then return regular roadlinks and complementary roadlinks that are in the bounding box and belong to said municipality.") {
 
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val mockVVHClient = MockitoSugar.mock[VVHClient]
