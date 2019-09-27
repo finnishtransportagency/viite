@@ -58,7 +58,7 @@
         ' </div>' +
         '<div>' +
         '<p><a id="node-point-link" class="node-points">Näytä solmukohdat</a></p>' +
-        '<div id="nodes-content">' +
+        '<div id="node-points-content">' +
         '</div>' +
         '<p><a id="junction-link" class="node-points">Näytä liittymat</a></p>' +
         '<div id="junctions-content">' +
@@ -72,7 +72,6 @@
     };
 
     var NodeJunctions = function () {
-
       var junctionsHtmlTable = function(junctionsInfo){
         var htmlTable = "";
         htmlTable += '<table class="change-table-dimensions">';
@@ -142,7 +141,6 @@
           '<label class="project-change-table-dimension-header target">    </label>' +
           '<label class="project-change-table-dimension-header">NRO</label>' +
           '<label class="project-change-table-dimension-header">TIE</label>' +
-          '<label class="project-change-table-dimension-header">TIE</label>' +
           '<label class="project-change-table-dimension-header">AJR</label>' +
           '<label class="project-change-table-dimension-header">AOSA</label>' +
           '<label class="project-change-table-dimension-header">AET</label>' +
@@ -154,7 +152,89 @@
       };
     };
 
+    var NodePoints = function () {
+      var nodePointsHtmlTable = function(node){
+        var htmlTable = "";
+        htmlTable += '<table class="change-table-dimensions">';
+        htmlTable += headRow();
+          var rowsInfo = getNodePointsRowsInfo(node.nodePoints);
+          _.each(rowsInfo, function(row){
+            htmlTable += '<tr>';
+            htmlTable += detachNodePointBox(row);
+            htmlTable += nodePointInfoHtml(row);
+            htmlTable += '</tr>';
+          });
+        htmlTable += '</table>';
+        return htmlTable;
+      };
+
+      var detachNodePointBox = function(rowInfo){
+        return '<td>&#9744 <i id="deleteNodePoint_' + rowInfo.nodePointId + '" ' +
+          rowInfo.nodePointId + '"></i></td>';
+      };
+
+      var nodePointInfoHtml = function(rowInfo){
+        return '<td class="project-change-table-dimension">' + rowInfo.road + '</td>' +
+          '<td class="project-change-table-dimension">' + rowInfo.part + '</td>' +
+          '<td class="project-change-table-dimension">' + rowInfo.addr + '</td>' +
+          '<td class="project-change-table-dimension">' + rowInfo.EJ + '</td>';
+      };
+
+      var getNodePointsRowsInfo = function(nodePoints){
+        var info = [];
+        if(!_.isUndefined(nodePoints) && nodePoints.length > 0){
+        _.map(nodePoints, function(point){
+          var row = {nodeId: point.nodeId, nodePointId: point.id, road: point.road, part: point.part, addr: point.addrM, EJ: point.beforeOrAfter};
+          info.push(row);
+        });
+
+        var groupedHomogeneousRows = _.groupBy(info, function (row) {
+          return [row.road, row.part, row.addr];
+        });
+
+        var joinedHomogeneousRows = _.partition(groupedHomogeneousRows, function(group) {
+          return group.length > 1;
+        });
+
+        var doubleHomogeneousRows = joinedHomogeneousRows[0];
+        var singleHomogeneousRows = joinedHomogeneousRows[1];
+
+        var doubleRows = _.map(doubleHomogeneousRows, function(drows){
+          var first = _.first(drows);
+          return {nodePointId: first.nodePointId, road: first.road, part: first.part, addr: first.addr, EJ: "EJ"};
+        });
+
+        var singleRows = _.map(singleHomogeneousRows, function(drows){
+          var first = _.first(drows);
+          return {nodePointId: first.nodePointId, road: first.road, part: first.part, addr: first.addr, EJ: (first.beforeOrAfter == 1 ? "E" : "J")};
+        });
+
+        return doubleRows.concat(singleRows);
+        } else return [];
+      };
+
+      var headRow = function(){
+        return '<tr class="row-changes">'+
+          '<label class="project-change-table-dimension-header target">    </label>' +
+          '<label class="project-change-table-dimension-header">TIE</label>' +
+          '<label class="project-change-table-dimension-header">AOSA</label>' +
+          '<label class="project-change-table-dimension-header">AET</label>' +
+          '<label class="project-change-table-dimension-header">EJ</label>' +
+          '</tr>';
+      };
+      return {
+        nodePointsHtmlTable: nodePointsHtmlTable
+      };
+    };
+
     var nodeJunctions = new NodeJunctions();
+    var nodePoints = new NodePoints();
+
+    var getNodePoints = function (nPoints) {
+      applicationModel.addSpinner();
+      $('#node-points-content').html(nodePoints.nodePointsHtmlTable(nPoints));
+      applicationModel.removeSpinner();
+    };
 
     var getNodeJunctions = function (junctions) {
       applicationModel.addSpinner();
@@ -178,6 +258,9 @@
 
           $('[id=node-point-link]').click(function () {
             changeNodePointsLinkText();
+            var node = currentNode;
+            if(node.nodePoints.length > 0)
+              getNodePoints(node);
             return false;
           });
 
