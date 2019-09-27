@@ -64,6 +64,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val nodesAndJunctionsService: NodesAndJunctionsService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date,
+               val date_of_data: String = Digiroad2Context.date_of_data,
                implicit val swagger: Swagger
               )
   extends ScalatraServlet
@@ -85,10 +86,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val DrawLinearPublicRoads = 3
   val DrawPublicRoads = 4
   val DrawAllRoads = 5
-
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
@@ -124,7 +121,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val config = userProvider.getCurrentUser().configuration
         (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
       }
-      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date)
+      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date, date_of_data)
     }
   }
 
@@ -258,6 +255,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case Right(roadNameList) => Map("success" -> true, "roadNameInfo" -> roadNameList.map(roadNameToApi))
         case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
       }
+    }
+  }
+
+  get("/junctions/:id/junction-points") {
+    val junctionId = params("id").toLong
+    val x: Seq[Long] = Seq(junctionId)
+    time(logger, s"GET request for /junctions/$junctionId/junction-points") {
+      nodesAndJunctionsService.getJunctionPointsByJunctionIds(x).map(junctionPointsToApi)
     }
   }
 
@@ -802,120 +807,36 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val getSuravageSplitCutLine: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("getSuravageSplitCutLine")
-      .parameters(
-        bodyParam[CutLineExtractor]("CutLine").description("This defines the specific point where a project link should be split in two. \r\n" +
-          "Object Structure: \r\n" + cutLineExtractorStructure)
-      )
-      tags "ViiteAPI - Project - SuravageSplit"
-      summary "This indicates the system what link (identified by the linkId) to split and where the split point occurs."
-      notes ""
-    )
-  post("/project/getCutLine") {
-    time(logger, "POST request for /project/getCutLine") {
-      try {
-        val splitLine = parsedBody.extract[CutLineExtractor]
-        if (splitLine.linkId == 0)
-          BadRequest("Missing mandatory 'linkId' parameter")
-        roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(splitLine.linkId))).headOption match {
-          case Some(suravage) =>
-            val splitGeom = GeometryUtils.calculatePointAndHeadingOnGeometry(suravage.geometry, splitLine.splitedPoint)
-            splitGeom match {
-              case Some(x) => val (p, v) = x
-                val cutGeom = Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
-                Map("success" -> true, "response" -> Map("geometry" -> cutGeom))
-              case _ => Map("success" -> false, "errorMessage" -> "Error during splitting calculation")
-            }
-          case _ => Map("success" -> false, "errorMessage" -> ErrorSuravageLinkNotFound)
-        }
-      } catch {
-        case e: SplittingException => Map("success" -> false, "errorMessage" -> e.getMessage)
-      }
-    }
-  }
 
-  private val getSuravagePreSplitInfoByLinkId: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("getSuravagePreSplitInfoByLinkId")
-      .parameters(
-        pathParam[Long]("linkID").description("LinkId of a projectLink")
-      )
-      tags "ViiteAPI - Project - SuravageSplit"
-      summary "This should return all the information pertaining to a split of the suravage links, but, without saving any data."
-      notes ""
-    )
-
-  put("/project/presplit/:linkID", operation(getSuravagePreSplitInfoByLinkId)) {
-    val linkID = params.get("linkID")
-    time(logger, s"PUT request for /project/presplit/$linkID") {
-      val user = userProvider.getCurrentUser()
-      linkID.map(_.toLong) match {
-        case Some(link) =>
-          try {
-            val options = parsedBody.extract[SplitOptions]
-            val (splitLinks, allTerminatedLinks, errorMessage, splitLine) = projectService.preSplitSuravageLink(link, user.username, options)
-            val cutGeom = splitLine match {
-              case Some(x) => val (p, v) = x
-                Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
-              case _ => Seq()
-            }
-            if (errorMessage.nonEmpty) {
-              Map("success" -> false, "errorMessage" -> errorMessage.get)
-            } else if (splitLinks.isEmpty) {
-              Map("success" -> false, "errorMessage" -> "Linkin jako ei onnistunut tuntemattomasta syystä")
-            } else {
-              val roadWithInfo = splitLinks.get.filter(_.status == LinkStatus.Terminated).head
-              val split: Map[String, Any] = Map(
-                "roadNumber" -> roadWithInfo.roadNumber,
-                "roadPartNumber" -> roadWithInfo.roadPartNumber,
-                "trackCode" -> roadWithInfo.track,
-                "terminatedLinks" -> allTerminatedLinks.map(projectLinkToApi),
-                "roadLinkSource" -> roadWithInfo.linkGeomSource.value,
-                "split" -> Map(
-                  "geometry" -> cutGeom
-                )
-              ) ++ splitLinks.get.flatMap(splitToApi)
-              Map("success" -> splitLinks.nonEmpty, "response" -> split)
-            }
-          } catch {
-            case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
-            case e: SplittingException => Map("success" -> false, "errorMessage" -> e.getMessage)
-            case _: NumberFormatException => BadRequest("Missing mandatory data")
-          }
-        case _ => BadRequest("Missing Linkid from url")
-      }
-    }
-  }
-
-  private val splitSuravageLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")
-      .parameters(
-        pathParam[Long]("linkID").description("LinkId of a projectLink")
-      )
-      tags "ViiteAPI - Project - SuravageSplit"
-      summary "This effectively perform the split and save the results on the database."
-      notes ""
-    )
-
-  put("/project/split/:linkID", operation(splitSuravageLinkByLinkId)) {
-    val linkID = params.get("linkID")
-    time(logger, s"PUT request for /project/split/$linkID") {
-      val user = userProvider.getCurrentUser()
-      linkID.map(_.toLong) match {
-        case Some(link) =>
-          try {
-            val options = parsedBody.extract[SplitOptions]
-            val splitError = projectService.splitSuravageLink(options.trackCode.value, options.projectId, options.coordinates, link, user.username, options)
-            val projectErrors = projectService.validateProjectById(options.projectId).map(errorPartsToApi)
-            Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull, "projectErrors" -> projectErrors)
-          } catch {
-            case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
-            case _: NumberFormatException => BadRequest("Missing mandatory data")
-          }
-        case _ => BadRequest("Missing Linkid from url")
-      }
-    }
-  }
+//  private val splitSuravageLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
+//    apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")
+//      .parameters(
+//        pathParam[Long]("linkID").description("LinkId of a projectLink")
+//      )
+//      tags "ViiteAPI - Project - SuravageSplit"
+//      summary "This effectively perform the split and save the results on the database."
+//      notes ""
+//    )
+//
+//  put("/project/split/:linkID", operation(splitSuravageLinkByLinkId)) {
+//    val linkID = params.get("linkID")
+//    time(logger, s"PUT request for /project/split/$linkID") {
+//      val user = userProvider.getCurrentUser()
+//      linkID.map(_.toLong) match {
+//        case Some(link) =>
+//          try {
+//            val options = parsedBody.extract[SplitOptions]
+//            val splitError = projectService.splitSuravageLink(options.trackCode.value, options.projectId, options.coordinates, link, user.username, options)
+//            val projectErrors = projectService.validateProjectById(options.projectId).map(errorPartsToApi)
+//            Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull, "projectErrors" -> projectErrors)
+//          } catch {
+//            case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
+//            case _: NumberFormatException => BadRequest("Missing mandatory data")
+//          }
+//        case _ => BadRequest("Missing Linkid from url")
+//      }
+//    }
+//  }
 
   private val getRoadNamesByRoadNumberAndProjectId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getRoadNamesByRoadNumberAndProjectId")
@@ -973,38 +894,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val revertSplit: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("revertSplit")
-      .parameters(
-        bodyParam[RevertSplitExtractor]("revertSplit").description("Data that identifies what split we need to revert. \r\n" +
-          "Object structure: \r\n" + revertSplitExtractor)
-      )
-      tags "ViiteAPI - Project - SuravageSplit"
-      summary "This effectively reverts the split operation and save the results on the database."
-      notes ""
-    )
-
-  delete("/project/split", operation(revertSplit)) {
-    time(logger, "DELETE request for /project/split") {
-      val user = userProvider.getCurrentUser()
-      try {
-        val data = parsedBody.extract[RevertSplitExtractor]
-        val projectId = data.projectId
-        val linkId = data.linkId
-        val coordinates = data.coordinates
-        (projectId, linkId) match {
-          case (Some(project), Some(link)) =>
-            val error = projectService.revertSplit(project, link, user.username)
-            projectService.saveProjectCoordinates(project, coordinates)
-            Map("success" -> error.isEmpty, "message" -> error)
-          case _ => BadRequest("Missing mandatory 'projectId' or 'linkId' parameter from URI: /project/split/:projectId/:linkId")
-        }
-      } catch {
-        case _: NumberFormatException => BadRequest("'projectId' or 'linkId' parameter given could not be parsed as an integer number")
-      }
-    }
-  }
-
   val getNodesByRoadAttributes = (
     apiOperation[Map[String, Any]]("getNodesByRoadAttributes")
       .parameters(
@@ -1016,6 +905,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       summary "Returns all the nodes belonging to the road number and possibly withing the given range of road part numbers."
       notes ""
     )
+
+  get("/getRoadLinkDate") {
+    time(logger, s"GET request for getRoadLinkDate"){
+      projectService.getRoadLinkDate()
+    }
+  }
 
   get("/nodes", operation(getNodesByRoadAttributes)) {
     val roadNumber = params.get("roadNumber").map(_.toLong)
@@ -1029,6 +924,24 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         }
       } else {
         BadRequest("Missing mandatory 'roadNumber' parameter.")
+      }
+    }
+  }
+
+  get("/templates") {
+    time(logger, s"GET request for /templates"){
+      val authorizedElys = userProvider.getCurrentUser().getAuthorizedElys
+      nodesAndJunctionsService.getNodePointTemplates(authorizedElys.toSeq).map(nodePointTemplateToApi) ++
+      nodesAndJunctionsService.getJunctionTemplates(authorizedElys.toSeq).map(junctionTemplateToApi)
+    }
+  }
+
+  get("/node-point-templates/:id") {
+    val id = params("id").toLong
+    time(logger, s"GET request for /node-point-templates/$id") {
+      nodesAndJunctionsService.getNodePointTemplateById(id) match {
+        case None => halt(NotFound("Node Points Template not found"))
+        case Some(nodePoint) => nodePointTemplateToApi(nodePoint)
       }
     }
   }
@@ -1047,10 +960,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         roadAddressService.getRoadAddressLinksByBoundingBox(boundingRectangle, Seq((1, 19999), (40000, 49999)))
       }
       case DrawAllRoads => time(logger, operationName = "DrawAllRoads") {
-        roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, roadNumberLimits = Seq(), everything = true)
+        roadAddressService.getRoadAddressLinks(boundingRectangle, roadNumberLimits = Seq(), everything = true)
       }
       case _ => time(logger, operationName = "DrawRoads") {
-        roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, roadNumberLimits = Seq((1, 19999)))
+        roadAddressService.getRoadAddressLinks(boundingRectangle, roadNumberLimits = Seq((1, 19999)))
       }
     }
     time(logger, operationName = "Partition road links") {
@@ -1073,6 +986,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           nodesAndJunctionsService.getNodeTemplatesByBoundingBox(boundingRectangle).map(nodePointTemplateToApi) ++
           nodesAndJunctionsService.getJunctionTemplatesByBoundingBox(boundingRectangle).map(junctionPointTemplateToApi)
       }
+    }
+  }
+
+  get("/junction-infos/:id") {
+    val junctionId = params("id").toLong
+    val x: Seq[Long] = Seq(junctionId)
+    time(logger, s"GET request for /junction-infos/$junctionId") {
+      nodesAndJunctionsService.getJunctionInfoByJunctionId(x).map(junctionInfoToApi)
     }
   }
 
@@ -1212,6 +1133,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "coordX" -> node.coordinates.x,
       "coordY" -> node.coordinates.y,
       "type" -> node.nodeType.value,
+      "startDate" -> formatToString(node.startDate.toString),
       "createdBy" -> node.createdBy,
       "createdTime" -> node.createdTime
     )
@@ -1223,19 +1145,58 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "nodeId" -> nodePoint.nodeId)
   }
 
+  def simpleNodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
+    Map("id" -> nodePoint.id,
+      "nodeId" -> nodePoint.nodeId,
+      "beforeAfter" -> nodePoint.beforeAfter.value,
+      "roadwayPointId" -> nodePoint.roadwayPointId,
+      "startDate" -> formatToString(nodePoint.startDate.toString),
+      "endDate" -> formatDateTimeToString(nodePoint.endDate),
+      "validFrom" -> formatDateTimeToString(Some(nodePoint.validFrom)),
+      "validTo" -> formatDateTimeToString(nodePoint.validTo),
+      "createdBy" -> nodePoint.createdBy,
+      "roadwayNumber" -> nodePoint.roadwayNumber,
+      "addrM" -> nodePoint.addrM,
+      "elyCode" -> nodePoint.elyCode,
+      "roadNumber" -> nodePoint.roadNumber,
+      "roadPartNumber" -> nodePoint.roadPartNumber,
+      "track" -> nodePoint.track
+    )
+  }
+
   def nodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
     Map("nodePointTemplate" -> {
       Map("id" -> nodePoint.id,
         "nodeId" -> nodePoint.nodeId,
         "beforeAfter" -> nodePoint.beforeAfter.value,
         "roadwayPointId" -> nodePoint.roadwayPointId,
-        "startDate" -> formatDateTimeToString(Some(nodePoint.startDate)),
+        "startDate" -> formatToString(nodePoint.startDate.toString),
         "endDate" -> formatDateTimeToString(nodePoint.endDate),
         "validFrom" -> formatDateTimeToString(Some(nodePoint.validFrom)),
         "validTo" -> formatDateTimeToString(nodePoint.validTo),
         "createdBy" -> nodePoint.createdBy,
         "roadwayNumber" -> nodePoint.roadwayNumber,
-        "addrM" -> nodePoint.addrM
+        "addrM" -> nodePoint.addrM,
+        "elyCode" -> nodePoint.elyCode,
+        "roadNumber" -> nodePoint.roadNumber,
+        "roadPartNumber" -> nodePoint.roadPartNumber,
+        "track" -> nodePoint.track
+      )
+    }
+    )
+  }
+
+  def junctionTemplateToApi(junctionTemplate: JunctionTemplate) : Map[String, Any] = {
+    Map("junctionTemplate" -> {
+      Map(
+        "junctionId" -> junctionTemplate.junctionId,
+        "junctionNumber" -> junctionTemplate.junctionNumber,
+        "startDate" -> formatToString(junctionTemplate.startDate.toString),
+        "roadNumber" -> junctionTemplate.roadNumber,
+        "roadPartNumber" -> junctionTemplate.roadPartNumber,
+        "track" -> junctionTemplate.track,
+        "addrM" -> junctionTemplate.addrM,
+        "elyCode" -> junctionTemplate.elyCode
       )
     }
     )
@@ -1257,6 +1218,36 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
     }
     )
+  }
+  def junctionPointsToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
+    Map("junctionPointTemplate" -> {
+      Map("id" -> junctionPoint.id,
+        "junctionId" -> junctionPoint.junctionId,
+        "beforeAfter" -> formatAfterBeforeToString(junctionPoint.beforeAfter.value ),
+        "roadwayPointId" -> junctionPoint.roadwayPointId,
+        "startDate" -> formatDateTimeToString(Some(junctionPoint.startDate)),
+        "endDate" -> formatDateTimeToString(junctionPoint.endDate),
+        "validFrom" -> formatDateTimeToString(Some(junctionPoint.validFrom)),
+        "validTo" -> formatDateTimeToString(junctionPoint.validTo),
+        "createdBy" -> junctionPoint.createdBy,
+        "roadwayNumber" -> junctionPoint.roadwayNumber,
+        "addrM" -> junctionPoint.addrM,
+        //RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER
+        "roadNumber" -> junctionPoint.roadNumber,
+        "roadPartNumber" -> junctionPoint.roadPartNumber,
+        "track" -> junctionPoint.track
+      )
+    }
+    )
+  }
+
+  def junctionInfoToApi(junctionInfo: JunctionInfo) : Map[String, Any] = {
+      Map("junctionId" -> junctionInfo.id,
+        "junctionNumber" -> junctionInfo.junctionNumber,
+        "nodeId" -> junctionInfo.nodeId,
+        "startDate" -> formatDateTimeToShortPatternString(Some(junctionInfo.startDate)),
+        "nodeNumber" -> junctionInfo.nodeNumber,
+        "nodeName" -> junctionInfo.nodeName)
   }
 
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
@@ -1499,9 +1490,26 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val formattedDate = new SimpleDateFormat("dd.MM.yyyy").format(date)
     formattedDate
   }
+  def formatAfterBeforeToString(afterBefore: Long): String = {
+
+    if (afterBefore == 0) {
+      val retValue = "E"
+      retValue
+    } else if ( afterBefore == 1) {
+      val otherValue = "J"
+      otherValue
+    } else {
+      val noneValue = ""
+      noneValue
+    }
+
+  }
 
   private def formatDateTimeToString(dateOption: Option[DateTime]): Option[String] =
     dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy, HH:mm:ss")) }
+
+  private def formatDateTimeToShortPatternString(dateOption: Option[DateTime]): Option[String] =
+    dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy")) }
 
   private def calibrationPointToApi(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]): Option[Map[String, Any]] = {
     calibrationPoint match {
@@ -1528,7 +1536,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
      projectService
    }*/
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String, date_of_data: String)
   case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
 
 }

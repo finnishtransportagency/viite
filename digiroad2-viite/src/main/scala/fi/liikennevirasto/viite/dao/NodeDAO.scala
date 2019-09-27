@@ -361,8 +361,9 @@ class NodeDAO extends BaseDAO {
       val untilString = if (untilDate.nonEmpty) s"AND PUBLISHED_TIME <= to_timestamp('${new Timestamp(untilDate.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
       val query =
         s"""
-         SELECT ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
-         FROM NODE
+         SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
+         FROM NODE N
+         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
          WHERE
          PUBLISHED_TIME >= to_timestamp('${new Timestamp(sinceDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
          $untilString AND PUBLISHED_TIME IS NOT NULL

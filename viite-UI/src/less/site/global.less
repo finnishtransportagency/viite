@@ -47,6 +47,28 @@ a {
     color: #fff;
     float: left;
   }
+  .pictureTooltip {
+    position: relative;
+    display: inline-block;
+    padding: 0px 15px;
+    font-size: @font-size-small;
+    color: #fff;
+    float: left;
+  }
+
+  .pictureTooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+  }
 
   .action-state {
     display: inline-block;
@@ -145,11 +167,8 @@ a {
 .calibration-point-image {
   .text-hide();
   display: block;
-  float: left;
   width: 75px;
   height: 32px;
-  margin: 3px 0;
-  color: #fff;
   background-image:url("../images/calibration-point.svg");
   background-repeat: no-repeat;
 }

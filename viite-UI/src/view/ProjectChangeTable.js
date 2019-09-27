@@ -91,7 +91,7 @@
 
     function getChanges() {
       var currentProject = projectCollection.getCurrentProject();
-      projectChangeInfoModel.getChanges(currentProject.project.id,function () {
+      projectChangeInfoModel.getChanges(currentProject.project.id, function () {
         var source = $('[id=label-source-btn]');
         var target = $('[id=label-target-btn]');
         if (source.hasClass('fa-sort-down') || source.hasClass('fa-sort-up')) {
@@ -204,7 +204,8 @@
       otherBtn.removeClass('fa-sort-up');
       otherBtn.addClass('fa-sort');
 
-      projectChangeInfoModel.sortChanges(side, btn.className.match('fa-sort-up'));
+      var projectChanges = projectChangeInfoModel.sortChanges(side, btn.className.match('fa-sort-up'));
+      eventbus.trigger('projectChanges:fetched', projectChanges);
     }
 
     function getReversed(changeInfoSeq){

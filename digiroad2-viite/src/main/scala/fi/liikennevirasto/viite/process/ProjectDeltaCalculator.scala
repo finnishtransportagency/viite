@@ -226,9 +226,9 @@ object ProjectDeltaCalculator {
       val matches = matchingTracks(paired, key)
       val target = targetToMap.map(t => t.copy(projectLinks = projectLinks.filter(link => link.roadNumber == t.roadNumber && link.roadPartNumber == t.roadPartNumberEnd && link.track == t.track && link.roadType == t.roadType && link.ely == t.ely &&
         link.startAddrMValue >= t.startMAddr && link.endAddrMValue <= t.endMAddr)))
-      if (matches.nonEmpty && matches.get.lengthCompare(target.length) == 0 && matchesFitOnTarget(target, matches.get))
-        adjustTrack((target, matches.get))
-      else
+      if (matches.nonEmpty && matches.get.lengthCompare(target.length) == 0 && matchesFitOnTarget(target, matches.get)) {
+        adjustTrack((target.sortBy(_.startMAddr), matches.get.sortBy(_.startMAddr)))
+      } else
         target
     }.toSeq
     result
@@ -285,7 +285,7 @@ object ProjectDeltaCalculator {
       && s._1.track != src.track)
       if (possibleExistingSameEndAddrMValue.nonEmpty) {
         val warningMessage = if (Math.abs(src.endMAddr - possibleExistingSameEndAddrMValue.head._1.endMAddr) > viite.MaxDistanceBetweenTracks)
-          Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
+          Some(viite.MaxDistanceBetweenTracksWarningMessage)
         else
           None
       ((src.copy(endMAddr = adjustAddressValues(src.endMAddr + possibleExistingSameEndAddrMValue.head._1.endMAddr, src.endMAddr, src.track)), target), warningMessage)
@@ -307,7 +307,7 @@ object ProjectDeltaCalculator {
           && s._1.track != possibleExistingSameStartAddrMValue.get._1.track)
         if (oppositePairingTrack.nonEmpty) {
           val warningMessage = if (Math.abs(possibleExistingSameStartAddrMValue.head._1.endMAddr - oppositePairingTrack.head._1.endMAddr) > viite.MaxDistanceBetweenTracks)
-            Some("Tarkista, että toimenpide vaihtuu samassa kohdassa.")
+            Some(viite.MaxDistanceBetweenTracksWarningMessage)
           else
             None
           ((src.copy(startMAddr = adjustAddressValues(possibleExistingSameStartAddrMValue.head._1.endMAddr + oppositePairingTrack.head._1.endMAddr, possibleExistingSameStartAddrMValue.head._1.endMAddr, src.track)), target), warningMessage)

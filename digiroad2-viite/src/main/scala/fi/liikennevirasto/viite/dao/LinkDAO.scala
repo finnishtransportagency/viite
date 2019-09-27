@@ -41,5 +41,12 @@ object LinkDAO {
     }
   }
 
+  def fetchMaxAdjustedTimestamp(): Long = {
+    sql"""
+      SELECT max(adjusted_timestamp) FROM link WHERE SOURCE = 1
+    """.as[Long].first
+
+  }
+
 
 }

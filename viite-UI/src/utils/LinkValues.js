@@ -19,7 +19,7 @@
 
     root.LinkGeomSource = {
         NormalLinkInterface:        {value: 1,  descriptionFI: "MML",            description: "NormalLinkInterface"},
-        ComplimentaryLinkInterface: {value: 2,  descriptionFI: "Täydentävä",     description: "ComplimentaryLinkInterface"},
+        ComplementaryLinkInterface: {value: 2,  descriptionFI: "Täydentävä",     description: "ComplementaryLinkInterface"},
         SuravageLinkInterface:      {value: 3,  descriptionFI: "Suravage",       description: "SuravageLinkInterface"},
         FrozenLinkInterface:        {value: 4,  descriptionFI: "MML jäädytetty", description: "FrozenLinkInterface"},
         HistoryLinkInterface:       {value: 5,  descriptionFI: "MML historia",   description: "HistoryLinkInterface"},
@@ -101,9 +101,9 @@
 
     root.RoadZIndex = {
         VectorLayer:                {value: 1},
-        SuravageLayer:              {value: 4},
         AnomalousMarkerLayer:       {value: 2},
         CalibrationPointLayer:      {value: 3},
+        UnderConstructionLayer:     {value: 4},
         GeometryChangedLayer:       {value: 5},
         ReservedRoadLayer:          {value: 6},
         HistoricRoadLayer:          {value: 7},
@@ -170,15 +170,15 @@
     root.BlackUnderlineRoadTypes = [root.RoadType.MunicipalityStreetRoad.value, root.RoadType.PrivateRoadType.value];
 
     root.ElyCodes = {
-        ELY_U:      {value: 1},
-        ELY_T:      {value: 2},
-        ELY_KAS:    {value: 3},
-        ELY_H:      {value: 4},
-        ELY_SK:     {value: 8},
-        ELY_KES:    {value: 9},
-        ELY_V:      {value: 10},
-        ELY_O:      {value: 12},
-        ELY_L:      {value: 14}
+        ELY_U:      {value: 1, name: "Uusimaa"},
+        ELY_T:      {value: 2, name: "Varsinais-Suomi"},
+        ELY_KAS:    {value: 3, name: "Kaakkois-Suomi"},
+        ELY_H:      {value: 4, name: "Pirkanmaa"},
+        ELY_SK:     {value: 8, name: "Pohjois-Savo"},
+        ELY_KES:    {value: 9, name: "Keski-Suomi"},
+        ELY_V:      {value: 10, name: "Etelä-Pohjanmaa"},
+        ELY_O:      {value: 12, name: "Pohjois-Pohjanmaa"},
+        ELY_L:      {value: 14, name: "Lappi"}
     };
 
     root.NodeType = {
@@ -188,7 +188,7 @@
         Interchange:                    {value:5, description:"Eritasoliittymä"},
         RoadBoundary:                   {value:7, description:"Maantien/kadun raja"},
         ELYBorder:                      {value:8, description:"ELY-raja"},
-        MultitrackIntersection:         {value:10, description:"Moniajoratainen liittymä"},
+        MultiTrackIntersection:         {value:10, description:"Moniajoratainen liittymä"},
         DropIntersection:               {value:11, description:"Pisaraliittymä"},
         AccessRoad:                     {value:12, description:"Liityntätie"},
         EndOfRoad:                      {value:13, description:"Tien loppu"},
@@ -197,6 +197,13 @@
         PrivateRoad:                    {value:16, description:"Yksityistie-tai katuliittymä"},
         StaggeredIntersection:          {value:17, description:"Porrastettu liittymä"},
         UnkownNodeType:                 {value:99, description:"Ei määritelty"}
+    };
+
+    root.Tool = {
+        Unknown:            {value: ""},
+        Default:            {value: "Select"},
+        SelectNode:         {value: "Select"},
+        AddNode:            {value: "Add"}
     };
 
 })(window.LinkValues = window.LinkValues || {});
