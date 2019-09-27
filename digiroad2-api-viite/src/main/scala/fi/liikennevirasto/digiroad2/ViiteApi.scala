@@ -1142,7 +1142,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def nodePointToApi(nodePoint: NodePoint) : Map[String, Any] = {
     //TODO
     Map("id" -> nodePoint.id,
-      "nodeId" -> nodePoint.nodeId)
+      "nodeId" -> nodePoint.nodeId,
+      "road" -> nodePoint.roadNumber,
+      "part" -> nodePoint.roadPartNumber,
+      "addrM" -> nodePoint.addrM,
+      "beforeOrAfter" -> nodePoint.beforeAfter.value
+    )
   }
 
   def simpleNodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {

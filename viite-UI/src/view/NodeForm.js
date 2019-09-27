@@ -71,70 +71,12 @@
       );
     };
 
-    var detachJunctionBox = function(rowInfo){
-      return '<td>&#9744 <i id="deleteJunction_' + rowInfo.junctionId + '" '
-        + rowInfo.junctionId + '"></i></td>';
-    };
+    var NodeJunctions = function () {
 
-    var junctionInfoHtml = function(rowInfo){
-        return '<td class="project-change-table-dimension">' + rowInfo.junctionNumber + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.road + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.track + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.part + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.addr + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.EJ + '</td>';
-    };
-
-    var getJunctionRowsInfo = function(junction){
-      var junctionId = junction.id;
-      var junctionNumber = junction.junctionNumber;
-      var info = [];
-      _.map(junction.junctionPoints, function(point){
-        var row = {junctionId: junctionId, junctionNumber: junctionNumber, road: point.road, part: point.part, track: point.track, addr: point.addrM, EJ: point.beforeOrAfter};
-        info.push(row);
-      });
-
-      var groupedHomogeneousRows = _.groupBy(info, function (row) {
-        return [row.junctionNumber, row.road, row.track, row.part, row.addr];
-      });
-
-      var joinedHomogeneousRows = _.partition(groupedHomogeneousRows, function(group) {
-        return group.length > 1;
-      });
-
-      var doubleHomogeneousRows = joinedHomogeneousRows[0];
-      var singleHomogeneousRows = joinedHomogeneousRows[1];
-
-      var doubleRows = _.map(doubleHomogeneousRows, function(drows){
-        var first = _.first(drows);
-        return {junctionId: first.junctionId, junctionNumber: first.junctionNumber, road: first.road, track: first.track, part: first.part, addr: first.addr, EJ: "EJ"};
-      });
-
-      var singleRows = _.map(singleHomogeneousRows, function(drows){
-        var first = _.first(drows);
-        return {junctionId: first.junctionId, junctionNumber: first.junctionNumber, road: first.road, track: first.track, part: first.part, addr: first.addr, EJ: (first.beforeOrAfter == 1 ? "E" : "J")};
-      });
-
-      return doubleRows.concat(singleRows);
-    };
-
-    var headRow = function(){
-      return '<tr class="row-changes">'+
-        '<label class="project-change-table-dimension-header target">    </label>' +
-        '<label class="project-change-table-dimension-header">NRO</label>' +
-        '<label class="project-change-table-dimension-header">TIE</label>' +
-        '<label class="project-change-table-dimension-header">TIE</label>' +
-        '<label class="project-change-table-dimension-header">AJR</label>' +
-        '<label class="project-change-table-dimension-header">AOSA</label>' +
-        '<label class="project-change-table-dimension-header">AET</label>' +
-        '<label class="project-change-table-dimension-header">EJ</label>' +
-        '</tr>';
-    };
-
-    var junctionsHtmlTable = function(junctionsInfo){
-      var htmlTable = "";
-      htmlTable += '<table class="change-table-dimensions">';
-      htmlTable += headRow();
+      var junctionsHtmlTable = function(junctionsInfo){
+        var htmlTable = "";
+        htmlTable += '<table class="change-table-dimensions">';
+        htmlTable += headRow();
         _.each(junctionsInfo, function (junctionRow) {
           var rowsInfo = getJunctionRowsInfo(junctionRow);
           _.each(rowsInfo, function(row){
@@ -144,13 +86,79 @@
             htmlTable += '</tr>';
           });
         });
-      htmlTable += '</table>';
-      return htmlTable;
+        htmlTable += '</table>';
+        return htmlTable;
+      };
+
+      var detachJunctionBox = function(rowInfo){
+        return '<td>&#9744 <i id="deleteJunction_' + rowInfo.junctionId + '" '
+          + rowInfo.junctionId + '"></i></td>';
+      };
+
+      var junctionInfoHtml = function(rowInfo){
+        return '<td class="project-change-table-dimension">' + rowInfo.junctionNumber + '</td>' +
+          '<td class="project-change-table-dimension">' + rowInfo.road + '</td>' +
+          '<td class="project-change-table-dimension">' + rowInfo.track + '</td>' +
+          '<td class="project-change-table-dimension">' + rowInfo.part + '</td>' +
+          '<td class="project-change-table-dimension">' + rowInfo.addr + '</td>' +
+          '<td class="project-change-table-dimension">' + rowInfo.EJ + '</td>';
+      };
+
+      var getJunctionRowsInfo = function(junction){
+        var junctionId = junction.id;
+        var junctionNumber = junction.junctionNumber;
+        var info = [];
+        _.map(junction.junctionPoints, function(point){
+          var row = {junctionId: junctionId, junctionNumber: junctionNumber, road: point.road, part: point.part, track: point.track, addr: point.addrM, EJ: point.beforeOrAfter};
+          info.push(row);
+        });
+
+        var groupedHomogeneousRows = _.groupBy(info, function (row) {
+          return [row.junctionNumber, row.road, row.track, row.part, row.addr];
+        });
+
+        var joinedHomogeneousRows = _.partition(groupedHomogeneousRows, function(group) {
+          return group.length > 1;
+        });
+
+        var doubleHomogeneousRows = joinedHomogeneousRows[0];
+        var singleHomogeneousRows = joinedHomogeneousRows[1];
+
+        var doubleRows = _.map(doubleHomogeneousRows, function(drows){
+          var first = _.first(drows);
+          return {junctionId: first.junctionId, junctionNumber: first.junctionNumber, road: first.road, track: first.track, part: first.part, addr: first.addr, EJ: "EJ"};
+        });
+
+        var singleRows = _.map(singleHomogeneousRows, function(drows){
+          var first = _.first(drows);
+          return {junctionId: first.junctionId, junctionNumber: first.junctionNumber, road: first.road, track: first.track, part: first.part, addr: first.addr, EJ: (first.beforeOrAfter == 1 ? "E" : "J")};
+        });
+
+        return doubleRows.concat(singleRows);
+      };
+
+      var headRow = function(){
+        return '<tr class="row-changes">'+
+          '<label class="project-change-table-dimension-header target">    </label>' +
+          '<label class="project-change-table-dimension-header">NRO</label>' +
+          '<label class="project-change-table-dimension-header">TIE</label>' +
+          '<label class="project-change-table-dimension-header">TIE</label>' +
+          '<label class="project-change-table-dimension-header">AJR</label>' +
+          '<label class="project-change-table-dimension-header">AOSA</label>' +
+          '<label class="project-change-table-dimension-header">AET</label>' +
+          '<label class="project-change-table-dimension-header">EJ</label>' +
+          '</tr>';
+      };
+      return {
+        junctionsHtmlTable: junctionsHtmlTable
+      }
     };
+
+    var nodeJunctions = new NodeJunctions();
 
     var getNodeJunctions = function (junctions) {
       applicationModel.addSpinner();
-      $('#junctions-content').html(junctionsHtmlTable(junctions));
+      $('#junctions-content').html(nodeJunctions.junctionsHtmlTable(junctions));
       applicationModel.removeSpinner();
     };
 
