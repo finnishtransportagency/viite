@@ -18,6 +18,11 @@
       line-height: (@line-height-modifier * 5) + 2;
       float: left;
     }
+
+    span.caption-title {
+      text-transform: uppercase;
+      color: @span-caption-title;
+    }
   }
 
   .rightSideSpan {
@@ -254,7 +259,9 @@
   width: 360px;
 
   .asset-log-info,
-  .asset-log-info-metadata {
+  .asset-log-info-metadata,
+  .asset-node-data,
+  .asset-input-node-data {
     font-size: @font-size-small;
     line-height: @line-height-modifier * 3;
     color: @input-color-placeholder-dark;
@@ -265,7 +272,7 @@
     text-decoration: underline;
   }
 
-  a.incomplete-links, .unknown-speed-limits, .floating-stops, .floating-point-assets {
+  a.incomplete-links, .unknown-speed-limits, .floating-stops, .floating-point-assets, .node-points, .junction-point {
     position:absolute;
     right: 10px;
     bottom: 130px;
@@ -355,7 +362,10 @@
   .form-control-static-short {
     margin-top: @control-label-margin-short;
   }
-
+  .form-control-static-short-yellow {
+    margin-top: @control-label-margin-short;
+    color: yellow;
+  }
   .project-choice-group{
     width: 370px;
     margin-top: 10px;
@@ -370,6 +380,25 @@
     width: 100%;
     padding-top: 0;
     padding-bottom: 0;
+  }
+
+  .asset-node-data {
+    float: none;
+    width: 100%;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .asset-input-node-data {
+    float: none;
+    width: 280px;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 5px;
   }
 
   .asset-log-info-metadata {

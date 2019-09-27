@@ -1,5 +1,5 @@
 (function(root) {
-    root.NodeLayer = function (map, roadLayer, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
+    root.NodeLayer = function (map, roadLayer, selectedNodeAndJunctionPoint, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
       Layer.call(this, map);
       var me = this;
       var indicatorVector = new ol.source.Vector({});
@@ -28,35 +28,30 @@
         name: 'directionMarkerLayer',
         zIndex: RoadZIndex.VectorLayer.value
       });
-      directionMarkerLayer.set('name', 'directionMarkerLayer');
 
       var nodeMarkerLayer = new ol.layer.Vector({
         source: nodeMarkerVector,
         name: 'nodeMarkerLayer',
         zIndex: RoadZIndex.CalibrationPointLayer.value
       });
-      nodeMarkerLayer.set('name', 'nodeMarkerLayer');
 
       var junctionMarkerLayer = new ol.layer.Vector({
         source: junctionMarkerVector,
         name: 'junctionMarkerLayer',
         zIndex: RoadZIndex.CalibrationPointLayer.value + 1
       });
-      junctionMarkerLayer.set('name', 'junctionMarkerLayer');
 
       var nodePointTemplateLayer = new ol.layer.Vector({
         source: nodePointTemplateVector,
         name: 'nodePointTemplateLayer',
         zIndex: RoadZIndex.CalibrationPointLayer.value - 1
       });
-      nodePointTemplateLayer.set('name', 'nodePointTemplateLayer');
 
       var junctionTemplateLayer = new ol.layer.Vector({
         source: junctionTemplateVector,
         name: 'junctionTemplateLayer',
         zIndex: RoadZIndex.CalibrationPointLayer.value - 1
       });
-      junctionTemplateLayer.set('name', 'junctionTemplateLayer');
 
       var layers = [directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer];
 
@@ -70,13 +65,137 @@
         junctionTemplateLayer.setOpacity(opacity);
       };
 
+      /**
+       * Event triggered by the selectedNode.open() returning all the open layers 3 features
+       * that need to be included in the selection.
+       */
+      me.eventListener.listenTo(eventbus, 'node:ol3Selected', function (ol3Features) {
+        addNodeFeaturesToSelection(ol3Features);
+      });
+
+      /**
+       * This will remove all the following interactions from the map:
+       * - nodeAndJunctionPointTemplateClick
+       */
+      var removeSelectInteractions = function () {
+        map.removeInteraction(nodeAndJunctionPointTemplateClick);
+      };
+
+      /**
+       * Type of interactions we want the map to be able to respond.
+       * A selected feature is moved to a new/temporary layer out of the default roadLayer.
+       * This interaction is restricted to a single click (there is a 250 ms enforced
+       * delay between single clicks in order to differentiate from double click).
+       * @type {ol.interaction.Select}
+       */
+      var nodeAndJunctionPointTemplateClick = new ol.interaction.Select({
+        // Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
+        // This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
+        layers: [nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer],
+        name: 'nodeAndJunctionPointTemplateClickInteractionNL',
+        // Limit this interaction to the singleClick
+        condition: ol.events.condition.singleClick
+      });
+
+      /**
+       * We now declare what kind of custom actions we want when the interaction happens.
+       * Note that 'select' is triggered when a feature is either selected or deselected.
+       * The event holds the selected features in the events.selected and the deselected in event.deselected.
+       *
+       * In this particular case we are fetching every node point template marker in view and
+       * sending them to the selectedNode.open for further processing.
+       */
+      nodeAndJunctionPointTemplateClick.on('select', function (event) {
+        applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+        var selectedNode = _.filter(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.nodeInfo);
+        });
+
+        var selectedNodePoint = _.filter(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
+        });
+
+        var selectedJunction = _.filter(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.junctionPointTemplateInfo);
+        });
+
+        if (!_.isUndefined(selectedNode) && selectedNode.length > 0) {
+          if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
+            applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+          } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
+            selectedNodeAndJunctionPoint.openNode(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
+          } else selectedNodeAndJunctionPoint.close();
+        } else if (!_.isUndefined(selectedNodePoint) && selectedNodePoint.length > 0) {
+          if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
+            applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+          } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
+            selectedNodeAndJunctionPoint.openNodePointTemplates(_.unique(_.map(selectedNodePoint, "nodePointTemplateInfo"), "id"));
+          } else selectedNodeAndJunctionPoint.close();
+        } else if (!_.isUndefined(selectedJunction) && selectedJunction.length > 0) {
+          if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) {
+            applicationModel.setSelectedTool(LinkValues.Tool.SelectNode.value);
+          } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
+            var junctionPointTemplates = _.unique(_.map(selectedJunction, "junctionPointTemplateInfo"), "junctionId");
+            selectedNodeAndJunctionPoint.setCurrentJunctionPointTemplates(junctionPointTemplates);
+            eventbus.trigger('junctionEdit:selected', _.first(selectedJunction).junctionPointTemplateInfo.junctionId);
+          } else selectedNodeAndJunctionPoint.close();
+        } else {
+          selectedNodeAndJunctionPoint.close();
+        }
+      });
+
+      /**
+       * Simple method that will add various open layers 3 features to a selection.
+       * @param ol3Features
+       */
+      var addNodeFeaturesToSelection = function (ol3Features) {
+        var olUids = _.map(nodeAndJunctionPointTemplateClick.getFeatures().getArray(), function (feature) {
+          return feature.ol_uid;
+        });
+        _.each(ol3Features, function (feature) {
+          if (!_.contains(olUids, feature.ol_uid)) {
+            nodeAndJunctionPointTemplateClick.getFeatures().push(feature);
+            olUids.push(feature.ol_uid); // prevent adding duplicate entries
+          }
+        });
+      };
+
+      /**
+       * This will add all the following interactions from the map:
+       * - nodeAndJunctionPointTemplateClick
+       */
+      var addClickInteractions = function () {
+        map.addInteraction(nodeAndJunctionPointTemplateClick);
+      };
+
+      // We add the defined interactions to the map.
+      addClickInteractions();
+
+      me.eventListener.listenTo(eventbus, 'node:unselected', function () {
+        if (nodePointTemplateLayer.getSource().getFeatures().length !== 0) {
+          nodePointTemplateLayer.getSource().clear();
+        }
+      });
+
+      me.eventListener.listenTo(eventbus, 'junction:unselected', function () {
+        if (junctionTemplateLayer.getSource().getFeatures().length !== 0) {
+          junctionTemplateLayer.getSource().clear();
+        }
+      });
+
+      me.eventListener.listenTo(eventbus, 'map:clicked', function () {
+        if (nodeMarkerLayer.getSource().getFeatures().concat(nodePointTemplateLayer.getSource().getFeatures()).concat(junctionTemplateLayer.getSource().getFeatures()).length > 0) {
+          selectedNodeAndJunctionPoint.close();
+        }
+      });
+
       var redraw = function () {
         if(applicationModel.getSelectedLayer() === 'node') {
 
           cachedMarker = new LinkPropertyMarker();
-          var suravageLinks = roadCollection.getSuravageLinks();
+          var underConstructionLinks = roadCollection.getUnderConstructionLinks();
           var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
-            return _.contains(_.map(suravageLinks, function (sl) {
+            return _.contains(_.map(underConstructionLinks, function (sl) {
               return sl.linkId;
             }), rl.linkId);
           });
@@ -88,9 +207,10 @@
               return roadLink.floating !== SelectionType.Floating.value && roadLink.anomaly !== Anomaly.NoAddressGiven.value && roadLink.anomaly !== Anomaly.GeometryChanged.value && (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
             });
             _.each(directionRoadMarker, function (directionLink) {
-              var marker = cachedMarker.createMarker(directionLink);
-              if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
-                directionMarkerLayer.getSource().addFeature(marker);
+              cachedMarker.createMarker(directionLink, function (marker) {
+                if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
+                  directionMarkerLayer.getSource().addFeature(marker);
+              });
             });
           }
 
@@ -120,20 +240,27 @@
               var nodeMarker = new NodeMarker();
               nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node));
             });
+
+            _.each(nodePointTemplates, function (nodePointTemplate) {
+              var nodePointTemplateMarker = new NodePointTemplateMarker();
+              var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
+                return (roadLink.startAddressM === nodePointTemplate.addrM || roadLink.endAddressM === nodePointTemplate.addrM) && roadLink.roadwayNumber === nodePointTemplate.roadwayNumber;
+              });
+              if (!_.isUndefined(roadLinkForPoint)) {
+                nodePointTemplateLayer.getSource().addFeature(nodePointTemplateMarker.createNodePointTemplateMarker(nodePointTemplate, roadLinkForPoint));
+              }
+            });
           }
 
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions){
-            var suravageLinks = roadCollection.getSuravageLinks();
             var roadLinksWithValues = _.reject(roadCollection.getAll(), function (rl) {
-              return _.contains(_.map(suravageLinks, function (sl) {
-                return sl.linkId;
-              }), rl.linkId) || rl.roadNumber === 0;
+              return rl.roadNumber === 0;
             });
             var junctions = [];
             var junctionPoints = [];
             var junctionPointsWithRoadlinks;
             _.map(nodes, function(node){
-              junctions =  junctions.concat(node.junctions);
+              junctions = junctions.concat(node.junctions);
             });
 
             _.map(junctions, function (junction) {
@@ -158,16 +285,6 @@
                var junctionMarker = new JunctionMarker();
                junctionMarkerLayer.getSource().addFeature(junctionMarker.createJunctionMarker(junctionPoint.junctionPoint, junctionPoint.junction, roadLink));
               });
-            });
-
-            _.each(nodePointTemplates, function (nodePointTemplate) {
-              var nodePointTemplateMarker = new NodePointTemplateMarker();
-              var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
-                return (roadLink.startAddressM === nodePointTemplate.addrM || roadLink.endAddressM === nodePointTemplate.addrM) && roadLink.roadwayNumber === nodePointTemplate.roadwayNumber;
-              });
-              if (!_.isUndefined(roadLinkForPoint)) {
-                nodePointTemplateLayer.getSource().addFeature(nodePointTemplateMarker.createNodePointTemplateMarker(nodePointTemplate, roadLinkForPoint));
-              }
             });
 
             _.each(junctionPointTemplates, function (junctionPointTemplate) {

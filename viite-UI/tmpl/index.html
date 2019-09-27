@@ -18,6 +18,7 @@
 <body class="digiroad2">
 <header id="header">
     <a href="./"><span class="logo">Viite</span></a>
+    <span class="pictureTooltip" id="pictureTooltip"></span>
   <span class="notification" id="notification">
   </span>
     <a href="manual/index.html" target="_blank" class="header-link">K&auml;ytt&ouml;ohje</a>
@@ -92,7 +93,6 @@
 <script type="text/javascript" src="src/utils/StyleRule.js"></script>
 
 <script type="text/javascript" src="src/view/NavigationPanel.js"></script>
-<script type="text/javascript" src="src/view/navigationpanel/EditModeToggleButton.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/RoadLinkBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/ProjectSelectBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/ProjectListModel.js"></script>
@@ -121,10 +121,17 @@
 <script type="text/javascript" src="src/view/ProjectForm.js"></script>
 <script type="text/javascript" src="src/view/SplitForm.js"></script>
 <script type="text/javascript" src="src/view/CrosshairToggle.js"></script>
+
+<script type="text/javascript" src="src/view/FormCommon.js"></script>
 <script type="text/javascript" src="src/view/LinkPropertyForm.js"></script>
 <script type="text/javascript" src="src/view/NodeSearchForm.js"></script>
-<script type="text/javascript" src="src/view/FormCommon.js"></script>
+
+<script type="text/javascript" src="src/view/NodeForm.js"></script>
+<script type="text/javascript" src="src/view/NodePointForm.js"></script>
+<script type="text/javascript" src="src/view/JunctionEditForm.js"></script>
+<script type="text/javascript" src="src/view/JunctionPointForm.js"></script>
 <script type="text/javascript" src="src/view/WorkListView.js"></script>
+
 
 <script type="text/javascript" src="src/model/SelectedProjectLink.js"></script>
 <script type="text/javascript" src="src/model/ProjectCollection.js"></script>
@@ -136,6 +143,7 @@
 <script type="text/javascript" src="src/model/LocationSearch.js"></script>
 <script type="text/javascript" src="src/model/ProjectChangeInfoModel.js"></script>
 <script type="text/javascript" src="src/model/NodeCollection.js"></script>
+<script type="text/javascript" src="src/model/SelectedNodeAndJunctionPoint.js"></script>
 
 <script type="text/javascript" src="src/modalconfirm/Confirm.js"></script>
 <script type="text/javascript" src="src/modalconfirm/ModalConfirm.js"></script>

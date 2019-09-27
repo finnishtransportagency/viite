@@ -24,15 +24,24 @@
      * Road address search
      *
      * @param roadData
+     * @param addressMValue
      * @returns {*}
      */
-    function roadLocationAPIResultParser(roadData){
+    function roadLocationAPIResultParser(roadData, addressMValue){
+      var sideCodes = LinkValues.SideCode;
       var constructTitle = function(address) {
         var titleParts = [_.get(address, 'roadNumber'), _.get(address, 'roadPartNumber')];
         return _.some(titleParts, _.isUndefined) ? '' : titleParts.join(' ');
       };
-      var lon = _.get(roadData, 'geometry[0].x');
-      var lat = _.get(roadData, 'geometry[0].y');
+      var lon, lat = 0;
+      if(addressMValue === 0 || (roadData.startAddrMValue === addressMValue && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValue && roadData.sideCode === sideCodes.AgainstDigitizing.value)){
+        lon = roadData.geometry[0].x;
+        lat = roadData.geometry[0].y;
+      }
+      else {
+        lon = roadData.geometry[roadData.geometry.length - 1].x;
+        lat =  roadData.geometry[roadData.geometry.length - 1].y;
+      }
       var title = constructTitle(roadData);
       if (lon && lat) {
         return  [{title: title, lon: lon, lat: lat, resultType:"road"}];
@@ -50,22 +59,24 @@
      */
     var getCoordinatesFromRoadAddress = function (road) {
       return backend.getCoordinatesFromRoadAddress(road.roadNumber, road.section, road.distance).then(function (roadData) {
-        var sortedRoad = _.sortBy(_.sortBy(roadData, function (addr) {
-          return addr.startAddrMValue;
-        }), function (road) {
-          return road.roadPartNumber;
-        });
-        var searchResult = roadLocationAPIResultParser(sortedRoad[0]);
-        if (searchResult.length === 0) {
-          return $.Deferred().reject('Tuntematon tieosoite');
-        } else {
-          return searchResult;
-        }
+        if (!_.isUndefined(roadData) && roadData.length > 0) {
+          var sortedRoad = _.sortBy(_.sortBy(roadData, function (addr) {
+            return addr.startAddrMValue;
+          }), function (road) {
+            return road.roadPartNumber;
+          });
+          var searchResult = roadLocationAPIResultParser(sortedRoad[0], road.distance);
+          if (searchResult.length === 0) {
+            return $.Deferred().reject('Tuntematon tieosoite');
+          } else {
+            return searchResult;
+          }
+        } else return [];
       });
     };
 
-    var resultFromCoordinates = function(coordinates) {
-      var result = _.assign({}, coordinates, { title: coordinates.lat + ',' + coordinates.lon });
+    var resultFromCoordinates = function (coordinates) {
+      var result = _.assign({}, coordinates, {title: coordinates.lat + ',' + coordinates.lon});
       return $.Deferred().resolve([result]);
     };
 

@@ -10,7 +10,9 @@
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
-    var nodeCollection = new NodeCollection(backend);
+    window.applicationModel = new ApplicationModel([selectedLinkProperty]);
+    var selectedNodeAndJunctionPoint = new SelectedNodeAndJunctionPoint();
+    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel), selectedNodeAndJunctionPoint);
 
     var models = {
       roadCollection: roadCollection,
@@ -18,11 +20,11 @@
       selectedLinkProperty: selectedLinkProperty,
       linkPropertiesModel: linkPropertiesModel,
       selectedProjectLinkProperty : selectedProjectLinkProperty,
-      nodeCollection: nodeCollection
+      nodeCollection: nodeCollection,
+      selectedNodeAndJunctionPoint: selectedNodeAndJunctionPoint
     };
 
     bindEvents();
-    window.applicationModel = new ApplicationModel([selectedLinkProperty]);
 
     var linkGroups = groupLinks(selectedProjectLinkProperty);
 
@@ -40,6 +42,7 @@
     );
 
     WorkListView.initialize(backend);
+
 
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
@@ -113,17 +116,19 @@
     var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty, models.nodeCollection);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
     var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
-    var nodeLayer = new NodeLayer(map, roadLayer, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
+    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodeAndJunctionPoint, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
+    new JunctionEditForm(models.selectedNodeAndJunctionPoint, backend);
 
-    new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection);
+    new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
+    new NodeForm(models.selectedNodeAndJunctionPoint);
+    new NodePointForm(models.selectedNodeAndJunctionPoint);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
-    new SplitForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
-
+    new JunctionPointForm(backend);
     var layers = _.merge({
       road: roadLayer,
       roadAddressProject: projectLinkLayer,
@@ -137,10 +142,25 @@
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 
-    // Show environment name next to Viite logo
-    var notification = jQuery('#notification');
-    notification.append(Environment.localizedName());
-    notification.append(' Päivämäärä: ' + startupParameters.deploy_date);
+    var toolTip = '<div id="infoTooltip">' +
+        '<i class="fas fa-info-circle" title="Versio: ' + startupParameters.deploy_date + '"></i>\n' +
+        '</div>';
+
+    var pictureTooltip = jQuery('#pictureTooltip');
+    pictureTooltip.empty();
+    pictureTooltip.append(toolTip);
+
+    backend.getRoadLinkDate (function (versionData) {
+      getRoadLinkDateInfo(versionData);
+    });
+
+    var getRoadLinkDateInfo = function (versionData) {
+
+      // Show environment name next to Viite logo
+      var notification = jQuery('#notification');
+      notification.append(Environment.localizedName());
+      notification.append(' Tielinkkiaineisto: ' +  versionData.result);
+    };
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {

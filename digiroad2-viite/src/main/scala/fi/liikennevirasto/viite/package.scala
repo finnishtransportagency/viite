@@ -36,6 +36,8 @@ package object viite {
 
   val noRoadwayId: Long = 0L
 
+  val junctionNumberTemplate = 0L
+
   val noReservedPartId: Long = 0L
 
   val NewIdValue: Long = -1000L
@@ -45,17 +47,11 @@ package object viite {
   val MaxJumpForSection = 50.0
   /* Maximum distance to consider the tracks to go side by side */
   val MaxDistanceBetweenTracks = 50
-  /* Maximum distance of regular road link geometry to suravage geometry difference where splitting is allowed */
-  val MaxSuravageToleranceToGeometry = 0.5
   val MaxRoadNumberDemandingRoadName = 70000
 
   val MaxAllowedNodes = 50
 
-  //TODO: remove after Suravage change following messages (4):
-  val ErrorNoMatchingProjectLinkForSplit = "Suravage-linkkiä vastaavaa käsittelemätöntä tieosoitelinkkiä ei löytynyt projektista."
-  val ErrorSuravageLinkNotFound = "Suravage-linkkiä ei löytynyt."
   val ErrorRoadLinkNotFound = "Tielinkkiä ei löytynyt."
-  val ErrorSplitSuravageNotUpdatable = "Valitut linkit sisältävät jaetun Suravage-linkin eikä sitä voi päivittää."
   val ErrorRoadAlreadyExistsOrInUse = "Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot."
   val ErrorFollowingRoadPartsNotFoundInDB = "Projektiin yritettiin varata tieosia joita ei ole olemassa, tarkista tieosoitteet:"
   val ErrorRoadLinkNotFoundInProject = "Tielinkkiä ei löytynyt projektista. Tekninen virhe, ota yhteys pääkäyttäjään."
@@ -105,6 +101,7 @@ package object viite {
   val GenericViiteErrorMessage = s"Muutosilmoituksen lähetys epäonnistui Viiteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon. "
   val ProjectNotWritable = s"Projekti ei ole enää muokattavissa."
   val ErrorMaxRoadNumberDemandingRoadNameMessage = s"Tien nimi on pakollinen tieto lukuunottamatta kevyen liikenteen väyliä."
+  val MaxDistanceBetweenTracksWarningMessage = "Tarkista, että toimenpide vaihtuu samassa kohdassa."
 
   //ELY-code error messages
   val MultipleElysInPartMessage = s"Samalla tieosalla eri elynumeroita. Tieosan tulee vaihtua ELY-rajalla. Korjaa tieosa- tai elynumeroa."
@@ -264,20 +261,6 @@ package object viite {
     "|       coordinates      | ProjectCoordinates |  This represents the middle point of all the project links involved in the project  |       |\n" +
     "|        roadName        |   Option[String]   |                Possible road name for all the project links sent here               |       |\n" +
     "|        reversed        |   Option[Boolean]  |                   Defines whether or not these roads are reversed                   |       |"
-
-  val cutLineExtractorStructure = "" +
-    "|  Field Name  | Field Type |         Description        |                   Notes                   |\n" +
-    "|:------------:|:----------:|:--------------------------:|:-----------------------------------------:|\n" +
-    "|    linkId    |    Long    |  LinkId of a project link. | It should be a linkId of a Suravage link. |\n" +
-    "| splitedPoint |    Point   | Point of the actual split. |        Simple 3 dimensional point.        |"
-
-
-  val revertSplitExtractor ="" +
-    "|  Field Name |     Field Type     |        Description        | Notes |\n" +
-    "|:-----------:|:------------------:|:-------------------------:|:-----:|\n" +
-    "|  projectId  |    Option[Long]    |    Possible Project Id    |       |\n" +
-    "|    linkId   |    Option[Long]    |      Possible Link Id     |       |\n" +
-    "| coordinates | ProjectCoordinates | Simple (x, y, zoom) entry |       |"
 
   val defaultProjectEly = -1L
 
