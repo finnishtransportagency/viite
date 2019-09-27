@@ -71,47 +71,11 @@
       );
     };
 
-    var changeTable =
-      $('<div class="change-table-frame"></div>');
-    // Text about validation success hard-coded now
-    var changeTableHeader = $('<div class="change-table-fixed-header"></div>');
-    changeTableHeader.append('<div class="change-table-borders">' +
-      '<div id ="change-table-borders-changetype"></div>' +
-      '<div id ="change-table-borders-source"></div>' +
-      '<div id ="change-table-borders-reversed"></div>' +
-      '<div id ="change-table-borders-target"></div></div>');
-    changeTableHeader.append('<div class="change-header">' +
-      '<label class="project-change-table-dimension-header target">    </label>' +
-      '<label class="project-change-table-dimension-header">NRO</label>' +
-      '<label class="project-change-table-dimension-header">TIE</label>' +
-      '<label class="project-change-table-dimension-header">AJR</label>' +
-      '<label class="project-change-table-dimension-header">AOSA</label>' +
-      '<label class="project-change-table-dimension-header">AET</label>' +
-      '<label class="project-change-table-dimension-header">EJ</label>');
-
-    changeTableHeader.append('<div class="change-table-dimension-headers" style="overflow-y: auto;">' +
-      '<table class="change-table-dimensions">' +
-      '</table>' +
-      '</div>');
-    changeTable.append(changeTableHeader);
-
     var detachJunctionBox = function(rowInfo){
-      return '<td class="project-change-table-dimension" id="deleteProjectSpan">&#9744 <i id="deleteJunction_' + rowInfo.junctionId + '" ' +
-        'class="fas fa-trash-alt" value="' + rowInfo.junctionId + '"></i></td>';
-
-      // html += '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
-      //   'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
-        // return ((changeInfoSeq.reversed) ? '<td class="project-change-table-dimension">&#9745</td>': '<td class="project-change-table-dimension">&#9744</td>');
+      return '<td>&#9744 <i id="deleteJunction_' + rowInfo.junctionId + '" '
+        + rowInfo.junctionId + '"></i></td>';
     };
 
-    function setTableHeight() {
-      var changeTableHeight = parseInt(changeTable.height());
-      var headerHeight = parseInt($('.change-header').height());
-      $('.change-table-dimension-headers').height(changeTableHeight - headerHeight - 30);// scroll size = total - header - border
-    }
-
-
-    // junctionId: first.junctionId, junctionNumber: first.junctionNumber, road: first.road, track: first.track, part: first.part, addr: first.addr, EJ: "EJ"
     var junctionInfoHtml = function(rowInfo){
         return '<td class="project-change-table-dimension">' + rowInfo.junctionNumber + '</td>' +
           '<td class="project-change-table-dimension">' + rowInfo.road + '</td>' +
@@ -154,45 +118,44 @@
       return doubleRows.concat(singleRows);
     };
 
-    var junctionsHtml = function (junctionsInfo) {
+    var headRow = function(){
+      return '<tr class="row-changes">'+
+        '<label class="project-change-table-dimension-header target">    </label>' +
+        '<label class="project-change-table-dimension-header">NRO</label>' +
+        '<label class="project-change-table-dimension-header">TIE</label>' +
+        '<label class="project-change-table-dimension-header">TIE</label>' +
+        '<label class="project-change-table-dimension-header">AJR</label>' +
+        '<label class="project-change-table-dimension-header">AOSA</label>' +
+        '<label class="project-change-table-dimension-header">AET</label>' +
+        '<label class="project-change-table-dimension-header">EJ</label>' +
+        '</tr>';
+    };
+
+    var junctionsHtmlTable = function(junctionsInfo){
       var htmlTable = "";
-      _.each(junctionsInfo, function (junctionRow) {
-        var rowsInfo = getJunctionRowsInfo(junctionRow);
-        _.each(rowsInfo, function(row){
-          htmlTable += '<tr class="row-changes">';
-          htmlTable += detachJunctionBox(row);
-          htmlTable += junctionInfoHtml(row);
-          htmlTable += '</tr>';
+      htmlTable += '<table class="change-table-dimensions">';
+      htmlTable += headRow();
+        _.each(junctionsInfo, function (junctionRow) {
+          var rowsInfo = getJunctionRowsInfo(junctionRow);
+          _.each(rowsInfo, function(row){
+            htmlTable += '<tr>';
+            htmlTable += detachJunctionBox(row);
+            htmlTable += junctionInfoHtml(row);
+            htmlTable += '</tr>';
+          });
         });
-      });
-      setTableHeight();
-      $('.row-changes').remove();
-      $('.change-table-dimensions').append($(htmlTable));
+      htmlTable += '</table>';
+      return htmlTable;
     };
 
     var getNodeJunctions = function (junctions) {
       applicationModel.addSpinner();
-        $('#junctions-content').html(junctionsHtml(junctions));
+      $('#junctions-content').html(junctionsHtmlTable(junctions));
       applicationModel.removeSpinner();
     };
 
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
-
-      // rootElement.on('click', '#deleteProjectSpan', function(){
-      //   displayDetachConfirmMessage("Haluatko varmasti poistaa tämän projektin?", true);
-      // });
-      //
-      // var displayDetachConfirmMessage = function (popupMessage) {
-      //   new GenericConfirmPopup(popupMessage, {
-      //     successCallback: function () {
-      //       detachJunction();
-      //     },
-      //     closeCallback: function () {
-      //       return false;
-      //     }
-      //   });
-      // };
 
       rootElement.on('click', '.btn-edit-node-cancel', function () {
         selectedNode.close();
@@ -243,13 +206,6 @@
           }
         }
       }
-
-      // $('[id=junction-point-link]').click(function () {
-      //
-      //   eventbus.trigger('junctionPointForm-junctionPoint:select', junctionId);
-      //   return false;
-      // });
-
 
     };
 
