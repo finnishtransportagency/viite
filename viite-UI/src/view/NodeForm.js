@@ -91,8 +91,8 @@
       };
 
       var detachJunctionBox = function(rowInfo){
-        return '<td>&#9744 <i id="deleteJunction_' + rowInfo.junctionId + '" '
-          + rowInfo.junctionId + '"></i></td>';
+        return '<td>&#9744 <i id="deleteJunction_' + rowInfo.junctionId + '" ' +
+          rowInfo.junctionId + '"></i></td>';
       };
 
       var junctionInfoHtml = function(rowInfo){
@@ -151,7 +151,7 @@
       };
       return {
         junctionsHtmlTable: junctionsHtmlTable
-      }
+      };
     };
 
     var nodeJunctions = new NodeJunctions();
