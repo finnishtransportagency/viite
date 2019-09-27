@@ -1261,6 +1261,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("id" -> junctionPoint.id,
       "junctionId" -> junctionPoint.junctionId,
       "roadwayNumber" -> junctionPoint.roadwayNumber,
+      "road" -> junctionPoint.roadNumber,
+      "part" -> junctionPoint.roadPartNumber,
+      "track" -> junctionPoint.track.value,
       "addrM" -> junctionPoint.addrM,
       "beforeOrAfter" -> junctionPoint.beforeAfter.value)
   }
