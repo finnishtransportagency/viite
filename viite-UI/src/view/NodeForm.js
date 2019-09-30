@@ -78,7 +78,7 @@
       var toHtmlTable = function(junctionsInfo){
         junctionsInfo = _.sortBy(junctionsInfo, 'junctionNumber');
         var htmlTable = "";
-        htmlTable += '<table class="change-table-dimensions">';
+        htmlTable += '<table class="node-junctions-table-dimension">';
         htmlTable += '<tr>' + headers() + '</tr>';
         _.each(junctionsInfo, function (junction) {
           htmlTable += '<tr>';
@@ -148,7 +148,7 @@
 
       var headers = function(){
         return '<th class="node-junctions-table-header">' +
-          ' <table class="change-table-dimensions">' +
+          ' <table class="node-junctions-table-dimension">' +
           '   <tr><th class="node-junctions-table-header">Irrota</th></tr>' +
           '   <tr><th class="node-junctions-table-header">liittymä</th></tr>' +
           '   <tr><th class="node-junctions-table-header">solmusta</th></tr>' +
@@ -170,7 +170,7 @@
     var NodePoints = function () {
       var toHtmlTable = function(nodePointsInfo){
         var htmlTable = "";
-        htmlTable += '<table class="change-table-dimensions">';
+        htmlTable += '<table class="node-points-table-dimension">';
         htmlTable += headRow();
           var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
           _.each(_.sortBy(rowsInfo, 'road'), function(row){
