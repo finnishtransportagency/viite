@@ -75,80 +75,9 @@
     };
 
     var Junctions = function () {
-      var toHtmlTable = function(junctionsInfo){
-        junctionsInfo = _.sortBy(junctionsInfo, 'junctionNumber');
-        var htmlTable = "";
-        htmlTable += '<table class="node-junctions-table-dimension">';
-        htmlTable += '<tr>' + headers() + '</tr>';
-        _.each(junctionsInfo, function (junction) {
-          htmlTable += '<tr>';
-          htmlTable += '<td>' + detachJunctionBox(junction) + '</td>';
-          htmlTable += '<td>' + junctionIcon(junction.junctionNumber) + '</td>';
-          var rowsInfo = getJunctionRowsInfo(junction);
-          _.each(_.sortBy(rowsInfo, 'road'), function(row) {
-            htmlTable += '<tr>';
-            htmlTable += junctionInfoHtml(row);
-            htmlTable += '</tr>';
-          });
-          htmlTable += '<tr>';
-        });
-        htmlTable += '</table>';
-        return htmlTable;
-      };
-
-      var detachJunctionBox = function(junction) {
-        return '<input type="checkbox" name="detach-junction-' + junction.id + '" value="' + junction.id + '" id="detach-junction-' + junction.id + '">';
-      };
-
-      var junctionIcon = function (number) {
-        return '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px; margin-top: 5px">' +
-          ' <param name="number" value="' + number + '"/></object>';
-      };
-
-      var junctionInfoHtml = function(rowInfo){
-          return '<td class="node-junctions-table">' + rowInfo.road + '</td>' +
-          '<td class="node-junctions-table">' + rowInfo.track + '</td>' +
-          '<td class="node-junctions-table">' + rowInfo.part + '</td>' +
-          '<td class="node-junctions-table">' + rowInfo.addr + '</td>' +
-          '<td class="node-junctions-table">' + rowInfo.EJ + '</td>';
-      };
-
-      var getJunctionRowsInfo = function(junction){
-        var junctionId = junction.id;
-        var junctionNumber = junction.junctionNumber;
-        var info = [];
-        _.map(junction.junctionPoints, function(point){
-          var row = {junctionId: junctionId, junctionNumber: junctionNumber, road: point.road, part: point.part, track: point.track, addr: point.addrM, EJ: point.beforeOrAfter};
-          info.push(row);
-        });
-
-        var groupedHomogeneousRows = _.groupBy(info, function (row) {
-          return [row.junctionNumber, row.road, row.track, row.part, row.addr];
-        });
-
-        var joinedHomogeneousRows = _.partition(groupedHomogeneousRows, function(group) {
-          return group.length > 1;
-        });
-
-        var doubleHomogeneousRows = joinedHomogeneousRows[0];
-        var singleHomogeneousRows = joinedHomogeneousRows[1];
-
-        var doubleRows = _.map(doubleHomogeneousRows, function(drows){
-          var first = _.first(drows);
-          return {junctionId: first.junctionId, junctionNumber: first.junctionNumber, road: first.road, track: first.track, part: first.part, addr: first.addr, EJ: "EJ"};
-        });
-
-        var singleRows = _.map(singleHomogeneousRows, function(drows){
-          var first = _.first(drows);
-          return {junctionId: first.junctionId, junctionNumber: first.junctionNumber, road: first.road, track: first.track, part: first.part, addr: first.addr, EJ: (first.beforeOrAfter == 1 ? "E" : "J")};
-        });
-
-        return doubleRows.concat(singleRows);
-      };
-
       var headers = function(){
         return '<th class="node-junctions-table-header">' +
-          ' <table class="node-junctions-table-dimension">' +
+          ' <table class="change-table-dimensions">' +
           '   <tr><th class="node-junctions-table-header">Irrota</th></tr>' +
           '   <tr><th class="node-junctions-table-header">liittymä</th></tr>' +
           '   <tr><th class="node-junctions-table-header">solmusta</th></tr>' +
@@ -160,6 +89,106 @@
           '<th class="node-junctions-table-header">AOSA</th>' +
           '<th class="node-junctions-table-header">AET</th>' +
           '<th class="node-junctions-table-header">EJ</th>';
+      };
+
+      var detachJunctionBox = function(junction) {
+        return '<input type="checkbox" name="detach-junction-' + junction.id + '" value="' + junction.id + '" id="detach-junction-' + junction.id + '">';
+      };
+
+      var junctionIcon = function (number) {
+        return '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px; margin-top: 5px">' +
+          ' <param name="number" value="' + number + '"/></object>';
+      };
+
+      var junctionInfoHtml = function(junctionPointsInfo) {
+        var roads = _.map(_.map(junctionPointsInfo, 'road'), function (road) {
+          return '<td class="node-junctions-table">' + road + '</td>'
+        });
+
+        var tracks = _.map(_.map(junctionPointsInfo, 'track'), function (track) {
+          return '<td class="node-junctions-table">' + track + '</td>'
+        });
+
+        var parts = _.map(_.map(junctionPointsInfo, 'part'), function (part) {
+          return '<td class="node-junctions-table">' + part + '</td>'
+        });
+
+        var addresses = _.map(_.map(junctionPointsInfo, 'addr'), function (addr) {
+          return '<td class="node-junctions-table">' + addr + '</td>'
+        });
+
+        var beforeOrAfter = _.map(_.map(junctionPointsInfo, 'beforeAfter'), function (beforeAfter) {
+          return '<td class="node-junctions-table">' + beforeAfter + '</td>'
+        });
+
+        return '<td class="node-junctions-table">' +
+          ' <table class="change-table-dimensions">' +
+          roads.join('') +
+          ' </table></td>' +
+          '<td class="node-junctions-table">' +
+          ' <table class="change-table-dimensions">' +
+          tracks.join('') +
+          ' </table></td>' +
+          '<td class="node-junctions-table">' +
+          ' <table class="change-table-dimensions">' +
+          parts.join('') +
+          ' </table></td>' +
+          '<td class="node-junctions-table">' +
+          ' <table class="change-table-dimensions">' +
+          addresses.join('') +
+          ' </table></td>' +
+          '<td class="node-junctions-table">' +
+          ' <table class="change-table-dimensions">' +
+          beforeOrAfter.join('') +
+          ' </table></td>';
+      };
+
+      var toHtmlTable = function(junctionsInfo){
+        junctionsInfo = _.sortBy(junctionsInfo, 'junctionNumber');
+        var htmlTable = "";
+        htmlTable += '<table class="node-junctions-table-dimension">';
+        htmlTable += '<tr>' + headers() + '</tr>';
+        _.each(junctionsInfo, function (junction) {
+          htmlTable += '<tr>';
+          htmlTable += '<td>' + detachJunctionBox(junction) + '</td>';
+          htmlTable += '<td>' + junctionIcon(junction.junctionNumber) + '</td>';
+          var junctionPointsInfo = getJunctionPointsInfo(junction);
+          htmlTable += junctionInfoHtml(junctionPointsInfo);
+          htmlTable += '<tr>';
+        });
+        htmlTable += '</table>';
+        return htmlTable;
+      };
+
+      var getJunctionPointsInfo = function(junction) {
+        var info = [];
+        _.map(junction.junctionPoints, function(point){
+          var row = {road: point.road, part: point.part, track: point.track, addr: point.addrM, beforeAfter: point.beforeOrAfter};
+          info.push(row);
+        });
+
+        var groupedHomogeneousRows = _.groupBy(info, function (row) {
+          return [row.road, row.track, row.part, row.addr];
+        });
+
+        var joinedHomogeneousRows = _.partition(groupedHomogeneousRows, function(group) {
+          return group.length > 1;
+        });
+
+        var doubleHomogeneousRows = joinedHomogeneousRows[0];
+        var singleHomogeneousRows = joinedHomogeneousRows[1];
+
+        var doubleRows = _.map(doubleHomogeneousRows, function(point) {
+          var first = _.first(point);
+          return {road: first.road, track: first.track, part: first.part, addr: first.addr, beforeAfter: "EJ"};
+        });
+
+        var singleRows = _.map(singleHomogeneousRows, function(point) {
+          var first = _.first(point);
+          return {road: first.road, track: first.track, part: first.part, addr: first.addr, beforeAfter: (first.beforeOrAfter === 1 ? "E" : "J")};
+        });
+
+        return _.sortBy(doubleRows.concat(singleRows), ['road', 'part', 'track', 'addr', 'beforeAfter']);
       };
 
       return {
