@@ -85,7 +85,7 @@
           htmlTable += '<td>' + detachJunctionBox(junction) + '</td>';
           htmlTable += '<td>' + junctionIcon(junction.junctionNumber) + '</td>';
           var rowsInfo = getJunctionRowsInfo(junction);
-          _.each(rowsInfo, function(row) {
+          _.each(_.sortBy(rowsInfo, 'road'), function(row) {
             htmlTable += '<tr>';
             htmlTable += junctionInfoHtml(row);
             htmlTable += '</tr>';
@@ -173,7 +173,7 @@
         htmlTable += '<table class="change-table-dimensions">';
         htmlTable += headRow();
           var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
-          _.each(rowsInfo, function(row){
+          _.each(_.sortBy(rowsInfo, 'road'), function(row){
             htmlTable += '<tr>';
             htmlTable += detachNodePointBox(row);
             htmlTable += nodePointInfoHtml(row);
