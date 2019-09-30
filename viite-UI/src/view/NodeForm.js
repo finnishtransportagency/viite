@@ -76,6 +76,7 @@
 
     var NodeJunctions = function () {
       var junctionsHtmlTable = function(junctionsInfo){
+        junctionsInfo = _.sortBy(junctionsInfo, 'junctionNumber');
         var htmlTable = "";
         htmlTable += '<table class="change-table-dimensions">';
         htmlTable += headRow();
