@@ -76,8 +76,9 @@
 
     var Junctions = function () {
       var headers = function(){
-        return '<th class="node-junctions-table-header">' +
-          ' <table class="change-table-dimensions">' +
+        return '<tr>'+
+          '<th class="node-junctions-table-header">' +
+          ' <table class="node-junctions-table-dimension">' +
           '   <tr><th class="node-junctions-table-header">Irrota</th></tr>' +
           '   <tr><th class="node-junctions-table-header">liittymä</th></tr>' +
           '   <tr><th class="node-junctions-table-header">solmusta</th></tr>' +
@@ -88,11 +89,12 @@
           '<th class="node-junctions-table-header">AJR</th>' +
           '<th class="node-junctions-table-header">AOSA</th>' +
           '<th class="node-junctions-table-header">AET</th>' +
-          '<th class="node-junctions-table-header">EJ</th>';
+          '<th class="node-junctions-table-header">EJ</th>' +
+          '</tr>';
       };
 
       var detachJunctionBox = function(junction) {
-        return '<input type="checkbox" name="detach-junction-' + junction.id + '" value="' + junction.id + '" id="detach-junction-' + junction.id + '">';
+        return '<td><input type="checkbox" name="detach-junction-' + junction.id + '" value="' + junction.id + '" id="detach-junction-' + junction.id + '"></td>';
       };
 
       var junctionIcon = function (number) {
@@ -102,23 +104,23 @@
 
       var junctionInfoHtml = function(junctionPointsInfo) {
         var roads = _.map(_.map(junctionPointsInfo, 'road'), function (road) {
-          return '<tr><td class="node-junctions-table">' + road + '</td></tr>'
+          return '<tr><td class="node-junctions-table">' + road + '</td></tr>';
         });
 
         var tracks = _.map(_.map(junctionPointsInfo, 'track'), function (track) {
-          return '<tr><td class="node-junctions-table">' + track + '</td></tr>'
+          return '<tr><td class="node-junctions-table">' + track + '</td></tr>';
         });
 
         var parts = _.map(_.map(junctionPointsInfo, 'part'), function (part) {
-          return '<tr><td class="node-junctions-table">' + part + '</td></tr>'
+          return '<tr><td class="node-junctions-table">' + part + '</td></tr>';
         });
 
         var addresses = _.map(_.map(junctionPointsInfo, 'addr'), function (addr) {
-          return '<tr><td class="node-junctions-table">' + addr + '</td></tr>'
+          return '<tr><td class="node-junctions-table">' + addr + '</td></tr>';
         });
 
         var beforeOrAfter = _.map(_.map(junctionPointsInfo, 'beforeAfter'), function (beforeAfter) {
-          return '<tr></tr><td class="node-junctions-table">' + beforeAfter + '</td></tr>'
+          return '<tr></tr><td class="node-junctions-table">' + beforeAfter + '</td></tr>';
         });
 
         return '<td class="node-junctions-table">' +
@@ -147,14 +149,13 @@
         junctionsInfo = _.sortBy(junctionsInfo, 'junctionNumber');
         var htmlTable = "";
         htmlTable += '<table class="node-junctions-table-dimension">';
-        htmlTable += '<tr>' + headers() + '</tr>';
+        htmlTable += headers();
         _.each(junctionsInfo, function (junction) {
           htmlTable += '<tr>';
-          htmlTable += '<td>' + detachJunctionBox(junction) + '</td>';
+          htmlTable += detachJunctionBox(junction);
           htmlTable += '<td>' + junctionIcon(junction.junctionNumber) + '</td>';
-          var junctionPointsInfo = getJunctionPointsInfo(junction);
-          htmlTable += junctionInfoHtml(junctionPointsInfo);
-          htmlTable += '<tr>';
+          htmlTable += junctionInfoHtml(getJunctionPointsInfo(junction));
+          htmlTable += '</tr>';
         });
         htmlTable += '</table>';
         return htmlTable;
@@ -200,7 +201,7 @@
       var toHtmlTable = function(nodePointsInfo){
         var htmlTable = "";
         htmlTable += '<table class="node-points-table-dimension">';
-        htmlTable += headRow();
+        htmlTable += headers();
           var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
           _.each(_.sortBy(rowsInfo, 'road'), function(row){
             htmlTable += '<tr>';
@@ -212,9 +213,8 @@
         return htmlTable;
       };
 
-      var detachNodePointBox = function(rowInfo){
-        return '<td>&#9744 <i id="deleteNodePoint_' + rowInfo.nodePointId + '" ' +
-          rowInfo.nodePointId + '"></i></td>';
+      var detachNodePointBox = function(nodepoint) {
+        return '<td><input type="checkbox" name="detach-node-point-' + nodepoint.nodePointId + '" value="' + nodepoint.nodePointId + '" id="detach-node-point-' + nodepoint.nodePointId + '"></td>';
       };
 
       var nodePointInfoHtml = function(rowInfo){
@@ -257,9 +257,14 @@
         } else return [];
       };
 
-      var headRow = function(){
-        return '<tr class="row-changes">'+
-          '<th class="node-points-table-header">IRROTA</th>' +
+      var headers = function(){
+        return '<tr">'+
+          '<th class="node-points-table-header">' +
+          ' <table class="node-points-table-dimension">' +
+          '   <tr><th class="node-points-table-header">Irrota</th></tr>' +
+          '   <tr><th class="node-points-table-header">solmukohta</th></tr>' +
+          ' </table>' +
+          '</th>' +
           '<th class="node-points-table-header">TIE</th>' +
           '<th class="node-points-table-header">AOSA</th>' +
           '<th class="node-points-table-header">AET</th>' +
