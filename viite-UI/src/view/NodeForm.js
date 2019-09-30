@@ -103,24 +103,24 @@
       };
 
       var junctionInfoHtml = function(junctionPointsInfo) {
-        var roads = _.map(_.map(junctionPointsInfo, 'road'), function (road) {
+        var roads = _.map(_.pluck(junctionPointsInfo, 'road'), function (road) {
           return '<tr><td class="node-junctions-table">' + road + '</td></tr>';
         });
 
-        var tracks = _.map(_.map(junctionPointsInfo, 'track'), function (track) {
+        var tracks = _.map(_.pluck(junctionPointsInfo, 'track'), function (track) {
           return '<tr><td class="node-junctions-table">' + track + '</td></tr>';
         });
 
-        var parts = _.map(_.map(junctionPointsInfo, 'part'), function (part) {
+        var parts = _.map(_.pluck(junctionPointsInfo, 'part'), function (part) {
           return '<tr><td class="node-junctions-table">' + part + '</td></tr>';
         });
 
-        var addresses = _.map(_.map(junctionPointsInfo, 'addr'), function (addr) {
+        var addresses = _.map(_.pluck(junctionPointsInfo, 'addr'), function (addr) {
           return '<tr><td class="node-junctions-table">' + addr + '</td></tr>';
         });
 
-        var beforeOrAfter = _.map(_.map(junctionPointsInfo, 'beforeAfter'), function (beforeAfter) {
-          return '<tr></tr><td class="node-junctions-table">' + beforeAfter + '</td></tr>';
+        var beforeOrAfter = _.map(_.pluck(junctionPointsInfo, 'beforeAfter'), function (beforeAfter) {
+          return '<tr><td class="node-junctions-table">' + beforeAfter + '</td></tr>';
         });
 
         return '<td class="node-junctions-table">' +
