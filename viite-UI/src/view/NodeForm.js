@@ -102,23 +102,23 @@
 
       var junctionInfoHtml = function(junctionPointsInfo) {
         var roads = _.map(_.map(junctionPointsInfo, 'road'), function (road) {
-          return '<td class="node-junctions-table">' + road + '</td>'
+          return '<tr><td class="node-junctions-table">' + road + '</td></tr>'
         });
 
         var tracks = _.map(_.map(junctionPointsInfo, 'track'), function (track) {
-          return '<td class="node-junctions-table">' + track + '</td>'
+          return '<tr><td class="node-junctions-table">' + track + '</td></tr>'
         });
 
         var parts = _.map(_.map(junctionPointsInfo, 'part'), function (part) {
-          return '<td class="node-junctions-table">' + part + '</td>'
+          return '<tr><td class="node-junctions-table">' + part + '</td></tr>'
         });
 
         var addresses = _.map(_.map(junctionPointsInfo, 'addr'), function (addr) {
-          return '<td class="node-junctions-table">' + addr + '</td>'
+          return '<tr><td class="node-junctions-table">' + addr + '</td></tr>'
         });
 
         var beforeOrAfter = _.map(_.map(junctionPointsInfo, 'beforeAfter'), function (beforeAfter) {
-          return '<td class="node-junctions-table">' + beforeAfter + '</td>'
+          return '<tr></tr><td class="node-junctions-table">' + beforeAfter + '</td></tr>'
         });
 
         return '<td class="node-junctions-table">' +
