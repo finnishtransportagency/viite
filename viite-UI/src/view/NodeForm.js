@@ -74,33 +74,39 @@
       );
     };
 
-    var NodeJunctions = function () {
-      var junctionsHtmlTable = function(junctionsInfo){
+    var Junctions = function () {
+      var toHtmlTable = function(junctionsInfo){
         junctionsInfo = _.sortBy(junctionsInfo, 'junctionNumber');
         var htmlTable = "";
         htmlTable += '<table class="change-table-dimensions">';
-        htmlTable += headRow();
-        _.each(junctionsInfo, function (junctionRow) {
-          var rowsInfo = getJunctionRowsInfo(junctionRow);
-          _.each(rowsInfo, function(row){
+        htmlTable += '<tr>' + headers() + '</tr>';
+        _.each(junctionsInfo, function (junction) {
+          htmlTable += '<tr>';
+          htmlTable += '<td>' + detachJunctionBox(junction) + '</td>';
+          htmlTable += '<td>' + junctionIcon(junction.junctionNumber) + '</td>';
+          var rowsInfo = getJunctionRowsInfo(junction);
+          _.each(rowsInfo, function(row) {
             htmlTable += '<tr>';
-            htmlTable += detachJunctionBox(row);
             htmlTable += junctionInfoHtml(row);
             htmlTable += '</tr>';
           });
+          htmlTable += '<tr>';
         });
         htmlTable += '</table>';
         return htmlTable;
       };
 
-      var detachJunctionBox = function(rowInfo){
-        return '<td>&#9744 <i id="deleteJunction_' + rowInfo.junctionId + '" ' +
-          rowInfo.junctionId + '"></i></td>';
+      var detachJunctionBox = function(junction) {
+        return '<input type="checkbox" name="detach-junction-' + junction.id + '" value="' + junction.id + '" id="detach-junction-' + junction.id + '">';
+      };
+
+      var junctionIcon = function (number) {
+        return '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px; margin-top: 5px">' +
+          ' <param name="number" value="' + number + '"/></object>';
       };
 
       var junctionInfoHtml = function(rowInfo){
-        return '<td class="node-junctions-table">' + rowInfo.junctionNumber + '</td>' +
-          '<td class="node-junctions-table">' + rowInfo.road + '</td>' +
+          return '<td class="node-junctions-table">' + rowInfo.road + '</td>' +
           '<td class="node-junctions-table">' + rowInfo.track + '</td>' +
           '<td class="node-junctions-table">' + rowInfo.part + '</td>' +
           '<td class="node-junctions-table">' + rowInfo.addr + '</td>' +
@@ -140,24 +146,29 @@
         return doubleRows.concat(singleRows);
       };
 
-      var headRow = function(){
-        return '<tr class="row-changes">'+
-          '<th class="node-junctions-table-header">IRROTA</th>' +
+      var headers = function(){
+        return '<th class="node-junctions-table-header">' +
+          ' <table class="change-table-dimensions">' +
+          '   <tr><th class="node-junctions-table-header">Irrota</th></tr>' +
+          '   <tr><th class="node-junctions-table-header">liittymä</th></tr>' +
+          '   <tr><th class="node-junctions-table-header">solmusta</th></tr>' +
+          ' </table>' +
+          '</th>' +
           '<th class="node-junctions-table-header">NRO</th>' +
           '<th class="node-junctions-table-header">TIE</th>' +
           '<th class="node-junctions-table-header">AJR</th>' +
           '<th class="node-junctions-table-header">AOSA</th>' +
           '<th class="node-junctions-table-header">AET</th>' +
-          '<th class="node-junctions-table-header">EJ</th>' +
-          '</tr>';
+          '<th class="node-junctions-table-header">EJ</th>';
       };
+
       return {
-        junctionsHtmlTable: junctionsHtmlTable
+        toHtmlTable: toHtmlTable
       };
     };
 
     var NodePoints = function () {
-      var nodePointsHtmlTable = function(nodePointsInfo){
+      var toHtmlTable = function(nodePointsInfo){
         var htmlTable = "";
         htmlTable += '<table class="change-table-dimensions">';
         htmlTable += headRow();
@@ -227,15 +238,15 @@
           '</tr>';
       };
       return {
-        nodePointsHtmlTable: nodePointsHtmlTable
+        toHtmlTable: toHtmlTable
       };
     };
 
-    var nodeJunctionsTable = new NodeJunctions();
+    var junctionsTable = new Junctions();
     var nodePointsTable = new NodePoints();
 
     var showNodePoints = function (nodePoints) {
-      $('#node-points-info-content').html(nodePointsTable.nodePointsHtmlTable(nodePoints));
+      $('#node-points-info-content').html(nodePointsTable.toHtmlTable(nodePoints));
     };
 
     var hideNodePoints = function () {
@@ -243,7 +254,7 @@
     };
 
     var showJunctions = function (junctions) {
-      $('#junctions-info-content').html(nodeJunctionsTable.junctionsHtmlTable(junctions));
+      $('#junctions-info-content').html(junctionsTable.toHtmlTable(junctions));
     };
 
     var hideJunctions = function () {
