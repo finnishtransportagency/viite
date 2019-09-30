@@ -124,23 +124,23 @@
         });
 
         return '<td class="node-junctions-table">' +
-          ' <table class="change-table-dimensions">' +
+          ' <table class="node-junctions-table-dimension">' +
           roads.join('') +
           ' </table></td>' +
           '<td class="node-junctions-table">' +
-          ' <table class="change-table-dimensions">' +
+          ' <table class="node-junctions-table-dimension">' +
           tracks.join('') +
           ' </table></td>' +
           '<td class="node-junctions-table">' +
-          ' <table class="change-table-dimensions">' +
+          ' <table class="node-junctions-table-dimension">' +
           parts.join('') +
           ' </table></td>' +
           '<td class="node-junctions-table">' +
-          ' <table class="change-table-dimensions">' +
+          ' <table class="node-junctions-table-dimension">' +
           addresses.join('') +
           ' </table></td>' +
           '<td class="node-junctions-table">' +
-          ' <table class="change-table-dimensions">' +
+          ' <table class="node-junctions-table-dimension">' +
           beforeOrAfter.join('') +
           ' </table></td>';
       };
