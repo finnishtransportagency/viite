@@ -99,12 +99,12 @@
       };
 
       var junctionInfoHtml = function(rowInfo){
-        return '<td class="project-change-table-dimension">' + rowInfo.junctionNumber + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.road + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.track + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.part + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.addr + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.EJ + '</td>';
+        return '<td class="node-junctions-table">' + rowInfo.junctionNumber + '</td>' +
+          '<td class="node-junctions-table">' + rowInfo.road + '</td>' +
+          '<td class="node-junctions-table">' + rowInfo.track + '</td>' +
+          '<td class="node-junctions-table">' + rowInfo.part + '</td>' +
+          '<td class="node-junctions-table">' + rowInfo.addr + '</td>' +
+          '<td class="node-junctions-table">' + rowInfo.EJ + '</td>';
       };
 
       var getJunctionRowsInfo = function(junction){
@@ -142,13 +142,13 @@
 
       var headRow = function(){
         return '<tr class="row-changes">'+
-          '<th class="project-change-table-dimension-header target">IRROTA</th>' +
-          '<th class="project-change-table-dimension-header">NRO</th>' +
-          '<th class="project-change-table-dimension-header">TIE</th>' +
-          '<th class="project-change-table-dimension-header">AJR</th>' +
-          '<th class="project-change-table-dimension-header">AOSA</th>' +
-          '<th class="project-change-table-dimension-header">AET</th>' +
-          '<th class="project-change-table-dimension-header">EJ</th>' +
+          '<th class="node-junctions-table-header">IRROTA</th>' +
+          '<th class="node-junctions-table-header">NRO</th>' +
+          '<th class="node-junctions-table-header">TIE</th>' +
+          '<th class="node-junctions-table-header">AJR</th>' +
+          '<th class="node-junctions-table-header">AOSA</th>' +
+          '<th class="node-junctions-table-header">AET</th>' +
+          '<th class="node-junctions-table-header">EJ</th>' +
           '</tr>';
       };
       return {
@@ -178,10 +178,10 @@
       };
 
       var nodePointInfoHtml = function(rowInfo){
-        return '<td class="project-change-table-dimension">' + rowInfo.road + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.part + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.addr + '</td>' +
-          '<td class="project-change-table-dimension">' + rowInfo.EJ + '</td>';
+        return '<td class="node-points-table">' + rowInfo.road + '</td>' +
+          '<td class="node-points-table">' + rowInfo.part + '</td>' +
+          '<td class="node-points-table">' + rowInfo.addr + '</td>' +
+          '<td class="node-points-table">' + rowInfo.EJ + '</td>';
       };
 
       var getNodePointsRowsInfo = function(nodePoints){
@@ -219,11 +219,11 @@
 
       var headRow = function(){
         return '<tr class="row-changes">'+
-          '<th class="project-change-table-dimension-header target">IRROTA</th>' +
-          '<th class="project-change-table-dimension-header">TIE</th>' +
-          '<th class="project-change-table-dimension-header">AOSA</th>' +
-          '<th class="project-change-table-dimension-header">AET</th>' +
-          '<th class="project-change-table-dimension-header">EJ</th>' +
+          '<th class="node-points-table-header">IRROTA</th>' +
+          '<th class="node-points-table-header">TIE</th>' +
+          '<th class="node-points-table-header">AOSA</th>' +
+          '<th class="node-points-table-header">AET</th>' +
+          '<th class="node-points-table-header">EJ</th>' +
           '</tr>';
       };
       return {
