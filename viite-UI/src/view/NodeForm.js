@@ -1,5 +1,8 @@
 (function (root) {
   root.NodeForm = function (selectedNode) {
+    var SHOW = 'Näytä';
+    var HIDE = 'Piilota';
+
     var NodeType = LinkValues.NodeType;
     var formCommon = new FormCommon('node-');
 
@@ -57,11 +60,11 @@
         '   </div>' +
         ' </div>' +
         '<div>' +
-        '<p><a id="node-point-link" class="node-points">Näytä solmukohdat</a></p>' +
-        '<div id="node-points-content">' +
+        '<p><a id="node-point-link" class="node-info-link" href="/">Näytä solmukohdat</a></p>' +
+        '<div id="node-points-info-content">' +
         '</div>' +
-        '<p><a id="junction-link" class="node-points">Näytä liittymat</a></p>' +
-        '<div id="junctions-content">' +
+        '<p><a id="junction-link" class="node-info-link" href="/">Näytä liittymat</a></p>' +
+        '<div id="junctions-info-content">' +
         '</div>' +
         '</div>' +
         '</div>' +
@@ -138,7 +141,7 @@
 
       var headRow = function(){
         return '<tr class="row-changes">'+
-          '<label class="project-change-table-dimension-header target">    </label>' +
+          '<label class="project-change-table-dimension-header target"></label>' +
           '<label class="project-change-table-dimension-header">NRO</label>' +
           '<label class="project-change-table-dimension-header">TIE</label>' +
           '<label class="project-change-table-dimension-header">AJR</label>' +
@@ -227,19 +230,41 @@
       };
     };
 
-    var nodeJunctions = new NodeJunctions();
-    var nodePoints = new NodePoints();
+    var nodeJunctionsTable = new NodeJunctions();
+    var nodePointsTable = new NodePoints();
 
-    var getNodePoints = function (nPoints) {
-      applicationModel.addSpinner();
-      $('#node-points-content').html(nodePoints.nodePointsHtmlTable(nPoints));
-      applicationModel.removeSpinner();
+    var showNodePoints = function (nodePoints) {
+      $('#node-points-info-content').html(nodePointsTable.nodePointsHtmlTable(nodePoints));
     };
 
-    var getNodeJunctions = function (junctions) {
-      applicationModel.addSpinner();
-      $('#junctions-content').html(nodeJunctions.junctionsHtmlTable(junctions));
-      applicationModel.removeSpinner();
+    var hideNodePoints = function () {
+      $('#node-points-info-content').html("");
+    };
+
+    var showJunctions = function (junctions) {
+      $('#junctions-info-content').html(nodeJunctionsTable.junctionsHtmlTable(junctions));
+    };
+
+    var hideJunctions = function () {
+      $('#junctions-info-content').html("");
+    };
+
+    var toggleLinkText = function (item) {
+      if (!_.isUndefined(item)) {
+        var text = item.text();
+        var isVisible = _.includes(text, SHOW);
+        text = isVisible ? text.replace(SHOW, HIDE) : text.replace(HIDE, SHOW);
+        item.text(text);
+        return isVisible;
+      }
+    };
+
+    var toggleContentTable = function (item, showContent, hideContent, data) {
+      if (toggleLinkText(item)) {
+        showContent(data);
+      } else {
+        hideContent();
+      }
     };
 
     var bindEvents = function () {
@@ -257,47 +282,19 @@
           rootElement.html(nodeForm(currentNode));
 
           $('[id=node-point-link]').click(function () {
-            changeNodePointsLinkText();
-            var node = currentNode;
-            if(node.nodePoints.length > 0)
-              getNodePoints(node);
+            toggleContentTable($(this), showNodePoints, hideNodePoints, currentNode.nodePoints);
             return false;
           });
 
           $('[id=junction-link]').click(function () {
-            changeJunctionsLinkText();
-            var node = currentNode;
-            if(node.junctions.length > 0)
-            getNodeJunctions(node.junctions);
+            toggleContentTable($(this), showJunctions, hideJunctions, currentNode.junctions);
             return false;
           });
+
         } else {
           selectedNode.close();
         }
       });
-
-      function changeNodePointsLinkText() {
-        var nodePointLink = $('[id=node-point-link]')[0];
-        if(!_.isUndefined(nodePointLink)){
-          if(nodePointLink.textContent == "Näytä solmukohdat"){
-            $('[id=node-point-link]')[0].text = "Piilota solmukohdat";
-          } else if(nodePointLink.textContent == "Piilota solmukohdat"){
-            $('[id=node-point-link]')[0].text = "Näytä solmukohdat";
-          }
-        }
-      }
-
-      function changeJunctionsLinkText(){
-        var junctionLink = $('[id=junction-link]')[0];
-        if(!_.isUndefined(junctionLink)){
-          if(junctionLink.textContent == "Näytä liittymat"){
-            $('[id=junction-link]')[0].text = "Piilota liittymat";
-          } else if(junctionLink.textContent == "Piilota liittymat"){
-            $('[id=junction-link]')[0].text = "Näytä liittymat";
-          }
-        }
-      }
-
     };
 
     bindEvents();
