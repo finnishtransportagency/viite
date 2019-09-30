@@ -157,11 +157,11 @@
     };
 
     var NodePoints = function () {
-      var nodePointsHtmlTable = function(node){
+      var nodePointsHtmlTable = function(nodePointsInfo){
         var htmlTable = "";
         htmlTable += '<table class="change-table-dimensions">';
         htmlTable += headRow();
-          var rowsInfo = getNodePointsRowsInfo(node.nodePoints);
+          var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
           _.each(rowsInfo, function(row){
             htmlTable += '<tr>';
             htmlTable += detachNodePointBox(row);
