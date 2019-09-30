@@ -142,13 +142,13 @@
 
       var headRow = function(){
         return '<tr class="row-changes">'+
-          '<label class="project-change-table-dimension-header target"></label>' +
-          '<label class="project-change-table-dimension-header">NRO</label>' +
-          '<label class="project-change-table-dimension-header">TIE</label>' +
-          '<label class="project-change-table-dimension-header">AJR</label>' +
-          '<label class="project-change-table-dimension-header">AOSA</label>' +
-          '<label class="project-change-table-dimension-header">AET</label>' +
-          '<label class="project-change-table-dimension-header">EJ</label>' +
+          '<th class="project-change-table-dimension-header target">IRROTA</th>' +
+          '<th class="project-change-table-dimension-header">NRO</th>' +
+          '<th class="project-change-table-dimension-header">TIE</th>' +
+          '<th class="project-change-table-dimension-header">AJR</th>' +
+          '<th class="project-change-table-dimension-header">AOSA</th>' +
+          '<th class="project-change-table-dimension-header">AET</th>' +
+          '<th class="project-change-table-dimension-header">EJ</th>' +
           '</tr>';
       };
       return {
@@ -219,11 +219,11 @@
 
       var headRow = function(){
         return '<tr class="row-changes">'+
-          '<label class="project-change-table-dimension-header target">    </label>' +
-          '<label class="project-change-table-dimension-header">TIE</label>' +
-          '<label class="project-change-table-dimension-header">AOSA</label>' +
-          '<label class="project-change-table-dimension-header">AET</label>' +
-          '<label class="project-change-table-dimension-header">EJ</label>' +
+          '<th class="project-change-table-dimension-header target">IRROTA</th>' +
+          '<th class="project-change-table-dimension-header">TIE</th>' +
+          '<th class="project-change-table-dimension-header">AOSA</th>' +
+          '<th class="project-change-table-dimension-header">AET</th>' +
+          '<th class="project-change-table-dimension-header">EJ</th>' +
           '</tr>';
       };
       return {
