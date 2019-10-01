@@ -257,6 +257,9 @@
         });
 
         eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, nodePointTemplates, junctionPointTemplates, zoom){
+          var roadLinksWithValues = _.reject(roadCollection.getAll(), function (rl) {
+            return rl.roadNumber === 0;
+          });
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
             _.each(nodes, function (node) {
               var nodeMarker = new NodeMarker();
@@ -275,9 +278,6 @@
           }
 
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions){
-            var roadLinksWithValues = _.reject(roadCollection.getAll(), function (rl) {
-              return rl.roadNumber === 0;
-            });
             var junctions = [];
             var junctionPoints = [];
             var junctionPointsWithRoadlinks;
