@@ -257,7 +257,7 @@
         } else return [];
       };
 
-      var headers = function(){
+      var headers = function() {
         return '<tr">'+
           '<th class="node-points-table-header">' +
           ' <table class="node-points-table-dimension">' +
@@ -279,20 +279,20 @@
     var junctionsTable = new Junctions();
     var nodePointsTable = new NodePoints();
 
-    var showNodePoints = function (nodePoints) {
-      $('#node-points-info-content').html(nodePointsTable.toHtmlTable(nodePoints));
+    var showNodePoints = function () {
+      $('#node-points-info-content').show();
     };
 
     var hideNodePoints = function () {
-      $('#node-points-info-content').html("");
+      $('#node-points-info-content').hide();
     };
 
-    var showJunctions = function (junctions) {
-      $('#junctions-info-content').html(junctionsTable.toHtmlTable(junctions));
+    var showJunctions = function () {
+      $('#junctions-info-content').show();
     };
 
     var hideJunctions = function () {
-      $('#junctions-info-content').html("");
+      $('#junctions-info-content').hide();
     };
 
     var toggleLinkText = function (item) {
@@ -305,9 +305,9 @@
       }
     };
 
-    var toggleContentTable = function (item, showContent, hideContent, data) {
+    var toggleContentTable = function (item, showContent, hideContent) {
       if (toggleLinkText(item)) {
-        showContent(data);
+        showContent();
       } else {
         hideContent();
       }
@@ -326,14 +326,20 @@
 
         if (!_.isEmpty(currentNode)) {
           rootElement.html(nodeForm(currentNode));
+          var nodePointsElement = $('#node-points-info-content');
+          nodePointsElement.html(nodePointsTable.toHtmlTable(currentNode.nodePoints));
+          nodePointsElement.hide();
+          var junctionsElement = $('#junctions-info-content');
+          junctionsElement.html(junctionsTable.toHtmlTable(currentNode.junctions));
+          junctionsElement.hide();
 
           $('[id=node-point-link]').click(function () {
-            toggleContentTable($(this), showNodePoints, hideNodePoints, currentNode.nodePoints);
+            toggleContentTable($(this), showNodePoints, hideNodePoints);
             return false;
           });
 
           $('[id=junction-link]').click(function () {
-            toggleContentTable($(this), showJunctions, hideJunctions, currentNode.junctions);
+            toggleContentTable($(this), showJunctions, hideJunctions);
             return false;
           });
 
