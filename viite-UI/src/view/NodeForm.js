@@ -98,6 +98,7 @@
       };
 
       var junctionIcon = function (number) {
+        if (_.isUndefined(number) || number === 99) { number = ''; }
         return '<object type="image/svg+xml" data="images/junction.svg">' +
           ' <param name="number" value="' + number + '"/></object>';
       };
