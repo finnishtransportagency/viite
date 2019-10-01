@@ -794,7 +794,7 @@
       applicationModel.setContinueButton(false);
       eventbus.trigger('layer:enableButtons', true);
       eventbus.trigger('form:showPropertyForm');
-      me.clearLayers(layers );
+      me.clearLayers(layers);
       me.refreshView();
       toggleSelectInteractions(true, true);
       applicationModel.setSelectionType(SelectionType.All);
