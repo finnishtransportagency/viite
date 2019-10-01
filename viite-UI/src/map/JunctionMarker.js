@@ -15,8 +15,15 @@
 
       var junctionMarkerStyle = new ol.style.Style({
         image: new ol.style.Icon({
-          src: 'images/junction-template.svg',
+          src: 'images/junction.svg',
           scale: 0.75
+        }),
+        text: new ol.style.Text({
+          text: (junction.junctionNumber === LinkValues.Generic.Undefined.value ? '' : ''+junction.junctionNumber+''),
+          font: '13px arial',
+          fill: new ol.style.Fill({
+            color: 'white'
+          })
         })
       });
 

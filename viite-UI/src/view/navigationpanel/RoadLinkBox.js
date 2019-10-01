@@ -20,7 +20,6 @@
     var junctionPicture = $('' +
       '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
       '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px; margin-top: 5px">\n' +
-      '    <param name="number" value="99"/>\n' +
       '</object>' +
       '<div class="label">Liittymä</div>' +
       '</div>');
