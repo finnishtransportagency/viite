@@ -98,7 +98,7 @@
       };
 
       var junctionIcon = function (number) {
-        return '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px; margin-top: 5px">' +
+        return '<object type="image/svg+xml" data="images/junction.svg">' +
           ' <param name="number" value="' + number + '"/></object>';
       };
 
