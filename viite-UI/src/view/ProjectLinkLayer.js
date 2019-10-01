@@ -1,13 +1,8 @@
 (function (root) {
-  root.ProjectLinkLayer = function (map, projectCollection, selectedProjectLinkProperty, roadLayer) {
+  root.ProjectLinkLayer = function (map, projectCollection, selectedProjectLinkProperty) {
     var layerName = 'roadAddressProject';
     Layer.call(this, map);
     var me = this;
-
-    var calibrationPointVector = new ol.source.Vector({});
-    var directionMarkerVector = new ol.source.Vector({});
-    var underConstructionProjectDirectionMarkerVector = new ol.source.Vector({});
-    var underConstructionRoadVector = new ol.source.Vector({});
 
     var Anomaly = LinkValues.Anomaly;
     var LinkGeomSource = LinkValues.LinkGeomSource;
@@ -22,6 +17,10 @@
     var isActiveLayer = false;
 
     var projectLinkStyler = new ProjectLinkStyler();
+
+    var calibrationPointVector = new ol.source.Vector({});
+    var directionMarkerVector = new ol.source.Vector({});
+    var underConstructionRoadVector = new ol.source.Vector({});
 
     var projectLinkVector = new ol.source.Vector({
       loader: function () {
@@ -420,10 +419,7 @@
     };
 
     var hideLayer = function () {
-      projectLinkLayer.getSource().clear();
-      calibrationPointLayer.getSource().clear();
-      underConstructionRoadProjectLayer.getSource().clear();
-      directionMarkerLayer.getSource().clear();
+      var layers = [projectLinkLayer, calibrationPointLayer, directionMarkerLayer, underConstructionRoadProjectLayer];
       me.clearLayers(layers);
     };
 
@@ -502,7 +498,6 @@
             return true;
       });
       me.toggleLayersVisibility(checkedBoxLayers, applicationModel.getRoadVisibility(), true);
-      var marker;
       var cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
 
       calibrationPointLayer.getSource().clear();
