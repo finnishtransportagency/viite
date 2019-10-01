@@ -76,7 +76,7 @@
 
     var Junctions = function () {
       var headers = function(){
-        return '<tr>'+
+        return '<tr class="node-junctions-table-header-border-bottom">' +
           '<th class="node-junctions-table-header">' +
           ' <table class="node-junctions-table-dimension">' +
           '   <tr><th class="node-junctions-table-header">Irrota</th></tr>' +
@@ -151,7 +151,7 @@
         htmlTable += '<table class="node-junctions-table-dimension">';
         htmlTable += headers();
         _.each(junctionsInfo, function (junction) {
-          htmlTable += '<tr>';
+          htmlTable += '<tr class="node-junctions-table-border-bottom">';
           htmlTable += detachJunctionBox(junction);
           htmlTable += '<td>' + junctionIcon(junction.junctionNumber) + '</td>';
           htmlTable += junctionInfoHtml(getJunctionPointsInfo(junction));
@@ -204,7 +204,7 @@
         htmlTable += headers();
           var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
           _.each(_.sortBy(rowsInfo, 'road'), function(row){
-            htmlTable += '<tr>';
+            htmlTable += '<tr class="node-junctions-table-border-bottom">';
             htmlTable += detachNodePointBox(row);
             htmlTable += nodePointInfoHtml(row);
             htmlTable += '</tr>';
@@ -258,7 +258,7 @@
       };
 
       var headers = function() {
-        return '<tr">'+
+        return '<tr class="node-junctions-table-header-border-bottom">' +
           '<th class="node-points-table-header">' +
           ' <table class="node-points-table-dimension">' +
           '   <tr><th class="node-points-table-header">Irrota</th></tr>' +
