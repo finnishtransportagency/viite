@@ -208,7 +208,7 @@
 
     root.Generic = {
       Undefined: {value: 99}
-    }
+    };
 
 })(window.LinkValues = window.LinkValues || {});
 
