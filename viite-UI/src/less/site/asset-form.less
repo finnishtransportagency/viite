@@ -272,10 +272,21 @@
     text-decoration: underline;
   }
 
-  a.incomplete-links, .unknown-speed-limits, .floating-stops, .floating-point-assets, .node-info-link {
+  a.incomplete-links, .unknown-speed-limits, .floating-stops, .floating-point-assets {
     position:absolute;
     right: 10px;
     bottom: 130px;
+  }
+
+  a.node-info-link {
+    color: @link-color;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      color: @link-color-hover;
+      text-decoration: underline;
+    }
   }
 
   .undefined {
@@ -389,6 +400,10 @@
     padding-bottom: 0;
     margin-top: 0;
     margin-bottom: 0;
+
+    label.required:before {
+      content: '*';
+    }
   }
 
   .asset-input-node-data {
