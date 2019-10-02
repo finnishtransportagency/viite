@@ -8,8 +8,8 @@
 
     var formButtons = function () {
       return '<div class="form form-controls">' +
-        '<button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
-        '<button class="cancel btn btn-edit-node-cancel">Peruuta</button>' +
+        ' <button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
+        ' <button class="cancel btn btn-edit-node-cancel">Peruuta</button>' +
         '</div>';
     };
 
@@ -25,42 +25,19 @@
       field = '<div class="form-group-node-static-metadata">' +
         '<p class="form-control-static asset-log-info-metadata">' +
         '<label>' + labelText + '</label>' +
-        dataField +
-        '</p>' +
-        '</div>';
-      return field;
-    };
-
-    var inputField = function (labelText, id, placeholder, value, maxLength) {
-      var lengthLimit = '';
-      if (maxLength)
-        lengthLimit = 'maxlength="' + maxLength + '"';
-      return '<div class="form-group-node-input-metadata">' +
-        '<p class="form-control-static asset-node-data">' +
-        '<label>' + labelText + '</label>' +
-        '<input type="text" class="form-control-static asset-input-node-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '" disabled/>' +
-        '</p>' +
-        '</div>';
-    };
-
-    var staticField = function (labelText, dataField) {
-      var field;
-      field = '<div class="form-group-node-static-metadata">' +
-        '<p class="form-control-static asset-log-info-metadata">' +
-        '<label>' + labelText + '</label>' +
           dataField +
         '</p>' +
         '</div>';
       return field;
     };
 
-    var inputField = function (labelText, id, placeholder, value, maxLength) {
+    var inputFieldRequired = function (labelText, id, placeholder, value, maxLength) {
       var lengthLimit = '';
       if (maxLength)
         lengthLimit = 'maxlength="' + maxLength + '"';
       return '<div class="form-group-node-input-metadata">' +
         '<p class="form-control-static asset-node-data">' +
-        '<label>' + labelText + '</label>' +
+        '<label class="required">' + labelText + '</label>' +
         '<input type="text" class="form-control-static asset-input-node-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '" disabled/>' +
         '</p>' +
         '</div>';
@@ -76,20 +53,20 @@
         ' <div class="form form-horizontal form-dark">' +
         '   <div>' +
         staticField('Solmunumero:', node.nodeNumber) +
-        inputField('*Solumn nimi:', 'name', '', node.name, 32) +
-        inputField('*Solmutyyppi:', 'type', '', getNodeType(node.type).description) +
-        inputField('*Alkupvm    :', 'date', '', node.startDate) +
+        inputFieldRequired('Solmun nimi', 'name', '', node.name, 32) +
+        inputFieldRequired('Solmutyyppi', 'type', '', getNodeType(node.type).description) +
+        inputFieldRequired('Alkupvm', 'date', 'pp.kk.vvvv', node.startDate) +
         staticField('Koordinaatit:', node.coordY + ', ' + node.coordX) +
         '   </div>' +
+        '   <div>' +
+        '     <p><a id="node-point-link" class="node-info-link" href="/">Näytä solmukohdat</a></p>' +
+        '     <div id="node-points-info-content">' +
+        '     </div>' +
+        '     <p><a id="junction-link" class="node-info-link" href="/">Näytä liittymat</a></p>' +
+        '     <div id="junctions-info-content">' +
+        '     </div>' +
+        '   </div>' +
         ' </div>' +
-        '<div>' +
-        '<p><a id="node-point-link" class="node-info-link" href="/">Näytä solmukohdat</a></p>' +
-        '<div id="node-points-info-content">' +
-        '</div>' +
-        '<p><a id="junction-link" class="node-info-link" href="/">Näytä liittymat</a></p>' +
-        '<div id="junctions-info-content">' +
-        '</div>' +
-        '</div>' +
         '</div>' +
         '<footer>' +
         formButtons() +
