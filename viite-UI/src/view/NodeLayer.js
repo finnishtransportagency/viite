@@ -230,9 +230,10 @@
               return roadLink.floating !== SelectionType.Floating.value && roadLink.anomaly !== Anomaly.NoAddressGiven.value && roadLink.anomaly !== Anomaly.GeometryChanged.value && (roadLink.sideCode === SideCode.AgainstDigitizing.value || roadLink.sideCode === SideCode.TowardsDigitizing.value);
             });
             _.each(directionRoadMarker, function (directionLink) {
-              var marker = cachedMarker.createMarker(directionLink);
-              if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
-                directionMarkerLayer.getSource().addFeature(marker);
+              cachedMarker.createMarker(directionLink, function (marker) {
+                if (zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
+                  directionMarkerLayer.getSource().addFeature(marker);
+              });
             });
           }
 
@@ -267,13 +268,13 @@
             });
 
             _.each(nodePointTemplates, function (nodePointTemplate) {
-                var nodePointTemplateMarker = new NodePointTemplateMarker();
-                var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
-                    return (roadLink.startAddressM === nodePointTemplate.addrM || roadLink.endAddressM === nodePointTemplate.addrM) && roadLink.roadwayNumber === nodePointTemplate.roadwayNumber;
-                });
-                if (!_.isUndefined(roadLinkForPoint)) {
-                    nodePointTemplateLayer.getSource().addFeature(nodePointTemplateMarker.createNodePointTemplateMarker(nodePointTemplate, roadLinkForPoint));
-                }
+              var nodePointTemplateMarker = new NodePointTemplateMarker();
+              var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
+                return (roadLink.startAddressM === nodePointTemplate.addrM || roadLink.endAddressM === nodePointTemplate.addrM) && roadLink.roadwayNumber === nodePointTemplate.roadwayNumber;
+              });
+              if (!_.isUndefined(roadLinkForPoint)) {
+                nodePointTemplateLayer.getSource().addFeature(nodePointTemplateMarker.createNodePointTemplateMarker(nodePointTemplate, roadLinkForPoint));
+              }
             });
           }
 

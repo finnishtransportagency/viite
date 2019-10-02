@@ -14,10 +14,33 @@
     };
 
     var getNodeType = function (nodeValue) {
-      var nodeType =  _.find(NodeType, function(type){
+      var nodeType = _.find(NodeType, function (type) {
         return type.value == nodeValue;
       });
       return _.isUndefined(nodeType) ? NodeType.UnkownNodeType : nodeType;
+    };
+
+    var staticField = function (labelText, dataField) {
+      var field;
+      field = '<div class="form-group-node-static-metadata">' +
+        '<p class="form-control-static asset-log-info-metadata">' +
+        '<label>' + labelText + '</label>' +
+        dataField +
+        '</p>' +
+        '</div>';
+      return field;
+    };
+
+    var inputField = function (labelText, id, placeholder, value, maxLength) {
+      var lengthLimit = '';
+      if (maxLength)
+        lengthLimit = 'maxlength="' + maxLength + '"';
+      return '<div class="form-group-node-input-metadata">' +
+        '<p class="form-control-static asset-node-data">' +
+        '<label>' + labelText + '</label>' +
+        '<input type="text" class="form-control-static asset-input-node-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '" disabled/>' +
+        '</p>' +
+        '</div>';
     };
 
     var staticField = function (labelText, dataField) {

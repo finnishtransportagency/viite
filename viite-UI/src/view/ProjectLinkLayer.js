@@ -576,8 +576,9 @@
               return acceptedLinks && projectLink.sideCode !== SideCode.Unknown.value && projectLink.endAddressM !== 0;
           });
           _.each(directionMarkers, function (directionLink) {
-            marker = cachedMarker.createProjectMarker(directionLink);
-            layer.getSource().addFeature(marker);
+            cachedMarker.createProjectMarker(directionLink, function (marker) {
+              layer.getSource().addFeature(marker);
+            });
           });
         };
         addMarkersToLayer(underConstructionProjectRoads, underConstructionProjectDirectionMarkerLayer);
