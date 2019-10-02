@@ -497,11 +497,9 @@
           } else
             return true;
       });
+      me.clearLayers(layers);
       me.toggleLayersVisibility(checkedBoxLayers, applicationModel.getRoadVisibility(), true);
       var cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
-
-      calibrationPointLayer.getSource().clear();
-      directionMarkerLayer.getSource().clear();
 
       var editedLinks = _.map(projectCollection.getDirty(), function (editedLink) {
         return editedLink;
