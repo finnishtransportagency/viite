@@ -57,7 +57,7 @@
     });
 
       function vectorLayerStyle(feature) {
-          return [projectLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}), projectLinkStyler.getUnderConstructionStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+          return [projectLinkStyler.getUnderConstructionStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
               projectLinkStyler.getProjectLinkStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})
               ];
       }
