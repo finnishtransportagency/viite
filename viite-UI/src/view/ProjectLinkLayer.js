@@ -567,7 +567,7 @@
             });
           });
         };
-        addMarkersToLayer(underConstructionProjectRoads);
+        addMarkersToLayer(underConstructionProjectRoads, directionMarkerLayer);
         addMarkersToLayer(projectLinks, directionMarkerLayer);
       }
 
