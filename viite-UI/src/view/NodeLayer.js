@@ -6,6 +6,7 @@
       var directionMarkerVector = new ol.source.Vector({});
       var nodeMarkerVector = new ol.source.Vector({});
       var junctionMarkerVector = new ol.source.Vector({});
+      var junctionSelectedMarkerVector = new ol.source.Vector({});
       var nodePointTemplateVector = new ol.source.Vector({});
       var junctionTemplateVector = new ol.source.Vector({});
       var isActiveLayer = false;
@@ -32,28 +33,37 @@
       var nodeMarkerLayer = new ol.layer.Vector({
         source: nodeMarkerVector,
         name: 'nodeMarkerLayer',
-        zIndex: RoadZIndex.CalibrationPointLayer.value
+        zIndex: RoadZIndex.CalibrationPointLayer.value,
+        selectable: false
       });
 
       var junctionMarkerLayer = new ol.layer.Vector({
         source: junctionMarkerVector,
         name: 'junctionMarkerLayer',
-        zIndex: RoadZIndex.CalibrationPointLayer.value + 1
+        zIndex: RoadZIndex.CalibrationPointLayer.value + 1,
+      });
+
+      var junctionSelectedMarkerLayer = new ol.layer.Vector({
+        source: junctionSelectedMarkerVector,
+        name: 'junctionSelectedMarkerLayer',
+        zIndex: RoadZIndex.CalibrationPointLayer.value + 1,
       });
 
       var nodePointTemplateLayer = new ol.layer.Vector({
         source: nodePointTemplateVector,
         name: 'nodePointTemplateLayer',
-        zIndex: RoadZIndex.CalibrationPointLayer.value - 1
+        zIndex: RoadZIndex.CalibrationPointLayer.value - 1,
+        selectable: false
       });
 
       var junctionTemplateLayer = new ol.layer.Vector({
         source: junctionTemplateVector,
         name: 'junctionTemplateLayer',
-        zIndex: RoadZIndex.CalibrationPointLayer.value - 1
+        zIndex: RoadZIndex.CalibrationPointLayer.value - 1,
+        selectable: false
       });
 
-      var layers = [directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer];
+      var layers = [directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, junctionSelectedMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer];
 
       var setGeneralOpacity = function (opacity) {
         roadLayer.layer.setOpacity(opacity);
@@ -61,6 +71,7 @@
         directionMarkerLayer.setOpacity(opacity);
         nodeMarkerLayer.setOpacity(opacity);
         junctionMarkerLayer.setOpacity(opacity);
+        junctionSelectedMarkerLayer.setOpacity(opacity);
         nodePointTemplateLayer.setOpacity(opacity);
         junctionTemplateLayer.setOpacity(opacity);
       };
@@ -74,8 +85,11 @@
        */
       var nodeAndJunctionPointTemplateClick = new ol.interaction.Select({
         // Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
-        // This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-        layers: [nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer],
+        multi: true,
+        // This will limit the interaction to the specific layer
+        layers: function (layer) {
+          return layer.get('selectable');
+        },
         name: 'nodeAndJunctionPointTemplateClickInteractionNL',
         // Limit this interaction to the singleClick
         condition: ol.events.condition.singleClick
@@ -90,22 +104,11 @@
        * sending them to the selectedNode.open for further processing.
        */
       nodeAndJunctionPointTemplateClick.on('select', function (event) {
-        if (applicationModel.selectedToolIs(LinkValues.Tool.Unknown.value)) { applicationModel.setSelectedTool(LinkValues.Tool.Select.value); } // ATTENTION: this needs to be re-designed.
         var selectedNode = _.filter(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.nodeInfo);
         });
 
-        // prevent form to close if user clicks on same node
-        var isSameNode = !_.find(event.deselected, function (selectionTarget) {
-          return !_.isUndefined(selectionTarget.nodeInfo);
-        });
-
-        if (!_.isUndefined(selectedNode) && selectedNode.length === 0 && isSameNode) {
-          eventbus.trigger('node:selected');
-          return;
-        }
-
-        var selectedNodePoint = _.filter(event.selected, function (selectionTarget) {
+        var selectedNodePointTemplate = _.filter(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
         });
 
@@ -113,64 +116,66 @@
           return !_.isUndefined(selectionTarget.junctionPointTemplateInfo);
         });
 
-        if (!_.isUndefined(selectedNode) && selectedNode.length === 0 && !_.isUndefined(selectedNodePoint) && selectedNodePoint.length === 0 && !_.isUndefined(selectedJunction) && selectedJunction.length === 0) {
+        if (!_.isUndefined(selectedNode) && selectedNode.length === 0 && !_.isUndefined(selectedNodePointTemplate) && selectedNodePointTemplate.length === 0 && !_.isUndefined(selectedJunction) && selectedJunction.length === 0) {
           selectedNodeAndJunctionPoint.close();
-        } else if (applicationModel.selectedToolIs(LinkValues.Tool.Select.value)) {
-          if (!_.isUndefined(selectedNode) && selectedNode.length > 0) {
-            nodeClick(selectedNode);
-          } else if (!_.isUndefined(selectedNodePoint) && selectedNodePoint.length > 0) {
-            nodePointClick(selectedNodePoint);
-          } else if (!_.isUndefined(selectedJunction) && selectedJunction.length > 0) {
-            junctionClick(selectedJunction);
-          }
+          clearJunctionsHighlights();
         } else {
-          removeFeaturesFromSelection(event.selected);
+          switch (applicationModel.getSelectedTool()) {
+            case LinkValues.Tool.Unknown.value:
+              if (!_.isUndefined(selectedJunction) && selectedJunction.length > 0) {
+                selectJunctionTemplate(selectedJunction);
+              } else if (!_.isUndefined(selectedNodePointTemplate) && selectedNodePointTemplate.length > 0) {
+                selectNodePointTemplate(selectedNodePointTemplate);
+              }
+              break;
+            case LinkValues.Tool.Select.value:
+              if (!_.isUndefined(selectedNode) && selectedNode.length > 0) { selectNode(selectedNode); }
+              break;
+            case LinkValues.Tool.Add.value:
+              // TODO - Create Node
+              break;
+          }
         }
       });
 
-      var nodeClick = function(selectedNode) {
-        selectedNodeAndJunctionPoint.openNode(_.first(_.unique(_.map(selectedNode, "nodeInfo"), "id")));
+      var selectNode = function(selectedNode) {
+        nodeMarkerLayer.setMap(null);
+        var node = _.first(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
+        selectedNodeAndJunctionPoint.openNode(node);
+        highlightJunctions(node.id);
       };
 
-      var nodePointClick = function(selectedNodePoint) {
+      var selectNodePointTemplate = function(selectedNodePoint) {
         selectedNodeAndJunctionPoint.openNodePointTemplates(_.unique(_.map(selectedNodePoint, "nodePointTemplateInfo"), "id"));
       };
 
-      var junctionClick = function (selectedJunction) {
+      var selectJunctionTemplate = function (selectedJunction) {
         selectedNodeAndJunctionPoint.openJunctionPointTemplates(_.unique(_.map(selectedJunction, "junctionPointTemplateInfo"), "junctionId"));
       };
 
-      /**
-       * Simple method that will add various open layers 3 features to a selection.
-       * @param ol3Features
-       */
-      var addFeaturesToSelection = function (ol3Features) {
-        var olUids = _.map(nodeAndJunctionPointTemplateClick.getFeatures().getArray(), function (feature) {
-          return feature.ol_uid;
+      var highlightJunctions = function(nodeId) {
+        var junctions = _.partition(junctionMarkerLayer.getSource().getFeatures(), function (feature) {
+          return feature.junction.nodeId === nodeId;
         });
-        _.each(ol3Features, function (feature) {
-          if (!_.contains(olUids, feature.ol_uid)) {
-            nodeAndJunctionPointTemplateClick.getFeatures().push(feature);
-            olUids.push(feature.ol_uid); // prevent adding duplicate entries
-          }
-        });
+
+        junctionSelectedMarkerVector.clear();
+        junctionSelectedMarkerVector.addFeatures(junctions[0]);
+        junctionMarkerVector.clear();
+        junctionMarkerVector.addFeatures(junctions[1]);
+
+        nodeMarkerLayer.setOpacity(0.2);
+        junctionMarkerLayer.setOpacity(0.2);
+        junctionTemplateLayer.setOpacity(0.2);
       };
 
-      /**
-       * Simple method that will remove various open layers 3 features from a selection.
-       * @param ol3Features
-       * @param select
-       */
-      var removeFeaturesFromSelection = function (ol3Features) {
-        var olUids = _.map(nodeAndJunctionPointTemplateClick.getFeatures().getArray(), function(feature){
-          return feature.ol_uid;
-        });
-        _.each(ol3Features, function(feature){
-          if(_.contains(olUids, feature.ol_uid)){
-            nodeAndJunctionPointTemplateClick.getFeatures().remove(feature);
-            olUids.push(feature.ol_uid); // prevent adding duplicate entries
-          }
-        });
+      var clearJunctionsHighlights = function () {
+        var junctions = junctionMarkerLayer.getSource().getFeatures().concat(junctionSelectedMarkerLayer.getSource().getFeatures());
+
+        junctionSelectedMarkerVector.clear();
+        junctionMarkerVector.clear();
+        junctionMarkerVector.addFeatures(junctions);
+
+        setGeneralOpacity(1);
       };
 
       /**
@@ -184,32 +189,57 @@
       // We add the defined interactions to the map.
       addClickInteractions();
 
-      me.eventListener.listenTo(eventbus, 'node:selected', function() {
-        var nodeId = selectedNodeAndJunctionPoint.getCurrentNode().id;
-        var junctions = [];
-        _.each(junctionMarkerLayer.getSource().getFeatures(), function (feature) {
-          if (feature.junction.nodeId === nodeId) {
-            junctions.push(feature);
-          }
-        });
-
-        addFeaturesToSelection(junctions);
-        nodeMarkerLayer.setOpacity(0.2);
-        junctionMarkerLayer.setOpacity(0.2);
-        junctionTemplateLayer.setOpacity(0.2);
-      });
-
       me.eventListener.listenTo(eventbus, 'node:unselected', function () {
-        setGeneralOpacity(1);
         if (nodePointTemplateLayer.getSource().getFeatures().length !== 0) {
           nodePointTemplateLayer.getSource().clear();
         }
-      });
+      });+
 
       me.eventListener.listenTo(eventbus, 'junction:unselected', function () {
         if (junctionTemplateLayer.getSource().getFeatures().length !== 0) {
           junctionTemplateLayer.getSource().clear();
         }
+      });
+
+      var setProperty = function (layers, propertyName, propertyValue) {
+        _.each(layers, function (layer) {
+          layer.set(propertyName, propertyValue);
+        });
+      };
+
+      me.eventListener.listenTo(eventbus, 'tool:changed', function (tool) {
+        switch (tool) {
+          case LinkValues.Tool.Unknown.value:
+            setProperty([nodeMarkerLayer], 'selectable', false);
+            setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
+            break;
+          case LinkValues.Tool.Select.value:
+            setProperty([nodeMarkerLayer], 'selectable', true);
+            setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
+            break;
+          case LinkValues.Tool.Add.value:
+            setProperty([nodeMarkerLayer], 'selectable', false);
+            setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
+            break;
+        }
+      });
+
+      me.eventListener.listenTo(eventbus, 'nodeLayer:fetch', function () {
+        map.getView().setZoom(Math.round(zoomlevels.getViewZoom(map)));
+        roadCollection.fetchWithNodes(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1);
+      });
+
+      me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
+        isActiveLayer = layer === 'node';
+        me.clearLayers();
+        if (previouslySelectedLayer === 'node') {
+          hideLayer();
+        } else if (previouslySelectedLayer === 'linkProperty') {
+          setGeneralOpacity(1);
+          showLayer();
+          eventbus.trigger('nodeLayer:fetch');
+        }
+        me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
       });
 
       var redraw = function () {
@@ -222,7 +252,7 @@
               return sl.linkId;
             }), rl.linkId);
           });
-          me.clearLayers([directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer]);
+          me.clearLayers([directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, junctionSelectedMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer]);
 
           if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
@@ -305,8 +335,8 @@
 
             _.each(junctionPointsWithRoadlinks, function (junctionPoint) {
               _.each(junctionPoint.roadLinks, function (roadLink) {
-               var junctionMarker = new JunctionMarker();
-               junctionMarkerLayer.getSource().addFeature(junctionMarker.createJunctionMarker(junctionPoint.junctionPoint, junctionPoint.junction, roadLink));
+                var junctionMarker = new JunctionMarker();
+                junctionMarkerLayer.getSource().addFeature(junctionMarker.createJunctionMarker(junctionPoint.junctionPoint, junctionPoint.junction, roadLink));
               });
             });
 
@@ -319,6 +349,12 @@
                 junctionTemplateLayer.getSource().addFeature(junctionPointTemplateMarker.createJunctionPointTemplateMarker(junctionPointTemplate, roadLinkForPoint));
               }
             });
+
+            var selectedNode = selectedNodeAndJunctionPoint.getCurrentNode();
+
+            if (!_.isUndefined(selectedNode)) {
+              highlightJunctions(selectedNode.id);
+            }
           }
         });
 
@@ -328,24 +364,6 @@
 
         eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers);
       };
-
-      me.eventListener.listenTo(eventbus, 'nodeLayer:fetch', function () {
-        map.getView().setZoom(Math.round(zoomlevels.getViewZoom(map)));
-        roadCollection.fetchWithNodes(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1);
-      });
-
-      me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
-        isActiveLayer = layer === 'node';
-        me.clearLayers();
-        if (previouslySelectedLayer === 'node') {
-          hideLayer();
-        } else if (previouslySelectedLayer === 'linkProperty') {
-          setGeneralOpacity(1);
-          showLayer();
-          eventbus.trigger('nodeLayer:fetch');
-        }
-        me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
-      });
 
       var showLayer = function () {
         me.start();

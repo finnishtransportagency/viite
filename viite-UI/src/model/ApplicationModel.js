@@ -104,11 +104,11 @@
     function setSelectedTool(tool) {
       if (tool !== selectedTool) {
         selectedTool = tool;
-        eventbus.trigger('tool:changed', tool);
       } else {
         selectedTool = LinkValues.Tool.Unknown.value;
         eventbus.trigger('tool:clear');
       }
+      eventbus.trigger('tool:changed', selectedTool);
     }
 
     var selectedToolIs = function (tool) {
