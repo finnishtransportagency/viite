@@ -459,8 +459,9 @@
     var redraw = function() {
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
+      var allRoadLinks = roadCollection.getAll();
       var underConstructionLinks = roadCollection.getUnderConstructionLinks();
-      var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
+      var roadLinks = _.reject(allRoadLinks, function (rl) {
         return _.contains(_.map(underConstructionLinks, function(sl){ return sl.linkId;}), rl.linkId);
       });
       var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
@@ -468,9 +469,10 @@
 
       if(zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
-        var directionRoadMarker = _.filter(roadLinks, function(roadlink) {
+        var directionRoadMarker = _.filter(allRoadLinks, function(roadlink) {
           return roadlink.floating !== SelectionType.Floating.value && roadlink.anomaly !== Anomaly.NoAddressGiven.value && roadlink.anomaly !== Anomaly.GeometryChanged.value && (roadlink.sideCode === SideCode.AgainstDigitizing.value || roadlink.sideCode === SideCode.TowardsDigitizing.value);
         });
+
         _.each(directionRoadMarker, function(directionLink) {
           cachedMarker.createMarker(directionLink, function (marker) {
             if(zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
