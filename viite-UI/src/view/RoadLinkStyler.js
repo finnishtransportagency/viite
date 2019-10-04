@@ -135,9 +135,9 @@
         ];
 
         var strokeRules = [
-            new StyleRule().where('roadClass').is(LinkValues.RoadClass.HighwayClass.value).use({stroke: {color: 'rgba(255, 0, 0, 0.75)', lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(LinkValues.RoadClass.MainRoadClass.value).use({stroke: {color: 'rgba(255, 148, 0, 0.75)',  lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(LinkValues.RoadClass.RegionalClass.value).use({stroke: {color: 'rgba(255, 148, 0, 0.75)',  lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.HighwayClass.value).use({stroke: {color: '#FF0000', opacity: 0.75, lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.MainRoadClass.value).use({stroke: {color: '#FF6600', opacity: 0.75,  lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.RegionalClass.value).use({stroke: {color: '#FF9400', opacity: 0.75,  lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.ConnectingClass.value).use({stroke: {color: '#0011BB',  lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.MinorConnectingClass.value).use({stroke: {color: 'rgba(74, 255, 255, 0.75)',  lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.StreetClass.value).use({stroke: {color: 'rgba(255, 42, 255, 0.75)',  lineCap: 'round'}}),
@@ -157,18 +157,18 @@
         ];
 
         var fillRules = [
-            new StyleRule().where('roadClass').is(1).use({stroke: {color: '#FF0000', lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(2).use({stroke: {color: '#FF6600',  lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(3).use({stroke: {color: '#FF9933',  lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(4).use({stroke: {color: '#0011BB',  lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(5).use({stroke: {color: '#33CCCC',  lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(6).use({stroke: {color: '#E01DD9',  lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(7).use({stroke: {color:'#fff', lineCap: 'butt', lineDash: [10, 10]}}),
-            new StyleRule().where('roadClass').is(8).use({stroke: {color:'#fff', lineCap: 'butt', lineDash: [10, 10]}}),
-            new StyleRule().where('roadClass').is(9).use({stroke: {color:'#f3f3f2', lineCap: 'butt', lineDash: [10, 10]}}),
-            new StyleRule().where('roadClass').is(10).use({stroke: {color: '#f3f3f2', lineCap: 'butt', lineDash: [10, 10]}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.HighwayClass.value).use({stroke: {color: '#FF0000', lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.MainRoadClass.value).use({stroke: {color: '#FF6600',  lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.RegionalClass.value).use({stroke: {color: '#FF9933',  lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.ConnectingClass.value).use({stroke: {color: '#0011BB',  lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.MinorConnectingClass.value).use({stroke: {color: '#33CCCC',  lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.StreetClass.value).use({stroke: {color: '#E01DD9',  lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.RampsAndRoundAboutsClass.value).use({stroke: {color:'#fff', lineCap: 'butt', lineDash: [10, 10]}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.PedestrianAndBicyclesClass.value).use({stroke: {color:'#fff', lineCap: 'butt', lineDash: [10, 10]}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.WinterRoadsClass.value).use({stroke: {color:'#f3f3f2', lineCap: 'butt', lineDash: [10, 10]}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.PathsClass.value).use({stroke: {color: '#f3f3f2', lineCap: 'butt', lineDash: [10, 10]}}),
             new StyleRule().where('roadClass').is(11).use({stroke: {color: '#444444', lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(12).use({stroke: {color:'#f3f3f2', lineCap: 'butt', lineDash: [10, 10]}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.PrivateRoadClass.value).use({stroke: {color:'#f3f3f2', lineCap: 'butt', lineDash: [10, 10]}}),
             new StyleRule().where('roadClass').is(97).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(98).use({stroke: {color: '#FAFAFA', lineCap: 'round'}}),
             new StyleRule().where('gapTransfering').is(true).use({stroke: {color: '#00FF00', lineCap: 'round'}}),
@@ -177,7 +177,7 @@
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color:'#ff9900', lineCap: 'butt', lineDash: [10, 10]}}),
             new StyleRule().where('floating').is(1).use({stroke: {color: '#F7FE2E', lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(99).and('roadLinkSource').is(LinkValues.LinkGeomSource.ComplementaryLinkInterface.value).use({stroke: {color: '#D3AFF6', lineCap: 'round'}})
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('roadLinkSource').is(LinkValues.LinkGeomSource.ComplementaryLinkInterface.value).use({stroke: {color: '#D3AFF6', lineCap: 'round'}})
         ];
 
         var borderRules = [
