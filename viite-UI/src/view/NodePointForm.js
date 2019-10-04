@@ -12,7 +12,7 @@
       return '<div class="form form-controls">' +
         '<button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
         '<button class="cancel btn btn-edit-node-cancel" disabled>Peruuta</button>' +
-        '<button class="cancel btn btn-block btn-return-list">Palaa lista-näkymään</button>' +
+        '<button class="cancel btn btn-block btn-return-list">Palaa listanäkymään</button>' +
         '<button class="send btn btn-block btn-send" disabled>Vie Tierekisteriin</button>' +
         '</div>';
     };
