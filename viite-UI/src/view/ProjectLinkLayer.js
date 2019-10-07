@@ -19,8 +19,9 @@
     var projectLinkStyler = new ProjectLinkStyler();
 
     var calibrationPointVector = new ol.source.Vector({});
-    var directionMarkerVector = new ol.source.Vector({});
     var underConstructionRoadVector = new ol.source.Vector({});
+    var directionMarkerVector = new ol.source.Vector({});
+    var underConstructionProjectDirectionMarkerVector = new ol.source.Vector({});
 
     var projectLinkVector = new ol.source.Vector({
       loader: function () {
@@ -49,17 +50,11 @@
       zIndex: RoadZIndex.CalibrationPointLayer.value
     });
 
-    var directionMarkerLayer = new ol.layer.Vector({
-      source: directionMarkerVector,
-      name: 'directionMarkerLayer',
-      zIndex: RoadZIndex.DirectionMarkerLayer.value
-    });
-
-      function vectorLayerStyle(feature) {
-          return [projectLinkStyler.getUnderConstructionStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
-              projectLinkStyler.getProjectLinkStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})
-              ];
-      }
+    function vectorLayerStyle(feature) {
+      return [projectLinkStyler.getUnderConstructionStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+        projectLinkStyler.getProjectLinkStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})
+      ];
+    }
 
     var underConstructionRoadProjectLayer = new ol.layer.Vector({
       source: underConstructionRoadVector,
@@ -75,7 +70,19 @@
       zIndex: RoadZIndex.VectorLayer.value
     });
 
-    var layers = [projectLinkLayer, calibrationPointLayer, directionMarkerLayer, underConstructionRoadProjectLayer];
+    var directionMarkerLayer = new ol.layer.Vector({
+      source: directionMarkerVector,
+      name: 'directionMarkerLayer',
+      zIndex: RoadZIndex.DirectionMarkerLayer.value
+    });
+
+    var underConstructionProjectDirectionMarkerLayer = new ol.layer.Vector({
+      source: underConstructionProjectDirectionMarkerVector,
+      name: 'underConstructionProjectDirectionMarkerLayer',
+      zIndex: RoadZIndex.DirectionMarkerLayer.value
+    });
+
+    var layers = [projectLinkLayer, calibrationPointLayer, directionMarkerLayer, underConstructionRoadProjectLayer, underConstructionProjectDirectionMarkerLayer];
 
     var getSelectedId = function (selected) {
       if (!_.isUndefined(selected.id) && selected.id > 0) {
@@ -419,7 +426,7 @@
     };
 
     var hideLayer = function () {
-      var layers = [projectLinkLayer, calibrationPointLayer, directionMarkerLayer, underConstructionRoadProjectLayer];
+      var layers = [projectLinkLayer, calibrationPointLayer, underConstructionRoadProjectLayer, directionMarkerLayer, underConstructionProjectDirectionMarkerLayer];
       me.clearLayers(layers);
     };
 
@@ -491,8 +498,8 @@
 
     me.redraw = function () {
       var checkedBoxLayers = _.filter(layers, function(layer) {
-          if ((layer.get('name') === 'underConstructionRoadProjectLayer') &&
-              (!underConstructionRoadProjectLayer.getVisible())){
+          if ((layer.get('name') === 'underConstructionRoadProjectLayer' || layer.get('name') === 'underConstructionProjectDirectionMarkerLayer') &&
+              (!underConstructionRoadProjectLayer.getVisible() || !underConstructionProjectDirectionMarkerLayer.getVisible())){
             return false;
           } else
             return true;
@@ -567,7 +574,7 @@
             });
           });
         };
-        addMarkersToLayer(underConstructionProjectRoads, directionMarkerLayer);
+        addMarkersToLayer(underConstructionProjectRoads, underConstructionProjectDirectionMarkerLayer);
         addMarkersToLayer(projectLinks, directionMarkerLayer);
       }
 
@@ -680,6 +687,7 @@
 
     me.eventListener.listenTo(eventbus, 'underConstructionProjectRoads:toggleVisibility', function (visibility) {
       underConstructionRoadProjectLayer.setVisible(visibility);
+      underConstructionProjectDirectionMarkerLayer.setVisible(visibility);
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:visibilityChanged', function () {
