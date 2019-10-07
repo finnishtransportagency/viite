@@ -120,7 +120,7 @@
       source: underConstructionRoadLayerVector,
       name: 'underConstructionRoadLayer',
       style: function(feature) {
-          return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+          return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}), roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
               roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})];
       }
     });
@@ -416,20 +416,6 @@
           feature.setStyle(unknownRoadStyle);
         }
       });
-    };
-
-    var highlightFeatures = function() {
-      clearHighlights();
-      var featuresToHighlight = [];
-      _.each(roadLayer.layer.features, function(feature) {
-        var gapTransfering = feature.linkData.gapTransfering;
-        var canIHighlight = !_.isUndefined(feature.attributes.linearLocationId) ? selectedLinkProperty.isSelectedByLinkId(feature.attributes.linkId) : selectedLinkProperty.isSelectedById(feature.attributes.id);
-        if(gapTransfering || canIHighlight){
-          featuresToHighlight.push(feature);
-        }
-      });
-      if(featuresToHighlight.length !== 0)
-        addFeaturesToSelection(featuresToHighlight);
     };
 
     var drawIndicators = function(links) {
