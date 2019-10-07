@@ -56,6 +56,13 @@
     });
     directionMarkerLayer.set('name', 'directionMarkerLayer');
 
+    var underConstructionMarkerLayer = new ol.layer.Vector({
+      source: underConstructionMarkerVector,
+      name: 'underConstructionMarkerLayer',
+      zIndex: RoadZIndex.DirectionMarkerLayer.value
+    });
+    underConstructionMarkerLayer.set('name', 'underConstructionMarkerLayer');
+
     var geometryChangedLayer = new ol.layer.Vector({
       source: geometryChangedVector,
       name: 'geometryChangedLayer',
@@ -132,7 +139,7 @@
     historicRoadsLayer.set('name', 'historicRoadsLayer');
 
 
-    var layers = [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
+    var layers = [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, directionMarkerLayer, underConstructionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
       indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, underConstructionRoadLayer, reservedRoadLayer, historicRoadsLayer];
 
     var setGeneralOpacity = function (opacity){
@@ -140,6 +147,7 @@
       floatingMarkerLayer.setOpacity(opacity);
       anomalousMarkerLayer.setOpacity(opacity);
       directionMarkerLayer.setOpacity(opacity);
+      underConstructionMarkerLayer.setOpacity(opacity);
       underConstructionRoadLayer.setOpacity(opacity);
       historicRoadsLayer.setOpacity(opacity);
       geometryChangedLayer.setOpacity(opacity);
@@ -239,11 +247,10 @@
           return currentSelectionType === SelectionType.All.value;
         }
       },
-      //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature) {
           return [roadLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
-            roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
-              roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})];
+            roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+            roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})];
       }
     });
     selectSingleClick.set('name','selectSingleClickInteractionLPL');
@@ -369,9 +376,10 @@
       var visibleFloatingMarkers =  withFloatingMarkers ? floatingMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleGreenRoadLayer = withGreenRoads ? greenRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
+      var visibleUnderConstructionMarkers = withDirectionalMarkers ? underConstructionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleUnderConstructionRoads = withunderConstructionRoads ? underConstructionRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleGeometryChanged = withGeometryChanged ? geometryChangedLayer.getSource().getFeaturesInExtent(extent) : [];
-      return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleFloatingMarkers).concat(visibleGreenRoadLayer).concat(visibleDirectionalMarkers).concat(visibleUnderConstructionRoads).concat(visibleGeometryChanged);
+      return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleFloatingMarkers).concat(visibleGreenRoadLayer).concat(visibleDirectionalMarkers).concat(visibleUnderConstructionMarkers).concat(visibleUnderConstructionRoads).concat(visibleGeometryChanged);
     };
 
     /**
@@ -465,20 +473,27 @@
         return _.contains(_.map(underConstructionLinks, function(sl){ return sl.linkId;}), rl.linkId);
       });
       var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
-      me.clearLayers([floatingMarkerLayer, anomalousMarkerLayer, geometryChangedLayer, underConstructionRoadLayer, directionMarkerLayer, calibrationPointLayer]);
+      me.clearLayers([floatingMarkerLayer, anomalousMarkerLayer, geometryChangedLayer, underConstructionRoadLayer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer]);
 
       if(zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
-        var directionRoadMarker = _.filter(allRoadLinks, function(roadlink) {
+        var directionRoadMarker = _.filter(roadLinks, function(roadlink) {
           return roadlink.floating !== SelectionType.Floating.value && roadlink.anomaly !== Anomaly.NoAddressGiven.value && roadlink.anomaly !== Anomaly.GeometryChanged.value && (roadlink.sideCode === SideCode.AgainstDigitizing.value || roadlink.sideCode === SideCode.TowardsDigitizing.value);
         });
 
-        _.each(directionRoadMarker, function(directionLink) {
-          cachedMarker.createMarker(directionLink, function (marker) {
-            if(zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers)
+        if(zoomlevels.getViewZoom(map) > zoomlevels.minZoomForDirectionalMarkers){
+          _.each(directionRoadMarker, function(directionLink) {
+            cachedMarker.createMarker(directionLink, function (marker) {
               directionMarkerLayer.getSource().addFeature(marker);
+            });
           });
-        });
+
+          _.each(underConstructionLinks, function(directionLink) {
+            cachedMarker.createMarker(directionLink, function (marker) {
+              underConstructionMarkerLayer.getSource().addFeature(marker);
+            });
+          });
+        }
 
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.floating === SelectionType.Floating.value;
@@ -727,6 +742,7 @@
       });
       eventListener.listenTo(eventbus, 'underConstructionRoads:toggleVisibility', function(visibility){
         underConstructionRoadLayer.setVisible(visibility);
+        underConstructionMarkerLayer.setVisible(visibility);
       });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
         //Exclude underConstruction layers from toggle
