@@ -4,11 +4,11 @@
       var me = this;
       var indicatorVector = new ol.source.Vector({});
       var directionMarkerVector = new ol.source.Vector({});
-      var nodeMarkerVector = new ol.source.Vector({});
-      var junctionMarkerVector = new ol.source.Vector({});
-      var junctionSelectedMarkerVector = new ol.source.Vector({});
-      var nodePointTemplateVector = new ol.source.Vector({});
-      var junctionTemplateVector = new ol.source.Vector({});
+      var dblVector = function () { return { selected: new ol.source.Vector({}), unselected: new ol.source.Vector({}) }; };
+      var nodeMarkerVector = dblVector();
+      var junctionMarkerVector = dblVector();
+      var nodePointTemplateVector = dblVector();
+      var junctionTemplateVector = dblVector();
       var isActiveLayer = false;
       var cachedMarker = null;
 
@@ -31,49 +31,70 @@
       });
 
       var nodeMarkerLayer = new ol.layer.Vector({
-        source: nodeMarkerVector,
+        source: nodeMarkerVector.unselected,
         name: 'nodeMarkerLayer',
         zIndex: RoadZIndex.CalibrationPointLayer.value,
         selectable: false
       });
 
-      var junctionMarkerLayer = new ol.layer.Vector({
-        source: junctionMarkerVector,
-        name: 'junctionMarkerLayer',
-        zIndex: RoadZIndex.CalibrationPointLayer.value + 1,
+      var nodeMarkerSelectedLayer = new ol.layer.Vector({
+        source: nodeMarkerVector.selected,
+        name: 'nodeMarkerSelectedLayer',
+        zIndex: RoadZIndex.CalibrationPointLayer.value
       });
 
-      var junctionSelectedMarkerLayer = new ol.layer.Vector({
-        source: junctionSelectedMarkerVector,
-        name: 'junctionSelectedMarkerLayer',
-        zIndex: RoadZIndex.CalibrationPointLayer.value + 1,
+      var junctionMarkerLayer = new ol.layer.Vector({
+        source: junctionMarkerVector.unselected,
+        name: 'junctionMarkerLayer',
+        zIndex: RoadZIndex.CalibrationPointLayer.value + 1
+      });
+
+      var junctionMarkerSelectedLayer = new ol.layer.Vector({
+        source: junctionMarkerVector.selected,
+        name: 'junctionMarkerSelectedLayer',
+        zIndex: RoadZIndex.CalibrationPointLayer.value + 1
       });
 
       var nodePointTemplateLayer = new ol.layer.Vector({
-        source: nodePointTemplateVector,
+        source: nodePointTemplateVector.unselected,
         name: 'nodePointTemplateLayer',
         zIndex: RoadZIndex.CalibrationPointLayer.value - 1,
         selectable: false
       });
 
+      var nodePointTemplateSelectedLayer = new ol.layer.Vector({
+        source: nodePointTemplateVector.selected,
+        name: 'nodePointTemplateSelectedLayer',
+        zIndex: RoadZIndex.CalibrationPointLayer.value - 1
+      });
+
       var junctionTemplateLayer = new ol.layer.Vector({
-        source: junctionTemplateVector,
+        source: junctionTemplateVector.unselected,
         name: 'junctionTemplateLayer',
         zIndex: RoadZIndex.CalibrationPointLayer.value - 1,
         selectable: false
       });
 
-      var layers = [directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, junctionSelectedMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer];
+      var junctionTemplateSelectedLayer = new ol.layer.Vector({
+        source: junctionTemplateVector.selected,
+        name: 'junctionTemplateSelectedLayer',
+        zIndex: RoadZIndex.CalibrationPointLayer.value - 1
+      });
+
+      var layers = [directionMarkerLayer, nodeMarkerLayer, nodeMarkerSelectedLayer, junctionMarkerLayer, junctionMarkerSelectedLayer, nodePointTemplateLayer, nodePointTemplateSelectedLayer, junctionTemplateLayer, junctionTemplateSelectedLayer];
 
       var setGeneralOpacity = function (opacity) {
         roadLayer.layer.setOpacity(opacity);
         indicatorLayer.setOpacity(opacity);
         directionMarkerLayer.setOpacity(opacity);
         nodeMarkerLayer.setOpacity(opacity);
+        nodeMarkerSelectedLayer.setOpacity(opacity);
         junctionMarkerLayer.setOpacity(opacity);
-        junctionSelectedMarkerLayer.setOpacity(opacity);
+        junctionMarkerSelectedLayer.setOpacity(opacity);
         nodePointTemplateLayer.setOpacity(opacity);
+        nodePointTemplateSelectedLayer.setOpacity(opacity);
         junctionTemplateLayer.setOpacity(opacity);
+        junctionTemplateSelectedLayer.setOpacity(opacity);
       };
 
       /**
@@ -104,32 +125,32 @@
        * sending them to the selectedNode.open for further processing.
        */
       nodeAndJunctionPointTemplateClick.on('select', function (event) {
-        var selectedNode = _.filter(event.selected, function (selectionTarget) {
+        nodeAndJunctionPointTemplateClick.setMap(null); // stop openLayers from using internal unmanaged layer
+        var selectedNodes = _.filter(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.nodeInfo);
         });
 
-        var selectedNodePointTemplate = _.filter(event.selected, function (selectionTarget) {
+        var selectedNodePointTemplates = _.filter(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.nodePointTemplateInfo);
         });
 
-        var selectedJunction = _.filter(event.selected, function (selectionTarget) {
-          return !_.isUndefined(selectionTarget.junctionPointTemplateInfo);
+        var selectedJunctions = _.filter(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.junctionTemplateInfo);
         });
 
-        if (!_.isUndefined(selectedNode) && selectedNode.length === 0 && !_.isUndefined(selectedNodePointTemplate) && selectedNodePointTemplate.length === 0 && !_.isUndefined(selectedJunction) && selectedJunction.length === 0) {
+        if (!_.isUndefined(selectedNodes) && selectedNodes.length === 0 && !_.isUndefined(selectedNodePointTemplates) && selectedNodePointTemplates.length === 0 && !_.isUndefined(selectedJunctions) && selectedJunctions.length === 0) {
           selectedNodeAndJunctionPoint.close();
-          clearJunctionsHighlights();
         } else {
           switch (applicationModel.getSelectedTool()) {
             case LinkValues.Tool.Unknown.value:
-              if (!_.isUndefined(selectedJunction) && selectedJunction.length > 0) {
-                selectJunctionTemplate(selectedJunction);
-              } else if (!_.isUndefined(selectedNodePointTemplate) && selectedNodePointTemplate.length > 0) {
-                selectNodePointTemplate(selectedNodePointTemplate);
+              if (!_.isUndefined(selectedJunctions) && selectedJunctions.length > 0) {
+                selectJunctionTemplate(selectedJunctions);
+              } else if (!_.isUndefined(selectedNodePointTemplates) && selectedNodePointTemplates.length > 0) {
+                selectNodePointTemplate(selectedNodePointTemplates);
               }
               break;
             case LinkValues.Tool.Select.value:
-              if (!_.isUndefined(selectedNode) && selectedNode.length > 0) { selectNode(selectedNode); }
+              if (!_.isUndefined(selectedNodes) && selectedNodes.length > 0) { selectNode(selectedNodes); }
               break;
             case LinkValues.Tool.Add.value:
               // TODO - Create Node
@@ -139,41 +160,56 @@
       });
 
       var selectNode = function(selectedNode) {
-        nodeMarkerLayer.setMap(null);
         var node = _.first(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
         selectedNodeAndJunctionPoint.openNode(node);
+        highlightNode(node.id);
         highlightJunctions(node.id);
-      };
 
-      var selectNodePointTemplate = function(selectedNodePoint) {
-        selectedNodeAndJunctionPoint.openNodePointTemplates(_.unique(_.map(selectedNodePoint, "nodePointTemplateInfo"), "id"));
-      };
-
-      var selectJunctionTemplate = function (selectedJunction) {
-        selectedNodeAndJunctionPoint.openJunctionPointTemplates(_.unique(_.map(selectedJunction, "junctionPointTemplateInfo"), "junctionId"));
-      };
-
-      var highlightJunctions = function(nodeId) {
-        var junctions = _.partition(junctionMarkerLayer.getSource().getFeatures(), function (feature) {
-          return feature.junction.nodeId === nodeId;
-        });
-
-        junctionSelectedMarkerVector.clear();
-        junctionSelectedMarkerVector.addFeatures(junctions[0]);
-        junctionMarkerVector.clear();
-        junctionMarkerVector.addFeatures(junctions[1]);
-
-        nodeMarkerLayer.setOpacity(0.2);
-        junctionMarkerLayer.setOpacity(0.2);
+        nodePointTemplateLayer.setOpacity(0.2);
         junctionTemplateLayer.setOpacity(0.2);
       };
 
-      var clearJunctionsHighlights = function () {
-        var junctions = junctionMarkerLayer.getSource().getFeatures().concat(junctionSelectedMarkerLayer.getSource().getFeatures());
+      var selectNodePointTemplate = function(selectedNodePointTemplates) {
+        selectedNodeAndJunctionPoint.openNodePointTemplate(_.unique(_.map(selectedNodePointTemplates, "nodePointTemplateInfo"), "id"));
+      };
 
-        junctionSelectedMarkerVector.clear();
-        junctionMarkerVector.clear();
-        junctionMarkerVector.addFeatures(junctions);
+      var selectJunctionTemplate = function (selectedJunctionPointTemplates) {
+        selectedNodeAndJunctionPoint.openJunctionTemplate(_.first(_.unique(_.map(selectedJunctionPointTemplates, "junctionTemplateInfo"), "junctionId")));
+      };
+
+      var selectFeaturesToHighlight = function (vector, featuresToHighlight, otherFeatures) {
+        vector.selected.clear();
+        vector.selected.addFeatures(featuresToHighlight);
+        vector.unselected.clear();
+        vector.unselected.addFeatures(otherFeatures);
+      };
+
+      var highlightNode = function (nodeId) {
+        var nodes = _.partition(nodeMarkerLayer.getSource().getFeatures(), function (nodeFeature) {
+          return nodeFeature.nodeInfo.id === nodeId;
+        });
+
+        selectFeaturesToHighlight(nodeMarkerVector, nodes[0], nodes[1]);
+
+        nodeMarkerLayer.setOpacity(0.2);
+      };
+
+      var highlightJunctions = function(nodeId) {
+        var junctions = _.partition(junctionMarkerLayer.getSource().getFeatures(), function (junctionFeature) {
+          return junctionFeature.junction.nodeId === nodeId;
+        });
+
+        selectFeaturesToHighlight(junctionMarkerVector, junctions[0], junctions[1]);
+
+        junctionMarkerLayer.setOpacity(0.2);
+      };
+
+      var clearHighlights = function () {
+        var nodes = nodeMarkerLayer.getSource().getFeatures().concat(nodeMarkerSelectedLayer.getSource().getFeatures());
+        var junctions = junctionMarkerLayer.getSource().getFeatures().concat(junctionMarkerSelectedLayer.getSource().getFeatures());
+
+        selectFeaturesToHighlight(nodeMarkerVector, [], nodes);
+        selectFeaturesToHighlight(junctionMarkerVector, [], junctions);
 
         setGeneralOpacity(1);
       };
@@ -189,15 +225,32 @@
       // We add the defined interactions to the map.
       addClickInteractions();
 
-      me.eventListener.listenTo(eventbus, 'node:unselected', function () {
-        if (nodePointTemplateLayer.getSource().getFeatures().length !== 0) {
-          nodePointTemplateLayer.getSource().clear();
-        }
-      });+
+      me.eventListener.listenTo(eventbus, 'node:unselected junctions:unselected nodePointTemplate:unselected junctionTemplate:unselected', function () {
+        clearHighlights();
+      });
 
-      me.eventListener.listenTo(eventbus, 'junction:unselected', function () {
-        if (junctionTemplateLayer.getSource().getFeatures().length !== 0) {
-          junctionTemplateLayer.getSource().clear();
+      me.eventListener.listenTo(eventbus, 'node:unselected', function () {
+        if (nodeMarkerSelectedLayer.getSource().getFeatures().length !== 0) {
+          nodeMarkerSelectedLayer.getSource().clear();
+          eventbus.trigger('junctions:unselected');
+        }
+      });
+
+      me.eventListener.listenTo(eventbus, 'junctions:unselected', function () {
+        if (junctionMarkerSelectedLayer.getSource().getFeatures().length !== 0) {
+          junctionMarkerSelectedLayer.getSource().clear();
+        }
+      });
+
+      me.eventListener.listenTo(eventbus, 'nodePointTemplate:unselected', function () {
+        if (nodePointTemplateSelectedLayer.getSource().getFeatures().length !== 0) {
+          nodePointTemplateSelectedLayer.getSource().clear();
+        }
+      });
+
+      me.eventListener.listenTo(eventbus, 'junctionTemplate:unselected', function () {
+        if (junctionTemplateSelectedLayer.getSource().getFeatures().length !== 0) {
+          junctionTemplateSelectedLayer.getSource().clear();
         }
       });
 
@@ -252,7 +305,7 @@
               return sl.linkId;
             }), rl.linkId);
           });
-          me.clearLayers([directionMarkerLayer, nodeMarkerLayer, junctionMarkerLayer, junctionSelectedMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer]);
+          me.clearLayers(layers);
 
           if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
@@ -287,10 +340,11 @@
           }
         });
 
-        eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, nodePointTemplates, junctionPointTemplates, zoom){
+        eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, nodePointTemplates, junctionTemplates, zoom){
           var roadLinksWithValues = _.reject(roadCollection.getAll(), function (rl) {
             return rl.roadNumber === 0;
           });
+
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
             _.each(nodes, function (node) {
               var nodeMarker = new NodeMarker();
@@ -308,53 +362,40 @@
             });
           }
 
-          if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions){
-            var junctions = [];
-            var junctionPoints = [];
-            var junctionPointsWithRoadlinks;
-            _.map(nodes, function(node){
-              junctions = junctions.concat(node.junctions);
-            });
-
-            _.map(junctions, function (junction) {
-              junctionPoints = junctionPoints.concat(junction.junctionPoints);
-            });
-
-            junctionPointsWithRoadlinks = _.map(junctionPoints, function (junctionPoint) {
-                return {
-                  junctionPoint: junctionPoint,
-                  roadLinks:_.filter(roadLinksWithValues, function (roadLink) {
-                    return (roadLink.startAddressM === junctionPoint.addrM || roadLink.endAddressM === junctionPoint.addrM) && roadLink.roadwayNumber === junctionPoint.roadwayNumber;
-                  }),
-                  junction: _.find(junctions, function (junction) {
-                    return junction.id === junctionPoint.junctionId;
-                  })
-                };
-              }
-            );
-
-            _.each(junctionPointsWithRoadlinks, function (junctionPoint) {
-              _.each(junctionPoint.roadLinks, function (roadLink) {
-                var junctionMarker = new JunctionMarker();
-                junctionMarkerLayer.getSource().addFeature(junctionMarker.createJunctionMarker(junctionPoint.junctionPoint, junctionPoint.junction, roadLink));
+          if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions) {
+            _.each(_.flatten(_.map(nodes, "junctions")), function (junction) {
+              var junctionMarker = new JunctionMarker();
+              var junctionPoint = {};
+              var roadLink = _.find(roadLinksWithValues, function (roadLink) {
+                junctionPoint = _.find(junction.junctionPoints, function (junctionPoint) {
+                  return (roadLink.startAddressM === junctionPoint.addrM || roadLink.endAddressM === junctionPoint.addrM) && roadLink.roadwayNumber === junctionPoint.roadwayNumber;
+                });
+                return !_.isUndefined(junctionPoint);
               });
-            });
-
-            _.each(junctionPointTemplates, function (junctionPointTemplate) {
-              var junctionPointTemplateMarker = new JunctionPointTemplateMarker();
-              var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
-                return (roadLink.startAddressM === junctionPointTemplate.addrM || roadLink.endAddressM === junctionPointTemplate.addrM) && roadLink.roadwayNumber === junctionPointTemplate.roadwayNumber;
-              });
-              if (!_.isUndefined(roadLinkForPoint)) {
-                junctionTemplateLayer.getSource().addFeature(junctionPointTemplateMarker.createJunctionPointTemplateMarker(junctionPointTemplate, roadLinkForPoint));
+              if (!_.isUndefined(roadLink) && !_.isUndefined(junctionPoint)) {
+                junctionMarkerLayer.getSource().addFeature(junctionMarker.createJunctionMarker(junction, junctionPoint, roadLink));
               }
             });
 
-            var selectedNode = selectedNodeAndJunctionPoint.getCurrentNode();
+            _.each(junctionTemplates, function (junctionTemplate) {
+              var junctionTemplateMarker = new JunctionTemplateMarker();
+              var junctionPoint = {};
+              var roadLink = _.find(roadLinksWithValues, function (roadLink) {
+                junctionPoint = _.find(junctionTemplate.junctionPoints, function (junctionPoint) {
+                  return (roadLink.startAddressM === junctionPoint.addrM || roadLink.endAddressM === junctionPoint.addrM) && roadLink.roadwayNumber === junctionPoint.roadwayNumber;
+                });
+                return !_.isUndefined(junctionPoint);
+              });
+              if (!_.isUndefined(roadLink) && !_.isUndefined(junctionPoint)) {
+                junctionTemplateLayer.getSource().addFeature(junctionTemplateMarker.createJunctionTemplateMarker(junctionTemplate, roadLink));
+              }
+            });
+          }
 
-            if (!_.isUndefined(selectedNode)) {
-              highlightJunctions(selectedNode.id);
-            }
+          var selectedNode = selectedNodeAndJunctionPoint.getCurrentNode();
+
+          if (!_.isUndefined(selectedNode)) {
+            highlightJunctions(selectedNode.id);
           }
         });
 

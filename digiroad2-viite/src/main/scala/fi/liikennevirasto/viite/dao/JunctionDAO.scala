@@ -1,22 +1,23 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Date
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.viite.NewIdValue
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.NewIdValue
 import org.joda.time.DateTime
+import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 
 case class Junction(id: Long, junctionNumber: Long, nodeId: Option[Long], startDate: DateTime, endDate: Option[DateTime],
                     validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
 case class JunctionInfo(id: Long, junctionNumber: Long, nodeId: Long, startDate: DateTime,
-                     nodeNumber: Long, nodeName: String)
+                        nodeNumber: Long, nodeName: String)
 
-case class JunctionTemplate(junctionId: Long, junctionNumber: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long)
+case class JunctionTemplate(id: Long, junctionNumber: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long)
 
 class JunctionDAO extends BaseDAO {
 
@@ -52,17 +53,17 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
-    implicit val getJunctionInfo: GetResult[JunctionInfo] = new GetResult[JunctionInfo] {
-      def apply(r: PositionedResult): JunctionInfo = {
-        val id = r.nextLong()
-        val junctionNumber = r.nextLong()
-        val nodeId = r.nextLong()
-        val startDate = formatter.parseDateTime(r.nextDate.toString)
-        val nodeNumber =r.nextLong()
-        val nodeName = r.nextString()
+  implicit val getJunctionInfo: GetResult[JunctionInfo] = new GetResult[JunctionInfo] {
+    def apply(r: PositionedResult): JunctionInfo = {
+      val id = r.nextLong()
+      val junctionNumber = r.nextLong()
+      val nodeId = r.nextLong()
+      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val nodeNumber =r.nextLong()
+      val nodeName = r.nextString()
 
-        JunctionInfo(id, junctionNumber, nodeId, startDate, nodeNumber, nodeName)
-      }
+      JunctionInfo(id, junctionNumber, nodeId, startDate, nodeNumber, nodeName)
+    }
   }
 
   private def queryList(query: String): List[Junction] = {
@@ -73,7 +74,7 @@ class JunctionDAO extends BaseDAO {
   }
 
   private def queryListTemplate(query: String): List[JunctionTemplate] = {
-    Q.queryNA[JunctionTemplate](query).list.groupBy(_.junctionId).map {
+    Q.queryNA[JunctionTemplate](query).list.groupBy(_.id).map {
       case (_, list) =>
         list.head
     }.toList
@@ -162,7 +163,29 @@ class JunctionDAO extends BaseDAO {
          LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
             WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_ID IS NULL
        """
-        queryListTemplate(query)
+    queryListTemplate(query)
+  }
+
+  def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionTemplate] = {
+    time(logger, "Fetch Junction templates by bounding box") {
+      val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
+        boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
+
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "LL.geometry")
+
+      val query =
+        s"""
+         SELECT DISTINCT j.ID, j.JUNCTION_NUMBER, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
+         FROM JUNCTION j
+         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL AND jp.END_DATE IS NULL
+         LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
+         LEFT JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
+         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+            WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_ID IS NULL
+            AND $boundingBoxFilter and JP.valid_to is null and JP.end_date is null
+        """
+      queryListTemplate(query)
+    }
   }
 
   def create(junctions: Iterable[Junction], createdBy: String = "-"): Seq[Long] = {
@@ -178,7 +201,7 @@ class JunctionDAO extends BaseDAO {
       x._1.copy(id = x._2)
     )
 
-      createJunctions.foreach {
+    createJunctions.foreach {
       junction =>
         ps.setLong(1, junction.id)
         ps.setLong(2, junction.junctionNumber)

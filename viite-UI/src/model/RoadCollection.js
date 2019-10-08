@@ -111,9 +111,9 @@
       currentZoom = zoom;
       backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedRoadLinks) {
         currentAllRoadLinks = fetchedRoadLinks;
-        backend.getNodes({boundingBox: boundingBox, zoom: zoom}, function(nodes){
+        backend.getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function(fetchedNodesAndJunctions) {
           fetchProcess(fetchedRoadLinks, zoom);
-          eventbus.trigger('node:fetched', nodes, zoom);
+          eventbus.trigger('node:fetched', fetchedNodesAndJunctions, zoom);
         });
       });
     };
