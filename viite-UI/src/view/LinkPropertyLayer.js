@@ -696,7 +696,7 @@
       });
       eventListener.listenTo(eventbus, 'underConstructionRoadLinks:fetched', function(underConstructionRoads){
         var partitioned = _.partition(_.flatten(underConstructionRoads), function(feature) {
-          return feature.getData().constructionType === ConstructionType.UnderConstruction.value;
+          return feature.getData().constructionType === ConstructionType.UnderConstruction.value && feature.getData().roadNumber === 0;
         });
         var ol3underConstructionRoads =
           _.map(partitioned[0], function(road) {
