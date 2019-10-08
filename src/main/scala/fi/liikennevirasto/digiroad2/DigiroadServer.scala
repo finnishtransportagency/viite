@@ -59,7 +59,7 @@ class OAGProxyServlet extends ProxyServlet {
 
   override def rewriteTarget(req: HttpServletRequest): String = {
     val uri = req.getRequestURI
-    "http://oag.liikennevirasto.fi/rasteripalvelu-mml" + regex.replaceFirstIn(uri, "")
+    "http://oag.vayla.fi/rasteripalvelu-mml" + regex.replaceFirstIn(uri, "")
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
@@ -74,7 +74,7 @@ class OAGRasterServiceProxyServlet extends ProxyServlet {
 
   override def rewriteTarget(req: HttpServletRequest): String = {
     val uri = req.getRequestURI
-    val url = "http://oag.liikennevirasto.fi" + regex.replaceFirstIn(uri, "") + "?" + req.getQueryString
+    val url = "http://oag.vayla.fi" + regex.replaceFirstIn(uri, "") + "?" + req.getQueryString
     logger.info(url)
     url
   }
