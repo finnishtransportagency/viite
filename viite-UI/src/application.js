@@ -13,6 +13,8 @@
     window.applicationModel = new ApplicationModel([selectedLinkProperty]);
     var selectedNodeAndJunctionPoint = new SelectedNodeAndJunctionPoint();
     var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel), selectedNodeAndJunctionPoint);
+    proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
+    ol.proj.proj4.register(proj4);
 
     var models = {
       roadCollection: roadCollection,
