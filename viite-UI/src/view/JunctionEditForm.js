@@ -5,7 +5,7 @@
         '<button class="save btn btn-edit-junction-save" disabled>Tallenna</button>' +
         '<button class="cancel btn btn-edit-junction-cancel" disabled>Peruuta</button>' +
         '<button class="send btn btn-detach-junction" disabled>Irrota liittymä solmusta</button>' +
-        '<button class="cancel btn btn-return-list-junction">Palaa lista-näkymään</button>' +
+        '<button class="cancel btn btn-return-list-junction">Palaa listanäkymään</button>' +
         '<button class="send btn btn-send-junction" disabled>Vie Tierekisteriin</button>' +
         '</div>';
     };

@@ -1,13 +1,8 @@
 (function (root) {
-  root.ProjectLinkLayer = function (map, projectCollection, selectedProjectLinkProperty, roadLayer) {
+  root.ProjectLinkLayer = function (map, projectCollection, selectedProjectLinkProperty) {
     var layerName = 'roadAddressProject';
     Layer.call(this, map);
     var me = this;
-
-    var calibrationPointVector = new ol.source.Vector({});
-    var directionMarkerVector = new ol.source.Vector({});
-    var underConstructionProjectDirectionMarkerVector = new ol.source.Vector({});
-    var underConstructionRoadVector = new ol.source.Vector({});
 
     var Anomaly = LinkValues.Anomaly;
     var LinkGeomSource = LinkValues.LinkGeomSource;
@@ -22,6 +17,10 @@
     var isActiveLayer = false;
 
     var projectLinkStyler = new ProjectLinkStyler();
+
+    var calibrationPointVector = new ol.source.Vector({});
+    var directionMarkerVector = new ol.source.Vector({});
+    var underConstructionRoadVector = new ol.source.Vector({});
 
     var projectLinkVector = new ol.source.Vector({
       loader: function () {
@@ -69,12 +68,6 @@
       zIndex: RoadZIndex.UnderConstructionLayer.value
     });
 
-    var underConstructionProjectDirectionMarkerLayer = new ol.layer.Vector({
-      source: underConstructionProjectDirectionMarkerVector,
-      name: 'underConstructionProjectDirectionMarkerLayer',
-      zIndex: RoadZIndex.DirectionMarkerLayer.value
-    });
-
     var projectLinkLayer = new ol.layer.Vector({
       source: projectLinkVector,
       name: layerName,
@@ -82,7 +75,7 @@
       zIndex: RoadZIndex.VectorLayer.value
     });
 
-    var layers = [projectLinkLayer, calibrationPointLayer, directionMarkerLayer, underConstructionRoadProjectLayer, underConstructionProjectDirectionMarkerLayer];
+    var layers = [projectLinkLayer, calibrationPointLayer, directionMarkerLayer, underConstructionRoadProjectLayer];
 
     var getSelectedId = function (selected) {
       if (!_.isUndefined(selected.id) && selected.id > 0) {
@@ -118,7 +111,7 @@
     var possibleStatusForSelection = [LinkStatus.NotHandled.value, LinkStatus.New.value, LinkStatus.Terminated.value, LinkStatus.Transfer.value, LinkStatus.Unchanged.value, LinkStatus.Numbering.value];
 
     var selectSingleClick = new ol.interaction.Select({
-      layer: [projectLinkLayer, underConstructionRoadProjectLayer, underConstructionProjectDirectionMarkerLayer],
+      layer: [projectLinkLayer, underConstructionRoadProjectLayer],
       condition: ol.events.condition.singleClick,
       style: function (feature) {
         if (!_.isUndefined(feature.linkData))
@@ -191,7 +184,7 @@
     };
 
     var selectDoubleClick = new ol.interaction.Select({
-      layer: [projectLinkLayer, underConstructionRoadProjectLayer, underConstructionProjectDirectionMarkerLayer],
+      layer: [projectLinkLayer, underConstructionRoadProjectLayer],
       condition: ol.events.condition.doubleClick,
       style: function(feature) {
           if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value ||
@@ -426,11 +419,7 @@
     };
 
     var hideLayer = function () {
-      projectLinkLayer.getSource().clear();
-      calibrationPointLayer.getSource().clear();
-      underConstructionProjectDirectionMarkerLayer.getSource().clear();
-      underConstructionRoadProjectLayer.getSource().clear();
-      directionMarkerLayer.getSource().clear();
+      var layers = [projectLinkLayer, calibrationPointLayer, directionMarkerLayer, underConstructionRoadProjectLayer];
       me.clearLayers(layers);
     };
 
@@ -502,18 +491,15 @@
 
     me.redraw = function () {
       var checkedBoxLayers = _.filter(layers, function(layer) {
-          if ((layer.get('name') === 'underConstructionRoadProjectLayer' || layer.get('name') === 'underConstructionProjectDirectionMarkerLayer') &&
-              (!underConstructionRoadProjectLayer.getVisible() || !underConstructionProjectDirectionMarkerLayer.getVisible())){
+          if ((layer.get('name') === 'underConstructionRoadProjectLayer') &&
+              (!underConstructionRoadProjectLayer.getVisible())){
             return false;
           } else
             return true;
       });
+      me.clearLayers(layers);
       me.toggleLayersVisibility(checkedBoxLayers, applicationModel.getRoadVisibility(), true);
-      var marker;
       var cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
-
-      calibrationPointLayer.getSource().clear();
-      directionMarkerLayer.getSource().clear();
 
       var editedLinks = _.map(projectCollection.getDirty(), function (editedLink) {
         return editedLink;
@@ -581,7 +567,7 @@
             });
           });
         };
-        addMarkersToLayer(underConstructionProjectRoads, underConstructionProjectDirectionMarkerLayer);
+        addMarkersToLayer(underConstructionProjectRoads, directionMarkerLayer);
         addMarkersToLayer(projectLinks, directionMarkerLayer);
       }
 
@@ -694,7 +680,6 @@
 
     me.eventListener.listenTo(eventbus, 'underConstructionProjectRoads:toggleVisibility', function (visibility) {
       underConstructionRoadProjectLayer.setVisible(visibility);
-      underConstructionProjectDirectionMarkerLayer.setVisible(visibility);
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:visibilityChanged', function () {
