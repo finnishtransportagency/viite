@@ -692,7 +692,7 @@
 
       });
       eventListener.listenTo(eventbus, 'underConstructionRoadLinks:fetched', function(underConstructionRoads){
-        var partitioned = _.map(_.flatten(underConstructionRoads), function(feature) {
+        var partitioned = _.partition(_.flatten(underConstructionRoads), function(feature) {
           return feature.getData().constructionType === ConstructionType.UnderConstruction.value;
         });
         var ol3underConstructionRoads =
@@ -708,6 +708,8 @@
           return feature;
         });
 
+        underConstructionRoadLayer.getSource().addFeatures(ol3underConstructionRoads);
+
         var ol3noInfoRoads =
           _.map(partitioned[1], function(road) {
             var roadData = road.getData();
@@ -720,7 +722,6 @@
             feature.linkData = roadData;
             return feature;
           });
-        underConstructionRoadLayer.getSource().addFeatures(ol3underConstructionRoads);
         roadLayer.layer.getSource().addFeatures(ol3noInfoRoads);
       });
       eventListener.listenTo(eventbus, 'underConstructionRoads:toggleVisibility', function(visibility){
