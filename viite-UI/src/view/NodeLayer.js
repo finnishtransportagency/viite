@@ -195,7 +195,7 @@
           cachedMarker = new LinkPropertyMarker();
           var underConstructionLinks = roadCollection.getUnderConstructionLinks();
           var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
-            return _.contains(_.map(underConstructionLinks, function (sl) {
+            return _.includes(_.map(underConstructionLinks, function (sl) {
               return sl.linkId;
             }), rl.linkId);
           });
@@ -316,7 +316,7 @@
         me.clearLayers();
         if (previouslySelectedLayer === 'node') {
           hideLayer();
-        } else if (previouslySelectedLayer === 'linkProperty') {
+        } else if (previouslySelectedLayer === 'linkProperty' && isActiveLayer) {
           setGeneralOpacity(1);
           showLayer();
           eventbus.trigger('nodeLayer:fetch');

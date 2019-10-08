@@ -70,13 +70,15 @@ module.exports = function(grunt) {
           port: 9003,
           base: ['dist', '.', 'viite-UI'],
           middleware: function(connect, opts) {
+            var serveStatic = require('serve-static');
+            var serveIndex = require('serve-index');
             var config = [
-              // Serve static files.
-              connect.static(opts.base[0]),
-              connect.static(opts.base[1]),
-              connect.static(opts.base[2]),
+              // Serve static files
+              serveStatic(opts.base[0]),
+              serveStatic(opts.base[1]),
+              serveStatic(opts.base[2]),
               // Make empty directories browsable.
-              connect.directory(opts.base[2])
+              serveIndex(opts.base[2], {'icons': true})
             ];
             var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
             config.unshift(proxy);
@@ -114,7 +116,7 @@ module.exports = function(grunt) {
           },
           {
             context: '/rasteripalvelu',
-            host: 'oag.liikennevirasto.fi',
+            host: 'oag.vayla.fi',
             port: '80',
             https: false,
             changeOrigin: true,
@@ -127,7 +129,6 @@ module.exports = function(grunt) {
             https: false,
             changeOrigin: true,
             xforward: false,
-            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'},
             rewrite: {
               '^/wmts': '/rasteripalvelu-mml/wmts'
             }
@@ -215,6 +216,7 @@ module.exports = function(grunt) {
           urls: ['http://127.0.0.1:9003/test/integration-tests.html'],
           run: false,
           log: true,
+          logErrors: true,
           timeout: 100000,
           reporter: 'Spec'
         }
@@ -235,11 +237,11 @@ module.exports = function(grunt) {
     exec: {
       prepare_openlayers: {
         cmd: 'npm install',
-        cwd: './node_modules/openlayers/'
+        cwd: './node_modules/ol/'
       },
       viite_build_openlayers: {
-        cmd: 'node tasks/build.js ../../viite-UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
-        cwd: './node_modules/openlayers/'
+        cmd: 'node tasks/build.js ../../viite-UI/src/resources/digiroad2/ol/ol-custom.js build/ol.js',
+        cwd: './node_modules/ol/'
       }
     }
   });

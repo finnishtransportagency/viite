@@ -88,7 +88,7 @@
   };
 
   geometrycalculator.getCentroid = function(points) {
-    var sums = _.foldl(points, function(sum, point) {
+    var sums = _.reduce(points, function(sum, point) {
       return { lat: point.lat + sum.lat, lon: point.lon + sum.lon };
     }, { lat: 0, lon: 0 });
 
