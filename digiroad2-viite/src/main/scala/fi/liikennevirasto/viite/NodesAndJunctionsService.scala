@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
-import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.{BeforeAfter, Junction, JunctionDAO, JunctionInfo, JunctionPoint, JunctionPointDAO, JunctionTemplate, LinearLocationDAO, LinkStatus, Node, NodeDAO, NodePoint, NodePointDAO, ProjectLink, ProjectRoadwayChange, RoadAddress, RoadAttributes, RoadwayChangesDAO, RoadwayDAO, RoadwayPointDAO}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
