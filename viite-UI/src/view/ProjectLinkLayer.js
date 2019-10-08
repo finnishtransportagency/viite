@@ -25,10 +25,10 @@
 
     var projectLinkVector = new ol.source.Vector({
       loader: function () {
-          var notUnderConstruction = _.filter(projectCollection.getAll(), function(link) {
-              return link.constructionType != LinkValues.ConstructionType.UnderConstruction.value;
-          });
-        var features = _.map(notUnderConstruction, function (projectLink) {
+        var pseudoNotUnderConstruction = _.reject(projectCollection.getAll(), function (projectRoad) {
+          return projectRoad.constructionType === ConstructionType.UnderConstruction.value && projectRoad.roadNumber === 0;
+        });
+        var features = _.map(pseudoNotUnderConstruction, function (projectLink) {
           var points = _.map(projectLink.points, function (point) {
             return [point.x, point.y];
           });
@@ -513,7 +513,7 @@
       });
 
         var separated = _.partition(projectCollection.getAll(), function (projectRoad) {
-            return projectRoad.constructionType === ConstructionType.UnderConstruction.value;
+            return projectRoad.constructionType === ConstructionType.UnderConstruction.value && projectRoad.roadNumber === 0;
         });
 
         var toBeTerminated = _.filter(editedLinks, function (link) {
