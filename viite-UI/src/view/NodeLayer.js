@@ -137,7 +137,7 @@
           } else if (applicationModel.selectedToolIs(LinkValues.Tool.SelectNode.value)) {
             var junctionPointTemplates = _.unique(_.map(selectedJunction, "junctionPointTemplateInfo"), "junctionId");
             selectedNodeAndJunctionPoint.setCurrentJunctionPointTemplates(junctionPointTemplates);
-            eventbus.trigger('junctionEdit:selected', _.first(selectedJunction).junctionPointTemplateInfo.junctionId);
+            eventbus.trigger('junctionEdit:selected', _.head(selectedJunction).junctionPointTemplateInfo.junctionId);
           } else selectedNodeAndJunctionPoint.close();
         } else {
           selectedNodeAndJunctionPoint.close();
@@ -153,7 +153,7 @@
           return feature.ol_uid;
         });
         _.each(ol3Features, function (feature) {
-          if (!_.contains(olUids, feature.ol_uid)) {
+          if (!_.includes(olUids, feature.ol_uid)) {
             nodeAndJunctionPointTemplateClick.getFeatures().push(feature);
             olUids.push(feature.ol_uid); // prevent adding duplicate entries
           }

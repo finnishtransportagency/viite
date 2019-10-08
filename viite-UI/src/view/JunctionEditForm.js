@@ -113,10 +113,10 @@
       eventbus.on('junctionPoint:selected', function () {
         rootElement.empty();
         var templatesList = selectedJunctionPoint.getCurrentJunctionPointTemplates();
-        var showJunctionTemplateEditForm = isJunctionTemplate(_.first(templatesList));
-        $('#feature-attributes').html(template(_.first(templatesList), showJunctionTemplateEditForm));
+        var showJunctionTemplateEditForm = isJunctionTemplate(_.head(templatesList));
+        $('#feature-attributes').html(template(_.head(templatesList), showJunctionTemplateEditForm));
         $('[id=junction-point-link]').click(function () {
-          eventbus.trigger('junctionPointForm-junctionPoint:select', _.first(templatesList).junctionId);
+          eventbus.trigger('junctionPointForm-junctionPoint:select', _.head(templatesList).junctionId);
           return false;
         });
         return false;
