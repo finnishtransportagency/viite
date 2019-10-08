@@ -5,12 +5,12 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
-import fi.liikennevirasto.viite.dao.{BeforeAfter, Junction, JunctionDAO, JunctionInfo, JunctionPoint, JunctionPointDAO, JunctionTemplate, LinearLocationDAO, LinkStatus, Node, NodeDAO, NodePoint, NodePointDAO, ProjectLink, ProjectRoadwayChange, RoadAddress, RoadAttributes, RoadwayChangesDAO, RoadwayDAO, RoadwayPointDAO}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
-import org.joda.time.DateTime
 
 class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO, roadwayChangesDAO: RoadwayChangesDAO) {
 
@@ -55,16 +55,16 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       junctionPointDAO.fetchJunctionPointsByJunctionIds(junctionIds)
     }
   }
-  def getNodesWithJunctionByBoundingBox(boundingRectangle: BoundingRectangle): Map[Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
+  def getNodesWithJunctionByBoundingBox(boundingRectangle: BoundingRectangle): Map[Node, (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
     withDynSession {
       time(logger, "Fetch nodes with junctions") {
         val nodes = nodeDAO.fetchByBoundingBox(boundingRectangle)
         val nodePoints = nodePointDAO.fetchNodePointsByNodeId(nodes.map(_.id))
         val junctions = junctionDAO.fetchJunctionByNodeIds(nodes.map(_.id))
         val junctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(junctions.map(_.id))
-        val nodesAndJunctions = nodes.map {
+        nodes.map {
           node =>
-            (Option(node),
+            (node,
               (
                 nodePoints.filter(np => np.nodeId.isDefined && np.nodeId.get == node.id),
                 junctions.filter(j => j.nodeId.isDefined && j.nodeId.get == node.id).map {
@@ -75,8 +75,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                 }.toMap
               )
             )
-        } ++ Seq((None, getTemplatesByBoundingBox(boundingRectangle)))
-        nodesAndJunctions.toMap
+        }.toMap
       }
     }
   }
@@ -126,7 +125,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       time(logger, "Fetch Junction templates") {
         val allJunctionTemplates = junctionDAO.fetchTemplates()
         allJunctionTemplates.filter(jt => jt.roadNumber != 0 && authorizedElys.contains(jt.elyCode))
-          .groupBy(_.junctionId).map(junctionTemplate => {
+          .groupBy(_.id).map(junctionTemplate => {
             junctionTemplate._2.minBy(jt => (jt.roadNumber, jt.roadPartNumber, jt.addrM))
         }).toSeq
       }
@@ -479,7 +478,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getNodeTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
+  def getNodePointTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
     withDynSession {
       time(logger, "Fetch nodes point templates") {
         nodePointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
@@ -487,10 +486,16 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getJunctionTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionPoint] = {
+  def getJunctionTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Map[JunctionTemplate, Seq[JunctionPoint]] = {
     withDynSession {
-      time(logger, "Fetch nodes point templates") {
-        junctionPointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+      time(logger, "Fetch junction templates") {
+        val junctions: Seq[JunctionTemplate] = junctionDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+        val junctionPoints: Seq[JunctionPoint] = junctionPointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+        junctions.map {
+          junction =>
+            (junction,
+              junctionPoints.filter(_.junctionId == junction.id))
+        }.toMap
       }
     }
   }
