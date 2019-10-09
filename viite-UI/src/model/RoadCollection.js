@@ -166,19 +166,16 @@
           roadLinkGroupsUnderConstruction = _.filter(roadLinkGroups, function(group) {
               return groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
           });
-          var underConstructionRoadAddresses = _.partition(roadLinkGroupsUnderConstruction, function(sur) {
-              return groupDataConstructionTypeFilter(sur, ConstructionType.UnderConstruction);
-          });
           var nonUnderConstructionRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
               return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
           });
-        setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(underConstructionRoadAddresses[0]).concat(floatingRoadLinks));
+        setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(roadLinkGroupsUnderConstruction).concat(floatingRoadLinks));
           eventbus.trigger('roadLinks:fetched', nonUnderConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
           if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
           }
-          if (underConstructionRoadAddresses[0].length !== 0)
-              eventbus.trigger('underConstructionRoadLinks:fetched', underConstructionRoadAddresses[0]);
+          if (roadLinkGroupsUnderConstruction.length !== 0)
+              eventbus.trigger('underConstructionRoadLinks:fetched', roadLinkGroupsUnderConstruction);
           if (applicationModel.isProjectButton()) {
               eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
               applicationModel.setProjectButton(false);
@@ -204,11 +201,11 @@
       if(_.isArray(group)) {
         return _.some(group, function(roadLink) {
           if(roadLink !== null)
-            return roadLink.getData().constructionType === dataConstructionType.value;
+            return roadLink.getData().constructionType === dataConstructionType.value && roadLink.getData().roadNumber === 0;
           else return false;
         });
       } else {
-        return group.getData().constructionType === dataConstructionType.value;
+        return group.getData().constructionType === dataConstructionType.value && group.getData().roadNumber === 0;
       }
     };
 
