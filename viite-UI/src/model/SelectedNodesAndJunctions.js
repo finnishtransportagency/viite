@@ -1,5 +1,5 @@
 (function (root) {
-  root.SelectedNodeAndJunctionPoint = function () {
+  root.SelectedNodesAndJunctions = function () {
     var current = {};
     var dirty = false;
 
@@ -8,14 +8,14 @@
       eventbus.trigger('node:selected');
     };
 
-    var openNodePointTemplates = function (nodePointTemplates) {
+    var openNodePointTemplate = function (nodePointTemplates) {
       setCurrentNodePointTemplates(nodePointTemplates);
-      eventbus.trigger('nodePoint:selected');
+      eventbus.trigger('nodePointTemplate:selected');
     };
 
-    var openJunctionPointTemplates = function (junctionPointTemplates) {
-      setCurrentJunctionPointTemplates(junctionPointTemplates);
-      eventbus.trigger('junctionPoint:selected');
+    var openJunctionTemplate = function (junctionTemplate) {
+      setCurrentJunctionTemplate(junctionTemplate);
+      eventbus.trigger('junctionTemplate:selected');
     };
 
     var setCurrentNode = function (node) {
@@ -26,11 +26,11 @@
       current.nodePointTemplates = nodePointTemplates;
     };
 
-    var setCurrentJunctionPointTemplates = function (junctionPointTemplates) {
-      current.junctionPointTemplates = junctionPointTemplates;
+    var setCurrentJunctionTemplate = function (junctionTemplate) {
+      current.junctionTemplate = junctionTemplate;
     };
 
-    var getCurrentNodes = function () {
+    var getCurrentNode = function () {
       return current.node;
     };
 
@@ -38,8 +38,8 @@
       return current.nodePointTemplates;
     };
 
-    var getCurrentJunctionPointTemplates = function () {
-      return current.junctionPointTemplates;
+    var getCurrentJunctionTemplate = function () {
+      return current.junctionTemplate;
     };
 
     var isDirty = function () {
@@ -58,19 +58,19 @@
     var close = function () {
       clean();
       eventbus.trigger('node:unselected');
-      eventbus.trigger('junction:unselected');
+      eventbus.trigger('nodePointTemplate:unselected');
+      eventbus.trigger('junctionTemplate:unselected');
       eventbus.trigger('nodesAndJunctions:open');
       eventbus.trigger('nodeLayer:fetch');
     };
 
     return {
       openNode: openNode,
-      openNodePointTemplates: openNodePointTemplates,
-      openJunctionPointTemplates: openJunctionPointTemplates,
-      getCurrentNodes: getCurrentNodes,
+      openNodePointTemplate: openNodePointTemplate,
+      openJunctionTemplate: openJunctionTemplate,
+      getCurrentNode: getCurrentNode,
       getCurrentNodePointTemplates: getCurrentNodePointTemplates,
-      getCurrentJunctionPointTemplates: getCurrentJunctionPointTemplates,
-      setCurrentJunctionPointTemplates: setCurrentJunctionPointTemplates,
+      getCurrentJunctionTemplate: getCurrentJunctionTemplate,
       isDirty: isDirty,
       setDirty: setDirty,
       clean: clean,

@@ -78,7 +78,7 @@
         selectedNodePoint.close();
       });
 
-      eventbus.on('nodePoint:selected', function () {
+      eventbus.on('nodePointTemplate:selected', function () {
         rootElement.empty();
         var templatesList = selectedNodePoint.getCurrentNodePointTemplates();
         var nodePointsList = [];

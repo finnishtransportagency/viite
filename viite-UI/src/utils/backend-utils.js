@@ -23,7 +23,7 @@
         };
     });
 
-    this.getNodes = createCallbackRequestor(function(params) {
+    this.getNodesAndJunctions = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
       return {

@@ -1,5 +1,5 @@
 (function (root) {
-  root.NodeCollection = function (backend, locationSearch, selectedNodePoint) {
+  root.NodeCollection = function (backend, locationSearch, selectedNodesAndJunctions) {
     var me = this;
     var nodes = [];
     var nodesWithAttributes = [];
@@ -7,10 +7,6 @@
     var mapJunctionTemplates = [];
     var userNodePointTemplates = [];
     var userJunctionTemplates = [];
-
-    this.getNodes = function() {
-      return nodes;
-    };
 
     this.setMapNodePointTemplates = function(list) {
       mapNodePointTemplates = list;
@@ -20,17 +16,9 @@
       mapJunctionTemplates = list;
     };
 
-    this.setUserTemplates = function(list) {
-      userNodePointTemplates = _.map(_.filter(list, function(nodePoint){
-        return !_.isUndefined(nodePoint.nodePointTemplate) ;
-      }), function(template){
-        return template.nodePointTemplate;
-      });
-      userJunctionTemplates = _.map(_.filter(list, function (junction) {
-        return !_.isUndefined(junction.junctionTemplate);
-      }), function(template) {
-        return template.junctionTemplate;
-      });
+    this.setUserTemplates = function(nodePointTemplates, junctionTemplates) {
+      userNodePointTemplates = nodePointTemplates;
+      userJunctionTemplates = junctionTemplates;
     };
 
     this.setNodes = function(list) {
@@ -59,28 +47,18 @@
     };
 
     eventbus.on('node:fetched', function(fetchResult, zoom) {
-      var nodes = _.filter(fetchResult, function(node){
-        return !_.isUndefined(node.name) ;
-      });
-      var nodePointTemplates = _.unique(_.map(_.filter(fetchResult, function(node) {
-        return !_.isUndefined(node.nodePointTemplate) ;
-      }), function (nodePointTemp) {
-        return nodePointTemp.nodePointTemplate;
-      }), "id");
-      var junctionPointTemplates = _.unique(_.map(_.filter(fetchResult, function(node) {
-          return !_.isUndefined(node.junctionPointTemplate) ;
-      }), function (junctionPointTemp) {
-          return junctionPointTemp.junctionPointTemplate;
-      }), "id");
+      var nodes = fetchResult.nodes;
+      var nodePointTemplates = fetchResult.nodePointTemplates;
+      var junctionTemplates = fetchResult.junctionTemplates;
 
       me.setNodes(nodes);
       me.setMapNodePointTemplates(nodePointTemplates);
-      me.setMapJunctionTemplates(mapJunctionTemplates);
-      eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionPointTemplates, zoom);
+      me.setMapJunctionTemplates(junctionTemplates);
+      eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionTemplates, zoom);
     });
 
-    eventbus.on('templates:fetched', function(data) {
-      me.setUserTemplates(data);
+    eventbus.on('templates:fetched', function(nodePointTemplates, junctionTemplates) {
+      me.setUserTemplates(nodePointTemplates, junctionTemplates);
     });
 
     eventbus.on('nodeSearchTool:clickNode', function (index, map) {
@@ -112,11 +90,11 @@
       if (_.isUndefined(nodePointTemplate)) {
         backend.getNodePointTemplateById(id, function (results) {
           moveToLocation(results.nodePointTemplate);
-          selectedNodePoint.openNodePointTemplates(_.unique([results.nodePointTemplate], "id"));
+          selectedNodesAndJunctions.openNodePointTemplate(_.unique([results.nodePointTemplate], "id"));
         });
       } else {
         moveToLocation(nodePointTemplate);
-        selectedNodePoint.openNodePointTemplates(_.unique([nodePointTemplate], "id"));
+        selectedNodesAndJunctions.openNodePointTemplate(_.unique([nodePointTemplate], "id"));
       }
     });
 
@@ -131,8 +109,8 @@
           eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat, zoom: 12 });
         }
         applicationModel.removeSpinner();
-    });
-        selectedNodePoint.openJunctionPointTemplates(_.unique([junctionTemplate], "junctionId"));
+      });
+      selectedNodesAndJunctions.openJunctionTemplate(_.unique([junctionTemplate], "junctionId"));
     });
 
     eventbus.on('nodeSearchTool:refreshView', function (map) {
