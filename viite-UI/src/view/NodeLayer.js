@@ -159,8 +159,8 @@
         }
       });
 
-      var selectNode = function(selectedNode) {
-        var node = _.first(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
+      var selectNode = function(selectedNodes) {
+        var node = _.first(_.unique(_.map(selectedNodes, "nodeInfo"), "id"));
         selectedNodeAndJunctionPoint.openNode(node);
         highlightNode(node.id);
         highlightJunctions(node.id);
@@ -254,6 +254,16 @@
         }
       });
 
+      var createUserNodeMarker = function (coords) {
+        var node = {
+          coordX: coords.x,
+          coordY: coords.y,
+          type:   LinkValues.NodeType.UnkownNodeType.value
+        };
+        var nodeMarker = new NodeMarker();
+        nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node));
+      };
+
       var setProperty = function (layers, propertyName, propertyValue) {
         _.each(layers, function (layer) {
           layer.set(propertyName, propertyValue);
@@ -263,16 +273,18 @@
       me.eventListener.listenTo(eventbus, 'tool:changed', function (tool) {
         switch (tool) {
           case LinkValues.Tool.Unknown.value:
+            me.eventListener.stopListening(eventbus, 'map:clicked', createUserNodeMarker);
             setProperty([nodeMarkerLayer], 'selectable', false);
             setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
             break;
           case LinkValues.Tool.Select.value:
+            me.eventListener.stopListening(eventbus, 'map:clicked', createUserNodeMarker);
             setProperty([nodeMarkerLayer], 'selectable', true);
             setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
             break;
           case LinkValues.Tool.Add.value:
-            setProperty([nodeMarkerLayer], 'selectable', false);
-            setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
+            setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
+            me.eventListener.listenTo(eventbus, 'map:clicked', createUserNodeMarker);
             break;
         }
       });
