@@ -19,15 +19,16 @@
     var projectLinkStyler = new ProjectLinkStyler();
 
     var calibrationPointVector = new ol.source.Vector({});
-    var directionMarkerVector = new ol.source.Vector({});
     var underConstructionRoadVector = new ol.source.Vector({});
+    var directionMarkerVector = new ol.source.Vector({});
+    var underConstructionProjectDirectionMarkerVector = new ol.source.Vector({});
 
     var projectLinkVector = new ol.source.Vector({
       loader: function () {
-          var notUnderConstruction = _.filter(projectCollection.getAll(), function(link) {
-              return link.constructionType != LinkValues.ConstructionType.UnderConstruction.value;
-          });
-        var features = _.map(notUnderConstruction, function (projectLink) {
+        var pseudoNotUnderConstruction = _.reject(projectCollection.getAll(), function (projectRoad) {
+          return projectRoad.constructionType === ConstructionType.UnderConstruction.value && projectRoad.roadNumber === 0;
+        });
+        var features = _.map(pseudoNotUnderConstruction, function (projectLink) {
           var points = _.map(projectLink.points, function (point) {
             return [point.x, point.y];
           });
@@ -49,17 +50,11 @@
       zIndex: RoadZIndex.CalibrationPointLayer.value
     });
 
-    var directionMarkerLayer = new ol.layer.Vector({
-      source: directionMarkerVector,
-      name: 'directionMarkerLayer',
-      zIndex: RoadZIndex.DirectionMarkerLayer.value
-    });
-
-      function vectorLayerStyle(feature) {
-          return [projectLinkStyler.getBorderStyle().getStyle(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}), projectLinkStyler.getUnderConstructionStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
-              projectLinkStyler.getProjectLinkStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})
-              ];
-      }
+    function vectorLayerStyle(feature) {
+      return [projectLinkStyler.getUnderConstructionStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+        projectLinkStyler.getProjectLinkStyler(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})
+      ];
+    }
 
     var underConstructionRoadProjectLayer = new ol.layer.Vector({
       source: underConstructionRoadVector,
@@ -75,7 +70,19 @@
       zIndex: RoadZIndex.VectorLayer.value
     });
 
-    var layers = [projectLinkLayer, calibrationPointLayer, directionMarkerLayer, underConstructionRoadProjectLayer];
+    var directionMarkerLayer = new ol.layer.Vector({
+      source: directionMarkerVector,
+      name: 'directionMarkerLayer',
+      zIndex: RoadZIndex.DirectionMarkerLayer.value
+    });
+
+    var underConstructionProjectDirectionMarkerLayer = new ol.layer.Vector({
+      source: underConstructionProjectDirectionMarkerVector,
+      name: 'underConstructionProjectDirectionMarkerLayer',
+      zIndex: RoadZIndex.DirectionMarkerLayer.value
+    });
+
+    var layers = [projectLinkLayer, calibrationPointLayer, directionMarkerLayer, underConstructionRoadProjectLayer, underConstructionProjectDirectionMarkerLayer];
 
     var getSelectedId = function (selected) {
       if (!_.isUndefined(selected.id) && selected.id > 0) {
@@ -419,7 +426,7 @@
     };
 
     var hideLayer = function () {
-      var layers = [projectLinkLayer, calibrationPointLayer, directionMarkerLayer, underConstructionRoadProjectLayer];
+      var layers = [projectLinkLayer, calibrationPointLayer, underConstructionRoadProjectLayer, directionMarkerLayer, underConstructionProjectDirectionMarkerLayer];
       me.clearLayers(layers);
     };
 
@@ -491,8 +498,8 @@
 
     me.redraw = function () {
       var checkedBoxLayers = _.filter(layers, function(layer) {
-          if ((layer.get('name') === 'underConstructionRoadProjectLayer') &&
-              (!underConstructionRoadProjectLayer.getVisible())){
+          if ((layer.get('name') === 'underConstructionRoadProjectLayer' || layer.get('name') === 'underConstructionProjectDirectionMarkerLayer') &&
+              (!underConstructionRoadProjectLayer.getVisible() || !underConstructionProjectDirectionMarkerLayer.getVisible())){
             return false;
           } else
             return true;
@@ -506,7 +513,7 @@
       });
 
         var separated = _.partition(projectCollection.getAll(), function (projectRoad) {
-            return projectRoad.constructionType === ConstructionType.UnderConstruction.value;
+            return projectRoad.constructionType === ConstructionType.UnderConstruction.value && projectRoad.roadNumber === 0;
         });
 
         var toBeTerminated = _.filter(editedLinks, function (link) {
@@ -567,7 +574,7 @@
             });
           });
         };
-        addMarkersToLayer(underConstructionProjectRoads, directionMarkerLayer);
+        addMarkersToLayer(underConstructionProjectRoads, underConstructionProjectDirectionMarkerLayer);
         addMarkersToLayer(projectLinks, directionMarkerLayer);
       }
 
@@ -680,6 +687,7 @@
 
     me.eventListener.listenTo(eventbus, 'underConstructionProjectRoads:toggleVisibility', function (visibility) {
       underConstructionRoadProjectLayer.setVisible(visibility);
+      underConstructionProjectDirectionMarkerLayer.setVisible(visibility);
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:visibilityChanged', function () {
