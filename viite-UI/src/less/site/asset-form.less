@@ -260,8 +260,8 @@
 
   .asset-log-info,
   .asset-log-info-metadata,
-  .asset-node-data,
-  .asset-input-node-data {
+  .asset-node-data, .asset-junction-data,
+  .asset-input-node-data, .asset-input-junction-data {
     font-size: @font-size-small;
     line-height: @line-height-modifier * 3;
     color: @input-color-placeholder-dark;
@@ -272,10 +272,21 @@
     text-decoration: underline;
   }
 
-  a.incomplete-links, .unknown-speed-limits, .floating-stops, .floating-point-assets, .node-points, .junction-point {
+  a.incomplete-links, .unknown-speed-limits, .floating-stops, .floating-point-assets {
     position:absolute;
     right: 10px;
     bottom: 130px;
+  }
+
+  a.node-info-link {
+    color: @link-color;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      color: @link-color-hover;
+      text-decoration: underline;
+    }
   }
 
   .undefined {
@@ -382,23 +393,29 @@
     padding-bottom: 0;
   }
 
-  .asset-node-data {
+  .asset-node-data, .asset-junction-data {
     float: none;
     width: 100%;
     padding-top: 0;
     padding-bottom: 0;
     margin-top: 0;
     margin-bottom: 0;
+
+    label.required {
+      color: @warning !important;
+    }
+
+    label.required:before {
+      content: '*';
+    }
   }
 
-  .asset-input-node-data {
+  .asset-input-node-data, .asset-input-junction-data {
     float: none;
-    width: 280px;
     padding-top: 0;
     padding-bottom: 0;
     margin-top: 0;
     margin-bottom: 0;
-    margin-left: 5px;
   }
 
   .asset-log-info-metadata {
