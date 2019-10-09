@@ -110,9 +110,13 @@
         var nodeData = featureAtPixel.nodeInfo;
         coordinate = map.getEventCoordinate(event.originalEvent);
         if (infoContent !== null) {
+          var nodeName = "";
+          if (!_.isUndefined(nodeData.name)) {
+            nodeName = 'Nimi: ' + nodeData.name + '<br>';
+          }
           infoContent.innerHTML =
-            'Nimi:&nbsp;' + nodeData.name + '<br>' +
-            'Solmutyyppi:&nbsp;' + displayNodeType(nodeData.type) + '<br>'
+            nodeName +
+            'Solmutyyppi: ' + displayNodeType(nodeData.type) + '<br>'
           ;
         }
         overlay.setPosition(coordinate);
