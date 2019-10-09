@@ -59,7 +59,7 @@ class JunctionDAO extends BaseDAO {
       val junctionNumber = r.nextLong()
       val nodeId = r.nextLong()
       val startDate = formatter.parseDateTime(r.nextDate.toString)
-      val nodeNumber =r.nextLong()
+      val nodeNumber = r.nextLong()
       val nodeName = r.nextString()
 
       JunctionInfo(id, junctionNumber, nodeId, startDate, nodeNumber, nodeName)
