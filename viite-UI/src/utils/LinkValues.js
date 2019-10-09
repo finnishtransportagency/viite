@@ -202,8 +202,12 @@
     root.Tool = {
         Unknown:            {value: ""},
         Default:            {value: "Select"},
-        SelectNode:         {value: "Select"},
-        AddNode:            {value: "Add"}
+        Select:             {value: "Select"},
+        Add:                {value: "Add"}
+    };
+
+    root.Generic = {
+      Undefined: {value: 99}
     };
 
 })(window.LinkValues = window.LinkValues || {});

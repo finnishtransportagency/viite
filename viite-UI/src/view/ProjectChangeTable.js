@@ -108,46 +108,50 @@
       $('.change-table-dimension-headers').height(changeTableHeight - headerHeight - 30);// scroll size = total - header - border
     }
 
+    function showChangeTable(projectChangeData){
+      var htmlTable = "";
+      var warningM = projectChangeData.warningMessage;
+      if (!_.isUndefined(warningM))
+        new ModalConfirm(warningM);
+      if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
+        _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq, index) {
+          var rowColorClass = '';
+          if (index % 2 !== 1) {
+            rowColorClass = 'white-row';
+          }
+          htmlTable += '<tr class="row-changes ' + rowColorClass + '">';
+          if (changeInfoSeq.changetype === LinkStatus.New.value) {
+            htmlTable += getEmptySource(changeInfoSeq);
+          } else {
+            htmlTable += getSourceInfo(changeInfoSeq);
+          }
+          htmlTable += getReversed(changeInfoSeq);
+          if (changeInfoSeq.changetype === LinkStatus.Terminated.value) {
+            htmlTable += getEmptyTarget();
+          } else {
+            htmlTable += getTargetInfo(changeInfoSeq);
+          }
+          htmlTable += '</tr>';
+        });
+        setTableHeight();
+      }
+      $('.row-changes').remove();
+      $('.change-table-dimensions').append($(htmlTable));
+      if (projectChangeData.validationErrors.length === 0) {
+        $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
+        var currentProject = projectCollection.getCurrentProject();
+        if ($('.change-table-frame').css('display') === "block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value || currentProject.project.statusCode === ProjectStatus.ErrorInTR.value)) {
+          $('#send-button').attr('disabled', false); //enables send button if changetable is open
+        }
+      } else {
+        $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
+      }
+    }
+
     function bindEvents() {
       $('.row-changes').remove();
       eventbus.on('projectChanges:fetched', function(projectChangeData) {
-        var htmlTable = "";
-        var warningM = projectChangeData.warningMessage;
-        if (!_.isUndefined(warningM))
-          new ModalConfirm(warningM);
-        if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
-          _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq, index) {
-            var rowColorClass = '';
-            if (index % 2 !== 1) {
-              rowColorClass = 'white-row';
-            }
-            htmlTable += '<tr class="row-changes ' + rowColorClass + '">';
-            if (changeInfoSeq.changetype === LinkStatus.New.value) {
-              htmlTable += getEmptySource(changeInfoSeq);
-            } else {
-              htmlTable += getSourceInfo(changeInfoSeq);
-            }
-            htmlTable += getReversed(changeInfoSeq);
-            if (changeInfoSeq.changetype === LinkStatus.Terminated.value) {
-              htmlTable += getEmptyTarget();
-            } else {
-              htmlTable += getTargetInfo(changeInfoSeq);
-            }
-            htmlTable += '</tr>';
-          });
-          setTableHeight();
-        }
-        $('.row-changes').remove();
-        $('.change-table-dimensions').append($(htmlTable));
-        if (projectChangeData.validationErrors.length === 0) {
-          $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
-          var currentProject = projectCollection.getCurrentProject();
-          if ($('.change-table-frame').css('display') === "block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value || currentProject.project.statusCode === ProjectStatus.ErrorInTR.value)) {
-            $('#send-button').attr('disabled', false); //enables send button if changetable is open
-          }
-        } else {
-          $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
-        }
+        showChangeTable(projectChangeData);
       });
 
       changeTable.on('click', 'button.max', function (){
