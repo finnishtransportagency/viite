@@ -11,8 +11,8 @@
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     window.applicationModel = new ApplicationModel([selectedLinkProperty]);
-    var selectedNodeAndJunctionPoint = new SelectedNodeAndJunctionPoint();
-    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel), selectedNodeAndJunctionPoint);
+    var selectedNodesAndJunctions = new SelectedNodesAndJunctions();
+    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel), selectedNodesAndJunctions);
 
     var models = {
       roadCollection: roadCollection,
@@ -21,7 +21,7 @@
       linkPropertiesModel: linkPropertiesModel,
       selectedProjectLinkProperty : selectedProjectLinkProperty,
       nodeCollection: nodeCollection,
-      selectedNodeAndJunctionPoint: selectedNodeAndJunctionPoint
+      selectedNodesAndJunctions: selectedNodesAndJunctions
     };
 
     bindEvents();
@@ -116,15 +116,15 @@
     var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty, models.nodeCollection);
     var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty);
     var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
-    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodeAndJunctionPoint, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
+    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
-    new JunctionEditForm(models.selectedNodeAndJunctionPoint, backend);
+    new JunctionEditForm(models.selectedNodesAndJunctions, backend);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
-    new NodeForm(models.selectedNodeAndJunctionPoint);
-    new NodePointForm(models.selectedNodeAndJunctionPoint);
+    new NodeForm(models.selectedNodesAndJunctions);
+    new NodePointForm(models.selectedNodesAndJunctions);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
