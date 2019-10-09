@@ -101,16 +101,20 @@
     eventbus.on('nodeSearchTool:clickJunctionTemplate', function(id) {
       applicationModel.addSpinner();
       var junctionTemplate = _.find(userJunctionTemplates, function (template) {
-        return template.junctionId === parseInt(id);
+        return template.id === parseInt(id);
       });
-      locationSearch.search(junctionTemplate.roadNumber + ' ' + junctionTemplate.roadPartNumber + ' ' + junctionTemplate.addrM).then(function(results) {
-        if (results.length >= 1) {
-          var result = results[0];
-          eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat, zoom: 12 });
-        }
+      if (!_.isUndefined(junctionTemplate)) {
+        locationSearch.search(junctionTemplate.roadNumber + ' ' + junctionTemplate.roadPartNumber + ' ' + junctionTemplate.addrM).then(function (results) {
+          if (results.length >= 1) {
+            var result = results[0];
+            eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat, zoom: zoomlevels.minZoomForJunctions});
+          }
+          applicationModel.removeSpinner();
+        });
+        selectedNodesAndJunctions.openJunctionTemplate(_.first(_.uniq([junctionTemplate], "id")));
+      } else {
         applicationModel.removeSpinner();
-      });
-      selectedNodesAndJunctions.openJunctionTemplate(_.unique([junctionTemplate], "junctionId"));
+      }
     });
 
     eventbus.on('nodeSearchTool:refreshView', function (map) {

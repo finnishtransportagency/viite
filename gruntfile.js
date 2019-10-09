@@ -142,9 +142,9 @@ module.exports = function(grunt) {
           },
           {
             context: '/vkm',
-            host: 'localhost',
-            port: '8997',
-            https: false,
+            host: 'oag.liikennevirasto.fi',
+            port: '80',
+            https: true,
             changeOrigin: false,
             xforward: false
           },
