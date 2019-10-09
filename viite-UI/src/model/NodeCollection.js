@@ -90,11 +90,11 @@
       if (_.isUndefined(nodePointTemplate)) {
         backend.getNodePointTemplateById(id, function (results) {
           moveToLocation(results.nodePointTemplate);
-          selectedNodesAndJunctions.openNodePointTemplate(_.unique([results.nodePointTemplate], "id"));
+          selectedNodesAndJunctions.openNodePointTemplate(_.uniq([results.nodePointTemplate], "id"));
         });
       } else {
         moveToLocation(nodePointTemplate);
-        selectedNodesAndJunctions.openNodePointTemplate(_.unique([nodePointTemplate], "id"));
+        selectedNodesAndJunctions.openNodePointTemplate(_.uniq([nodePointTemplate], "id"));
       }
     });
 
@@ -110,7 +110,7 @@
         }
         applicationModel.removeSpinner();
       });
-      selectedNodesAndJunctions.openJunctionTemplate(_.unique([junctionTemplate], "junctionId"));
+      selectedNodesAndJunctions.openJunctionTemplate(_.uniq([junctionTemplate], "junctionId"));
     });
 
     eventbus.on('nodeSearchTool:refreshView', function (map) {

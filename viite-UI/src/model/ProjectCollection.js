@@ -328,7 +328,7 @@
       var newLinks = newAndOtherLinks[0];
       var otherLinks = newAndOtherLinks[1];
 
-      var linkIds = _.unique(_.map(newLinks, function (t) {
+      var linkIds = _.uniq(_.map(newLinks, function (t) {
         if (!_.isUndefined(t.linkId)) {
           return t.linkId;
         } else return 0;
