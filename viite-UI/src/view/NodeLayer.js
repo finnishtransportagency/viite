@@ -160,7 +160,7 @@
       });
 
       var selectNode = function(selectedNode) {
-        var node = _.first(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
+        var node = _.head(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
         selectedNodeAndJunctionPoint.openNode(node);
         highlightNode(node.id);
         highlightJunctions(node.id);
@@ -174,7 +174,7 @@
       };
 
       var selectJunctionTemplate = function (selectedJunctionPointTemplates) {
-        selectedNodeAndJunctionPoint.openJunctionTemplate(_.first(_.unique(_.map(selectedJunctionPointTemplates, "junctionTemplateInfo"), "junctionId")));
+        selectedNodeAndJunctionPoint.openJunctionTemplate(_.head(_.unique(_.map(selectedJunctionPointTemplates, "junctionTemplateInfo"), "junctionId")));
       };
 
       var selectFeaturesToHighlight = function (vector, featuresToHighlight, otherFeatures) {
