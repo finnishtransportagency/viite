@@ -104,7 +104,7 @@
         // TODO Check that merge was done correctly
         var discontinuity = {discontinuity: parseInt(extractUniqueValues([endRoadOnSelection], 'discontinuity'))};
         var startAddressM = {startAddressM: _.minBy(_.chain(selectedData).map('startAddressM').uniq().value())};
-        var endAddressM = {endAddressM: _.maxBy(_.chain(selectedData).pluck('endAddressM').uniq().value())};
+        var endAddressM = {endAddressM: _.maxBy(_.chain(selectedData).map('endAddressM').uniq().value())};
 
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
@@ -484,7 +484,7 @@
       var newSources = _.isArray(sourceData) ? sourceData : [sourceData];
       var isAddedToNewSources = _.chain(newSources).map(function (ns) {
         return ns.id;
-      }).contains(fetchedFeature.getData().id).value();
+      }).includes(fetchedFeature.getData().id).value();
 
       if (!_.isUndefined(additionalSourceIdentifier) && !_.isUndefined(fetchedFeature) && !isAddedToNewSources)
         newSources.push(fetchedFeature.getData());
