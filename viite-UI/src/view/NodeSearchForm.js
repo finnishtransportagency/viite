@@ -67,7 +67,7 @@
     };
 
     var junctionTemplateLink = function(junctionTemplate){
-      return '<a id=' + junctionTemplate.junctionId + ' class="junction-template-link" href="#node/junctionTemplate/' + junctionTemplate.junctionId + '" style="font-weight:bold;cursor:pointer;">' +
+      return '<a id=' + junctionTemplate.id + ' class="junction-template-link" href="#node/junctionTemplate/' + junctionTemplate.id + '" style="font-weight:bold;cursor:pointer;">' +
         junctionTemplate.roadNumber + ' / ' +
         junctionTemplate.track + ' / ' +
         junctionTemplate.roadPartNumber + ' / ' +
