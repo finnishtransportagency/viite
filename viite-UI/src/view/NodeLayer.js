@@ -287,11 +287,14 @@
       });
 
       me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
-        isActiveLayer = layer === 'node';
         me.clearLayers();
         if (previouslySelectedLayer === 'node') {
           hideLayer();
           removeClickInteractions();
+        } else if (layer === 'node') {
+          setGeneralOpacity(1);
+          showLayer();
+          eventbus.trigger('nodeLayer:fetch');
         }
         me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
       });
