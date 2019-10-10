@@ -139,7 +139,7 @@
       }
     });
 
-    eventbus.on('nodePointTemplate:selected', function (nodePointTemplateId) {
+    eventbus.on('nodePointTemplate:open', function (nodePointTemplateId) {
       router.navigate('nodePointTemplate/' + nodePointTemplateId);
     });
 
