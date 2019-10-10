@@ -222,6 +222,10 @@
         map.addInteraction(nodeAndJunctionPointTemplateClick);
       };
 
+      var removeClickInteractions = function () {
+        map.removeInteraction(nodeAndJunctionPointTemplateClick);
+      };
+
       // We add the defined interactions to the map.
       addClickInteractions();
 
@@ -287,10 +291,7 @@
         me.clearLayers();
         if (previouslySelectedLayer === 'node') {
           hideLayer();
-        } else if (previouslySelectedLayer === 'linkProperty') {
-          setGeneralOpacity(1);
-          showLayer();
-          eventbus.trigger('nodeLayer:fetch');
+          removeClickInteractions();
         }
         me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
       });
