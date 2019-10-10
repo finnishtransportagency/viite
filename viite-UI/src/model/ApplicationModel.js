@@ -201,6 +201,19 @@
             }
             eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
         }
+        var noRoadAddressVisibleCheckbox = $('#noRoadAddressVisibleCheckbox')[0];
+        if (layer !== selectedLayer || toggleStart) {
+          if (noRoadAddressVisibleCheckbox) {
+            if (layer === 'roadAddressProject') {
+              $('#noRoadAddressVisibleCheckbox')[0].checked = true;
+              $('#noRoadAddressVisibleCheckbox')[0].disabled = false;
+            } else {
+              $('#noRoadAddressVisibleCheckbox')[0].checked = true;
+              $('#noRoadAddressVisibleCheckbox')[0].disabled = false;
+            }
+          }
+          eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
+        }
       },
       getSelectedLayer: function () {
         return selectedLayer;
