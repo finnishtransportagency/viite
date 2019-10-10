@@ -55,7 +55,7 @@
         staticField('Solmunumero:', node.nodeNumber) +
         inputFieldRequired('Solmun nimi', 'name', '', node.name, 32) +
         inputFieldRequired('Solmutyyppi', 'type', '', getNodeType(node.type).description) +
-        inputFieldRequired('Liittymänumero', 'date', 'pp.kk.vvvv', node.startDate) +
+        inputFieldRequired('Alkupvm', 'date', 'pp.kk.vvvv', node.startDate) +
         staticField('Koordinaatit:', node.coordY + ', ' + node.coordX) +
         '   </div>' +
         '   <div>' +
