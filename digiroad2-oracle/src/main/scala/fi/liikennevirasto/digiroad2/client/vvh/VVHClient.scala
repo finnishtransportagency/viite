@@ -323,7 +323,7 @@ trait VVHClientOperations {
   }
 
   protected def queryParameters(fetchGeometry: Boolean = true): String = {
-    if (fetchGeometry && !disableGeometry) "returnGeometry=true&returnZ=false&returnM=true&geometryPrecision=3&f=json"
+    if (fetchGeometry && !disableGeometry) "returnGeometry=true&returnZ=true&returnM=true&geometryPrecision=3&f=json"
     else "returnGeometry=false&f=json"
   }
 
@@ -587,10 +587,10 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
 
   protected def extractRoadLinkFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHRoadlink = {
     val linkGeometry: Seq[Point] = path.map(point => {
-      Point(point(0), point(1))
+      Point(point(0), point(1), extractMeasure(point(2)).get)
     })
-    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> 0.0, "m" -> point(2))))
-    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + 0.0 + " " + point(2)).mkString(", ") + ")"))
+    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
+    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ") + ")"))
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val mtkClass = attributes("MTKCLASS")
@@ -1007,11 +1007,11 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
     val attributes = extractFeatureAttributes(feature)
     val path = extractFeatureGeometry(feature)
     val linkGeometry: Seq[Point] = path.map(point => {
-      Point(point(0), point(1))
+      Point(point(0), point(1), extractMeasure(point(2)).get)
     })
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
-    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> 0.0, "m" -> point(2))))
-    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + 0.0 + " " + point(2)).mkString(", ") + ")"))
+    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
+    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ") + ")"))
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val createdDate = attributes("CREATED_DATE").asInstanceOf[BigInt].longValue()
     val endTime = attributes("END_DATE").asInstanceOf[BigInt].longValue()
