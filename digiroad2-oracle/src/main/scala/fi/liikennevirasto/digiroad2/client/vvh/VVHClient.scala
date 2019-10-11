@@ -372,8 +372,6 @@ trait VVHClientOperations {
         }
       } catch {
         case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
-        case _: ClientProtocolException => Right(VVHError(Map(("VVH FETCH failure", "ClientProtocol Exception during VVH fetch. Check connection to VVH")), url))
-        case _: UnsupportedOperationException => Right(VVHError(Map(("VVH FETCH failure", "UnsupportedOperation Exception during VVH fetch. Check connection to VVH")), url))
       }
     }
   }
@@ -404,8 +402,6 @@ trait VVHClientOperations {
         }
       } catch {
         case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
-        case _: ClientProtocolException => Right(VVHError(Map(("VVH FETCH failure", "ClientProtocol Exception during VVH fetch. Check connection to VVH")), url))
-        case _: UnsupportedOperationException => Right(VVHError(Map(("VVH FETCH failure", "UnsupportedOperation Exception during VVH fetch. Check connection to VVH")), url))
       }
     }
   }
