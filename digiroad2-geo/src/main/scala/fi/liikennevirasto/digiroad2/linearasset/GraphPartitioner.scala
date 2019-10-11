@@ -1,5 +1,4 @@
 package fi.liikennevirasto.digiroad2.linearasset
-import _root_.com.vividsolutions.jts.geom.LineSegment
 import fi.liikennevirasto.GeometryUtils
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
@@ -12,7 +11,7 @@ trait GraphPartitioner {
     val generator = new BasicLineGraphGenerator(tolerance)
     links.foreach { link =>
       val (sp, ep) = GeometryUtils.geometryEndpoints(link.geometry)
-      val segment = new LineSegment(sp.x, sp.y, ep.x, ep.y)
+      val segment = new _root_.com.vividsolutions.jts.geom.LineSegment(sp.x, sp.y, ep.x, ep.y)
       val graphable = generator.add(segment)
       graphable.setObject(link)
     }
