@@ -1,5 +1,5 @@
 package fi.liikennevirasto.digiroad2.linearasset
-import com.vividsolutions.jts.geom.LineSegment
+import _root_.com.vividsolutions.jts.geom.LineSegment
 import fi.liikennevirasto.GeometryUtils
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
