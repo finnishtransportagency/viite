@@ -41,6 +41,7 @@
       var nodePointTemplate = _.sortBy(nodePointTemplates, function (nodePoint) {
         return [nodePoint.roadNumber, nodePoint.roadPartNumber, nodePoint.addrM, nodePoint.beforeAfter];
       })[0];
+      eventbus.on('nodePointTemplate:open', nodePointTemplate.id);
       return _.template('' +
         '<header>' +
         formCommon.captionTitle('Solmukohta-aihion tiedot:') +
