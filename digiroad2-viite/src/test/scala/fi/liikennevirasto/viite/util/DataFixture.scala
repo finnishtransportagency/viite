@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.util
 
 import java.util.Properties
 
+import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
@@ -13,7 +14,6 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
-import org.flywaydb.core.Flyway
 import org.joda.time.DateTime
 
 import scala.collection.mutable.ListBuffer
@@ -271,7 +271,7 @@ object DataFixture {
   }
 
   def flywayInit() {
-    flyway.baseline()
+    flyway.init()
   }
 
   def importMunicipalityCodes() {
