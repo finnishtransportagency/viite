@@ -71,9 +71,9 @@
     });
 
     eventbus.on('nodeSearchTool:clickNodePointTemplate', function(id) {
-      var moveToLocation = function(nodePoint) {
-        if (!_.isUndefined(nodePoint)) {
-          locationSearch.search(nodePoint.roadNumber + ' ' + nodePoint.roadPartNumber + ' ' + nodePoint.addrM).then(function (results) {
+      var moveToLocation = function(nodePointTemplate) {
+        if (!_.isUndefined(nodePointTemplate)) {
+          locationSearch.search(nodePointTemplate.roadNumber + ' ' + nodePointTemplate.roadPartNumber + ' ' + nodePointTemplate.addrM).then(function (results) {
             if (results.length >= 1) {
               var result = results[0];
               eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat, zoom: 12});
@@ -88,13 +88,13 @@
         return template.id === parseInt(id);
       });
       if (_.isUndefined(nodePointTemplate)) {
-        backend.getNodePointTemplateById(id, function (results) {
-          moveToLocation(results.nodePointTemplate);
-          selectedNodesAndJunctions.openNodePointTemplate(_.unique([results.nodePointTemplate], "id"));
+        backend.getNodePointTemplateById(id, function (nodePointTemplate) {
+          moveToLocation(nodePointTemplate);
+          selectedNodesAndJunctions.openNodePointTemplate([nodePointTemplate]);
         });
       } else {
         moveToLocation(nodePointTemplate);
-        selectedNodesAndJunctions.openNodePointTemplate(_.unique([nodePointTemplate], "id"));
+        selectedNodesAndJunctions.openNodePointTemplate([nodePointTemplate]);
       }
     });
 
