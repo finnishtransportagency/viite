@@ -764,7 +764,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumber(roadwayNumber: Long)(query: String): String = {
-    s"""$query where a.valid_to is null and (end_date is null or a.end_date >= sysdate) and a.ROADWAY_NUMBER = $roadwayNumber"""
+    s"""$query where a.valid_to is null and (a.end_date is null or a.end_date >= sysdate) and a.ROADWAY_NUMBER = $roadwayNumber"""
   }
 
   private def withRoadwayNumberEnded(roadwayNumber: Long)(query: String): String = {
