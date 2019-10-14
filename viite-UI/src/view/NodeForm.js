@@ -38,12 +38,41 @@
       return '<div class="form-group-node-input-metadata">' +
         '<p class="form-control-static asset-node-data">' +
         '<label class="required">' + labelText + '</label>' +
-        '<input type="text" class="form-control-static asset-input-node-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '" disabled/>' +
-        '</p>' +
-        '</div>';
+        '<input type="text" class="form-control asset-input-node-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '"/>' +
+        '</p></div>';
+    };
+
+    var addNodeTypeDropdown = function (labelText, id, nodeType) {
+      var addNodeTypeOptions = function (selected) {
+        var nodeTypes = _.filter(LinkValues.NodeType, function (nodeType) {
+          return nodeType !== LinkValues.NodeType.UnkownNodeType;
+        });
+
+        return _.map(nodeTypes, function (nodeType) {
+          var selected = nodeType.value === selected ? 'selected' : '';
+          return '<option value="' + nodeType.value + '"' + selected + '>' +
+            nodeType.value + ' ' + nodeType.description + '</option>';
+        });
+      };
+
+      var unknownNodeType = "";
+      if (nodeType === LinkValues.NodeType.UnkownNodeType) {
+        unknownNodeType = '<option value="' + nodeType.value + '" selected disabled hidden>' +
+          nodeType.value + ' ' + nodeType.description + '</option>';
+      }
+
+      return '<div class="form-group-node-input-metadata"><p class="form-control-static asset-node-data">' +
+        ' <label class="dropdown required">' + labelText + '</label>' +
+        ' <select type="text" class="form-control asset-input-node-data" id="' + id + '">' +
+        unknownNodeType +
+        addNodeTypeOptions(nodeType) +
+        ' </select></p></div>';
     };
 
     var nodeForm = function (node) {
+      var nodeNumber = node.nodeNumber ? node.nodeNumber : '-';
+      var nodeName = node.name ? node.name : '';
+      var startDate = node.startDate ? node.startDate : '';
       return _.template('' +
         '<header>' +
         formCommon.captionTitle('Solmun tiedot:') +
@@ -52,11 +81,11 @@
         '<div class="wrapper read-only">' +
         ' <div class="form form-horizontal form-dark">' +
         '   <div>' +
-        staticField('Solmunumero:', node.nodeNumber) +
-        inputFieldRequired('Solmun nimi', 'name', '', node.name, 32) +
-        inputFieldRequired('Solmutyyppi', 'type', '', getNodeType(node.type).description) +
-        inputFieldRequired('Alkupvm', 'date', 'pp.kk.vvvv', node.startDate) +
-        staticField('Koordinaatit:', node.coordY + ', ' + node.coordX) +
+        staticField('Solmunumero:', nodeNumber) +
+        staticField('Koordinaatit (<i>P</i>, <i>I</i>):', node.coordY + ', ' + node.coordX) +
+        inputFieldRequired('Solmun nimi', 'nodeName', '', nodeName, 32) +
+        addNodeTypeDropdown('Solmutyyppi', 'nodeTypeDropdown', getNodeType(node.type)) +
+        inputFieldRequired('Alkupvm', 'nodeStartDate', 'pp.kk.vvvv', startDate) +
         '   </div>' +
         '   <div>' +
         '     <p><a id="node-point-link" class="node-info-link" href="/">Näytä solmukohdat</a></p>' +
@@ -98,9 +127,12 @@
       };
 
       var junctionIcon = function (number) {
-        if (_.isUndefined(number) || number === 99) { number = ''; }
-        return '<object type="image/svg+xml" data="images/junction.svg">' +
-          ' <param name="number" value="' + number + '"/></object>';
+        if (_.isUndefined(number) || number === 99) {
+          return '<object type="image/svg+xml" data="images/junction.svg">';
+        } else {
+          return '<object type="image/svg+xml" data="images/junction.svg">' +
+            ' <param name="number" value="' + number + '"/></object>';
+        }
       };
 
       var junctionInfoHtml = function(junctionPointsInfo) {
@@ -314,6 +346,11 @@
       }
     };
 
+    var addDatePicker = function () {
+      var $date = $('#nodeStartDate');
+      dateutil.addSingleDependentDatePicker($date);
+    };
+
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
 
@@ -327,6 +364,7 @@
 
         if (!_.isEmpty(currentNode)) {
           rootElement.html(nodeForm(currentNode));
+          addDatePicker();
           var nodePointsElement = $('#node-points-info-content');
           nodePointsElement.html(nodePointsTable.toHtmlTable(currentNode.nodePoints));
           nodePointsElement.hide();

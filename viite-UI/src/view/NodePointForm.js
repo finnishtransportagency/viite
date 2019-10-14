@@ -3,9 +3,7 @@
     var formCommon = new FormCommon('node-point-');
 
     var nodeTemplatePicture = function () {
-      return '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin: 5px 5px 5px 5px">\n' +
-        '    <param name="number" value="99"/>\n' +
-        '</object>';
+      return '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin: 5px 5px 5px 5px"></object>';
     };
 
     var formButtons = function () {
