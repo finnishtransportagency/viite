@@ -16,6 +16,8 @@
       var SideCode = LinkValues.SideCode;
       var RoadZIndex = LinkValues.RoadZIndex;
 
+      var isActiveLayer = false;
+
       var indicatorLayer = new ol.layer.Vector({
         source: indicatorVector,
         name: 'indicatorLayer',
@@ -158,7 +160,7 @@
       });
 
       var selectNode = function(selectedNodes) {
-        selectedNodeAndJunctionPoint.close();
+        // eventbus.trigger('selectedNodeAndJunctionPoint:close');
         var node = _.first(_.unique(_.map(selectedNodes, "nodeInfo"), "id"));
         selectedNodeAndJunctionPoint.openNode(node);
         highlightNode(node.id);
@@ -171,13 +173,13 @@
       };
 
       var selectNodePointTemplate = function(selectedNodePointTemplates) {
-        selectedNodeAndJunctionPoint.close();
+        // eventbus.trigger('selectedNodeAndJunctionPoint:close');
         selectedNodeAndJunctionPoint.openNodePointTemplate(_.unique(_.map(selectedNodePointTemplates, "nodePointTemplateInfo"), "id"));
       };
 
-      var selectJunctionTemplate = function (selectedJunctionPointTemplates) {
-        selectedNodeAndJunctionPoint.close();
-        selectedNodeAndJunctionPoint.openJunctionTemplate(_.first(_.unique(_.map(selectedJunctionPointTemplates, "junctionTemplateInfo"), "junctionId")));
+      var selectJunctionTemplate = function (selectedJunctionTemplates) {
+        // eventbus.trigger('selectedNodeAndJunctionPoint:close');
+        selectedNodeAndJunctionPoint.openJunctionTemplate(_.first(_.unique(_.map(selectedJunctionTemplates, "junctionTemplateInfo"), "junctionId")));
       };
 
       var selectFeaturesToHighlight = function (vector, featuresToHighlight, otherFeatures) {
@@ -217,20 +219,24 @@
         setGeneralOpacity(1);
       };
 
+      var toggleSelectInteractions = function (activate) {
+        nodeAndJunctionPointTemplateClick.setActive(activate);
+      };
+
       /**
        * This will add all the following interactions from the map:
        * - nodeAndJunctionPointTemplateClick
        */
-      var addClickInteractions = function () {
+      var addSelectInteractions = function () {
         map.addInteraction(nodeAndJunctionPointTemplateClick);
       };
 
-      var removeClickInteractions = function () {
+      var removeSelectInteractions = function () {
         map.removeInteraction(nodeAndJunctionPointTemplateClick);
       };
 
       // We add the defined interactions to the map.
-      addClickInteractions();
+      addSelectInteractions();
 
       me.eventListener.listenTo(eventbus, 'node:unselected junctions:unselected nodePointTemplate:unselected junctionTemplate:unselected', function () {
         clearHighlights();
@@ -262,8 +268,9 @@
       });
 
       var addNodeToMap = function (node) {
-        var nodeMarker = new NodeMarker();
-        nodeMarkerSelectedLayer.getSource().addFeature(nodeMarker.createNodeMarker(node));
+        var nodeMarker = new NodeMarker().createNodeMarker(node);
+        nodeMarkerSelectedLayer.getSource().addFeature(nodeMarker);
+        return nodeMarker;
       };
 
       var createUserNodeMarker = function (coords) {
@@ -272,7 +279,7 @@
           coordY: parseInt(coords.y, 10),
           type:   LinkValues.NodeType.UnkownNodeType.value
         };
-        addNodeToMap(node);
+        node.nodeMarker = addNodeToMap(node);
         selectedNodeAndJunctionPoint.openNode(node);
         eventbus.trigger('tool:changed', LinkValues.Tool.Unknown.value);
 
@@ -313,11 +320,18 @@
       });
 
       me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
-        me.clearLayers();
+        isActiveLayer = layer === 'node';
+        toggleSelectInteractions(isActiveLayer);
+        if (isActiveLayer) {
+          addSelectInteractions();
+        } else {
+          clearHighlights();
+          removeSelectInteractions();
+        }
         if (previouslySelectedLayer === 'node') {
           hideLayer();
-          removeClickInteractions();
-        } else if (layer === 'node') {
+          removeSelectInteractions();
+        } else {
           setGeneralOpacity(1);
           showLayer();
           eventbus.trigger('nodeLayer:fetch');
@@ -378,8 +392,8 @@
           var selectedNode = selectedNodeAndJunctionPoint.getCurrentNode();
 
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
-            if (!_.isUndefined(selectedNode) && _.isUndefined(selectedNode.id)) {
-              nodeMarkerLayer.getSource().addFeature(new NodeMarker().createNodeMarker(selectedNode));
+            if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.nodeMarker)) {
+                nodeMarkerLayer.getSource().addFeature(selectedNode.nodeMarker); // adds node created by user which isn't saved yet.
             }
 
             _.each(nodes, function (node) {
@@ -440,7 +454,11 @@
 
         eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers);
 
-        // eventListener.listenTo(eventbus, '')
+        eventListener.listenTo(eventbus, 'nodeType:changed', function (node) {
+          if (!_.isUndefined(node)) {
+            var nodeMarker = node.nodeMarker;
+          }
+        });
       };
 
       var showLayer = function () {

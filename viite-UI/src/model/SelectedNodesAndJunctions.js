@@ -4,8 +4,8 @@
     var dirty = false;
 
     var openNode = function (node) {
+      eventbus.trigger('node:selected', node);
       setCurrentNode(node);
-      eventbus.trigger('node:selected');
     };
 
     var openNodePointTemplate = function (nodePointTemplates) {
@@ -44,7 +44,7 @@
 
     var setNodeType = function (nodeType) {
       current.node.nodeType = nodeType;
-      eventbus.trigger('nodeType:changed');
+      eventbus.trigger('nodeType:changed', current.node);
     };
 
     var isDirty = function () {
@@ -60,13 +60,22 @@
       dirty = false;
     };
 
-    var close = function () {
+    var close = function (options) {
       clean();
-      eventbus.trigger('node:unselected');
-      eventbus.trigger('nodePointTemplate:unselected');
-      eventbus.trigger('junctionTemplate:unselected');
+      eventbus.trigger(options);
       eventbus.trigger('nodesAndJunctions:open');
-      eventbus.trigger('nodeLayer:fetch');
+    };
+
+    var closeNode = function () {
+      close('node:unselected');
+    };
+
+    var closeNodePoint = function () {
+      close('nodePointTemplate:unselected');
+    };
+
+    var closeJunction = function () {
+      close('junctionTemplate:unselected');
     };
 
     return {
@@ -79,8 +88,9 @@
       setNodeType: setNodeType,
       isDirty: isDirty,
       setDirty: setDirty,
-      clean: clean,
-      close: close
+      closeNode: closeNode,
+      closeNodePoint: closeNodePoint,
+      closeJunction: closeJunction
     };
 
   };
