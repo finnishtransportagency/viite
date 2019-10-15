@@ -222,14 +222,14 @@
         return '<td class="node-points-table">' + rowInfo.road + '</td>' +
           '<td class="node-points-table">' + rowInfo.part + '</td>' +
           '<td class="node-points-table">' + rowInfo.addr + '</td>' +
-          '<td class="node-points-table">' + rowInfo.EJ + '</td>';
+          '<td class="node-points-table">' + rowInfo.beforeAfter + '</td>';
       };
 
       var getNodePointsRowsInfo = function(nodePoints){
         var info = [];
         if(!_.isUndefined(nodePoints) && nodePoints.length > 0){
         _.map(nodePoints, function(point){
-          var row = {nodeId: point.nodeId, nodePointId: point.id, road: point.road, part: point.part, addr: point.addrM, EJ: point.beforeOrAfter};
+          var row = {nodeId: point.nodeId, nodePointId: point.id, road: point.road, part: point.part, addr: point.addrM, beforeAfter: point.beforeOrAfter};
           info.push(row);
         });
 
@@ -246,12 +246,12 @@
 
         var doubleRows = _.map(doubleHomogeneousRows, function(drows){
           var first = _.first(drows);
-          return {nodePointId: first.nodePointId, road: first.road, part: first.part, addr: first.addr, EJ: "EJ"};
+          return {nodePointId: first.nodePointId, road: first.road, part: first.part, addr: first.addr, beforeAfter: "EJ"};
         });
 
         var singleRows = _.map(singleHomogeneousRows, function(drows){
           var first = _.first(drows);
-          return {nodePointId: first.nodePointId, road: first.road, part: first.part, addr: first.addr, EJ: (first.EJ === 1 ? "E" : "J")};
+          return {nodePointId: first.nodePointId, road: first.road, part: first.part, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J")};
         });
 
         return doubleRows.concat(singleRows);
