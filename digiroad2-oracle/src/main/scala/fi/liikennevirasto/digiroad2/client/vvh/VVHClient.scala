@@ -9,9 +9,10 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{Unknown => _, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import org.apache.http.NameValuePair
+import org.apache.http.{HttpResponse, NameValuePair}
+import org.apache.http.client.ClientProtocolException
 import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.joda.time.format.DateTimeFormat
@@ -359,18 +360,18 @@ trait VVHClientOperations {
     time(logger, s"Fetch VVH features with url '$url'") {
       val request = new HttpGet(url)
       val client = HttpClientBuilder.create().build()
+      var response: CloseableHttpResponse = null
       try {
-        val response = client.execute(request)
-        try {
-          mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
-        } finally {
-          response.close()
-          if (response.getStatusLine.getStatusCode >= 300) {
-           return Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
-          }
-        }
+        response = client.execute(request)
+        mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
       } catch {
         case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
+      } finally {
+        if (response != null)
+          response.close()
+        if (response.getStatusLine.getStatusCode >= 300) {
+          return Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+        }
       }
     }
   }

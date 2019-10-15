@@ -163,8 +163,8 @@
         // eventbus.trigger('selectedNodeAndJunctionPoint:close');
         var node = _.first(_.unique(_.map(selectedNodes, "nodeInfo"), "id"));
         selectedNodeAndJunctionPoint.openNode(node);
+        clearHighlights();
         highlightNode(node.id);
-        highlightJunctions(node.id);
 
         setOpacityFor([
           nodePointTemplateLayer,
@@ -190,23 +190,24 @@
       };
 
       var highlightNode = function (nodeId) {
+        var highlightJunctions = function(nodeId) {
+          var junctions = _.partition(junctionMarkerLayer.getSource().getFeatures(), function (junctionFeature) {
+            return junctionFeature.junction.nodeId === nodeId;
+          });
+
+          selectFeaturesToHighlight(junctionMarkerVector, junctions[0], junctions[1]);
+
+          setOpacityFor([junctionMarkerLayer], 0.2);
+      };
+
         var nodes = _.partition(nodeMarkerLayer.getSource().getFeatures(), function (nodeFeature) {
           return nodeFeature.nodeInfo.id === nodeId;
         });
 
         selectFeaturesToHighlight(nodeMarkerVector, nodes[0], nodes[1]);
+        highlightJunctions(nodeId);
 
-        setOpacityFor([nodeMarkerLayer], 0.2);
-      };
-
-      var highlightJunctions = function(nodeId) {
-        var junctions = _.partition(junctionMarkerLayer.getSource().getFeatures(), function (junctionFeature) {
-          return junctionFeature.junction.nodeId === nodeId;
-        });
-
-        selectFeaturesToHighlight(junctionMarkerVector, junctions[0], junctions[1]);
-
-        setOpacityFor([junctionMarkerLayer], 0.2);
+        nodeMarkerLayer.setOpacity(0.2);
       };
 
       var clearHighlights = function () {
@@ -445,6 +446,11 @@
                 junctionTemplateLayer.getSource().addFeature(junctionTemplateMarker.createJunctionTemplateMarker(junctionTemplate, roadLink));
               }
             });
+          }
+
+          if (!_.isUndefined(selectedNode.id)) {
+            clearHighlights();
+            highlightNode(selectedNode.id);
           }
         });
 
