@@ -69,16 +69,16 @@ object Digiroad2Context {
 
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
-//  val logger: Logger = LoggerFactory.getLogger(getClass)
-//  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per minute
-//    try {
-//      projectService.updateProjectsWaitingResponseFromTR()
-//    } catch {
-//      case  NonFatal(ex) =>
-//        logger.error("Exception at TR checks:" + ex.getMessage)
-//        System.err.println("Exception at TR checks: " + ex.getMessage)
-//    }
-//  }
+  val logger: Logger = LoggerFactory.getLogger(getClass)
+  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per minute
+    try {
+      projectService.updateProjectsWaitingResponseFromTR()
+    } catch {
+      case  NonFatal(ex) =>
+        logger.error("Exception at TR checks:" + ex.getMessage)
+        System.err.println("Exception at TR checks: " + ex.getMessage)
+    }
+  }
 
   system.scheduler.schedule(FiniteDuration(5, TimeUnit.MINUTES), FiniteDuration(5, TimeUnit.MINUTES)) { // first query after 5 minutes, then once per 5 minute
     try {
