@@ -692,28 +692,31 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         if (roadwayPoints.nonEmpty) {
           if (change.changeType == Transfer || change.changeType == Unchanged) {
             if (!change.reversed) {
-              roadwayPoints.flatMap { rwp =>
+              val rwPoints: Seq[(Long, Long, String, Long)] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
                 val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp, newAddrM)
-                if (roadwayNumberInPoint.isDefined) list :+ (roadwayNumberInPoint.get, newAddrM, username, rwp.id)
-                else list
+                if (roadwayNumberInPoint.isDefined) Seq((roadwayNumberInPoint.get, newAddrM, username, rwp.id))
+                else Seq()
               }
+              list ++ rwPoints
             } else {
-              roadwayPoints.flatMap { rwp =>
+              val rwPoints: Seq[(Long, Long, String, Long)] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
                 val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp, newAddrM)
-                if (roadwayNumberInPoint.isDefined) list :+ (roadwayNumberInPoint.get, newAddrM, username, rwp.id)
-                else list
+                if (roadwayNumberInPoint.isDefined) Seq((roadwayNumberInPoint.get, newAddrM, username, rwp.id))
+                else Seq()
               }
+              list ++ rwPoints
             }
           } else if (change.changeType == ReNumeration) {
             if (change.reversed) {
-              roadwayPoints.flatMap { rwp =>
+              val rwPoints: Seq[(Long, Long, String, Long)] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
                 val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp, newAddrM)
-                if (roadwayNumberInPoint.isDefined) list :+ (roadwayNumberInPoint.get, newAddrM, username, rwp.id)
-                else list
+                if (roadwayNumberInPoint.isDefined) Seq((roadwayNumberInPoint.get, newAddrM, username, rwp.id))
+                else Seq()
               }
+              list ++ rwPoints
             } else {
               list
             }
