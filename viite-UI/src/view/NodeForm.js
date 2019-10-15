@@ -187,7 +187,7 @@
 
         var singleRows = _.map(singleHomogeneousRows, function(point) {
           var first = _.first(point);
-          return {road: first.road, track: first.track, part: first.part, addr: first.addr, beforeAfter: (first.beforeOrAfter === 1 ? "E" : "J")};
+          return {road: first.road, track: first.track, part: first.part, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J")};
         });
 
         return _.sortBy(doubleRows.concat(singleRows), ['road', 'part', 'track', 'addr', 'beforeAfter']);
@@ -251,7 +251,7 @@
 
         var singleRows = _.map(singleHomogeneousRows, function(drows){
           var first = _.first(drows);
-          return {nodePointId: first.nodePointId, road: first.road, part: first.part, addr: first.addr, EJ: (first.beforeOrAfter == 1 ? "E" : "J")};
+          return {nodePointId: first.nodePointId, road: first.road, part: first.part, addr: first.addr, EJ: (first.EJ === 1 ? "E" : "J")};
         });
 
         return doubleRows.concat(singleRows);
