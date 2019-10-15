@@ -42,6 +42,11 @@
       return current.junctionTemplate;
     };
 
+    var setNodeType = function (nodeType) {
+      current.node.nodeType = nodeType;
+      eventbus.trigger('nodeType:changed');
+    };
+
     var isDirty = function () {
       return dirty;
     };
@@ -71,6 +76,7 @@
       getCurrentNode: getCurrentNode,
       getCurrentNodePointTemplates: getCurrentNodePointTemplates,
       getCurrentJunctionTemplate: getCurrentJunctionTemplate,
+      setNodeType: setNodeType,
       isDirty: isDirty,
       setDirty: setDirty,
       clean: clean,

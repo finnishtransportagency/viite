@@ -351,11 +351,43 @@
       dateutil.addSingleDependentDatePicker($date);
     };
 
+    var textFieldChangeHandler = function () {
+      if (selectedNode) {
+        selectedNode.setDirty(true);
+      }
+
+      var textIsNonEmpty = $('#nodeName').val() !== "";
+      var nodeTypeIsValid = $('#nodeTypeDropdown :selected').val() !== LinkValues.NodeType.UnkownNodeType.value.toString();
+      var dateIsNonEmpty = $('#nodeStartDate').val() !== "";
+
+      if (textIsNonEmpty && nodeTypeIsValid && dateIsNonEmpty) {
+        $('.btn-edit-node-save').removeProp('disabled');
+      } else {
+        $('.btn-edit-node-save').prop('disabled', true);
+      }
+    };
+
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
 
       rootElement.on('click', '.btn-edit-node-cancel', function () {
-        selectedNode.close();
+        if (selectedNode.isDirty()) {
+          new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
+            successCallback: function () {
+              // saveAndNext();
+              // eventbus.trigger('roadAddressProject:enableInteractions');
+            },
+            closeCallback: function () {
+              selectedNode.close();
+            }
+          });
+        } else {
+          selectedNode.close();
+        }
+      });
+
+      eventbus.on('nodeType:changed', function (nodeType) {
+        // TODO - UPDATE CURRENT NODE TYPE VIEW ! - open layers tricks again !
       });
 
       eventbus.on('node:selected', function () {
@@ -386,6 +418,17 @@
           selectedNode.close();
         }
       });
+
+      rootElement.on('change', '#nodeName, #nodeTypeDropdown, #nodeStartDate', function () {
+        textFieldChangeHandler();
+      });
+
+      rootElement.on('change', '#nodeTypeDropdown', function () {
+        var nodeType = $(this).val();
+        selectedNode.setNodeType(nodeType);
+      });
+
+
     };
 
     bindEvents();
