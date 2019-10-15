@@ -99,7 +99,6 @@
             new StyleRule().where('roadLinkSource').is(LinkValues.LinkGeomSource.ComplementaryLinkInterface.value).and('roadClass').is(LinkValues.RoadClass.NoClass.value).use({stroke: {color: '#D3AFF6', lineCap: 'round'}}),
             new StyleRule().where('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).and('roadClass').is(LinkValues.RoadClass.NoClass.value).use({stroke: {color:'#000', lineCap: 'butt', lineDash: [10, 10], opacity: 1}}),
             new StyleRule().where('roadLinkSource').is(LinkValues.LinkGeomSource.ComplementaryLinkInterface.value).and('status').is(unknownStatus).use({stroke: {color: '#D3AFF6', opacity: 1}})
-
         ];
 
         var underConstructionRules = [
@@ -118,6 +117,18 @@
             new StyleRule().where('status').is(unknownStatus).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: '#383836', lineCap: 'round', opacity: 1}})
             ];
 
+      var borderRules = [
+        new StyleRule().where('zoomLevel').isIn([5, 6]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 7 }}),
+        new StyleRule().where('zoomLevel').isIn([7, 8]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 8 }}),
+        new StyleRule().where('zoomLevel').is(9).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 9 }}),
+        new StyleRule().where('zoomLevel').is(10).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 10 }}),
+        new StyleRule().where('zoomLevel').is(11).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 11 }}),
+        new StyleRule().where('zoomLevel').is(12).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 12 }}),
+        new StyleRule().where('zoomLevel').is(13).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 15 }}),
+        new StyleRule().where('zoomLevel').is(14).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 17 }}),
+        new StyleRule().where('zoomLevel').is(15).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 19 }})
+      ];
+
         var selectionStyleRules = [
             new StyleRule().where('status').is(terminatedStatus).and('connectedLinkId').isDefined().use({stroke: {color: '#C6C00F'}})
         ];
@@ -132,6 +143,7 @@
         underConstructionStyle.addRules(underConstructionRules);
 
         var projectLinkStyle = new StyleRuleProvider({stroke: {opacity: 0.5}, zIndex: 3});
+        projectLinkStyle.addRules(borderRules);
         projectLinkStyle.addRules(strokeWidthRules);
         projectLinkStyle.addRules(fillWidthRules);
         projectLinkStyle.addRules(strokeRules);
