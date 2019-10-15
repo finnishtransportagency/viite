@@ -87,8 +87,8 @@
           '<th class="node-junctions-table-header">NRO</th>' +
           '<th class="node-junctions-table-header">TIE</th>' +
           '<th class="node-junctions-table-header">AJR</th>' +
-          '<th class="node-junctions-table-header">AOSA</th>' +
-          '<th class="node-junctions-table-header">AET</th>' +
+          '<th class="node-junctions-table-header">OSA</th>' +
+          '<th class="node-junctions-table-header">ET</th>' +
           '<th class="node-junctions-table-header">EJ</th>' +
           '</tr>';
       };
@@ -267,8 +267,8 @@
           ' </table>' +
           '</th>' +
           '<th class="node-points-table-header">TIE</th>' +
-          '<th class="node-points-table-header">AOSA</th>' +
-          '<th class="node-points-table-header">AET</th>' +
+          '<th class="node-points-table-header">OSA</th>' +
+          '<th class="node-points-table-header">ET</th>' +
           '<th class="node-points-table-header">EJ</th>' +
           '</tr>';
       };
