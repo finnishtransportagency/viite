@@ -352,7 +352,7 @@
     };
 
     var textFieldChangeHandler = function () {
-      if (selectedNode) {
+      if (!_.isUndefined(selectedNode.getCurrentNode())) {
         selectedNode.setDirty(true);
       }
 
@@ -367,33 +367,47 @@
       }
     };
 
+    var showCloseConfirmPopupMessage = function () {
+      new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
+        successCallback: function () {
+          selectedNode.save();
+        },
+        closeCallback: function () {
+          selectedNode.closeNode();
+        }
+      });
+    };
+
+    var closeForm = function () {
+      if (selectedNode.isDirty()) {
+        showCloseConfirmPopupMessage();
+      } else {
+        selectedNode.closeNode();
+      }
+    };
+
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
 
+      rootElement.on('change', '#nodeName, #nodeTypeDropdown, #nodeStartDate', function () {
+        textFieldChangeHandler();
+      });
+
+      rootElement.on('change', '#nodeTypeDropdown', function () {
+        var nodeType = $(this).val();
+        selectedNode.setNodeType(nodeType);
+      });
+
       rootElement.on('click', '.btn-edit-node-cancel', function () {
-        if (selectedNode.isDirty()) {
-          new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
-            successCallback: function () {
-              // saveAndNext();
-              // eventbus.trigger('roadAddressProject:enableInteractions');
-            },
-            closeCallback: function () {
-              selectedNode.close();
-            }
-          });
-        } else {
-          selectedNode.close();
-        }
+        closeForm();
       });
 
-      eventbus.on('nodeType:changed', function (nodeType) {
-        // TODO - UPDATE CURRENT NODE TYPE VIEW ! - open layers tricks again !
+      eventbus.on('selectedNodeAndJunctionPoint:close', function () {
+        closeForm();
       });
 
-      eventbus.on('node:selected', function () {
+      eventbus.on('node:selected', function (currentNode) {
         rootElement.empty();
-        var currentNode = selectedNode.getCurrentNode();
-
         if (!_.isEmpty(currentNode)) {
           rootElement.html(nodeForm(currentNode));
           addDatePicker();
@@ -413,22 +427,8 @@
             toggleContentTable($(this), showJunctions, hideJunctions);
             return false;
           });
-
-        } else {
-          selectedNode.close();
         }
       });
-
-      rootElement.on('change', '#nodeName, #nodeTypeDropdown, #nodeStartDate', function () {
-        textFieldChangeHandler();
-      });
-
-      rootElement.on('change', '#nodeTypeDropdown', function () {
-        var nodeType = $(this).val();
-        selectedNode.setNodeType(nodeType);
-      });
-
-
     };
 
     bindEvents();

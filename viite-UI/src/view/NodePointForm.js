@@ -74,20 +74,19 @@
       var rootElement = $('#feature-attributes');
 
       rootElement.on('click', '.btn-return-list', function () {
-        selectedNodePoint.close();
+        selectedNodePoint.closeNodePoint();
+      });
+
+      eventbus.on('selectedNodeAndJunctionPoint:close', function () {
+        selectedNodePoint.closeNodePoint();
       });
 
       eventbus.on('nodePointTemplate:selected', function () {
         rootElement.empty();
         var templatesList = selectedNodePoint.getCurrentNodePointTemplates();
-        var nodePointsList = [];
 
         if (!_.isEmpty(templatesList)) {
           rootElement.html(nodePointTemplateForm(templatesList));
-        } else if (!_.isEmpty(nodePointsList)) {
-          // build form for node point.
-        } else {
-          selectedNodePoint.close();
         }
 
       });
