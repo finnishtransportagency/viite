@@ -117,17 +117,20 @@
             new StyleRule().where('status').is(unknownStatus).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: '#383836', lineCap: 'round', opacity: 1}})
             ];
 
-      var borderRules = [
-        new StyleRule().where('zoomLevel').isIn([5, 6]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 7 }}),
-        new StyleRule().where('zoomLevel').isIn([7, 8]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 8 }}),
-        new StyleRule().where('zoomLevel').is(9).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 9 }}),
-        new StyleRule().where('zoomLevel').is(10).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 10 }}),
-        new StyleRule().where('zoomLevel').is(11).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 11 }}),
-        new StyleRule().where('zoomLevel').is(12).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 12 }}),
-        new StyleRule().where('zoomLevel').is(13).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 15 }}),
-        new StyleRule().where('zoomLevel').is(14).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 17 }}),
-        new StyleRule().where('zoomLevel').is(15).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({color: '#1E1E1E', lineCap: 'round', stroke: {width: 19 }})
-      ];
+        var borderRules = [
+          new StyleRule().where('zoomLevel').isIn([5, 6]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 7 }}),
+          new StyleRule().where('zoomLevel').isIn([7, 8]).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 8 }}),
+          new StyleRule().where('zoomLevel').is(9).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 9 }}),
+          new StyleRule().where('zoomLevel').is(10).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 10 }}),
+          new StyleRule().where('zoomLevel').is(11).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 11 }}),
+          new StyleRule().where('zoomLevel').is(12).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 12 }}),
+          new StyleRule().where('zoomLevel').is(13).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 15 }}),
+          new StyleRule().where('zoomLevel').is(14).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 17 }}),
+          new StyleRule().where('zoomLevel').is(15).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 19 }})
+        ];
+
+        var projectBorderStyle = new StyleRuleProvider({stroke: {lineCap: 'round', color: 'rgba(0, 0, 0, 0.5)'}, zIndex: LinkValues.RoadZIndex.VectorLayer.value});
+        projectBorderStyle.addRules(borderRules);
 
         var selectionStyleRules = [
             new StyleRule().where('status').is(terminatedStatus).and('connectedLinkId').isDefined().use({stroke: {color: '#C6C00F'}})
@@ -143,7 +146,6 @@
         underConstructionStyle.addRules(underConstructionRules);
 
         var projectLinkStyle = new StyleRuleProvider({stroke: {opacity: 0.5}, zIndex: 3});
-        projectLinkStyle.addRules(borderRules);
         projectLinkStyle.addRules(strokeWidthRules);
         projectLinkStyle.addRules(fillWidthRules);
         projectLinkStyle.addRules(strokeRules);
@@ -153,6 +155,10 @@
         selectionLinkStyle.addRules(strokeWidthRules);
         selectionLinkStyle.addRules(selectionStyleRules);
         selectionLinkStyle.addRules(cutterStyleRules);
+
+        var getProjectBorderStyle = function(){
+          return projectBorderStyle;
+        };
 
         var getUnderConstructionStyle = function () {
             return underConstructionStyle;
@@ -166,6 +172,10 @@
             return selectionLinkStyle;
         };
 
+        var getProjectBorderStyler = function (linkData, zoom) {
+          return getProjectBorderStyle().getStyle(linkData, zoom);
+        };
+
         var getUnderConstructionStyler = function (linkData, zoom) {
             return getUnderConstructionStyle().getStyle(linkData, zoom);
         };
@@ -177,7 +187,8 @@
         return {
             getUnderConstructionStyler: getUnderConstructionStyler,
             getProjectLinkStyler: getProjectLinkStyler,
-            getSelectionLinkStyle: getSelectionLinkStyle
+            getSelectionLinkStyle: getSelectionLinkStyle,
+            getProjectBorderStyler: getProjectBorderStyler
         };
     };
 })(this);
