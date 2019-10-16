@@ -145,7 +145,7 @@ module.exports = function(grunt) {
             host: 'oag.liikennevirasto.fi',
             port: '80',
             https: true,
-            changeOrigin: false,
+            changeOrigin: true,
             xforward: false
           },
           {
