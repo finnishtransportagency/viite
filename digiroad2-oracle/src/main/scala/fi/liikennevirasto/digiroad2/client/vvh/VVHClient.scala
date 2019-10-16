@@ -9,10 +9,10 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{Unknown => _, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import org.apache.http.NameValuePair
+import org.apache.http.{HttpResponse, NameValuePair}
 import org.apache.http.client.ClientProtocolException
 import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.joda.time.format.DateTimeFormat
@@ -323,7 +323,7 @@ trait VVHClientOperations {
   }
 
   protected def queryParameters(fetchGeometry: Boolean = true): String = {
-    if (fetchGeometry && !disableGeometry) "returnGeometry=true&returnZ=false&returnM=true&geometryPrecision=3&f=json"
+    if (fetchGeometry && !disableGeometry) "returnGeometry=true&returnZ=true&returnM=true&geometryPrecision=3&f=json"
     else "returnGeometry=false&f=json"
   }
 
@@ -360,20 +360,18 @@ trait VVHClientOperations {
     time(logger, s"Fetch VVH features with url '$url'") {
       val request = new HttpGet(url)
       val client = HttpClientBuilder.create().build()
+      var response: CloseableHttpResponse = null
       try {
-        val response = client.execute(request)
-        try {
-          mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
-        } finally {
-          response.close()
-          if (response.getStatusLine.getStatusCode >= 300) {
-           return Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
-          }
-        }
+        response = client.execute(request)
+        mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
       } catch {
         case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
-        case _: ClientProtocolException => Right(VVHError(Map(("VVH FETCH failure", "ClientProtocol Exception during VVH fetch. Check connection to VVH")), url))
-        case _: UnsupportedOperationException => Right(VVHError(Map(("VVH FETCH failure", "UnsupportedOperation Exception during VVH fetch. Check connection to VVH")), url))
+      } finally {
+        if (response != null)
+          response.close()
+        if (response.getStatusLine.getStatusCode >= 300) {
+          return Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+        }
       }
     }
   }
@@ -404,8 +402,6 @@ trait VVHClientOperations {
         }
       } catch {
         case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
-        case _: ClientProtocolException => Right(VVHError(Map(("VVH FETCH failure", "ClientProtocol Exception during VVH fetch. Check connection to VVH")), url))
-        case _: UnsupportedOperationException => Right(VVHError(Map(("VVH FETCH failure", "UnsupportedOperation Exception during VVH fetch. Check connection to VVH")), url))
       }
     }
   }
@@ -592,10 +588,10 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
 
   protected def extractRoadLinkFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHRoadlink = {
     val linkGeometry: Seq[Point] = path.map(point => {
-      Point(point(0), point(1))
+      Point(point(0), point(1), extractMeasure(point(2)).get)
     })
-    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> 0.0, "m" -> point(2))))
-    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + 0.0 + " " + point(2)).mkString(", ") + ")"))
+    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
+    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ") + ")"))
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val mtkClass = attributes("MTKCLASS")
@@ -1012,11 +1008,11 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
     val attributes = extractFeatureAttributes(feature)
     val path = extractFeatureGeometry(feature)
     val linkGeometry: Seq[Point] = path.map(point => {
-      Point(point(0), point(1))
+      Point(point(0), point(1), extractMeasure(point(2)).get)
     })
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
-    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> 0.0, "m" -> point(2))))
-    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + 0.0 + " " + point(2)).mkString(", ") + ")"))
+    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
+    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ") + ")"))
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val createdDate = attributes("CREATED_DATE").asInstanceOf[BigInt].longValue()
     val endTime = attributes("END_DATE").asInstanceOf[BigInt].longValue()
