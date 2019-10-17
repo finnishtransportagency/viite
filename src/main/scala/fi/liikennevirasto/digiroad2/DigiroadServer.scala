@@ -124,7 +124,6 @@ class ArcGisProxyServlet extends ProxyServlet {
 }
 
 class VKMProxyServlet extends ProxyServlet {
-  private val logger = LoggerFactory.getLogger(getClass)
   def regex: Regex = "/(digiroad|viite)".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
@@ -140,7 +139,6 @@ class VKMProxyServlet extends ProxyServlet {
     parameters.foreach { case(key, value) =>
       proxyRequest.param(key, value.mkString(""))
     }
-    logger.info(s"Sending proxy request to VKM: ${proxyRequest.getMethod} ${proxyRequest.getHost}${proxyRequest.getPath} ${proxyRequest.getParams}")
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
