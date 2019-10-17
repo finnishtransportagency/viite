@@ -168,7 +168,6 @@
       },
       getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,
-      selectedToolIs: selectedToolIs,
       getSelectedTool: function () {
         return selectedTool;
       },

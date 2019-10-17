@@ -42,9 +42,16 @@
       return current.junctionTemplate;
     };
 
-    var setNodeType = function (nodeType) {
-      current.node.nodeType = nodeType;
-      eventbus.trigger('nodeType:changed', current.node);
+    var setName = function (name) {
+      current.node.name = name;
+      eventbus.trigger('changed:name', current.node);
+      setDirty(true);
+    };
+
+    var setType = function (type) {
+      current.node.type = type;
+      eventbus.trigger('changed:type', current.node);
+      setDirty(true);
     };
 
     var isDirty = function () {
@@ -60,14 +67,18 @@
       dirty = false;
     };
 
-    var close = function (options) {
+    var close = function (options, params) {
       clean();
-      eventbus.trigger(options);
+      eventbus.trigger(options, params);
       eventbus.trigger('nodesAndJunctions:open');
     };
 
     var closeNode = function () {
-      close('node:unselected');
+      var node = {};
+      if (!_.isUndefined(current.node) && _.isUndefined(current.node.id)) {
+        node = current.node;
+      }
+      close('node:unselected', node);
     };
 
     var closeNodePoint = function () {
@@ -78,6 +89,15 @@
       close('junctionTemplate:unselected');
     };
 
+    var save = function (options, params) {
+      eventbus.trigger(options, params);
+    };
+
+    var saveNode = function () {
+      save('node:save', current.node);
+      setDirty(false);
+    };
+
     return {
       openNode: openNode,
       openNodePointTemplate: openNodePointTemplate,
@@ -85,12 +105,15 @@
       getCurrentNode: getCurrentNode,
       getCurrentNodePointTemplates: getCurrentNodePointTemplates,
       getCurrentJunctionTemplate: getCurrentJunctionTemplate,
-      setNodeType: setNodeType,
+      setName: setName,
+      setType: setType,
       isDirty: isDirty,
       setDirty: setDirty,
       closeNode: closeNode,
       closeNodePoint: closeNodePoint,
-      closeJunction: closeJunction
+      closeJunction: closeJunction,
+      save: save,
+      saveNode: saveNode
     };
 
   };

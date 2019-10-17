@@ -49,7 +49,7 @@
         });
 
         return _.map(nodeTypes, function (nodeType) {
-          var selected = nodeType.value === selected ? 'selected' : '';
+          var selected = nodeType === selected ? 'selected' : '';
           return '<option value="' + nodeType.value + '"' + selected + '>' +
             nodeType.value + ' ' + nodeType.description + '</option>';
         });
@@ -370,7 +370,7 @@
     var showCloseConfirmPopupMessage = function () {
       new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
         successCallback: function () {
-          selectedNode.save();
+          selectedNode.saveNode();
         },
         closeCallback: function () {
           selectedNode.closeNode();
@@ -393,16 +393,19 @@
         textFieldChangeHandler();
       });
 
+      rootElement.on('change', '#nodeName', function () {
+        selectedNode.setName(($(this).val()));
+      });
+
       rootElement.on('change', '#nodeTypeDropdown', function () {
-        var nodeType = $(this).val();
-        selectedNode.setNodeType(nodeType);
+        selectedNode.setType(parseInt($(this).val()));
+      });
+
+      rootElement.on('click', '.btn-edit-node-save', function () {
+        selectedNode.saveNode();
       });
 
       rootElement.on('click', '.btn-edit-node-cancel', function () {
-        closeForm();
-      });
-
-      eventbus.on('selectedNodeAndJunctionPoint:close', function () {
         closeForm();
       });
 
