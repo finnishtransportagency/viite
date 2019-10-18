@@ -398,11 +398,11 @@
       var deferred;
       var request;
 
-      function doRequest(){
-        if(request)
+      function doRequest() {
+        if (request)
           request.abort();
 
-        request = $.ajax(getParameters.apply(undefined, arguments)).done(function(result){
+        request = $.ajax(getParameters.apply(undefined, arguments)).done(function(result) {
           deferred.resolve(result);
         });
         return deferred;
