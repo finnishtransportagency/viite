@@ -142,9 +142,7 @@
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 
-    var toolTip = '<div id="infoTooltip">' +
-        '<i class="fas fa-info-circle" title="Versio: ' + startupParameters.deploy_date + '"></i>\n' +
-        '</div>';
+    var toolTip = '<i class="fas fa-info-circle" title="Versio: ' + startupParameters.deploy_date + '"></i>\n';
 
     var pictureTooltip = jQuery('#pictureTooltip');
     pictureTooltip.empty();
