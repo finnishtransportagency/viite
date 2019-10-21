@@ -270,7 +270,9 @@
             break;
           case LinkValues.Tool.Add.value:
             me.eventListener.listenTo(eventbus, 'map:clicked', createNewNodeMarker);
-            selectedNodeAndJunctionPoint.closeForm();
+            if (!_.isUndefined(selectedNodeAndJunctionPoint.getCurrentNode()) || !_.isUndefined(selectedNodeAndJunctionPoint.getCurrentNodePointTemplates()) || !_.isUndefined(selectedNodeAndJunctionPoint.getCurrentJunctionTemplate())) {
+              selectedNodeAndJunctionPoint.closeForm();
+            }
             setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
             break;
         }

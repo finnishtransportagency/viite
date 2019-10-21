@@ -269,7 +269,7 @@ class NodeDAO extends BaseDAO {
 
     val ps = dynamicSession.prepareStatement(
       """insert into NODE (ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, CREATED_BY, VALID_FROM)
-      values (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)""".stripMargin)
+      values (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'))""".stripMargin)
 
     // Set ids for the nodes without one
     val (ready, idLess) = nodes.partition(_.id != NewIdValue)
