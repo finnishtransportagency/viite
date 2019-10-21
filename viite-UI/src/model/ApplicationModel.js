@@ -201,18 +201,18 @@
             }
             eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
         }
-        var noRoadAddressVisibleCheckbox = $('#noRoadAddressVisibleCheckbox')[0];
+        var unAddressedRoadsVisibleCheckbox = $('#unAddressedRoadsVisibleCheckbox')[0];
         if (layer !== selectedLayer || toggleStart) {
-          if (noRoadAddressVisibleCheckbox) {
+          if (unAddressedRoadsVisibleCheckbox) {
             if (layer === 'roadAddressProject') {
-              $('#noRoadAddressVisibleCheckbox')[0].checked = true;
-              $('#noRoadAddressVisibleCheckbox')[0].disabled = false;
+              $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
+              $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
             } else {
-              $('#noRoadAddressVisibleCheckbox')[0].checked = true;
-              $('#noRoadAddressVisibleCheckbox')[0].disabled = false;
+              $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
+              $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
             }
           }
-          eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
+          eventbus.trigger('unAddressedRoadsProjectRoads:toggleVisibility', true);
         }
       },
       getSelectedLayer: function () {

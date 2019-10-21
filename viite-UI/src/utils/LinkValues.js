@@ -109,6 +109,7 @@
         HistoricRoadLayer:          {value: 7},
         DirectionMarkerLayer:       {value: 8},
         GreenLayer:                 {value: 10},
+        unAddressedRoadsLayer:      {value: 11},
         IndicatorLayer:             {value: 99}
     };
 

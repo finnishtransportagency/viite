@@ -14,6 +14,7 @@
     var simulationVector = new ol.source.Vector({});
     var geometryChangedVector = new ol.source.Vector({});
     var underConstructionRoadLayerVector = new ol.source.Vector({});
+    var unAddressedRoadLayerVector = new ol.source.Vector({});
     var reservedRoadVector = new ol.source.Vector({});
     var historicRoadsVector = new ol.source.Vector({});
 
@@ -119,6 +120,16 @@
     });
     underConstructionRoadLayer.set('name', 'underConstructionRoadLayer');
 
+    var unAddressedRoadLayer = new ol.layer.Vector({
+      source: unAddressedRoadLayerVector,
+      name: 'unAddressedRoadLayer',
+      style: function(feature) {
+        return [roadLinkStyler.getRoadLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)}),
+          roadLinkStyler.getOverlayStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)})];
+      }
+    });
+    unAddressedRoadLayer.set('name', 'unAddressedRoadLayer');
+
 
     var historicRoadsLayer = new ol.layer.Vector({
       source: historicRoadsVector,
@@ -133,7 +144,8 @@
 
 
     var layers = [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
-      indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, underConstructionRoadLayer, reservedRoadLayer, historicRoadsLayer];
+      indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, underConstructionRoadLayer, unAddressedRoadLayer,
+        reservedRoadLayer, historicRoadsLayer];
 
     var setGeneralOpacity = function (opacity){
       roadLayer.layer.setOpacity(opacity);
@@ -141,6 +153,7 @@
       anomalousMarkerLayer.setOpacity(opacity);
       directionMarkerLayer.setOpacity(opacity);
       underConstructionRoadLayer.setOpacity(opacity);
+      unAddressedRoadLayer.setOpacity(opacity);
       historicRoadsLayer.setOpacity(opacity);
       geometryChangedLayer.setOpacity(opacity);
     };
@@ -157,7 +170,7 @@
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
       //multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layer: [roadLayer.layer, geometryChangedLayer, underConstructionRoadLayer, historicRoadsLayer],
+      layer: [roadLayer.layer, geometryChangedLayer, underConstructionRoadLayer, unAddressedRoadLayer, historicRoadsLayer],
       //Limit this interaction to the doubleClick
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
@@ -225,7 +238,8 @@
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlapping
       multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layers: [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer, underConstructionRoadLayer, historicRoadsLayer],
+      layers: [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer,
+        underConstructionRoadLayer, unAddressedRoadLayer,historicRoadsLayer],
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
       filter: function(feature) {
@@ -370,6 +384,7 @@
       var visibleGreenRoadLayer = withGreenRoads ? greenRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleUnderConstructionRoads = withunderConstructionRoads ? underConstructionRoadLayer.getSource().getFeaturesInExtent(extent) : [];
+      var visibleUnAddressedRoads = withunderConstructionRoads ? unAddressedRoadLayer.getSource().getFeaturesInExtent(extent) :[];
       var visibleGeometryChanged = withGeometryChanged ? geometryChangedLayer.getSource().getFeaturesInExtent(extent) : [];
       return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleFloatingMarkers).concat(visibleGreenRoadLayer).concat(visibleDirectionalMarkers).concat(visibleUnderConstructionRoads).concat(visibleGeometryChanged);
     };
@@ -464,7 +479,8 @@
         return _.contains(_.map(underConstructionLinks, function(sl){ return sl.linkId;}), rl.linkId);
       });
       var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
-      me.clearLayers([floatingMarkerLayer, anomalousMarkerLayer, geometryChangedLayer, underConstructionRoadLayer, directionMarkerLayer, calibrationPointLayer]);
+      me.clearLayers([floatingMarkerLayer, anomalousMarkerLayer, geometryChangedLayer, underConstructionRoadLayer,
+        unAddressedRoadLayer,directionMarkerLayer, calibrationPointLayer]);
 
       if(zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
@@ -556,6 +572,7 @@
       roadCollection.reset();
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map));
       underConstructionRoadLayer.changed();
+      unAddressedRoadLayer.changed();
       roadLayer.layer.changed();
     };
 
@@ -723,13 +740,51 @@
         underConstructionRoadLayer.getSource().addFeatures(ol3underConstructionRoads);
         roadLayer.layer.getSource().addFeatures(ol3noInfoRoads);
       });
+      // 2075 TODO
+      eventListener.listenTo(eventbus, 'unAddressedRoadLinks:fetched', function(unAddressedRoads){
+        var partitioned = _.partition(_.flatten(unAddressedRoads), function(feature) {
+          return feature.linkData.anomaly === Anomaly.NoAddressGiven.value;
+        });
+        var ol3unAddressedRoads =
+            _.map(partitioned[0], function(road) {
+              var roadData = road.getData();
+              var points = _.map(roadData.points, function (point) {
+                return [point.x, point.y];
+              });
+              var feature = new ol.Feature({
+                geometry: new ol.geom.LineString(points)
+              });
+              feature.linkData = roadData;
+              return feature;
+            });
+
+        var ol3noInfoRoads =
+            _.map(partitioned[1], function(road) {
+              var roadData = road.getData();
+              var points = _.map(roadData.points, function (point) {
+                return [point.x, point.y];
+              });
+              var feature = new ol.Feature({
+                geometry: new ol.geom.LineString(points)
+              });
+              feature.linkData = roadData;
+              return feature;
+            });
+        unAddressedRoadLayer.getSource().addFeatures(ol3unAddressedRoads);
+        roadLayer.layer.getSource().addFeatures(ol3noInfoRoads);
+      });
+      eventListener.listenTo(eventbus, 'unAddressedRoads:toggleVisibility', function(visibility){
+        unAddressedRoadLayer.setVisible(visibility);
+      });
       eventListener.listenTo(eventbus, 'underConstructionRoads:toggleVisibility', function(visibility){
         underConstructionRoadLayer.setVisible(visibility);
       });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
         //Exclude underConstruction layers from toggle
         me.toggleLayersVisibility([roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
-          indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer, historicRoadsLayer], applicationModel.getRoadVisibility());
+        indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer, historicRoadsLayer], applicationModel.getRoadVisibility());
+
+
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
