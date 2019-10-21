@@ -24,6 +24,22 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
+  def addOrUpdateNode(node: Node) = {
+    withDynTransaction {
+      try {
+        if (node.id == NewIdValue) {
+          nodeDAO.create(Seq(node))
+        } else {
+          Seq(0)
+          // TODO - Update node information
+        }
+        None
+      } catch {
+        case e: Exception => Some(e.getMessage)
+      }
+    }
+  }
+
   def getNodesByRoadAttributes(roadNumber: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Either[String, Seq[(Node, RoadAttributes)]] = {
     withDynSession {
       try {
@@ -50,11 +66,13 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }
     }
   }
+
   def getJunctionPointsByJunctionIds(junctionIds: Seq[Long]): Seq[JunctionPoint] = {
     withDynSession {
       junctionPointDAO.fetchJunctionPointsByJunctionIds(junctionIds)
     }
   }
+
   def getNodesWithJunctionByBoundingBox(boundingRectangle: BoundingRectangle): Map[Node, (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
     withDynSession {
       time(logger, "Fetch nodes with junctions") {
@@ -604,6 +622,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     val obsoleteJunctions = expireObsoleteJunctions(obsoleteJunctionPoints)
     expireNodes(obsoleteNodePoints, obsoleteJunctions)
   }
+
   def getJunctionInfoByJunctionId(junctionIds: Seq[Long]): Option[JunctionInfo]= {
     withDynSession {
       junctionDAO.fetchJunctionInfoByJunctionId(junctionIds)

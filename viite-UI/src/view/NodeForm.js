@@ -15,7 +15,7 @@
 
     var getNodeType = function (nodeValue) {
       var nodeType = _.find(NodeType, function (type) {
-        return type.value == nodeValue;
+        return type.value === nodeValue;
       });
       return _.isUndefined(nodeType) ? NodeType.UnkownNodeType : nodeType;
     };
@@ -49,8 +49,8 @@
         });
 
         return _.map(nodeTypes, function (nodeType) {
-          var selected = nodeType === selected ? 'selected' : '';
-          return '<option value="' + nodeType.value + '"' + selected + '>' +
+          var option = _.isEqual(nodeType, selected) ? 'selected' : '';
+          return '<option value="' + nodeType.value + '"' + option + '>' +
             nodeType.value + ' ' + nodeType.description + '</option>';
         });
       };
@@ -82,7 +82,7 @@
         ' <div class="form form-horizontal form-dark">' +
         '   <div>' +
         staticField('Solmunumero:', nodeNumber) +
-        staticField('Koordinaatit (<i>P</i>, <i>I</i>):', node.coordY + ', ' + node.coordX) +
+        staticField('Koordinaatit (<i>P</i>, <i>I</i>):', parseInt(node.coordY) + ', ' + parseInt(node.coordX)) +
         inputFieldRequired('Solmun nimi', 'nodeName', '', nodeName, 32) +
         addNodeTypeDropdown('Solmutyyppi', 'nodeTypeDropdown', getNodeType(node.type)) +
         inputFieldRequired('Alkupvm', 'nodeStartDate', 'pp.kk.vvvv', startDate) +
@@ -349,6 +349,9 @@
     var addDatePicker = function () {
       var $date = $('#nodeStartDate');
       dateutil.addSingleDependentDatePicker($date);
+      $date.change(function () {
+        selectedNode.setStartDate(($(this).val()));
+      });
     };
 
     var textFieldChangeHandler = function () {
@@ -431,6 +434,16 @@
             return false;
           });
         }
+      });
+
+      eventbus.on('node:saveSuccess', function () {
+        applicationModel.removeSpinner();
+        selectedNode.closeForm(); // we'll have to change this later probably
+      });
+
+      eventbus.on("node:saveUnsuccessful", function (error) {
+        new ModalConfirm(error);
+        applicationModel.removeSpinner();
       });
     };
 

@@ -16,8 +16,6 @@
       var SideCode = LinkValues.SideCode;
       var RoadZIndex = LinkValues.RoadZIndex;
 
-      var isActiveLayer = false;
-
       var indicatorLayer = new ol.layer.Vector({
         source: indicatorVector,
         name: 'indicatorLayer',
@@ -271,20 +269,17 @@
             setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
             break;
           case LinkValues.Tool.Add.value:
-            setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
             me.eventListener.listenTo(eventbus, 'map:clicked', createNewNodeMarker);
+            selectedNodeAndJunctionPoint.closeForm();
+            setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
             break;
         }
       });
 
-      me.eventListener.listenTo(eventbus, 'node:save', function (node) {
-        alert(node.name + 'is now saved.');
-      });
-
       var createNewNodeMarker = function (coords) {
         var node = {
-          coordX: parseInt(coords.x, 10),
-          coordY: parseInt(coords.y, 10),
+          coordX: coords.x,
+          coordY: coords.y,
           type:   LinkValues.NodeType.UnkownNodeType.value
         };
         addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(node));
@@ -318,7 +313,7 @@
       });
 
       me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
-        toggleSelectInteractions(isActiveLayer);
+        toggleSelectInteractions(layer === 'node');
         if (previouslySelectedLayer === 'node') {
           hideLayer();
           removeSelectInteractions();

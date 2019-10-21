@@ -15,7 +15,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 sealed trait NodeType {
-  def value: Long
+  def value: Int
 
   def displayValue: String
 }
@@ -24,7 +24,7 @@ object NodeType {
   val values: Set[NodeType] = Set(NormalIntersection, Roundabout, YIntersection, Interchange, RoadBoundary, ELYBorder, MultitrackIntersection,
     DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnkownNodeType)
 
-  def apply(intValue: Long): NodeType = {
+  def apply(intValue: Int): NodeType = {
     values.find(_.value == intValue).getOrElse(UnkownNodeType)
   }
 
@@ -136,7 +136,7 @@ class NodeDAO extends BaseDAO {
       val coordX = r.nextLong()
       val coordY = r.nextLong()
       val name = r.nextStringOption()
-      val nodeType = NodeType.apply(r.nextLong())
+      val nodeType = NodeType.apply(r.nextInt())
       val startDate = formatter.parseDateTime(r.nextDate.toString)
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = formatter.parseDateTime(r.nextDate.toString)
@@ -221,7 +221,7 @@ class NodeDAO extends BaseDAO {
         ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M, rw.TRACK
       """
 
-    Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Long], DateTime, Option[DateTime], DateTime, Option[DateTime],
+    Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Int], DateTime, Option[DateTime], DateTime, Option[DateTime],
       Option[String], Option[DateTime], Long, Long, Long, Long)](query).list.map {
 
       case (id, nodeNumber, x, y, name, nodeType, startDate, endDate, validFrom, validTo,
@@ -268,8 +268,8 @@ class NodeDAO extends BaseDAO {
   def create(nodes: Iterable[Node], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
-      """insert into NODE (ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, CREATED_BY)
-      values (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""".stripMargin)
+      """insert into NODE (ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, CREATED_BY, VALID_FROM)
+      values (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)""".stripMargin)
 
     // Set ids for the nodes without one
     val (ready, idLess) = nodes.partition(_.id != NewIdValue)
@@ -300,6 +300,7 @@ class NodeDAO extends BaseDAO {
           case None => ""
         })
         ps.setString(8, if (createdBy == null) "-" else createdBy)
+        ps.setString(9, dateFormatter.print(node.validFrom))
         ps.addBatch()
     }
     ps.executeBatch()
