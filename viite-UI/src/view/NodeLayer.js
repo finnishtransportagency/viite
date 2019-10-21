@@ -292,19 +292,13 @@
       });
 
       me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
-        isActiveLayer = layer === 'node';
-        toggleSelectInteractions(isActiveLayer);
-        if (isActiveLayer) {
-          addSelectInteractions();
-        } else {
-          clearHighlights();
-          removeSelectInteractions();
-        }
+        toggleSelectInteractions(layer === 'node');
         if (previouslySelectedLayer === 'node') {
           hideLayer();
           removeSelectInteractions();
-        } else {
+        } else if (layer === 'node') {
           setGeneralOpacity(1);
+          addSelectInteractions();
           showLayer();
           eventbus.trigger('nodeLayer:fetch');
         }
