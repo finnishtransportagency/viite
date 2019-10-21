@@ -4,16 +4,19 @@
     var dirty = false;
 
     var openNode = function (node) {
-      eventbus.trigger('node:selected', node);
+      clean();
       setCurrentNode(node);
+      eventbus.trigger('node:selected', node);
     };
 
     var openNodePointTemplate = function (nodePointTemplates) {
+      clean();
       setCurrentNodePointTemplates(nodePointTemplates);
       eventbus.trigger('nodePointTemplate:selected');
     };
 
     var openJunctionTemplate = function (junctionTemplate) {
+      clean();
       setCurrentJunctionTemplate(junctionTemplate);
       eventbus.trigger('junctionTemplate:selected');
     };
@@ -44,13 +47,17 @@
 
     var setName = function (name) {
       current.node.name = name;
-      eventbus.trigger('changed:name', current.node);
       setDirty(true);
     };
 
     var setType = function (type) {
       current.node.type = type;
       eventbus.trigger('changed:type', current.node);
+      setDirty(true);
+    };
+
+    var setStartDate = function (startDate) {
+      current.node.startDate = startDate;
       setDirty(true);
     };
 
@@ -81,6 +88,12 @@
       close('node:unselected', node);
     };
 
+    var closeForm = function () {
+      close('node:unselected');
+      closeNodePoint();
+      closeJunction();
+    };
+
     var closeNodePoint = function () {
       close('nodePointTemplate:unselected');
     };
@@ -95,7 +108,6 @@
 
     var saveNode = function () {
       save('node:save', current.node);
-      setDirty(false);
     };
 
     return {
@@ -107,12 +119,13 @@
       getCurrentJunctionTemplate: getCurrentJunctionTemplate,
       setName: setName,
       setType: setType,
+      setStartDate: setStartDate,
       isDirty: isDirty,
       setDirty: setDirty,
       closeNode: closeNode,
+      closeForm: closeForm,
       closeNodePoint: closeNodePoint,
       closeJunction: closeJunction,
-      save: save,
       saveNode: saveNode
     };
 
