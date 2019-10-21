@@ -21,11 +21,11 @@
     var calibrationPointVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
     var underConstructionRoadVector = new ol.source.Vector({});
-
+    var unAddressedRoadsRoadVector = new ol.source.Vector({});
     var projectLinkVector = new ol.source.Vector({
       loader: function () {
           var notUnderConstruction = _.filter(projectCollection.getAll(), function(link) {
-              return link.constructionType != LinkValues.ConstructionType.UnderConstruction.value;
+              return link.constructionType != LinkValues.ConstructionType.UnderConstruction.value ;
           });
         var features = _.map(notUnderConstruction, function (projectLink) {
           var points = _.map(projectLink.points, function (point) {
@@ -66,6 +66,12 @@
       name: 'underConstructionRoadProjectLayer',
       style: vectorLayerStyle,
       zIndex: RoadZIndex.UnderConstructionLayer.value
+    });
+    var unAddressedRoadsProjectLayer = new ol.layer.Vector({
+      source: unAddressedRoadsRoadVector,
+      name: 'unAddressedRoadsProjectLayer',
+      style: vectorLayerStyle,
+      zIndex: RoadZIndex.unAddressedRoadsLayer.value
     });
 
     var projectLinkLayer = new ol.layer.Vector({
@@ -301,7 +307,7 @@
     var highlightFeatures = function () {
       clearHighlights();
       var featuresToHighlight = [];
-      _.each(projectLinkVector.getFeatures().concat(underConstructionRoadProjectLayer.getSource().getFeatures()), function (feature) {
+      _.each(projectLinkVector.getFeatures().concat(underConstructionRoadProjectLayer.getSource().getFeatures()).concat(unAddressedRoadsProjectLayer.getSource().getFeatures()), function (feature) {
           var canIHighlight = ((!_.isUndefined(feature.linkData.linkId) && _.isUndefined(feature.linkData.connectedLinkId)) ||
           (!_.isUndefined(feature.linkData.connectedLinkId) && feature.linkData.status === LinkStatus.Terminated.value) ?
               selectedProjectLinkProperty.isSelected(getSelectedId(feature.linkData)) : false);
@@ -543,6 +549,26 @@
         feature.linkId = projectLink.linkId;
         features.push(feature);
       });
+      var separatedRoads = _.partition(projectCollection.getAll(), function (projectRoad) {
+        return projectRoad.anomaly === Anomaly.NoAddressGiven.value;
+
+      });
+      var unAddressedProjectRoads = separatedRoads[0].filter(function (val) {
+        return _.find(separated[1], function (link) {
+          return link.linkId === val.linkId;
+        }) !== 0;
+      });
+
+      _.map(unAddressedProjectRoads, function (projectLink) {
+        var points = _.map(projectLink.points, function (point) {
+          return [point.x, point.y];
+        });
+        var feature = new ol.Feature({
+          geometry: new ol.geom.LineString(points)
+        });
+        feature.linkData = projectLink;
+        unAddressedRoadsProjectLayer.getSource().addFeatures([feature]);
+      });
 
       var removeSelectFeatures = function(select) {
         var selectFeatures = select.getFeatures();
@@ -680,6 +706,9 @@
 
     me.eventListener.listenTo(eventbus, 'underConstructionProjectRoads:toggleVisibility', function (visibility) {
       underConstructionRoadProjectLayer.setVisible(visibility);
+    });
+    me.eventListener.listenTo(eventbus, 'unAddressedRoadsProjectRoads:toggleVisibility', function (visibility) {
+      unAddressedRoadsProjectLayer.setVisible(visibility);
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:visibilityChanged', function () {

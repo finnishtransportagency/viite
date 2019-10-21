@@ -134,15 +134,15 @@
           var fetched = _.partition(fetchedRoadLinkModels, function (model) {
               return _.every(model, function (mod) {
                   var modData = mod.getData();
-                  return modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.id === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
+                  return modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.roadNumber === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
               });
           });
-          unknownRoadLinkGroups = fetched[0];
+          var unknownRoadLinkGroups = fetched[0];
           var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
           if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
             setRoadLinkGroups(fetched[1]);
           } else {
-            setRoadLinkGroups(fetchedRoadLinkModels);
+            setRoadLinkGroups(fetched[1]);//setRoadLinkGroups(fetchedRoadLinkModels);
           }
 
           if (!_.isEmpty(getSelectedRoadLinks())) {
@@ -169,6 +169,9 @@
           var underConstructionRoadAddresses = _.partition(roadLinkGroupsUnderConstruction, function(sur) {
               return groupDataConstructionTypeFilter(sur, ConstructionType.UnderConstruction);
           });
+          var unAddressedRoads = _.partition(unknownRoadLinkGroups, function(sur) {
+           return groupDataUnAdressedTypeFilter(sur, LinkValues.Anomaly.NoAddressGiven.value );
+          });
           var nonUnderConstructionRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
               return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
           });
@@ -179,6 +182,8 @@
           }
           if (underConstructionRoadAddresses[0].length !== 0)
               eventbus.trigger('underConstructionRoadLinks:fetched', underConstructionRoadAddresses[0]);
+          if (unAddressedRoads[0].length !== 0)
+            eventbus.trigger('unAddressedRoadLinks:fetched', unknownRoadLinkGroups[0]);
           if (applicationModel.isProjectButton()) {
               eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
               applicationModel.setProjectButton(false);
@@ -209,6 +214,18 @@
         });
       } else {
         return group.getData().constructionType === dataConstructionType.value;
+      }
+    };
+
+    var groupDataUnAdressedTypeFilter = function(group, NoAddressGiven){
+      if(_.isArray(group)) {
+        return _.some(group, function(roadLink) {
+          if(roadLink !== null)
+            return roadLink.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value;
+          else return false;
+        });
+      } else {
+        return group.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value;
       }
     };
 
