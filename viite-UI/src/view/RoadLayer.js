@@ -174,19 +174,42 @@
         return feature;
       });
       var coordinate;
-      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.junction) && !_.isUndefined(featureAtPixel.junctionPoint)) {
+      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.junction) && !_.isUndefined(featureAtPixel.junction.junctionPoints)) {
         var junctionData = featureAtPixel.junction;
-        var junctionPointData = featureAtPixel.junctionPoint;
-        var nodes = nodeCollection.getNodesWithAttributes();
-        var node = _.find(nodes, function (node) {
-          return node.id === junctionData.nodeId;
-        });
-        var roadLink = featureAtPixel.roadLink;
+        var junctionPointData = featureAtPixel.junction.junctionPoints;
+        var node = nodeCollection.getNodeById(junctionData.nodeId);
         coordinate = map.getEventCoordinate(event.originalEvent);
+        var roadAddressInfo = [];
+        _.map(junctionPointData, function(point){
+          roadAddressInfo.push({road: point.road, part: point.part, track: point.track, addr: point.addrM, beforeAfter: point.beforeOrAfter});
+        });
+
+        var groupedRoadAddresses = _.groupBy(roadAddressInfo, function (row) {
+          return [row.road, row.track, row.part, row.addr];
+        });
+
+        var roadAddresses = _.partition(groupedRoadAddresses, function (group) {
+          return group.length > 1;
+        });
+
+        var doubleRows = _.map(roadAddresses[0], function (junctionPoints) {
+          var first = _.first(junctionPoints); // TODO VIITE-2028 logic goes here, probably.
+          return {road: first.road, track: first.track, part: first.part, addr: first.addr};
+        });
+
+        var singleRows = _.map(roadAddresses[1], function(junctionPoint) {
+          return {road: junctionPoint[0].road, track: junctionPoint[0].track, part: junctionPoint[0].part, addr: junctionPoint[0].addr};
+        });
+
+        var roadAddressContent = _.sortBy(doubleRows.concat(singleRows), ['road', 'part', 'track', 'addr']);
+
         if (infoContent !== null) {
           infoContent.innerHTML =
-            'Tieosoite:&nbsp;' + roadLink.roadNumber + '/'+ roadLink.trackCode + '/' + roadLink.roadPartNumber + '/' + junctionPointData.addrM + '<br>' +
-            'Solmun nimi:&nbsp;' + (!_.isUndefined(node) ? node.name : '') + '<br>'
+            'Solmun&nbsp;nimi:&nbsp;' + (!_.isUndefined(node) ? node.name.replace(' ', '&nbsp;') : '') + '<br>' +
+            'Tieosoite:<br>' +
+            _.map(roadAddressContent, function (junctionPoint) {
+              return '&thinsp;' + junctionPoint.road + '&nbsp;/&nbsp;' + junctionPoint.track + '&nbsp;/&nbsp;' + junctionPoint.part + '&nbsp;/&nbsp;' + junctionPoint.addr + '<br>';
+            }).join('')
           ;
         }
         overlay.setPosition(coordinate);
@@ -198,7 +221,6 @@
       displayRoadAddressInfo(event, pixel);
       displayNodeInfo(event, pixel);
       displayJunctionInfo(event, pixel);
-
     });
 
     var handleRoadsVisibility = function () {
