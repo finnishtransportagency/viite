@@ -139,7 +139,7 @@ class VKMProxyServlet extends ProxyServlet {
     parameters.foreach { case(key, value) =>
       proxyRequest.param(key, value.mkString(""))
     }
-    logger.info(s"Sending proxy request to VKM: ${proxyRequest.getMethod} ${proxyRequest.getHost}${proxyRequest.getPath} ${proxyRequest.getParams}")
+    logger.info(s"Sending proxy request to VKM: ${proxyRequest.getMethod} ${proxyRequest.getURI}")
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
