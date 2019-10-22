@@ -183,14 +183,6 @@ class NodeDAO extends BaseDAO {
       """.as[Long].firstOption
   }
 
-  def fetchIdWithHistory(nodeNumber: Long): Option[Long] = {
-    sql"""
-      SELECT ID
-      from NODE
-      where NODE_NUMBER = $nodeNumber
-      """.as[Long].firstOption
-  }
-
   def fetchByRoadAttributes(road_number: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[(Node, RoadAttributes)] = {
     val road_condition = (minRoadPartNumber.isDefined, maxRoadPartNumber.isDefined) match {
       case (true, true) => s"AND rw.ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND rw.ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
@@ -205,7 +197,7 @@ class NodeDAO extends BaseDAO {
                         node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M
         FROM NODE node
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(node.COORDINATES)) coords
-        LEFT JOIN NODE_POINT np ON node.ID = np.NODE_ID AND np.VALID_TO IS NULL AND np.END_DATE IS NULL
+        LEFT JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER AND np.VALID_TO IS NULL
         LEFT JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
           WHERE node.VALID_TO IS NULL AND node.END_DATE IS NULL
@@ -214,7 +206,7 @@ class NodeDAO extends BaseDAO {
             SELECT * FROM NODE_POINT np_c
               LEFT JOIN ROADWAY_POINT rp_c ON np_c.ROADWAY_POINT_ID = rp_c.ID
               LEFT JOIN ROADWAY rw_c ON rp_c.ROADWAY_NUMBER = rw_c.ROADWAY_NUMBER AND rw_c.VALID_TO IS NULL AND rw_c.END_DATE IS NULL
-                WHERE np_c.VALID_TO IS NULL AND np_c.END_DATE IS NULL AND np_c.NODE_ID = node.ID
+                WHERE np_c.VALID_TO IS NULL AND np_c.NODE_NUMBER = node.NODE_NUMBER
                 AND rw_c.ROAD_NUMBER = rw.ROAD_NUMBER AND rw_c.ROAD_PART_NUMBER != rw.ROAD_PART_NUMBER) THEN 0
             ELSE 1
           END = 1)
@@ -252,13 +244,13 @@ class NodeDAO extends BaseDAO {
             LEFT JOIN JUNCTION J ON JP.JUNCTION_ID = J.ID
             LEFT JOIN ROADWAY_POINT RP ON JP.ROADWAY_POINT_ID = RP.ID
             LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
-            WHERE J.NODE_ID = N.ID AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL) < 2
+            WHERE J.NODE_NUMBER = N.NODE_NUMBER AND JP.VALID_TO IS NULL) < 2
           AND ((SELECT COUNT(*) FROM NODE_POINT NP
-            WHERE NP.NODE_ID = N.ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL) > 1
+            WHERE NP.NODE_NUMBER = N.NODE_NUMBER AND NP.VALID_TO IS NULL) > 1
           AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER || '-' || RW.ROAD_PART_NUMBER || ',' || RW.ROAD_TYPE) FROM NODE_POINT NP
             LEFT JOIN ROADWAY_POINT RP ON NP.ROADWAY_POINT_ID = RP.ID
             LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
-            WHERE NP.NODE_ID = N.ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL) < 2)
+            WHERE NP.NODE_NUMBER = N.NODE_NUMBER AND NP.VALID_TO IS NULL) < 2)
           AND VALID_TO IS NULL AND END_DATE IS NULL
         """
       queryList(query)
@@ -347,9 +339,9 @@ class NodeDAO extends BaseDAO {
         FROM NODE N
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
           WHERE END_DATE IS NULL AND VALID_TO IS NULL AND ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
-            SELECT NULL FROM JUNCTION J WHERE N.id = J.NODE_ID AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
+            SELECT NULL FROM JUNCTION J WHERE N.NODE_NUMBER = J.NODE_NUMBER AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
           ) AND NOT EXISTS (
-            SELECT NULL FROM NODE_POINT NP WHERE N.id = NP.NODE_ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL
+            SELECT NULL FROM NODE_POINT NP WHERE N.NODE_NUMBER = NP.NODE_NUMBER AND NP.VALID_TO IS NULL
           )
       """
       queryList(query)

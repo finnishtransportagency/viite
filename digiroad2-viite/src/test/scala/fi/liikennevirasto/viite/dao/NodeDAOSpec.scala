@@ -82,7 +82,7 @@ class NodeDAOSpec extends FunSuite with Matchers {
       dao.create(Seq(testNode1.copy(id = nodeId)))
       val roadwayPointId = Sequences.nextRoadwayPointId
       roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId))
-      nodePointDAO.create(Seq(testNodePoint1.copy(nodeId = Some(nodeId), roadwayPointId = roadwayPointId)))
+      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeId), roadwayPointId = roadwayPointId)))
       val nodesAndRoadAttributes = dao.fetchByRoadAttributes(roadNumber1, None, None)
       nodesAndRoadAttributes.isEmpty should be(false)
       nodesAndRoadAttributes.size should be(1)

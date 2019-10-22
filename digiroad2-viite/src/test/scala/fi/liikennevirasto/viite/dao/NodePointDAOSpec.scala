@@ -69,8 +69,8 @@ class NodePointDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = Sequences.nextRoadwayNumber))
       val nodeId = nodeDAO.create(Seq(testNode1)).head
-      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId)),
-        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
+      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeId)),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeId))))
       val nodePoints = dao.fetchNodePointsByNodeId(Seq(-1))
       nodePoints.isEmpty should be(true)
     }
@@ -84,11 +84,11 @@ class NodePointDAOSpec extends FunSuite with Matchers {
       roadwayDAO.create(Seq(roadway))
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber ))
       val nodeId = nodeDAO.create(Seq(testNode1)).head
-      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId)),
-        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
+      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeId)),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeId))))
       val nodePoints = dao.fetchNodePointsByNodeId(Seq(nodeId))
       nodePoints.size should be(2)
-      nodePoints.count(n => n.nodeId.contains(nodeId)) should be(2)
+      nodePoints.count(n => n.nodeNumber.contains(nodeId)) should be(2)
     }
   }
 
@@ -96,8 +96,8 @@ class NodePointDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayNumber = Sequences.nextRoadwayNumber
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
-      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = None),
-        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = None)))
+      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = None),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = None)))
       linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
       val nodePoints = dao.fetchTemplatesByBoundingBox(BoundingRectangle(Point(0, 0), Point(1, 1)))
       nodePoints.isEmpty should be(true)
@@ -108,8 +108,8 @@ class NodePointDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayNumber = Sequences.nextRoadwayNumber
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
-      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = None),
-        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = None)), "Test")
+      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = None),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = None)), "Test")
       linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
       val nodePoints = dao.fetchTemplatesByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
       nodePoints.size should be(2)
@@ -133,7 +133,7 @@ class NodePointDAOSpec extends FunSuite with Matchers {
       val fetched = dao.fetchByIds(ids)
       fetched.size should be(1)
       fetched.head.id should be(ids.last)
-      fetched.head.nodeId should be(None)
+      fetched.head.nodeNumber should be(None)
     }
   }
 
@@ -144,8 +144,8 @@ class NodePointDAOSpec extends FunSuite with Matchers {
       roadwayDAO.create(Seq(roadway))
       val nodeId = nodeDAO.create(Seq(testNode1)).head
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
-      val ids = dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId)),
-        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeId = Some(nodeId))))
+      val ids = dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeId)),
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeId))))
       val fetchedBefore = dao.fetchByIds(ids)
       fetchedBefore.size should be(2)
       dao.expireById(Seq(ids.head))

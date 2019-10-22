@@ -60,14 +60,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       time(logger, "Fetch nodes with junctions") {
         val nodes = nodeDAO.fetchByBoundingBox(boundingRectangle)
         val nodePoints = nodePointDAO.fetchNodePointsByNodeId(nodes.map(_.id))
-        val junctions = junctionDAO.fetchJunctionByNodeIds(nodes.map(_.id))
+        val junctions = junctionDAO.fetchJunctionsByNodeNumbers(nodes.map(_.id))
         val junctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(junctions.map(_.id))
         nodes.map {
           node =>
             (node,
               (
-                nodePoints.filter(np => np.nodeId.isDefined && np.nodeId.get == node.id),
-                junctions.filter(j => j.nodeId.isDefined && j.nodeId.get == node.id).map {
+                nodePoints.filter(np => np.nodeNumber.isDefined && np.nodeNumber.get == node.id),
+                junctions.filter(j => j.nodeNumber.isDefined && j.nodeNumber.get == node.id).map {
                   junction =>
                     (
                       junction, junctionPoints.filter(_.junctionId == junction.id)
@@ -84,14 +84,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     withDynSession {
       val nodes = nodeDAO.fetchAllByDateRange(sinceDate, untilDate)
       val nodePoints = nodePointDAO.fetchNodePointsByNodeId(nodes.map(_.id))
-      val junctions = junctionDAO.fetchJunctionByNodeIds(nodes.map(_.id))
+      val junctions = junctionDAO.fetchJunctionsByNodeNumbers(nodes.map(_.id))
       val junctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(junctions.map(_.id))
       nodes.map {
         node =>
           (Option(node),
             (
-              nodePoints.filter(np => np.nodeId.isDefined && np.nodeId.get == node.id),
-              junctions.filter(j => j.nodeId.isDefined && j.nodeId.get == node.id).map {
+              nodePoints.filter(np => np.nodeNumber.isDefined && np.nodeNumber.get == node.id),
+              junctions.filter(j => j.nodeNumber.isDefined && j.nodeNumber.get == node.id).map {
                 junction =>
                   (
                     junction, junctionPoints.filter(_.junctionId == junction.id)
@@ -513,8 +513,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val startAddrMValue: Long = roadwayDAO.fetchAllByRoadwayNumbers(affectedRoadwayNumbers.toSet).minBy(_.startAddrMValue).startAddrMValue
       val endAddrMValue = roadwayDAO.fetchAllByRoadwayNumbers(affectedRoadwayNumbers.toSet).maxBy(_.endAddrMValue).endAddrMValue
 
-      val nodePoints = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id)).filter(_.nodeId.isDefined)
-      val obsoleteNodes = nodeDAO.fetchObsoleteById(nodePoints.map(_.nodeId.get).distinct)
+      val nodePoints = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id)).filter(_.nodeNumber.isDefined)
+      val obsoleteNodes = nodeDAO.fetchObsoleteById(nodePoints.map(_.nodeNumber.get).distinct)
       val obsoleteNodePoints = nodePointDAO.fetchNodePointsByNodeId(obsoleteNodes.map(_.id)) ++
         nodePoints.filterNot(n => (n.beforeAfter == BeforeAfter.After && n.addrM == startAddrMValue) || (n.beforeAfter == BeforeAfter.Before && n.addrM == endAddrMValue))
 
@@ -560,18 +560,18 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       nodePointDAO.expireById(obsoleteNodePoints.map(_.id))
 
       // Remove nodes that no longer have justification for the current network
-      val obsoleteNodes = nodeDAO.fetchObsoleteById((obsoleteJunctions.filter(j => j.nodeId.isDefined).map(_.nodeId.get)
-        ++ obsoleteNodePoints.filter(np => np.nodeId.isDefined).map(_.nodeId.get)).distinct)
+      val obsoleteNodes = nodeDAO.fetchObsoleteById((obsoleteJunctions.filter(j => j.nodeNumber.isDefined).map(_.nodeNumber.get)
+        ++ obsoleteNodePoints.filter(np => np.nodeNumber.isDefined).map(_.nodeNumber.get)).distinct)
 
       // Handle obsolete node points of valid and obsolete nodes separately
       val (obsoleteNodePointsOfObsoleteNodes, obsoleteNodePointsOfValidNodes) = obsoleteNodePoints
-        .partition(np => obsoleteNodes.exists(n => n.id == np.nodeId.getOrElse(-1)))
+        .partition(np => obsoleteNodes.exists(n => n.id == np.nodeNumber.getOrElse(-1)))
 
       // Create node rows with end date and node point rows with end date and new node id
       obsoleteNodes.foreach(n => {
         val newNodeId = nodeDAO.create(Seq(n.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
         nodePointDAO.create(obsoleteNodePointsOfObsoleteNodes.map(_.copy(id = NewIdValue, endDate = endDate,
-          nodeId = Some(newNodeId), createdBy = Some(username))))
+          nodeNumber = Some(newNodeId), createdBy = Some(username))))
       })
 
       // Create node point rows of the valid nodes with end date
