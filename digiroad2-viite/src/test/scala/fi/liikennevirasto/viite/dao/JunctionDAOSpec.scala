@@ -63,7 +63,7 @@ class JunctionDAOSpec extends FunSuite with Matchers {
   test("Test expireById When two created and one expired Then expire one and keep the other") {
     runWithRollback {
       val nodeId = nodeDAO.create(Seq(testNode1)).head
-      val ids = dao.create(Seq(testJunction1.copy(nodeId = Some(nodeId)), testJunction2.copy(nodeId = Some(nodeId))))
+      val ids = dao.create(Seq(testJunction1.copy(nodeNumber = Some(nodeId)), testJunction2.copy(nodeNumber = Some(nodeId))))
       dao.expireById(Seq(ids.head))
       val fetched = dao.fetchByIds(ids)
       fetched.size should be(1)
@@ -74,8 +74,8 @@ class JunctionDAOSpec extends FunSuite with Matchers {
   test("Test fetchJunctionByNodeIds When non-existing node Then return none") {
     runWithRollback {
       val nodeId = nodeDAO.create(Seq(testNode1)).head
-      dao.create(Seq(testJunction1.copy(nodeId = Some(nodeId)), testJunction2.copy(nodeId = Some(nodeId))))
-      val fetched = dao.fetchJunctionByNodeIds(Seq(nodeId + 1)) // Non-existing node id
+      dao.create(Seq(testJunction1.copy(nodeNumber = Some(nodeId)), testJunction2.copy(nodeNumber = Some(nodeId))))
+      val fetched = dao.fetchJunctionsByNodeNumbers(Seq(nodeId + 1)) // Non-existing node id
       fetched.size should be(0)
     }
   }
@@ -83,10 +83,10 @@ class JunctionDAOSpec extends FunSuite with Matchers {
   test("Test fetchJunctionByNodeIds When fetched Then return junctions") {
     runWithRollback {
       val nodeId = nodeDAO.create(Seq(testNode1)).head
-      val fetched1 = dao.fetchJunctionByNodeIds(Seq(nodeId))
+      val fetched1 = dao.fetchJunctionsByNodeNumbers(Seq(nodeId))
       fetched1.size should be(0)
-      dao.create(Seq(testJunction1.copy(nodeId = Some(nodeId)), testJunction2.copy(nodeId = Some(nodeId))))
-      val fetched2 = dao.fetchJunctionByNodeIds(Seq(nodeId))
+      dao.create(Seq(testJunction1.copy(nodeNumber = Some(nodeId)), testJunction2.copy(nodeNumber = Some(nodeId))))
+      val fetched2 = dao.fetchJunctionsByNodeNumbers(Seq(nodeId))
       fetched2.size should be(2)
     }
   }

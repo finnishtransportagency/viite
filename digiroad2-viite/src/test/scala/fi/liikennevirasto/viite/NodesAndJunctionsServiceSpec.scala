@@ -108,7 +108,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodeDAO.create(Seq(testNode1.copy(id = nodeId)))
       val roadwayPointId = Sequences.nextRoadwayPointId
       roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId))
-      nodePointDAO.create(Seq(testNodePoint1.copy(nodeId = Some(nodeId), roadwayPointId = roadwayPointId)))
+      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeId), roadwayPointId = roadwayPointId)))
 
       val nodesAndRoadAttributes = nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber1, None, None)
       nodesAndRoadAttributes.isRight should be(true)
@@ -134,7 +134,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         nodeDAO.create(Seq(testNode1.copy(id = nodeId)))
         val roadwayPointId = Sequences.nextRoadwayPointId
         roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId, addrMValue = index))
-        nodePointDAO.create(Seq(testNodePoint1.copy(nodeId = Some(nodeId), roadwayPointId = roadwayPointId)))
+        nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeId), roadwayPointId = roadwayPointId)))
       }
 
       val nodesAndRoadAttributes = nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber1, Some(roadPartNumber1), None)
@@ -155,7 +155,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         nodeDAO.create(Seq(testNode1.copy(id = nodeId)))
         val roadwayPointId = Sequences.nextRoadwayPointId
         roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId, addrMValue = index))
-        nodePointDAO.create(Seq(testNodePoint1.copy(nodeId = Some(nodeId), roadwayPointId = roadwayPointId)))
+        nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeId), roadwayPointId = roadwayPointId)))
       }
 
       val nodesAndRoadAttributes = nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber1, None, None)
@@ -650,7 +650,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       templates._2.head._2.size should be(1)
       templates._1.head.roadwayNumber should be(roadwayNumber)
       templates._2.head._1.id should be(junctionId)
-      templates._2.head._1.nodeId should be(None)
+      templates._2.head._1.nodeNumber should be(None)
       templates._2.head._2.head.junctionId should be(junctionId)
     }
   }
@@ -721,14 +721,14 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         np => {
           if (np.roadwayNumber == roadLink1.roadwayNumber) {
             if (np.addrM == roadLink1.startAddrMValue)
-              sqlu"""UPDATE NODE_POINT SET NODE_ID = ${node1.id} WHERE ID = ${np.id}""".execute
+              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node1.nodeNumber} WHERE ID = ${np.id}""".execute
             else if (np.addrM == roadLink1.endAddrMValue)
-              sqlu"""UPDATE NODE_POINT SET NODE_ID = ${node2.id} WHERE ID = ${np.id}""".execute
+              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""".execute
           } else if (np.roadwayNumber == roadLink2.roadwayNumber) {
             if (np.addrM == roadLink2.startAddrMValue)
-              sqlu"""UPDATE NODE_POINT SET NODE_ID = ${node2.id} WHERE ID = ${np.id}""".execute
+              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""".execute
             else if (np.addrM == roadLink2.endAddrMValue)
-              sqlu"""UPDATE NODE_POINT SET NODE_ID = ${node3.id} WHERE ID = ${np.id}""".execute
+              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node3.nodeNumber} WHERE ID = ${np.id}""".execute
           }
         }
       )
@@ -806,9 +806,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodePointTemplates.foreach(
         np => {
           if (np.addrM == roadLink.startAddrMValue)
-            sqlu"""UPDATE NODE_POINT SET NODE_ID = ${node1.id} WHERE ID = ${np.id}""".execute
+            sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node1.nodeNumber} WHERE ID = ${np.id}""".execute
           else if (np.addrM == roadLink.endAddrMValue)
-            sqlu"""UPDATE NODE_POINT SET NODE_ID = ${node2.id} WHERE ID = ${np.id}""".execute
+            sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""".execute
         }
       )
 
@@ -893,9 +893,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodePointTemplates.foreach(
         np => {
           if (np.addrM == roadLink.startAddrMValue)
-            sqlu"""UPDATE NODE_POINT SET NODE_ID = ${node1.id} WHERE ID = ${np.id}""".execute
+            sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node1.nodeNumber} WHERE ID = ${np.id}""".execute
           else if (np.addrM == roadLink.endAddrMValue)
-            sqlu"""UPDATE NODE_POINT SET NODE_ID = ${node2.id} WHERE ID = ${np.id}""".execute
+            sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""".execute
         }
       )
 

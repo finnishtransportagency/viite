@@ -1138,9 +1138,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
   }
 
+  // TODO nodeId -> nodeNumber
   def nodePointToApi(nodePoint: NodePoint) : Map[String, Any] = {
     Map("id" -> nodePoint.id,
-      "nodeId" -> nodePoint.nodeId,
+      "nodeId" -> nodePoint.nodeNumber,
       "road" -> nodePoint.roadNumber,
       "part" -> nodePoint.roadPartNumber,
       "addrM" -> nodePoint.addrM,
@@ -1148,9 +1149,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
   }
 
+  // TODO nodeId -> nodeNumber
   def simpleNodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
     Map("id" -> nodePoint.id,
-      "nodeId" -> nodePoint.nodeId,
+      "nodeId" -> nodePoint.nodeNumber,
       "beforeAfter" -> nodePoint.beforeAfter.value,
       "roadwayPointId" -> nodePoint.roadwayPointId,
       "startDate" -> formatToString(nodePoint.startDate.toString),
@@ -1167,9 +1169,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
   }
 
+  // TODO nodeId -> nodeNumber
   def nodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
     Map("id" -> nodePoint.id,
-      "nodeId" -> nodePoint.nodeId,
+      "nodeId" -> nodePoint.nodeNumber,
       "beforeAfter" -> nodePoint.beforeAfter.value,
       "roadwayPointId" -> nodePoint.roadwayPointId,
       "startDate" -> formatToString(nodePoint.startDate.toString),
@@ -1219,19 +1222,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "track" -> junctionPoint.track)
   }
 
+  // TODO nodeId -> nodeNumber
   def junctionInfoToApi(junctionInfo: JunctionInfo) : Map[String, Any] = {
     Map("junctionId" -> junctionInfo.id,
       "junctionNumber" -> junctionInfo.junctionNumber,
-      "nodeId" -> junctionInfo.nodeId,
+      "nodeId" -> junctionInfo.nodeNumber,
       "startDate" -> formatDateTimeToShortPatternString(Some(junctionInfo.startDate)),
       "nodeNumber" -> junctionInfo.nodeNumber,
       "nodeName" -> junctionInfo.nodeName)
   }
 
+  // TODO nodeId -> nodeNumber
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
     Map("id" -> junction._1.id,
       "junctionNumber" -> junction._1.junctionNumber,
-      "nodeId" -> junction._1.nodeId,
+      "nodeId" -> junction._1.nodeNumber,
       "junctionPoints" -> junction._2.map(junctionPointToApi))
   }
 
