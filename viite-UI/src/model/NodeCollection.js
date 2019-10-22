@@ -25,6 +25,12 @@
       nodes = list;
     };
 
+    this.getNodeById = function(nodeId) {
+      return _.find(nodes, function (node) {
+        return node.id === nodeId;
+      });
+    };
+
     this.getNodesWithAttributes = function() {
       return nodesWithAttributes;
     };

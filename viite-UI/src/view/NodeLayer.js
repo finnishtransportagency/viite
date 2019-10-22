@@ -162,8 +162,8 @@
       var selectNode = function(selectedNode) {
         var node = _.head(_.uniq(_.map(selectedNode, "nodeInfo"), "id"));
         selectedNodeAndJunctionPoint.openNode(node);
+        clearHighlights();
         highlightNode(node.id);
-        highlightJunctions(node.id);
 
         nodePointTemplateLayer.setOpacity(0.2);
         junctionTemplateLayer.setOpacity(0.2);
@@ -185,23 +185,24 @@
       };
 
       var highlightNode = function (nodeId) {
+        var highlightJunctions = function(nodeId) {
+          var junctions = _.partition(junctionMarkerLayer.getSource().getFeatures(), function (junctionFeature) {
+            return junctionFeature.junction.nodeId === nodeId;
+          });
+
+          selectFeaturesToHighlight(junctionMarkerVector, junctions[0], junctions[1]);
+
+          junctionMarkerLayer.setOpacity(0.2);
+        };
+
         var nodes = _.partition(nodeMarkerLayer.getSource().getFeatures(), function (nodeFeature) {
           return nodeFeature.nodeInfo.id === nodeId;
         });
 
         selectFeaturesToHighlight(nodeMarkerVector, nodes[0], nodes[1]);
+        highlightJunctions(nodeId);
 
         nodeMarkerLayer.setOpacity(0.2);
-      };
-
-      var highlightJunctions = function(nodeId) {
-        var junctions = _.partition(junctionMarkerLayer.getSource().getFeatures(), function (junctionFeature) {
-          return junctionFeature.junction.nodeId === nodeId;
-        });
-
-        selectFeaturesToHighlight(junctionMarkerVector, junctions[0], junctions[1]);
-
-        junctionMarkerLayer.setOpacity(0.2);
       };
 
       var clearHighlights = function () {
@@ -214,20 +215,24 @@
         setGeneralOpacity(1);
       };
 
+      var toggleSelectInteractions = function (activate) {
+        nodeAndJunctionPointTemplateClick.setActive(activate);
+      };
+
       /**
        * This will add all the following interactions from the map:
        * - nodeAndJunctionPointTemplateClick
        */
-      var addClickInteractions = function () {
+      var addSelectInteractions = function () {
         map.addInteraction(nodeAndJunctionPointTemplateClick);
       };
 
-      var removeClickInteractions = function () {
+      var removeSelectInteractions = function () {
         map.removeInteraction(nodeAndJunctionPointTemplateClick);
       };
 
       // We add the defined interactions to the map.
-      addClickInteractions();
+      addSelectInteractions();
 
       me.eventListener.listenTo(eventbus, 'node:unselected junctions:unselected nodePointTemplate:unselected junctionTemplate:unselected', function () {
         clearHighlights();
@@ -287,12 +292,13 @@
       });
 
       me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
-        me.clearLayers();
+        toggleSelectInteractions(layer === 'node');
         if (previouslySelectedLayer === 'node') {
           hideLayer();
-          removeClickInteractions();
+          removeSelectInteractions();
         } else if (layer === 'node') {
           setGeneralOpacity(1);
+          addSelectInteractions();
           showLayer();
           eventbus.trigger('nodeLayer:fetch');
         }
@@ -398,8 +404,9 @@
 
           var selectedNode = selectedNodeAndJunctionPoint.getCurrentNode();
 
-          if (!_.isUndefined(selectedNode)) {
-            highlightJunctions(selectedNode.id);
+          if (!_.isUndefined(selectedNode.id)) {
+            clearHighlights();
+            highlightNode(selectedNode.id);
           }
         });
 
