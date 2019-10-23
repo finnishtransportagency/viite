@@ -10,7 +10,7 @@
       if (applicationModel.isProjectOpen()) {
         new ModalConfirm("Projektin muokkaus on kesken. Tallenna muutokset ja/tai poistu Peruuta-painikkeella.");
       } else {
-        projectListModel.show();
+        projectListModel.toggle();
       }
     }
 

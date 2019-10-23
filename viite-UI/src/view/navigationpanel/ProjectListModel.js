@@ -103,9 +103,9 @@
       return field;
     };
 
-    function show() {
+    function toggle() {
       $('.container').append('<div class="modal-overlay confirm-modal" id="projectList"><div class="modal-dialog"></div></div>');
-      $('.modal-dialog').append(projectList.show());
+      $('.modal-dialog').append(projectList.toggle());
       eventbus.trigger("roadAddressProject:deactivateAllSelections");
       bindEvents();
       fetchProjects();
@@ -170,7 +170,7 @@
             //check if show all TR projects checkbox is checked or the project has been sent to TR less than two days ago
             return $('#TRProjectsVisibleCheckbox')[0].checked || (new Date() - new Date(proj.dateModified.split('.').reverse().join('-'))) / millisecondsToHours < hoursInDay * 2;
           }
-          return _.includes(statusToDisplay, proj.statusCode);
+          return _.contains(statusToDisplay, proj.statusCode);
         });
 
         var sortedProjects = unfinishedProjects.sort(function (a, b) {
@@ -294,7 +294,7 @@
       });
 
       projectList.on('click', 'button.close', function () {
-        $('#project-list').find('table').hide();
+        $('#project-list').find('table').remove();
         $('.project-item').remove();
         $('#TRProjectsVisibleCheckbox').prop('checked', false);
         hide();
@@ -310,7 +310,7 @@
     }
 
     return {
-      show: show,
+      toggle: toggle,
       hide: hide,
       element: projectList,
       bindEvents: bindEvents
