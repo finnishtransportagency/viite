@@ -11,6 +11,7 @@
       var junctionTemplateVector = dblVector();
       var isActiveLayer = false;
       var cachedMarker = null;
+      // var nodeMarker = {};
 
       var SelectionType = LinkValues.SelectionType;
       var Anomaly = LinkValues.Anomaly;
@@ -22,7 +23,6 @@
         name: 'indicatorLayer',
         zIndex: RoadZIndex.IndicatorLayer.value
       });
-      indicatorLayer.set('name', 'indicatorLayer');
 
       var directionMarkerLayer = new ol.layer.Vector({
         source: directionMarkerVector,
@@ -40,7 +40,8 @@
       var nodeMarkerSelectedLayer = new ol.layer.Vector({
         source: nodeMarkerVector.selected,
         name: 'nodeMarkerSelectedLayer',
-        zIndex: RoadZIndex.CalibrationPointLayer.value
+        zIndex: RoadZIndex.CalibrationPointLayer.value,
+        translatable: false
       });
 
       var junctionMarkerLayer = new ol.layer.Vector({
@@ -97,9 +98,10 @@
         junctionTemplateSelectedLayer.setOpacity(opacity);
       };
 
+
       /**
        * Type of interactions we want the map to be able to respond.
-       * A selected feature is moved to a new/temporary layer out of the default roadLayer.
+       * A selected feature is moved to a temporary layer out of the default layer.
        * This interaction is restricted to a single click (there is a 250 ms enforced
        * delay between single clicks in order to differentiate from double click).
        * @type {ol.interaction.Select}
@@ -114,6 +116,18 @@
         name: 'nodeAndJunctionPointTemplateClickInteractionNL',
         // Limit this interaction to the singleClick
         condition: ol.events.condition.singleClick
+      });
+
+      /**
+       * A node feature, either 'selected' or 'unselected' can be moved to a new place, within a maximum of 200m distance.
+       * This interaction is enabled only if the node tool 'MOVE' is enabled.
+       * @type {ol.interaction.Translate}
+       */
+      var nodeTranslate = new ol.interaction.Translate({
+        layers: function (layer) {
+          return layer.get('translatable');
+        },
+        name: 'nodeTranslateNL'
       });
 
       /**
@@ -158,6 +172,14 @@
           }
         }
       });
+
+      // nodeTranslate.on('translatestart', function (evt) {
+      //   nodeMarker = marker2.getCoordinates();
+      // });
+      //
+      // nodeTranslate.on('translating', function (evt) { // TODO update coordinates for node in the database {{$create}}
+      //   line.setCoordinates([coordMarker2, evt.coordinate]);
+      // });
 
       var selectNode = function(selectedNode) {
         var node = _.first(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
@@ -222,7 +244,18 @@
       /**
        * This will add all the following interactions from the map:
        * - nodeAndJunctionPointTemplateClick
+       * - nodeTranslate
        */
+      var addInteractions = function () {
+        addSelectInteractions();
+        addTranslateInteractions();
+      };
+
+      var removeInteractions = function () {
+        removeSelectInteractions();
+        removeTranslateInteractions();
+      };
+
       var addSelectInteractions = function () {
         map.addInteraction(nodeAndJunctionPointTemplateClick);
       };
@@ -231,8 +264,20 @@
         map.removeInteraction(nodeAndJunctionPointTemplateClick);
       };
 
+      var addTranslateInteractions = function () {
+        map.addInteraction(nodeTranslate);
+      };
+
+      var removeTranslateInteractions = function () {
+        map.removeInteraction(nodeTranslate);
+      };
+
       // We add the defined interactions to the map.
-      addSelectInteractions();
+      addInteractions();
+
+      me.eventListener.listenTo(eventbus, 'node:unselected', function () {
+        setProperty([nodeMarkerSelectedLayer], 'translatable', false);
+      });
 
       me.eventListener.listenTo(eventbus, 'node:unselected junctions:unselected nodePointTemplate:unselected junctionTemplate:unselected', function () {
         clearHighlights();
@@ -274,14 +319,19 @@
           case LinkValues.Tool.Unknown.value:
             setProperty([nodeMarkerLayer], 'selectable', false);
             setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
+            if (!_.isUndefined(selectedNodeAndJunctionPoint.getCurrentNode())) {
+              setProperty([nodeMarkerSelectedLayer], 'translatable', true);
+            }
             break;
           case LinkValues.Tool.Select.value:
             setProperty([nodeMarkerLayer], 'selectable', true);
             setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
+            setProperty([nodeMarkerSelectedLayer], 'translatable', false);
             break;
           case LinkValues.Tool.Add.value:
             setProperty([nodeMarkerLayer], 'selectable', false);
             setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
+            setProperty([nodeMarkerSelectedLayer], 'translatable', false);
             break;
         }
       });
@@ -295,14 +345,14 @@
         isActiveLayer = layer === 'node';
         toggleSelectInteractions(isActiveLayer);
         if (isActiveLayer) {
-          addSelectInteractions();
+          addInteractions();
         } else {
           clearHighlights();
-          removeSelectInteractions();
+          removeInteractions();
         }
         if (previouslySelectedLayer === 'node') {
           hideLayer();
-          removeSelectInteractions();
+          removeInteractions();
         } else {
           setGeneralOpacity(1);
           showLayer();
