@@ -36,7 +36,7 @@
       var part = road.roadPartNumber;
       var track = road.trackCode;
       var roadName = selected[0].roadName;
-      var link = _.head(_.filter(links, function (l) {
+      var link = _.first(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
       var projectEditable = project.statusCode === editableStatus;
@@ -166,7 +166,7 @@
       if (!projectEditable) {
         return ''; // Don't show the button if project status is not incomplete
       }
-      var reversedInGroup = _.uniq(_.map(selected, 'reversed'));
+      var reversedInGroup = _.uniq(_.pluck(selected, 'reversed'));
       var isPartialReversed = reversedInGroup.length > 1;
       return '<div hidden class="' + prefix + 'form-group changeDirectionDiv" style="margin-top:15px">' +
         '<button class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
