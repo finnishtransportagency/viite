@@ -17,7 +17,7 @@
       var nodeType = _.find(NodeType, function (type) {
         return type.value == nodeValue;
       });
-      return _.isUndefined(nodeType) ? NodeType.UnkownNodeType : nodeType;
+      return _.isUndefined(nodeType) ? NodeType.UnknownNodeType : nodeType;
     };
 
     var staticField = function (labelText, dataField) {
