@@ -9,22 +9,8 @@ object Digiroad2Build extends Build {
   val Digiroad2Name = "viite"
   val Digiroad2GeoName = "digiroad2-geo"
   val Version = "0.1.0-SNAPSHOT"
-
-  val ScalaVersion = "2.11.12"
-  val ScalatraVersion = "2.6.5"
-  val ScalaTestVersion = "3.2.0-SNAP7"
-  val JodaConvertVersion = "2.2.0"
-  val JodaTimeVersion = "2.10.1"
-  val AkkaVersion = "2.5.22"
-  val HttpClientVersion = "4.5.8"
-  val NewRelicApiVersion = "5.0.0"
-  val ScalatraSwaggerVersion = "2.6.5"
-  val CommonsIOVersion = "2.6"
-  val JsonJacksonVersion = "3.6.5"
-  val MockitoCoreVersion = "2.27.0"
-  val LogbackClassicVersion = "1.2.3"
-  val JettyVersion = "9.2.28.v20190418"
-
+  val ScalaVersion = "2.11.7"
+  val ScalatraVersion = "2.6.3"
   val env: String = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "dev"
   val testEnv: String = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "test"
   lazy val geoJar = Project (
@@ -40,12 +26,12 @@ object Digiroad2Build extends Build {
         "osgeo" at "http://download.osgeo.org/webdav/geotools/",
         "opengeo" at "http://repo.boundlessgeo.com/main/"),
       libraryDependencies ++= Seq(
-        "org.joda" % "joda-convert" % JodaConvertVersion,
-        "joda-time" % "joda-time" % JodaTimeVersion,
-        "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
+        "org.joda" % "joda-convert" % "1.2",
+        "joda-time" % "joda-time" % "2.2",
+        "com.typesafe.akka" %% "akka-actor" % "2.3.2",
         "javax.media" % "jai_core" % "1.1.3" from "http://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-        "org.geotools" % "gt-graph" % "21.0",
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
+        "org.geotools" % "gt-graph" % "19.0",
+        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test"
       )
     )
   )
@@ -66,20 +52,20 @@ object Digiroad2Build extends Build {
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
-        "org.apache.commons" % "commons-lang3" % "3.9",
-        "commons-codec" % "commons-codec" % "1.12",
+        "org.apache.commons" % "commons-lang3" % "3.2",
+        "commons-codec" % "commons-codec" % "1.9",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
+        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "com.typesafe.slick" %% "slick" % "3.0.0",
-        "org.json4s"   %% "json4s-jackson" % JsonJacksonVersion,
-        "org.joda" % "joda-convert" % JodaConvertVersion,
-        "joda-time" % "joda-time" % JodaTimeVersion,
+        "org.json4s"   %% "json4s-jackson" % "3.5.3",
+        "org.joda" % "joda-convert" % "1.2",
+        "joda-time" % "joda-time" % "2.2",
         "com.github.tototoshi" %% "slick-joda-mapper" % "2.0.0",
-        "com.github.tototoshi" %% "scala-csv" % "1.3.5",
-        "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
-        "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
-        "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
-        "org.flywaydb" % "flyway-core" % "4.2.0" % "test",
+        "com.github.tototoshi" %% "scala-csv" % "1.0.0",
+        "org.apache.httpcomponents" % "httpclient" % "4.3.3",
+        "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
+        "org.mockito" % "mockito-core" % "1.9.5" % "test",
+        "com.googlecode.flyway" % "flyway-core" % "2.3" % "test",
         "com.oracle" % "ojdbc6" % "11.2.0.3.0",
         "com.oracle" % "sdoapi" % "11.2.0",
         "com.oracle" % "sdoutl" % "11.2.0"
@@ -107,17 +93,17 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.json4s"   %% "json4s-jackson" % JsonJacksonVersion,
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
+        "org.json4s"   %% "json4s-jackson" % "3.5.3",
+        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion % "test",
-        "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
-        "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % "test",
-        "ch.qos.logback" % "logback-classic" % LogbackClassicVersion % "runtime",
-        "commons-io" % "commons-io" % CommonsIOVersion,
-        "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
-        "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
-        "org.scalatra" %% "scalatra-swagger"  % ScalatraSwaggerVersion,
+        "org.mockito" % "mockito-core" % "1.9.5" % "test",
+        "com.typesafe.akka" %% "akka-testkit" % "2.3.2" % "test",
+        "ch.qos.logback" % "logback-classic" % "1.0.6" % "runtime",
+        "commons-io" % "commons-io" % "2.4",
+        "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
+        "org.apache.httpcomponents" % "httpclient" % "4.3.3",
+        "org.scalatra" %% "scalatra-swagger"  % "2.6.3",
         "com.github.nscala-time" %% "nscala-time" % "2.22.0"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
@@ -141,21 +127,21 @@ object Digiroad2Build extends Build {
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
-        "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
-        "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "compile, test",
+        "com.typesafe.akka" %% "akka-actor" % "2.3.2",
+        "org.apache.httpcomponents" % "httpclient" % "4.3.3",
+        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "compile,test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-swagger" % ScalatraSwaggerVersion,
-        "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
-        "org.joda" % "joda-convert" % JodaConvertVersion,
-        "joda-time" % "joda-time" % JodaTimeVersion,
-        "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "compile",
-        "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "compile",
-        "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "compile",
-        "org.eclipse.jetty" % "jetty-jmx" % JettyVersion % "compile",
-        "javax.servlet" % "javax.servlet-api" % "4.0.1" % "provided;test" artifacts Artifact("javax.servlet-api", "jar", "jar")
+        "org.scalatra" %% "scalatra-swagger"  % "2.6.3",
+        "org.mockito" % "mockito-core" % "1.9.5" % "test",
+        "org.joda" % "joda-convert" % "1.2",
+        "joda-time" % "joda-time" % "2.2",
+        "org.eclipse.jetty" % "jetty-webapp" % "9.2.10.v20150310" % "compile",
+        "org.eclipse.jetty" % "jetty-servlets" % "9.2.10.v20150310" % "compile",
+        "org.eclipse.jetty" % "jetty-proxy" % "9.2.10.v20150310" % "compile",
+        "org.eclipse.jetty" % "jetty-jmx" % "9.2.10.v20150310" % "compile",
+        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts Artifact("javax.servlet", "jar", "jar")
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
@@ -180,18 +166,18 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.json4s"   %% "json4s-jackson" % JsonJacksonVersion,
-        "org.json4s"   %% "json4s-native" % "3.6.5",
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
+        "org.json4s"   %% "json4s-jackson" % "3.5.3",
+        "org.json4s"   %% "json4s-native" % "3.5.2",
+        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
-        "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % "test",
-        "ch.qos.logback" % "logback-classic" % LogbackClassicVersion % "runtime",
-        "commons-io" % "commons-io" % CommonsIOVersion,
-        "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
-        "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
-        "org.scalatra" %% "scalatra-swagger"  % ScalatraSwaggerVersion
+        "org.mockito" % "mockito-core" % "1.9.5" % "test",
+        "com.typesafe.akka" %% "akka-testkit" % "2.3.2" % "test",
+        "ch.qos.logback" % "logback-classic" % "1.0.6" % "runtime",
+        "commons-io" % "commons-io" % "2.4",
+        "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
+        "org.apache.httpcomponents" % "httpclient" % "4.3.3",
+        "org.scalatra" %% "scalatra-swagger"  % "2.6.3"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
@@ -219,21 +205,21 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.json4s"   %% "json4s-jackson" % JsonJacksonVersion,
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
+        "org.json4s"   %% "json4s-jackson" % "3.5.3",
+        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-swagger"  % ScalatraSwaggerVersion,
-        "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
-        "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % "test",
-        "ch.qos.logback" % "logback-classic" % LogbackClassicVersion % "runtime",
-        "commons-io" % "commons-io" % CommonsIOVersion,
-        "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
-        "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
-        "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "container;compile",
-        "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "container;compile",
-        "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "container;compile",
-        "javax.servlet" % "javax.servlet-api" % "4.0.1" % "provided;test" artifacts Artifact("javax.servlet-api", "jar", "jar")
+        "org.scalatra" %% "scalatra-swagger"  % "2.6.3",
+        "org.mockito" % "mockito-core" % "1.9.5" % "test",
+        "com.typesafe.akka" %% "akka-testkit" % "2.3.2" % "test",
+        "ch.qos.logback" % "logback-classic" % "1.0.6" % "runtime",
+        "commons-io" % "commons-io" % "2.4",
+        "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
+        "org.apache.httpcomponents" % "httpclient" % "4.3.3",
+        "org.eclipse.jetty" % "jetty-webapp" % "9.2.10.v20150310" % "container;compile",
+        "org.eclipse.jetty" % "jetty-servlets" % "9.2.10.v20150310" % "container;compile",
+        "org.eclipse.jetty" % "jetty-proxy" % "9.2.10.v20150310" % "container;compile",
+        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts Artifact("javax.servlet", "jar", "jar")
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv

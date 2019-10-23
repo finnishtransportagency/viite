@@ -21,7 +21,7 @@
 
     var transitionModifiers = function(targetStatus, currentStatus) {
       var mod;
-      if (_.includes(targetStatus.transitionFrom, currentStatus))
+      if (_.contains(targetStatus.transitionFrom, currentStatus))
         mod = '';
       else
         mod = 'disabled hidden';
@@ -143,7 +143,7 @@
     };
 
     var isProjectEditable = function(){
-      return _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
+      return _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
     };
 
     var checkInputs = function () {
@@ -272,7 +272,7 @@
           removeNumberingFromDropdown();
         }
         disableFormInputs();
-        var selectedDiscontinuity = _.maxBy(selectedProjectLink, function (projectLink) {
+        var selectedDiscontinuity = _.max(selectedProjectLink, function (projectLink) {
           return projectLink.endAddressM;
         }).discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
@@ -635,7 +635,7 @@
           LinkValues.ProjectError.DoubleEndOfRoad.value,
           LinkValues.ProjectError.RoadNotReserved.value
         ];
-        if (_.includes(roadPartErrors, error.errorCode)) {
+        if (_.contains(roadPartErrors, error.errorCode)) {
           var rootElement = $('#feature-attributes');
           rootElement.find('#editProjectSpan').click();
         } else {

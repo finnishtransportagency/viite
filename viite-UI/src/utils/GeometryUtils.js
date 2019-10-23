@@ -192,7 +192,7 @@
   root.calculateMidpointOfLineString = function (lineString) {
     var length = lineString.getLength();
     var vertices = lineString.getCoordinates();
-    var firstVertex = _.head(vertices);
+    var firstVertex = _.first(vertices);
     var optionalMidpoint = _.reduce(_.tail(vertices), function (acc, vertex) {
       if (acc.midpoint) return acc;
       var distance = distanceOfPoints(vertex, acc.previousVertex);
@@ -217,9 +217,9 @@
 
   root.areAdjacents = function (geometry1, geometry2) {
     var epsilon = 0.01;
-    var geom1FirstPoint = _.head(geometry1);
+    var geom1FirstPoint = _.first(geometry1);
     var geom1LastPoint = _.last(geometry1);
-    var geom2FirstPoint = _.head(geometry2);
+    var geom2FirstPoint = _.first(geometry2);
     var geom2LastPoint = _.last(geometry2);
     return distanceOfPoints(geom2FirstPoint, geom1FirstPoint) < epsilon ||
       distanceOfPoints(geom2LastPoint, geom1FirstPoint) < epsilon ||
@@ -228,9 +228,9 @@
   };
 
   root.connectingEndPoint = function (geometry1, geometry2) {
-    var geom1FirstPoint = _.head(geometry1);
+    var geom1FirstPoint = _.first(geometry1);
     var geom1LastPoint = _.last(geometry1);
-    var geom2FirstPoint = _.head(geometry2);
+    var geom2FirstPoint = _.first(geometry2);
     var geom2LastPoint = _.last(geometry2);
     var connectedEndPoint = _.find([geom1FirstPoint, geom1LastPoint], function (point) {
       return arePointsAdjacent(point, geom2FirstPoint) || arePointsAdjacent(point, geom2LastPoint);
