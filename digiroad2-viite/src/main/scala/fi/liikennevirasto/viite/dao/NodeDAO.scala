@@ -22,10 +22,10 @@ sealed trait NodeType {
 
 object NodeType {
   val values: Set[NodeType] = Set(NormalIntersection, Roundabout, YIntersection, Interchange, RoadBoundary, ELYBorder, MultitrackIntersection,
-    DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnkownNodeType)
+    DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnknownNodeType)
 
   def apply(intValue: Long): NodeType = {
-    values.find(_.value == intValue).getOrElse(UnkownNodeType)
+    values.find(_.value == intValue).getOrElse(UnknownNodeType)
   }
 
   case object NormalIntersection extends NodeType {
@@ -112,7 +112,7 @@ object NodeType {
     def displayValue = "Porrastettu liittymä"
   }
 
-  case object UnkownNodeType extends NodeType {
+  case object UnknownNodeType extends NodeType {
     def value = 99
 
     def displayValue = "Ei määritelty"
@@ -219,7 +219,7 @@ class NodeDAO extends BaseDAO {
       case (id, nodeNumber, x, y, name, nodeType, startDate, endDate, validFrom, validTo,
       createdBy, createdTime, roadNumber, track, roadPartNumber, addrMValue) =>
 
-        (Node(id, nodeNumber, Point(x, y), name, NodeType.apply(nodeType.getOrElse(NodeType.UnkownNodeType.value)), startDate, endDate, validFrom, validTo, createdBy, createdTime, None, None),
+        (Node(id, nodeNumber, Point(x, y), name, NodeType.apply(nodeType.getOrElse(NodeType.UnknownNodeType.value)), startDate, endDate, validFrom, validTo, createdBy, createdTime, None, None),
           RoadAttributes(roadNumber, track, roadPartNumber, addrMValue))
     }
   }

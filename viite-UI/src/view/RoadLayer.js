@@ -124,7 +124,7 @@
       var nodeType = _.find(LinkValues.NodeType, function (type) {
         return type.value === nodeTypeCode;
       });
-      return _.isUndefined(nodeType) ? NodeType.UnkownNodeType.description : nodeType.description;
+      return _.isUndefined(nodeType) ? NodeType.UnknownNodeType.description : nodeType.description;
     };
 
     var displayJunctionInfo = function (event, pixel) {
