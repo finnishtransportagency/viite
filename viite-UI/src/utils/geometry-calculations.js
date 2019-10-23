@@ -45,11 +45,10 @@
       return temp;
     };
 
-    return _.chain(features)
-      .map(fromFeatureVectorToLine)
-      .min('distance')
-      .omit('distance')
-      .value();
+    var mappedFeaturesVectorToLine = _.map(features, function(o){
+      return fromFeatureVectorToLine(o);
+    });
+    return _.omit(_.minBy(mappedFeaturesVectorToLine, 'distance'), "distance");
   };
 
   geometrycalculator.getSquaredDistanceBetweenPoints = function(pointA, pointB) {
