@@ -9,7 +9,6 @@
       var junctionMarkerVector = dblVector();
       var nodePointTemplateVector = dblVector();
       var junctionTemplateVector = dblVector();
-      var isActiveLayer = false;
       var cachedMarker = null;
 
       var SelectionType = LinkValues.SelectionType;
@@ -97,6 +96,18 @@
         junctionTemplateSelectedLayer.setOpacity(opacity);
       };
 
+      var setOpacityFor = function (layers, opacity) {
+        _.each(layers, function (layer) {
+          layer.setOpacity(opacity);
+        });
+      };
+
+      var setProperty = function (layers, propertyName, propertyValue) {
+        _.each(layers, function (layer) {
+          layer.set(propertyName, propertyValue);
+        });
+      };
+
       /**
        * Type of interactions we want the map to be able to respond.
        * A selected feature is moved to a new/temporary layer out of the default roadLayer.
@@ -138,50 +149,66 @@
           return !_.isUndefined(selectionTarget.junctionTemplateInfo);
         });
 
-        if (!_.isUndefined(selectedNodes) && selectedNodes.length === 0 && !_.isUndefined(selectedNodePointTemplates) && selectedNodePointTemplates.length === 0 && !_.isUndefined(selectedJunctions) && selectedJunctions.length === 0) {
-          selectedNodeAndJunctionPoint.close();
-        } else {
-          switch (applicationModel.getSelectedTool()) {
-            case LinkValues.Tool.Unknown.value:
-              if (!_.isUndefined(selectedJunctions) && selectedJunctions.length > 0) {
-                selectJunctionTemplate(selectedJunctions);
-              } else if (!_.isUndefined(selectedNodePointTemplates) && selectedNodePointTemplates.length > 0) {
-                selectNodePointTemplate(selectedNodePointTemplates);
-              }
-              break;
-            case LinkValues.Tool.Select.value:
-              if (!_.isUndefined(selectedNodes) && selectedNodes.length > 0) { selectNode(selectedNodes); }
-              break;
-            case LinkValues.Tool.Add.value:
-              // TODO - Create Node
-              break;
-          }
+        switch (applicationModel.getSelectedTool()) {
+          case LinkValues.Tool.Unknown.value:
+            if (!_.isUndefined(selectedJunctions) && selectedJunctions.length > 0) {
+              selectJunctionTemplate(_.first(_.uniq(_.map(selectedJunctions, "junctionTemplateInfo"), "junctionId")));
+            } else if (!_.isUndefined(selectedNodePointTemplates) && selectedNodePointTemplates.length > 0) {
+              selectNodePointTemplate(_.uniq(_.map(selectedNodePointTemplates, "nodePointTemplateInfo"), "id"));
+            }
+            break;
+          case LinkValues.Tool.Select.value:
+            if (!_.isUndefined(selectedNodes) && selectedNodes.length > 0) {
+              selectNode(_.first(_.uniq(_.map(selectedNodes, "nodeInfo"), "id")));
+            }
+            break;
         }
       });
 
-      var selectNode = function(selectedNode) {
-        var node = _.first(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
-        selectedNodeAndJunctionPoint.openNode(node);
-        clearHighlights();
-        highlightNode(node.id);
-
-        nodePointTemplateLayer.setOpacity(0.2);
-        junctionTemplateLayer.setOpacity(0.2);
+      /**
+       * This will add all the following interactions from the map:
+       * - nodeAndJunctionPointTemplateClick
+       */
+      var toggleSelectInteractions = function (activate) {
+        nodeAndJunctionPointTemplateClick.setActive(activate);
       };
 
-      var selectNodePointTemplate = function(selectedNodePointTemplates) {
-        selectedNodeAndJunctionPoint.openNodePointTemplate(_.unique(_.map(selectedNodePointTemplates, "nodePointTemplateInfo"), "id"));
+      var addSelectInteractions = function () {
+        map.addInteraction(nodeAndJunctionPointTemplateClick);
       };
 
-      var selectJunctionTemplate = function (selectedJunctionPointTemplates) {
-        selectedNodeAndJunctionPoint.openJunctionTemplate(_.first(_.unique(_.map(selectedJunctionPointTemplates, "junctionTemplateInfo"), "junctionId")));
+      var removeSelectInteractions = function () {
+        map.removeInteraction(nodeAndJunctionPointTemplateClick);
       };
+
+      // We add the defined interactions to the map.
+      addSelectInteractions();
 
       var selectFeaturesToHighlight = function (vector, featuresToHighlight, otherFeatures) {
         vector.selected.clear();
         vector.selected.addFeatures(featuresToHighlight);
         vector.unselected.clear();
         vector.unselected.addFeatures(otherFeatures);
+      };
+
+      var selectNode = function(node) {
+        clearHighlights();
+        selectedNodeAndJunctionPoint.openNode(node);
+        highlightNode(node);
+      };
+
+      var selectNodePointTemplate = function(nodePointTemplate) {
+        clearHighlights();
+        selectedNodeAndJunctionPoint.openNodePointTemplate(nodePointTemplate);
+      };
+
+      var selectJunctionTemplate = function (junctionTemplate) {
+        clearHighlights();
+        selectedNodeAndJunctionPoint.openJunctionTemplate(junctionTemplate);
+      };
+
+      var addFeature = function(layer, feature) {
+        layer.getSource().addFeature(feature);
       };
 
       var highlightNode = function (id) {
@@ -215,76 +242,72 @@
         setGeneralOpacity(1);
       };
 
-      var toggleSelectInteractions = function (activate) {
-        nodeAndJunctionPointTemplateClick.setActive(activate);
+      var clearHighlightsForUnselectedLayers = function () {
+        setOpacityFor([
+          nodeMarkerLayer,
+          junctionMarkerLayer,
+          nodePointTemplateLayer,
+          junctionTemplateLayer
+        ], 0.2);
       };
 
-      /**
-       * This will add all the following interactions from the map:
-       * - nodeAndJunctionPointTemplateClick
-       */
-      var addSelectInteractions = function () {
-        map.addInteraction(nodeAndJunctionPointTemplateClick);
-      };
-
-      var removeSelectInteractions = function () {
-        map.removeInteraction(nodeAndJunctionPointTemplateClick);
-      };
-
-      // We add the defined interactions to the map.
-      addSelectInteractions();
-
-      me.eventListener.listenTo(eventbus, 'node:unselected junctions:unselected nodePointTemplate:unselected junctionTemplate:unselected', function () {
+      me.eventListener.listenTo(eventbus, 'node:unselected nodePointTemplate:unselected junctionTemplate:unselected', function (node) {
+        removeCurrentNodeMarker(node);
         clearHighlights();
       });
-
-      me.eventListener.listenTo(eventbus, 'node:unselected', function () {
-        if (nodeMarkerSelectedLayer.getSource().getFeatures().length !== 0) {
-          nodeMarkerSelectedLayer.getSource().clear();
-          eventbus.trigger('junctions:unselected');
-        }
-      });
-
-      me.eventListener.listenTo(eventbus, 'junctions:unselected', function () {
-        if (junctionMarkerSelectedLayer.getSource().getFeatures().length !== 0) {
-          junctionMarkerSelectedLayer.getSource().clear();
-        }
-      });
-
-      me.eventListener.listenTo(eventbus, 'nodePointTemplate:unselected', function () {
-        if (nodePointTemplateSelectedLayer.getSource().getFeatures().length !== 0) {
-          nodePointTemplateSelectedLayer.getSource().clear();
-        }
-      });
-
-      me.eventListener.listenTo(eventbus, 'junctionTemplate:unselected', function () {
-        if (junctionTemplateSelectedLayer.getSource().getFeatures().length !== 0) {
-          junctionTemplateSelectedLayer.getSource().clear();
-        }
-      });
-
-      var setProperty = function (layers, propertyName, propertyValue) {
-        _.each(layers, function (layer) {
-          layer.set(propertyName, propertyValue);
-        });
-      };
 
       me.eventListener.listenTo(eventbus, 'tool:changed', function (tool) {
         switch (tool) {
           case LinkValues.Tool.Unknown.value:
+            me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
             setProperty([nodeMarkerLayer], 'selectable', false);
             setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
             break;
           case LinkValues.Tool.Select.value:
+            me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
             setProperty([nodeMarkerLayer], 'selectable', true);
             setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
             break;
           case LinkValues.Tool.Add.value:
-            setProperty([nodeMarkerLayer], 'selectable', false);
-            setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
+            me.eventListener.listenTo(eventbus, 'map:clicked', createNewNodeMarker);
+            if (!_.isUndefined(selectedNodeAndJunctionPoint.getCurrentNode()) || !_.isUndefined(selectedNodeAndJunctionPoint.getCurrentNodePointTemplates()) || !_.isUndefined(selectedNodeAndJunctionPoint.getCurrentJunctionTemplate())) {
+              selectedNodeAndJunctionPoint.closeForm();
+            }
+            setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
             break;
         }
       });
+
+      var createNewNodeMarker = function (coords) {
+        var node = {
+          coordX: coords.x,
+          coordY: coords.y,
+          type:   LinkValues.NodeType.UnkownNodeType.value
+        };
+        addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(node));
+        applicationModel.setSelectedTool(LinkValues.Tool.Unknown.value);
+        selectNode(node);
+      };
+
+      var removeCurrentNodeMarker = function (node) {
+        if (!_.isUndefined(node)) {
+          _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
+            if (_.isEqual(nodeFeature.nodeInfo, node)) {
+              nodeMarkerSelectedLayer.getSource().removeFeature(nodeFeature);
+            }
+          });
+        }
+      };
+
+      var updateCurrentNodeMarker = function (node) {
+        if (!_.isUndefined(node)) {
+          _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
+            if (_.isEqual(nodeFeature.nodeInfo, node)) {
+              nodeFeature.setProperties({type: node.type});
+            }
+          });
+        }
+      };
 
       me.eventListener.listenTo(eventbus, 'nodeLayer:fetch', function () {
         map.getView().setZoom(Math.round(zoomlevels.getViewZoom(map)));
@@ -350,63 +373,73 @@
           }
         });
 
-        eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, nodePointTemplates, junctionTemplates, zoom){
-          var roadLinksWithValues = _.reject(roadCollection.getAll(), function (rl) {
-            return rl.roadNumber === 0;
-          });
+        eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, nodePointTemplates, junctionTemplates, zoom) {
+          var roadLinkForPoint = function (predicate) {
+            var roadLinksWithValues = _.reject(roadCollection.getAll(), function (rl) {
+              return rl.roadNumber === 0;
+            });
+
+            return _.find(roadLinksWithValues, predicate);
+          };
+
+          var addJunctionToMap = function (junction) {
+            var junctionPoint = {};
+            var roadLink = roadLinkForPoint(function (roadLink) {
+              junctionPoint = _.find(junction.junctionPoints, function (junctionPoint) {
+                return (roadLink.startAddressM === junctionPoint.addrM || roadLink.endAddressM === junctionPoint.addrM) && roadLink.roadwayNumber === junctionPoint.roadwayNumber;
+              });
+              return !_.isUndefined(junctionPoint);
+            });
+            if (!_.isUndefined(roadLink) && !_.isUndefined(junctionPoint)) {
+              if (!_.isUndefined(junction.nodeNumber)) {
+                addFeature(junctionMarkerLayer, new JunctionMarker().createJunctionMarker(junction, junctionPoint, roadLink));
+              } else {
+                addFeature(junctionTemplateLayer, new JunctionTemplateMarker().createJunctionTemplateMarker(junction, roadLink));
+              }
+            }
+          };
+
+          var selectedNode = selectedNodeAndJunctionPoint.getCurrentNode();
 
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
+            if (!_.isUndefined(selectedNode) && _.isUndefined(selectedNode.id)) {
+              // adds node created by user which isn't saved yet.
+              addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(selectedNode));
+            }
+
             _.each(nodes, function (node) {
-              var nodeMarker = new NodeMarker();
-              nodeMarkerLayer.getSource().addFeature(nodeMarker.createNodeMarker(node));
+              addFeature(nodeMarkerLayer, new NodeMarker().createNodeMarker(node));
             });
 
             _.each(nodePointTemplates, function (nodePointTemplate) {
-              var nodePointTemplateMarker = new NodePointTemplateMarker();
-              var roadLinkForPoint = _.find(roadLinksWithValues, function (roadLink) {
+              var roadLink = roadLinkForPoint(function (roadLink) {
                 return (roadLink.startAddressM === nodePointTemplate.addrM || roadLink.endAddressM === nodePointTemplate.addrM) && roadLink.roadwayNumber === nodePointTemplate.roadwayNumber;
               });
-              if (!_.isUndefined(roadLinkForPoint)) {
-                nodePointTemplateLayer.getSource().addFeature(nodePointTemplateMarker.createNodePointTemplateMarker(nodePointTemplate, roadLinkForPoint));
+              if (!_.isUndefined(roadLink)) {
+                addFeature(nodePointTemplateLayer, new NodePointTemplateMarker().createNodePointTemplateMarker(nodePointTemplate, roadLink));
               }
             });
           }
 
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions) {
-            _.each(_.flatten(_.map(nodes, "junctions")), function (junction) {
-              var junctionMarker = new JunctionMarker();
-              var junctionPoint = {};
-              var roadLink = _.find(roadLinksWithValues, function (roadLink) {
-                junctionPoint = _.find(junction.junctionPoints, function (junctionPoint) {
-                  return (roadLink.startAddressM === junctionPoint.addrM || roadLink.endAddressM === junctionPoint.addrM) && roadLink.roadwayNumber === junctionPoint.roadwayNumber;
-                });
-                return !_.isUndefined(junctionPoint);
+            if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.nodeMarker)) {
+              _.each(selectedNode.junctions, function (junction) {
+                addJunctionToMap(junction);
               });
-              if (!_.isUndefined(roadLink) && !_.isUndefined(junctionPoint)) {
-                junctionMarkerLayer.getSource().addFeature(junctionMarker.createJunctionMarker(junction, junctionPoint, roadLink));
-              }
+            }
+
+            _.each(_.flatten(_.map(nodes, "junctions")), function (junction) {
+              addJunctionToMap(junction);
             });
 
             _.each(junctionTemplates, function (junctionTemplate) {
-              var junctionTemplateMarker = new JunctionTemplateMarker();
-              var junctionPoint = {};
-              var roadLink = _.find(roadLinksWithValues, function (roadLink) {
-                junctionPoint = _.find(junctionTemplate.junctionPoints, function (junctionPoint) {
-                  return (roadLink.startAddressM === junctionPoint.addrM || roadLink.endAddressM === junctionPoint.addrM) && roadLink.roadwayNumber === junctionPoint.roadwayNumber;
-                });
-                return !_.isUndefined(junctionPoint);
-              });
-              if (!_.isUndefined(roadLink) && !_.isUndefined(junctionPoint)) {
-                junctionTemplateLayer.getSource().addFeature(junctionTemplateMarker.createJunctionTemplateMarker(junctionTemplate, roadLink));
-              }
+              addJunctionToMap(junctionTemplate);
             });
           }
 
-          var selectedNode = selectedNodeAndJunctionPoint.getCurrentNode();
-
-          if (!_.isUndefined(selectedNode.id)) {
+          if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.id)) {
             clearHighlights();
-            highlightNode(selectedNode.id);
+            highlightNode(selectedNode);
           }
         });
 
@@ -415,6 +448,10 @@
         });
 
         eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers);
+
+        eventListener.listenTo(eventbus, 'changed:type', function (node) {
+          updateCurrentNodeMarker(node);
+        });
       };
 
       var showLayer = function () {

@@ -63,6 +63,31 @@
       eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionTemplates, zoom);
     });
 
+    eventbus.on('node:save', function (node) {
+      applicationModel.addSpinner();
+      var dataJson = {
+        coordinates: { x: Number(node.coordX), y: Number(node.coordY) },
+        name: node.name,
+        nodeType: Number(node.type),
+        startDate: node.startDate
+      };
+      if (!_.isUndefined(node)) {
+        if (!_.isUndefined(node.id)) {
+          // TODO - Update node information
+        } else {
+          backend.saveNodeInformation(dataJson, function (result) {
+            if (result.success) {
+              eventbus.trigger('node:saveSuccess');
+            } else {
+              eventbus.trigger('node:saveUnsuccessful', result.errorMessage);
+            }
+          }, function (result) {
+            eventbus.trigger('node:saveUnsuccessful', result.errorMessage);
+          });
+        }
+      }
+    });
+
     eventbus.on('templates:fetched', function(nodePointTemplates, junctionTemplates) {
       me.setUserTemplates(nodePointTemplates, junctionTemplates);
     });
