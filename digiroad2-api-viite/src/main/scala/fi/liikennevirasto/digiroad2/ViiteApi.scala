@@ -929,15 +929,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   get("/templates") {
-    try {
-      time(logger, s"GET request for /templates") {
-        val authorizedElys = userProvider.getCurrentUser().getAuthorizedElys
-        Map("nodePointTemplates" -> nodesAndJunctionsService.getNodePointTemplates(authorizedElys.toSeq).map(nodePointTemplateToApi),
-          "junctionTemplates" -> nodesAndJunctionsService.getJunctionTemplates(authorizedElys.toSeq).map(junctionTemplateToApi))
-      }
-    } catch {
-      case e: Exception =>
-        logger.error(e.toString, e)
+    time(logger, s"GET request for /templates") {
+      val authorizedElys = userProvider.getCurrentUser().getAuthorizedElys
+      Map("nodePointTemplates" -> nodesAndJunctionsService.getNodePointTemplates(authorizedElys.toSeq).map(nodePointTemplateToApi),
+        "junctionTemplates" -> nodesAndJunctionsService.getJunctionTemplates(authorizedElys.toSeq).map(junctionTemplateToApi))
     }
   }
 
