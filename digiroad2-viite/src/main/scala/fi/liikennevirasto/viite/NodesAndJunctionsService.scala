@@ -570,19 +570,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val obsoleteNodes = nodeDAO.fetchObsoleteById((obsoleteJunctions.filter(j => j.nodeNumber.isDefined).map(_.nodeNumber.get)
         ++ obsoleteNodePoints.filter(np => np.nodeNumber.isDefined).map(_.nodeNumber.get)).distinct)
 
-      // Handle obsolete node points of valid and obsolete nodes separately
-      val (obsoleteNodePointsOfObsoleteNodes, obsoleteNodePointsOfValidNodes) = obsoleteNodePoints
-        .partition(np => obsoleteNodes.exists(n => n.nodeNumber == np.nodeNumber.getOrElse(-1)))
-
       // Create node rows with end date and node point rows with end date and new node id
       obsoleteNodes.foreach(n => {
-        val newNodeNumber = nodeDAO.create(Seq(n.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
-        nodePointDAO.create(obsoleteNodePointsOfObsoleteNodes.map(_.copy(id = NewIdValue, endDate = endDate,
-          nodeNumber = Some(newNodeNumber), createdBy = Some(username))))
+        nodeDAO.create(Seq(n.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
       })
-
-      // Create node point rows of the valid nodes with end date
-      nodePointDAO.create(obsoleteNodePointsOfValidNodes.map(_.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username))))
 
       logger.info(s"Expiring nodes : ${obsoleteNodes.map(_.id)}")
       nodeDAO.expireById(obsoleteNodes.map(_.id))
