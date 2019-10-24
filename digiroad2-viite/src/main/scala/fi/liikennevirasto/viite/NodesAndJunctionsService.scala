@@ -566,7 +566,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       // Handle obsolete node points of valid and obsolete nodes separately
       val (obsoleteNodePointsOfObsoleteNodes, obsoleteNodePointsOfValidNodes) = obsoleteNodePoints
-        .partition(np => obsoleteNodes.exists(n => n.id == np.nodeNumber.getOrElse(-1)))
+        .partition(np => obsoleteNodes.exists(n => n.nodeNumber == np.nodeNumber.getOrElse(-1)))
 
       // Create node rows with end date and node point rows with end date and new node id
       obsoleteNodes.foreach(n => {
