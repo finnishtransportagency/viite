@@ -543,15 +543,16 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val (obsoleteJunctionPointsOfObsoleteJunctions, obsoleteJunctionPointsOfValidJunctions) = (obsoleteJunctionPoints ++ obsoleteJunctionPointsOfNowExpiredJunctions)
         .partition(jp => obsoleteJunctions.exists(j => j.id == jp.junctionId))
 
-      // Create junction rows with end date and junction point rows with end date and new junction id
+      // Create junction rows with end date and junction point rows with new junction id
       obsoleteJunctions.foreach(j => {
         val newJunctionId = junctionDAO.create(Seq(j.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
-        junctionPointDAO.create(obsoleteJunctionPointsOfObsoleteJunctions.map(_.copy(id = NewIdValue, validTo = endDate,
+        junctionPointDAO.create(obsoleteJunctionPointsOfObsoleteJunctions.map(_.copy(id = NewIdValue,
           junctionId = newJunctionId, createdBy = Some(username))))
       })
 
-      // Create junction point rows of the valid junctions with end date
-      junctionPointDAO.create(obsoleteJunctionPointsOfValidJunctions.map(_.copy(id = NewIdValue, validTo = endDate, createdBy = Some(username))))
+      // Create junction point rows of the valid junctions
+      // TODO We should not expire these in the first place, since now we are creating exact copy of the previous ones
+      junctionPointDAO.create(obsoleteJunctionPointsOfValidJunctions.map(_.copy(id = NewIdValue, createdBy = Some(username))))
       obsoleteJunctions
     }
 
@@ -596,7 +597,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     val obsoleteJunctions = expireObsoleteJunctions(obsoleteJunctionPoints)
     expireNodes(obsoleteNodePoints, obsoleteJunctions)
   }
-  def getJunctionInfoByJunctionId(junctionIds: Seq[Long]): Option[JunctionInfo]= {
+
+  def getJunctionInfoByJunctionId(junctionIds: Seq[Long]): Option[JunctionInfo] = {
     withDynSession {
       junctionDAO.fetchJunctionInfoByJunctionId(junctionIds)
 
