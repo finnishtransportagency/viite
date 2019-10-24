@@ -296,7 +296,7 @@ class NodeDAO extends BaseDAO {
     }
     ps.executeBatch()
     ps.close()
-    createNodes.map(_.id).toSeq
+    createNodes.map(_.nodeNumber).toSeq
   }
 
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[Node] = {
@@ -330,15 +330,15 @@ class NodeDAO extends BaseDAO {
     }
   }
 
-  def fetchEmptyNodes(ids: Iterable[Long]): Seq[Node] = {
-    if (ids.isEmpty) {
+  def fetchEmptyNodes(nodeNumbers: Iterable[Long]): Seq[Node] = {
+    if (nodeNumbers.isEmpty) {
       Seq()
     } else {
       val query = s"""
         SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
         FROM NODE N
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
-          WHERE END_DATE IS NULL AND VALID_TO IS NULL AND ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
+          WHERE END_DATE IS NULL AND VALID_TO IS NULL AND NODE_NUMBER IN (${nodeNumbers.mkString(", ")}) AND NOT EXISTS (
             SELECT NULL FROM JUNCTION J WHERE N.NODE_NUMBER = J.NODE_NUMBER AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
           ) AND NOT EXISTS (
             SELECT NULL FROM NODE_POINT NP WHERE N.NODE_NUMBER = NP.NODE_NUMBER AND NP.VALID_TO IS NULL

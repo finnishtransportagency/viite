@@ -79,10 +79,10 @@ class NodeDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       roadwayDAO.create(Seq(testRoadway1))
       val nodeId = Sequences.nextNodeId
-      dao.create(Seq(testNode1.copy(id = nodeId)))
+      val nodeNumber = dao.create(Seq(testNode1.copy(id = nodeId))).head
       val roadwayPointId = Sequences.nextRoadwayPointId
       roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId))
-      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeId), roadwayPointId = roadwayPointId)))
+      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId)))
       val nodesAndRoadAttributes = dao.fetchByRoadAttributes(roadNumber1, None, None)
       nodesAndRoadAttributes.isEmpty should be(false)
       nodesAndRoadAttributes.size should be(1)
@@ -94,10 +94,10 @@ class NodeDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchEmptyNodes When one empty Then return one") {
     runWithRollback {
-      val nodeIds = dao.create(Seq(testNode1))
-      val nodes = dao.fetchEmptyNodes(nodeIds)
+      val nodeNumbers = dao.create(Seq(testNode1))
+      val nodes = dao.fetchEmptyNodes(nodeNumbers)
       nodes.size should be(1)
-      nodes.head.id should be(nodeIds.head)
+      nodes.head.nodeNumber should be(nodeNumbers.head)
       nodes.head.coordinates.x should be(testNode1.coordinates.x)
       nodes.head.coordinates.y should be(testNode1.coordinates.y)
     }
@@ -105,10 +105,10 @@ class NodeDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchByBoundingBox When matching Then return them") {
     runWithRollback {
-      val nodeIds = dao.create(Seq(testNode1))
+      val nodeNumbers = dao.create(Seq(testNode1))
       val nodes = dao.fetchByBoundingBox(BoundingRectangle(Point(50, 50), Point(150, 150)))
       nodes.size should be(1)
-      nodes.head.id should be(nodeIds.head)
+      nodes.head.nodeNumber should be(nodeNumbers.head)
       nodes.head.coordinates.x should be(testNode1.coordinates.x)
       nodes.head.coordinates.y should be(testNode1.coordinates.y)
     }
@@ -117,10 +117,10 @@ class NodeDAOSpec extends FunSuite with Matchers {
   test("Test fetchByNodeNumber When matching Then return them") {
     runWithRollback {
       val nodeNumber = Sequences.nextNodeNumber
-      val nodeIds = dao.create(Seq(testNode1.copy(nodeNumber = nodeNumber)))
+      val nodeNumbers = dao.create(Seq(testNode1.copy(nodeNumber = nodeNumber)))
       val nodes = dao.fetchByNodeNumber(nodeNumber)
       nodes.size should be(1)
-      nodes.head.id should be(nodeIds.head)
+      nodes.head.nodeNumber should be(nodeNumbers.head)
       nodes.head.coordinates.x should be(testNode1.coordinates.x)
       nodes.head.coordinates.y should be(testNode1.coordinates.y)
     }

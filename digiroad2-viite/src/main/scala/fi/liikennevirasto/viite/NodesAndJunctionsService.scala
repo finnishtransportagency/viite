@@ -60,15 +60,15 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     withDynSession {
       time(logger, "Fetch nodes with junctions") {
         val nodes = nodeDAO.fetchByBoundingBox(boundingRectangle)
-        val nodePoints = nodePointDAO.fetchNodePointsByNodeId(nodes.map(_.id))
-        val junctions = junctionDAO.fetchJunctionsByNodeNumbers(nodes.map(_.id))
+        val nodePoints = nodePointDAO.fetchNodePointsByNodeNumber(nodes.map(_.nodeNumber))
+        val junctions = junctionDAO.fetchJunctionsByNodeNumbers(nodes.map(_.nodeNumber))
         val junctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(junctions.map(_.id))
         nodes.map {
           node =>
             (node,
               (
-                nodePoints.filter(np => np.nodeNumber.isDefined && np.nodeNumber.get == node.id),
-                junctions.filter(j => j.nodeNumber.isDefined && j.nodeNumber.get == node.id).map {
+                nodePoints.filter(np => np.nodeNumber.isDefined && np.nodeNumber.get == node.nodeNumber),
+                junctions.filter(j => j.nodeNumber.isDefined && j.nodeNumber.get == node.nodeNumber).map {
                   junction =>
                     (
                       junction, junctionPoints.filter(_.junctionId == junction.id)
@@ -84,15 +84,15 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def getNodesWithTimeInterval(sinceDate: DateTime, untilDate: Option[DateTime]) : Map[Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
     withDynSession {
       val nodes = nodeDAO.fetchAllByDateRange(sinceDate, untilDate)
-      val nodePoints = nodePointDAO.fetchNodePointsByNodeId(nodes.map(_.id))
-      val junctions = junctionDAO.fetchJunctionsByNodeNumbers(nodes.map(_.id))
+      val nodePoints = nodePointDAO.fetchNodePointsByNodeNumber(nodes.map(_.nodeNumber))
+      val junctions = junctionDAO.fetchJunctionsByNodeNumbers(nodes.map(_.nodeNumber))
       val junctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(junctions.map(_.id))
       nodes.map {
         node =>
           (Option(node),
             (
-              nodePoints.filter(np => np.nodeNumber.isDefined && np.nodeNumber.get == node.id),
-              junctions.filter(j => j.nodeNumber.isDefined && j.nodeNumber.get == node.id).map {
+              nodePoints.filter(np => np.nodeNumber.isDefined && np.nodeNumber.get == node.nodeNumber),
+              junctions.filter(j => j.nodeNumber.isDefined && j.nodeNumber.get == node.nodeNumber).map {
                 junction =>
                   (
                     junction, junctionPoints.filter(_.junctionId == junction.id)
@@ -516,7 +516,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       val nodePoints = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id)).filter(_.nodeNumber.isDefined)
       val obsoleteNodes = nodeDAO.fetchObsoleteById(nodePoints.map(_.nodeNumber.get).distinct)
-      val obsoleteNodePoints = nodePointDAO.fetchNodePointsByNodeId(obsoleteNodes.map(_.id)) ++
+      val obsoleteNodePoints = nodePointDAO.fetchNodePointsByNodeNumber(obsoleteNodes.map(_.nodeNumber)) ++
         nodePoints.filterNot(n => (n.beforeAfter == BeforeAfter.After && n.addrM == startAddrMValue) || (n.beforeAfter == BeforeAfter.Before && n.addrM == endAddrMValue))
 
       val junctionPoints = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id))
@@ -570,9 +570,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       // Create node rows with end date and node point rows with end date and new node id
       obsoleteNodes.foreach(n => {
-        val newNodeId = nodeDAO.create(Seq(n.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
+        val newNodeNumber = nodeDAO.create(Seq(n.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
         nodePointDAO.create(obsoleteNodePointsOfObsoleteNodes.map(_.copy(id = NewIdValue, endDate = endDate,
-          nodeNumber = Some(newNodeId), createdBy = Some(username))))
+          nodeNumber = Some(newNodeNumber), createdBy = Some(username))))
       })
 
       // Create node point rows of the valid nodes with end date

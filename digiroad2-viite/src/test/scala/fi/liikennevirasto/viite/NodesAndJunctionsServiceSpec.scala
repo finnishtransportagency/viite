@@ -104,10 +104,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     runWithRollback {
       roadwayDAO.create(Seq(testRoadway1))
       val nodeId = Sequences.nextNodeId
-      nodeDAO.create(Seq(testNode1.copy(id = nodeId)))
+      val nodeNumber = nodeDAO.create(Seq(testNode1.copy(id = nodeId))).head
       val roadwayPointId = Sequences.nextRoadwayPointId
       roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId))
-      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeId), roadwayPointId = roadwayPointId)))
+      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId)))
 
       val nodesAndRoadAttributes = nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber1, None, None)
       nodesAndRoadAttributes.isRight should be(true)
@@ -130,10 +130,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       roadwayDAO.create(Seq(testRoadway1))
       for (index <- 0 to MaxAllowedNodes) {
         val nodeId = Sequences.nextNodeId
-        nodeDAO.create(Seq(testNode1.copy(id = nodeId)))
+        val nodeNumber = nodeDAO.create(Seq(testNode1.copy(id = nodeId))).head
         val roadwayPointId = Sequences.nextRoadwayPointId
         roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId, addrMValue = index))
-        nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeId), roadwayPointId = roadwayPointId)))
+        nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId)))
       }
 
       val nodesAndRoadAttributes = nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber1, Some(roadPartNumber1), None)
@@ -151,10 +151,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       roadwayDAO.create(Seq(testRoadway1))
       for (index <- 0 to MaxAllowedNodes) {
         val nodeId = Sequences.nextNodeId
-        nodeDAO.create(Seq(testNode1.copy(id = nodeId)))
+        val nodeNumber = nodeDAO.create(Seq(testNode1.copy(id = nodeId))).head
         val roadwayPointId = Sequences.nextRoadwayPointId
         roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId, addrMValue = index))
-        nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeId), roadwayPointId = roadwayPointId)))
+        nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId)))
       }
 
       val nodesAndRoadAttributes = nodesAndJunctionsService.getNodesByRoadAttributes(roadNumber1, None, None)
@@ -732,7 +732,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         }
       )
 
-      val nodePoints = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id, node3.id))
+      val nodePoints = nodePointDAO.fetchNodePointsByNodeNumber(Seq(node1.nodeNumber, node2.nodeNumber, node3.nodeNumber))
       nodePoints.length should be(4)
       nodePoints.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink1.startAddrMValue) should be(true)
       nodePoints.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink1.endAddrMValue) should be(true)
@@ -744,7 +744,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(Seq(terminatedRoadLink), Some(terminatedRoadLink.endDate.get.minusDays(1)))
 
       // Test expired node and node points
-      val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id, node3.id))
+      val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeNumber(Seq(node1.nodeNumber, node2.nodeNumber, node3.nodeNumber))
       nodePointsAfterExpiration.length should be(2)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink1.startAddrMValue) should be(true)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink1.endAddrMValue) should be(true)
@@ -811,7 +811,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         }
       )
 
-      val nodePoints = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id))
+      val nodePoints = nodePointDAO.fetchNodePointsByNodeNumber(Seq(node1.nodeNumber, node2.nodeNumber))
       nodePoints.length should be(2)
       nodePoints.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink.startAddrMValue) should be(true)
       nodePoints.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink.endAddrMValue) should be(true)
@@ -833,7 +833,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(Seq(unchangedRoadLink, newRoadLink), Some(DateTime.now().minusDays(1)))
 
       // Test expired node and node points
-      val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id))
+      val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeNumber(Seq(node1.nodeNumber, node2.nodeNumber))
       nodePointsAfterExpiration.length should be(1)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink.startAddrMValue) should be(true)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink.endAddrMValue) should be(false)
@@ -898,7 +898,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         }
       )
 
-      val nodePoints = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id))
+      val nodePoints = nodePointDAO.fetchNodePointsByNodeNumber(Seq(node1.nodeNumber, node2.nodeNumber))
       nodePoints.length should be(2)
       nodePoints.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink.startAddrMValue) should be(true)
       nodePoints.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink.endAddrMValue) should be(true)
@@ -936,7 +936,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(Seq(roadLink, newRoadLink), Some(DateTime.now().minusDays(1)))
 
       // Test expired node and node points
-      val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeId(Seq(node1.id, node2.id))
+      val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeNumber(Seq(node1.nodeNumber, node2.nodeNumber))
       nodePointsAfterExpiration.length should be(1)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink.startAddrMValue) should be(false)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink.endAddrMValue) should be(true)
