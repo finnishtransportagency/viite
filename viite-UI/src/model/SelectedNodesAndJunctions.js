@@ -4,16 +4,19 @@
     var dirty = false;
 
     var openNode = function (node) {
+      clean();
       setCurrentNode(node);
-      eventbus.trigger('node:selected');
+      eventbus.trigger('node:selected', node);
     };
 
     var openNodePointTemplate = function (nodePointTemplates) {
+      clean();
       setCurrentNodePointTemplates(nodePointTemplates);
       eventbus.trigger('nodePointTemplate:selected');
     };
 
     var openJunctionTemplate = function (junctionTemplate) {
+      clean();
       setCurrentJunctionTemplate(junctionTemplate);
       eventbus.trigger('junctionTemplate:selected');
     };
@@ -42,6 +45,22 @@
       return current.junctionTemplate;
     };
 
+    var setName = function (name) {
+      current.node.name = name;
+      setDirty(true);
+    };
+
+    var setType = function (type) {
+      current.node.type = type;
+      eventbus.trigger('changed:type', current.node);
+      setDirty(true);
+    };
+
+    var setStartDate = function (startDate) {
+      current.node.startDate = startDate;
+      setDirty(true);
+    };
+
     var isDirty = function () {
       return dirty;
     };
@@ -55,13 +74,40 @@
       dirty = false;
     };
 
-    var close = function () {
+    var close = function (options, params) {
       clean();
-      eventbus.trigger('node:unselected');
-      eventbus.trigger('nodePointTemplate:unselected');
-      eventbus.trigger('junctionTemplate:unselected');
+      eventbus.trigger(options, params);
       eventbus.trigger('nodesAndJunctions:open');
-      eventbus.trigger('nodeLayer:fetch');
+    };
+
+    var closeNode = function () {
+      var node = {};
+      if (!_.isUndefined(current.node) && _.isUndefined(current.node.id)) {
+        node = current.node;
+      }
+      close('node:unselected', node);
+    };
+
+    var closeForm = function () {
+      close('node:unselected');
+      closeNodePoint();
+      closeJunction();
+    };
+
+    var closeNodePoint = function () {
+      close('nodePointTemplate:unselected');
+    };
+
+    var closeJunction = function () {
+      close('junctionTemplate:unselected');
+    };
+
+    var save = function (options, params) {
+      eventbus.trigger(options, params);
+    };
+
+    var saveNode = function () {
+      save('node:save', current.node);
     };
 
     return {
@@ -71,10 +117,16 @@
       getCurrentNode: getCurrentNode,
       getCurrentNodePointTemplates: getCurrentNodePointTemplates,
       getCurrentJunctionTemplate: getCurrentJunctionTemplate,
+      setName: setName,
+      setType: setType,
+      setStartDate: setStartDate,
       isDirty: isDirty,
       setDirty: setDirty,
-      clean: clean,
-      close: close
+      closeNode: closeNode,
+      closeForm: closeForm,
+      closeNodePoint: closeNodePoint,
+      closeJunction: closeJunction,
+      saveNode: saveNode
     };
 
   };

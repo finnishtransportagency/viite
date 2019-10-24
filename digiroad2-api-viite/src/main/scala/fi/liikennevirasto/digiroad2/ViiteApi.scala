@@ -56,6 +56,9 @@ case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
 case class CutLineExtractor(linkId: Long, splitedPoint: Point)
 
+case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, coordinates: Point, name: Option[String], nodeType: Int, startDate: String, endDate: Option[String], validFrom: Option[String], validTo: Option[String],
+                         createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None)
+
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val projectService: ProjectService,
@@ -946,6 +949,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  put("/node") {
+    time(logger, s"PUT request for /node") {
+      val nodeInfo = parsedBody.extract[NodeExtractor]
+      val user = userProvider.getCurrentUser()
+      val node: Node = NodeConverter.toNode(nodeInfo, user)
+      nodesAndJunctionsService.addOrUpdateNode(node) match {
+        case Some(err) => Map("success" -> false, "errorMessage" -> err)
+        case None => Map("success" -> true)
+      }
+    }
+  }
+
   private def getRoadAddressLinks(zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val viiteRoadLinks = zoomLevel match {
@@ -1530,5 +1545,18 @@ object ProjectConverter {
     ProjectReservedPart(0L, rp.roadNumber, rp.roadPartNumber,
       None, None, Some(rp.ely),
       None, None, None, None)
+  }
+}
+
+object NodeConverter {
+  def toNode(node: NodeExtractor, user: User) : Node = {
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    val endDate = if (node.endDate.isDefined) Option(formatter.parseDateTime(node.endDate.get)) else None
+    val validFrom = if (node.validFrom.isDefined) formatter.parseDateTime(node.validFrom.get) else new DateTime()
+    val validTo = if (node.validTo.isDefined) Option(formatter.parseDateTime(node.validTo.get)) else None
+    val createdTime = if (node.createdTime.isDefined) Option(formatter.parseDateTime(node.createdTime.get)) else None
+
+    Node(node.id, node.nodeNumber, node.coordinates, node.name, NodeType.apply(node.nodeType),
+         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, Some(user.username), createdTime)
   }
 }

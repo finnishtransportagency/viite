@@ -662,5 +662,17 @@
       });
     }, 1000);
 
+    this.saveNodeInformation = _.throttle(function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/node",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
   };
 }(this));

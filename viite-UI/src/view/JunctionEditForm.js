@@ -1,5 +1,5 @@
 (function (root) {
-  root.JunctionEditForm = function (selectedJunctionPoint, backend) {
+  root.JunctionEditForm = function (selectedJunction, backend) {
     var formButtons = function () {
       return '<div class="form form-controls">' +
         '<button class="save btn btn-edit-junction-save" disabled>Tallenna</button>' +
@@ -103,7 +103,11 @@
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
       rootElement.on('click', '.btn-return-list-junction', function () {
-        selectedJunctionPoint.close();
+        selectedJunction.closeJunction();
+      });
+
+      eventbus.on('selectedNodeAndJunctionPoint:close', function () {
+        selectedJunction.closeJunction();
       });
 
       eventbus.on('junctionEdit:selected', function (junctionId) {
@@ -114,7 +118,7 @@
 
       eventbus.on('junctionTemplate:selected', function () {
         rootElement.empty();
-        var junctionTemplate = selectedJunctionPoint.getCurrentJunctionTemplate();
+        var junctionTemplate = selectedJunction.getCurrentJunctionTemplate();
         var showJunctionTemplateEditForm = isJunctionTemplate(junctionTemplate);
         $('#feature-attributes').html(template(junctionTemplate, showJunctionTemplateEditForm));
         $('[id=junction-point-link]').click(function () {
