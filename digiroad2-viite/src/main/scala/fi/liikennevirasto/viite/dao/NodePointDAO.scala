@@ -80,7 +80,7 @@ object BeforeAfter {
 
 }
 
-case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeNumber: Option[Long], nodePointType: NodePointType,
+case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeNumber: Option[Long], nodePointType: NodePointType = NodePointType.UnknownNodePointType,
                      startDate: DateTime, endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
                      createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long,
                      roadNumber: Long, roadPartNumber: Long, track: Track, elyCode: Long)
