@@ -391,7 +391,7 @@
               return !_.isUndefined(junctionPoint);
             });
             if (!_.isUndefined(roadLink) && !_.isUndefined(junctionPoint)) {
-              if (!_.isUndefined(junction.nodeId)) {
+              if (!_.isUndefined(junction.nodeNumber)) {
                 addFeature(junctionMarkerLayer, new JunctionMarker().createJunctionMarker(junction, junctionPoint, roadLink));
               } else {
                 addFeature(junctionTemplateLayer, new JunctionTemplateMarker().createJunctionTemplateMarker(junction, roadLink));
