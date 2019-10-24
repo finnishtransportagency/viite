@@ -15,7 +15,7 @@
 
     var getNodeType = function (nodeValue) {
       var nodeType = _.find(NodeType, function (type) {
-        return type.value == nodeValue;
+        return type.value === nodeValue;
       });
       return _.isUndefined(nodeType) ? NodeType.UnknownNodeType : nodeType;
     };
@@ -38,12 +38,41 @@
       return '<div class="form-group-node-input-metadata">' +
         '<p class="form-control-static asset-node-data">' +
         '<label class="required">' + labelText + '</label>' +
-        '<input type="text" class="form-control-static asset-input-node-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '" disabled/>' +
-        '</p>' +
-        '</div>';
+        '<input type="text" class="form-control asset-input-node-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '"/>' +
+        '</p></div>';
+    };
+
+    var addNodeTypeDropdown = function (labelText, id, nodeType) {
+      var addNodeTypeOptions = function (selected) {
+        var nodeTypes = _.filter(LinkValues.NodeType, function (nodeType) {
+          return nodeType !== LinkValues.NodeType.UnkownNodeType;
+        });
+
+        return _.map(nodeTypes, function (nodeType) {
+          var option = _.isEqual(nodeType, selected) ? 'selected' : '';
+          return '<option value="' + nodeType.value + '"' + option + '>' +
+            nodeType.value + ' ' + nodeType.description + '</option>';
+        });
+      };
+
+      var unknownNodeType = "";
+      if (nodeType === LinkValues.NodeType.UnkownNodeType) {
+        unknownNodeType = '<option value="' + nodeType.value + '" selected disabled hidden>' +
+          nodeType.value + ' ' + nodeType.description + '</option>';
+      }
+
+      return '<div class="form-group-node-input-metadata"><p class="form-control-static asset-node-data">' +
+        ' <label class="dropdown required">' + labelText + '</label>' +
+        ' <select type="text" class="form-control asset-input-node-data" id="' + id + '">' +
+        unknownNodeType +
+        addNodeTypeOptions(nodeType) +
+        ' </select></p></div>';
     };
 
     var nodeForm = function (node) {
+      var nodeNumber = node.nodeNumber ? node.nodeNumber : '-';
+      var nodeName = node.name ? node.name : '';
+      var startDate = node.startDate ? node.startDate : '';
       return _.template('' +
         '<header>' +
         formCommon.captionTitle('Solmun tiedot:') +
@@ -52,11 +81,11 @@
         '<div class="wrapper read-only">' +
         ' <div class="form form-horizontal form-dark">' +
         '   <div>' +
-        staticField('Solmunumero:', node.nodeNumber) +
-        inputFieldRequired('Solmun nimi', 'name', '', node.name, 32) +
-        inputFieldRequired('Solmutyyppi', 'type', '', getNodeType(node.type).description) +
-        inputFieldRequired('Alkupvm', 'date', 'pp.kk.vvvv', node.startDate) +
-        staticField('Koordinaatit:', node.coordY + ', ' + node.coordX) +
+        staticField('Solmunumero:', nodeNumber) +
+        staticField('Koordinaatit (<i>P</i>, <i>I</i>):', parseInt(node.coordY) + ', ' + parseInt(node.coordX)) +
+        inputFieldRequired('Solmun nimi', 'nodeName', '', nodeName, 32) +
+        addNodeTypeDropdown('Solmutyyppi', 'nodeTypeDropdown', getNodeType(node.type)) +
+        inputFieldRequired('Alkupvm', 'nodeStartDate', 'pp.kk.vvvv', startDate) +
         '   </div>' +
         '   <div>' +
         '     <p><a id="node-point-link" class="node-info-link" href="/">Näytä solmukohdat</a></p>' +
@@ -98,9 +127,12 @@
       };
 
       var junctionIcon = function (number) {
-        if (_.isUndefined(number) || number === 99) { number = ''; }
-        return '<object type="image/svg+xml" data="images/junction.svg">' +
-          ' <param name="number" value="' + number + '"/></object>';
+        if (_.isUndefined(number) || number === 99) {
+          return '<object type="image/svg+xml" data="images/junction.svg">';
+        } else {
+          return '<object type="image/svg+xml" data="images/junction.svg">' +
+            ' <param name="number" value="' + number + '"/></object>';
+        }
       };
 
       var junctionInfoHtml = function(junctionPointsInfo) {
@@ -314,19 +346,77 @@
       }
     };
 
+    var addDatePicker = function () {
+      var $date = $('#nodeStartDate');
+      dateutil.addSingleDependentDatePicker($date);
+      $date.change(function () {
+        selectedNode.setStartDate(($(this).val()));
+      });
+    };
+
+    var textFieldChangeHandler = function () {
+      if (!_.isUndefined(selectedNode.getCurrentNode())) {
+        selectedNode.setDirty(true);
+      }
+
+      var textIsNonEmpty = $('#nodeName').val() !== "";
+      var nodeTypeIsValid = $('#nodeTypeDropdown :selected').val() !== LinkValues.NodeType.UnkownNodeType.value.toString();
+      var dateIsNonEmpty = $('#nodeStartDate').val() !== "";
+
+      if (textIsNonEmpty && nodeTypeIsValid && dateIsNonEmpty) {
+        $('.btn-edit-node-save').removeProp('disabled');
+      } else {
+        $('.btn-edit-node-save').prop('disabled', true);
+      }
+    };
+
+    var showCloseConfirmPopupMessage = function () {
+      new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
+        successCallback: function () {
+          selectedNode.saveNode();
+        },
+        closeCallback: function () {
+          selectedNode.closeNode();
+        }
+      });
+    };
+
+    var closeForm = function () {
+      if (selectedNode.isDirty()) {
+        showCloseConfirmPopupMessage();
+      } else {
+        selectedNode.closeNode();
+      }
+    };
+
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
 
-      rootElement.on('click', '.btn-edit-node-cancel', function () {
-        selectedNode.close();
+      rootElement.on('change', '#nodeName, #nodeTypeDropdown, #nodeStartDate', function () {
+        textFieldChangeHandler();
       });
 
-      eventbus.on('node:selected', function () {
-        rootElement.empty();
-        var currentNode = selectedNode.getCurrentNode();
+      rootElement.on('change', '#nodeName', function () {
+        selectedNode.setName(($(this).val()));
+      });
 
+      rootElement.on('change', '#nodeTypeDropdown', function () {
+        selectedNode.setType(parseInt($(this).val()));
+      });
+
+      rootElement.on('click', '.btn-edit-node-save', function () {
+        selectedNode.saveNode();
+      });
+
+      rootElement.on('click', '.btn-edit-node-cancel', function () {
+        closeForm();
+      });
+
+      eventbus.on('node:selected', function (currentNode) {
+        rootElement.empty();
         if (!_.isEmpty(currentNode)) {
           rootElement.html(nodeForm(currentNode));
+          addDatePicker();
           var nodePointsElement = $('#node-points-info-content');
           nodePointsElement.html(nodePointsTable.toHtmlTable(currentNode.nodePoints));
           nodePointsElement.hide();
@@ -343,10 +433,17 @@
             toggleContentTable($(this), showJunctions, hideJunctions);
             return false;
           });
-
-        } else {
-          selectedNode.close();
         }
+      });
+
+      eventbus.on('node:saveSuccess', function () {
+        applicationModel.removeSpinner();
+        selectedNode.closeForm(); // we'll have to change this later probably
+      });
+
+      eventbus.on("node:saveUnsuccessful", function (error) {
+        new ModalConfirm(error);
+        applicationModel.removeSpinner();
       });
     };
 
