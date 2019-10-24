@@ -40,7 +40,6 @@
     var loadFeatures = function (features) {
       roadVector.clear(true);
       roadVector.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
-      eventbus.trigger('roadLayer:featuresLoaded', features); // For testing: tells that the layer is ready to be "clicked"
     };
 
 
