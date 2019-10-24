@@ -105,11 +105,17 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getNodePointTemplates(authorizedElys: Seq[Int]): Seq[NodePoint] = {
+    try {
     withDynSession{
       time(logger, "Fetch node point templates") {
         val allNodePointTemplates = nodePointDAO.fetchTemplates()
         allNodePointTemplates.filter(template => authorizedElys.contains(template.elyCode))
       }
+    }
+    } catch {
+      case e: Exception =>
+        logger.error(e.toString, e)
+        Seq()
     }
   }
 

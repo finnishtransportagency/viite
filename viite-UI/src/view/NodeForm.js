@@ -229,7 +229,7 @@
         var info = [];
         if(!_.isUndefined(nodePoints) && nodePoints.length > 0){
         _.map(nodePoints, function(point){
-          var row = {nodeId: point.nodeId, nodePointId: point.id, road: point.road, part: point.part, addr: point.addrM, beforeAfter: point.beforeOrAfter};
+          var row = {nodeNumber: point.nodeNumber, nodePointId: point.id, road: point.road, part: point.part, addr: point.addrM, beforeAfter: point.beforeOrAfter};
           info.push(row);
         });
 

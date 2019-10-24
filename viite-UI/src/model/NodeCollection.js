@@ -25,9 +25,9 @@
       nodes = list;
     };
 
-    this.getNodeById = function(nodeId) {
+    this.getNodeByNodeNumber = function(nodeNumber) {
       return _.find(nodes, function (node) {
-        return node.id === nodeId;
+        return node.nodeNumber === nodeNumber;
       });
     };
 

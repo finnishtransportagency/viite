@@ -135,7 +135,7 @@
       if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.junction) && !_.isUndefined(featureAtPixel.junction.junctionPoints)) {
         var junctionData = featureAtPixel.junction;
         var junctionPointData = featureAtPixel.junction.junctionPoints;
-        var node = nodeCollection.getNodeById(junctionData.nodeId);
+        var node = nodeCollection.getNodeByNodeNumber(junctionData.nodeNumber);
         coordinate = map.getEventCoordinate(event.originalEvent);
         var roadAddressInfo = [];
         _.map(junctionPointData, function(point){
