@@ -184,10 +184,10 @@
         vector.unselected.addFeatures(otherFeatures);
       };
 
-      var highlightNode = function (nodeId) {
-        var highlightJunctions = function(nodeId) {
+      var highlightNode = function (id) {
+        var highlightJunctions = function(nodeNumber) {
           var junctions = _.partition(junctionMarkerLayer.getSource().getFeatures(), function (junctionFeature) {
-            return junctionFeature.junction.nodeId === nodeId;
+            return junctionFeature.junction.nodeNumber === nodeNumber;
           });
 
           selectFeaturesToHighlight(junctionMarkerVector, junctions[0], junctions[1]);
@@ -196,11 +196,11 @@
         };
 
         var nodes = _.partition(nodeMarkerLayer.getSource().getFeatures(), function (nodeFeature) {
-          return nodeFeature.nodeInfo.id === nodeId;
+          return nodeFeature.nodeInfo.id === id;
         });
 
         selectFeaturesToHighlight(nodeMarkerVector, nodes[0], nodes[1]);
-        highlightJunctions(nodeId);
+        highlightJunctions(_.uniq(_.map(nodes[0], "nodeNumber")));
 
         nodeMarkerLayer.setOpacity(0.2);
       };
