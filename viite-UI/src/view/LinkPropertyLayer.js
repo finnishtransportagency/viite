@@ -545,7 +545,6 @@
             var calMarker = new CalibrationPoint(actualPoint);
             calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
           });
-          eventbus.trigger('roadLayer:featuresLoaded', calibrationPointLayer.getSource().getFeatures());
         }
       }
       addSelectInteractions();
