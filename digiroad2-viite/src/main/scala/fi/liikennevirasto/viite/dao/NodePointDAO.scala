@@ -141,13 +141,13 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
-  def fetchNodePointsByNodeId(nodeIds: Seq[Long]): Seq[NodePoint] = {
-    if (nodeIds.isEmpty) Seq()
+  def fetchNodePointsByNodeNumber(nodeNumbers: Seq[Long]): Seq[NodePoint] = {
+    if (nodeNumbers.isEmpty) Seq()
     else {
       val query =
         s"""
          $selectFromNodePoint
-         where N.id in (${nodeIds.mkString(",")}) and NP.valid_to is null
+         where N.node_number in (${nodeNumbers.mkString(", ")}) and NP.valid_to is null
          and rw.end_date is null
        """
       queryList(query)
