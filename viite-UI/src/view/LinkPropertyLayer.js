@@ -743,7 +743,7 @@
       // 2075 TODO
       eventListener.listenTo(eventbus, 'unAddressedRoadLinks:fetched', function(unAddressedRoads){
         var partitioned = _.partition(_.flatten(unAddressedRoads), function(feature) {
-          return feature.linkData.anomaly === Anomaly.NoAddressGiven.value;
+          return feature.getData.anomaly === Anomaly.NoAddressGiven.value;
         });
         var ol3unAddressedRoads =
             _.map(partitioned[0], function(road) {

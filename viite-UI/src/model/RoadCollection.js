@@ -142,7 +142,7 @@
           if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
             setRoadLinkGroups(fetched[1]);
           } else {
-            setRoadLinkGroups(fetched[1]);//setRoadLinkGroups(fetchedRoadLinkModels);
+            setRoadLinkGroups(fetched[1]);
           }
 
           if (!_.isEmpty(getSelectedRoadLinks())) {
@@ -169,13 +169,13 @@
           var underConstructionRoadAddresses = _.partition(roadLinkGroupsUnderConstruction, function(sur) {
               return groupDataConstructionTypeFilter(sur, ConstructionType.UnderConstruction);
           });
-          var unAddressedRoads = _.partition(unknownRoadLinkGroups, function(sur) {
-           return groupDataUnAdressedTypeFilter(sur, LinkValues.Anomaly.NoAddressGiven.value );
+          var unAddressedRoads = _.partition(roadLinkGroups, function(group) {
+           return groupDataUnAddressedTypeFilter(group, LinkValues.Anomaly.NoAddressGiven.value );
           });
           var nonUnderConstructionRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
-              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
+            return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
           });
-        setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(underConstructionRoadAddresses[0]).concat(floatingRoadLinks));
+         setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(underConstructionRoadAddresses[0]).concat(floatingRoadLinks));
           eventbus.trigger('roadLinks:fetched', nonUnderConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
           if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
@@ -183,7 +183,7 @@
           if (underConstructionRoadAddresses[0].length !== 0)
               eventbus.trigger('underConstructionRoadLinks:fetched', underConstructionRoadAddresses[0]);
           if (unAddressedRoads[0].length !== 0)
-            eventbus.trigger('unAddressedRoadLinks:fetched', unknownRoadLinkGroups[0]);
+            eventbus.trigger('unAddressedRoadLinks:fetched', unAddressedRoads[0]);
           if (applicationModel.isProjectButton()) {
               eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
               applicationModel.setProjectButton(false);
@@ -217,15 +217,27 @@
       }
     };
 
-    var groupDataUnAdressedTypeFilter = function(group, NoAddressGiven){
+    var groupDataUnAddressedTypeFilter = function(group, NoAddressGiven){
+     /*
+      Viite-2075 contains A + B. Although roadNumber === 0 condition might include all wanted options
+      - A Näytä tieosoitteettomat "ei rakenteilla olevat linkit"
+      roadLink.getData().constructionType =  ConstructionType.InUse:
+
+      - B  Näytä tieosoitteettomat
+      modData.roadClass === LinkValues.RoadClass.NoClass.value  ||
+      modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value
+      Viite-2075 modData.roadClass === LinkValues.RoadClass.NoClass.value  ||
+     */
+
       if(_.isArray(group)) {
         return _.some(group, function(roadLink) {
-          if(roadLink !== null)
-            return roadLink.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value;
-          else return false;
+          if(roadLink !== null){
+            return ((roadLink.getData().roadNumber === 0 && roadLink.getData().constructionType === ConstructionType.InUse) || roadLink.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value ||  roadLink.getData().roadClass === LinkValues.RoadClass.NoClass.value );
+          } else
+            return false;
         });
       } else {
-        return group.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value;
+        return ((group.getData().roadNumber === 0  && group.getData().constructionType === ConstructionType.InUse )|| group.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value ||  group.getData().roadClass === LinkValues.RoadClass.NoClass.value || group.getData().constructionType === ConstructionType.InUse);
       }
     };
 
