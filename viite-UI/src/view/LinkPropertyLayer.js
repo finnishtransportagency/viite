@@ -742,6 +742,7 @@
       });
       // 2075 TODO
       eventListener.listenTo(eventbus, 'unAddressedRoadLinks:fetched', function(unAddressedRoads){
+        console.log(" eventbus, 'unAddressedRoadLinks:fetched'");
         var partitioned = _.partition(_.flatten(unAddressedRoads), function(feature) {
           return feature.getData.anomaly === Anomaly.NoAddressGiven.value;
         });
@@ -770,8 +771,9 @@
               feature.linkData = roadData;
               return feature;
             });
-        unAddressedRoadLayer.getSource().addFeatures(ol3unAddressedRoads);
-        roadLayer.layer.getSource().addFeatures(ol3noInfoRoads);
+         // unAddressedRoadLayer.getSource().addFeatures(ol3unAddressedRoads);//ol3unAddressedRoads
+         // roadLayer.layer.getSource().addFeatures(ol3noInfoRoads);//ol3noInfoRoads
+        unAddressedRoadLayer.getSource().addFeatures(ol3noInfoRoads);//ol3unAddressedRoads
       });
       eventListener.listenTo(eventbus, 'unAddressedRoads:toggleVisibility', function(visibility){
         unAddressedRoadLayer.setVisible(visibility);
