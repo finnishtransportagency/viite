@@ -66,9 +66,9 @@
     this.getProjectLink = function (ids) {
       return _.filter(projectLinks(), function (projectLink) {
         if (projectLink.getData().id > 0) {
-          return _.includes(ids, projectLink.getData().id);
+          return _.contains(ids, projectLink.getData().id);
         } else {
-          return _.includes(ids, projectLink.getData().linkId);
+          return _.contains(ids, projectLink.getData().linkId);
         }
       });
     };
@@ -307,7 +307,7 @@
           var roadPartLinks = self.getProjectLink(_.map(roadPartIds, function (road) {
             return road;
           }));
-          var startAddrFromChangedLinks = _.minBy(_.map(roadPartLinks, function (link) {
+          var startAddrFromChangedLinks = _.min(_.map(roadPartLinks, function (link) {
             return link.getData().startAddressM;
           }));
           var userDiffFromChangedLinks = userEndAddr - startAddrFromChangedLinks;
@@ -328,13 +328,13 @@
       var newLinks = newAndOtherLinks[0];
       var otherLinks = newAndOtherLinks[1];
 
-      var linkIds = _.uniq(_.map(newLinks, function (t) {
+      var linkIds = _.unique(_.map(newLinks, function (t) {
         if (!_.isUndefined(t.linkId)) {
           return t.linkId;
         } else return 0;
       }));
 
-      var ids = _.uniq(_.map(otherLinks, function (t) {
+      var ids = _.unique(_.map(otherLinks, function (t) {
         if (!_.isUndefined(t.id)) {
           return t.id;
         } else return 0;
@@ -359,7 +359,7 @@
         trackCode: Number(roadAddressProjectForm.find('#trackCodeDropdown')[0].value),
         discontinuity: Number(roadAddressProjectForm.find('#discontinuityDropdown')[0].value),
         roadEly: Number(roadAddressProjectForm.find('#ely')[0].value),
-        roadLinkSource: Number(_.head(changedLinks).roadLinkSource),
+        roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
         roadType: Number(roadAddressProjectForm.find('#roadTypeDropdown')[0].value),
         userDefinedEndAddressM: endDistance !== undefined ? (!isNaN(Number(endDistance.value)) ? Number(endDistance.value) : null) : null,
         coordinates: coordinates,
@@ -376,7 +376,7 @@
       }).last().value();
       var isNewRoad = changedLink.status === LinkStatus.New.value;
 
-      var validUserEndAddress = !validUserGivenAddrMValues(_.head(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM);
+      var validUserEndAddress = !validUserGivenAddrMValues(_.first(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM);
       if (isNewRoad && (editedEndDistance || editedBeginDistance) && validUserEndAddress) {
         new GenericConfirmPopup("Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
           successCallback: function () {
@@ -575,7 +575,7 @@
     };
 
     this.getRoadAddressesFromFormedRoadPart = function (roadNumber, roadPartNumber) {
-      return _.map(_.filter(formedParts, function (part) {
+      return _.pluck(_.filter(formedParts, function (part) {
         return part.roadNumber.toString() === roadNumber && part.roadPartNumber.toString() === roadPartNumber;
       }), "roadAddresses");
     };
@@ -604,7 +604,7 @@
           error.linkIds = error.ids;
         }
         _.each(projectLinks(), function (pl) {
-          if (_.includes(errorIds, pl.getData().id)) {
+          if (_.contains(errorIds, pl.getData().id)) {
             error.linkIds.push(pl.getData().linkId);
           }
         });
@@ -634,7 +634,7 @@
 
     function arrayIntersection(a, b, areEqualFunction) {
       return _.filter(a, function (aElem) {
-        return _.some(b, function (bElem) {
+        return _.any(b, function (bElem) {
           return areEqualFunction(aElem, bElem);
         });
       });

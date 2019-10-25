@@ -22,7 +22,7 @@
       .map(function(asset) {
         return [asset.layerName, asset];
       })
-      .fromPairs()
+      .zipObject()
       .value();
 
     bindEvents();
