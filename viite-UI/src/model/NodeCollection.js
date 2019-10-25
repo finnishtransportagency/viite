@@ -117,7 +117,7 @@
           }
           applicationModel.removeSpinner();
         });
-        selectedNodesAndJunctions.openJunctionTemplate(_.first(_.uniq([junctionTemplate], "id")));
+        selectedNodesAndJunctions.openJunctionTemplate(_.head(_.uniq([junctionTemplate], "id")));
       } else {
         applicationModel.removeSpinner();
       }
