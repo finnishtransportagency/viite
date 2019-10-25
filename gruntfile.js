@@ -235,14 +235,14 @@ module.exports = function(grunt) {
       }
     },
     exec: {
-      prepare_openlayers: {
-        cmd: 'npm install',
-        cwd: './node_modules/ol/'
-      },
-      viite_build_openlayers: {
-        cmd: 'node tasks/build.js ../../viite-UI/src/resources/digiroad2/ol/ol-custom.js build/ol.js',
-        cwd: './node_modules/ol/'
-      }
+      // prepare_openlayers: {
+      //   cmd: 'npm install',
+      //   cwd: './node_modules/ol/'
+      // },
+      // viite_build_openlayers: {
+      //   cmd: 'node tasks/build.js ../../viite-UI/src/resources/digiroad2/ol/ol-custom.js build/ol.js',
+      //   cwd: './node_modules/ol/'
+      // }
     }
   });
 
@@ -270,7 +270,8 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'mocha:viite_integration', 'clean', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:'+target, 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'preprocess:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+  // grunt.registerTask('deploy', ['clean', 'env:'+target, 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'preprocess:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:'+target, 'preprocess:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
 
   grunt.registerTask('unit-test', ['properties', 'jshint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
 
