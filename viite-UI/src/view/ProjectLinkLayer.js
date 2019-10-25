@@ -549,17 +549,23 @@
         feature.linkId = projectLink.linkId;
         features.push(feature);
       });
+      // Viite-2075 TODO
       var separatedRoads = _.partition(projectCollection.getAll(), function (projectRoad) {
-        return projectRoad.anomaly === Anomaly.NoAddressGiven.value;
+        // console.log(projectRoad.roadClass === LinkValues.RoadClass.NoClass.value || ( projectRoad.anomaly === LinkValues.Anomaly.NoAddressGiven.value && projectRoad.roadNumber === 0 )|| projectRoad.anomaly === LinkValues.Anomaly.GeometryChanged.value;
+        // console.log("projectRoad.roadClass ,projectRoad.anomaly ,projectRoad.roadNumber " );
+        // console.log(projectRoad.roadClass + ", " +  projectRoad.anomaly + ", " +projectRoad.roadNumber + ", " );
+
+        return projectRoad.roadClass === LinkValues.RoadClass.NoClass.value || ( projectRoad.anomaly === LinkValues.Anomaly.NoAddressGiven.value && projectRoad.roadNumber === 0 )|| projectRoad.anomaly === LinkValues.Anomaly.GeometryChanged.value;
 
       });
+      // Viite-2075 TODO
       var unAddressedProjectRoads = separatedRoads[0].filter(function (val) {
         return _.find(separated[1], function (link) {
           return link.linkId === val.linkId;
         }) !== 0;
       });
 
-      _.map(unAddressedProjectRoads, function (projectLink) {
+      _.map(separatedRoads[0], function (projectLink) {
         var points = _.map(projectLink.points, function (point) {
           return [point.x, point.y];
         });
