@@ -109,7 +109,7 @@
     eventbus.on('linkProperties:selected', function (linkProperty) {
       if (!_.isEmpty(models.selectedLinkProperty.get())) {
         if (_.isArray(linkProperty)) {
-          router.navigate('linkProperty/' + _.head(linkProperty).linkId);
+          router.navigate('linkProperty/' + _.first(linkProperty).linkId);
         } else {
           router.navigate('linkProperty/' + linkProperty.linkId);
         }

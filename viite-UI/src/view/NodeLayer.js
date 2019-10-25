@@ -160,7 +160,7 @@
       });
 
       var selectNode = function(selectedNode) {
-        var node = _.head(_.uniq(_.map(selectedNode, "nodeInfo"), "id"));
+        var node = _.first(_.unique(_.map(selectedNode, "nodeInfo"), "id"));
         selectedNodeAndJunctionPoint.openNode(node);
         clearHighlights();
         highlightNode(node.id);
@@ -170,11 +170,11 @@
       };
 
       var selectNodePointTemplate = function(selectedNodePointTemplates) {
-        selectedNodeAndJunctionPoint.openNodePointTemplate(_.uniq(_.map(selectedNodePointTemplates, "nodePointTemplateInfo"), "id"));
+        selectedNodeAndJunctionPoint.openNodePointTemplate(_.unique(_.map(selectedNodePointTemplates, "nodePointTemplateInfo"), "id"));
       };
 
       var selectJunctionTemplate = function (selectedJunctionPointTemplates) {
-        selectedNodeAndJunctionPoint.openJunctionTemplate(_.head(_.uniq(_.map(selectedJunctionPointTemplates, "junctionTemplateInfo"), "junctionId")));
+        selectedNodeAndJunctionPoint.openJunctionTemplate(_.first(_.unique(_.map(selectedJunctionPointTemplates, "junctionTemplateInfo"), "junctionId")));
       };
 
       var selectFeaturesToHighlight = function (vector, featuresToHighlight, otherFeatures) {
@@ -311,7 +311,7 @@
           cachedMarker = new LinkPropertyMarker();
           var underConstructionLinks = roadCollection.getUnderConstructionLinks();
           var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
-            return _.includes(_.map(underConstructionLinks, function (sl) {
+            return _.contains(_.map(underConstructionLinks, function (sl) {
               return sl.linkId;
             }), rl.linkId);
           });

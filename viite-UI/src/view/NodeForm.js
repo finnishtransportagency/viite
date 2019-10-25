@@ -104,23 +104,23 @@
       };
 
       var junctionInfoHtml = function(junctionPointsInfo) {
-        var roads = _.map(_.map(junctionPointsInfo, 'road'), function (road) {
+        var roads = _.map(_.pluck(junctionPointsInfo, 'road'), function (road) {
           return '<tr><td class="node-junctions-table">' + road + '</td></tr>';
         });
 
-        var tracks = _.map(_.map(junctionPointsInfo, 'track'), function (track) {
+        var tracks = _.map(_.pluck(junctionPointsInfo, 'track'), function (track) {
           return '<tr><td class="node-junctions-table">' + track + '</td></tr>';
         });
 
-        var parts = _.map(_.map(junctionPointsInfo, 'part'), function (part) {
+        var parts = _.map(_.pluck(junctionPointsInfo, 'part'), function (part) {
           return '<tr><td class="node-junctions-table">' + part + '</td></tr>';
         });
 
-        var addresses = _.map(_.map(junctionPointsInfo, 'addr'), function (addr) {
+        var addresses = _.map(_.pluck(junctionPointsInfo, 'addr'), function (addr) {
           return '<tr><td class="node-junctions-table">' + addr + '</td></tr>';
         });
 
-        var beforeOrAfter = _.map(_.map(junctionPointsInfo, 'beforeAfter'), function (beforeAfter) {
+        var beforeOrAfter = _.map(_.pluck(junctionPointsInfo, 'beforeAfter'), function (beforeAfter) {
           return '<tr><td class="node-junctions-table">' + beforeAfter + '</td></tr>';
         });
 
@@ -181,12 +181,12 @@
         var singleHomogeneousRows = joinedHomogeneousRows[1];
 
         var doubleRows = _.map(doubleHomogeneousRows, function(point) {
-          var first = _.head(point);
+          var first = _.first(point);
           return {road: first.road, track: first.track, part: first.part, addr: first.addr, beforeAfter: "EJ"};
         });
 
         var singleRows = _.map(singleHomogeneousRows, function(point) {
-          var first = _.head(point);
+          var first = _.first(point);
           return {road: first.road, track: first.track, part: first.part, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J")};
         });
 
@@ -245,12 +245,12 @@
         var singleHomogeneousRows = joinedHomogeneousRows[1];
 
         var doubleRows = _.map(doubleHomogeneousRows, function(drows){
-          var first = _.head(drows);
+          var first = _.first(drows);
           return {nodePointId: first.nodePointId, road: first.road, part: first.part, addr: first.addr, beforeAfter: "EJ"};
         });
 
         var singleRows = _.map(singleHomogeneousRows, function(drows){
-          var first = _.head(drows);
+          var first = _.first(drows);
           return {nodePointId: first.nodePointId, road: first.road, part: first.part, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J")};
         });
 
