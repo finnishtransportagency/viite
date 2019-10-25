@@ -150,7 +150,7 @@
         });
 
         var doubleRows = _.map(roadAddresses[0], function (junctionPoints) {
-          var first = _.first(junctionPoints); // TODO VIITE-2028 logic goes here, probably.
+          var first = _.head(junctionPoints); // TODO VIITE-2028 logic goes here, probably.
           return {road: first.road, track: first.track, part: first.part, addr: first.addr};
         });
 
