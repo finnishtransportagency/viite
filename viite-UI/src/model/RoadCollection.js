@@ -134,15 +134,19 @@
           var fetched = _.partition(fetchedRoadLinkModels, function (model) {
               return _.every(model, function (mod) {
                   var modData = mod.getData();
-                  return modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.roadNumber === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
+                  //return  modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.id === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
+                return modData.roadClass === LinkValues.RoadClass.NoClass.value || modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.roadNumber === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
+
               });
           });
           var unknownRoadLinkGroups = fetched[0];
           var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
           if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
             setRoadLinkGroups(fetched[1]);
+            console.log("Selected 0, zoom="+zoom);
           } else {
-            setRoadLinkGroups(fetched[1]);
+            console.log("Selected 1, zoom="+zoom);
+            setRoadLinkGroups(fetchedRoadLinkModels);
           }
 
           if (!_.isEmpty(getSelectedRoadLinks())) {
@@ -169,13 +173,19 @@
           var underConstructionRoadAddresses = _.partition(roadLinkGroupsUnderConstruction, function(sur) {
               return groupDataConstructionTypeFilter(sur, ConstructionType.UnderConstruction);
           });
-          var unAddressedRoads = _.partition(roadLinkGroups, function(group) {
-           return groupDataUnAddressedTypeFilter(group, LinkValues.Anomaly.NoAddressGiven.value );
+          // Viite-2075 TODO remove underConstruction roads from unAdressedRoads -> modData.constructionType ===  ConstructionType.InUse ||
+          var unAddressedRoads = _.partition(fetchedRoadLinkModels, function (model) {
+            return _.every(model, function (mod) {
+              var modData = mod.getData();
+              //return  modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.id === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
+                return  modData.roadClass === LinkValues.RoadClass.NoClass.value || ( modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.roadNumber === 0 )|| modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
+            });
           });
+          // Viite-2075 TODO remove unAddressedRoads[0] from nonUnderConstructionRoadLinkGroups
           var nonUnderConstructionRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
             return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
           });
-         setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(underConstructionRoadAddresses[0]).concat(floatingRoadLinks));
+          setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(underConstructionRoadAddresses[0]).concat(floatingRoadLinks));
           eventbus.trigger('roadLinks:fetched', nonUnderConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
           if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
@@ -227,17 +237,24 @@
       modData.roadClass === LinkValues.RoadClass.NoClass.value  ||
       modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value
       Viite-2075 modData.roadClass === LinkValues.RoadClass.NoClass.value  ||
+
+      Tämä toimii
+      return modData.roadClass === LinkValues.RoadClass.NoClass.value || modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.roadNumber === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
+
      */
 
       if(_.isArray(group)) {
         return _.some(group, function(roadLink) {
           if(roadLink !== null){
-            return ((roadLink.getData().roadNumber === 0 && roadLink.getData().constructionType === ConstructionType.InUse) || roadLink.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value ||  roadLink.getData().roadClass === LinkValues.RoadClass.NoClass.value );
+            data = roadLink.getData();
+            return data.roadClass === LinkValues.RoadClass.NoClass.value || data.anomaly === LinkValues.Anomaly.NoAddressGiven.value && data.roadNumber === 0 || data.anomaly === LinkValues.Anomaly.GeometryChanged.value;
+
+           // return ((roadLink.getData().roadNumber === 0 && roadLink.getData().constructionType === ConstructionType.InUse) || roadLink.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value ||  roadLink.getData().roadClass === LinkValues.RoadClass.NoClass.value );
           } else
             return false;
         });
       } else {
-        return ((group.getData().roadNumber === 0  && group.getData().constructionType === ConstructionType.InUse )|| group.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value ||  group.getData().roadClass === LinkValues.RoadClass.NoClass.value || group.getData().constructionType === ConstructionType.InUse);
+        return group.getData().roadNumber === 0  || group.getData().constructionType === ConstructionType.InUse || group.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value ||  group.getData().roadClass === LinkValues.RoadClass.NoClass.value || group.getData().constructionType === ConstructionType.InUse;
       }
     };
 
