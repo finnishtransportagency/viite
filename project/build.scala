@@ -10,7 +10,7 @@ object Digiroad2Build extends Build {
   val Digiroad2GeoName = "digiroad2-geo"
   val Version = "0.1.0-SNAPSHOT"
 
-  val ScalaVersion = "2.11.7"
+  val ScalaVersion = "2.11.12"
   val ScalatraVersion = "2.6.5"
   val ScalaTestVersion = "3.2.0-SNAP7"
   val JodaConvertVersion = "2.2.0"
