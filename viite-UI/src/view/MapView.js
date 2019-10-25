@@ -143,7 +143,7 @@
     });
 
     $('body').on('keyup', function(evt){
-        if (_.contains(metaKeyCodes, evt.which) && evt.originalEvent.key !== LinkValues.SelectKeyName) // ctrl key up
+        if (_.includes(metaKeyCodes, evt.which) && evt.originalEvent.key !== LinkValues.SelectKeyName) // ctrl key up
         map.getViewport().style.cursor = "initial";
     });
 
