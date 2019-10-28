@@ -6,6 +6,9 @@
     var openNode = function (node) {
       clean();
       setCurrentNode(node);
+      current.node.junctionsToDetach = [];
+      current.node.junctionsToUpdate = [];
+      current.node.nodePointsToDetach = [];
       eventbus.trigger('node:selected', node);
     };
 
@@ -59,6 +62,40 @@
     var setStartDate = function (startDate) {
       current.node.startDate = startDate;
       setDirty(true);
+    };
+
+    var detachNodePoint = function (id) {
+      var nodePoints = _.partition(current.node.nodePoints, function (nodePoint) {
+        return nodePoint.id === id;
+      });
+      current.node.nodePointsToDetach = current.node.nodePointsToDetach.concat(nodePoints[0]);
+      current.node.nodePoints = nodePoints[1];
+      setDirty(true);
+    };
+
+    var attachNodePoint = function () {
+      var nodePoints = _.partition(current.node.nodePointsToDetach, function (nodePoint) {
+        return nodePoint.id === id;
+      });
+      current.node.nodePoints = current.node.nodePoints.concat(nodePoints[0]);
+      current.node.nodePointsToDetach = nodePoints[1];
+    };
+
+    var detachJunction = function (id) {
+      var junctions = _.partition(current.node.junctions, function (junction) {
+        return junction.id === id;
+      });
+      current.node.junctionsToDetach = current.node.junctionsToDetach.concat(junctions[0]);
+      current.node.junctions = junctions[1];
+      setDirty(true);
+    };
+
+    var attachJunction = function (id) {
+      var junctions = _.partition(current.node.junctionsToDetach, function (junction) {
+        return junction.id === id;
+      });
+      current.node.junctions = current.node.junctions.concat(junctions[0]);
+      current.node.junctionsToDetach = junctions[1];
     };
 
     var isDirty = function () {
@@ -120,6 +157,10 @@
       setName: setName,
       setType: setType,
       setStartDate: setStartDate,
+      detachNodePoint: detachNodePoint,
+      attachNodePoint: attachNodePoint,
+      detachJunction: detachJunction,
+      attachJunction: attachJunction,
       isDirty: isDirty,
       setDirty: setDirty,
       closeNode: closeNode,

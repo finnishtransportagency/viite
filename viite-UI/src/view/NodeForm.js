@@ -123,7 +123,9 @@
       };
 
       var detachJunctionBox = function(junction) {
-        return '<td><input type="checkbox" name="detach-junction-' + junction.id + '" value="' + junction.id + '" id="detach-junction-' + junction.id + '"></td>';
+        return '<td><input type="checkbox" name="detach-junction-' + junction.id + '" value="' + junction.id + '" id="detach-junction-' + junction.id + '"' +
+          'data-junction-number=" ' + junction.junctionNumber + ' "' +
+          '></td>';
       };
 
       var junctionIcon = function (number) {
@@ -409,6 +411,34 @@
 
       rootElement.on('change', '#nodeTypeDropdown', function () {
         selectedNode.setType(parseInt($(this).val()));
+      });
+
+      rootElement.on('change', '[id^="detach-node-point-"]', function () {
+        new GenericConfirmPopup('Haluatko varmasti irrottaa solmukohdan solmusta?', {
+          successCallback: function () {
+            selectedNode.detachNodePoint(parseInt(this.value));
+          },
+          closeCallback: function () {
+            // TODO checkbox off again :D
+          }
+        });
+      });
+
+      rootElement.on('change', '[id^="detach-junction-"]', function () {
+        var id = parseInt(this.value);
+        var junctionNumber = this.getAttribute('data-junction-number');
+        if (this.checked) {
+          new GenericConfirmPopup('Haluatko varmasti irrottaa liittymän ' + junctionNumber + ' solmusta?', {
+            successCallback: function () {
+              selectedNode.detachJunction(parseInt(id));
+            },
+            closeCallback: function () {
+              // TODO checkbox off again :D
+            }
+          });
+        } else {
+          selectedNode.attachJunction(parseInt(id));
+        }
       });
 
       rootElement.on('click', '.btn-edit-node-save', function () {
