@@ -45,7 +45,7 @@
     var addNodeTypeDropdown = function (labelText, id, nodeType) {
       var addNodeTypeOptions = function (selected) {
         var nodeTypes = _.filter(LinkValues.NodeType, function (nodeType) {
-          return nodeType !== LinkValues.NodeType.UnkownNodeType;
+          return nodeType !== LinkValues.NodeType.UnknownNodeType;
         });
 
         return _.map(nodeTypes, function (nodeType) {
@@ -56,7 +56,7 @@
       };
 
       var unknownNodeType = "";
-      if (nodeType === LinkValues.NodeType.UnkownNodeType) {
+      if (nodeType === LinkValues.NodeType.UnknownNodeType) {
         unknownNodeType = '<option value="' + nodeType.value + '" selected disabled hidden>' +
           nodeType.value + ' ' + nodeType.description + '</option>';
       }
@@ -236,7 +236,7 @@
         htmlTable += '<table class="node-points-table-dimension">';
         htmlTable += headers();
           var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
-          _.each(_.sortBy(rowsInfo, 'road'), function(row){
+          _.each(_.sortBy(rowsInfo, ['road', 'part', 'addr']), function(row){
             htmlTable += '<tr class="node-junctions-table-border-bottom">';
             htmlTable += detachNodePointBox(row);
             htmlTable += nodePointInfoHtml(row);
@@ -246,8 +246,15 @@
         return htmlTable;
       };
 
-      var detachNodePointBox = function(nodepoint) {
-        return '<td><input type="checkbox" name="detach-node-point-' + nodepoint.nodePointId + '" value="' + nodepoint.nodePointId + '" id="detach-node-point-' + nodepoint.nodePointId + '"></td>';
+      var detachNodePointBox = function(nodePoint) {
+        var nodePointType = _.find(LinkValues.NodePointType, function (nodePointType) {
+          return nodePointType.value === nodePoint.type;
+        });
+        var isDetachable = 'title="' + nodePointType.description + '"'; // added for testing purposes, needs to be confirm if this title is a good idea for production env.
+        if (_.isEqual(nodePointType, LinkValues.NodePointType.CalculatedNodePoint)) {
+          isDetachable += ' disabled';
+        }
+        return '<td><input ' + isDetachable + ' type="checkbox" name="detach-node-point-' + nodePoint.id + '" value="' + nodePoint.id + '" id="detach-node-point-' + nodePoint.id + '"></td>';
       };
 
       var nodePointInfoHtml = function(rowInfo){
@@ -261,7 +268,7 @@
         var info = [];
         if(!_.isUndefined(nodePoints) && nodePoints.length > 0){
         _.map(nodePoints, function(point){
-          var row = {nodeNumber: point.nodeNumber, nodePointId: point.id, road: point.road, part: point.part, addr: point.addrM, beforeAfter: point.beforeOrAfter};
+          var row = {id: point.id, nodeNumber: point.nodeNumber, road: point.road, part: point.part, addr: point.addrM, beforeAfter: point.beforeOrAfter, type: point.type};
           info.push(row);
         });
 
@@ -278,12 +285,12 @@
 
         var doubleRows = _.map(doubleHomogeneousRows, function(drows){
           var first = _.first(drows);
-          return {nodePointId: first.nodePointId, road: first.road, part: first.part, addr: first.addr, beforeAfter: "EJ"};
+          return {id: first.id, nodeNumber: first.nodeNumber, road: first.road, part: first.part, addr: first.addr, beforeAfter: "EJ", type: first.type};
         });
 
         var singleRows = _.map(singleHomogeneousRows, function(drows){
           var first = _.first(drows);
-          return {nodePointId: first.nodePointId, road: first.road, part: first.part, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J")};
+          return {id: first.id, nodeNumber: first.nodeNumber, road: first.road, part: first.part, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J"), type: first.type};
         });
 
         return doubleRows.concat(singleRows);
@@ -360,7 +367,7 @@
       }
 
       var textIsNonEmpty = $('#nodeName').val() !== "";
-      var nodeTypeIsValid = $('#nodeTypeDropdown :selected').val() !== LinkValues.NodeType.UnkownNodeType.value.toString();
+      var nodeTypeIsValid = $('#nodeTypeDropdown :selected').val() !== LinkValues.NodeType.UnknownNodeType.value.toString();
       var dateIsNonEmpty = $('#nodeStartDate').val() !== "";
 
       if (textIsNonEmpty && nodeTypeIsValid && dateIsNonEmpty) {
