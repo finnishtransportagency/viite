@@ -5,8 +5,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
-import fi.liikennevirasto.viite.dao.NodePointType.{RoadNodePoint, CalculatedNodePoint, UnknownNodePointType}
-import fi.liikennevirasto.viite.dao.{NodePointType, BeforeAfter, Junction, JunctionDAO, JunctionInfo, JunctionPoint, JunctionPointDAO, JunctionTemplate, LinearLocationDAO, LinkStatus, Node, NodeDAO, NodePoint, NodePointDAO, ProjectLink, ProjectRoadwayChange, RoadAddress, RoadAttributes, RoadwayChangesDAO, RoadwayDAO, RoadwayPointDAO}
+import fi.liikennevirasto.viite.dao.NodePointType.RoadNodePoint
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -545,6 +545,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
 
     def expireObsoleteJunctions(obsoleteJunctionPoints: Set[JunctionPoint]): Seq[Junction] = {
+
       // Expire current junction points rows
       logger.info(s"Expiring junction points : ${obsoleteJunctionPoints.map(_.id)}")
       junctionPointDAO.expireById(obsoleteJunctionPoints.map(_.id))
@@ -558,8 +559,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       junctionPointDAO.expireById(obsoleteJunctionPointsOfNowExpiredJunctions.map(_.id))
 
       // Handle obsolete junction points of valid and obsolete junctions separately
-      val (obsoleteJunctionPointsOfObsoleteJunctions, obsoleteJunctionPointsOfValidJunctions) = (obsoleteJunctionPoints ++ obsoleteJunctionPointsOfNowExpiredJunctions)
-        .partition(jp => obsoleteJunctions.exists(j => j.id == jp.junctionId))
+      val (obsoleteJunctionPointsOfObsoleteJunctions, obsoleteJunctionPointsOfValidJunctions) =
+        (obsoleteJunctionPoints ++ obsoleteJunctionPointsOfNowExpiredJunctions)
+          .partition(jp => obsoleteJunctions.exists(j => j.id == jp.junctionId))
 
       // Create junction rows with end date and junction point rows with new junction id
       obsoleteJunctions.foreach(j => {
@@ -569,15 +571,13 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       })
 
       // Create junction point rows of the valid junctions
-      // TODO We should not expire these in the first place, since now we are creating exact copy of the previous ones
+      // TODO Would be better not to expire these in the first place, since now we are creating exact copy of the previous ones
       junctionPointDAO.create(obsoleteJunctionPointsOfValidJunctions.map(_.copy(id = NewIdValue, createdBy = Some(username))))
+
       obsoleteJunctions
     }
 
     def expireNodes(obsoleteNodePoints: Set[NodePoint], obsoleteJunctions: Seq[Junction]): Unit = {
-      // Expire current node points rows
-      logger.info(s"Expiring node points : ${obsoleteNodePoints.map(_.id)}")
-      nodePointDAO.expireById(obsoleteNodePoints.map(_.id))
 
       // Remove nodes that no longer have justification for the current network
       val obsoleteNodes = nodeDAO.fetchObsoleteById((obsoleteJunctions.filter(j => j.nodeNumber.isDefined).map(_.nodeNumber.get)
