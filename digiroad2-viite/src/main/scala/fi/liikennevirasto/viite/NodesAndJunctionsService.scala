@@ -629,19 +629,19 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (junctions.nonEmpty) {
         val junctionToBeDetached = junctions.head
 
-        // Expire the current junction row
+        // Expire the current junction
         junctionDAO.expireById(Seq(junctionId))
 
-        // Create a new junction row
+        // Create a new junction template
         val junction = junctionToBeDetached.copy(id = NewIdValue, junctionNumber = junctionNumberTemplate,
           nodeNumber = None, createdBy = Some(username))
         val newJunctionId = junctionDAO.create(Seq(junction)).head
 
-        // Expire the current junction point rows
+        // Expire the current junction points
         val junctionPointsToExpire = junctionPointDAO.fetchJunctionPointsByJunctionIds(Seq(junctionId))
         junctionPointDAO.expireById(junctionPointsToExpire.map(_.id))
 
-        // Create new junction point rows with new junction id
+        // Create new junction points with new junction id
         junctionPointDAO.create(junctionPointsToExpire.map(_.copy(id = NewIdValue, junctionId = newJunctionId,
           createdBy = Some(username))))
 
@@ -653,4 +653,27 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
     None
   }
+
+  def detachNodePointFromNode(nodePointId: Long, username: String = "-"): Option[String] = {
+    withDynTransaction {
+      val nodePoints = nodePointDAO.fetchByIds(Seq(nodePointId))
+      if (nodePoints.nonEmpty) {
+        val nodePointToBeDetached = nodePoints.head
+
+        // Expire the current node point
+        nodePointDAO.expireById(Seq(nodePointId))
+
+        // Create a new node point template
+        val nodePoint = nodePointToBeDetached.copy(id = NewIdValue, nodeNumber = None, createdBy = Some(username))
+        nodePointDAO.create(Seq(nodePoint))
+
+        // TODO Should we check if node becomes obsolete and should be terminated?
+
+      } else {
+        return Some("Solmukohtaa ei löytynyt")
+      }
+    }
+    None
+  }
+
 }
