@@ -533,7 +533,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val endAddrMValue = roadwayDAO.fetchAllByRoadwayNumbers(affectedRoadwayNumbers.toSet).maxBy(_.endAddrMValue).endAddrMValue
 
       val nodePoints = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id)).filter(_.nodeNumber.isDefined)
-      val obsoleteNodes = nodeDAO.fetchObsoleteById(nodePoints.map(_.nodeNumber.get).distinct)
+      val obsoleteNodes = nodeDAO.fetchObsoleteByNodeNumbers(nodePoints.map(_.nodeNumber.get).distinct)
       val obsoleteNodePoints = nodePointDAO.fetchNodePointsByNodeNumber(obsoleteNodes.map(_.nodeNumber)) ++
         nodePoints.filterNot(n => (n.beforeAfter == BeforeAfter.After && n.addrM == startAddrMValue) || (n.beforeAfter == BeforeAfter.Before && n.addrM == endAddrMValue))
 
@@ -580,10 +580,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     def expireNodes(obsoleteNodePoints: Set[NodePoint], obsoleteJunctions: Seq[Junction]): Unit = {
 
       // Remove nodes that no longer have justification for the current network
-      val obsoleteNodes = nodeDAO.fetchObsoleteById((obsoleteJunctions.filter(j => j.nodeNumber.isDefined).map(_.nodeNumber.get)
+      val obsoleteNodes = nodeDAO.fetchObsoleteByNodeNumbers((obsoleteJunctions.filter(j => j.nodeNumber.isDefined).map(_.nodeNumber.get)
         ++ obsoleteNodePoints.filter(np => np.nodeNumber.isDefined).map(_.nodeNumber.get)).distinct)
 
-      // Create node rows with end date and node point rows with end date and new node id
+      // Create node rows with end date
       obsoleteNodes.foreach(n => {
         nodeDAO.create(Seq(n.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
       })
@@ -622,4 +622,60 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     }
   }
+
+  def detachJunctionFromNode(junctionId: Long, username: String = "-"): Option[String] = {
+    withDynTransaction {
+      val junctions = junctionDAO.fetchByIds(Seq(junctionId))
+      if (junctions.nonEmpty) {
+        val junctionToBeDetached = junctions.head
+
+        // Expire the current junction
+        junctionDAO.expireById(Seq(junctionId))
+
+        // Create a new junction template
+        val junction = junctionToBeDetached.copy(id = NewIdValue, junctionNumber = junctionNumberTemplate,
+          nodeNumber = None, createdBy = Some(username))
+        val newJunctionId = junctionDAO.create(Seq(junction)).head
+
+        // Expire the current junction points
+        val junctionPointsToExpire = junctionPointDAO.fetchJunctionPointsByJunctionIds(Seq(junctionId))
+        junctionPointDAO.expireById(junctionPointsToExpire.map(_.id))
+
+        // Create new junction points with new junction id
+        junctionPointDAO.create(junctionPointsToExpire.map(_.copy(id = NewIdValue, junctionId = newJunctionId,
+          createdBy = Some(username))))
+
+        // TODO Calculate node points again
+
+        // TODO If there are no node points left under the node, node can be terminated
+
+      } else {
+        return Some("Liittymää ei löytynyt")
+      }
+    }
+    None
+  }
+
+  def detachNodePointFromNode(nodePointId: Long, username: String = "-"): Option[String] = {
+    withDynTransaction {
+      val nodePoints = nodePointDAO.fetchByIds(Seq(nodePointId))
+      if (nodePoints.nonEmpty) {
+        val nodePointToBeDetached = nodePoints.head
+
+        // Expire the current node point
+        nodePointDAO.expireById(Seq(nodePointId))
+
+        // Create a new node point template
+        val nodePoint = nodePointToBeDetached.copy(id = NewIdValue, nodeNumber = None, createdBy = Some(username))
+        nodePointDAO.create(Seq(nodePoint))
+
+        // TODO If there are no node points left under the node, node can be terminated
+
+      } else {
+        return Some("Solmukohtaa ei löytynyt")
+      }
+    }
+    None
+  }
+
 }
