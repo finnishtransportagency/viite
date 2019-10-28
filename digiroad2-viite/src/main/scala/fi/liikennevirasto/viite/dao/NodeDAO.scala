@@ -225,21 +225,21 @@ class NodeDAO extends BaseDAO {
   }
 
   /**
-    * Search for Junctions that no longer have justification for the current network.
+    * Search for Nodes that no longer have justification for the current network.
     *
-    * @param ids : Iterable[Long] - The ids of the junctions to verify.
+    * @param nodeNumbers : Iterable[Long] - The node numbers of nodes to verify.
     * @return
     */
-  def fetchObsoleteById(ids: Iterable[Long]): Seq[Node] = {
+  def fetchObsoleteByNodeNumbers(nodeNumbers: Iterable[Long]): Seq[Node] = {
     // An Obsolete node are those that no longer have justification for the current network, and must be expired.
-    if (ids.isEmpty) {
+    if (nodeNumbers.isEmpty) {
       Seq()
     } else {
       val query = s"""
         SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
         FROM NODE N
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
-          WHERE ID IN (${ids.mkString(", ")})
+          WHERE NODE_NUMBER IN (${nodeNumbers.mkString(", ")})
           AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER) FROM JUNCTION_POINT JP
             LEFT JOIN JUNCTION J ON JP.JUNCTION_ID = J.ID
             LEFT JOIN ROADWAY_POINT RP ON JP.ROADWAY_POINT_ID = RP.ID
