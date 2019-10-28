@@ -622,4 +622,35 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     }
   }
+
+  def detachJunctionFromNode(junctionId: Long, username: String = "-"): Option[String] = {
+    withDynTransaction {
+      val junctions = junctionDAO.fetchByIds(Seq(junctionId))
+      if (junctions.nonEmpty) {
+        val junctionToBeDetached = junctions.head
+
+        // Expire the current junction row
+        junctionDAO.expireById(Seq(junctionId))
+
+        // Create a new junction row
+        val junction = junctionToBeDetached.copy(id = NewIdValue, junctionNumber = junctionNumberTemplate,
+          nodeNumber = None, createdBy = Some(username))
+        val newJunctionId = junctionDAO.create(Seq(junction)).head
+
+        // Expire the current junction point rows
+        val junctionPointsToExpire = junctionPointDAO.fetchJunctionPointsByJunctionIds(Seq(junctionId))
+        junctionPointDAO.expireById(junctionPointsToExpire.map(_.id))
+
+        // Create new junction point rows with new junction id
+        junctionPointDAO.create(junctionPointsToExpire.map(_.copy(id = NewIdValue, junctionId = newJunctionId,
+          createdBy = Some(username))))
+
+        // TODO Should we check if node becomes obsolete and should be terminated?
+
+      } else {
+        return Some("Liittymää ei löytynyt")
+      }
+    }
+    None
+  }
 }

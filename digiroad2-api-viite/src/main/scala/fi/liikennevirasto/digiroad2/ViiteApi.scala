@@ -961,6 +961,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  post("/junctions/:id/detach") {
+    val id = params("id").toLong
+    time(logger, s"POST request for /junctions/$id/detach") {
+      val user = userProvider.getCurrentUser()
+      val error = nodesAndJunctionsService.detachJunctionFromNode(id, user.username);
+      error match {
+        case Some(message) =>
+          Map("success" -> "false", "message" -> message)
+        case None =>
+          Map("success" -> "true", "message" -> "")
+      }
+    }
+  }
+
   private def getRoadAddressLinks(zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val viiteRoadLinks = zoomLevel match {
