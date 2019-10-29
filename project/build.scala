@@ -59,9 +59,7 @@ object Digiroad2Build extends Build {
       name := Digiroad2OracleName,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers ++= Seq(Classpaths.typesafeReleases,
-        "maven-public" at "http://livibuild04.vally.local/nexus/repository/maven-public/",
-        "ivy-public" at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
+      resolvers += Classpaths.typesafeReleases,
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
@@ -80,9 +78,9 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
         "org.flywaydb" % "flyway-core" % "4.2.0" % "test",
-        "com.oracle" % "ojdbc6" % "11.2.0.3.0",
-        "com.oracle" % "sdoapi" % "11.2.0",
-        "com.oracle" % "sdoutl" % "11.2.0"
+        "com.oracle" % "ojdbc6" % "11.2.0.3.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.jar",
+        "com.oracle" % "sdoapi" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoapi/11.2.0/sdoapi-11.2.0.jar",
+        "com.oracle" % "sdoutl" % "11.2.0" from "hhtp://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoutl/11.2.0/sdoutl-11.2.0.jar"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
