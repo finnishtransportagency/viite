@@ -1,3 +1,4 @@
+import io.gatling.sbt.GatlingPlugin
 import org.scalatra.sbt._
 import sbt.Keys._
 import sbt.{Def, _}
@@ -10,20 +11,19 @@ object Digiroad2Build extends Build {
   val Digiroad2GeoName = "digiroad2-geo"
   val Version = "0.1.0-SNAPSHOT"
 
-  val ScalaVersion = "2.11.12"
-  val ScalatraVersion = "2.6.5"
+  val ScalaVersion = "2.11.7"
+  val ScalatraVersion = "2.6.3"
   val ScalaTestVersion = "3.2.0-SNAP7"
-  val JodaConvertVersion = "2.2.0"
-  val JodaTimeVersion = "2.10.1"
-  val AkkaVersion = "2.5.22"
-  val HttpClientVersion = "4.5.8"
-  val NewRelicApiVersion = "5.0.0"
-  val ScalatraSwaggerVersion = "2.6.5"
+  val JodaConvertVersion = "2.0.1"
+  val JodaTimeVersion = "2.9.9"
+  val AkkaVersion = "2.5.12"
+  val HttpClientVersion = "4.5.5"
+  val NewRelicApiVersion = "3.1.1"
   val CommonsIOVersion = "2.6"
-  val JsonJacksonVersion = "3.6.5"
-  val MockitoCoreVersion = "2.27.0"
+  val JsonJacksonVersion = "3.5.3"
+  val MockitoCoreVersion = "2.18.3"
   val LogbackClassicVersion = "1.2.3"
-  val JettyVersion = "9.2.28.v20190418"
+  val JettyVersion = "9.2.15.v20160210"
 
   val env: String = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "dev"
   val testEnv: String = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "test"
@@ -44,7 +44,7 @@ object Digiroad2Build extends Build {
         "joda-time" % "joda-time" % JodaTimeVersion,
         "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
         "javax.media" % "jai_core" % "1.1.3" from "http://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-        "org.geotools" % "gt-graph" % "21.0",
+        "org.geotools" % "gt-graph" % "19.0",
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
       )
     )
@@ -59,25 +59,31 @@ object Digiroad2Build extends Build {
       name := Digiroad2OracleName,
       version := Version,
       scalaVersion := ScalaVersion,
+//      resolvers ++= Seq(Classpaths.typesafeReleases,
+//        "maven-public" at "http://livibuild04.vally.local/nexus/repository/maven-public/",
+//        "ivy-public" at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
       resolvers += Classpaths.typesafeReleases,
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
-        "org.apache.commons" % "commons-lang3" % "3.9",
-        "commons-codec" % "commons-codec" % "1.12",
+        "org.apache.commons" % "commons-lang3" % "3.2",
+        "commons-codec" % "commons-codec" % "1.9",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
         "com.typesafe.slick" %% "slick" % "3.0.0",
         "org.json4s"   %% "json4s-jackson" % JsonJacksonVersion,
         "org.joda" % "joda-convert" % JodaConvertVersion,
         "joda-time" % "joda-time" % JodaTimeVersion,
-        "com.github.tototoshi" %% "slick-joda-mapper" % "2.0.0",
+        "com.github.tototoshi" %% "slick-joda-mapper" % "2.2.0",
         "com.github.tototoshi" %% "scala-csv" % "1.3.5",
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
-        "com.googlecode.flyway" % "flyway-core" % "2.3" % "test",
+        "com.googlecode.flyway" % "flyway-core" % "2.3.1" % "test",
+//        "com.oracle" % "ojdbc6" % "11.2.0.3.0",
+//        "com.oracle" % "sdoapi" % "11.2.0",
+//        "com.oracle" % "sdoutl" % "11.2.0"
         "com.oracle" % "ojdbc6" % "11.2.0.3.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.jar",
         "com.oracle" % "sdoapi" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoapi/11.2.0/sdoapi-11.2.0.jar",
         "com.oracle" % "sdoutl" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoutl/11.2.0/sdoutl-11.2.0.jar"
@@ -115,7 +121,7 @@ object Digiroad2Build extends Build {
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
-        "org.scalatra" %% "scalatra-swagger"  % ScalatraSwaggerVersion,
+        "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
         "com.github.nscala-time" %% "nscala-time" % "2.22.0"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
@@ -145,7 +151,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-swagger" % ScalatraSwaggerVersion,
+        "org.scalatra" %% "scalatra-swagger" % ScalatraVersion,
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
         "org.joda" % "joda-convert" % JodaConvertVersion,
         "joda-time" % "joda-time" % JodaTimeVersion,
@@ -153,7 +159,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-jmx" % JettyVersion % "compile",
-        "javax.servlet" % "javax.servlet-api" % "4.0.1" % "provided;test" artifacts Artifact("javax.servlet-api", "jar", "jar")
+        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts Artifact("javax.servlet", "jar", "jar")
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
@@ -179,7 +185,8 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.json4s"   %% "json4s-jackson" % JsonJacksonVersion,
-        "org.json4s"   %% "json4s-native" % "3.6.5",
+        "org.json4s"   %% "json4s-native" % "3.5.2",
+        "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.0",
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
@@ -189,7 +196,7 @@ object Digiroad2Build extends Build {
         "commons-io" % "commons-io" % CommonsIOVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
-        "org.scalatra" %% "scalatra-swagger"  % ScalatraSwaggerVersion
+        "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
@@ -221,7 +228,7 @@ object Digiroad2Build extends Build {
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-swagger"  % ScalatraSwaggerVersion,
+        "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
         "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % "test",
         "ch.qos.logback" % "logback-classic" % LogbackClassicVersion % "runtime",
@@ -231,14 +238,20 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "container;compile",
-        "javax.servlet" % "javax.servlet-api" % "4.0.1" % "provided;test" artifacts Artifact("javax.servlet-api", "jar", "jar"),
-        "systems.uom" % "systems-common-java8" % "systems-common-java8-0.7.2"
+        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
     )
   ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar) aggregate
     (geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar)
+
+  lazy val gatling = project.in(file("digiroad2-gatling"))
+    .enablePlugins(GatlingPlugin)
+    .settings(scalaVersion := ScalaVersion)
+    .settings(libraryDependencies ++= Seq(
+      "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.1.7" % "test",
+      "io.gatling" % "gatling-test-framework" % "2.1.7" % "test"))
 
   val assemblySettings: Seq[Def.Setting[_]] = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
@@ -247,9 +260,6 @@ object Digiroad2Build extends Build {
     {
       case x if x.endsWith("about.html") => MergeStrategy.discard
       case x => old(x)
-    } } ,
-    excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
-      cp filter {_.data.getName == "uom-se-1.0.8.jar"}
-    }
+    } }
   )
 }
