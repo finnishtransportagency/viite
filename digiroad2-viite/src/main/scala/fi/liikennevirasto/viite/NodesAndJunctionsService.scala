@@ -25,14 +25,28 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
-  def addOrUpdateNode(node: Node) = {
+  def addOrUpdateNode(node: Node, username: String = "-"): Option[String] = {
     withDynTransaction {
       try {
         if (node.id == NewIdValue) {
           nodeDAO.create(Seq(node))
         } else {
-          Seq(0)
-          // TODO - Update node information
+          val old = nodeDAO.fetchById(node.id)
+          if (old.isDefined) {
+
+            // Update the node information
+            nodeDAO.expireById(Seq(node.id))
+            if (old.get.nodeType != node.nodeType) {
+
+              // Create a new history layer when the node type has changed
+              nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(DateTime.now), createdBy = Some(username))))
+
+            }
+            nodeDAO.create(Seq(node.copy(id = NewIdValue, createdBy = Some(username))))
+
+          } else {
+            return Some("Päivitettävää solmua ei löytynyt")
+          }
         }
         None
       } catch {

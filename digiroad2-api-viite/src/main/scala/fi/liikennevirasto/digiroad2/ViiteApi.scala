@@ -954,7 +954,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val nodeInfo = parsedBody.extract[NodeExtractor]
       val user = userProvider.getCurrentUser()
       val node: Node = NodeConverter.toNode(nodeInfo, user)
-      nodesAndJunctionsService.addOrUpdateNode(node) match {
+      nodesAndJunctionsService.addOrUpdateNode(node, user.username) match {
         case Some(err) => Map("success" -> false, "errorMessage" -> err)
         case None => Map("success" -> true)
       }
