@@ -29,7 +29,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     withDynTransaction {
       try {
         if (node.id == NewIdValue) {
-          nodeDAO.create(Seq(node))
+          nodeDAO.create(Seq(node), username)
         } else {
           val old = nodeDAO.fetchById(node.id)
           if (old.isDefined) {
@@ -43,11 +43,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               }
 
               // Create a new history layer when the node type has changed
-              nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)), createdBy = Some(username))))
-              nodeDAO.create(Seq(node.copy(id = NewIdValue, createdBy = Some(username))))
+              nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
+              nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
 
             } else {
-              nodeDAO.create(Seq(node.copy(id = NewIdValue, createdBy = Some(username))))
+              nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
             }
             nodeDAO.expireById(Seq(node.id))
 

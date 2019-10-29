@@ -942,6 +942,37 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink.endAddrMValue) should be(true)
     }
   }
+
+  test("Test addOrUpdateNode When creating new Then new is created") {
+    runWithRollback {
+      val node = Node(NewIdValue, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy.get)
+      val fetched = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("No node found"))
+      fetched.startDate should be(node.startDate)
+      fetched.nodeType should be(node.nodeType)
+      fetched.nodeNumber should be(node.nodeNumber)
+      fetched.coordinates should be(node.coordinates)
+      fetched.endDate should be(node.endDate)
+      fetched.createdBy should be(node.createdBy)
+      fetched.name should be(node.name)
+      fetched.editor should be(node.editor)
+      fetched.publishedTime should be(node.publishedTime)
+    }
+  }
+
+  test("Test addOrUpdateNode When update existing Then existing is expired and new created") {
+    runWithRollback {
+      // TODO
+    }
+  }
+
+  test("Test addOrUpdateNode When update existing and change type Then existing is expired, history and new created") {
+    runWithRollback {
+      // TODO
+    }
+  }
+
   // </editor-fold>
   // <editor-fold desc="Junctions">
   /**
