@@ -1,14 +1,13 @@
 package fi.liikennevirasto.digiroad2.linearasset
+import com.vividsolutions.jts.geom.LineSegment
 import fi.liikennevirasto.GeometryUtils
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
 import org.geotools.graph.structure.basic.BasicEdge
-import org.locationtech.jts.geom.LineSegment
-
 import scala.collection.JavaConversions._
 
 trait GraphPartitioner {
-  def clusterLinks[T <: PolyLine](links: Seq[T], tolerance: Double = 0.5): Seq[Graph] = {
+  protected def clusterLinks[T <: PolyLine](links: Seq[T], tolerance: Double = 0.5): Seq[Graph] = {
     val generator = new BasicLineGraphGenerator(tolerance)
     links.foreach { link =>
       val (sp, ep) = GeometryUtils.geometryEndpoints(link.geometry)
