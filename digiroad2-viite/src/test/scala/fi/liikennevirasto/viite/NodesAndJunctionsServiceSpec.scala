@@ -943,11 +943,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test addOrUpdateNode When creating new Then new is created") {
+  test("Test addOrUpdateNode When creating new Then new is created successfully") {
     runWithRollback {
       val node = Node(NewIdValue, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
         DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy.get)
+      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy.get) should be(None)
       val fetched = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("No node found"))
       fetched.startDate should be(node.startDate)
       fetched.nodeType should be(node.nodeType)
@@ -961,9 +961,29 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  test("Test addOrUpdateNode When update non-existing Then should return error") {
+    runWithRollback {
+      val node = Node(-1, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy.get) should not be(None)
+    }
+  }
+
   test("Test addOrUpdateNode When update existing Then existing is expired and new created") {
     runWithRollback {
-      // TODO
+      val node = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      nodeDAO.create(Seq(node), node.createdBy.get)
+      nodeDAO.fetchById(node.id) should not be None
+      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1)), node.createdBy.get) should be(None)
+      nodeDAO.fetchById(node.id) should be(None)
+      val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
+      updated.id should not be node.id
+      updated.createdBy should be(node.createdBy)
+      updated.createdTime should not be node.createdTime
+      updated.publishedTime should be(None)
+      updated.editor should be(None)
+      updated.coordinates should be(Point(1, 1))
     }
   }
 
