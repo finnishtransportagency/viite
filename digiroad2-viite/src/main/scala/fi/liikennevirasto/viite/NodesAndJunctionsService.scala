@@ -35,14 +35,21 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           if (old.isDefined) {
 
             // Update the node information
-            nodeDAO.expireById(Seq(node.id))
             if (old.get.nodeType != node.nodeType) {
 
-              // Create a new history layer when the node type has changed
-              nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(DateTime.now), createdBy = Some(username))))
+              // Check that new start date is not earlier than before
+              if (node.startDate.getMillis < old.get.startDate.getMillis) {
+                return Some("Solmun uusi alkupäivämäärä ei saa olla ennen nykyistä alkupäivämäärää.")
+              }
 
+              // Create a new history layer when the node type has changed
+              nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)), createdBy = Some(username))))
+              nodeDAO.create(Seq(node.copy(id = NewIdValue, createdBy = Some(username))))
+
+            } else {
+              nodeDAO.create(Seq(node.copy(id = NewIdValue, createdBy = Some(username))))
             }
-            nodeDAO.create(Seq(node.copy(id = NewIdValue, createdBy = Some(username))))
+            nodeDAO.expireById(Seq(node.id))
 
           } else {
             return Some("Päivitettävää solmua ei löytynyt")
