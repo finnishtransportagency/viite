@@ -650,19 +650,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
           // If there are no node points left under the node, node can be terminated
           val nodeNumber = junctionToBeDetached.nodeNumber.get
-          val nodePoints = nodePointDAO.fetchNodePointsByNodeNumber(Seq(nodeNumber))
-          if (nodePoints.isEmpty) {
-
-            // Terminate Node
-            val node = nodeDAO.fetchByNodeNumber(nodeNumber)
-            if (node.isDefined) {
-              nodeDAO.expireById(Seq(node.get.id))
-              nodeDAO.create(Seq(node.get.copy(id = NewIdValue, endDate = Some(DateTime.now), createdBy = Some(username))))
-            } else {
-              throw new Exception(s"Could not find node with number $nodeNumber")
-            }
-
-          }
+          terminateNodeIfNoNodePoints(nodeNumber, username)
 
         } else {
           return Some("Liittymä oli jo aihio, eikä sitä oltu liitetty solmuun")
@@ -674,20 +662,34 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     None
   }
 
+  private def terminateNodeIfNoNodePoints(nodeNumber: Long, username: String) = {
+    val nodePoints = nodePointDAO.fetchNodePointsByNodeNumber(Seq(nodeNumber))
+    if (nodePoints.isEmpty) {
+      val node = nodeDAO.fetchByNodeNumber(nodeNumber)
+      if (node.isDefined) {
+
+        // Terminate Node
+        nodeDAO.expireById(Seq(node.get.id))
+        nodeDAO.create(Seq(node.get.copy(id = NewIdValue, endDate = Some(DateTime.now), createdBy = Some(username))))
+
+      } else {
+        throw new Exception(s"Could not find node with number $nodeNumber")
+      }
+    }
+  }
+
   def detachNodePointFromNode(nodePointId: Long, username: String = "-"): Option[String] = {
     withDynTransaction {
       val nodePoints = nodePointDAO.fetchByIds(Seq(nodePointId))
       if (nodePoints.nonEmpty) {
         val nodePointToBeDetached = nodePoints.head
 
-        // Expire the current node point
+        // Expire the current node point and create a new template
         nodePointDAO.expireById(Seq(nodePointId))
+        nodePointDAO.create(Seq(nodePointToBeDetached.copy(id = NewIdValue, nodeNumber = None, createdBy = Some(username))))
 
-        // Create a new node point template
-        val nodePoint = nodePointToBeDetached.copy(id = NewIdValue, nodeNumber = None, createdBy = Some(username))
-        nodePointDAO.create(Seq(nodePoint))
-
-        // TODO If there are no node points left under the node, node can be terminated
+        // If there are no node points left under the node, node can be terminated
+        terminateNodeIfNoNodePoints(nodePointToBeDetached.nodeNumber.get, username)
 
       } else {
         return Some("Solmukohtaa ei löytynyt")
