@@ -233,7 +233,8 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "container;compile",
-        "javax.servlet" % "javax.servlet-api" % "4.0.1" % "provided;test" artifacts Artifact("javax.servlet-api", "jar", "jar")
+        "javax.servlet" % "javax.servlet-api" % "4.0.1" % "provided;test" artifacts Artifact("javax.servlet-api", "jar", "jar"),
+        "systems.uom" % "systems-common-java8" % "systems-common-java8-0.7.2"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
@@ -248,6 +249,9 @@ object Digiroad2Build extends Build {
     {
       case x if x.endsWith("about.html") => MergeStrategy.discard
       case x => old(x)
-    } }
+    } } ,
+    excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
+      cp filter {_.data.getName == "uom-se-1.0.8.jar"}
+    }
   )
 }
