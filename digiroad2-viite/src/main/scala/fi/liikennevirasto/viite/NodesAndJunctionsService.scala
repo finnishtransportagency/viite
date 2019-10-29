@@ -619,7 +619,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def getJunctionInfoByJunctionId(junctionIds: Seq[Long]): Option[JunctionInfo] = {
     withDynSession {
       junctionDAO.fetchJunctionInfoByJunctionId(junctionIds)
-
     }
   }
 
@@ -646,7 +645,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           junctionPointDAO.create(junctionPointsToExpire.map(_.copy(id = NewIdValue, junctionId = newJunctionId,
             createdBy = Some(username))))
 
-          // TODO Calculate node points again
+          // TODO Calculate node points again (implemented in VIITE-1862)
 
           // If there are no node points left under the node, node can be terminated
           val nodeNumber = junctionToBeDetached.nodeNumber.get
@@ -683,14 +682,18 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val nodePoints = nodePointDAO.fetchByIds(Seq(nodePointId))
       if (nodePoints.nonEmpty) {
         val nodePointToBeDetached = nodePoints.head
+        if (nodePointToBeDetached.nodePointType == RoadNodePoint) {
 
-        // Expire the current node point and create a new template
-        nodePointDAO.expireById(Seq(nodePointId))
-        nodePointDAO.create(Seq(nodePointToBeDetached.copy(id = NewIdValue, nodeNumber = None, createdBy = Some(username))))
+          // Expire the current node point and create a new template
+          nodePointDAO.expireById(Seq(nodePointId))
+          nodePointDAO.create(Seq(nodePointToBeDetached.copy(id = NewIdValue, nodeNumber = None, createdBy = Some(username))))
 
-        // If there are no node points left under the node, node can be terminated
-        terminateNodeIfNoNodePoints(nodePointToBeDetached.nodeNumber.get, username)
+          // If there are no node points left under the node, node can be terminated
+          terminateNodeIfNoNodePoints(nodePointToBeDetached.nodeNumber.get, username)
 
+        } else {
+          return Some("Vain tien solmukohdan saa irrottaa solmusta")
+        }
       } else {
         return Some("Solmukohtaa ei löytynyt")
       }
