@@ -38,7 +38,7 @@
     "proj4": "^2.5.0",
     "requirejs": "2.3.5",
     "web-console-reporter": "1.0.0",
-    "yarn": "1.12.3"
+    "yarn": "1.19.1"
   },
   "engines": {
     "node": "8.12.0"
