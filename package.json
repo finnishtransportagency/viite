@@ -31,7 +31,7 @@
     "interactjs": "1.4.8",
     "jquery": "3.4.0",
     "jquery-migrate": "3.0.1",
-    "lodash": "4.17.11",
+    "lodash": "4.17.15",
     "moment": "2.24.0",
     "ol": "^5.3.3",
     "pikaday": "1.8.0",
