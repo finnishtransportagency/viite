@@ -270,6 +270,7 @@ class NodeDAO extends BaseDAO {
       x._1.copy(id = x._2)
     )
 
+    var nodeNumbers = scala.collection.mutable.MutableList[Long]()
     createNodes.foreach {
       node =>
         val nodeNumber = if (node.nodeNumber == NewIdValue) {
@@ -277,6 +278,7 @@ class NodeDAO extends BaseDAO {
         } else {
           node.nodeNumber
         }
+        nodeNumbers += nodeNumber
         ps.setLong(1, node.id)
         ps.setLong(2, nodeNumber)
         ps.setObject(3, OracleDatabase.createRoadsJGeometry(Seq(node.coordinates), dynamicSession.conn, 0))
@@ -297,7 +299,7 @@ class NodeDAO extends BaseDAO {
     }
     ps.executeBatch()
     ps.close()
-    createNodes.map(_.nodeNumber).toSeq
+    nodeNumbers
   }
 
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[Node] = {

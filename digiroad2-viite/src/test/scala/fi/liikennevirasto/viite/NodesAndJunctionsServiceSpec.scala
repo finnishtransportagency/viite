@@ -105,8 +105,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   test("Test nodesAndJunctionsService.getNodesByRoadAttributes When there are less than 50 nodes in the given road Then should return the list of those nodes") {
     runWithRollback {
       roadwayDAO.create(Seq(testRoadway1))
-      val nodeId = Sequences.nextNodeId
-      val nodeNumber = nodeDAO.create(Seq(testNode1.copy(id = nodeId))).head
+      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
       val roadwayPointId = Sequences.nextRoadwayPointId
       roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId))
       nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId)))
@@ -122,7 +121,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           node._2.roadNumber should be(roadNumber1)
           node._2.roadPartNumber should be(roadPartNumber1)
         }
-        case _ => println("should not get here")
+        case _ => fail("Should not get here")
       }
     }
   }
