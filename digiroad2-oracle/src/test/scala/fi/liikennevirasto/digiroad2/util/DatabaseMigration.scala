@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import org.flywaydb.core.Flyway
+import com.googlecode.flyway.core.Flyway
 
 object DatabaseMigration {
   def main(args: Array[String]) : Unit = {
