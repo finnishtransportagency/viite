@@ -35,10 +35,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           if (old.isDefined) {
 
             // Update the node information
-            if (old.get.nodeType != node.nodeType) {
+            val oldStartDate = old.get.startDate.withTimeAtStartOfDay
+            val newStartDate = node.startDate.withTimeAtStartOfDay
+            if (old.get.nodeType != node.nodeType && oldStartDate != newStartDate) {
 
               // Check that new start date is not earlier than before
-              if (node.startDate.getMillis < old.get.startDate.getMillis) {
+              if (newStartDate.getMillis < oldStartDate.getMillis) {
                 return Some("Solmun uusi alkupäivämäärä ei saa olla ennen nykyistä alkupäivämäärää.")
               }
 
