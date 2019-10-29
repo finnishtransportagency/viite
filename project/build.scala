@@ -1,3 +1,4 @@
+import io.gatling.sbt.GatlingPlugin
 import org.scalatra.sbt._
 import sbt.Keys._
 import sbt.{Def, _}
@@ -43,7 +44,7 @@ object Digiroad2Build extends Build {
         "joda-time" % "joda-time" % JodaTimeVersion,
         "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
         "javax.media" % "jai_core" % "1.1.3" from "http://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-        "org.geotools" % "gt-graph" % "19.0" % "compile",
+        "org.geotools" % "gt-graph" % "19.0",
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
       )
     )
@@ -58,9 +59,10 @@ object Digiroad2Build extends Build {
       name := Digiroad2OracleName,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers ++= Seq(Classpaths.typesafeReleases,
-        "maven-public" at "http://livibuild04.vally.local/nexus/repository/maven-public/",
-        "ivy-public" at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
+//      resolvers ++= Seq(Classpaths.typesafeReleases,
+//        "maven-public" at "http://livibuild04.vally.local/nexus/repository/maven-public/",
+//        "ivy-public" at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
+      resolvers += Classpaths.typesafeReleases,
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
@@ -79,9 +81,12 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1" % "test",
-        "com.oracle" % "ojdbc6" % "11.2.0.3.0",
-        "com.oracle" % "sdoapi" % "11.2.0",
-        "com.oracle" % "sdoutl" % "11.2.0"
+//        "com.oracle" % "ojdbc6" % "11.2.0.3.0",
+//        "com.oracle" % "sdoapi" % "11.2.0",
+//        "com.oracle" % "sdoutl" % "11.2.0"
+        "com.oracle" % "ojdbc6" % "11.2.0.3.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.jar",
+        "com.oracle" % "sdoapi" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoapi/11.2.0/sdoapi-11.2.0.jar",
+        "com.oracle" % "sdoutl" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoutl/11.2.0/sdoutl-11.2.0.jar"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
@@ -153,7 +158,8 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-webapp" % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "compile",
-        "org.eclipse.jetty" % "jetty-jmx" % JettyVersion % "compile"
+        "org.eclipse.jetty" % "jetty-jmx" % JettyVersion % "compile",
+        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts Artifact("javax.servlet", "jar", "jar")
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
@@ -239,6 +245,13 @@ object Digiroad2Build extends Build {
     )
   ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar) aggregate
     (geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar)
+
+  lazy val gatling = project.in(file("digiroad2-gatling"))
+    .enablePlugins(GatlingPlugin)
+    .settings(scalaVersion := ScalaVersion)
+    .settings(libraryDependencies ++= Seq(
+      "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.1.7" % "test",
+      "io.gatling" % "gatling-test-framework" % "2.1.7" % "test"))
 
   val assemblySettings: Seq[Def.Setting[_]] = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),

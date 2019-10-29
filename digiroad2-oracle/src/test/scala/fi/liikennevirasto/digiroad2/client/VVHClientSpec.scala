@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import org.geotools.geometry.jts.GeometryBuilder
-import org.locationtech.jts.geom.GeometryFactory
+import com.vividsolutions.jts.geom.GeometryFactory
 import org.scalatest.{FunSuite, Matchers}
 
 import scala.concurrent.Await
