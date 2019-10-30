@@ -55,6 +55,7 @@
 
     var setType = function (type) {
       current.node.type = type;
+      current.node.typeChanged = true;
       eventbus.trigger('changed:type', current.node);
       setDirty(true);
     };
@@ -68,7 +69,7 @@
       var nodePoints = _.partition(current.node.nodePoints, function (nodePoint) {
         return nodePoint.id === id;
       });
-      current.node.nodePointsToDetach = current.node.nodePointsToDetach.concat(nodePoints[0]);
+      current.node.nodePointsToDetach.push(_.first(nodePoints[0]));
       current.node.nodePoints = nodePoints[1];
       setDirty(true);
     };
@@ -77,7 +78,7 @@
       var nodePoints = _.partition(current.node.nodePointsToDetach, function (nodePoint) {
         return nodePoint.id === id;
       });
-      current.node.nodePoints = current.node.nodePoints.concat(nodePoints[0]);
+      current.node.nodePoints.push(_.first(nodePoints[0]));
       current.node.nodePointsToDetach = nodePoints[1];
     };
 
@@ -85,17 +86,25 @@
       var junctions = _.partition(current.node.junctions, function (junction) {
         return junction.id === id;
       });
-      current.node.junctionsToDetach = current.node.junctionsToDetach.concat(junctions[0]);
+
+      var junctionToDetach = _.first(junctions[0]);
+
+      current.node.junctionsToDetach.push(junctionToDetach);
       current.node.junctions = junctions[1];
       setDirty(true);
+      eventbus.trigger('junction:detach', junctionToDetach);
     };
 
     var attachJunction = function (id) {
       var junctions = _.partition(current.node.junctionsToDetach, function (junction) {
         return junction.id === id;
       });
-      current.node.junctions = current.node.junctions.concat(junctions[0]);
+
+      var junctionToAttach = _.first(junctions[0]);
+
+      current.node.junctions.push(junctionToAttach);
       current.node.junctionsToDetach = junctions[1];
+      eventbus.trigger('junction:attach', junctionToAttach);
     };
 
     var isDirty = function () {

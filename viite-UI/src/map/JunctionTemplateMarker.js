@@ -1,9 +1,9 @@
 (function (root) {
   root.JunctionTemplateMarker = function () {
-    var createJunctionTemplateMarker = function (junctionTemplate, roadLink) {
+    var createJunctionTemplateMarker = function (junctionTemplate, junctionPoint, roadLink) {
       var point = [];
 
-      if ((roadLink.sideCode === LinkValues.SideCode.TowardsDigitizing.value && junctionTemplate.addrM === roadLink.endAddressM) || (roadLink.sideCode === LinkValues.SideCode.AgainstDigitizing.value && junctionTemplate.addrM === roadLink.startAddressM)) {
+      if ((roadLink.sideCode === LinkValues.SideCode.TowardsDigitizing.value && junctionPoint.addrM === roadLink.endAddressM) || (roadLink.sideCode === LinkValues.SideCode.AgainstDigitizing.value && junctionPoint.addrM === roadLink.startAddressM)) {
         point = roadLink.points[roadLink.points.length - 1];
       } else {
         point = roadLink.points[0];
@@ -21,7 +21,8 @@
       });
 
       marker.setStyle(junctionTemplateMarkerStyle);
-      marker.junctionTemplateInfo = junctionTemplate;
+      marker.junctionTemplate = junctionTemplate;
+      marker.roadLink = roadLink;
       return marker;
     };
 

@@ -662,11 +662,23 @@
       });
     }, 1000);
 
-    this.saveNodeInformation = _.throttle(function (data, success, failure) {
+    this.createNodeInfo = _.throttle(function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/viite/nodes",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
+    this.saveNodeInfo = _.throttle(function (nodeId, data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/viite/node",
+        url: "api/viite/node/" + nodeId,
         data: JSON.stringify(data),
         dataType: "json",
         success: success,

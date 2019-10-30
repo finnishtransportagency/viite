@@ -949,8 +949,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  put("/node") {
-    time(logger, s"PUT request for /node") {
+  post("/nodes") {
+    time(logger, s"POST request for /nodes") {
+      println(parsedBody)
       val nodeInfo = parsedBody.extract[NodeExtractor]
       val user = userProvider.getCurrentUser()
       val node: Node = NodeConverter.toNode(nodeInfo, user)
@@ -958,6 +959,24 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case Some(err) => Map("success" -> false, "errorMessage" -> err)
         case None => Map("success" -> true)
       }
+    }
+  }
+
+  put("/node/:id") {
+    val id = params("id").toLong
+    time(logger, s"PUT request for /node/$id") {
+      try {
+        println(parsedBody)
+        val nodeInfo = parsedBody.extract[NodeExtractor]
+        val user = userProvider.getCurrentUser()
+        val node: Node = NodeConverter.toNode(nodeInfo, user)
+      } catch {
+        case ex: Exception => println("Failed : ", ex.printStackTrace())
+      }
+//      nodesAndJunctionsService.addOrUpdateNode(node) match {
+//        case Some(err) => Map("success" -> false, "errorMessage" -> err)
+//        case None => Map("success" -> true)
+//      }
     }
   }
 

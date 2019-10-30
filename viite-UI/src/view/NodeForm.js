@@ -82,7 +82,7 @@
         ' <div class="form form-horizontal form-dark">' +
         '   <div>' +
         staticField('Solmunumero:', nodeNumber) +
-        staticField('Koordinaatit (<i>P</i>, <i>I</i>):', parseInt(node.coordY) + ', ' + parseInt(node.coordX)) +
+        staticField('Koordinaatit (<i>P</i>, <i>I</i>):', node.coordY + ', ' + node.coordX) +
         inputFieldRequired('Solmun nimi', 'nodeName', '', nodeName, 32) +
         addNodeTypeDropdown('Solmutyyppi', 'nodeTypeDropdown', getNodeType(node.type)) +
         inputFieldRequired('Alkupvm', 'nodeStartDate', 'pp.kk.vvvv', startDate) +
@@ -386,6 +386,7 @@
         },
         closeCallback: function () {
           selectedNode.closeNode();
+          eventbus.trigger('nodeLayer:refreshView');
         }
       });
     };
@@ -430,14 +431,14 @@
         if (this.checked) {
           new GenericConfirmPopup('Haluatko varmasti irrottaa liittymän ' + junctionNumber + ' solmusta?', {
             successCallback: function () {
-              selectedNode.detachJunction(parseInt(id));
+              selectedNode.detachJunction(id);
             },
             closeCallback: function () {
               // TODO checkbox off again :D
             }
           });
         } else {
-          selectedNode.attachJunction(parseInt(id));
+          selectedNode.attachJunction(id);
         }
       });
 
@@ -475,12 +476,12 @@
 
       eventbus.on('node:saveSuccess', function () {
         applicationModel.removeSpinner();
-        selectedNode.closeForm(); // we'll have to change this later probably
+        selectedNode.closeNode(); // we'll have to change this later probably
       });
 
       eventbus.on("node:saveUnsuccessful", function (error) {
-        new ModalConfirm(error);
         applicationModel.removeSpinner();
+        new ModalConfirm(error);
       });
     };
 

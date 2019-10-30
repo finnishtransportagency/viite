@@ -73,9 +73,18 @@
       };
       if (!_.isUndefined(node)) {
         if (!_.isUndefined(node.id)) {
-          // TODO - Update node information
+          dataJson.junctionsToDetach = node.junctionsToDetach;
+          backend.saveNodeInfo(node.id, dataJson, function (result) {
+            if (result.success) {
+              eventbus.trigger('node:saveSuccess');
+            } else {
+              eventbus.trigger('node:saveUnsuccessful', result.errorMessage);
+            }
+          }, function (result) {
+            eventbus.trigger('node:saveUnsuccessful', result.errorMessage);
+          });
         } else {
-          backend.saveNodeInformation(dataJson, function (result) {
+          backend.createNodeInfo(dataJson, function (result) {
             if (result.success) {
               eventbus.trigger('node:saveSuccess');
             } else {
