@@ -727,10 +727,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         } else list
 
       }.distinct
-      if (updatableRoadwayPoints.nonEmpty)
+      if (updatableRoadwayPoints.nonEmpty) {
+        logger.info(s"Updating ${updatableRoadwayPoints.length} roadway points: ${updatableRoadwayPoints.mkString(", ")}")
         roadwayPointDAO.update(updatableRoadwayPoints)
+      }
     } catch {
-      case ex: Exception => println("Failed roadwaypointsUpdate: ", ex.printStackTrace())
+      case ex: Exception => logger.error("Failed to update roadway points.", ex)
     }
   }
 
