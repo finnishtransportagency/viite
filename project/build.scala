@@ -16,7 +16,7 @@ object Digiroad2Build extends Build {
   val ScalaTestVersion = "3.2.0-SNAP7"
   val JodaConvertVersion = "2.0.1"
   val JodaTimeVersion = "2.9.9"
-  val AkkaVersion = "2.4.20"
+  val AkkaVersion = "2.3.16"
   val HttpClientVersion = "4.5.5"
   val NewRelicApiVersion = "3.1.1"
   val CommonsIOVersion = "2.6"
