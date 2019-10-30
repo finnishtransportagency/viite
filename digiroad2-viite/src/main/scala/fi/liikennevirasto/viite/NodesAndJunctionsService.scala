@@ -25,8 +25,22 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
-  def addOrUpdateNode(node: Node, username: String = "-"): Option[String] = {
+  def update(node: Node, junctionsIds: Seq[Long], username: String = "-"): Option[String] = {
     withDynTransaction {
+      try {
+        (addOrUpdateNode(node, username), detachJunctionsFromNode(junctionsIds, username)) match {
+          case (Some(addOrUpdateNodeErr), _) => Some(addOrUpdateNodeErr)
+          case (_, Some(detachJunctionsFromNodeErr)) => Some(detachJunctionsFromNodeErr)
+          case _ => None
+        }
+      } catch {
+        case e: Exception => Some(e.getMessage)
+      }
+    }
+  }
+
+  def addOrUpdateNode(node: Node, username: String = "-"): Option[String] = {
+    def addOrUpdate(node: Node, username: String = "-"): Option[String] = {
       try {
         if (node.id == NewIdValue) {
           nodeDAO.create(Seq(node), username)
@@ -60,6 +74,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         None
       } catch {
         case e: Exception => Some(e.getMessage)
+      }
+    }
+
+    if(OracleDatabase.isWithinSession) {
+      addOrUpdate(node, username)
+    } else {
+      withDynTransaction {
+        addOrUpdate(node, username)
       }
     }
   }
@@ -645,23 +667,22 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def detachJunctionFromNode(junctionId: Long, username: String = "-"): Option[String] = {
-    withDynTransaction {
-      val junctions = junctionDAO.fetchByIds(Seq(junctionId))
-      if (junctions.nonEmpty) {
-        val junctionToBeDetached = junctions.head
-        if (junctionToBeDetached.nodeNumber.isDefined) {
+  def detachJunctionsFromNode(junctionIds: Seq[Long], username: String = "-"): Option[String] = {
+    def detachJunctions(junctionIds: Seq[Long], username: String = "-"): Option[String] = {
+      val junctionsToDetach = junctionDAO.fetchByIds(junctionIds).filter(_.nodeNumber.isDefined)
+      if (junctionsToDetach.nonEmpty) {
 
-          // Expire the current junction
-          junctionDAO.expireById(Seq(junctionId))
+        // Expire the current junction
+        junctionDAO.expireById(junctionsToDetach.map(_.id))
 
+        junctionsToDetach.foreach { j =>
           // Create a new junction template
-          val junction = junctionToBeDetached.copy(id = NewIdValue, junctionNumber = junctionNumberTemplate,
+          val junction = j.copy(id = NewIdValue, junctionNumber = junctionNumberTemplate,
             nodeNumber = None, createdBy = Some(username))
           val newJunctionId = junctionDAO.create(Seq(junction)).head
 
           // Expire the current junction points
-          val junctionPointsToExpire = junctionPointDAO.fetchJunctionPointsByJunctionIds(Seq(junctionId))
+          val junctionPointsToExpire = junctionPointDAO.fetchJunctionPointsByJunctionIds(Seq(j.id))
           junctionPointDAO.expireById(junctionPointsToExpire.map(_.id))
 
           // Create new junction points with new junction id
@@ -669,19 +690,24 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             createdBy = Some(username))))
 
           // TODO Calculate node points again (implemented in VIITE-1862)
-
-          // If there are no node points left under the node, node can be terminated
-          val nodeNumber = junctionToBeDetached.nodeNumber.get
-          terminateNodeIfNoNodePoints(nodeNumber, username)
-
-        } else {
-          return Some("Liittymä oli jo aihio, eikä sitä oltu liitetty solmuun")
         }
+
+        // If there are no node points left under the node, node can be terminated
+        val nodeNumber = junctionsToDetach.head.nodeNumber.get
+        terminateNodeIfNoNodePoints(nodeNumber, username)
       } else {
         return Some("Liittymää ei löytynyt")
       }
+      None
     }
-    None
+
+    if (OracleDatabase.isWithinSession) {
+      detachJunctions(junctionIds, username)
+    } else {
+      withDynTransaction {
+        detachJunctions(junctionIds, username)
+      }
+    }
   }
 
   private def terminateNodeIfNoNodePoints(nodeNumber: Long, username: String) = {

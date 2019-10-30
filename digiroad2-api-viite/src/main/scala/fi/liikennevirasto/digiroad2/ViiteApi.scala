@@ -56,8 +56,10 @@ case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
 case class CutLineExtractor(linkId: Long, splitedPoint: Point)
 
+case class JunctionExtractor(id: Long, junctionNumber: Long, nodeNumber: Option[Long])
+
 case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, coordinates: Point, name: Option[String], nodeType: Int, startDate: String, endDate: Option[String], validFrom: Option[String], validTo: Option[String],
-                         createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None)
+                         createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None, junctionsToDetach: List[JunctionExtractor])
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
@@ -951,11 +953,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   post("/nodes") {
     time(logger, s"POST request for /nodes") {
-      println(parsedBody)
+      val username = userProvider.getCurrentUser().username
       val nodeInfo = parsedBody.extract[NodeExtractor]
-      val user = userProvider.getCurrentUser()
-      val node: Node = NodeConverter.toNode(nodeInfo, user)
-      nodesAndJunctionsService.addOrUpdateNode(node, user.username) match {
+      val node: Node = NodeConverter.toNode(nodeInfo, username)
+      nodesAndJunctionsService.addOrUpdateNode(node, username) match {
         case Some(err) => Map("success" -> false, "errorMessage" -> err)
         case None => Map("success" -> true)
       }
@@ -965,31 +966,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/node/:id") {
     val id = params("id").toLong
     time(logger, s"PUT request for /node/$id") {
+      val username = userProvider.getCurrentUser().username
       try {
-        println(parsedBody)
         val nodeInfo = parsedBody.extract[NodeExtractor]
-        val user = userProvider.getCurrentUser()
-        val node: Node = NodeConverter.toNode(nodeInfo, user)
+        val node: Node = NodeConverter.toNode(nodeInfo, username)
+        val junctionsIds = JunctionConverter.toJunctionIds(nodeInfo.junctionsToDetach)
+        nodesAndJunctionsService.update(node, junctionsIds, username) match {
+          case Some(err) => Map("success" -> false, "errorMessage" -> err)
+          case None => Map("success" -> true)
+        }
       } catch {
         case ex: Exception => println("Failed : ", ex.printStackTrace())
-      }
-//      nodesAndJunctionsService.addOrUpdateNode(node) match {
-//        case Some(err) => Map("success" -> false, "errorMessage" -> err)
-//        case None => Map("success" -> true)
-//      }
-    }
-  }
-
-  post("/junctions/:id/detach") {
-    val id = params("id").toLong
-    time(logger, s"POST request for /junctions/$id/detach") {
-      val user = userProvider.getCurrentUser()
-      val error = nodesAndJunctionsService.detachJunctionFromNode(id, user.username);
-      error match {
-        case Some(message) =>
-          Map("success" -> "false", "message" -> message)
-        case None =>
-          Map("success" -> "true", "message" -> "")
       }
     }
   }
@@ -1596,7 +1583,7 @@ object ProjectConverter {
 }
 
 object NodeConverter {
-  def toNode(node: NodeExtractor, user: User) : Node = {
+  def toNode(node: NodeExtractor, username: String) : Node = {
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val endDate = if (node.endDate.isDefined) Option(formatter.parseDateTime(node.endDate.get)) else None
     val validFrom = if (node.validFrom.isDefined) formatter.parseDateTime(node.validFrom.get) else new DateTime()
@@ -1604,6 +1591,12 @@ object NodeConverter {
     val createdTime = if (node.createdTime.isDefined) Option(formatter.parseDateTime(node.createdTime.get)) else None
 
     Node(node.id, node.nodeNumber, node.coordinates, node.name, NodeType.apply(node.nodeType),
-         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, Some(user.username), createdTime)
+         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, Some(username), createdTime)
+  }
+}
+
+object JunctionConverter {
+  def toJunctionIds(junctions: Seq[JunctionExtractor]) : Seq[Long] = {
+    junctions.map(_.id)
   }
 }
