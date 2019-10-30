@@ -1,4 +1,4 @@
-FROM alpine
+FROM alpine:3.5
 
 ENV SCALA_VERSION 2.11.7
 ENV SBT_VERSION 0.13.5
@@ -25,7 +25,7 @@ RUN apk update && apk upgrade && \
     echo "Europe/Helsinki" > /etc/timezone
 
 #Install java
-RUN apk add openjdk8-jre=1.8.0_171
+RUN apk add openjdk8-jre
 
 #Install scala
 RUN curl -L https://downloads.typesafe.com/scala/$SCALA_VERSION/scala-$SCALA_VERSION.tgz --output scala-$SCALA_VERSION.tgz && \
