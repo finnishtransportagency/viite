@@ -77,7 +77,7 @@ object Digiroad2Build extends Build {
         "joda-time" % "joda-time" % JodaTimeVersion,
         "com.github.tototoshi" %% "slick-joda-mapper" % "2.2.0",
         "com.github.tototoshi" %% "scala-csv" % "1.3.5",
-        "org.apache.httpcomponents" % "httpclient" % "4.3.3",
+        "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1" % "test",
