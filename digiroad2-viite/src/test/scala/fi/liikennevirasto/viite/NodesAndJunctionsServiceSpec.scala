@@ -663,7 +663,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * Terminate road number 1 and road part 2
     *
     * Expected:
-    * Node Point at the end of road part 2 should be expire.
+    * Node Point at the end of road part 2 should be expired.
     * Node at the end of road part 2 should expire conditionally:
     * * If there are no more node points nor junctions referenced by this nodeId, then expire the node.
     */
@@ -709,9 +709,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       // Creation of nodes and node points
       nodesAndJunctionsService.handleNodePointTemplates(projectChanges, projectLinks, projectService.mapChangedRoadwayNumbers(projectLinks, projectLinks))
 
-      val node1 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink1.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      val node2 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink2.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      val node3 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink2.geometry.last, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      val nodeNumber1 = Sequences.nextNodeNumber
+      val nodeNumber2 = Sequences.nextNodeNumber
+      val nodeNumber3 = Sequences.nextNodeNumber
+      val node1 = Node(NewIdValue, nodeNumber1, roadLink1.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      val node2 = Node(NewIdValue, nodeNumber2, roadLink2.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      val node3 = Node(NewIdValue, nodeNumber3, roadLink2.geometry.last, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
 
       nodeDAO.create(Seq(node1, node2, node3))
 
@@ -721,19 +724,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         np => {
           if (np.roadwayNumber == roadLink1.roadwayNumber) {
             if (np.addrM == roadLink1.startAddrMValue)
-              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node1.nodeNumber} WHERE ID = ${np.id}""".execute
+              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber1 WHERE ID = ${np.id}""".execute
             else if (np.addrM == roadLink1.endAddrMValue)
-              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""".execute
+              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber2 WHERE ID = ${np.id}""".execute
           } else if (np.roadwayNumber == roadLink2.roadwayNumber) {
             if (np.addrM == roadLink2.startAddrMValue)
-              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node2.nodeNumber} WHERE ID = ${np.id}""".execute
+              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber2 WHERE ID = ${np.id}""".execute
             else if (np.addrM == roadLink2.endAddrMValue)
-              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = ${node3.nodeNumber} WHERE ID = ${np.id}""".execute
+              sqlu"""UPDATE NODE_POINT SET NODE_NUMBER = $nodeNumber3 WHERE ID = ${np.id}""".execute
           }
         }
       )
 
-      val nodePoints = nodePointDAO.fetchNodePointsByNodeNumber(Seq(node1.nodeNumber, node2.nodeNumber, node3.nodeNumber))
+      val nodePoints = nodePointDAO.fetchNodePointsByNodeNumber(Seq(nodeNumber1, nodeNumber2, nodeNumber3))
       nodePoints.length should be(4)
       nodePoints.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink1.startAddrMValue) should be(true)
       nodePoints.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink1.endAddrMValue) should be(true)
@@ -745,7 +748,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(Seq(terminatedRoadLink), Some(terminatedRoadLink.endDate.get.minusDays(1)))
 
       // Test expired node and node points
-      val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeNumber(Seq(node1.nodeNumber, node2.nodeNumber, node3.nodeNumber))
+      val nodePointsAfterExpiration = nodePointDAO.fetchNodePointsByNodeNumber(Seq(nodeNumber1, nodeNumber2, nodeNumber3))
       nodePointsAfterExpiration.length should be(2)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.After && node.addrM == roadLink1.startAddrMValue) should be(true)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink1.endAddrMValue) should be(true)
