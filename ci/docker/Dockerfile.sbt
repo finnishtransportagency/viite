@@ -25,7 +25,7 @@ RUN apk update && apk upgrade && \
     echo "Europe/Helsinki" > /etc/timezone
 
 #Install java
-RUN apk add openjdk8-jre
+RUN apk add openjdk8-jre=1.8.0_171-b10
 
 #Install scala
 RUN curl -L https://downloads.typesafe.com/scala/$SCALA_VERSION/scala-$SCALA_VERSION.tgz --output scala-$SCALA_VERSION.tgz && \
