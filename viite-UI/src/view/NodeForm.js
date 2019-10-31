@@ -199,7 +199,7 @@
       var getJunctionPointsInfo = function(junction) {
         var info = [];
         _.map(junction.junctionPoints, function(point){
-          var row = {road: point.road, part: point.part, track: point.track, addr: point.addrM, beforeAfter: point.beforeOrAfter};
+          var row = {road: point.road, part: point.part, track: point.track, addr: point.addrM, beforeAfter: point.beforeAfter};
           info.push(row);
         });
 
@@ -270,7 +270,7 @@
         var info = [];
         if(!_.isUndefined(nodePoints) && nodePoints.length > 0){
         _.map(nodePoints, function(point){
-          var row = {id: point.id, nodeNumber: point.nodeNumber, road: point.road, part: point.part, addr: point.addrM, beforeAfter: point.beforeOrAfter, type: point.type};
+          var row = {id: point.id, nodeNumber: point.nodeNumber, road: point.road, part: point.part, addr: point.addrM, beforeAfter: point.beforeAfter, type: point.type};
           info.push(row);
         });
 
@@ -415,30 +415,37 @@
       });
 
       rootElement.on('change', '[id^="detach-node-point-"]', function () {
-        new GenericConfirmPopup('Haluatko varmasti irrottaa solmukohdan solmusta?', {
-          successCallback: function () {
-            selectedNode.detachNodePoint(parseInt(this.value));
-          },
-          closeCallback: function () {
-            // TODO checkbox off again :D
-          }
-        });
-      });
-
-      rootElement.on('change', '[id^="detach-junction-"]', function () {
-        var id = parseInt(this.value);
-        var junctionNumber = this.getAttribute('data-junction-number');
-        if (this.checked) {
-          new GenericConfirmPopup('Haluatko varmasti irrottaa liittymän ' + junctionNumber + ' solmusta?', {
+        var checkbox = this;
+        var nodePointId = parseInt(checkbox.value);
+        if (checkbox.checked) {
+          new GenericConfirmPopup('Haluatko varmasti irrottaa solmukohdan solmusta?', {
             successCallback: function () {
-              selectedNode.detachJunction(id);
+              selectedNode.detachNodePoint(nodePointId);
             },
             closeCallback: function () {
-              // TODO checkbox off again :D
+              $(checkbox).prop('checked', false);
             }
           });
         } else {
-          selectedNode.attachJunction(id);
+          selectedNode.attachNodePoint(nodePointId);
+        }
+      });
+
+      rootElement.on('change', '[id^="detach-junction-"]', function () {
+        var checkbox = this;
+        var junctionId = parseInt(checkbox.value);
+        var junctionNumber = checkbox.getAttribute('data-junction-number');
+        if (checkbox.checked) {
+          new GenericConfirmPopup('Haluatko varmasti irrottaa liittymän ' + junctionNumber + ' solmusta?', {
+            successCallback: function () {
+              selectedNode.detachJunction(junctionId);
+            },
+            closeCallback: function () {
+              $(checkbox).prop('checked', false);
+            }
+          });
+        } else {
+          selectedNode.attachJunction(junctionId);
         }
       });
 

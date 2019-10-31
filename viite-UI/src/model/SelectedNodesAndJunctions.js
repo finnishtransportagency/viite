@@ -12,7 +12,7 @@
       eventbus.trigger('node:selected', node);
     };
 
-    var openNodePointTemplate = function (nodePointTemplates) {
+    var openNodePointTemplates = function (nodePointTemplates) {
       clean();
       setCurrentNodePointTemplates(nodePointTemplates);
       eventbus.trigger('nodePointTemplate:selected');
@@ -69,17 +69,25 @@
       var nodePoints = _.partition(current.node.nodePoints, function (nodePoint) {
         return nodePoint.id === id;
       });
-      current.node.nodePointsToDetach.push(_.first(nodePoints[0]));
+
+      var nodePointToDetach = _.first(nodePoints[0]);
+
+      current.node.nodePointsToDetach.push(nodePointToDetach);
       current.node.nodePoints = nodePoints[1];
       setDirty(true);
+      eventbus.trigger('nodePoint:detach', nodePointToDetach);
     };
 
-    var attachNodePoint = function () {
+    var attachNodePoint = function (id) {
       var nodePoints = _.partition(current.node.nodePointsToDetach, function (nodePoint) {
         return nodePoint.id === id;
       });
-      current.node.nodePoints.push(_.first(nodePoints[0]));
+
+      var nodePointToAttach = _.first(nodePoints[0]);
+
+      current.node.nodePoints.push(nodePointToAttach);
       current.node.nodePointsToDetach = nodePoints[1];
+      eventbus.trigger('nodePoint:attach', nodePointToAttach);
     };
 
     var detachJunction = function (id) {
@@ -158,7 +166,7 @@
 
     return {
       openNode: openNode,
-      openNodePointTemplate: openNodePointTemplate,
+      openNodePointTemplates: openNodePointTemplates,
       openJunctionTemplate: openJunctionTemplate,
       getCurrentNode: getCurrentNode,
       getCurrentNodePointTemplates: getCurrentNodePointTemplates,
