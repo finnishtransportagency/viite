@@ -227,7 +227,7 @@
 
     var bindExternalEventHandlers = function() {
       eventbus.on('userData:fetched', function (userData) {
-        if (_.contains(userData.roles, 'viite')) {
+        if (_.includes(userData.roles, 'viite')) {
           $('#projectListButton').removeAttr('style');
           elements.expanded.append(nodeToolSelection.element);
         }

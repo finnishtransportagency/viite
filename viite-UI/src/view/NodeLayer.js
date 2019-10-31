@@ -426,7 +426,7 @@
           }), rl.linkId);
         });
         me.clearLayers(layers);
-
+        
         if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
           var directionRoadMarker = _.filter(roadLinks, function (roadLink) {

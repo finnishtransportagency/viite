@@ -40,7 +40,6 @@
     var loadFeatures = function (features) {
       roadVector.clear(true);
       roadVector.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
-      eventbus.trigger('roadLayer:featuresLoaded', features); // For testing: tells that the layer is ready to be "clicked"
     };
 
 
@@ -155,7 +154,7 @@
         });
 
         var doubleRows = _.map(roadAddresses[0], function (junctionPoints) {
-          var first = _.first(junctionPoints); // TODO VIITE-2028 logic goes here, probably.
+          var first = _.head(junctionPoints); // TODO VIITE-2028 logic goes here, probably.
           return {road: first.road, track: first.track, part: first.part, addr: first.addr};
         });
 
@@ -190,8 +189,6 @@
     };
 
     this.refreshMap = function (mapState) {
-      //if ((applicationModel.getSelectedTool() === 'Cut' && selectSingleClick.getFeatures().getArray().length > 0))
-      //return;
       if (mapState.zoom < zoomlevels.minZoomForRoadLinks) {
         roadLayer.getSource().clear();
         eventbus.trigger('map:clearLayers');
