@@ -655,27 +655,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test getNodesWithJunctionByBoundingBox When matching templates Then return them") {
-    runWithRollback {
-      val roadwayNumber = Sequences.nextRoadwayNumber
-      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber)))
-      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
-      val roadwayPointId = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
-      nodePointDAO.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId)))
-      val junctionId = junctionDAO.create(Seq(testJunction1)).head
-      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
-
-      val nodes = nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
-      nodes(None)._1.size should be(1)
-      nodes(None)._2.size should be(1)
-      nodes(None)._2.head._2.size should be(1)
-      nodes(None)._1.head.roadwayNumber should be(roadwayNumber)
-      nodes(None)._2.head._1.id should be(junctionId)
-      nodes(None)._2.head._1.nodeId should be(None)
-      nodes(None)._2.head._2.head.junctionId should be(junctionId)
-    }
-  }
-
   // <editor-fold desc="Nodes">
   /**
     * Test case for Termination:
