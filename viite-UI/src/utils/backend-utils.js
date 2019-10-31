@@ -396,19 +396,21 @@
 
     function latestResponseRequestor(getParameters) {
       var deferred;
-      var requests = new Bacon.Bus();
-      var responses = requests.debounceImmediate(500).flatMapLatest(function (params) {
-        gettingRoadLinks = Bacon.$.ajax(params, true);
-        return gettingRoadLinks;
-      });
+      var request;
 
+      function doRequest() {
+        if (request)
+          request.abort();
+
+        request = $.ajax(getParameters.apply(undefined, arguments)).done(function(result) {
+          deferred.resolve(result);
+        });
+        return deferred;
+      }
       return function () {
-        if (deferred) {
-          deferred.reject();
-        }
-        deferred = responses.toDeferred();
-        requests.push(getParameters.apply(undefined, arguments));
-        return deferred.promise();
+        deferred = $.Deferred();
+        _.debounce(doRequest, 200).apply(undefined, arguments);
+        return deferred;
       };
     }
 
@@ -452,7 +454,7 @@
       };
 
       var isCarTrafficRoad = function () {
-        return !_.isUndefined(data.linkType) && !_.contains([8, 9, 21, 99], data.linkType);
+        return !_.isUndefined(data.linkType) && !_.includes([8, 9, 21, 99], data.linkType);
       };
 
       var cancel = function () {
