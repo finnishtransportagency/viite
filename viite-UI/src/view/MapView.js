@@ -71,6 +71,10 @@
       setCursor(tool);
     });
 
+    eventbus.on('tool:clear', function() {
+      map.getViewport().style.cursor = 'default';
+    });
+
     eventbus.on('coordinates:selected', function(position) {
       if (geometrycalculator.isInBounds(map.getView().calculateExtent(map.getSize()), position.lon, position.lat)) {
         var zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map));
@@ -139,7 +143,7 @@
     });
 
     $('body').on('keyup', function(evt){
-        if (_.contains(metaKeyCodes, evt.which) && evt.originalEvent.key !== LinkValues.SelectKeyName) // ctrl key up
+        if (_.includes(metaKeyCodes, evt.which) && evt.originalEvent.key !== LinkValues.SelectKeyName) // ctrl key up
         map.getViewport().style.cursor = "initial";
     });
 

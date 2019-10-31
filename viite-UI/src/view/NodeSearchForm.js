@@ -67,7 +67,7 @@
     };
 
     var junctionTemplateLink = function(junctionTemplate){
-      return '<a id=' + junctionTemplate.junctionId + ' class="junction-template-link" href="#node/junctionTemplate/' + junctionTemplate.junctionId + '" style="font-weight:bold;cursor:pointer;">' +
+      return '<a id=' + junctionTemplate.id + ' class="junction-template-link" href="#node/junctionTemplate/' + junctionTemplate.id + '" style="font-weight:bold;cursor:pointer;">' +
         junctionTemplate.roadNumber + ' / ' +
         junctionTemplate.track + ' / ' +
         junctionTemplate.roadPartNumber + ' / ' +
@@ -152,17 +152,9 @@
 
       var getTemplates = function() {
         backend.getTemplates(function(data){
-          eventbus.trigger('templates:fetched', data);
-          var nodePointTemplates = _.map(_.filter(data, function(nodePoint){
-            return !_.isUndefined(nodePoint.nodePointTemplate) ;
-          }), function(template){
-            return template.nodePointTemplate;
-          });
-          var junctionTemplates = _.map(_.filter(data, function (junction) {
-            return !_.isUndefined(junction.junctionTemplate);
-          }), function(template) {
-            return template.junctionTemplate;
-          });
+          var nodePointTemplates = data.nodePointTemplates;
+          var junctionTemplates = data.junctionTemplates;
+          eventbus.trigger('templates:fetched', nodePointTemplates, junctionTemplates);
           $('#nodes-and-junctions-content').html(junctionTemplatesHtml(junctionTemplates) + nodePointTemplatesHtml(nodePointTemplates));
           applicationModel.removeSpinner();
         });
