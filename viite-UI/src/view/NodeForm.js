@@ -285,13 +285,13 @@
         var doubleHomogeneousRows = joinedHomogeneousRows[0];
         var singleHomogeneousRows = joinedHomogeneousRows[1];
 
-        var doubleRows = _.map(doubleHomogeneousRows, function(drows){
-          var first = _.first(drows);
+        var doubleRows = _.map(doubleHomogeneousRows, function(drows) {
+          var first = _.head(drows);
           return {id: first.id, nodeNumber: first.nodeNumber, road: first.road, part: first.part, addr: first.addr, beforeAfter: "EJ", type: first.type};
         });
 
-        var singleRows = _.map(singleHomogeneousRows, function(drows){
-          var first = _.first(drows);
+        var singleRows = _.map(singleHomogeneousRows, function(drows) {
+          var first = _.head(drows);
           return {id: first.id, nodeNumber: first.nodeNumber, road: first.road, part: first.part, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J"), type: first.type};
         });
 
