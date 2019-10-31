@@ -106,8 +106,8 @@
         return feature;
       });
       var coordinate;
-      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.nodeInfo)) {
-        var nodeData = featureAtPixel.nodeInfo;
+      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.node)) {
+        var nodeData = featureAtPixel.node;
         coordinate = map.getEventCoordinate(event.originalEvent);
         if (infoContent !== null) {
           var nodeName = "";
@@ -143,7 +143,7 @@
         coordinate = map.getEventCoordinate(event.originalEvent);
         var roadAddressInfo = [];
         _.map(junctionPointData, function(point){
-          roadAddressInfo.push({road: point.road, part: point.part, track: point.track, addr: point.addrM, beforeAfter: point.beforeOrAfter});
+          roadAddressInfo.push({road: point.road, part: point.part, track: point.track, addr: point.addrM, beforeAfter: point.beforeAfter});
         });
 
         var groupedRoadAddresses = _.groupBy(roadAddressInfo, function (row) {

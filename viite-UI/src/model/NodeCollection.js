@@ -73,8 +73,13 @@
       };
       if (!_.isUndefined(node)) {
         if (!_.isUndefined(node.id)) {
-          dataJson.junctionsToDetach = node.junctionsToDetach;
-          backend.saveNodeInfo(node.id, dataJson, function (result) {
+          dataJson = _.merge(dataJson, {
+            id: node.id,
+            nodeNumber: node.nodeNumber,
+            junctionsToDetach: node.junctionsToDetach,
+            nodePointsToDetach: node.nodePointsToDetach
+          });
+          backend.saveNodeInfo(dataJson, function (result) {
             if (result.success) {
               eventbus.trigger('node:saveSuccess');
             } else {
@@ -130,11 +135,11 @@
       if (_.isUndefined(nodePointTemplate)) {
         backend.getNodePointTemplateById(id, function (nodePointTemplate) {
           moveToLocation(nodePointTemplate);
-          selectedNodesAndJunctions.openNodePointTemplate([nodePointTemplate]);
+          selectedNodesAndJunctions.openNodePointTemplates([nodePointTemplate]);
         });
       } else {
         moveToLocation(nodePointTemplate);
-        selectedNodesAndJunctions.openNodePointTemplate([nodePointTemplate]);
+        selectedNodesAndJunctions.openNodePointTemplates([nodePointTemplate]);
       }
     });
 

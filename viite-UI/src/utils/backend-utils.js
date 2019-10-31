@@ -674,11 +674,11 @@
       });
     }, 1000);
 
-    this.saveNodeInfo = _.throttle(function (nodeId, data, success, failure) {
+    this.saveNodeInfo = _.throttle(function (data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/viite/node/" + nodeId,
+        url: "api/viite/node/" + data.id,
         data: JSON.stringify(data),
         dataType: "json",
         success: success,

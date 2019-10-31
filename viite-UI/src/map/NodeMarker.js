@@ -19,7 +19,7 @@
         this.setStyle(nodeMarkerStyleProvider(this.get('type')));
       });
 
-      marker.nodeInfo = node;
+      marker.node = node;
       marker.setStyle(nodeMarkerStyleProvider(node.type));
       return marker;
     };
