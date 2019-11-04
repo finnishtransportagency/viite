@@ -695,15 +695,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(AddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
-            RoadwayChangeSection(Some(roadLink1.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink1.roadPartNumber), endRoadPartNumber = Some(roadLink1.roadPartNumber), startAddressM = Some(0L), endAddressM = Some(100L), Some(RoadType.PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
-            Discontinuity.Continuous,RoadType.PublicRoad,  reversed = false, 1, 8)
-          ,DateTime.now,Some(0L)),
+            RoadwayChangeSection(Some(roadLink1.roadNumber), Some(Track.Combined.value.toLong),
+              startRoadPartNumber = Some(roadLink1.roadPartNumber), endRoadPartNumber = Some(roadLink1.roadPartNumber),
+              startAddressM = Some(0L), endAddressM = Some(100L), Some(RoadType.PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
+            Discontinuity.Continuous, RoadType.PublicRoad, reversed = false, 1, 8)
+          , DateTime.now, Some(0L)),
         ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(AddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
-            RoadwayChangeSection(Some(roadLink2.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink2.roadPartNumber), endRoadPartNumber = Some(roadLink2.roadPartNumber), startAddressM = Some(0L), endAddressM = Some(150L), Some(RoadType.PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
-            Discontinuity.Continuous,RoadType.PublicRoad,  reversed = false, 2, 8)
-          ,DateTime.now,Some(0L))
+            RoadwayChangeSection(Some(roadLink2.roadNumber), Some(Track.Combined.value.toLong),
+              startRoadPartNumber = Some(roadLink2.roadPartNumber), endRoadPartNumber = Some(roadLink2.roadPartNumber),
+              startAddressM = Some(0L), endAddressM = Some(150L), Some(RoadType.PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
+            Discontinuity.Continuous, RoadType.PublicRoad, reversed = false, 2, 8)
+          , DateTime.now, Some(0L))
       )
 
       // Creation of nodes and node points
