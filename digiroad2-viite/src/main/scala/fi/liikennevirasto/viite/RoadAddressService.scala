@@ -619,7 +619,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
             case Some(roadwayPoint) =>
               roadwayPoint.id
-            case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, username)
+            case _ =>
+              logger.info("endCalibrationPointsToCheck. roadwayPointDAO.create (" + cal.roadwayNumber + "," +  cal.startCalibrationPoint.get +","+ username+ ")")
+              roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, username)
           }
         if (calibrationPoint.isEmpty) {
           CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = username)
@@ -637,6 +639,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             case _ => roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, username)
           }
         if (calibrationPoint.isEmpty) {
+          logger.info("endCalibrationPointsToCheck. roadwayPointDAO.create (" + cal.roadwayNumber + "," +  cal.startCalibrationPoint.get +","+ username+ ")")
           CalibrationPointDAO.create(roadwayPointId, cal.linkId, startOrEnd = 1, calType = CalibrationPointType.Mandatory, createdBy = username)
         } else {
           CalibrationPointDAO.updateRoadwayPoint(roadwayPointId, cal.linkId, startOrEnd = 1)
@@ -650,6 +653,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       val roadwayPointId = if (existingRoadwayPoint.nonEmpty) {
         existingRoadwayPoint.get.id
       } else {
+        logger.info("handleDualRoadwayPoints. roadwayPointDAO.create (" + newRoadwayNumber + "," +  newStartAddr +","+ username+ ")")
         roadwayPointDAO.create(newRoadwayNumber, newStartAddr, username)
       }
       val nodePointIds = nodePointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After).map(_.id)
