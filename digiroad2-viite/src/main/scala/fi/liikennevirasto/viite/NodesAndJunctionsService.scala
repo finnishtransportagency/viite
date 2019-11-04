@@ -19,6 +19,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
+  def withDynTransactionNewOrExisting[T](f: => T): T = OracleDatabase.withDynTransactionNewOrExisting(f)
+
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
@@ -671,7 +673,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def detachJunctionsFromNode(junctionIds: Seq[Long], username: String = "-"): Option[String] = {
-    def detachJunctions(junctionIds: Seq[Long], username: String = "-"): Option[String] = {
+    withDynTransactionNewOrExisting {
       val junctionsToDetach = junctionDAO.fetchByIds(junctionIds).filter(_.nodeNumber.isDefined)
       if (junctionsToDetach.nonEmpty) {
 
@@ -701,14 +703,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }
       None
     }
-
-    if (OracleDatabase.isWithinSession) {
-      detachJunctions(junctionIds, username)
-    } else {
-      withDynTransaction {
-        detachJunctions(junctionIds, username)
-      }
-    }
   }
 
   private def terminateNodeIfNoNodePoints(nodeNumber: Long, username: String) = {
@@ -728,30 +722,27 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def detachNodePointsFromNode(nodePointIds: Seq[Long], username: String = "-"): Option[String] = {
-    def detachNodePoints(nodePointIds: Seq[Long], username: String = "-"): Option[String] = {
+    withDynTransactionNewOrExisting {
       val nodePointsToDetach = nodePointDAO.fetchByIds(nodePointIds).filter(n => n.nodeNumber.isDefined && n.nodePointType == NodePointType.RoadNodePoint)
       if (nodePointsToDetach.nonEmpty) {
+
         // Expire the current node point and create a new template
         nodePointDAO.expireById(nodePointsToDetach.map(_.id))
 
         nodePointsToDetach.foreach { np =>
+
           // Create a new node point template
           nodePointDAO.create(Seq(np.copy(id = NewIdValue, nodeNumber = None, createdBy = Some(username))))
+
         }
 
         // If there are no node points left under the node, node can be terminated
         val nodeNumber = nodePointsToDetach.head.nodeNumber.get
         terminateNodeIfNoNodePoints(nodeNumber, username)
+
       }
       None
     }
-
-    if (OracleDatabase.isWithinSession) {
-      detachNodePoints(nodePointIds, username)
-    } else {
-      withDynTransaction {
-        detachNodePoints(nodePointIds, username)
-      }
-    }
   }
+
 }
