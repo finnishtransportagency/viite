@@ -421,7 +421,7 @@
         cachedMarker = new LinkPropertyMarker();
         var underConstructionLinks = roadCollection.getUnderConstructionLinks();
         var roadLinks = _.reject(roadCollection.getAll(), function (rl) {
-          return _.contains(_.map(underConstructionLinks, function (sl) {
+          return _.includes(_.map(underConstructionLinks, function (sl) {
             return sl.linkId;
           }), rl.linkId);
         });
