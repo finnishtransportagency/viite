@@ -43,7 +43,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def addOrUpdateNode(node: Node, username: String = "-"): Option[String] = {
-    def addOrUpdate(node: Node, username: String = "-"): Option[String] = {
+    withDynTransactionNewOrExisting {
       try {
         if (node.id == NewIdValue) {
           nodeDAO.create(Seq(node), username)
@@ -79,14 +79,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         None
       } catch {
         case e: Exception => Some(e.getMessage)
-      }
-    }
-
-    if(OracleDatabase.isWithinSession) {
-      addOrUpdate(node, username)
-    } else {
-      withDynTransaction {
-        addOrUpdate(node, username)
       }
     }
   }
