@@ -13,20 +13,24 @@ ALTER TABLE JUNCTION_POINT DROP COLUMN END_DATE;
 
 ALTER TABLE NODE_POINT ADD ("TYPE" NUMBER DEFAULT 99 NOT NULL);
 
--- TODO NEEDS TO BE INCLUDED ROAD_TYPE CHANGES CONDITION
 UPDATE NODE_POINT NP SET "TYPE" = (SELECT CASE
--- [TYPE = 99] Includes templates, expired points or points yet attached to expired nodes
-		WHEN (point.NODE_NUMBER IS NULL OR point.VALID_TO IS NOT NULL
-		  OR NOT EXISTS (SELECT 1 FROM NODE node
-		    WHERE node.NODE_NUMBER = point.NODE_NUMBER
-		    AND (node.END_DATE IS NULL AND node.VALID_TO IS NULL))) THEN 99
--- [TYPE = 1] Includes points where ADDR_M is equal to START_ADDR_M or END_ADDR_M of the road (road_number, road_part_number and track)
+-- [TYPE = 99] Includes expired node points points or points attached to expired nodes
+		WHEN (point.VALID_TO IS NOT NULL OR NOT EXISTS (SELECT 1 FROM NODE node
+		    WHERE node.NODE_NUMBER = point.NODE_NUMBER AND (node.END_DATE IS NULL AND node.VALID_TO IS NULL))) THEN 99
+-- [TYPE = 1] Includes templates, points where ADDR_M is equal to START_ADDR_M or END_ADDR_M of the road (road_number, road_part_number and track) and when ROAD_TYPE changes
+		WHEN point.NODE_NUMBER IS NULL THEN 1 -- node point template
 		WHEN (rp.ADDR_M = (SELECT MIN(roadAddr.START_ADDR_M) FROM ROADWAY roadAddr
 				WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.TRACK = rw.TRACK AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
-				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)
-			OR rp.ADDR_M = (SELECT MAX(roadAddr.END_ADDR_M) FROM ROADWAY roadAddr
+				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ADDR_M is equal to START_ADDR_M
+		WHEN (rp.ADDR_M = (SELECT MAX(roadAddr.END_ADDR_M) FROM ROADWAY roadAddr
 				WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.TRACK = rw.TRACK AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
-				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1
+				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ADDR_M is equal to END_ADDR_M
+		WHEN ((SELECT roadAddr.ROAD_TYPE FROM ROADWAY roadAddr
+				WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.TRACK = rw.TRACK AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.START_ADDR_M = rp.ADDR_M
+				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL) !=
+			(SELECT roadAddr.ROAD_TYPE FROM ROADWAY roadAddr
+				WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.TRACK = rw.TRACK AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.END_ADDR_M = rp.ADDR_M
+				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ROAD_TYPE changes on ADDR_M
 -- [TYPE = 2]
 		ELSE 2
 	END AS NODE_POINT_TYPE
