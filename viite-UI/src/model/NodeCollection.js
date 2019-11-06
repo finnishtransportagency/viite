@@ -83,20 +83,20 @@
             if (result.success) {
               eventbus.trigger('node:saveSuccess');
             } else {
-              eventbus.trigger('node:saveUnsuccessful', result.errorMessage);
+              eventbus.trigger('node:saveFailed', result.errorMessage);
             }
           }, function (result) {
-            eventbus.trigger('node:saveUnsuccessful', result.errorMessage);
+            eventbus.trigger('node:saveFailed', result.errorMessage);
           });
         } else {
           backend.createNodeInfo(dataJson, function (result) {
             if (result.success) {
               eventbus.trigger('node:saveSuccess');
             } else {
-              eventbus.trigger('node:saveUnsuccessful', result.errorMessage);
+              eventbus.trigger('node:saveFailed', result.errorMessage);
             }
           }, function (result) {
-            eventbus.trigger('node:saveUnsuccessful', result.errorMessage);
+            eventbus.trigger('node:saveFailed', result.errorMessage);
           });
         }
       }

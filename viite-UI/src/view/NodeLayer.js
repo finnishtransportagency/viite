@@ -140,7 +140,7 @@
         return !_.isUndefined(selectionTarget.node);
       });
 
-      // Select all node points in same place.
+      // select all node point templates in same place.
       var selectedNodePointTemplates = _.filter(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.nodePointTemplate);
       });
@@ -192,17 +192,20 @@
     };
 
     var selectNode = function(node) {
+      selectedNodeAndJunctionPoint.closeForm();
       clearHighlights();
       selectedNodeAndJunctionPoint.openNode(node);
       highlightNode(node);
     };
 
     var selectNodePointTemplates = function(nodePointTemplates) {
+      selectedNodeAndJunctionPoint.closeForm();
       clearHighlights();
       selectedNodeAndJunctionPoint.openNodePointTemplates(nodePointTemplates);
     };
 
     var selectJunctionTemplate = function (junctionTemplate) {
+      selectedNodeAndJunctionPoint.closeForm();
       clearHighlights();
       selectedNodeAndJunctionPoint.openJunctionTemplate(junctionTemplate);
     };
@@ -249,10 +252,13 @@
       nodeLayerSelectInteraction.getFeatures().clear();
     };
 
-    me.eventListener.listenTo(eventbus, 'node:unselected nodePointTemplate:unselected junctionTemplate:unselected', function (node) {
+    me.eventListener.listenTo(eventbus, 'node:unselected', function (node) {
       if (!_.isUndefined(node)) {
         removeCurrentNodeMarker(node);
       }
+    });
+
+    me.eventListener.listenTo(eventbus, 'node:unselected nodePointTemplate:unselected junctionTemplate:unselected', function () {
       clearHighlights();
     });
 

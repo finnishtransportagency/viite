@@ -23,9 +23,9 @@
     return addPicker(jQuery(element));
   };
 
-    dateutil.addFinnishDatePickerWithStartDate = function (element, startDate) {
-        return addPickerWithStartDate(jQuery(element), startDate);
-    };
+  dateutil.addFinnishDatePickerWithStartDate = function (element, startDate) {
+    return addPickerWithStartDate(jQuery(element), startDate);
+  };
 
   dateutil.addNullableFinnishDatePicker = function (element, onSelect) {
     var elem = jQuery(element);
@@ -84,21 +84,34 @@
     };
   };
 
-    dateutil.addSingleDatePicker = function (fromElement) {
-        var fromDateString = function (s) {
-            return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
-        };
-        var from = fromDateString(fromElement.val());
-        return dateutil.addFinnishDatePicker(fromElement);
+  dateutil.addSingleDatePicker = function (fromElement) {
+    var fromDateString = function (s) {
+      return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
     };
+    var from = fromDateString(fromElement.val());
+    return dateutil.addFinnishDatePicker(fromElement);
+  };
 
-    dateutil.addSingleDatePickerWithStartDate = function (fromElement, startDate) {
-        var fromDateString = function (s) {
-            return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
-        };
-        var from = fromDateString(fromElement.val());
-        return dateutil.addFinnishDatePickerWithStartDate(fromElement, startDate);
+  dateutil.addSingleDatePickerWithStartDate = function (fromElement, startDate) {
+    var fromDateString = function (s) {
+      return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
     };
+    var from = fromDateString(fromElement.val());
+    return dateutil.addFinnishDatePickerWithStartDate(fromElement, startDate);
+  };
+
+  dateutil.addSingleConditionalDatePicker = function (fromElement, startDate) {
+    var fromDateString = function (s) {
+      return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
+    };
+    var from = fromDateString(startDate);
+    var datePicker;
+    datePicker = {
+      from: dateutil.addFinnishDatePicker(fromElement)
+    };
+    datePicker.from.setMinDate(from);
+  };
+
   dateutil.removeDatePickersFromDom = function () {
     jQuery('.pika-single.is-bound.is-hidden').remove();
   };
@@ -123,26 +136,26 @@
     return picker;
   }
 
-    function addPickerWithStartDate(jqueryElement, startDate, onDraw, onSelect) {
-        var picker = new Pikaday({
-            field: jqueryElement.get(0),
-            format: FINNISH_DATE_FORMAT,
-            firstDay: 1,
-            yearRange: [1950, 2050],
-            onDraw: onDraw,
-            onSelect: onSelect,
-            i18n: FINNISH_PIKADAY_I18N,
-            defaultDate: moment(startDate, FINNISH_DATE_FORMAT).toDate()
-        });
-        jqueryElement.keypress(function (e) {
-            if (e.which === 13) { // hide on enter key press
-                picker.hide();
-                jqueryElement.blur();
-            }
-        });
-        jqueryElement.attr('placeholder', FINNISH_HINT_TEXT);
-        return picker;
-    }
+  function addPickerWithStartDate(jqueryElement, startDate, onDraw, onSelect) {
+    var picker = new Pikaday({
+      field: jqueryElement.get(0),
+      format: FINNISH_DATE_FORMAT,
+      firstDay: 1,
+      yearRange: [1950, 2050],
+      onDraw: onDraw,
+      onSelect: onSelect,
+      i18n: FINNISH_PIKADAY_I18N,
+      defaultDate: moment(startDate, FINNISH_DATE_FORMAT).toDate()
+    });
+    jqueryElement.keypress(function (e) {
+      if (e.which === 13) { // hide on enter key press
+        picker.hide();
+        jqueryElement.blur();
+      }
+    });
+    jqueryElement.attr('placeholder', FINNISH_HINT_TEXT);
+    return picker;
+  }
 
   dateutil.extractLatestModifications = function (elementsWithModificationTimestamps) {
     var newest = _.maxBy(elementsWithModificationTimestamps, function (s) {

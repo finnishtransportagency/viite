@@ -48,21 +48,28 @@
       return current.junctionTemplate;
     };
 
-    var setName = function (name) {
+    var setNodeName = function (name) {
       current.node.name = name;
       setDirty(true);
     };
 
-    var setType = function (type) {
+    var setNodeType = function (type) {
+      if (!current.node.typeChanged) { current.node.oldType = current.node.type; }
       current.node.type = type;
-      current.node.typeChanged = true;
+      current.node.typeChanged = current.node.oldType !== type;
       eventbus.trigger('changed:type', current.node);
-      setDirty(true);
+      setDirty(current.node.typeChanged);
+    };
+
+    var typeHasChanged = function () {
+      return current.node.typeChanged;
     };
 
     var setStartDate = function (startDate) {
+      if (!current.node.startDateChanged) { current.node.oldStartDate = current.node.startDate; }
       current.node.startDate = startDate;
-      setDirty(true);
+      current.node.startDateChanged = current.node.oldStartDate !== startDate;
+      setDirty(current.node.startDateChanged);
     };
 
     var detachNodePoint = function (id) {
@@ -129,9 +136,12 @@
     };
 
     var close = function (options, params) {
-      clean();
       eventbus.trigger(options, params);
       eventbus.trigger('nodesAndJunctions:open');
+    };
+
+    var closeForm = function () {
+      eventbus.trigger('nodeLayer:closeForm', current); // all nodes and junctions forms should listen to this trigger
     };
 
     var closeNode = function () {
@@ -139,20 +149,18 @@
       if (!_.isUndefined(current.node) && _.isUndefined(current.node.id)) {
         node = current.node;
       }
+      clean();
       close('node:unselected', node);
-    };
-
-    var closeForm = function () {
-      close('node:unselected');
-      closeNodePoint();
-      closeJunction();
+      eventbus.trigger('nodeLayer:refreshView');
     };
 
     var closeNodePoint = function () {
+      clean();
       close('nodePointTemplate:unselected');
     };
 
     var closeJunction = function () {
+      clean();
       close('junctionTemplate:unselected');
     };
 
@@ -171,8 +179,9 @@
       getCurrentNode: getCurrentNode,
       getCurrentNodePointTemplates: getCurrentNodePointTemplates,
       getCurrentJunctionTemplate: getCurrentJunctionTemplate,
-      setName: setName,
-      setType: setType,
+      setNodeName: setNodeName,
+      setNodeType: setNodeType,
+      typeHasChanged: typeHasChanged,
       setStartDate: setStartDate,
       detachNodePoint: detachNodePoint,
       attachNodePoint: attachNodePoint,
