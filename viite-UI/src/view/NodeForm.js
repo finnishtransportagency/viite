@@ -356,8 +356,8 @@
       }
     };
 
-    var addDatePicker = function (fromElement, startDate) {
-      dateutil.addSingleConditionalDatePicker(fromElement, startDate);
+    var addDatePicker = function (fromElement, minDate) {
+      dateutil.addSingleDatePickerWithMinDate(fromElement, minDate);
       fromElement.change(function () {
         selectedNode.setStartDate(($(this).val()));
       });
@@ -372,7 +372,7 @@
       var nodeTypeIsValid = $('#nodeTypeDropdown :selected').val() !== LinkValues.NodeType.UnknownNodeType.value.toString();
       var dateIsNonEmpty = $('#nodeStartDate').val() !== "";
 
-      if (textIsNonEmpty && nodeTypeIsValid && dateIsNonEmpty) {
+      if (textIsNonEmpty && nodeTypeIsValid && selectedNode.typeHasChanged() && dateIsNonEmpty && selectedNode.startDateHasChanged()) {
         $('.btn-edit-node-save').prop('disabled', false);
       } else {
         $('.btn-edit-node-save').prop('disabled', true);
@@ -488,6 +488,14 @@
             disabledDatePicker(!selectedNode.typeHasChanged());
           });
         }
+      });
+
+      eventbus.on('reset:nodeType', function (originalNodeType) {
+        // TODO
+      });
+
+      eventbus.on('reset:startDate', function (originalStartDate) {
+        // eventbus.trigger('change:nodeStartDate') TODO
       });
 
       eventbus.on('nodeLayer:closeForm', function (current) {

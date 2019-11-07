@@ -181,7 +181,7 @@
 
     var addDatePicker = function () {
       var $validFrom = $('#alkupvm');
-      dateutil.addSingleDependentDatePicker($validFrom);
+      dateutil.addSingleDatePicker($validFrom);
     };
 
     var formIsInvalid = function (rootElement) {

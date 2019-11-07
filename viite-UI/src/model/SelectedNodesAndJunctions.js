@@ -58,7 +58,8 @@
       current.node.type = type;
       current.node.typeChanged = current.node.oldType !== type;
       eventbus.trigger('changed:type', current.node);
-      setDirty(current.node.typeChanged);
+      if (!current.node.typeChanged) { eventbus.trigger('reset:startDate', current.node.oldStartDate); }
+      setDirty(true);
     };
 
     var typeHasChanged = function () {
@@ -69,7 +70,11 @@
       if (!current.node.startDateChanged) { current.node.oldStartDate = current.node.startDate; }
       current.node.startDate = startDate;
       current.node.startDateChanged = current.node.oldStartDate !== startDate;
-      setDirty(current.node.startDateChanged);
+      setDirty(true);
+    };
+
+    var startDateHasChanged = function () {
+      return current.node.startDateChanged;
     };
 
     var detachNodePoint = function (id) {
@@ -183,6 +188,7 @@
       setNodeType: setNodeType,
       typeHasChanged: typeHasChanged,
       setStartDate: setStartDate,
+      startDateHasChanged: startDateHasChanged,
       detachNodePoint: detachNodePoint,
       attachNodePoint: attachNodePoint,
       detachJunction: detachJunction,
