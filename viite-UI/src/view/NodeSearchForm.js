@@ -112,7 +112,8 @@
     };
 
     var nodePointTemplatesHtml = function (nodePointTemplates) {
-      var groups = _.groupBy(nodePointTemplates, function (template) {
+      var uniqueNPTemplates = _.uniqBy(nodePointTemplates, ['roadNumber', 'roadPartNumber', 'addrM']);
+      var groups = _.groupBy(uniqueNPTemplates, function (template) {
         return template.elyCode;
       });
       var text = "";
