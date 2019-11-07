@@ -112,7 +112,9 @@
     };
 
     var nodePointTemplatesHtml = function (nodePointTemplates) {
-      var uniqueNPTemplates = _.uniqBy(nodePointTemplates, ['roadNumber', 'roadPartNumber', 'addrM']);
+      var uniqueNPTemplates = _.uniqWith(nodePointTemplates, function (o1, o2) {
+        return o1.roadNumber === o2.roadNumber && o1.roadPartNumber === o2.roadPartNumber && o1.addrM === o2.addrM;
+      });
       var groups = _.groupBy(uniqueNPTemplates, function (template) {
         return template.elyCode;
       });
