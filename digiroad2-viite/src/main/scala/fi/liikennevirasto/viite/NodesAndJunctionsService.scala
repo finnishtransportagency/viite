@@ -622,16 +622,21 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     def expireNodes(obsoleteNodePoints: Set[NodePoint], obsoleteJunctions: Seq[Junction]): Unit = {
 
+      // Expire obsolete node points
+      nodePointDAO.expireById(obsoleteNodePoints.map(_.id))
+
+      val nodeNumbersToCheck = (obsoleteJunctions.filter(j => j.nodeNumber.isDefined).map(_.nodeNumber.get)
+        ++ obsoleteNodePoints.filter(np => np.nodeNumber.isDefined).map(_.nodeNumber.get)).distinct
+
       // Remove nodes that no longer have justification for the current network
-      val obsoleteNodes = nodeDAO.fetchObsoleteByNodeNumbers((obsoleteJunctions.filter(j => j.nodeNumber.isDefined).map(_.nodeNumber.get)
-        ++ obsoleteNodePoints.filter(np => np.nodeNumber.isDefined).map(_.nodeNumber.get)).distinct)
+      val obsoleteNodes = nodeDAO.fetchObsoleteByNodeNumbers(nodeNumbersToCheck)
 
       // Create node rows with end date
       obsoleteNodes.foreach(n => {
         nodeDAO.create(Seq(n.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
       })
 
-      logger.info(s"Expiring nodes : ${obsoleteNodes.map(_.id)}")
+      logger.info(s"Expiring nodes: ${obsoleteNodes.map(_.nodeNumber)}")
       nodeDAO.expireById(obsoleteNodes.map(_.id))
     }
 

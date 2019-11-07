@@ -230,6 +230,7 @@ class NodeDAO extends BaseDAO {
     * @param nodeNumbers : Iterable[Long] - The node numbers of nodes to verify.
     * @return
     */
+  // TODO Do we need to check the node point type here too?
   def fetchObsoleteByNodeNumbers(nodeNumbers: Iterable[Long]): Seq[Node] = {
     // An Obsolete node are those that no longer have justification for the current network, and must be expired.
     if (nodeNumbers.isEmpty) {
@@ -239,14 +240,14 @@ class NodeDAO extends BaseDAO {
         SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
         FROM NODE N
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
-          WHERE NODE_NUMBER IN (${nodeNumbers.mkString(", ")})
+        WHERE NODE_NUMBER IN (${nodeNumbers.mkString(", ")})
           AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER) FROM JUNCTION_POINT JP
             LEFT JOIN JUNCTION J ON JP.JUNCTION_ID = J.ID
             LEFT JOIN ROADWAY_POINT RP ON JP.ROADWAY_POINT_ID = RP.ID
             LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
             WHERE J.NODE_NUMBER = N.NODE_NUMBER AND JP.VALID_TO IS NULL) < 2
           AND ((SELECT COUNT(*) FROM NODE_POINT NP
-            WHERE NP.NODE_NUMBER = N.NODE_NUMBER AND NP.VALID_TO IS NULL) > 1
+            WHERE NP.NODE_NUMBER = N.NODE_NUMBER AND NP.VALID_TO IS NULL) < 1
           AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER || '-' || RW.ROAD_PART_NUMBER || ',' || RW.ROAD_TYPE) FROM NODE_POINT NP
             LEFT JOIN ROADWAY_POINT RP ON NP.ROADWAY_POINT_ID = RP.ID
             LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
