@@ -1,5 +1,7 @@
 (function (root) {
   root.NodeForm = function (selectedNode) {
+    var picker;
+
     var SHOW = 'Näytä';
     var HIDE = 'Piilota';
 
@@ -357,10 +359,15 @@
     };
 
     var addDatePicker = function (fromElement, minDate) {
-      dateutil.addSingleDatePickerWithMinDate(fromElement, minDate);
+      picker = dateutil.addSingleDatePickerWithMinDate(fromElement, minDate);
       fromElement.change(function () {
-        selectedNode.setStartDate(($(this).val()));
+        selectedNode.setStartDate(this.value);
       });
+    };
+
+    var resetDatePicker = function (originalStartDate) {
+      picker.setDate(originalStartDate);
+      picker.gotoToday();
     };
 
     var disabledDatePicker = function (isDisabled) {
@@ -490,12 +497,8 @@
         }
       });
 
-      eventbus.on('reset:nodeType', function (originalNodeType) {
-        // TODO
-      });
-
       eventbus.on('reset:startDate', function (originalStartDate) {
-        // eventbus.trigger('change:nodeStartDate') TODO
+        resetDatePicker(originalStartDate);
       });
 
       eventbus.on('nodeLayer:closeForm', function (current) {

@@ -83,6 +83,7 @@
     var datePicker = dateUtils.addFinnishDatePicker(fromElement);
     datePicker.setMinDate(from.toDate());
     datePicker.gotoToday();
+    return datePicker;
   };
 
   dateUtils.removeDatePickersFromDom = function () {
