@@ -264,7 +264,7 @@
   .asset-input-node-data, .asset-input-junction-data {
     font-size: @font-size-small;
     line-height: @line-height-modifier * 3;
-    color: @input-color-placeholder-dark;
+    color: #ffffff;
   }
 
   a {
@@ -408,9 +408,14 @@
     label.required:before {
       content: '*';
     }
+
+    input {
+      padding-left: @line-height-modifier;
+    }
   }
 
   .asset-input-node-data, .asset-input-junction-data {
+    display: inline-block;
     float: none;
     padding-top: 0;
     padding-bottom: 0;

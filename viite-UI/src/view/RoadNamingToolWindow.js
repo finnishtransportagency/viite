@@ -79,11 +79,10 @@
         var retroactivelyAddDatePickers = function (originalStartDate) {
             var inputs = $('.form-control[data-fieldName=startDate]:not([placeholder])');
             inputs.each(function (index, input) {
-                if (input.dataset.roadid == newId) {
-                    var datePicker = _.isUndefined(originalStartDate) ? dateutil.addSingleDatePicker($(input)) : dateutil.addSingleDatePickerWithStartDate($(input), originalStartDate);
+                if (parseInt(input.dataset.roadid) === newId) {
+                    dateutil.addSingleDatePickerWithMinDate($(input), originalStartDate);
                 }
             });
-            $('.pika-single.is-bound').css("width", "auto");
         };
 
         function toggle() {
