@@ -831,7 +831,7 @@
     };
 
     var linkIdsToExclude = function(){
-      return _.chain(getFeaturesToKeepFloatings().concat(getFeaturesToKeepUnknown()).concat(getFeaturesToKeep()).concat(roadCollection.getUnderConstructionLinks())).map(function(feature){
+      return _.chain(getFeaturesToKeepFloatings().concat(getFeaturesToKeepUnknown()).concat(getFeaturesToKeep()).concat(roadCollection.getUnaddressedRoadLinkGroups())).map(function(feature){
         return feature.linkId;
       }).uniq().value();
     };

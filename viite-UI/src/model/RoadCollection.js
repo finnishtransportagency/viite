@@ -61,7 +61,8 @@
       var unknownRoadLinkGroups = [];
       var currentZoom = -1;
     var roadLinkGroups = [];
-    var roadLinkGroupsUnderConstruction = [];
+    var underConstructionRoadLinkGroups = [];
+    var unaddressedRoadLinkGroups = [];
     var tmpRoadLinkGroups = [];
     var tmpRoadAddresses = [];
     var tmpNewRoadAddresses = [];
@@ -133,19 +134,21 @@
           });
           var fetched = _.partition(fetchedRoadLinkModels, function (model) {
               return _.every(model, function (mod) {
-                  var modData = mod.getData();
-                  //return  modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.id === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
-                return modData.roadClass === LinkValues.RoadClass.NoClass.value || modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.roadNumber === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
-
+                return mod.getData().roadNumber === 0;
               });
           });
-          var unknownRoadLinkGroups = fetched[0];
+
+          unaddressedRoadLinkGroups = _.partition(fetched[0], function(group) {
+          return groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
+          });
+
+          underConstructionRoadLinkGroups = unaddressedRoadLinkGroups[0];
+          unknownRoadLinkGroups = unaddressedRoadLinkGroups[1];
+
           var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
           if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
             setRoadLinkGroups(fetched[1]);
-            console.log("Selected 0, zoom="+zoom);
           } else {
-            console.log("Selected 1, zoom="+zoom);
             setRoadLinkGroups(fetchedRoadLinkModels);
           }
 
@@ -167,31 +170,19 @@
               return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, SelectionType.Floating.value);
           });
 
-          roadLinkGroupsUnderConstruction = _.filter(roadLinkGroups, function(group) {
-              return groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
-          });
-        // Viite-2075 TODO remove underConstruction roads from unAdressedRoads -> modData.constructionType ===  ConstructionType.InUse ||
-        var unAddressedRoads = _.partition(fetchedRoadLinkModels, function (model) {
-          return _.every(model, function (mod) {
-            var modData = mod.getData();
-            //return  modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.id === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
-            return  modData.roadClass === LinkValues.RoadClass.NoClass.value || ( modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.roadNumber === 0 )|| modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
-          });
-        });
-        // Viite-2075 TODO remove unAddressedRoads[0] from nonUnderConstructionRoadLinkGroups
-
         var nonUnderConstructionRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
             return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
           });
-        setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(roadLinkGroupsUnderConstruction).concat(floatingRoadLinks));
+
+        setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(underConstructionRoadLinkGroups).concat(floatingRoadLinks));
           eventbus.trigger('roadLinks:fetched', nonUnderConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
           if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
           }
-          if (roadLinkGroupsUnderConstruction.length !== 0)
-              eventbus.trigger('underConstructionRoadLinks:fetched', roadLinkGroupsUnderConstruction);
-          if (unAddressedRoads[0].length !== 0)
-              eventbus.trigger('unAddressedRoadLinks:fetched', unAddressedRoads[0]);
+          if (underConstructionRoadLinkGroups.length !== 0)
+              eventbus.trigger('underConstructionRoadLinks:fetched', underConstructionRoadLinkGroups);
+          if (unknownRoadLinkGroups.length !== 0)
+              eventbus.trigger('unAddressedRoadLinks:fetched', unknownRoadLinkGroups);
           if (applicationModel.isProjectButton()) {
               eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
               applicationModel.setProjectButton(false);
@@ -217,11 +208,11 @@
       if(_.isArray(group)) {
         return _.some(group, function(roadLink) {
           if(roadLink !== null)
-            return roadLink.getData().constructionType === dataConstructionType.value && roadLink.getData().roadNumber === 0;
+            return roadLink.getData().constructionType === dataConstructionType.value;
           else return false;
         });
       } else {
-        return group.getData().constructionType === dataConstructionType.value && group.getData().roadNumber === 0;
+        return group.getData().constructionType === dataConstructionType.value;
       }
     };
 
@@ -269,7 +260,7 @@
     };
 
     var underConstructionRoadLinks = function() {
-      return _.flatten(roadLinkGroupsUnderConstruction);
+      return _.flatten(underConstructionRoadLinkGroups);
     };
 
     this.getAll = function() {
@@ -278,8 +269,14 @@
       });
     };
 
+    this.getUnaddressedRoadLinkGroups = function() {
+      return _.map(_.flatten(_.flatten(unaddressedRoadLinkGroups)), function(roadLink) {
+        return roadLink.getData();
+      });
+    };
+
     this.getUnderConstructionLinks = function() {
-      return _.map(_.flatten(roadLinkGroupsUnderConstruction), function(roadLink) {
+      return _.map(_.flatten(underConstructionRoadLinkGroups), function(roadLink) {
         return roadLink.getData();
       });
     };
