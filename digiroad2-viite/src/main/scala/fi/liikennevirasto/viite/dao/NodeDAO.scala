@@ -15,17 +15,17 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 sealed trait NodeType {
-  def value: Long
+  def value: Int
 
   def displayValue: String
 }
 
 object NodeType {
   val values: Set[NodeType] = Set(NormalIntersection, Roundabout, YIntersection, Interchange, RoadBoundary, ELYBorder, MultitrackIntersection,
-    DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnkownNodeType)
+    DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnknownNodeType)
 
-  def apply(intValue: Long): NodeType = {
-    values.find(_.value == intValue).getOrElse(UnkownNodeType)
+  def apply(intValue: Int): NodeType = {
+    values.find(_.value == intValue).getOrElse(UnknownNodeType)
   }
 
   case object NormalIntersection extends NodeType {
@@ -112,7 +112,7 @@ object NodeType {
     def displayValue = "Porrastettu liittymä"
   }
 
-  case object UnkownNodeType extends NodeType {
+  case object UnknownNodeType extends NodeType {
     def value = 99
 
     def displayValue = "Ei määritelty"
@@ -136,7 +136,7 @@ class NodeDAO extends BaseDAO {
       val coordX = r.nextLong()
       val coordY = r.nextLong()
       val name = r.nextStringOption()
-      val nodeType = NodeType.apply(r.nextLong())
+      val nodeType = NodeType.apply(r.nextInt())
       val startDate = formatter.parseDateTime(r.nextDate.toString)
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = formatter.parseDateTime(r.nextDate.toString)
@@ -183,14 +183,6 @@ class NodeDAO extends BaseDAO {
       """.as[Long].firstOption
   }
 
-  def fetchIdWithHistory(nodeNumber: Long): Option[Long] = {
-    sql"""
-      SELECT ID
-      from NODE
-      where NODE_NUMBER = $nodeNumber
-      """.as[Long].firstOption
-  }
-
   def fetchByRoadAttributes(road_number: Long, minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[(Node, RoadAttributes)] = {
     val road_condition = (minRoadPartNumber.isDefined, maxRoadPartNumber.isDefined) match {
       case (true, true) => s"AND rw.ROAD_PART_NUMBER >= ${minRoadPartNumber.get} AND rw.ROAD_PART_NUMBER <= ${maxRoadPartNumber.get}"
@@ -205,7 +197,7 @@ class NodeDAO extends BaseDAO {
                         node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M
         FROM NODE node
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(node.COORDINATES)) coords
-        LEFT JOIN NODE_POINT np ON node.ID = np.NODE_ID AND np.VALID_TO IS NULL AND np.END_DATE IS NULL
+        LEFT JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER AND np.VALID_TO IS NULL
         LEFT JOIN ROADWAY_POINT rp ON np.ROADWAY_POINT_ID = rp.ID
         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
           WHERE node.VALID_TO IS NULL AND node.END_DATE IS NULL
@@ -214,51 +206,52 @@ class NodeDAO extends BaseDAO {
             SELECT * FROM NODE_POINT np_c
               LEFT JOIN ROADWAY_POINT rp_c ON np_c.ROADWAY_POINT_ID = rp_c.ID
               LEFT JOIN ROADWAY rw_c ON rp_c.ROADWAY_NUMBER = rw_c.ROADWAY_NUMBER AND rw_c.VALID_TO IS NULL AND rw_c.END_DATE IS NULL
-                WHERE np_c.VALID_TO IS NULL AND np_c.END_DATE IS NULL AND np_c.NODE_ID = node.ID
+                WHERE np_c.VALID_TO IS NULL AND np_c.NODE_NUMBER = node.NODE_NUMBER
                 AND rw_c.ROAD_NUMBER = rw.ROAD_NUMBER AND rw_c.ROAD_PART_NUMBER != rw.ROAD_PART_NUMBER) THEN 0
             ELSE 1
           END = 1)
         ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M, rw.TRACK
       """
 
-    Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Long], DateTime, Option[DateTime], DateTime, Option[DateTime],
+    Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Int], DateTime, Option[DateTime], DateTime, Option[DateTime],
       Option[String], Option[DateTime], Long, Long, Long, Long)](query).list.map {
 
       case (id, nodeNumber, x, y, name, nodeType, startDate, endDate, validFrom, validTo,
       createdBy, createdTime, roadNumber, track, roadPartNumber, addrMValue) =>
 
-        (Node(id, nodeNumber, Point(x, y), name, NodeType.apply(nodeType.getOrElse(NodeType.UnkownNodeType.value)), startDate, endDate, validFrom, validTo, createdBy, createdTime, None, None),
+        (Node(id, nodeNumber, Point(x, y), name, NodeType.apply(nodeType.getOrElse(NodeType.UnknownNodeType.value)), startDate, endDate, validFrom, validTo, createdBy, createdTime, None, None),
           RoadAttributes(roadNumber, track, roadPartNumber, addrMValue))
     }
   }
 
   /**
-    * Search for Junctions that no longer have justification for the current network.
+    * Search for Nodes that no longer have justification for the current network.
     *
-    * @param ids : Iterable[Long] - The ids of the junctions to verify.
+    * @param nodeNumbers : Iterable[Long] - The node numbers of nodes to verify.
     * @return
     */
-  def fetchObsoleteById(ids: Iterable[Long]): Seq[Node] = {
+  // TODO Do we need to check the node point type here too?
+  def fetchObsoleteByNodeNumbers(nodeNumbers: Iterable[Long]): Seq[Node] = {
     // An Obsolete node are those that no longer have justification for the current network, and must be expired.
-    if (ids.isEmpty) {
+    if (nodeNumbers.isEmpty) {
       Seq()
     } else {
       val query = s"""
         SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
         FROM NODE N
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
-          WHERE ID IN (${ids.mkString(", ")})
+        WHERE NODE_NUMBER IN (${nodeNumbers.mkString(", ")})
           AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER) FROM JUNCTION_POINT JP
             LEFT JOIN JUNCTION J ON JP.JUNCTION_ID = J.ID
             LEFT JOIN ROADWAY_POINT RP ON JP.ROADWAY_POINT_ID = RP.ID
             LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
-            WHERE J.NODE_ID = N.ID AND JP.VALID_TO IS NULL AND JP.END_DATE IS NULL) < 2
+            WHERE J.NODE_NUMBER = N.NODE_NUMBER AND JP.VALID_TO IS NULL) < 2
           AND ((SELECT COUNT(*) FROM NODE_POINT NP
-            WHERE NP.NODE_ID = N.ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL) > 1
+            WHERE NP.NODE_NUMBER = N.NODE_NUMBER AND NP.VALID_TO IS NULL) < 1
           AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER || '-' || RW.ROAD_PART_NUMBER || ',' || RW.ROAD_TYPE) FROM NODE_POINT NP
             LEFT JOIN ROADWAY_POINT RP ON NP.ROADWAY_POINT_ID = RP.ID
             LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
-            WHERE NP.NODE_ID = N.ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL) < 2)
+            WHERE NP.NODE_NUMBER = N.NODE_NUMBER AND NP.VALID_TO IS NULL) < 2)
           AND VALID_TO IS NULL AND END_DATE IS NULL
         """
       queryList(query)
@@ -268,8 +261,8 @@ class NodeDAO extends BaseDAO {
   def create(nodes: Iterable[Node], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
-      """insert into NODE (ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, CREATED_BY)
-      values (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""".stripMargin)
+      """insert into NODE (ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, CREATED_BY, VALID_FROM)
+      values (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'))""".stripMargin)
 
     // Set ids for the nodes without one
     val (ready, idLess) = nodes.partition(_.id != NewIdValue)
@@ -278,6 +271,7 @@ class NodeDAO extends BaseDAO {
       x._1.copy(id = x._2)
     )
 
+    var nodeNumbers = scala.collection.mutable.MutableList[Long]()
     createNodes.foreach {
       node =>
         val nodeNumber = if (node.nodeNumber == NewIdValue) {
@@ -285,6 +279,7 @@ class NodeDAO extends BaseDAO {
         } else {
           node.nodeNumber
         }
+        nodeNumbers += nodeNumber
         ps.setLong(1, node.id)
         ps.setLong(2, nodeNumber)
         ps.setObject(3, OracleDatabase.createRoadsJGeometry(Seq(node.coordinates), dynamicSession.conn, 0))
@@ -300,11 +295,12 @@ class NodeDAO extends BaseDAO {
           case None => ""
         })
         ps.setString(8, if (createdBy == null) "-" else createdBy)
+        ps.setString(9, dateFormatter.print(node.validFrom))
         ps.addBatch()
     }
     ps.executeBatch()
     ps.close()
-    createNodes.map(_.id).toSeq
+    nodeNumbers
   }
 
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[Node] = {
@@ -338,18 +334,18 @@ class NodeDAO extends BaseDAO {
     }
   }
 
-  def fetchEmptyNodes(ids: Iterable[Long]): Seq[Node] = {
-    if (ids.isEmpty) {
+  def fetchEmptyNodes(nodeNumbers: Iterable[Long]): Seq[Node] = {
+    if (nodeNumbers.isEmpty) {
       Seq()
     } else {
       val query = s"""
         SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
         FROM NODE N
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
-          WHERE END_DATE IS NULL AND VALID_TO IS NULL AND ID IN (${ids.mkString(", ")}) AND NOT EXISTS (
-            SELECT NULL FROM JUNCTION J WHERE N.id = J.NODE_ID AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
+          WHERE END_DATE IS NULL AND VALID_TO IS NULL AND NODE_NUMBER IN (${nodeNumbers.mkString(", ")}) AND NOT EXISTS (
+            SELECT NULL FROM JUNCTION J WHERE N.NODE_NUMBER = J.NODE_NUMBER AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
           ) AND NOT EXISTS (
-            SELECT NULL FROM NODE_POINT NP WHERE N.id = NP.NODE_ID AND NP.VALID_TO IS NULL AND NP.END_DATE IS NULL
+            SELECT NULL FROM NODE_POINT NP WHERE N.NODE_NUMBER = NP.NODE_NUMBER AND NP.VALID_TO IS NULL
           )
       """
       queryList(query)

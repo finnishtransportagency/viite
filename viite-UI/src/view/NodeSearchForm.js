@@ -1,7 +1,5 @@
 (function (root) {
   root.NodeSearchForm = function (instructionsPopup, map, nodeCollection, backend) {
-    var container = $('#legendDiv');
-    var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
     var header = function() {
       return '<header>' +
         '<span id="close-node-search" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>' +
@@ -208,7 +206,7 @@
           nodeCollection.getNodesByRoadAttributes(data);
         });
 
-        rootElement.on('click', '.node-link', function (event) {
+        rootElement.one('click', '.node-link', function (event) {
           eventbus.trigger('nodeSearchTool:clickNode', event.currentTarget.id, map);
         });
 
