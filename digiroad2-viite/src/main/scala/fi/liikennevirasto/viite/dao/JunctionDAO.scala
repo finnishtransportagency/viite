@@ -156,6 +156,34 @@ class JunctionDAO extends BaseDAO {
     queryListTemplate(query)
   }
 
+  def fetchTemplatesByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[JunctionTemplate] = {
+    val query =
+      s"""
+         SELECT DISTINCT j.ID, j.JUNCTION_NUMBER, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
+         FROM JUNCTION j
+         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
+         LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
+         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+         WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_NUMBER IS NULL
+           AND rw.ROADWAY_NUMBER IN (${roadwayNumbers.mkString(", ")})
+       """
+    queryListTemplate(query)
+  }
+
+  def fetchTerminatedByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[JunctionTemplate] = {
+    val query =
+      s"""
+         SELECT DISTINCT j.ID, j.JUNCTION_NUMBER, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
+         FROM JUNCTION j
+         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
+         LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
+         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+         WHERE j.VALID_TO IS NULL AND j.END_DATE IS NOT NULL
+           AND rw.ROADWAY_NUMBER IN (${roadwayNumbers.mkString(", ")})
+       """
+    queryListTemplate(query)
+  }
+
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionTemplate] = {
     time(logger, "Fetch Junction templates by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
