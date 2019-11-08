@@ -150,12 +150,19 @@ object ProjectDeltaCalculator {
           else
             Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = r2.calibrationPoints))
         case LinkStatus.New =>
-          if (!hasCalibrationPoint)
+          if (!hasCalibrationPoint && r2.discontinuity.value != Discontinuity.ParallelLink.value) {
             Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = r2.calibrationPoints))
-          else
+          }
+          else if (!hasCalibrationPoint && r2.discontinuity.value == Discontinuity.ParallelLink.value){
             Seq(r2, r1)
-        case _ =>
+          }
+          else{
+            Seq(r2, r1)
+          }
+        case _ =>{
           Seq(r2, r1)
+        }
+
       }
     else
       Seq(r2, r1)
