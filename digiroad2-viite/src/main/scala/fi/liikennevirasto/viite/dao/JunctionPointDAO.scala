@@ -77,7 +77,7 @@ class JunctionPointDAO extends BaseDAO {
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
           JOIN JUNCTION J on (J.ID = JP.JUNCTION_ID)
           JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
-          where J.ID in (${junctionIds.mkString(",")}) AND JP.VALID_TO IS NULL
+          where J.ID in (${junctionIds.mkString(", ")}) AND JP.VALID_TO IS NULL
         """
       queryList(query)
     }
