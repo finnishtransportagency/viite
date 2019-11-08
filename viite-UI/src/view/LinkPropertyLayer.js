@@ -741,27 +741,12 @@
           });
         roadLayer.layer.getSource().addFeatures(ol3noInfoRoads);
       });
-      // 2075 TODO
+
       eventListener.listenTo(eventbus, 'unAddressedRoadLinks:fetched', function(unAddressedRoads){
         console.log(" eventbus, 'unAddressedRoadLinks:fetched'");
-        var partitioned = _.partition(_.flatten(unAddressedRoads), function(feature) {
-          return feature.getData.anomaly === Anomaly.NoAddressGiven.value;
-        });
-        var ol3unAddressedRoads =
-            _.map(partitioned[0], function(road) {
-              var roadData = road.getData();
-              var points = _.map(roadData.points, function (point) {
-                return [point.x, point.y];
-              });
-              var feature = new ol.Feature({
-                geometry: new ol.geom.LineString(points)
-              });
-              feature.linkData = roadData;
-              return feature;
-            });
 
         var ol3noInfoRoads =
-            _.map(partitioned[1], function(road) {
+            _.map(_.flatten(unAddressedRoads), function(road) {
               var roadData = road.getData();
               var points = _.map(roadData.points, function (point) {
                 return [point.x, point.y];
@@ -772,8 +757,6 @@
               feature.linkData = roadData;
               return feature;
             });
-         // unAddressedRoadLayer.getSource().addFeatures(ol3unAddressedRoads);//ol3unAddressedRoads
-         // roadLayer.layer.getSource().addFeatures(ol3noInfoRoads);//ol3noInfoRoads
         unAddressedRoadLayer.getSource().addFeatures(ol3noInfoRoads);//ol3unAddressedRoads
       });
       eventListener.listenTo(eventbus, 'unAddressedRoads:toggleVisibility', function(visibility){
@@ -787,8 +770,6 @@
         //Exclude underConstruction layers from toggle
         me.toggleLayersVisibility([roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, directionMarkerLayer, geometryChangedLayer, calibrationPointLayer,
         indicatorLayer, greenRoadLayer, pickRoadsLayer, simulatedRoadsLayer, reservedRoadLayer, historicRoadsLayer], applicationModel.getRoadVisibility());
-
-
       });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', redraw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
@@ -901,7 +882,6 @@
             features.push(feature);
           }
         });
-        greenRoads(features,true);
         addFeaturesToSelection(features);
       }
     };
@@ -948,7 +928,6 @@
             }
           });
           addFeaturesToSelection(features);
-          greenRoads(features);
         }
       }
       if(features.length === 0)

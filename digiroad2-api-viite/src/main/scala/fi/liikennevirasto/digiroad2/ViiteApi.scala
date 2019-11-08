@@ -967,7 +967,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       }
     }
     time(logger, operationName = "Partition road links") {
-      val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(viiteRoadLinks)
+      val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(viiteRoadLinks)
       partitionedRoadLinks.map {
         _.map(roadAddressLinkToApi)
       }
