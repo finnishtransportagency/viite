@@ -143,10 +143,6 @@
         } else {
           openDoubleClick(data);
         }
-        /*var currentFloatings = getCurrentFloatings();
-        if (!_.isEmpty(currentFloatings)) {
-          setSources(currentFloatings);
-        }*/
         _.forEach(current, function (selected) {
           selected.select();
         });
