@@ -306,7 +306,7 @@ class RoadwayChangesDAO {
       }
       roadwayChangePS.setLong(1, projectId)
       roadwayChangePS.setLong(2, addressChangeType.value)
-      roadwayChangePS.setLong(13, Discontinuity.replaceParallelLink(roadwaySection.discontinuity).value)
+      roadwayChangePS.setLong(13, roadwaySection.discontinuity.value)
       roadwayChangePS.setLong(14, roadwaySection.roadType.value)
       roadwayChangePS.setLong(15, roadwaySection.ely)
       roadwayChangePS.setLong(16, roadwaySection.roadType.value)
@@ -341,7 +341,7 @@ class RoadwayChangesDAO {
       roadwayChangePS.setDouble(10, newRoadwaySection.startMAddr)
       roadwayChangePS.setDouble(11, oldRoadwaySection.endMAddr)
       roadwayChangePS.setDouble(12, newRoadwaySection.endMAddr)
-      roadwayChangePS.setLong(13, Discontinuity.replaceParallelLink(newRoadwaySection.discontinuity).value)
+      roadwayChangePS.setLong(13, newRoadwaySection.discontinuity.value)
       roadwayChangePS.setLong(14, newRoadwaySection.roadType.value)
       roadwayChangePS.setLong(15, newRoadwaySection.ely)
       roadwayChangePS.setLong(16, oldRoadwaySection.roadType.value)
