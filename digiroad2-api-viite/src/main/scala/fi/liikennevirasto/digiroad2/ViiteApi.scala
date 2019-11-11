@@ -1209,7 +1209,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def junctionTemplateToApi(junctionTemplate: JunctionTemplate) : Map[String, Any] = {
     Map(
       "id" -> junctionTemplate.id,
-      "junctionNumber" -> junctionTemplate.junctionNumber,
+      "junctionNumber" -> null,
       "startDate" -> formatToString(junctionTemplate.startDate.toString),
       "roadNumber" -> junctionTemplate.roadNumber,
       "roadPartNumber" -> junctionTemplate.roadPartNumber,
@@ -1240,7 +1240,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def junctionInfoToApi(junctionInfo: JunctionInfo) : Map[String, Any] = {
     Map("junctionId" -> junctionInfo.id,
-      "junctionNumber" -> junctionInfo.junctionNumber,
+      "junctionNumber" -> (if (junctionInfo.junctionNumber.isDefined) junctionInfo.junctionNumber else null),
       "nodeNumber" -> junctionInfo.nodeNumber,
       "startDate" -> formatDateTimeToShortPatternString(Some(junctionInfo.startDate)),
       "nodeNumber" -> junctionInfo.nodeNumber,
@@ -1249,7 +1249,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
     Map("id" -> junction._1.id,
-      "junctionNumber" -> junction._1.junctionNumber,
+      "junctionNumber" -> (if (junction._1.junctionNumber.isDefined) junction._1.junctionNumber else null),
       "nodeNumber" -> junction._1.nodeNumber,
       "junctionPoints" -> junction._2.map(junctionPointToApi))
   }

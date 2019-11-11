@@ -20,10 +20,10 @@ class JunctionDAOSpec extends FunSuite with Matchers {
   val dao = new JunctionDAO
   val nodeDAO = new NodeDAO
 
-  val testJunction1 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-01"), None,
+  val testJunction1 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-01"), None,
     DateTime.parse("2019-01-01"), None, None, None)
 
-  val testJunction2 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-02"), None,
+  val testJunction2 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-02"), None,
     DateTime.parse("2019-01-02"), None, None, None)
 
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
