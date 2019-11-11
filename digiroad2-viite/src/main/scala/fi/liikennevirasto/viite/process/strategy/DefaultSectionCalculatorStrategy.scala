@@ -75,23 +75,23 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   }
 
   def assignProperRoadwayNumber(seq: Seq[ProjectLink], givenRoadwayNumber: Long, originalAddresses: Seq[RoadAddress]): (Long, Boolean) = {
-    val (roadwayNumber, affectNextOnes): (Long, Boolean) = if(seq.nonEmpty && seq.exists(_.status == LinkStatus.New)){
-      //then we now that for sure the addresses increased their length for the part => new roadwayNumber for the new sections
+    val (roadwayNumber, affectNextOnes): (Long, Boolean) = if (seq.nonEmpty && seq.exists(_.status == LinkStatus.New)) {
+      // then we now that for sure the addresses increased their length for the part => new roadwayNumber for the new sections
       (givenRoadwayNumber, false)
-    } else if(seq.nonEmpty && seq.exists(_.status == LinkStatus.Numbering)){
-      //then we now that for sure the addresses didnt change the address length part, only changed the number of road or part => same roadwayNumber
+    } else if (seq.nonEmpty && seq.exists(_.status == LinkStatus.Numbering)) {
+      // then we now that for sure the addresses didnt change the address length part, only changed the number of road or part => same roadwayNumber
       (seq.headOption.map(_.roadwayNumber).get, false)
     } else {
-      //other cases where the address length could have changed when comparing to their original address length, or also splitted by roadtype (which will be given further below)
+      // other cases where the address length could have changed when comparing to their original address length, or also splitted by roadtype (which will be given further below)
       val roadTypeSection = seq.groupBy(_.roadType)
       val originalRoadTypeSection = originalAddresses.filter(a => seq.map(_.roadwayId).contains(a.id)).sortBy(_.startAddrMValue).groupBy(_.roadType)
-      //even if the roadtype changes, to have a new roadwayNumber it should change/be splitted the existing roadway section
+      // even if the roadtype changes, to have a new roadwayNumber it should change/be splitted the existing roadway section
       val sortedRoadTypeSectionsByAddress = roadTypeSection.values
       val sortedOriginalRoadTypeSectionsByAddress = originalRoadTypeSection.values
-      val sameSectionAddressesByAddressLengthAndRoadType = sortedRoadTypeSectionsByAddress.zip(sortedOriginalRoadTypeSectionsByAddress).forall{
+      val sameSectionAddressesByAddressLengthAndRoadType = sortedRoadTypeSectionsByAddress.zip(sortedOriginalRoadTypeSectionsByAddress).forall {
         case (pls, addrs) => (pls.last.endAddrMValue - pls.head.startAddrMValue) == (addrs.last.endAddrMValue - addrs.head.startAddrMValue)
       }
-      val (innerRoadwayNumber, innerFlag) = if(roadTypeSection.keys.size == originalRoadTypeSection.keys.size && sameSectionAddressesByAddressLengthAndRoadType)
+      val (innerRoadwayNumber, innerFlag) = if (roadTypeSection.keys.size == originalRoadTypeSection.keys.size && sameSectionAddressesByAddressLengthAndRoadType)
         (seq.headOption.map(_.roadwayNumber).get, false)
       else
         (givenRoadwayNumber, true)
