@@ -188,16 +188,7 @@ class RoadwayChangesDAO {
       else
         resultList ++ Seq(nextRow)
     }
-    def combineWithLogging(resultList: Seq[ChangeRow], nextRow: ChangeRow): Seq[ChangeRow] = {
-      val previousRow = resultList.last
-      logger.info("checkContinuityMergingRows(previousRow, nextRow)"+ previousRow+ "_" + nextRow + "_" + checkContinuityMergingRows(previousRow, nextRow))
-      if (previousRow.sourceEndAddressM == nextRow.sourceStartAddressM && previousRow.targetEndAddressM == nextRow.targetStartAddressM ){
-        //resultList.dropRight(1) ++ Seq(previousRow.copy(sourceEndAddressM = nextRow.sourceEndAddressM, targetEndAddressM = nextRow.targetEndAddressM, sourceDiscontinuity = nextRow.sourceDiscontinuity, targetDiscontinuity = nextRow.targetDiscontinuity))
-        resultList ++ Seq(nextRow)
-      }
-      else
-        resultList ++ Seq(nextRow)
-    }
+
 
     def combineReversed(resultList: Seq[ChangeRow], nextRow: ChangeRow): Seq[ChangeRow] = {
       val previousRow = resultList.last
@@ -210,13 +201,6 @@ class RoadwayChangesDAO {
 
     def checkContinuityMergingRows(previousRow: ChangeRow, nextRow: ChangeRow): Boolean = {
       // Checking sourceDiscontinuity
-      logger.info("Checking sourceDiscontinuity:")
-      logger.info("((previousRow.sourceDiscontinuity == nextRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty) && previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value))"+ ((previousRow.sourceDiscontinuity == nextRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty) && previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value)) )
-      logger.info("(previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value)) "+ (previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value)) )
-      logger.info("Checking targetDiscontinuity:")
-      logger.info("((previousRow.targetDiscontinuity == nextRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty) && previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value))"+ ((previousRow.targetDiscontinuity == nextRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty) && previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value)))
-      logger.info("(previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.targetDiscontinuity.contains(Discontinuity.Continuous.value))"+ (previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.targetDiscontinuity.contains(Discontinuity.Continuous.value)))
-
       (((previousRow.sourceDiscontinuity == nextRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty) && previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value))
         || (previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value))) &&
       // Checking targetDiscontinuity
@@ -236,7 +220,7 @@ class RoadwayChangesDAO {
         case (result, nextChangeRow) =>
           if (result.isEmpty) Seq(nextChangeRow)
           else if(nextChangeRow.reversed) combineReversed(result, nextChangeRow)
-          else combineWithLogging(result, nextChangeRow)
+          else combine(result, nextChangeRow)
       }
     }.toList.sortBy(r => (r.targetRoadNumber, r.targetStartRoadPartNumber, r.targetStartAddressM, r.targetTrackCode,
       r.sourceRoadNumber, r.sourceStartRoadPartNumber, r.sourceStartAddressM, r.sourceTrackCode))
