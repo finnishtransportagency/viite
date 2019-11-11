@@ -36,8 +36,6 @@ package object viite {
 
   val noRoadwayId: Long = 0L
 
-  val junctionNumberTemplate = 0L
-
   val noReservedPartId: Long = 0L
 
   val NewIdValue: Long = -1000L

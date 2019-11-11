@@ -12,11 +12,12 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-case class Junction(id: Long, junctionNumber: Long, nodeNumber: Option[Long], startDate: DateTime, endDate: Option[DateTime],
+case class Junction(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: DateTime, endDate: Option[DateTime],
                     validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
-case class JunctionInfo(id: Long, junctionNumber: Long, startDate: DateTime, nodeNumber: Long, nodeName: String)
 
-case class JunctionTemplate(id: Long, junctionNumber: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long)
+case class JunctionInfo(id: Long, junctionNumber: Option[Long], startDate: DateTime, nodeNumber: Long, nodeName: String)
+
+case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long)
 
 class JunctionDAO extends BaseDAO {
 
@@ -25,7 +26,7 @@ class JunctionDAO extends BaseDAO {
   implicit val getJunction: GetResult[Junction] = new GetResult[Junction] {
     def apply(r: PositionedResult): Junction = {
       val id = r.nextLong()
-      val junctionNumber = r.nextLong()
+      val junctionNumber = r.nextLongOption()
       val nodeNumber = r.nextLongOption()
       val startDate = formatter.parseDateTime(r.nextDate.toString)
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
@@ -40,7 +41,6 @@ class JunctionDAO extends BaseDAO {
   implicit val getJunctionTemplate: GetResult[JunctionTemplate] = new GetResult[JunctionTemplate] {
     def apply(r: PositionedResult): JunctionTemplate = {
       val junctionId = r.nextLong()
-      val junctionNumber = r.nextLong()
       val startDate = formatter.parseDateTime(r.nextDate.toString)
       val roadNumber = r.nextLong()
       val roadPartNumber = r.nextLong()
@@ -48,14 +48,14 @@ class JunctionDAO extends BaseDAO {
       val addrM = r.nextLong()
       val ely = r.nextLong()
 
-      JunctionTemplate(junctionId, junctionNumber, startDate, roadNumber, roadPartNumber, Track.apply(trackCode), addrM, ely)
+      JunctionTemplate(junctionId, startDate, roadNumber, roadPartNumber, Track.apply(trackCode), addrM, ely)
     }
   }
 
   implicit val getJunctionInfo: GetResult[JunctionInfo] = new GetResult[JunctionInfo] {
     def apply(r: PositionedResult): JunctionInfo = {
       val id = r.nextLong()
-      val junctionNumber = r.nextLong()
+      val junctionNumber = r.nextLongOption()
       val nodeNumber = r.nextLong()
       val startDate = formatter.parseDateTime(r.nextDate.toString)
       val nodeName = r.nextString()
@@ -146,7 +146,7 @@ class JunctionDAO extends BaseDAO {
   def fetchTemplates() : Seq[JunctionTemplate] = {
     val query =
       s"""
-         SELECT DISTINCT j.ID, j.JUNCTION_NUMBER, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
+         SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
          FROM JUNCTION j
          LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
          LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
@@ -159,7 +159,7 @@ class JunctionDAO extends BaseDAO {
   def fetchTemplatesByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[JunctionTemplate] = {
     val query =
       s"""
-         SELECT DISTINCT j.ID, j.JUNCTION_NUMBER, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
+         SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
          FROM JUNCTION j
          LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
          LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
@@ -193,7 +193,7 @@ class JunctionDAO extends BaseDAO {
 
       val query =
         s"""
-         SELECT DISTINCT j.ID, j.JUNCTION_NUMBER, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
+         SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
          FROM JUNCTION j
          LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
          LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
@@ -222,7 +222,11 @@ class JunctionDAO extends BaseDAO {
     createJunctions.foreach {
       junction =>
         ps.setLong(1, junction.id)
-        ps.setLong(2, junction.junctionNumber)
+        if (junction.junctionNumber.isDefined) {
+          ps.setLong(2, junction.junctionNumber.get)
+        } else {
+          ps.setNull(2, java.sql.Types.INTEGER)
+        }
         if (junction.nodeNumber.isDefined) {
           ps.setLong(3, junction.nodeNumber.get)
         } else {
