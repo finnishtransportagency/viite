@@ -170,10 +170,10 @@ class JunctionDAO extends BaseDAO {
     queryListTemplate(query)
   }
 
-  def fetchTerminatedByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[JunctionTemplate] = {
+  def fetchTerminatedByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[Junction] = {
     val query =
       s"""
-         SELECT DISTINCT j.ID, j.JUNCTION_NUMBER, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
+         SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_NUMBER, j.START_DATE, j.END_DATE, j.VALID_FROM, j.VALID_TO, j.CREATED_BY, j.CREATED_TIME
          FROM JUNCTION j
          LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
          LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
@@ -181,7 +181,7 @@ class JunctionDAO extends BaseDAO {
          WHERE j.VALID_TO IS NULL AND j.END_DATE IS NOT NULL
            AND rw.ROADWAY_NUMBER IN (${roadwayNumbers.mkString(", ")})
        """
-    queryListTemplate(query)
+    queryList(query)
   }
 
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionTemplate] = {
