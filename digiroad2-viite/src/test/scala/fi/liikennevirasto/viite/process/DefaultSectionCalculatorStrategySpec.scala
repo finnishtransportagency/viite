@@ -1,12 +1,11 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
@@ -274,10 +273,10 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       left.map(_.roadwayNumber).distinct.size should be (1)
       right.map(_.roadwayNumber).distinct.size should be (left.map(_.roadwayNumber).distinct.size)
 
-      val assignedValues2 = defaultSectionCalculatorStrategy.assignMValues(Seq(projectLinkRight1, projectLinkRight2), Seq(projectLinkLeft1, projectLinkLeft2.copy(roadwayNumber = Sequences.nextRoadwayNumber)), Seq.empty[UserDefinedCalibrationPoint])
+      val assignedValues2 = defaultSectionCalculatorStrategy.assignMValues(Seq(projectLinkRight1, projectLinkRight2.copy(roadType = RoadType.PrivateRoadType)), Seq(projectLinkLeft1, projectLinkLeft2.copy(roadwayNumber = Sequences.nextRoadwayNumber, roadType = RoadType.PrivateRoadType)), Seq.empty[UserDefinedCalibrationPoint])
 
       val (left2, right2) = assignedValues2.partition(_.track == Track.LeftSide)
-
+      //should have same 2 different roadwayNumber since they have 2 different roadtypes (projectLinkLeft2 have now Private RoadType)
       left2.map(_.roadwayNumber).distinct.size should be (2)
       right2.map(_.roadwayNumber).distinct.size should be (left2.map(_.roadwayNumber).distinct.size)
 
@@ -287,7 +286,8 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val assignedValues3 = defaultSectionCalculatorStrategy.assignMValues(Seq(projectLinkLeft3, projectLinkLeft4, projectLinkLeft5), assignedValues++Seq(projectLinkRight3, projectLinkRight4, projectLinkRight5), Seq.empty[UserDefinedCalibrationPoint])
 
       val (left3, right3) = assignedValues3.partition(_.track == Track.LeftSide)
-      left3.map(_.roadwayNumber).distinct.size should be (3)
+      //all new should have same roadwayNumber since they belong to the same section group in same (road, part, track, roadtype)
+      left3.map(_.roadwayNumber).distinct.size should be (1)
       right3.map(_.roadwayNumber).distinct.size should be (left3.map(_.roadwayNumber).distinct.size)
 
       assignedValues3.find(_.linearLocationId == projectLinkRight4.linearLocationId).get.roadwayNumber should be (assignedValues3.find(_.linearLocationId == projectLinkRight5.linearLocationId).get.roadwayNumber)
