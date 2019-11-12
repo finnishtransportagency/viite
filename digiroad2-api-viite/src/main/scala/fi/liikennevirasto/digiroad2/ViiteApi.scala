@@ -966,9 +966,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  put("/node/:id") {
+  put("/nodes/:id") {
     val id = params("id").toLong
-    time(logger, s"PUT request for /node/$id") {
+    time(logger, s"PUT request for /nodes/$id") {
       val username = userProvider.getCurrentUser().username
       try {
         val nodeInfo = parsedBody.extract[NodeExtractor]
