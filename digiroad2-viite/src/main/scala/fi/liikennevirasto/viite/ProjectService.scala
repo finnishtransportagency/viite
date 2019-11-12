@@ -1819,13 +1819,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     roadwayDAO.expireHistory(Set(roadwayId))
   }
 
-  def mapChangedRoadwayNumbers(projectLinks: Seq[ProjectLink], projectLinksAfterChanges: Seq[ProjectLink]): Seq[RoadwayNumbersLinkChange] = {
-    val filteredOldLinks = projectLinks.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering, LinkStatus.UnChanged).contains(rw.status)).sortBy(_.id)
-    val filteredNewLinks = projectLinksAfterChanges.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering, LinkStatus.UnChanged).contains(rw.status)).sortBy(_.id)
-    filteredOldLinks.zip(filteredNewLinks).map { case (oldLink, newLink) =>
-      RoadwayNumbersLinkChange(oldLink.originalStartAddrMValue, oldLink.originalEndAddrMValue, newLink.startAddrMValue, newLink.endAddrMValue, oldLink.roadwayNumber, newLink.roadwayNumber)
-    }
-  }
+//  def mapChangedRoadwayNumbers(projectLinks: Seq[ProjectLink], projectLinksAfterChanges: Seq[ProjectLink]): Seq[RoadwayNumbersLinkChange] = {
+//    val listaLinks = projectLinks.toList
+//    val filteredOldLinks = projectLinks.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering, LinkStatus.UnChanged).contains(rw.status)).sortBy(_.id)
+//    val filteredNewLinks = projectLinksAfterChanges.filter(rw => List(LinkStatus.Transfer, LinkStatus.Numbering, LinkStatus.UnChanged).contains(rw.status)).sortBy(_.id)
+//    filteredOldLinks.zip(filteredNewLinks).map { case (oldLink, newLink) =>
+//      RoadwayNumbersLinkChange(oldLink.originalStartAddrMValue, oldLink.originalEndAddrMValue, newLink.startAddrMValue, newLink.endAddrMValue, oldLink.roadwayNumber, newLink.roadwayNumber)
+//    }
+//  }
 
   def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Set[Long] = {
     if (newState != Saved2TR) {
@@ -1834,6 +1835,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val project = fetchProjectById(projectID).get
     val projectLinks = projectLinkDAO.fetchProjectLinks(projectID)
+    val projectLinkChanges = projectLinkDAO.fetchProjectLinksChange(projectID)
     val currentRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
     val historyRoadways = roadwayDAO.fetchAllByRoadwayNumbers(currentRoadways.map(_._2.roadwayNumber).toSet, withHistory = true).filter(_.endDate.isDefined).map(roadway => (roadway.id, roadway)).toMap
     val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
@@ -1864,9 +1866,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadwayDAO.create(roadwaysToInsert)
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       val projectLinksAfterChanges = if(generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
-      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges), username = project.createdBy)
-      nodesAndJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges))
-      nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges))
+//      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges), username = project.createdBy)
+//      nodesAndJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges))
+//      nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, mapChangedRoadwayNumbers(projectLinks, projectLinksAfterChanges))
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, projectLinkChanges, username = project.createdBy)
+      nodesAndJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges, projectLinkChanges)
+      nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, projectLinkChanges)
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterChanges, Some(project.startDate.minusDays(1)), project.createdBy)
       handleNewRoadNames(roadwayChanges, project)
       handleRoadNames(roadwayChanges)
@@ -2027,6 +2032,6 @@ class SplittingException(s: String) extends RuntimeException {
 case class ProjectBoundingBoxResult(projectLinkResultF: Future[Seq[ProjectLink]], roadLinkF: Future[Seq[RoadLink]],
                                     complementaryF: Future[Seq[RoadLink]])
 
-case class RoadwayNumbersLinkChange(originalStartAddr: Long, originalEndAddr: Long, newStartAddr: Long, newEndAddr: Long, oldRoadwayNumber: Long, newRoadwayNumber: Long)
+case class RoadwayNumbersLinkChange(id: Long, originalStartAddr: Long, originalEndAddr: Long, newStartAddr: Long, newEndAddr: Long,  status: LinkStatus, oldRoadwayNumber: Long, newRoadwayNumber: Long)
 
 
