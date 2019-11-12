@@ -73,10 +73,6 @@
       setDirty(true);
     };
 
-    var startDateHasChanged = function () {
-      return current.node.startDateChanged;
-    };
-
     var detachNodePoint = function (id) {
       var nodePoints = _.partition(current.node.nodePoints, function (nodePoint) {
         return nodePoint.id === id;
@@ -188,7 +184,6 @@
       setNodeType: setNodeType,
       typeHasChanged: typeHasChanged,
       setStartDate: setStartDate,
-      startDateHasChanged: startDateHasChanged,
       detachNodePoint: detachNodePoint,
       attachNodePoint: attachNodePoint,
       detachJunction: detachJunction,

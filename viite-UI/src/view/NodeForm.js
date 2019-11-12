@@ -379,7 +379,7 @@
       var nodeTypeIsValid = $('#nodeTypeDropdown :selected').val() !== LinkValues.NodeType.UnknownNodeType.value.toString();
       var dateIsNonEmpty = $('#nodeStartDate').val() !== "";
 
-      if (textIsNonEmpty && nodeTypeIsValid && selectedNode.typeHasChanged() && dateIsNonEmpty && selectedNode.startDateHasChanged()) {
+      if (textIsNonEmpty && nodeTypeIsValid && dateIsNonEmpty && selectedNode.isDirty()) {
         $('.btn-edit-node-save').prop('disabled', false);
       } else {
         $('.btn-edit-node-save').prop('disabled', true);

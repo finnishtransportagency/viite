@@ -49,7 +49,7 @@
         '<p class="form-control-static asset-log-info-metadata">Solmunimi: ' + checkEmptyAndNullAndZero(junctionInfo.nodeName) + '</p>' +
         '</div>' +
         '<div class="form-group-metadata">' +
-        '<p class="form-control-static asset-log-info-metadata">Liittymä id: ' + checkEmptyAndNullAndZero(junctionInfo.junctionId) + '</p>' +
+        '<p class="form-control-static asset-log-info-metadata">Liittymä id: ' + checkEmptyAndNullAndZero(junctionInfo.id) + '</p>' +
         '</div>' +
         inputFieldRequired('Liittymänumero', 'liittymanro', '', checkEmptyAndNullAndZero(junctionInfo.junctionNumber), 2) +
         '</div>' +
