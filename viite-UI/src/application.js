@@ -48,17 +48,17 @@
 
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
-        startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection);
+        startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection,projectListModel);
     });
   };
 
-    var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection) {
+    var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel) {
     setupProjections();
       var url = 'rasteripalvelu/wmts/maasto?';
       fetch(url + 'service=wmts&request=GetCapabilities').then(function(response) {
       return response.text();
     }).then(function(arcConfig) {
-      var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection);
+      var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection, projectListModel);
       new URLRouter(map, backend, models);
       eventbus.trigger('application:initialized');
     });
@@ -110,7 +110,7 @@
     return map;
   };
 
-  var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection) {
+  var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection, projectListModel) {
     var tileMaps = new TileMapCollection(arcConfig);
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
@@ -121,7 +121,7 @@
     var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
-    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
+    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel);
     new JunctionEditForm(models.selectedNodesAndJunctions, backend);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
