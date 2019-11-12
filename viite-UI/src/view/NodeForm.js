@@ -464,7 +464,7 @@
         rootElement.empty();
         if (!_.isEmpty(currentNode)) {
           rootElement.html(nodeForm(currentNode));
-          addDatePicker($('#nodeStartDate'), currentNode.oldStartDate || currentNode.startDate);
+          addDatePicker($('#nodeStartDate'), currentNode.oldStartDate || currentNode.startDate || moment("1.1.2000", dateutil.FINNISH_DATE_FORMAT).toDate());
           var nodePointsElement = $('#node-points-info-content');
           nodePointsElement.html(nodePointsTable.toHtmlTable(currentNode.nodePoints));
           nodePointsElement.hide();
