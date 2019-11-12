@@ -374,7 +374,7 @@
       $('#nodeStartDate').prop('disabled', isDisabled);
     };
 
-    var textFieldChangeHandler = function () {
+    var nodeChangeHandler = function () {
       var textIsNonEmpty = $('#nodeName').val() !== "";
       var nodeTypeIsValid = $('#nodeTypeDropdown :selected').val() !== LinkValues.NodeType.UnknownNodeType.value.toString();
       var dateIsNonEmpty = $('#nodeStartDate').val() !== "";
@@ -482,8 +482,8 @@
             return false;
           });
 
-          eventbus.on('change:nodeName change:nodeTypeDropdown change:nodeStartDate', function () {
-            textFieldChangeHandler();
+          eventbus.on('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:detach nodePoint:detach', function () {
+            nodeChangeHandler();
           });
 
           eventbus.on('change:nodeName', function (nodeName) {
