@@ -980,7 +980,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           case None => Map("success" -> true)
         }
       } catch {
-        case ex: Exception => println("Failed : ", ex.printStackTrace())
+        case ex: Exception => {
+          logger.error("Request PUT /nodes/:id failed.", ex)
+          BadRequest(s"Failed to save changes to node (id: $id).")
+        }
       }
     }
   }
