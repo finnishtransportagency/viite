@@ -276,7 +276,7 @@
       target.setAttribute('data-y', y);
     }
 
-    function replaceParallelLink(currentDiscontinuity){
+    function replaceParallelLink(currentDiscontinuity) {
       if (currentDiscontinuity === 6)
          return 5;
       else
