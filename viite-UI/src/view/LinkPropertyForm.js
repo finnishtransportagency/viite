@@ -473,8 +473,7 @@
         });
       };
 
-
-    var bindEvents = function() {
+      var bindEvents = function() {
       var rootElement = $('#feature-attributes');
 
       addActionButtons();
