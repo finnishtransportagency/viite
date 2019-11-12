@@ -165,12 +165,8 @@
       close('junctionTemplate:unselected');
     };
 
-    var save = function (options, params) {
-      eventbus.trigger(options, params);
-    };
-
     var saveNode = function () {
-      save('node:save', current.node);
+      eventbus.trigger('node:save', current.node);
     };
 
     return {

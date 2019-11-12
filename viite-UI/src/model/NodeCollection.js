@@ -83,20 +83,20 @@
             if (result.success) {
               eventbus.trigger('node:saveSuccess');
             } else {
-              eventbus.trigger('node:saveFailed', result.errorMessage);
+              eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun tallennus epäonnistui.');
             }
           }, function (result) {
-            eventbus.trigger('node:saveFailed', result.errorMessage);
+            eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun tallennus epäonnistui.');
           });
         } else {
           backend.createNodeInfo(dataJson, function (result) {
             if (result.success) {
               eventbus.trigger('node:saveSuccess');
             } else {
-              eventbus.trigger('node:saveFailed', result.errorMessage);
+              eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun lisääminen epäonnistui.');
             }
           }, function (result) {
-            eventbus.trigger('node:saveFailed', result.errorMessage);
+            eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun lisääminen epäonnistui.');
           });
         }
       }
