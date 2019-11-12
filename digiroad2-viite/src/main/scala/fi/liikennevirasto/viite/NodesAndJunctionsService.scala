@@ -47,35 +47,34 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       try {
         if (node.id == NewIdValue) {
           nodeDAO.create(Seq(node), username)
-          return None
-        }
-
-        val old = nodeDAO.fetchById(node.id)
-        if (old.isDefined) {
-          val oldStartDate = old.get.startDate.withTimeAtStartOfDay
-          val newStartDate = node.startDate.withTimeAtStartOfDay
-          if (node.name != old.get.name || old.get.nodeType != node.nodeType || oldStartDate != newStartDate
-            || old.get.coordinates != node.coordinates) {
-
-            // Update the node information
-            if (old.get.nodeType != node.nodeType && oldStartDate != newStartDate) {
-
-              // Check that new start date is not earlier than before
-              if (newStartDate.getMillis < oldStartDate.getMillis) {
-                return Some("Solmun uusi alkupäivämäärä ei saa olla ennen nykyistä alkupäivämäärää.")
-              }
-
-              // Create a new history layer when the node type has changed
-              nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
-              nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
-
-            } else {
-              nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
-            }
-            nodeDAO.expireById(Seq(node.id))
-          }
         } else {
-          return Some("Päivitettävää solmua ei löytynyt")
+          val old = nodeDAO.fetchById(node.id)
+          if (old.isDefined) {
+            val oldStartDate = old.get.startDate.withTimeAtStartOfDay
+            val newStartDate = node.startDate.withTimeAtStartOfDay
+            if (node.name != old.get.name || old.get.nodeType != node.nodeType || oldStartDate != newStartDate
+              || old.get.coordinates != node.coordinates) {
+
+              // Update the node information
+              if (old.get.nodeType != node.nodeType && oldStartDate != newStartDate) {
+
+                // Check that new start date is not earlier than before
+                if (newStartDate.getMillis < oldStartDate.getMillis) {
+                  return Some("Solmun uusi alkupäivämäärä ei saa olla ennen nykyistä alkupäivämäärää.")
+                }
+
+                // Create a new history layer when the node type has changed
+                nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
+                nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
+
+              } else {
+                nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
+              }
+              nodeDAO.expireById(Seq(node.id))
+            }
+          } else {
+            return Some("Päivitettävää solmua ei löytynyt")
+          }
         }
         None
       } catch {
