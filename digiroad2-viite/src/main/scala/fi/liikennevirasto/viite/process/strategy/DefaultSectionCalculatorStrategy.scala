@@ -106,7 +106,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
     val continuousProjectLinks = seq.takeWhile(pl => pl.track == track && pl.roadType.value == roadType)
 
-    val (assignedRoadwayNumber, affectNextOnes) = assignProperRoadwayNumber(seq, givenRoadwayNumber, originalAddresses)
+    val (assignedRoadwayNumber, affectNextOnes) = assignProperRoadwayNumber(seq.filter(_.track == track), givenRoadwayNumber, originalAddresses)
     val passByRestLinks = if (affectNextOnes) {
       val nextRoadwayNumber = Sequences.nextRoadwayNumber
       seq.drop(continuousProjectLinks.size).map(_.copy(roadwayNumber = nextRoadwayNumber))
