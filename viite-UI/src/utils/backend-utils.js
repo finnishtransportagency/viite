@@ -680,7 +680,7 @@
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/viite/node/" + data.id,
+        url: "api/viite/nodes/" + data.id,
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
