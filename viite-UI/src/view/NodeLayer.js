@@ -422,7 +422,7 @@
     });
 
     var redraw = function () {
-      if(applicationModel.getSelectedLayer() === 'node') {
+      if (applicationModel.getSelectedLayer() === 'node') {
 
         cachedMarker = new LinkPropertyMarker();
         var underConstructionLinks = roadCollection.getUnderConstructionLinks();
