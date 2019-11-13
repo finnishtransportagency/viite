@@ -60,7 +60,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
                 // Check that new start date is not earlier than before
                 if (newStartDate.getMillis < oldStartDate.getMillis) {
-                  return Some("Solmun uusi alkupäivämäärä ei saa olla ennen nykyistä alkupäivämäärää.")
+                  return Some(NodeStartDateUpdateErrorMessage)
                 }
 
                 // Create a new history layer when the node type has changed
@@ -73,7 +73,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               nodeDAO.expireById(Seq(node.id))
             }
           } else {
-            return Some("Päivitettävää solmua ei löytynyt")
+            return Some(NodeNotFoundErrorMessage)
           }
         }
         None
