@@ -277,8 +277,8 @@
     }
 
     function replaceParallelLink(currentDiscontinuity){
-      if (currentDiscontinuity === 6)
-         return 5;
+      if (currentDiscontinuity === LinkValues.Discontinuity.ParallelLink.value)
+         return LinkValues.Discontinuity.Continuous.value;
       else
         return currentDiscontinuity;
     }
