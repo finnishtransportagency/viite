@@ -212,9 +212,6 @@
         Add:                {value: "Add"}
     };
 
-    root.Generic = {
-      Undefined: {value: 99}
-    };
     root.Discontinuity = {
         EndOfRoad:             {value : 1, description:"Tien loppu"},
         Discontinuous:         {value : 2, description:"Epäjatkuva"},
