@@ -231,7 +231,7 @@
     var bindExternalEventHandlers = function() {
       eventbus.on('userData:fetched', function (userData) {
         if (_.includes(userData.roles, 'viite')) {
-          $('#projectListButton').removeAttr('style');
+          $('#formProjectButton').removeAttr('style');
           elements.expanded.append(nodeToolSelection.element);
         }
       });

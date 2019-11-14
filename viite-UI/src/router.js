@@ -71,7 +71,7 @@
         eventbus.trigger('underConstructionRoads:toggleVisibility', false);
         $('.underconstruction-visible-wrapper').hide();
         $('#toggleEditMode').hide();
-        $('#emptyFormDiv,#projectListButton').hide();
+        $('#emptyFormDiv,#formProjectButton').hide();
         eventbus.trigger('linkProperty:fetchHistoryLinks', dateSeparated);
       },
 
