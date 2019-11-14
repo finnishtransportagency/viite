@@ -39,8 +39,7 @@
         instructionsPopup,
         new LocationSearch(backend, window.applicationModel)
       ),
-      new ProjectSelectBox(projectListModel),
-        linkGroups
+      linkGroups
     );
 
     WorkListView.initialize(backend);
