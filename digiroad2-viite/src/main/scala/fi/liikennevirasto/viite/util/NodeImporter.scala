@@ -106,7 +106,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
             TO_CHAR(np.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), NP.KAYTTAJA, TO_CHAR(NP.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
             FROM SOLMUKOHTA NP
             JOIN AJORADAN_PISTE AP ON (ID_TIEOSOITE = AP.ID)
-            JOIN SOLMU N ON (ID_SOLMU = SOLMU.ID)
+            JOIN SOLMU N ON (ID_SOLMU = N.ID)
             WHERE NP.VOIMASSAOLOAIKA_LOPPU IS NULL OR N.VOIMASSAOLOAIKA_LOPPU IS NOT NULL
       """
         .as[ConversionNodePoint].list
