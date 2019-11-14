@@ -105,13 +105,17 @@
         return feature;
       });
       var coordinate;
-      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.nodeInfo)) {
-        var nodeData = featureAtPixel.nodeInfo;
+      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.node)) {
+        var nodeData = featureAtPixel.node;
         coordinate = map.getEventCoordinate(event.originalEvent);
         if (infoContent !== null) {
+          var nodeName = "";
+          if (!_.isUndefined(nodeData.name)) {
+            nodeName = 'Nimi: ' + nodeData.name + '<br>';
+          }
           infoContent.innerHTML =
-            'Nimi:&nbsp;' + nodeData.name + '<br>' +
-            'Solmutyyppi:&nbsp;' + displayNodeType(nodeData.type) + '<br>'
+            nodeName +
+            'Solmutyyppi: ' + displayNodeType(nodeData.type) + '<br>'
           ;
         }
         overlay.setPosition(coordinate);
@@ -123,7 +127,7 @@
       var nodeType = _.find(LinkValues.NodeType, function (type) {
         return type.value === nodeTypeCode;
       });
-      return _.isUndefined(nodeType) ? NodeType.UnkownNodeType.description : nodeType.description;
+      return _.isUndefined(nodeType) ? NodeType.UnknownNodeType.description : nodeType.description;
     };
 
     var displayJunctionInfo = function (event, pixel) {
@@ -134,11 +138,11 @@
       if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.junction) && !_.isUndefined(featureAtPixel.junction.junctionPoints)) {
         var junctionData = featureAtPixel.junction;
         var junctionPointData = featureAtPixel.junction.junctionPoints;
-        var node = nodeCollection.getNodeById(junctionData.nodeId);
+        var node = nodeCollection.getNodeByNodeNumber(junctionData.nodeNumber);
         coordinate = map.getEventCoordinate(event.originalEvent);
         var roadAddressInfo = [];
         _.map(junctionPointData, function(point){
-          roadAddressInfo.push({road: point.road, part: point.part, track: point.track, addr: point.addrM, beforeAfter: point.beforeOrAfter});
+          roadAddressInfo.push({road: point.road, part: point.part, track: point.track, addr: point.addrM, beforeAfter: point.beforeAfter});
         });
 
         var groupedRoadAddresses = _.groupBy(roadAddressInfo, function (row) {

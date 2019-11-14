@@ -43,6 +43,22 @@ object OracleDatabase {
     }
   }
 
+  def withDynTransactionNewOrExisting[T](f: => T): T = {
+    if (transactionOpen.get()) {
+      f
+    } else {
+      try {
+        transactionOpen.set(true)
+        Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+          setSessionLanguage()
+          f
+        }
+      } finally {
+        transactionOpen.set(false)
+      }
+    }
+  }
+
   def withDynSession[T](f: => T): T = {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested session")
