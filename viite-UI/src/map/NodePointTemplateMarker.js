@@ -21,7 +21,8 @@
       });
 
       marker.setStyle(nodePointMarkerStyle);
-      marker.nodePointTemplateInfo = nodePoint;
+      marker.nodePointTemplate = nodePoint;
+      marker.roadLink = roadLink;
       return marker;
     };
 
