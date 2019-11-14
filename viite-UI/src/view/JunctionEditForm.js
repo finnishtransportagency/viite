@@ -1,5 +1,5 @@
 (function (root) {
-  root.JunctionEditForm = function (selectedJunctionPoint, backend) {
+  root.JunctionEditForm = function (selectedJunction, backend) {
     var formButtons = function () {
       return '<div class="form form-controls">' +
         '<button class="save btn btn-edit-junction-save" disabled>Tallenna</button>' +
@@ -23,7 +23,7 @@
       return '<div class="form-group-junction-input-metadata">' +
         '<p class="form-control-static asset-junction-data">' +
         '<label class="required">' + labelText + '</label>' +
-        '<input type="text" class="form-control-static asset-input-junction-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '" disabled/>' +
+        '<input type="text" class="form-control asset-input-junction-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '" disabled/>' +
         '</p>' +
         '</div>';
     };
@@ -49,7 +49,7 @@
         '<p class="form-control-static asset-log-info-metadata">Solmunimi: ' + checkEmptyAndNullAndZero(junctionInfo.nodeName) + '</p>' +
         '</div>' +
         '<div class="form-group-metadata">' +
-        '<p class="form-control-static asset-log-info-metadata">Liittymä id: ' + checkEmptyAndNullAndZero(junctionInfo.junctionId) + '</p>' +
+        '<p class="form-control-static asset-log-info-metadata">Liittymä id: ' + checkEmptyAndNullAndZero(junctionInfo.id) + '</p>' +
         '</div>' +
         inputFieldRequired('Liittymänumero', 'liittymanro', '', checkEmptyAndNullAndZero(junctionInfo.junctionNumber), 2) +
         '</div>' +
@@ -103,7 +103,11 @@
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
       rootElement.on('click', '.btn-return-list-junction', function () {
-        selectedJunctionPoint.close();
+        selectedJunction.closeJunction();
+      });
+
+      eventbus.on('selectedNodeAndJunctionPoint:close', function () {
+        selectedJunction.closeJunction();
       });
 
       eventbus.on('junctionEdit:selected', function (junctionId) {
@@ -114,7 +118,7 @@
 
       eventbus.on('junctionTemplate:selected', function () {
         rootElement.empty();
-        var junctionTemplate = selectedJunctionPoint.getCurrentJunctionTemplate();
+        var junctionTemplate = selectedJunction.getCurrentJunctionTemplate();
         var showJunctionTemplateEditForm = isJunctionTemplate(junctionTemplate);
         $('#feature-attributes').html(template(junctionTemplate, showJunctionTemplateEditForm));
         $('[id=junction-point-link]').click(function () {

@@ -25,9 +25,9 @@
       nodes = list;
     };
 
-    this.getNodeById = function(nodeId) {
+    this.getNodeByNodeNumber = function(nodeNumber) {
       return _.find(nodes, function (node) {
-        return node.id === nodeId;
+        return node.nodeNumber === nodeNumber;
       });
     };
 
@@ -63,6 +63,45 @@
       eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionTemplates, zoom);
     });
 
+    eventbus.on('node:save', function (node) {
+      applicationModel.addSpinner();
+      var dataJson = {
+        coordinates: { x: Number(node.coordX), y: Number(node.coordY) },
+        name: node.name,
+        nodeType: Number(node.type),
+        startDate: node.startDate
+      };
+      if (!_.isUndefined(node)) {
+        if (!_.isUndefined(node.id)) {
+          dataJson = _.merge(dataJson, {
+            id: node.id,
+            nodeNumber: node.nodeNumber,
+            junctionsToDetach: node.junctionsToDetach,
+            nodePointsToDetach: node.nodePointsToDetach
+          });
+          backend.saveNodeInfo(dataJson, function (result) {
+            if (result.success) {
+              eventbus.trigger('node:saveSuccess');
+            } else {
+              eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun tallennus epäonnistui.');
+            }
+          }, function (result) {
+            eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun tallennus epäonnistui.');
+          });
+        } else {
+          backend.createNodeInfo(dataJson, function (result) {
+            if (result.success) {
+              eventbus.trigger('node:saveSuccess');
+            } else {
+              eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun lisääminen epäonnistui.');
+            }
+          }, function (result) {
+            eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun lisääminen epäonnistui.');
+          });
+        }
+      }
+    });
+
     eventbus.on('templates:fetched', function(nodePointTemplates, junctionTemplates) {
       me.setUserTemplates(nodePointTemplates, junctionTemplates);
     });
@@ -96,11 +135,11 @@
       if (_.isUndefined(nodePointTemplate)) {
         backend.getNodePointTemplateById(id, function (nodePointTemplate) {
           moveToLocation(nodePointTemplate);
-          selectedNodesAndJunctions.openNodePointTemplate([nodePointTemplate]);
+          selectedNodesAndJunctions.openNodePointTemplates([nodePointTemplate]);
         });
       } else {
         moveToLocation(nodePointTemplate);
-        selectedNodesAndJunctions.openNodePointTemplate([nodePointTemplate]);
+        selectedNodesAndJunctions.openNodePointTemplates([nodePointTemplate]);
       }
     });
 
