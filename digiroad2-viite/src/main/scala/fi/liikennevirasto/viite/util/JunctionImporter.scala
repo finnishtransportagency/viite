@@ -109,7 +109,7 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
            FROM LIITTYMAKOHTA JP
            JOIN AJORADAN_PISTE AP ON (JP.ID_AJORADAN_PISTE = AP.ID)
            JOIN LIITTYMA J ON (JP.ID_LIITTYMA = J.ID)
-           WHERE JP.VOIMASSAOLOAIKA_LOPPU IS NULL AND J.VOIMASSAOLOAIKA_LOPPU IS NOT NULL
+           WHERE JP.VOIMASSAOLOAIKA_LOPPU IS NULL OR J.VOIMASSAOLOAIKA_LOPPU IS NOT NULL
       """
         .as[ConversionJunctionPoint].list
     }
