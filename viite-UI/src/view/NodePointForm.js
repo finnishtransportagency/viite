@@ -3,9 +3,7 @@
     var formCommon = new FormCommon('node-point-');
 
     var nodeTemplatePicture = function () {
-      return '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin: 5px 5px 5px 5px">\n' +
-        '    <param name="number" value="99"/>\n' +
-        '</object>';
+      return '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin: 5px 5px 5px 5px"></object>';
     };
 
     var formButtons = function () {
@@ -76,20 +74,19 @@
       var rootElement = $('#feature-attributes');
 
       rootElement.on('click', '.btn-return-list', function () {
-        selectedNodePoint.close();
+        selectedNodePoint.closeNodePoint();
+      });
+
+      eventbus.on('selectedNodeAndJunctionPoint:close', function () {
+        selectedNodePoint.closeNodePoint();
       });
 
       eventbus.on('nodePointTemplate:selected', function () {
         rootElement.empty();
         var templatesList = selectedNodePoint.getCurrentNodePointTemplates();
-        var nodePointsList = [];
 
         if (!_.isEmpty(templatesList)) {
           rootElement.html(nodePointTemplateForm(templatesList));
-        } else if (!_.isEmpty(nodePointsList)) {
-          // build form for node point.
-        } else {
-          selectedNodePoint.close();
         }
 
       });

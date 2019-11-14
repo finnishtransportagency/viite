@@ -111,10 +111,6 @@
       eventbus.trigger('tool:changed', selectedTool);
     }
 
-    var selectedToolIs = function (tool) {
-      return selectedTool === tool;
-    };
-
     var getCurrentAction = function () {
       return currentAction;
     };
@@ -168,7 +164,6 @@
       },
       getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,
-      selectedToolIs: selectedToolIs,
       getSelectedTool: function () {
         return selectedTool;
       },

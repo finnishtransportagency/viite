@@ -26,17 +26,13 @@
 
     var junctionTemplatePicture = $('' +
       '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-      '<object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 5px; margin-top: 5px">\n' +
-      '    <param name="number" value="99"/>\n' +
-      '</object>' +
+      '<object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 5px; margin-top: 5px"></object>' +
       '<div class="label">Liittymäaihio</div>' +
       '</div>');
 
     var nodeTemplatePicture = $('' +
       '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-      '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin-right: 5px; margin-top: 5px">\n' +
-      '    <param name="number" value="99"/>\n' +
-      '</object>' +
+      '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin-right: 5px; margin-top: 5px"></object>' +
       '<div class="label">Solmukohta-aihio</div>' +
       '</div>');
 
@@ -54,6 +50,7 @@
       [98, 'Tietyyppi kunnan katuosuus tai yks.tie'],
       [99,'Tuntematon']
     ];
+
     var constructionTypes = [
       [0, 'Muu tieverkko, rakenteilla'],
       [1, 'Tuntematon, rakenteilla']

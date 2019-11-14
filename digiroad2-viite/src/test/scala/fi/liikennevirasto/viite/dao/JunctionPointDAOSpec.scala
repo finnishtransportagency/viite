@@ -26,11 +26,11 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
 
   val testJunctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
+    DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
   val testJunctionPoint2 = JunctionPoint(NewIdValue, BeforeAfter.After, -1, -1,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
+    DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
 
-  val testJunction1 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-01"), None,
+  val testJunction1 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-01"), None,
     DateTime.parse("2019-01-01"), None, None, None)
 
   test("Test create When nothing to create Then return empty Seq") {
