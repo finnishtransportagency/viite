@@ -24,7 +24,7 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
                                 createdBy: String, createdTime: Option[DateTime])
 
   case class ConversionJunctionPoint(id: Long, beforeOrAfter: Long, roadwayNumberTR: Long, addressMValueTR: Long, junctionTRId: Long,
-                                 startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
+                                 validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
   private def insertJunctionStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO JUNCTION (ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
@@ -105,10 +105,12 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
 
   protected def fetchJunctionPointsFromConversionTable(): Seq[ConversionJunctionPoint] = {
     conversionDatabase.withDynSession {
-      sql"""SELECT JP.ID, JP.EJ, AP.ID_AJORATA, AP.ETAISYYS, JP.ID_LIITTYMA, TO_CHAR(JP.VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'),
-           TO_CHAR(JP.VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(JP.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), JP.KAYTTAJA, TO_CHAR(JP.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
+      sql"""SELECT JP.ID, JP.EJ, AP.ID_AJORATA, AP.ETAISYYS, JP.ID_LIITTYMA, TO_CHAR(JP.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), JP.KAYTTAJA, TO_CHAR(JP.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
            FROM LIITTYMAKOHTA JP
-           JOIN AJORADAN_PISTE AP ON (ID_AJORADAN_PISTE = AP.ID) """
+           JOIN AJORADAN_PISTE AP ON (JP.ID_AJORADAN_PISTE = AP.ID)
+           JOIN LIITTYMA J ON (JP.ID_LIITTYMA = J.ID)
+           WHERE JP.VOIMASSAOLOAIKA_LOPPU IS NULL AND J.VOIMASSAOLOAIKA_LOPPU IS NOT NULL
+      """
         .as[ConversionJunctionPoint].list
     }
   }
@@ -136,8 +138,6 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
       val roadwayNumberInTR = r.nextLong()
       val addressMValueInTR = r.nextLong()
       val junctionTRId = r.nextLong()
-      val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val endDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextString()
       val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
@@ -146,7 +146,7 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
         case "J" => 2
         case _ => 0
       }
-      ConversionJunctionPoint(id, beforeOrAfter, roadwayNumberInTR, addressMValueInTR, junctionTRId, startDate, endDate, validFrom, None, createdBy, createdTime)
+      ConversionJunctionPoint(id, beforeOrAfter, roadwayNumberInTR, addressMValueInTR, junctionTRId, validFrom, None, createdBy, createdTime)
     }
   }
 
