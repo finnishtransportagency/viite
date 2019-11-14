@@ -182,21 +182,27 @@
     };
 
     root.NodeType = {
-        NormalIntersection:             {value:1, description:"Normaali tasoliittymä"},
-        Roundabout:                     {value:3, description:"Kiertoliittymä"},
-        YIntersection:                  {value:4, description:"Y-liittymä"},
-        Interchange:                    {value:5, description:"Eritasoliittymä"},
-        RoadBoundary:                   {value:7, description:"Maantien/kadun raja"},
-        ELYBorder:                      {value:8, description:"ELY-raja"},
-        MultiTrackIntersection:         {value:10, description:"Moniajoratainen liittymä"},
-        DropIntersection:               {value:11, description:"Pisaraliittymä"},
-        AccessRoad:                     {value:12, description:"Liityntätie"},
-        EndOfRoad:                      {value:13, description:"Tien loppu"},
-        Bridge:                         {value:14, description:"Silta"},
-        MaintenanceOpening:             {value:15, description:"Huoltoaukko"},
-        PrivateRoad:                    {value:16, description:"Yksityistie-tai katuliittymä"},
-        StaggeredIntersection:          {value:17, description:"Porrastettu liittymä"},
-        UnkownNodeType:                 {value:99, description:"Ei määritelty"}
+        NormalIntersection:             {value:1,   description:"Normaali tasoliittymä"},
+        Roundabout:                     {value:3,   description:"Kiertoliittymä"},
+        YIntersection:                  {value:4,   description:"Y-liittymä"},
+        Interchange:                    {value:5,   description:"Eritasoliittymä"},
+        RoadBoundary:                   {value:7,   description:"Maantien/kadun raja"},
+        ELYBorder:                      {value:8,   description:"ELY-raja"},
+        MultiTrackIntersection:         {value:10,  description:"Moniajoratainen liittymä"},
+        DropIntersection:               {value:11,  description:"Pisaraliittymä"},
+        AccessRoad:                     {value:12,  description:"Liityntätie"},
+        EndOfRoad:                      {value:13,  description:"Tien loppu"},
+        Bridge:                         {value:14,  description:"Silta"},
+        MaintenanceOpening:             {value:15,  description:"Huoltoaukko"},
+        PrivateRoad:                    {value:16,  description:"Yksityistie-tai katuliittymä"},
+        StaggeredIntersection:          {value:17,  description:"Porrastettu liittymä"},
+        UnknownNodeType:                {value:99,  description:"Ei määritelty"}
+    };
+
+    root.NodePointType = {
+        RoadNodePoint:                  {value:1,   description:"Tien solmukohta"},
+        CalculatedNodePoint:            {value:2,   description:"Laskettu solmukohta"},
+        UnknownNodePointType:           {value:99,  description:"Ei määritelty"}
     };
 
     root.Tool = {
@@ -209,17 +215,6 @@
     root.Generic = {
       Undefined: {value: 99}
     };
-
-    root.Discontinuity = {
-        EndOfRoad:             {value : 1, description:"Tien loppu"},
-        Discontinuous:         {value : 2, description:"Epäjatkuva"},
-        ChangingELYCode:       {value : 3, description:"ELY:n raja"},
-        MinorDiscontinuity:    {value : 4, description:"Lievä epäjatkuvuus"},
-        Continuous:            {value : 5, description:"Jatkuva"},
-        ParallelLink:          {value : 6, description:"Parallel Link"}
-
-    };
-
 
 })(window.LinkValues = window.LinkValues || {});
 

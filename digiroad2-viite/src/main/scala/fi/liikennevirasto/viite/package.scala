@@ -36,8 +36,6 @@ package object viite {
 
   val noRoadwayId: Long = 0L
 
-  val junctionNumberTemplate = 0L
-
   val noReservedPartId: Long = 0L
 
   val NewIdValue: Long = -1000L
@@ -124,6 +122,8 @@ package object viite {
 
   // Nodes and Junctions error messages
   val ReturnedTooManyNodesErrorMessage = "Hakusi palauttaa yli 50 kohdetta, rajaa hakua pienemmäksi."
+  val NodeNotFoundErrorMessage = "Päivitettävää solmua ei löytynyt."
+  val NodeStartDateUpdateErrorMessage = "Solmun uusi alkupäivämäärä ei saa olla ennen nykyistä alkupäivämäärää."
 
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
