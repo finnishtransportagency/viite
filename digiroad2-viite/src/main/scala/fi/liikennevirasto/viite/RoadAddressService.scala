@@ -617,9 +617,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
             case Some(roadwayPoint) =>
               roadwayPoint.id
-            case _ =>
+            case _ => {
               logger.info(s"Creating roadway point for start calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.startCalibrationPoint.get})")
               roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, username)
+            }
           }
         if (calibrationPoint.isEmpty) {
           logger.info(s"Creating mandatory start calibration point: roadway point: ${roadwayPointId}, link: ${cal.linkId})")
@@ -636,9 +637,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           roadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.get) match {
             case Some(roadwayPoint) =>
               roadwayPoint.id
-            case _ =>
+            case _ => {
               logger.info(s"Creating roadway point for end calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.endCalibrationPoint.get})")
               roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, username)
+            }
           }
         if (calibrationPoint.isEmpty) {
           logger.info(s"Creating mandatory end calibration point: roadway point: ${roadwayPointId}, link: ${cal.linkId})")

@@ -20,10 +20,10 @@ class JunctionDAOSpec extends FunSuite with Matchers {
   val dao = new JunctionDAO
   val nodeDAO = new NodeDAO
 
-  val testJunction1 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-01"), None,
+  val testJunction1 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-01"), None,
     DateTime.parse("2019-01-01"), None, None, None)
 
-  val testJunction2 = Junction(NewIdValue, -1, None, DateTime.parse("2019-01-02"), None,
+  val testJunction2 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-02"), None,
     DateTime.parse("2019-01-02"), None, None, None)
 
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
@@ -62,8 +62,8 @@ class JunctionDAOSpec extends FunSuite with Matchers {
 
   test("Test expireById When two created and one expired Then expire one and keep the other") {
     runWithRollback {
-      val nodeId = nodeDAO.create(Seq(testNode1)).head
-      val ids = dao.create(Seq(testJunction1.copy(nodeId = Some(nodeId)), testJunction2.copy(nodeId = Some(nodeId))))
+      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
+      val ids = dao.create(Seq(testJunction1.copy(nodeNumber = Some(nodeNumber)), testJunction2.copy(nodeNumber = Some(nodeNumber))))
       dao.expireById(Seq(ids.head))
       val fetched = dao.fetchByIds(ids)
       fetched.size should be(1)
@@ -73,20 +73,20 @@ class JunctionDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchJunctionByNodeIds When non-existing node Then return none") {
     runWithRollback {
-      val nodeId = nodeDAO.create(Seq(testNode1)).head
-      dao.create(Seq(testJunction1.copy(nodeId = Some(nodeId)), testJunction2.copy(nodeId = Some(nodeId))))
-      val fetched = dao.fetchJunctionByNodeIds(Seq(nodeId + 1)) // Non-existing node id
+      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
+      dao.create(Seq(testJunction1.copy(nodeNumber = Some(nodeNumber)), testJunction2.copy(nodeNumber = Some(nodeNumber))))
+      val fetched = dao.fetchJunctionsByNodeNumbers(Seq(nodeNumber + 1)) // Non-existing node id
       fetched.size should be(0)
     }
   }
 
   test("Test fetchJunctionByNodeIds When fetched Then return junctions") {
     runWithRollback {
-      val nodeId = nodeDAO.create(Seq(testNode1)).head
-      val fetched1 = dao.fetchJunctionByNodeIds(Seq(nodeId))
+      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
+      val fetched1 = dao.fetchJunctionsByNodeNumbers(Seq(nodeNumber))
       fetched1.size should be(0)
-      dao.create(Seq(testJunction1.copy(nodeId = Some(nodeId)), testJunction2.copy(nodeId = Some(nodeId))))
-      val fetched2 = dao.fetchJunctionByNodeIds(Seq(nodeId))
+      dao.create(Seq(testJunction1.copy(nodeNumber = Some(nodeNumber)), testJunction2.copy(nodeNumber = Some(nodeNumber))))
+      val fetched2 = dao.fetchJunctionsByNodeNumbers(Seq(nodeNumber))
       fetched2.size should be(2)
     }
   }
