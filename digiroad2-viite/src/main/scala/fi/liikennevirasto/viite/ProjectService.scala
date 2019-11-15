@@ -1425,9 +1425,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }.toSeq
 
       val recalculatedTerminated = ProjectSectionCalculator.assignTerminatedMValues(terminated, recalculated)
+      val assignedTerminatedRoadwayNumbers = assignTerminatedRoadwayNumbers(others++recalculatedTerminated)
       val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ recalculatedTerminated).map(_.roadwayId))
-      projectLinkDAO.updateProjectLinks(recalculated ++ recalculatedTerminated, userName, originalAddresses)
+      projectLinkDAO.updateProjectLinks(recalculated ++ assignedTerminatedRoadwayNumbers, userName, originalAddresses)
     }
+  }
+
+  private def assignTerminatedRoadwayNumbers(seq: Seq[ProjectLink]): Seq[ProjectLink] = {
+    val sectionGroup = seq.groupBy(pl => (pl.track, pl.roadwayNumber))
+    //check if entire section changed
+    sectionGroup.values.flatMap { pls =>
+      if (!pls.forall(_.status == LinkStatus.Terminated)) {
+        val newRoadwayNumber = Sequences.nextRoadwayNumber
+        val terminated = pls.filter(_.status == LinkStatus.Terminated)
+        terminated.map(_.copy(roadwayNumber = newRoadwayNumber))
+      } else pls.filter(_.status == LinkStatus.Terminated)
+    }.toSeq
   }
 
   private def recalculateChangeTable(projectId: Long): (Boolean, Option[String]) = {
@@ -1835,7 +1848,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       change =>
         val linksRelatedToChange = roadwayProjectLinkIds.filter(link => link._1 == change.changeInfo.orderInChangeTable).map(_._2)
         val projectLinksInChange = projectLinks.filter(pl => linksRelatedToChange.contains(pl.id))
-        (change, projectLinksInChange)
+        val assignedProperRoadwayNumbers = projectLinksInChange.map{ pl =>
+          val properRoadwayNumber = projectLinkChanges.find(_.id == pl.id)
+          pl.copy(roadwayNumber = properRoadwayNumber.get.newRoadwayNumber)
+        }
+        (change, assignedProperRoadwayNumbers)
     }
 
     if (projectLinks.isEmpty) {
@@ -2020,6 +2037,6 @@ class SplittingException(s: String) extends RuntimeException {
 case class ProjectBoundingBoxResult(projectLinkResultF: Future[Seq[ProjectLink]], roadLinkF: Future[Seq[RoadLink]],
                                     complementaryF: Future[Seq[RoadLink]])
 
-case class RoadwayNumbersLinkChange(id: Long, originalStartAddr: Long, originalEndAddr: Long, newStartAddr: Long, newEndAddr: Long,  status: LinkStatus, oldRoadwayNumber: Long, newRoadwayNumber: Long)
+case class RoadwayNumbersLinkChange(id: Long, roadwayId: Long, roadNumber: Long, roadPartNumber:Long, originalStartAddr: Long, originalEndAddr: Long, newStartAddr: Long, newEndAddr: Long,  status: LinkStatus, reversed:Boolean, oldRoadwayNumber: Long, newRoadwayNumber: Long)
 
 
