@@ -1,5 +1,5 @@
 (function (root) {
-  root.NodeCollection = function (backend, locationSearch, selectedNodePoint) {
+  root.NodeCollection = function (backend, locationSearch, selectedNodesAndJunctions) {
     var me = this;
     var nodes = [];
     var nodesWithAttributes = [];
@@ -7,10 +7,6 @@
     var mapJunctionTemplates = [];
     var userNodePointTemplates = [];
     var userJunctionTemplates = [];
-
-    this.getNodes = function() {
-      return nodes;
-    };
 
     this.setMapNodePointTemplates = function(list) {
       mapNodePointTemplates = list;
@@ -20,21 +16,19 @@
       mapJunctionTemplates = list;
     };
 
-    this.setUserTemplates = function(list) {
-      userNodePointTemplates = _.map(_.filter(list, function(nodePoint){
-        return !_.isUndefined(nodePoint.nodePointTemplate) ;
-      }), function(template){
-        return template.nodePointTemplate;
-      });
-      userJunctionTemplates = _.map(_.filter(list, function (junction) {
-        return !_.isUndefined(junction.junctionTemplate);
-      }), function(template) {
-        return template.junctionTemplate;
-      });
+    this.setUserTemplates = function(nodePointTemplates, junctionTemplates) {
+      userNodePointTemplates = nodePointTemplates;
+      userJunctionTemplates = junctionTemplates;
     };
 
     this.setNodes = function(list) {
       nodes = list;
+    };
+
+    this.getNodeByNodeNumber = function(nodeNumber) {
+      return _.find(nodes, function (node) {
+        return node.nodeNumber === nodeNumber;
+      });
     };
 
     this.getNodesWithAttributes = function() {
@@ -59,28 +53,57 @@
     };
 
     eventbus.on('node:fetched', function(fetchResult, zoom) {
-      var nodes = _.filter(fetchResult, function(node){
-        return !_.isUndefined(node.name) ;
-      });
-      var nodePointTemplates = _.unique(_.map(_.filter(fetchResult, function(node) {
-        return !_.isUndefined(node.nodePointTemplate) ;
-      }), function (nodePointTemp) {
-        return nodePointTemp.nodePointTemplate;
-      }), "id");
-      var junctionPointTemplates = _.unique(_.map(_.filter(fetchResult, function(node) {
-          return !_.isUndefined(node.junctionPointTemplate) ;
-      }), function (junctionPointTemp) {
-          return junctionPointTemp.junctionPointTemplate;
-      }), "id");
+      var nodes = fetchResult.nodes;
+      var nodePointTemplates = fetchResult.nodePointTemplates;
+      var junctionTemplates = fetchResult.junctionTemplates;
 
       me.setNodes(nodes);
       me.setMapNodePointTemplates(nodePointTemplates);
-      me.setMapJunctionTemplates(mapJunctionTemplates);
-      eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionPointTemplates, zoom);
+      me.setMapJunctionTemplates(junctionTemplates);
+      eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionTemplates, zoom);
     });
 
-    eventbus.on('templates:fetched', function(data) {
-      me.setUserTemplates(data);
+    eventbus.on('node:save', function (node) {
+      applicationModel.addSpinner();
+      var dataJson = {
+        coordinates: { x: Number(node.coordX), y: Number(node.coordY) },
+        name: node.name,
+        nodeType: Number(node.type),
+        startDate: node.startDate
+      };
+      if (!_.isUndefined(node)) {
+        if (!_.isUndefined(node.id)) {
+          dataJson = _.merge(dataJson, {
+            id: node.id,
+            nodeNumber: node.nodeNumber,
+            junctionsToDetach: node.junctionsToDetach,
+            nodePointsToDetach: node.nodePointsToDetach
+          });
+          backend.saveNodeInfo(dataJson, function (result) {
+            if (result.success) {
+              eventbus.trigger('node:saveSuccess');
+            } else {
+              eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun tallennus epäonnistui.');
+            }
+          }, function (result) {
+            eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun tallennus epäonnistui.');
+          });
+        } else {
+          backend.createNodeInfo(dataJson, function (result) {
+            if (result.success) {
+              eventbus.trigger('node:saveSuccess');
+            } else {
+              eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun lisääminen epäonnistui.');
+            }
+          }, function (result) {
+            eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun lisääminen epäonnistui.');
+          });
+        }
+      }
+    });
+
+    eventbus.on('templates:fetched', function(nodePointTemplates, junctionTemplates) {
+      me.setUserTemplates(nodePointTemplates, junctionTemplates);
     });
 
     eventbus.on('nodeSearchTool:clickNode', function (index, map) {
@@ -93,9 +116,9 @@
     });
 
     eventbus.on('nodeSearchTool:clickNodePointTemplate', function(id) {
-      var moveToLocation = function(nodePoint) {
-        if (!_.isUndefined(nodePoint)) {
-          locationSearch.search(nodePoint.roadNumber + ' ' + nodePoint.roadPartNumber + ' ' + nodePoint.addrM).then(function (results) {
+      var moveToLocation = function(nodePointTemplate) {
+        if (!_.isUndefined(nodePointTemplate)) {
+          locationSearch.search(nodePointTemplate.roadNumber + ' ' + nodePointTemplate.roadPartNumber + ' ' + nodePointTemplate.addrM).then(function (results) {
             if (results.length >= 1) {
               var result = results[0];
               eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat, zoom: 12});
@@ -110,29 +133,33 @@
         return template.id === parseInt(id);
       });
       if (_.isUndefined(nodePointTemplate)) {
-        backend.getNodePointTemplateById(id, function (results) {
-          moveToLocation(results.nodePointTemplate);
-          selectedNodePoint.openNodePointTemplates(_.unique([results.nodePointTemplate], "id"));
+        backend.getNodePointTemplateById(id, function (nodePointTemplate) {
+          moveToLocation(nodePointTemplate);
+          selectedNodesAndJunctions.openNodePointTemplates([nodePointTemplate]);
         });
       } else {
         moveToLocation(nodePointTemplate);
-        selectedNodePoint.openNodePointTemplates(_.unique([nodePointTemplate], "id"));
+        selectedNodesAndJunctions.openNodePointTemplates([nodePointTemplate]);
       }
     });
 
     eventbus.on('nodeSearchTool:clickJunctionTemplate', function(id) {
       applicationModel.addSpinner();
       var junctionTemplate = _.find(userJunctionTemplates, function (template) {
-        return template.junctionId === parseInt(id);
+        return template.id === parseInt(id);
       });
-      locationSearch.search(junctionTemplate.roadNumber + ' ' + junctionTemplate.roadPartNumber + ' ' + junctionTemplate.addrM).then(function(results) {
-        if (results.length >= 1) {
-          var result = results[0];
-          eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat, zoom: 12 });
-        }
+      if (!_.isUndefined(junctionTemplate)) {
+        locationSearch.search(junctionTemplate.roadNumber + ' ' + junctionTemplate.roadPartNumber + ' ' + junctionTemplate.addrM).then(function (results) {
+          if (results.length >= 1) {
+            var result = results[0];
+            eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat, zoom: zoomlevels.minZoomForJunctions});
+          }
+          applicationModel.removeSpinner();
+        });
+        selectedNodesAndJunctions.openJunctionTemplate(_.head(_.uniq([junctionTemplate], "id")));
+      } else {
         applicationModel.removeSpinner();
-    });
-        selectedNodePoint.openJunctionPointTemplates(_.unique([junctionTemplate], "junctionId"));
+      }
     });
 
     eventbus.on('nodeSearchTool:refreshView', function (map) {

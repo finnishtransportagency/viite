@@ -20,24 +20,19 @@
     var junctionPicture = $('' +
       '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
       '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px; margin-top: 5px">\n' +
-      '    <param name="number" value="99"/>\n' +
       '</object>' +
       '<div class="label">Liittymä</div>' +
       '</div>');
 
     var junctionTemplatePicture = $('' +
       '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-      '<object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 5px; margin-top: 5px">\n' +
-      '    <param name="number" value="99"/>\n' +
-      '</object>' +
+      '<object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 5px; margin-top: 5px"></object>' +
       '<div class="label">Liittymäaihio</div>' +
       '</div>');
 
     var nodeTemplatePicture = $('' +
       '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-      '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin-right: 5px; margin-top: 5px">\n' +
-      '    <param name="number" value="99"/>\n' +
-      '</object>' +
+      '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin-right: 5px; margin-top: 5px"></object>' +
       '<div class="label">Solmukohta-aihio</div>' +
       '</div>');
 
@@ -55,6 +50,7 @@
       [98, 'Tietyyppi kunnan katuosuus tai yks.tie'],
       [99,'Tuntematon']
     ];
+
     var constructionTypes = [
       [0, 'Muu tieverkko, rakenteilla'],
       [1, 'Tuntematon, rakenteilla']
@@ -181,12 +177,9 @@
       _.each(tools, function(tool) {
         element.append(tool.element);
       });
-      var hide = function() {
-        element.hide();
-      };
-      var show = function() {
-        element.show();
-      };
+
+      var hide = function() { element.hide(); };
+      var show = function() { element.show(); };
 
       eventbus.on('tool:changed', function(name) {
         _.each(tools, function(tool) {
@@ -197,15 +190,16 @@
           }
         });
       });
-        var deactivateAll = function() {
-            _.each(tools, function(tool) {
-                tool.deactivate();
-            });
-        };
-        var reset = function() {
-            deactivateAll();
-            tools[0].activate();
-        };
+
+      eventbus.on('tool:clear', function () {
+        reset();
+      });
+
+      var reset = function() {
+        _.each(tools, function(tool) {
+          tool.deactivate();
+        });
+      };
 
       hide();
 
@@ -218,8 +212,8 @@
     };
 
     var nodeToolSelection = new ToolSelection([
-      new Tool(LinkValues.Tool.SelectNode.value, selectToolIcon),
-      new Tool(LinkValues.Tool.AddNode.value, addToolIcon)
+      new Tool(LinkValues.Tool.Select.value, selectToolIcon),
+      new Tool(LinkValues.Tool.Add.value, addToolIcon)
     ]);
 
     var templateAttributes = {
@@ -233,7 +227,7 @@
 
     var bindExternalEventHandlers = function() {
       eventbus.on('userData:fetched', function (userData) {
-        if (_.contains(userData.roles, 'viite')) {
+        if (_.includes(userData.roles, 'viite')) {
           $('#projectListButton').removeAttr('style');
           elements.expanded.append(nodeToolSelection.element);
         }

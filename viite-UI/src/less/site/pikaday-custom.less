@@ -19,8 +19,8 @@ div.pika-single {
   color: #fff;
   background: #444444;
   border: 1px solid #555;
-  width: 240px;
   z-index: 10001;
+  width: auto;
 }
 
 table.pika-table th {
@@ -37,7 +37,12 @@ table.pika-table th {
   font-size: 12px;
   background-color: #444444;
   font-weight: normal;
+
+  .pika-select option[disabled] {
+    display: none;
+  }
 }
+
 
 .pika-button {
   color: #fff;

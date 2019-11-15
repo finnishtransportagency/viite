@@ -82,7 +82,7 @@
     var roadTypeShown = true;
 
     var isDirty = function () {
-      return _.any(models, function (model) {
+      return _.some(models, function (model) {
         return model.isDirty();
       });
     };
@@ -104,13 +104,12 @@
     function setSelectedTool(tool) {
       if (tool !== selectedTool) {
         selectedTool = tool;
-        eventbus.trigger('tool:changed', tool);
+      } else {
+        selectedTool = LinkValues.Tool.Unknown.value;
+        eventbus.trigger('tool:clear');
       }
+      eventbus.trigger('tool:changed', selectedTool);
     }
-
-    var selectedToolIs = function (tool) {
-      return selectedTool === tool;
-    };
 
     var getCurrentAction = function () {
       return currentAction;
@@ -165,7 +164,6 @@
       },
       getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,
-      selectedToolIs: selectedToolIs,
       getSelectedTool: function () {
         return selectedTool;
       },
