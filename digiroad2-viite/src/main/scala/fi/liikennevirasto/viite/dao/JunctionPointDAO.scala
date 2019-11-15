@@ -57,7 +57,7 @@ class JunctionPointDAO extends BaseDAO {
           FROM JUNCTION_POINT JP
           JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID)
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL)
           where JP.ID in (${ids.mkString(",")}) AND JP.VALID_TO IS NULL
         """
       queryList(query)
@@ -76,7 +76,7 @@ class JunctionPointDAO extends BaseDAO {
           JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID)
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
           JOIN JUNCTION J on (J.ID = JP.JUNCTION_ID)
-          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
+          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL)
           where J.ID in (${junctionIds.mkString(", ")}) AND JP.VALID_TO IS NULL
         """
       queryList(query)
@@ -91,7 +91,7 @@ class JunctionPointDAO extends BaseDAO {
        FROM JUNCTION_POINT JP
        JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID)
        JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
-       JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+       JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL)
        where JP.valid_to is null and
        RP.ROADWAY_NUMBER = $roadwayNumber and RP.ADDR_M = $addrM and JP.before_after = ${beforeAfter.value}
      """
@@ -106,7 +106,7 @@ class JunctionPointDAO extends BaseDAO {
        FROM JUNCTION_POINT JP
        JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID)
        JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
-       JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+       JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL)
        where JP.valid_to is null and
        RP.ROADWAY_NUMBER in (${roadwayNumber.mkString(",")}) and RP.ADDR_M = $addrM and JP.before_after = ${beforeAfter.value}
      """
@@ -124,7 +124,7 @@ class JunctionPointDAO extends BaseDAO {
           FROM JUNCTION_POINT JP
           JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID)
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL)
           where JP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")}) AND JP.VALID_TO IS NULL
         """
       queryList(query)
@@ -139,7 +139,7 @@ class JunctionPointDAO extends BaseDAO {
         FROM JUNCTION_POINT JP
         JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID)
         JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-        JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+        JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL)
         where JP.ROADWAY_POINT_ID = $roadwayPointId AND JP.VALID_TO IS NULL
       """
     queryList(query)
