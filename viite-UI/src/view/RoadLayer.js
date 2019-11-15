@@ -40,7 +40,6 @@
     var loadFeatures = function (features) {
       roadVector.clear(true);
       roadVector.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
-      eventbus.trigger('roadLayer:featuresLoaded', features); // For testing: tells that the layer is ready to be "clicked"
     };
 
 
@@ -106,13 +105,17 @@
         return feature;
       });
       var coordinate;
-      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.nodeInfo)) {
-        var nodeData = featureAtPixel.nodeInfo;
+      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.node)) {
+        var nodeData = featureAtPixel.node;
         coordinate = map.getEventCoordinate(event.originalEvent);
         if (infoContent !== null) {
+          var nodeName = "";
+          if (!_.isUndefined(nodeData.name)) {
+            nodeName = 'Nimi: ' + nodeData.name + '<br>';
+          }
           infoContent.innerHTML =
-            'Nimi:&nbsp;' + nodeData.name + '<br>' +
-            'Solmutyyppi:&nbsp;' + displayNodeType(nodeData.type) + '<br>'
+            nodeName +
+            'Solmutyyppi: ' + displayNodeType(nodeData.type) + '<br>'
           ;
         }
         overlay.setPosition(coordinate);
@@ -121,52 +124,10 @@
     };
 
     var displayNodeType = function (nodeTypeCode) {
-      var nodeType;
-      switch (nodeTypeCode) {
-        case LinkValues.NodeType.NormalIntersection.value:
-          nodeType = LinkValues.NodeType.NormalIntersection.description;
-          break;
-        case LinkValues.NodeType.Roundabout.value:
-          nodeType = LinkValues.NodeType.Roundabout.description;
-          break;
-        case LinkValues.NodeType.YIntersection.value:
-          nodeType = LinkValues.NodeType.YIntersection.description;
-          break;
-        case LinkValues.NodeType.Interchange.value:
-          nodeType = LinkValues.NodeType.Interchange.description;
-          break;
-        case LinkValues.NodeType.RoadBoundary.value:
-          nodeType = LinkValues.NodeType.RoadBoundary.description;
-          break;
-        case LinkValues.NodeType.MultiTrackIntersection.value:
-          nodeType = LinkValues.NodeType.MultiTrackIntersection.description;
-          break;
-        case LinkValues.NodeType.DropIntersection.value:
-          nodeType = LinkValues.NodeType.DropIntersection.description;
-          break;
-        case LinkValues.NodeType.AccessRoad.value:
-          nodeType = LinkValues.NodeType.AccessRoad.description;
-          break;
-        case LinkValues.NodeType.EndOfRoad.value:
-          nodeType = LinkValues.NodeType.EndOfRoad.description;
-          break;
-        case LinkValues.NodeType.Bridge.value:
-          nodeType = LinkValues.NodeType.Bridge.description;
-          break;
-        case LinkValues.NodeType.MaintenanceOpening.value:
-          nodeType = LinkValues.NodeType.MaintenanceOpening.description;
-          break;
-        case LinkValues.NodeType.PrivateRoad.value:
-          nodeType = LinkValues.NodeType.PrivateRoad.description;
-          break;
-        case LinkValues.NodeType.StaggeredIntersection.value:
-          nodeType = LinkValues.NodeType.StaggeredIntersection.description;
-          break;
-        case LinkValues.NodeType.UnkownNodeType.value:
-          nodeType = LinkValues.NodeType.UnkownNodeType.description;
-          break;
-      }
-      return nodeType;
+      var nodeType = _.find(LinkValues.NodeType, function (type) {
+        return type.value === nodeTypeCode;
+      });
+      return _.isUndefined(nodeType) ? NodeType.UnknownNodeType.description : nodeType.description;
     };
 
     var displayJunctionInfo = function (event, pixel) {
@@ -174,19 +135,42 @@
         return feature;
       });
       var coordinate;
-      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.junction) && !_.isUndefined(featureAtPixel.junctionPoint)) {
+      if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.junction) && !_.isUndefined(featureAtPixel.junction.junctionPoints)) {
         var junctionData = featureAtPixel.junction;
-        var junctionPointData = featureAtPixel.junctionPoint;
-        var nodes = nodeCollection.getNodesWithAttributes();
-        var node = _.find(nodes, function (node) {
-          return node.id === junctionData.nodeId;
-        });
-        var roadLink = featureAtPixel.roadLink;
+        var junctionPointData = featureAtPixel.junction.junctionPoints;
+        var node = nodeCollection.getNodeByNodeNumber(junctionData.nodeNumber);
         coordinate = map.getEventCoordinate(event.originalEvent);
+        var roadAddressInfo = [];
+        _.map(junctionPointData, function(point){
+          roadAddressInfo.push({road: point.road, part: point.part, track: point.track, addr: point.addrM, beforeAfter: point.beforeAfter});
+        });
+
+        var groupedRoadAddresses = _.groupBy(roadAddressInfo, function (row) {
+          return [row.road, row.track, row.part, row.addr];
+        });
+
+        var roadAddresses = _.partition(groupedRoadAddresses, function (group) {
+          return group.length > 1;
+        });
+
+        var doubleRows = _.map(roadAddresses[0], function (junctionPoints) {
+          var first = _.head(junctionPoints); // TODO VIITE-2028 logic goes here, probably.
+          return {road: first.road, track: first.track, part: first.part, addr: first.addr};
+        });
+
+        var singleRows = _.map(roadAddresses[1], function(junctionPoint) {
+          return {road: junctionPoint[0].road, track: junctionPoint[0].track, part: junctionPoint[0].part, addr: junctionPoint[0].addr};
+        });
+
+        var roadAddressContent = _.sortBy(doubleRows.concat(singleRows), ['road', 'part', 'track', 'addr']);
+
         if (infoContent !== null) {
           infoContent.innerHTML =
-            'Tieosoite:&nbsp;' + roadLink.roadNumber + '/'+ roadLink.trackCode + '/' + roadLink.roadPartNumber + '/' + junctionPointData.addrM + '<br>' +
-            'Solmun nimi:&nbsp;' + (!_.isUndefined(node) ? node.name : '') + '<br>'
+            'Solmun&nbsp;nimi:&nbsp;' + (!_.isUndefined(node) ? node.name.replace(' ', '&nbsp;') : '') + '<br>' +
+            'Tieosoite:<br>' +
+            _.map(roadAddressContent, function (junctionPoint) {
+              return '&thinsp;' + junctionPoint.road + '&nbsp;/&nbsp;' + junctionPoint.track + '&nbsp;/&nbsp;' + junctionPoint.part + '&nbsp;/&nbsp;' + junctionPoint.addr + '<br>';
+            }).join('')
           ;
         }
         overlay.setPosition(coordinate);
@@ -198,7 +182,6 @@
       displayRoadAddressInfo(event, pixel);
       displayNodeInfo(event, pixel);
       displayJunctionInfo(event, pixel);
-
     });
 
     var handleRoadsVisibility = function () {
@@ -206,8 +189,6 @@
     };
 
     this.refreshMap = function (mapState) {
-      //if ((applicationModel.getSelectedTool() === 'Cut' && selectSingleClick.getFeatures().getArray().length > 0))
-      //return;
       if (mapState.zoom < zoomlevels.minZoomForRoadLinks) {
         roadLayer.getSource().clear();
         eventbus.trigger('map:clearLayers');

@@ -1,19 +1,32 @@
 (function (root) {
-  root.JunctionEditForm = function (selectedJunctionPoint, backend) {
+  root.JunctionEditForm = function (selectedJunction, backend) {
     var formButtons = function () {
       return '<div class="form form-controls">' +
         '<button class="save btn btn-edit-junction-save" disabled>Tallenna</button>' +
         '<button class="cancel btn btn-edit-junction-cancel" disabled>Peruuta</button>' +
         '<button class="send btn btn-detach-junction" disabled>Irrota liittymä solmusta</button>' +
-        '<button class="cancel btn btn-return-list-junction">Palaa lista-näkymään</button>' +
+        '<button class="cancel btn btn-return-list-junction">Palaa listanäkymään</button>' +
         '<button class="send btn btn-send-junction" disabled>Vie Tierekisteriin</button>' +
         '</div>';
     };
+
     var svgJunction =
-      '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 10px; margin-top: 5px"></object>';
+      '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 10px;"></object>';
 
     var svgJunctionTemplate =
       '<object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 10px; margin-top: 5px"></object>';
+
+    var inputFieldRequired = function (labelText, id, placeholder, value, maxLength) {
+      var lengthLimit = '';
+      if (maxLength)
+        lengthLimit = 'maxlength="' + maxLength + '"';
+      return '<div class="form-group-junction-input-metadata">' +
+        '<p class="form-control-static asset-junction-data">' +
+        '<label class="required">' + labelText + '</label>' +
+        '<input type="text" class="form-control asset-input-junction-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '" disabled/>' +
+        '</p>' +
+        '</div>';
+    };
 
     var template = function (junctionInfo, showJunctionTemplateEditForm) {
       return _.template('' +
@@ -21,10 +34,10 @@
         title() +
         '</header>' +
         '<div class="wrapper read-only">' +
-        '<div>' +
-        addPicture(showJunctionTemplateEditForm) +
-        '<a id="junction-point-link" class="junction-point">Tarkastele liittymäkohtien tietoja</a>' +
-        '</div>' +
+        '<table><tr>' +
+        '<td>' + addPicture(showJunctionTemplateEditForm) + '</td>' +
+        '<td><a id="junction-point-link" class="junction-point">Tarkastele liittymäkohtien tietoja</a></td>' +
+        '</tr></table>' +
         '<div class="form form-horizontal form-dark">' +
         '<div class="form-group-metadata">' +
         '<p class="form-control-static asset-log-info-metadata">Alkupvm: ' + junctionInfo.startDate + '</p>' +
@@ -36,19 +49,17 @@
         '<p class="form-control-static asset-log-info-metadata">Solmunimi: ' + checkEmptyAndNullAndZero(junctionInfo.nodeName) + '</p>' +
         '</div>' +
         '<div class="form-group-metadata">' +
-        '<p class="form-control-static asset-log-info-metadata">Liittymä id: ' + checkEmptyAndNullAndZero(junctionInfo.junctionId) + '</p>' +
+        '<p class="form-control-static asset-log-info-metadata">Liittymä id: ' + checkEmptyAndNullAndZero(junctionInfo.id) + '</p>' +
         '</div>' +
-        '<div>' +
-        addSmallLabelYellow('Liittymänumero:') + addSmallInputNumber('liittymanro', checkEmptyAndNullAndZero(junctionInfo.junctionNumber), 5) +
-        '</div>' +
+        inputFieldRequired('Liittymänumero', 'liittymanro', '', checkEmptyAndNullAndZero(junctionInfo.junctionNumber), 2) +
         '</div>' +
         '</div>' +
         '</div>' +
         '<footer>' +
         formButtons() +
         '</footer>');
-
     };
+
     var checkEmptyAndNullAndZero = function (value) {
       if (null === value || '' === value) {
         return '';
@@ -59,15 +70,17 @@
       } else {
         return value;
       }
-
     };
+
     var isJunctionTemplate = function (junctionInfo) {
       if (null === junctionInfo.junctionNumber || '' === junctionInfo.junctionNumber || junctionInfo.junctionNumber === 0)
         return true;
     };
+
     var title = function () {
       return '<span class="caption-title">Liittymän tiedot:</span>';
     };
+
     var addPicture = function (showJunctionTemplateEditForm) {
       if (showJunctionTemplateEditForm) {
         return svgJunctionTemplate;
@@ -76,23 +89,12 @@
       }
     };
 
-    var addSmallLabelYellow = function (label) {
-      return '<label class="form-control-static-short-yellow">' + label + '</label>';
-    };
-    var addSmallInputNumber = function (id, value, maxLength) {
-      // Validate only number characters on "onkeypress" including TAB and backspace
-      var smallNumberImput = '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-        '" class="class="form-control junction-small-input" " id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '"' +
-        (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
-      return smallNumberImput;
-    };
-
     var getJunctionData = function (junctionId) {
       return backend.getJunctionInfoByJunctionId(junctionId, function (junctionInfo) {
         var showJunctionTemplateEditForm = isJunctionTemplate(junctionInfo);
         $('#feature-attributes').html(template(junctionInfo, showJunctionTemplateEditForm));
         $('[id=junction-point-link]').click(function () {
-          eventbus.trigger('junctionPointForm-junctionPoint:select', junctionId);
+          eventbus.trigger('junctionTemplate-points:select', junctionId);
           return false;
         });
       });
@@ -101,7 +103,11 @@
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
       rootElement.on('click', '.btn-return-list-junction', function () {
-        selectedJunctionPoint.close();
+        selectedJunction.closeJunction();
+      });
+
+      eventbus.on('selectedNodeAndJunctionPoint:close', function () {
+        selectedJunction.closeJunction();
       });
 
       eventbus.on('junctionEdit:selected', function (junctionId) {
@@ -110,13 +116,13 @@
         return false;
       });
 
-      eventbus.on('junctionPoint:selected', function () {
+      eventbus.on('junctionTemplate:selected', function () {
         rootElement.empty();
-        var templatesList = selectedJunctionPoint.getCurrentJunctionPointTemplates();
-        var showJunctionTemplateEditForm = isJunctionTemplate(_.first(templatesList));
-        $('#feature-attributes').html(template(_.first(templatesList), showJunctionTemplateEditForm));
+        var junctionTemplate = selectedJunction.getCurrentJunctionTemplate();
+        var showJunctionTemplateEditForm = isJunctionTemplate(junctionTemplate);
+        $('#feature-attributes').html(template(junctionTemplate, showJunctionTemplateEditForm));
         $('[id=junction-point-link]').click(function () {
-          eventbus.trigger('junctionPointForm-junctionPoint:select', _.first(templatesList).junctionId);
+          eventbus.trigger('junctionTemplate-points:select', junctionTemplate.id);
           return false;
         });
         return false;

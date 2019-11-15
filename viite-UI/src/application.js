@@ -11,8 +11,10 @@
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     window.applicationModel = new ApplicationModel([selectedLinkProperty]);
-    var selectedNodeAndJunctionPoint = new SelectedNodeAndJunctionPoint();
-    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel), selectedNodeAndJunctionPoint);
+    var selectedNodesAndJunctions = new SelectedNodesAndJunctions();
+    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel), selectedNodesAndJunctions);
+    proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
+    ol.proj.proj4.register(proj4);
 
     var models = {
       roadCollection: roadCollection,
@@ -21,7 +23,7 @@
       linkPropertiesModel: linkPropertiesModel,
       selectedProjectLinkProperty : selectedProjectLinkProperty,
       nodeCollection: nodeCollection,
-      selectedNodeAndJunctionPoint: selectedNodeAndJunctionPoint
+      selectedNodesAndJunctions: selectedNodesAndJunctions
     };
 
     bindEvents();
@@ -114,17 +116,17 @@
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
     var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty, models.nodeCollection);
-    var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
+    var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty);
     var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
-    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodeAndJunctionPoint, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
+    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
-    new JunctionEditForm(models.selectedNodeAndJunctionPoint, backend);
+    new JunctionEditForm(models.selectedNodesAndJunctions, backend);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
-    new NodeForm(models.selectedNodeAndJunctionPoint);
-    new NodePointForm(models.selectedNodeAndJunctionPoint);
+    new NodeForm(models.selectedNodesAndJunctions);
+    new NodePointForm(models.selectedNodesAndJunctions);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
@@ -142,9 +144,7 @@
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 
-    var toolTip = '<div id="infoTooltip">' +
-        '<i class="fas fa-info-circle" title="Versio: ' + startupParameters.deploy_date + '"></i>\n' +
-        '</div>';
+    var toolTip = '<i class="fas fa-info-circle" title="Versio: ' + startupParameters.deploy_date + '"></i>\n';
 
     var pictureTooltip = jQuery('#pictureTooltip');
     pictureTooltip.empty();

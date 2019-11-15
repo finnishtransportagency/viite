@@ -1,6 +1,6 @@
 (function (root) {
-  root.JunctionPointTemplateMarker = function () {
-    var createJunctionPointTemplateMarker = function (junctionPoint, roadLink) {
+  root.JunctionTemplateMarker = function () {
+    var createJunctionTemplateMarker = function (junctionTemplate, junctionPoint, roadLink) {
       var point = [];
 
       if ((roadLink.sideCode === LinkValues.SideCode.TowardsDigitizing.value && junctionPoint.addrM === roadLink.endAddressM) || (roadLink.sideCode === LinkValues.SideCode.AgainstDigitizing.value && junctionPoint.addrM === roadLink.startAddressM)) {
@@ -13,20 +13,21 @@
         geometry: new ol.geom.Point([point.x, point.y])
       });
 
-      var junctionPointMarkerStyle = new ol.style.Style({
+      var junctionTemplateMarkerStyle = new ol.style.Style({
         image: new ol.style.Icon({
           src: 'images/junction-template.svg',
           scale: 1
         })
       });
 
-      marker.setStyle(junctionPointMarkerStyle);
-      marker.junctionPointTemplateInfo = junctionPoint;
+      marker.setStyle(junctionTemplateMarkerStyle);
+      marker.junctionTemplate = junctionTemplate;
+      marker.roadLink = roadLink;
       return marker;
     };
 
     return {
-      createJunctionPointTemplateMarker: createJunctionPointTemplateMarker
+      createJunctionTemplateMarker: createJunctionTemplateMarker
     };
   };
 }(this));

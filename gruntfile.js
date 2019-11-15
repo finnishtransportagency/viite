@@ -114,7 +114,7 @@ module.exports = function(grunt) {
           },
           {
             context: '/rasteripalvelu',
-            host: 'oag.liikennevirasto.fi',
+            host: 'oag.vayla.fi',
             port: '80',
             https: false,
             changeOrigin: true,
@@ -127,7 +127,6 @@ module.exports = function(grunt) {
             https: false,
             changeOrigin: true,
             xforward: false,
-            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'},
             rewrite: {
               '^/wmts': '/rasteripalvelu-mml/wmts'
             }
@@ -142,10 +141,10 @@ module.exports = function(grunt) {
           },
           {
             context: '/vkm',
-            host: 'localhost',
-            port: '8997',
-            https: false,
-            changeOrigin: false,
+            host: 'oag.liikennevirasto.fi',
+            port: '80',
+            https: true,
+            changeOrigin: true,
             xforward: false
           },
           {
@@ -215,6 +214,7 @@ module.exports = function(grunt) {
           urls: ['http://127.0.0.1:9003/test/integration-tests.html'],
           run: false,
           log: true,
+          logErrors: true,
           timeout: 100000,
           reporter: 'Spec'
         }
@@ -233,14 +233,6 @@ module.exports = function(grunt) {
       }
     },
     exec: {
-      prepare_openlayers: {
-        cmd: 'npm install',
-        cwd: './node_modules/openlayers/'
-      },
-      viite_build_openlayers: {
-        cmd: 'node tasks/build.js ../../viite-UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
-        cwd: './node_modules/openlayers/'
-      }
     }
   });
 
@@ -268,7 +260,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'mocha:viite_integration', 'clean', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:'+target, 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'preprocess:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:'+target, 'preprocess:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
 
   grunt.registerTask('unit-test', ['properties', 'jshint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
 

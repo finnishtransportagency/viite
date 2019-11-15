@@ -1,7 +1,5 @@
 (function (root) {
   root.NodeSearchForm = function (instructionsPopup, map, nodeCollection, backend) {
-    var container = $('#legendDiv');
-    var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
     var header = function() {
       return '<header>' +
         '<span id="close-node-search" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>' +
@@ -67,7 +65,7 @@
     };
 
     var junctionTemplateLink = function(junctionTemplate){
-      return '<a id=' + junctionTemplate.junctionId + ' class="junction-template-link" href="#node/junctionTemplate/' + junctionTemplate.junctionId + '" style="font-weight:bold;cursor:pointer;">' +
+      return '<a id=' + junctionTemplate.id + ' class="junction-template-link" href="#node/junctionTemplate/' + junctionTemplate.id + '" style="font-weight:bold;cursor:pointer;">' +
         junctionTemplate.roadNumber + ' / ' +
         junctionTemplate.track + ' / ' +
         junctionTemplate.roadPartNumber + ' / ' +
@@ -112,7 +110,10 @@
     };
 
     var nodePointTemplatesHtml = function (nodePointTemplates) {
-      var groups = _.groupBy(nodePointTemplates, function (template) {
+      var uniqueNPTemplates = _.uniqWith(nodePointTemplates, function (o1, o2) {
+        return o1.roadNumber === o2.roadNumber && o1.roadPartNumber === o2.roadPartNumber && o1.addrM === o2.addrM;
+      });
+      var groups = _.groupBy(uniqueNPTemplates, function (template) {
         return template.elyCode;
       });
       var text = "";
@@ -152,17 +153,9 @@
 
       var getTemplates = function() {
         backend.getTemplates(function(data){
-          eventbus.trigger('templates:fetched', data);
-          var nodePointTemplates = _.map(_.filter(data, function(nodePoint){
-            return !_.isUndefined(nodePoint.nodePointTemplate) ;
-          }), function(template){
-            return template.nodePointTemplate;
-          });
-          var junctionTemplates = _.map(_.filter(data, function (junction) {
-            return !_.isUndefined(junction.junctionTemplate);
-          }), function(template) {
-            return template.junctionTemplate;
-          });
+          var nodePointTemplates = data.nodePointTemplates;
+          var junctionTemplates = data.junctionTemplates;
+          eventbus.trigger('templates:fetched', nodePointTemplates, junctionTemplates);
           $('#nodes-and-junctions-content').html(junctionTemplatesHtml(junctionTemplates) + nodePointTemplatesHtml(nodePointTemplates));
           applicationModel.removeSpinner();
         });
@@ -216,7 +209,7 @@
           nodeCollection.getNodesByRoadAttributes(data);
         });
 
-        rootElement.on('click', '.node-link', function (event) {
+        rootElement.one('click', '.node-link', function (event) {
           eventbus.trigger('nodeSearchTool:clickNode', event.currentTarget.id, map);
         });
 

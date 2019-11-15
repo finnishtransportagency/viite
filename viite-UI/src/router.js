@@ -109,7 +109,7 @@
     eventbus.on('linkProperties:selected', function (linkProperty) {
       if (!_.isEmpty(models.selectedLinkProperty.get())) {
         if (_.isArray(linkProperty)) {
-          router.navigate('linkProperty/' + _.first(linkProperty).linkId);
+          router.navigate('linkProperty/' + _.head(linkProperty).linkId);
         } else {
           router.navigate('linkProperty/' + linkProperty.linkId);
         }
@@ -139,7 +139,7 @@
       }
     });
 
-    eventbus.on('nodePointTemplate:selected', function (nodePointTemplateId) {
+    eventbus.on('nodePointTemplate:open', function (nodePointTemplateId) {
       router.navigate('nodePointTemplate/' + nodePointTemplateId);
     });
 

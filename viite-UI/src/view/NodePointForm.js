@@ -3,16 +3,14 @@
     var formCommon = new FormCommon('node-point-');
 
     var nodeTemplatePicture = function () {
-      return '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin: 5px 5px 5px 5px">\n' +
-        '    <param name="number" value="99"/>\n' +
-        '</object>';
+      return '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin: 5px 5px 5px 5px"></object>';
     };
 
     var formButtons = function () {
       return '<div class="form form-controls">' +
         '<button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
         '<button class="cancel btn btn-edit-node-cancel" disabled>Peruuta</button>' +
-        '<button class="cancel btn btn-block btn-return-list">Palaa lista-näkymään</button>' +
+        '<button class="cancel btn btn-block btn-return-list">Palaa listanäkymään</button>' +
         '<button class="send btn btn-block btn-send" disabled>Vie Tierekisteriin</button>' +
         '</div>';
     };
@@ -41,6 +39,7 @@
       var nodePointTemplate = _.sortBy(nodePointTemplates, function (nodePoint) {
         return [nodePoint.roadNumber, nodePoint.roadPartNumber, nodePoint.addrM, nodePoint.beforeAfter];
       })[0];
+      eventbus.on('nodePointTemplate:open', nodePointTemplate.id);
       return _.template('' +
         '<header>' +
         formCommon.captionTitle('Solmukohta-aihion tiedot:') +
@@ -75,20 +74,19 @@
       var rootElement = $('#feature-attributes');
 
       rootElement.on('click', '.btn-return-list', function () {
-        selectedNodePoint.close();
+        selectedNodePoint.closeNodePoint();
       });
 
-      eventbus.on('nodePoint:selected', function () {
+      eventbus.on('selectedNodeAndJunctionPoint:close', function () {
+        selectedNodePoint.closeNodePoint();
+      });
+
+      eventbus.on('nodePointTemplate:selected', function () {
         rootElement.empty();
         var templatesList = selectedNodePoint.getCurrentNodePointTemplates();
-        var nodePointsList = [];
 
         if (!_.isEmpty(templatesList)) {
           rootElement.html(nodePointTemplateForm(templatesList));
-        } else if (!_.isEmpty(nodePointsList)) {
-          // build form for node point.
-        } else {
-          selectedNodePoint.close();
         }
 
       });
