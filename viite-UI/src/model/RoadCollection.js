@@ -61,7 +61,8 @@
       var unknownRoadLinkGroups = [];
       var currentZoom = -1;
     var roadLinkGroups = [];
-    var roadLinkGroupsUnderConstruction = [];
+    var underConstructionRoadLinkGroups = [];
+    var unaddressedRoadLinkGroups = [];
     var tmpRoadLinkGroups = [];
     var tmpRoadAddresses = [];
     var tmpNewRoadAddresses = [];
@@ -133,11 +134,17 @@
           });
           var fetched = _.partition(fetchedRoadLinkModels, function (model) {
               return _.every(model, function (mod) {
-                  var modData = mod.getData();
-                  return modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.id === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
+                return mod.getData().roadNumber === 0;
               });
           });
-          unknownRoadLinkGroups = fetched[0];
+
+          unaddressedRoadLinkGroups = _.partition(fetched[0], function(group) {
+          return groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
+          });
+
+          underConstructionRoadLinkGroups = unaddressedRoadLinkGroups[0];
+          unknownRoadLinkGroups = unaddressedRoadLinkGroups[1];
+
           var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
           if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
             setRoadLinkGroups(fetched[1]);
@@ -163,19 +170,19 @@
               return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, SelectionType.Floating.value);
           });
 
-          roadLinkGroupsUnderConstruction = _.filter(roadLinkGroups, function(group) {
-              return groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
+        var nonUnderConstructionRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
+            return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
           });
-          var nonUnderConstructionRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
-              return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
-          });
-        setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(roadLinkGroupsUnderConstruction).concat(floatingRoadLinks));
+
+        setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(underConstructionRoadLinkGroups).concat(floatingRoadLinks));
           eventbus.trigger('roadLinks:fetched', nonUnderConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
           if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
           }
-          if (roadLinkGroupsUnderConstruction.length !== 0)
-              eventbus.trigger('underConstructionRoadLinks:fetched', roadLinkGroupsUnderConstruction);
+          if (underConstructionRoadLinkGroups.length !== 0)
+              eventbus.trigger('underConstructionRoadLinks:fetched', underConstructionRoadLinkGroups);
+          if (unknownRoadLinkGroups.length !== 0)
+              eventbus.trigger('unAddressedRoadLinks:fetched', unknownRoadLinkGroups);
           if (applicationModel.isProjectButton()) {
               eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
               applicationModel.setProjectButton(false);
@@ -201,11 +208,42 @@
       if(_.isArray(group)) {
         return _.some(group, function(roadLink) {
           if(roadLink !== null)
-            return roadLink.getData().constructionType === dataConstructionType.value && roadLink.getData().roadNumber === 0;
+            return roadLink.getData().constructionType === dataConstructionType.value;
           else return false;
         });
       } else {
-        return group.getData().constructionType === dataConstructionType.value && group.getData().roadNumber === 0;
+        return group.getData().constructionType === dataConstructionType.value;
+      }
+    };
+
+    var groupDataUnAddressedTypeFilter = function(group, NoAddressGiven){
+     /*
+      Viite-2075 contains A + B. Although roadNumber === 0 condition might include all wanted options
+      - A Näytä tieosoitteettomat "ei rakenteilla olevat linkit"
+      roadLink.getData().constructionType =  ConstructionType.InUse:
+
+      - B  Näytä tieosoitteettomat
+      modData.roadClass === LinkValues.RoadClass.NoClass.value  ||
+      modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value
+      Viite-2075 modData.roadClass === LinkValues.RoadClass.NoClass.value  ||
+
+      Tämä toimii
+      return modData.roadClass === LinkValues.RoadClass.NoClass.value || modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.roadNumber === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
+
+     */
+
+      if(_.isArray(group)) {
+        return _.some(group, function(roadLink) {
+          if(roadLink !== null){
+            data = roadLink.getData();
+            return data.roadClass === LinkValues.RoadClass.NoClass.value || data.anomaly === LinkValues.Anomaly.NoAddressGiven.value && data.roadNumber === 0 || data.anomaly === LinkValues.Anomaly.GeometryChanged.value;
+
+           // return ((roadLink.getData().roadNumber === 0 && roadLink.getData().constructionType === ConstructionType.InUse) || roadLink.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value ||  roadLink.getData().roadClass === LinkValues.RoadClass.NoClass.value );
+          } else
+            return false;
+        });
+      } else {
+        return group.getData().roadNumber === 0  || group.getData().constructionType === ConstructionType.InUse || group.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value ||  group.getData().roadClass === LinkValues.RoadClass.NoClass.value || group.getData().constructionType === ConstructionType.InUse;
       }
     };
 
@@ -222,7 +260,7 @@
     };
 
     var underConstructionRoadLinks = function() {
-      return _.flatten(roadLinkGroupsUnderConstruction);
+      return _.flatten(underConstructionRoadLinkGroups);
     };
 
     this.getAll = function() {
@@ -231,8 +269,14 @@
       });
     };
 
+    this.getUnaddressedRoadLinkGroups = function() {
+      return _.map(_.flatten(_.flatten(unaddressedRoadLinkGroups)), function(roadLink) {
+        return roadLink.getData();
+      });
+    };
+
     this.getUnderConstructionLinks = function() {
-      return _.map(_.flatten(roadLinkGroupsUnderConstruction), function(roadLink) {
+      return _.map(_.flatten(underConstructionRoadLinkGroups), function(roadLink) {
         return roadLink.getData();
       });
     };
