@@ -212,5 +212,14 @@
         Add:                {value: "Add"}
     };
 
+    root.Discontinuity = {
+        EndOfRoad:             {value : 1, description:"Tien loppu"},
+        Discontinuous:         {value : 2, description:"Epäjatkuva"},
+        ChangingELYCode:       {value : 3, description:"ELY:n raja"},
+        MinorDiscontinuity:    {value : 4, description:"Lievä epäjatkuvuus"},
+        Continuous:            {value : 5, description:"Jatkuva"},
+        ParallelLink:          {value : 6, description:"Parallel Link"}
+
+    };
 })(window.LinkValues = window.LinkValues || {});
 
