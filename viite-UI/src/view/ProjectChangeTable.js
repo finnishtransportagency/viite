@@ -59,7 +59,7 @@
     changeTable.append(changeTableHeader);
 
     function show() {
-      $('.container').append(changeTable.toggle());
+      $('.container').append(changeTable);
       resetInteractions();
       interact('.change-table-frame').unset();
       bindEvents();
