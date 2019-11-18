@@ -14,16 +14,16 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
           eventbus.once('layer:selected', function(){
             done();
           });
-          $('[id^=projectListButton]:visible').prop('disabled', false);
-          $('[id^=projectListButton]:visible').attr('disabled', false);
+          $('[id^=formProjectButton]:visible').prop('disabled', false);
+          $('[id^=formProjectButton]:visible').attr('disabled', false);
           testHelpers.selectLayer('roadAddressProject');
-          testHelpers.clickProjectListButton();
+          testHelpers.clickFormProjectButton();
       }, backend);
     });
 
     it('open project list window', function () {
-      $('[id^=projectListButton]').prop('disabled', false);
-      $('[id^=projectListButton]').attr('disabled', false);
+      $('[id^=formProjectButton]').prop('disabled', false);
+      $('[id^=formProjectButton]').attr('disabled', false);
       assert($('[id^=project-window]:visible').length > 0, "Windows didn't open. Check permissions.");
     });
 

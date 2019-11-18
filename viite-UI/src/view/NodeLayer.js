@@ -539,12 +539,12 @@
     var showLayer = function () {
       me.start();
       me.layerStarted(me.eventListener);
-      $('#projectListButton').prop('disabled', true);
+      $('#formProjectButton').prop('disabled', true);
     };
 
     var hideLayer = function () {
       me.clearLayers(layers);
-      $('#projectListButton').prop('disabled', false);
+      $('#formProjectButton').prop('disabled', false);
     };
 
     me.toggleLayersVisibility(layers, true);
