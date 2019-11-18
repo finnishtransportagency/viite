@@ -98,9 +98,10 @@ object DataFixture {
   }
 
   def initialImport(importTableName: Option[String]): Unit = {
-    println("\nImporting road addresses and nodes and junctions started at time: ")
+    println("\nImporting road addresses, updating geometry and importing nodes and junctions started at time: ")
     println(DateTime.now())
     importRoadAddresses(importTableName)
+    updateLinearLocationGeometry()
     importNodesAndJunctions()
   }
 
