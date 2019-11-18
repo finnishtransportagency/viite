@@ -216,37 +216,6 @@
       }
     };
 
-    var groupDataUnAddressedTypeFilter = function(group, NoAddressGiven){
-     /*
-      Viite-2075 contains A + B. Although roadNumber === 0 condition might include all wanted options
-      - A Näytä tieosoitteettomat "ei rakenteilla olevat linkit"
-      roadLink.getData().constructionType =  ConstructionType.InUse:
-
-      - B  Näytä tieosoitteettomat
-      modData.roadClass === LinkValues.RoadClass.NoClass.value  ||
-      modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value
-      Viite-2075 modData.roadClass === LinkValues.RoadClass.NoClass.value  ||
-
-      Tämä toimii
-      return modData.roadClass === LinkValues.RoadClass.NoClass.value || modData.anomaly === LinkValues.Anomaly.NoAddressGiven.value && modData.roadNumber === 0 || modData.anomaly === LinkValues.Anomaly.GeometryChanged.value;
-
-     */
-
-      if(_.isArray(group)) {
-        return _.some(group, function(roadLink) {
-          if(roadLink !== null){
-            data = roadLink.getData();
-            return data.roadClass === LinkValues.RoadClass.NoClass.value || data.anomaly === LinkValues.Anomaly.NoAddressGiven.value && data.roadNumber === 0 || data.anomaly === LinkValues.Anomaly.GeometryChanged.value;
-
-           // return ((roadLink.getData().roadNumber === 0 && roadLink.getData().constructionType === ConstructionType.InUse) || roadLink.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value ||  roadLink.getData().roadClass === LinkValues.RoadClass.NoClass.value );
-          } else
-            return false;
-        });
-      } else {
-        return group.getData().roadNumber === 0  || group.getData().constructionType === ConstructionType.InUse || group.getData().anomaly == LinkValues.Anomaly.NoAddressGiven.value ||  group.getData().roadClass === LinkValues.RoadClass.NoClass.value || group.getData().constructionType === ConstructionType.InUse;
-      }
-    };
-
     var groupLinkTypeFilter = function(group, dataSource) {
       if (_.isArray(group)) {
         return _.some(group, function(roadLink) {
