@@ -97,6 +97,13 @@ object DataFixture {
     dataImporter.importNodesAndJunctions(Conversion.database())
   }
 
+  def initialImport(importTableName: Option[String]): Unit = {
+    println("\nImporting road addresses and nodes and junctions started at time: ")
+    println(DateTime.now())
+    importRoadAddresses(importTableName)
+    importNodesAndJunctions()
+  }
+
   def updateLinearLocationGeometry(): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
@@ -334,11 +341,16 @@ object DataFixture {
         testIntegrationAPIWithAllMunicipalities()
       case Some("import_nodes_and_junctions") =>
         importNodesAndJunctions()
+      case Some("initial_import") =>
+        if (args.length > 1)
+          initialImport(Some(args(1)))
+        else
+          throw new Exception("****** Import failed! conversiontable name required as second input ******")
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | update_missing " +
         "| import_complementary_road_address " +
         "| update_road_addresses_geometry | import_road_address_change_test_data " +
         "| apply_change_information_to_road_address_links | import_road_names | check_road_network" +
-        "| test | flyway_init | import_nodes_and_junctions")
+        "| test | flyway_init | import_nodes_and_junctions | initial_import")
     }
   }
 
