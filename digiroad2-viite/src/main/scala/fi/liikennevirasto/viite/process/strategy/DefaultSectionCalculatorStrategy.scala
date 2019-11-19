@@ -10,6 +10,9 @@ import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibr
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import org.slf4j.LoggerFactory
+import fi.liikennevirasto.viite.NewIdValue
+
+import scala.collection.immutable.ListMap
 
 class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
 
@@ -74,69 +77,87 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
   }
 
-  def assignProperRoadwayNumber(seq: Seq[ProjectLink], givenRoadwayNumber: Long, originalAddresses: Seq[RoadAddress]): (Long, Boolean) = {
-    val (roadwayNumber, affectNextOnes): (Long, Boolean) = if (seq.nonEmpty && seq.exists(_.status == LinkStatus.New)) {
+  def assignProperRoadwayNumber(continuousProjectLinks: Seq[ProjectLink], givenRoadwayNumber: Long, originalHistorySection: Seq[ProjectLink]): Long = {
+    val roadwayNumber = if (continuousProjectLinks.nonEmpty && continuousProjectLinks.exists(_.status == LinkStatus.New)) {
       // then we now that for sure the addresses increased their length for the part => new roadwayNumber for the new sections
-      (givenRoadwayNumber, false)
-    } else if (seq.nonEmpty && seq.exists(_.status == LinkStatus.Numbering)) {
+     givenRoadwayNumber
+    } else if (continuousProjectLinks.nonEmpty && continuousProjectLinks.exists(_.status == LinkStatus.Numbering)) {
       // then we now that for sure the addresses didnt change the address length part, only changed the number of road or part => same roadwayNumber
-      (seq.headOption.map(_.roadwayNumber).get, false)
+      continuousProjectLinks.headOption.map(_.roadwayNumber).get
     } else {
-      // other cases where the address length could have changed when comparing to their original address length, or also splitted by roadtype (which will be given further below)
-      val roadTypeSection = seq.groupBy(_.roadType)
-      val originalRoadTypeSection = originalAddresses.filter(a => seq.map(_.roadwayId).contains(a.id)).sortBy(_.startAddrMValue).groupBy(_.roadType)
-      // even if the roadtype changes, to have a new roadwayNumber it should change/be splitted the existing roadway section
-      val sortedRoadTypeSectionsByAddress = roadTypeSection.values
-      val sortedOriginalRoadTypeSectionsByAddress = originalRoadTypeSection.values
-      val sameSectionAddressesByAddressLengthAndRoadType = sortedRoadTypeSectionsByAddress.zip(sortedOriginalRoadTypeSectionsByAddress).forall {
-        case (pls, addrs) => (pls.last.endAddrMValue - pls.head.startAddrMValue) == (addrs.last.endAddrMValue - addrs.head.startAddrMValue)
-      }
-      val (innerRoadwayNumber, innerFlag) = if (roadTypeSection.keys.size == originalRoadTypeSection.keys.size && sameSectionAddressesByAddressLengthAndRoadType)
-        (seq.headOption.map(_.roadwayNumber).get, false)
+      val originalAddresses = getRoadAddressesByRoadwayIds(originalHistorySection.map(_.roadwayId))
+      val isSameAddressLengthSection = (continuousProjectLinks.last.endAddrMValue - continuousProjectLinks.head.startAddrMValue) == (originalAddresses.last.endAddrMValue - originalAddresses.head.startAddrMValue)
+      val innerRoadwayNumber = if (isSameAddressLengthSection)
+        continuousProjectLinks.headOption.map(_.roadwayNumber).get
       else
-        (givenRoadwayNumber, true)
-      (innerRoadwayNumber, innerFlag)
+        givenRoadwayNumber
+      innerRoadwayNumber
     }
-    (roadwayNumber, affectNextOnes)
+    roadwayNumber
   }
 
-  private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long, originalAddresses: Seq[RoadAddress]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long]): Seq[RoadAddress] = {
+    val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
+    val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
+    roadAddresses
+  }
+
+  private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-
+    val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
-    val continuousProjectLinks = seq.takeWhile(pl => pl.track == track && pl.roadType.value == roadType)
+    val firstLinkStatus = seq.headOption.map(_.status).getOrElse(LinkStatus.Unknown)
+    val originalHistorySection = if (firstLinkStatus == LinkStatus.New) Seq() else seq.takeWhile(pl => pl.track == track && pl.roadwayNumber == roadwayNumber)
+    val continuousProjectLinks =
+      if (firstLinkStatus == LinkStatus.New)
+        seq.takeWhile(pl => pl.status.equals(LinkStatus.New) && pl.status.equals(LinkStatus.New) && pl.track == track && pl.roadType.value == roadType).sortBy(_.startAddrMValue)
+      else
+        seq.takeWhile(pl => pl.track == track && pl.roadType.value == roadType && pl.roadwayNumber == roadwayNumber).sortBy(_.startAddrMValue)
 
-    val (assignedRoadwayNumber, affectNextOnes) = assignProperRoadwayNumber(seq, givenRoadwayNumber, originalAddresses)
-    val passByRestLinks = if (affectNextOnes) {
-      val nextRoadwayNumber = Sequences.nextRoadwayNumber
-      seq.drop(continuousProjectLinks.size).map(_.copy(roadwayNumber = nextRoadwayNumber))
-    } else {
-      seq.drop(continuousProjectLinks.size)
-    }
-    (continuousProjectLinks.map(pl => pl.copy(roadwayNumber = assignedRoadwayNumber)), passByRestLinks)
+    val assignedRoadwayNumber = assignProperRoadwayNumber(continuousProjectLinks, givenRoadwayNumber, originalHistorySection)
+    (continuousProjectLinks.map(pl => pl.copy(roadwayNumber = assignedRoadwayNumber)), seq.drop(continuousProjectLinks.size))
   }
 
   private def calculateSectionAddressValues(sections: Seq[CombinedSection],
                                             userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[CombinedSection] = {
-    def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long]): Seq[RoadAddress] = {
-      val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
-      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
-      roadAddresses
-    }
 
     def adjustTracksToMatch(leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+      def adjustTwoTrackRoadwayNumbers(firstRight: Seq[ProjectLink], restRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink], restLeft: Seq[ProjectLink])
+      : ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
+        val (transferLinks, newLinks) = if (firstRight.exists(_.status == LinkStatus.Transfer)) (firstRight, firstLeft) else (firstLeft, firstRight)
+        val groupedTransfer: ListMap[Long, Seq[ProjectLink]] = ListMap(transferLinks.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue):_*)
 
+        val adjustedNewLinks = groupedTransfer.foldLeft(Seq.empty[ProjectLink], newLinks) {
+          case ((adjustedLinks, linksToProcess), group) =>
+            val newRoadwayNumber = Sequences.nextRoadwayNumber
+            val links = linksToProcess.take(group._2.size).map(_.copy(roadwayNumber = newRoadwayNumber))
+            val linksLeft = linksToProcess.drop(group._2.size)
+            (adjustedLinks ++ links, linksLeft)
+        }._1
+
+        val (right, left) = if (adjustedNewLinks.exists(_.track == Track.RightSide)) (adjustedNewLinks, transferLinks) else (transferLinks, adjustedNewLinks)
+        ((right, restRight), (left, restLeft))
+      }
+      def adjustableToRoadwayNumberAttribution(firstRight: Seq[ProjectLink], restRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink], restLeft: Seq[ProjectLink]): Boolean = {
+        ((firstRight.forall(_.status == LinkStatus.New) && firstLeft.forall(_.status == LinkStatus.Transfer))
+          || (firstRight.forall(_.status == LinkStatus.Transfer) && firstLeft.forall(_.status == LinkStatus.New))) && firstRight.size == firstLeft.size
+      }
 
         if (rightLinks.isEmpty && leftLinks.isEmpty) {
           (Seq(), Seq())
         } else {
 
+          val right = continuousWOutRoadwayNumberSection(rightLinks)
+          val left = continuousWOutRoadwayNumberSection(leftLinks)
+
             val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
-              {
+              if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
+                adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
+              } else {
                 val newRoadwayNumber1 = Sequences.nextRoadwayNumber
                 val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
-                (continuousRoadwaySection(rightLinks, newRoadwayNumber1, getRoadAddressesByRoadwayIds(rightLinks.map(_.roadwayId))),
-                  continuousRoadwaySection(leftLinks, newRoadwayNumber2, getRoadAddressesByRoadwayIds(leftLinks.map(_.roadwayId))))
+                (continuousRoadwaySection(rightLinks, newRoadwayNumber1),
+                  continuousRoadwaySection(leftLinks, newRoadwayNumber2))
               }
 
           if (firstRight.isEmpty || firstLeft.isEmpty)
