@@ -139,7 +139,7 @@
           });
 
           unaddressedRoadLinkGroups = _.partition(fetched[0], function(group) {
-          return groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
+            return groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
           });
 
           underConstructionRoadLinkGroups = unaddressedRoadLinkGroups[0];
