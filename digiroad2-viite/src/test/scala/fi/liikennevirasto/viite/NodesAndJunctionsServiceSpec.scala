@@ -101,14 +101,14 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
 
   def buildTestDataForProject(project: Option[Project], rws: Option[Seq[Roadway]], lil: Option[Seq[LinearLocation]], pls: Option[Seq[ProjectLink]]): Unit ={
-    if(rws.nonEmpty)
+    if (rws.nonEmpty)
       roadwayDAO.create(rws.get)
-    if(lil.nonEmpty)
+    if (lil.nonEmpty)
       linearLocationDAO.create(lil.get, "user")
-    if(project.nonEmpty)
+    if (project.nonEmpty)
       projectDAO.create(project.get)
-    if(pls.nonEmpty) {
-      if(project.nonEmpty){
+    if (pls.nonEmpty) {
+      if (project.nonEmpty){
         val roadParts = pls.get.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).keys
         roadParts.foreach(rp => projectReservedPartDAO.reserveRoadPart(project.get.id, rp._1, rp._2, "user"))
         projectLinkDAO.create(pls.get.map(_.copy(projectId = project.get.id)))
