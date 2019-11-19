@@ -111,10 +111,6 @@
       eventbus.trigger('tool:changed', selectedTool);
     }
 
-    var selectedToolIs = function (tool) {
-      return selectedTool === tool;
-    };
-
     var getCurrentAction = function () {
       return currentAction;
     };
@@ -168,7 +164,6 @@
       },
       getUserGeoLocation: getUserGeoLocation,
       setSelectedTool: setSelectedTool,
-      selectedToolIs: selectedToolIs,
       getSelectedTool: function () {
         return selectedTool;
       },
@@ -203,6 +198,19 @@
                 }
             }
             eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
+        }
+        var unAddressedRoadsVisibleCheckbox = $('#unAddressedRoadsVisibleCheckbox')[0];
+        if (layer !== selectedLayer || toggleStart) {
+          if (unAddressedRoadsVisibleCheckbox) {
+            if (layer === 'roadAddressProject') {
+              $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
+              $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
+            } else {
+              $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
+              $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
+            }
+          }
+          eventbus.trigger('unAddressedRoadsProjectRoads:toggleVisibility', true);
         }
       },
       getSelectedLayer: function () {

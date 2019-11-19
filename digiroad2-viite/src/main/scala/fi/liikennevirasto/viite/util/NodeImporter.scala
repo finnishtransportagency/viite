@@ -24,18 +24,18 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
                             validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
   case class ConversionNodePoint(id: Long, beforeOrAfter: Long, nodeId: Long, nodeNumber: Long, roadwayNumberTR: Long, addressMValueTR: Long,
-                                 startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
+                                 validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
   private def insertNodeStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
       " (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)")
 
   private def insertNodePointStatement(): PreparedStatement =
-    dynamicSession.prepareStatement(sql = "INSERT INTO NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_ID, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?) ")
+    dynamicSession.prepareStatement(sql = "INSERT INTO NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_NUMBER, VALID_FROM, CREATED_BY) VALUES " +
+      " (?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), ?) ")
 
 
-  def insertNode(nodeStatement: PreparedStatement, conversionNode: ConversionNode): Unit ={
+  def insertNode(nodeStatement: PreparedStatement, conversionNode: ConversionNode): Unit = {
     nodeStatement.setLong(1, conversionNode.id)
     nodeStatement.setLong(2, conversionNode.nodeNumber)
     nodeStatement.setObject(3, OracleDatabase.createRoadsJGeometry(Seq(conversionNode.coordinates), dynamicSession.conn, endMValue = 0))
@@ -48,15 +48,13 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodeStatement.addBatch()
   }
 
-  def insertNodePoint(nodePointStatement: PreparedStatement, nodePoint: ConversionNodePoint, nodeId: Long, roadwayPointId: Long): Unit = {
+  def insertNodePoint(nodePointStatement: PreparedStatement, nodePoint: ConversionNodePoint, nodeNumber: Long, roadwayPointId: Long): Unit = {
     nodePointStatement.setLong(1, Sequences.nextNodePointId)
     nodePointStatement.setLong(2, nodePoint.beforeOrAfter)
     nodePointStatement.setLong(3, roadwayPointId)
-    nodePointStatement.setLong(4, nodeId)
-    nodePointStatement.setString(5, datePrinter(nodePoint.startDate))
-    nodePointStatement.setString(6, datePrinter(nodePoint.endDate))
-    nodePointStatement.setString(7, datePrinter(nodePoint.validFrom))
-    nodePointStatement.setString(8, nodePoint.createdBy)
+    nodePointStatement.setLong(4, nodeNumber)
+    nodePointStatement.setString(5, datePrinter(nodePoint.validFrom))
+    nodePointStatement.setString(6, nodePoint.createdBy)
     nodePointStatement.addBatch()
   }
 
@@ -81,10 +79,10 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
             println(s"Inserting node point with TR id = ${conversionNodePoint.id} and node_id = ${conversionNodePoint.nodeId} for node_number = ${conversionNode._1.nodeNumber}")
             if(existingRoadwayPoint.isEmpty){
               val newRoadwayPoint = roadwayPointDAO.create(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR, createdBy = "node_import")
-              insertNodePoint(nodePointPs, conversionNodePoint, newNodeId, newRoadwayPoint)
+              insertNodePoint(nodePointPs, conversionNodePoint, conversionNode._1.nodeNumber, newRoadwayPoint)
             }
             else
-              insertNodePoint(nodePointPs, conversionNodePoint, newNodeId, existingRoadwayPoint.get.id)
+              insertNodePoint(nodePointPs, conversionNodePoint, conversionNode._1.nodeNumber, existingRoadwayPoint.get.id)
           }
         }
     }
@@ -104,11 +102,13 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
 
   protected def fetchNodePointsFromConversionTable(): Seq[ConversionNodePoint] = {
     conversionDatabase.withDynSession {
-      sql"""SELECT NP.ID, NP.EJ, NP.ID_SOLMU, SOLMU.SOLMUNRO, AP.ID_AJORATA, AP.ETAISYYS, TO_CHAR(NP.VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(NP.VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
+      sql"""SELECT NP.ID, NP.EJ, NP.ID_SOLMU, N.SOLMUNRO, AP.ID_AJORATA, AP.ETAISYYS,
             TO_CHAR(np.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), NP.KAYTTAJA, TO_CHAR(NP.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
             FROM SOLMUKOHTA NP
             JOIN AJORADAN_PISTE AP ON (ID_TIEOSOITE = AP.ID)
-            JOIN SOLMU ON (ID_SOLMU = SOLMU.ID) """
+            JOIN SOLMU N ON (ID_SOLMU = N.ID)
+            WHERE NP.VOIMASSAOLOAIKA_LOPPU IS NULL OR N.VOIMASSAOLOAIKA_LOPPU IS NOT NULL
+      """
         .as[ConversionNodePoint].list
     }
   }
@@ -139,8 +139,6 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
       val nodeNumber = r.nextLong()
       val roadwayNumberInTR = r.nextLong()
       val addressMValueInTR = r.nextLong()
-      val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val endDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextString()
       val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
@@ -149,7 +147,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
         case "J" => 2
         case _ => 0
       }
-      ConversionNodePoint(id, beforeOrAfter, nodeId, nodeNumber, roadwayNumberInTR, addressMValueInTR, startDate, endDate, validFrom, None, createdBy, createdTime)
+      ConversionNodePoint(id, beforeOrAfter, nodeId, nodeNumber, roadwayNumberInTR, addressMValueInTR, validFrom, None, createdBy, createdTime)
     }
   }
 
