@@ -133,8 +133,8 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       $('.link-properties button.save:enabled').click();
     };
 
-    var clickProjectListButton = function(){
-      $('[id=projectListButton]').click();
+    var clickFormProjectButton = function(){
+      $('[id=formProjectButton]').click();
     };
 
     var clickNextButton = function(){
@@ -317,7 +317,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       clickValintaButton:clickValintaButton,
       clickEnabledSiirraButton: clickEnabledSiirraButton,
       clickVisibleEditModeButton: clickVisibleEditModeButton,
-      clickProjectListButton: clickProjectListButton,
+      clickFormProjectButton: clickFormProjectButton,
       clickNextButton: clickNextButton,
       clickReserveButton: clickReserveButton,
       clickOpenProjectButton: clickOpenProjectButton,

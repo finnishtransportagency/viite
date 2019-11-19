@@ -4,7 +4,7 @@ import java.sql.PreparedStatement
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.{ProjectService, RoadType, dao}
-import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, Discontinuous, MinorDiscontinuity}
+import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadwaySection}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -136,13 +136,18 @@ class RoadwayChangesDAO {
     val source = toRoadwayChangeSource(row)
     val target = toRoadwayChangeRecipient(row)
     RoadwayChangeInfo(AddressChangeType.apply(row.changeType), source, target,
-      Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value)),
+      replaceParallelLink(Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value))),
       RoadType.apply(row.targetRoadType.getOrElse(RoadType.Unknown.value)),
       row.reversed,
       row.orderInTable,
       target.ely.getOrElse(source.ely.get))
   }
 
+  private def replaceParallelLink(currentDiscontinuity: Discontinuity): Discontinuity = {
+    if (currentDiscontinuity == ParallelLink)
+      Continuous
+    else currentDiscontinuity
+  }
   // TODO: cleanup after modification dates and modified by are populated correctly
   private def getUserAndModDate(row: ChangeRow): (String, DateTime) = {
     val user = if (row.modifiedDate.isEmpty) {
@@ -187,6 +192,7 @@ class RoadwayChangesDAO {
       else
         resultList ++ Seq(nextRow)
     }
+
 
     def combineReversed(resultList: Seq[ChangeRow], nextRow: ChangeRow): Seq[ChangeRow] = {
       val previousRow = resultList.last
@@ -305,11 +311,11 @@ class RoadwayChangesDAO {
       }
       roadwayChangePS.setLong(1, projectId)
       roadwayChangePS.setLong(2, addressChangeType.value)
-      roadwayChangePS.setLong(13, Discontinuity.replaceParallelLink(roadwaySection.discontinuity).value)
+      roadwayChangePS.setLong(13, roadwaySection.discontinuity.value)
       roadwayChangePS.setLong(14, roadwaySection.roadType.value)
       roadwayChangePS.setLong(15, roadwaySection.ely)
       roadwayChangePS.setLong(16, roadwaySection.roadType.value)
-      roadwayChangePS.setLong(17, Discontinuity.replaceParallelLink(roadwaySection.discontinuity).value)
+      roadwayChangePS.setLong(17, roadwaySection.discontinuity.value)
       roadwayChangePS.setLong(18, roadwaySection.ely)
       roadwayChangePS.setLong(19, if (roadwaySection.reversed) 1 else 0)
       roadwayChangePS.setLong(20, nextChangeOrderLink)
@@ -340,11 +346,11 @@ class RoadwayChangesDAO {
       roadwayChangePS.setDouble(10, newRoadwaySection.startMAddr)
       roadwayChangePS.setDouble(11, oldRoadwaySection.endMAddr)
       roadwayChangePS.setDouble(12, newRoadwaySection.endMAddr)
-      roadwayChangePS.setLong(13, Discontinuity.replaceParallelLink(newRoadwaySection.discontinuity).value)
+      roadwayChangePS.setLong(13, newRoadwaySection.discontinuity.value)
       roadwayChangePS.setLong(14, newRoadwaySection.roadType.value)
       roadwayChangePS.setLong(15, newRoadwaySection.ely)
       roadwayChangePS.setLong(16, oldRoadwaySection.roadType.value)
-      roadwayChangePS.setLong(17, Discontinuity.replaceParallelLink(oldRoadwaySection.discontinuity).value)
+      roadwayChangePS.setLong(17, oldRoadwaySection.discontinuity.value)
       roadwayChangePS.setLong(18, oldRoadwaySection.ely)
       roadwayChangePS.setLong(19, if (newRoadwaySection.reversed) 1 else 0)
       roadwayChangePS.setLong(20, nextChangeOrderLink)
