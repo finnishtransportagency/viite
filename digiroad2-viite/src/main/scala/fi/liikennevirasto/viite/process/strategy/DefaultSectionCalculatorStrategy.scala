@@ -98,9 +98,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
     val firstLinkStatus = seq.headOption.map(_.status).getOrElse(LinkStatus.Unknown)
-    val originalHistorySection = if(firstLinkStatus == LinkStatus.New) Seq() else seq.takeWhile(pl => pl.track == track && pl.roadwayNumber == roadwayNumber)
+    val originalHistorySection = if (firstLinkStatus == LinkStatus.New) Seq() else seq.takeWhile(pl => pl.track == track && pl.roadwayNumber == roadwayNumber)
     val continuousProjectLinks =
-      if(firstLinkStatus == LinkStatus.New)
+      if (firstLinkStatus == LinkStatus.New)
         seq.takeWhile(pl => pl.status.equals(LinkStatus.New) && pl.status.equals(LinkStatus.New) && pl.track == track && pl.roadType.value == roadType).sortBy(_.startAddrMValue)
       else
         seq.takeWhile(pl => pl.track == track && pl.roadType.value == roadType && pl.roadwayNumber == roadwayNumber).sortBy(_.startAddrMValue)
