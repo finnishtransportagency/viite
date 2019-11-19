@@ -1,44 +1,44 @@
-Digiroad - V&auml;yl&auml;verkon hallinta (VVH) -sovelluksen k&auml;ytt&ouml;ohje
+Digiroad - Väyläverkon hallinta (VVH) -sovelluksen käyttöohje
 ======================================================
 
-1. Yleist&auml;
+1. Yleistä
 -----------------------
 
-V&auml;yl&auml;verkon hallinta (VVH) -sovellus on osa Digiroad-tietoj&auml;rjestelm&auml;&auml;. VVH-sovelluksessa hallinnoidaan linkki-solmu -mallista v&auml;yl&auml;verkkoa (geometriaa). Digiroad-tietoj&auml;rjestelm&auml; koostuu ominaisuustietojen hallinta -sovelluksesta (OTH) ja VVH-sovelluksesta yhdess&auml;. VVH tarjoaa OTH:lle geometriatiedot rajapinnan kautta, eik&auml; geometriaa hallinnoida OTH-sovelluksen puolella.
+Väyläverkon hallinta (VVH) -sovellus on osa Digiroad-tietojärjestelmää. VVH-sovelluksessa hallinnoidaan linkki-solmu -mallista väyläverkkoa (geometriaa). Digiroad-tietojärjestelmä koostuu ominaisuustietojen hallinta -sovelluksesta (OTH) ja VVH-sovelluksesta yhdessä. VVH tarjoaa OTH:lle geometriatiedot rajapinnan kautta, eikä geometriaa hallinnoida OTH-sovelluksen puolella.
 
-VVH-sovellus tarjoaa geometriatiedot my&ouml;s Viite-sovellukselle. Uudessa Viite-sovelluksessa hallinnoidaan V&auml;yl&auml;n tieosoiteverkkoa.
+VVH-sovellus tarjoaa geometriatiedot myös Viite-sovellukselle. Uudessa Viite-sovelluksessa hallinnoidaan Väylän tieosoiteverkkoa.
 
-T&auml;ss&auml; ohjeessa k&auml;sitell&auml;&auml;n ainoastaan V&auml;yl&auml;verkon hallinnan sovellusta.
+Tässä ohjeessa käsitellään ainoastaan Väyläverkon hallinnan sovellusta.
 
-VVH-sovellus tarjoaa geometrian yll&auml;pitoon erilaisia ty&ouml;kaluja, joiden avulla geometriaa voidaan ladata tietokantaan ja muokata:
+VVH-sovellus tarjoaa geometrian ylläpitoon erilaisia työkaluja, joiden avulla geometriaa voidaan ladata tietokantaan ja muokata:
 
-1. Maanmittauslaitoksen Maastotietokannasta tulevat MTK-p&auml;ivitykset (muutostiedot) ladataan automaattisesti joka y&ouml; klo 23.00*. __T&auml;m&auml; prosessi on kehitystiimin vastuulla,__ koska se tapahtuu automatisoidusti, ja p&auml;ivitysten toiminnasta vastaa sovellustoimittaja (CGI). MML:n toimittamaa aineistoa ei voi my&ouml;sk&auml;&auml;n muokata VVH-sovelluksessa.
+1. Maanmittauslaitoksen Maastotietokannasta tulevat MTK-päivitykset (muutostiedot) ladataan automaattisesti joka yö klo 23.00*. __Tämä prosessi on kehitystiimin vastuulla,__ koska se tapahtuu automatisoidusti, ja päivitysten toiminnasta vastaa sovellustoimittaja (CGI). MML:n toimittamaa aineistoa ei voi myöskään muokata VVH-sovelluksessa.
 
-1. Suunnitelmageometrian tallennetaminen VVH:n tietokantaan sovelluksen avulla. Ty&ouml; tehd&auml;&auml;n manuaalisesti. Olennaisessa osassa t&auml;t&auml; on VVH-ty&ouml;nohjaus (workflow), jonka mukaan k&auml;ytt&auml;j&auml;n toimenpiteet etenev&auml;t sovelluksessa.
+1. Suunnitelmageometrian tallennetaminen VVH:n tietokantaan sovelluksen avulla. Työ tehdään manuaalisesti. Olennaisessa osassa tätä on VVH-työnohjaus (workflow), jonka mukaan käyttäjän toimenpiteet etenevät sovelluksessa.
 
-1. T&auml;ydent&auml;v&auml;n geometrian tallennetaminen VVH:n tietokantaan sovelluksen avulla. Ty&ouml; tehd&auml;&auml;n manuaalisesti. Olennaisessa osassa t&auml;t&auml; on VVH-ty&ouml;nohjaus (workflow), jonka mukaan k&auml;ytt&auml;j&auml;n toimenpiteet etenev&auml;t sovelluksessa.
+1. Täydentävän geometrian tallennetaminen VVH:n tietokantaan sovelluksen avulla. Työ tehdään manuaalisesti. Olennaisessa osassa tätä on VVH-työnohjaus (workflow), jonka mukaan käyttäjän toimenpiteet etenevät sovelluksessa.
 
-V&auml;yl&auml;verkon hallinta -sovellus on toteutettu Esri ArcGIS-teknologian p&auml;&auml;lle. K&auml;ytett&auml;v&auml; ArcGIS-sovellus on ArcMap 10.3. ArcEditor-lisenssill&auml;. Sovellusta k&auml;ytet&auml;&auml;n V&auml;yl&auml;n Citrix-palvelun kautta. Sovelluksessa on k&auml;yt&ouml;ss&auml; my&ouml;s kaikki ArcEditorin tavalliset toiminnot, eik&auml; niit&auml; k&auml;sitell&auml; t&auml;ss&auml; ohjeessa erikseen. Ohje olettaa, ett&auml; k&auml;ytt&auml;j&auml;lle ovat ArcMapin perustoiminnallisuudet tuttuja.
+Väyläverkon hallinta -sovellus on toteutettu Esri ArcGIS-teknologian päälle. Käytettävä ArcGIS-sovellus on ArcMap 10.3. ArcEditor-lisenssillä. Sovellusta käytetään Väylän Citrix-palvelun kautta. Sovelluksessa on käytössä myös kaikki ArcEditorin tavalliset toiminnot, eikä niitä käsitellä tässä ohjeessa erikseen. Ohje olettaa, että käyttäjälle ovat ArcMapin perustoiminnallisuudet tuttuja.
 
-1.1 Yhteystiedot ja k&auml;ytt&auml;j&auml;tunnukset
+1.1 Yhteystiedot ja käyttäjätunnukset
 --------------------------
 
-VVH-sovelluksen k&auml;ytt&ouml;&auml; varten tulee olla p&auml;&auml;sy V&auml;yl&auml;n Citrix-palveluun, jonka lis&auml;ksi annetaan erikseen oikeudet VVH-sovellukseen.
+VVH-sovelluksen käyttöä varten tulee olla pääsy Väylän Citrix-palveluun, jonka lisäksi annetaan erikseen oikeudet VVH-sovellukseen.
 
-__K&auml;ytt&auml;j&auml;tunnukset Citrix-palveluun:__ V&auml;yl&auml;n oman yhteyshenkil&ouml;n kautta
-__K&auml;ytt&auml;j&auml;tunnukset VVH-sovellukseen ja sovellustuki:__ Digiroad-operaattori, info@digiroad.fi
+__Käyttäjätunnukset Citrix-palveluun:__ Väylän oman yhteyshenkilön kautta
+__Käyttäjätunnukset VVH-sovellukseen ja sovellustuki:__ Digiroad-operaattori, info@digiroad.fi
 
 1.2 Termit ja lyhenteet
 --------------------------
 
 __Hallinnollinen luokka__
-Tien omistaja (valtio, kunta, yksityinen tai ei tiedossa), yll&auml;pidosta vastaa MML.
+Tien omistaja (valtio, kunta, yksityinen tai ei tiedossa), ylläpidosta vastaa MML.
 
 __Linkki-solmu verkko tai linkki-solmu malli__
-Tielinkkien ja tiesolmujen muodostoma topologisesti ehe&auml; verkko. Tiesolmut liitt&auml;v&auml;t tielinkit toisiinsa.
+Tielinkkien ja tiesolmujen muodostoma topologisesti eheä verkko. Tiesolmut liittävät tielinkit toisiinsa.
 
 __Kohdeluokka (tai tieluokka)__
-Maanmittauslaitoksen k&auml;ytt&auml;m&auml; luokittelu linkkien hierarkialle, esimerkiksi Autotie Ia, Autotie Ib, ajopolku jne. Digiroadissa vastaava termi on toiminnallinen luokka (+linkkityyppi), mutta n&auml;m&auml; eiv&auml;t vastaa toisiaan suoraan. Jokaisella tielinkill&auml; on kohdeluokka.
+Maanmittauslaitoksen käyttämä luokittelu linkkien hierarkialle, esimerkiksi Autotie Ia, Autotie Ib, ajopolku jne. Digiroadissa vastaava termi on toiminnallinen luokka (+linkkityyppi), mutta nämä eivät vastaa toisiaan suoraan. Jokaisella tielinkillä on kohdeluokka.
 
 __MML__
 Maanmittauslaitos
@@ -47,405 +47,405 @@ __MTK__
 Maanmittauslaitoksen Maastotietokanta.
 
 __Suravage__
-Suunniteltu rakentamisvaiheen geometria. Suravage-geometrioita tallennetaan VVH:n tietokantaan ty&ouml;nohjauksen (workflown) mukaisesti VVH:n ja ArcMapin ty&ouml;kaluilla.
+Suunniteltu rakentamisvaiheen geometria. Suravage-geometrioita tallennetaan VVH:n tietokantaan työnohjauksen (workflown) mukaisesti VVH:n ja ArcMapin työkaluilla.
 
 __Suunnitelmalinkki__
-Suunnitelmalinkki-tasolla ovat Suravage-geometrian tielinkit. Suunnitelmaty&ouml;n&auml; tehdyt ty&ouml;linkit siirtyv&auml;t suunnitelmalinkki-tasolle checkinin yhteydess&auml;, ja poistuvat ty&ouml;linkki-tasolta.
+Suunnitelmalinkki-tasolla ovat Suravage-geometrian tielinkit. Suunnitelmatyönä tehdyt työlinkit siirtyvät suunnitelmalinkki-tasolle checkinin yhteydessä, ja poistuvat työlinkki-tasolta.
 
 __Suunnitelmasolmu__
-Suunnitelmasolmu-tasolla ovat Suravage-geometrian solmut. Suunnitelmaty&ouml;n&auml; tehdyt ty&ouml;solmut siirtyv&auml;t suunnitelmasolmu-tasolle checkinin yhteydess&auml;, ja poistuvat ty&ouml;solmu-tasolta.
+Suunnitelmasolmu-tasolla ovat Suravage-geometrian solmut. Suunnitelmatyönä tehdyt työsolmut siirtyvät suunnitelmasolmu-tasolle checkinin yhteydessä, ja poistuvat työsolmu-tasolta.
 
 __Tielinkki tai linkki__
-MML:n ja siten VVH:n tiegeometrian perusyksikk&ouml;. Yhteen tielinkkiin voi liitty&auml; 2-n tiesolmua. Tielinkkej&auml; ei voi muokata VVH-sovelluksessa
+MML:n ja siten VVH:n tiegeometrian perusyksikkö. Yhteen tielinkkiin voi liittyä 2-n tiesolmua. Tielinkkejä ei voi muokata VVH-sovelluksessa
 
 __Tiesolmu tai solmu__
-K&auml;ytet&auml;&auml;n kuvaamaan kahden tai useamman tielinkin kytk&ouml;st&auml;, tielinkin alkua tai p&auml;&auml;tepistett&auml;. Jokaisella tielinkill&auml; on alkusolmu ja loppusolmu. Solmujen hallinta on automaattista, eli VVH-sovellus lis&auml;&auml; ja poistaa ne sek&auml; t&auml;ydent&auml;&auml; niiden ominaisuustiedot automaattisesti. Yhteen solmuun voi liitty&auml; 1-n tielinkki&auml;.
+Käytetään kuvaamaan kahden tai useamman tielinkin kytköstä, tielinkin alkua tai päätepistettä. Jokaisella tielinkillä on alkusolmu ja loppusolmu. Solmujen hallinta on automaattista, eli VVH-sovellus lisää ja poistaa ne sekä täydentää niiden ominaisuustiedot automaattisesti. Yhteen solmuun voi liittyä 1-n tielinkkiä.
 
-__Ty&ouml;__
-VVH:n ty&ouml;nohjauksen ilmentym&auml;. Ty&ouml;n sis&auml;ll&auml; tehd&auml;&auml;n kaikki muutokset, jotka halutaan ko. ty&ouml;st&auml; tallentaa tietokantaan.
+__Työ__
+VVH:n työnohjauksen ilmentymä. Työn sisällä tehdään kaikki muutokset, jotka halutaan ko. työstä tallentaa tietokantaan.
 
-__Ty&ouml;alue__
-Ty&ouml;n rajaava aluerajaus (polygoni). Ty&ouml;n luominen alkaa ty&ouml;alueen rajauksella. Ty&ouml;h&ouml;n liittyv&auml;t uudet kohteet luodaan t&auml;m&auml;n ty&ouml;alueen sis&auml;ll&auml;.
+__Työalue__
+Työn rajaava aluerajaus (polygoni). Työn luominen alkaa työalueen rajauksella. Työhön liittyvät uudet kohteet luodaan tämän työalueen sisällä.
 
-__Ty&ouml;linkki__
-Ty&ouml;linkki on linkki, joka luodaan ty&ouml;n aikana. Ty&ouml;linkki-tasolla linkit (esim. suunnitelmalinkit) ovat muokattavissa.
+__Työlinkki__
+Työlinkki on linkki, joka luodaan työn aikana. Työlinkki-tasolla linkit (esim. suunnitelmalinkit) ovat muokattavissa.
 
-__Ty&ouml;nohjaus, workflow__
-K&auml;ytt&auml;j&auml;n toiminta sovelluksessa uusien linkkien digitoinnin osalta etenee VVH:n ty&ouml;nohjauksen mukaan. K&auml;ytt&auml;j&auml; ei voi tallentaa uusia tielinkkej&auml; tietokantaan muuten, kuin ty&ouml;nohjauksen mukaisesti. J&auml;rjestelm&auml; est&auml;&auml; ty&ouml;nohjauksesta poikkeavan toiminnan.
+__Työnohjaus, workflow__
+Käyttäjän toiminta sovelluksessa uusien linkkien digitoinnin osalta etenee VVH:n työnohjauksen mukaan. Käyttäjä ei voi tallentaa uusia tielinkkejä tietokantaan muuten, kuin työnohjauksen mukaisesti. Järjestelmä estää työnohjauksesta poikkeavan toiminnan.
 
-__Ty&ouml;solmu__
-Ty&ouml;solmu on solmu, joka luodana ty&ouml;n aikana. Ty&ouml;solmu-tasolla solmut ovat muokattavissa. VVH-j&auml;rjestelm&auml;ss&auml; solmujen hallinta on automatisoitu.
+__Työsolmu__
+Työsolmu on solmu, joka luodana työn aikana. Työsolmu-tasolla solmut ovat muokattavissa. VVH-järjestelmässä solmujen hallinta on automatisoitu.
 
-__T&auml;ydent&auml;v&auml; linkki__
-T&auml;ydent&auml;v&auml; linkki -tasolla ovat t&auml;ydent&auml;v&auml;n geometrian tielinkit. T&auml;ydent&auml;v&auml;n geometrian ty&ouml;n&auml; tehdyt ty&ouml;linkit siirtyv&auml;t t&auml;ydent&auml;v&auml; linkki -tasolle checkinin yhteydess&auml;, ja poistuvat ty&ouml;linkki-tasolta.
+__Täydentävä linkki__
+Täydentävä linkki -tasolla ovat täydentävän geometrian tielinkit. Täydentävän geometrian työnä tehdyt työlinkit siirtyvät täydentävä linkki -tasolle checkinin yhteydessä, ja poistuvat työlinkki-tasolta.
 
-__T&auml;ydent&auml;v&auml; solmu__
-T&auml;ydent&auml;v&auml; solmu -tasolla ovat t&auml;ydent&auml;v&auml;n geometrian solmut. T&auml;ydent&auml;v&auml;n geometrian ty&ouml;n&auml; tehdyt ty&ouml;solmut siirtyv&auml;t t&auml;ydent&auml;v&auml; solmu -tasolle checkinin yhteydess&auml;, ja poistuvat ty&ouml;solmu-tasolta.
+__Täydentävä solmu__
+Täydentävä solmu -tasolla ovat täydentävän geometrian solmut. Täydentävän geometrian työnä tehdyt työsolmut siirtyvät täydentävä solmu -tasolle checkinin yhteydessä, ja poistuvat työsolmu-tasolta.
 
 __Verteksi__
-Tielinkin taitepistet (digitoidut pisteet). Tielinkill&auml; voi olla 2-n verteksi&auml; riippuen digitoinnin tarkkuudesta.
+Tielinkin taitepistet (digitoidut pisteet). Tielinkillä voi olla 2-n verteksiä riippuen digitoinnin tarkkuudesta.
 
 1.2.1 Kohteiden ID-hallinta
 --------------------------
 
-J&auml;rjestelm&auml; huolehtii ID-hallinnasta automaattisesti. Alle on kerrottu, mit&auml; eri ID:t VVH-sovelluksessa tarkoittavat.
+Järjestelmä huolehtii ID-hallinnasta automaattisesti. Alle on kerrottu, mitä eri ID:t VVH-sovelluksessa tarkoittavat.
 
-__OBJECTID:__ ESRI:n GeoDatabase -kohdeluokan sis&auml;inen tunniste. Geodatabase yll&auml;pit&auml;&auml;. Ei k&auml;ytet&auml; VVH:ssa
-__MTKID:__ Maastotietokannan tieviivan tunniste. Siirret&auml;&auml;n sellaisenaan VVH:n tielinkille.
-__DRID:__ VVH:n sis&auml;inen tunniste. K&auml;ytet&auml;&auml;n mm. kohteiden v&auml;lisiin relaatioihin ja historian hallintaan. P&auml;ivityssovellus luo ja yll&auml;pit&auml;&auml;. DRID vaihtuu vain jos MTKID ja LinkID vaihtuvat. J&auml;rjestelm&auml; huolehtii DRID:n hallinnasta.
-__LINKID:__ VVH:n linkkitunniste. Yksitt&auml;isen VVH-tielinkin identifioiva tunniste, joka muuttuu kun tieverkon  topologia on muuttunut tai tielinkin geometria on oleellisesti muuttunut. J&auml;rjestelm&auml; huolehtii linkki ID:n hallinnasta.
-__NODEID:__ VVH:n solmutunniste. Yksitt&auml;isen VVH-tiesolmun identifioiva tunniste, joka muuttuu kun solmun sijainti on   muuttunut ja solmuun yhdistyvien tielinkkien lukum&auml;&auml;r&auml; on muuttunut. J&auml;rjestelm&auml; huolehtii Node ID:n hallinnasta.
+__OBJECTID:__ ESRI:n GeoDatabase -kohdeluokan sisäinen tunniste. Geodatabase ylläpitää. Ei käytetä VVH:ssa
+__MTKID:__ Maastotietokannan tieviivan tunniste. Siirretään sellaisenaan VVH:n tielinkille.
+__DRID:__ VVH:n sisäinen tunniste. Käytetään mm. kohteiden välisiin relaatioihin ja historian hallintaan. Päivityssovellus luo ja ylläpitää. DRID vaihtuu vain jos MTKID ja LinkID vaihtuvat. Järjestelmä huolehtii DRID:n hallinnasta.
+__LINKID:__ VVH:n linkkitunniste. Yksittäisen VVH-tielinkin identifioiva tunniste, joka muuttuu kun tieverkon  topologia on muuttunut tai tielinkin geometria on oleellisesti muuttunut. Järjestelmä huolehtii linkki ID:n hallinnasta.
+__NODEID:__ VVH:n solmutunniste. Yksittäisen VVH-tiesolmun identifioiva tunniste, joka muuttuu kun solmun sijainti on   muuttunut ja solmuun yhdistyvien tielinkkien lukumäärä on muuttunut. Järjestelmä huolehtii Node ID:n hallinnasta.
 
-DRID, LinkiD ja NodeID muodostetaan kun kohde luodaan ensimm&auml;ist&auml; kertaa VVH-kantaan. Kohteiden p&auml;ivittyess&auml; DRID pysyy aina samana. LinkID voi muuttua perustuen linkin muutokseen (linkin ID:n elinkaaren hallinta).
+DRID, LinkiD ja NodeID muodostetaan kun kohde luodaan ensimmäistä kertaa VVH-kantaan. Kohteiden päivittyessä DRID pysyy aina samana. LinkID voi muuttua perustuen linkin muutokseen (linkin ID:n elinkaaren hallinta).
 
-1.3 Ty&ouml;skentelyn aloitus
+1.3 Työskentelyn aloitus
 --------------------------
 
-V&auml;yl&auml;verkon hallinnan sovellukseen kirjaudutaan osoitteesta https://citrix.vayla.fi/. Valitaan Apps ->  ArcMap __Standard__.
+Väyläverkon hallinnan sovellukseen kirjaudutaan osoitteesta https://citrix.vayla.fi/. Valitaan Apps ->  ArcMap __Standard__.
 
 ![ArcMap.](k1.png)
 
-_ArcMap Standard -kuvake Citrixiss&auml;._
+_ArcMap Standard -kuvake Citrixissä._
 
-N&auml;m&auml; ty&ouml;vaiheet tehd&auml;&auml;n vain kerran, mink&auml; j&auml;lkeen Digiroad-ty&ouml;kalujen tulisi olla k&auml;yt&ouml;ss&auml; aina, kun ArcMap on avattu.
+Nämä työvaiheet tehdään vain kerran, minkä jälkeen Digiroad-työkalujen tulisi olla käytössä aina, kun ArcMap on avattu.
 
 1. Avaa ArcMap
 
-1. Valitse Customize -> Add-In Manager ja Options-v&auml;lilehti
+1. Valitse Customize -> Add-In Manager ja Options-välilehti
 
 1. Valitse Add Folder..
 
 1. Kirjoita avautuvaan ikkunaan kohtaan Kansio: \\\172.17.204.39\VVH$
-	-Huom! Jos Folder-kentt&auml;&auml;n kirjoitetun osoitteen per&auml;ss&auml; on v&auml;lily&ouml;nti, ei toimi oikein
+	-Huom! Jos Folder-kenttään kirjoitetun osoitteen perässä on välilyönti, ei toimi oikein
 	
 1. Paina OK ja Close.
 
-1. Valitse Customize -> Toolbars ja ruksi Digiroadin ty&ouml;kaluvalikot eli Digiroad Editor ja Digiroad Tools
+1. Valitse Customize -> Toolbars ja ruksi Digiroadin työkaluvalikot eli Digiroad Editor ja Digiroad Tools
 
-1. Sulje ArcMap ja avaa uudelleen. Nyt Digiroad-ty&ouml;kaluvalikot ovat valmiina k&auml;ytett&auml;viss&auml;.
+1. Sulje ArcMap ja avaa uudelleen. Nyt Digiroad-työkaluvalikot ovat valmiina käytettävissä.
 
 
-2. Digiroad Tools: kirjautuminen ja perusty&ouml;kalut
+2. Digiroad Tools: kirjautuminen ja perustyökalut
 --------------------------
 
-Digiroad toolbar -ty&ouml;kalupalkki sis&auml;lt&auml;&auml; aputy&ouml;kaluja aineiston hallintaan.
+Digiroad toolbar -työkalupalkki sisältää aputyökaluja aineiston hallintaan.
 
 ![Digiroad Tools.](k2.png)
 
 _Digiroad Tools._
 
-2.1 Kirjautuminen j&auml;rjestelm&auml;&auml;n 
+2.1 Kirjautuminen järjestelmään 
 --------------------------
 
-Jos j&auml;rjestelm&auml; ei ArcMappia avattaessa kysy kirjautumistietoja, saa kirjautumisen auki Digiroad Tools -> Digiroad: Login. Kirjautuminen on pakollista, jotta VVH:n ty&ouml;kaluja voi k&auml;ytt&auml;&auml;. Oletuksena kirjautuminen tapahtuu VVH:n tuotantokantaan, jolloin osoitteen p&auml;&auml;te on /vvh.
+Jos järjestelmä ei ArcMappia avattaessa kysy kirjautumistietoja, saa kirjautumisen auki Digiroad Tools -> Digiroad: Login. Kirjautuminen on pakollista, jotta VVH:n työkaluja voi käyttää. Oletuksena kirjautuminen tapahtuu VVH:n tuotantokantaan, jolloin osoitteen pääte on /vvh.
 
-Kirjautumiseen k&auml;ytet&auml;&auml;n V&auml;yl&auml;n Citrixiin k&auml;ytett&auml;v&auml;&auml; k&auml;ytt&auml;j&auml;tunnusta (A-, U-, LX-, L- tai K-alkuinen) ja __erikseen VVH-sovellukseen m&auml;&auml;ritetty&auml; salasanaa__. Salasana ei siis ole sama, kuin Citrixiin kirjauduttaessa. Oletussalasana on kerrottu k&auml;ytt&auml;j&auml;lle VVH-sovelluskoulutuksen yhteydess&auml;.
+Kirjautumiseen käytetään Väylän Citrixiin käytettävää käyttäjätunnusta (A-, U-, LX-, L- tai K-alkuinen) ja __erikseen VVH-sovellukseen määritettyä salasanaa__. Salasana ei siis ole sama, kuin Citrixiin kirjauduttaessa. Oletussalasana on kerrottu käyttäjälle VVH-sovelluskoulutuksen yhteydessä.
 
-![Kirjautuminen j&auml;rjestelm&auml;&auml;n.](k3.png)
+![Kirjautuminen järjestelmään.](k3.png)
 
-_Kirjautuminen j&auml;rjestelm&auml;&auml;n._
+_Kirjautuminen järjestelmään._
 
-Jos k&auml;ytt&auml;j&auml; haluaa kirjautua muihin tietokantoihin, se tapahtuu klikkaamalla neli&ouml;it&auml; kirjautumisikkunan vasemmassa reunassa, ja valitsemalla avautuvasta alapalkista alasvetovalikosta haluttu tietokanta. Kaikkiin tietokantoihin on omat kirjautumistiedot, joten k&auml;ytt&auml;j&auml;ll&auml; ei oletuksena ole p&auml;&auml;sy&auml; kaikkiin kantoihin.
+Jos käyttäjä haluaa kirjautua muihin tietokantoihin, se tapahtuu klikkaamalla neliöitä kirjautumisikkunan vasemmassa reunassa, ja valitsemalla avautuvasta alapalkista alasvetovalikosta haluttu tietokanta. Kaikkiin tietokantoihin on omat kirjautumistiedot, joten käyttäjällä ei oletuksena ole pääsyä kaikkiin kantoihin.
 
-Jos j&auml;rjestelm&auml; pyyt&auml;&auml; Login-vaiheessa vaihtamaan salasanan, sen voi tehd&auml; heti tai vasta my&ouml;hemmin painamalla Cancel. Salasanan voi vaihtaa my&ouml;hemmin my&ouml;s Digiroad: Options-valikosta (kts. alempaa).
+Jos järjestelmä pyytää Login-vaiheessa vaihtamaan salasanan, sen voi tehdä heti tai vasta myöhemmin painamalla Cancel. Salasanan voi vaihtaa myöhemmin myös Digiroad: Options-valikosta (kts. alempaa).
 
-Kirjautuessa j&auml;rjestelm&auml; ilmoittaa my&ouml;s, jos MTK-p&auml;ivitykset eiv&auml;t ole ajossa tai jokin MTK-p&auml;ivitys ei ole mennyt l&auml;pi. N&auml;ihin voi painaa OK. VVH:n kehitystiimi huolehtii p&auml;ivitysten ajosta.
+Kirjautuessa järjestelmä ilmoittaa myös, jos MTK-päivitykset eivät ole ajossa tai jokin MTK-päivitys ei ole mennyt läpi. Näihin voi painaa OK. VVH:n kehitystiimi huolehtii päivitysten ajosta.
 
 ![Ilmoitus.](k4.png)
 
-_J&auml;rjestelm&auml; ilmoittaa k&auml;ytt&auml;j&auml;lle kirjautumisen yhteydess&auml;, jos MTK-p&auml;ivitykset eiv&auml;t ole ajossa. N&auml;in kaikki sovelluksen k&auml;ytt&auml;j&auml;t tiet&auml;v&auml;t asiasta._
+_Järjestelmä ilmoittaa käyttäjälle kirjautumisen yhteydessä, jos MTK-päivitykset eivät ole ajossa. Näin kaikki sovelluksen käyttäjät tietävät asiasta._
 
 ![Ilmoitus.](k5.png)
 
-_J&auml;rjestelm&auml; ilmoittaa k&auml;ytt&auml;j&auml;lle, jos jokin MTK-p&auml;ivitys ei ole mennyt l&auml;pi._
+_Järjestelmä ilmoittaa käyttäjälle, jos jokin MTK-päivitys ei ole mennyt läpi._
 
 2.2 Add Layers
 --------------------------
 
-Add Layers -ty&ouml;kalulla voi lis&auml;t&auml; j&auml;rjestelm&auml;ss&auml; valmiiksi olevia karttatasoja kartalle. Add Layersin saa auki Digiroad Tools -alasvetovalikosta tai sen oikealla puolella olevasta kuvakkeesta. Haluttu karttataso ruksitaan valikosta ja painetaan Apply. Tasot tulevat n&auml;kyviin kartalle ja sis&auml;llysluetteloon (Table of Contents). OK-painikkeesta tasot lis&auml;t&auml;&auml;n kartalle ja Add Layers sulkeutuu. Add Layersin voi sulkea my&ouml;s ruksista.
+Add Layers -työkalulla voi lisätä järjestelmässä valmiiksi olevia karttatasoja kartalle. Add Layersin saa auki Digiroad Tools -alasvetovalikosta tai sen oikealla puolella olevasta kuvakkeesta. Haluttu karttataso ruksitaan valikosta ja painetaan Apply. Tasot tulevat näkyviin kartalle ja sisällysluetteloon (Table of Contents). OK-painikkeesta tasot lisätään kartalle ja Add Layers sulkeutuu. Add Layersin voi sulkea myös ruksista.
 
-Add Layers -valikossa ylimp&auml;n&auml; ovat “perusgeometriatasot”, jotka ovat Maanmittauslaitoksen Maastotietokannasta. Lis&auml;ksi valittavana ovat historiatasot, suunnitelmalinkkeihin liittyv&auml;t tasot, kuntarajat, maakuntarajat, Ely-rajat, V&auml;yl&auml;n raiteet sek&auml; erilaisia MML:n taustakarttoja WMTS-tasoina.
+Add Layers -valikossa ylimpänä ovat “perusgeometriatasot”, jotka ovat Maanmittauslaitoksen Maastotietokannasta. Lisäksi valittavana ovat historiatasot, suunnitelmalinkkeihin liittyvät tasot, kuntarajat, maakuntarajat, Ely-rajat, Väylän raiteet sekä erilaisia MML:n taustakarttoja WMTS-tasoina.
 
-Add Layerisist&auml; voi valita my&ouml;s vain tietyn kunnan kohteet tielinkki-tasolta lis&auml;tt&auml;v&auml;ksi municipality alasvetovalikosta (oletuksena koko Suomi) ja zoomata ko. kuntaan valitsemalla ruksin kohtaan Zoom to selected.
+Add Layerisistä voi valita myös vain tietyn kunnan kohteet tielinkki-tasolta lisättäväksi municipality alasvetovalikosta (oletuksena koko Suomi) ja zoomata ko. kuntaan valitsemalla ruksin kohtaan Zoom to selected.
 
-__Huomio tasojen lis&auml;&auml;misest&auml;:__ ArcMap lopettaa piirron painamalla Esc-n&auml;pp&auml;int&auml;. Jos lis&auml;&auml; esim. tielinkki-tason siten, ett&auml; zoomaus on koko Suomeen, kest&auml;&auml; tason piirtyminen melko kauan. Piirto katkeaa Escill&auml;. Usein ennen isojen aineistojen lis&auml;&auml;mist&auml; on hyv&auml; zoomata johonkin pienelle alueelle, niin piirto ei kest&auml; kauan. Milloin tahansa ty&ouml;skentelyn aikana Esc-n&auml;pp&auml;imest&auml; on hy&ouml;ty&auml;, jos ei halua odottaa piirtoa loppuun asti.
+__Huomio tasojen lisäämisestä:__ ArcMap lopettaa piirron painamalla Esc-näppäintä. Jos lisää esim. tielinkki-tason siten, että zoomaus on koko Suomeen, kestää tason piirtyminen melko kauan. Piirto katkeaa Escillä. Usein ennen isojen aineistojen lisäämistä on hyvä zoomata johonkin pienelle alueelle, niin piirto ei kestä kauan. Milloin tahansa työskentelyn aikana Esc-näppäimestä on hyötyä, jos ei halua odottaa piirtoa loppuun asti.
 
-Jo lis&auml;tyt tasot v&auml;rj&auml;ytyv&auml;t sinisell&auml; Add Layersiss&auml;, mutta se ei est&auml; lis&auml;&auml;m&auml;st&auml; niit&auml; uudelleen.
+Jo lisätyt tasot värjäytyvät sinisellä Add Layersissä, mutta se ei estä lisäämästä niitä uudelleen.
 
 ![Add Layers.](k6.png)
 
-_Add Layers -valikosta voi lis&auml;t&auml; j&auml;rjestelm&auml;ss&auml; valmiina olevia karttatasoja._
+_Add Layers -valikosta voi lisätä järjestelmässä valmiina olevia karttatasoja._
 
 2.3 Feature Drawing
 --------------------------
 
-Feature Drawing avataan Digiroad tools -alasvetovalikon kautta. Feature Drawing -ikkunan avulla karttatasoille voidaan lis&auml;t&auml; erilaisia piirtoelementtej&auml;, kuten digitointisuuntaa havainnollistavat nuolet.
+Feature Drawing avataan Digiroad tools -alasvetovalikon kautta. Feature Drawing -ikkunan avulla karttatasoille voidaan lisätä erilaisia piirtoelementtejä, kuten digitointisuuntaa havainnollistavat nuolet.
 
-Digitointisuunnan piirrosta on apua esimerkiksi silloin, kun Suravage-aineistolle on tarkoitus m&auml;&auml;ritt&auml;&auml; yksisuuntaisuus-tietoja. Yksisuuntaisuudet tallennetaan suhteessa linkin digitointisuuntaan.
+Digitointisuunnan piirrosta on apua esimerkiksi silloin, kun Suravage-aineistolle on tarkoitus määrittää yksisuuntaisuus-tietoja. Yksisuuntaisuudet tallennetaan suhteessa linkin digitointisuuntaan.
 
-Feature Drawing tukee seuraavia elementtej&auml;:
+Feature Drawing tukee seuraavia elementtejä:
 
-1. Draw Start Points piirt&auml;&auml; ensimm&auml;isen verteksin.
-1. Draw Vertices piirt&auml;&auml; kohteiden kaikki verteksit paitsi ensimm&auml;isen ja viimeisen.
-1. Draw End Points piirt&auml;&auml; viimeisen verteksin.
-1. Draw Direction Arrows piirt&auml;&auml; suuntanuolen osoittamaan viivan digitointisuuntaa. Huomaa, ett&auml; suuntanuolen symbolin kulma tulee asettaa niin, ett&auml; se osoittaa vasemmalta oikealle (oletusasetus on n&auml;in, ok)
+1. Draw Start Points piirtää ensimmäisen verteksin.
+1. Draw Vertices piirtää kohteiden kaikki verteksit paitsi ensimmäisen ja viimeisen.
+1. Draw End Points piirtää viimeisen verteksin.
+1. Draw Direction Arrows piirtää suuntanuolen osoittamaan viivan digitointisuuntaa. Huomaa, että suuntanuolen symbolin kulma tulee asettaa niin, että se osoittaa vasemmalta oikealle (oletusasetus on näin, ok)
 
 ![Feature Drawing.](k7.png)
 
 _Feature Drawing._
 
-Jokaisen elementin symboli voidaan asettaa erikseen k&auml;ytt&auml;en ArcMapin symbolieditoria. Symbolieditoriin p&auml;&auml;see kunkin elementin Edit-painikkeesta.
+Jokaisen elementin symboli voidaan asettaa erikseen käyttäen ArcMapin symbolieditoria. Symbolieditoriin pääsee kunkin elementin Edit-painikkeesta.
 
-Halutut symbolit lis&auml;t&auml;&auml;n kartalle Apply-painikkeesta. Symbolit piirret&auml;&auml;n karttatasolle niin kauan, kunnes k&auml;ytt&auml;j&auml; ne poistaa tai ArcMap istunto suljetaan. Feature Drawing -ikkunan sulkeminen ei poista symboleita. Erikoispiirrot voi poistaa kaikilta karttatasoilta my&ouml;s painamalla Reset-painiketta.
+Halutut symbolit lisätään kartalle Apply-painikkeesta. Symbolit piirretään karttatasolle niin kauan, kunnes käyttäjä ne poistaa tai ArcMap istunto suljetaan. Feature Drawing -ikkunan sulkeminen ei poista symboleita. Erikoispiirrot voi poistaa kaikilta karttatasoilta myös painamalla Reset-painiketta.
 
 ![Feature Drawing.](k8.png)
 
-_Feature Drawing -ty&ouml;kalulla saadaan piirtoon mm. kohteiden digitointisuunnat._
+_Feature Drawing -työkalulla saadaan piirtoon mm. kohteiden digitointisuunnat._
 
 2.4 Options
 --------------------------
 
-Options-valikko avataan Digiroad Tools -alasvetovalikosta. Digiroad Options - ikkuna on asetusikkuna erilaisten ty&ouml;kalujen ja toiminnallisuuksien asetusten hallintaan k&auml;ytt&auml;j&auml;kohtaisesti. Ikkunan avulla voidaan asettaa mm. “Flash selected geometries” -valinta Tools -v&auml;lilehdelt&auml;.
+Options-valikko avataan Digiroad Tools -alasvetovalikosta. Digiroad Options - ikkuna on asetusikkuna erilaisten työkalujen ja toiminnallisuuksien asetusten hallintaan käyttäjäkohtaisesti. Ikkunan avulla voidaan asettaa mm. “Flash selected geometries” -valinta Tools -välilehdeltä.
 
-Optionsin valikoihin kannattaa tutustua, jotta ty&ouml;skennelless&auml; voi valita sielt&auml; itselleen sopivat asetukset.
+Optionsin valikoihin kannattaa tutustua, jotta työskennellessä voi valita sieltä itselleen sopivat asetukset.
 
 ![Options.](k9.png)
 
-_Digiroad: Options -valikon asetuksia. Oikealla Editor Extension -v&auml;lilehti, josta l&ouml;ytyy esimerkiksi Editor trackiin liittyv&auml;t k&auml;ytt&auml;j&auml;kohtaiset asetukset._
+_Digiroad: Options -valikon asetuksia. Oikealla Editor Extension -välilehti, josta löytyy esimerkiksi Editor trackiin liittyvät käyttäjäkohtaiset asetukset._
 
 ###Salasanan vaihtaminen###
 
-Salasanan vaihtaminen onnistuu Digiroad: Options -valikon General-v&auml;lilehdelt&auml; kohdasta Change Password.
+Salasanan vaihtaminen onnistuu Digiroad: Options -valikon General-välilehdeltä kohdasta Change Password.
 
-2.5 Muita perusty&ouml;kaluja
+2.5 Muita perustyökaluja
 --------------------------
 
 ###Feature Coordinates###
 
-Feature Coordinates -ty&ouml;kalulla voi tarkastella aineiston karttakoordinaatteja. Toiminto on suunniteltu toimimaan mahdollisimman yhdenmukaisesti ArcMap-vakioty&ouml;kalu Feature Infon kanssa. Erona on se, ett&auml; Feature Info avaa ikkunan kohteiden ominaisuuksien tarkasteluun ja Feature Coordinates vastaavasti avaa ikkunan kohteiden koordinaattien tarkasteluun.    
+Feature Coordinates -työkalulla voi tarkastella aineiston karttakoordinaatteja. Toiminto on suunniteltu toimimaan mahdollisimman yhdenmukaisesti ArcMap-vakiotyökalu Feature Infon kanssa. Erona on se, että Feature Info avaa ikkunan kohteiden ominaisuuksien tarkasteluun ja Feature Coordinates vastaavasti avaa ikkunan kohteiden koordinaattien tarkasteluun.    
 
-T&auml;t&auml; ty&ouml;kalua voi k&auml;ytt&auml;&auml; my&ouml;s esimerkiksi siihen, kun tutkii Suravage-geometrian z-koordinaattien arvoja.
+Tätä työkalua voi käyttää myös esimerkiksi siihen, kun tutkii Suravage-geometrian z-koordinaattien arvoja.
 
-Ty&ouml;kalun saa auki valitsemalla Digiroad Toolsista Feature Coordinates, ty&ouml;kalupalkista Feature Coordinates -ty&ouml;kalun
+Työkalun saa auki valitsemalla Digiroad Toolsista Feature Coordinates, työkalupalkista Feature Coordinates -työkalun
 
 ![Feature Coordinates.](k10.png)
 
 ja valitsemalla sitten kohteita kartalta.
 
-Ty&ouml;kalulla voidaan valita:
+Työkalulla voidaan valita:
 
-1. Yksitt&auml;isi&auml; kohteita klikkaamalla kohdetta kartalta
-1. Useita kohteita piirt&auml;m&auml;ll&auml; suorakaide
-1. Yksitt&auml;isi&auml; tai uusia kohteita s&auml;ilytt&auml;en aikaisemman valinnan kohteet k&auml;ytt&auml;m&auml;ll&auml; CTRL -n&auml;pp&auml;int&auml;
+1. Yksittäisiä kohteita klikkaamalla kohdetta kartalta
+1. Useita kohteita piirtämällä suorakaide
+1. Yksittäisiä tai uusia kohteita säilyttäen aikaisemman valinnan kohteet käyttämällä CTRL -näppäintä
 
 ![Feature Coordinates.](k11.png)
 
-_Feature Coordinates -ty&ouml;kalu._
+_Feature Coordinates -työkalu._
 
-Ikkuna koostuu kahdesta paneelista ja kohteiden valintalistasta. Ylempi paneeli listaa kaikki valitut kohteet ja mahdolliset kohteiden osat. Alempi paneeli listaa valitun kohteen karttakoordinaatit. Valintalista (Coordinates from) m&auml;&auml;r&auml;&auml; ty&ouml;kalun valintoihin k&auml;ytt&auml;m&auml;n kartattason.
+Ikkuna koostuu kahdesta paneelista ja kohteiden valintalistasta. Ylempi paneeli listaa kaikki valitut kohteet ja mahdolliset kohteiden osat. Alempi paneeli listaa valitun kohteen karttakoordinaatit. Valintalista (Coordinates from) määrää työkalun valintoihin käyttämän kartattason.
 
-Vaihtoehdot ovat Feature Info -ty&ouml;kalun mukaiset eli:
+Vaihtoehdot ovat Feature Info -työkalun mukaiset eli:
 
-1. Sis&auml;llysluettelon ylimm&auml;inen  karttataso Top-most Layer
-1. N&auml;kyv&auml;t karttatasot Visible Layers
+1. Sisällysluettelon ylimmäinen  karttataso Top-most Layer
+1. Näkyvät karttatasot Visible Layers
 1. Valittavissa olevat karttatasot Selectable Layers
-1. Yksitt&auml;inen valittu karttataso, nyt valittuna “Tielinkki (kohdeluokka)”
+1. Yksittäinen valittu karttataso, nyt valittuna “Tielinkki (kohdeluokka)”
 
-Ylemm&auml;n paneelin kohdelistasta (nyt Sotkamontie tai OID-arvoilla merkattu kohde) valitaan aktiivinen kohde tai osa, jonka koordinaatit listataan alempaan paneeliin. Kohteiden tarkastelussa helpottaa, jos Digiroad Options -valikosta on valittuna Tools -v&auml;lilehdelt&auml; “Flash selected geometries”, jolloin sovellus v&auml;l&auml;ytt&auml;&auml; kartalla kohdetta, jota klikataan ylemm&auml;st&auml; paneelista. Tuplaklikkamalla kohdetta voidaan kartta kohdistaa kohteeseen.
+Ylemmän paneelin kohdelistasta (nyt Sotkamontie tai OID-arvoilla merkattu kohde) valitaan aktiivinen kohde tai osa, jonka koordinaatit listataan alempaan paneeliin. Kohteiden tarkastelussa helpottaa, jos Digiroad Options -valikosta on valittuna Tools -välilehdeltä “Flash selected geometries”, jolloin sovellus väläyttää kartalla kohdetta, jota klikataan ylemmästä paneelista. Tuplaklikkamalla kohdetta voidaan kartta kohdistaa kohteeseen.
 
-Alemman paneelin lista sis&auml;lt&auml;&auml; X, Y, M ja Z koordinaatit. Saraketta voidaan k&auml;ytt&auml;&auml; lajittelun kautta esim. kun halutaan l&ouml;yt&auml;&auml; verteksej&auml;, jotka ovat erityisen l&auml;hell&auml; tai kaukana toisistaan (esim. kun tutkitaan laaduntarkistusajojen tuloksia VVH:n kehitystiimiss&auml;).
+Alemman paneelin lista sisältää X, Y, M ja Z koordinaatit. Saraketta voidaan käyttää lajittelun kautta esim. kun halutaan löytää verteksejä, jotka ovat erityisen lähellä tai kaukana toisistaan (esim. kun tutkitaan laaduntarkistusajojen tuloksia VVH:n kehitystiimissä).
 
 ###Feature Differences###
 
-Feature Differences -ty&ouml;kalulla voi tarkastella aineiston kohteiden ominaisuustietojen eroja. Toiminto on suunniteltu toimimaan mahdollisimman yhdenmukaisesti ArcMap-vakioty&ouml;kalu Feature Infon kanssa. Erona se, ett&auml; Feature Info avaa yhden kohteen kaikki ominaisuudet, kun taas Feature Differences listaa kaikkien valittujen kohteiden ominaisuuksien erot. 
+Feature Differences -työkalulla voi tarkastella aineiston kohteiden ominaisuustietojen eroja. Toiminto on suunniteltu toimimaan mahdollisimman yhdenmukaisesti ArcMap-vakiotyökalu Feature Infon kanssa. Erona se, että Feature Info avaa yhden kohteen kaikki ominaisuudet, kun taas Feature Differences listaa kaikkien valittujen kohteiden ominaisuuksien erot. 
 
-Ty&ouml;kalun saa auki valitsemalla Digiroad Tools -valikosta Feature Differences, ty&ouml;kalupalkista  Feature Differences -ty&ouml;kalun
+Työkalun saa auki valitsemalla Digiroad Tools -valikosta Feature Differences, työkalupalkista  Feature Differences -työkalun
 
 ![Feature Differences.](k12.png)
 
-ja valitsemalla sitten kohteita kartalta. Kohteiden valinta suoritetaan samalla tavalla kuin Feature Info ja Feature Coordinates -ty&ouml;kaluilla. Kohdekarttataso valitaan alasvetovalikosta, eli mink&auml; karttatason kohteiden eroja halutaan tarkastella (tielinkit, tiesolmut tms.)
+ja valitsemalla sitten kohteita kartalta. Kohteiden valinta suoritetaan samalla tavalla kuin Feature Info ja Feature Coordinates -työkaluilla. Kohdekarttataso valitaan alasvetovalikosta, eli minkä karttatason kohteiden eroja halutaan tarkastella (tielinkit, tiesolmut tms.)
 
-Rivit, joilla arvot eroavat, on v&auml;ritetty keltaisella taustav&auml;rill&auml; (kuva alla). Sarakkeita on yht&auml; monta, kuin kartalta valittuja kohteita (Feature 1, Feature 2 jne.) ja ne ovat kaikki mukana tarkastelussa. T&auml;m&auml;n avulla voi esimerkiksi tarkastella viereisten ajoratojen ominaisuustietojen mahdollisia eroavaisuuksia.
+Rivit, joilla arvot eroavat, on väritetty keltaisella taustavärillä (kuva alla). Sarakkeita on yhtä monta, kuin kartalta valittuja kohteita (Feature 1, Feature 2 jne.) ja ne ovat kaikki mukana tarkastelussa. Tämän avulla voi esimerkiksi tarkastella viereisten ajoratojen ominaisuustietojen mahdollisia eroavaisuuksia.
 
 ![Feature Differences.](k13.png)
 
-_Feature Differences -ty&ouml;kalu._
+_Feature Differences -työkalu._
 
-Ty&ouml;kalun Options -valikosta voidaan valita mit&auml; listalla n&auml;ytet&auml;&auml;n:
+Työkalun Options -valikosta voidaan valita mitä listalla näytetään:
 
-1. Use Field Alias k&auml;ytt&auml;&auml; kohdeluokan kent&auml;n nimen sijaan GeoDatabase -kent&auml;n alias nime&auml;. Esimerkiksi kohtaan MTK-ID tulee teksti MTK-tunniste, JOBID kohtaan ty&ouml;n tunniste jne.
-1. Use Domain Values n&auml;ytt&auml;&auml; todellisten tietokanta-arvojen sijaan kent&auml;n arvoille sanalliset selitteet.
-1. Drop Fields With Equal Values suodattaa listalta kaikki kent&auml;t, joiden arvot ovat kaikilla valituilla kohteilla samat.
+1. Use Field Alias käyttää kohdeluokan kentän nimen sijaan GeoDatabase -kentän alias nimeä. Esimerkiksi kohtaan MTK-ID tulee teksti MTK-tunniste, JOBID kohtaan työn tunniste jne.
+1. Use Domain Values näyttää todellisten tietokanta-arvojen sijaan kentän arvoille sanalliset selitteet.
+1. Drop Fields With Equal Values suodattaa listalta kaikki kentät, joiden arvot ovat kaikilla valituilla kohteilla samat.
 
-Jos valinnat Use Field Alias ja Use Domain Values ovat valittuna, tulee yll&auml; olevasta valinnasta selke&auml;mmin luettava:
+Jos valinnat Use Field Alias ja Use Domain Values ovat valittuna, tulee yllä olevasta valinnasta selkeämmin luettava:
 
 ![Feature Differences.](k14.png)
 
-_Feature Diffrences -ty&ouml;kalu, kun Use Field alias ja Use domain values -valinnat ovat k&auml;yt&ouml;ss&auml;._
+_Feature Diffrences -työkalu, kun Use Field alias ja Use domain values -valinnat ovat käytössä._
  
-Klikkaammalla kohteen sarakkeen otsikkoa, kohdetta voidaan v&auml;l&auml;ytt&auml;&auml; n&auml;kym&auml;ss&auml; tai tuplaklikkaamalla kohdistaa kohteeseen. 
+Klikkaammalla kohteen sarakkeen otsikkoa, kohdetta voidaan väläyttää näkymässä tai tuplaklikkaamalla kohdistaa kohteeseen. 
 
-3. Digiroad Editor ja editoinnin ty&ouml;nohjaus (workflow)
+3. Digiroad Editor ja editoinnin työnohjaus (workflow)
 --------------------------
 
-Digiroad Editor -ty&ouml;kaluvalikko sis&auml;lt&auml;&auml; ty&ouml;n ohjaukseen ja ty&ouml;n kulkuun liittyvi&auml; toiminnallisuuksia. Osa ty&ouml;nohjauksen asetuksista voi muuttaa k&auml;ytt&auml;j&auml;kohtaisesti Digiroad Options -valikosta Workflow -v&auml;lilehdelt&auml;.
+Digiroad Editor -työkaluvalikko sisältää työn ohjaukseen ja työn kulkuun liittyviä toiminnallisuuksia. Osa työnohjauksen asetuksista voi muuttaa käyttäjäkohtaisesti Digiroad Options -valikosta Workflow -välilehdeltä.
 
-T&auml;ss&auml; ohjeessa keskityt&auml;&auml;n suunnitelma-aineistojen ty&ouml;nohjaukseen. Sovelluksessa yll&auml;pidet&auml;&auml;n my&ouml;s t&auml;ydent&auml;v&auml;&auml; geometriaa, jonka ty&ouml;nohjaus on t&auml;ysin samanlainen. Tarvittaessa k&auml;ytt&auml;j&auml; voi t&auml;ydent&auml;v&auml;n geometrian osalta tapauksesta riippuen ohittaa osan vaiheista (esim. ominaisuustietojen t&auml;ydellinen t&auml;ytt&auml;minen).
+Tässä ohjeessa keskitytään suunnitelma-aineistojen työnohjaukseen. Sovelluksessa ylläpidetään myös täydentävää geometriaa, jonka työnohjaus on täysin samanlainen. Tarvittaessa käyttäjä voi täydentävän geometrian osalta tapauksesta riippuen ohittaa osan vaiheista (esim. ominaisuustietojen täydellinen täyttäminen).
 
-Ty&ouml;kalut esitell&auml;&auml;n ty&ouml;nohjauksen (Workflow) mukaisessa j&auml;rjestyksess&auml;, eli siin&auml; j&auml;rjestyksess&auml; jossa k&auml;ytt&auml;j&auml; etenee VVH-sovelluksessa suunnitelma-aineistoja k&auml;sittelless&auml;&auml;n. Kuitenkin k&auml;yt&auml;nn&ouml;ss&auml; esimerkiksi validointeja tulee tehty&auml; ty&ouml;skentelyn aikana useita kertoja. Kaikki ty&ouml;n vaiheet voikin toistaa tarpeen mukaan k&auml;yt&auml;nn&ouml;ss&auml; useita kertoja, paitsi ty&ouml;alueen luomisen ja ty&ouml;n merkkaamisen valmiiksi.
+Työkalut esitellään työnohjauksen (Workflow) mukaisessa järjestyksessä, eli siinä järjestyksessä jossa käyttäjä etenee VVH-sovelluksessa suunnitelma-aineistoja käsittellessään. Kuitenkin käytännössä esimerkiksi validointeja tulee tehtyä työskentelyn aikana useita kertoja. Kaikki työn vaiheet voikin toistaa tarpeen mukaan käytännössä useita kertoja, paitsi työalueen luomisen ja työn merkkaamisen valmiiksi.
 
-1. Ty&ouml;alueen luominen: Create a Job
-M&auml;&auml;ritell&auml;&auml;n ty&ouml;alue (polygoni), jonka alueella aiotaan ty&ouml;skennell&auml;.
+1. Työalueen luominen: Create a Job
+Määritellään työalue (polygoni), jonka alueella aiotaan työskennellä.
 
-1. Ty&ouml;n rekister&ouml;inti ja ominaisuuksien m&auml;&auml;rittely ja ty&ouml;n avaus: Register New Job
-Ty&ouml; rekister&ouml;id&auml;&auml;n ja siihen liitet&auml;&auml;n tarvittavat liitteet ja muut lis&auml;tiedot.
+1. Työn rekisteröinti ja ominaisuuksien määrittely ja työn avaus: Register New Job
+Työ rekisteröidään ja siihen liitetään tarvittavat liitteet ja muut lisätiedot.
 
-1. Ty&ouml;n ulosmerkkaus: Digiroad: Checkout
-Ty&ouml;alueella olevat suunnitelmalinkit ja -solmut siirret&auml;&auml;n suunnitelmalinkki-tasolta muokattavalle tasolle.
+1. Työn ulosmerkkaus: Digiroad: Checkout
+Työalueella olevat suunnitelmalinkit ja -solmut siirretään suunnitelmalinkki-tasolta muokattavalle tasolle.
 
 1. Aineiston muokkaus: Start editing
 Varsinainen editointi eli kohteiden luominen ja muokkaaminen.
 
 1. Validointi: Feature Validation
-Kohteiden validointi, jotta ne ovat topologisesti eheit&auml; ja sis&auml;lt&auml;v&auml;t v&auml;himm&auml;istiedot.
+Kohteiden validointi, jotta ne ovat topologisesti eheitä ja sisältävät vähimmäistiedot.
 
-1. Aineiston sis&auml;&auml;nmerkkaus: Digiroad: Checkin
-Validoidun aineiston palauttaminen tietokantaan ns. prim&auml;&auml;ritasolle, jossa sit&auml; ei voi muokata.
+1. Aineiston sisäänmerkkaus: Digiroad: Checkin
+Validoidun aineiston palauttaminen tietokantaan ns. primääritasolle, jossa sitä ei voi muokata.
 
-1. Ty&ouml;n merkkaus valmiiksi
-Checkin ei sis&auml;ll&auml; ty&ouml; merkkausta valmiiksi. Ty&ouml; merkataan valmiiksi (Complete Job) vasta sen j&auml;lkeen, kun siihen ei varmasti ole en&auml;&auml; tulossa muutoksia.
+1. Työn merkkaus valmiiksi
+Checkin ei sisällä työ merkkausta valmiiksi. Työ merkataan valmiiksi (Complete Job) vasta sen jälkeen, kun siihen ei varmasti ole enää tulossa muutoksia.
 
-	Lis&auml;ksi k&auml;ytt&auml;j&auml; voi hallita t&ouml;it&auml; ja ty&ouml;jonoa sek&auml; p&auml;ivitt&auml;&auml; ty&ouml;alueen tarvittaessa:
+	Lisäksi käyttäjä voi hallita töitä ja työjonoa sekä päivittää työalueen tarvittaessa:
 
-1. T&ouml;iden ja ty&ouml;jonon hallinta: Digiroad: Suspend Job ja Digiroad: Work Queue
-T&ouml;iden keskeytt&auml;minen ja jatkaminen sek&auml; olemassa olevien t&ouml;iden hallinta.
+1. Töiden ja työjonon hallinta: Digiroad: Suspend Job ja Digiroad: Work Queue
+Töiden keskeyttäminen ja jatkaminen sekä olemassa olevien töiden hallinta.
 
-1. Ty&ouml;alueen p&auml;ivitt&auml;minen
+1. Työalueen päivittäminen
 
-Alla on kuva VVH:n ty&ouml;nkulusta (Digiroad VVH Workflow), sek&auml; ty&ouml;linkkien ja ty&ouml;solmujen siirtymisest&auml; muokattavalle tasolle ja pois muokattavalta tasolta (VVH Checkout ja Checkin).
+Alla on kuva VVH:n työnkulusta (Digiroad VVH Workflow), sekä työlinkkien ja työsolmujen siirtymisestä muokattavalle tasolle ja pois muokattavalta tasolta (VVH Checkout ja Checkin).
 
-![VVH ty&ouml;nkulku.](k15.png)
+![VVH työnkulku.](k15.png)
 
-_VVH ty&ouml;nkulku. Aineistolle voi tehd&auml; checkoutin ja checkinin niin monta kertaa, kuin on tarpeen. Vasta Complete Job tekee ty&ouml;st&auml; valmiin, ja sit&auml; ei voi en&auml;&auml; palata editoimaan._
+_VVH työnkulku. Aineistolle voi tehdä checkoutin ja checkinin niin monta kertaa, kuin on tarpeen. Vasta Complete Job tekee työstä valmiin, ja sitä ei voi enää palata editoimaan._
 
-![VVH ty&ouml;nkulku.](k16.png)
+![VVH työnkulku.](k16.png)
 
-_Suunnitelmalinkkien ja -solmujen siirtyminen eri tasojen v&auml;lill&auml; checkoutin ja checkinin yhteydess&auml;. Aineistolle voi tehd&auml; checkoutin ja checkinin niin monta kertaa, kuin on tarpeen. Vasta Complete Job tekee ty&ouml;st&auml; valmiin, ja sit&auml; ei voi en&auml;&auml; palata editoimaan._
+_Suunnitelmalinkkien ja -solmujen siirtyminen eri tasojen välillä checkoutin ja checkinin yhteydessä. Aineistolle voi tehdä checkoutin ja checkinin niin monta kertaa, kuin on tarpeen. Vasta Complete Job tekee työstä valmiin, ja sitä ei voi enää palata editoimaan._
 
-3.1 Ty&ouml;alueen luominen: Create a Job
+3.1 Työalueen luominen: Create a Job
 --------------------------
 
-Ty&ouml;alueen voi luoda kahdella eri tavalla:
+Työalueen voi luoda kahdella eri tavalla:
 
 1. Create Job Area: Painike
 
 	![painike.](k17.png) 
 
-	jonka j&auml;lkeen alue piirret&auml;&auml;n kartalle. Piirto loppuu tuplaklikkaamalla.
+	jonka jälkeen alue piirretään kartalle. Piirto loppuu tuplaklikkaamalla.
 
-1. Create Job: Valitsemalla kartalta ArcMapin Selection-ty&ouml;kalulla tielinkkej&auml; ja luomalla ty&ouml;alueen tielinkkien kattamalta alueelta valitsemalla painike 
+1. Create Job: Valitsemalla kartalta ArcMapin Selection-työkalulla tielinkkejä ja luomalla työalueen tielinkkien kattamalta alueelta valitsemalla painike 
 
 	![painike.](k18.png) 
 
-Ty&ouml;alueen piirt&auml;misen j&auml;lkeen rekister&ouml;inti-ikkuna avautuu. Ty&ouml;alueen kokoa ei ole pakollista m&auml;&auml;ritt&auml;&auml; tarkasti t&auml;ss&auml; vaiheessa. Ty&ouml;alue p&auml;ivittyy silloin, jos k&auml;ytt&auml;j&auml; digitoi ty&ouml;linkkej&auml; ty&ouml;alueen rajan yli tai sen ulkopuolelle. Ty&ouml;aluetta voi p&auml;ivitt&auml;&auml; my&ouml;hemmin my&ouml;s manuaalisesti, kts. kohta 3.8 Ty&ouml;alueen p&auml;ivitt&auml;minen.
+Työalueen piirtämisen jälkeen rekisteröinti-ikkuna avautuu. Työalueen kokoa ei ole pakollista määrittää tarkasti tässä vaiheessa. Työalue päivittyy silloin, jos käyttäjä digitoi työlinkkejä työalueen rajan yli tai sen ulkopuolelle. Työaluetta voi päivittää myöhemmin myös manuaalisesti, kts. kohta 3.8 Työalueen päivittäminen.
 
-3.2 Ty&ouml;n rekister&ouml;iminen: Register Job
+3.2 Työn rekisteröiminen: Register Job
 --------------------------
 
-Ty&ouml;n rekister&ouml;inniss&auml; annetaan ty&ouml;n perustiedot, kuten tyyppi (alasvetovalikosta) ja nimi. Suravage-aineistoilla ty&ouml;n tyyppi on aina Suunnitelma-aineiston muokkaus ja nimeksi annetaan hankkeen nimi, esim. “Vt 6 TaaLa”. Ty&ouml;n kesto ja prioriteetti eiv&auml;t ole olennaisia tietoja, joten niiden sis&auml;lt&ouml;&ouml;n ei tarvitse puuttua. Kohtaan notes on hyv&auml; kirjoittaa mahdolliset erityispiirteet ko. ty&ouml;st&auml;. 
+Työn rekisteröinnissä annetaan työn perustiedot, kuten tyyppi (alasvetovalikosta) ja nimi. Suravage-aineistoilla työn tyyppi on aina Suunnitelma-aineiston muokkaus ja nimeksi annetaan hankkeen nimi, esim. “Vt 6 TaaLa”. Työn kesto ja prioriteetti eivät ole olennaisia tietoja, joten niiden sisältöön ei tarvitse puuttua. Kohtaan notes on hyvä kirjoittaa mahdolliset erityispiirteet ko. työstä. 
 
-Rekister&ouml;inniss&auml; lis&auml;t&auml;&auml;n my&ouml;s ty&ouml;h&ouml;n liittyv&auml;t tasot (Layers) ja liitteet (Attachments) rekister&ouml;inti-ikkunan muiden v&auml;lilehtien kautta. Liitteiksi voidaan lis&auml;t&auml; esimerkiksi suunnitelmaan liittyvi&auml; PDF-tiedostoja. Shift-painike pohjassa voi valita useita liitteit&auml; kerrallaan.
+Rekisteröinnissä lisätään myös työhön liittyvät tasot (Layers) ja liitteet (Attachments) rekisteröinti-ikkunan muiden välilehtien kautta. Liitteiksi voidaan lisätä esimerkiksi suunnitelmaan liittyviä PDF-tiedostoja. Shift-painike pohjassa voi valita useita liitteitä kerrallaan.
 
-![Rekister&ouml;inti.](k19.png) 
+![Rekisteröinti.](k19.png) 
 
-_Ty&ouml;n rekister&ouml;inti. Layers ja Attachment -v&auml;lilehdill&auml; lis&auml;t&auml;&auml;n ty&ouml;ss&auml; tarvittavat tasot ja liitteet._
+_Työn rekisteröinti. Layers ja Attachment -välilehdillä lisätään työssä tarvittavat tasot ja liitteet._
 
-Ty&ouml; avautuu automaattisesti painikkeesta Register, jos ruksia Open this job immediately ei poista. Rekister&ouml;innin j&auml;lkeen sovellus kohdistaa ty&ouml;alueeseen. Sovellus my&ouml;s luo automaattisesti ty&ouml;alueelle tasot ty&ouml;solmu ja ty&ouml;linkki, jotka ovat tyhji&auml;. Tasot tulevat n&auml;kyviin sis&auml;llysluetteloon (Table of Contents). Kun ty&ouml;h&ouml;n digitoidaan uusia kohteita, ne tallentuvat n&auml;ille kyseisille tasoille, eiv&auml;t siis samalle tasolle MTK-tielinkkien ja niist&auml; luotujen solmujen kanssa.
+Työ avautuu automaattisesti painikkeesta Register, jos ruksia Open this job immediately ei poista. Rekisteröinnin jälkeen sovellus kohdistaa työalueeseen. Sovellus myös luo automaattisesti työalueelle tasot työsolmu ja työlinkki, jotka ovat tyhjiä. Tasot tulevat näkyviin sisällysluetteloon (Table of Contents). Kun työhön digitoidaan uusia kohteita, ne tallentuvat näille kyseisille tasoille, eivät siis samalle tasolle MTK-tielinkkien ja niistä luotujen solmujen kanssa.
 
-3.3 Ty&ouml;n ulosmerkkaus: Digiroad: Checkout
+3.3 Työn ulosmerkkaus: Digiroad: Checkout
 --------------------------
 
-Ty&ouml;n ulosmerkkauksessa kopioidaan ty&ouml;alueella olevat suunnitelmalinkit editoitavalle aineistotasolle. Checkoutissa ty&ouml;linkki-tasolle tulevat ne kohteet, joiden ty&ouml;numero (JOBID) on sama kuin ko. ty&ouml;n tai JOBID on null (ty&ouml; on poistettu, mutta checkin tehty). Vastaavasti ty&ouml;solmu-tasolle tulevat suunnitelmasolmu-tasolta ko. suunnitelmalinkkeihin liittyv&auml;t solmut. 
+Työn ulosmerkkauksessa kopioidaan työalueella olevat suunnitelmalinkit editoitavalle aineistotasolle. Checkoutissa työlinkki-tasolle tulevat ne kohteet, joiden työnumero (JOBID) on sama kuin ko. työn tai JOBID on null (työ on poistettu, mutta checkin tehty). Vastaavasti työsolmu-tasolle tulevat suunnitelmasolmu-tasolta ko. suunnitelmalinkkeihin liittyvät solmut. 
 
-K&auml;yt&auml;nn&ouml;ss&auml; siis kun ensimm&auml;ist&auml; kertaa ko. alueella ty&ouml;skennell&auml;&auml;n, ei ulosmerkkauksessa tule kartalle viel&auml; mit&auml;&auml;n kohteita ellei ty&ouml;alueella ole suunnitelmalinkkej&auml;, joiden JOBID on null. Merkitys muuttuu, kun checkin on kerran tehty, mutta ty&ouml;n editointia halutaan jatkaa. VVH-j&auml;rjestelm&auml; kuitenkin vaatii checkoutin tekemisen my&ouml;s ensimm&auml;isell&auml; kerralla, kun ty&ouml; aloitetaan.
+Käytännössä siis kun ensimmäistä kertaa ko. alueella työskennellään, ei ulosmerkkauksessa tule kartalle vielä mitään kohteita ellei työalueella ole suunnitelmalinkkejä, joiden JOBID on null. Merkitys muuttuu, kun checkin on kerran tehty, mutta työn editointia halutaan jatkaa. VVH-järjestelmä kuitenkin vaatii checkoutin tekemisen myös ensimmäisellä kerralla, kun työ aloitetaan.
 
-Huomioitava on, ett&auml; jos samalla alueella on jollain toisella JOBID:ll&auml; suunnitelmalinkkej&auml;, eiv&auml;t ne tule ty&ouml;linkki-tasolle checkoutissa. N&auml;iden linkkien olemassaolon voi helposti tarkistaa laittamalla piirtoon suunnitelmalinkki-tason kohteet. Muissa t&ouml;iss&auml; olevia ty&ouml;linkkej&auml; ei saa n&auml;kyviin kartalle.
+Huomioitava on, että jos samalla alueella on jollain toisella JOBID:llä suunnitelmalinkkejä, eivät ne tule työlinkki-tasolle checkoutissa. Näiden linkkien olemassaolon voi helposti tarkistaa laittamalla piirtoon suunnitelmalinkki-tason kohteet. Muissa töissä olevia työlinkkejä ei saa näkyviin kartalle.
 
-Checkout suoritetaan Digiroad Editor-valikosta valitsemalla kohta Digiroad: Checkout. Ilmestyv&auml;st&auml; ikkunasta (alla) painetaan Checkout. T&auml;m&auml; kest&auml;&auml; hetken. Kun Checkout on valmis, ilmestyy ikkunaan teksti “Checkout Completed!” Ikkunan voi sulkea ruksista.
+Checkout suoritetaan Digiroad Editor-valikosta valitsemalla kohta Digiroad: Checkout. Ilmestyvästä ikkunasta (alla) painetaan Checkout. Tämä kestää hetken. Kun Checkout on valmis, ilmestyy ikkunaan teksti “Checkout Completed!” Ikkunan voi sulkea ruksista.
 
 ![Ulosmerkkaus.](k20.png) 
 
-_Checkout. Checkout hakee ty&ouml;alueelta kaikki kohteet, joilla on sama JOBID tai JOBID null. K&auml;yt&auml;nn&ouml;ss&auml; kun ty&ouml;lle tehd&auml;&auml;n ensimm&auml;ist&auml; kertaa checkout, ei se palauta kartalle uusia kohteita._
+_Checkout. Checkout hakee työalueelta kaikki kohteet, joilla on sama JOBID tai JOBID null. Käytännössä kun työlle tehdään ensimmäistä kertaa checkout, ei se palauta kartalle uusia kohteita._
 
-Checkoutin voi perua tarvittaessa kohdasta Undo Checkout (palauttaa ty&ouml;linkit ja ty&ouml;solmut tietokantaan suunnitelmalinkki- ja solmu tasoille).
+Checkoutin voi perua tarvittaessa kohdasta Undo Checkout (palauttaa työlinkit ja työsolmut tietokantaan suunnitelmalinkki- ja solmu tasoille).
 
-Checkoutin j&auml;lkeen voidaan aloittaa ty&ouml;n kohteiden muokkaaminen.
+Checkoutin jälkeen voidaan aloittaa työn kohteiden muokkaaminen.
 
-3.4 Ty&ouml;n muokkaus: Start Editing
+3.4 Työn muokkaus: Start Editing
 --------------------------
 
-Editointi aloitetaan valitsemalla Digiroad Editor valikosta Start Editing. __Editointia ei saa aloittaa ArcMapin vakioeditorilla, koska t&auml;ll&ouml;in editoitavaksi ei tule oikea taso.__ 
+Editointi aloitetaan valitsemalla Digiroad Editor valikosta Start Editing. __Editointia ei saa aloittaa ArcMapin vakioeditorilla, koska tällöin editoitavaksi ei tule oikea taso.__ 
 
-Editointitilassa on mahdollista luoda uusia kohteita, muokata niit&auml; sek&auml; muokata kohteiden ominaisuustietoja. Editointi tapahtuu aina ty&ouml;linkki ja ty&ouml;solmu -kohteille, eik&auml; editointi vaikuta Maastotietokannasta tulleisiin tielinkkeihin tai niist&auml; luotuihin solmuihin. My&ouml;sk&auml;&auml;n mit&auml;&auml;n muita VVH-tietokannan tasoja ei voi muokata.
+Editointitilassa on mahdollista luoda uusia kohteita, muokata niitä sekä muokata kohteiden ominaisuustietoja. Editointi tapahtuu aina työlinkki ja työsolmu -kohteille, eikä editointi vaikuta Maastotietokannasta tulleisiin tielinkkeihin tai niistä luotuihin solmuihin. Myöskään mitään muita VVH-tietokannan tasoja ei voi muokata.
 
-VVH-kantaan viet&auml;v&auml;ksi toimitetut Suravage- (tai muut) aineistot eiv&auml;t v&auml;ltt&auml;m&auml;tt&auml; ole ohjeistuksen mukaisesti tehtyj&auml;, jolloin esimerkiksi suunnitelmageometrioiden katkot eiv&auml;t ole oikeissa paikoissa ja aineistoon muodostuu virheellisi&auml; solmuja. Aineistot voivat jopa menn&auml; VVH:n validoinnista l&auml;pi, mutta ne eiv&auml;t silti vastaa suunnittelijoiden Suravage-ohjeistusta. T&auml;ll&ouml;in on aineiston k&auml;sittelij&auml;n vastuulla huomata n&auml;m&auml; virheet, ja korjata aineisto VVH:n ty&ouml;kaluilla.
+VVH-kantaan vietäväksi toimitetut Suravage- (tai muut) aineistot eivät välttämättä ole ohjeistuksen mukaisesti tehtyjä, jolloin esimerkiksi suunnitelmageometrioiden katkot eivät ole oikeissa paikoissa ja aineistoon muodostuu virheellisiä solmuja. Aineistot voivat jopa mennä VVH:n validoinnista läpi, mutta ne eivät silti vastaa suunnittelijoiden Suravage-ohjeistusta. Tällöin on aineiston käsittelijän vastuulla huomata nämä virheet, ja korjata aineisto VVH:n työkaluilla.
 
-3.4.1 Ty&ouml;linkkien muokkaus
+3.4.1 Työlinkkien muokkaus
 --------------------------
 
-P&auml;&auml;asiassa editointi noudattaa ArcMapin vakioty&ouml;kalujen toimintalogiikkaa. Jos k&auml;ytt&auml;j&auml;ll&auml; on jo valmiina jokin taso, joka on tarkoitus kopioida VVH:hon (esim. Suravage-aineistoa), voi sen kopioida ty&ouml;linkki-tasolle tutulla tavalla Ctrl-C, Ctrl-V.
+Pääasiassa editointi noudattaa ArcMapin vakiotyökalujen toimintalogiikkaa. Jos käyttäjällä on jo valmiina jokin taso, joka on tarkoitus kopioida VVH:hon (esim. Suravage-aineistoa), voi sen kopioida työlinkki-tasolle tutulla tavalla Ctrl-C, Ctrl-V.
 
-Jos taas haluaa digitoida k&auml;sin uusia viivoja, Digiroad Editor valikon Create Features -painikkeen
+Jos taas haluaa digitoida käsin uusia viivoja, Digiroad Editor valikon Create Features -painikkeen
 
 ![Create Features](k21.png)
 
-kautta voi valita, millaisia kohteita digitoidaan. Koska solmujen luominen on automaattista (kts. seuraava kohta), k&auml;ytt&auml;j&auml;t digitoivat p&auml;&auml;asiassa vain viivoja. Valittavina ovat K&auml;vely-/py&ouml;r&auml;tie ja Muu tieviiva. Valinta tehd&auml;&auml;n sen mukaan, kumpia ollaan digitoimassa.
+kautta voi valita, millaisia kohteita digitoidaan. Koska solmujen luominen on automaattista (kts. seuraava kohta), käyttäjät digitoivat pääasiassa vain viivoja. Valittavina ovat Kävely-/pyörätie ja Muu tieviiva. Valinta tehdään sen mukaan, kumpia ollaan digitoimassa.
 
-Sn&auml;pp&auml;ys on oletuksena p&auml;&auml;ll&auml;, jotta digitointi on helppo kiinnitt&auml;&auml; muihin ty&ouml;linkkeihin ja MTK-tielinkkeihin (ty&ouml;linkkien sn&auml;pp&auml;ys MTK:n linkkeihin ei kuitenkaan katkaise tai muutoin vaikuta MTK-tason tielinkkeihin).
+Snäppäys on oletuksena päällä, jotta digitointi on helppo kiinnittää muihin työlinkkeihin ja MTK-tielinkkeihin (työlinkkien snäppäys MTK:n linkkeihin ei kuitenkaan katkaise tai muutoin vaikuta MTK-tason tielinkkeihin).
 
-K&auml;ytt&auml;j&auml;ll&auml; on mahdollisuus editoida ty&ouml;linkki-tason kohteita my&ouml;s niiden lis&auml;yksen j&auml;lkeen. K&auml;yt&ouml;ss&auml; ovat kaikki ArcMapin vakioeditointimahdollisuudet, esimerkiksi ty&ouml;linkin katkaisu ja verteksien lis&auml;ys/poisto ja linkkien muokkaus raahaamalla verteksej&auml;. Jos k&auml;ytt&auml;j&auml; digitoi uuden viivan ty&ouml;alueen rajojen yli, laajenee ty&ouml;alue automaattisesti vastaamaan digitoidun viivan m&auml;&auml;rittelemi&auml; rajoja.
+Käyttäjällä on mahdollisuus editoida työlinkki-tason kohteita myös niiden lisäyksen jälkeen. Käytössä ovat kaikki ArcMapin vakioeditointimahdollisuudet, esimerkiksi työlinkin katkaisu ja verteksien lisäys/poisto ja linkkien muokkaus raahaamalla verteksejä. Jos käyttäjä digitoi uuden viivan työalueen rajojen yli, laajenee työalue automaattisesti vastaamaan digitoidun viivan määrittelemiä rajoja.
 
-Solmujen lis&auml;yksest&auml; ja poistamisesta ei tarvitse huolehtia, vaan ne lis&auml;t&auml;&auml;n j&auml;lkik&auml;teen seuraavan kohdan mukaan.
+Solmujen lisäyksestä ja poistamisesta ei tarvitse huolehtia, vaan ne lisätään jälkikäteen seuraavan kohdan mukaan.
 
-3.4.2 Ty&ouml;solmujen poisto ja lis&auml;ys
+3.4.2 Työsolmujen poisto ja lisäys
 --------------------------
 
-Kun ty&ouml;linkkien editointi on valmis, voi kaikki solmut poistaa ja t&auml;m&auml;n j&auml;lkeen lis&auml;t&auml; uudelleen, jolloin sovellus luo solmujen tyypit ja linkkien ja solmujen v&auml;liset relaatiot automaattisesti. Solmujen poisto ja lis&auml;ys tehd&auml;&auml;n Feature Validation -ikkunassa Tools-v&auml;lilehdell&auml;. 
+Kun työlinkkien editointi on valmis, voi kaikki solmut poistaa ja tämän jälkeen lisätä uudelleen, jolloin sovellus luo solmujen tyypit ja linkkien ja solmujen väliset relaatiot automaattisesti. Solmujen poisto ja lisäys tehdään Feature Validation -ikkunassa Tools-välilehdellä. 
 
-Editointi tulee olla edelleen p&auml;&auml;ll&auml;, kun solmut poistetaan ja lis&auml;t&auml;&auml;n.
+Editointi tulee olla edelleen päällä, kun solmut poistetaan ja lisätään.
 
-Solmut poistetaan painikkeesta Remove All. T&auml;m&auml; vie hetken (ei indikaattoria etenemiselle), jonka j&auml;lkeen sovellus ilmoittaa poistettujen solmujen lukum&auml;&auml;r&auml;n. Uudet solmut luodaan painikkeesta Create. T&auml;m&auml; vie hetken, jonka j&auml;lkeen sovellus ilmoittaa luotujen solmujen lukum&auml;&auml;r&auml;n.
+Solmut poistetaan painikkeesta Remove All. Tämä vie hetken (ei indikaattoria etenemiselle), jonka jälkeen sovellus ilmoittaa poistettujen solmujen lukumäärän. Uudet solmut luodaan painikkeesta Create. Tämä vie hetken, jonka jälkeen sovellus ilmoittaa luotujen solmujen lukumäärän.
 
 ![Create Features](k22.png)
 
-_Solmujen poisto ja lis&auml;ys -ty&ouml;kalu Feature Validation -> Tools-v&auml;lilehti._
+_Solmujen poisto ja lisäys -työkalu Feature Validation -> Tools-välilehti._
 
-Kun sovellus luo uusia solmuja, se luo tarvittaessa linkkikatkoja niihin kohtiin, joissa tielinkit on sn&auml;p&auml;tty risteykseksi, mutta linkkikatko puuttuu. T&auml;m&auml;n huomaa kartalla linkkien “v&auml;l&auml;hdyksin&auml;”.
+Kun sovellus luo uusia solmuja, se luo tarvittaessa linkkikatkoja niihin kohtiin, joissa tielinkit on snäpätty risteykseksi, mutta linkkikatko puuttuu. Tämän huomaa kartalla linkkien “välähdyksinä”.
 
 ![Solmut](k23.png)
 
-_Vasemmalla tielinkit ennen solmujen luomista, oikealla solmujen luomisen j&auml;lkeen. VVH-sovellus tekee solmuja luodessa linkkikatkot automaattisesti tarvittaessa._
+_Vasemmalla tielinkit ennen solmujen luomista, oikealla solmujen luomisen jälkeen. VVH-sovellus tekee solmuja luodessa linkkikatkot automaattisesti tarvittaessa._
 
-Kun solmut on luotu, tehd&auml;&auml;n tavalliseen tapaan validointi tai jatketaan ty&ouml;skentely&auml;.
+Kun solmut on luotu, tehdään tavalliseen tapaan validointi tai jatketaan työskentelyä.
 
 ![Solmut](k24.png)
 
-_Ty&ouml;linkki ja ty&ouml;solmu -tasojen kohteita. Kohteet on kopioitu VVH-yll&auml;pit&auml;j&auml;lle toimitetusta keskilinjasta. Pinkit solmut ovat pseudosolmuja ja mustat solmut ovat risteyssolmuja._
+_Työlinkki ja työsolmu -tasojen kohteita. Kohteet on kopioitu VVH-ylläpitäjälle toimitetusta keskilinjasta. Pinkit solmut ovat pseudosolmuja ja mustat solmut ovat risteyssolmuja._
 
-###Ty&ouml;linkkien digitointi, kun Disable topology checks -valinta ei ole p&auml;&auml;ll&auml;###
+###Työlinkkien digitointi, kun Disable topology checks -valinta ei ole päällä###
 
-Editointi toimii eri tavalla silloin, kun Digiroad: Optionsissa ei ole ruksia kohdassa “Disable topology checks”. Kun k&auml;ytt&auml;j&auml; digitoi kohteita topologiatarkistusten ollessa p&auml;&auml;ll&auml;, j&auml;rjestelm&auml; luo solmut automaattisesti ja tarvittaessa katkoo ty&ouml;linkkej&auml;. My&ouml;s risteyksiss&auml; sovellus huolehtii automaattisesti linkkien katkomisesta. Viivat tulee sn&auml;p&auml;t&auml; toisiinsa, jotta katkominen toimii.
+Editointi toimii eri tavalla silloin, kun Digiroad: Optionsissa ei ole ruksia kohdassa “Disable topology checks”. Kun käyttäjä digitoi kohteita topologiatarkistusten ollessa päällä, järjestelmä luo solmut automaattisesti ja tarvittaessa katkoo työlinkkejä. Myös risteyksissä sovellus huolehtii automaattisesti linkkien katkomisesta. Viivat tulee snäpätä toisiinsa, jotta katkominen toimii.
 
-Useimmiten ty&ouml;skentely on helpompaa ja sujuvampaa ilman VVH:n automaattisia topologiatarkistuksia. Mahdolliset virheelliset kohteet tulevat kuitenkin ilmi validoinnissa, esimerkiksi jos solmujen relaatiot ty&ouml;linkkeihin ovat puutteelliset.
+Useimmiten työskentely on helpompaa ja sujuvampaa ilman VVH:n automaattisia topologiatarkistuksia. Mahdolliset virheelliset kohteet tulevat kuitenkin ilmi validoinnissa, esimerkiksi jos solmujen relaatiot työlinkkeihin ovat puutteelliset.
 
 ![Disable](k25.png)
 
 _Disable topology checks ei ole valittuna._
 
-3.4.3 Ty&ouml;linkkien ominaisuustiedot
+3.4.3 Työlinkkien ominaisuustiedot
 --------------------------
 
-Ty&ouml;linkin ominaisuustietoja voi muokata tavalliseen tapaan ominaisuustietotaulussa. Useita kohteita voi p&auml;ivitt&auml;&auml; Field Calculatorin avulla antamalla arvoksi ko. koodiarvo. Ominaisuustietoja voi muokata my&ouml;s valitsemalla Digiroad Editor valikosta Attributes
+Työlinkin ominaisuustietoja voi muokata tavalliseen tapaan ominaisuustietotaulussa. Useita kohteita voi päivittää Field Calculatorin avulla antamalla arvoksi ko. koodiarvo. Ominaisuustietoja voi muokata myös valitsemalla Digiroad Editor valikosta Attributes
 
 ![Attributes](k26.png)
 
@@ -455,42 +455,42 @@ Ominaisuustietojen muokkaus aukeaa sovelluksen oikeaan laitaan kartalta valitull
 
 _Suunnitelma-aineiston ominaisuustietoja._
 
-Ominaisuustietoja on erilaisia. Koodiarvollisilla ominaisuustiedoilla on VVH:ssa my&ouml;s domain-arvo, jolloin domain-arvo n&auml;kyy k&auml;ytt&ouml;liittym&auml;ss&auml;. Esimerkiksi Aineistol&auml;hde 7 on “V&auml;yl&auml;”.
+Ominaisuustietoja on erilaisia. Koodiarvollisilla ominaisuustiedoilla on VVH:ssa myös domain-arvo, jolloin domain-arvo näkyy käyttöliittymässä. Esimerkiksi Aineistolähde 7 on “Väylä”.
 
-Osa ominaisuustiedoista on pakollisia. T&auml;ll&ouml;in my&ouml;s kohteet, joista pakolliset tiedot puuttuvat, j&auml;&auml;v&auml;t kiinni validoinnissa (mik&auml;li pakollisten tietojen validointi on valittuna, validoinnista tarkemmin my&ouml;hemmiss&auml; kappaleissa).
+Osa ominaisuustiedoista on pakollisia. Tällöin myös kohteet, joista pakolliset tiedot puuttuvat, jäävät kiinni validoinnissa (mikäli pakollisten tietojen validointi on valittuna, validoinnista tarkemmin myöhemmissä kappaleissa).
 
-VVH-yll&auml;pit&auml;j&auml;n ohjeesta voi tarkistaa, mitk&auml; tiedot Suravage-aineistolle tulee t&auml;ydent&auml;&auml;. Kaikkia ominaisuustietoja ei t&auml;ydennet&auml; Suravage-aineistolle. Ominaisuustietojen koodiarvoluettelot l&ouml;ytyv&auml;t t&auml;m&auml;n k&auml;ytt&ouml;ohjeen toiselta v&auml;lilehdelt&auml; (yl&auml;reunasta painike VVH koodiarvoluettelot).
+VVH-ylläpitäjän ohjeesta voi tarkistaa, mitkä tiedot Suravage-aineistolle tulee täydentää. Kaikkia ominaisuustietoja ei täydennetä Suravage-aineistolle. Ominaisuustietojen koodiarvoluettelot löytyvät tämän käyttöohjeen toiselta välilehdeltä (yläreunasta painike VVH koodiarvoluettelot).
 
-__Pakollisia ominaisuustietoja ovat__ (suluissa tietokannan kent&auml;n nimi, joka on tarpeen tiet&auml;&auml; esim. select by attributes kyselyss&auml;):
+__Pakollisia ominaisuustietoja ovat__ (suluissa tietokannan kentän nimi, joka on tarpeen tietää esim. select by attributes kyselyssä):
 
 
-|Ominaisuustieto|Tyyppi|Lis&auml;tiedot|Oletusarvo|
+|Ominaisuustieto|Tyyppi|Lisätiedot|Oletusarvo|
 |---------------|------|---------------|----------|
 |Objectid (OBJECTID)|Kokonaisluku|Luodaan automaattisesti||
 |Digiroad-tunniste (DRID)|Kokonaisluku|Luodaan automaattisesti||
 |Linkkitunniste (LINKID)|Kokonaisluku|Luodaan automaattisesti||
-|Ty&ouml;n tunniste (JOBID)|Kokonaisluku|Luodaan automaattisesti||
-|Aineistol&auml;hde (SOURCEINFO)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo|null|
+|Työn tunniste (JOBID)|Kokonaisluku|Luodaan automaattisesti||
+|Aineistolähde (SOURCEINFO)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo|null|
 |Hallinnollinen luokka (ADMINCLASS)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo|null|
-|Kohderyhm&auml; (MTKGROUP)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo|Suunnitelmatiest&ouml; (viiva)|
+|Kohderyhmä (MTKGROUP)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo|Suunnitelmatiestö (viiva)|
 |Valmiusaste (CONSTRUCTIONTYPE)|Koodiarvo|Valitaan alasvetovalikosta, esim. rakenteilla tai annetaan koodiarvo|Suunnitteilla|
 |Yksisuuntaisuus (DIRECTIONTYPE)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo|null|
 |Tasosijainti (VERTICALLEVEL)|Koodiarvo|Valitaan alasvetovalikosta, esim. Tunnelissa, kts. luku 4, tai annetaan koodiarvo|null|
-|Kuntatunnus (MUNICIPALITYCODE)|Koodiarvo|Koodiarvo, t&auml;ydennet&auml;&auml;n automaattisesti*||
-|Hankkeen arvioitu valmistuminen (ESTIMATED_COMPLETION)|P&auml;iv&auml;m&auml;&auml;r&auml; (pp.kk.vvvv)|Jos tieto sy&ouml;tet&auml;&auml;n Field Calculatorin kautta, tulee tieto sy&ouml;tt&auml;&auml; muodossa # kk-pp-vvvv # eli esim. # 10-01-2017 # tarkoittaa 1.10.2017|null|
+|Kuntatunnus (MUNICIPALITYCODE)|Koodiarvo|Koodiarvo, täydennetään automaattisesti*||
+|Hankkeen arvioitu valmistuminen (ESTIMATED_COMPLETION)|Päivämäärä (pp.kk.vvvv)|Jos tieto syötetään Field Calculatorin kautta, tulee tieto syöttää muodossa # kk-pp-vvvv # eli esim. # 10-01-2017 # tarkoittaa 1.10.2017|null|
 
-*) Kuntarajan ylitt&auml;v&auml;n kohteen kuntanumeroa VVH ei t&auml;ydenn&auml;, vaan k&auml;ytt&auml;j&auml;n on t&auml;ydennett&auml;v&auml; se itse. Kuntakoodiksi tulee se kunta, jonka puolella on pidempi osuus tielinkist&auml;.
+*) Kuntarajan ylittävän kohteen kuntanumeroa VVH ei täydennä, vaan käyttäjän on täydennettävä se itse. Kuntakoodiksi tulee se kunta, jonka puolella on pidempi osuus tielinkistä.
 
 Muut ominaisuustiedot:
 
-|Ominaisuustieto|Tyyppi|Lis&auml;tiedot|Oletusarvo|
+|Ominaisuustieto|Tyyppi|Lisätiedot|Oletusarvo|
 |---------------|------|---------------|----------|
-|MTK-tunniste (MTKID)|Kokonaisluku|MML:n k&auml;ytt&auml;m&auml; ID, ei t&auml;ydennet&auml; ty&ouml;linkille|null|
-|Kohdeluokka (MTKCLASS)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo. Vastaa MML:n kohdeluokkaa. VVH:ssa annetaan vain arvoja null ja 12314 K&auml;vely- ja/tai py&ouml;r&auml;tie|null|
+|MTK-tunniste (MTKID)|Kokonaisluku|MML:n käyttämä ID, ei täydennetä työlinkille|null|
+|Kohdeluokka (MTKCLASS)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo. Vastaa MML:n kohdeluokkaa. VVH:ssa annetaan vain arvoja null ja 12314 Kävely- ja/tai pyörätie|null|
 |Tienumero (ROADNUMBER)|Kokonaisluku||null|
 |Tieosanumero (ROADPARTNUMBER)|Kokonaisluku||null|
 |Ajoratakoodi (TRACK_CODE)|Kokonaisluku||null|
-|P&auml;&auml;llystetieto (SURFACETYPE)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo|null|
+|Päällystetieto (SURFACETYPE)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo|null|
 |Sijaintitarkkuus (HORIZONTALACCURACY)|Koodiarvo|Valitaan alasvetovalikosta, esim. 0,5 m tai annetaan koodiarvo|null|
 |Korkeustarkkuus (VERTICALACCURACY)|Koodiarvo|Valitaan alasvetovalikosta, esim. 0,5 m tai annetaan koodiarvo|null|
 |Kulkutapa (VECTORTYPE)|Koodiarvo|Valitaan alasvetovalikosta, esim. Murto tai annetaan koodiarvo|Murto|
@@ -499,32 +499,32 @@ Muut ominaisuustiedot:
 |Osoitenumero, vasen, loppu (TO_LEFT)|Kokonaisluku||null|
 |Osoitenumero, oikea, alku (FROM_RIGHT)|Kokonaisluku||null|
 |Osoitenumero, oikea, loppu (TO_RIGHT)|Kokonaisluku||null|
-|Voimassaolo, alku (VALID_FROM)|P&auml;iv&auml;m&auml;&auml;r&auml;|Valitaan kalenterivalikosta|null|
-|Voimassaolo, loppu (VALID_TO)|P&auml;iv&auml;m&auml;&auml;r&auml;|Valitaan kalenterivalikosta|null|
-|Perustusp&auml;iv&auml; (CREATED_DATE)|P&auml;iv&auml;m&auml;&auml;r&auml;|T&auml;ydennet&auml;&auml;n automaattisesti, kohteen luontip&auml;iv&auml;||
-|Perustaja (CREATED_BY)|Tekstikentt&auml;|T&auml;ydennet&auml;&auml;n automaattisesti, digitoijan k&auml;ytt&auml;j&auml;tunnus||
-|Validointistatus (VALIDATIONSTATUS)|Koodiarvo|K&auml;sitell&auml;&auml;n automaattisesti||
-|Kohteen olotila (OBJECTSATUS)|Koodiarvo|K&auml;sitell&auml;&auml;n automaattisesti||
-|Tien nimi (suomi) (ROADNAME_FI)|Tekstikentt&auml;||null|
-|Tien nimi (ruotsi) (ROADNAME_SE)|Tekstikentt&auml;||null|
-|Tien nimi (saame) (ROADNAME_SM)|Tekstikentt&auml;||null|
-|MTKHEREFLIP|Koodiarvo|T&auml;ydennet&auml;&auml;n automaattisesti, checkin k&auml;&auml;nt&auml;&auml; geometrian digitointisuunnan tarvittaessa, jotta se vastaa ns. Here-flip -s&auml;&auml;nt&ouml;&auml;. Kentt&auml; tulee mukaan vasta checkin-vaiheessa||
-|CUST_CLASS|Tekstikentt&auml;|K&auml;yt&ouml;ss&auml; Tampereen t&auml;ydent&auml;vill&auml; geometrioilla, ei Suravagessa||
-|CUST_ID_STR|Tekstikentt&auml;|K&auml;yt&ouml;ss&auml; Tampereen t&auml;ydent&auml;vill&auml; geometrioilla, ei Suravagessa||
-|CUST_ID_NUM|Kokonaisluku|K&auml;yt&ouml;ss&auml; Tampereen t&auml;ydent&auml;vill&auml; geometrioilla, ei Suravagessa||
-|CUST_OWNER|Koodiarvo|K&auml;yt&ouml;ss&auml; Tampereen t&auml;ydent&auml;vill&auml; geometrioilla, ei Suravagessa||
+|Voimassaolo, alku (VALID_FROM)|Päivämäärä|Valitaan kalenterivalikosta|null|
+|Voimassaolo, loppu (VALID_TO)|Päivämäärä|Valitaan kalenterivalikosta|null|
+|Perustuspäivä (CREATED_DATE)|Päivämäärä|Täydennetään automaattisesti, kohteen luontipäivä||
+|Perustaja (CREATED_BY)|Tekstikenttä|Täydennetään automaattisesti, digitoijan käyttäjätunnus||
+|Validointistatus (VALIDATIONSTATUS)|Koodiarvo|Käsitellään automaattisesti||
+|Kohteen olotila (OBJECTSATUS)|Koodiarvo|Käsitellään automaattisesti||
+|Tien nimi (suomi) (ROADNAME_FI)|Tekstikenttä||null|
+|Tien nimi (ruotsi) (ROADNAME_SE)|Tekstikenttä||null|
+|Tien nimi (saame) (ROADNAME_SM)|Tekstikenttä||null|
+|MTKHEREFLIP|Koodiarvo|Täydennetään automaattisesti, checkin kääntää geometrian digitointisuunnan tarvittaessa, jotta se vastaa ns. Here-flip -sääntöä. Kenttä tulee mukaan vasta checkin-vaiheessa||
+|CUST_CLASS|Tekstikenttä|Käytössä Tampereen täydentävillä geometrioilla, ei Suravagessa||
+|CUST_ID_STR|Tekstikenttä|Käytössä Tampereen täydentävillä geometrioilla, ei Suravagessa||
+|CUST_ID_NUM|Kokonaisluku|Käytössä Tampereen täydentävillä geometrioilla, ei Suravagessa||
+|CUST_OWNER|Koodiarvo|Käytössä Tampereen täydentävillä geometrioilla, ei Suravagessa||
 
-3.4.5 Ty&ouml;solmun ominaisuustiedot
+3.4.5 Työsolmun ominaisuustiedot
 --------------------------
 
-Solmujen ominaisuustietoja ei tarvitse t&auml;ydent&auml;&auml;, sill&auml; VVH-j&auml;rjestelm&auml; huolehtii niist&auml; automaattisesti. Poikkeuksena tasan kuntarajalla sijaitsevat ty&ouml;solmut, joille annettaan kuntanumeroksi jomman kumman kunnan kuntanumero.
+Solmujen ominaisuustietoja ei tarvitse täydentää, sillä VVH-järjestelmä huolehtii niistä automaattisesti. Poikkeuksena tasan kuntarajalla sijaitsevat työsolmut, joille annettaan kuntanumeroksi jomman kumman kunnan kuntanumero.
 
 3.4.6 Editor trackin seuraaminen editoinnin aikana
 --------------------------
 
-Editoinnissa tehtyj&auml; muutoksia tietokantaan voi seurata Editor trackin kautta. Editor track kertoo j&auml;rjestelm&auml;ss&auml; editoinnin aikana tapahtuvat (my&ouml;s automaattiset) toiminnot. My&ouml;s kielletyt operaatiot lokittuvat Editor trackiin, jolloin k&auml;ytt&auml;j&auml; n&auml;kee, miksei esimerkiksi kartalle digitoitua viivaa luotu. Editor track avataan Digiroad Editor -> Feature Validation -> Editor track v&auml;lilehti.
+Editoinnissa tehtyjä muutoksia tietokantaan voi seurata Editor trackin kautta. Editor track kertoo järjestelmässä editoinnin aikana tapahtuvat (myös automaattiset) toiminnot. Myös kielletyt operaatiot lokittuvat Editor trackiin, jolloin käyttäjä näkee, miksei esimerkiksi kartalle digitoitua viivaa luotu. Editor track avataan Digiroad Editor -> Feature Validation -> Editor track välilehti.
 
-Editor track kirjoittaa lokiin oletuksena vain kriittiset viestit, eli esimerkiksi virheelliset geometriat (vasemman puoleinen kuva alla). T&auml;t&auml; asetusta voi muuttaa Digiroad: Optionsista (Digiroad Tools -ty&ouml;kaluista) tai klikkaamalla hiiren oikeaa nappia Editor Trackiss&auml;. Vaihtoehtoisia lokitustasoja on kolme, joista oletuksena on valittuna taso, jossa virheellisten kohteiden digitointi lokitetaan k&auml;ytt&auml;j&auml;lle. Keskitasolla Editor track kirjoittaa lokiin joitakin tapahtumia (linkki luotu, solmu luotu) tai tarkimmalla tasolla kaikki tapahtumat (kohteiden luominen, ominaisuustietojen tallentuminen, kohteiden v&auml;liset relaatiot jne., oikeanpuoleinen kuva alla). Editor trackist&auml; voi siis k&auml;tev&auml;sti seurata, mit&auml; sovelluksessa tapahtuu oman ty&ouml;skentelyn aikana. Eri tasoiset viestit lokitetaan eri v&auml;reill&auml;.
+Editor track kirjoittaa lokiin oletuksena vain kriittiset viestit, eli esimerkiksi virheelliset geometriat (vasemman puoleinen kuva alla). Tätä asetusta voi muuttaa Digiroad: Optionsista (Digiroad Tools -työkaluista) tai klikkaamalla hiiren oikeaa nappia Editor Trackissä. Vaihtoehtoisia lokitustasoja on kolme, joista oletuksena on valittuna taso, jossa virheellisten kohteiden digitointi lokitetaan käyttäjälle. Keskitasolla Editor track kirjoittaa lokiin joitakin tapahtumia (linkki luotu, solmu luotu) tai tarkimmalla tasolla kaikki tapahtumat (kohteiden luominen, ominaisuustietojen tallentuminen, kohteiden väliset relaatiot jne., oikeanpuoleinen kuva alla). Editor trackistä voi siis kätevästi seurata, mitä sovelluksessa tapahtuu oman työskentelyn aikana. Eri tasoiset viestit lokitetaan eri väreillä.
 
 ![Editor track](k28.png)
 
@@ -533,104 +533,104 @@ _Editor track. Vasemmalla minimilokitus, oikealla tarkin mahdollinen lokitus._
 3.5 Validointi: Feature Validation
 --------------------------
 
-K&auml;ytt&auml;j&auml; voi validoida tekemi&auml;&auml;n muutoksia sek&auml; ty&ouml;skentelyn aikana ett&auml; sen j&auml;lkeen. K&auml;ytt&auml;j&auml;n on pakollista validoida tehdyt geometriat ennen niiden vienti&auml; tietokantaan (Digiroad: Checkin) prim&auml;&auml;ritasolle. Validoinnin avulla varmistutaan aineiston topologisesta eheydest&auml;.
+Käyttäjä voi validoida tekemiään muutoksia sekä työskentelyn aikana että sen jälkeen. Käyttäjän on pakollista validoida tehdyt geometriat ennen niiden vientiä tietokantaan (Digiroad: Checkin) primääritasolle. Validoinnin avulla varmistutaan aineiston topologisesta eheydestä.
 
 3.5.1 Validation rules
 --------------------------
 
-Validation rules -v&auml;lilehdelt&auml; k&auml;ytt&auml;j&auml; voi valita, mitk&auml; kohteet “j&auml;&auml;v&auml;t kiinni” validoinnissa. On siis mahdollista tapauskohtaisesti sallia my&ouml;s sellaisten kohteiden validoinnin l&auml;p&auml;isy, jotka eiv&auml;t v&auml;ltt&auml;m&auml;tt&auml; ole topologisesti tai ominaisuustiedoiltaan “t&auml;ydellisi&auml;”. Validointeja voi kuitenkin ty&ouml;skentelyn aikana “ajaa” niin monta kertaa kuin tarpeen, ja kohteet j&auml;&auml;v&auml;t kiinni validoinnissa ruksittujen s&auml;&auml;nt&ouml;jen mukaisesti. T&auml;rke&auml;&auml; (ja pakollista) on ajaa kokonaisvaltainen validointi silloin, kun on aikeissa tehd&auml; checkinin.
+Validation rules -välilehdeltä käyttäjä voi valita, mitkä kohteet “jäävät kiinni” validoinnissa. On siis mahdollista tapauskohtaisesti sallia myös sellaisten kohteiden validoinnin läpäisy, jotka eivät välttämättä ole topologisesti tai ominaisuustiedoiltaan “täydellisiä”. Validointeja voi kuitenkin työskentelyn aikana “ajaa” niin monta kertaa kuin tarpeen, ja kohteet jäävät kiinni validoinnissa ruksittujen sääntöjen mukaisesti. Tärkeää (ja pakollista) on ajaa kokonaisvaltainen validointi silloin, kun on aikeissa tehdä checkinin.
 
 ![Validointi](k29.png)
 
-_Validointi. Validointis&auml;&auml;nt&ouml;j&auml; voi vaihdella ruksimalla niit&auml; p&auml;&auml;lle ja pois Feature Validation -ikkunassa._
+_Validointi. Validointisääntöjä voi vaihdella ruksimalla niitä päälle ja pois Feature Validation -ikkunassa._
 
 3.5.2 Validoinnin ajaminen
 --------------------------
 
-Editointi on lopetettava ja muutokset tallennettava ennen validointia. T&auml;m&auml;n j&auml;lkeen Feature Validation -ikkunassa Run-painikkeen painaminen k&auml;ynnist&auml;&auml; validoinnin. Kaikki ty&ouml;h&ouml;n kuuluvat ty&ouml;linkit ja ty&ouml;solmut validoidaan. Validoinnin etenemist&auml; voi seurata validointi-ikkunan alareunan palkista. Virheelliset kohteet lokitetaan v&auml;lilehdelle Not Valid Features. Validation Rules -ikkunassa ruksitut kohdat vaikuttavat siihen, millaiset kohteet katsotaan virheellisiksi validoinnissa.
+Editointi on lopetettava ja muutokset tallennettava ennen validointia. Tämän jälkeen Feature Validation -ikkunassa Run-painikkeen painaminen käynnistää validoinnin. Kaikki työhön kuuluvat työlinkit ja työsolmut validoidaan. Validoinnin etenemistä voi seurata validointi-ikkunan alareunan palkista. Virheelliset kohteet lokitetaan välilehdelle Not Valid Features. Validation Rules -ikkunassa ruksitut kohdat vaikuttavat siihen, millaiset kohteet katsotaan virheellisiksi validoinnissa.
 
 ![Validointi](k30.png)
 
-_Validoinnin etenemist&auml; voi seurata validointi-ikkunan alareunasta._
+_Validoinnin etenemistä voi seurata validointi-ikkunan alareunasta._
 
-Kun validointi on valmis, sovellus ilmoittaa samassa kohdassa, ett&auml; validointi on valmis. Virheelliset kohteet voi tarkistaa Error List -v&auml;lilehdelt&auml;.
+Kun validointi on valmis, sovellus ilmoittaa samassa kohdassa, että validointi on valmis. Virheelliset kohteet voi tarkistaa Error List -välilehdeltä.
 
 ![Validointi](k31.png)
 
-_Validoinnin tulokset, jos aineistossa on ollut virheellisi&auml; kohteita (vanha kuva - v&auml;lilehden nimi on nykyisin Error List)._
+_Validoinnin tulokset, jos aineistossa on ollut virheellisiä kohteita (vanha kuva - välilehden nimi on nykyisin Error List)._
 
-Jos validoinnin ajaa t&auml;m&auml;n j&auml;lkeen uudelleen siten, ett&auml; muuttaa validointis&auml;&auml;nt&ouml;j&auml;, poistuvat kohteet korjauslistalta. Esimerkiksi pakollisten ominaisuustietojen poistaminen s&auml;&auml;nn&ouml;ist&auml; edellisess&auml; tapauksessa lyhent&auml;&auml; listaa huomattavasti:
+Jos validoinnin ajaa tämän jälkeen uudelleen siten, että muuttaa validointisääntöjä, poistuvat kohteet korjauslistalta. Esimerkiksi pakollisten ominaisuustietojen poistaminen säännöistä edellisessä tapauksessa lyhentää listaa huomattavasti:
 
 ![Validointi](k32.png)
 
 _Validoinnin tulokset, kun osa kohteista on korjattu._
 
-Kohteiden tallentamista tietokantaan prim&auml;&auml;ritasolle eli Checkini&auml; ei voi tehd&auml; ilman, ett&auml; virheelliseksi katsotut kohteet on korjattu. Tuplaklikkaamalla kohdetta virhelistalla, sovellus zoomaa ko. kohteeseen. Kun kohteet on korjattu, ajetaan validointi uudelleen ja tarkistetaan, ett&auml; virhelista on tyhj&auml;.
+Kohteiden tallentamista tietokantaan primääritasolle eli Checkiniä ei voi tehdä ilman, että virheelliseksi katsotut kohteet on korjattu. Tuplaklikkaamalla kohdetta virhelistalla, sovellus zoomaa ko. kohteeseen. Kun kohteet on korjattu, ajetaan validointi uudelleen ja tarkistetaan, että virhelista on tyhjä.
 
-Pakolliset ominaisuustiedot voi korjata my&ouml;s valitsemalla listalta hiiren oikealla korjattava kohde ja Fix null values. T&auml;ll&auml; tavalla korjausten tekeminen ei edellyt&auml; editointitilaan siirtymist&auml;. Kohteet voi korjata yksi kerrallaan tai kaikki kerrallaan. Esim. aineistol&auml;hde on usein kaikille kohteille sama samalla ty&ouml;alueella.
+Pakolliset ominaisuustiedot voi korjata myös valitsemalla listalta hiiren oikealla korjattava kohde ja Fix null values. Tällä tavalla korjausten tekeminen ei edellytä editointitilaan siirtymistä. Kohteet voi korjata yksi kerrallaan tai kaikki kerrallaan. Esim. aineistolähde on usein kaikille kohteille sama samalla työalueella.
 
 ![Fix](k33.png)
 
-_Fix Null Values. Pakollisia ominaisuustietoja voi korjata my&ouml;s Fix Null Values -toiminnolla._
+_Fix Null Values. Pakollisia ominaisuustietoja voi korjata myös Fix Null Values -toiminnolla._
 
-Jos virheellisen kohteen haluaa hyv&auml;ksy&auml; validointivirheest&auml; huolimatta, voi kohteelle asettaa “Set Valid Flag” -valinnan, jolloin se katsotaan k&auml;ytt&auml;j&auml;n hyv&auml;ksym&auml;ksi kohteeksi ja kohteen voi vied&auml; tietokantaan (seuraava kohta, Digiroad: Checkin).
+Jos virheellisen kohteen haluaa hyväksyä validointivirheestä huolimatta, voi kohteelle asettaa “Set Valid Flag” -valinnan, jolloin se katsotaan käyttäjän hyväksymäksi kohteeksi ja kohteen voi viedä tietokantaan (seuraava kohta, Digiroad: Checkin).
 
-3.6 Aineiston sis&auml;&auml;nmerkkaus: Digiroad: Checkin
+3.6 Aineiston sisäänmerkkaus: Digiroad: Checkin
 --------------------------
 
-Sis&auml;&auml;nmerkkaamisen avulla kopioidaan ty&ouml;h&ouml;n liittyv&auml; muokattu aineisto tietokantaan prim&auml;&auml;ritasolle eli suunnitelmalinkki-tasolle ja suunnitelmasolmu-tasolle. Suunnitelmalinkki-tasolta kohteet siirtyv&auml;t jatkossa esimerkiksi OTH-sovelluksen ja Viite-sovelluksen k&auml;ytt&ouml;&ouml;n. Ilman Checkini&auml; aineistoa ei siis voi k&auml;ytt&auml;&auml; miss&auml;&auml;n VVH:n rajapintoja hy&ouml;dynt&auml;viss&auml; j&auml;rjestelmiss&auml;.
+Sisäänmerkkaamisen avulla kopioidaan työhön liittyvä muokattu aineisto tietokantaan primääritasolle eli suunnitelmalinkki-tasolle ja suunnitelmasolmu-tasolle. Suunnitelmalinkki-tasolta kohteet siirtyvät jatkossa esimerkiksi OTH-sovelluksen ja Viite-sovelluksen käyttöön. Ilman Checkiniä aineistoa ei siis voi käyttää missään VVH:n rajapintoja hyödyntävissä järjestelmissä.
 
-Jotta Checkin voidaan tehd&auml;, tulee validointi olla kokonaisuudessaan mennyt l&auml;pi, eik&auml; ty&ouml;ss&auml; saa olla kohteita, jotka eiv&auml;t ole l&auml;p&auml;isseet validointia. Checkin ajetaan Digiroad Editor valikosta valitsemalla Digiroad: Checkin. Jos virheellisi&auml; kohteita on, huomauttaa sovellus t&auml;st&auml;. Samoin jos validointi on tekem&auml;tt&auml;, ei checkini&auml; voi tehd&auml;, koska kaikki kohteet katsotaan virheellisiksi.
+Jotta Checkin voidaan tehdä, tulee validointi olla kokonaisuudessaan mennyt läpi, eikä työssä saa olla kohteita, jotka eivät ole läpäisseet validointia. Checkin ajetaan Digiroad Editor valikosta valitsemalla Digiroad: Checkin. Jos virheellisiä kohteita on, huomauttaa sovellus tästä. Samoin jos validointi on tekemättä, ei checkiniä voi tehdä, koska kaikki kohteet katsotaan virheellisiksi.
 
 ![Checkin](k34.png)
 
-_Checkin, jos validointi on tekem&auml;tt&auml; tai validoinnissa on j&auml;&auml;nyt virheellisi&auml; kohteita._
+_Checkin, jos validointi on tekemättä tai validoinnissa on jäänyt virheellisiä kohteita._
 
-Kun validointi on tehty onnistuneesti, aktivoituu Checkin painike ja sis&auml;&auml;nmerkkauksen voi ajaa.
+Kun validointi on tehty onnistuneesti, aktivoituu Checkin painike ja sisäänmerkkauksen voi ajaa.
 
 ![Checkin](k35.png)
 
 _Checkin, kun validointi on tehty onnistuneesti._
 
-Kun checkin on tehty, kohteet poistuvat ty&ouml;linkki ja ty&ouml;solmu -tasoilta ja siirtyv&auml;t suunnitelmalinkki ja suunnitelmasolmu -tasoille. Ne saa palautettua takaisin tekem&auml;ll&auml; aineistolle taas checkoutin.
+Kun checkin on tehty, kohteet poistuvat työlinkki ja työsolmu -tasoilta ja siirtyvät suunnitelmalinkki ja suunnitelmasolmu -tasoille. Ne saa palautettua takaisin tekemällä aineistolle taas checkoutin.
 
-Checkin kannattaa tehd&auml; kuitenkin vasta, kuin aineisto on hy&ouml;dynt&auml;miskelpoisessa vaiheessa. Jos ty&ouml; ei ole valmis, vaan se halutaan keskeytt&auml;&auml; esim. kotiin l&auml;hdett&auml;ess&auml;, se tehd&auml;&auml;n Digiroad: Supend Job -valinnalla. Suspend Job on riitt&auml;v&auml;, jos ty&ouml; j&auml;&auml; t&auml;ysin kesken (kts. luku 3.7).
+Checkin kannattaa tehdä kuitenkin vasta, kuin aineisto on hyödyntämiskelpoisessa vaiheessa. Jos työ ei ole valmis, vaan se halutaan keskeyttää esim. kotiin lähdettäessä, se tehdään Digiroad: Supend Job -valinnalla. Suspend Job on riittävä, jos työ jää täysin kesken (kts. luku 3.7).
 
 ![Checkin](k36.png)
 
-_Ty&ouml;linkit ja ty&ouml;solmut ennen checkini&auml;, kohteet valmiita._
+_Työlinkit ja työsolmut ennen checkiniä, kohteet valmiita._
 
 ![Checkin](k37.png)
 
-_Kohteet suunnitelmalinkki ja suunnitelmasolmu -tasoilla checkinin j&auml;lkeen._
+_Kohteet suunnitelmalinkki ja suunnitelmasolmu -tasoilla checkinin jälkeen._
 
-###Ns. Here-flip checkinin yhteydess&auml;###
+###Ns. Here-flip checkinin yhteydessä###
 
-Here-flip -s&auml;&auml;nt&ouml; tarkoittaa, ett&auml; kaikkien kohteiden digitointisuunnat noudattavat seuraavia s&auml;&auml;nt&ouml;j&auml;:
+Here-flip -sääntö tarkoittaa, että kaikkien kohteiden digitointisuunnat noudattavat seuraavia sääntöjä:
 
-1. Linkin alkupiste on aina sen etel&auml;isempi piste
-1. T&auml;ysin it&auml;-l&auml;nsisuuntaisella linkill&auml; alkupiste on l&auml;ntinen alkupiste
+1. Linkin alkupiste on aina sen eteläisempi piste
+1. Täysin itä-länsisuuntaisella linkillä alkupiste on läntinen alkupiste
 
-K&auml;ytt&auml;j&auml;n ei tarvitse huolehtia itse here-flip -s&auml;&auml;nn&ouml;n toteutumisesta.
+Käyttäjän ei tarvitse huolehtia itse here-flip -säännön toteutumisesta.
 
-VVH-sovellus tarkistaa checkinin yhteydess&auml;, ett&auml; tielinkkien digitointisuunnat vastaavat Here-flip -s&auml;&auml;nt&ouml;&auml;. Tarvittaessa digitointisuunta k&auml;&auml;nnet&auml;&auml;n (etel&auml;st&auml; pohjoiseen tai l&auml;nnest&auml; it&auml;&auml;n), ja MTKHEREFLIP -kent&auml;n arvoksi tulee 1. Samalla digitointisuuntariippuvaiset ominaisuustiedot k&auml;&auml;nnet&auml;&auml;n (yksisuuntaisuus, osoitenumerot).
+VVH-sovellus tarkistaa checkinin yhteydessä, että tielinkkien digitointisuunnat vastaavat Here-flip -sääntöä. Tarvittaessa digitointisuunta käännetään (etelästä pohjoiseen tai lännestä itään), ja MTKHEREFLIP -kentän arvoksi tulee 1. Samalla digitointisuuntariippuvaiset ominaisuustiedot käännetään (yksisuuntaisuus, osoitenumerot).
 
-Here-flip -s&auml;&auml;nn&ouml;n toteutumisen voi todentaa checkinin j&auml;lkeen lis&auml;&auml;m&auml;ll&auml; suunnitelmalinkit kartalle ja t&auml;m&auml;n j&auml;lkeen Feature Drawing -ty&ouml;kalulla digitointisuuntanuolen piirtoon. Kaikkien nuolien tulisi osoittaa etel&auml;st&auml; pohjoiseen tai l&auml;nnest&auml; it&auml;&auml;n.
+Here-flip -säännön toteutumisen voi todentaa checkinin jälkeen lisäämällä suunnitelmalinkit kartalle ja tämän jälkeen Feature Drawing -työkalulla digitointisuuntanuolen piirtoon. Kaikkien nuolien tulisi osoittaa etelästä pohjoiseen tai lännestä itään.
 
 ![Hereflip](k38.png)
 
-_Suunnitelmalinkkien digitointisuunnat ovat here-flip -s&auml;&auml;nn&ouml;n mukaisia._
+_Suunnitelmalinkkien digitointisuunnat ovat here-flip -säännön mukaisia._
 
 
-3.7 T&ouml;iden ja ty&ouml;jonon hallinta: Digiroad: Suspend Job ja Digiroad: Work Queue
+3.7 Töiden ja työjonon hallinta: Digiroad: Suspend Job ja Digiroad: Work Queue
 --------------------------
 
-VVH-sovelluksessa on mahdollista hallita t&ouml;it&auml; keskeytt&auml;m&auml;ll&auml; niit&auml;, avaamalla uudelleen sek&auml; muokkaamalla olemassa olevien t&ouml;iden tietoja. Tarvittaessa ty&ouml;n voi my&ouml;s poistaa.
+VVH-sovelluksessa on mahdollista hallita töitä keskeyttämällä niitä, avaamalla uudelleen sekä muokkaamalla olemassa olevien töiden tietoja. Tarvittaessa työn voi myös poistaa.
 
-3.7.1 Ty&ouml;n keskeytt&auml;minen: Digiroad: Suspend Job
+3.7.1 Työn keskeyttäminen: Digiroad: Suspend Job
 --------------------------
 
-Ty&ouml;n keskeytt&auml;minen on normaalitilanne esimerkiksi silloin, kun ei ty&ouml;p&auml;iv&auml;n aikana saa ty&ouml;t&auml; valmiiksi, ArcMap suljetaan ja ty&ouml; j&auml;&auml; odottamaan hetke&auml;, jolloin sit&auml; taas jatketaan.  Ty&ouml; keskeytet&auml;&auml;n valitsemalla Digiroad Editor valikosta Suspend Job. Jotta ty&ouml;n voi keskeytt&auml;&auml;, tulee editointi olla pois p&auml;&auml;lt&auml; ja muutokset tallennettuna. Keskeytyksen j&auml;lkeen voi ArcMapin sulkea turvallisesti ja palata ty&ouml;h&ouml;n my&ouml;hemmin.
+Työn keskeyttäminen on normaalitilanne esimerkiksi silloin, kun ei työpäivän aikana saa työtä valmiiksi, ArcMap suljetaan ja työ jää odottamaan hetkeä, jolloin sitä taas jatketaan.  Työ keskeytetään valitsemalla Digiroad Editor valikosta Suspend Job. Jotta työn voi keskeyttää, tulee editointi olla pois päältä ja muutokset tallennettuna. Keskeytyksen jälkeen voi ArcMapin sulkea turvallisesti ja palata työhön myöhemmin.
 
 ![Suspend](k39.png)
 
@@ -638,128 +638,128 @@ _Digiroad: Suspend Job_
 
 ![Suspend](k40.png)
 
-_ArcMapi&auml; ei voi sulkea, jos VVH:ssa on ty&ouml; auki._
+_ArcMapiä ei voi sulkea, jos VVH:ssa on työ auki._
 
-Ty&ouml;n uudelleen avaaminen ja  jatkaminen my&ouml;hemmin onnistuu ty&ouml;jonon kautta.
+Työn uudelleen avaaminen ja  jatkaminen myöhemmin onnistuu työjonon kautta.
 
-3.7.2 Ty&ouml;jonon hallinta: Digiroad: Work Queue
+3.7.2 Työjonon hallinta: Digiroad: Work Queue
 --------------------------
 
-Keskener&auml;isi&auml; t&ouml;it&auml; voidaan hallita ty&ouml;jonossa.  Mm. t&ouml;iden avaaminen uudelleen (Open Job) keskeytyksen j&auml;lkeen ja ty&ouml;n vapautus (Release Job) tapahtuu ty&ouml;jonon kautta. Ty&ouml;jono avataan Digiroad Editor -valikosta valitsemalla Digiroad: Work Queue. Ty&ouml;jono n&auml;ytt&auml;&auml; kaikki julkiset ty&ouml;t. On t&auml;rke&auml;&auml;, ettei t&ouml;it&auml; turhaan tehd&auml; yksityisiksi, jotta ne n&auml;kyv&auml;t ja ovat hallittavissa ty&ouml;jonossa kaikkien toimesta.
+Keskeneräisiä töitä voidaan hallita työjonossa.  Mm. töiden avaaminen uudelleen (Open Job) keskeytyksen jälkeen ja työn vapautus (Release Job) tapahtuu työjonon kautta. Työjono avataan Digiroad Editor -valikosta valitsemalla Digiroad: Work Queue. Työjono näyttää kaikki julkiset työt. On tärkeää, ettei töitä turhaan tehdä yksityisiksi, jotta ne näkyvät ja ovat hallittavissa työjonossa kaikkien toimesta.
 
 ![Jono](k41.png)
 
-_Ty&ouml;jono._
+_Työjono._
 
-Klikkamalla ty&ouml;t&auml; ty&ouml;jonosta, n&auml;hd&auml;&auml;n ty&ouml;n tiedot. Eri v&auml;lilehdill&auml; voi hallita my&ouml;s ty&ouml;n liitteit&auml; jne. aivan kuten silloin, kun ty&ouml; rekister&ouml;itiin. Ty&ouml;n tietoja voi muokata vain silloin, kun se ei ole auki. Jos siis haluaa lis&auml;t&auml; ty&ouml;h&ouml;n uuden liitteen tai layerin, tulee se ensin sulkea ja sitten muokata sit&auml; ty&ouml;jonosta.
+Klikkamalla työtä työjonosta, nähdään työn tiedot. Eri välilehdillä voi hallita myös työn liitteitä jne. aivan kuten silloin, kun työ rekisteröitiin. Työn tietoja voi muokata vain silloin, kun se ei ole auki. Jos siis haluaa lisätä työhön uuden liitteen tai layerin, tulee se ensin sulkea ja sitten muokata sitä työjonosta.
 
-Julkisten t&ouml;iden hallinta ja niiden avaaminen on sallittua kaikille k&auml;ytt&auml;jille. Esimerkiksi kohtaan Notes voi my&ouml;s toiset kirjoittaa huomiota ty&ouml;st&auml;, jos on jatkanut toisen aloittamaa ty&ouml;t&auml;.
+Julkisten töiden hallinta ja niiden avaaminen on sallittua kaikille käyttäjille. Esimerkiksi kohtaan Notes voi myös toiset kirjoittaa huomiota työstä, jos on jatkanut toisen aloittamaa työtä.
 
-3.7.3 Ty&ouml;n avaaminen (Open Job)
+3.7.3 Työn avaaminen (Open Job)
 --------------------------
 
-Ty&ouml; avataan uudelleen valitsemalla Open Job. T&auml;m&auml;n j&auml;lkeen voi editointia jatkaa taas tavallisesti. Checkout tehd&auml;&auml;n tarvittaessa. Sovellus ei anna aloittaa editointia, jos checkout on tekem&auml;tt&auml;.
+Työ avataan uudelleen valitsemalla Open Job. Tämän jälkeen voi editointia jatkaa taas tavallisesti. Checkout tehdään tarvittaessa. Sovellus ei anna aloittaa editointia, jos checkout on tekemättä.
 
-Valmiit ja yksityiset ty&ouml;t saadaan n&auml;kyviin valitsemalla Work Queue -alasvetovalikosta Show Private Queue ja Show Completed Queue. Valmiita t&ouml;it&auml; ei voida avata uudelleen ja yksityisi&auml; t&ouml;it&auml; voi hallita vain niiden omistaja sek&auml; admin-k&auml;ytt&auml;j&auml; (kts. admin-k&auml;ytt&auml;j&auml;n oikeudet ty&ouml;jonon hallinnassa).
+Valmiit ja yksityiset työt saadaan näkyviin valitsemalla Work Queue -alasvetovalikosta Show Private Queue ja Show Completed Queue. Valmiita töitä ei voida avata uudelleen ja yksityisiä töitä voi hallita vain niiden omistaja sekä admin-käyttäjä (kts. admin-käyttäjän oikeudet työjonon hallinnassa).
 
 ![Jono](k42.png)
 
-_Valmiit ja yksityiset ty&ouml;t._
+_Valmiit ja yksityiset työt._
 
-3.7.4 Ty&ouml;n merkkaaminen valmiiksi (Complete Job)
+3.7.4 Työn merkkaaminen valmiiksi (Complete Job)
 --------------------------
 
-Kun Checkin on tehty ja ty&ouml; on kokonaan valmis (siihen ei ole tarpeen palata), voi ty&ouml;n merkata valmiiksi Digiroad Editor -valikosta valitsemalla Digiroad: Complete Job.
+Kun Checkin on tehty ja työ on kokonaan valmis (siihen ei ole tarpeen palata), voi työn merkata valmiiksi Digiroad Editor -valikosta valitsemalla Digiroad: Complete Job.
 
-Huom! Valmiiksi merkattua ty&ouml;t&auml; ei voi avata en&auml;&auml; uudelleen k&auml;ytt&ouml;liittym&auml;st&auml; eik&auml; sit&auml; p&auml;&auml;se siis en&auml;&auml; editoimaan.
+Huom! Valmiiksi merkattua työtä ei voi avata enää uudelleen käyttöliittymästä eikä sitä pääse siis enää editoimaan.
 
-Jos kuitenkin k&auml;ytt&auml;j&auml;ll&auml; on tarve korjata ty&ouml;t&auml; Complete Job -valinnan j&auml;lkeen, voi VVH:n kehitystiimi&auml; pyyt&auml;&auml; palauttamaan ty&ouml; takaisin ty&ouml;jonoon. Kehitystiimille ilmoitetaan ty&ouml;n tarkka nimi (tai ty&ouml;n numero, ei n&auml;y listassa). Jos ty&ouml;n nime&auml; ei muista, sen voi tarkistaa avaamalla ty&ouml;jonosta valmiiden t&ouml;iden listan.
+Jos kuitenkin käyttäjällä on tarve korjata työtä Complete Job -valinnan jälkeen, voi VVH:n kehitystiimiä pyytää palauttamaan työ takaisin työjonoon. Kehitystiimille ilmoitetaan työn tarkka nimi (tai työn numero, ei näy listassa). Jos työn nimeä ei muista, sen voi tarkistaa avaamalla työjonosta valmiiden töiden listan.
 
 ![Jono](k43.png)
 
-_Valmiiden t&ouml;iden lista._
+_Valmiiden töiden lista._
 
-3.7.5 Ty&ouml;n vapautus (Release Job),  jos ArcMap kaatuu
+3.7.5 Työn vapautus (Release Job),  jos ArcMap kaatuu
 --------------------------
 
-Ty&ouml;n vapautus on tarpeen, jos esimerkiksi ArcMap on kaatunut kesken ty&ouml;skentelyn. T&auml;ll&ouml;in ty&ouml; j&auml;&auml; tilanteeseen, jossa sit&auml; ei voi jatkaa ilman vapautusta. Ty&ouml; vapautetaan valitsemalla hiiren oikealla ty&ouml; ty&ouml;jonosta, valitsemalla Manage Jobs -> Release Job. 
+Työn vapautus on tarpeen, jos esimerkiksi ArcMap on kaatunut kesken työskentelyn. Tällöin työ jää tilanteeseen, jossa sitä ei voi jatkaa ilman vapautusta. Työ vapautetaan valitsemalla hiiren oikealla työ työjonosta, valitsemalla Manage Jobs -> Release Job. 
 
-3.7.6 Ty&ouml;n poistaminen (Delete Job)
+3.7.6 Työn poistaminen (Delete Job)
 --------------------------
 
-Ty&ouml; poistetaan samasta paikasta, mist&auml; ty&ouml; vapautetaan eli valitsemalla hiiren oikealla ty&ouml; ty&ouml;jonosta, valitsemalla Manage Jobs -> Delete Job. P&auml;&auml;asiassa t&ouml;it&auml; ei tarvitse poistaa.
+Työ poistetaan samasta paikasta, mistä työ vapautetaan eli valitsemalla hiiren oikealla työ työjonosta, valitsemalla Manage Jobs -> Delete Job. Pääasiassa töitä ei tarvitse poistaa.
 
-Ty&ouml;n poistaminen johtaa kaikkien ty&ouml;linkkien ja ty&ouml;solmujen poistamiseen. Kuitenkin ne kohteet, joille Checkin on tehty, eiv&auml;t poistu vaan ne j&auml;&auml;v&auml;t tietokantaan, koska ne ovat suunnitelmalinkki ja suunnitelmasolmu -tasoilla. N&auml;iden kohteiden JOBID menee kuitenkin arvolle null, koska ko. ty&ouml; on poistettu.
+Työn poistaminen johtaa kaikkien työlinkkien ja työsolmujen poistamiseen. Kuitenkin ne kohteet, joille Checkin on tehty, eivät poistu vaan ne jäävät tietokantaan, koska ne ovat suunnitelmalinkki ja suunnitelmasolmu -tasoilla. Näiden kohteiden JOBID menee kuitenkin arvolle null, koska ko. työ on poistettu.
 
-3.7.7 Admin-k&auml;ytt&auml;j&auml;n oikeudet ty&ouml;jonon hallinnassa
+3.7.7 Admin-käyttäjän oikeudet työjonon hallinnassa
 --------------------------
 
-Jos k&auml;ytt&auml;j&auml; on admin, voi k&auml;ytt&auml;j&auml; my&ouml;s vapauttaa ja poistaa toisten t&ouml;it&auml;. Lis&auml;ksi adminilla on oikeudet siirt&auml;&auml; muiden t&ouml;it&auml; yksityiseksi ja julkiseksi. Admin-oikeuksia voi pyyt&auml;&auml; VVH:n kehitystiimilt&auml;.
+Jos käyttäjä on admin, voi käyttäjä myös vapauttaa ja poistaa toisten töitä. Lisäksi adminilla on oikeudet siirtää muiden töitä yksityiseksi ja julkiseksi. Admin-oikeuksia voi pyytää VVH:n kehitystiimiltä.
 
-Jos k&auml;ytt&auml;j&auml;lle annetaan admin-oikeudet, tulee k&auml;ytt&auml;j&auml;n kirjautua VVH-j&auml;rjestelm&auml;&auml;n uudelleen, jotta oikeudet toimivat.
+Jos käyttäjälle annetaan admin-oikeudet, tulee käyttäjän kirjautua VVH-järjestelmään uudelleen, jotta oikeudet toimivat.
 
-3.7.8 P&auml;&auml;llekk&auml;iset ty&ouml;alueet
+3.7.8 Päällekkäiset työalueet
 --------------------------
 
-VVH:ssa ei ole estett&auml; sille, etteiv&auml;tk&ouml; ty&ouml;alueet voisi olla p&auml;&auml;llekk&auml;in. Kaksi p&auml;&auml;llekk&auml;ist&auml; ty&ouml;aluetta ei kuitenkaan voi olla yht&auml;aikaa auki. Jos yritt&auml;&auml; avata ty&ouml;aluetta, jonka kanssa toinen ty&ouml;alue on jo p&auml;&auml;llekk&auml;in ja auki, ei VVH anna avata toista ty&ouml;aluetta. T&auml;ll&ouml;in tulee odottaa, ett&auml; toinen ty&ouml;alue suljetaan tai ottaa yhteytt&auml; toisen ty&ouml;alueen k&auml;ytt&auml;j&auml;&auml;n ja pyyt&auml;&auml; sulkemaan ty&ouml;alue.
+VVH:ssa ei ole estettä sille, etteivätkö työalueet voisi olla päällekkäin. Kaksi päällekkäistä työaluetta ei kuitenkaan voi olla yhtäaikaa auki. Jos yrittää avata työaluetta, jonka kanssa toinen työalue on jo päällekkäin ja auki, ei VVH anna avata toista työaluetta. Tällöin tulee odottaa, että toinen työalue suljetaan tai ottaa yhteyttä toisen työalueen käyttäjään ja pyytää sulkemaan työalue.
 
 ![Overlap](k54.png)
 
-_Ilmoitus, jos yritt&auml;&auml; avata ty&ouml;alueen, jonka kanssa p&auml;&auml;llekk&auml;inen ty&ouml;alue on jo auki._
+_Ilmoitus, jos yrittää avata työalueen, jonka kanssa päällekkäinen työalue on jo auki._
 
-3.8 Ty&ouml;alueen p&auml;ivitt&auml;minen
+3.8 Työalueen päivittäminen
 --------------------------
 
-Ty&ouml;alueen koko p&auml;ivittyy automaattisesti, jos kohteita digitoi alueen reunaviivojen yli. Ty&ouml;alue suurenee 100 m p&auml;&auml;h&auml;n uloimmasta ty&ouml;linkist&auml;. 
+Työalueen koko päivittyy automaattisesti, jos kohteita digitoi alueen reunaviivojen yli. Työalue suurenee 100 m päähän uloimmasta työlinkistä. 
 
-3.8.1 Ty&ouml;alueen suurentaminen
+3.8.1 Työalueen suurentaminen
 --------------------------
 
-Jos ty&ouml;alueen haluaa p&auml;ivitt&auml;&auml; kokonaisuudessaan isommaksi, sen voi tehd&auml; avaamalla ko. ty&ouml;n ja digitoimalla CTRL-nappi pohjassa uuden ty&ouml;alueen Create Job Area -ty&ouml;kalulla
+Jos työalueen haluaa päivittää kokonaisuudessaan isommaksi, sen voi tehdä avaamalla ko. työn ja digitoimalla CTRL-nappi pohjassa uuden työalueen Create Job Area -työkalulla
 
 ![Area](k45.png)
 
-Uuden ty&ouml;alueen tulee leikata vanhan ty&ouml;alueen raja tai ymp&auml;r&ouml;id&auml; se kokonaan. T&auml;m&auml;n j&auml;lkeen sovellus varmistaa, halutaanko ty&ouml;aluetta muokata. Pienemp&auml;&auml; ty&ouml;aluetta ei voi tehd&auml;, koska muuten jo digitoidut kohteet voisivat j&auml;&auml;d&auml; sen ulkopuolelle.
+Uuden työalueen tulee leikata vanhan työalueen raja tai ympäröidä se kokonaan. Tämän jälkeen sovellus varmistaa, halutaanko työaluetta muokata. Pienempää työaluetta ei voi tehdä, koska muuten jo digitoidut kohteet voisivat jäädä sen ulkopuolelle.
 
-Create Job Area -ty&ouml;kalu on k&auml;yt&ouml;ss&auml; vain silloin, kun editointi ei ole p&auml;&auml;ll&auml;.
+Create Job Area -työkalu on käytössä vain silloin, kun editointi ei ole päällä.
 
-3.8.2 Ty&ouml;alueen jakaminen kahteen uuteen ty&ouml;alueeseen (toistaiseksi ei tarpeellinen toiminto)
+3.8.2 Työalueen jakaminen kahteen uuteen työalueeseen (toistaiseksi ei tarpeellinen toiminto)
 --------------------------
 
-Olemassa olevan ty&ouml;alueen voi jakaa kahteen uuteen alueeseen. Jaon aikana editointi ei saa olla p&auml;&auml;ll&auml;. T&auml;m&auml; voi olla hy&ouml;dyllist&auml; esimerkiksi silloin, jos osa ty&ouml;alueesta halutaan jakaa toiselle henkil&ouml;lle teht&auml;v&auml;ksi tai teht&auml;v&auml;ksi my&ouml;hemm&auml;ss&auml; vaiheessa. T&auml;m&auml; tehd&auml;&auml;n Create Job Area -ty&ouml;kalulla digitoimalla uusi alue, joka leikkaa vanhan ty&ouml;alueen tai on kokonaan sen sis&auml;ll&auml;. T&auml;m&auml;n j&auml;lkeen avautuu uuden ty&ouml;n rekister&ouml;inti-ikkuna.
+Olemassa olevan työalueen voi jakaa kahteen uuteen alueeseen. Jaon aikana editointi ei saa olla päällä. Tämä voi olla hyödyllistä esimerkiksi silloin, jos osa työalueesta halutaan jakaa toiselle henkilölle tehtäväksi tai tehtäväksi myöhemmässä vaiheessa. Tämä tehdään Create Job Area -työkalulla digitoimalla uusi alue, joka leikkaa vanhan työalueen tai on kokonaan sen sisällä. Tämän jälkeen avautuu uuden työn rekisteröinti-ikkuna.
 
-Alla on kuvasarja uuden ty&ouml;alueen tekemisest&auml;:
+Alla on kuvasarja uuden työalueen tekemisestä:
 
 ![Area](k44.png)
 
-_Ty&ouml;alueen jakaminen. Vanha ty&ouml;alue ennen jakoa._
+_Työalueen jakaminen. Vanha työalue ennen jakoa._
 
 ![Area](k46.png)
 
-_Ty&ouml;alueen jakaminen. Uuden ty&ouml;alueen digitointi vanhan ty&ouml;alueen sis&auml;lle._
+_Työalueen jakaminen. Uuden työalueen digitointi vanhan työalueen sisälle._
 
-Avautuvassa ikkunassa voi valita, siirret&auml;&auml;nk&ouml; vanhan ty&ouml;n kohteet uuteen ty&ouml;h&ouml;n: “Move contained data to new job”. Uuteen ty&ouml;h&ouml;n siirtyv&auml;t kaikki kokonaan uuden ty&ouml;alueen sis&auml;ll&auml; olevat kohteet, ja ne poistuvat vanhasta ty&ouml;st&auml;.
+Avautuvassa ikkunassa voi valita, siirretäänkö vanhan työn kohteet uuteen työhön: “Move contained data to new job”. Uuteen työhön siirtyvät kaikki kokonaan uuden työalueen sisällä olevat kohteet, ja ne poistuvat vanhasta työstä.
 
 ![Area](k47.png)
 
-_Uuden ty&ouml;alueen rekister&ouml;inti._
+_Uuden työalueen rekisteröinti._
 
-Klikkaamalla register, sovellus kysyy, halutaanko rekister&ouml;id&auml; uusi ty&ouml;alue tai p&auml;ivitt&auml;&auml; vanha.
+Klikkaamalla register, sovellus kysyy, halutaanko rekisteröidä uusi työalue tai päivittää vanha.
 
-Jos on valittu Move contained data to new job, vanhasta ty&ouml;alueesta poistuu kohteet uuteen ty&ouml;alueeseen. Jos t&auml;t&auml; ei ole valittu, syntyy uusi ty&ouml;alue, mutta ilman vanhan ty&ouml;alueen kohteita.
+Jos on valittu Move contained data to new job, vanhasta työalueesta poistuu kohteet uuteen työalueeseen. Jos tätä ei ole valittu, syntyy uusi työalue, mutta ilman vanhan työalueen kohteita.
 
 ![Area](k48.png)
 
-_Vanha ty&ouml;alue jakamisen j&auml;lkeen, kohteet vanhasta ty&ouml;alueesta on siirretty uuteen._
+_Vanha työalue jakamisen jälkeen, kohteet vanhasta työalueesta on siirretty uuteen._
 
-Rekister&ouml;innin j&auml;lkeen uusi ty&ouml;alue on samanlainen ty&ouml;alue, kuin kaikki muutkin ty&ouml;alueet.
+Rekisteröinnin jälkeen uusi työalue on samanlainen työalue, kuin kaikki muutkin työalueet.
 
-4. Tasosijainnin lis&auml;&auml;minen automaattisesti
+4. Tasosijainnin lisääminen automaattisesti
 --------------------------
 
-V&auml;yl&auml;verkon hallintaan tuodulle ty&ouml;linkki-aineistolle on mahdollista lis&auml;t&auml; automaattisesti tasosijainti -tieto, jos aineistossa on mukana Z-koordinaatit. Jos Z-koordinaatit puuttuvat, automaattinen tasosijainti antaa kaikille kohteille arvon 0 eli Pinnalla. Tasosijainnit voi m&auml;&auml;ritell&auml; my&ouml;s manuaalisesti ominaisuustietotauluun, jos Z-koordinaatteja ei ole toimitettu.
+Väyläverkon hallintaan tuodulle työlinkki-aineistolle on mahdollista lisätä automaattisesti tasosijainti -tieto, jos aineistossa on mukana Z-koordinaatit. Jos Z-koordinaatit puuttuvat, automaattinen tasosijainti antaa kaikille kohteille arvon 0 eli Pinnalla. Tasosijainnit voi määritellä myös manuaalisesti ominaisuustietotauluun, jos Z-koordinaatteja ei ole toimitettu.
 
-Tasosijainteja m&auml;&auml;ritt&auml;ess&auml; editointi tulee olla pois p&auml;&auml;lt&auml;. Tasosijainnit lasketaan Z-koordinaateista automaattisesti valitsemalla Feature Validation -ikkunan Tools -v&auml;lilehdelt&auml; Vertical Level of Links -> Update.
+Tasosijainteja määrittäessä editointi tulee olla pois päältä. Tasosijainnit lasketaan Z-koordinaateista automaattisesti valitsemalla Feature Validation -ikkunan Tools -välilehdeltä Vertical Level of Links -> Update.
 
 ![Vertical](k49.png)
 
@@ -767,67 +767,67 @@ _Vertical Level of Links._
 
 ![Vertical](k50.png)
 
-_Kun sovellus on laskenut tasosijainnit, ne on n&auml;ht&auml;viss&auml; ty&ouml;linkkien ominaisuustietotaulussa._
+_Kun sovellus on laskenut tasosijainnit, ne on nähtävissä työlinkkien ominaisuustietotaulussa._
 
-5. Keskener&auml;isen ty&ouml;n alueelle tulleet muutokset MTK-importeissa
+5. Keskeneräisen työn alueelle tulleet muutokset MTK-importeissa
 --------------------------
 
-SURAVAGE-t&ouml;iden on tarkoitus sopia nykyiseen MTK-geometriaan esim. linkkikatkojen osalta. Koska VVH-yll&auml;pit&auml;j&auml;n on hyv&auml; olla tietoinen keskener&auml;isen ty&ouml;n alueelle MTK-importeissa tulleista muutoksista, sovellus ilmoittaa t&auml;st&auml;, kun ty&ouml;t&auml; avataan. Ilmoitusta ei tule, jos k&auml;sitelt&auml;vien kohteiden lokissa ei ole kohteita (kts. lokin avaaminen seuraavasta luvusta).
+SURAVAGE-töiden on tarkoitus sopia nykyiseen MTK-geometriaan esim. linkkikatkojen osalta. Koska VVH-ylläpitäjän on hyvä olla tietoinen keskeneräisen työn alueelle MTK-importeissa tulleista muutoksista, sovellus ilmoittaa tästä, kun työtä avataan. Ilmoitusta ei tule, jos käsiteltävien kohteiden lokissa ei ole kohteita (kts. lokin avaaminen seuraavasta luvusta).
 
 ![Loki](k57.PNG)
 
-_Ilmoitus ty&ouml;n alueelle tulleista muutoksista._
+_Ilmoitus työn alueelle tulleista muutoksista._
 
-Loki-ikkunaan voi painaa ok. T&auml;m&auml;n j&auml;lkeen avataan loki, ja tarkistetaan onko muutoksilla vaikutuksia ty&ouml;linkkeihin.
+Loki-ikkunaan voi painaa ok. Tämän jälkeen avataan loki, ja tarkistetaan onko muutoksilla vaikutuksia työlinkkeihin.
 
 5.1. Lokin avaaminen
 --------------------------
 
-Lokin saa n&auml;kyviin valikosta Digiroad: Editor -> Digiroad: Job Changes. Loki aukeaa n&auml;yt&ouml;n vasempaan laitaan.
+Lokin saa näkyviin valikosta Digiroad: Editor -> Digiroad: Job Changes. Loki aukeaa näytön vasempaan laitaan.
 
-![Ty&ouml;n alueen muutosloki.](k58.PNG)
+![Työn alueen muutosloki.](k58.PNG)
 
-_Ty&ouml;n alueelle tulleiden muutosten loki._
+_Työn alueelle tulleiden muutosten loki._
 
-Lokissa olevat sarakkeet kertovat kohteen MTK-ID:n ja MML:n tekem&auml;n muutostyypin. MTK-ID:n avulla k&auml;ytt&auml;j&auml; voi zoomata oikeaan paikkaan tarkistaakseen muutokset.
+Lokissa olevat sarakkeet kertovat kohteen MTK-ID:n ja MML:n tekemän muutostyypin. MTK-ID:n avulla käyttäjä voi zoomata oikeaan paikkaan tarkistaakseen muutokset.
 
-5.2. Lokin l&auml;pik&auml;ymiseen tarvittavat tasot
+5.2. Lokin läpikäymiseen tarvittavat tasot
 --------------------------
 
-Lokin l&auml;pik&auml;ymist&auml; varten varsinaisen Ty&ouml;linkki-tason lis&auml;ksi tulee kartalla olla my&ouml;s taso Tielinkki (MTK), jotta kohteisiin voi zoomata ja niiden vaikutukset ty&ouml;h&ouml;n (ty&ouml;linkkeihin) tarkistaa.
+Lokin läpikäymistä varten varsinaisen Työlinkki-tason lisäksi tulee kartalla olla myös taso Tielinkki (MTK), jotta kohteisiin voi zoomata ja niiden vaikutukset työhön (työlinkkeihin) tarkistaa.
 
-5.3. Lokin l&auml;pik&auml;yminen
+5.3. Lokin läpikäyminen
 --------------------------
 
 1. Klikataan hiiren oikealla __lokista__ kohdetta ja valitaan "Zoom to Extent", sovellus kohdistaa kyseiseen MTK-ID:seen eli tielinkkiin
-1. Tarkistetaan, vaikuttaako ko. tielinkiss&auml; tapahtunut muutos ty&ouml;linkkeihin (kohteet eiv&auml;t v&auml;ltt&auml;m&auml;tt&auml; osu edes ty&ouml;linkkeihin, jolloin sen tarkempaa tarkastelua ei tarvita)
+1. Tarkistetaan, vaikuttaako ko. tielinkissä tapahtunut muutos työlinkkeihin (kohteet eivät välttämättä osu edes työlinkkeihin, jolloin sen tarkempaa tarkastelua ei tarvita)
 1. Kun tarkastelu on tehty, kohteen saa pois lokista painamalla painiketta "Mark Processed"
 
-Jos lokissa on kohde statuksella "Deleted", ei siihen voi kohdistaa, koska se on poistettu. N&auml;m&auml; kohteet l&ouml;ytyv&auml;t tarvittaessa tasolta "Linkki-solmu historia", jos niit&auml; haluaa tarkastella.
+Jos lokissa on kohde statuksella "Deleted", ei siihen voi kohdistaa, koska se on poistettu. Nämä kohteet löytyvät tarvittaessa tasolta "Linkki-solmu historia", jos niitä haluaa tarkastella.
 
 
 6. Suunnitelmalinkkien historiointi manuaalisesti
 --------------------------
 
-Kun MML palauttaa suunnitelmalinkit VVH:aan MTK-sanomien mukana, vastaava Suravage-aineisto l&ouml;ytyy my&ouml;s tielinkki-tasolta. Suunnitelmakohteet historioituvat suunnitelmalinkki-tasolta. Jos MML:n toimittama suunnitelmalinkki ei ole t&auml;ysin identtinen suunnitelmalinkin kanssa geometrialtaan, suunnitelmalinkki ei historioidu automaattisesti, vaan se on teht&auml;v&auml; VVH:ssa VVH-yll&auml;pit&auml;j&auml;n toimesta.
+Kun MML palauttaa suunnitelmalinkit VVH:aan MTK-sanomien mukana, vastaava Suravage-aineisto löytyy myös tielinkki-tasolta. Suunnitelmakohteet historioituvat suunnitelmalinkki-tasolta. Jos MML:n toimittama suunnitelmalinkki ei ole täysin identtinen suunnitelmalinkin kanssa geometrialtaan, suunnitelmalinkki ei historioidu automaattisesti, vaan se on tehtävä VVH:ssa VVH-ylläpitäjän toimesta.
 
 Kohteet tulevat manuaaliseen historiointiin, jos
 
-- Kohde on huomattavasti muuttunut MML:lla, esimerkiksi sit&auml; pidennetty, lyhennetty, katkaistu tai yhdistetty toiseen linkkiin
-- Kohde on katsottu vastaavan jotain vanhaa MTK-ID:t&auml;, jolloin se ei ole varsinainen uusi Suravage-kohde eik&auml; sit&auml; olisi tarvinnut toimittaa MML:lle Suravage-prosessissa
+- Kohde on huomattavasti muuttunut MML:lla, esimerkiksi sitä pidennetty, lyhennetty, katkaistu tai yhdistetty toiseen linkkiin
+- Kohde on katsottu vastaavan jotain vanhaa MTK-ID:tä, jolloin se ei ole varsinainen uusi Suravage-kohde eikä sitä olisi tarvinnut toimittaa MML:lle Suravage-prosessissa
 
 6.1. Lokin avaaminen
 --------------------------
 
-Kullakin k&auml;ytt&auml;j&auml;ll&auml; on loki, jossa on lueteltu ne MTK-ID:t, jotka on tunnistetu Suravage-kohteiksi, mutta joiden suunnitelmalinkki&auml; ei ole voitu historioida automaattisesti. Lokin saa n&auml;kyviin valikosta Digiroad: Editor -> Suravage History Log....
+Kullakin käyttäjällä on loki, jossa on lueteltu ne MTK-ID:t, jotka on tunnistetu Suravage-kohteiksi, mutta joiden suunnitelmalinkkiä ei ole voitu historioida automaattisesti. Lokin saa näkyviin valikosta Digiroad: Editor -> Suravage History Log....
 
-Loki aukeaa n&auml;yt&ouml;n vasempaan laitaan.
+Loki aukeaa näytön vasempaan laitaan.
 
 ![Suravage manual history log](k56.png)
 
 _Suravage manual history log._
 
-Lokissa olevat sarakkeet kertovat kohteen MTK-ID:n, MML:n tekem&auml;n muutostyypin sek&auml; ty&ouml;n nimen, johon suunnitelmalinkki on alunperin tehty.
+Lokissa olevat sarakkeet kertovat kohteen MTK-ID:n, MML:n tekemän muutostyypin sekä työn nimen, johon suunnitelmalinkki on alunperin tehty.
 
 6.2 Historioinnissa tarvittavat tasot
 --------------------------
@@ -837,7 +837,7 @@ Historiointia varten kartalle tulee valita Add Layers -valikosta tasot:
 - Tielinkki (MTK)
 - Suunnitelmalinkki
 
-Tielinkki -tason avulla kohdistetaan lokista kohteeseen, jolle ei ole tunnistettu automaattisesti historioitavaa suunnitelmalinkki&auml;. Suunnitelmalinkki -tasolta vastaavasti valitaan kohteet, jotka historioidaan.
+Tielinkki -tason avulla kohdistetaan lokista kohteeseen, jolle ei ole tunnistettu automaattisesti historioitavaa suunnitelmalinkkiä. Suunnitelmalinkki -tasolta vastaavasti valitaan kohteet, jotka historioidaan.
 
 6.3. Historiointiprosessi
 --------------------------
@@ -845,78 +845,76 @@ Tielinkki -tason avulla kohdistetaan lokista kohteeseen, jolle ei ole tunnistett
 Historiointi tapahtuu seuraavalla tavalla:
 
 1. Klikataan hiiren oikealla __lokista__ kohdetta ja valitaan "Zoom to Extent", sovellus kohdistaa kyseiseen MTK-ID:seen eli tielinkkiin
-1. Huomataan suunnilleen samasta kohdasta l&ouml;ytyv&auml; suunnitelmalinkki, joka voidaan historioida, koska MTK-kohde on korvannut sen
-1. Valitaan ArcMapin valintaty&ouml;kalulla historioitava __suunnitelmalinkki__ kartalta (historiointia varten kannattaa ko. taso laittaa asetukselle "Make this only selectable layer")
+1. Huomataan suunnilleen samasta kohdasta löytyvä suunnitelmalinkki, joka voidaan historioida, koska MTK-kohde on korvannut sen
+1. Valitaan ArcMapin valintatyökalulla historioitava __suunnitelmalinkki__ kartalta (historiointia varten kannattaa ko. taso laittaa asetukselle "Make this only selectable layer")
 1. Painetaan lokin alareunasta painiketta "Move to history"
-1. Nyt MTK-ID on k&auml;sitelty, ja sen saa pois lokista painamalla painiketta "Mark Processed"
+1. Nyt MTK-ID on käsitelty, ja sen saa pois lokista painamalla painiketta "Mark Processed"
 
-N&auml;in k&auml;yd&auml;&auml;n l&auml;pi koko loki, jotta suunnitelmalinkit eiv&auml;t j&auml;&auml; roikkumaan suunnitelmalinkki-tasolle kun MTK-linkit ovat ne korvanneet.
+Näin käydään läpi koko loki, jotta suunnitelmalinkit eivät jää roikkumaan suunnitelmalinkki-tasolle kun MTK-linkit ovat ne korvanneet.
 
 
-7. MTK-p&auml;ivitysten ajaminen ja seuranta (vain kehitystiimin k&auml;ytt&ouml;&ouml;n)
+7. MTK-päivitysten ajaminen ja seuranta (vain kehitystiimin käyttöön)
 --------------------------
 
-VVH-sovellus p&auml;ivitt&auml;&auml; MTK:n p&auml;ivityssanomat joka aamuy&ouml; automaattisesti. Tarvittaessa p&auml;ivitykset voi my&ouml;s laittaa pois p&auml;&auml;lt&auml; (esim. Digiroad-julkaisua varten). Pois p&auml;&auml;lt&auml; olevista p&auml;ivityksist&auml; tai virheest&auml; p&auml;ivitysajossa ilmoitetaan kaikille k&auml;ytt&auml;jille sis&auml;&auml;nkirjautumisen yhteydess&auml;. Jos p&auml;ivitykset ovat p&auml;&auml;ll&auml;, eik&auml; virhetilanteita ole, niin ilmoitusta ei tule.
+VVH-sovellus päivittää MTK:n päivityssanomat joka aamuyö automaattisesti. Tarvittaessa päivitykset voi myös laittaa pois päältä (esim. Digiroad-julkaisua varten). Pois päältä olevista päivityksistä tai virheestä päivitysajossa ilmoitetaan kaikille käyttäjille sisäänkirjautumisen yhteydessä. Jos päivitykset ovat päällä, eikä virhetilanteita ole, niin ilmoitusta ei tule.
 
-P&auml;ivityksi&auml; ja niiden ajoa hallitsee toistaiseksi VVH:n kehitystiimi, eik&auml; muiden k&auml;ytt&auml;jien ole syyt&auml; puuttua p&auml;ivitysten ajoon.
+Päivityksiä ja niiden ajoa hallitsee toistaiseksi VVH:n kehitystiimi, eikä muiden käyttäjien ole syytä puuttua päivitysten ajoon.
 
-7.1. P&auml;ivitysten hallinta
+7.1. Päivitysten hallinta
 --------------------------
 
-P&auml;ivitykset voi poistaa automaattiajosta eli disabloida Digiroad Options -valikosta Database v&auml;lilehdelt&auml;. Kun VVH sovellus avataan, k&auml;ytt&auml;j&auml;lle ilmoitetaan, jos MTK-p&auml;ivitykset eiv&auml;t ole ajossa.
+Päivitykset voi poistaa automaattiajosta eli disabloida Digiroad Options -valikosta Database välilehdeltä. Kun VVH sovellus avataan, käyttäjälle ilmoitetaan, jos MTK-päivitykset eivät ole ajossa.
 
-P&auml;ivitykset palautetaan ajoon palauttamalla ruksi ko. kohtaan. Normaalitilassa olevista p&auml;ivityksist&auml; ei tule ilmoituksia k&auml;ytt&auml;jille.
+Päivitykset palautetaan ajoon palauttamalla ruksi ko. kohtaan. Normaalitilassa olevista päivityksistä ei tule ilmoituksia käyttäjille.
 
 ![MTK](k51.png)
 
-_Digiroad Updates. MTK-p&auml;ivitysten disablointi._
+_Digiroad Updates. MTK-päivitysten disablointi._
 
 ![MTK](k52.png)
 
-_Kirjautumisen yhteydess&auml; n&auml;ytett&auml;v&auml; huomautus p&auml;ivityksien disabloinnista._
+_Kirjautumisen yhteydessä näytettävä huomautus päivityksien disabloinnista._
 
 7.2. Digiroad: RoadLink Changes
 --------------------------
 
-RoadLink Changes -valikossa voi tarkastella MTK-p&auml;ivityksi&auml; ja niiden muutoksia VVH:n tielinkki-aineistossa. RoadLink Changes avataan Digiroad Editor -alasvetovalikosta. Kun RoadLink Changes -ikkunan avaa, tulee kartalle my&ouml;s Tielinkin muutokset.lyr -taso, joka sis&auml;lt&auml;&auml; muutoskohteiden polygonit. Niiden avulla muutoksia voi olla helpompi tarkastella, erityisesti hy&ouml;dynt&auml;m&auml;ll&auml; attribuuttitaulua ja siell&auml; Select by Attributes -toimintoa esim. tietyn tyyppisten muutosten tarkasteluun (tuntematon, lyhennetty, pidennetty..).
+RoadLink Changes -valikossa voi tarkastella MTK-päivityksiä ja niiden muutoksia VVH:n tielinkki-aineistossa. RoadLink Changes avataan Digiroad Editor -alasvetovalikosta. Kun RoadLink Changes -ikkunan avaa, tulee kartalle myös Tielinkin muutokset.lyr -taso, joka sisältää muutoskohteiden polygonit. Niiden avulla muutoksia voi olla helpompi tarkastella, erityisesti hyödyntämällä attribuuttitaulua ja siellä Select by Attributes -toimintoa esim. tietyn tyyppisten muutosten tarkasteluun (tuntematon, lyhennetty, pidennetty..).
 
 ![MTK](k53.png)
 
-_RoadLink Changes. MTK-p&auml;ivitysten tarkastelu._
+_RoadLink Changes. MTK-päivitysten tarkastelu._
 
-List Updates -kohdasta voi valita, miten pitk&auml;lt&auml; ajalta haluaa historiaa tarkastella. Klikkaamalla ylemm&auml;st&auml; paneelista t&auml;m&auml;n j&auml;lkeen p&auml;ivityspakettia (zip), avautuu alempaan paneeliin sen tiedot linkkien muutoksista. Mit&auml; muutoksia n&auml;ytet&auml;&auml;n, voi valita Digiroad Optionsin Database -v&auml;lilehdelt&auml; tai RoadLink Changes -ikkunan Window -alasvetovalikosta.
+List Updates -kohdasta voi valita, miten pitkältä ajalta haluaa historiaa tarkastella. Klikkaamalla ylemmästä paneelista tämän jälkeen päivityspakettia (zip), avautuu alempaan paneeliin sen tiedot linkkien muutoksista. Mitä muutoksia näytetään, voi valita Digiroad Optionsin Database -välilehdeltä tai RoadLink Changes -ikkunan Window -alasvetovalikosta.
 
-Tuplaklikkaamalla muuttunutta kohdetta tai valitsemalla se hiiren oikealla ja Pan to Extent tai Zoom to extent p&auml;&auml;see tarkastelemaan kohdetta kartalla.
+Tuplaklikkaamalla muuttunutta kohdetta tai valitsemalla se hiiren oikealla ja Pan to Extent tai Zoom to extent pääsee tarkastelemaan kohdetta kartalla.
 
-Eri muutostyyppej&auml; ovat:
+Eri muutostyyppejä ovat:
 
 0 - Tuntematon
 1 - Yhdistetty (muokattu osa)
 2 - Yhdistetty (poistettu osa)
-3 - Pidennetty (yhtenev&auml; osa)
+3 - Pidennetty (yhtenevä osa)
 4 - Pidennetty (uusi osa)
 5 - Jaettu (muokattu osa)
 6 - Jaettu (uusi osa)
-7 - Lyhennetty (yhtenev&auml; osa)
+7 - Lyhennetty (yhtenevä osa)
 8 - Lyhennetty (poistettu osa)
-9 - Korvattu uudella (pidemm&auml;ll&auml;)
-10 - Korvattu uudella (lyhyemm&auml;ll&auml;)
+9 - Korvattu uudella (pidemmällä)
+10 - Korvattu uudella (lyhyemmällä)
 11 - Poistettu
 12 - Uusi
-13 - Korvattu uudella (yhtenev&auml; osa)
+13 - Korvattu uudella (yhtenevä osa)
 14 - Korvattu uudella (uusi osa)
 15 - Korvattu uudella (poistettu osa)
 
-Kun tarkastelee p&auml;ivityshistorian kohteita, kannattaa kartalle ottaa my&ouml;s tielinkin historia -taso ja visualisoida kaikki historian muutostyypit n&auml;kyviin. Tielinkin historiassa n&auml;kee vanhat tielinkit sellaisenaan, kuin ne ovat menneet historiaan.
+Kun tarkastelee päivityshistorian kohteita, kannattaa kartalle ottaa myös tielinkin historia -taso ja visualisoida kaikki historian muutostyypit näkyviin. Tielinkin historiassa näkee vanhat tielinkit sellaisenaan, kuin ne ovat menneet historiaan.
 
 7.3 Here-flip
 --------------------------
 
-Maastotietokannan kohteiden digitointisuunnat tarkistetaan MTK-importin yhteydess&auml;. Tarvittaessa digitointisuunta ja digitointisuuntariippuvaiset ominaisuustiedot k&auml;&auml;nnet&auml;&auml;n Here-flip -s&auml;&auml;nn&ouml;n mukaisesti. Here-flip -s&auml;&auml;nt&ouml; tarkoittaa, ett&auml; kaikkien tielinkkien digitointisuunnat noudattavat seuraavia s&auml;&auml;nt&ouml;j&auml;:
+Maastotietokannan kohteiden digitointisuunnat tarkistetaan MTK-importin yhteydessä. Tarvittaessa digitointisuunta ja digitointisuuntariippuvaiset ominaisuustiedot käännetään Here-flip -säännön mukaisesti. Here-flip -sääntö tarkoittaa, että kaikkien tielinkkien digitointisuunnat noudattavat seuraavia sääntöjä:
 
-1. Linkin alkupiste on aina sen etel&auml;isempi piste
-1. T&auml;ysin it&auml;-l&auml;nsisuuntaisella linkill&auml; alkupiste on l&auml;ntinen alkupiste
+1. Linkin alkupiste on aina sen eteläisempi piste
+1. Täysin itä-länsisuuntaisella linkillä alkupiste on läntinen alkupiste
 
-Tarvittaessa digitointisuunta k&auml;&auml;nnet&auml;&auml;n (etel&auml;st&auml; pohjoiseen tai l&auml;nnest&auml; it&auml;&auml;n), ja MTKHEREFLIP -kent&auml;n arvoksi tulee 1. Vastaavasti yksisuuntaisuus tieto k&auml;&auml;nnet&auml;&auml;n (jos arvo on muuta kuin molempiin suuntiin) ja osoitenumeroiden alku- ja loppuarvot k&auml;&auml;nnet&auml;&auml;n toisin p&auml;in.
-
-
+Tarvittaessa digitointisuunta käännetään (etelästä pohjoiseen tai lännestä itään), ja MTKHEREFLIP -kentän arvoksi tulee 1. Vastaavasti yksisuuntaisuus tieto käännetään (jos arvo on muuta kuin molempiin suuntiin) ja osoitenumeroiden alku- ja loppuarvot käännetään toisin päin.
