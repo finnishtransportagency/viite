@@ -386,28 +386,9 @@
       }
     };
 
-    var showCloseConfirmPopupMessage = function () {
-      new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
-        successCallback: function () {
-          selectedNode.saveNode();
-        },
-        closeCallback: function () {
-          closeNode();
-        }
-      });
-    };
-
     var closeNode = function () {
       selectedNode.closeNode();
       eventbus.off('change:nodeName, change:nodeTypeDropdown, change:nodeStartDate');
-    };
-
-    var closeForm = function () {
-      if (selectedNode.isDirty()) {
-        showCloseConfirmPopupMessage();
-      } else {
-        closeNode();
-      }
     };
 
     var bindEvents = function () {
@@ -457,7 +438,7 @@
       });
 
       rootElement.on('click', '.btn-edit-node-cancel', function () {
-        closeForm();
+        closeNode();
       });
 
       eventbus.on('node:selected', function (currentNode) {
@@ -503,7 +484,7 @@
 
       eventbus.on('nodeLayer:closeForm', function (current) {
         if (!_.isUndefined(current) && !_.isUndefined(current.node)) {
-          closeForm();
+          closeNode();
         }
       });
 
