@@ -38,7 +38,7 @@
         var showDialog = function(message) {
           resultsSection.hide();
           clearSection.hide();
-          instructionsPopup.show(message, 3000);
+          instructionsPopup.show(_.isString(message) ? message : 'Yhteys Viitekehysmuuntimeen epäonnistui', 3000);
         };
 
         searchResults.html('Haku käynnissä…');
@@ -50,9 +50,7 @@
             var result = results[0];
             eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
           }
-        }).fail(function () {
-          showDialog('Yhteys Viitekehysmuuntimeen epäonnistui');
-        });
+        }).fail(showDialog);
       };
 
       coordinatesText.keypress(function(event) {
