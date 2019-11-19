@@ -253,6 +253,19 @@ class ProjectLinkDAO {
         	  LEFT JOIN project_link_name pln ON (pln.road_number = plh.road_number AND pln.project_id = plh.project_id)
      """.stripMargin
 
+  private val projectLinksChangeQueryBase =
+    s"""
+        select PROJECT_LINK.ID, ROADWAY.ID, PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.ORIGINAL_START_ADDR_M, PROJECT_LINK.ORIGINAL_END_ADDR_M,
+          PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
+          PROJECT_LINK.STATUS,
+          PROJECT_LINK.REVERSED,
+          ROADWAY.ROADWAY_NUMBER,
+          PROJECT_LINK.ROADWAY_NUMBER
+          from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID)
+          LEFT JOIN ROADWAY ON (ROADWAY.ID = PROJECT_LINK.ROADWAY_ID)
+          LEFT JOIN Linear_Location ON (Linear_Location.ID = PROJECT_LINK.Linear_Location_Id)
+      """
+
   implicit val getProjectLinkRow: GetResult[ProjectLink] = new GetResult[ProjectLink] {
     def apply(r: PositionedResult) = {
       val projectLinkId = r.nextLong()
@@ -307,8 +320,32 @@ class ProjectLinkDAO {
     }
   }
 
+  implicit val getProjectLinksChangeRow: GetResult[RoadwayNumbersLinkChange] = new GetResult[RoadwayNumbersLinkChange] {
+    def apply(r: PositionedResult) = {
+      val projectLinkId = r.nextLong()
+      val roadwayId = r.nextLong()
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val originalStartAddrMValue = r.nextLong()
+      val originalEndAddrMValue = r.nextLong()
+      val startAddrM = r.nextLong()
+      val endAddrM = r.nextLong()
+      val status = LinkStatus.apply(r.nextInt())
+      val reversed = r.nextBoolean()
+      val roadwayNumber = r.nextLong()
+      val projectRoadwayNumber = r.nextLong()
+
+      RoadwayNumbersLinkChange(projectLinkId, roadwayId, roadNumber, roadPartNumber, originalStartAddrMValue, originalEndAddrMValue, startAddrM, endAddrM,
+        status, reversed, roadwayNumber, projectRoadwayNumber)
+    }
+  }
+
   private def listQuery(query: String) = {
     Q.queryNA[ProjectLink](query).iterator.toSeq
+  }
+
+  private def changesListQuery(query: String) = {
+    Q.queryNA[RoadwayNumbersLinkChange](query).iterator.toSeq
   }
 
   def create(links: Seq[ProjectLink]): Seq[Long] = {
@@ -475,6 +512,15 @@ class ProjectLinkDAO {
         s"""$projectLinkQueryBase
                 where $filter PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
+    }
+  }
+
+  def fetchProjectLinksChange(projectId: Long): Seq[RoadwayNumbersLinkChange] = {
+    time(logger, "Get project links changes") {
+      val query =
+        s"""$projectLinksChangeQueryBase
+                where PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+      changesListQuery(query)
     }
   }
 

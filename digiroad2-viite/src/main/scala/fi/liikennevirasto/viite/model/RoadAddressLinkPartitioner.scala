@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.digiroad2.asset.ConstructionType
+import fi.liikennevirasto.digiroad2.asset.{ConstructionType, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.linearasset.GraphPartitioner
 
 object RoadAddressLinkPartitioner extends GraphPartitioner {
@@ -10,7 +10,8 @@ object RoadAddressLinkPartitioner extends GraphPartitioner {
   */
   def groupByHomogeneousSection[T <: RoadAddressLinkLike](links: Seq[T]): Seq[Seq[T]] = {
     val linkGroups = links.groupBy { link => (
-      link.constructionType.equals(ConstructionType.UnderConstruction), link.roadNumber, link.roadPartNumber, link.trackCode
+      link.anomaly.equals(Anomaly.NoAddressGiven), link.constructionType.equals(ConstructionType.UnderConstruction), link.roadNumber, link.roadPartNumber, link.trackCode,
+      link.roadLinkSource.equals(LinkGeomSource.ComplementaryLinkInterface)
       )
     }
 
