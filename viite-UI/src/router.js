@@ -34,10 +34,6 @@
         applicationModel.selectLayer('linkProperty');
         backend.getRoadAddressByLinkId(linkId, function (response) {
           if (response.success) {
-            eventbus.once('roadLinks:afterDraw', function () {
-              models.selectedLinkProperty.open(response.linkId, response.id, true);
-              eventbus.trigger('linkProperties:reselect');
-            });
               map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
               map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
           } else {

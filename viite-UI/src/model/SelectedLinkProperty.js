@@ -143,10 +143,6 @@
         } else {
           openDoubleClick(data);
         }
-        /*var currentFloatings = getCurrentFloatings();
-        if (!_.isEmpty(currentFloatings)) {
-          setSources(currentFloatings);
-        }*/
         _.forEach(current, function (selected) {
           selected.select();
         });
@@ -831,7 +827,7 @@
     };
 
     var linkIdsToExclude = function(){
-      return _.chain(getFeaturesToKeepFloatings().concat(getFeaturesToKeepUnknown()).concat(getFeaturesToKeep()).concat(roadCollection.getUnderConstructionLinks())).map(function(feature){
+      return _.chain(getFeaturesToKeepFloatings().concat(getFeaturesToKeepUnknown()).concat(getFeaturesToKeep()).concat(roadCollection.getUnaddressedRoadLinkGroups())).map(function(feature){
         return feature.linkId;
       }).uniq().value();
     };
