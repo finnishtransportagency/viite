@@ -604,7 +604,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case Some(error) => throw new RoadPartReservedException(error)
           case _ =>
             val roadwaysByLinkSource = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).groupBy(_.linkGeomSource)
-            val regular = if (roadwaysByLinkSource.contains(LinkGeomSource.NormalLinkInterface)) roadwaysByLinkSource(LinkGeomSource.NormalLinkInterface) else Seq()
+            val regularLinkSource = if (frozenTimeVVHAPIServiceEnabled) LinkGeomSource.FrozenLinkInterface else LinkGeomSource.NormalLinkInterface
+            val regular = if (roadwaysByLinkSource.contains(regularLinkSource)) roadwaysByLinkSource(regularLinkSource) else Seq()
             val complementary = if (roadwaysByLinkSource.contains(LinkGeomSource.ComplementaryLinkInterface)) roadwaysByLinkSource(LinkGeomSource.ComplementaryLinkInterface) else Seq()
             if (complementary.nonEmpty) {
               logger.debug(s"Adding ${complementary.size} complementary links in project.")
