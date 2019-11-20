@@ -604,7 +604,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case Some(error) => throw new RoadPartReservedException(error)
           case _ =>
             val roadwaysByLinkSource = linearLocationDAO.fetchByRoadways(roadways.map(_.roadwayNumber).toSet).groupBy(_.linkGeomSource)
-            val regular = if (roadwaysByLinkSource.contains(LinkGeomSource.NormalLinkInterface)) roadwaysByLinkSource(LinkGeomSource.NormalLinkInterface) else Seq()
+            val regularLinkSource = if (frozenTimeVVHAPIServiceEnabled) LinkGeomSource.FrozenLinkInterface else LinkGeomSource.NormalLinkInterface
+            val regular = if (roadwaysByLinkSource.contains(regularLinkSource)) roadwaysByLinkSource(regularLinkSource) else Seq()
             val complementary = if (roadwaysByLinkSource.contains(LinkGeomSource.ComplementaryLinkInterface)) roadwaysByLinkSource(LinkGeomSource.ComplementaryLinkInterface) else Seq()
             if (complementary.nonEmpty) {
               logger.debug(s"Adding ${complementary.size} complementary links in project.")
@@ -612,7 +613,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val regularMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(regular.map(_.linkId).toSet, frozenTimeVVHAPIServiceEnabled).map(rm => rm.linkId -> rm).toMap
             val complementaryMapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(complementary.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
             val fullMapping = regularMapping ++ complementaryMapping
-            val addresses = roadways.flatMap(r => roadwayAddressMapper.mapRoadAddresses(r, (regular ++ complementary).groupBy(_.roadwayNumber)(r.roadwayNumber)))
+            val addresses = roadways.flatMap(r =>
+              roadwayAddressMapper.mapRoadAddresses(r, (regular ++ complementary).groupBy(_.roadwayNumber).getOrElse(r.roadwayNumber, {
+                logger.error(s"Failed to add links to the project. No links found with roadway number ${r.roadwayNumber}. Reserved parts were: ${project.reservedParts.map(r => s"(road number: ${r.roadNumber}, road part number: ${r.roadPartNumber})").mkString(", ")}")
+                throw new RoadAddressException(s"Linkkien lisääminen projektiin epäonnistui Viitteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon.")
+              })))
             checkAndReserve(project, reserved)
             logger.debug(s"Reserve done")
             addresses.map(ra => newProjectTemplate(fullMapping(ra.linkId), ra, project))
