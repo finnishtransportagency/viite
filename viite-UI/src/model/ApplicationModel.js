@@ -102,7 +102,7 @@
     }
 
     function isSelectedTool(tool) {
-      return tool === selectedTool
+      return tool === selectedTool;
     }
 
     function setSelectedTool(tool) {
