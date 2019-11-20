@@ -174,11 +174,11 @@
     };
 
     var addSelectInteractions = function () {
-      nodeLayerSelectInteraction.setActive(true);
+      map.addInteraction(nodeLayerSelectInteraction);
     };
 
     var removeSelectInteractions = function () {
-      nodeLayerSelectInteraction.setActive(false);
+      map.removeInteraction(nodeLayerSelectInteraction);
     };
 
     // We add the defined interactions to the map.
@@ -275,7 +275,7 @@
           setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
           break;
         case LinkValues.Tool.Add.value:
-          removeSelectInteractions();
+          toggleSelectInteractions(false);
           me.eventListener.listenToOnce(eventbus, 'map:clicked', createNewNodeMarker);
           if (!_.isUndefined(selectedNodeAndJunctionPoint.getCurrentNode()) || !_.isUndefined(selectedNodeAndJunctionPoint.getCurrentNodePointTemplates()) || !_.isUndefined(selectedNodeAndJunctionPoint.getCurrentJunctionTemplate())) {
             selectedNodeAndJunctionPoint.closeForm();
@@ -295,7 +295,6 @@
         function (feature) { return feature.node.id === node.id; });
       selectNode(node);
       applicationModel.setSelectedTool(LinkValues.Tool.Unknown.value);
-      addSelectInteractions();
     };
 
     var removeCurrentNodeMarker = function (node) {
@@ -406,6 +405,7 @@
     });
 
     me.eventListener.listenTo(eventbus, 'nodeLayer:refreshView', function () {
+      toggleSelectInteractions(!applicationModel.isSelectedTool(LinkValues.Tool.Add.value));
       applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
     });
 
