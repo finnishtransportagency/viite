@@ -57,7 +57,7 @@
       if (!current.node.typeChanged) { current.node.oldType = current.node.type; }
       current.node.type = type;
       current.node.typeChanged = current.node.oldType !== type;
-      eventbus.trigger('changed:type', current.node);
+      eventbus.trigger('change:type', current.node);
       if (!current.node.typeChanged) { eventbus.trigger('reset:startDate', current.node.oldStartDate || current.node.startDate); }
       setDirty(true);
     };
