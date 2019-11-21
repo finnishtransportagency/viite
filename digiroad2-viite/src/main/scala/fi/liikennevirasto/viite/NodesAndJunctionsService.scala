@@ -208,7 +208,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
 
     def rampsAndRoundAboutsPartsIntersectionHandler(roadwayChanges: List[ProjectRoadwayChange], filteredLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange]): Unit ={
-      //TODO check only last part link that connects to any links (or is it starting link?) in other parts of same roadnumber
+      //TODO check if link connects any other links in other parts of same roadnumber
     }
 
     def multipleRoadIntersectionHandler(roadwayChanges: List[ProjectRoadwayChange], filteredLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange]){
