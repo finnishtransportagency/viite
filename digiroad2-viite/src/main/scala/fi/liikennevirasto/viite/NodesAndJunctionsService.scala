@@ -357,18 +357,18 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val headRoadsForAllRoads = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(link.getFirstPoint, link.getFirstPoint), roadNumberLimits)
         val tailRoadsForAllRoads = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(link.getLastPoint, link.getLastPoint), roadNumberLimits)
 
-        val (headRoads: Seq[RoadAddress], tailRoads: Seq[RoadAddress]) = link match {
-          case l if RoadClass.RampsAndRoundaboutsClass.roads.contains(l.roadNumber.toInt) => (
-            headRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber) ++
-              headRoadsForAllRoads.filterNot(l => l.roadNumber == link.roadNumber),
-            tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber) ++
-              tailRoadsForAllRoads.filterNot(l => l.roadNumber == link.roadNumber))
-          case l => (Seq.empty[RoadAddress], Seq.empty[RoadAddress]) /* TODO check discontinuity on link */
-          case l => (Seq.empty[RoadAddress], Seq.empty[RoadAddress]) /* TODO check roundabout and sametrack on link */
-          case _ => (
-            headRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber),
-            tailRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber))
-        }
+        val (headRoads: Seq[RoadAddress], tailRoads: Seq[RoadAddress]) =
+          if(RoadClass.RampsAndRoundaboutsClass.roads.contains(link.roadNumber.toInt)) {
+            //there can be Discontinuous or EndOfRoad link connecting to the same PART in roundabouts
+            if (List(Discontinuity.Discontinuous, Discontinuity.EndOfRoad).contains(link.discontinuity)) {
+              (headRoadsForAllRoads, tailRoadsForAllRoads)
+            } else (headRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber || l.roadNumber != link.roadNumber),
+              tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber || l.roadNumber != link.roadNumber))
+            } //there can be MinorDiscontinuity or EndOfRoad link connecting to the same ROAD in other than rampsOrRoundabout roads
+            else if (List(Discontinuity.MinorDiscontinuity, Discontinuity.EndOfRoad).contains(link.discontinuity))
+                (headRoadsForAllRoads, tailRoadsForAllRoads)
+            else (headRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber),
+                tailRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber))
 
         val roadsToHead = headRoads.filter(_.connected(link.getFirstPoint))
         val roadsFromHead = headRoads.filter(r => link.getFirstPoint.connected(r.getFirstPoint))
