@@ -828,10 +828,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val nodePointTemplates = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints)
       nodePointTemplates.length should be (2)
 
-//      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
+      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
       //4 new junctions points template, 2 before, 2 after
-//      junctionPointTemplates.length should be(4)
-      //TODO Uncomment lines above after 2068 implementation
+      junctionPointTemplates.length should be(4)
     }
   }
 
@@ -935,13 +934,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodesAndJunctionsService.handleJunctionPointTemplates(projectChanges, leftPLinks++rightPLinks++combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks++rightPLinks++combPLinks).map(_.roadwayNumber)).map(_.id)
-      val nodePointTemplates = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints)
-      nodePointTemplates.length should be (2)
 
-      //      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
+      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
       //3 new junctions points template, 2 before 1 after
-      //      junctionPointTemplates.length should be(3)
-      //TODO Uncomment lines above after 2068 implementation
+      junctionPointTemplates.length should be(3)
+      //TODO check why test fails
     }
   }
 
@@ -1025,10 +1022,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
-      //      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
+      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
       //3 new junctions points template, 2 before 1 after (because of EndOfRoad in part3 creates 3)
-      //      junctionPointTemplates.length should be(3)
-      //TODO Uncomment lines above after 2068 discontinuous implementation
+      junctionPointTemplates.length should be(3)
     }
   }
 
@@ -1061,7 +1057,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val combGeom3 = Seq(Point(10.0, 0.0), Point(20.0, 1.0))
 
       val combLink1 = dummyProjectLink(road, part1, Track.Combined, Discontinuity.Continuous, 0, 10, Some(DateTime.now()), None, 12345, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom1, rwNumber).copy(id = plId, projectId = projectId, roadwayId = rwId, linearLocationId = llId)
-      val combLink2 = dummyProjectLink(road, part1, Track.Combined, Discontinuity.EndOfRoad, 10, 20, Some(DateTime.now()), None, 12346, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom2, rwNumber).copy(id = plId+1, projectId = projectId, roadwayId = rwId, linearLocationId = llId+1)
+      val combLink2 = dummyProjectLink(road, part1, Track.Combined, Discontinuity.Discontinuous, 10, 20, Some(DateTime.now()), None, 12346, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom2, rwNumber).copy(id = plId+1, projectId = projectId, roadwayId = rwId, linearLocationId = llId+1)
       val combLink3 = dummyProjectLink(road, part2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom3, rwNumber+1).copy(id = plId+2, projectId = projectId, roadwayId = rwId+1, linearLocationId = llId+2)
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
@@ -1088,8 +1084,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(AddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
-            RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(10L), endAddressM = Some(20L), Some(RoadType.PublicRoad), Some(Discontinuity.EndOfRoad), Some(8L)),
-            Discontinuity.EndOfRoad, RoadType.PublicRoad, reversed = false, 2, 8)
+            RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), startAddressM = Some(10L), endAddressM = Some(20L), Some(RoadType.PublicRoad), Some(Discontinuity.Discontinuous), Some(8L)),
+            Discontinuity.Discontinuous, RoadType.PublicRoad, reversed = false, 2, 8)
           , DateTime.now, Some(0L)),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(AddressChangeType.New,
@@ -1109,10 +1105,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
-      //      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
+      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
       //3 new junctions points template, 1 before 2 after
-      //      junctionPointTemplates.length should be(3)
-      //TODO Uncomment lines above after 2156 implementation
+      junctionPointTemplates.length should be(3)
+      //TODO check why test fails
     }
   }
 
@@ -1190,9 +1186,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
-      //      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
+      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
       //2 new junctions points template, 1 before 1 after
-      //      junctionPointTemplates.length should be(2)
+      junctionPointTemplates.length should be(2)
       //TODO Uncomment lines above after 2068 discontinuous implementation
     }
   }
@@ -1271,10 +1267,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
-      //      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
+      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
       //2 new junctions points template, 1 before 1 after
-      //      junctionPointTemplates.length should be(2)
-      //TODO Uncomment lines above after 2068 discontinuous implementation
+      junctionPointTemplates.length should be(2)
+      //TODO check why tests fails
     }
   }
 
