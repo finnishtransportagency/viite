@@ -203,7 +203,15 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def handleJunctionPointTemplates(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange]): Unit = {
-    def handleMultipleRoadIntersection(roadwayChanges: List[ProjectRoadwayChange], filteredLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange]){
+    def innerRoadDiscontinuousIntersectionHandler(roadwayChanges: List[ProjectRoadwayChange], filteredLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange]): Unit ={
+      //TODO check only links that intersects discontinuous links in same roadnumber(or can we also assume for same part?)
+    }
+
+    def rampsAndRoundAboutsPartsIntersectionHandler(roadwayChanges: List[ProjectRoadwayChange], filteredLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange]): Unit ={
+      //TODO check only last part link that connects to any links (or is it starting link?) in other parts of same roadnumber
+    }
+
+    def multipleRoadIntersectionHandler(roadwayChanges: List[ProjectRoadwayChange], filteredLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange]){
 
       def getJunctionsInHead(link: ProjectLink, roadsToHead: Seq[RoadAddress], roadsFromHead: Seq[RoadAddress]): Seq[Junction] = {
         roadsToHead.flatMap { rh =>
@@ -445,23 +453,18 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }
     }
 
-    def handleInnerRoadDiscontinuousIntersection(roadwayChanges: List[ProjectRoadwayChange], filteredLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange]): Unit ={
-      //TODO check only links that intersects discontinuous links in same roadnumber
-    }
+    val nonTerminatedProjectLinks = projectLinks.filter(_.status != LinkStatus.Terminated)
 
-    def handleRampsAndRoundAboutsPartsIntersection(roadwayChanges: List[ProjectRoadwayChange], filteredLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange]): Unit ={
-    }
-    val validMultipleRoadIntersectionLinks = projectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
+    val validMultipleRoadIntersectionLinks = nonTerminatedProjectLinks.filter(pl => RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(pl.roadNumber.toInt))
 
-    //previousExistingValidations
-    handleMultipleRoadIntersection(roadwayChanges, validMultipleRoadIntersectionLinks, mappedRoadwayNumbers)
+    multipleRoadIntersectionHandler(roadwayChanges, validMultipleRoadIntersectionLinks, mappedRoadwayNumbers)
 
     // VIITE-2068 links that intersects discontinuous links in same road number
-    handleInnerRoadDiscontinuousIntersection(roadwayChanges, projectLinks, mappedRoadwayNumbers)
+    innerRoadDiscontinuousIntersectionHandler(roadwayChanges, nonTerminatedProjectLinks, mappedRoadwayNumbers)
 
     //VIITE-2156 different road parts for same road number in RoadClass RampsAndRoundAboutsClass
-    val validRampsAndRoundAboutsLinks = projectLinks.filter(pl => RoadClass.RampsAndRoundAboutsClass.roads.contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
-    handleRampsAndRoundAboutsPartsIntersection(roadwayChanges, validRampsAndRoundAboutsLinks, mappedRoadwayNumbers)
+    val validRampsAndRoundAboutsLinks = nonTerminatedProjectLinks.filter(pl => RoadClass.RampsAndRoundAboutsClass.roads.contains(pl.roadNumber.toInt))
+    rampsAndRoundAboutsPartsIntersectionHandler(roadwayChanges, validRampsAndRoundAboutsLinks, mappedRoadwayNumbers)
   }
 
   /*
