@@ -1026,8 +1026,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
       //      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-      //4 new junctions points template, 2 before 2 after (because of Discontinuous in part 2 create one, and EndOfRoad in part3 creates 3)
-      //      junctionPointTemplates.length should be(4)
+      //3 new junctions points template, 2 before 1 after (because of EndOfRoad in part3 creates 3)
+      //      junctionPointTemplates.length should be(3)
       //TODO Uncomment lines above after 2068 discontinuous implementation
     }
   }
