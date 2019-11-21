@@ -359,9 +359,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
         val (headRoads: Seq[RoadAddress], tailRoads: Seq[RoadAddress]) = link match {
           case l if RoadClass.RampsAndRoundaboutsClass.roads.contains(l.roadNumber.toInt) => (
-            headRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber).filterNot(l => l.roadPartNumber == link.roadPartNumber) ++
+            headRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber) ++
               headRoadsForAllRoads.filterNot(l => l.roadNumber == link.roadNumber),
-            tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber).filterNot(l => l.roadPartNumber == link.roadPartNumber) ++
+            tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber) ++
               tailRoadsForAllRoads.filterNot(l => l.roadNumber == link.roadNumber))
           case l => (Seq.empty[RoadAddress], Seq.empty[RoadAddress]) /* TODO check discontinuity on link */
           case l => (Seq.empty[RoadAddress], Seq.empty[RoadAddress]) /* TODO check roundabout and sametrack on link */
