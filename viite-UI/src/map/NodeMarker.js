@@ -16,7 +16,9 @@
       };
 
       marker.on('change:type', function () {
-        this.setStyle(nodeMarkerStyleProvider(this.get('type')));
+        var type = this.get('type');
+        marker.node.type = type;
+        this.setStyle(nodeMarkerStyleProvider(type));
       });
 
       marker.node = node;

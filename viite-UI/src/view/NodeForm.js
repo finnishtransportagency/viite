@@ -388,7 +388,7 @@
 
     var closeNode = function () {
       selectedNode.closeNode();
-      eventbus.off('change:nodeName, change:nodeTypeDropdown, change:nodeStartDate');
+      eventbus.off('change:nodeName change:nodeTypeDropdown change:nodeStartDate');
     };
 
     var bindEvents = function () {
@@ -463,10 +463,6 @@
             return false;
           });
 
-          eventbus.on('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:detach nodePoint:detach', function () {
-            nodeChangeHandler();
-          });
-
           eventbus.on('change:nodeName', function (nodeName) {
             selectedNode.setNodeName(nodeName);
           });
@@ -474,6 +470,10 @@
           eventbus.on('change:nodeTypeDropdown', function (nodeType) {
             selectedNode.setNodeType(parseInt(nodeType));
             disabledDatePicker(!selectedNode.typeHasChanged());
+          });
+
+          eventbus.on('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:detach nodePoint:detach', function () {
+            nodeChangeHandler();
           });
         }
       });

@@ -49,7 +49,9 @@
     };
 
     var setNodeName = function (name) {
+      if (!current.node.name) { current.node.oldName = current.node.name; }
       current.node.name = name;
+      current.node.startDateChanged = current.node.name !== name;
       setDirty(true);
     };
 
@@ -57,8 +59,10 @@
       if (!current.node.typeChanged) { current.node.oldType = current.node.type; }
       current.node.type = type;
       current.node.typeChanged = current.node.oldType !== type;
-      eventbus.trigger('change:type', current.node);
-      if (!current.node.typeChanged) { eventbus.trigger('reset:startDate', current.node.oldStartDate || current.node.startDate); }
+      eventbus.trigger('change:nodeType', current.node);
+      if (!typeHasChanged()) {
+        eventbus.trigger('reset:startDate', current.node.oldStartDate || current.node.startDate);
+      }
       setDirty(true);
     };
 
@@ -131,9 +135,16 @@
       dirty = value;
     };
 
+    var cleanNode = function () {
+      if (isDirty() && !_.isUndefined(current.node)) {
+        eventbus.trigger('reset:node', current.node);
+      }
+      clean();
+    };
+
     var clean = function () {
-      current = [];
       dirty = false;
+      current = [];
     };
 
     var close = function (options, params) {
@@ -146,12 +157,8 @@
     };
 
     var closeNode = function () {
-      var node = {};
-      if (!_.isUndefined(current.node) && _.isUndefined(current.node.id)) {
-        node = current.node;
-      }
-      clean();
-      close('node:unselected', node);
+      cleanNode();
+      close('node:unselected');
       eventbus.trigger('nodeLayer:refreshView');
     };
 
@@ -166,6 +173,7 @@
     };
 
     var saveNode = function () {
+      setDirty(false);
       eventbus.trigger('node:save', current.node);
     };
 

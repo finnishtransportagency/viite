@@ -252,10 +252,8 @@
       nodeLayerSelectInteraction.getFeatures().clear();
     };
 
-    me.eventListener.listenTo(eventbus, 'node:unselected', function (node) {
-      if (!_.isUndefined(node)) {
-        removeCurrentNodeMarker(node);
-      }
+    me.eventListener.listenTo(eventbus, 'node:unselected', function () {
+      removeCurrentNodeMarker();
     });
 
     me.eventListener.listenTo(eventbus, 'node:unselected nodePointTemplate:unselected junctionTemplate:unselected', function () {
@@ -297,9 +295,9 @@
       applicationModel.setSelectedTool(LinkValues.Tool.Unknown.value);
     };
 
-    var removeCurrentNodeMarker = function (node) {
+    var removeCurrentNodeMarker = function () {
       _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
-        if (_.isEqual(nodeFeature.node, node)) {
+        if (_.isUndefined(nodeFeature.node.id)) {
           nodeMarkerSelectedLayer.getSource().removeFeature(nodeFeature);
         }
       });
@@ -308,10 +306,25 @@
     var updateCurrentNodeMarker = function (node) {
       if (!_.isUndefined(node)) {
         _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
-          if (_.isEqual(nodeFeature.node, node)) {
+          if (nodeFeature.node.id === node.id) {
             nodeFeature.setProperties({type: node.type});
           }
         });
+      }
+    };
+
+    var resetCurrentNodeMarker = function (node) {
+      if (!_.isUndefined(node)) {
+        _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
+          if (nodeFeature.node.id === node.id) {
+            nodeFeature.setProperties({
+              name:       node.oldName || node.name,
+              type:       node.oldType || node.type,
+              startDate:  node.oldStartDate || node.startDate
+            });
+          }
+        })
+        _.each(junctionMarkerSelectedLayer.getSource)
       }
     };
 
@@ -375,6 +388,10 @@
       }
     };
 
+    me.eventListener.listenTo(eventbus, 'change:nodeType', function (node) {
+      updateCurrentNodeMarker(node);
+    });
+
     me.eventListener.listenTo(eventbus, 'junction:detach', function (junctionToDetach) {
       if (!_.isUndefined(junctionToDetach)) {
         toggleJunctionToTemplate(junctionToDetach, true);
@@ -397,6 +414,10 @@
       if (!_.isUndefined(nodePointToAttach)) {
         toggleNodePointToTemplate(nodePointToAttach);
       }
+    });
+
+    me.eventListener.listenTo(eventbus, 'reset:node', function (node) {
+      resetCurrentNodeMarker(node);
     });
 
     me.eventListener.listenTo(eventbus, 'nodeLayer:fetch', function () {
@@ -475,7 +496,7 @@
           if (!_.isUndefined(selectedNode) && _.isUndefined(selectedNode.id)) {
             // adds node created by user which isn't saved yet.
             addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(selectedNode),
-              function (feature) { return feature.node.id === selectedNode.id; });
+              function (feature) { return _.isUndefined(feature.node.id); });
           }
 
           _.each(nodes, function (node) {
@@ -518,12 +539,13 @@
               toggleJunctionToTemplate(junctionToDetach, true);
             });
           }
-
           if (!_.isUndefined(selectedNode.nodePointsToDetach) && selectedNode.nodePointsToDetach.length > 0) {
+
             _.each(selectedNode.nodePointsToDetach, function (nodePointToDetach) {
               toggleNodePointToTemplate(nodePointToDetach, true);
             });
           }
+          updateCurrentNodeMarker(selectedNode);
         }
       });
 
@@ -532,10 +554,6 @@
       });
 
       eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers);
-
-      eventListener.listenTo(eventbus, 'changed:NodeType', function (node) {
-        updateCurrentNodeMarker(node);
-      });
     };
 
     var showLayer = function () {
