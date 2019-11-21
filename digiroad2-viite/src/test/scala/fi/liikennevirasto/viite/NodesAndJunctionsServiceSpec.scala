@@ -1035,20 +1035,20 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new ramps road part that connects to other part in same road number Then junction template and junctions points should be handled/created properly") {
     runWithRollback {
       /*
-                      >|
+                          >|
+                        /
+                      C3
                     /
-                  C2
-                /
-     |--C1-->|0|--C3-->|
+          |--C1-->|0|--C2-->|
 
-            Note:
+        * Note:
             0: Illustration where junction points should be created
             C: Combined track
-       */
+      */
 
       val road = 20001
       val part1 = 1L
-      val part2 = 1L
+      val part2 = 2L
       val projectId = Sequences.nextViiteProjectId
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
