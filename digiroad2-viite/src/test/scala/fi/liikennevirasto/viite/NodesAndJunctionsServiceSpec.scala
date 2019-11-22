@@ -1186,7 +1186,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
       //2 new junctions points template, 1 before 1 after
       junctionPointTemplates.length should be(2)
-      //TODO Uncomment lines above after 2068 discontinuous implementation
     }
   }
 
@@ -1267,20 +1266,20 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
       //2 new junctions points template, 1 before 1 after
       junctionPointTemplates.length should be(2)
-      //TODO check why tests fails
     }
   }
+
+  /*
+  //TODO
+  There can be the possibility that the created/modified Projectlink is not ramp or roundabout and is not EndOfRoad but this added link can still create one connection between the already existing EndOfRoad link,
+     so we need to check that if there is some road EndOfRoad in same roadNumber ending in the head of this projectLink
+  */
 
 
 
    /*
    //TODO
    There can be the possibility that the created/modified Projectlink is ramp or roundabout and is not EndOfRoad but this added link can still create one connection between the already existing EndOfRoad link,
-      so we need to check that if there is some road EndOfRoad in same roadNumber ending in the head of this projectLink
-   */
-  /*
-   //TODO
-   There can be the possibility that the created/modified Projectlink is not ramp or roundabout and is not EndOfRoad but this added link can still create one connection between the already existing EndOfRoad link,
       so we need to check that if there is some road EndOfRoad in same roadNumber ending in the head of this projectLink
    */
 
