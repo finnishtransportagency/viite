@@ -1272,14 +1272,16 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
 
 
-  //TODO add test where we add one new link is ramp that is not discontinuous but However by adding it the already existing EndOfRoad will now connect to this one
-  /*
-    <Mind blow gif>
-   */
 
-  //TODO add test where we add one new link is not ramp or roundabout that is not discontinuous but However by adding it the already existing EndOfRoad will now connect to this one
+   /*
+   //TODO
+   There can be the possibility that the created/modified Projectlink is ramp or roundabout and is not EndOfRoad but this added link can still create one connection between the already existing EndOfRoad link,
+      so we need to check that if there is some road EndOfRoad in same roadNumber ending in the head of this projectLink
+   */
   /*
-    <Mind blow gif>
+   //TODO
+   There can be the possibility that the created/modified Projectlink is not ramp or roundabout and is not EndOfRoad but this added link can still create one connection between the already existing EndOfRoad link,
+      so we need to check that if there is some road EndOfRoad in same roadNumber ending in the head of this projectLink
    */
 
   //TODO add test to check handleJunctionPointTemplates creation between new different roadpart links that intersect between them in project
