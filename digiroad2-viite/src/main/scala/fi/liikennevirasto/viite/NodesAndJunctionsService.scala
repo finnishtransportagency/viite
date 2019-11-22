@@ -382,6 +382,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                   && l.getLastPoint.connected(link.getFirstPoint))
                 ++
                 headRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber || l.roadNumber != link.roadNumber),
+                //check that there is already one existing Discontinuous/EndOfRoad road for same road part that connects its tail to the tail of the added project link
+                tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber == link.roadPartNumber &&
+                  List(Discontinuity.Discontinuous, Discontinuity.EndOfRoad).contains(l.discontinuity)
+                  && l.getLastPoint.connected(link.getLastPoint))
+                  ++
               tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber || l.roadNumber != link.roadNumber))}
             } //there can be MinorDiscontinuity, Discontinuity or EndOfRoad link connecting to the same ROAD in other than rampsOrRoundabout roads
             else if (List(Discontinuity.MinorDiscontinuity, Discontinuity.Discontinuous, Discontinuity.EndOfRoad).contains(link.discontinuity))
@@ -397,6 +402,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                 && l.getLastPoint.connected(link.getFirstPoint))
               ++
               headRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber),
+              //check that there is already one existing Discontinuous/EndOfRoad road for same road part that connects its tail to the head of the added project link
+              tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && List(Discontinuity.MinorDiscontinuity, Discontinuity.Discontinuous, Discontinuity.EndOfRoad).contains(l.discontinuity)
+                && l.getLastPoint.connected(link.getLastPoint))
+                ++
                 tailRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber))}
 
         val roadsToHead = headRoads.filter(_.connected(link.getFirstPoint))
