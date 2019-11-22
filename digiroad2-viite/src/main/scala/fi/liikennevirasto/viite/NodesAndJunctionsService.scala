@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
@@ -389,8 +390,16 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                   ++
               tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber || l.roadNumber != link.roadNumber))}
             } //there can be MinorDiscontinuity, Discontinuity or EndOfRoad link connecting to the same ROAD in other than rampsOrRoundabout roads
-            else if (List(Discontinuity.MinorDiscontinuity, Discontinuity.Discontinuous, Discontinuity.EndOfRoad).contains(link.discontinuity))
-            (headRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber),
+            else if (List(Discontinuity.MinorDiscontinuity, Discontinuity.Discontinuous).contains(link.discontinuity))
+            (headRoadsForAllRoads,
+              tailRoadsForAllRoads)
+          else if (link.discontinuity == Discontinuity.EndOfRoad)
+            (
+              headRoadsForAllRoads.filter(r => r.roadNumber == link.roadNumber && GeometryUtils.areAdjacent(r.getLastPoint, link.getFirstPoint))
+              ++
+              headRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber),
+              tailRoadsForAllRoads.filter(r => r.roadNumber == link.roadNumber && GeometryUtils.areAdjacent(r.getLastPoint, link.getFirstPoint))
+              ++
               tailRoadsForAllRoads)
             else {
             /*There can be the possibility that the created/modified Projectlink is not for Example endOfRoad but this added link can still create one connection between the already existing EndOfRoad link,
@@ -408,7 +417,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                 ++
                 tailRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber))}
 
-        val roadsToHead = headRoads.filter(_.connected(link.getFirstPoint))
+        val roadsToHead = headRoads.filter(_.getLastPoint.connected(link.getFirstPoint))
         val roadsFromHead = headRoads.filter(r => link.getFirstPoint.connected(r.getFirstPoint))
 
         val roadsFromTail = tailRoads.filter(r => link.getLastPoint.connected(r.getFirstPoint))
