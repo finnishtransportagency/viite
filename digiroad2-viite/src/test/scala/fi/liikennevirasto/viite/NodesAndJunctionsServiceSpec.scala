@@ -28,6 +28,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   private val roadNumber1 = 990
   private val roadwayNumber1 = 1000000000l
   private val roadPartNumber1 = 1
+  val roadNumberLimits = Seq((0, 69999))
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockRoadwayChangesDAO = MockitoSugar.mock[RoadwayChangesDAO]
@@ -773,17 +774,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val leftPLinks = Seq(leftLink1, leftLink2, leftLink3)
       val rightPLinks = Seq(rightLink1, rightLink2, rightLink3, rightLink4)
 
-      val (lc1, rw1): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
-      val (lc2, rw2): (LinearLocation, Roadway) = Seq(leftLink2).map(toRoadwayAndLinearLocation).head
-      val (lc3, rw3): (LinearLocation, Roadway) = Seq(leftLink3).map(toRoadwayAndLinearLocation).head
-      val (lc4, rw4): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
-      val (lc5, rw5): (LinearLocation, Roadway) = Seq(rightLink2).map(toRoadwayAndLinearLocation).head
-      val (lc6, rw6): (LinearLocation, Roadway) = Seq(rightLink3).map(toRoadwayAndLinearLocation).head
-      val (lc7, rw7): (LinearLocation, Roadway) = Seq(rightLink4).map(toRoadwayAndLinearLocation).head
+      val (lll1, rw1): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
+      val (lll2, rw2): (LinearLocation, Roadway) = Seq(leftLink2).map(toRoadwayAndLinearLocation).head
+      val (lll3, rw3): (LinearLocation, Roadway) = Seq(leftLink3).map(toRoadwayAndLinearLocation).head
+      val (rll1, rw4): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
+      val (rll2, rw5): (LinearLocation, Roadway) = Seq(rightLink2).map(toRoadwayAndLinearLocation).head
+      val (rll3, rw6): (LinearLocation, Roadway) = Seq(rightLink3).map(toRoadwayAndLinearLocation).head
+      val (rll4, rw7): (LinearLocation, Roadway) = Seq(rightLink4).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 20)
       val rw2WithId = rw4.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 20)
 
-      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId)), Some(Seq(lc1, lc2, lc3, lc4, lc5, lc6, lc7)), Some(leftPLinks++rightPLinks))
+      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId)), Some(Seq(lll1, lll2, lll3, rll1, rll2, rll3, rll4)), Some(leftPLinks++rightPLinks))
 
       val projectChanges = List(
         //left
@@ -816,7 +817,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           , DateTime.now, Some(0L))
       )
 
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(lc1, lc2, lc3, lc4, lc5, lc6, lc7))
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(lc1, lc2, lc3, lc4, lc5, lc6, lc7))
+      //leftLink1
+      //WIP
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.last, leftGeom1.last), roadNumberLimits)).thenReturn(Seq(lll2, rll3))
+
+
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(rw1WithId, rw2WithId))
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
