@@ -367,14 +367,22 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                 tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber == link.roadPartNumber) ++
                 tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber) ++
                   tailRoadsForAllRoads.filterNot(l => l.roadNumber == link.roadNumber))
-            } else (headRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber || l.roadNumber != link.roadNumber),
-              tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber || l.roadNumber != link.roadNumber))
-            } //there can be MinorDiscontinuity or EndOfRoad link connecting to the same ROAD in other than rampsOrRoundabout roads
+            } else {
+              /*There can be the possibility that the created/modified Projectlink is not for Example endOfRoad but this added link can still create one connection between the already existing EndOfRoad link,
+              so we need to check that if there is some road EndOfRoad in same roadNumber ending in the head of this projectLink
+               */
+              (headRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber || l.roadNumber != link.roadNumber),
+              tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber || l.roadNumber != link.roadNumber))}
+            } //there can be MinorDiscontinuity, Discontinuity or EndOfRoad link connecting to the same ROAD in other than rampsOrRoundabout roads
             else if (List(Discontinuity.MinorDiscontinuity, Discontinuity.Discontinuous, Discontinuity.EndOfRoad).contains(link.discontinuity))
             (headRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber),
               tailRoadsForAllRoads)
-            else (headRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber),
-                tailRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber))
+            else {
+            /*There can be the possibility that the created/modified Projectlink is not for Example endOfRoad but this added link can still create one connection between the already existing EndOfRoad link,
+              so we need to check that if there is some road EndOfRoad in same roadNumber ending in the head of this projectLink
+               */
+            (headRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber),
+                tailRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber))}
 
         val roadsToHead = headRoads.filter(_.connected(link.getFirstPoint))
         val roadsFromHead = headRoads.filter(r => link.getFirstPoint.connected(r.getFirstPoint))
