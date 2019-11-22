@@ -365,7 +365,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             } else (headRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber || l.roadNumber != link.roadNumber),
               tailRoadsForAllRoads.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber || l.roadNumber != link.roadNumber))
             } //there can be MinorDiscontinuity or EndOfRoad link connecting to the same ROAD in other than rampsOrRoundabout roads
-            else if (List(Discontinuity.MinorDiscontinuity, Discontinuity.EndOfRoad).contains(link.discontinuity))
+            else if (List(Discontinuity.MinorDiscontinuity, Discontinuity.Discontinuous, Discontinuity.EndOfRoad).contains(link.discontinuity))
                 (headRoadsForAllRoads, tailRoadsForAllRoads)
             else (headRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber),
                 tailRoadsForAllRoads.filterNot(_.roadNumber == link.roadNumber))
