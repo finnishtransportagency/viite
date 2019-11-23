@@ -1886,7 +1886,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.info(s"Creating history rows based on operation")
       linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
       (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
-      roadwayDAO.create(roadwaysToInsert)
+      roadwayDAO.create(roadwaysToInsert.filter(roadway => roadway.endDate.isEmpty || roadway.startDate.isAfter(roadway.endDate.get)))
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       val projectLinksAfterChanges = if (generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
       roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, projectLinkChanges, username = project.createdBy)
