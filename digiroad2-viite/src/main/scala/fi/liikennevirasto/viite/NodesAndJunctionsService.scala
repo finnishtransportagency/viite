@@ -243,7 +243,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue, r.roadNumber, r.roadPartNumber, r.track))).head
         Some(junctionId)
-      } else None
+      } else Some(roadJunctionPoint.head.junctionId)
 
       val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
         junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
@@ -275,7 +275,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.startAddrMValue, r.roadNumber, r.roadPartNumber, r.track))).head
         Some(junctionId)
-      } else None
+      } else Some(roadJunctionPoint.head.junctionId)
 
       val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
         junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, link.endDate, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
@@ -305,7 +305,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue, r.roadNumber, r.roadPartNumber, r.track))).head
         Some(junctionId)
-      } else None
+      } else Some(roadJunctionPoint.head.junctionId)
 
       val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
         junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, link.endDate, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
@@ -335,7 +335,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, link.createdBy, Some(DateTime.now), r.roadwayNumber, r.startAddrMValue, r.roadNumber, r.roadPartNumber, r.track))).head
         Some(junctionId)
-      } else None
+      } else Some(roadJunctionPoint.head.junctionId)
 
       val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
         junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, link.endDate, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
@@ -391,6 +391,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               roadsInLastPoint.filter(l => l.roadNumber == link.roadNumber && l.roadPartNumber != link.roadPartNumber || l.roadNumber != link.roadNumber))}
             } //there can be MinorDiscontinuity, Discontinuity or EndOfRoad link connecting to the same ROAD in other than rampsOrRoundabout roads
             else if (List(Discontinuity.MinorDiscontinuity, Discontinuity.Discontinuous).contains(link.discontinuity))
+            //TODO alterar codigo das roadsInFirstPoint dependendo da resposta do janne
             (roadsInFirstPoint,
               roadsInLastPoint)
           else if (link.discontinuity == Discontinuity.EndOfRoad)

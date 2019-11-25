@@ -850,9 +850,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks++rightPLinks).map(_.roadwayNumber)).map(_.id)
 
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
+
+      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber))
+
       junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(4)
       junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(3)
       junctionPointTemplates.length should be(7)
+      junctions.size should be (2)
     }
   }
 
@@ -1016,14 +1020,14 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val combPLinks = Seq(combLink1, combLink2, combLink3)
 
-      val (lc1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (lc2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
+      val (cll1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (cll2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (cll3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 10)
       val rw2WithId = rw2.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 10)
       val rw3WithId = rw3.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 10)
 
-      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(lc1, lc2, lc3)), Some(combPLinks))
+      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(cll1, cll2, cll3)), Some(combPLinks))
 
       val projectChanges = List(
         //Combined
@@ -1047,8 +1051,28 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           , DateTime.now, Some(0L))
       )
 
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(lc1, lc2, lc3))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(rw1WithId, rw2WithId))
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(lc1, lc2, lc3))
+//      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(rw1WithId, rw2WithId))
+
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq())
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], false)).thenReturn(Seq())
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.last, combGeom1.last), roadNumberLimits)).thenReturn(Seq(cll1, cll2, cll3))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber, cll2.roadwayNumber, cll3.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId))
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq())
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom3.head, combGeom3.head), roadNumberLimits)).thenReturn(Seq())
+
+      /*
+                     |
+                    |
+                    C3
+                    |
+                    v
+          |--C1-->|0|--C2-->|
+
+                 Note:
+                 0: Illustration where junction points should be created
+                 C: Combined track
+            */
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
