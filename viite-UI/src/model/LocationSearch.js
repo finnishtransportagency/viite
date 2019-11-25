@@ -65,7 +65,7 @@
           }), function (road) {
             return road.roadPartNumber;
           });
-          var searchResult = roadLocationAPIResultParser(sortedRoad[0], road.distance);
+          var searchResult = roadLocationAPIResultParser(sortedRoad[0], roadData[0].startAddrMValue);
           if (searchResult.length === 0) {
             return $.Deferred().reject('Tuntematon tieosoite');
           } else {
