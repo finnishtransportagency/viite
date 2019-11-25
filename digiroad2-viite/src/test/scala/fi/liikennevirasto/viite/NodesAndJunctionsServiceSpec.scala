@@ -876,7 +876,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val combGeom2 = Seq(Point(5.0, 40.0), Point(5.0, 35.0))
 
       val leftLink1 = dummyProjectLink(road, part, Track.LeftSide, Discontinuity.Continuous, 0, 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, leftGeom1, rwNumber).copy(id = plId, projectId = projectId, roadwayId = rwId, linearLocationId = llId)
-      val rightLink1 = dummyProjectLink(road, part, Track.RightSide, Discontinuity.Continuous, 0, 5, Some(DateTime.now()), None, 12346, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, rightGeom1, rwNumber+1).copy(id = plId+1, projectId = projectId, roadwayId = rwId+1, linearLocationId = llId+1)
+      val rightLink1 = dummyProjectLink(road, part, Track.RightSide, Discontinuity.Discontinuous, 0, 5, Some(DateTime.now()), None, 12346, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, rightGeom1, rwNumber+1).copy(id = plId+1, projectId = projectId, roadwayId = rwId+1, linearLocationId = llId+1)
       val combLink1 = dummyProjectLink(road, part, Track.Combined, Discontinuity.Continuous, 5, 15, Some(DateTime.now()), None, 12347, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom1, rwNumber+2).copy(id = plId+2, projectId = projectId, roadwayId = rwId+2, linearLocationId = llId+2)
       val combLink2 = dummyProjectLink(road, part, Track.Combined, Discontinuity.Continuous, 15, 20, Some(DateTime.now()), None, 12348, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom2, rwNumber+2).copy(id = plId+3, projectId = projectId, roadwayId = rwId+2, linearLocationId = llId+3)
 
@@ -887,15 +887,15 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rightPLinks = Seq(rightLink1)
       val combPLinks = Seq(combLink1, combLink2)
 
-      val (lc1, rw1): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
-      val (lc2, rw2): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
-      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-      val (lc4, rw4): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
+      val (lll1, rw1): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
+      val (rll1, rw2): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
+      val (cll1, rw3): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
+      val (cll2, rw4): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 5)
       val rw2WithId = rw2.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 5)
       val rw3WithId = rw3.copy(ely = 8L, startAddrMValue = 5, endAddrMValue = 20)
 
-      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(lc1, lc2, lc3, lc4)), Some(leftPLinks++rightPLinks++combPLinks))
+      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(lll1, rll1, cll1, cll2)), Some(leftPLinks++rightPLinks++combPLinks))
 
       val projectChanges = List(
         //left
@@ -928,8 +928,22 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           , DateTime.now, Some(0L))
       )
 
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(lc1, lc2, lc3, lc4))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId))
+            when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
+            when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.last, leftGeom1.last), roadNumberLimits)).thenReturn(Seq(cll1))
+            when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.head, rightGeom1.head), roadNumberLimits)).thenReturn(Seq())
+            when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.last, rightGeom1.last), roadNumberLimits)).thenReturn(Seq(cll1, cll2))
+            when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(lll1))
+            when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.last, combGeom1.last), roadNumberLimits)).thenReturn(Seq(rll1, cll2))
+            when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.head, combGeom2.head), roadNumberLimits)).thenReturn(Seq(rll1, cll1))
+            when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq())
+
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], false)).thenReturn(Seq())
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(rll1.roadwayNumber), false)).thenReturn(Seq(rw2WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber), false)).thenReturn(Seq(rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll1.roadwayNumber, cll2.roadwayNumber), false)).thenReturn(Seq(rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(rll1.roadwayNumber, cll2.roadwayNumber), false)).thenReturn(Seq(rw2WithId, rw3WithId))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(cll2.roadwayNumber), false)).thenReturn(Seq(rw3WithId))
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
