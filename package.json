@@ -39,7 +39,7 @@
     "yarn": "1.12.3"
   },
   "engines": {
-    "node": "8.12.0"
+    "node": ">=8.12.0"
   },
   "scripts": {
     "test": "grunt test"
