@@ -156,6 +156,18 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     val startAddrMValue = if (toProcess.head.calibrationPoints._1.isDefined) toProcess.head.calibrationPoints._1.get else roadway.startAddrMValue
     val endAddrMValue = if (toProcess.last.calibrationPoints._2.isDefined) toProcess.last.calibrationPoints._2.get else roadway.endAddrMValue
 
+//    defined calibrationPoint value (4728 addr) for end link (its now the first because of reverse) is being bigger than the end of the roadway section (337 addr)
+//    we might need to process "roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)"
+
+    //uncomment below code for break point at line 165
+//    /*
+//    if(startAddrMValue == 4728 && endAddrMValue == 337){
+//      1
+//    } else {
+//      0
+//    }
+//    */
+
     boundaryAddressMap(roadway, toProcess, startAddrMValue, endAddrMValue) ++ recursiveMapRoadAddresses(roadway, others)
   }
 
