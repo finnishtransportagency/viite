@@ -207,6 +207,44 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  test("Test getTemplatesByBoundingBox When no matching templates Then return nothing") {
+    runWithRollback {
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber)))
+      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
+      val roadwayPointId = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
+      nodePointDAO.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId)))
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
+
+      val templates = nodesAndJunctionsService.getTemplatesByBoundingBox(BoundingRectangle(Point(96, 96), Point(98, 98)))
+      templates._1.size should be(0)
+      templates._2.size should be(0)
+    }
+  }
+
+  test("Test getTemplatesByBoundingBox When matching templates Then return them") {
+    runWithRollback {
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber)))
+      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
+      val roadwayPointId = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
+      nodePointDAO.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId)))
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
+
+      val templates = nodesAndJunctionsService.getTemplatesByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
+      templates._1.size should be(1)
+      templates._2.size should be(1)
+      templates._2.head._2.size should be(1)
+      templates._1.head.roadwayNumber should be(roadwayNumber)
+      templates._2.head._1.id should be(junctionId)
+      templates._2.head._1.nodeNumber should be(None)
+      templates._2.head._2.head.junctionId should be(junctionId)
+    }
+  }
+
+  // <editor-fold desc="Create Junction Points">
   test("Test nodesAndJunctionsService.handleNodePointTemplates When creating projectLinks Then node points template should be handled/created properly and" +
     " When reverse, the node points BeforeAfter should be reversed") {
     runWithRollback {
@@ -1243,12 +1281,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     runWithRollback {
       /*
 
-     0--C1-->|
-     ^       |
+     0|--C1-->|
+     ^        |
      |       C2
-     C4      |
-     |       v
-     |<--C3--|
+     C4       |
+     |        v
+     |<--C3---|
 
             Note:
             0: Illustration where junction points should be created
@@ -1303,7 +1341,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           , DateTime.now, Some(0L))
       )
 
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(lc1, lc2, lc3, lc4))
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(lc1, lc4))
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.last, combGeom1.last), roadNumberLimits)).thenReturn(Seq(lc1, lc2))
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq(lc2, lc3))
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom3.last, combGeom3.last), roadNumberLimits)).thenReturn(Seq(lc3, lc4))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(rw1WithId))
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -1385,7 +1426,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           , DateTime.now, Some(0L))
       )
 
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(lc1, lc2, lc3, lc4))
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(lc1, lc4))
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.last, combGeom1.last), roadNumberLimits)).thenReturn(Seq(lc1, lc2))
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq(lc2, lc3))
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom3.last, combGeom3.last), roadNumberLimits)).thenReturn(Seq(lc3, lc4))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(rw1WithId))
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -1403,42 +1447,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test getTemplatesByBoundingBox When no matching templates Then return nothing") {
-    runWithRollback {
-      val roadwayNumber = Sequences.nextRoadwayNumber
-      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber)))
-      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
-      val roadwayPointId = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
-      nodePointDAO.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId)))
-      val junctionId = junctionDAO.create(Seq(testJunction1)).head
-      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
-
-      val templates = nodesAndJunctionsService.getTemplatesByBoundingBox(BoundingRectangle(Point(96, 96), Point(98, 98)))
-      templates._1.size should be(0)
-      templates._2.size should be(0)
-    }
-  }
-
-  test("Test getTemplatesByBoundingBox When matching templates Then return them") {
-    runWithRollback {
-      val roadwayNumber = Sequences.nextRoadwayNumber
-      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber)))
-      linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
-      val roadwayPointId = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
-      nodePointDAO.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId)))
-      val junctionId = junctionDAO.create(Seq(testJunction1)).head
-      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
-
-      val templates = nodesAndJunctionsService.getTemplatesByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
-      templates._1.size should be(1)
-      templates._2.size should be(1)
-      templates._2.head._2.size should be(1)
-      templates._1.head.roadwayNumber should be(roadwayNumber)
-      templates._2.head._1.id should be(junctionId)
-      templates._2.head._1.nodeNumber should be(None)
-      templates._2.head._2.head.junctionId should be(junctionId)
-    }
-  }
+  // </editor-fold>
 
   // <editor-fold desc="Nodes">
   /**
@@ -1850,7 +1859,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
 
   // </editor-fold>
-  // <editor-fold desc="Junctions">
+  // <editor-fold desc="Expire Junctions">
   /**
     * Test case for Termination:
     * Reserve road number 2 part 1
