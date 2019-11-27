@@ -170,12 +170,12 @@
               return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) && groupLinkTypeFilter(group, SelectionType.Floating.value);
           });
 
-        var nonUnderConstructionRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
+        var nonHistoryConstructionRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
             return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
           });
 
-        setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(underConstructionRoadLinkGroups).concat(floatingRoadLinks));
-          eventbus.trigger('roadLinks:fetched', nonUnderConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
+        setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups.concat(underConstructionRoadLinkGroups).concat(floatingRoadLinks));
+          eventbus.trigger('roadLinks:fetched', nonHistoryConstructionRoadLinkGroups, (!_.isUndefined(drawUnknowns) && drawUnknowns), selectedLinkIds);
           if (historicRoadLinks.length !== 0) {
               eventbus.trigger('linkProperty:fetchedHistoryLinks', historicRoadLinks);
           }
