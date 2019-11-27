@@ -475,7 +475,6 @@
 
     me.redraw = function () {
       me.clearLayers(layers);
-      me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
       var cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
 
       var editedLinks = _.map(projectCollection.getDirty(), function (editedLink) {
