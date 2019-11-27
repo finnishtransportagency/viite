@@ -1852,7 +1852,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.error(s" Project state not at Saved2TR")
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
-    val project = fetchProjectById(projectID).get
+    val project = projectDAO.fetchById(projectID).get
     val projectLinks = projectLinkDAO.fetchProjectLinks(projectID)
     val projectLinkChanges = projectLinkDAO.fetchProjectLinksChange(projectID)
     val currentRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
@@ -1890,13 +1890,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       val projectLinksAfterChanges = if (generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
       roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, projectLinkChanges, username = project.createdBy)
+      roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
       nodesAndJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges, projectLinkChanges)
       nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, projectLinkChanges)
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterChanges, Some(project.startDate.minusDays(1)), project.createdBy)
-      handleNewRoadNames(roadwayChanges, project)
+      handleNewRoadNames(roadwayChanges)
       handleRoadNames(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
-      roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
       ProjectLinkNameDAO.removeByProject(projectID)
       projectLinks.map(_.roadNumber).toSet
     } catch {
@@ -1958,7 +1958,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     })
   }
 
-  def handleNewRoadNames(roadwayChanges: Seq[ProjectRoadwayChange], project: Project): Unit = {
+  def handleNewRoadNames(roadwayChanges: Seq[ProjectRoadwayChange]): Unit = {
     val roadNames = roadwayChanges.flatMap(rwc => {
       val roadNumberOptional = rwc.changeInfo.target.roadNumber
       if (rwc.changeInfo.changeType.equals(AddressChangeType.New) && roadNumberOptional.isDefined) {
