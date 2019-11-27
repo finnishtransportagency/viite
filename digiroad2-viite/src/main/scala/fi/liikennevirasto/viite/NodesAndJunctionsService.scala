@@ -1,6 +1,5 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
@@ -365,19 +364,19 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           * * Discontinuity cases for same road number;
           * * Discontinuous links that are connected to project links;
          */
-        val (headRoads: Seq[RoadAddress], tailRoads: Seq[RoadAddress]) = {
+        val (headRoads, tailRoads): (Seq[RoadAddress], Seq[RoadAddress]) = {
           if (RoadClass.RampsAndRoundaboutsClass.roads.contains(projectLink.roadNumber.toInt)) {
             val head = roadsInFirstPoint filterNot RoadAddressFilters.sameRoadNumberAndRoadPartNumber(projectLink)
             val tail = projectLink.discontinuity match {
               case Discontinuity.EndOfRoad | Discontinuity.Discontinuous =>
-                // Roundabuts (20001 to 39999) : at the last link of the round lane - EndOfRoad or Discontinuous
+                // Roundabouts (20001 to 39999) : at the last link of the round lane - EndOfRoad or Discontinuous
                 roadsInLastPoint
               case _ =>
                 // Ramps : where road number OR road part number change
                 roadsInLastPoint filterNot RoadAddressFilters.sameRoadNumberAndRoadPartNumber(projectLink)
             }
             (head, tail)
-          } else if (RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads).contains(projectLink.roadNumber.toInt)) {
+          } else if ((RoadClass.nodeAndJunctionRoadClass.flatMap(_.roads)).contains(projectLink.roadNumber.toInt)) {
             projectLink.discontinuity match {
               case Discontinuity.EndOfRoad =>
                 // Discontinuity EndOfRoad for same road number - The road ends in itself.
@@ -395,6 +394,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                 val tail = roadsInLastPoint filterNot RoadAddressFilters.sameRoadNumber(projectLink)
                 (head, tail)
             }
+          } else {
+            (Seq.empty[RoadAddress], Seq.empty[RoadAddress])
           }
         }
 
