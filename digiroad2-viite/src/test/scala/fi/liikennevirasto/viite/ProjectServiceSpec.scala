@@ -1662,7 +1662,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectBefore = projectService.getSingleProjectById(projectId)
-      projectService.handleNewRoadNames(changes, projectBefore.get)
+      projectService.handleNewRoadNames(changes)
       val project = projectService.getSingleProjectById(projectId)
       val validNamesAfterUpdate = RoadNameDAO.getCurrentRoadNamesByRoadNumber(66666)
       validNamesAfterUpdate.size should be(1)
@@ -1796,7 +1796,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
       val projectBefore = projectService.getSingleProjectById(projectId)
-      projectService.handleNewRoadNames(changes, projectBefore.get)
+      projectService.handleNewRoadNames(changes)
       val namesAfterUpdate = RoadNameDAO.getLatestRoadName(66666)
       val project = projectService.getSingleProjectById(projectId)
       namesAfterUpdate.get.roadName should be(namesBeforeUpdate.get.roadName)
@@ -1823,7 +1823,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
       val projectBefore = projectService.getSingleProjectById(projectId)
-      projectService.handleNewRoadNames(changes, projectBefore.get)
+      projectService.handleNewRoadNames(changes)
       val namesAfterUpdate = RoadNameDAO.getLatestRoadName(66666)
       val project = projectService.getSingleProjectById(projectId)
       project.get.statusInfo should be(None)
@@ -1860,7 +1860,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectBefore = projectService.getSingleProjectById(projectId)
-      projectService.handleNewRoadNames(changes, projectBefore.get)
+      projectService.handleNewRoadNames(changes)
       val project = projectService.getSingleProjectById(projectId)
       val namesAfterUpdate55555 = RoadNameDAO.getLatestRoadName(55555)
       val namesAfterUpdate66666 = RoadNameDAO.getLatestRoadName(66666)
@@ -2175,7 +2175,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       ProjectLinkNameDAO.create(project.id, testRoadNumber2, testName)
 
       // Method to be tested
-      projectService.handleNewRoadNames(changes, project)
+      projectService.handleNewRoadNames(changes)
 
       // Test if project link is removed from DB
       ProjectLinkNameDAO.get(project.id, testRoadNumber1) should be (None)
