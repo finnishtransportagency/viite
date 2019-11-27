@@ -60,6 +60,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
     override def withDynTransactionNewOrExisting[T](f: => T): T = f
   }
+
   val projectService: ProjectService = new ProjectService(roadAddressService, mockRoadLinkService, nodesAndJunctionsService, roadwayDAO,
     roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
     nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
@@ -1113,18 +1114,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts that connects to other existing part which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly") {
     runWithRollback {
       /*
-                |
-               |
-               C3
-               |
-               v
-     |--C1-->|0|--C2-->|
+                   |
+                   |
+                   C3
+                   |
+                   v
+          |--C1-->|0|--C2-->|
 
-            Note:
-            0: Illustration where junction points should be created
-            C: Combined track
-       */
-
+        * Note:
+          0: Illustration where junction points should be created
+          C: Combined track
+        */
       val road = 999L
       val part1 = 1L
       val part2 = 2L

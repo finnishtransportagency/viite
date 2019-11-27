@@ -923,5 +923,14 @@ object AddressConsistencyValidator {
   }
 
   case class AddressErrorDetails(linearLocationId: Long, linkId: Long, roadNumber: Long, roadPartNumber: Long, addressError: AddressError, ely: Long)
+}
 
+object RoadAddressFilters {
+  def sameRoadNumber(pl: ProjectLink)(road: RoadAddress): Boolean = {
+    road.roadNumber == pl.roadNumber
+  }
+
+  def sameRoadNumberAndRoadPartNumber(pl: ProjectLink)(road: RoadAddress): Boolean = {
+    road.roadNumber == pl.roadNumber && road.roadPartNumber == pl.roadPartNumber
+  }
 }
