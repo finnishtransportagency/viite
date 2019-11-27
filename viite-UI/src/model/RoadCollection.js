@@ -171,7 +171,7 @@
           });
 
         var nonUnderConstructionRoadLinkGroups = _.reject(roadLinkGroups, function(group) {
-            return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface) || groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
+            return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
           });
 
         setRoadLinkGroups(nonUnderConstructionRoadLinkGroups.concat(underConstructionRoadLinkGroups).concat(floatingRoadLinks));
