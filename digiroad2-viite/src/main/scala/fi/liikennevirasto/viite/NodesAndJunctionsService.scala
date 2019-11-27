@@ -204,28 +204,23 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   def handleJunctionPointTemplates(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange]): Unit = {
     def getJunctionsInHead(link: ProjectLink, roadsToHead: Seq[RoadAddress], roadsFromHead: Seq[RoadAddress]): Seq[Junction] = {
-      roadsToHead.flatMap { rh =>
-        val jcPoints = (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.endAddrMValue, BeforeAfter.Before) ++
-          junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After))
-          .map(_.junctionId).toSeq
-        junctionDAO.fetchByIds(jcPoints)
-      } ++ roadsFromHead.flatMap { rh =>
-        val jcPoints = (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.startAddrMValue, BeforeAfter.After) ++
-          junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)).map(_.junctionId).toSeq
-        junctionDAO.fetchByIds(jcPoints)
+      val junctionIds = {
+        val linkHeadJunction = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
+        val roadsToHeadJunction = roadsToHead.flatMap(rh => junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.endAddrMValue, BeforeAfter.Before))
+        val roadsFromHeadJunction = roadsFromHead.flatMap(rh => junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.startAddrMValue, BeforeAfter.After))
+        (linkHeadJunction++roadsToHeadJunction++roadsFromHeadJunction).map(_.junctionId).toSeq.distinct
       }
+      junctionDAO.fetchByIds(junctionIds)
     }
 
     def getJunctionsToTail(link: ProjectLink, roadsToTail: Seq[RoadAddress], roadsFromTail: Seq[RoadAddress]): Seq[Junction] = {
-      roadsToTail.flatMap { rh =>
-        val jcPoints = (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.endAddrMValue, BeforeAfter.Before) ++
-          junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)).map(_.junctionId).toSeq
-        junctionDAO.fetchByIds(jcPoints)
-      } ++ roadsFromTail.flatMap { rh =>
-        val jcPoints = (junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.startAddrMValue, BeforeAfter.After) ++
-          junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)).map(_.junctionId).toSeq
-        junctionDAO.fetchByIds(jcPoints)
+      val junctionIds = {
+        val linkHeadJunction = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)
+        val roadsToTailJunction = roadsToTail.flatMap(rh => junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.endAddrMValue, BeforeAfter.Before))
+        val roadsFromTailJunction = roadsFromTail.flatMap(rh => junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.startAddrMValue, BeforeAfter.After))
+        (linkHeadJunction++roadsToTailJunction++roadsFromTailJunction).map(_.junctionId).toSeq.distinct
       }
+      junctionDAO.fetchByIds(junctionIds)
     }
 
     def handleRoadsToHead(link: ProjectLink, junctionsInHead: Seq[Junction], r: RoadAddress): Unit = {
@@ -247,7 +242,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
         junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, None, DateTime.now, None, link.createdBy, Some(DateTime.now)))).head
       else junctionIdentifier.getOrElse(junctionsInHead.head.id)
-      val rwPointId = {
         val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.startAddrMValue)
         val rwPoint = if (existingRoadwayPoint.nonEmpty) {
           existingRoadwayPoint.get.id
@@ -257,7 +251,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
         if(linkJunctionPoint.isEmpty)
           junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, DateTime.now, None, link.createdBy, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track)))
-      }
     }
 
     def handleRoadsFromHead(link: ProjectLink, newJunctionsInHead: Seq[Junction], junctionsInHead: Seq[Junction], r: RoadAddress): Unit = {
