@@ -854,7 +854,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def getRoadwayChangesAndSendToTR(projectId: Set[Long]): ProjectChangeStatus = {
-    logger.info(s"Fetching all road address changes for projects: ${projectId.toString()}")
+    logger.info(s"Fetching all road address changes for projects: ${projectId.mkString(", ")}")
     val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(projectId)
     prettyPrintLog(roadwayChanges)
     logger.info(s"Sending changes to TR")
@@ -1545,6 +1545,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         projectDAO.assignNewProjectTRId(projectId) //Generate new TR_ID
         val trProjectStateMessage = getRoadwayChangesAndSendToTR(Set(projectId))
         if (trProjectStateMessage.status == ProjectState.Failed2GenerateTRIdInViite.value) {
+          logger.error(s"Publishing project $projectId failed. Failed to generate TR ID in Viite.")
           return PublishResult(validationSuccess = false, sendSuccess = false, Some(trProjectStateMessage.reason))
         }
         trProjectStateMessage.status match {
@@ -1555,16 +1556,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
           case _ =>
             //rollback
-            logger.info(s"Sending to TR failed: ${trProjectStateMessage.reason}")
+            logger.error(s"Sending to TR failed: ${trProjectStateMessage.reason}")
             val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else TrConnectionError
             PublishResult(validationSuccess = true, sendSuccess = false, Some(returningMessage))
         }
       } catch {
         //Exceptions taken out val response = client.execute(request) of sendJsonMessage in ViiteTierekisteriClient
         case ioe@(_: IOException | _: ClientProtocolException) =>
+          logger.error(s"Error occurred while publishing project ${projectId}.", ioe)
           projectDAO.updateProjectStatus(projectId, SendingToTR)
           PublishResult(validationSuccess = false, sendSuccess = false, Some(TrConnectionError))
         case NonFatal(_) =>
+          logger.error(s"Error occurred while publishing project ${projectId}.")
           projectDAO.updateProjectStatus(projectId, ErrorInViite)
           PublishResult(validationSuccess = false, sendSuccess = false, Some(GenericViiteErrorMessage))
       }
