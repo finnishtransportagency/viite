@@ -438,18 +438,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   post("/roadlinks/roadaddress/project/sendToTR", operation(sendProjectToTRByProjectId)) {
     val projectID = (parsedBody \ "projectID").extract[Long]
     time(logger, s"POST request for /roadlinks/roadaddress/project/sendToTR (projectID: $projectID)") {
-      val writableProjectService = projectService.projectWritableCheck(projectID)
-      if (writableProjectService.isEmpty) {
+      val projectWritableError = projectService.projectWritableCheck(projectID)
+      if (projectWritableError.isEmpty) {
         val sendStatus = projectService.publishProject(projectID)
-        if (sendStatus.validationSuccess && sendStatus.sendSuccess)
+        if (sendStatus.validationSuccess && sendStatus.sendSuccess) {
           Map("sendSuccess" -> true)
-        else if (sendStatus.errorMessage.getOrElse("").toLowerCase == FailedToSendToTRMessage.toLowerCase) {
-          projectService.setProjectStatus(projectID, SendingToTR)
-          Map("sendSuccess" -> false, "errorMessage" -> TrConnectionError)
-        } else Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
-      }
-      else {
-        Map("sendSuccess" -> false, "errorMessage" -> writableProjectService.get)
+        } else {
+          logger.error(s"Failed to send project ${projectID} to TR. Error: ${sendStatus.errorMessage.getOrElse("-")}")
+          Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(FailedToSendToTRMessage))
+        }
+      } else {
+        logger.error(s"Failed to send project ${projectID} to TR. Error: ${projectWritableError.get}")
+        Map("sendSuccess" -> false, "errorMessage" -> projectWritableError.get)
       }
     }
   }
