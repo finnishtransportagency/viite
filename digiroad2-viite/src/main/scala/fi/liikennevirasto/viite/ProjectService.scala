@@ -1556,7 +1556,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
           case _ =>
             //rollback
-            logger.error(s"Sending to TR failed: ${trProjectStateMessage.reason}")
+            logger.error(s"Sending project ${trProjectStateMessage.projectId} to TR failed. Status: ${trProjectStateMessage.status} Error message: ${trProjectStateMessage.reason}")
             val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else TrConnectionError
             PublishResult(validationSuccess = true, sendSuccess = false, Some(returningMessage))
         }
