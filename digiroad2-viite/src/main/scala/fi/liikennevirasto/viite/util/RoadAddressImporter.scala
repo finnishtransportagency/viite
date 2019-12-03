@@ -63,7 +63,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def linkStatement(): PreparedStatement = {
-    dynamicSession.prepareStatement(sql = "Insert into LINK (ID, SOURCE) values(?, ?)")
+    dynamicSession.prepareStatement(sql = "Insert into LINK (ID, SOURCE, ADJUSTED_TIMESTAMP) values(?, ?, ?)")
   }
 
   def datePrinter(date: Option[DateTime]): String = {
@@ -324,6 +324,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         if (LinkDAO.fetch(link.linkId).isEmpty) {
           statement.setLong(1, link.linkId)
           statement.setLong(2, link.linkSource.value)
+          statement.setLong(3, link.vvhTimeStamp)
           statement.addBatch()
         }
     }
