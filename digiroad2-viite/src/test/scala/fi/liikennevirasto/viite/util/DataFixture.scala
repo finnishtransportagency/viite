@@ -16,9 +16,8 @@ import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.DateTime
 
-import scala.collection.mutable.ListBuffer
-import scala.collection.parallel.immutable.ParSet
 import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.immutable.ParSet
 import scala.language.postfixOps
 
 object DataFixture {
@@ -70,24 +69,17 @@ object DataFixture {
   def importRoadAddresses(importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val geometryAdjustedTimeStamp = dr2properties.getProperty("digiroad2.viite.importTimeStamp", "")
-    if (geometryAdjustedTimeStamp == "" || geometryAdjustedTimeStamp.toLong == 0L) {
-      println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
-    } else {
-      println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
-      importTableName match {
-        case None => // shouldn't get here because args size test
-          throw new Exception("****** Import failed! conversiontable name required as second input ******")
-        case Some(tableName) =>
-          val importOptions = ImportOptions(
-            onlyComplementaryLinks = false,
-            useFrozenLinkService = geometryFrozen,
-            geometryAdjustedTimeStamp.toLong, tableName,
-            onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
-          dataImporter.importRoadAddressData(Conversion.database(), vvhClient, importOptions)
-
-      }
-      println(s"Road address import complete at time: ${DateTime.now()}")
+    importTableName match {
+      case None => // shouldn't get here because args size test
+        throw new Exception("****** Import failed! Conversion table name required as a second input ******")
+      case Some(tableName) =>
+        val importOptions = ImportOptions(
+          onlyComplementaryLinks = false,
+          useFrozenLinkService = geometryFrozen,
+          tableName,
+          onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
+        dataImporter.importRoadAddressData(Conversion.database(), vvhClient, importOptions)
+        println(s"Road address import complete at time: ${DateTime.now()}")
     }
   }
 
