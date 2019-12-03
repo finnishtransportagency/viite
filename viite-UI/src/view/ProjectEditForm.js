@@ -171,6 +171,7 @@
     var changeDropDownValue = function (statusCode) {
       var dropdown_0_new = $("#dropDown_0 option[value=" + LinkStatus.New.description + "]");
       var rootElement = $('#feature-attributes');
+      var roadTypeDropDownValue = selectedProjectLink[0].roadTypeId;
       switch (statusCode) {
         case LinkStatus.Unchanged.value:
           dropdown_0_new.prop('disabled',true);
@@ -189,9 +190,13 @@
           break;
         case LinkStatus.Numbering.value:
           $("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").attr('selected', 'selected').change();
+          break;
+        case LinkStatus.Undefined.value:
+          roadTypeDropDownValue = LinkValues.RoadType.Empty.value;
+          break;
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
-      $('#roadTypeDropdown').val(selectedProjectLink[0].roadTypeId);
+      $('#roadTypeDropdown').val(roadTypeDropDownValue);
     };
 
     var removeNumberingFromDropdown = function () {
