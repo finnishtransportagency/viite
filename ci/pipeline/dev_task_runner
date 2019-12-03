@@ -43,12 +43,14 @@ pipeline {
                                        'fuse_road_address_with_history',
                                        'import_road_names',
                                        'test_integration_api_all_municipalities',
-                                       'import_nodes_and_junctions'
+                                       'import_nodes_and_junctions',
+                                       'initial_import'
                                        ])
 
         choice(name: 'IMPORT_TABLE', choices: [
                                        'VVH_TIEOSOITE_JOULUKUU2018',
-                                       'VVH_TIEOSOITE_KESAKUU_2019'
+                                       'VVH_TIEOSOITE_KESAKUU_2019',
+                                       'VVH_TIEOSOITE_MARRASKUU_2019'
                                        ])
     }
 
