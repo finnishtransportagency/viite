@@ -161,11 +161,15 @@
       var trackCodeDropdown = $('#trackCodeDropdown')[0];
       filled = filled && !_.isUndefined(trackCodeDropdown) && !_.isUndefined(trackCodeDropdown.value) && trackCodeDropdown.value !== '99';
 
+      var roadTypeCodeDropdown = $('#roadTypeDropdown')[0];
+      filled = filled && !_.isUndefined(roadTypeCodeDropdown) && !_.isUndefined(roadTypeCodeDropdown.value) && roadTypeCodeDropdown.value !== '0';
+
       if (filled) {
         rootElement.find('.project-form button.update').prop("disabled", false);
       } else {
         rootElement.find('.project-form button.update').prop("disabled", true);
       }
+
     };
 
     var changeDropDownValue = function (statusCode) {
@@ -549,6 +553,10 @@
       });
 
       rootElement.on('change', '#trackCodeDropdown', function () {
+        checkInputs('.project-');
+      });
+
+      rootElement.on('change', '#roadTypeDropdown', function () {
         checkInputs('.project-');
       });
 
