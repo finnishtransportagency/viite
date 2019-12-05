@@ -69,7 +69,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val nodesAndJunctionsService: NodesAndJunctionsService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date,
-               val date_of_data: String = Digiroad2Context.date_of_data,
                implicit val swagger: Swagger
               )
   extends ScalatraServlet
@@ -126,7 +125,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val config = userProvider.getCurrentUser().configuration
         (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
       }
-      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date, date_of_data)
+      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date)
     }
   }
 
@@ -436,18 +435,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   post("/roadlinks/roadaddress/project/sendToTR", operation(sendProjectToTRByProjectId)) {
     val projectID = (parsedBody \ "projectID").extract[Long]
     time(logger, s"POST request for /roadlinks/roadaddress/project/sendToTR (projectID: $projectID)") {
-      val writableProjectService = projectService.projectWritableCheck(projectID)
-      if (writableProjectService.isEmpty) {
+      val projectWritableError = projectService.projectWritableCheck(projectID)
+      if (projectWritableError.isEmpty) {
         val sendStatus = projectService.publishProject(projectID)
-        if (sendStatus.validationSuccess && sendStatus.sendSuccess)
+        if (sendStatus.validationSuccess && sendStatus.sendSuccess) {
           Map("sendSuccess" -> true)
-        else if (sendStatus.errorMessage.getOrElse("").toLowerCase == FailedToSendToTRMessage.toLowerCase) {
-          projectService.setProjectStatus(projectID, SendingToTR)
-          Map("sendSuccess" -> false, "errorMessage" -> TrConnectionError)
-        } else Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
-      }
-      else {
-        Map("sendSuccess" -> false, "errorMessage" -> writableProjectService.get)
+        } else {
+          logger.error(s"Failed to send project ${projectID} to TR. Error: ${sendStatus.errorMessage.getOrElse("-")}")
+          Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(FailedToSendToTRMessage))
+        }
+      } else {
+        logger.error(s"Failed to send project ${projectID} to TR. Error: ${projectWritableError.get}")
+        Map("sendSuccess" -> false, "errorMessage" -> projectWritableError.get)
       }
     }
   }
@@ -1533,7 +1532,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
      projectService
    }*/
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String, date_of_data: String)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
   case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
 
 }

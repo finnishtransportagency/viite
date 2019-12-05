@@ -147,7 +147,7 @@ class LinearLocationDAO {
 
     createLinearLocations.foreach {
       location =>
-        LinkDAO.createIfEmptyFetch(location.linkId)
+        LinkDAO.createIfEmptyFetch(location.linkId, location.adjustedTimestamp, location.linkGeomSource.value)
         val roadwayNumber = if (location.roadwayNumber == NewIdValue) {
           Sequences.nextRoadwayNumber
         } else {

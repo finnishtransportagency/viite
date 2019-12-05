@@ -209,7 +209,7 @@
           nodeCollection.getNodesByRoadAttributes(data);
         });
 
-        rootElement.one('click', '.node-link', function (event) {
+        rootElement.on('click', '.node-link', function (event) {
           eventbus.trigger('nodeSearchTool:clickNode', event.currentTarget.id, map);
         });
 

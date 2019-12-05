@@ -185,8 +185,9 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return (applicationModel.getSelectedTool() !== 'Cut' && !_.isUndefined(selectionTarget.linkData) && (
             projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) ||
-            (selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value && selectionTarget.linkData.floating !== SelectionType.Floating.value) ||
-            selectionTarget.linkData.roadClass === RoadClass.NoClass.value || selectionTarget.linkData.constructionType === ConstructionType.UnderConstruction.value)
+            selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value ||
+            selectionTarget.linkData.roadClass === RoadClass.NoClass.value ||
+            (selectionTarget.linkData.constructionType === ConstructionType.UnderConstruction.value && selectionTarget.linkData.anomaly === Anomaly.NoAddressGiven.value))
         );
       });
       if (isNotEditingData) {
@@ -474,7 +475,6 @@
 
     me.redraw = function () {
       me.clearLayers(layers);
-      me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
       var cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
 
       var editedLinks = _.map(projectCollection.getDirty(), function (editedLink) {
