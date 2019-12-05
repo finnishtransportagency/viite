@@ -185,8 +185,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     withDynSession{
       time(logger, "Fetch Junction templates") {
         val allJunctionTemplates = junctionDAO.fetchTemplates()
-        allJunctionTemplates.filter(jt => jt.roadNumber != 0 && authorizedElys.contains(jt.elyCode))
-          .groupBy(_.id).map(junctionTemplate => {
+        allJunctionTemplates.filter(jt => jt.roadNumber != 0 && authorizedElys.contains(jt.elyCode)).groupBy(_.id).map(junctionTemplate => {
           junctionTemplate._2.minBy(jt => (jt.roadNumber, jt.roadPartNumber, jt.addrM))
         }).toSeq
       }

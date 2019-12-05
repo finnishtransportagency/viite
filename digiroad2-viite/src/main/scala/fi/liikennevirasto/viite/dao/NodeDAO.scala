@@ -166,21 +166,6 @@ class NodeDAO extends BaseDAO {
       """.as[Node].firstOption
   }
 
-  def fetchByNodeNumbers(nodeNumbers: Seq[Long]): Seq[Node] = {
-    if (nodeNumbers.isEmpty)
-      List()
-    else {
-      val query =
-        s"""
-      SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
-      from NODE N
-      CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
-      where NODE_NUMBER IN (${nodeNumbers.mkString(", ")}) and valid_to is null and end_date is null
-      """
-      queryList(query)
-    }
-  }
-
   def fetchById(nodeId: Long): Option[Node] = {
     sql"""
       SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
