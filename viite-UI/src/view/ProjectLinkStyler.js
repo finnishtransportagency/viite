@@ -114,7 +114,7 @@
             new StyleRule().where('status').is(transferredStatus).use({stroke: {color: '#FF0000', lineCap: 'round', opacity: 1}}),
             new StyleRule().where('status').is(numberingStatus).use({stroke: {color: '#8B4513', lineCap: 'round', opacity: 1}}),
             new StyleRule().where('status').is(terminatedStatus).use({stroke: {color: '#383836', lineCap: 'round', opacity: 1}}),
-            new StyleRule().where('status').is(unknownStatus).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: '#383836', lineCap: 'round', opacity: 1}})
+            new StyleRule().where('status').is(unknownStatus).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: '#646461', lineCap: 'round', opacity: 1}})
             ];
 
         var borderRules = [
