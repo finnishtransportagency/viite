@@ -114,6 +114,7 @@
     };
 
     root.RoadType = {
+        Empty:                          {value:0, description:""},
         PublicRoad:                     {value:1, description:"Yleinen tie"},
         FerryRoad:                      {value:2, description:"Lauttaväylä yleisellä tiellä"},
         MunicipalityStreetRoad:         {value:3, description:"Kunnan katuosuus"},
@@ -121,6 +122,7 @@
         PrivateRoadType:                {value:5, description:"Yksityistie"},
         UnknownOwnerRoad:               {value:9, description:"Omistaja selvittämättä"},
         Unknown:                        {value:99, description:"Ei määritelty"}
+
     };
 
     root.RoadTypeShort = {
