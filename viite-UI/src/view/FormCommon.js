@@ -83,19 +83,19 @@
     var roadTypeDropdown = function() {
       var roadTypeDefaultValueToShow = '--';
       var roadTypeDefaultValue = RoadType.Empty.value;
-      return '<select class="'+prefix+'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
-        '<option value = "' + roadTypeDefaultValue+ '">'+roadTypeDefaultValueToShow+'</option>' +
-        '<option value = "1">1 Maantie</option>'+
-        '<option value = "2">2 Lauttaväylä maantiellä</option>'+
-        '<option value = "3">3 Kunnan katuosuus</option>'+
-        '<option value = "4">4 Maantien työmaa</option>'+
-        '<option value = "5">5 Yksityistie</option>'+
+      return '<select class="' + prefix + 'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
+        '<option value = "' + roadTypeDefaultValue+ '">' + roadTypeDefaultValueToShow + '</option>' +
+        '<option value = "1">1 Maantie</option>' +
+        '<option value = "2">2 Lauttaväylä maantiellä</option>' +
+        '<option value = "3">3 Kunnan katuosuus</option>' +
+        '<option value = "4">4 Maantien työmaa</option>' +
+        '<option value = "5">5 Yksityistie</option>' +
         '<option value = "9">9 Omistaja selvittämättä</option>' +
 
         '</select>';
     };
 
-    var addSmallLabel = function(label){
+    var addSmallLabel = function(label) {
       return '<label class="control-label-small">'+label+'</label>';
     };
 
