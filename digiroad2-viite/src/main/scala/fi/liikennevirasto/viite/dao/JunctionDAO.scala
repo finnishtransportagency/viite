@@ -118,31 +118,6 @@ class JunctionDAO extends BaseDAO {
 
   }
 
-  /**
-    * Search for Junctions that no longer have justification for the current network.
-    *
-    * @param ids : Iterable[Long] - The ids of the junctions to verify.
-    * @return
-    */
-  def fetchObsoleteById(ids: Iterable[Long]): Seq[Junction] = {
-    // An Obsolete junction are those that no longer have justification for the current network, and must be expired.
-    if (ids.isEmpty) {
-      Seq()
-    } else {
-      val query = s"""
-        SELECT ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-          FROM JUNCTION J
-          WHERE ID IN (${ids.mkString(", ")})
-          AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER) FROM JUNCTION_POINT JP
-            LEFT JOIN ROADWAY_POINT RP ON JP.ROADWAY_POINT_ID = RP.ID
-            LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
-            WHERE JP.JUNCTION_ID = J.ID AND JP.VALID_TO IS NULL) < 2
-          AND VALID_TO IS NULL AND END_DATE IS NULL
-        """
-      queryList(query)
-    }
-  }
-
   def fetchTemplates() : Seq[JunctionTemplate] = {
     val query =
       s"""
