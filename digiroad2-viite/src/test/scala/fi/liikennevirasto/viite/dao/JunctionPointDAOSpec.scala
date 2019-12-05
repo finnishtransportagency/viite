@@ -65,7 +65,7 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
       val junctionId = junctionDAO.create(Seq(testJunction1)).head
       dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
         testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
-      val junctionPoints = dao.fetchJunctionPointsByJunctionIds(Seq(-1))
+      val junctionPoints = dao.fetchByJunctionIds(Seq(-1))
       junctionPoints.isEmpty should be(true)
     }
   }
@@ -79,7 +79,7 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
       val junctionId = junctionDAO.create(Seq(testJunction1)).head
       dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
         testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
-      val junctionPoints = dao.fetchJunctionPointsByJunctionIds(Seq(junctionId))
+      val junctionPoints = dao.fetchByJunctionIds(Seq(junctionId))
       junctionPoints.size should be(2)
       junctionPoints.filter(jp => jp.beforeAfter == testJunctionPoint1.beforeAfter).head.addrM should be(testJunctionPoint1.addrM)
       junctionPoints.filter(jp => jp.beforeAfter == testJunctionPoint2.beforeAfter).head.addrM should be(testJunctionPoint2.addrM)

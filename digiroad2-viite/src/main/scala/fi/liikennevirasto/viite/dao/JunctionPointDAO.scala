@@ -64,7 +64,7 @@ class JunctionPointDAO extends BaseDAO {
     }
   }
 
-  def fetchJunctionPointsByJunctionIds(junctionIds: Seq[Long]): Seq[JunctionPoint] = {
+  def fetchByJunctionIds(junctionIds: Seq[Long]): Seq[JunctionPoint] = {
     if (junctionIds.isEmpty) {
       Seq()
     } else {

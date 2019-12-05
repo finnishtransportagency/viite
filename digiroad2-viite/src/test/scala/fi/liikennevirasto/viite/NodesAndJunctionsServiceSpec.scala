@@ -1801,6 +1801,102 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   // </editor-fold>
 
   // <editor-fold desc="Nodes">
+  test("Test addOrUpdateNode When creating new Then new is created successfully") {
+    runWithRollback {
+      val node = Node(NewIdValue, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy.get) should be(None)
+      val fetched = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("No node found"))
+      fetched.startDate should be(node.startDate)
+      fetched.nodeType should be(node.nodeType)
+      fetched.nodeNumber should be(node.nodeNumber)
+      fetched.coordinates should be(node.coordinates)
+      fetched.endDate should be(node.endDate)
+      fetched.createdBy should be(node.createdBy)
+      fetched.name should be(node.name)
+      fetched.editor should be(node.editor)
+      fetched.publishedTime should be(node.publishedTime)
+      val historyRowEndDate = sql"""SELECT END_DATE from NODE
+        WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
+      historyRowEndDate should be(None)
+    }
+  }
+
+  test("Test addOrUpdateNode When update non-existing Then should return error") {
+    runWithRollback {
+      val node = Node(-1, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy.get) should not be (None)
+    }
+  }
+
+  test("Test addOrUpdateNode When update existing Then existing is expired and new created") {
+    runWithRollback {
+      val node = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      nodeDAO.create(Seq(node), node.createdBy.get)
+      nodeDAO.fetchById(node.id) should not be None
+      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1)), node.createdBy.get) should be(None)
+      nodeDAO.fetchById(node.id) should be(None)
+      val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
+      updated.id should not be node.id
+      updated.createdBy should be(node.createdBy)
+      updated.createdTime should not be node.createdTime
+      updated.publishedTime should be(None)
+      updated.editor should be(None)
+      updated.coordinates should be(Point(1, 1))
+      val historyRowEndDate = sql"""SELECT END_DATE from NODE
+        WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
+      historyRowEndDate should be(None)
+    }
+  }
+
+  test("Test addOrUpdateNode When update existing and change type but not start date Then existing is expired, new created") {
+    runWithRollback {
+      val node = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      nodeDAO.create(Seq(node), node.createdBy.get)
+      nodeDAO.fetchById(node.id) should not be None
+      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1), nodeType = NodeType.Bridge), node.createdBy.get) should be(None)
+      nodeDAO.fetchById(node.id) should be(None)
+      val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
+      updated.id should not be node.id
+      updated.createdBy should be(node.createdBy)
+      updated.createdTime should not be node.createdTime
+      updated.publishedTime should be(None)
+      updated.editor should be(None)
+      updated.coordinates should be(Point(1, 1))
+      updated.nodeType should be(NodeType.Bridge)
+      updated.startDate should be(node.startDate)
+      val historyRowEndDate = sql"""SELECT END_DATE from NODE
+        WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
+      historyRowEndDate should be(None)
+    }
+  }
+
+  test("Test addOrUpdateNode When update existing and change type and start date Then existing is expired, history and new created") {
+    runWithRollback {
+      val node = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
+        DateTime.now().minusDays(1).withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      nodeDAO.create(Seq(node), node.createdBy.get)
+      nodeDAO.fetchById(node.id) should not be None
+      nodesAndJunctionsService.addOrUpdateNode(node.copy(startDate = DateTime.now().plusDays(1).withTimeAtStartOfDay(),
+        nodeType = NodeType.Bridge), node.createdBy.get) should be(None)
+      nodeDAO.fetchById(node.id) should be(None)
+      val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
+      updated.id should not be node.id
+      updated.createdBy should be(node.createdBy)
+      updated.createdTime should not be node.createdTime
+      updated.publishedTime should be(None)
+      updated.editor should be(None)
+      updated.nodeType should be(NodeType.Bridge)
+      updated.startDate should not be node.startDate
+      val historyRowEndDate = sql"""SELECT END_DATE from NODE
+        WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
+      historyRowEndDate should not be None
+    }
+  }
+
   /**
     * Test case for Termination:
     * Reserve road number 1 and road part 2
@@ -2113,102 +2209,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test addOrUpdateNode When creating new Then new is created successfully") {
-    runWithRollback {
-      val node = Node(NewIdValue, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
-        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy.get) should be(None)
-      val fetched = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("No node found"))
-      fetched.startDate should be(node.startDate)
-      fetched.nodeType should be(node.nodeType)
-      fetched.nodeNumber should be(node.nodeNumber)
-      fetched.coordinates should be(node.coordinates)
-      fetched.endDate should be(node.endDate)
-      fetched.createdBy should be(node.createdBy)
-      fetched.name should be(node.name)
-      fetched.editor should be(node.editor)
-      fetched.publishedTime should be(node.publishedTime)
-      val historyRowEndDate = sql"""SELECT END_DATE from NODE
-        WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
-      historyRowEndDate should be(None)
-    }
-  }
-
-  test("Test addOrUpdateNode When update non-existing Then should return error") {
-    runWithRollback {
-      val node = Node(-1, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
-        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy.get) should not be (None)
-    }
-  }
-
-  test("Test addOrUpdateNode When update existing Then existing is expired and new created") {
-    runWithRollback {
-      val node = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
-        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      nodeDAO.create(Seq(node), node.createdBy.get)
-      nodeDAO.fetchById(node.id) should not be None
-      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1)), node.createdBy.get) should be(None)
-      nodeDAO.fetchById(node.id) should be(None)
-      val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
-      updated.id should not be node.id
-      updated.createdBy should be(node.createdBy)
-      updated.createdTime should not be node.createdTime
-      updated.publishedTime should be(None)
-      updated.editor should be(None)
-      updated.coordinates should be(Point(1, 1))
-      val historyRowEndDate = sql"""SELECT END_DATE from NODE
-        WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
-      historyRowEndDate should be(None)
-    }
-  }
-
-  test("Test addOrUpdateNode When update existing and change type but not start date Then existing is expired, new created") {
-    runWithRollback {
-      val node = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
-        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      nodeDAO.create(Seq(node), node.createdBy.get)
-      nodeDAO.fetchById(node.id) should not be None
-      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1), nodeType = NodeType.Bridge), node.createdBy.get) should be(None)
-      nodeDAO.fetchById(node.id) should be(None)
-      val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
-      updated.id should not be node.id
-      updated.createdBy should be(node.createdBy)
-      updated.createdTime should not be node.createdTime
-      updated.publishedTime should be(None)
-      updated.editor should be(None)
-      updated.coordinates should be(Point(1, 1))
-      updated.nodeType should be(NodeType.Bridge)
-      updated.startDate should be(node.startDate)
-      val historyRowEndDate = sql"""SELECT END_DATE from NODE
-        WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
-      historyRowEndDate should be(None)
-    }
-  }
-
-  test("Test addOrUpdateNode When update existing and change type and start date Then existing is expired, history and new created") {
-    runWithRollback {
-      val node = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
-        DateTime.now().minusDays(1).withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      nodeDAO.create(Seq(node), node.createdBy.get)
-      nodeDAO.fetchById(node.id) should not be None
-      nodesAndJunctionsService.addOrUpdateNode(node.copy(startDate = DateTime.now().plusDays(1).withTimeAtStartOfDay(),
-        nodeType = NodeType.Bridge), node.createdBy.get) should be(None)
-      nodeDAO.fetchById(node.id) should be(None)
-      val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
-      updated.id should not be node.id
-      updated.createdBy should be(node.createdBy)
-      updated.createdTime should not be node.createdTime
-      updated.publishedTime should be(None)
-      updated.editor should be(None)
-      updated.nodeType should be(NodeType.Bridge)
-      updated.startDate should not be node.startDate
-      val historyRowEndDate = sql"""SELECT END_DATE from NODE
-        WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
-      historyRowEndDate should not be None
-    }
-  }
-
   // </editor-fold>
   // <editor-fold desc="Expire Junctions">
   /**
@@ -2300,11 +2300,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       originalJunctions.length should be(0)
 
       // Check that junction points for the terminated junction exist
-      val terminatedJunctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(terminatedJunctionsAfterExpire.map(_.id))
+      val terminatedJunctionPoints = junctionPointDAO.fetchByJunctionIds(terminatedJunctionsAfterExpire.map(_.id))
       terminatedJunctionPoints.length should be(2)
 
       // Check that junction points for the original junction were expired
-      val originalJunctionPoints = junctionPointDAO.fetchJunctionPointsByJunctionIds(junctionPointTemplates.map(_.junctionId))
+      val originalJunctionPoints = junctionPointDAO.fetchByJunctionIds(junctionPointTemplates.map(_.junctionId))
       originalJunctionPoints.length should be(0)
 
     }
@@ -2392,10 +2392,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       terminatedJunctions.head.endDate.isDefined should be(true)
 
       // Old junction points should be expired
-      junctionPointDAO.fetchJunctionPointsByJunctionIds(junctionPointTemplates.map(_.junctionId)).length should be(0)
+      junctionPointDAO.fetchByJunctionIds(junctionPointTemplates.map(_.junctionId)).length should be(0)
 
       // New junction points should be created for terminated junction
-      junctionPointDAO.fetchJunctionPointsByJunctionIds(terminatedJunctions.map(_.id)).length should be(3)
+      junctionPointDAO.fetchByJunctionIds(terminatedJunctions.map(_.id)).length should be(3)
 
     }
   }
