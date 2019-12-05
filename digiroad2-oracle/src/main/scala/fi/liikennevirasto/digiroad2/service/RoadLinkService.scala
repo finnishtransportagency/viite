@@ -69,6 +69,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else Seq.empty[VVHRoadlink]
   }
 
+  def fetchVVHFrozenRoadLinksAndComplementaryFromVVH(linkIds: Set[Long]): Seq[VVHRoadlink] = {
+    if (linkIds.nonEmpty) vvhClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds) ++ vvhClient.complementaryData.fetchByLinkIds(linkIds)
+    else Seq.empty[VVHRoadlink]
+  }
+
   def getMidPointByLinkId(linkId: Long): Option[Point] = {
     val roadLinkOption = vvhClient.roadLinkData.fetchByLinkId(linkId).orElse(vvhClient.complementaryData.fetchByLinkId(linkId))
     roadLinkOption.map{
@@ -103,7 +108,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getVVHRoadlinks(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled: Boolean = false): Seq[VVHRoadlink] = {
     if (linkIds.nonEmpty) {
       if (frozenTimeVVHAPIServiceEnabled) {
-        vvhClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds)
+        fetchVVHFrozenRoadLinksAndComplementaryFromVVH(linkIds)
       } else {
         fetchVVHRoadLinksAndComplementaryFromVVH(linkIds)
       }

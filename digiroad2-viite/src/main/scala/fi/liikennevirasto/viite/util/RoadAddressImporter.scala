@@ -63,7 +63,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def linkStatement(): PreparedStatement = {
-    dynamicSession.prepareStatement(sql = "Insert into LINK (ID, SOURCE) values(?, ?)")
+    dynamicSession.prepareStatement(sql = "Insert into LINK (ID, SOURCE, ADJUSTED_TIMESTAMP) values(?, ?, ?)")
   }
 
   def datePrinter(date: Option[DateTime]): String = {
@@ -285,9 +285,8 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val maxAddress = addresses.last._1
         val linkIds = addresses.map(_._1.linkId)
         val currentAddresses = currentConversionAddresses.filter(add => add.roadwayNumber == minAddress.roadwayNumber && linkIds.contains(add.linkId)).sortBy(_.startAddressM)
-        val isReversed = if (currentAddresses.head.linkId == minAddress.linkId && currentAddresses.head.startM == minAddress.startM) 1 else 0
 
-        val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, isReversed, minAddress.startDate,
+        val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber, minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, minAddress.directionFlag, minAddress.startDate,
           minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = NoTermination.value)
 
         insertRoadway(roadwayPs, roadAddress)
@@ -325,6 +324,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         if (LinkDAO.fetch(link.linkId).isEmpty) {
           statement.setLong(1, link.linkId)
           statement.setLong(2, link.linkSource.value)
+          statement.setLong(3, link.vvhTimeStamp)
           statement.addBatch()
         }
     }

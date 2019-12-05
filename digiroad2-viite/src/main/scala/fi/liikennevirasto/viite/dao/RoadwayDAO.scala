@@ -764,7 +764,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumber(roadwayNumber: Long)(query: String): String = {
-    s"""$query where a.valid_to is null and (a.end_date is null or a.end_date >= sysdate) and a.ROADWAY_NUMBER = $roadwayNumber"""
+    s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER = $roadwayNumber"""
   }
 
   private def withRoadwayNumberEnded(roadwayNumber: Long)(query: String): String = {
@@ -772,7 +772,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false)(query: String): String = {
-    val endDateFilter = if (withHistory) "" else "and (a.end_date is null or a.end_date >= sysdate)"
+    val endDateFilter = if (withHistory) "" else "and a.end_date is null"
     if (roadwayNumbers.size > 1000) {
       MassQuery.withIds(roadwayNumbers) {
         idTableName =>

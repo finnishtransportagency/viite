@@ -420,7 +420,6 @@
         showLayer();
         eventbus.trigger('nodeLayer:fetch');
       }
-      me.toggleLayersVisibility(layers, applicationModel.getRoadVisibility());
     });
 
     var redraw = function () {
@@ -541,15 +540,14 @@
     var showLayer = function () {
       me.start();
       me.layerStarted(me.eventListener);
-      $('#formProjectButton').prop('disabled', true);
+      me.toggleLayersVisibility(layers, true);
     };
 
     var hideLayer = function () {
       me.clearLayers(layers);
-      $('#formProjectButton').prop('disabled', false);
+      me.toggleLayersVisibility(layers, false);
     };
 
-    me.toggleLayersVisibility(layers, true);
     me.addLayers(layers);
 
     return {

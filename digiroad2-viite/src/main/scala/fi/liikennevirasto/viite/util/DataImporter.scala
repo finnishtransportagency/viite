@@ -145,9 +145,6 @@ class DataImporter {
       val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
       roadAddressImporter.importRoadAddress()
 
-      println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
-      sqlu"""UPDATE LINK
-        SET ADJUSTED_TIMESTAMP = ${importOptions.geometryAdjustedTimeStamp}""".execute
       println(s"${DateTime.now()} - Updating terminated roadways information")
       sqlu"""UPDATE ROADWAY SET TERMINATED = 2
             WHERE TERMINATED = 0 AND end_date IS NOT null AND EXISTS (SELECT 1 FROM ROADWAY rw
@@ -367,6 +364,6 @@ class DataImporter {
 
 }
 
-case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, geometryAdjustedTimeStamp: Long, conversionTable: String, onlyCurrentRoads: Boolean)
+case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, conversionTable: String, onlyCurrentRoads: Boolean)
 case class RoadPart(roadNumber: Long, roadPart: Long, ely: Long)
 
