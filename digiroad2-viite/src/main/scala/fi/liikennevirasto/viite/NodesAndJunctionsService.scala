@@ -357,6 +357,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           * * Discontinuity cases for same road number;
           * * Discontinuous links that are connected to project links;
          */
+        // TODO Missing discontinuity cases and double check on links (LINEAR LOCATION) connected to project links
         val (headRoads, tailRoads): (Seq[RoadAddress], Seq[RoadAddress]) = {
           if (RoadClass.RampsAndRoundaboutsClass.roads.contains(projectLink.roadNumber.toInt)) {
             val head = roadsInFirstPoint filterNot RoadAddressFilters.sameRoadNumberAndRoadPartNumber(projectLink)
@@ -613,6 +614,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         .filter(_.nodePointType == NodePointType.RoadNodePoint)
         .filterNot(n => (n.beforeAfter == BeforeAfter.After && n.addrM == startAddrMValue) || (n.beforeAfter == BeforeAfter.Before && n.addrM == endAddrMValue))
 
+      // TODO Missing discontinuity cases
       val junctions = junctionDAO.fetchByIds(junctionPointDAO.fetchByRoadwayPointIds(roadwayPointIds).map(_.junctionId))
       val obsoleteJunctionPoints = junctions.flatMap { junction =>
         junctionPointDAO.fetchByJunctionIds(Seq(junction.id)) match {
@@ -673,7 +675,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         ++ nodePoints.filter(np => np.nodeNumber.isDefined).map(_.nodeNumber.get)).distinct
 
       // Remove nodes that no longer have justification for the current network
-      val obsoleteNodes = nodeDAO.fetchObsoleteByNodeNumbers(nodeNumbersToCheck)
+      val obsoleteNodes = nodeDAO.fetchEmptyNodes(nodeNumbersToCheck)
 
       // Create node rows with end date
       obsoleteNodes.foreach(n => {

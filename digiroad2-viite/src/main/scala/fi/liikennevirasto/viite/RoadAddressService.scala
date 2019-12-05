@@ -938,8 +938,15 @@ object RoadAddressFilters {
   }
 
   def obsoleteJunctions(junctionPoints: Seq[JunctionPoint]): Boolean = {
-//    val junctionPointsGroupedByRoadAddresses = junctionPoints.groupBy(junctionPoint =>(junctionPoint.roadNumber, junctionPoint.roadPartNumber))
-//    junctionPointsGroupedByRoadAddresses
-    false
+    // TODO Missing discontinuity cases! - this code block might need great changed by the time discontinuity cases get to the scene
+    // junction points grouped by road (road number and road part number): Map[(Long, Long), Seq[JunctionPoint]]
+    junctionPoints.groupBy { junctionPoint =>
+      val roadNumber = junctionPoint.roadNumber;
+      if (RoadClass.RampsAndRoundaboutsClass.roads.contains(junctionPoint.roadNumber)) {
+        (roadNumber, junctionPoint.roadPartNumber)
+      } else {
+        (roadNumber, 0)
+      }
+    }.keys.size > 1
   }
 }
