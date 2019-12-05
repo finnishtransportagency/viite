@@ -758,8 +758,10 @@ object RoadClass {
     RampsAndRoundaboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass, ConstructionSiteTemporaryClass,
     PrivateRoadClass, NoClass)
 
-  val nodeAndJunctionRoadClass = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass,
-    StreetClass, PrivateRoadClass, WinterRoadsClass, PathsClass)
+  val forNodes: Set[Int] = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass,
+    StreetClass, PrivateRoadClass, WinterRoadsClass, PathsClass).flatMap(_.roads)
+
+  val forJunctions: Range = 0 until 70000
 
   def get(roadNumber: Int): Int = {
     values.find(_.roads contains roadNumber).getOrElse(NoClass).value
@@ -790,15 +792,16 @@ object RoadClass {
     def roads: Range.Inclusive = 10000 to 19999
   }
 
+  case object RampsAndRoundaboutsClass extends RoadClass {
+    def value = 7
+    def roads: Range.Inclusive = 20001 to 39999
+  }
+
   case object StreetClass extends RoadClass {
     def value = 6
     def roads: Range.Inclusive = 40000 to 49999
   }
 
-  case object RampsAndRoundaboutsClass extends RoadClass {
-    def value = 7
-    def roads: Range.Inclusive = 20001 to 39999
-  }
 
   case object PedestrianAndBicyclesClassA extends RoadClass {
     def value = 8
@@ -932,5 +935,11 @@ object RoadAddressFilters {
 
   def sameRoadNumberAndRoadPartNumber(pl: ProjectLink)(road: RoadAddress): Boolean = {
     road.roadNumber == pl.roadNumber && road.roadPartNumber == pl.roadPartNumber
+  }
+
+  def obsoleteJunctions(junctionPoints: Seq[JunctionPoint]): Boolean = {
+//    val junctionPointsGroupedByRoadAddresses = junctionPoints.groupBy(junctionPoint =>(junctionPoint.roadNumber, junctionPoint.roadPartNumber))
+//    junctionPointsGroupedByRoadAddresses
+    false
   }
 }
