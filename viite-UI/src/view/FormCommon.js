@@ -84,7 +84,7 @@
       var roadTypeDefaultValueToShow = '--';
       var roadTypeDefaultValue = RoadType.Empty.value;
       return '<select class="' + prefix + 'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
-        '<option value = "' + roadTypeDefaultValue+ '">' + roadTypeDefaultValueToShow + '</option>' +
+        '<option value = "' + roadTypeDefaultValue + '">' + roadTypeDefaultValueToShow + '</option>' +
         '<option value = "1">1 Maantie</option>' +
         '<option value = "2">2 Lauttaväylä maantiellä</option>' +
         '<option value = "3">3 Kunnan katuosuus</option>' +
