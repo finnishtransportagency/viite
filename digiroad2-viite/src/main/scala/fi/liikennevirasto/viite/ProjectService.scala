@@ -1553,7 +1553,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             setProjectStatus(projectId, Sent2TR, withSession = false)
             logger.info(s"Sending to TR successful: ${trProjectStateMessage.reason}")
             PublishResult(validationSuccess = true, sendSuccess = true, Some(trProjectStateMessage.reason))
-
+          case 500 =>
+            logger.error(s"Sending project ${trProjectStateMessage.projectId} to TR failed. Status: ${trProjectStateMessage.status} Error message: ${trProjectStateMessage.reason}")
+            val returningMessage = if (trProjectStateMessage.reason.nonEmpty) trProjectStateMessage.reason else TrConnectionError
+            projectDAO.updateProjectStatus(projectId, SendingToTR)
+            PublishResult(validationSuccess = true, sendSuccess = false, Some(returningMessage))
           case _ =>
             //rollback
             logger.error(s"Sending project ${trProjectStateMessage.projectId} to TR failed. Status: ${trProjectStateMessage.status} Error message: ${trProjectStateMessage.reason}")
