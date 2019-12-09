@@ -255,6 +255,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     * @param calibrationPoints The calibration points set by user as fixed addresses
     * @return Starting point
     */
+
   private def findStartingPoint(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink], otherRoadPartLinks: Seq[ProjectLink],
                                 calibrationPoints: Seq[UserDefinedCalibrationPoint], oppositeTrackLinks: Seq[ProjectLink]): (Point, ProjectLink) = {
 

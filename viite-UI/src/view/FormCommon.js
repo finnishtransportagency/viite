@@ -3,6 +3,7 @@
     var Track = LinkValues.Track;
     var RoadNameSource = LinkValues.RoadNameSource;
     var editableStatus = LinkValues.ProjectStatus.Incomplete.value;
+    var RoadType = LinkValues.RoadType;
 
     var title = function (titleName) {
           if (!titleName)
@@ -80,18 +81,21 @@
       };
 
     var roadTypeDropdown = function() {
-      return '<select class="'+prefix+'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
-        '<option value = "1">1 Maantie</option>'+
-        '<option value = "2">2 Lauttaväylä maantiellä</option>'+
-        '<option value = "3">3 Kunnan katuosuus</option>'+
-        '<option value = "4">4 Maantien työmaa</option>'+
-        '<option value = "5">5 Yksityistie</option>'+
+      var roadTypeDefaultValueToShow = '--';
+      var roadTypeDefaultValue = RoadType.Empty.value;
+      return '<select class="' + prefix + 'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
+        '<option value = "' + roadTypeDefaultValue + '">' + roadTypeDefaultValueToShow + '</option>' +
+        '<option value = "1">1 Maantie</option>' +
+        '<option value = "2">2 Lauttaväylä maantiellä</option>' +
+        '<option value = "3">3 Kunnan katuosuus</option>' +
+        '<option value = "4">4 Maantien työmaa</option>' +
+        '<option value = "5">5 Yksityistie</option>' +
         '<option value = "9">9 Omistaja selvittämättä</option>' +
-        '<option value = "99">99 Ei määritelty</option>' +
+
         '</select>';
     };
 
-    var addSmallLabel = function(label){
+    var addSmallLabel = function(label) {
       return '<label class="control-label-small">'+label+'</label>';
     };
 
