@@ -21,10 +21,10 @@
       return '<span class="caption-title">' + title + '</span>';
     };
 
-    var addRoadNameField = function (name, isBlocked) {
+    var addRoadNameField = function (name, isBlocked, maxLength) {
       var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
       var disabled = nameToDisplay !== "" && isBlocked;
-      return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
+      return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') +  + '/>';
     };
 
     var projectButtons = function() {
@@ -56,7 +56,7 @@
         addSmallLabel('TIETYYPPI') +
           roadTypeDropdown() + '<br>' +
           addSmallLabel('NIMI') +
-          addRoadNameField(roadName, selected[0].roadNameBlocked) +
+          addRoadNameField(roadName, selected[0].roadNameBlocked, 50) +
           ((selected.length === 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
     };
