@@ -103,7 +103,7 @@ class JunctionDAO extends BaseDAO {
         s"""
       SELECT ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       FROM JUNCTION
-      WHERE ID IN (${ids.mkString(", ")}) AND VALID_TO IS NULL
+      WHERE ID IN (${ids.mkString(", ")}) AND VALID_TO IS NULL AND END_DATE IS NULL
       """
       queryList(query)
     }

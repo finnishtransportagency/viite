@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.AddressChangeType.{ReNumeration, Transfer, Unchanged}
+import fi.liikennevirasto.viite.dao.AddressChangeType.{ReNumeration, Transfer, Unchanged, Termination}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.{RoadwayPointDAO, _}
 import fi.liikennevirasto.viite.model.RoadAddressLink
@@ -682,13 +682,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
 
     try {
-      val affectableChanges = roadwayChanges.filter(rw => List(Transfer, ReNumeration, Unchanged).contains(rw.changeInfo.changeType))
-      val updatableRoadwayPoints: Seq[(Long, Long, String, Long)] = affectableChanges.sortBy(_.changeInfo.target.startAddressM).foldLeft(Seq.empty[(Long, Long, String, Long)]) { (list, rwc) =>
+      val projectRoadwayChanges = roadwayChanges.filter(rw => List(Transfer, ReNumeration, Unchanged, Termination).contains(rw.changeInfo.changeType))
+      val updatableRoadwayPoints: Seq[(Long, Long, String, Long)] = projectRoadwayChanges.sortBy(_.changeInfo.target.startAddressM).foldLeft(Seq.empty[(Long, Long, String, Long)]) { (list, rwc) =>
 
         val change = rwc.changeInfo
         val source = change.source
         val target = change.target
-        val roadwayNumbers = roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber).distinct
+        val terminatedRoadwayNumbersChanges = mappedRoadwayNumbers.filter { entry => entry.roadNumber == source.roadNumber.get &&
+          (source.startRoadPartNumber.get to source.endRoadPartNumber.get contains entry.roadPartNumber) &&
+          entry.originalStartAddr == source.startAddressM.get && entry.originalEndAddr == source.endAddressM.get
+        }
+        val roadwayNumbers = if (change.changeType == Termination) {
+          terminatedRoadwayNumbersChanges.map(_.newRoadwayNumber).distinct
+        } else roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber).distinct
         val roadwayPoints = roadwayNumbers.flatMap { rwn =>
           val roadwayNumberInPoint = mappedRoadwayNumbers.filter(mrw => mrw.newRoadwayNumber == rwn && mrw.originalStartAddr >= source.startAddressM.get && mrw.originalEndAddr <= source.endAddressM.get)
           if (roadwayNumberInPoint.nonEmpty) {
@@ -729,10 +735,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             } else {
               list
             }
-          } else {
-            //TODO IF NEED IN FUTURE remove filter from top and add roadwayChange Termination cases/expire roadwaypoint cases
+          } else if (change.changeType == Termination) {
+            val rwPoints: Seq[(Long, Long, String, Long)] = roadwayPoints.flatMap { rwp =>
+              val terminatedRoadAddress = terminatedRoadwayNumbersChanges.find(change => change.oldRoadwayNumber == rwp.roadwayNumber &&
+                change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get
+              )
+              if (terminatedRoadAddress.isDefined) {
+                val newAddrM = if (!change.reversed) {
+                  terminatedRoadAddress.get.newStartAddr + (rwp.addrMValue - source.startAddressM.get)
+                } else terminatedRoadAddress.get.newEndAddr - (rwp.addrMValue - source.startAddressM.get)
+                val roadwayNumberInPoint = terminatedRoadAddress.get.newRoadwayNumber
+                Seq((roadwayNumberInPoint, newAddrM, username, rwp.id))
+              } else Seq()
+            }
+            list ++ rwPoints
+          } else
             list
-          }
         } else list
 
       }.distinct
@@ -973,7 +991,7 @@ object RoadAddressFilters {
     // TODO Missing discontinuity cases! - this code block might need great changed by the time discontinuity cases get to the scene
     // junction points grouped by road (road number and road part number): Map[(Long, Long), Seq[JunctionPoint]]
     junctionPoints.groupBy { junctionPoint =>
-      val roadNumber = junctionPoint.roadNumber;
+      val roadNumber = junctionPoint.roadNumber
       if (RoadClass.RampsAndRoundaboutsClass.roads.contains(junctionPoint.roadNumber)) {
         (roadNumber, junctionPoint.roadPartNumber)
       } else {
