@@ -761,7 +761,7 @@ object RoadClass {
   val forNodes: Set[Int] = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass,
     StreetClass, PrivateRoadClass, WinterRoadsClass, PathsClass).flatMap(_.roads)
 
-  val forJunctions: Range = 0 until 70000
+  val forJunctions: Range = 0 until 69999
 
   def get(roadNumber: Int): Int = {
     values.find(_.roads contains roadNumber).getOrElse(NoClass).value
@@ -929,12 +929,44 @@ object AddressConsistencyValidator {
 }
 
 object RoadAddressFilters {
-  def sameRoadNumber(pl: ProjectLink)(road: RoadAddress): Boolean = {
-    road.roadNumber == pl.roadNumber
+  def sameRoad(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.roadNumber == next.roadNumber
   }
 
-  def sameRoadNumberAndRoadPartNumber(pl: ProjectLink)(road: RoadAddress): Boolean = {
-    road.roadNumber == pl.roadNumber && road.roadPartNumber == pl.roadPartNumber
+  def samePart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.roadPartNumber == next.roadPartNumber
+  }
+
+  def sameRoadPart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.roadNumber == next.roadNumber && curr.roadPartNumber == next.roadPartNumber
+  }
+
+  def continuousRoad(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    sameRoad(curr)(next) && Track.isTrackContinuous(curr.track, next.track) && continuousAddress(curr)(next)
+  }
+
+  def continuousRoadPart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    continuousRoad(curr)(next) && sameRoadPart(curr)(next)
+  }
+  def discontinuousRoadPart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    !continuousRoadPart(curr)(next)
+  }
+
+  def continuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.endAddrMValue == next.startAddrMValue
+  }
+
+  def continuousTopology(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.endPoint.connected(next.startingPoint)
+  }
+
+  def discontinuousTopology(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    !continuousTopology(curr)(next)
+  }
+
+  def halfContinuousHalfDiscontinuous(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    (RoadAddressFilters.continuousRoadPart(curr)(next) && RoadAddressFilters.discontinuousTopology(curr)(next)) ||
+    (RoadAddressFilters.discontinuousRoadPart(curr)(next) && RoadAddressFilters.continuousTopology(curr)(next))
   }
 
   def obsoleteJunctions(junctionPoints: Seq[JunctionPoint]): Boolean = {
