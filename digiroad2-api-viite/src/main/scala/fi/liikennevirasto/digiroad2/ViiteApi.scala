@@ -1179,20 +1179,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def nodePointToApi(nodePoint: NodePoint) : Map[String, Any] = {
     Map("id" -> nodePoint.id,
       "nodeNumber" -> nodePoint.nodeNumber,
-      "road" -> nodePoint.roadNumber,
-      "part" -> nodePoint.roadPartNumber,
-      "addrM" -> nodePoint.addrM,
-      "roadwayNumber" -> nodePoint.roadwayNumber,
-      "beforeAfter" -> nodePoint.beforeAfter.value,
-      "type" -> nodePoint.nodePointType.value
-    )
-  }
-
-  def nodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
-    Map("id" -> nodePoint.id,
       "beforeAfter" -> nodePoint.beforeAfter.value,
       "roadwayPointId" -> nodePoint.roadwayPointId,
       "type" -> nodePoint.nodePointType.value,
+      "startDate" -> formatToString(nodePoint.startDate.toString),
+      "endDate" -> formatDateTimeToString(nodePoint.endDate),
       "validFrom" -> formatDateTimeToString(Some(nodePoint.validFrom)),
       "validTo" -> formatDateTimeToString(nodePoint.validTo),
       "createdBy" -> nodePoint.createdBy,
@@ -1201,8 +1192,27 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "elyCode" -> nodePoint.elyCode,
       "roadNumber" -> nodePoint.roadNumber,
       "roadPartNumber" -> nodePoint.roadPartNumber,
-      "track" -> nodePoint.track,
-      "type" -> nodePoint.nodePointType.value)
+      "track" -> nodePoint.track
+    )
+  }
+
+  def nodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
+    Map("id" -> nodePoint.id,
+      "beforeAfter" -> nodePoint.beforeAfter.value,
+      "roadwayPointId" -> nodePoint.roadwayPointId,
+      "type" -> nodePoint.nodePointType.value,
+      "startDate" -> formatToString(nodePoint.startDate.toString),
+      "endDate" -> formatDateTimeToString(nodePoint.endDate),
+      "validFrom" -> formatDateTimeToString(Some(nodePoint.validFrom)),
+      "validTo" -> formatDateTimeToString(nodePoint.validTo),
+      "createdBy" -> nodePoint.createdBy,
+      "roadwayNumber" -> nodePoint.roadwayNumber,
+      "addrM" -> nodePoint.addrM,
+      "elyCode" -> nodePoint.elyCode,
+      "roadNumber" -> nodePoint.roadNumber,
+      "roadPartNumber" -> nodePoint.roadPartNumber,
+      "track" -> nodePoint.track
+    )
   }
 
   def junctionTemplateToApi(junctionTemplate: JunctionTemplate) : Map[String, Any] = {
@@ -1227,6 +1237,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "junctionId" -> junctionPoint.junctionId,
       "beforeAfter" -> formatAfterBeforeToString(junctionPoint.beforeAfter.value ),
       "roadwayPointId" -> junctionPoint.roadwayPointId,
+      "startDate" -> formatDateTimeToString(Some(junctionPoint.startDate)),
+      "endDate" -> formatDateTimeToString(junctionPoint.endDate),
       "validFrom" -> formatDateTimeToString(Some(junctionPoint.validFrom)),
       "validTo" -> formatDateTimeToString(junctionPoint.validTo),
       "createdBy" -> junctionPoint.createdBy,
