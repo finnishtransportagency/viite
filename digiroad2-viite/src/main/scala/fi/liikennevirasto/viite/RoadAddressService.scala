@@ -997,6 +997,6 @@ object RoadAddressFilters {
       } else {
         (roadNumber, 0)
       }
-    }.keys.size > 1
+    }.keys.size == 1
   }
 }

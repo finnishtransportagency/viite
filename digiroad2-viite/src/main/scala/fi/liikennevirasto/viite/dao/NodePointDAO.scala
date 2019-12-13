@@ -141,7 +141,7 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
-  def fetchNodePointsByNodeNumber(nodeNumbers: Seq[Long]): Seq[NodePoint] = {
+  def fetchByNodeNumbers(nodeNumbers: Seq[Long]): Seq[NodePoint] = {
     if (nodeNumbers.isEmpty) Seq()
     else {
       val query =
