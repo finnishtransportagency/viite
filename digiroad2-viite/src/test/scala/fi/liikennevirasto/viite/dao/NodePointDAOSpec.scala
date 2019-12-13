@@ -71,7 +71,7 @@ class NodePointDAOSpec extends FunSuite with Matchers {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
       dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeNumber)),
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeNumber))))
-      val nodePoints = dao.fetchNodePointsByNodeNumber(Seq(-1))
+      val nodePoints = dao.fetchByNodeNumbers(Seq(-1))
       nodePoints.isEmpty should be(true)
     }
   }
@@ -86,7 +86,7 @@ class NodePointDAOSpec extends FunSuite with Matchers {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
       dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeNumber)),
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeNumber))))
-      val nodePoints = dao.fetchNodePointsByNodeNumber(Seq(nodeNumber))
+      val nodePoints = dao.fetchByNodeNumbers(Seq(nodeNumber))
       nodePoints.size should be(2)
       nodePoints.count(n => n.nodeNumber.contains(nodeNumber)) should be(2)
     }
