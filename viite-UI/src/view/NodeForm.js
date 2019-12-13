@@ -419,12 +419,29 @@
         var checkbox = this;
         var junctionId = parseInt(checkbox.value);
         var junctionNumber = checkbox.getAttribute('data-junction-number');
+       var detachPopUP =  function () {
+         new GenericConfirmPopup('Tämä toimenpide päättää solmun, tallennetaanko muutokset? Kyllä vai Ei+ checkbox.id' + checkbox.id, {
+          successCallback: function () {
+            var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
+            instructionsPopup.show('TSolmu lakkautettu', 2000);
+
+          },
+          closeCallback: function () {
+            var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
+            instructionsPopup.show('Toiminnon peruminen', 2000);
+            $(checkbox).prop('checked', false);
+          }
+        });
+       };
         if (checkbox.checked) {
           new GenericConfirmPopup('Haluatko varmasti irrottaa liittymän ' + junctionNumber + ' solmusta?', {
             successCallback: function () {
-              selectedNode.detachJunction(junctionId);
+              //selectedNode.detachJunction(junctionId);
+              detachPopUP();
             },
             closeCallback: function () {
+              // var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
+              // instructionsPopup.show('This action expiring the node, will it be saved the changes? Yes or No', 2000);
               $(checkbox).prop('checked', false);
             }
           });
