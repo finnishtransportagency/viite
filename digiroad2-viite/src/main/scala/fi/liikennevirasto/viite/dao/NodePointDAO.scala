@@ -81,7 +81,7 @@ object BeforeAfter {
 }
 
 case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeNumber: Option[Long], nodePointType: NodePointType = NodePointType.UnknownNodePointType,
-                     startDate: DateTime, endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
+                     startDate: Option[DateTime], endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
                      createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long,
                      roadNumber: Long, roadPartNumber: Long, track: Track, elyCode: Long)
 
@@ -104,7 +104,7 @@ class NodePointDAO extends BaseDAO {
       val roadwayPointId = r.nextLong()
       val nodeNumber = r.nextLongOption()
       val nodePointType = NodePointType.apply(r.nextInt())
-      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = formatter.parseDateTime(r.nextDate.toString)
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))

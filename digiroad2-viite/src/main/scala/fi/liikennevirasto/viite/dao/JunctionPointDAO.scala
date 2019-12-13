@@ -11,7 +11,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 
-case class JunctionPoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, junctionId: Long, startDate: DateTime, endDate: Option[DateTime],
+case class JunctionPoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, junctionId: Long, startDate: Option[DateTime], endDate: Option[DateTime],
                          validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM: Long,
                          roadNumber: Long, roadPartNumber: Long, track: Track)
 
@@ -25,7 +25,7 @@ class JunctionPointDAO extends BaseDAO {
       val beforeOrAfter = r.nextLong()
       val roadwayPointId = r.nextLong()
       val junctionId = r.nextLong()
-      val startDate = formatter.parseDateTime(r.nextDate.toString)
+      val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = formatter.parseDateTime(r.nextDate.toString)
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))

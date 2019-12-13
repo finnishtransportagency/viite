@@ -29,10 +29,10 @@ class NodePointDAOSpec extends FunSuite with Matchers {
 
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
 
-  val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined, 0)
-  val testNodePoint2 = NodePoint(NewIdValue, BeforeAfter.After, -1, None, NodePointType.UnknownNodePointType,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined, 0)
+  val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType, None, None,
+    DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined, 0)
+  val testNodePoint2 = NodePoint(NewIdValue, BeforeAfter.After, -1, None, NodePointType.UnknownNodePointType, None, None,
+    DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined, 0)
 
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None)
