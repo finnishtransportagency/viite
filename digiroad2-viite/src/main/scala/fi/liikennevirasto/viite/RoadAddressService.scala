@@ -1010,6 +1010,10 @@ object RoadAddressFilters {
     (continuousTopology(curr)(next) || connectingBothTails(curr)(next)) && curr.discontinuity == Discontinuity.EndOfRoad
   }
 
+  def afterMinorDiscontinuousJump(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.discontinuity == Discontinuity.MinorDiscontinuity
+  }
+
   def halfContinuousHalfDiscontinuous(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
     (RoadAddressFilters.continuousRoadPart(curr)(next) && RoadAddressFilters.discontinuousTopology(curr)(next)) ||
     (RoadAddressFilters.discontinuousRoadPart(curr)(next) && RoadAddressFilters.continuousTopology(curr)(next))

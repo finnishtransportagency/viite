@@ -380,11 +380,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               (head, tail)
             case Discontinuity.MinorDiscontinuity =>
               // Discontinuity cases for same road number
-//              if(projectLink.linkId == 12347){
-//                1
-//              } else {
-//                0
-//              }
               val head = if(roadsInFirstPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
               roadsInFirstPoint
             else if(nonTerminatedLinks.exists(fl=>RoadAddressFilters.continuousRoadPart(fl)(projectLink) && RoadAddressFilters.discontinuousTopology(fl)(projectLink)))
@@ -419,12 +414,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           }
         }
 
-        val roadsToHead = headRoads.filter(hr=> hr.endPoint.connected(projectLink.startingPoint) || hr.discontinuity == Discontinuity.MinorDiscontinuity && RoadAddressFilters.continuousRoadPart(hr)(projectLink))
-//        val roadsToHead = headRoads.filter(hr=> hr.endPoint.connected(projectLink.startingPoint) || hr.discontinuity == Discontinuity.MinorDiscontinuity)
-        val roadsFromHead = headRoads.filter(hr => projectLink.startingPoint.connected(hr.startingPoint))
+        val roadsToHead = headRoads.filter(hr=> RoadAddressFilters.continuousTopology(hr)(projectLink) || RoadAddressFilters.afterMinorDiscontinuousJump(hr)(projectLink))
+        val roadsFromHead = headRoads.filter(hr => RoadAddressFilters.connectingBothHeads(hr)(projectLink))
 
-        val roadsToTail = tailRoads.filter(tr=> tr.endPoint.connected(projectLink.endPoint))
-        val roadsFromTail = tailRoads.filter(tr => projectLink.endPoint.connected(tr.startingPoint))
+        val roadsToTail = tailRoads.filter(tr=> RoadAddressFilters.connectingBothTails(tr)(projectLink))
+        val roadsFromTail = tailRoads.filter(tr => RoadAddressFilters.continuousTopology(projectLink)(tr))
 
         /*  handle creation of JUNCTION_POINT in reverse cases */
         val junctionReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && projectLink.startAddrMValue >= ch.changeInfo.target.startAddressM.get
