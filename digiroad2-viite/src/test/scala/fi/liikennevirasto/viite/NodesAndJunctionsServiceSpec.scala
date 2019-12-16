@@ -2190,7 +2190,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val combLink1 = dummyProjectLink(road, part, Track.Combined, Discontinuity.Continuous, 0, 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom1, rwNumber).copy(id = plId, projectId = projectId, roadwayId = rwId, linearLocationId = llId)
       val combLink2 = dummyProjectLink(road, part, Track.Combined, Discontinuity.Continuous, 5, 10, Some(DateTime.now()), None, 12346, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom2, rwNumber).copy(id = plId+1, projectId = projectId, roadwayId = rwId, linearLocationId = llId+1)
       val combLink3 = dummyProjectLink(road, part, Track.Combined, Discontinuity.Continuous, 10, 15, Some(DateTime.now()), None, 12347, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom3, rwNumber).copy(id = plId+2, projectId = projectId, roadwayId = rwId, linearLocationId = llId+2)
-      val combLink4 = dummyProjectLink(road, part, Track.Combined, Discontinuity.MinorDiscontinuity, 15, 20, Some(DateTime.now()), None, 12348, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom4, rwNumber).copy(id = plId+3, projectId = projectId, roadwayId = rwId, linearLocationId = llId+3)
+      val combLink4 = dummyProjectLink(road, part, Track.Combined, Discontinuity.Discontinuous, 15, 20, Some(DateTime.now()), None, 12348, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom4, rwNumber).copy(id = plId+3, projectId = projectId, roadwayId = rwId, linearLocationId = llId+3)
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
@@ -2219,9 +2219,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           , DateTime.now, Some(0L)),
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(AddressChangeType.New,
-            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
-            RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(RoadType.PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
-            Discontinuity.MinorDiscontinuity, RoadType.PublicRoad, reversed = false, 2, 8)
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Discontinuous), Some(8L)),
+            RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(RoadType.PublicRoad), Some(Discontinuity.Discontinuous), Some(8L)),
+            Discontinuity.Discontinuous, RoadType.PublicRoad, reversed = false, 2, 8)
           , DateTime.now, Some(0L))
       )
 
