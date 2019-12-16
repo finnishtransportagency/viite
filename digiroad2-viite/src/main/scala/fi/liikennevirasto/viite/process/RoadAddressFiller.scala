@@ -3,13 +3,11 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.State
-import fi.liikennevirasto.digiroad2.client.vvh.VVHHistoryRoadLink
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.RoadType.PublicRoad
+import fi.liikennevirasto.viite.RoadType.Empty
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
-import fi.liikennevirasto.viite.process.RoadAddressFiller.generateUnaddressedSegments
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -55,7 +53,7 @@ object RoadAddressFiller {
 
   private def generateUnknownLink(roadLink: RoadLinkLike) = {
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
-    Seq(UnaddressedRoadLink(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), if (isPublicRoad(roadLink)) {
+    Seq(UnaddressedRoadLink(roadLink.linkId, None, None, Empty, None, None, Some(0.0), Some(roadLink.length), if (isPublicRoad(roadLink)) {
       Anomaly.NoAddressGiven
     } else {
       Anomaly.None
@@ -192,7 +190,7 @@ object RoadAddressFiller {
         Anomaly.None
       }
       val unaddressedRoadLink =
-        UnaddressedRoadLink(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), anomaly,
+        UnaddressedRoadLink(roadLink.linkId, None, None, Empty, None, None, Some(0.0), Some(roadLink.length), anomaly,
           GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length))
 
       Seq(roadAddressLinkBuilder.build(roadLink, unaddressedRoadLink))
