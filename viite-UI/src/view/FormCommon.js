@@ -110,7 +110,7 @@
         '</select>';
     };
 
-    var addSmallLabel = function(label){
+    var addSmallLabel = function(label) {
       return '<label class="control-label-small">'+label+'</label>';
     };
 
