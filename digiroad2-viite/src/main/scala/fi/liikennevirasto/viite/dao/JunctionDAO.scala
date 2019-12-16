@@ -149,18 +149,17 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
-  def fetchTerminatedByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[Junction] = {
+  def fetchHistoryByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[Junction] = {
     if (roadwayNumbers.nonEmpty) {
       val query =
         s"""
          SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_NUMBER, j.START_DATE, j.END_DATE, j.VALID_FROM, j.VALID_TO, j.CREATED_BY, j.CREATED_TIME
          FROM JUNCTION j
-         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
+         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID
          LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-         WHERE j.VALID_TO IS NULL AND j.END_DATE IS NOT NULL
-           AND rw.ROADWAY_NUMBER IN (${roadwayNumbers.mkString(", ")})
-       """
+         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
+         WHERE rw.ROADWAY_NUMBER IN (${roadwayNumbers.mkString(", ")})
+        """
       queryList(query)
     } else {
       Seq.empty[Junction]
