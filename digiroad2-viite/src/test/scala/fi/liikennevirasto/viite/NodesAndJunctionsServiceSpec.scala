@@ -1023,8 +1023,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks++rightPLinks++combPLinks).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
       val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
-      //3 new junctions points template, 2 before 1 after
+
       junctionPointTemplates.length should be(3)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(1)
       junctions.size should be (1)
     }
   }
@@ -1114,9 +1116,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks++rightPLinks++combPLinks).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-//      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
-      //3 new junctions points template, 2 before 1 after
       junctionPointTemplates.length should be(3)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(1)
       //TODO new rule for creation of Junction says that we should only create Junction where junction points are connected by geometry
 //      junctions.size should be (0)
     }
@@ -1222,9 +1224,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks++rightPLinks++combPLinks).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-//      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
-      //3 new junctions points template, 2 before 1 after
       junctionPointTemplates.length should be(5)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(3)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(2)
       //TODO new rule for creation of Junction says that we should only create Junction where junction points are connected by geometry
 //      junctions.size should be (0)
     }
@@ -1330,9 +1332,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks++rightPLinks++combPLinks).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-//      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
-      //3 new junctions points template, 2 before 1 after
       junctionPointTemplates.length should be(3)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(1)
       //TODO new rule for creation of Junction says that we should only create Junction where junction points are connected by geometry
 //      junctions.size should be (0)
     }
@@ -1450,11 +1452,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks++rightPLinks++combPLinks).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-//      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
-      //3 new junctions points template, 1 before 1 after
       junctionPointTemplates.length should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(1)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(1)
       //TODO new rule for creation of Junction says that we should only create Junction where junction points are connected by geometry
-//      junctions.size should be (0)
+
+      //      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
+      //      junctions.size should be (0)
     }
   }
 
@@ -1541,10 +1545,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
 
-      //3 new junctions points template, 2 before 1 after (because of EndOfRoad in part3 creates 3)
       junctionPointTemplates.length should be(3)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(1)
+
+      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
       junctions.size should be (1)
     }
   }
@@ -1633,9 +1639,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
 
       junctionPointTemplates.length should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(1)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(1)
+
+      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
       junctions.size should be (1)
     }
   }
@@ -1724,9 +1733,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
 
       junctionPointTemplates.length should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(2)
+
+      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
       junctions.size should be (1)
     }
   }
@@ -1810,10 +1821,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((combPLinks:+combLink3).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
 
-      //3 new junctions points template, 2 before 1 after (because of EndOfRoad in part3 creates 3)
       junctionPointTemplates.length should be(3)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(1)
+
+      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
       junctions.size should be (1)
     }
   }
@@ -1896,9 +1909,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((combPLinks:+combLink3).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
 
       junctionPointTemplates.length should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(1)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(1)
+
+      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
       junctions.size should be (1)
     }
   }
@@ -1911,7 +1927,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
                           C3
                           |
                           v
-         0|--C1-->|--C2-->|
+         |--C1-->|--C2-->|0
 
         * Note:
           0: Illustration where junction points should be created
@@ -1981,9 +1997,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((combPLinks:+combLink3).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
 
       junctionPointTemplates.length should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(2)
+
+      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
       junctions.size should be (1)
     }
   }
@@ -2150,9 +2168,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
-      //2 new junctions points template, 1 before 1 after
       junctionPointTemplates.length should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(1)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(1)
+
+      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
       junctions.size should be (1)
     }
   }
@@ -2239,11 +2259,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
-      //2 new junctions points template, 1 before 1 after
       junctionPointTemplates.length should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(1)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(1)
+
+      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
       junctions.size should be (1)
-      //TODOfailed
     }
   }
 
@@ -2338,11 +2359,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
-      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
-      //2 new junctions points template, 2 before 2 after
       junctionPointTemplates.length should be(4)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(2)
+      junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(2)
+
+      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(junctionPointTemplates.map(_.roadwayNumber).distinct)
       junctions.size should be (1)
-      //TODOfailed
     }
   }
 
