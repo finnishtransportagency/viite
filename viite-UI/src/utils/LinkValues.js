@@ -124,6 +124,19 @@
         Unknown:                        {value:99, description:"Ei määritelty"}
 
     };
+    root.RoadTypeDisplayValues = {
+        Empty:                          {value:0, description:"--"},
+        PublicRoad:                     {value:1, description:"1 Maantie"},
+        FerryRoad:                      {value:2, description:"2 Lauttaväylä maantiellä"},
+        MunicipalityStreetRoad:         {value:3, description:"3 Kunnan katuosuus"},
+        PublicUnderConstructionRoad:    {value:4, description:"4 Maantien työmaa"},
+        PrivateRoadType:                {value:5, description:"5 Yksityistie"},
+        UnknownOwnerRoad:               {value:9, description:"9 Omistaja selvittämättä"},
+
+
+    };
+
+
 
     root.RoadTypeShort = {
         PublicRoad:                     {value:1, description:"tie"},

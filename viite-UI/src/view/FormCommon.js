@@ -40,6 +40,7 @@
       var link = _.head(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
+      var roadType = !_.isUndefined(link.roadTypeId) ? link.roadTypeId : '';
       var projectEditable = project.statusCode === editableStatus;
       return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
@@ -54,7 +55,7 @@
         addSmallInputNumber('ely', link.elyCode, !projectEditable, 2) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
-          roadTypeDropdown() + '<br>' +
+          roadTypeDropdown(roadType) + '<br>' +
           addSmallLabel('NIMI') +
           addRoadNameField(roadName, selected[0].roadNameBlocked) +
           ((selected.length === 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
@@ -80,11 +81,25 @@
           }
       };
 
-    var roadTypeDropdown = function() {
-      var roadTypeDefaultValueToShow = '--';
-      var roadTypeDefaultValue = RoadType.Empty.value;
+    var roadTypeLabel = function(roadType){
+      var roadTypeInfo = _.find(LinkValues.RoadTypeDisplayValues, function (obj) {
+        return obj.value === roadType;
+      });
+      return roadTypeInfo;
+    };
+    var roadTypeDropdown = function(roadTypeDefaultValue) {
+      var roadTypeDefaultValueToShow = '';
+      if (roadTypeDefaultValue === '') {
+        roadTypeDefaultValue = RoadType.Empty.value;
+        roadTypeDefaultValueToShow = '--';
+      } else {
+        var roadTypeText = roadTypeLabel(roadTypeDefaultValue);
+        roadTypeDefaultValueToShow = roadTypeText.description;
+
+      }
+
       return '<select class="'+prefix+'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
-        '<option value = "' + roadTypeDefaultValue+ '">'+roadTypeDefaultValueToShow+'</option>' +
+        '<option value = "' + roadTypeDefaultValue+ '" selected hidden >' +roadTypeDefaultValueToShow+'</option>' +
         '<option value = "1">1 Maantie</option>'+
         '<option value = "2">2 Lauttaväylä maantiellä</option>'+
         '<option value = "3">3 Kunnan katuosuus</option>'+
