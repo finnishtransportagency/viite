@@ -661,11 +661,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         logger.info(s"handleDualRoadwayPoints: Creating roadway point: roadway number: ${newRoadwayNumber}, address: $newStartAddr)")
         roadwayPointDAO.create(newRoadwayNumber, newStartAddr, username)
       }
-      val nodePointIds = nodePointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After).map(_.id)
-      val junctionPointIds = junctionPointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After).map(_.id)
+      val nodePoints = nodePointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After)
+      val junctionPoints = junctionPointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After)
 
-      nodePointIds.foreach(nodePointDAO.updateRoadwayPointId(_, roadwayPointId))
-      junctionPointIds.foreach(junctionPointDAO.updateRoadwayPointId(_, roadwayPointId))
+      nodePointDAO.expireById(nodePoints.map(_.id))
+      nodePointDAO.create(nodePoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId)))
+
+      junctionPointDAO.expireById(junctionPoints.map(_.id))
+      junctionPointDAO.create(junctionPoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId)))
     }
 
     def getNewRoadwayNumberInPoint(roadwayPoint: RoadwayPoint, newAddrM: Long): Option[Long] = {

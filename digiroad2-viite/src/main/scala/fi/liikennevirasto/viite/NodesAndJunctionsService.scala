@@ -668,7 +668,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       // Create junction rows with end date and junction point rows with new junction id
       junctionsToExpire.foreach(j => {
         val newJunctionId = junctionDAO.create(Seq(j.copy(id = NewIdValue, endDate = endDate, createdBy = Some(username)))).head
-        junctionPointDAO.create(junctionPointsOfExpiredJunctions.filter(_.junctionId == j.id).map(_.copy(id = NewIdValue,
+        junctionPointDAO.create((junctionPoints ++ junctionPointsOfExpiredJunctions).filter(_.junctionId == j.id).map(_.copy(id = NewIdValue,
           junctionId = newJunctionId, createdBy = Some(username))))
       })
 
@@ -708,17 +708,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     val terminatedRoadwayNumbers = terminated.map(_.roadwayNumber).distinct
     val pointsToExpire: (Seq[NodePoint], Seq[JunctionPoint]) = nodePointsAndJunctionPointsToExpire(terminatedRoadwayNumbers)
 
-    logger.info(s"Obsolete node points : ${pointsToExpire._1.map(_.id)}")
-    logger.info(s"Obsolete junction points : ${pointsToExpire._2.map(_.id)}")
-
     val modifiedSections = modified.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber, projectLink.roadType))
     val obsoletePointsFromModifiedRoadways: Seq[(Seq[NodePoint], Seq[JunctionPoint])] = modifiedSections.mapValues { section: Seq[ProjectLink] =>
       val modifiedRoadwayNumbers = section.map(_.roadwayNumber).distinct
       obsoleteNodePointsAndJunctionPoints(modifiedRoadwayNumbers)
     }.values.toSeq
-
-    logger.info(s"Obsolete node points : ${obsoletePointsFromModifiedRoadways.map(_._1.map(_.id))}")
-    logger.info(s"Obsolete junction points : ${obsoletePointsFromModifiedRoadways.map(_._2.map(_.id))}")
 
     val obsoleteNodePoints = pointsToExpire._1 ++ obsoletePointsFromModifiedRoadways.flatMap(_._1)
     val obsoleteJunctionPoints = pointsToExpire._2 ++ obsoletePointsFromModifiedRoadways.flatMap(_._2)
