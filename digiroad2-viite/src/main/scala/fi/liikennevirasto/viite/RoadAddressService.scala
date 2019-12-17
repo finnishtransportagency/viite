@@ -962,19 +962,40 @@ object RoadAddressFilters {
     curr.roadNumber == next.roadNumber && curr.roadPartNumber == next.roadPartNumber
   }
 
+  def sameTrack(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.track == next.track
+  }
+
   def continuousRoad(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
     sameRoad(curr)(next) && Track.isTrackContinuous(curr.track, next.track) && continuousAddress(curr)(next)
+  }
+
+  def discontinuousRoad(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    !continuousRoad(curr)(next)
   }
 
   def continuousRoadPart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
     continuousRoad(curr)(next) && sameRoadPart(curr)(next)
   }
+
+  def continuousRoadPartTrack(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    continuousRoadPart(curr)(next) && sameTrack(curr)(next)
+  }
+
   def discontinuousRoadPart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
-    !continuousRoadPart(curr)(next)
+    !continuousRoad(curr)(next) && sameRoadPart(curr)(next)
   }
 
   def continuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
     curr.endAddrMValue == next.startAddrMValue
+  }
+
+  def discontinuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    !continuousAddress(curr)(next)
+  }
+
+  def discontinuousAddressInSamePart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    !continuousAddress(curr)(next) && sameRoadPart(curr)(next)
   }
 
   def continuousTopology(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
@@ -983,6 +1004,22 @@ object RoadAddressFilters {
 
   def discontinuousTopology(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
     !continuousTopology(curr)(next)
+  }
+
+  def connectingBothTails(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.endPoint.connected(next.endPoint)
+  }
+
+  def connectingBothHeads(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.startingPoint.connected(next.startingPoint)
+  }
+
+  def endingOfRoad(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    (continuousTopology(curr)(next) || connectingBothTails(curr)(next)) && curr.discontinuity == Discontinuity.EndOfRoad
+  }
+
+  def afterDiscontinuousJump(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.discontinuity == Discontinuity.MinorDiscontinuity || curr.discontinuity == Discontinuity.Discontinuous
   }
 
   def halfContinuousHalfDiscontinuous(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
