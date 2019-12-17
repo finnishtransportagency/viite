@@ -360,7 +360,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           if (RoadClass.RampsAndRoundaboutsClass.roads.contains(projectLink.roadNumber.toInt)) {
             val head = roadsInFirstPoint filterNot RoadAddressFilters.sameRoadPart(projectLink)
             val tail = projectLink.discontinuity match {
-              case Discontinuity.EndOfRoad | Discontinuity.Discontinuous =>
+              case Discontinuity.EndOfRoad | Discontinuity.Discontinuous | Discontinuity.MinorDiscontinuity =>
                 // Roundabouts (20001 to 39999) : at the last link of the round lane - EndOfRoad or Discontinuous
                 roadsInLastPoint
               case _ =>
@@ -372,42 +372,32 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             projectLink.discontinuity match {
             case Discontinuity.EndOfRoad =>
               // Discontinuity EndOfRoad for same road number - The road ends in itself.
-              val head = if(nonTerminatedLinks.exists(fl=>RoadAddressFilters.continuousRoadPart(fl)(projectLink) && RoadAddressFilters.discontinuousTopology(fl)(projectLink))){
-                roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink)) ++ nonTerminatedLinks.filter(f => RoadAddressFilters.continuousRoadPart(f)(projectLink) && RoadAddressFilters.discontinuousTopology(f)(projectLink))
-              } else {
-                roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))}
+                val head = roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
               val tail = roadsInLastPoint
               (head, tail)
             case Discontinuity.MinorDiscontinuity =>
               // Discontinuity cases for same road number
-//              if(projectLink.linkId == 12347){
-//                1
-//              } else {
-//                0
-//              }
-              val head = if(nonTerminatedLinks.exists(fl=>RoadAddressFilters.continuousRoadPart(fl)(projectLink) && RoadAddressFilters.discontinuousTopology(fl)(projectLink)))
-                roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink)) ++ nonTerminatedLinks.filter(f => RoadAddressFilters.continuousRoadPart(f)(projectLink) && RoadAddressFilters.discontinuousTopology(f)(projectLink))
+              val head = if(roadsInFirstPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
+              roadsInFirstPoint
               else
                 roadsInFirstPoint filterNot RoadAddressFilters.sameRoad(projectLink)
               //even if there are no connecting points (for e.g. in case of a geometry jump), the discontinuous links should have one junction point in the ending point in middle of the part (MinorDiscontinuity)
-              val tail:Seq[BaseRoadAddress] = if(roadsInLastPoint.nonEmpty || projectLink.discontinuity == Discontinuity.Discontinuous) roadsInLastPoint else Seq(projectLink)
+              val tail:Seq[BaseRoadAddress] = if(roadsInLastPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
+                roadsInLastPoint
+              else
+                roadsInLastPoint.filter(r =>  RoadAddressFilters.continuousTopology(r)(projectLink) || RoadAddressFilters.connectingBothTails(r)(projectLink))
               (head, tail)
             case _ =>
-              if(projectLink.linkId == 12347){
-                  1
-              } else {
-                0
-              }
-              val head = if(nonTerminatedLinks.exists(fl=>RoadAddressFilters.continuousRoadPart(fl)(projectLink) && RoadAddressFilters.discontinuousTopology(fl)(projectLink)))
-//                roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink)) ++ nonTerminatedLinks.filter(f => RoadAddressFilters.continuousRoadPart(f)(projectLink) && RoadAddressFilters.discontinuousTopology(f)(projectLink))
+              val head = if(roadsInFirstPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
+                roadsInFirstPoint.filter(r => RoadAddressFilters.continuousTopology(r)(projectLink) || RoadAddressFilters.connectingBothHeads(r)(projectLink))
+              else if(nonTerminatedLinks.exists(fl=>RoadAddressFilters.continuousRoadPartTrack(fl)(projectLink) && RoadAddressFilters.discontinuousTopology(fl)(projectLink)))
                 roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink)) ++ nonTerminatedLinks.filter(fl => fl.id != projectLink.id && (RoadAddressFilters.halfContinuousHalfDiscontinuous(fl)(projectLink) || projectLink.startingPoint.connected(fl.startingPoint)))
               else
                 roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
 
-//              val filtered1 = nonTerminatedLinks.filter(fl => RoadAddressFilters.continuousRoadPart(projectLink)(fl))
-//              val filtered2 = nonTerminatedLinks.filter(fl => RoadAddressFilters.discontinuousTopology(projectLink)(fl))
-//              val tail =  if(nonTerminatedLinks.exists(fl=>RoadAddressFilters.continuousRoadPart(projectLink)(fl) && RoadAddressFilters.discontinuousTopology(projectLink)(fl)))
-              val tail =  if(nonTerminatedLinks.exists(fl=>RoadAddressFilters.halfContinuousHalfDiscontinuous(projectLink)(fl)))
+              val tail =  if(roadsInLastPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
+                roadsInLastPoint
+              else if(roadsInLastPoint.exists(fl=>RoadAddressFilters.halfContinuousHalfDiscontinuous(projectLink)(fl)))
                 roadsInLastPoint
               else
                 roadsInLastPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
@@ -417,11 +407,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           }
         }
 
-        val roadsToHead = headRoads.filter(hr=> hr.endPoint.connected(projectLink.startingPoint) || hr.discontinuity == Discontinuity.MinorDiscontinuity && RoadAddressFilters.continuousRoadPart(hr)(projectLink))
-        val roadsFromHead = headRoads.filter(hr => projectLink.startingPoint.connected(hr.startingPoint))
+        val roadsToHead = headRoads.filter(hr=> RoadAddressFilters.continuousTopology(hr)(projectLink) || RoadAddressFilters.afterDiscontinuousJump(hr)(projectLink))
+        val roadsFromHead = headRoads.filter(hr => RoadAddressFilters.connectingBothHeads(hr)(projectLink))
 
-        val roadsToTail = tailRoads.filter(tr=> tr.endPoint.connected(projectLink.endPoint))
-        val roadsFromTail = tailRoads.filter(tr => projectLink.endPoint.connected(tr.startingPoint))
+        val roadsToTail = tailRoads.filter(tr=> RoadAddressFilters.connectingBothTails(tr)(projectLink))
+        val roadsFromTail = tailRoads.filter(tr => RoadAddressFilters.continuousTopology(projectLink)(tr))
 
         /*  handle creation of JUNCTION_POINT in reverse cases */
         val junctionReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && projectLink.startAddrMValue >= ch.changeInfo.target.startAddressM.get
@@ -467,16 +457,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           * 0:junction point
         */
         //passed by collections "junctions in Head/ToTail" need to be passed for every iteration
-        //  |--R-->0|0--L-->
         roadsToHead.foreach { roadAddress: BaseRoadAddress => handleRoadsToHead(projectLink, getJunctionsInHead(projectLink, roadsToHead, roadsFromHead), roadAddress) }
 
-        //  <--R--0|0--L-->
         roadsFromHead.foreach { roadAddress: BaseRoadAddress => handleRoadsFromHead(projectLink, getJunctionsInHead(projectLink, roadsToHead, roadsFromHead), getJunctionsInHead(projectLink, roadsToHead, roadsFromHead), roadAddress) }
 
-        //  |--R--0>|<0--L--|
         roadsToTail.foreach { roadAddress: BaseRoadAddress => handleRoadsToTail(projectLink, getJunctionsToTail(projectLink, roadsToTail, roadsFromTail), getJunctionsInHead(projectLink, roadsToHead, roadsFromHead), roadAddress) }
 
-        //  <--R--0|<0--L--|
         roadsFromTail.foreach { roadAddress: BaseRoadAddress => handleRoadsFromTail(projectLink, getJunctionsToTail(projectLink, roadsToTail, roadsFromTail), getJunctionsInHead(projectLink, roadsToHead, roadsFromHead), roadAddress) }
       }
     }
