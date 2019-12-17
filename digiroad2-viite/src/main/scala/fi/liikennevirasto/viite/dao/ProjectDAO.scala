@@ -97,6 +97,12 @@ class ProjectDAO {
     Q.queryNA[Long](query).list
   }
 
+  def fetchByTRId(trProjectId: Long): Option[Project] = {
+    time(logger, "Fetch project by tr_id") {
+      fetch(query => s"""$query where tr_id = $trProjectId""").headOption
+    }
+  }
+
   def fetchById(projectId: Long, withNullElyFilter: Boolean = false): Option[Project] = {
     time(logger, "Fetch project by id") {
       if(withNullElyFilter)
@@ -146,6 +152,16 @@ class ProjectDAO {
 
   def updateProjectStatus(projectID: Long, state: ProjectState) {
     sqlu""" update project set state=${state.value} WHERE id=$projectID""".execute
+  }
+
+  def fetchProjectTRIdsWithWaitingTRStatus: List[Long] = {
+    val query =
+      s"""
+         SELECT tr_id
+         FROM project
+         WHERE state=${ProjectState.Sent2TR.value} OR state=${ProjectState.TRProcessing.value}
+       """
+    Q.queryNA[Long](query).list
   }
 
   def fetchProjectIdsWithWaitingTRStatus: List[Long] = {
