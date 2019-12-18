@@ -13,7 +13,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class Junction(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: DateTime, endDate: Option[DateTime],
-                    validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
+                    validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
 case class JunctionInfo(id: Long, junctionNumber: Option[Long], startDate: DateTime, nodeNumber: Long, nodeName: String)
 
@@ -32,7 +32,7 @@ class JunctionDAO extends BaseDAO {
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = formatter.parseDateTime(r.nextDate.toString)
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val createdBy = r.nextStringOption()
+      val createdBy = r.nextString()
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       Junction(id, junctionNumber, nodeNumber, startDate, endDate, validFrom, validTo, createdBy, createdTime)
     }
@@ -188,7 +188,7 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
-  def create(junctions: Iterable[Junction], createdBy: String = "-"): Seq[Long] = {
+  def create(junctions: Iterable[Junction]): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into JUNCTION (ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, CREATED_BY)
@@ -219,7 +219,7 @@ class JunctionDAO extends BaseDAO {
           case Some(date) => dateFormatter.print(date)
           case None => ""
         })
-        ps.setString(6, if (createdBy == null) "-" else createdBy)
+        ps.setString(6, junction.createdBy)
         ps.addBatch()
     }
     ps.executeBatch()

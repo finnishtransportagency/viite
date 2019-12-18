@@ -121,7 +121,7 @@ object NodeType {
 }
 
 case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: DateTime, endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
-                createdBy: Option[String], createdTime: Option[DateTime], editor: Option[String] = None, publishedTime: Option[DateTime] = None)
+                createdBy: String, createdTime: Option[DateTime], editor: Option[String] = None, publishedTime: Option[DateTime] = None)
 
 case class RoadAttributes(roadNumber: Long, track: Long, roadPartNumber: Long, addrMValue: Long)
 
@@ -141,7 +141,7 @@ class NodeDAO extends BaseDAO {
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = formatter.parseDateTime(r.nextDate.toString)
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val createdBy = r.nextStringOption()
+      val createdBy = r.nextString()
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val editor = r.nextStringOption()
       val publishedTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
@@ -214,7 +214,7 @@ class NodeDAO extends BaseDAO {
       """
 
     Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Int], DateTime, Option[DateTime], DateTime, Option[DateTime],
-      Option[String], Option[DateTime], Long, Long, Long, Long)](query).list.map {
+      String, Option[DateTime], Long, Long, Long, Long)](query).list.map {
 
       case (id, nodeNumber, x, y, name, nodeType, startDate, endDate, validFrom, validTo,
       createdBy, createdTime, roadNumber, track, roadPartNumber, addrMValue) =>

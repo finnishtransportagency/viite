@@ -12,7 +12,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 
 case class JunctionPoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, junctionId: Long, startDate: Option[DateTime], endDate: Option[DateTime],
-                         validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM: Long,
+                         validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime], roadwayNumber: Long, addrM: Long,
                          roadNumber: Long, roadPartNumber: Long, track: Track)
 
 class JunctionPointDAO extends BaseDAO {
@@ -29,7 +29,7 @@ class JunctionPointDAO extends BaseDAO {
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = formatter.parseDateTime(r.nextDate.toString)
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val createdBy = r.nextStringOption()
+      val createdBy = r.nextString()
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val roadwayNumber = r.nextLong()
       val addrM = r.nextLong()
@@ -170,7 +170,7 @@ class JunctionPointDAO extends BaseDAO {
     }
   }
 
-  def create(junctionPoints: Iterable[JunctionPoint], createdBy: String = "-"): Seq[Long] = {
+  def create(junctionPoints: Iterable[JunctionPoint]): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into JUNCTION_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, JUNCTION_ID, CREATED_BY)
@@ -189,7 +189,7 @@ class JunctionPointDAO extends BaseDAO {
         ps.setLong(2, junctionPoint.beforeAfter.value)
         ps.setLong(3, junctionPoint.roadwayPointId)
         ps.setLong(4, junctionPoint.junctionId)
-        ps.setString(5, if (createdBy == null) "-" else createdBy)
+        ps.setString(5, junctionPoint.createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
