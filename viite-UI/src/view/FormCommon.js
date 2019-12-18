@@ -40,7 +40,7 @@
       var link = _.head(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
-      var roadType = !_.isUndefined(link.roadTypeId) ? link.roadTypeId : '';
+      var roadType = !_.isUndefined(link.roadTypeId) ? link.roadTypeId : RoadType.Empty.value;
       var projectEditable = project.statusCode === editableStatus;
       return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
@@ -82,24 +82,14 @@
       };
 
     var roadTypeLabel = function(roadType){
-      var roadTypeInfo = _.find(LinkValues.RoadTypeDisplayValues, function (obj) {
+      var roadTypeInfo = _.find(LinkValues.RoadType, function (obj) {
         return obj.value === roadType;
       });
-      return roadTypeInfo;
+      return roadTypeInfo.displayText;
     };
     var roadTypeDropdown = function(roadTypeDefaultValue) {
-      var roadTypeDefaultValueToShow = '';
-      if (roadTypeDefaultValue === '') {
-        roadTypeDefaultValue = RoadType.Empty.value;
-        roadTypeDefaultValueToShow = '--';
-      } else {
-        var roadTypeText = roadTypeLabel(roadTypeDefaultValue);
-        roadTypeDefaultValueToShow = roadTypeText.description;
-
-      }
-
       return '<select class="'+prefix+'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
-        '<option value = "' + roadTypeDefaultValue+ '" selected hidden >' +roadTypeDefaultValueToShow+'</option>' +
+        '<option value = "' + roadTypeDefaultValue+ '" selected hidden >' + roadTypeLabel(roadTypeDefaultValue) +'</option>' +
         '<option value = "1">1 Maantie</option>'+
         '<option value = "2">2 Lauttaväylä maantiellä</option>'+
         '<option value = "3">3 Kunnan katuosuus</option>'+
