@@ -40,6 +40,7 @@
       var link = _.head(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
+      var roadType = !_.isUndefined(link.roadTypeId) ? link.roadTypeId : RoadType.Empty.value;
       var projectEditable = project.statusCode === editableStatus;
       return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
@@ -54,7 +55,7 @@
         addSmallInputNumber('ely', link.elyCode, !projectEditable, 2) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
-          roadTypeDropdown() + '<br>' +
+          roadTypeDropdown(roadType) + '<br>' +
           addSmallLabel('NIMI') +
           addRoadNameField(roadName, selected[0].roadNameBlocked, 50) +
           ((selected.length === 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
@@ -80,16 +81,20 @@
           }
       };
 
-    var roadTypeDropdown = function() {
-      var roadTypeDefaultValueToShow = '--';
-      var roadTypeDefaultValue = RoadType.Empty.value;
-      return '<select class="' + prefix + 'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
-        '<option value = "' + roadTypeDefaultValue + '">' + roadTypeDefaultValueToShow + '</option>' +
-        '<option value = "1">1 Maantie</option>' +
-        '<option value = "2">2 Lauttaväylä maantiellä</option>' +
-        '<option value = "3">3 Kunnan katuosuus</option>' +
-        '<option value = "4">4 Maantien työmaa</option>' +
-        '<option value = "5">5 Yksityistie</option>' +
+    var roadTypeLabel = function(roadType){
+      var roadTypeInfo = _.find(LinkValues.RoadType, function (obj) {
+        return obj.value === roadType;
+      });
+      return roadTypeInfo.displayText;
+    };
+    var roadTypeDropdown = function(roadTypeDefaultValue) {
+      return '<select class="'+prefix+'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
+        '<option value = "' + roadTypeDefaultValue+ '" selected hidden >' + roadTypeLabel(roadTypeDefaultValue) +'</option>' +
+        '<option value = "1">1 Maantie</option>'+
+        '<option value = "2">2 Lauttaväylä maantiellä</option>'+
+        '<option value = "3">3 Kunnan katuosuus</option>'+
+        '<option value = "4">4 Maantien työmaa</option>'+
+        '<option value = "5">5 Yksityistie</option>'+
         '<option value = "9">9 Omistaja selvittämättä</option>' +
 
         '</select>';
