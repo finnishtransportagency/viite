@@ -8,6 +8,7 @@
     var NodeType = LinkValues.NodeType;
     var formCommon = new FormCommon('node-');
 
+    var junctionsToDetach;
     var formButtons = function () {
       return '<div class="form form-controls">' +
         ' <button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
@@ -184,6 +185,7 @@
       };
 
       var toHtmlTable = function(junctionsInfo){
+        junctionsToDetach = junctionsInfo;
         junctionsInfo = _.sortBy(junctionsInfo, 'junctionNumber');
         var htmlTable = "";
         htmlTable += '<table class="node-junctions-table-dimension">';
@@ -404,7 +406,8 @@
         if (checkbox.checked) {
           new GenericConfirmPopup('Haluatko varmasti irrottaa solmukohdan solmusta?', {
             successCallback: function () {
-              selectedNode.detachNodePoint(nodePointId);
+              //selectedNode.detachNodePoint(nodePointId);
+              detachPopUP(nodePointId, checkbox.id);
             },
             closeCallback: function () {
               $(checkbox).prop('checked', false);
@@ -414,16 +417,34 @@
           selectedNode.attachNodePoint(nodePointId);
         }
       });
+      /*
+      front laskee solmukohdan ja liittymän koordinaatit openLayerin avulla ( toteutettu jo). Löytyy solmukohdan aihiolta.
 
-      rootElement.on('change', '[id^="detach-junction-"]', function () {
-        var checkbox = this;
-        var junctionId = parseInt(checkbox.value);
-        var junctionNumber = checkbox.getAttribute('data-junction-number');
-       var detachPopUP =  function () {
-         new GenericConfirmPopup('Tämä toimenpide päättää solmun, tallennetaanko muutokset? Kyllä vai Ei+ checkbox.id' + checkbox.id, {
+      solmukohdat valitaan poistettavaksi jos liittyma.x+y == solmukohta.x+y ja liittymän ja solmukohdan nodeNumber sama
+
+      MUISTA!
+
+      Solmua ei lakkauteta, jos jäljelle jää joku tien solmukohtia (Tyyppi =1, Tien solmukohta (popup teksti checkboxilla))
+       tai liittymiä.
+       */
+      var detachPopUP =  function (nodePointId, checkBoxId) {
+        new GenericConfirmPopup('Tämä toimenpide päättää solmun, tallennetaanko muutokset? Kyllä vai Ei+ checkbox.id, nodePointId ' + checkBoxId + ', ' +nodePointId, {
           successCallback: function () {
             var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
-            instructionsPopup.show('TSolmu lakkautettu', 2000);
+            var obj1 = junctionMarkerLayer;
+            var messageB = 'B__';
+            _.each(junctionsToDetach, function (junction) {
+              messageB += junction.toString();
+              console.log(messageB);
+              $('[id^="detach-junction-' +junction.id +'"]').prop('checked',true);
+            });
+            instructionsPopup.show(messageB, 4000);
+            var message ='A__';
+            _.each(junctionsTable, function (tableRow) {
+              message += tableRow.toString();
+              console.log(tableRow.toString());
+            });
+            instructionsPopup.show(message,4000);
 
           },
           closeCallback: function () {
@@ -432,12 +453,17 @@
             $(checkbox).prop('checked', false);
           }
         });
-       };
+      };
+      rootElement.on('change', '[id^="detach-junction-"]', function () {
+        var checkbox = this;
+        var junctionId = parseInt(checkbox.value);
+        var junctionNumber = checkbox.getAttribute('data-junction-number');
+
         if (checkbox.checked) {
           new GenericConfirmPopup('Haluatko varmasti irrottaa liittymän ' + junctionNumber + ' solmusta?', {
             successCallback: function () {
               //selectedNode.detachJunction(junctionId);
-              detachPopUP();
+
             },
             closeCallback: function () {
               // var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
