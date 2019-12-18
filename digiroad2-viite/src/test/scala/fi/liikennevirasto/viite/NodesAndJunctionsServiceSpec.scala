@@ -83,18 +83,18 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node"), NodeType.NormalIntersection,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, Some("Test"), None)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, "Test", None)
 
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadwayNumber1, 0, "Test", None, None, None)
 
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType, Some(testNode1.startDate), testNode1.endDate,
-    DateTime.parse("2019-01-01"), None, Some("Test"), None, 0, 0, 0, 0, Track.Combined, 0)
+    DateTime.parse("2019-01-01"), None, "Test", None, 0, 0, 0, 0, Track.Combined, 0)
 
   val testJunction1 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-01"), None,
-    DateTime.parse("2019-01-01"), None, None, None)
+    DateTime.parse("2019-01-01"), None, "Test", None)
 
   val testJunctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, Some(testJunction1.startDate), testJunction1.endDate,
-    DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
+    DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined)
 
   val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l,
     (None, None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
@@ -2451,8 +2451,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   test("Test addOrUpdateNode When creating new Then new is created successfully") {
     runWithRollback {
       val node = Node(NewIdValue, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
-        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy.get) should be(None)
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
+      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy) should be(None)
       val fetched = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("No node found"))
       fetched.startDate should be(node.startDate)
       fetched.nodeType should be(node.nodeType)
@@ -2472,18 +2472,18 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   test("Test addOrUpdateNode When update non-existing Then should return error") {
     runWithRollback {
       val node = Node(-1, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
-        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy.get) should not be (None)
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
+      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy) should not be (None)
     }
   }
 
   test("Test addOrUpdateNode When update existing Then existing is expired and new created") {
     runWithRollback {
       val node = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
-        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      nodeDAO.create(Seq(node), node.createdBy.get)
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
+      nodeDAO.create(Seq(node), node.createdBy)
       nodeDAO.fetchById(node.id) should not be None
-      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1)), node.createdBy.get) should be(None)
+      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1)), node.createdBy) should be(None)
       nodeDAO.fetchById(node.id) should be(None)
       val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
       updated.id should not be node.id
@@ -2501,10 +2501,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   test("Test addOrUpdateNode When update existing and change type but not start date Then existing is expired, new created") {
     runWithRollback {
       val node = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
-        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      nodeDAO.create(Seq(node), node.createdBy.get)
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
+      nodeDAO.create(Seq(node), node.createdBy)
       nodeDAO.fetchById(node.id) should not be None
-      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1), nodeType = NodeType.Bridge), node.createdBy.get) should be(None)
+      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1), nodeType = NodeType.Bridge), node.createdBy) should be(None)
       nodeDAO.fetchById(node.id) should be(None)
       val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
       updated.id should not be node.id
@@ -2524,11 +2524,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   test("Test addOrUpdateNode When update existing and change type and start date Then existing is expired, history and new created") {
     runWithRollback {
       val node = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, Point(0, 0), None, NodeType.EndOfRoad,
-        DateTime.now().minusDays(1).withTimeAtStartOfDay(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      nodeDAO.create(Seq(node), node.createdBy.get)
+        DateTime.now().minusDays(1).withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
+      nodeDAO.create(Seq(node), node.createdBy)
       nodeDAO.fetchById(node.id) should not be None
       nodesAndJunctionsService.addOrUpdateNode(node.copy(startDate = DateTime.now().plusDays(1).withTimeAtStartOfDay(),
-        nodeType = NodeType.Bridge), node.createdBy.get) should be(None)
+        nodeType = NodeType.Bridge), node.createdBy) should be(None)
       nodeDAO.fetchById(node.id) should be(None)
       val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
       updated.id should not be node.id
@@ -2608,9 +2608,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val nodeNumber1 = Sequences.nextNodeNumber
       val nodeNumber2 = Sequences.nextNodeNumber
       val nodeNumber3 = Sequences.nextNodeNumber
-      val node1 = Node(NewIdValue, nodeNumber1, roadLink1.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      val node2 = Node(NewIdValue, nodeNumber2, roadLink2.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      val node3 = Node(NewIdValue, nodeNumber3, roadLink2.geometry.last, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      val node1 = Node(NewIdValue, nodeNumber1, roadLink1.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, "user", Some(DateTime.now()))
+      val node2 = Node(NewIdValue, nodeNumber2, roadLink2.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, "user", Some(DateTime.now()))
+      val node3 = Node(NewIdValue, nodeNumber3, roadLink2.geometry.last, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, "user", Some(DateTime.now()))
 
       nodeDAO.create(Seq(node1, node2, node3))
 
@@ -2700,8 +2700,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       nodesAndJunctionsService.handleNodePointTemplates(projectChanges, projectLinks, mappedRoadwayNumbers)
 
-      val node1 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      val node2 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink.geometry.last, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      val node1 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, "user", Some(DateTime.now()))
+      val node2 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink.geometry.last, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, "user", Some(DateTime.now()))
 
       nodeDAO.create(Seq(node1, node2))
 
@@ -2794,8 +2794,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       // Creation of nodes and node points
       nodesAndJunctionsService.handleNodePointTemplates(projectChanges, projectLinks, mappedRoadwayNumbers)
 
-      val node1 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
-      val node2 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink.geometry.last, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, Some("user"), Some(DateTime.now()))
+      val node1 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, "user", Some(DateTime.now()))
+      val node2 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink.geometry.last, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, "user", Some(DateTime.now()))
 
       nodeDAO.create(Seq(node1, node2))
 

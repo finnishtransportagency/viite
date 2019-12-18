@@ -1566,7 +1566,7 @@ object NodeConverter {
     val createdTime = if (node.createdTime.isDefined) Option(formatter.parseDateTime(node.createdTime.get)) else None
 
     Node(node.id, node.nodeNumber, node.coordinates, node.name, NodeType.apply(node.nodeType),
-         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, Some(username), createdTime)
+         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, username, createdTime)
   }
 }
 

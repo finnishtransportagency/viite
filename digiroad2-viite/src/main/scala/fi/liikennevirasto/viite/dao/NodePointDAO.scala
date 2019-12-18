@@ -82,7 +82,7 @@ object BeforeAfter {
 
 case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeNumber: Option[Long], nodePointType: NodePointType = NodePointType.UnknownNodePointType,
                      startDate: Option[DateTime], endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
-                     createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long,
+                     createdBy: String, createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long,
                      roadNumber: Long, roadPartNumber: Long, track: Track, elyCode: Long)
 
 class NodePointDAO extends BaseDAO {
@@ -108,7 +108,7 @@ class NodePointDAO extends BaseDAO {
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = formatter.parseDateTime(r.nextDate.toString)
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val createdBy = r.nextStringOption()
+      val createdBy = r.nextString()
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val roadwayNumber = r.nextLong()
       val addrM = r.nextLong()
@@ -263,7 +263,7 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
-  def create(nodePoints: Iterable[NodePoint], createdBy: String = "-"): Seq[Long] = {
+  def create(nodePoints: Iterable[NodePoint]): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_NUMBER, "TYPE", CREATED_BY)
@@ -287,7 +287,7 @@ class NodePointDAO extends BaseDAO {
           ps.setNull(4, java.sql.Types.INTEGER)
         }
         ps.setInt(5, nodePoint.nodePointType.value)
-        ps.setString(6, if (createdBy == null) "-" else createdBy)
+        ps.setString(6, nodePoint.createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
