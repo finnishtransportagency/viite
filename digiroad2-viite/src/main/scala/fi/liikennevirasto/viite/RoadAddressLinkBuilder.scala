@@ -126,12 +126,17 @@ sealed trait RoadType {
 }
 
 object RoadType {
-  val values = Set(PublicRoad, FerryRoad, MunicipalityStreetRoad, PublicUnderConstructionRoad, PrivateRoadType, UnknownOwnerRoad)
+  val values = Set(Empty, PublicRoad, FerryRoad, MunicipalityStreetRoad, PublicUnderConstructionRoad, PrivateRoadType, UnknownOwnerRoad)
 
   def apply(intValue: Int): RoadType = {
     values.find(_.value == intValue).getOrElse(UnknownOwnerRoad)
   }
 
+  case object Empty extends RoadType {
+    def value = 0
+
+    def displayValue = "--"
+  }
   case object PublicRoad extends RoadType {
     def value = 1
 
