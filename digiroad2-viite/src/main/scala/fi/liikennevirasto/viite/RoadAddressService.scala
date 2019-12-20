@@ -785,9 +785,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
       if (distinctUpdatableRoadwayPoints.nonEmpty) {
         logger.info(s"Updating ${distinctUpdatableRoadwayPoints.length} roadway points: ${distinctUpdatableRoadwayPoints.mkString(", ")}")
-        distinctUpdatableRoadwayPoints.foreach(r => {
-          saveRoadwayPoint(r)
-        })
+        roadwayPointDAO.update(distinctUpdatableRoadwayPoints)
       }
     } catch {
       case ex: Exception => logger.error("Failed to update roadway points.", ex)
