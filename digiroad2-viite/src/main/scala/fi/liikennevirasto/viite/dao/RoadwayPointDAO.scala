@@ -61,25 +61,24 @@ class RoadwayPointDAO extends BaseDAO {
   }
 
   def update(roadwayPoint: RoadwayPoint): Long = {
-    update(Seq((roadwayPoint.roadwayNumber, roadwayPoint.addrMValue, roadwayPoint.modifiedBy.getOrElse("-"), roadwayPoint.id))).head
+    update(Seq(roadwayPoint)).head
   }
 
-  def update(roadwayPoints: Seq[(Long, Long, String, Long)]): Seq[Long] = {
-
+  def update(roadwayPoints: Seq[RoadwayPoint]): Seq[Long] = {
     val ps = dynamicSession.prepareStatement("update ROADWAY_POINT SET ROADWAY_NUMBER = ?, ADDR_M = ?, MODIFIED_BY = ?, MODIFIED_TIME = SYSDATE WHERE ID = ?")
 
     roadwayPoints.foreach {
       rwPoint =>
-        logger.info(s"Update roadway_point (id: ${rwPoint._4}, roadwayNumber: ${rwPoint._1}, addr: ${rwPoint._2})")
-        ps.setLong(1, rwPoint._1)
-        ps.setLong(2, rwPoint._2)
-        ps.setString(3, rwPoint._3)
-        ps.setLong(4, rwPoint._4)
+        logger.info(s"Update roadway_point (id: ${rwPoint.id}, roadwayNumber: ${rwPoint.roadwayNumber}, addr: ${rwPoint.addrMValue})")
+        ps.setLong(1, rwPoint.roadwayNumber)
+        ps.setLong(2, rwPoint.addrMValue)
+        ps.setString(3, rwPoint.modifiedBy.getOrElse("-"))
+        ps.setLong(4, rwPoint.id)
         ps.addBatch()
     }
     ps.executeBatch()
     ps.close()
-    roadwayPoints.map(_._4)
+    roadwayPoints.map(_.id)
   }
 
   def fetch(id: Long): RoadwayPoint = {
