@@ -9,6 +9,7 @@
     var formCommon = new FormCommon('node-');
 
     var junctionsToDetach;
+    var nodePointsRows = [];
     var formButtons = function () {
       return '<div class="form form-controls">' +
         ' <button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
@@ -272,14 +273,15 @@
       };
 
       var getNodePointsRowsInfo = function(nodePoints){
-        var info = [];
+        nodePointsRows = [];
         if(!_.isUndefined(nodePoints) && nodePoints.length > 0){
         _.map(nodePoints, function(point){
-          var row = {id: point.id, nodeNumber: point.nodeNumber, road: point.road, part: point.part, addr: point.addrM, beforeAfter: point.beforeAfter, type: point.type};
-          info.push(row);
+          var row = {id: point.id, nodeNumber: point.nodeNumber, road: point.road, part: point.part, addr: point.addrM,
+            beforeAfter: point.beforeAfter, type: point.type, x: point.x, y:point.y};
+          nodePointsRows.push(row);
         });
 
-        var groupedHomogeneousRows = _.groupBy(info, function (row) {
+        var groupedHomogeneousRows = _.groupBy(nodePointsRows, function (row) {
           return [row.road, row.part, row.addr];
         });
 
@@ -404,74 +406,64 @@
         var checkbox = this;
         var nodePointId = parseInt(checkbox.value);
         if (checkbox.checked) {
-          new GenericConfirmPopup('Haluatko varmasti irrottaa solmukohdan solmusta?', {
+          new GenericConfirmPopup('Haluatko varmasti irrottaa solmukohdan solmusta ?', {
             successCallback: function () {
-              //selectedNode.detachNodePoint(nodePointId);
-              detachPopUP(nodePointId, checkbox.id);
+              selectedNode.detachNodePoint(nodePointId);
+              markMatchingJunctions(nodePointId, checkbox.checked);
             },
             closeCallback: function () {
               $(checkbox).prop('checked', false);
             }
           });
         } else {
+          markMatchingJunctions(nodePointId, checkbox.checked);
           selectedNode.attachNodePoint(nodePointId);
         }
       });
-      /*
-      front laskee solmukohdan ja liittymän koordinaatit openLayerin avulla ( toteutettu jo). Löytyy solmukohdan aihiolta.
+      var markMatchingNodePoints = function (junctionId, checked){
+        var junction = junctionsToDetach.find(function(row) {
+          return row.id == junctionId;
+        });
+        _.each(nodePointsRows, function (nodePoint) {
+          if (junction.x == nodePoint.x && junction.y == nodePoint.y && junction.nodeNumber == nodePoint.nodeNumber){
+            $('[id^="detach-node-point-' +nodePoint.id +'"]').prop('checked',checked);
+            if (checked) {
+              selectedNode.detachNodePoint(nodePoint.id);
+            } else {
+              selectedNode.attachNodePoint(nodePoint.id);
+            }
+          }
+        });
+      };
+      var markMatchingJunctions = function (nodePointId, checked){
+        var nodePoint = nodePointsRows.find(function(row) {
+          return row.id == nodePointId;
+        });
+        _.each(junctionsToDetach, function (junction) {
+          if (junction.x == nodePoint.x && junction.y == nodePoint.y && junction.nodeNumber == nodePoint.nodeNumber){
+            $('[id^="detach-junction-' +junction.id +'"]').prop('checked',checked);
+            if (checked){
+              selectedNode.detachJunction(junction.id);
+            }
 
-      solmukohdat valitaan poistettavaksi jos liittyma.x+y == solmukohta.x+y ja liittymän ja solmukohdan nodeNumber sama
-
-      MUISTA!
-
-      Solmua ei lakkauteta, jos jäljelle jää joku tien solmukohtia (Tyyppi =1, Tien solmukohta (popup teksti checkboxilla))
-       tai liittymiä.
-       */
-      var detachPopUP =  function (nodePointId, checkBoxId) {
-        new GenericConfirmPopup('Tämä toimenpide päättää solmun, tallennetaanko muutokset? Kyllä vai Ei+ checkbox.id, nodePointId ' + checkBoxId + ', ' +nodePointId, {
-          successCallback: function () {
-            var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
-            var obj1 = junctionMarkerLayer;
-            var messageB = 'B__';
-            _.each(junctionsToDetach, function (junction) {
-              messageB += junction.toString();
-              console.log(messageB);
-              $('[id^="detach-junction-' +junction.id +'"]').prop('checked',true);
-            });
-            instructionsPopup.show(messageB, 4000);
-            var message ='A__';
-            _.each(junctionsTable, function (tableRow) {
-              message += tableRow.toString();
-              console.log(tableRow.toString());
-            });
-            instructionsPopup.show(message,4000);
-
-          },
-          closeCallback: function () {
-            var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
-            instructionsPopup.show('Toiminnon peruminen', 2000);
-            $(checkbox).prop('checked', false);
           }
         });
       };
       rootElement.on('change', '[id^="detach-junction-"]', function () {
         var checkbox = this;
         var junctionId = parseInt(checkbox.value);
-        var junctionNumber = checkbox.getAttribute('data-junction-number');
-
         if (checkbox.checked) {
-          new GenericConfirmPopup('Haluatko varmasti irrottaa liittymän ' + junctionNumber + ' solmusta?', {
+          new GenericConfirmPopup('Haluatko varmasti irrottaa liittymän solmusta ?', {
             successCallback: function () {
-              //selectedNode.detachJunction(junctionId);
-
+              selectedNode.detachJunction(junctionId);
+              markMatchingNodePoints(junctionId, checkbox.checked);
             },
             closeCallback: function () {
-              // var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
-              // instructionsPopup.show('This action expiring the node, will it be saved the changes? Yes or No', 2000);
               $(checkbox).prop('checked', false);
             }
           });
         } else {
+          markMatchingNodePoints(junctionId, checkbox.checked);
           selectedNode.attachJunction(junctionId);
         }
       });
