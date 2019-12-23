@@ -28,6 +28,8 @@
       });
 
       marker.setStyle(junctionMarkerStyle);
+      junction.x =point.x;
+      junction.y = point.y;
       marker.junction = junction;
       marker.roadLink = roadLink;
       return marker;

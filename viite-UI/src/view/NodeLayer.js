@@ -322,7 +322,10 @@
 
       return _.find(roadLinksWithValues, predicate);
     };
+    // TODO VIITE-2187
+    var addCoordinatesToNodePoint = function (nodePoint) {
 
+    };
     var addJunctionToMap = function (junction, isTemplate, selectedLayer) {
       var junctionPoint = {};
       var roadLink = roadLinkForPoint(function (roadLink) {
@@ -481,7 +484,12 @@
             addFeature(nodeMarkerLayer, new NodeMarker().createNodeMarker(node),
               function (feature) { return feature.node.id === node.id; });
           });
-
+          // TODO VIITE-2178
+          // _.each(nodes, function (node) {
+          //     _.each(node.nodePoints, function (nodePoint) {
+          //         addCoordinatesToNodePoint(nodePoint)
+          //     });
+          // });
           _.each(nodePointTemplates, function (nodePointTemplate) {
             var roadLink = roadLinkForPoint(function (roadLink) {
               return (roadLink.startAddressM === nodePointTemplate.addrM || roadLink.endAddressM === nodePointTemplate.addrM) && roadLink.roadwayNumber === nodePointTemplate.roadwayNumber;
