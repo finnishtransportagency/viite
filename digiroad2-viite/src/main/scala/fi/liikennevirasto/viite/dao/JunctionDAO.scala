@@ -108,6 +108,32 @@ class JunctionDAO extends BaseDAO {
       queryList(query)
     }
   }
+
+  def fetchAllByIds(ids: Seq[Long]): Seq[Junction] = {
+    if (ids.isEmpty)
+      List()
+    else {
+      val query =
+        s"""
+      SELECT ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      FROM JUNCTION
+      WHERE ID IN (${ids.mkString(", ")})
+      """
+      queryList(query)
+    }
+  }
+
+  def fetchJunctionByIdWithValidPoints(id: Long): Seq[Junction] = {
+      val query =
+        s"""
+      SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_NUMBER, j.START_DATE, j.END_DATE, j.VALID_FROM, j.VALID_TO, j.CREATED_BY, j.CREATED_TIME
+      FROM JUNCTION j
+      INNER JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
+      WHERE j.ID = $id AND j.VALID_TO IS NULL AND j.END_DATE IS NULL
+      """
+      queryList(query)
+  }
+
   def fetchJunctionInfoByJunctionId(ids: Seq[Long]): Option[JunctionInfo] = {
     sql"""
       SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_NUMBER, j.START_DATE, n.NAME
