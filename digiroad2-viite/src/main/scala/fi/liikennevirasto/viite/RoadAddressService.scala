@@ -1028,7 +1028,6 @@ object RoadAddressFilters {
   }
 
   def obsoleteJunctions(junctionPoints: Seq[JunctionPoint]): Boolean = {
-    // TODO Missing discontinuity cases! - this code block might need great changed by the time discontinuity cases get to the scene
     if(junctionPoints.isEmpty)
       true
     else
