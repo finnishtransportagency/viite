@@ -716,7 +716,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }.values.toSeq
 
     val obsoleteNodePoints = terminatedNodePoints ++ obsoletePointsFromModifiedRoadways.flatMap(_._1)
-//    val obsoleteJunctionPoints = terminatedJunctionPoints ++ obsoletePointsFromModifiedRoadways.flatMap(_._2)
     val obsoleteJunctionPoints = obsoletePointsFromModifiedRoadways.flatMap(_._2)
 
     val expiredJunctions = expireJunctionsAndJunctionPoints(obsoleteJunctionPoints)
@@ -812,14 +811,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val junctionPointsInSameAddrAndPart = rest.filter(jp => curr.roadNumber == jp.roadNumber && curr.addrM == jp.addrM)
         val (before, after) = junctionPointsInSameAddrAndPart.partition(_.beforeAfter == Before)
         (before.size > 1 && after.nonEmpty && !twoTrackToCombined(before, after)) || (before.nonEmpty && after.size > 1 && !combinedToTwoTrack(before, after))
-        //not Combined to two track road OR not two track road to Combined
       }
 
-      /*need to exist:
-      2 or more Before and at least one After in same road part and address
-      or
-      2 or more After and at least one Before in same road part and address
-      */
       def twoTrackToCombined(before: Seq[JunctionPoint], after: Seq[JunctionPoint]): Boolean = {
         before.forall(_.track != Track.Combined) && after.forall(_.track == Track.Combined)
       }
@@ -829,8 +822,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }
 
       junctionPointsToCheck.exists { jpc =>
-        //Should not delete none if any of the new rules are applicable
-        //slide 9, 10, 20
         isRoadPartIntersection(jpc, junctionPointsToCheck.filterNot(_.id != jpc.id))
       }
     }
