@@ -18,6 +18,8 @@
         </encoder>
     </appender>
 
+    <logger name="fi.liikennevirasto" level="DEBUG" />
+
     <root level="info">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
