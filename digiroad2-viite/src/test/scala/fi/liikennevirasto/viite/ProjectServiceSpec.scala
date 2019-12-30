@@ -2787,6 +2787,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(ProjectState.Saved2TR, 1000351)
 
+      val roadwayPoints = roadwayPointDAO.fetch(Seq((166883763l, 0l)))
+      roadwayPoints.size should be(1)
+
     }
   }
 
