@@ -633,12 +633,19 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       val junctions = junctionDAO.fetchByIds(junctionPointDAO.fetchByRoadwayPointIds(roadwayPointIds).map(_.junctionId))
       val obsoleteJunctionPoints: Seq[JunctionPoint] = junctions.flatMap { junction =>
+        val terminatedJunctionPoints = groupedTerminatedJunctionPoints.getOrElse(junction.id, Seq.empty[JunctionPoint])
         val affectedJunctionsPoints = junctionPointDAO.fetchByJunctionIds(Seq(junction.id)) match {
           case junctionPoints if junctionPoints.exists(jp => RoadClass.RampsAndRoundaboutsClass.roads.contains(jp.roadNumber)) =>
-            if (junctionPoints.groupBy(jp => (jp.roadNumber, jp.roadPartNumber)).keys.size == 1) junctionPoints
-            else Seq.empty[JunctionPoint]
+            val junctionPointsToCheck = junctionPoints.filterNot(jp => terminatedJunctionPoints.map(_.id).contains(jp.id))
+            if (junctionPointsToCheck.size <= 1) {
+              //basic rule
+              junctionPointsToCheck
+            } else if(ObsoleteJunctionPointFilters.rampsAndRoundaboutsDisContinuityInSameOwnRoadNumber(junctionPointsToCheck) ||
+              junctionPoints.groupBy(jp => (jp.roadNumber, jp.roadPartNumber)).keys.size > 1)
+              Seq.empty[JunctionPoint]
+            else junctionPointsToCheck
           case junctionPoints if !junctionPoints.forall(jp => RoadClass.RampsAndRoundaboutsClass.roads.contains(jp.roadNumber)) =>
-            val terminatedJunctionPoints = groupedTerminatedJunctionPoints.getOrElse(junction.id, Seq.empty[JunctionPoint])
+
             val junctionPointsToCheck = junctionPoints.filterNot(jp => terminatedJunctionPoints.map(_.id).contains(jp.id))
             //check if the terminated junction Points are the unique ones in the Junction to avoid further complex validations
             if (junctionPointsToCheck.size <= 1) {
@@ -846,6 +853,19 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         isRoadEndingInItself(jpc, junctionPointsToCheck.filterNot(_.id == jpc.id))
       }
     }
+
+    def rampsAndRoundaboutsDisContinuityInSameOwnRoadNumber(junctionPointsToCheck: Seq[JunctionPoint]): Boolean = {
+      val validEndingDiscontinuityForRamps = List(Discontinuity.EndOfRoad, Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity)
+
+      def isRoadEndingInItself(curr: JunctionPoint, rest: Seq[JunctionPoint]): Boolean = {
+        rest.exists(jp => curr.roadNumber == jp.roadNumber && jp.addrM == 0 && validEndingDiscontinuityForRamps.contains(curr.discontinuity) && curr.beforeAfter == Before)
+      }
+
+      junctionPointsToCheck.exists { jpc =>
+        isRoadEndingInItself(jpc, junctionPointsToCheck.filterNot(_.id == jpc.id))
+      }
+    }
+
   }
 
 }
