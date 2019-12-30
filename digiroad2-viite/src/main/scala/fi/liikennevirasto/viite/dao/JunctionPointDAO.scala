@@ -79,6 +79,24 @@ class JunctionPointDAO extends BaseDAO {
           JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID)
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
           JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL)
+          where J.ID in (${junctionIds.mkString(",")}) AND JP.VALID_TO IS NULL AND J.END_DATE IS NULL AND J.VALID_TO IS NULL
+        """
+      queryList(query)
+    }
+  }
+
+  def fetchAllByJunctionIds(junctionIds: Seq[Long]): Seq[JunctionPoint] = {
+    if (junctionIds.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+          SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, J.START_DATE, J.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
+          RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.DISCONTINUITY
+          FROM JUNCTION_POINT JP
+          JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID)
+          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL)
           where J.ID in (${junctionIds.mkString(",")}) AND JP.VALID_TO IS NULL
         """
       queryList(query)
