@@ -251,6 +251,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       roadLinkService.getMidPointByLinkId(linkId)
     }
   }
+  get("/roadlinks/mtkid/:mtkId") {
+    val mtkId = params("mtkId").toLong
+    time(logger, s"GET request for /roadlinks/mtkid/$mtkId") {
+      roadLinkService.getRoadLinkMiddlePointByMtkId(mtkId)
+    }
+  }
 
   get("/roadnames") {
     val roadNumber = params.get("roadNumber")
