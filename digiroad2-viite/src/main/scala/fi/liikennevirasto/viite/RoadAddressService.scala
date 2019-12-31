@@ -652,44 +652,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
-  /**
-    * Saves RoadwayPoint by using existing one, inserting new, or updating the existing one.
-    *
-    * @param roadwayPoint
-    * @return id of the RoadwayPoint
-    */
-  def saveRoadwayPoint(roadwayPoint: RoadwayPoint): Long = {
-    if (roadwayPoint.isNew) {
-      val existing = roadwayPointDAO.fetch(roadwayPoint.roadwayNumber, roadwayPoint.addrMValue)
-      if (existing.isDefined) {
-        existing.get.id
-      } else {
-        roadwayPointDAO.create(roadwayPoint);
-      }
-    } else {
-      val roadwayNumber = roadwayPoint.roadwayNumber
-      val addrM = roadwayPoint.addrMValue
-      val roadwayPointId = roadwayPoint.id
-      val existing = roadwayPointDAO.fetch(roadwayNumber, addrM)
-      if (existing.isDefined) {
-
-        // Take existing roadway point in use.
-        // Update all points (nodePoint, junctionPoint, calibrationPoint) that currently refer to
-        // the updatable roadway point to use the existing roadway point.
-        val nodePoints = nodePointDAO.fetchByRoadwayPointId(roadwayPointId)
-        nodePoints.foreach(np => nodePointDAO.updateRoadwayPointId(np.id, existing.get.id))
-        val junctionPoints = junctionPointDAO.fetchByRoadwayPointId(roadwayPointId)
-        junctionPoints.foreach(jp => junctionPointDAO.updateRoadwayPointId(jp.id, roadwayPointId))
-        val calibrationPoints = CalibrationPointDAO.fetchByRoadwayPoint(roadwayPointId)
-        calibrationPoints.foreach(cp => CalibrationPointDAO.updateRoadwayPoint(roadwayPointId, cp.linkId, cp.startOrEnd))
-
-        existing.get.id
-      } else {
-        roadwayPointDAO.update(roadwayPoint)
-      }
-    }
-  }
-
   def handleRoadwayPointsUpdate(roadwayChanges: List[ProjectRoadwayChange], mappedRoadwayNumbers: Seq[RoadwayNumbersLinkChange], username: String = "-"): Unit = {
     def handleDualRoadwayPoints(oldRoadwayPointId: Long, newRoadwayNumber: Long, newStartAddr: Long): Option[Long] = {
       val existingRoadwayPoint = roadwayPointDAO.fetch(newRoadwayNumber, newStartAddr)
