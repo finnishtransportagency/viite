@@ -1187,9 +1187,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "addrM" -> nodePoint.addrM,
       "roadwayNumber" -> nodePoint.roadwayNumber,
       "beforeAfter" -> nodePoint.beforeAfter.value,
-      "type" -> nodePoint.nodePointType.value,
-      "x" -> null,
-      "y" -> null
+      "type" -> nodePoint.nodePointType.value
     )
   }
 
@@ -1255,9 +1253,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("id" -> junction._1.id,
       "junctionNumber" -> junction._1.junctionNumber.orNull,
       "nodeNumber" -> junction._1.nodeNumber,
-      "junctionPoints" -> junction._2.map(junctionPointToApi),
-      "x" -> null,
-      "y" -> null
+      "junctionPoints" -> junction._2.map(junctionPointToApi)
     )
   }
 
