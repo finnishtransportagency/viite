@@ -88,15 +88,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def getRoadLinkMiddlePointByMtkId(mtkId: Long):  Option[Point] = {
     vvhClient.roadLinkData.fetchByMmlId(mtkId).flatMap { vvhRoadLink =>
-      //val point = GeometryUtils.calculatePointFromLinearReference(vvhRoadLink.geometry, GeometryUtils.geometryLength(vvhRoadLink.geometry) / 2.0)
       Option(GeometryUtils.midPointGeometry(vvhRoadLink.geometry))
-      /*
-      point match {
-        case Some(point) => Some(vvhRoadLink.linkId, point)
-        case None => None
-      }
-      */
-
     }
   }
 
