@@ -45,7 +45,7 @@
                 field = '<div id="datePicker" value="' + dataField + '" data-roadId="' + roadId + '" data-FieldName="' + fieldName + '">' +
                     '<input id="datePickerInput" class="' + inputClass + ' date-picker-input" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%">' +
                     '</div>';
-            } else if (fieldName === "roadName"){
+            } else if (fieldName === "roadName") {
                 field = '<div>' +
                     '<input class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' +
                     roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%" ' +
@@ -53,7 +53,7 @@
                     '</div>';
             } else {
                 field = '<div>' +
-                    '<input class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%" +  >' +
+                    '<input class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%">' +
                     '</div>';
             }
             return field;
