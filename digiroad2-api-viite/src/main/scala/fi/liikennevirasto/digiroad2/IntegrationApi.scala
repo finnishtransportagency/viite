@@ -6,7 +6,7 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, Junction, JunctionPoint, LinearLocation, Node, NodePoint, Roadway}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import org.joda.time.DateTime
@@ -273,7 +273,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       "name" -> node.name,
       "type" -> node.nodeType.value,
       "start_date" -> node.startDate.toString,
-      "end_date" -> (if(node.endDate.isDefined) node.endDate.get.toString else null),
+      "end_date" -> (if (node.endDate.isDefined) node.endDate.get.toString else null),
       "user" -> node.createdBy
     )
   }
@@ -286,7 +286,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       "track" -> nodePoint.track.value,
       "distance" -> nodePoint.addrM,
       "start_date" -> nodePoint.startDate.toString,
-      "end_date" -> (if(nodePoint.endDate.isDefined) nodePoint.endDate.get.toString else null),
+      "end_date" -> (if (nodePoint.endDate.isDefined) nodePoint.endDate.get.toString else null),
       "user" -> nodePoint.createdBy
     )
   }
@@ -295,7 +295,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     Map(
       "junction_number" -> (if (junction._1.junctionNumber.isDefined) junction._1.junctionNumber.get else null),
       "start_date" -> junction._1.startDate.toString,
-      "end_date" -> (if(junction._1.endDate.isDefined) junction._1.endDate.get.toString else null),
+      "end_date" -> (if (junction._1.endDate.isDefined) junction._1.endDate.get.toString else null),
       "user" -> junction._1.createdBy,
       "junction_points" -> junction._2.map(junctionPointToApi))
   }
@@ -308,7 +308,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       "track" -> junctionPoint.track.value,
       "distance" -> junctionPoint.addrM,
       "start_date" -> junctionPoint.startDate.toString,
-      "end_date" -> (if(junctionPoint.endDate.isDefined) junctionPoint.endDate.get.toString else null),
+      "end_date" -> (if (junctionPoint.endDate.isDefined) junctionPoint.endDate.get.toString else null),
       "user" -> junctionPoint.createdBy
     )
   }
