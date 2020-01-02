@@ -81,6 +81,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, roadLink.length / 2.0).getOrElse(Point(roadLink.geometry.head.x, roadLink.geometry.head.y))
     }
   }
+  /**
+    * Returns road link middle point by mtk id. Used to select a road link by url to be shown on map (for example: index.html#linkProperty/mtkid/12345).
+    *
+    *
+    */
+  def getRoadLinkMiddlePointByMtkId(mtkId: Long):  Option[Point] = {
+    vvhClient.roadLinkData.fetchByMmlId(mtkId).flatMap { vvhRoadLink =>
+      Option(GeometryUtils.midPointGeometry(vvhRoadLink.geometry))
+    }
+  }
 
   def getRoadLinkByLinkIdFromVVH(linkId: Long): Option[RoadLink] = getRoadLinksByLinkIdsFromVVH(Set(linkId)).headOption
 
