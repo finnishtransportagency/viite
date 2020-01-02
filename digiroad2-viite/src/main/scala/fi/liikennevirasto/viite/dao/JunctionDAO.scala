@@ -175,7 +175,7 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
-  def fetchHistoryByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[Junction] = {
+  def fetchExpiredByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[Junction] = {
     if (roadwayNumbers.nonEmpty) {
       val query =
         s"""
