@@ -141,7 +141,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getNodesWithTimeInterval(sinceDate: DateTime, untilDate: Option[DateTime]) : Map[Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
+  def getNodesWithTimeInterval(sinceDate: DateTime, untilDate: Option[DateTime]): Map[Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
     withDynSession {
       val nodes = nodeDAO.fetchAllByDateRange(sinceDate, untilDate)
       val nodePoints = nodePointDAO.fetchByNodeNumbers(nodes.map(_.nodeNumber))
@@ -165,7 +165,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getNodePointTemplates(authorizedElys: Seq[Int]): Seq[NodePoint] = {
-    withDynSession{
+    withDynSession {
       time(logger, "Fetch node point templates") {
         val allNodePointTemplates = nodePointDAO.fetchTemplates()
         allNodePointTemplates.filter(template => authorizedElys.contains(template.elyCode))
@@ -182,7 +182,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getJunctionTemplates(authorizedElys: Seq[Int]): Seq[JunctionTemplate] = {
-    withDynSession{
+    withDynSession {
       time(logger, "Fetch Junction templates") {
         val allJunctionTemplates = junctionDAO.fetchTemplates()
         allJunctionTemplates.filter(jt => jt.roadNumber != 0 && authorizedElys.contains(jt.elyCode)).groupBy(_.id).map(junctionTemplate => {
@@ -207,7 +207,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val linkHeadJunction = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
         val roadsToHeadJunction = roadsToHead.flatMap(rh => junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.endAddrMValue, BeforeAfter.Before))
         val roadsFromHeadJunction = roadsFromHead.flatMap(rh => junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.startAddrMValue, BeforeAfter.After))
-        (linkHeadJunction++roadsToHeadJunction++roadsFromHeadJunction).map(_.junctionId).toSeq.distinct
+        (linkHeadJunction ++ roadsToHeadJunction ++ roadsFromHeadJunction).map(_.junctionId).toSeq.distinct
       }
       junctionDAO.fetchByIds(junctionIds)
     }
@@ -217,7 +217,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val linkHeadJunction = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)
         val roadsToTailJunction = roadsToTail.flatMap(rh => junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.endAddrMValue, BeforeAfter.Before))
         val roadsFromTailJunction = roadsFromTail.flatMap(rh => junctionPointDAO.fetchJunctionPointsByRoadwayPoints(rh.roadwayNumber, rh.startAddrMValue, BeforeAfter.After))
-        (linkHeadJunction++roadsToTailJunction++roadsFromTailJunction).map(_.junctionId).toSeq.distinct
+        (linkHeadJunction ++ roadsToTailJunction ++ roadsFromTailJunction).map(_.junctionId).toSeq.distinct
       }
       junctionDAO.fetchByIds(junctionIds)
     }
@@ -249,7 +249,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, link.createdBy.getOrElse("-"))
       }
       val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
-      if(linkJunctionPoint.isEmpty) {
+      if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, link.createdBy.getOrElse("-"), Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
       }
@@ -282,7 +282,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, r.createdBy.getOrElse("-"))
       }
       val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
-      if(linkJunctionPoint.isEmpty) {
+      if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, link.createdBy.getOrElse("-"), Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
       }
@@ -315,7 +315,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         roadwayPointDAO.create(link.roadwayNumber, link.endAddrMValue, r.createdBy.getOrElse("-"))
       }
       val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)
-      if(linkJunctionPoint.isEmpty) {
+      if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, link.createdBy.getOrElse("-"), Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
       }
@@ -348,19 +348,19 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         roadwayPointDAO.create(link.roadwayNumber, link.endAddrMValue, r.createdBy.getOrElse("-"))
       }
       val linkJunctionPoint = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)
-      if(linkJunctionPoint.isEmpty) {
+      if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, link.createdBy.getOrElse("-"), Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
       }
     }
 
     time(logger, "Handling junction point templates") {
-      val nonTerminatedLinks:Seq[BaseRoadAddress] = projectLinks.filter(pl => pl.status != LinkStatus.Terminated)
+      val nonTerminatedLinks: Seq[BaseRoadAddress] = projectLinks.filter(pl => pl.status != LinkStatus.Terminated)
       nonTerminatedLinks.foreach { projectLink =>
         val roadNumberLimits = Seq((RoadClass.forJunctions.start, RoadClass.forJunctions.end))
 
-        val roadsInFirstPoint:Seq[BaseRoadAddress] = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(projectLink.startingPoint, projectLink.startingPoint), roadNumberLimits).filterNot(_.linearLocationId == projectLink.linearLocationId)
-        val roadsInLastPoint:Seq[BaseRoadAddress] = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(projectLink.endPoint, projectLink.endPoint), roadNumberLimits).filterNot(_.linearLocationId == projectLink.linearLocationId)
+        val roadsInFirstPoint: Seq[BaseRoadAddress] = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(projectLink.startingPoint, projectLink.startingPoint), roadNumberLimits).filterNot(_.linearLocationId == projectLink.linearLocationId)
+        val roadsInLastPoint: Seq[BaseRoadAddress] = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(projectLink.endPoint, projectLink.endPoint), roadNumberLimits).filterNot(_.linearLocationId == projectLink.linearLocationId)
         /*
           * RoadAddresses where a junction will be created or updated if there's one already
           * * Ramps;
@@ -382,50 +382,50 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             (head, tail)
           } else {
             projectLink.discontinuity match {
-            case Discontinuity.EndOfRoad =>
-              // Discontinuity EndOfRoad for same road number - The road ends in itself.
+              case Discontinuity.EndOfRoad =>
+                // Discontinuity EndOfRoad for same road number - The road ends in itself.
                 val head = roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
-              val tail = roadsInLastPoint
-              (head, tail)
-            case Discontinuity.MinorDiscontinuity =>
-              // Discontinuity cases for same road number
-              val head = if(roadsInFirstPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
-              roadsInFirstPoint
-              else
-                roadsInFirstPoint filterNot RoadAddressFilters.sameRoad(projectLink)
-              //even if there are no connecting points (for e.g. in case of a geometry jump), the discontinuous links should have one junction point in the ending point in middle of the part (MinorDiscontinuity)
-              val tail:Seq[BaseRoadAddress] = if(roadsInLastPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
-                roadsInLastPoint
-              else
-                roadsInLastPoint.filter(r =>  RoadAddressFilters.continuousTopology(r)(projectLink) || RoadAddressFilters.connectingBothTails(r)(projectLink))
-              (head, tail)
-            case _ =>
-              val head = if(roadsInFirstPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
-                roadsInFirstPoint.filter(r => RoadAddressFilters.continuousTopology(r)(projectLink) || RoadAddressFilters.connectingBothHeads(r)(projectLink))
-              else if(nonTerminatedLinks.exists(fl=>RoadAddressFilters.continuousRoadPartTrack(fl)(projectLink) && RoadAddressFilters.discontinuousTopology(fl)(projectLink)))
-                roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink)) ++ nonTerminatedLinks.filter(fl => fl.id != projectLink.id && (RoadAddressFilters.halfContinuousHalfDiscontinuous(fl)(projectLink) || projectLink.startingPoint.connected(fl.startingPoint)))
-              else
-                roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
+                val tail = roadsInLastPoint
+                (head, tail)
+              case Discontinuity.MinorDiscontinuity =>
+                // Discontinuity cases for same road number
+                val head = if (roadsInFirstPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
+                  roadsInFirstPoint
+                else
+                  roadsInFirstPoint filterNot RoadAddressFilters.sameRoad(projectLink)
+                //even if there are no connecting points (for e.g. in case of a geometry jump), the discontinuous links should have one junction point in the ending point in middle of the part (MinorDiscontinuity)
+                val tail: Seq[BaseRoadAddress] = if (roadsInLastPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
+                  roadsInLastPoint
+                else
+                  roadsInLastPoint.filter(r => RoadAddressFilters.continuousTopology(r)(projectLink) || RoadAddressFilters.connectingBothTails(r)(projectLink))
+                (head, tail)
+              case _ =>
+                val head = if (roadsInFirstPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
+                  roadsInFirstPoint.filter(r => RoadAddressFilters.continuousTopology(r)(projectLink) || RoadAddressFilters.connectingBothHeads(r)(projectLink))
+                else if (nonTerminatedLinks.exists(fl => RoadAddressFilters.continuousRoadPartTrack(fl)(projectLink) && RoadAddressFilters.discontinuousTopology(fl)(projectLink)))
+                  roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink)) ++ nonTerminatedLinks.filter(fl => fl.id != projectLink.id && (RoadAddressFilters.halfContinuousHalfDiscontinuous(fl)(projectLink) || projectLink.startingPoint.connected(fl.startingPoint)))
+                else
+                  roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
 
-              val tail =  if(roadsInLastPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
-                roadsInLastPoint
-              else if(roadsInLastPoint.exists(fl=>RoadAddressFilters.halfContinuousHalfDiscontinuous(projectLink)(fl)))
-                roadsInLastPoint
-              else
-                roadsInLastPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
+                val tail = if (roadsInLastPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
+                  roadsInLastPoint
+                else if (roadsInLastPoint.exists(fl => RoadAddressFilters.halfContinuousHalfDiscontinuous(projectLink)(fl)))
+                  roadsInLastPoint
+                else
+                  roadsInLastPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
 
-              (head, tail)
+                (head, tail)
             }
           }
         }
 
-        val roadsToHead = headRoads.filter(hr=> RoadAddressFilters.continuousTopology(hr)(projectLink) || RoadAddressFilters.afterDiscontinuousJump(hr)(projectLink))
+        val roadsToHead = headRoads.filter(hr => RoadAddressFilters.continuousTopology(hr)(projectLink) || RoadAddressFilters.afterDiscontinuousJump(hr)(projectLink))
         val roadsFromHead = headRoads.filter(hr => RoadAddressFilters.connectingBothHeads(hr)(projectLink))
 
-        val roadsToTail = tailRoads.filter(tr=> RoadAddressFilters.connectingBothTails(tr)(projectLink))
+        val roadsToTail = tailRoads.filter(tr => RoadAddressFilters.connectingBothTails(tr)(projectLink))
         val roadsFromTail = tailRoads.filter(tr => RoadAddressFilters.continuousTopology(projectLink)(tr))
 
-        /*  handle creation of JUNCTION_POINT in reverse cases */
+        /* handle creation of JUNCTION_POINT in reverse cases */
         val junctionReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && projectLink.startAddrMValue >= ch.changeInfo.target.startAddressM.get
           && ch.changeInfo.target.endAddressM.nonEmpty && projectLink.endAddrMValue <= ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed)
 
@@ -468,7 +468,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           * L:project link
           * 0:junction point
         */
-        //passed by collections "junctions in Head/ToTail" need to be passed for every iteration
+        // passed by collections "junctions in Head/ToTail" need to be passed for every iteration
         roadsToHead.foreach { roadAddress: BaseRoadAddress => handleRoadsToHead(projectLink, getJunctionsInHead(projectLink, roadsToHead, roadsFromHead), roadAddress) }
 
         roadsFromHead.foreach { roadAddress: BaseRoadAddress => handleRoadsFromHead(projectLink, getJunctionsInHead(projectLink, roadsToHead, roadsFromHead), getJunctionsInHead(projectLink, roadsToHead, roadsFromHead), roadAddress) }
@@ -622,7 +622,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       logger.info(s"Modified roadway number: $roadwayNumbersSection")
       val roadwayPointIds = roadwayPointDAO.fetchByRoadwayNumbers(roadwayNumbersSection).map(_.id)
       val sortedRoadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbersSection.toSet).sortBy(_.startAddrMValue)
-      val obsoleteNodePoints = if(sortedRoadways.nonEmpty){
+      val obsoleteNodePoints = if (sortedRoadways.nonEmpty) {
         val (startAddrMValue, endAddrMValue) = (sortedRoadways.head.startAddrMValue, sortedRoadways.last.endAddrMValue)
         nodePointDAO.fetchByRoadwayPointIds(roadwayPointIds)
           .filter(_.nodePointType == NodePointType.RoadNodePoint)
@@ -638,18 +638,18 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           case junctionPoints if junctionPoints.exists(jp => RoadClass.RampsAndRoundaboutsClass.roads.contains(jp.roadNumber)) =>
             val junctionPointsToCheck = junctionPoints.filterNot(jp => terminatedJunctionPoints.map(_.id).contains(jp.id))
             if (junctionPointsToCheck.size <= 1) {
-              //basic rule
+              // basic rule
               junctionPointsToCheck
-            } else if(ObsoleteJunctionPointFilters.rampsAndRoundaboutsDisContinuityInSameOwnRoadNumber(junctionPointsToCheck) ||
+            } else if (ObsoleteJunctionPointFilters.rampsAndRoundaboutsDisContinuityInSameOwnRoadNumber(junctionPointsToCheck) ||
               junctionPoints.groupBy(jp => (jp.roadNumber, jp.roadPartNumber)).keys.size > 1)
               Seq.empty[JunctionPoint]
             else junctionPointsToCheck
           case junctionPoints if !junctionPoints.forall(jp => RoadClass.RampsAndRoundaboutsClass.roads.contains(jp.roadNumber)) =>
 
             val junctionPointsToCheck = junctionPoints.filterNot(jp => terminatedJunctionPoints.map(_.id).contains(jp.id))
-            //check if the terminated junction Points are the unique ones in the Junction to avoid further complex validations
+            // check if the terminated junction Points are the unique ones in the Junction to avoid further complex validations
             if (junctionPointsToCheck.size <= 1) {
-              //basic rule
+              // basic rule
               junctionPointsToCheck
             } else if (ObsoleteJunctionPointFilters.multipleRoadNumberIntersection(junctionPointsToCheck) ||
               ObsoleteJunctionPointFilters.sameRoadAddressIntersection(junctionPointsToCheck) ||
@@ -674,7 +674,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val junctionIdsToCheck = junctionPoints.map(_.junctionId).distinct
 
       // Remove junctions that no longer have valid junction Points
-      val junctionsToExpireIds = junctionIdsToCheck.filter{ id =>
+      val junctionsToExpireIds = junctionIdsToCheck.filter { id =>
         junctionDAO.fetchJunctionByIdWithValidPoints(id).isEmpty
       }
 
