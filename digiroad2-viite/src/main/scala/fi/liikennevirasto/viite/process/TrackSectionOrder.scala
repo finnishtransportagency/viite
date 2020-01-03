@@ -385,12 +385,21 @@ object TrackSectionOrder {
       setOnSideCalibrationPoints(rightProjectLinks, raCalibrationPointsNSide, userDefinedCalibrationPoint))
   }
 
-
   protected def setOnSideCalibrationPoints(projectLinks: Seq[ProjectLink], raCalibrationPointsNSide: Map[Long, (CalibrationCode, SideCode)], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
-          val calPointSource1 = if (projectLinks.tail.head.calibrationPoints._1.isDefined) projectLinks.tail.head.calibrationPoints._1.get.source else ProjectLinkSource
-          val calPointSource2 = if (projectLinks.init.last.calibrationPoints._2.isDefined) projectLinks.init.last.calibrationPoints._2.get.source else ProjectLinkSource
-          val raCPs = Seq(setCalibrationPoint(projectLinks.head, userCalibrationPoint.get(projectLinks.head.id), startCP = true, endCP = projectLinks.tail.head.calibrationPoints._1.isDefined, calPointSource1)) ++ projectLinks.init.tail ++
-            Seq(setCalibrationPoint(projectLinks.last, userCalibrationPoint.get(projectLinks.last.id), projectLinks.init.last.calibrationPoints._2.isDefined, endCP = true, calPointSource2))
+    if (projectLinks.head.status == NotHandled)
+      projectLinks
+    else
+      projectLinks.size match {
+        case 0 => projectLinks
+        case 1 =>
+          projectLinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id), startCP = true, endCP = true, ProjectLinkSource))
+        case _ =>
+
+          val resetedPlsCps = projectLinks.map(_.copy(calibrationPoints = (None, None)))
+          val calPointSource1 = if (resetedPlsCps.tail.head.calibrationPoints._1.isDefined) resetedPlsCps.tail.head.calibrationPoints._1.get.source else ProjectLinkSource
+          val calPointSource2 = if (resetedPlsCps.init.last.calibrationPoints._2.isDefined) resetedPlsCps.init.last.calibrationPoints._2.get.source else ProjectLinkSource
+          val raCPs = Seq(setCalibrationPoint(resetedPlsCps.head, userCalibrationPoint.get(resetedPlsCps.head.id), startCP = true, endCP = resetedPlsCps.tail.head.calibrationPoints._1.isDefined, calPointSource1)) ++ resetedPlsCps.init.tail ++
+            Seq(setCalibrationPoint(resetedPlsCps.last, userCalibrationPoint.get(resetedPlsCps.last.id), resetedPlsCps.init.last.calibrationPoints._2.isDefined, endCP = true, calPointSource2))
 
           val linksWithCPs: Seq[ProjectLink] = raCPs.foldLeft(Seq.empty[ProjectLink]) {(list, i) =>
             if (list.isEmpty) {
@@ -406,7 +415,9 @@ object TrackSectionOrder {
             }
           }
           linksWithCPs
+      }
   }
+
   protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint],
                                     startCP: Boolean, endCP: Boolean, source: CalibrationPointSource = UnknownSource): ProjectLink = {
     val sCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
