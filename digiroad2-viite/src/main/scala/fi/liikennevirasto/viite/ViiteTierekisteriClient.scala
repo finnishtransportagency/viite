@@ -277,7 +277,7 @@ object ViiteTierekisteriClient {
 
     val response = client.execute(request)
     try {
-      val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRStatusResponse]
+      val receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRStatusResponse]
       Option(receivedData)
     } catch {
       case NonFatal(e) =>
