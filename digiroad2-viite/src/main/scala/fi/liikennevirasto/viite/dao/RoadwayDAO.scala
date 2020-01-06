@@ -486,7 +486,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   def fetchAllByRoadNumbers(roadNumbers: Set[Long]): Seq[Roadway] = {
-    time(logger, "Fetch road ways by road number") {
+    time(logger, "Fetch roadways by road number") {
       fetch(withRoadNumbersInValidDate(roadNumbers))
     }
   }
@@ -565,7 +565,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   def fetchAllByRoadwayId(roadwayIds: Seq[Long]): Seq[Roadway] = {
-    time(logger, "Fetch road ways by id") {
+    time(logger, "Fetch roadways by id") {
       if (roadwayIds.isEmpty) {
         Seq()
       } else {
