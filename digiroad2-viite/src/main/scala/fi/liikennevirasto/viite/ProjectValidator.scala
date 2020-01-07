@@ -31,7 +31,7 @@ class ProjectValidator {
   }
   lazy val vvhClient: VVHClient = new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   val eventBus = new DummyEventBus
-  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
+  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
