@@ -39,8 +39,10 @@ object DataFixture {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
 
+  private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
+
   val eventBus = new DummyEventBus
-  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
+  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, geometryFrozen)
   val roadAddressDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
@@ -49,9 +51,7 @@ object DataFixture {
   val junctionPointDAO = new JunctionPointDAO
   val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
 
-  lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer))
-
-  private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
+  lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen))
 
   private lazy val numberThreads: Int = 6
 
@@ -100,7 +100,7 @@ object DataFixture {
   def updateLinearLocationGeometry(): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    dataImporter.updateLinearLocationGeometry(vvhClient)
+    dataImporter.updateLinearLocationGeometry(vvhClient, geometryFrozen)
     println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
   }
@@ -109,7 +109,7 @@ object DataFixture {
     println(s"\nstart checking road network at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val username = properties.getProperty("bonecp.username")
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen)
     OracleDatabase.withDynTransaction {
       val checker = new RoadNetworkChecker(roadLinkService)
       checker.checkRoadNetwork(username)
@@ -183,7 +183,7 @@ object DataFixture {
 
   private def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
 
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer, geometryFrozen)
     val linearLocationDAO = new LinearLocationDAO
 
     println("Clearing cache...")
@@ -213,7 +213,7 @@ object DataFixture {
           println("Start processing municipality %d".format(municipality))
 
         //Obtain all RoadLink by municipality and change info from VVH
-        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt, geometryFrozen)
+        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
         val allRoadLinks = roadLinks
 
           println("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)

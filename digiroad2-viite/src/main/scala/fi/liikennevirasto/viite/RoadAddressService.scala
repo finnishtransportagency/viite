@@ -128,7 +128,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val boundingBoxResult = BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(linearLocationsLinkIds),
       Future((linearLocations, roadLinkService.getRoadLinksHistoryFromVVH(linearLocationsLinkIds))),
-      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(linearLocationsLinkIds, frozenTimeVVHAPIServiceEnabled)),
+      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(linearLocationsLinkIds)),
       Future(Seq())
     )
 
@@ -185,7 +185,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @return Returns all the filtered road addresses
     */
   def getAllByMunicipality(municipality: Int): Seq[RoadAddressLink] = {
-    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality, frozenTimeVVHAPIServiceEnabled)
+    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
 
     val linearLocations = withDynTransaction {
       time(logger, "Fetch addresses") {
@@ -572,7 +572,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       roadLinkService.getChangeInfoFromVVHF(boundingRectangle, Set()),
       //Should fetch all the road types
       Future(fetchLinearLocationsByBoundingBox(boundingRectangle)),
-      Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads, frozenTimeVVHAPIServiceEnabled)),
+      Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads)),
       Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, Set()))
     )
     getRoadAddressLinks(boundingBoxResult)
