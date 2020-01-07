@@ -35,15 +35,12 @@
       };
       var lon, lat = 0;
       addressMValue = _.isUndefined(addressMValue) ? 0 : addressMValue;
-      if (addressMValue === 0 && (roadData.startAddrMValue === addressMValue && roadData.sideCode === sideCodes.TowardsDigitizing.value)) {
+      if ((roadData.startAddrMValue === addressMValue && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValue && roadData.sideCode === sideCodes.AgainstDigitizing.value) ) {
         lon = roadData.geometry[0].x;
         lat = roadData.geometry[0].y;
-      } else if (addressMValue === 0 && (roadData.endAddrMValue === addressMValue && roadData.sideCode === sideCodes.AgainstDigitizing.value)) {
-        lon = roadData.geometry[roadData.geometry.length - 1].x;
-        lat = roadData.geometry[roadData.geometry.length - 1].y;
       } else {
         lon = roadData.geometry[roadData.geometry.length - 1].x;
-        lat = roadData.geometry[roadData.geometry.length - 1].y;
+        lat =  roadData.geometry[roadData.geometry.length - 1].y;
       }
       var title = constructTitle(roadData);
       if (lon && lat) {

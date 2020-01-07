@@ -145,9 +145,6 @@ class DataImporter {
       val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
       roadAddressImporter.importRoadAddress()
 
-      println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
-      sqlu"""UPDATE LINK
-        SET ADJUSTED_TIMESTAMP = ${importOptions.geometryAdjustedTimeStamp}""".execute
       println(s"${DateTime.now()} - Updating terminated roadways information")
       sqlu"""UPDATE ROADWAY SET TERMINATED = 2
             WHERE TERMINATED = 0 AND end_date IS NOT null AND EXISTS (SELECT 1 FROM ROADWAY rw
@@ -168,30 +165,30 @@ class DataImporter {
   private def updateNodePointType() = {
     sqlu"""
       UPDATE NODE_POINT NP SET "TYPE" = (SELECT CASE
-            -- [TYPE = 99] Includes expired node points points or points attached to expired nodes
+          -- [TYPE = 99] Includes expired node points points or points attached to expired nodes
           WHEN (point.VALID_TO IS NOT NULL OR NOT EXISTS (SELECT 1 FROM NODE node
             WHERE node.NODE_NUMBER = point.NODE_NUMBER AND (node.END_DATE IS NULL AND node.VALID_TO IS NULL))) THEN 99
           -- [TYPE = 1] Includes templates, points where ADDR_M is equal to START_ADDR_M or END_ADDR_M of the road (road_number, road_part_number and track) and when ROAD_TYPE changes
           WHEN point.NODE_NUMBER IS NULL THEN 1 -- node point template
           WHEN (rp.ADDR_M = (SELECT MIN(roadAddr.START_ADDR_M) FROM ROADWAY roadAddr
-            WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.TRACK = rw.TRACK AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
+            WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
             AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ADDR_M is equal to START_ADDR_M
           WHEN (rp.ADDR_M = (SELECT MAX(roadAddr.END_ADDR_M) FROM ROADWAY roadAddr
-            WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.TRACK = rw.TRACK AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
+            WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
             AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ADDR_M is equal to END_ADDR_M
-          WHEN ((SELECT roadAddr.ROAD_TYPE FROM ROADWAY roadAddr
-            WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.TRACK = rw.TRACK AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.START_ADDR_M = rp.ADDR_M
-          AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL) !=
-          (SELECT roadAddr.ROAD_TYPE FROM ROADWAY roadAddr
-            WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.TRACK = rw.TRACK AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.END_ADDR_M = rp.ADDR_M
-          AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ROAD_TYPE changed on ADDR_M
-            -- [TYPE = 2]
+          WHEN ((SELECT DISTINCT(roadAddr.ROAD_TYPE) FROM ROADWAY roadAddr
+              WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.START_ADDR_M = rp.ADDR_M
+              AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL) !=
+            (SELECT DISTINCT(roadAddr.ROAD_TYPE) FROM ROADWAY roadAddr
+              WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.END_ADDR_M = rp.ADDR_M
+              AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ROAD_TYPE changed on ADDR_M
+          -- [TYPE = 2]
           ELSE 2
-          END AS NODE_POINT_TYPE
-          FROM NODE_POINT point
-          LEFT JOIN ROADWAY_POINT rp ON point.ROADWAY_POINT_ID = rp.ID
-          LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-          WHERE point.ID = NP.ID)""".execute
+        END AS NODE_POINT_TYPE
+        FROM NODE_POINT point
+        LEFT JOIN ROADWAY_POINT rp ON point.ROADWAY_POINT_ID = rp.ID
+        LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+          WHERE point.ID = NP.ID AND ROWNUM = 1)""".execute
   }
 
   def importNodesAndJunctions(conversionDatabase: DatabaseDef) = {
@@ -367,6 +364,6 @@ class DataImporter {
 
 }
 
-case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, geometryAdjustedTimeStamp: Long, conversionTable: String, onlyCurrentRoads: Boolean)
+case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, conversionTable: String, onlyCurrentRoads: Boolean)
 case class RoadPart(roadNumber: Long, roadPart: Long, ely: Long)
 

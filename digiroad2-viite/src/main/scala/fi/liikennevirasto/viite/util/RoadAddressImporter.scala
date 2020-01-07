@@ -63,7 +63,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def linkStatement(): PreparedStatement = {
-    dynamicSession.prepareStatement(sql = "Insert into LINK (ID, SOURCE) values(?, ?)")
+    dynamicSession.prepareStatement(sql = "Insert into LINK (ID, SOURCE, ADJUSTED_TIMESTAMP) values(?, ?, ?)")
   }
 
   def datePrinter(date: Option[DateTime]): String = {
@@ -302,18 +302,18 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
   }
 
   private def handlePoints(roadwayPointPs: PreparedStatement, calibrationPointPs: PreparedStatement, startCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)], endCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)]): Unit = {
-    if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id == NewIdValue) {
+    if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.isNew) {
       val roadwayPointId = insertRoadwayPoint(roadwayPointPs, startCalibrationPoint.get._1)
       insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2.copy(roadwayPointId = roadwayPointId))
     }
-    else if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id != NewIdValue && startCalibrationPoint.get._2.id == NewIdValue) {
+    else if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.isNotNew && startCalibrationPoint.get._2.id == NewIdValue) {
       insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2)
     }
-    if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id == NewIdValue) {
+    if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.isNew) {
       val roadwayPointId = insertRoadwayPoint(roadwayPointPs, endCalibrationPoint.get._1)
       insertCalibrationPoint(calibrationPointPs, endCalibrationPoint.get._2.copy(roadwayPointId = roadwayPointId))
     }
-    else if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id != NewIdValue && endCalibrationPoint.get._2.id == NewIdValue) {
+    else if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.isNotNew && endCalibrationPoint.get._2.id == NewIdValue) {
       insertCalibrationPoint(calibrationPointPs, endCalibrationPoint.get._2)
     }
   }
@@ -324,6 +324,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         if (LinkDAO.fetch(link.linkId).isEmpty) {
           statement.setLong(1, link.linkId)
           statement.setLong(2, link.linkSource.value)
+          statement.setLong(3, link.vvhTimeStamp)
           statement.addBatch()
         }
     }

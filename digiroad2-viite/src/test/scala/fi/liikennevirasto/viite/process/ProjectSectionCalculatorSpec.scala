@@ -535,6 +535,9 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val idRoad0 = 0L //   U>
       val idRoad1 = 1L //   U>
       val idRoad2 = 2L //   N>
+      /*
+      |--U-->|--U-->|--N-->|
+       */
       val projectLink0 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(idRoad0, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
         0L, 9L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad0, 0.0, 8.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad0, 0.0, 0L)), None),
         Seq(Point(20.0, 10.0), Point(28, 10)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))

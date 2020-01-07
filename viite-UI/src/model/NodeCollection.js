@@ -52,6 +52,10 @@
       });
     };
 
+    this.getCoordinates = function (roadNumber, roadPartNumber, addrM, setCoordinates) {
+      locationSearch.search(roadNumber + ' ' + roadPartNumber + ' ' + addrM).then(setCoordinates);
+    };
+
     eventbus.on('node:fetched', function(fetchResult, zoom) {
       var nodes = fetchResult.nodes;
       var nodePointTemplates = fetchResult.nodePointTemplates;
