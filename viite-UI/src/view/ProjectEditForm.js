@@ -161,11 +161,15 @@
       var trackCodeDropdown = $('#trackCodeDropdown')[0];
       filled = filled && !_.isUndefined(trackCodeDropdown) && !_.isUndefined(trackCodeDropdown.value) && trackCodeDropdown.value !== '99';
 
+      var roadTypeCodeDropdown = $('#roadTypeDropdown')[0];
+      filled = filled && !_.isUndefined(roadTypeCodeDropdown) && !_.isUndefined(roadTypeCodeDropdown.value) && roadTypeCodeDropdown.value !== '0';
+
       if (filled) {
         rootElement.find('.project-form button.update').prop("disabled", false);
       } else {
         rootElement.find('.project-form button.update').prop("disabled", true);
       }
+
     };
 
     var changeDropDownValue = function (statusCode) {
@@ -189,9 +193,9 @@
           break;
         case LinkStatus.Numbering.value:
           $("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").attr('selected', 'selected').change();
+          break;
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
-      $('#roadTypeDropdown').val(selectedProjectLink[0].roadTypeId);
     };
 
     var removeNumberingFromDropdown = function () {
@@ -544,6 +548,10 @@
       });
 
       rootElement.on('change', '#trackCodeDropdown', function () {
+        checkInputs('.project-');
+      });
+
+      rootElement.on('change', '#roadTypeDropdown', function () {
         checkInputs('.project-');
       });
 

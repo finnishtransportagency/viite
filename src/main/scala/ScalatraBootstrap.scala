@@ -22,7 +22,7 @@ class ScalatraBootstrap extends LifeCycle {
       val url = Digiroad2Context.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
       if ("http://localhost.*/api/trrest/".r.findFirstIn(url).nonEmpty) {
         println("Using local tierekisteri mock at /api/trrest/")
-        context.mount(new ViiteTierekisteriMockApi, "/api/trrest/*")
+        context.mount(new ViiteTierekisteriMockApi(Digiroad2Context.projectService), "/api/trrest/*")
       } else {
         println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         println("NOTE! Tierekisteri integration enabled but not using local mock")
@@ -30,7 +30,7 @@ class ScalatraBootstrap extends LifeCycle {
       }
     } else {
       // Mount for manual testing purposes but do not use them
-      context.mount(new ViiteTierekisteriMockApi, "/api/trrest/*")
+      context.mount(new ViiteTierekisteriMockApi(Digiroad2Context.projectService), "/api/trrest/*")
     }
 
     context.mount(new ResourcesApp, "/api-docs")

@@ -203,6 +203,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     projectLinksWithAssignedValuesBefore.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value))
   }
 
+  //TODO should not be ignored after VIITE-2214
   test("Test defaultSectionCalculatorStrategy.findStartingPoints() When adding one (New) link before the existing (Transfer) road but where the first link was terminated Then the road should still maintain the previous existing direction") {
    runWithRollback{
     val geomTerminatedComb1 = Seq(Point(30.0, 10.0), Point(30.0, 20.0))
@@ -238,6 +239,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
    }
   }
 
+  //TODO should not be ignored after VIITE-2214
   test("Test defaultSectionCalculatorStrategy.findStartingPoints() When adding one (New) link with inverted geometry before the existing (Transfer) road but where the first link was terminated Then the road should still maintain the previous existing direction") {
     runWithRollback{
     val geomTerminatedComb1 = Seq(Point(30.0, 10.0), Point(30.0, 20.0))
@@ -273,6 +275,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     }
   }
 
+  //TODO should not be ignored after VIITE-2214
   test("Test defaultSectionCalculatorStrategy.findStartingPoints() When adding two (New) links before and after existing transfer links(s) but where the first link was terminated Then the road should maintain the previous direction") {
     runWithRollback {
       val geomTerminatedComb1 = Seq(Point(40.0, 20.0), Point(40.0, 30.0))

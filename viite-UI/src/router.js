@@ -23,6 +23,7 @@
       routes: {
         'linkProperty/:linkId': 'linkProperty',
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
+        'linkProperty/mtkid/:mtkid': 'linkPropertyByMtk',
         'roadAddressProject/:projectId': 'roadAddressProject',
         'historyLayer/:date': 'historyLayer',
         'work-list/floatingRoadAddress' : 'floatingAddressesList',
@@ -53,6 +54,16 @@
         });
       },
 
+      linkPropertyByMtk: function (mtkid) {
+        applicationModel.selectLayer('linkProperty');
+        backend.getRoadLinkByMtkId(mtkid, function (response) {
+          eventbus.once('linkProperties:available', function () {
+            models.selectedLinkProperty.open(response.id);
+          });
+          map.getView().setCenter([response.x, response.y]);
+          map.getView().setZoom(12);
+      });
+    },
       roadAddressProject: function (projectId) {
         applicationModel.selectLayer('roadAddressProject');
         eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);

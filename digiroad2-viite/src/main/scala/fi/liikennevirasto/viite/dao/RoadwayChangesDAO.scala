@@ -3,8 +3,8 @@ package fi.liikennevirasto.viite.dao
 import java.sql.PreparedStatement
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.viite.{ProjectService, RoadType, dao}
-import fi.liikennevirasto.viite.dao.Discontinuity.{ChangingELYCode, Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
+import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, ParallelLink}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadwaySection}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -206,11 +206,10 @@ class RoadwayChangesDAO {
     def checkContinuityMergingRows(previousRow: ChangeRow, nextRow: ChangeRow): Boolean = {
       // Checking sourceDiscontinuity
       (((previousRow.sourceDiscontinuity == nextRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty) && previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value))
-        || (previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value))) &&
+        || (previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value))) && nextRow.sourceDiscontinuity.get != Discontinuity.ParallelLink.value  &&
       // Checking targetDiscontinuity
       (((previousRow.targetDiscontinuity == nextRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty) && previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value))
-        || (previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.targetDiscontinuity.contains(Discontinuity.Continuous.value)))
-
+        || (previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.targetDiscontinuity.contains(Discontinuity.Continuous.value))) && nextRow.targetDiscontinuity.get != Discontinuity.ParallelLink.value
     }
 
     resultList.groupBy(r =>
