@@ -213,7 +213,7 @@
     }
 
     function getReversed(changeInfoSeq){
-      return ((changeInfoSeq.reversed) ? '<td class="project-change-table-dimension">&#9745</td>': '<td class="project-change-table-dimension">&#9744</td>');
+      return ((changeInfoSeq.reversed) ? '<td class="project-change-table-dimension">&#10004;</td>': '<td class="project-change-table-dimension"></td>');
     }
 
     function getEmptySource(changeInfoSeq) {
