@@ -746,21 +746,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               list
             }
           } else if (change.changeType == Termination) {
-            val rwPoints: Seq[(Long, Long, String, Long)] = roadwayPoints.flatMap { rwp =>
+            val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
               val terminatedRoadAddress = terminatedRoadwayNumbersChanges.find(change => change.oldRoadwayNumber == rwp.roadwayNumber &&
                 change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get
               )
               if (terminatedRoadAddress.isDefined) {
-                val newAddrM = if (!change.reversed) {
-                  terminatedRoadAddress.get.newStartAddr + (rwp.addrMValue - source.startAddressM.get)
-                } else terminatedRoadAddress.get.newEndAddr - (rwp.addrMValue - source.startAddressM.get)
-                val roadwayNumberInPoint = terminatedRoadAddress.get.newRoadwayNumber
-                Seq((roadwayNumberInPoint, newAddrM, username, rwp.id))
+                val roadwayNumberInPoint = terminatedRoadAddress.get.oldRoadwayNumber
+                Seq(rwp.copy(roadwayNumber = roadwayNumberInPoint, addrMValue = rwp.addrMValue, modifiedBy = Some(username)))
               } else Seq()
             }
             list ++ rwPoints
-          } else
-            list
+          } else list
         } else list
       }
 
