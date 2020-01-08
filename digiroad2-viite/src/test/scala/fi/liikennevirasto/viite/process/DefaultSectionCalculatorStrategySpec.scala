@@ -204,7 +204,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   }
 
   test("Test defaultSectionCalculatorStrategy.findStartingPoints() When adding one (New) link before the existing (Transfer) road but where the first link was terminated Then the road should still maintain the previous existing direction") {
-   runWithRollback{
+   runWithRollback {
     val geomTerminatedComb1 = Seq(Point(30.0, 10.0), Point(30.0, 20.0))
     val geomTransferComb1 = Seq(Point(30.0, 20.0), Point(20.0, 30.0))
     val geomTransferComb2 = Seq(Point(20.0, 30.0), Point(10.0, 40.0))
@@ -214,18 +214,18 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       None, 12344L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
       geomTerminatedComb1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTerminatedComb1), 0L, 0, 0, reversed = false,
       None, 86400L)
-    val projectLinkComb1 = ProjectLink(plId+1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 30L, 15L, 30L, None, None,
+    val projectLinkComb1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 30L, 15L, 30L, None, None,
       None, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
       geomTransferComb1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1), 0L, 0, 0, reversed = false,
       None, 86400L)
-    val projectLinkComb2 = ProjectLink(plId+2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 30L, 45L, 30L, 45L, None, None,
+    val projectLinkComb2 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 30L, 45L, 30L, 45L, None, None,
       None, 12346L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
       geomTransferComb2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb2), 0L, 0, 0, reversed = false,
       None, 86400L)
 
     val geomNewComb = Seq(Point(40.0, 10.0), Point(30.0, 20.0))
 
-    val projectLinkCombNew = ProjectLink(plId+3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+    val projectLinkCombNew = ProjectLink(plId + 3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
       None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None),
       geomNewComb, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewComb), 0L, 0, 0, reversed = false,
       None, 86400L)
@@ -239,7 +239,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   }
 
   test("Test defaultSectionCalculatorStrategy.findStartingPoints() When adding one (New) link with inverted geometry before the existing (Transfer) road but where the first link was terminated Then the road should still maintain the previous existing direction") {
-    runWithRollback{
+    runWithRollback {
     val geomTerminatedComb1 = Seq(Point(30.0, 10.0), Point(30.0, 20.0))
     val geomTransferComb1 = Seq(Point(30.0, 20.0), Point(20.0, 30.0))
     val geomTransferComb2 = Seq(Point(20.0, 30.0), Point(10.0, 40.0))
@@ -249,18 +249,18 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       None, 12344L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
       geomTerminatedComb1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTerminatedComb1), 0L, 0, 0, reversed = false,
       None, 86400L)
-    val projectLinkComb1 = ProjectLink(plId+1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 30L, 15L, 30L, None, None,
+    val projectLinkComb1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 30L, 15L, 30L, None, None,
       None, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
       geomTransferComb1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1), 0L, 0, 0, reversed = false,
       None, 86400L)
-    val projectLinkComb2 = ProjectLink(plId+2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 30L, 45L, 30L, 45L, None, None,
+    val projectLinkComb2 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 30L, 45L, 30L, 45L, None, None,
       None, 12346L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
       geomTransferComb2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb2), 0L, 0, 0, reversed = false,
       None, 86400L)
 
     val geomNewComb = Seq(Point(30.0, 20.0), Point(40.0, 10.0))
 
-    val projectLinkCombNew = ProjectLink(plId+3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+    val projectLinkCombNew = ProjectLink(plId + 3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
       None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None),
       geomNewComb, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewComb), 0L, 0, 0, reversed = false,
       None, 86400L)
