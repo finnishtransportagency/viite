@@ -283,14 +283,20 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         }
         val chainEndPoints = TrackSectionOrder.findChainEndpoints(remainLinks)
         val (linksWithValues, linksWithoutValues) = remainLinks.partition(_.endAddrMValue != 0)
-        val endPointsWithValues = chainEndPoints.filter(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
-        val oldFirst = TrackSectionOrder.findOnceConnectedLinks(remainLinks).values.find(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
-        if (endPointsWithValues.size == 1) {
-          val otherEndPoint = chainEndPoints.filterNot(_._2.id == endPointsWithValues.head._2.id)
-          val onceConnectLinks = TrackSectionOrder.findOnceConnectedLinks(linksWithoutValues)
-          if (endPointsWithValues.nonEmpty && onceConnectLinks.nonEmpty && linksWithValues.size == 1
-            && onceConnectLinks.exists(connected => GeometryUtils.areAdjacent(connected._2.getEndPoints._2, endPointsWithValues.head._2.getEndPoints._1)
-            || GeometryUtils.areAdjacent(connected._2.getEndPoints._1, endPointsWithValues.head._2.getEndPoints._1)))
+          val endPointsWithValues = ListMap(chainEndPoints.filter(link => link._2.startAddrMValue >= 0 && link._2.endAddrMValue != 0).toSeq
+           .sortWith(_._2.startAddrMValue < _._2.startAddrMValue):_*)
+
+          val oldFirst = TrackSectionOrder.findOnceConnectedLinks(remainLinks).values.find(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
+          if (endPointsWithValues.size == 1) {
+            val endLinkWithValues = endPointsWithValues.head._2
+            val otherEndPoint = chainEndPoints.filterNot(_._2.id == endPointsWithValues.head._2.id)
+            val onceConnectLinks = TrackSectionOrder.findOnceConnectedLinks(linksWithoutValues)
+            val existsCloserProjectlink = linksWithValues.filter(pl => pl.startAddrMValue < endLinkWithValues.startAddrMValue && pl.id != endLinkWithValues.id)
+                if (endPointsWithValues.nonEmpty && onceConnectLinks.nonEmpty && linksWithValues.nonEmpty
+              && (onceConnectLinks.exists(connected => GeometryUtils.areAdjacent(connected._2.getEndPoints._2, endPointsWithValues.head._2.getEndPoints._1)
+              || GeometryUtils.areAdjacent(connected._2.getEndPoints._1, endPointsWithValues.head._2.getEndPoints._1)
+                || GeometryUtils.areAdjacent(linksWithValues.minBy(_.startAddrMValue).geometry, connected._2.getEndPoints._2)) || existsCloserProjectlink.nonEmpty)
+            )
             otherEndPoint.head
           else
             endPointsWithValues.head
