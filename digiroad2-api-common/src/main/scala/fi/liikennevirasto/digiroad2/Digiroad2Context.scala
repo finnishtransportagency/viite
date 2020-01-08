@@ -153,7 +153,7 @@ object Digiroad2Context {
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
+    new RoadLinkService(vvhClient, eventbus, new JsonSerializer, useFrozenLinkInterface)
   }
 
   lazy val roadwayDAO: RoadwayDAO = {
@@ -214,6 +214,10 @@ object Digiroad2Context {
 
   lazy val deploy_date: String = {
     revisionInfo.getProperty("digiroad2.latestDeploy")
+  }
+
+  lazy val useFrozenLinkInterface: Boolean = {
+    properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
   }
 
   val env: String = System.getProperty("env")

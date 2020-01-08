@@ -150,7 +150,7 @@
             new StyleRule().where('roadClass').is(98).use({stroke: {color: '#FAFAFA', lineCap: 'round'}}),
             new StyleRule().where('gapTransfering').is(true).use({stroke: {color: '#00FF00', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('roadLinkSource').isNot(LinkValues.LinkGeomSource.SuravageLinkInterface.value).use({stroke: {color: 'rgba(238, 238, 235, 0.75)', lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(1).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(1).use({stroke: {color: '#646461', lineCap: 'round'}}),
             new StyleRule().where('floating').is(1).use({stroke: {color: '#F7FE2E', lineCap: 'round'}}),
             new StyleRule().where('roadLinkSource').is(LinkValues.LinkGeomSource.SuravageLinkInterface.value).and('roadClass').is(LinkValues.RoadClass.NoClass.value).use({stroke: {color: 'rgba(238, 238, 235, 0.75)', lineCap: 'round'}})
         ];
@@ -173,7 +173,7 @@
             new StyleRule().where('gapTransfering').is(true).use({stroke: {color: '#00FF00', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('roadLinkSource').isNot(LinkValues.LinkGeomSource.SuravageLinkInterface.value).and('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: '#A4A4A2', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('roadLinkSource').isNot(LinkValues.LinkGeomSource.SuravageLinkInterface.value).and('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color:'#000', lineCap: 'butt', lineDash: [10, 10]}}),
-            new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: '#1E1E1E', lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: '#646461', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color:'#ff9900', lineCap: 'butt', lineDash: [10, 10]}}),
             new StyleRule().where('floating').is(1).use({stroke: {color: '#F7FE2E', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('roadLinkSource').is(LinkValues.LinkGeomSource.ComplementaryLinkInterface.value).use({stroke: {color: '#D3AFF6', lineCap: 'round'}})
