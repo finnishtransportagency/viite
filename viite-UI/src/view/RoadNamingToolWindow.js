@@ -36,7 +36,7 @@
             return field;
         };
 
-        var staticFieldRoadList = function (dataField, writable, roadId, fieldName) {
+        var staticFieldRoadList = function (dataField, writable, roadId, fieldName, maxLength) {
             var field;
             var inputClass = (writable ? "form-control" : "input-road-details-readonly");
             var readOnly = (writable ? "" : "readonly");
@@ -44,6 +44,12 @@
             if ((fieldName === "startDate" || fieldName === "endDate") && writable) {
                 field = '<div id="datePicker" value="' + dataField + '" data-roadId="' + roadId + '" data-FieldName="' + fieldName + '">' +
                     '<input id="datePickerInput" class="' + inputClass + ' date-picker-input" value="' + dataField + '" ' + readOnly + ' data-roadId="' + roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%">' +
+                    '</div>';
+            } else if (fieldName === "roadName") {
+                field = '<div>' +
+                    '<input class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' +
+                    roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%" ' +
+                    (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ">'" +
                     '</div>';
             } else {
                 field = '<div>' +
@@ -198,7 +204,7 @@
                         var startDate = road.startDate ? road.startDate.format('DD.MM.YYYY') : '';
                         html += '<tr class="roadList-item">' +
                             '<td style="width: 150px;">' + staticFieldRoadNumber(road.roadNumber, road.id) + '</td>' +
-                            '<td style="width: 250px;">' + staticFieldRoadList(road.name, writable, road.id, "roadName") + '</td>' +
+                            '<td style="width: 250px;">' + staticFieldRoadList(road.name, writable, road.id, "roadName", 50) + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList(startDate, false, road.id, "startDate") + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList(road.endDate ? road.endDate.format('DD.MM.YYYY') : '', writable, road.id, "endDate") + '</td>';
                         if (!road.endDate) {
@@ -239,7 +245,7 @@
                         var originalStartDate = target.attr("data-originalStartDate");
                         $('#roadList-table').append('<tr class="roadList-item" id="newRoadName" data-originalRoadId ="' + originalRoadId + '" data-roadNumber="' + roadNumber + '" data-originalStartDate="' + originalStartDate + ' ">' +
                             '<td style="width: 150px;">' + staticFieldRoadNumber(roadNumber, newId) + '</td>' +
-                            '<td style="width: 250px;">' + staticFieldRoadList("", true, newId, "roadName") + '</td>' +
+                            '<td style="width: 250px;">' + staticFieldRoadList("", true, newId, "roadName", 50) + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList("", true, newId, "startDate") + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList("", true, newId, "endDate") + '</td>' +
                             '<td>' + '<div id="plus_minus_buttons" data-roadId="' + newId + '" data-roadNumber="' + roadNumber + '"><button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 10px" id="undo-new-road-name" data-roadId="' + originalRoadId + '" data-roadNumber="' + roadNumber + '">-</button></div>' + '</td>' +
