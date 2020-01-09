@@ -49,7 +49,7 @@
                 field = '<div>' +
                     '<input class="' + inputClass + '" value="' + dataField + '" ' + readOnly + ' data-roadId="' +
                     roadId + '" data-FieldName="' + fieldName + '" style="margin-top: 0px; ' + leftMargin + ' width: 85%" ' +
-                    (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ">'" +
+                    (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ">" +
                     '</div>';
             } else {
                 field = '<div>' +
