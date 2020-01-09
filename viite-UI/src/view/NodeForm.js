@@ -273,7 +273,7 @@
         });
         var isDetachable = 'title="' + nodePointType.description + '"'; // added for testing purposes, needs to be confirm if this title is a good idea for production env.
         if (_.isEqual(nodePointType, LinkValues.NodePointType.CalculatedNodePoint)) {
-          isDetachable += ' disabled';
+          isDetachable += ' disabled class="hidden"';
         }
         return '<td><input ' + isDetachable + ' type="checkbox" name="detach-node-point-' + nodePoint.id + '" value="' + nodePoint.id + '" id="detach-node-point-' + nodePoint.id + '"></td>';
       };
