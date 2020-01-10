@@ -81,15 +81,15 @@ object BeforeAfter {
 }
 
 case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeNumber: Option[Long], nodePointType: NodePointType = NodePointType.UnknownNodePointType,
-                     validFrom: DateTime, validTo: Option[DateTime],
-                     createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long,
+                     startDate: Option[DateTime], endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
+                     createdBy: String, createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long,
                      roadNumber: Long, roadPartNumber: Long, track: Track, elyCode: Long)
 
 class NodePointDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
-  val selectFromNodePoint = """SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE",
+  val selectFromNodePoint = """SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", N.START_DATE, N.END_DATE,
                              NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M,
                              RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.ELY
                              FROM NODE_POINT NP
@@ -104,9 +104,11 @@ class NodePointDAO extends BaseDAO {
       val roadwayPointId = r.nextLong()
       val nodeNumber = r.nextLongOption()
       val nodePointType = NodePointType.apply(r.nextInt())
+      val startDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = formatter.parseDateTime(r.nextDate.toString)
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val createdBy = r.nextStringOption()
+      val createdBy = r.nextString()
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val roadwayNumber = r.nextLong()
       val addrM = r.nextLong()
@@ -115,7 +117,7 @@ class NodePointDAO extends BaseDAO {
       val track = r.nextLongOption().map(l => Track.apply(l.toInt)).getOrElse(Track.Unknown)
       val ely = r.nextLongOption().map(l => l).getOrElse(0L)
 
-      NodePoint(id, BeforeAfter.apply(beforeAfter), roadwayPointId, nodeNumber, nodePointType, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM, roadNumber, roadPartNumber, track, ely)
+      NodePoint(id, BeforeAfter.apply(beforeAfter), roadwayPointId, nodeNumber, nodePointType, startDate, endDate, validFrom, validTo, createdBy, createdTime, roadwayNumber, addrM, roadNumber, roadPartNumber, track, ely)
     }
   }
 
@@ -139,7 +141,7 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
-  def fetchNodePointsByNodeNumber(nodeNumbers: Seq[Long]): Seq[NodePoint] = {
+  def fetchByNodeNumbers(nodeNumbers: Seq[Long]): Seq[NodePoint] = {
     if (nodeNumbers.isEmpty) Seq()
     else {
       val query =
@@ -186,7 +188,7 @@ class NodePointDAO extends BaseDAO {
   def fetchTemplatesByRoadwayNumber(roadwayNumber: Long): List[NodePoint] = {
     val query =
       s"""
-        SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE",
+        SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", NULL, NULL,
         NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, NULL, NULL, NULL, NULL
         FROM NODE_POINT NP
         JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
@@ -201,7 +203,7 @@ class NodePointDAO extends BaseDAO {
       if (roadwayNumbers.isEmpty) {
         ""
       } else {
-        s"""SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE",
+        s"""SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", NULL, NULL,
           NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, rw.ELY
           FROM NODE_POINT NP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
@@ -215,7 +217,7 @@ class NodePointDAO extends BaseDAO {
   def fetchTemplates() : Seq[NodePoint] = {
     val query =
       s"""
-         SELECT DISTINCT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NULL AS NODE_NUMBER, NP."TYPE",
+         SELECT DISTINCT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NULL AS NODE_NUMBER, NP."TYPE", NULL, NULL,
          NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, rw.ELY
          FROM NODE_POINT NP
          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
@@ -229,7 +231,7 @@ class NodePointDAO extends BaseDAO {
   def fetchNodePointTemplateById(id: Long): Option[NodePoint] = {
     val query =
       s"""
-         SELECT DISTINCT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE",
+         SELECT DISTINCT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", NULL, NULL,
          NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, rw.ELY
          FROM NODE_POINT NP
          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
@@ -249,7 +251,7 @@ class NodePointDAO extends BaseDAO {
 
       val query =
         s"""
-          SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE",
+          SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", NULL, NULL,
             NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.ELY
           FROM NODE_POINT NP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
@@ -261,7 +263,7 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
-  def create(nodePoints: Iterable[NodePoint], createdBy: String = "-"): Seq[Long] = {
+  def create(nodePoints: Iterable[NodePoint]): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_NUMBER, "TYPE", CREATED_BY)
@@ -285,7 +287,7 @@ class NodePointDAO extends BaseDAO {
           ps.setNull(4, java.sql.Types.INTEGER)
         }
         ps.setInt(5, nodePoint.nodePointType.value)
-        ps.setString(6, if (createdBy == null) "-" else createdBy)
+        ps.setString(6, nodePoint.createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
