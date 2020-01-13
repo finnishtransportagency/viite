@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.util
 
-import java.sql.{PreparedStatement, Types}
+import java.sql.PreparedStatement
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import org.joda.time.format.ISODateTimeFormat
@@ -12,15 +12,11 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
-import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
-import fi.liikennevirasto.viite.dao.{CalibrationCode, TerminationCode}
-import fi.liikennevirasto.viite.dao.RoadwayPoint
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
-import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPoint, CalibrationPointType}
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
+import fi.liikennevirasto.viite.dao.{CalibrationCode, RoadwayPoint, TerminationCode, _}
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -365,7 +361,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val existingRoadwayPoint = roadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.startAddressM)
         existingRoadwayPoint match {
           case Some(x) =>
-            val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPoint(x.id)
+            val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPointId(x.id)
             if (existingCalibrationPoint.isDefined)
               Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
             else
@@ -385,7 +381,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         val existingRoadwayPoint = roadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.endAddressM)
         existingRoadwayPoint match {
           case Some(x) =>
-            val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPoint(x.id)
+            val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPointId(x.id)
             if (existingCalibrationPoint.isDefined)
               Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
             else
