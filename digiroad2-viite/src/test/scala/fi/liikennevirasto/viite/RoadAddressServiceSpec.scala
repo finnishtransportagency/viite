@@ -44,7 +44,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val roadwayPointDAO = new RoadwayPointDAO
   val nodeDAO = new NodeDAO
   val nodePointDAO = new NodePointDAO
-  val calculatedNodePointDAO = new CalculatedNodePointDAO
   val junctionDAO = new JunctionDAO
   val junctionPointDAO = new JunctionPointDAO
   val roadwayChangesDAO = new RoadwayChangesDAO
@@ -56,7 +55,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, calculatedNodePointDAO , junctionDAO, junctionPointDAO, roadwayChangesDAO)
+  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO, roadwayChangesDAO)
 
   val projectService = new ProjectService(roadAddressService, mockRoadLinkService, nodesAndJunctionsService, roadwayDAO,
     roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,

@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
 
-class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO, calculatedNodePointDAO: CalculatedNodePointDAO, junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO, roadwayChangesDAO: RoadwayChangesDAO) {
+class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayPointDAO, linearLocationDAO: LinearLocationDAO, nodeDAO: NodeDAO, nodePointDAO: NodePointDAO,  junctionDAO: JunctionDAO, junctionPointDAO: JunctionPointDAO, roadwayChangesDAO: RoadwayChangesDAO) {
 
   case class CompleteNode(node: Option[Node], nodePoints: Seq[NodePoint], junctions: Map[Junction, Seq[JunctionPoint]])
 
@@ -870,7 +870,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def getCalculatedNodePoints(nodes: Seq[Node]): Seq[NodePoint] = {
     withDynSession {
       //time(logger, "Fetch calculated node points") {
-        calculatedNodePointDAO.fetchCalculatedNodePoints(nodes.map(_.id))
+      nodePointDAO.fetchCalculatedNodePoints(nodes.map(_.id))
       //}
     }
   }
