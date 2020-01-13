@@ -2998,18 +2998,18 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodesAndJunctionsService.handleNodePointTemplates(projectChanges, pls, mappedChanges)
 
       val fetchedNodesPoints = pls.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber)).sortBy(_.id)
-      val node1 = fetchedNodesPoints.find(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.After)
-      node1.isEmpty should be(true)
-      val node2 = fetchedNodesPoints.find(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.Before)
-      node2.isEmpty should be(true)
-      val node3 = fetchedNodesPoints.find(n => n.roadwayNumber == right.roadwayNumber && n.beforeAfter == BeforeAfter.After)
-      node3.nonEmpty should be(true)
-      val node4 = fetchedNodesPoints.find(n => n.roadwayNumber == right.roadwayNumber && n.beforeAfter == BeforeAfter.Before)
-      node4.nonEmpty should be(true)
-      val node5 = fetchedNodesPoints.find(n => n.roadwayNumber == combined1.roadwayNumber && n.beforeAfter == BeforeAfter.After)
-      node5.nonEmpty should be(true)
-      val node6 = fetchedNodesPoints.find(n => n.roadwayNumber == combined2.roadwayNumber && n.beforeAfter == BeforeAfter.Before)
-      node6.nonEmpty should be(true)
+      val np1 = fetchedNodesPoints.find(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.After)
+      np1.isEmpty should be(true)
+      val np2 = fetchedNodesPoints.find(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.Before)
+      np2.isEmpty should be(true)
+      val np3 = fetchedNodesPoints.find(n => n.roadwayNumber == right.roadwayNumber && n.beforeAfter == BeforeAfter.After)
+      np3.nonEmpty should be(true)
+      val np4 = fetchedNodesPoints.find(n => n.roadwayNumber == right.roadwayNumber && n.beforeAfter == BeforeAfter.Before)
+      np4.nonEmpty should be(true)
+      val np5 = fetchedNodesPoints.find(n => n.roadwayNumber == combined1.roadwayNumber && n.beforeAfter == BeforeAfter.After)
+      np5.nonEmpty should be(true)
+      val np6 = fetchedNodesPoints.find(n => n.roadwayNumber == combined2.roadwayNumber && n.beforeAfter == BeforeAfter.Before)
+      np6.nonEmpty should be(true)
 
       //testing reverse
       /*
@@ -3283,6 +3283,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink1.endAddrMValue) should be(true)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == terminatedRoadLink.roadwayNumber) should be(false)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == terminatedRoadLink.roadwayNumber) should be(false)
+
+      // TODO Check calculated node points
     }
   }
 
@@ -3296,6 +3298,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and road type
     * then all of those node points and the node itself should expire.
     */
+  // TODO Add here calculated node point and check that it is also expired
   test("Test expireObsoleteNodesAndJunctions case When road is extended after the existing road") {
     runWithRollback {
       val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
@@ -3389,6 +3392,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and road type
     * then all of those node points and the node itself should expire.
     */
+  // TODO Add here calculated node point and check that it is also expired
   test("Test expireObsoleteNodesAndJunctions case When road is extended before the existing road") {
     runWithRollback {
       val roadGeom1 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
@@ -3678,4 +3682,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
   // </editor-fold>
+
+  // TODO Test cases for recalculating node points
+
 }
