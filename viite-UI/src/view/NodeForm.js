@@ -554,6 +554,10 @@
         closeNode();
       });
 
+      eventbus.on('templates:selected', function (templates) {
+        // TODO 2055 templates form will be build here
+      });
+
       eventbus.on('node:selected', function (currentNode) {
         rootElement.empty();
         if (!_.isEmpty(currentNode)) {

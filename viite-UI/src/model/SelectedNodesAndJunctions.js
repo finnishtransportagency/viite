@@ -1,5 +1,5 @@
 (function (root) {
-  root.SelectedNodesAndJunctions = function () {
+  root.SelectedNodesAndJunctions = function (nodeCollection) {
     var current = {};
     var dirty = false;
 
@@ -12,16 +12,26 @@
       eventbus.trigger('node:selected', node);
     };
 
-    var openNodePointTemplates = function (nodePointTemplates) {
+    var openTemplates = function (templates) {
       clean();
-      setCurrentNodePointTemplates(nodePointTemplates);
-      eventbus.trigger('nodePointTemplate:selected');
+      setCurrentNodePointTemplates(templates.nodePointTemplates);
+      setCurrentJunctionTemplate(templates.junctionTemplate);
+      eventbus.trigger('templates:selected', templates);
+    };
+
+    var templates = function (coordinates) {
+      return {
+        nodePointTemplates: nodeCollection.getNodePointTemplatesByCoordinates(coordinates),
+        junctionTemplate: nodeCollection.getJunctionTemplateByCoordinates(coordinates)
+      };
+    };
+
+    var openNodePointTemplates = function (nodePointTemplates) {
+      openTemplates(templates(_.first(nodePointTemplates).coordinates));
     };
 
     var openJunctionTemplate = function (junctionTemplate) {
-      clean();
-      setCurrentJunctionTemplate(junctionTemplate);
-      eventbus.trigger('junctionTemplate:selected');
+      openTemplates(templates(_.first(junctionTemplate.junctionPoints).coordinates));
     };
 
     var setCurrentNode = function (node) {
@@ -158,6 +168,7 @@
       openNode: openNode,
       openNodePointTemplates: openNodePointTemplates,
       openJunctionTemplate: openJunctionTemplate,
+      openTemplates: openTemplates,
       getCurrentNode: getCurrentNode,
       getCurrentNodePointTemplates: getCurrentNodePointTemplates,
       getCurrentJunctionTemplate: getCurrentJunctionTemplate,

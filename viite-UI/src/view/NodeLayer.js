@@ -1,5 +1,5 @@
 (function(root) {
-  root.NodeLayer = function (map, roadLayer, selectedNodeAndJunctionPoint, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
+  root.NodeLayer = function (map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
     Layer.call(this, map);
     var me = this;
     var indicatorVector = new ol.source.Vector({});
@@ -192,22 +192,22 @@
     };
 
     var selectNode = function(node) {
-      selectedNodeAndJunctionPoint.closeForm();
+      selectedNodesAndJunctions.closeForm();
       clearHighlights();
-      selectedNodeAndJunctionPoint.openNode(node);
+      selectedNodesAndJunctions.openNode(node);
       highlightNode(node);
     };
 
     var selectNodePointTemplates = function(nodePointTemplates) {
-      selectedNodeAndJunctionPoint.closeForm();
+      selectedNodesAndJunctions.closeForm();
       clearHighlights();
-      selectedNodeAndJunctionPoint.openNodePointTemplates(nodePointTemplates);
+      selectedNodesAndJunctions.openNodePointTemplates(nodePointTemplates);
     };
 
     var selectJunctionTemplate = function (junctionTemplate) {
-      selectedNodeAndJunctionPoint.closeForm();
+      selectedNodesAndJunctions.closeForm();
       clearHighlights();
-      selectedNodeAndJunctionPoint.openJunctionTemplate(junctionTemplate);
+      selectedNodesAndJunctions.openJunctionTemplate(junctionTemplate);
     };
 
     var addFeature = function(layer, feature, predicate) {
@@ -258,11 +258,17 @@
       }
     });
 
+    // TODO 2054 - make sure this works fine!
+    // me.eventListener.listenTo(eventbus, 'node:unselected', function () {
+    //   setProperty([nodeMarkerSelectedLayer], 'translatable', false);
+    // });
+
     me.eventListener.listenTo(eventbus, 'node:unselected nodePointTemplate:unselected junctionTemplate:unselected', function () {
       clearHighlights();
     });
 
     me.eventListener.listenTo(eventbus, 'tool:changed', function (tool) {
+      // TODO 2054 - make sure this works fine!
       switch (tool) {
         case LinkValues.Tool.Unknown.value:
           me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
@@ -277,8 +283,8 @@
         case LinkValues.Tool.Add.value:
           toggleSelectInteractions(false);
           me.eventListener.listenToOnce(eventbus, 'map:clicked', createNewNodeMarker);
-          if (!_.isUndefined(selectedNodeAndJunctionPoint.getCurrentNode()) || !_.isUndefined(selectedNodeAndJunctionPoint.getCurrentNodePointTemplates()) || !_.isUndefined(selectedNodeAndJunctionPoint.getCurrentJunctionTemplate())) {
-            selectedNodeAndJunctionPoint.closeForm();
+          if (!_.isUndefined(selectedNodesAndJunctions.getCurrentNode()) || !_.isUndefined(selectedNodesAndJunctions.getCurrentNodePointTemplates()) || !_.isUndefined(selectedNodesAndJunctions.getCurrentJunctionTemplate())) {
+            selectedNodesAndJunctions.closeForm();
           }
           setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
           break;
@@ -287,9 +293,8 @@
 
     var createNewNodeMarker = function (coords) {
       var node = {
-        coordX: parseInt(coords.x),
-        coordY: parseInt(coords.y),
-        type:   LinkValues.NodeType.UnknownNodeType.value
+        coordinates:  { x: parseInt(coords.x), y: parseInt(coords.y) },
+        type:         LinkValues.NodeType.UnknownNodeType.value
       };
       addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(node),
         function (feature) { return feature.node.id === node.id; });
@@ -324,19 +329,19 @@
     };
 
     var addJunctionToMap = function (junction, isTemplate, selectedLayer) {
-      var junctionPoint = {};
+      var refJunctionPoint = {};
       var roadLink = roadLinkForPoint(function (roadLink) {
-        junctionPoint = _.find(junction.junctionPoints, function (junctionPoint) {
+        refJunctionPoint = _.find(junction.junctionPoints, function (junctionPoint) {
           return (roadLink.startAddressM === junctionPoint.addrM || roadLink.endAddressM === junctionPoint.addrM) && roadLink.roadwayNumber === junctionPoint.roadwayNumber;
         });
-        return !_.isUndefined(junctionPoint);
+        return !_.isUndefined(refJunctionPoint);
       });
-      if (!_.isUndefined(roadLink) && !_.isUndefined(junctionPoint)) {
+      if (!_.isUndefined(roadLink) && !_.isUndefined(refJunctionPoint)) {
         if (_.isUndefined(junction.nodeNumber) || isTemplate) {
-          addFeature(selectedLayer || junctionTemplateLayer, new JunctionTemplateMarker().createJunctionTemplateMarker(junction, junctionPoint, roadLink),
+          addFeature(selectedLayer || junctionTemplateLayer, new JunctionTemplateMarker().createJunctionTemplateMarker(junction, refJunctionPoint, roadLink, roadLinkForPoint, nodeCollection.getCoordinates),
             function (feature) { return feature.junctionTemplate.id === junction.id; });
         } else {
-          addFeature(selectedLayer || junctionMarkerLayer, new JunctionMarker().createJunctionMarker(junction, junctionPoint, roadLink),
+          addFeature(selectedLayer || junctionMarkerLayer, new JunctionMarker().createJunctionMarker(junction, refJunctionPoint, roadLink),
             function (feature) { return feature.junction.id === junction.id; });
         }
       }
@@ -476,7 +481,7 @@
       });
 
       eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, nodePointTemplates, junctionTemplates, zoom) {
-        var selectedNode = selectedNodeAndJunctionPoint.getCurrentNode();
+        var selectedNode = selectedNodesAndJunctions.getCurrentNode();
 
         if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
           if (!_.isUndefined(selectedNode) && _.isUndefined(selectedNode.id)) {

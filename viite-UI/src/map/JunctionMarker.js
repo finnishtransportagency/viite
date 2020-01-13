@@ -1,9 +1,9 @@
 (function (root) {
   root.JunctionMarker = function () {
-    var createJunctionMarker = function (junction, junctionPoint, roadLink) {
+    var createJunctionMarker = function (junction, referencePoint, roadLink) {
       var point = [];
 
-      if ((roadLink.sideCode === LinkValues.SideCode.TowardsDigitizing.value && junctionPoint.addrM === roadLink.endAddressM) || (roadLink.sideCode === LinkValues.SideCode.AgainstDigitizing.value && junctionPoint.addrM === roadLink.startAddressM)) {
+      if ((roadLink.sideCode === LinkValues.SideCode.TowardsDigitizing.value && referencePoint.addrM === roadLink.endAddressM) || (roadLink.sideCode === LinkValues.SideCode.AgainstDigitizing.value && referencePoint.addrM === roadLink.startAddressM)) {
         point = roadLink.points[roadLink.points.length - 1];
       } else {
         point = roadLink.points[0];
