@@ -39,6 +39,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val roadwayPointDAO = new RoadwayPointDAO
   val nodeDAO = new NodeDAO
   val nodePointDAO = new NodePointDAO
+  val calculatedNodePointDAO = new CalculatedNodePointDAO
   val junctionDAO = new JunctionDAO
   val junctionPointDAO = new JunctionPointDAO
   val linearLocationDAO = new LinearLocationDAO
@@ -53,7 +54,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO, roadwayChangesDAO) {
+  val nodesAndJunctionsService = new NodesAndJunctionsService(mockRoadwayDAO, roadwayPointDAO, mockLinearLocationDAO, nodeDAO, nodePointDAO, calculatedNodePointDAO, junctionDAO, junctionPointDAO, roadwayChangesDAO) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
