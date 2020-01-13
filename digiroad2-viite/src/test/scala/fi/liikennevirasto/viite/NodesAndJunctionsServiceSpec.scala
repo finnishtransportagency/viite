@@ -3284,6 +3284,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink1.endAddrMValue) should be(true)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == terminatedRoadLink.roadwayNumber) should be(false)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == terminatedRoadLink.roadwayNumber) should be(false)
+
+      // TODO Check calculated node points
     }
   }
 
@@ -3297,6 +3299,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and road type
     * then all of those node points and the node itself should expire.
     */
+  // TODO Add here calculated node point and check that it is also expired
   test("Test expireObsoleteNodesAndJunctions case When road is extended after the existing road") {
     runWithRollback {
       val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
@@ -3390,6 +3393,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and road type
     * then all of those node points and the node itself should expire.
     */
+  // TODO Add here calculated node point and check that it is also expired
   test("Test expireObsoleteNodesAndJunctions case When road is extended before the existing road") {
     runWithRollback {
       val roadGeom1 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
@@ -3679,4 +3683,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
   // </editor-fold>
+
+  // TODO Test cases for recalculating node points
+
 }
