@@ -79,7 +79,17 @@ object CalibrationPointDAO {
      """.as[CalibrationPoint].firstOption
   }
 
-  def fetchByRoadwayPoint(roadwayPointId:Long) : Option[CalibrationPoint] = {
+  def fetch(linkId: Long, startOrEnd: Long, roadwayPointId: Long) : Option[CalibrationPoint] = {
+    sql"""
+         SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+         FROM CALIBRATION_POINT CP
+         WHERE CP.ROADWAY_POINT_ID = $roadwayPointId
+         AND CP.LINK_ID = $linkId
+         AND CP.START_END = $startOrEnd
+     """.as[CalibrationPoint].firstOption
+  }
+
+  def fetchByRoadwayPointId(roadwayPointId:Long) : Option[CalibrationPoint] = {
     sql"""
          SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
          FROM CALIBRATION_POINT CP
