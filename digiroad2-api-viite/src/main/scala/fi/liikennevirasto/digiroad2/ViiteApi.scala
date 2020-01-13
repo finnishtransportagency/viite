@@ -959,6 +959,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/junction-templates/:id") {
+    val id = params("id").toLong
+    time(logger, s"GET request for /junction-templates/$id") {
+      nodesAndJunctionsService.getJunctionTemplatesById(id) match {
+        case None => halt(NotFound("Junction Template not found"))
+        case Some(junctionTemplate) => junctionTemplateToApi(junctionTemplate)
+      }
+    }
+  }
+
   post("/nodes") {
     time(logger, s"POST request for /nodes") {
       val username = userProvider.getCurrentUser().username
@@ -1176,8 +1186,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("id" -> node.id,
       "nodeNumber" -> node.nodeNumber,
       "name" -> node.name,
-      "coordX" -> node.coordinates.x,
-      "coordY" -> node.coordinates.y,
+      "coordinates" -> Map(
+        "x" -> node.coordinates.x,
+        "y" -> node.coordinates.y),
       "type" -> node.nodeType.value,
       "startDate" -> formatToString(node.startDate.toString),
       "createdBy" -> node.createdBy,
@@ -1444,8 +1455,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val (node, roadAttr) = nodeAndRoadAttr
     Map("id" -> node.id,
       "nodeNumber" -> node.nodeNumber,
-      "coordX" -> node.coordinates.x,
-      "coordY" -> node.coordinates.y,
+      "coordinates" -> Map(
+        "x" -> node.coordinates.x,
+        "y" -> node.coordinates.y),
       "name" -> node.name,
       "type" -> node.nodeType.displayValue,
       "roadNumber" -> roadAttr.roadNumber,

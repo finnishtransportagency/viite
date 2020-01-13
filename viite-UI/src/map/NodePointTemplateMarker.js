@@ -21,6 +21,10 @@
       });
 
       marker.setStyle(nodePointMarkerStyle);
+      nodePoint.coordinates = {
+        x: point.x,
+        y: point.y
+      };
       marker.nodePointTemplate = nodePoint;
       marker.roadLink = roadLink;
       return marker;

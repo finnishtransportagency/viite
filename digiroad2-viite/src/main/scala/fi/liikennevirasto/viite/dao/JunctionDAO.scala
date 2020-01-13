@@ -156,6 +156,20 @@ class JunctionDAO extends BaseDAO {
     queryListTemplate(query)
   }
 
+  def fetchJunctionTemplateById(id: Long): Option[JunctionTemplate] = {
+    val query =
+      s"""
+         SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
+         FROM JUNCTION j
+         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
+         LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
+         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+            WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_NUMBER IS NULL
+            AND j.id = $id
+       """
+    queryListTemplate(query).headOption
+  }
+
   def fetchTemplatesByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[JunctionTemplate] = {
     val query =
       s"""

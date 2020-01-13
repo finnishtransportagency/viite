@@ -11,8 +11,8 @@
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     window.applicationModel = new ApplicationModel([selectedLinkProperty]);
-    var selectedNodesAndJunctions = new SelectedNodesAndJunctions();
-    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel), selectedNodesAndJunctions);
+    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel));
+    var selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
     ol.proj.proj4.register(proj4);
 

@@ -15,14 +15,12 @@
           } else {
             point = roadLink.points[0];
           }
-          nodePoint.x = point.x;
-          nodePoint.y = point.y;
+          nodePoint.coordinates = { x: point.x, y: point.y };
         } else {
           getCoordinates(nodePoint.road, nodePoint.part, nodePoint.addrM, function (results) {
             if (results.length >= 1) {
               var result = results[0];
-              nodePoint.x = result.lon;
-              nodePoint.y = result.lat;
+              nodePoint.coordinates = { x: parseFloat(result.lon).toFixed(3), y: parseFloat(result.lat).toFixed(3) };
             }
           });
         }
@@ -42,21 +40,19 @@
           } else {
             point = roadLink.points[0];
           }
-          junctionPoint.x = point.x;
-          junctionPoint.y = point.y;
+          junctionPoint.coordinates = { x: point.x, y: point.y };
         } else {
           getCoordinates(junctionPoint.road, junctionPoint.part, junctionPoint.addrM, function (results) {
             if (results.length >= 1) {
               var result = results[0];
-              junctionPoint.x = result.lon;
-              junctionPoint.y = result.lat;
+              junctionPoint.coordinates = { x: parseFloat(result.lon).toFixed(3), y: parseFloat(result.lat).toFixed(3) };
             }
           });
         }
       });
 
       var marker = new ol.Feature({
-        geometry: new ol.geom.Point([node.coordX, node.coordY]),
+        geometry: new ol.geom.Point([node.coordinates.x, node.coordinates.y]),
         type: node.type
       });
 
