@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.AddressChangeType.{ReNumeration, Transfer, Unchanged}
+import fi.liikennevirasto.viite.dao.AddressChangeType.{ReNumeration, Termination, Transfer, Unchanged}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.{RoadwayPointDAO, _}
 import fi.liikennevirasto.viite.model.RoadAddressLink
@@ -304,9 +304,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   def getRoadAddressWithRoadAndPart(road: Long, part: Long, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false, newTransaction: Boolean = true): Seq[RoadAddress] = {
     if (newTransaction)
       withDynSession {
-      val roadways = roadwayDAO.fetchAllByRoadAndPart(road, part, withHistory, fetchOnlyEnd)
-      roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
-    }
+        val roadways = roadwayDAO.fetchAllByRoadAndPart(road, part, withHistory, fetchOnlyEnd)
+        roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
+      }
     else {
       val roadways = roadwayDAO.fetchAllByRoadAndPart(road, part, withHistory, fetchOnlyEnd)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
@@ -566,7 +566,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)],
-                                      everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
+                          everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
 
     val boundingBoxResult = BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(boundingRectangle, Set()),
@@ -587,7 +587,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val currentStartCP = currentCPs.filter(_.startOrEnd == 0)
     val currentEndCP = currentCPs.filter(_.startOrEnd == 1)
     val startCPsToBeExpired = currentStartCP.filter(c => !startCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId && ((sc.startCalibrationPoint.isDefined && c.startOrEnd == 0) || sc.endCalibrationPoint.isDefined && c.startOrEnd == 1)))
-    val endCPsToBeExpired = currentEndCP.filter(c => !endCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId  && ((sc.startCalibrationPoint.isDefined && c.startOrEnd == 0) || sc.endCalibrationPoint.isDefined && c.startOrEnd == 1)))
+    val endCPsToBeExpired = currentEndCP.filter(c => !endCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId && ((sc.startCalibrationPoint.isDefined && c.startOrEnd == 0) || sc.endCalibrationPoint.isDefined && c.startOrEnd == 1)))
 
     // Expire calibration points
     startCPsToBeExpired.foreach {
@@ -663,11 +663,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         disposedRoadwayPointId = Some(oldRoadwayPointId)
         roadwayPointDAO.create(newRoadwayNumber, newStartAddr, username)
       }
-      val nodePointIds = nodePointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After).map(_.id)
-      val junctionPointIds = junctionPointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After).map(_.id)
+      val nodePoints = nodePointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After)
+      val junctionPoints = junctionPointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After)
 
-      nodePointIds.foreach(nodePointDAO.updateRoadwayPointId(_, roadwayPointId))
-      junctionPointIds.foreach(junctionPointDAO.updateRoadwayPointId(_, roadwayPointId))
+      nodePointDAO.expireById(nodePoints.map(_.id))
+      nodePointDAO.create(nodePoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId)))
+
+      junctionPointDAO.expireById(junctionPoints.map(_.id))
+      junctionPointDAO.create(junctionPoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId)))
       disposedRoadwayPointId
     }
 
@@ -686,15 +689,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
 
     try {
-      val affectableChanges = roadwayChanges.filter(rw => List(Transfer, ReNumeration, Unchanged).contains(rw.changeInfo.changeType))
-      val allUpdatableRoadwayPoints: Seq[RoadwayPoint] = affectableChanges.sortBy(_.changeInfo.target.startAddressM).foldLeft(
-        Seq.empty[RoadwayPoint]) { (list, rwc) =>
 
+      val projectRoadwayChanges = roadwayChanges.filter(rw => List(Transfer, ReNumeration, Unchanged, Termination).contains(rw.changeInfo.changeType))
+      val allUpdatableRoadwayPoints: Seq[RoadwayPoint] = projectRoadwayChanges.sortBy(_.changeInfo.target.startAddressM).foldLeft(
+        Seq.empty[RoadwayPoint]) { (list, rwc) =>
         val change = rwc.changeInfo
         val source = change.source
         val target = change.target
-        val roadwayNumbers = roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get,
-          Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber).distinct
+        val terminatedRoadwayNumbersChanges = mappedRoadwayNumbers.filter { entry =>
+          entry.roadNumber == source.roadNumber.get &&
+            (source.startRoadPartNumber.get to source.endRoadPartNumber.get contains entry.roadPartNumber) &&
+            entry.originalStartAddr == source.startAddressM.get && entry.originalEndAddr == source.endAddressM.get
+        }
+        val roadwayNumbers = if (change.changeType == Termination) {
+          terminatedRoadwayNumbersChanges.map(_.newRoadwayNumber).distinct
+        } else roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber).distinct
         val roadwayPoints = roadwayNumbers.flatMap { rwn =>
           val roadwayNumberInPoint = mappedRoadwayNumbers.filter(mrw => mrw.newRoadwayNumber == rwn
             && mrw.originalStartAddr >= source.startAddressM.get && mrw.originalEndAddr <= source.endAddressM.get)
@@ -736,10 +745,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             } else {
               list
             }
-          } else {
-            // TODO IF NEED IN FUTURE remove filter from top and add roadwayChange Termination cases/expire roadwaypoint cases
-            list
-          }
+          } else if (change.changeType == Termination) {
+            val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
+              val terminatedRoadAddress = terminatedRoadwayNumbersChanges.find(change => change.oldRoadwayNumber == rwp.roadwayNumber &&
+                change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get
+              )
+              if (terminatedRoadAddress.isDefined) {
+                val roadwayNumberInPoint = terminatedRoadAddress.get.oldRoadwayNumber
+                Seq(rwp.copy(roadwayNumber = roadwayNumberInPoint, addrMValue = rwp.addrMValue, modifiedBy = Some(username)))
+              } else Seq()
+            }
+            list ++ rwPoints
+          } else list
         } else list
       }
 
@@ -762,11 +779,13 @@ sealed trait RoadClass {
 
 object RoadClass {
   val values: Set[RoadClass] = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass, StreetClass,
-    RampsAndRoundAboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass, ConstructionSiteTemporaryClass,
+    RampsAndRoundaboutsClass, PedestrianAndBicyclesClassA, PedestrianAndBicyclesClassB, WinterRoadsClass, PathsClass, ConstructionSiteTemporaryClass,
     PrivateRoadClass, NoClass)
 
-  val nodeAndJunctionRoadClass = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass,
-    StreetClass, PrivateRoadClass, WinterRoadsClass, PathsClass)
+  val forNodes: Set[Int] = Set(HighwayClass, MainRoadClass, RegionalClass, ConnectingClass, MinorConnectingClass,
+    StreetClass, PrivateRoadClass, WinterRoadsClass, PathsClass).flatMap(_.roads)
+
+  val forJunctions: Range = 0 until 69999
 
   def get(roadNumber: Int): Int = {
     values.find(_.roads contains roadNumber).getOrElse(NoClass).value
@@ -774,71 +793,86 @@ object RoadClass {
 
   case object HighwayClass extends RoadClass {
     def value = 1
+
     def roads: Range.Inclusive = 1 to 39
   }
 
   case object MainRoadClass extends RoadClass {
     def value = 2
+
     def roads: Range.Inclusive = 40 to 99
   }
 
   case object RegionalClass extends RoadClass {
     def value = 3
+
     def roads: Range.Inclusive = 100 to 999
   }
 
   case object ConnectingClass extends RoadClass {
     def value = 4
+
     def roads: Range.Inclusive = 1000 to 9999
   }
 
   case object MinorConnectingClass extends RoadClass {
     def value = 5
+
     def roads: Range.Inclusive = 10000 to 19999
+  }
+
+  case object RampsAndRoundaboutsClass extends RoadClass {
+    def value = 7
+
+    def roads: Range.Inclusive = 20001 to 39999
   }
 
   case object StreetClass extends RoadClass {
     def value = 6
+
     def roads: Range.Inclusive = 40000 to 49999
   }
 
-  case object RampsAndRoundAboutsClass extends RoadClass {
-    def value = 7
-    def roads: Range.Inclusive = 20001 to 39999
-  }
 
   case object PedestrianAndBicyclesClassA extends RoadClass {
     def value = 8
+
     def roads: Range.Inclusive = 70001 to 89999
   }
 
   case object PedestrianAndBicyclesClassB extends RoadClass {
     def value = 8
+
     def roads: Range.Inclusive = 90001 to 99999
   }
 
   case object WinterRoadsClass extends RoadClass {
     def value = 9
+
     def roads: Range.Inclusive = 60001 to 61999
   }
 
   case object PathsClass extends RoadClass {
     def value = 10
+
     def roads: Range.Inclusive = 62001 to 62999
   }
 
   case object ConstructionSiteTemporaryClass extends RoadClass {
     def value = 11
+
     def roads: Range.Inclusive = 9900 to 9999
   }
 
   case object PrivateRoadClass extends RoadClass {
     def value = 12
+
     def roads: Range.Inclusive = 50001 to 59999
   }
 
   case object NoClass extends RoadClass {
     def value = 99
+
     def roads: Range.Inclusive = 0 to 0
   }
 
@@ -853,8 +887,8 @@ case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 
 case class LinearLocationResult(current: Seq[LinearLocation])
 
-  case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]], roadAddressResultF: Future[(Seq[LinearLocation], Seq[VVHHistoryRoadLink])],
-                               roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]])
+case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]], roadAddressResultF: Future[(Seq[LinearLocation], Seq[VVHHistoryRoadLink])],
+                             roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]])
 
 case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
   val currentSegments: Seq[RoadAddress] = v._1
@@ -931,4 +965,97 @@ object AddressConsistencyValidator {
 
   case class AddressErrorDetails(linearLocationId: Long, linkId: Long, roadNumber: Long, roadPartNumber: Long, addressError: AddressError, ely: Long)
 
+}
+
+object RoadAddressFilters {
+  def sameRoad(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.roadNumber == next.roadNumber
+  }
+
+  def samePart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.roadPartNumber == next.roadPartNumber
+  }
+
+  def sameRoadPart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.roadNumber == next.roadNumber && curr.roadPartNumber == next.roadPartNumber
+  }
+
+  def sameTrack(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.track == next.track
+  }
+
+  def continuousRoad(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    sameRoad(curr)(next) && Track.isTrackContinuous(curr.track, next.track) && continuousAddress(curr)(next)
+  }
+
+  def discontinuousRoad(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    !continuousRoad(curr)(next)
+  }
+
+  def continuousRoadPart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    continuousRoad(curr)(next) && sameRoadPart(curr)(next)
+  }
+
+  def continuousRoadPartTrack(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    continuousRoadPart(curr)(next) && sameTrack(curr)(next)
+  }
+
+  def discontinuousRoadPart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    !continuousRoad(curr)(next) && sameRoadPart(curr)(next)
+  }
+
+  def continuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.endAddrMValue == next.startAddrMValue
+  }
+
+  def discontinuousAddress(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    !continuousAddress(curr)(next)
+  }
+
+  def discontinuousAddressInSamePart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    !continuousAddress(curr)(next) && sameRoadPart(curr)(next)
+  }
+
+  def continuousTopology(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.endPoint.connected(next.startingPoint)
+  }
+
+  def discontinuousTopology(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    !continuousTopology(curr)(next)
+  }
+
+  def connectingBothTails(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.endPoint.connected(next.endPoint)
+  }
+
+  def connectingBothHeads(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.startingPoint.connected(next.startingPoint)
+  }
+
+  def endingOfRoad(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    (continuousTopology(curr)(next) || connectingBothTails(curr)(next)) && curr.discontinuity == Discontinuity.EndOfRoad
+  }
+
+  def afterDiscontinuousJump(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.discontinuity == Discontinuity.MinorDiscontinuity || curr.discontinuity == Discontinuity.Discontinuous
+  }
+
+  def halfContinuousHalfDiscontinuous(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    (RoadAddressFilters.continuousRoadPart(curr)(next) && RoadAddressFilters.discontinuousTopology(curr)(next)) ||
+      (RoadAddressFilters.discontinuousRoadPart(curr)(next) && RoadAddressFilters.continuousTopology(curr)(next))
+  }
+
+  def obsoleteJunctions(junctionPoints: Seq[JunctionPoint]): Boolean = {
+    if (junctionPoints.isEmpty)
+      true
+    else
+      junctionPoints.groupBy { junctionPoint =>
+        val roadNumber = junctionPoint.roadNumber
+        if (RoadClass.RampsAndRoundaboutsClass.roads.contains(junctionPoint.roadNumber)) {
+          (roadNumber, junctionPoint.roadPartNumber)
+        } else {
+          roadNumber
+        }
+      }.keys.size == 1
+  }
 }

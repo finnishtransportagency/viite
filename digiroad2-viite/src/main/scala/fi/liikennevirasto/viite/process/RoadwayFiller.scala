@@ -124,7 +124,8 @@ object RoadwayFiller {
     val roadway = Roadway(NewIdValue, roadwayNumber, changeTarget.roadNumber.get, changeTarget.startRoadPartNumber.get, changeTarget.roadType.get, Track.apply(changeTarget.trackCode.get.toInt), changeTarget.discontinuity.get,
       changeTarget.startAddressM.get, changeTarget.endAddressM.get, change.changeInfo.reversed, startDate = projectLinks.head.startDate.get, endDate = projectLinks.head.endDate, createdBy = projectLinks.head.createdBy.get, projectLinks.head.roadName,
       projectLinks.head.ely, NoTermination)
-    Seq((Seq(roadway), roadwayAddressMapper.mapLinearLocations(roadway, projectLinks), projectLinks.map(_.copy(roadwayNumber = roadway.roadwayNumber))))
+    val projectLinksWithGivenAttributes = projectLinks.map(pl => pl.copy(roadwayNumber = roadway.roadwayNumber, linearLocationId = if(pl.linearLocationId == 0 || pl.linearLocationId == NewIdValue) Sequences.nextLinearLocationId else pl.linearLocationId))
+    Seq((Seq(roadway), roadwayAddressMapper.mapLinearLocations(roadway, projectLinksWithGivenAttributes, newLink = true), projectLinksWithGivenAttributes))
   }
 
   private def applyNumbering(change: ProjectRoadwayChange, projectLinks: Seq[ProjectLink], currentRoadways: Seq[Roadway], historyRoadways: Seq[Roadway]): Seq[(Seq[Roadway], Seq[LinearLocation], Seq[ProjectLink])] = {

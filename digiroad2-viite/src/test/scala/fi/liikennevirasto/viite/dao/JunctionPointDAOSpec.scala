@@ -25,13 +25,13 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
 
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
 
-  val testJunctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1,
-    DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
-  val testJunctionPoint2 = JunctionPoint(NewIdValue, BeforeAfter.After, -1, -1,
-    DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined)
+  val testJunctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, None, None,
+    DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
+  val testJunctionPoint2 = JunctionPoint(NewIdValue, BeforeAfter.After, -1, -1, None, None,
+    DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
 
   val testJunction1 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-01"), None,
-    DateTime.parse("2019-01-01"), None, None, None)
+    DateTime.parse("2019-01-01"), None, "Test", None)
 
   test("Test create When nothing to create Then return empty Seq") {
     runWithRollback {
@@ -65,7 +65,7 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
       val junctionId = junctionDAO.create(Seq(testJunction1)).head
       dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
         testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
-      val junctionPoints = dao.fetchJunctionPointsByJunctionIds(Seq(-1))
+      val junctionPoints = dao.fetchByJunctionIds(Seq(-1))
       junctionPoints.isEmpty should be(true)
     }
   }
@@ -79,7 +79,7 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
       val junctionId = junctionDAO.create(Seq(testJunction1)).head
       dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
         testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
-      val junctionPoints = dao.fetchJunctionPointsByJunctionIds(Seq(junctionId))
+      val junctionPoints = dao.fetchByJunctionIds(Seq(junctionId))
       junctionPoints.size should be(2)
       junctionPoints.filter(jp => jp.beforeAfter == testJunctionPoint1.beforeAfter).head.addrM should be(testJunctionPoint1.addrM)
       junctionPoints.filter(jp => jp.beforeAfter == testJunctionPoint2.beforeAfter).head.addrM should be(testJunctionPoint2.addrM)
