@@ -3691,7 +3691,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
   test("Test calculateNodePointsForNode When node is empty Then do nothing") {
     runWithRollback {
-      // TODO
+      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
+      nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber)
+      nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber)).size should be(0)
     }
   }
 

@@ -883,19 +883,19 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     * - If the road part doesn't have any "road node points", calculate node point by taking the average of the addresses
     *   of all junction points on both tracks and add this "calculated node point" on track 0 or 1
     *
-    * @param nodeId
+    * @param nodeNumber
     */
-  def calculateNodePointsForNode(nodeId: Long) : Unit = {
+  def calculateNodePointsForNode(nodeNumber: Long) : Unit = {
     withDynSession {
-      val node = nodeDAO.fetchById(nodeId)
-      if (node.isEmpty) throw new Exception(s"Node ${nodeId} not found.")
+      val node = nodeDAO.fetchByNodeNumber(nodeNumber)
+      if (node.isEmpty) throw new Exception(s"Node ${nodeNumber} not found.")
       /*
         1. Veli-Matin ajatus oli,että aina kun solmulle tulee muutoksia, niin sen kaikki laskennalliset solmukohdat
         lasketaan aina uudestaan. Ei edes yritä tunnistaa, mikä laskennallinen solmukohta on päivitystarpeessa,
         vaan kaikki lasketaan uudestaan.
         -> Expiroidaan solmulta kaikki node pointit, millä tyyppi = 2
      */
-      nodePointDAO.expireByNodeNumberAndType(nodeId, NodePointType.CalculatedNodePoint.value)
+      nodePointDAO.expireByNodeNumberAndType(nodeNumber, NodePointType.CalculatedNodePoint.value)
       /*
         2. TODO algoritmin mukainen node_point generointi
      */
