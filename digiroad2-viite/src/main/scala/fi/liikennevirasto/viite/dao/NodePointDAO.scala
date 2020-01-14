@@ -338,6 +338,14 @@ class NodePointDAO extends BaseDAO {
     else
       Q.updateNA(query).first
   }
+  def expireByNodeNumberAndType(node_number: Long, typeId: Long): Unit = {
+    val query =
+      s"""
+        Update NODE_POINT Set valid_to = sysdate where valid_to IS NULL AND node_number = $node_number
+        AND type = $typeId
+      """
+    Q.updateNA(query).execute
+  }
 
   def updateRoadwayPointId(nodePointId: Any, roadwayPointId: Long) = {
     Q.updateNA(s"UPDATE NODE_POINT SET ROADWAY_POINT_ID = $roadwayPointId WHERE ID = $nodePointId").execute
@@ -356,4 +364,5 @@ class NodePointDAO extends BaseDAO {
        """
     queryList(query)
   }
+
 }

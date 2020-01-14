@@ -874,4 +874,18 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       //}
     }
   }
+  def createCalculatedNodePointsForSingleNode(id: Long) : Unit = {
+    withDynSession {
+      /*
+        1. Veli-Matin ajatus oli,että aina kun solmulle tulee muutoksia, niin sen kaikki laskennalliset solmukohdat
+        lasketaan aina uudestaan. Ei edes yritä tunnistaa, mikä laskennallinen solmukohta on päivitystarpeessa,
+        vaan kaikki lasketaan uudestaan.
+        -> Expiroidaan solmulta kaikki node pointit, millä tyyppi = 2
+     */
+      nodePointDAO.expireByNodeNumberAndType(id, NodePointType.CalculatedNodePoint.value)
+      /*
+        2. TODO algoritmin mukainen node_point generointi
+     */
+    }
+  }
 }
