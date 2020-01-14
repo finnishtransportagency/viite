@@ -874,7 +874,18 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       //}
     }
   }
-  def createCalculatedNodePointsForSingleNode(id: Long) : Unit = {
+
+  /**
+    * Calculates node points for all the road parts of the node.
+    *
+    * - Go through the road parts (road numbers 1-19999 and 40000-69999) of the node one by one
+    * - If the road part has any "road node points", no need to calculate new node points
+    * - If the road part doesn't have any "road node points", calculate node point by taking the average of the addresses
+    *   of all junction points on both tracks and add this "calculated node point" on track 0 or 1
+    *
+    * @param nodeId
+    */
+  def calculatedNodePointsForNode(nodeId: Long) : Unit = {
     withDynSession {
       /*
         1. Veli-Matin ajatus oli,että aina kun solmulle tulee muutoksia, niin sen kaikki laskennalliset solmukohdat
@@ -882,7 +893,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         vaan kaikki lasketaan uudestaan.
         -> Expiroidaan solmulta kaikki node pointit, millä tyyppi = 2
      */
-      nodePointDAO.expireByNodeNumberAndType(id, NodePointType.CalculatedNodePoint.value)
+      nodePointDAO.expireByNodeNumberAndType(nodeId, NodePointType.CalculatedNodePoint.value)
       /*
         2. TODO algoritmin mukainen node_point generointi
      */
