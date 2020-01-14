@@ -885,7 +885,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     *
     * @param nodeId
     */
-  def calculatedNodePointsForNode(nodeId: Long) : Unit = {
+  def calculateNodePointsForNode(nodeId: Long) : Unit = {
     withDynSession {
       /*
         1. Veli-Matin ajatus oli,että aina kun solmulle tulee muutoksia, niin sen kaikki laskennalliset solmukohdat
