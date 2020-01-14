@@ -3683,6 +3683,34 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
   // </editor-fold>
 
-  // TODO Test cases for recalculating node points
+  test("Test calculatedNodePointsForNode When node not found Then do nothing") {
+    runWithRollback {
+      // TODO
+    }
+  }
+
+  test("Test calculatedNodePointsForNode When node is empty Then do nothing") {
+    runWithRollback {
+      // TODO
+    }
+  }
+
+  test("Test calculatedNodePointsForNode When all the road parts of node already contain 'road node points' Then do nothing") {
+    runWithRollback {
+      // TODO
+    }
+  }
+
+  test("Test calculatedNodePointsForNode When one track road part doesn't contain 'road node point' Then calculate node point") {
+    runWithRollback {
+      // TODO
+    }
+  }
+
+  test("Test calculatedNodePointsForNode When two track road part has junction points on both tracks and no 'road node points' Then calculate node point") {
+    runWithRollback {
+      // TODO
+    }
+  }
 
 }
