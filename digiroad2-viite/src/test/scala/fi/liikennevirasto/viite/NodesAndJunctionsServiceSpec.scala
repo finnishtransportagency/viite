@@ -3683,9 +3683,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
   // </editor-fold>
 
-  test("Test calculateNodePointsForNode When node not found Then do nothing") {
+  test("Test calculateNodePointsForNode When node not found Then throw Exception") {
     runWithRollback {
-      // TODO
+      intercept[Exception] { nodesAndJunctionsService.calculateNodePointsForNode(-1) }
     }
   }
 

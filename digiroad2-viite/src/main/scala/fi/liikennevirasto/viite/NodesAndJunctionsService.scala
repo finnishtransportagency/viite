@@ -887,6 +887,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     */
   def calculateNodePointsForNode(nodeId: Long) : Unit = {
     withDynSession {
+      val node = nodeDAO.fetchById(nodeId)
+      if (node.isEmpty) throw new Exception(s"Node ${nodeId} not found.")
       /*
         1. Veli-Matin ajatus oli,että aina kun solmulle tulee muutoksia, niin sen kaikki laskennalliset solmukohdat
         lasketaan aina uudestaan. Ei edes yritä tunnistaa, mikä laskennallinen solmukohta on päivitystarpeessa,
