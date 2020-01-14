@@ -885,7 +885,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     *
     * @param nodeNumber
     */
-  def calculateNodePointsForNode(nodeNumber: Long) : Unit = {
+  def calculateNodePointsForNode(nodeNumber: Long) : Seq[NodePoint] = {
     withDynSession {
       val node = nodeDAO.fetchByNodeNumber(nodeNumber)
       if (node.isEmpty) throw new Exception(s"Node ${nodeNumber} not found.")
@@ -899,6 +899,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       /*
         2. TODO algoritmin mukainen node_point generointi
      */
+      Seq()
     }
   }
 }
