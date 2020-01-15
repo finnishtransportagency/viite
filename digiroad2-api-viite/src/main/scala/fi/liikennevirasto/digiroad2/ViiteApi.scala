@@ -1199,8 +1199,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def nodePointToApi(nodePoint: NodePoint) : Map[String, Any] = {
     Map("id" -> nodePoint.id,
       "nodeNumber" -> nodePoint.nodeNumber,
-      "road" -> nodePoint.roadNumber,
-      "part" -> nodePoint.roadPartNumber,
+      "roadNumber" -> nodePoint.roadNumber,
+      "roadPartNumber" -> nodePoint.roadPartNumber,
       "addrM" -> nodePoint.addrM,
       "roadwayNumber" -> nodePoint.roadwayNumber,
       "beforeAfter" -> nodePoint.beforeAfter.value,
@@ -1245,7 +1245,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def junctionPointsToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
     Map("id" -> junctionPoint.id,
       "junctionId" -> junctionPoint.junctionId,
-      "beforeAfter" -> formatAfterBeforeToString(junctionPoint.beforeAfter.value ),
+      "beforeAfter" -> junctionPoint.beforeAfter.value,
       "roadwayPointId" -> junctionPoint.roadwayPointId,
       "validFrom" -> formatDateTimeToString(Some(junctionPoint.validFrom)),
       "validTo" -> formatDateTimeToString(junctionPoint.validTo),
@@ -1277,8 +1277,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("id" -> junctionPoint.id,
       "junctionId" -> junctionPoint.junctionId,
       "roadwayNumber" -> junctionPoint.roadwayNumber,
-      "road" -> junctionPoint.roadNumber,
-      "part" -> junctionPoint.roadPartNumber,
+      "roadNumber" -> junctionPoint.roadNumber,
+      "roadPartNumber" -> junctionPoint.roadPartNumber,
       "track" -> junctionPoint.track.value,
       "addrM" -> junctionPoint.addrM,
       "beforeAfter" -> junctionPoint.beforeAfter.value)
@@ -1506,20 +1506,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(entryDate)
     val formattedDate = new SimpleDateFormat("dd.MM.yyyy").format(date)
     formattedDate
-  }
-  def formatAfterBeforeToString(afterBefore: Long): String = {
-
-    if (afterBefore == 0) {
-      val retValue = "E"
-      retValue
-    } else if ( afterBefore == 1) {
-      val otherValue = "J"
-      otherValue
-    } else {
-      val noneValue = ""
-      noneValue
-    }
-
   }
 
   private def formatDateTimeToString(dateOption: Option[DateTime]): Option[String] =

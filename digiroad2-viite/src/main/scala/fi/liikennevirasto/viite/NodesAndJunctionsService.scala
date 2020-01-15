@@ -50,13 +50,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else {
           val old = nodeDAO.fetchById(node.id)
           if (old.isDefined) {
-            val oldStartDate = old.get.startDate.withTimeAtStartOfDay
-            val newStartDate = node.startDate.withTimeAtStartOfDay
-            if (node.name != old.get.name || old.get.nodeType != node.nodeType || oldStartDate != newStartDate
-              || old.get.coordinates != node.coordinates) {
-
-              // Update the node information
-              if (old.get.nodeType != node.nodeType && oldStartDate != newStartDate) {
+            val originalStartDate = old.get.startDate.withTimeAtStartOfDay
+            val startDate = node.startDate.withTimeAtStartOfDay
 
                 // Check that new start date is not earlier than before
                 if (newStartDate.getMillis < oldStartDate.getMillis) {

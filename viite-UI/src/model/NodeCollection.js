@@ -63,19 +63,22 @@
     };
 
     this.getJunctionTemplateByCoordinates = function (coordinates) {
-      return _.find(mapJunctionTemplates, function (junctionTemplate) {
+      return _.filter(mapJunctionTemplates, function (junctionTemplate) {
         return _.find(junctionTemplate.junctionPoints, function (junctionPoint) {
           return _.isEqual(junctionPoint.coordinates, coordinates);
         });
       });
     };
 
-    this.moveToLocation = function(template) {
+    this.moveToLocation = function (template) {
       if (!_.isUndefined(template)) {
         locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM).then(function (results) {
           if (results.length >= 1) {
             var result = results[0];
             eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat, zoom: 12});
+            backend.getNodesAndJunctions({boundingBox: [result.lon, result.lat, result.lon, result.lat].join(","), zoom: zoomlevels.minZoomForJunctions}, function(fetchedNodesAndJunctions) {
+              eventbus.trigger('selectedNodesAndJunctions:openTemplates', fetchedNodesAndJunctions);
+            });
           }
           applicationModel.removeSpinner();
         });
@@ -147,35 +150,29 @@
 
     eventbus.on('nodeSearchTool:clickNodePointTemplate', function(id) {
       applicationModel.addSpinner();
-      // TODO 2055 create structure: { "nodePointTemplates" = [], "junctionTemplate" = [] }
       var nodePointTemplate = _.find(userNodePointTemplates, function (template) {
         return template.id === parseInt(id);
       });
       if (_.isUndefined(nodePointTemplate)) {
         backend.getNodePointTemplateById(id, function (nodePointTemplate) {
           me.moveToLocation(nodePointTemplate);
-          eventbus.trigger('selectedNodesAndJunctions:openTemplates', templates);
         });
       } else {
         me.moveToLocation(nodePointTemplate);
-        eventbus.trigger('selectedNodesAndJunctions:openTemplates', templates);
       }
     });
 
     eventbus.on('nodeSearchTool:clickJunctionTemplate', function(id) {
       applicationModel.addSpinner();
-      // TODO 2055 create structure: { "nodePointTemplates" = [], "junctionTemplate" = [] }
       var junctionTemplate = _.find(userJunctionTemplates, function (template) {
         return template.id === parseInt(id);
       });
       if (_.isUndefined(junctionTemplate)) {
         backend.getJunctionTemplateById(id, function (junctionTemplate) {
           me.moveToLocation(junctionTemplate);
-          eventbus.trigger('selectedNodesAndJunctions:openTemplates', templates);
         });
       } else {
         me.moveToLocation(junctionTemplate);
-        eventbus.trigger('selectedNodesAndJunctions:openTemplates', templates);
       }
     });
 

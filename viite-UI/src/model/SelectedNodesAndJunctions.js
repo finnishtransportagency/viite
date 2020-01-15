@@ -15,14 +15,14 @@
     var openTemplates = function (templates) {
       clean();
       setCurrentNodePointTemplates(templates.nodePointTemplates);
-      setCurrentJunctionTemplate(templates.junctionTemplate);
+      setCurrentJunctionTemplate(_.first(templates.junctionTemplates));
       eventbus.trigger('templates:selected', templates);
     };
 
     var templates = function (coordinates) {
       return {
         nodePointTemplates: nodeCollection.getNodePointTemplatesByCoordinates(coordinates),
-        junctionTemplate: nodeCollection.getJunctionTemplateByCoordinates(coordinates)
+        junctionTemplates: nodeCollection.getJunctionTemplateByCoordinates(coordinates)
       };
     };
 

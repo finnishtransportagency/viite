@@ -142,7 +142,7 @@
         coordinate = map.getEventCoordinate(event.originalEvent);
         var roadAddressInfo = [];
         _.map(junctionPointData, function(point){
-          roadAddressInfo.push({road: point.road, part: point.part, track: point.track, addr: point.addrM, beforeAfter: point.beforeAfter});
+          roadAddressInfo.push({road: point.roadNumber, part: point.roadPartNumber, track: point.track, addr: point.addrM, beforeAfter: point.beforeAfter});
         });
 
         var groupedRoadAddresses = _.groupBy(roadAddressInfo, function (row) {

@@ -17,7 +17,7 @@
           }
           nodePoint.coordinates = { x: point.x, y: point.y };
         } else {
-          getCoordinates(nodePoint.road, nodePoint.part, nodePoint.addrM, function (results) {
+          getCoordinates(nodePoint.roadNumber, nodePoint.roadPartNumber, nodePoint.addrM, function (results) {
             if (results.length >= 1) {
               var result = results[0];
               nodePoint.coordinates = { x: parseFloat(result.lon).toFixed(3), y: parseFloat(result.lat).toFixed(3) };
@@ -42,7 +42,7 @@
           }
           junctionPoint.coordinates = { x: point.x, y: point.y };
         } else {
-          getCoordinates(junctionPoint.road, junctionPoint.part, junctionPoint.addrM, function (results) {
+          getCoordinates(junctionPoint.roadNumber, junctionPoint.roadPartNumber, junctionPoint.addrM, function (results) {
             if (results.length >= 1) {
               var result = results[0];
               junctionPoint.coordinates = { x: parseFloat(result.lon).toFixed(3), y: parseFloat(result.lat).toFixed(3) };
