@@ -65,10 +65,10 @@
 
     var templatesForm = function (title) {
       var formButtons = function () {
-        // needs refactoring
+        // TOOD 2055 needs refactoring
         return '<div class="form form-controls">' +
-          ' <button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
-          ' <button class="cancel btn btn-edit-node-cancel">Peruuta</button>' +
+          ' <button class="save btn btn-edit-templates-save" disabled>Tallenna</button>' +
+          ' <button class="cancel btn btn-edit-templates-cancel">Peruuta</button>' +
           '</div>';
       };
 
@@ -137,9 +137,9 @@
     };
 
     var Junctions = function () {
-      var headers = function(asMessageOrTemplate) {
+      var headers = function(asResume) {
         var checkbox = '';
-        if (!asMessageOrTemplate) {
+        if (!asResume) {
           checkbox += '<th class="node-junctions-table-header">' +
             ' <table class="node-junctions-table-dimension">' +
             '   <tr><th class="node-junctions-table-header">Irrota</th></tr>' +
@@ -225,16 +225,19 @@
       };
 
       var toHtmlTable = function(junctionsInfo, asMessageOrTemplate) {
+        var asMessage = _.has(asMessageOrTemplate, 'message') && asMessageOrTemplate.message;
+        var asTemplate = _.has(asMessageOrTemplate, 'template') && asMessageOrTemplate.template;
+        var asResume = asMessage || asTemplate;
         var htmlTable = "";
         htmlTable += '<table class="node-junctions-table-dimension">';
-        htmlTable += headers(asMessageOrTemplate);
+        htmlTable += headers(asResume);
         _.each(junctionsInfo, function (junction) {
           htmlTable += '<tr class="node-junctions-table-border-bottom">';
-          if (!asMessageOrTemplate.message) {
+          if (asResume) {
+            htmlTable += '<td>' + junctionIcon(junction.junctionNumber, asTemplate) + '</td>';
+          } else {
             htmlTable += detachJunctionBox(junction);
             htmlTable += '<td>' + junctionIcon(junction.junctionNumber) + '</td>';
-          } else {
-            htmlTable += '<td>' + junctionIcon(junction.junctionNumber, asMessageOrTemplate.template) + '</td>';
           }
           htmlTable += junctionInfoHtml(getJunctionPointsInfo(junction));
           htmlTable += '</tr>';
@@ -286,13 +289,14 @@
       };
 
       var toHtmlTable = function(nodePointsInfo, asMessageOrTemplate) {
+        var asResume = _.has(asMessageOrTemplate, 'message') && asMessageOrTemplate.message || _.has(asMessageOrTemplate, 'template') && asMessageOrTemplate.template;
         var htmlTable = "";
         htmlTable += '<table class="node-points-table-dimension">';
-        htmlTable += headers(asMessageOrTemplate.message);
+        htmlTable += headers(asResume);
         var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
         _.each(_.sortBy(rowsInfo, ['roadNumber', 'roadPartNumber', 'addr']), function(row){
           htmlTable += '<tr class="node-junctions-table-border-bottom">';
-          if (!asMessageOrTemplate) htmlTable += detachNodePointBox(row);
+          if (!asResume) htmlTable += detachNodePointBox(row);
           htmlTable += nodePointInfoHtml(row);
           htmlTable += '</tr>';
         });
@@ -351,9 +355,9 @@
         } else return [];
       };
 
-      var headers = function(asMessage) {
+      var headers = function(asResume) {
         var checkbox = '';
-        if (!asMessage) {
+        if (!asResume) {
           checkbox += '<th class="node-points-table-header">' +
             ' <table class="node-points-table-dimension">' +
             '   <tr><th class="node-points-table-header">Irrota</th></tr>' +
