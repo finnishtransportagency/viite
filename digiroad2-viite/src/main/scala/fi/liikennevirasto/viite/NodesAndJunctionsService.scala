@@ -53,19 +53,23 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             val originalStartDate = old.get.startDate.withTimeAtStartOfDay
             val startDate = node.startDate.withTimeAtStartOfDay
 
-                // Check that new start date is not earlier than before
-                if (newStartDate.getMillis < oldStartDate.getMillis) {
-                  return Some(NodeStartDateUpdateErrorMessage)
-                }
+            // Check that new start date is not earlier than before
+            if (startDate.getMillis < originalStartDate.getMillis) {
+              return Some(NodeStartDateUpdateErrorMessage)
+            }
+
+            if (node.name != old.get.name || old.get.nodeType != node.nodeType || originalStartDate != startDate || old.get.coordinates != node.coordinates) {
+              // Create new node and invalidate old one
+              if (old.get.nodeType != node.nodeType && originalStartDate != startDate) {
 
                 // Create a new history layer when the node type has changed
+                nodeDAO.expireById(Seq(old.get.id))
                 nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
                 nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
 
               } else {
-                nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
+                nodeDAO.update(Seq(node), username)
               }
-              nodeDAO.expireById(Seq(node.id))
             }
           } else {
             return Some(NodeNotFoundErrorMessage)

@@ -106,6 +106,7 @@
       var nodeNumber = node.nodeNumber ? node.nodeNumber : '-';
       var nodeName = node.name ? node.name : '';
       var startDate = node.startDate ? node.startDate : '';
+
       return _.template('' +
         '<header>' +
         formCommon.captionTitle(title) +
@@ -115,7 +116,7 @@
         ' <div class="form form-horizontal form-dark">' +
         '   <div>' +
         staticField('Solmunumero:', nodeNumber) +
-        staticField('Koordinaatit (<i>P</i>, <i>I</i>):', node.coordY + ', ' + node.coordX) +
+        staticField('Koordinaatit (<i>P</i>, <i>I</i>):', '<label id="node-coordinates">' + node.coordinates.y + ', ' + node.coordinates.x + '</label>') +
         inputFieldRequired('Solmun nimi', 'nodeName', '', nodeName, 'maxlength', 32) +
         addNodeTypeDropdown('Solmutyyppi', 'nodeTypeDropdown', getNodeType(node.type)) +
         inputFieldRequired('Alkupvm', 'nodeStartDate', 'pp.kk.vvvv', startDate, 'disabled', true) +
@@ -550,10 +551,13 @@
       });
 
       rootElement.on('click', '.btn-edit-node-save', function () {
+        var node = selectedNode.getCurrentNode();
+        eventbus.trigger('node:repositionNode', node, [node.coordinates.x, node.coordinates.y]);
         selectedNode.saveNode();
       });
 
       rootElement.on('click', '.btn-edit-node-cancel', function () {
+        selectedNode.revertFormChanges();
         closeNode();
       });
 
@@ -578,8 +582,12 @@
           var junctionsElement = $('#junctions-info-content');
           junctionsElement.html(junctionsTable.toHtmlTable(_.sortBy(currentNode.junctions, 'junctionNumber')));
 
-          eventbus.on('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:detach nodePoint:detach', function () {
+          eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:detach nodePoint:detach', function () {
             nodeChangeHandler();
+          });
+
+          eventbus.on('node:setCoordinates', function (coordinates) {
+            $("#node-coordinates").text(coordinates[1] + ', ' + coordinates[0]);
           });
 
           eventbus.on('change:nodeName', function (nodeName) {

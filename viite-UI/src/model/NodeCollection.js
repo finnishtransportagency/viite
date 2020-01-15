@@ -98,13 +98,13 @@
 
     eventbus.on('node:save', function (node) {
       applicationModel.addSpinner();
-      var dataJson = {
-        coordinates: { x: Number(node.coordX), y: Number(node.coordY) },
-        name: node.name,
-        nodeType: Number(node.type),
-        startDate: node.startDate
-      };
       if (!_.isUndefined(node)) {
+        var dataJson = {
+          coordinates: node.coordinates,
+          name: node.name,
+          nodeType: Number(node.type),
+          startDate: node.startDate
+        };
         if (!_.isUndefined(node.id)) {
           dataJson = _.merge(dataJson, {
             id: node.id,
