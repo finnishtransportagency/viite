@@ -81,11 +81,12 @@ object CalibrationPointDAO {
 
   def fetch(linkId: Long, startOrEnd: Long, roadwayPointId: Long) : Option[CalibrationPoint] = {
     sql"""
-         SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+         SELECT CP.ID, CP.ROADWAY_POINT_ID, CP.LINK_ID, CP.START_END, CP.TYPE, CP.VALID_FROM, CP.VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
          FROM CALIBRATION_POINT CP
          WHERE CP.ROADWAY_POINT_ID = $roadwayPointId
          AND CP.LINK_ID = $linkId
          AND CP.START_END = $startOrEnd
+         AND CP.VALID_TO IS NULL
      """.as[CalibrationPoint].firstOption
   }
 

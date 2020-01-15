@@ -715,6 +715,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(5)
       junctionPointTemplates.length should be(10)
       junctions.size should be(3)
+      val calibrationPointsInJunctionPointsPlace = CalibrationPointDAO.fetchByLinkId((leftPLinks ++ rightPLinks).map(_.linkId))
+      calibrationPointsInJunctionPointsPlace.size should be (10)
+      val (start, end) = calibrationPointsInJunctionPointsPlace.partition(_.startOrEnd == 0)
+      val startCalibrationPointsLinks = start.map(_.linkId).distinct
+      val endCalibrationPointsLinks = end.map(_.linkId).distinct
+      startCalibrationPointsLinks.size should be (5)
+      endCalibrationPointsLinks.size should be (5)
+
+      startCalibrationPointsLinks.forall(List(leftLink2.linkId, leftLink3.linkId, rightLink2.linkId, rightLink3.linkId, rightLink4.linkId).contains(_)) should be (true)
+      endCalibrationPointsLinks.forall(List(leftLink1.linkId, leftLink2.linkId, rightLink1.linkId, rightLink2.linkId, rightLink3.linkId).contains(_)) should be (true)
+
     }
   }
 
