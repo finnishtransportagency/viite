@@ -211,7 +211,7 @@
     root.Tool = {
         Unknown:            {value: ""},
         Default:            {value: "Select"},
-        Select:             {value: "Select"},
+        Select:             {value: "Select",   description: 'Solmun valinta'},
         Add:                {value: "Add"}
     };
 
