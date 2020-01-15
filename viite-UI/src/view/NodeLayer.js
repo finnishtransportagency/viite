@@ -166,9 +166,69 @@
     });
 
     /**
+     * Type of interactions we want the map to be able to respond to.
+     * A translate feature used to move either 'selected' or 'unselected' nodes to a new place,
+     * within a maximum of 200m distance.
+     * @type {ol.interaction.Translate}
+     */
+    var nodeInitialPosition = null;
+    var nodeTranslate = new ol.interaction.Translate({
+      layers: [nodeMarkerSelectedLayer]
+    });
+
+    /**
+     * Save initial node position for comparison purposes
+     */
+    nodeTranslate.on('translatestart', function (evt) {
+      nodeInitialPosition = [parseInt(evt.coordinate[0]), parseInt(evt.coordinate[1])];
+      selectedNodesAndJunctions.setInitialCoordinates(evt.coordinate);
+    });
+
+    /**
+     * while translating the new position the 200m limitation need to be verified
+     * and stop the node movement when that limitation is not obeyed
+     */
+    nodeTranslate.on('translating', function (evt) {
+      if (verifyMovementLimitationsAreObeyed(nodeInitialPosition, evt.coordinate)) {
+        eventbus.trigger('node:setCoordinates', [parseInt(evt.coordinate[0]), parseInt(evt.coordinate[1])]);
+      }
+    });
+
+    nodeTranslate.on('translateend', function (evt) {
+      if (!verifyMovementLimitationsAreObeyed(nodeInitialPosition, evt.coordinate)){
+        eventbus.trigger('node:setCoordinates', [nodeInitialPosition[0], nodeInitialPosition[1]]);
+        eventbus.trigger('node:repositionNode', selectedNodesAndJunctions.getCurrentNode());
+      } else {
+        selectedNodesAndJunctions.setCoordinates(evt.coordinate);
+      }
+    });
+
+    /**
+     * Verifies if the new position is within the 200 meters limitation
+     * @param nodeInitialPosition initial position of the node
+     * @param coordinates contains coordinate X and coordinate Y
+     */
+    var verifyMovementLimitationsAreObeyed = function(nodeInitialPosition, coordinates) {
+      var parsedCoordXDif = parseInt(coordinates[0]) - nodeInitialPosition[0];
+      var parsedCoordYDif = parseInt(coordinates[1]) - nodeInitialPosition[1];
+      return parseInt(Math.sqrt(Math.pow(parsedCoordXDif, 2) + Math.pow(parsedCoordYDif, 2))) < 200;
+    };
+
+    /**
      * This will add all the following interactions from the map:
      * - nodeLayerSelectInteraction
+     * - nodeTranslate
      */
+    var addInteractions = function () {
+      addSelectInteractions();
+      addTranslateInteractions();
+    };
+
+    var removeInteractions = function () {
+      removeSelectInteractions();
+      removeTranslateInteractions();
+    };
+
     var toggleSelectInteractions = function (activate) {
       nodeLayerSelectInteraction.setActive(activate);
     };
@@ -181,8 +241,16 @@
       map.removeInteraction(nodeLayerSelectInteraction);
     };
 
+    var addTranslateInteractions = function () {
+      map.addInteraction(nodeTranslate);
+    };
+
+    var removeTranslateInteractions = function () {
+      map.removeInteraction(nodeTranslate);
+    };
+
     // We add the defined interactions to the map.
-    addSelectInteractions();
+    addInteractions();
 
     var selectFeaturesToHighlight = function (vector, featuresToHighlight, otherFeatures) {
       vector.selected.clear();
@@ -416,14 +484,26 @@
       applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
     });
 
+    me.eventListener.listenTo(eventbus, 'node:repositionNode', function (node, coordinates) {
+      _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
+        if (_.isEqual(nodeFeature.node, node)) {
+          var point = _.isUndefined(coordinates) ?
+              new ol.geom.Point([node.initialCoordX, node.initialCoordY]) :
+              new ol.geom.Point([coordinates[0], coordinates[1]]);
+          nodeFeature.setGeometry(point);
+        }
+      });
+      return false;
+    });
+
     me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
       toggleSelectInteractions(layer === 'node');
       if (previouslySelectedLayer === 'node') {
         hideLayer();
-        removeSelectInteractions();
+        removeInteractions();
       } else if (layer === 'node') {
         setGeneralOpacity(1);
-        addSelectInteractions();
+        addInteractions();
         showLayer();
         eventbus.trigger('nodeLayer:fetch');
       }
@@ -478,15 +558,20 @@
         var selectedNode = selectedNodesAndJunctions.getCurrentNode();
 
         if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
-          if (!_.isUndefined(selectedNode) && _.isUndefined(selectedNode.id)) {
+          if (!_.isUndefined(selectedNode)) {
             // adds node created by user which isn't saved yet.
             addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(selectedNode, roadLinkForPoint, nodeCollection.getCoordinates),
               function (feature) { return feature.node.id === selectedNode.id; });
           }
 
           _.each(nodes, function (node) {
-            addFeature(nodeMarkerLayer, new NodeMarker().createNodeMarker(node, roadLinkForPoint, nodeCollection.getCoordinates),
-              function (feature) { return feature.node.id === node.id; });
+            // filter the current selected node not to be redrawn when being translated
+            if (_.isUndefined(selectedNode) || node.id !== selectedNode.id) {
+              addFeature(nodeMarkerLayer, new NodeMarker().createNodeMarker(node, roadLinkForPoint, nodeCollection.getCoordinates),
+                  function (feature) {
+                    return feature.node.id === node.id;
+                  });
+            }
           });
 
           if (!_.isUndefined(selectedNode)) {

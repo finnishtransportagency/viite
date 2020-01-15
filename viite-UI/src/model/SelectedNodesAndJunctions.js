@@ -58,8 +58,26 @@
       return current.junctionTemplate;
     };
 
+    var setInitialCoordinates = function (coordinates) {
+      if (_.isUndefined(current.node.oldCoordX) && _.isUndefined(current.node.oldCoordY)) {
+        current.node.oldCoordX = current.node.coordX;
+        current.node.oldCoordY = current.node.coordY;
+      }
+      current.node.initialCoordX = parseInt(coordinates[0]);
+      current.node.initialCoordY = parseInt(coordinates[1]);
+    };
+
+    var setCoordinates = function (coordinates) {
+      current.node.coordX = parseInt(coordinates[0]);
+      current.node.coordY = parseInt(coordinates[1]);
+      setDirty(true);
+      eventbus.trigger('change:node-coordinates');
+    };
+
     var setNodeName = function (name) {
+      if (!current.node.startNameChanged) { current.node.oldName = current.node.name; }
       current.node.name = name;
+      current.node.startNameChanged = current.node.oldName !== name;
       setDirty(true);
     };
 
@@ -164,6 +182,30 @@
       eventbus.trigger('node:save', current.node);
     };
 
+
+    /**
+     * Checks for changes on form name, type, date and coordinates to revert them
+     * and triggers node reposition to it's old coordinates
+     */
+    var revertFormChanges = function() {
+        if(current.node.startNameChanged)
+            current.node.name = current.node.oldName;
+        if(current.node.typeChanged)
+            current.node.type = current.node.oldType;
+        if(current.node.startDateChanged)
+            current.node.startDate = current.node.oldStartDate;
+
+        if(current.node.oldCoordX && current.node.oldCoordY) {
+            current.node.coordX = current.node.oldCoordX;
+            current.node.coordY = current.node.oldCoordY;
+            eventbus.trigger('node:repositionNode', current.node, [current.node.oldCoordX, current.node.oldCoordY]);
+        }
+    };
+
+    eventbus.on('selectedNodesAndJunctions:openTemplates', function (templates) {
+      openTemplates(templates);
+    });
+
     return {
       openNode: openNode,
       openNodePointTemplates: openNodePointTemplates,
@@ -172,6 +214,8 @@
       getCurrentNode: getCurrentNode,
       getCurrentNodePointTemplates: getCurrentNodePointTemplates,
       getCurrentJunctionTemplate: getCurrentJunctionTemplate,
+      setInitialCoordinates: setInitialCoordinates,
+      setCoordinates: setCoordinates,
       setNodeName: setNodeName,
       setNodeType: setNodeType,
       typeHasChanged: typeHasChanged,
@@ -184,8 +228,8 @@
       closeForm: closeForm,
       closeNodePoint: closeNodePoint,
       closeJunction: closeJunction,
-      saveNode: saveNode
+      saveNode: saveNode,
+      revertFormChanges: revertFormChanges
     };
-
   };
 })(this);
