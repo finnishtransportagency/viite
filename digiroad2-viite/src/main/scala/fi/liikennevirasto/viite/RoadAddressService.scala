@@ -711,7 +711,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
                 val (roadwayNumberInPoint, disposedRoadwayPointId) = getNewRoadwayNumberInPoint(rwp, newAddrM)
-                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty){
+                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) {
                   val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
                   roadwayPointDAO.update(newRwp)
                   Seq(newRwp)
@@ -723,7 +723,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
                 val (roadwayNumberInPoint, disposedRoadwayPointId) = getNewRoadwayNumberInPoint(rwp, newAddrM)
-                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty){
+                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) {
                   val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
                   roadwayPointDAO.update(newRwp)
                   Seq(newRwp)
@@ -737,7 +737,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
                 val (roadwayNumberInPoint, disposedRoadwayPointId) = getNewRoadwayNumberInPoint(rwp, newAddrM)
-                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty){
+                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) {
                   val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
                   roadwayPointDAO.update(newRwp)
                   Seq(newRwp)
