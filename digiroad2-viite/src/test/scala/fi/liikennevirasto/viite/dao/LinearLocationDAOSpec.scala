@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{Point, asset}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -67,7 +67,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
         calibrationPoints, geometry, linkSource, roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation))
       val roadwayPointId = roadwayPointDAO.create(linearLocation.roadwayNumber, linearLocation.startCalibrationPoint.get, "test")
-      CalibrationPointDAO.create(roadwayPointId, linearLocation.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = "test")
+      CalibrationPointDAO.create(roadwayPointId, linearLocation.linkId, startOrEnd = CalibrationPointLocation.StartOfLink.value, calType = CalibrationPointType.Mandatory, createdBy = "test")
       val loc = linearLocationDAO.fetchById(id).getOrElse(fail())
 
       // Check that the values were saved correctly in database

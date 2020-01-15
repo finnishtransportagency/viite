@@ -24,7 +24,23 @@ object CalibrationPointDAO {
     case object Mandatory extends CalibrationPointType {def value = 2}
   }
 
-  case class CalibrationPoint(id: Long, roadwayPointId: Long, linkId: Long, roadwayNumber: Long, addrM: Long, startOrEnd: Long, typeCode: CalibrationPointType, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String, createdTime: Option[DateTime] = None)
+  sealed trait CalibrationPointLocation {
+    def value: Int
+  }
+
+  object CalibrationPointLocation {
+    val values = Set(StartOfLink, EndOfLink, Unknown)
+
+    def apply(intValue: Int): CalibrationPointLocation = {
+      values.find(_.value == intValue).getOrElse(Unknown)
+    }
+
+    case object StartOfLink extends CalibrationPointLocation {def value = 0}
+    case object EndOfLink extends CalibrationPointLocation {def value = 1}
+    case object Unknown extends CalibrationPointLocation {def value = 99}
+  }
+
+  case class CalibrationPoint(id: Long, roadwayPointId: Long, linkId: Long, roadwayNumber: Long, addrM: Long, startOrEnd: CalibrationPointLocation, typeCode: CalibrationPointType, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String, createdTime: Option[DateTime] = None)
 
   implicit val getRoadwayPointRow = new GetResult[CalibrationPoint] {
     def apply(r: PositionedResult) = {
@@ -33,7 +49,7 @@ object CalibrationPointDAO {
       val linkId = r.nextLong()
       val roadwayNumber = r.nextLong()
       val addrMValue = r.nextLong()
-      val startOrEnd = r.nextLong()
+      val startOrEnd = CalibrationPointLocation.apply(r.nextLong().toInt)
       val typeCode = CalibrationPointType.apply(r.nextLong().toInt)
       val validFrom = r.nextDateOption().map(d => new DateTime(d.getTime))
       val validTo = r.nextDateOption().map(d => new DateTime(d.getTime))
@@ -48,7 +64,7 @@ object CalibrationPointDAO {
   def create(calibrationPoint: CalibrationPoint): Unit = {
     sqlu"""
       Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES
-      (${Sequences.nextCalibrationPointId}, ${calibrationPoint.roadwayPointId}, ${calibrationPoint.linkId}, ${calibrationPoint.startOrEnd}, ${calibrationPoint.typeCode.value}, ${calibrationPoint.createdBy})
+      (${Sequences.nextCalibrationPointId}, ${calibrationPoint.roadwayPointId}, ${calibrationPoint.linkId}, ${calibrationPoint.startOrEnd.value}, ${calibrationPoint.typeCode.value}, ${calibrationPoint.createdBy})
       """.execute
   }
 
