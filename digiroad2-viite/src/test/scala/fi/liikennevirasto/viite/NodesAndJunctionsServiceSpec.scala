@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.RoadType.PublicRoad
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointLocation
 import fi.liikennevirasto.viite.dao.{BeforeAfter, _}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
@@ -719,7 +720,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       junctions.size should be(3)
       val calibrationPointsInJunctionPointsPlace = CalibrationPointDAO.fetchByLinkId((leftPLinks ++ rightPLinks).map(_.linkId))
       calibrationPointsInJunctionPointsPlace.size should be (10)
-      val (start, end) = calibrationPointsInJunctionPointsPlace.partition(_.startOrEnd == 0)
+      val (start, end) = calibrationPointsInJunctionPointsPlace.partition(_.startOrEnd == CalibrationPointLocation.StartOfLink)
       val startCalibrationPointsLinks = start.map(_.linkId).distinct
       val endCalibrationPointsLinks = end.map(_.linkId).distinct
       startCalibrationPointsLinks.size should be (5)
