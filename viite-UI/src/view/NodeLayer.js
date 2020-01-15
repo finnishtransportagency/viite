@@ -258,17 +258,11 @@
       }
     });
 
-    // TODO 2054 - make sure this works fine!
-    // me.eventListener.listenTo(eventbus, 'node:unselected', function () {
-    //   setProperty([nodeMarkerSelectedLayer], 'translatable', false);
-    // });
-
     me.eventListener.listenTo(eventbus, 'node:unselected nodePointTemplate:unselected junctionTemplate:unselected', function () {
       clearHighlights();
     });
 
     me.eventListener.listenTo(eventbus, 'tool:changed', function (tool) {
-      // TODO 2054 - make sure this works fine!
       switch (tool) {
         case LinkValues.Tool.Unknown.value:
           me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
