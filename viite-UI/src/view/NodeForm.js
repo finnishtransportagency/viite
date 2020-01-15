@@ -1,21 +1,10 @@
 (function (root) {
   root.NodeForm = function (selectedNode) {
-    var picker;
-
-    var SHOW = 'Näytä';
-    var HIDE = 'Piilota';
-
-    var NodeType = LinkValues.NodeType;
     var formCommon = new FormCommon('node-');
-
-    var junctionsToDetach;
-    var nodePointsRows = [];
-    var formButtons = function () {
-      return '<div class="form form-controls">' +
-        ' <button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
-        ' <button class="cancel btn btn-edit-node-cancel">Peruuta</button>' +
-        '</div>';
-    };
+    var NodeType = LinkValues.NodeType;
+    var NODE_POINTS_TITLE = 'Näytä solmukohdat';
+    var JUNCTIONS_TITLE = 'Näytä liittymat';
+    var picker;
 
     var getNodeType = function (nodeValue) {
       var nodeType = _.find(NodeType, function (type) {
@@ -74,13 +63,52 @@
         ' </select></p></div>';
     };
 
-    var nodeForm = function (node) {
+    var templatesForm = function (title) {
+      var formButtons = function () {
+        // needs refactoring
+        return '<div class="form form-controls">' +
+          ' <button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
+          ' <button class="cancel btn btn-edit-node-cancel">Peruuta</button>' +
+          '</div>';
+      };
+
+      return _.template('' +
+        '<header>' +
+        formCommon.captionTitle(title) +
+        '</header>' +
+
+        '<div class="wrapper read-only">' +
+        ' <div class="form form-horizontal form-dark">' +
+        '   <div>' +
+        '     <p class="node-info">' + NODE_POINTS_TITLE + '</p>' +
+        '     <div id="node-points-info-content">' +
+        '     </div>' +
+        '     <p class="node-info">' + JUNCTIONS_TITLE + '</p>' +
+        '     <div id="junctions-info-content">' +
+        '     </div>' +
+        '   </div>' +
+        ' </div>' +
+        '</div>' +
+
+        '<footer>' +
+        formButtons() +
+        '</footer>'
+      );
+    };
+
+    var nodeForm = function (title, node) {
+      var formButtons = function () {
+        return '<div class="form form-controls">' +
+          ' <button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
+          ' <button class="cancel btn btn-edit-node-cancel">Peruuta</button>' +
+          '</div>';
+      };
       var nodeNumber = node.nodeNumber ? node.nodeNumber : '-';
       var nodeName = node.name ? node.name : '';
       var startDate = node.startDate ? node.startDate : '';
       return _.template('' +
         '<header>' +
-        formCommon.captionTitle('Solmun tiedot:') +
+        formCommon.captionTitle(title) +
         '</header>' +
 
         '<div class="wrapper read-only">' +
@@ -93,10 +121,10 @@
         inputFieldRequired('Alkupvm', 'nodeStartDate', 'pp.kk.vvvv', startDate, 'disabled', true) +
         '   </div>' +
         '   <div>' +
-        '     <p><a id="node-point-link" class="node-info-link" href="/">Näytä solmukohdat</a></p>' +
+        '     <p class="node-info">' + NODE_POINTS_TITLE + '</p>' +
         '     <div id="node-points-info-content">' +
         '     </div>' +
-        '     <p><a id="junction-link" class="node-info-link" href="/">Näytä liittymat</a></p>' +
+        '     <p class="node-info">' + JUNCTIONS_TITLE + '</p>' +
         '     <div id="junctions-info-content">' +
         '     </div>' +
         '   </div>' +
@@ -109,9 +137,9 @@
     };
 
     var Junctions = function () {
-      var headers = function(asMessage) {
+      var headers = function(asMessageOrTemplate) {
         var checkbox = '';
-        if (!asMessage) {
+        if (!asMessageOrTemplate) {
           checkbox += '<th class="node-junctions-table-header">' +
             ' <table class="node-junctions-table-dimension">' +
             '   <tr><th class="node-junctions-table-header">Irrota</th></tr>' +
@@ -137,8 +165,11 @@
           '></td>';
       };
 
-      var junctionIcon = function (number) {
-        if (_.isUndefined(number) || number === 99) {
+      var junctionIcon = function (number, asTemplate) {
+        if (asTemplate) {
+          return '<object type="image/svg+xml" data="images/junction-template.svg">';
+        }
+        if (_.isUndefined(number)) {
           return '<object type="image/svg+xml" data="images/junction.svg">';
         } else {
           return '<object type="image/svg+xml" data="images/junction.svg">' +
@@ -147,16 +178,16 @@
       };
 
       var junctionInfoHtml = function(junctionPointsInfo) {
-        var roads = _.map(_.map(junctionPointsInfo, 'road'), function (road) {
-          return '<tr><td class="node-junctions-table">' + road + '</td></tr>';
+        var roads = _.map(_.map(junctionPointsInfo, 'roadNumber'), function (roadNumber) {
+          return '<tr><td class="node-junctions-table">' + roadNumber + '</td></tr>';
         });
 
         var tracks = _.map(_.map(junctionPointsInfo, 'track'), function (track) {
           return '<tr><td class="node-junctions-table">' + track + '</td></tr>';
         });
 
-        var parts = _.map(_.map(junctionPointsInfo, 'part'), function (part) {
-          return '<tr><td class="node-junctions-table">' + part + '</td></tr>';
+        var parts = _.map(_.map(junctionPointsInfo, 'roadPartNumber'), function (roadPartNumber) {
+          return '<tr><td class="node-junctions-table">' + roadPartNumber + '</td></tr>';
         });
 
         var addresses = _.map(_.map(junctionPointsInfo, 'addr'), function (addr) {
@@ -190,19 +221,21 @@
       };
 
       var toMessage = function (junctionsInfo) {
-        return toHtmlTable(junctionsInfo, true);
+        return toHtmlTable(junctionsInfo, {message: true});
       };
 
-      var toHtmlTable = function(junctionsInfo, asMessage) {
-        junctionsToDetach = junctionsInfo;
-        junctionsInfo = _.sortBy(junctionsInfo, 'junctionNumber');
+      var toHtmlTable = function(junctionsInfo, asMessageOrTemplate) {
         var htmlTable = "";
         htmlTable += '<table class="node-junctions-table-dimension">';
-        htmlTable += headers(asMessage);
+        htmlTable += headers(asMessageOrTemplate);
         _.each(junctionsInfo, function (junction) {
           htmlTable += '<tr class="node-junctions-table-border-bottom">';
-          if (!asMessage) htmlTable += detachJunctionBox(junction);
-          htmlTable += '<td>' + junctionIcon(junction.junctionNumber) + '</td>';
+          if (!asMessageOrTemplate.message) {
+            htmlTable += detachJunctionBox(junction);
+            htmlTable += '<td>' + junctionIcon(junction.junctionNumber) + '</td>';
+          } else {
+            htmlTable += '<td>' + junctionIcon(junction.junctionNumber, asMessageOrTemplate.template) + '</td>';
+          }
           htmlTable += junctionInfoHtml(getJunctionPointsInfo(junction));
           htmlTable += '</tr>';
         });
@@ -213,12 +246,12 @@
       var getJunctionPointsInfo = function(junction) {
         var info = [];
         _.map(junction.junctionPoints, function(point){
-          var row = {road: point.road, part: point.part, track: point.track, addr: point.addrM, beforeAfter: point.beforeAfter};
+          var row = {roadNumber: point.roadNumber, roadPartNumber: point.roadPartNumber, track: point.track, addr: point.addrM, beforeAfter: point.beforeAfter};
           info.push(row);
         });
 
         var groupedHomogeneousRows = _.groupBy(info, function (row) {
-          return [row.road, row.track, row.part, row.addr];
+          return [row.roadNumber, row.track, row.roadPartNumber, row.addr];
         });
 
         var joinedHomogeneousRows = _.partition(groupedHomogeneousRows, function(group) {
@@ -230,15 +263,15 @@
 
         var doubleRows = _.map(doubleHomogeneousRows, function(point) {
           var first = _.head(point);
-          return {road: first.road, track: first.track, part: first.part, addr: first.addr, beforeAfter: "EJ"};
+          return {roadNumber: first.roadNumber, track: first.track, roadPartNumber: first.roadPartNumber, addr: first.addr, beforeAfter: "EJ"};
         });
 
         var singleRows = _.map(singleHomogeneousRows, function(point) {
           var first = _.head(point);
-          return {road: first.road, track: first.track, part: first.part, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J")};
+          return {roadNumber: first.roadNumber, track: first.track, roadPartNumber: first.roadPartNumber, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J")};
         });
 
-        return _.sortBy(doubleRows.concat(singleRows), ['road', 'part', 'track', 'addr', 'beforeAfter']);
+        return _.sortBy(doubleRows.concat(singleRows), ['roadNumber', 'roadPartNumber', 'track', 'addr', 'beforeAfter']);
       };
 
       return {
@@ -249,17 +282,17 @@
 
     var NodePoints = function () {
       var toMessage = function (nodePointsInfo) {
-        return toHtmlTable(nodePointsInfo, true);
+        return toHtmlTable(nodePointsInfo, {message: true});
       };
 
-      var toHtmlTable = function(nodePointsInfo, asMessage) {
+      var toHtmlTable = function(nodePointsInfo, asMessageOrTemplate) {
         var htmlTable = "";
         htmlTable += '<table class="node-points-table-dimension">';
-        htmlTable += headers(asMessage);
+        htmlTable += headers(asMessageOrTemplate.message);
         var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
-        _.each(_.sortBy(rowsInfo, ['road', 'part', 'addr']), function(row){
+        _.each(_.sortBy(rowsInfo, ['roadNumber', 'roadPartNumber', 'addr']), function(row){
           htmlTable += '<tr class="node-junctions-table-border-bottom">';
-          if (!asMessage) htmlTable += detachNodePointBox(row);
+          if (!asMessageOrTemplate) htmlTable += detachNodePointBox(row);
           htmlTable += nodePointInfoHtml(row);
           htmlTable += '</tr>';
         });
@@ -279,8 +312,8 @@
       };
 
       var nodePointInfoHtml = function(rowInfo){
-        return '<td class="node-points-table">' + rowInfo.road + '</td>' +
-          '<td class="node-points-table">' + rowInfo.part + '</td>' +
+        return '<td class="node-points-table">' + rowInfo.roadNumber + '</td>' +
+          '<td class="node-points-table">' + rowInfo.roadPartNumber + '</td>' +
           '<td class="node-points-table">' + rowInfo.addr + '</td>' +
           '<td class="node-points-table">' + rowInfo.beforeAfter + '</td>';
       };
@@ -289,12 +322,12 @@
         if (!_.isUndefined(nodePoints) && nodePoints.length > 0) {
           var nodePointsRows = [];
           _.map(nodePoints, function(point) {
-            var row = {id: point.id, nodeNumber: point.nodeNumber, road: point.road, part: point.part, addr: point.addrM, beforeAfter: point.beforeAfter, type: point.type};
+            var row = {id: point.id, nodeNumber: point.nodeNumber, roadNumber: point.roadNumber, roadPartNumber: point.roadPartNumber, addr: point.addrM, beforeAfter: point.beforeAfter, type: point.type};
             nodePointsRows.push(row);
           });
 
           var groupedHomogeneousRows = _.groupBy(nodePointsRows, function (row) {
-            return [row.road, row.part, row.addr];
+            return [row.roadNumber, row.roadPartNumber, row.addr];
           });
 
           var joinedHomogeneousRows = _.partition(groupedHomogeneousRows, function(group) {
@@ -306,12 +339,12 @@
 
           var doubleRows = _.map(doubleHomogeneousRows, function(drows) {
             var first = _.head(drows);
-            return {id: first.id, nodeNumber: first.nodeNumber, road: first.road, part: first.part, addr: first.addr, beforeAfter: "EJ", type: first.type};
+            return {id: first.id, nodeNumber: first.nodeNumber, roadNumber: first.roadNumber, roadPartNumber: first.roadPartNumber, addr: first.addr, beforeAfter: "EJ", type: first.type};
           });
 
           var singleRows = _.map(singleHomogeneousRows, function(drows) {
             var first = _.head(drows);
-            return {id: first.id, nodeNumber: first.nodeNumber, road: first.road, part: first.part, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J"), type: first.type};
+            return {id: first.id, nodeNumber: first.nodeNumber, roadNumber: first.roadNumber, roadPartNumber: first.roadPartNumber, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J"), type: first.type};
           });
 
           return doubleRows.concat(singleRows);
@@ -344,40 +377,6 @@
 
     var junctionsTable = new Junctions();
     var nodePointsTable = new NodePoints();
-
-    var showNodePoints = function () {
-      $('#node-points-info-content').show();
-    };
-
-    var hideNodePoints = function () {
-      $('#node-points-info-content').hide();
-    };
-
-    var showJunctions = function () {
-      $('#junctions-info-content').show();
-    };
-
-    var hideJunctions = function () {
-      $('#junctions-info-content').hide();
-    };
-
-    var toggleLinkText = function (item) {
-      if (!_.isUndefined(item)) {
-        var text = item.text();
-        var isVisible = _.includes(text, SHOW);
-        text = isVisible ? text.replace(SHOW, HIDE) : text.replace(HIDE, SHOW);
-        item.text(text);
-        return isVisible;
-      }
-    };
-
-    var toggleContentTable = function (item, showContent, hideContent) {
-      if (toggleLinkText(item)) {
-        showContent();
-      } else {
-        hideContent();
-      }
-    };
 
     var addDatePicker = function (fromElement, minDate) {
       picker = dateutil.addSingleDatePickerWithMinDate(fromElement, minDate);
@@ -421,9 +420,9 @@
 
       var buildMessage = function (junction, nodePoints) {
         return 'Haluatko varmasti irrottaa solmukohdat ja liittymän solmusta ?' +
-          '<div>Solmukohdat :</div>' +
+          '<p class="node-info">Solmukohdat :</p>' +
           nodePointsTable.toMessage(nodePoints) +
-          '<div>Liittyma :</div>' +
+          '<p class="node-info">Liittyma :</p>' +
           junctionsTable.toMessage([junction]);
       };
 
@@ -555,30 +554,25 @@
       });
 
       eventbus.on('templates:selected', function (templates) {
-        // TODO 2055 templates form will be build here
+        rootElement.empty();
+        if (!_.isEmpty(templates.nodePointTemplates) || !_.isEmpty(templates.junctionTemplates)) {
+          rootElement.html(templatesForm('Aihioiden tiedot:'));
+          var nodePointsElement = $('#node-points-info-content');
+          nodePointsElement.html(nodePointsTable.toHtmlTable(templates.nodePointTemplates, {template: true}));
+          var junctionsElement = $('#junctions-info-content');
+          junctionsElement.html(junctionsTable.toHtmlTable(templates.junctionTemplates, {template: true}));
+        }
       });
 
       eventbus.on('node:selected', function (currentNode) {
         rootElement.empty();
         if (!_.isEmpty(currentNode)) {
-          rootElement.html(nodeForm(currentNode));
+          rootElement.html(nodeForm('Solmun tiedot:', currentNode));
           addDatePicker($('#nodeStartDate'), currentNode.oldStartDate || currentNode.startDate || moment("1.1.2000", dateutil.FINNISH_DATE_FORMAT).toDate());
           var nodePointsElement = $('#node-points-info-content');
           nodePointsElement.html(nodePointsTable.toHtmlTable(currentNode.nodePoints));
-          nodePointsElement.hide();
           var junctionsElement = $('#junctions-info-content');
-          junctionsElement.html(junctionsTable.toHtmlTable(currentNode.junctions));
-          junctionsElement.hide();
-
-          rootElement.find('[id=node-point-link]').click(function () {
-            toggleContentTable($(this), showNodePoints, hideNodePoints);
-            return false;
-          });
-
-          rootElement.find('[id=junction-link]').click(function () {
-            toggleContentTable($(this), showJunctions, hideJunctions);
-            return false;
-          });
+          junctionsElement.html(junctionsTable.toHtmlTable(_.sortBy(currentNode.junctions, 'junctionNumber')));
 
           eventbus.on('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:detach nodePoint:detach', function () {
             nodeChangeHandler();
