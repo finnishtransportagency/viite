@@ -102,6 +102,12 @@
       });
     }, 1000);
 
+    this.getRoadLinkByMtkId = _.throttle(function (mtkId, callback) {
+      return $.getJSON('api/viite/roadlinks/mtkid/' + mtkId, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
 
     this.getRoadName =
       _.debounce(function (roadNumber, projectID, callback) {
@@ -680,7 +686,7 @@
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/viite/node/" + data.id,
+        url: "api/viite/nodes/" + data.id,
         data: JSON.stringify(data),
         dataType: "json",
         success: success,

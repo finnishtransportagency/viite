@@ -23,7 +23,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
 
   val vvhClient = new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   val eventBus = new DummyEventBus
-  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
+  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, new RoadwayPointDAO, new NodePointDAO, new JunctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean){
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
@@ -126,12 +126,17 @@ sealed trait RoadType {
 }
 
 object RoadType {
-  val values = Set(PublicRoad, FerryRoad, MunicipalityStreetRoad, PublicUnderConstructionRoad, PrivateRoadType, UnknownOwnerRoad)
+  val values = Set(Empty, PublicRoad, FerryRoad, MunicipalityStreetRoad, PublicUnderConstructionRoad, PrivateRoadType, UnknownOwnerRoad)
 
   def apply(intValue: Int): RoadType = {
     values.find(_.value == intValue).getOrElse(UnknownOwnerRoad)
   }
 
+  case object Empty extends RoadType {
+    def value = 0
+
+    def displayValue = "--"
+  }
   case object PublicRoad extends RoadType {
     def value = 1
 

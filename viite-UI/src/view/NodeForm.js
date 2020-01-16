@@ -8,6 +8,8 @@
     var NodeType = LinkValues.NodeType;
     var formCommon = new FormCommon('node-');
 
+    var junctionsToDetach;
+    var nodePointsRows = [];
     var formButtons = function () {
       return '<div class="form form-controls">' +
         ' <button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
@@ -27,7 +29,7 @@
       field = '<div class="form-group-node-static-metadata">' +
         '<p class="form-control-static asset-log-info-metadata">' +
         '<label>' + labelText + '</label>' +
-          dataField +
+        dataField +
         '</p>' +
         '</div>';
       return field;
@@ -107,15 +109,19 @@
     };
 
     var Junctions = function () {
-      var headers = function(){
+      var headers = function(asMessage) {
+        var checkbox = '';
+        if (!asMessage) {
+          checkbox += '<th class="node-junctions-table-header">' +
+            ' <table class="node-junctions-table-dimension">' +
+            '   <tr><th class="node-junctions-table-header">Irrota</th></tr>' +
+            '   <tr><th class="node-junctions-table-header">liittymä</th></tr>' +
+            '   <tr><th class="node-junctions-table-header">solmusta</th></tr>' +
+            ' </table>' +
+            '</th>';
+        }
         return '<tr class="node-junctions-table-header-border-bottom">' +
-          '<th class="node-junctions-table-header">' +
-          ' <table class="node-junctions-table-dimension">' +
-          '   <tr><th class="node-junctions-table-header">Irrota</th></tr>' +
-          '   <tr><th class="node-junctions-table-header">liittymä</th></tr>' +
-          '   <tr><th class="node-junctions-table-header">solmusta</th></tr>' +
-          ' </table>' +
-          '</th>' +
+          checkbox +
           '<th class="node-junctions-table-header">NRO</th>' +
           '<th class="node-junctions-table-header">TIE</th>' +
           '<th class="node-junctions-table-header">AJR</th>' +
@@ -183,14 +189,19 @@
           ' </table></td>';
       };
 
-      var toHtmlTable = function(junctionsInfo){
+      var toMessage = function (junctionsInfo) {
+        return toHtmlTable(junctionsInfo, true);
+      };
+
+      var toHtmlTable = function(junctionsInfo, asMessage) {
+        junctionsToDetach = junctionsInfo;
         junctionsInfo = _.sortBy(junctionsInfo, 'junctionNumber');
         var htmlTable = "";
         htmlTable += '<table class="node-junctions-table-dimension">';
-        htmlTable += headers();
+        htmlTable += headers(asMessage);
         _.each(junctionsInfo, function (junction) {
           htmlTable += '<tr class="node-junctions-table-border-bottom">';
-          htmlTable += detachJunctionBox(junction);
+          if (!asMessage) htmlTable += detachJunctionBox(junction);
           htmlTable += '<td>' + junctionIcon(junction.junctionNumber) + '</td>';
           htmlTable += junctionInfoHtml(getJunctionPointsInfo(junction));
           htmlTable += '</tr>';
@@ -231,22 +242,27 @@
       };
 
       return {
+        toMessage: toMessage,
         toHtmlTable: toHtmlTable
       };
     };
 
     var NodePoints = function () {
-      var toHtmlTable = function(nodePointsInfo){
+      var toMessage = function (nodePointsInfo) {
+        return toHtmlTable(nodePointsInfo, true);
+      };
+
+      var toHtmlTable = function(nodePointsInfo, asMessage) {
         var htmlTable = "";
         htmlTable += '<table class="node-points-table-dimension">';
-        htmlTable += headers();
-          var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
-          _.each(_.sortBy(rowsInfo, ['road', 'part', 'addr']), function(row){
-            htmlTable += '<tr class="node-junctions-table-border-bottom">';
-            htmlTable += detachNodePointBox(row);
-            htmlTable += nodePointInfoHtml(row);
-            htmlTable += '</tr>';
-          });
+        htmlTable += headers(asMessage);
+        var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
+        _.each(_.sortBy(rowsInfo, ['road', 'part', 'addr']), function(row){
+          htmlTable += '<tr class="node-junctions-table-border-bottom">';
+          if (!asMessage) htmlTable += detachNodePointBox(row);
+          htmlTable += nodePointInfoHtml(row);
+          htmlTable += '</tr>';
+        });
         htmlTable += '</table>';
         return htmlTable;
       };
@@ -257,7 +273,7 @@
         });
         var isDetachable = 'title="' + nodePointType.description + '"'; // added for testing purposes, needs to be confirm if this title is a good idea for production env.
         if (_.isEqual(nodePointType, LinkValues.NodePointType.CalculatedNodePoint)) {
-          isDetachable += ' disabled';
+          isDetachable += ' disabled hidden';
         }
         return '<td><input ' + isDetachable + ' type="checkbox" name="detach-node-point-' + nodePoint.id + '" value="' + nodePoint.id + '" id="detach-node-point-' + nodePoint.id + '"></td>';
       };
@@ -269,47 +285,51 @@
           '<td class="node-points-table">' + rowInfo.beforeAfter + '</td>';
       };
 
-      var getNodePointsRowsInfo = function(nodePoints){
-        var info = [];
-        if(!_.isUndefined(nodePoints) && nodePoints.length > 0){
-        _.map(nodePoints, function(point){
-          var row = {id: point.id, nodeNumber: point.nodeNumber, road: point.road, part: point.part, addr: point.addrM, beforeAfter: point.beforeAfter, type: point.type};
-          info.push(row);
-        });
+      var getNodePointsRowsInfo = function(nodePoints) {
+        if (!_.isUndefined(nodePoints) && nodePoints.length > 0) {
+          var nodePointsRows = [];
+          _.map(nodePoints, function(point) {
+            var row = {id: point.id, nodeNumber: point.nodeNumber, road: point.road, part: point.part, addr: point.addrM, beforeAfter: point.beforeAfter, type: point.type};
+            nodePointsRows.push(row);
+          });
 
-        var groupedHomogeneousRows = _.groupBy(info, function (row) {
-          return [row.road, row.part, row.addr];
-        });
+          var groupedHomogeneousRows = _.groupBy(nodePointsRows, function (row) {
+            return [row.road, row.part, row.addr];
+          });
 
-        var joinedHomogeneousRows = _.partition(groupedHomogeneousRows, function(group) {
-          return group.length > 1;
-        });
+          var joinedHomogeneousRows = _.partition(groupedHomogeneousRows, function(group) {
+            return group.length > 1;
+          });
 
-        var doubleHomogeneousRows = joinedHomogeneousRows[0];
-        var singleHomogeneousRows = joinedHomogeneousRows[1];
+          var doubleHomogeneousRows = joinedHomogeneousRows[0];
+          var singleHomogeneousRows = joinedHomogeneousRows[1];
 
-        var doubleRows = _.map(doubleHomogeneousRows, function(drows) {
-          var first = _.head(drows);
-          return {id: first.id, nodeNumber: first.nodeNumber, road: first.road, part: first.part, addr: first.addr, beforeAfter: "EJ", type: first.type};
-        });
+          var doubleRows = _.map(doubleHomogeneousRows, function(drows) {
+            var first = _.head(drows);
+            return {id: first.id, nodeNumber: first.nodeNumber, road: first.road, part: first.part, addr: first.addr, beforeAfter: "EJ", type: first.type};
+          });
 
-        var singleRows = _.map(singleHomogeneousRows, function(drows) {
-          var first = _.head(drows);
-          return {id: first.id, nodeNumber: first.nodeNumber, road: first.road, part: first.part, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J"), type: first.type};
-        });
+          var singleRows = _.map(singleHomogeneousRows, function(drows) {
+            var first = _.head(drows);
+            return {id: first.id, nodeNumber: first.nodeNumber, road: first.road, part: first.part, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J"), type: first.type};
+          });
 
-        return doubleRows.concat(singleRows);
+          return doubleRows.concat(singleRows);
         } else return [];
       };
 
-      var headers = function() {
+      var headers = function(asMessage) {
+        var checkbox = '';
+        if (!asMessage) {
+          checkbox += '<th class="node-points-table-header">' +
+            ' <table class="node-points-table-dimension">' +
+            '   <tr><th class="node-points-table-header">Irrota</th></tr>' +
+            '   <tr><th class="node-points-table-header">solmukohta</th></tr>' +
+            ' </table>' +
+            '</th>';
+        }
         return '<tr class="node-junctions-table-header-border-bottom">' +
-          '<th class="node-points-table-header">' +
-          ' <table class="node-points-table-dimension">' +
-          '   <tr><th class="node-points-table-header">Irrota</th></tr>' +
-          '   <tr><th class="node-points-table-header">solmukohta</th></tr>' +
-          ' </table>' +
-          '</th>' +
+          checkbox +
           '<th class="node-points-table-header">TIE</th>' +
           '<th class="node-points-table-header">OSA</th>' +
           '<th class="node-points-table-header">ET</th>' +
@@ -317,6 +337,7 @@
           '</tr>';
       };
       return {
+        toMessage: toMessage,
         toHtmlTable: toHtmlTable
       };
     };
@@ -374,40 +395,21 @@
       $('#nodeStartDate').prop('disabled', isDisabled);
     };
 
-    var textFieldChangeHandler = function () {
+    var nodeChangeHandler = function () {
       var textIsNonEmpty = $('#nodeName').val() !== "";
       var nodeTypeIsValid = $('#nodeTypeDropdown :selected').val() !== LinkValues.NodeType.UnknownNodeType.value.toString();
       var dateIsNonEmpty = $('#nodeStartDate').val() !== "";
 
-      if (textIsNonEmpty && nodeTypeIsValid && selectedNode.typeHasChanged() && dateIsNonEmpty && selectedNode.startDateHasChanged()) {
+      if (textIsNonEmpty && nodeTypeIsValid && dateIsNonEmpty && selectedNode.isDirty()) {
         $('.btn-edit-node-save').prop('disabled', false);
       } else {
         $('.btn-edit-node-save').prop('disabled', true);
       }
     };
 
-    var showCloseConfirmPopupMessage = function () {
-      new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
-        successCallback: function () {
-          selectedNode.saveNode();
-        },
-        closeCallback: function () {
-          closeNode();
-        }
-      });
-    };
-
     var closeNode = function () {
       selectedNode.closeNode();
       eventbus.off('change:nodeName, change:nodeTypeDropdown, change:nodeStartDate');
-    };
-
-    var closeForm = function () {
-      if (selectedNode.isDirty()) {
-        showCloseConfirmPopupMessage();
-      } else {
-        closeNode();
-      }
     };
 
     var bindEvents = function () {
@@ -417,38 +419,130 @@
         eventbus.trigger(event.type + ':' + event.target.id, $(this).val());
       });
 
+      var buildMessage = function (junction, nodePoints) {
+        return 'Haluatko varmasti irrottaa solmukohdat ja liittymän solmusta ?' +
+          '<div>Solmukohdat :</div>' +
+          nodePointsTable.toMessage(nodePoints) +
+          '<div>Liittyma :</div>' +
+          junctionsTable.toMessage([junction]);
+      };
+
+      var junctionAndNodePointsByJunctionPointsCoordinates = function (node, junctionId) {
+        var junction = _.find(_.concat(node.junctions, node.junctionsToDetach), function (junction) {
+          return junction.id === junctionId;
+        });
+
+        var nodePoints = _.filter(_.concat(node.nodePoints, node.nodePointsToDetach), function (nodePoint) {
+          var junctionPointsCoordinates = _.map(junction.junctionPoints, function (junctionPoint) {
+            return {x: junctionPoint.x, y: junctionPoint.y};
+          });
+
+          return !_.isEmpty(_.intersectionWith(junctionPointsCoordinates, [{x: nodePoint.x, y: nodePoint.y}], _.isEqual));
+        });
+
+        return {
+          junction: junction,
+          nodePoints: _.filter(nodePoints, function (nodePoint) {
+            return nodePoint.type === LinkValues.NodePointType.RoadNodePoint.value || nodePoint.type === LinkValues.NodePointType.UnknownNodePointType.value;
+          })
+        };
+      };
+
+      var junctionAndNodePointsByNodePointCoordinates = function (node, nodePointId) {
+        var nodePoint = _.find(_.concat(node.nodePoints, node.nodePointsToDetach), function (nodePoint) {
+          return nodePoint.id === nodePointId;
+        });
+
+        var junction = _.find(_.concat(node.junctions, node.junctionsToDetach), function (junction) {
+          var junctionPointsCoordinates = _.map(junction.junctionPoints, function (junctionPoint) {
+            return {x: junctionPoint.x, y: junctionPoint.y};
+          });
+
+          return !_.isEmpty(_.intersectionWith(junctionPointsCoordinates, [{x: nodePoint.x, y: nodePoint.y}], _.isEqual));
+        });
+
+        if (!_.isUndefined(junction)) { return junctionAndNodePointsByJunctionPointsCoordinates(node, junction.id); }
+        else if (nodePoint.type === LinkValues.NodePointType.RoadNodePoint.value || nodePoint.type === LinkValues.NodePointType.UnknownNodePointType.value) {
+          return {
+            nodePoints: [nodePoint]
+          };
+        }
+      };
+
+      var markJunctionAndNodePoints = function (junction, nodePoints, checked) {
+        if (!_.isUndefined(junction)) {
+          $('[id^="detach-junction-' + junction.id + '"]').prop('checked', checked);
+        }
+        _.each(nodePoints, function (nodePoint) {
+          $('[id^="detach-node-point-' + nodePoint.id + '"]').prop('checked', checked);
+        });
+      };
+
       rootElement.on('change', '[id^="detach-node-point-"]', function () {
         var checkbox = this;
         var nodePointId = parseInt(checkbox.value);
+        var match = junctionAndNodePointsByNodePointCoordinates(selectedNode.getCurrentNode(), nodePointId);
+        var junction = match.junction;
+        var nodePoints = match.nodePoints;
         if (checkbox.checked) {
-          new GenericConfirmPopup('Haluatko varmasti irrottaa solmukohdan solmusta?', {
+          if (!_.isEmpty(junction) || nodePoints.length > 1) {
+            new GenericConfirmPopup(buildMessage(junction, match.nodePoints), {
+              successCallback: function () {
+                selectedNode.detachJunctionAndNodePoints(junction, nodePoints);
+                markJunctionAndNodePoints(junction, nodePoints, true);
+              },
+              closeCallback: function () {
+                $(checkbox).prop('checked', false);
+              }
+            });
+          } else {
+            selectedNode.detachJunctionAndNodePoints(null, nodePoints);
+            markJunctionAndNodePoints(null, nodePoints, true);
+          }
+        } else {
+          new GenericConfirmPopup('Haluatko peruuttaa solmukohtien ja liittymän irrotuksen solmusta ?', {
             successCallback: function () {
-              selectedNode.detachNodePoint(nodePointId);
+              selectedNode.attachJunctionAndNodePoints(junction, nodePoints);
+              markJunctionAndNodePoints(junction, nodePoints, false);
             },
             closeCallback: function () {
-              $(checkbox).prop('checked', false);
+              $(checkbox).prop('checked', true);
             }
           });
-        } else {
-          selectedNode.attachNodePoint(nodePointId);
         }
       });
 
       rootElement.on('change', '[id^="detach-junction-"]', function () {
         var checkbox = this;
         var junctionId = parseInt(checkbox.value);
-        var junctionNumber = checkbox.getAttribute('data-junction-number');
+        var match = junctionAndNodePointsByJunctionPointsCoordinates(selectedNode.getCurrentNode(), junctionId);
+        var junction = match.junction;
+        var nodePoints = match.nodePoints;
         if (checkbox.checked) {
-          new GenericConfirmPopup('Haluatko varmasti irrottaa liittymän ' + junctionNumber + ' solmusta?', {
+          if (!_.isEmpty(nodePoints)) {
+            new GenericConfirmPopup(buildMessage(junction, match.nodePoints), {
+              successCallback: function () {
+                selectedNode.detachJunctionAndNodePoints(junction, nodePoints);
+                markJunctionAndNodePoints(junction, nodePoints, true);
+              },
+              closeCallback: function () {
+                $(checkbox).prop('checked', false);
+              }
+            });
+          } else {
+            selectedNode.detachJunctionAndNodePoints(junction);
+            markJunctionAndNodePoints(junction, null, true);
+          }
+        } else {
+          new GenericConfirmPopup('Haluatko peruuttaa solmukohtien ja liittymän irrotuksen solmusta ?', {
             successCallback: function () {
-              selectedNode.detachJunction(junctionId);
+              selectedNode.attachJunctionAndNodePoints(junction, nodePoints);
+              markJunctionAndNodePoints(junction, nodePoints, false);
             },
             closeCallback: function () {
-              $(checkbox).prop('checked', false);
+              $(checkbox).prop('checked', true);
             }
           });
-        } else {
-          selectedNode.attachJunction(junctionId);
         }
       });
 
@@ -457,14 +551,14 @@
       });
 
       rootElement.on('click', '.btn-edit-node-cancel', function () {
-        closeForm();
+        closeNode();
       });
 
       eventbus.on('node:selected', function (currentNode) {
         rootElement.empty();
         if (!_.isEmpty(currentNode)) {
           rootElement.html(nodeForm(currentNode));
-          addDatePicker($('#nodeStartDate'), currentNode.oldStartDate || currentNode.startDate);
+          addDatePicker($('#nodeStartDate'), currentNode.oldStartDate || currentNode.startDate || moment("1.1.2000", dateutil.FINNISH_DATE_FORMAT).toDate());
           var nodePointsElement = $('#node-points-info-content');
           nodePointsElement.html(nodePointsTable.toHtmlTable(currentNode.nodePoints));
           nodePointsElement.hide();
@@ -482,8 +576,8 @@
             return false;
           });
 
-          eventbus.on('change:nodeName change:nodeTypeDropdown change:nodeStartDate', function () {
-            textFieldChangeHandler();
+          eventbus.on('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:detach nodePoint:detach', function () {
+            nodeChangeHandler();
           });
 
           eventbus.on('change:nodeName', function (nodeName) {
@@ -503,7 +597,7 @@
 
       eventbus.on('nodeLayer:closeForm', function (current) {
         if (!_.isUndefined(current) && !_.isUndefined(current.node)) {
-          closeForm();
+          closeNode();
         }
       });
 

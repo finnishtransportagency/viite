@@ -6,26 +6,23 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
-import fi.liikennevirasto.viite.util.DigiroadSerializers
+import fi.liikennevirasto.digiroad2.util.{RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
-import fi.liikennevirasto.viite.util.SplitOptions
+import fi.liikennevirasto.viite.util.DigiroadSerializers
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.swagger.Swagger
+import org.scalatra.swagger.{Swagger, _}
 import org.scalatra.{NotFound, _}
 import org.slf4j.{Logger, LoggerFactory}
-import org.scalatra.swagger._
 
 import scala.util.parsing.json.JSON._
 import scala.util.{Left, Right}
@@ -72,7 +69,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val nodesAndJunctionsService: NodesAndJunctionsService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date,
-               val date_of_data: String = Digiroad2Context.date_of_data,
                implicit val swagger: Swagger
               )
   extends ScalatraServlet
@@ -129,7 +125,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val config = userProvider.getCurrentUser().configuration
         (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
       }
-      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date, date_of_data)
+      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date)
     }
   }
 
@@ -250,6 +246,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val linkId = params("linkId").toLong
     time(logger, s"GET request for /roadlinks/midpoint/$linkId") {
       roadLinkService.getMidPointByLinkId(linkId)
+    }
+  }
+  get("/roadlinks/mtkid/:mtkId") {
+    val mtkId = params("mtkId").toLong
+    time(logger, s"GET request for /roadlinks/mtkid/$mtkId") {
+      roadLinkService.getRoadLinkMiddlePointByMtkId(mtkId)
     }
   }
 
@@ -439,18 +441,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   post("/roadlinks/roadaddress/project/sendToTR", operation(sendProjectToTRByProjectId)) {
     val projectID = (parsedBody \ "projectID").extract[Long]
     time(logger, s"POST request for /roadlinks/roadaddress/project/sendToTR (projectID: $projectID)") {
-      val writableProjectService = projectService.projectWritableCheck(projectID)
-      if (writableProjectService.isEmpty) {
+      val projectWritableError = projectService.projectWritableCheck(projectID)
+      if (projectWritableError.isEmpty) {
         val sendStatus = projectService.publishProject(projectID)
-        if (sendStatus.validationSuccess && sendStatus.sendSuccess)
+        if (sendStatus.validationSuccess && sendStatus.sendSuccess) {
           Map("sendSuccess" -> true)
-        else if (sendStatus.errorMessage.getOrElse("").toLowerCase == FailedToSendToTRMessage.toLowerCase) {
-          projectService.setProjectStatus(projectID, SendingToTR)
-          Map("sendSuccess" -> false, "errorMessage" -> TrConnectionError)
-        } else Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
-      }
-      else {
-        Map("sendSuccess" -> false, "errorMessage" -> writableProjectService.get)
+        } else {
+          logger.error(s"Failed to send project ${projectID} to TR. Error: ${sendStatus.errorMessage.getOrElse("-")}")
+          Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(FailedToSendToTRMessage))
+        }
+      } else {
+        logger.error(s"Failed to send project ${projectID} to TR. Error: ${projectWritableError.get}")
+        Map("sendSuccess" -> false, "errorMessage" -> projectWritableError.get)
       }
     }
   }
@@ -966,9 +968,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  put("/node/:id") {
+  put("/nodes/:id") {
     val id = params("id").toLong
-    time(logger, s"PUT request for /node/$id") {
+    time(logger, s"PUT request for /nodes/$id") {
       val username = userProvider.getCurrentUser().username
       try {
         val nodeInfo = parsedBody.extract[NodeExtractor]
@@ -980,7 +982,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           case None => Map("success" -> true)
         }
       } catch {
-        case ex: Exception => println("Failed : ", ex.printStackTrace())
+        case ex: Exception => {
+          logger.error("Request PUT /nodes/:id failed.", ex)
+          BadRequest(s"Failed to save changes to node (id: $id).")
+        }
       }
     }
   }
@@ -1006,7 +1011,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       }
     }
     time(logger, operationName = "Partition road links") {
-      val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(viiteRoadLinks)
+      val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(viiteRoadLinks)
       partitionedRoadLinks.map {
         _.map(roadAddressLinkToApi)
       }
@@ -1202,14 +1207,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "elyCode" -> nodePoint.elyCode,
       "roadNumber" -> nodePoint.roadNumber,
       "roadPartNumber" -> nodePoint.roadPartNumber,
-      "track" -> nodePoint.track,
-      "type" -> nodePoint.nodePointType.value)
+      "track" -> nodePoint.track
+    )
   }
 
   def junctionTemplateToApi(junctionTemplate: JunctionTemplate) : Map[String, Any] = {
     Map(
       "id" -> junctionTemplate.id,
-      "junctionNumber" -> junctionTemplate.junctionNumber,
+      "junctionNumber" -> null,
       "startDate" -> formatToString(junctionTemplate.startDate.toString),
       "roadNumber" -> junctionTemplate.roadNumber,
       "roadPartNumber" -> junctionTemplate.roadPartNumber,
@@ -1228,6 +1233,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "junctionId" -> junctionPoint.junctionId,
       "beforeAfter" -> formatAfterBeforeToString(junctionPoint.beforeAfter.value ),
       "roadwayPointId" -> junctionPoint.roadwayPointId,
+      "startDate" -> formatDateTimeToString(junctionPoint.startDate),
+      "endDate" -> formatDateTimeToString(junctionPoint.endDate),
       "validFrom" -> formatDateTimeToString(Some(junctionPoint.validFrom)),
       "validTo" -> formatDateTimeToString(junctionPoint.validTo),
       "createdBy" -> junctionPoint.createdBy,
@@ -1240,7 +1247,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def junctionInfoToApi(junctionInfo: JunctionInfo) : Map[String, Any] = {
     Map("junctionId" -> junctionInfo.id,
-      "junctionNumber" -> junctionInfo.junctionNumber,
+      "junctionNumber" -> junctionInfo.junctionNumber.orNull,
       "nodeNumber" -> junctionInfo.nodeNumber,
       "startDate" -> formatDateTimeToShortPatternString(Some(junctionInfo.startDate)),
       "nodeNumber" -> junctionInfo.nodeNumber,
@@ -1249,7 +1256,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
     Map("id" -> junction._1.id,
-      "junctionNumber" -> junction._1.junctionNumber,
+      "junctionNumber" -> junction._1.junctionNumber.orNull,
       "nodeNumber" -> junction._1.nodeNumber,
       "junctionPoints" -> junction._2.map(junctionPointToApi))
   }
@@ -1533,7 +1540,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
      projectService
    }*/
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String, date_of_data: String)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
   case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
 
 }
@@ -1565,7 +1572,7 @@ object NodeConverter {
     val createdTime = if (node.createdTime.isDefined) Option(formatter.parseDateTime(node.createdTime.get)) else None
 
     Node(node.id, node.nodeNumber, node.coordinates, node.name, NodeType.apply(node.nodeType),
-         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, Some(username), createdTime)
+         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, username, createdTime)
   }
 }
 

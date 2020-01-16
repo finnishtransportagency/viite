@@ -11,7 +11,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function (chai, eventbus, testHelper
         openLayersMap = map;
         testHelpers.clickVisibleEditModeButton();
         eventbus.on('roadLayer:featuresLoaded', function () {
-          testHelpers.clickProjectListButton();
+          testHelpers.clickformProjectButton();
           testHelpers.clickNewProjectButton();
           $('[id^=nimi]').val('projectThree').trigger("change");
           $('[id^=alkupvm]').val('30.5.2017').trigger("change");

@@ -27,18 +27,18 @@
      * @param addressMValue
      * @returns {*}
      */
-    function roadLocationAPIResultParser(roadData, addressMValue){
+    function roadLocationAPIResultParser(roadData, addressMValue) {
       var sideCodes = LinkValues.SideCode;
       var constructTitle = function(address) {
         var titleParts = [_.get(address, 'roadNumber'), _.get(address, 'roadPartNumber')];
         return _.some(titleParts, _.isUndefined) ? '' : titleParts.join(' ');
       };
       var lon, lat = 0;
-      if(addressMValue === 0 || (roadData.startAddrMValue === addressMValue && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValue && roadData.sideCode === sideCodes.AgainstDigitizing.value)){
+      addressMValue = _.isUndefined(addressMValue) ? 0 : addressMValue;
+      if ((roadData.startAddrMValue === addressMValue && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValue && roadData.sideCode === sideCodes.AgainstDigitizing.value) ) {
         lon = roadData.geometry[0].x;
         lat = roadData.geometry[0].y;
-      }
-      else {
+      } else {
         lon = roadData.geometry[roadData.geometry.length - 1].x;
         lat =  roadData.geometry[roadData.geometry.length - 1].y;
       }

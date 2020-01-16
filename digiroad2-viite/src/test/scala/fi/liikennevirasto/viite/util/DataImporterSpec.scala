@@ -82,7 +82,7 @@ class DataImporterSpec extends FunSuite with Matchers {
   when(mockVVHFrozenTimeRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
   when(mockVVHHistoryClient.fetchVVHRoadLinkByLinkIds(any[Set[Long]])).thenReturn(Seq())
 
-  val importOptions = ImportOptions(onlyComplementaryLinks = false, useFrozenLinkService = false, 1510790400000L, "MOCK_CONVERSION", onlyCurrentRoads = false)
+  val importOptions = ImportOptions(onlyComplementaryLinks = false, useFrozenLinkService = false, "MOCK_CONVERSION", onlyCurrentRoads = false)
 
   val roadAddressImporter = new RoadAddressImporter(null, mockVVHClient, importOptions) {
     override def fetchChunkRoadwayNumbersFromConversionTable(): Seq[(Long, Long)] = {
