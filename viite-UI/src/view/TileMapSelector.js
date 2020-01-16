@@ -13,11 +13,17 @@
           '<label><input type="checkbox" name="propertyBoundariesVisible" value="propertyBoundariesVisible"  id="propertyBoundariesVisibleCheckbox">Näytä kiinteistörajat</label>' +
         '</div>' +
       '</div>' +
-      '<div class="underconstruction-visible-wrapper">' +
+      '<div class="noroadaddress-visible-wrapper">' +
         '<div class="checkbox">' +
-          '<label><input type="checkbox" name="underConstructionVisible" value="underConstructionVisible" checked="true" id="underConstructionVisibleCheckbox">Näytä rakenteilla-linkit</label>' +
+          '<label><input type="checkbox" name="unAddressedRoadsVisible" value="unAddressedRoadsVisible" checked="false" id="unAddressedRoadsVisibleCheckbox">Näytä tieosoitteettomat-linkit</label>' +
         '</div>' +
       '</div>' +
+        '<div class="underconstruction-visible-wrapper">' +
+    '<div class="checkbox">' +
+    '<label><input type="checkbox" name="underConstructionVisible" value="underConstructionVisible" checked="true" id="underConstructionVisibleCheckbox">Näytä rakenteilla-linkit</label>' +
+    '</div>' +
+    '</div>' +
+
         '<div class="roads-visible-wrapper">' +
         '<div class="checkbox">' +
         '<label><input type="checkbox" name="roadsVisible" value="roadsVisible" checked="true" id="roadsVisibleCheckbox">Näytä tieosoiteverkko</label>' +
@@ -35,7 +41,10 @@
     $('#propertyBoundariesVisibleCheckbox').change(function () {
       eventbus.trigger('tileMap:togglepropertyBorder', this.checked);
     });
-
+    $('#unAddressedRoadsVisibleCheckbox').change(function() {
+      eventbus.trigger('unAddressedRoads:toggleVisibility', this.checked);
+      eventbus.trigger("unAddressedProjectRoads:toggleVisibility", this.checked);
+    });
     $('#underConstructionVisibleCheckbox').change(function() {
       eventbus.trigger('underConstructionRoads:toggleVisibility', this.checked);
       eventbus.trigger("underConstructionProjectRoads:toggleVisibility", this.checked);

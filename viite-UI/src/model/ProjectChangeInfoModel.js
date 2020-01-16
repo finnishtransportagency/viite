@@ -24,19 +24,10 @@
     }
 
     function sortChanges(side, reverse) {
-        projectChanges.changeTable.changeInfoSeq = _.sortBy(projectChanges.changeTable.changeInfoSeq, function (change) {
-          function sort(item) {
-            return [item.roadNumber, item.startRoadPartNumber, item.startAddressM, item.trackCode];
-          }
-
-          if (side == "source") {
-            return sort(change.source);
-          } else {
-            return sort(change.target);
-          }
-        });
-        if (reverse) projectChanges.changeTable.changeInfoSeq.reverse();
-        return projectChanges;
+      projectChanges.changeTable.changeInfoSeq = _.sortBy(projectChanges.changeTable.changeInfoSeq,
+        [side + ".roadNumber", side + ".startRoadPartNumber", side + ".startAddressM", side + ".trackCode"]);
+      if (reverse) projectChanges.changeTable.changeInfoSeq.reverse();
+      return projectChanges;
     }
 
     function roadChangeAPIResultParser(changeData) {

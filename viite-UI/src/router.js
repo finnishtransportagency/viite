@@ -23,6 +23,7 @@
       routes: {
         'linkProperty/:linkId': 'linkProperty',
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
+        'linkProperty/mtkid/:mtkid': 'linkPropertyByMtk',
         'roadAddressProject/:projectId': 'roadAddressProject',
         'historyLayer/:date': 'historyLayer',
         'work-list/floatingRoadAddress' : 'floatingAddressesList',
@@ -34,10 +35,6 @@
         applicationModel.selectLayer('linkProperty');
         backend.getRoadAddressByLinkId(linkId, function (response) {
           if (response.success) {
-            eventbus.once('roadLinks:afterDraw', function () {
-              models.selectedLinkProperty.open(response.linkId, response.id, true);
-              eventbus.trigger('linkProperties:reselect');
-            });
               map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
               map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
           } else {
@@ -57,6 +54,16 @@
         });
       },
 
+      linkPropertyByMtk: function (mtkid) {
+        applicationModel.selectLayer('linkProperty');
+        backend.getRoadLinkByMtkId(mtkid, function (response) {
+          eventbus.once('linkProperties:available', function () {
+            models.selectedLinkProperty.open(response.id);
+          });
+          map.getView().setCenter([response.x, response.y]);
+          map.getView().setZoom(12);
+      });
+    },
       roadAddressProject: function (projectId) {
         applicationModel.selectLayer('roadAddressProject');
         eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
@@ -71,7 +78,7 @@
         eventbus.trigger('underConstructionRoads:toggleVisibility', false);
         $('.underconstruction-visible-wrapper').hide();
         $('#toggleEditMode').hide();
-        $('#emptyFormDiv,#projectListButton').hide();
+        $('#emptyFormDiv,#formProjectButton').hide();
         eventbus.trigger('linkProperty:fetchHistoryLinks', dateSeparated);
       },
 

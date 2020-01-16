@@ -101,8 +101,12 @@
       roadsVisibility = !roadsVisibility;
     }
 
+    function isSelectedTool(tool) {
+      return tool === selectedTool;
+    }
+
     function setSelectedTool(tool) {
-      if (tool !== selectedTool) {
+      if (!isSelectedTool(tool)) {
         selectedTool = tool;
       } else {
         selectedTool = LinkValues.Tool.Unknown.value;
@@ -167,6 +171,7 @@
       getSelectedTool: function () {
         return selectedTool;
       },
+      isSelectedTool: isSelectedTool,
       zoom: zoom,
       setZoomLevel: setZoomLevel,
       getRoadVisibility: function () {
@@ -198,6 +203,19 @@
                 }
             }
             eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
+        }
+        var unAddressedRoadsVisibleCheckbox = $('#unAddressedRoadsVisibleCheckbox')[0];
+        if (layer !== selectedLayer || toggleStart) {
+          if (unAddressedRoadsVisibleCheckbox) {
+            if (layer === 'roadAddressProject') {
+              $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
+              $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
+            } else {
+              $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
+              $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
+            }
+          }
+          eventbus.trigger('unAddressedRoadsProjectRoads:toggleVisibility', true);
         }
       },
       getSelectedLayer: function () {

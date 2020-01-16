@@ -19,7 +19,7 @@
           scale: 0.75
         }),
         text: new ol.style.Text({
-          text: junction.junctionNumber === LinkValues.Generic.Undefined.value ? '' : junction.junctionNumber.toString(),
+          text: !junction.junctionNumber ? '' : junction.junctionNumber.toString(),
           font: '13px arial',
           fill: new ol.style.Fill({
             color: 'white'

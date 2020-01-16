@@ -16,9 +16,8 @@ import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.DateTime
 
-import scala.collection.mutable.ListBuffer
-import scala.collection.parallel.immutable.ParSet
 import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.immutable.ParSet
 import scala.language.postfixOps
 
 object DataFixture {
@@ -40,8 +39,10 @@ object DataFixture {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
 
+  private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
+
   val eventBus = new DummyEventBus
-  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
+  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, geometryFrozen)
   val roadAddressDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
@@ -50,9 +51,7 @@ object DataFixture {
   val junctionPointDAO = new JunctionPointDAO
   val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
 
-  lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer))
-
-  private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
+  lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen))
 
   private lazy val numberThreads: Int = 6
 
@@ -70,24 +69,17 @@ object DataFixture {
   def importRoadAddresses(importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val geometryAdjustedTimeStamp = dr2properties.getProperty("digiroad2.viite.importTimeStamp", "")
-    if (geometryAdjustedTimeStamp == "" || geometryAdjustedTimeStamp.toLong == 0L) {
-      println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
-    } else {
-      println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
-      importTableName match {
-        case None => // shouldn't get here because args size test
-          throw new Exception("****** Import failed! conversiontable name required as second input ******")
-        case Some(tableName) =>
-          val importOptions = ImportOptions(
-            onlyComplementaryLinks = false,
-            useFrozenLinkService = geometryFrozen,
-            geometryAdjustedTimeStamp.toLong, tableName,
-            onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
-          dataImporter.importRoadAddressData(Conversion.database(), vvhClient, importOptions)
-
-      }
-      println(s"Road address import complete at time: ${DateTime.now()}")
+    importTableName match {
+      case None => // shouldn't get here because args size test
+        throw new Exception("****** Import failed! Conversion table name required as a second input ******")
+      case Some(tableName) =>
+        val importOptions = ImportOptions(
+          onlyComplementaryLinks = false,
+          useFrozenLinkService = geometryFrozen,
+          tableName,
+          onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
+        dataImporter.importRoadAddressData(Conversion.database(), vvhClient, importOptions)
+        println(s"Road address import complete at time: ${DateTime.now()}")
     }
   }
 
@@ -97,10 +89,18 @@ object DataFixture {
     dataImporter.importNodesAndJunctions(Conversion.database())
   }
 
+  def initialImport(importTableName: Option[String]): Unit = {
+    println("\nImporting road addresses, updating geometry and importing nodes and junctions started at time: ")
+    println(DateTime.now())
+    importRoadAddresses(importTableName)
+    updateLinearLocationGeometry()
+    importNodesAndJunctions()
+  }
+
   def updateLinearLocationGeometry(): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    dataImporter.updateLinearLocationGeometry(vvhClient)
+    dataImporter.updateLinearLocationGeometry(vvhClient, geometryFrozen)
     println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
   }
@@ -109,7 +109,7 @@ object DataFixture {
     println(s"\nstart checking road network at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val username = properties.getProperty("bonecp.username")
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen)
     OracleDatabase.withDynTransaction {
       val checker = new RoadNetworkChecker(roadLinkService)
       checker.checkRoadNetwork(username)
@@ -183,7 +183,7 @@ object DataFixture {
 
   private def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
 
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer, geometryFrozen)
     val linearLocationDAO = new LinearLocationDAO
 
     println("Clearing cache...")
@@ -213,7 +213,7 @@ object DataFixture {
           println("Start processing municipality %d".format(municipality))
 
         //Obtain all RoadLink by municipality and change info from VVH
-        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt, geometryFrozen)
+        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
         val allRoadLinks = roadLinks
 
           println("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)
@@ -334,11 +334,16 @@ object DataFixture {
         testIntegrationAPIWithAllMunicipalities()
       case Some("import_nodes_and_junctions") =>
         importNodesAndJunctions()
+      case Some("initial_import") =>
+        if (args.length > 1)
+          initialImport(Some(args(1)))
+        else
+          throw new Exception("****** Import failed! conversiontable name required as second input ******")
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | update_missing " +
         "| import_complementary_road_address " +
         "| update_road_addresses_geometry | import_road_address_change_test_data " +
         "| apply_change_information_to_road_address_links | import_road_names | check_road_network" +
-        "| test | flyway_init | import_nodes_and_junctions")
+        "| test | flyway_init | import_nodes_and_junctions | initial_import")
     }
   }
 

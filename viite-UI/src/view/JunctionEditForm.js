@@ -23,7 +23,7 @@
       return '<div class="form-group-junction-input-metadata">' +
         '<p class="form-control-static asset-junction-data">' +
         '<label class="required">' + labelText + '</label>' +
-        '<input type="text" class="form-control-static asset-input-junction-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '" disabled/>' +
+        '<input type="text" class="form-control asset-input-junction-data" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '" disabled/>' +
         '</p>' +
         '</div>';
     };
@@ -49,7 +49,7 @@
         '<p class="form-control-static asset-log-info-metadata">Solmunimi: ' + checkEmptyAndNullAndZero(junctionInfo.nodeName) + '</p>' +
         '</div>' +
         '<div class="form-group-metadata">' +
-        '<p class="form-control-static asset-log-info-metadata">Liittymä id: ' + checkEmptyAndNullAndZero(junctionInfo.junctionId) + '</p>' +
+        '<p class="form-control-static asset-log-info-metadata">Liittymä id: ' + checkEmptyAndNullAndZero(junctionInfo.id) + '</p>' +
         '</div>' +
         inputFieldRequired('Liittymänumero', 'liittymanro', '', checkEmptyAndNullAndZero(junctionInfo.junctionNumber), 2) +
         '</div>' +

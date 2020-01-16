@@ -57,7 +57,7 @@
       if (!current.node.typeChanged) { current.node.oldType = current.node.type; }
       current.node.type = type;
       current.node.typeChanged = current.node.oldType !== type;
-      eventbus.trigger('changed:type', current.node);
+      eventbus.trigger('change:type', current.node);
       if (!current.node.typeChanged) { eventbus.trigger('reset:startDate', current.node.oldStartDate || current.node.startDate); }
       setDirty(true);
     };
@@ -73,58 +73,39 @@
       setDirty(true);
     };
 
-    var startDateHasChanged = function () {
-      return current.node.startDateChanged;
-    };
-
-    var detachNodePoint = function (id) {
-      var nodePoints = _.partition(current.node.nodePoints, function (nodePoint) {
-        return nodePoint.id === id;
+    var detachJunctionAndNodePoints = function (junction, nodePoints) {
+      if (!_.isUndefined(junction)) {
+        current.node.junctionsToDetach.push(junction);
+        _.remove(current.node.junctions, function (j) {
+          return j.id === junction.id;
+        });
+        eventbus.trigger('junction:detach', junction);
+      }
+      _.each(nodePoints, function (nodePoint) {
+        current.node.nodePointsToDetach.push(nodePoint);
+        _.remove(current.node.nodePoints, function (np) {
+          return np.id === nodePoint.id;
+        });
+        eventbus.trigger('nodePoint:detach', nodePoint);
       });
-
-      var nodePointToDetach = _.first(nodePoints[0]);
-
-      current.node.nodePointsToDetach.push(nodePointToDetach);
-      current.node.nodePoints = nodePoints[1];
       setDirty(true);
-      eventbus.trigger('nodePoint:detach', nodePointToDetach);
     };
 
-    var attachNodePoint = function (id) {
-      var nodePoints = _.partition(current.node.nodePointsToDetach, function (nodePoint) {
-        return nodePoint.id === id;
+    var attachJunctionAndNodePoints = function (junction, nodePoints) {
+      if (!_.isUndefined(junction)) {
+        current.node.junctions.push(junction);
+        _.remove(current.node.junctionsToDetach, function (j) {
+          return j.id === junction.id;
+        });
+        eventbus.trigger('junction:attach', junction);
+      }
+      _.each(nodePoints, function (nodePoint) {
+        current.node.nodePoints.push(nodePoint);
+        _.remove(current.node.nodePointsToDetach, function (np) {
+          return np.id === nodePoint.id;
+        });
+        eventbus.trigger('nodePoint:attach', nodePoint);
       });
-
-      var nodePointToAttach = _.first(nodePoints[0]);
-
-      current.node.nodePoints.push(nodePointToAttach);
-      current.node.nodePointsToDetach = nodePoints[1];
-      eventbus.trigger('nodePoint:attach', nodePointToAttach);
-    };
-
-    var detachJunction = function (id) {
-      var junctions = _.partition(current.node.junctions, function (junction) {
-        return junction.id === id;
-      });
-
-      var junctionToDetach = _.first(junctions[0]);
-
-      current.node.junctionsToDetach.push(junctionToDetach);
-      current.node.junctions = junctions[1];
-      setDirty(true);
-      eventbus.trigger('junction:detach', junctionToDetach);
-    };
-
-    var attachJunction = function (id) {
-      var junctions = _.partition(current.node.junctionsToDetach, function (junction) {
-        return junction.id === id;
-      });
-
-      var junctionToAttach = _.first(junctions[0]);
-
-      current.node.junctions.push(junctionToAttach);
-      current.node.junctionsToDetach = junctions[1];
-      eventbus.trigger('junction:attach', junctionToAttach);
     };
 
     var isDirty = function () {
@@ -169,12 +150,8 @@
       close('junctionTemplate:unselected');
     };
 
-    var save = function (options, params) {
-      eventbus.trigger(options, params);
-    };
-
     var saveNode = function () {
-      save('node:save', current.node);
+      eventbus.trigger('node:save', current.node);
     };
 
     return {
@@ -188,11 +165,8 @@
       setNodeType: setNodeType,
       typeHasChanged: typeHasChanged,
       setStartDate: setStartDate,
-      startDateHasChanged: startDateHasChanged,
-      detachNodePoint: detachNodePoint,
-      attachNodePoint: attachNodePoint,
-      detachJunction: detachJunction,
-      attachJunction: attachJunction,
+      detachJunctionAndNodePoints: detachJunctionAndNodePoints,
+      attachJunctionAndNodePoints: attachJunctionAndNodePoints,
       isDirty: isDirty,
       setDirty: setDirty,
       closeNode: closeNode,

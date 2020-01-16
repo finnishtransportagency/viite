@@ -24,7 +24,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
                             validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
   case class ConversionNodePoint(id: Long, beforeOrAfter: Long, nodeId: Long, nodeNumber: Long, roadwayNumberTR: Long, addressMValueTR: Long,
-                                 startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
+                                 validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
   private def insertNodeStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
@@ -102,11 +102,13 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
 
   protected def fetchNodePointsFromConversionTable(): Seq[ConversionNodePoint] = {
     conversionDatabase.withDynSession {
-      sql"""SELECT NP.ID, NP.EJ, NP.ID_SOLMU, SOLMU.SOLMUNRO, AP.ID_AJORATA, AP.ETAISYYS, TO_CHAR(NP.VOIMASSAOLOAIKA_ALKU, 'YYYY-MM-DD hh:mm:ss'), TO_CHAR(NP.VOIMASSAOLOAIKA_LOPPU, 'YYYY-MM-DD hh:mm:ss'),
+      sql"""SELECT NP.ID, NP.EJ, NP.ID_SOLMU, N.SOLMUNRO, AP.ID_AJORATA, AP.ETAISYYS,
             TO_CHAR(np.MUUTOSPVM, 'YYYY-MM-DD hh:mm:ss'), NP.KAYTTAJA, TO_CHAR(NP.REKISTEROINTIPVM, 'YYYY-MM-DD hh:mm:ss')
             FROM SOLMUKOHTA NP
             JOIN AJORADAN_PISTE AP ON (ID_TIEOSOITE = AP.ID)
-            JOIN SOLMU ON (ID_SOLMU = SOLMU.ID) """
+            JOIN SOLMU N ON (ID_SOLMU = N.ID)
+            WHERE NP.VOIMASSAOLOAIKA_LOPPU IS NULL OR N.VOIMASSAOLOAIKA_LOPPU IS NOT NULL
+      """
         .as[ConversionNodePoint].list
     }
   }
@@ -137,8 +139,6 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
       val nodeNumber = r.nextLong()
       val roadwayNumberInTR = r.nextLong()
       val addressMValueInTR = r.nextLong()
-      val startDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val endDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextString()
       val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
@@ -147,7 +147,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
         case "J" => 2
         case _ => 0
       }
-      ConversionNodePoint(id, beforeOrAfter, nodeId, nodeNumber, roadwayNumberInTR, addressMValueInTR, startDate, endDate, validFrom, None, createdBy, createdTime)
+      ConversionNodePoint(id, beforeOrAfter, nodeId, nodeNumber, roadwayNumberInTR, addressMValueInTR, validFrom, None, createdBy, createdTime)
     }
   }
 

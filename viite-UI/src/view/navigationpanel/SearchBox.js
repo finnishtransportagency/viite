@@ -1,7 +1,5 @@
 (function(root) {
   root.SearchBox = function(instructionsPopup, locationSearch) {
-    var INTERNAL_SERVER_ERROR_500 = 500;
-
     var tooltip = "Hae katuosoitteella, tieosoitteella tai koordinaateilla";
     var groupDiv = $('<div id="searchBox" class="panel-group search-box"/>');
     var coordinatesDiv = $('<div class="panel"/>');
@@ -35,11 +33,12 @@
         resultsSection.show();
         clearSection.show();
       };
+
       var moveToLocation = function() {
         var showDialog = function(message) {
           resultsSection.hide();
           clearSection.hide();
-          instructionsPopup.show(message, 3000);
+          instructionsPopup.show(_.isString(message) ? message : 'Yhteys Viitekehysmuuntimeen epäonnistui', 3000);
         };
 
         searchResults.html('Haku käynnissä…');
@@ -51,10 +50,7 @@
             var result = results[0];
             eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
           }
-        }).fail(function (message) {
-          if (!_.isUndefined(message) && message.status === INTERNAL_SERVER_ERROR_500) { message = "Yhteys Viitekehysmuuntimeen epäonnistui"; }
-          showDialog(message);
-        });
+        }).fail(showDialog);
       };
 
       coordinatesText.keypress(function(event) {

@@ -153,7 +153,7 @@ object Digiroad2Context {
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
+    new RoadLinkService(vvhClient, eventbus, new JsonSerializer, useFrozenLinkInterface)
   }
 
   lazy val roadwayDAO: RoadwayDAO = {
@@ -211,18 +211,20 @@ object Digiroad2Context {
   lazy val revision: String = {
     revisionInfo.getProperty("digiroad2.revision")
   }
+
   lazy val deploy_date: String = {
     revisionInfo.getProperty("digiroad2.latestDeploy")
   }
-  lazy val date_of_data: String = {
-    revisionInfo.getProperty("digiroad2.dateofData")
+
+  lazy val useFrozenLinkInterface: Boolean = {
+    properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
   }
 
   val env: String = System.getProperty("env")
 
   def getProperty(name: String): String = {
     val property = properties.getProperty(name)
-    if(property != null)
+    if (property != null)
       property
     else
       throw new RuntimeException(s"cannot find property $name for enviroment: $env")
