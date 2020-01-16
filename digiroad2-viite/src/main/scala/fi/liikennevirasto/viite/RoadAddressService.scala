@@ -1037,7 +1037,7 @@ object RoadAddressFilters {
   }
 
   def afterDiscontinuousJump(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
-    curr.discontinuity == Discontinuity.MinorDiscontinuity || curr.discontinuity == Discontinuity.Discontinuous
+    curr.discontinuity == Discontinuity.MinorDiscontinuity || curr.discontinuity == Discontinuity.Discontinuous && sameRoadPart(curr)(next)
   }
 
   def halfContinuousHalfDiscontinuous(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
