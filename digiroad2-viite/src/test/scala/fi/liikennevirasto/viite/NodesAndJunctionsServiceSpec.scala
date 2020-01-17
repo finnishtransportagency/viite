@@ -228,6 +228,92 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  test("Test nodesAndJunctionsService.handleJunctionPointTemplates roadsToHead case When creating projectlinks Then junction template and junctions points should be handled/created properly") {
+    runWithRollback {
+      /*
+     v0---R---|
+     |0--PL-->|--PL-->|
+
+
+     PL: Project link
+     R: Existing road
+       */
+      val geom1 = Seq(Point(10.0, 0.0), Point(0.0, 0.0))
+      val geom2 = Seq(Point(0.0, 0.0), Point(11.0, 0.0))
+      val geom3 = Seq(Point(11.0, 0.0), Point(20.0, 0.0))
+      val road999 = 999L
+      val road1000 = 1000L
+      val part = 1L
+      val roadwayNumber = Sequences.nextRoadwayNumber
+      val rwId = Sequences.nextRoadwayId
+      val roadway = Roadway(rwId, roadwayNumber, road999, part, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      val roadway2 = Roadway(rwId + 1, roadwayNumber + 1, road1000, part, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 20L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      val linearLocationId = Sequences.nextLinearLocationId
+      val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (Some(0), Some(10)), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
+      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val plId1 = projectId + 1
+
+      val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), Seq(), None, None)
+
+      val link1 = dummyProjectLink(road1000, part, Track.Combined, Discontinuity.Continuous, 0, 11, Some(DateTime.now()), None, 12346, 0, 10, SideCode.TowardsDigitizing, LinkStatus.New, projectId, RoadType.PublicRoad, geom2, roadwayNumber + 1).copy(id = plId1 + 1, roadwayId = rwId + 1, linearLocationId = linearLocationId + 1)
+      val link2 = dummyProjectLink(road1000, part, Track.Combined, Discontinuity.Continuous, 11, 20, Some(DateTime.now()), None, 12347, 0, 10, SideCode.TowardsDigitizing, LinkStatus.New, projectId, RoadType.PublicRoad, geom3, roadwayNumber + 1).copy(id = plId1 + 2, roadwayId = rwId + 1, linearLocationId = linearLocationId + 2)
+
+      val linearLocations = Seq(
+        LinearLocation(linearLocationId, 1, 12345, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (Some(0l), None), Seq(Point(0.0, 0.0), Point(10.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
+          roadwayNumber, Some(DateTime.parse("2000-01-01")), None),
+        LinearLocation(linearLocationId + 1, 1, 12346, 0.0, 11.0, SideCode.TowardsDigitizing, 10000000000l,
+          (None, None), Seq(Point(0.0, 0.0), Point(11.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
+          roadwayNumber + 1, Some(DateTime.parse("2000-01-01")), None),
+        LinearLocation(linearLocationId + 2, 2, 12347, 0.0, 9.0, SideCode.TowardsDigitizing, 10000000000l,
+          (None, None), Seq(Point(11.0, 0.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
+          roadwayNumber + 1, Some(DateTime.parse("2000-01-01")), None)
+      )
+      val pls = Seq(link1, link2)
+      roadwayDAO.create(Seq(roadway, roadway2))
+      buildTestDataForProject(Some(project), None, Some(linearLocations), Some(pls))
+      val projectChanges = List(
+        ProjectRoadwayChange(0, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
+            RoadwayChangeSection(Some(link1.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPartNumber), endRoadPartNumber = Some(link1.roadPartNumber), startAddressM = Some(link1.startAddrMValue), endAddressM = Some(link2.endAddrMValue), Some(RoadType.PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
+            Discontinuity.Continuous, RoadType.PublicRoad, reversed = false, 1, 8)
+          , DateTime.now, Some(0L))
+      )
+
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
+
+      val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
+      nodesAndJunctionsService.handleJunctionPointTemplates(projectChanges, pls, mappedRoadwayNumbers)
+
+      val roadJunctionPoints = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(roadway.roadwayNumber, roadway.endAddrMValue, BeforeAfter.Before)
+      val junction1 = junctionDAO.fetchByIds(Seq(roadJunctionPoints.head.junctionId))
+
+      val link1JunctionPoints = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link1.roadwayNumber, link1.startAddrMValue, BeforeAfter.After)
+      val link2JunctionPoints = junctionPointDAO.fetchJunctionPointsByRoadwayPoints(link2.roadwayNumber, link2.startAddrMValue, BeforeAfter.After)
+      val junction2 = junctionDAO.fetchByIds(Seq(link1JunctionPoints.head.junctionId))
+
+      junction1 should be(junction2)
+
+      val roadwayPoint1 = roadwayPointDAO.fetch(roadway.roadwayNumber, roadway.endAddrMValue)
+      val roadwayPoint2 = roadwayPointDAO.fetch(link1.roadwayNumber, link1.startAddrMValue)
+
+      roadwayPoint1.head.addrMValue should be(roadway.endAddrMValue)
+      roadwayPoint2.head.addrMValue should be(link1.startAddrMValue)
+
+      roadJunctionPoints.isDefined should be(true)
+      roadJunctionPoints.head.beforeAfter should be(BeforeAfter.Before)
+      roadJunctionPoints.head.roadwayNumber should be(roadway.roadwayNumber)
+      link1JunctionPoints.isDefined should be(true)
+      link1JunctionPoints.head.beforeAfter should be(BeforeAfter.After)
+      link1JunctionPoints.head.roadwayNumber should be(link1.roadwayNumber)
+      link2JunctionPoints.isDefined should be(false)
+
+    }
+  }
+
   // <editor-fold desc="Create & Expire Junction and its Points">
   // <editor-fold desc="with reverse">
 
