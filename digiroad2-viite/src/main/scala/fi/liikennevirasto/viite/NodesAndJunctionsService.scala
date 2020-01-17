@@ -237,7 +237,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${r.roadwayNumber} addrM: ${r.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, link.createdBy.getOrElse("-"), Some(DateTime.now), r.roadwayNumber, r.endAddrMValue, r.roadNumber, r.roadPartNumber, r.track, r.discontinuity))).head
-        if(CalibrationPointDAO.fetch(r.linkId, CalibrationPointLocation.EndOfLink.value, rwPoint).isEmpty){
+        if (CalibrationPointDAO.fetch(r.linkId, CalibrationPointLocation.EndOfLink.value, rwPoint).isEmpty) {
           logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${r.linkId} startOrEnd: 1")
           CalibrationPointDAO.create(rwPoint, r.linkId, CalibrationPointLocation.EndOfLink.value, calType = CalibrationPointType.Mandatory, createdBy = link.createdBy.getOrElse("-"))
         }
@@ -257,7 +257,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, link.createdBy.getOrElse("-"), Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
-        if(CalibrationPointDAO.fetch(link.linkId, CalibrationPointLocation.StartOfLink.value, rwPoint).isEmpty){
+        if (CalibrationPointDAO.fetch(link.linkId, CalibrationPointLocation.StartOfLink.value, rwPoint).isEmpty) {
           logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${link.linkId} startOrEnd: 0")
           CalibrationPointDAO.create(rwPoint, link.linkId, CalibrationPointLocation.StartOfLink.value, calType = CalibrationPointType.Mandatory, createdBy = link.createdBy.getOrElse("-"))
         }
@@ -278,7 +278,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${r.roadwayNumber} addrM: ${r.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, link.createdBy.getOrElse("-"), Some(DateTime.now), r.roadwayNumber, r.startAddrMValue, r.roadNumber, r.roadPartNumber, r.track, r.discontinuity))).head
-        if(CalibrationPointDAO.fetch(r.linkId, CalibrationPointLocation.StartOfLink.value, rwPoint).isEmpty){
+        if (CalibrationPointDAO.fetch(r.linkId, CalibrationPointLocation.StartOfLink.value, rwPoint).isEmpty) {
           logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${r.linkId} startOrEnd: 0")
           CalibrationPointDAO.create(rwPoint, r.linkId, CalibrationPointLocation.StartOfLink.value, calType = CalibrationPointType.Mandatory, createdBy = link.createdBy.getOrElse("-"))
         }
@@ -298,7 +298,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, link.createdBy.getOrElse("-"), Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
-        if(CalibrationPointDAO.fetch(link.linkId, CalibrationPointLocation.StartOfLink.value, rwPoint).isEmpty){
+        if (CalibrationPointDAO.fetch(link.linkId, CalibrationPointLocation.StartOfLink.value, rwPoint).isEmpty) {
           logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${link.linkId} startOrEnd: 0")
           CalibrationPointDAO.create(rwPoint, link.linkId, CalibrationPointLocation.StartOfLink.value, calType = CalibrationPointType.Mandatory, createdBy = link.createdBy.getOrElse("-"))
         }
@@ -319,7 +319,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${r.roadwayNumber} addrM: ${r.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, link.createdBy.getOrElse("-"), Some(DateTime.now), r.roadwayNumber, r.endAddrMValue, r.roadNumber, r.roadPartNumber, r.track, r.discontinuity))).head
-        if(CalibrationPointDAO.fetch(r.linkId, CalibrationPointLocation.EndOfLink.value, rwPoint).isEmpty){
+        if (CalibrationPointDAO.fetch(r.linkId, CalibrationPointLocation.EndOfLink.value, rwPoint).isEmpty) {
           logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${r.linkId} startOrEnd: 1")
           CalibrationPointDAO.create(rwPoint, r.linkId, CalibrationPointLocation.EndOfLink.value, calType = CalibrationPointType.Mandatory, createdBy = link.createdBy.getOrElse("-"))
         }
@@ -339,7 +339,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, link.createdBy.getOrElse("-"), Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
-        if(CalibrationPointDAO.fetch(link.linkId, CalibrationPointLocation.EndOfLink.value, rwPoint).isEmpty){
+        if (CalibrationPointDAO.fetch(link.linkId, CalibrationPointLocation.EndOfLink.value, rwPoint).isEmpty) {
           logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${link.linkId} startOrEnd: 1")
           CalibrationPointDAO.create(rwPoint, link.linkId, CalibrationPointLocation.EndOfLink.value, calType = CalibrationPointType.Mandatory, createdBy = link.createdBy.getOrElse("-"))
         }
@@ -360,7 +360,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${r.roadwayNumber} addrM: ${r.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, link.createdBy.getOrElse("-"), Some(DateTime.now), r.roadwayNumber, r.startAddrMValue, r.roadNumber, r.roadPartNumber, r.track, r.discontinuity))).head
-        if(CalibrationPointDAO.fetch(r.linkId, CalibrationPointLocation.StartOfLink.value, rwPoint).isEmpty){
+        if (CalibrationPointDAO.fetch(r.linkId, CalibrationPointLocation.StartOfLink.value, rwPoint).isEmpty) {
           logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${r.linkId} startOrEnd: 0")
           CalibrationPointDAO.create(rwPoint, r.linkId, CalibrationPointLocation.StartOfLink.value, calType = CalibrationPointType.Mandatory, createdBy = link.createdBy.getOrElse("-"))
         }
@@ -380,7 +380,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, link.createdBy.getOrElse("-"), Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
-        if(CalibrationPointDAO.fetch(link.linkId, CalibrationPointLocation.EndOfLink.value, rwPoint).isEmpty){
+        if (CalibrationPointDAO.fetch(link.linkId, CalibrationPointLocation.EndOfLink.value, rwPoint).isEmpty) {
           logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${link.linkId} startOrEnd: 1")
           CalibrationPointDAO.create(rwPoint, link.linkId, CalibrationPointLocation.EndOfLink.value, calType = CalibrationPointType.Mandatory, createdBy = link.createdBy.getOrElse("-"))
         }
