@@ -699,7 +699,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         val terminatedRoadwayNumbersChanges = mappedRoadwayNumbers.filter { entry =>
           entry.roadNumber == source.roadNumber.get &&
             (source.startRoadPartNumber.get to source.endRoadPartNumber.get contains entry.roadPartNumber) &&
-            entry.originalStartAddr == source.startAddressM.get && entry.originalEndAddr == source.endAddressM.get
+            entry.originalStartAddr >= source.startAddressM.get && entry.originalEndAddr <= source.endAddressM.get
         }
         val roadwayNumbers = if (change.changeType == Termination) {
           terminatedRoadwayNumbersChanges.map(_.newRoadwayNumber).distinct
@@ -763,8 +763,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
                 change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get
               )
               if (terminatedRoadAddress.isDefined) {
-                val roadwayNumberInPoint = terminatedRoadAddress.get.oldRoadwayNumber
-                Seq(rwp.copy(roadwayNumber = roadwayNumberInPoint, addrMValue = rwp.addrMValue, modifiedBy = Some(username)))
+                val roadwayNumberInPoint = terminatedRoadAddress.get.newRoadwayNumber
+                val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint, addrMValue = rwp.addrMValue, modifiedBy = Some(username))
+                roadwayPointDAO.update(newRwp)
+                Seq(newRwp)
               } else Seq()
             }
             list ++ rwPoints
