@@ -720,7 +720,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
                 val (roadwayNumberInPoint, disposedRoadwayPointId) = getNewRoadwayNumberInPoint(rwp, newAddrM)
-                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) Seq(rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username)))
+                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) {
+                  val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
+                  roadwayPointDAO.update(newRwp)
+                  Seq(newRwp)
+                }
                 else Seq()
               }
               list ++ rwPoints
@@ -728,7 +732,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
                 val (roadwayNumberInPoint, disposedRoadwayPointId) = getNewRoadwayNumberInPoint(rwp, newAddrM)
-                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) Seq(rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username)))
+                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) {
+                  val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
+                  roadwayPointDAO.update(newRwp)
+                  Seq(newRwp)
+                }
                 else Seq()
               }
               list ++ rwPoints
@@ -738,7 +746,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
                 val (roadwayNumberInPoint, disposedRoadwayPointId) = getNewRoadwayNumberInPoint(rwp, newAddrM)
-                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) Seq(rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username)))
+                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) {
+                  val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
+                  roadwayPointDAO.update(newRwp)
+                  Seq(newRwp)
+                }
                 else Seq()
               }
               list ++ rwPoints
@@ -761,8 +773,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       }
 
       if (allUpdatableRoadwayPoints.nonEmpty) {
-        logger.info(s"Updating ${allUpdatableRoadwayPoints.length} roadway points: ${allUpdatableRoadwayPoints.mkString(", ")}")
-        roadwayPointDAO.update(allUpdatableRoadwayPoints)
+        logger.info(s"Updated ${allUpdatableRoadwayPoints.length} roadway points: ${allUpdatableRoadwayPoints.mkString(", ")}")
       }
     } catch {
       case ex: Exception => logger.error("Failed to update roadway points.", ex)
