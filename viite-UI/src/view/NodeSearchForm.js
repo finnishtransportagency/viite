@@ -1,5 +1,6 @@
 (function (root) {
   root.NodeSearchForm = function (instructionsPopup, map, nodeCollection, backend) {
+    var formCommon = new FormCommon('node-search-');
     var header = function() {
       return '<header>' +
         '<span id="close-node-search" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>' +
@@ -8,12 +9,6 @@
 
     var label = function(label) {
       return '<label class="control-label-small">' + label + '</label>';
-    };
-
-    var inputNumber = function (id, maxLength) {
-      return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)' +
-        '" class="form-control node-input" id = "' + id + '"' +
-        (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + '/>';
     };
 
     var searchButton = function () {
@@ -32,7 +27,7 @@
         label('Tie') + label('Aosa') + label('Losa') +
         '</div>' +
         '<div id= "road-attributes" class="form-group">' +
-        inputNumber('tie', 5) + inputNumber('aosa', 3) + inputNumber('losa', 3) +
+          formCommon.nodeInputNumber('tie', 5) + formCommon.nodeInputNumber('aosa', 3) + formCommon.nodeInputNumber('losa', 3) +
         searchButton() +
         '</div>' +
         '<button id="clear-node-search" type="button" class="btn btn-clean-node-search btn-block" disabled>Tyhjenn&auml; tulokset</button>' +

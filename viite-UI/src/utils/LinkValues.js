@@ -212,6 +212,7 @@
         Unknown:            {value: ""},
         Default:            {value: "Select"},
         Select:             {value: "Select",   description: 'Solmun valinta'},
+        Attach:             {value: "Attach",   alias:["Select"]},
         Add:                {value: "Add"}
     };
 

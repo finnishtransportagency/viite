@@ -63,7 +63,13 @@
     }, this);
 
     var setCursor = function(tool) {
-      var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'crosshair', 'Copy': 'copy'};
+      var cursor = {
+        'Select': 'default',
+        'Attach': 'default',
+        'Add': 'crosshair',
+        'Cut': 'crosshair',
+        'Copy': 'copy'
+      };
       map.getViewport().style.cursor = tool ? cursor[tool] : 'default';
     };
 
