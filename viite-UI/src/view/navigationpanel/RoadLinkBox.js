@@ -148,6 +148,7 @@
           applicationModel.setSelectedTool(toolName);
         });
       });
+
       var deactivate = function() {
         element.removeClass('active');
       };
@@ -184,10 +185,11 @@
 
       eventbus.on('tool:changed', function(name) {
         _.each(tools, function(tool) {
-          if (tool.name !== name) {
-            tool.deactivate();
-          } else {
+          if (tool.name === name ||
+            (_.has(LinkValues.Tool[name], 'alias') && _.includes(LinkValues.Tool[name].alias, tool.name))) {
             tool.activate();
+          } else {
+            tool.deactivate();
           }
         });
       });

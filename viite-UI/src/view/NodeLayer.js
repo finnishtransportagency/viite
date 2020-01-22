@@ -171,7 +171,6 @@
      * within a maximum of 200m distance.
      * @type {ol.interaction.Translate}
      */
-    var nodeInitialPosition = null;
     var nodeTranslate = new ol.interaction.Translate({
       layers: [nodeMarkerSelectedLayer]
     });
@@ -180,8 +179,10 @@
      * Save initial node position for comparison purposes
      */
     nodeTranslate.on('translatestart', function (evt) {
-      nodeInitialPosition = [parseInt(evt.coordinate[0]), parseInt(evt.coordinate[1])];
-      selectedNodesAndJunctions.setInitialCoordinates(evt.coordinate);
+      selectedNodesAndJunctions.setInitialCoordinates({
+        x: parseInt(evt.coordinate[0]),
+        y: parseInt(evt.coordinate[1])
+      });
     });
 
     /**
@@ -199,7 +200,10 @@
         eventbus.trigger('node:setCoordinates', [nodeInitialPosition[0], nodeInitialPosition[1]]);
         eventbus.trigger('node:repositionNode', selectedNodesAndJunctions.getCurrentNode());
       } else {
-        selectedNodesAndJunctions.setCoordinates(evt.coordinate);
+        selectedNodesAndJunctions.setCoordinates({
+          x: parseInt(evt.coordinate[0]),
+          y: parseInt(evt.coordinate[1])
+        });
       }
     });
 
@@ -326,7 +330,7 @@
       }
     });
 
-    me.eventListener.listenTo(eventbus, 'node:unselected nodePointTemplate:unselected junctionTemplate:unselected', function () {
+    me.eventListener.listenTo(eventbus, 'node:unselected templates:unselected', function () {
       clearHighlights();
     });
 
@@ -338,6 +342,7 @@
           setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
           break;
         case LinkValues.Tool.Select.value:
+        case LinkValues.Tool.Attach.value:
           me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
           setProperty([nodeMarkerLayer], 'selectable', true);
           setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
@@ -345,9 +350,11 @@
         case LinkValues.Tool.Add.value:
           toggleSelectInteractions(false);
           me.eventListener.listenToOnce(eventbus, 'map:clicked', createNewNodeMarker);
-          if (!_.isUndefined(selectedNodesAndJunctions.getCurrentNode()) || !_.isUndefined(selectedNodesAndJunctions.getCurrentNodePointTemplates()) || !_.isUndefined(selectedNodesAndJunctions.getCurrentJunctionTemplate())) {
-            selectedNodesAndJunctions.closeForm();
-          }
+          // // TODO check this!
+          // var templates = selectedNodesAndJunctions.getCurrentTemplates();
+          // if (!_.isUndefined(selectedNodesAndJunctions.getCurrentNode()) || !_.isUndefined(templates.nodePoints) || !_.isUndefined(templates.junction)) {
+          //   selectedNodesAndJunctions.closeForm();
+          // }
           setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
           break;
       }
@@ -507,6 +514,18 @@
         showLayer();
         eventbus.trigger('nodeLayer:fetch');
       }
+    });
+
+    me.eventListener.listenTo(eventbus, 'template:clicked', function (coordinates) {
+      // TODO VIITE-2055 this trigger must be fixed!
+      eventbus.trigger('coordinates:selected', coordinates);
+      var xy = {x: coordinates.lon, y: coordinates.lat};
+      alert('NodeLayer @ {x: ' + xy.x + ', y: ' + xy.y + '}');
+      applicationModel.removeSpinner();
+
+      // selectedNodesAndJunctions.closeForm();
+      // clearHighlights();
+      // selectedNodesAndJunctions.openTemplates(junctionTemplate);
     });
 
     var redraw = function () {

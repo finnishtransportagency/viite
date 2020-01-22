@@ -75,12 +75,23 @@
         locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM).then(function (results) {
           if (results.length >= 1) {
             var result = results[0];
-            eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat, zoom: 12});
-            backend.getNodesAndJunctions({boundingBox: [result.lon, result.lat, result.lon, result.lat].join(","), zoom: zoomlevels.minZoomForJunctions}, function(fetchedNodesAndJunctions) {
-              eventbus.trigger('selectedNodesAndJunctions:openTemplates', fetchedNodesAndJunctions);
-            });
+            eventbus.trigger('template:clicked', {lon: result.lon, lat: result.lat, zoom: 12});
+            // backend.getNodesAndJunctions({boundingBox: [result.lon, result.lat, result.lon, result.lat].join(","), zoom: zoomlevels.minZoomForJunctions}, function(fetchedNodesAndJunctions) {
+            //   if (_.has(fetchedNodesAndJunctions, 'nodePointTemplates') || _.has(fetchedNodesAndJunctions, 'junctionTemplates')) {
+            //     var referencePoint = { x: parseFloat(result.lon).toFixed(3), y: parseFloat(result.lat).toFixed(3) };
+            //     eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
+            //       nodePoints: _.filter(fetchedNodesAndJunctions.nodePointTemplates, function (nodePoint) {
+            //         return _.isEqual(nodePoint.coordinates, referencePoint);
+            //       }),
+            //       junction: _.first(_.filter(fetchedNodesAndJunctions.junctionTemplates, function (junction) {
+            //         return _.isEqual(_.first(junction.junctionPoints).coordinates, referencePoint);
+            //       }))
+            //     });
+            //   }
+            // });
+          } else {
+            applicationModel.removeSpinner();
           }
-          applicationModel.removeSpinner();
         });
       }
     };

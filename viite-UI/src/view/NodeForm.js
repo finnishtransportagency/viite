@@ -1,9 +1,10 @@
 (function (root) {
-  root.NodeForm = function (selectedNode) {
+  root.NodeForm = function (selectedNodesAndJunctions) {
     var formCommon = new FormCommon('node-');
     var NodeType = LinkValues.NodeType;
-    var NODE_POINTS_TITLE = 'Näytä solmukohdat';
-    var JUNCTIONS_TITLE = 'Näytä liittymat';
+
+    var NODE_POINTS_TITLE = 'Solmukohdat';
+    var JUNCTIONS_TITLE = 'Liittymät';
     var picker;
 
     var getNodeType = function (nodeValue) {
@@ -65,9 +66,10 @@
 
     var templatesForm = function (title) {
       var formButtons = function () {
-        // TOOD 2055 needs refactoring
         return '<div class="form form-controls">' +
-          ' <button class="save btn btn-edit-templates-save" disabled>Tallenna</button>' +
+          ' <button id="attachToMapNode" class="btn btn-block btn-attach-node">Valitse kartatta solmu, johon haluat liittää aihiot</button>' +
+          ' <button id="attachToNewNode" class="btn btn-block btn-attach-node">Luo uusi solmu, johon haluat liittää aihiot</button>' +
+          ' <button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
           ' <button class="cancel btn btn-edit-templates-cancel">Peruuta</button>' +
           '</div>';
       };
@@ -125,7 +127,7 @@
         '     <p class="node-info">' + NODE_POINTS_TITLE + '</p>' +
         '     <div id="node-points-info-content">' +
         '     </div>' +
-        '     <p class="node-info">' + JUNCTIONS_TITLE + '</p>' +
+        '     <p class="node-info">' + JUNCTIONS_TITLE + '<i id="editNodeJunctions" class="btn-pencil-edit fas fa-pencil-alt"> </i> </p>' +
         '     <div id="junctions-info-content">' +
         '     </div>' +
         '   </div>' +
@@ -166,15 +168,15 @@
           '></td>';
       };
 
-      var junctionIcon = function (number, asTemplate) {
+      var junctionIcon = function (junction, asTemplate) {
         if (asTemplate) {
-          return '<object type="image/svg+xml" data="images/junction-template.svg">';
+          return '<object type="image/svg+xml" id="junction-number-icon-' + junction.id + '" data="images/junction-template.svg">';
         }
-        if (_.isUndefined(number)) {
-          return '<object type="image/svg+xml" data="images/junction.svg">';
+        if (_.isUndefined(junction.junctionNumber)) {
+          return '<object type="image/svg+xml" id="junction-number-icon-' + junction.id + '" data="images/junction.svg">';
         } else {
-          return '<object type="image/svg+xml" data="images/junction.svg">' +
-            ' <param name="number" value="' + number + '"/></object>';
+          return '<object type="image/svg+xml" id="junction-number-icon-' + junction.id + '" data="images/junction.svg">' +
+            ' <param name="number"  value="' + junction.junctionNumber + '"/></object>';
         }
       };
 
@@ -235,10 +237,10 @@
         _.each(junctionsInfo, function (junction) {
           htmlTable += '<tr class="node-junctions-table-border-bottom">';
           if (asResume) {
-            htmlTable += '<td>' + junctionIcon(junction.junctionNumber, asTemplate) + '</td>';
+            htmlTable += '<td>' + junctionIcon(junction, asTemplate) + '</td>';
           } else {
             htmlTable += detachJunctionBox(junction);
-            htmlTable += '<td>' + junctionIcon(junction.junctionNumber) + '</td>';
+            htmlTable += '<td>' + junctionIcon(junction) + '</td>';
           }
           htmlTable += junctionInfoHtml(getJunctionPointsInfo(junction));
           htmlTable += '</tr>';
@@ -280,7 +282,8 @@
 
       return {
         toMessage: toMessage,
-        toHtmlTable: toHtmlTable
+        toHtmlTable: toHtmlTable,
+        junctionIcon: junctionIcon
       };
     };
 
@@ -386,7 +389,7 @@
     var addDatePicker = function (fromElement, minDate) {
       picker = dateutil.addSingleDatePickerWithMinDate(fromElement, minDate);
       fromElement.change(function () {
-        selectedNode.setStartDate(this.value);
+        selectedNodesAndJunctions.setStartDate(this.value);
       });
     };
 
@@ -400,19 +403,19 @@
     };
 
     var nodeChangeHandler = function () {
-      var textIsNonEmpty = $('#nodeName').val() !== "";
-      var nodeTypeIsValid = $('#nodeTypeDropdown :selected').val() !== LinkValues.NodeType.UnknownNodeType.value.toString();
-      var dateIsNonEmpty = $('#nodeStartDate').val() !== "";
+      var textIsEmpty = $('#nodeName').val() === "";
+      var nodeTypeInvalid = $('#nodeTypeDropdown :selected').val() === LinkValues.NodeType.UnknownNodeType.value.toString();
+      var startDateIsEmpty = $('#nodeStartDate').val() === "";
 
-      if (textIsNonEmpty && nodeTypeIsValid && dateIsNonEmpty && selectedNode.isDirty()) {
-        $('.btn-edit-node-save').prop('disabled', false);
-      } else {
+      if (textIsEmpty || nodeTypeInvalid || startDateIsEmpty) {
         $('.btn-edit-node-save').prop('disabled', true);
+      } else {
+        $('.btn-edit-node-save').prop('disabled', !selectedNodesAndJunctions.isDirty());
       }
     };
 
     var closeNode = function () {
-      selectedNode.closeNode();
+      selectedNodesAndJunctions.closeNode();
       eventbus.off('change:nodeName, change:nodeTypeDropdown, change:nodeStartDate');
     };
 
@@ -438,10 +441,10 @@
 
         var nodePoints = _.filter(_.concat(node.nodePoints, node.nodePointsToDetach), function (nodePoint) {
           var junctionPointsCoordinates = _.map(junction.junctionPoints, function (junctionPoint) {
-            return {x: junctionPoint.x, y: junctionPoint.y};
+            return junctionPoint.coordinates;
           });
 
-          return !_.isEmpty(_.intersectionWith(junctionPointsCoordinates, [{x: nodePoint.x, y: nodePoint.y}], _.isEqual));
+          return !_.isEmpty(_.intersectionWith(junctionPointsCoordinates, [nodePoint.coordinates], _.isEqual));
         });
 
         return {
@@ -485,14 +488,14 @@
       rootElement.on('change', '[id^="detach-node-point-"]', function () {
         var checkbox = this;
         var nodePointId = parseInt(checkbox.value);
-        var match = junctionAndNodePointsByNodePointCoordinates(selectedNode.getCurrentNode(), nodePointId);
+        var match = junctionAndNodePointsByNodePointCoordinates(selectedNodesAndJunctions.getCurrentNode(), nodePointId);
         var junction = match.junction;
         var nodePoints = match.nodePoints;
         if (checkbox.checked) {
           if (!_.isEmpty(junction) || nodePoints.length > 1) {
             new GenericConfirmPopup(buildMessage(junction, match.nodePoints), {
               successCallback: function () {
-                selectedNode.detachJunctionAndNodePoints(junction, nodePoints);
+                selectedNodesAndJunctions.detachJunctionAndNodePoints(junction, nodePoints);
                 markJunctionAndNodePoints(junction, nodePoints, true);
               },
               closeCallback: function () {
@@ -500,13 +503,13 @@
               }
             });
           } else {
-            selectedNode.detachJunctionAndNodePoints(null, nodePoints);
+            selectedNodesAndJunctions.detachJunctionAndNodePoints(null, nodePoints);
             markJunctionAndNodePoints(null, nodePoints, true);
           }
         } else {
           new GenericConfirmPopup('Haluatko peruuttaa solmukohtien ja liittymän irrotuksen solmusta ?', {
             successCallback: function () {
-              selectedNode.attachJunctionAndNodePoints(junction, nodePoints);
+              selectedNodesAndJunctions.attachJunctionAndNodePoints(junction, nodePoints);
               markJunctionAndNodePoints(junction, nodePoints, false);
             },
             closeCallback: function () {
@@ -519,14 +522,14 @@
       rootElement.on('change', '[id^="detach-junction-"]', function () {
         var checkbox = this;
         var junctionId = parseInt(checkbox.value);
-        var match = junctionAndNodePointsByJunctionPointsCoordinates(selectedNode.getCurrentNode(), junctionId);
+        var match = junctionAndNodePointsByJunctionPointsCoordinates(selectedNodesAndJunctions.getCurrentNode(), junctionId);
         var junction = match.junction;
         var nodePoints = match.nodePoints;
         if (checkbox.checked) {
           if (!_.isEmpty(nodePoints)) {
             new GenericConfirmPopup(buildMessage(junction, match.nodePoints), {
               successCallback: function () {
-                selectedNode.detachJunctionAndNodePoints(junction, nodePoints);
+                selectedNodesAndJunctions.detachJunctionAndNodePoints(junction, nodePoints);
                 markJunctionAndNodePoints(junction, nodePoints, true);
               },
               closeCallback: function () {
@@ -534,13 +537,13 @@
               }
             });
           } else {
-            selectedNode.detachJunctionAndNodePoints(junction);
+            selectedNodesAndJunctions.detachJunctionAndNodePoints(junction);
             markJunctionAndNodePoints(junction, null, true);
           }
         } else {
           new GenericConfirmPopup('Haluatko peruuttaa solmukohtien ja liittymän irrotuksen solmusta ?', {
             successCallback: function () {
-              selectedNode.attachJunctionAndNodePoints(junction, nodePoints);
+              selectedNodesAndJunctions.attachJunctionAndNodePoints(junction, nodePoints);
               markJunctionAndNodePoints(junction, nodePoints, false);
             },
             closeCallback: function () {
@@ -550,25 +553,53 @@
         }
       });
 
+      rootElement.on('click', '#editNodeJunctions', function () {
+        _.forEach(selectedNodesAndJunctions.getCurrentNode().junctions, function(junction) {
+          var element = $('#junction-number-textbox-' + junction.id);
+          //verify editing mode (on/off) by the current element being presented. On(#junction-number-textbox)/Off(#junction-number-icon)
+          if(_.isEmpty(element)){
+            //repaint junction icons to junction text boxes.
+            $('#junction-number-icon-' + junction.id).replaceWith(formCommon.nodeInputNumber('junction-number-textbox-' + junction.id, 2, junction.junctionNumber, 'width:20px;'));
+          } else {
+            //replace junction.junctionNumber
+            junction.junctionNumber = _.isEmpty(element.val()) ? 0 : parseInt(element.val());
+            //repaint junction text boxes to junction icons
+            element.replaceWith(junctionsTable.junctionIcon(junction));
+          }
+        });
+      });
+
       rootElement.on('click', '.btn-edit-node-save', function () {
-        var node = selectedNode.getCurrentNode();
+        var node = selectedNodesAndJunctions.getCurrentNode();
         eventbus.trigger('node:repositionNode', node, [node.coordinates.x, node.coordinates.y]);
-        selectedNode.saveNode();
+        selectedNodesAndJunctions.saveNode();
       });
 
       rootElement.on('click', '.btn-edit-node-cancel', function () {
-        selectedNode.revertFormChanges();
+        selectedNodesAndJunctions.revertFormChanges();
         closeNode();
+      });
+
+      rootElement.on('click', '#attachToMapNode', function () {
+        applicationModel.setSelectedTool(LinkValues.Tool.Attach.value);
+      });
+
+      rootElement.on('click', '#attachToNewNode', function () {
+        applicationModel.setSelectedTool(LinkValues.Tool.Add.value);
+      });
+
+      rootElement.on('click', '.btn-edit-templates-cancel', function () {
+        selectedNodesAndJunctions.closeTemplates();
       });
 
       eventbus.on('templates:selected', function (templates) {
         rootElement.empty();
-        if (!_.isEmpty(templates.nodePointTemplates) || !_.isEmpty(templates.junctionTemplates)) {
+        if (!_.isEmpty(templates.nodePoints) || !_.isUndefined(templates.junction)) {
           rootElement.html(templatesForm('Aihioiden tiedot:'));
           var nodePointsElement = $('#node-points-info-content');
-          nodePointsElement.html(nodePointsTable.toHtmlTable(templates.nodePointTemplates, {template: true}));
+          nodePointsElement.html(nodePointsTable.toHtmlTable(templates.nodePoints, {template: true}));
           var junctionsElement = $('#junctions-info-content');
-          junctionsElement.html(junctionsTable.toHtmlTable(templates.junctionTemplates, {template: true}));
+          junctionsElement.html(junctionsTable.toHtmlTable(templates.junction, {template: true}));
         }
       });
 
@@ -582,21 +613,21 @@
           var junctionsElement = $('#junctions-info-content');
           junctionsElement.html(junctionsTable.toHtmlTable(_.sortBy(currentNode.junctions, 'junctionNumber')));
 
-          eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:detach nodePoint:detach', function () {
-            nodeChangeHandler();
-          });
-
           eventbus.on('node:setCoordinates', function (coordinates) {
             $("#node-coordinates").text(coordinates[1] + ', ' + coordinates[0]);
           });
 
           eventbus.on('change:nodeName', function (nodeName) {
-            selectedNode.setNodeName(nodeName);
+            selectedNodesAndJunctions.setNodeName(nodeName);
           });
 
           eventbus.on('change:nodeTypeDropdown', function (nodeType) {
-            selectedNode.setNodeType(parseInt(nodeType));
-            disabledDatePicker(!selectedNode.typeHasChanged());
+            selectedNodesAndJunctions.setNodeType(parseInt(nodeType));
+            disabledDatePicker(!selectedNodesAndJunctions.typeHasChanged());
+          });
+
+          eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:detach nodePoint:detach', function () {
+            nodeChangeHandler();
           });
         }
       });

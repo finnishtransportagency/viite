@@ -1,7 +1,6 @@
 (function (root) {
   root.SelectedNodesAndJunctions = function (nodeCollection) {
     var current = {};
-    var dirty = false;
 
     var openNode = function (node) {
       clean();
@@ -12,17 +11,18 @@
       eventbus.trigger('node:selected', node);
     };
 
-    var openTemplates = function (templates) {
-      clean();
-      setCurrentNodePointTemplates(templates.nodePointTemplates);
-      setCurrentJunctionTemplate(_.first(templates.junctionTemplates));
-      eventbus.trigger('templates:selected', templates);
+    var getCurrentNode = function () {
+      return current.node;
+    };
+
+    var setCurrentNode = function (node) {
+      current.node = _.cloneDeep(node);
     };
 
     var templates = function (coordinates) {
       return {
-        nodePointTemplates: nodeCollection.getNodePointTemplatesByCoordinates(coordinates),
-        junctionTemplates: nodeCollection.getJunctionTemplateByCoordinates(coordinates)
+        nodePoints: nodeCollection.getNodePointTemplatesByCoordinates(coordinates),
+        junction: nodeCollection.getJunctionTemplateByCoordinates(coordinates)
       };
     };
 
@@ -34,60 +34,44 @@
       openTemplates(templates(_.first(junctionTemplate.junctionPoints).coordinates));
     };
 
-    var setCurrentNode = function (node) {
-      current.node = node;
+    var openTemplates = function (templates) {
+      clean();
+      setCurrentTemplates(templates.nodePoints, _.first(templates.junction));
+      eventbus.trigger('templates:selected', templates);
     };
 
-    var setCurrentNodePointTemplates = function (nodePointTemplates) {
-      current.nodePointTemplates = nodePointTemplates;
+    var getCurrentTemplates = function () {
+      return current.templates;
     };
 
-    var setCurrentJunctionTemplate = function (junctionTemplate) {
-      current.junctionTemplate = junctionTemplate;
-    };
-
-    var getCurrentNode = function () {
-      return current.node;
-    };
-
-    var getCurrentNodePointTemplates = function () {
-      return current.nodePointTemplates;
-    };
-
-    var getCurrentJunctionTemplate = function () {
-      return current.junctionTemplate;
+    var setCurrentTemplates = function (nodePoints, junction) {
+      current.templates = {
+        nodePoints: _.cloneDeep(nodePoints),
+        junction: _.cloneDeep(junction)
+      };
     };
 
     var setInitialCoordinates = function (coordinates) {
-      if (_.isUndefined(current.node.oldCoordX) && _.isUndefined(current.node.oldCoordY)) {
-        current.node.oldCoordX = current.node.coordX;
-        current.node.oldCoordY = current.node.coordY;
-      }
-      current.node.initialCoordX = parseInt(coordinates[0]);
-      current.node.initialCoordY = parseInt(coordinates[1]);
+      current.node.initialCoordinates = coordinates;
     };
 
     var setCoordinates = function (coordinates) {
-      current.node.coordX = parseInt(coordinates[0]);
-      current.node.coordY = parseInt(coordinates[1]);
-      setDirty(true);
+      current.node.coordinates = coordinates;
       eventbus.trigger('change:node-coordinates');
     };
 
     var setNodeName = function (name) {
-      if (!current.node.startNameChanged) { current.node.oldName = current.node.name; }
       current.node.name = name;
-      current.node.startNameChanged = current.node.oldName !== name;
-      setDirty(true);
     };
 
     var setNodeType = function (type) {
-      if (!current.node.typeChanged) { current.node.oldType = current.node.type; }
       current.node.type = type;
-      current.node.typeChanged = current.node.oldType !== type;
-      eventbus.trigger('change:type', current.node);
-      if (!current.node.typeChanged) { eventbus.trigger('reset:startDate', current.node.oldStartDate || current.node.startDate); }
-      setDirty(true);
+      // if (!current.node.typeChanged) { current.node.oldType = current.node.type; }
+      // current.node.type = type;
+      // current.node.typeChanged = current.node.oldType !== type;
+      // eventbus.trigger('change:type', current.node);
+      // if (!current.node.typeChanged) { eventbus.trigger('reset:startDate', current.node.oldStartDate || current.node.startDate); }
+      // setDirty(true);
     };
 
     var typeHasChanged = function () {
@@ -98,7 +82,6 @@
       if (!current.node.startDateChanged) { current.node.oldStartDate = current.node.startDate; }
       current.node.startDate = startDate;
       current.node.startDateChanged = current.node.oldStartDate !== startDate;
-      setDirty(true);
     };
 
     var detachJunctionAndNodePoints = function (junction, nodePoints) {
@@ -116,7 +99,6 @@
         });
         eventbus.trigger('nodePoint:detach', nodePoint);
       });
-      setDirty(true);
     };
 
     var attachJunctionAndNodePoints = function (junction, nodePoints) {
@@ -137,16 +119,12 @@
     };
 
     var isDirty = function () {
-      return dirty;
-    };
-
-    var setDirty = function (value) {
-      dirty = value;
+      var original = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber);
+      return !_.isEqual(current.node, original);
     };
 
     var clean = function () {
-      current = [];
-      dirty = false;
+      current = {};
     };
 
     var close = function (options, params) {
@@ -168,20 +146,14 @@
       eventbus.trigger('nodeLayer:refreshView');
     };
 
-    var closeNodePoint = function () {
+    var closeTemplates = function () {
       clean();
-      close('nodePointTemplate:unselected');
-    };
-
-    var closeJunction = function () {
-      clean();
-      close('junctionTemplate:unselected');
+      close('templates:unselected');
     };
 
     var saveNode = function () {
       eventbus.trigger('node:save', current.node);
     };
-
 
     /**
      * Checks for changes on form name, type, date and coordinates to revert them
@@ -212,8 +184,7 @@
       openJunctionTemplate: openJunctionTemplate,
       openTemplates: openTemplates,
       getCurrentNode: getCurrentNode,
-      getCurrentNodePointTemplates: getCurrentNodePointTemplates,
-      getCurrentJunctionTemplate: getCurrentJunctionTemplate,
+      getCurrentTemplates: getCurrentTemplates,
       setInitialCoordinates: setInitialCoordinates,
       setCoordinates: setCoordinates,
       setNodeName: setNodeName,
@@ -223,11 +194,9 @@
       detachJunctionAndNodePoints: detachJunctionAndNodePoints,
       attachJunctionAndNodePoints: attachJunctionAndNodePoints,
       isDirty: isDirty,
-      setDirty: setDirty,
       closeNode: closeNode,
+      closeTemplates: closeTemplates,
       closeForm: closeForm,
-      closeNodePoint: closeNodePoint,
-      closeJunction: closeJunction,
       saveNode: saveNode,
       revertFormChanges: revertFormChanges
     };

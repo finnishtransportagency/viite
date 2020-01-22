@@ -12,8 +12,8 @@
     };
 
       var titleWithEditingTool = function (project) {
-          return '<span class ="edit-mode-title">' + project.name + ' <i id="editProjectSpan" class="btn-edit-project fas fa-pencil-alt"' +
-              'value="' + project.id + '"></i></span>' +
+          return '<span class ="edit-mode-title">' + project.name + ' <i id="editProjectSpan" class=' +
+              '"btn-pencil-edit fas fa-pencil-alt" value="' + project.id + '"></i></span>' +
               '<span id="closeProjectSpan" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>';
     };
 
@@ -125,8 +125,12 @@
         disabled + (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
     };
 
-    var addSmallInputNumberDisabled = function(id, value) {
-      return '<input type="text" class="form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value)? '' : value ) + '" readonly="readonly"/>';
+    var nodeInputNumber = function (id, maxLength, value, style) {
+      return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)' +
+          '" class="form-control node-input" id = "' + id + '"' +
+          (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '" ') +
+          (_.isUndefined(value) ? '' : ' value="' + value + '" ') +
+          (_.isUndefined(style) ? '' : ' style="' + style + '" ')+ '/>';
     };
 
     var addDiscontinuityDropdown = function(link){
@@ -338,7 +342,7 @@
       roadTypeDropdown: roadTypeDropdown,
       addSmallLabel: addSmallLabel,
       addSmallInputNumber: addSmallInputNumber,
-      addSmallInputNumberDisabled: addSmallInputNumberDisabled,
+      nodeInputNumber: nodeInputNumber,
       addDiscontinuityDropdown: addDiscontinuityDropdown,
       changeDirection: changeDirection,
       selectedData: selectedData,
