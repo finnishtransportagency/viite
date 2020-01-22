@@ -268,7 +268,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     // Pick the one with calibration point set to zero: or any old link with lowest address: or new links by direction
     calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse(
       oldLinks.filter(_.status == LinkStatus.UnChanged).sortBy(_.startAddrMValue).headOption.map(pl => (pl.startingPoint, pl)).getOrElse {
-        oldLinks.filter(_.status == LinkStatus.NotHandled).sortBy(_.startAddrMValue).headOption.map(pl => (pl.startingPoint, pl)).getOrElse {
+        oldLinks.find(pl => pl.status == LinkStatus.NotHandled && pl.startAddrMValue == 0).map(pl => (pl.startingPoint, pl)).getOrElse {
           val remainLinks = oldLinks ++ newLinks
           if (remainLinks.isEmpty)
             throw new InvalidAddressDataException("Missing right track starting project links")
