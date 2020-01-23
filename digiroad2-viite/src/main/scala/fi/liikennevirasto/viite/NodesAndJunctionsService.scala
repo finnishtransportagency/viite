@@ -868,4 +868,47 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   }
 
+  /**
+  * Calculates node points for all the road parts of the node.
+    *
+  * - Go through the road parts (road numbers 1-19999 and 40000-69999) of the node one by one
+  * - If the road part has any "road node points", no need to calculate new node points
+    * - If the road part doesn't have any "road node points", calculate node point by taking the average of the addresses
+    *   of all junction points on both tracks and add this "calculated node point" on track 0 or 1
+  *
+  * @param nodeNumber
+    */
+  def calculateNodePointsForNode(id: Long, username: String, nodeNumber: Long) : Seq[NodePoint] = {
+    withDynSession {
+      /*
+
+        1. Veli-Matin ajatus oli,että aina kun solmulle tulee muutoksia, niin sen kaikki laskennalliset solmukohdat
+        lasketaan aina uudestaan. Ei edes yritä tunnistaa, mikä laskennallinen solmukohta on päivitystarpeessa,
+        vaan kaikki lasketaan uudestaan.
+        -> Expiroidaan solmulta kaikki node pointit, millä tyyppi = 2
+     */
+      nodePointDAO.expireByNodeNumberAndType(nodeNumber, NodePointType.CalculatedNodePoint.value)
+      /*
+        2. TODO algoritmin mukainen node_point generointi
+     */
+    }
+    Seq()
+  }
+
+  def getCalculatedNodePoints(nodes: Seq[Node]): Seq[NodePoint] = {
+    withDynSession {
+      //time(logger, "Fetch calculated node points") {
+      nodePointDAO.fetchCalculatedNodePoints(nodes.map(_.id))
+      //}
+    }
+  }
+
+  def insertCalculatedRoadwayPoints(roadway_number: Long, addrMValue: Long, username: String): Long ={
+    roadwayPointDAO.create( roadway_number, addrMValue ,username)
+  }
+
+  def insertCalculatedNodePoints(roadway_point_id : Long, before_after: Long, nodeNumber: Long) : Unit = {
+    nodePointDAO.insertCalculatedNodePoints(roadway_point_id, before_after, Option(nodeNumber))
+  }
+
 }

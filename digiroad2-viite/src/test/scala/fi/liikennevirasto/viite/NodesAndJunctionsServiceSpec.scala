@@ -27,7 +27,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   private val roadNumber1 = 990
   private val roadwayNumber1 = 1000000000l
+  private val roadwayNumber2 = 1000000002l
   private val roadPartNumber1 = 1
+  private val roadPartNumber2 = 2
   val roadNumberLimits = Seq((RoadClass.forJunctions.start, RoadClass.forJunctions.end))
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
@@ -82,10 +84,14 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
+  val testRoadway2 = Roadway(NewIdValue, roadwayNumber2, roadNumber1, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+    0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node"), NodeType.NormalIntersection,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, "Test", None)
 
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadwayNumber1, 0, "Test", None, None, None)
+  val testRoadwayPoint2 = RoadwayPoint(NewIdValue, roadwayNumber2, 0, "Test", None, None, None)
 
   val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType, Some(testNode1.startDate), testNode1.endDate,
     DateTime.parse("2019-01-01"), None, "Test", None, 0, 0, 0, 0, Track.Combined, 0)
@@ -2998,18 +3004,18 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodesAndJunctionsService.handleNodePointTemplates(projectChanges, pls, mappedChanges)
 
       val fetchedNodesPoints = pls.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber)).sortBy(_.id)
-      val node1 = fetchedNodesPoints.find(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.After)
-      node1.isEmpty should be(true)
-      val node2 = fetchedNodesPoints.find(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.Before)
-      node2.isEmpty should be(true)
-      val node3 = fetchedNodesPoints.find(n => n.roadwayNumber == right.roadwayNumber && n.beforeAfter == BeforeAfter.After)
-      node3.nonEmpty should be(true)
-      val node4 = fetchedNodesPoints.find(n => n.roadwayNumber == right.roadwayNumber && n.beforeAfter == BeforeAfter.Before)
-      node4.nonEmpty should be(true)
-      val node5 = fetchedNodesPoints.find(n => n.roadwayNumber == combined1.roadwayNumber && n.beforeAfter == BeforeAfter.After)
-      node5.nonEmpty should be(true)
-      val node6 = fetchedNodesPoints.find(n => n.roadwayNumber == combined2.roadwayNumber && n.beforeAfter == BeforeAfter.Before)
-      node6.nonEmpty should be(true)
+      val np1 = fetchedNodesPoints.find(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.After)
+      np1.isEmpty should be(true)
+      val np2 = fetchedNodesPoints.find(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.Before)
+      np2.isEmpty should be(true)
+      val np3 = fetchedNodesPoints.find(n => n.roadwayNumber == right.roadwayNumber && n.beforeAfter == BeforeAfter.After)
+      np3.nonEmpty should be(true)
+      val np4 = fetchedNodesPoints.find(n => n.roadwayNumber == right.roadwayNumber && n.beforeAfter == BeforeAfter.Before)
+      np4.nonEmpty should be(true)
+      val np5 = fetchedNodesPoints.find(n => n.roadwayNumber == combined1.roadwayNumber && n.beforeAfter == BeforeAfter.After)
+      np5.nonEmpty should be(true)
+      val np6 = fetchedNodesPoints.find(n => n.roadwayNumber == combined2.roadwayNumber && n.beforeAfter == BeforeAfter.Before)
+      np6.nonEmpty should be(true)
 
       //testing reverse
       /*
@@ -3283,6 +3289,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == roadLink1.roadwayNumber && node.beforeAfter == BeforeAfter.Before && node.addrM == roadLink1.endAddrMValue) should be(true)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == terminatedRoadLink.roadwayNumber) should be(false)
       nodePointsAfterExpiration.exists(node => node.roadwayNumber == terminatedRoadLink.roadwayNumber) should be(false)
+
+      // TODO Check calculated node points
     }
   }
 
@@ -3296,6 +3304,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and road type
     * then all of those node points and the node itself should expire.
     */
+  // TODO Add here calculated node point and check that it is also expired
   test("Test expireObsoleteNodesAndJunctions case When road is extended after the existing road") {
     runWithRollback {
       val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
@@ -3389,6 +3398,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     * * If the remaining node points referenced by this nodeId are all present in the same road number, road part, track and road type
     * then all of those node points and the node itself should expire.
     */
+  // TODO Add here calculated node point and check that it is also expired
   test("Test expireObsoleteNodesAndJunctions case When road is extended before the existing road") {
     runWithRollback {
       val roadGeom1 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
@@ -3678,4 +3688,63 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
   // </editor-fold>
+
+  test("Test calculateNodePointsForNode When node not found Then throw Exception") {
+    runWithRollback {
+      intercept[Exception] { nodesAndJunctionsService.calculateNodePointsForNode(-1,"TestUser", -1) }
+    }
+  }
+
+  test("Test calculateNodePointsForNode When node is empty Then do nothing") {
+    runWithRollback {
+      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
+      nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser" , -1).size should be(0)
+      nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber)).size should be(0)
+    }
+  }
+
+  test("Test calculateNodePointsForNode When all the road parts of node already contain 'road node points' Then do nothing") {
+    runWithRollback {
+      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
+      val roadway1 = testRoadway1 // Road 990 / 1
+      val roadway2 = testRoadway2 // Road 990 / 2
+      roadwayDAO.create(Seq(roadway1, roadway2))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1)
+      val roadwayPointId2 = roadwayPointDAO.create(testRoadwayPoint2)
+      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId1)))
+      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId2)))
+
+      val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
+      nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser", -1).size should be(0)
+      val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
+      before.map(_.id).toSet should be(after.map(_.id).toSet)
+    }
+  }
+
+  test("Test calculateNodePointsForNode When one track road part doesn't contain 'road node point' Then calculate " +
+    "node point") {
+
+    /*Nodepoint addr_m =  Node_pont.id=roadway_point.id
+      Junction_point addr_m = junctioin_point.id=roadway_point.id
+     */
+    runWithRollback {
+      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
+      val roadway1 = testRoadway1 // Road 990 / 1
+      val roadway2 = testRoadway2 // Road 990 / 2
+      roadwayDAO.create(Seq(roadway1, roadway2))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1)
+      val roadwayPointId2 = roadwayPointDAO.create(testRoadwayPoint2)
+      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId1)))
+      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId2)))
+
+      // TODO
+    }
+  }
+
+  test("Test calculateNodePointsForNode When two track road part has junction points on both tracks and no 'road node points' Then calculate node point") {
+    runWithRollback {
+      // TODO
+    }
+  }
+
 }
