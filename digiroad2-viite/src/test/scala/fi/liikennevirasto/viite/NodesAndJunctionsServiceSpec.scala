@@ -3691,14 +3691,14 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
   test("Test calculateNodePointsForNode When node not found Then throw Exception") {
     runWithRollback {
-      intercept[Exception] { nodesAndJunctionsService.calculateNodePointsForNode(-1) }
+      intercept[Exception] { nodesAndJunctionsService.calculateNodePointsForNode(-1,"TestUser", -1) }
     }
   }
 
   test("Test calculateNodePointsForNode When node is empty Then do nothing") {
     runWithRollback {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
-      nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber).size should be(0)
+      nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser" , -1).size should be(0)
       nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber)).size should be(0)
     }
   }
@@ -3715,14 +3715,28 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId2)))
 
       val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
-      nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber).size should be(0)
+      nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser", -1).size should be(0)
       val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
       before.map(_.id).toSet should be(after.map(_.id).toSet)
     }
   }
 
-  test("Test calculateNodePointsForNode When one track road part doesn't contain 'road node point' Then calculate node point") {
+  test("Test calculateNodePointsForNode When one track road part doesn't contain 'road node point' Then calculate " +
+    "node point") {
+
+    /*Nodepoint addr_m =  Node_pont.id=roadway_point.id
+      Junction_point addr_m = junctioin_point.id=roadway_point.id
+     */
     runWithRollback {
+      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
+      val roadway1 = testRoadway1 // Road 990 / 1
+      val roadway2 = testRoadway2 // Road 990 / 2
+      roadwayDAO.create(Seq(roadway1, roadway2))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1)
+      val roadwayPointId2 = roadwayPointDAO.create(testRoadwayPoint2)
+      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId1)))
+      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId2)))
+
       // TODO
     }
   }

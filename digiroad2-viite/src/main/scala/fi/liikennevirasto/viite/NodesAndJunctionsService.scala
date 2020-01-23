@@ -885,11 +885,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     *
     * @param nodeNumber
     */
-  def calculateNodePointsForNode(nodeNumber: Long) : Seq[NodePoint] = {
+  def calculateNodePointsForNode(id: Long, username: String, nodeNumber: Long) : Seq[NodePoint] = {
     withDynSession {
-      val node = nodeDAO.fetchByNodeNumber(nodeNumber)
-      if (node.isEmpty) throw new Exception(s"Node ${nodeNumber} not found.")
       /*
+
         1. Veli-Matin ajatus oli,että aina kun solmulle tulee muutoksia, niin sen kaikki laskennalliset solmukohdat
         lasketaan aina uudestaan. Ei edes yritä tunnistaa, mikä laskennallinen solmukohta on päivitystarpeessa,
         vaan kaikki lasketaan uudestaan.
@@ -899,7 +898,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       /*
         2. TODO algoritmin mukainen node_point generointi
      */
-      Seq()
     }
+    Seq()
   }
+  def insertCalculatedRoadwayPoints(roadway_number: Long, addrMValue: Long, username: String): Long ={
+    roadwayPointDAO.create( roadway_number, addrMValue ,username)
+  }
+  def insertCalculatedNodePoints(roadway_point_id : Long, before_after: Long, nodeNumber: Long) : Unit = {
+    nodePointDAO.insertCalculatedNodePoints(roadway_point_id, before_after, Option(nodeNumber))
+  }
+
 }
