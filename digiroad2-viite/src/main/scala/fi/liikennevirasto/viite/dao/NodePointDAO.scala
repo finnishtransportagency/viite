@@ -353,6 +353,7 @@ class NodePointDAO extends BaseDAO {
   def updateRoadwayPointId(nodePointId: Any, roadwayPointId: Long) = {
     Q.updateNA(s"UPDATE NODE_POINT SET ROADWAY_POINT_ID = $roadwayPointId WHERE ID = $nodePointId").execute
   }
+  
   def fetchCalculatedNodePoints(ids: Iterable[Long]) : Seq[NodePoint] = {
     val query =
       s"""
