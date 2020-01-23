@@ -341,6 +341,7 @@ class NodePointDAO extends BaseDAO {
     else
       Q.updateNA(query).first
   }
+  
   def expireByNodeNumberAndType(node_number: Long, typeId: Long): Unit = {
     val query =
       s"""
