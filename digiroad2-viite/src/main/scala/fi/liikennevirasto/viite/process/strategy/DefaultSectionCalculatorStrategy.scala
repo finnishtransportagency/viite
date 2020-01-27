@@ -191,8 +191,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       (rightStartPoint, rightStartPoint)
     else {
       // Get left track non-connected points and find the closest to right track starting point
-      val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
-      val rightLinks = newLinks.filter(_.track == Track.RightSide) ++ oldLinks.filter(_.track == Track.RightSide)
+      val (leftLinks, rightLinks) =  (newLinks ++ oldLinks).filterNot(_.track == Track.Combined).partition(_.track == Track.LeftSide)
       val chainEndPoints = TrackSectionOrder.findChainEndpoints(leftLinks)
 
       if (chainEndPoints.isEmpty)
