@@ -403,7 +403,7 @@ class NodePointDAO extends BaseDAO {
         RoadPartInfo(road_number, roadway_number, road_part_number, before_after, roadway_point_id, addr_m )
     }
   }
-  def fetchNodePointsCountForRoadAndRoadPart(roadway_number: Long, road_part_number: Long) : Option[Long] = {
+  def fetchNodePointsCountForRoadAndRoadPart(roadway_number: Long, road_part_number: Long, beforeAfter: Long) : Option[Long] = {
     val query =
       s"""
           SELECT count(NP.ID)
@@ -413,12 +413,14 @@ class NodePointDAO extends BaseDAO {
           AND R.END_DATE IS NULL AND R.VALID_TO IS NULL
           AND RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
           AND NP.ROADWAY_POINT_ID = RP.ID
+          AND NP.BEFORE_AFTER != $beforeAfter
           AND NP.VALID_TO IS NULL
+          AND NP.TYPE=1
           ORDER BY R.ROAD_PART_NUMBER
        """
     Q.queryNA[(Long)](query).firstOption
   }
-  def fetchAverageAddrM(roadway_number: Long, road_part_number: Long) : Option[Long] = {
+  def fetchAverageAddrM(roadway_number: Long, road_part_number: Long) : Long = {
     val query =
       s"""
           SELECT AVG(RP.ADDR_M)
@@ -430,10 +432,10 @@ class NodePointDAO extends BaseDAO {
           AND JP.ROADWAY_POINT_ID = RP.ID
           ORDER BY R.ROAD_PART_NUMBER
        """
-    Q.queryNA[(Long)](query).firstOption
+    Q.queryNA[(Long)](query).first
   }
 
-  def insertCalculatedNodePoints(roadway_point_id: Long, before_after: Long, nodeNumber: Option[Long]) : Unit ={
+  def insertCalculatedNodePoint(roadway_point_id: Long, before_after: Long, nodeNumber: Option[Long]) : Unit ={
     create(Seq(NodePoint(NewIdValue, BeforeAfter.apply(before_after), roadway_point_id, nodeNumber, CalculatedNodePoint,
       None, None, DateTime.now(), None,
       "-", Some(DateTime.now()), 0L, 11,
