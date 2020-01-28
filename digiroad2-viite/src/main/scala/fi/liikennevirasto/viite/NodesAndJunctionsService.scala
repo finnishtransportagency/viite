@@ -883,9 +883,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   *
   * @param id, username, nodeNumber
     */
-  def calculateNodePointsForNode(id: Long, username: String, nodeNumber: Long) : Seq[NodePoint] = {
+  def calculateNodePointsForNode(id: Long, username: String, nodeNumber: Long) : Option[String] = {
     withDynSession {
-      nodePointDAO.expireByNodeNumberAndType(nodeNumber, NodePointType.CalculatedNodePoint.value)
+      try { nodePointDAO.expireByNodeNumberAndType(nodeNumber, NodePointType.CalculatedNodePoint.value)
       /* - Go through the road parts (road numbers 1-19999 and 40000-69999) of the node one by one
        */
       val roadPartInfos = nodePointDAO.fetchRoadPartsInfoForNode(id)
@@ -932,9 +932,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             }
           }
         }
+
+      }
+      None
+      }
+      catch {
+        case e: Exception => Some(e.getMessage)
       }
     }
-    Seq()
   }
 
   def getCalculatedNodePoints(nodes: Seq[Node]): Seq[NodePoint] = {
@@ -946,7 +951,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def checkRoadwayPointExist(roadway_number: Long, addrMValueAVG: Long ): Seq [RoadwayPoint] ={
-    //roadPartInfo.roadway_number, addrMValueAVG
     roadwayPointDAO.fetchByRoadwayNumberAndAddresses(roadway_number, addrMValueAVG, addrMValueAVG)
   }
 
