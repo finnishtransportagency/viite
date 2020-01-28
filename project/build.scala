@@ -43,7 +43,7 @@ object Digiroad2Build extends Build {
         "org.joda" % "joda-convert" % JodaConvertVersion,
         "joda-time" % "joda-time" % JodaTimeVersion,
         "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
-        "javax.media" % "jai_core" % "1.1.3" from "http://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+        "javax.media" % "jai_core" % "1.1.3" from "http://livibuild04.vally.local/nexus/repository/3rdparty/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
         "org.geotools" % "gt-graph" % "19.0",
         "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
       )
