@@ -1060,18 +1060,4 @@ object RoadAddressFilters {
     (RoadAddressFilters.continuousRoadPart(curr)(next) && RoadAddressFilters.discontinuousTopology(curr)(next)) ||
       (RoadAddressFilters.discontinuousRoadPart(curr)(next) && RoadAddressFilters.continuousTopology(curr)(next))
   }
-
-  def obsoleteJunctions(junctionPoints: Seq[JunctionPoint]): Boolean = {
-    if (junctionPoints.isEmpty)
-      true
-    else
-      junctionPoints.groupBy { junctionPoint =>
-        val roadNumber = junctionPoint.roadNumber
-        if (RoadClass.RampsAndRoundaboutsClass.roads.contains(junctionPoint.roadNumber)) {
-          (roadNumber, junctionPoint.roadPartNumber)
-        } else {
-          roadNumber
-        }
-      }.keys.size == 1
-  }
 }
