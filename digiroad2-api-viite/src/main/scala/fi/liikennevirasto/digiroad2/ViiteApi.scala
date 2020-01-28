@@ -981,7 +981,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           case Some(err) => Map("success" -> false, "errorMessage" -> err)
           case None => Map("success" -> true)
         }
-        nodesAndJunctionsService.calculateNodePointsForNode(id, username, node.nodeNumber)
+        nodesAndJunctionsService.calculateNodePointsForNode(id, username, node.nodeNumber) match {
+          case Some(err) => Map("success" -> false, "errorMessage" -> err)
+          case None => Map("success" -> true)
+        }
       } catch {
         case ex: Exception => {
           logger.error("Request PUT /nodes/:id failed.", ex)
