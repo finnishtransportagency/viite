@@ -833,10 +833,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     def sameRoadAddressIntersection(junctionPointsToCheck: Seq[JunctionPoint]): Boolean = {
 
       def isRoadPartIntersection(curr: JunctionPoint, rest: Seq[JunctionPoint]): Boolean = {
-        val junctionPointsInSameAddrAndPart = rest.filter(jp => curr.roadNumber == jp.roadNumber && curr.addrM == jp.addrM)
+        val junctionPointsInSameAddrAndPart = rest.filter(jp => curr.roadNumber == jp.roadNumber && curr.roadPartNumber == jp.roadPartNumber && curr.addrM == jp.addrM)
         val (before, after) = (junctionPointsInSameAddrAndPart :+ curr).partition(_.beforeAfter == Before)
-        (before.size > 1 && after.nonEmpty && !twoTrackToCombined(before, after)) || (before.nonEmpty && after.size > 1 && !combinedToTwoTrack(before, after)) ||
-          rest.map(_.addrM).exists(addr => addr != curr.addrM)
+        val junctionPointsInSamePart = rest.filter(jp => curr.roadNumber == jp.roadNumber && curr.roadPartNumber == jp.roadPartNumber)
+        val combinedIntersection = junctionPointsInSamePart.map(_.addrM).exists(addr => addr != curr.addrM)
+        (before.size > 1 && after.nonEmpty && !twoTrackToCombined(before, after)) || (before.nonEmpty && after.size > 1 && !combinedToTwoTrack(before, after)) || combinedIntersection
       }
 
       def twoTrackToCombined(before: Seq[JunctionPoint], after: Seq[JunctionPoint]): Boolean = {
@@ -846,11 +847,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       def combinedToTwoTrack(before: Seq[JunctionPoint], after: Seq[JunctionPoint]): Boolean = {
         before.forall(_.track == Track.Combined) && after.forall(_.track != Track.Combined)
       }
-
-//      def sameAddress(before: Seq[JunctionPoint], after: Seq[JunctionPoint]): Boolean = {
-//
-////        before.forall(_.track == Track.Combined) && after.forall(_.track != Track.Combined)
-//      }
 
       junctionPointsToCheck.exists { jpc =>
         isRoadPartIntersection(jpc, junctionPointsToCheck.filter(_.id != jpc.id))
