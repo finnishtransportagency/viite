@@ -5,9 +5,6 @@
     var openNode = function (node) {
       clean();
       setCurrentNode(node);
-      current.node.junctionsToDetach = [];
-      current.node.junctionsToUpdate = [];
-      current.node.nodePointsToDetach = [];
       eventbus.trigger('node:selected', node);
     };
 
@@ -51,8 +48,20 @@
       };
     };
 
-    var setInitialCoordinates = function (coordinates) {
-      current.node.initialCoordinates = coordinates;
+    var getJunctions = function () {
+      return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).junctions;
+    };
+
+    var getNodePoints = function () {
+      return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).nodePoints;
+    };
+
+    var getStartingCoordinates = function () {
+      return current.node.startingCoordinates;
+    };
+
+    var setStartingCoordinates = function (coordinates) {
+      current.node.startingCoordinates = coordinates;
     };
 
     var setCoordinates = function (coordinates) {
@@ -66,34 +75,31 @@
 
     var setNodeType = function (type) {
       current.node.type = type;
-      // if (!current.node.typeChanged) { current.node.oldType = current.node.type; }
-      // current.node.type = type;
-      // current.node.typeChanged = current.node.oldType !== type;
-      // eventbus.trigger('change:type', current.node);
-      // if (!current.node.typeChanged) { eventbus.trigger('reset:startDate', current.node.oldStartDate || current.node.startDate); }
-      // setDirty(true);
-    };
-
-    var typeHasChanged = function () {
-      return current.node.typeChanged;
+      eventbus.trigger('change:type', current.node);
     };
 
     var setStartDate = function (startDate) {
-      if (!current.node.startDateChanged) { current.node.oldStartDate = current.node.startDate; }
+      // if (!current.node.startDateChanged) { current.node.oldStartDate = current.node.startDate; }
       current.node.startDate = startDate;
-      current.node.startDateChanged = current.node.oldStartDate !== startDate;
+      // current.node.startDateChanged = current.node.oldStartDate !== startDate;
+    };
+
+    var typeHasChanged = function (nodeType) {
+      return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).type !== nodeType;
+    };
+
+    var getInitialStartDate = function () {
+      return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).startDate;
     };
 
     var detachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
-        current.node.junctionsToDetach.push(junction);
         _.remove(current.node.junctions, function (j) {
           return j.id === junction.id;
         });
         eventbus.trigger('junction:detach', junction);
       }
       _.each(nodePoints, function (nodePoint) {
-        current.node.nodePointsToDetach.push(nodePoint);
         _.remove(current.node.nodePoints, function (np) {
           return np.id === nodePoint.id;
         });
@@ -104,23 +110,57 @@
     var attachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
         current.node.junctions.push(junction);
-        _.remove(current.node.junctionsToDetach, function (j) {
-          return j.id === junction.id;
-        });
         eventbus.trigger('junction:attach', junction);
       }
       _.each(nodePoints, function (nodePoint) {
         current.node.nodePoints.push(nodePoint);
-        _.remove(current.node.nodePointsToDetach, function (np) {
-          return np.id === nodePoint.id;
-        });
         eventbus.trigger('nodePoint:attach', nodePoint);
       });
     };
 
     var isDirty = function () {
       var original = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber);
-      return !_.isEqual(current.node, original);
+      var nodePointsEquality = false;
+      var junctionsEquality = false;
+      var junctionPointsEquality = false;
+      //comparing nodes without junctions or nodePoints
+      var nodesEquality = isEqualWithout(original, current.node, ['junctions', 'nodePoints']);
+      //comparing the nodePoints of both nodes
+      if (original.nodePoints.length === current.node.nodePoints.length && original.nodePoints.length !== 0){
+        nodePointsEquality = !_.some(_.flatMap(_.zip(original.nodePoints, current.node.nodePoints), _.spread(function(originalNodePoint, currentNodePoint) {
+          return {equality: isEqualWithout(originalNodePoint, currentNodePoint, 'coordinates')};
+        })), ['equality', false]);
+      }
+      //comparing the junctions of both nodes
+      if (original.junctions.length === current.node.junctions.length && original.junctions.length !== 0) {
+        junctionsEquality = !_.some(_.flatMap(_.zip(original.junctions, current.node.junctions), _.spread(function (originalJunction, currentJunction) {
+          // return isEqualWithout(originalJunction, currentJunction, 'junctionPoints');
+          return {equality: isEqualWithout(originalJunction, currentJunction, 'junctionPoints')};
+        })), ['equality', false]);
+
+        //comparing the junctionPoints of all junctions in both nodes
+        junctionPointsEquality = !_.some(_.flatMap(_.zip(original.junctions, current.node.junctions), _.spread(function(originalJunction, currentJunction) {
+          if (originalJunction.junctionPoints.length === currentJunction.junctionPoints.length && originalJunction.junctionPoints.length !== 0) {
+            return _.flatMap(_.zip(originalJunction.junctionPoints, currentJunction.junctionPoints), _.spread(function (originalJunctionPoint, currentJunctionPoint) {
+              // return isEqualWithout(originalJunctionPoint, currentJunctionPoint, 'coordinates');
+              return {equality: isEqualWithout(originalJunctionPoint, currentJunctionPoint, 'coordinates')};
+            }));
+          } else return false;
+        })), ['equality', false]);
+      }
+      //true equality implemented
+      return !(nodesEquality && nodePointsEquality && junctionsEquality && junctionPointsEquality);
+    };
+
+    var searchForFalseValue = function (value) {
+      return value === false;
+    };
+
+    var isEqualWithout = function (original, current, toIgnore) {
+      return _.isEqual(
+          _.omit(original, toIgnore),
+          _.omit(current, toIgnore)
+      );
     };
 
     var clean = function () {
@@ -185,11 +225,15 @@
       openTemplates: openTemplates,
       getCurrentNode: getCurrentNode,
       getCurrentTemplates: getCurrentTemplates,
-      setInitialCoordinates: setInitialCoordinates,
+      getJunctions: getJunctions,
+      getNodePoints: getNodePoints,
+      getStartingCoordinates: getStartingCoordinates,
+      setStartingCoordinates: setStartingCoordinates,
       setCoordinates: setCoordinates,
       setNodeName: setNodeName,
       setNodeType: setNodeType,
       typeHasChanged: typeHasChanged,
+      getInitialStartDate: getInitialStartDate,
       setStartDate: setStartDate,
       detachJunctionAndNodePoints: detachJunctionAndNodePoints,
       attachJunctionAndNodePoints: attachJunctionAndNodePoints,
