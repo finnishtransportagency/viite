@@ -1916,6 +1916,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.debug(s"Expiring obsolete nodes and junctions")
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterChanges, Some(project.startDate.minusDays(1)), username = project.createdBy)
       logger.debug(s"Handling road names")
+      handleNewRoadNames(roadwayChanges)
       handleRoadNames(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
       ProjectLinkNameDAO.removeByProject(projectID)
