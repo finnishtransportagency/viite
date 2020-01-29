@@ -462,8 +462,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           }
         } else
           newLinks
-      projectLinkDAO.create(createLinks.map(_.copy(createdBy = Some(user))))
-      recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)), Some(newTrack), Some(discontinuity))
+      val newLinkIds = projectLinkDAO.create(createLinks.map(_.copy(createdBy = Some(user))))
+      recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)), Some(newTrack), Some(discontinuity), newLinkIds)
       newLinks.flatMap(_.roadName).headOption.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
     } catch {
       case ex: ProjectValidationException => Some(ex.getMessage)
@@ -1404,7 +1404,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[(Long, Long)] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None): Unit = {
+  private def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[(Long, Long)] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None, completelyNewLinkIds: Seq[Long] = Seq()): Unit = {
 
     def setReversedFlag(adjustedLink: ProjectLink, before: Option[ProjectLink]): ProjectLink = {
       before.map(_.sideCode) match {
@@ -1426,10 +1426,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1._1, grp._1._2)
           val calculatedLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map(rpl =>
             setReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadwayId != 0L))
-          )
+          ).sortBy(_.endAddrMValue)
           if (newDiscontinuity.isDefined && newTrack.isDefined && roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
-            val (filtered, rest) = calculatedLinks.sortBy(_.endAddrMValue).partition(_.track == newTrack.get)
-            rest ++ filtered.init :+ filtered.last.copy(discontinuity = newDiscontinuity.get)
+            if(completelyNewLinkIds.nonEmpty){
+              val (completelyNew, others) = calculatedLinks.partition(cl => completelyNewLinkIds.contains(cl.id))
+              others ++ completelyNew.init :+ completelyNew.last.copy(discontinuity = newDiscontinuity.get)
+            } else {
+              val (filtered, rest) = calculatedLinks.partition(_.track == newTrack.get)
+              rest ++ filtered.init :+ filtered.last.copy(discontinuity = newDiscontinuity.get)
+            }
           }
           else
             calculatedLinks
