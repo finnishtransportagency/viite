@@ -885,58 +885,58 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     */
   def calculateNodePointsForNode(id: Long, username: String, nodeNumber: Long) : Option[String] = {
     withDynSession {
-      try { nodePointDAO.expireByNodeNumberAndType(nodeNumber, NodePointType.CalculatedNodePoint.value)
-      /* - Go through the road parts (road numbers 1-19999 and 40000-69999) of the node one by one
-       */
-      val roadPartInfos = nodePointDAO.fetchRoadPartsInfoForNode(id)
-      if (roadPartInfos.nonEmpty) {
-        roadPartInfos.foreach { roadPartInfo =>
-          val countNodePointsForRoadAndRoadPart = nodePointDAO.fetchNodePointsCountForRoadAndRoadPart(roadPartInfo.roadway_number, roadPartInfo.road_part_number, roadPartInfo.before_after)
-          logger.info("Count node points for roadPartInfo.roadway_number,  " + roadPartInfo.roadway_number + ", road_part"
-            + roadPartInfo.road_part_number + ", count=" + countNodePointsForRoadAndRoadPart)
-          /*
-             If the road part doesn't have any "road node points", calculate node point by taking the average of the
-             addresses of all junction points on both tracks and add this "calculated node point" on track 0 or 1
-           */
-          if (countNodePointsForRoadAndRoadPart.get == 0) {
-            val addrMValueAVG = nodePointDAO.fetchAverageAddrM(roadPartInfo.roadway_number, roadPartInfo.road_part_number)
-            logger.info("average addr_m for roadPartInfo.roadway_number= " + roadPartInfo.roadway_number + ", addrMValueAVG= " + addrMValueAVG)
-            logger.info("roadPartInfo.equals(addrMValueAVG) " + roadPartInfo.addr_m.equals(addrMValueAVG) )
-            if ( ! roadPartInfo.addr_m.equals(addrMValueAVG)) {
-              logger.info("roadPartInfo.addr_m != addrMValueAVG," + roadPartInfo.addr_m + ", " + addrMValueAVG)
-              val roadWayPointExists = checkRoadwayPointExist(roadPartInfo.roadway_number, addrMValueAVG)
-              if ( roadWayPointExists.nonEmpty) {
-                roadWayPointExists.map( rwp =>{
-                  insertCalculatedNodePoint(rwp.id, BeforeAfter.Before.value, nodeNumber)
-                  insertCalculatedNodePoint(rwp.id, BeforeAfter.After.value, nodeNumber)
-                  logger.info("roadWayPointExists ")
-                  logger.info("insertCalculatedNodePoint, roadway_point_id= " + rwp.id+ ", before_after= "
-                    + BeforeAfter.Before.value + ", nodeNumber= " + nodeNumber)
-                  logger.info("insertCalculatedNodePoint, roadway_point_id= " + rwp.id+ ", before_after= "
-                    + BeforeAfter.After.value + ", nodeNumber= " + nodeNumber)
-                } )
+      try {
+        nodePointDAO.expireByNodeNumberAndType(nodeNumber, NodePointType.CalculatedNodePoint.value)
+        /* - Go through the road parts (road numbers 1-19999 and 40000-69999) of the node one by one
+         */
+        val roadPartInfos = nodePointDAO.fetchRoadPartsInfoForNode(id)
+        if (roadPartInfos.nonEmpty) {
+          roadPartInfos.foreach { roadPartInfo =>
+            val countNodePointsForRoadAndRoadPart = nodePointDAO.fetchNodePointsCountForRoadAndRoadPart(roadPartInfo.roadway_number, roadPartInfo.road_part_number, roadPartInfo.before_after)
+            logger.info("Count node points for roadPartInfo.roadway_number,  " + roadPartInfo.roadway_number + ", road_part"
+              + roadPartInfo.road_part_number + ", count=" + countNodePointsForRoadAndRoadPart)
+            /*
+               If the road part doesn't have any "road node points", calculate node point by taking the average of the
+               addresses of all junction points on both tracks and add this "calculated node point" on track 0 or 1
+             */
+            if (countNodePointsForRoadAndRoadPart.get == 0) {
+              val addrMValueAVG = nodePointDAO.fetchAverageAddrM(roadPartInfo.roadway_number, roadPartInfo.road_part_number)
+              logger.info("average addr_m for roadPartInfo.roadway_number= " + roadPartInfo.roadway_number + ", addrMValueAVG= " + addrMValueAVG)
+              logger.info("roadPartInfo.equals(addrMValueAVG) " + roadPartInfo.addr_m.equals(addrMValueAVG) )
+              if ( ! roadPartInfo.addr_m.equals(addrMValueAVG)) {
+                logger.info("roadPartInfo.addr_m != addrMValueAVG," + roadPartInfo.addr_m + ", " + addrMValueAVG)
+                val roadWayPointExists = checkRoadwayPointExist(roadPartInfo.roadway_number, addrMValueAVG)
+                if ( roadWayPointExists.nonEmpty) {
+                  roadWayPointExists.map( rwp =>{
+                    insertCalculatedNodePoint(rwp.id, BeforeAfter.Before.value, nodeNumber)
+                    insertCalculatedNodePoint(rwp.id, BeforeAfter.After.value, nodeNumber)
+                    logger.info("roadWayPointExists ")
+                    logger.info("insertCalculatedNodePoint, roadway_point_id= " + rwp.id+ ", before_after= "
+                      + BeforeAfter.Before.value + ", nodeNumber= " + nodeNumber)
+                    logger.info("insertCalculatedNodePoint, roadway_point_id= " + rwp.id+ ", before_after= "
+                      + BeforeAfter.After.value + ", nodeNumber= " + nodeNumber)
+                   }
+                  )
+                } else {
+                  val roadway_point_id_New = insertCalculatedRoadwayPoints(roadPartInfo.roadway_number, addrMValueAVG, username)
+                  insertCalculatedNodePoint(roadway_point_id_New, BeforeAfter.Before.value, nodeNumber)
+                  insertCalculatedNodePoint(roadway_point_id_New, BeforeAfter.After.value, nodeNumber)
+                  logger.info("insertCalculatedRoadwayPoint,  " + roadPartInfo.roadway_number + ", addr_m= "
+                    + addrMValueAVG + ", username= " + username)
+                  logger.info("insertCalculatedNodePoint, roadway_point_id= " + roadway_point_id_New + ", before_after= "
+                    + roadPartInfo.before_after + ", nodeNumber= " + nodeNumber)
+                }
+
+
               } else {
-                val roadway_point_id_New = insertCalculatedRoadwayPoints(roadPartInfo.roadway_number, addrMValueAVG, username)
-                insertCalculatedNodePoint(roadway_point_id_New, BeforeAfter.Before.value, nodeNumber)
-                insertCalculatedNodePoint(roadway_point_id_New, BeforeAfter.After.value, nodeNumber)
-                logger.info("insertCalculatedRoadwayPoint,  " + roadPartInfo.roadway_number + ", addr_m= "
-                  + addrMValueAVG + ", username= " + username)
-                logger.info("insertCalculatedNodePoint, roadway_point_id= " + roadway_point_id_New + ", before_after= "
-                  + roadPartInfo.before_after + ", nodeNumber= " + nodeNumber)
+                insertCalculatedNodePoint(roadPartInfo.roadway_point_id, BeforeAfter.Before.value, nodeNumber)
+                insertCalculatedNodePoint(roadPartInfo.roadway_point_id, BeforeAfter.After.value, nodeNumber)
               }
-
-
-            } else {
-              insertCalculatedNodePoint(roadPartInfo.roadway_point_id, BeforeAfter.Before.value, nodeNumber)
-              insertCalculatedNodePoint(roadPartInfo.roadway_point_id, BeforeAfter.After.value, nodeNumber)
             }
           }
         }
-
-      }
-      None
-      }
-      catch {
+        None
+      }  catch {
         case e: Exception => Some(e.getMessage)
       }
     }
