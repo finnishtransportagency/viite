@@ -461,9 +461,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               firstLinkId, existingLinks)
           }
         } else
-          newLinks
+          newLinks.init :+ newLinks.last.copy(discontinuity = discontinuity)
       projectLinkDAO.create(createLinks.map(_.copy(createdBy = Some(user))))
-      recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)), Some(newTrack), Some(discontinuity))
+      recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)), Some(newTrack), None)
       newLinks.flatMap(_.roadName).headOption.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
     } catch {
       case ex: ProjectValidationException => Some(ex.getMessage)
