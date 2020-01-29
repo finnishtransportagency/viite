@@ -76,6 +76,7 @@
           if (results.length >= 1) {
             var result = results[0];
             eventbus.trigger('template:clicked', {lon: result.lon, lat: result.lat, zoom: 12});
+            // TODO 2220 open node form with templates from link!
             // backend.getNodesAndJunctions({boundingBox: [result.lon, result.lat, result.lon, result.lat].join(","), zoom: zoomlevels.minZoomForJunctions}, function(fetchedNodesAndJunctions) {
             //   if (_.has(fetchedNodesAndJunctions, 'nodePointTemplates') || _.has(fetchedNodesAndJunctions, 'junctionTemplates')) {
             //     var referencePoint = { x: parseFloat(result.lon).toFixed(3), y: parseFloat(result.lat).toFixed(3) };
@@ -119,9 +120,7 @@
         if (!_.isUndefined(node.id)) {
           dataJson = _.merge(dataJson, {
             id: node.id,
-            nodeNumber: node.nodeNumber,
-            junctionsToDetach: node.junctionsToDetach,
-            nodePointsToDetach: node.nodePointsToDetach
+            nodeNumber: node.nodeNumber
           });
           backend.saveNodeInfo(dataJson, function (result) {
             if (result.success) {

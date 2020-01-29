@@ -434,12 +434,12 @@
           junctionsTable.toMessage([junction]);
       };
 
-      var junctionAndNodePointsByJunctionPointsCoordinates = function (node, junctionId) {
-        var junction = _.find(_.concat(node.junctions, node.junctionsToDetach), function (junction) {
+      var junctionAndNodePointsByJunctionPointsCoordinates = function (junctionId) {
+        var junction = _.find(selectedNodesAndJunctions.getJunctions(), function (junction) {
           return junction.id === junctionId;
         });
 
-        var nodePoints = _.filter(_.concat(node.nodePoints, node.nodePointsToDetach), function (nodePoint) {
+        var nodePoints = _.filter(selectedNodesAndJunctions.getNodePoints(), function (nodePoint) {
           var junctionPointsCoordinates = _.map(junction.junctionPoints, function (junctionPoint) {
             return junctionPoint.coordinates;
           });
@@ -455,20 +455,18 @@
         };
       };
 
-      var junctionAndNodePointsByNodePointCoordinates = function (node, nodePointId) {
-        var nodePoint = _.find(_.concat(node.nodePoints, node.nodePointsToDetach), function (nodePoint) {
+      var junctionAndNodePointsByNodePointCoordinates = function (nodePointId) {
+        var nodePoint = _.find(selectedNodesAndJunctions.getNodePoints(), function (nodePoint) {
           return nodePoint.id === nodePointId;
         });
 
-        var junction = _.find(_.concat(node.junctions, node.junctionsToDetach), function (junction) {
-          var junctionPointsCoordinates = _.map(junction.junctionPoints, function (junctionPoint) {
-            return {x: junctionPoint.x, y: junctionPoint.y};
-          });
+        var junction = _.find(selectedNodesAndJunctions.getJunctions(), function (junction) {
+          var junctionPointsCoordinates = _.map(junction.junctionPoints, 'coordinates');
 
-          return !_.isEmpty(_.intersectionWith(junctionPointsCoordinates, [{x: nodePoint.x, y: nodePoint.y}], _.isEqual));
+          return !_.isEmpty(_.intersectionWith(junctionPointsCoordinates, [{x: nodePoint.coordinates.x, y: nodePoint.coordinates.y}], _.isEqual));
         });
 
-        if (!_.isUndefined(junction)) { return junctionAndNodePointsByJunctionPointsCoordinates(node, junction.id); }
+        if (!_.isUndefined(junction)) { return junctionAndNodePointsByJunctionPointsCoordinates(junction.id); }
         else if (nodePoint.type === LinkValues.NodePointType.RoadNodePoint.value || nodePoint.type === LinkValues.NodePointType.UnknownNodePointType.value) {
           return {
             nodePoints: [nodePoint]
@@ -488,7 +486,7 @@
       rootElement.on('change', '[id^="detach-node-point-"]', function () {
         var checkbox = this;
         var nodePointId = parseInt(checkbox.value);
-        var match = junctionAndNodePointsByNodePointCoordinates(selectedNodesAndJunctions.getCurrentNode(), nodePointId);
+        var match = junctionAndNodePointsByNodePointCoordinates(nodePointId);
         var junction = match.junction;
         var nodePoints = match.nodePoints;
         if (checkbox.checked) {
@@ -503,8 +501,8 @@
               }
             });
           } else {
-            selectedNodesAndJunctions.detachJunctionAndNodePoints(null, nodePoints);
-            markJunctionAndNodePoints(null, nodePoints, true);
+            selectedNodesAndJunctions.detachJunctionAndNodePoints(undefined, nodePoints);
+            markJunctionAndNodePoints(undefined, nodePoints, true);
           }
         } else {
           new GenericConfirmPopup('Haluatko peruuttaa solmukohtien ja liittymän irrotuksen solmusta ?', {
@@ -522,7 +520,7 @@
       rootElement.on('change', '[id^="detach-junction-"]', function () {
         var checkbox = this;
         var junctionId = parseInt(checkbox.value);
-        var match = junctionAndNodePointsByJunctionPointsCoordinates(selectedNodesAndJunctions.getCurrentNode(), junctionId);
+        var match = junctionAndNodePointsByJunctionPointsCoordinates(junctionId);
         var junction = match.junction;
         var nodePoints = match.nodePoints;
         if (checkbox.checked) {
@@ -537,8 +535,8 @@
               }
             });
           } else {
-            selectedNodesAndJunctions.detachJunctionAndNodePoints(junction);
-            markJunctionAndNodePoints(junction, null, true);
+            selectedNodesAndJunctions.detachJunctionAndNodePoints(junction, undefined);
+            markJunctionAndNodePoints(junction, undefined, true);
           }
         } else {
           new GenericConfirmPopup('Haluatko peruuttaa solmukohtien ja liittymän irrotuksen solmusta ?', {
@@ -556,16 +554,19 @@
       rootElement.on('click', '#editNodeJunctions', function () {
         _.forEach(selectedNodesAndJunctions.getCurrentNode().junctions, function(junction) {
           var element = $('#junction-number-textbox-' + junction.id);
-          //verify editing mode (on/off) by the current element being presented. On(#junction-number-textbox)/Off(#junction-number-icon)
+          //  verify editing mode (on/off) by the current element being presented. On(#junction-number-textbox)/Off(#junction-number-icon)
           if(_.isEmpty(element)){
-            //repaint junction icons to junction text boxes.
+            //  repaint junction icons to junction text boxes.
             $('#junction-number-icon-' + junction.id).replaceWith(formCommon.nodeInputNumber('junction-number-textbox-' + junction.id, 2, junction.junctionNumber, 'width:20px;'));
           } else {
-            //replace junction.junctionNumber
+            //  replace junction.junctionNumber
             junction.junctionNumber = _.isEmpty(element.val()) ? 0 : parseInt(element.val());
-            //repaint junction text boxes to junction icons
+            //  update junction number on the map
+            eventbus.trigger('junction:mapNumberUpdate', junction);
+            //  repaint junction text boxes to junction icons
             element.replaceWith(junctionsTable.junctionIcon(junction));
           }
+          eventbus.trigger('change:editNodeJunctions');
         });
       });
 
@@ -576,6 +577,7 @@
       });
 
       rootElement.on('click', '.btn-edit-node-cancel', function () {
+        // TODO PERUUTA! 2221
         selectedNodesAndJunctions.revertFormChanges();
         closeNode();
       });
@@ -614,7 +616,7 @@
           junctionsElement.html(junctionsTable.toHtmlTable(_.sortBy(currentNode.junctions, 'junctionNumber')));
 
           eventbus.on('node:setCoordinates', function (coordinates) {
-            $("#node-coordinates").text(coordinates[1] + ', ' + coordinates[0]);
+            $("#node-coordinates").text(coordinates.x + ', ' + coordinates.y);
           });
 
           eventbus.on('change:nodeName', function (nodeName) {
@@ -622,11 +624,15 @@
           });
 
           eventbus.on('change:nodeTypeDropdown', function (nodeType) {
+            var typeHasChanged = selectedNodesAndJunctions.typeHasChanged(parseInt(nodeType));
             selectedNodesAndJunctions.setNodeType(parseInt(nodeType));
-            disabledDatePicker(!selectedNodesAndJunctions.typeHasChanged());
+            //  revert date picker to it's original value when node type is changed back
+            if(!typeHasChanged) { $("#nodeStartDate").val(selectedNodesAndJunctions.getInitialStartDate()); }
+            disabledDatePicker(!typeHasChanged);
           });
 
-          eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:detach nodePoint:detach', function () {
+          eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate ' +
+                      'junction:detach nodePoint:detach junction:attach nodePoint:attach change:editNodeJunctions', function () {
             nodeChangeHandler();
           });
         }
