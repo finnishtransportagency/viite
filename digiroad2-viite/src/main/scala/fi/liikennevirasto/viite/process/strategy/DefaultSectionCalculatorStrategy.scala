@@ -268,7 +268,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     // Pick the one with calibration point set to zero: or any old link with lowest address: or new links by direction
     calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse(
       oldLinks.filter(_.status == LinkStatus.UnChanged).sortBy(_.startAddrMValue).headOption.map(pl => (pl.startingPoint, pl)).getOrElse {
-        oldLinks.find(pl => pl.status == LinkStatus.NotHandled && pl.startAddrMValue == 0).map(pl => (pl.startingPoint, pl)).getOrElse {
           val remainLinks = oldLinks ++ newLinks
           if (remainLinks.isEmpty)
             throw new InvalidAddressDataException("Missing right track starting project links")
@@ -288,7 +287,16 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           val endPointsWithValues = ListMap(chainEndPoints.filter(link => link._2.startAddrMValue >= 0 && link._2.endAddrMValue != 0).toSeq
             .sortWith(_._2.startAddrMValue < _._2.startAddrMValue): _*)
 
-          val oldFirst = TrackSectionOrder.findOnceConnectedLinks(remainLinks).values.find(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
+          val foundConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks).values.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
+          //In case there is some old starting link, we want to prioritize the one that didnt change or was not treated yet.
+          // We could have more than two starting link since one of them can be Transferred from any part to this one.
+          val oldFirst: Option[ProjectLink] =
+          if(foundConnectedLinks.nonEmpty){
+            foundConnectedLinks.find(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.NotHandled)
+              .orElse(foundConnectedLinks.find(_.status == LinkStatus.Transfer))
+          } else {
+            None
+          }
           if (endPointsWithValues.size == 1) {
             val endLinkWithValues = endPointsWithValues.head._2
             val otherEndPoint = chainEndPoints.filterNot(_._2.id == endPointsWithValues.head._2.id)
@@ -336,7 +344,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               } else {
                 chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
               }
-            }
           }
         }
       }
