@@ -701,12 +701,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rightGeom4 = Seq(Point(5.0, 40.0), Point(5.0, 35.0))
 
       val leftLink1 = dummyProjectLink(road, part, Track.LeftSide, Discontinuity.Continuous, 0, 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, leftGeom1, rwNumber).copy(id = plId, projectId = projectId, roadwayId = rwId, linearLocationId = llId)
-      val leftLink2 = dummyProjectLink(road, part, Track.LeftSide, Discontinuity.Continuous, 5, 10, Some(DateTime.now()), None, 12346, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, leftGeom2, rwNumber).copy(id = plId + 1, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 1)
-      val leftLink3 = dummyProjectLink(road, part, Track.LeftSide, Discontinuity.EndOfRoad, 10, 20, Some(DateTime.now()), None, 12347, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, leftGeom3, rwNumber).copy(id = plId + 2, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 2)
-      val rightLink1 = dummyProjectLink(road, part, Track.RightSide, Discontinuity.Continuous, 0, 5, Some(DateTime.now()), None, 12348, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, rightGeom1, rwNumber + 1).copy(id = plId + 3, projectId = projectId, roadwayId = rwId + 1, linearLocationId = llId + 3)
-      val rightLink2 = dummyProjectLink(road, part, Track.RightSide, Discontinuity.Discontinuous, 5, 10, Some(DateTime.now()), None, 12349, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, rightGeom2, rwNumber + 1).copy(id = plId + 4, projectId = projectId, roadwayId = rwId + 1, linearLocationId = llId + 4)
-      val rightLink3 = dummyProjectLink(road, part, Track.RightSide, Discontinuity.Continuous, 10, 15, Some(DateTime.now()), None, 12350, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, rightGeom3, rwNumber + 1).copy(id = plId + 5, projectId = projectId, roadwayId = rwId + 1, linearLocationId = llId + 5)
-      val rightLink4 = dummyProjectLink(road, part, Track.RightSide, Discontinuity.EndOfRoad, 15, 20, Some(DateTime.now()), None, 12351, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, rightGeom4, rwNumber + 1).copy(id = plId + 6, projectId = projectId, roadwayId = rwId + 1, linearLocationId = llId + 6)
+      val leftLink2 = dummyProjectLink(road, part, Track.LeftSide, Discontinuity.ParallelLink, 5, 10, Some(DateTime.now()), None, 12346, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, leftGeom2, rwNumber).copy(id = plId + 1, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 1)
+      val leftLink3 = dummyProjectLink(road, part, Track.LeftSide, Discontinuity.EndOfRoad, 10, 20, Some(DateTime.now()), None, 12347, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, leftGeom3, rwNumber + 1).copy(id = plId + 2, projectId = projectId, roadwayId = rwId + 1, linearLocationId = llId + 2)
+      val rightLink1 = dummyProjectLink(road, part, Track.RightSide, Discontinuity.Continuous, 0, 5, Some(DateTime.now()), None, 12348, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, rightGeom1, rwNumber + 2).copy(id = plId + 3, projectId = projectId, roadwayId = rwId + 2, linearLocationId = llId + 3)
+      val rightLink2 = dummyProjectLink(road, part, Track.RightSide, Discontinuity.Discontinuous, 5, 10, Some(DateTime.now()), None, 12349, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, rightGeom2, rwNumber + 2).copy(id = plId + 4, projectId = projectId, roadwayId = rwId + 2, linearLocationId = llId + 4)
+      val rightLink3 = dummyProjectLink(road, part, Track.RightSide, Discontinuity.Continuous, 10, 15, Some(DateTime.now()), None, 12350, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, rightGeom3, rwNumber + 3).copy(id = plId + 5, projectId = projectId, roadwayId = rwId + 3, linearLocationId = llId + 5)
+      val rightLink4 = dummyProjectLink(road, part, Track.RightSide, Discontinuity.EndOfRoad, 15, 20, Some(DateTime.now()), None, 12351, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, rightGeom4, rwNumber + 3).copy(id = plId + 6, projectId = projectId, roadwayId = rwId + 3, linearLocationId = llId + 6)
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
@@ -721,8 +721,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val (rll2, rw5): (LinearLocation, Roadway) = Seq(rightLink2).map(toRoadwayAndLinearLocation).head
       val (rll3, rw6): (LinearLocation, Roadway) = Seq(rightLink3).map(toRoadwayAndLinearLocation).head
       val (rll4, rw7): (LinearLocation, Roadway) = Seq(rightLink4).map(toRoadwayAndLinearLocation).head
-      val rw1WithId = rw1.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 20)
-      val rw2WithId = rw4.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 20)
+      val rw1WithId = rw2.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 10)
+      val rw2WithId = rw5.copy(ely = 8L, startAddrMValue = 0, endAddrMValue = 10)
+      val rw3WithId = rw3.copy(ely = 8L, startAddrMValue = 10, endAddrMValue = 20)
+      val rw4WithId = rw7.copy(ely = 8L, startAddrMValue = 10, endAddrMValue = 20)
       val orderedlll1 = lll1.copy(orderNumber = 1)
       val orderedlll2 = lll2.copy(orderNumber = 2)
       val orderedlll3 = lll3.copy(orderNumber = 3)
@@ -732,62 +734,86 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val orderedrll3 = rll3.copy(orderNumber = 3)
       val orderedrll4 = rll4.copy(orderNumber = 4)
 
-      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId)), Some(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4)), Some(leftPLinks ++ rightPLinks))
+      buildTestDataForProject(Some(project),
+        Some(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId)), Some(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4)), Some(leftPLinks ++ rightPLinks))
 
       val projectChanges = List(
-        //left
+        // left - parallel link
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(AddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
-            RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(15L), Some(RoadType.PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
-            Discontinuity.Continuous, RoadType.PublicRoad, reversed = false, 1, 8)
+            RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(RoadType.PublicRoad), Some(Discontinuity.ParallelLink), Some(8L)),
+            Discontinuity.ParallelLink, RoadType.PublicRoad, reversed = false, 1, 8)
           , DateTime.now, Some(0L)),
-        //right
+        // right - discontinuous
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(AddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
-            RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(15L), Some(RoadType.PublicRoad), Some(Discontinuity.Discontinuous), Some(8L)),
+            RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(0L), endAddressM = Some(10L), Some(RoadType.PublicRoad), Some(Discontinuity.Discontinuous), Some(8L)),
             Discontinuity.Discontinuous, RoadType.PublicRoad, reversed = false, 2, 8)
           , DateTime.now, Some(0L)),
-        //combined
+        //  left - end of road
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(AddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
-            RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(RoadType.PublicRoad), Some(Discontinuity.EndOfRoad), Some(8L)),
+            RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(20L), Some(RoadType.PublicRoad), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, RoadType.PublicRoad, reversed = false, 3, 8)
           , DateTime.now, Some(0L)),
-        //combined
+        //  right - end of road
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(AddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
-            RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(15L), endAddressM = Some(20L), Some(RoadType.PublicRoad), Some(Discontinuity.EndOfRoad), Some(8L)),
+            RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), startAddressM = Some(10L), endAddressM = Some(20L), Some(RoadType.PublicRoad), Some(Discontinuity.EndOfRoad), Some(8L)),
             Discontinuity.EndOfRoad, RoadType.PublicRoad, reversed = false, 4, 8)
           , DateTime.now, Some(0L))
       )
 
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], false)).thenReturn(Seq())
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.last, leftGeom1.last), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedlll1.roadwayNumber, orderedrll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.head, rightGeom1.head), roadNumberLimits)).thenReturn(Seq())
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.last, rightGeom1.last), roadNumberLimits)).thenReturn(Seq(orderedrll1, orderedrll2, orderedrll3, orderedrll4))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedrll2.roadwayNumber), false)).thenReturn(Seq(rw2WithId))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom2.last, rightGeom2.last), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedlll1.roadwayNumber, orderedrll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom2.head, leftGeom2.head), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedlll1.roadwayNumber, orderedrll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom2.last, leftGeom2.last), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedrll1.roadwayNumber, orderedlll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom3.head, rightGeom3.head), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedlll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom3.last, rightGeom3.last), roadNumberLimits)).thenReturn(Seq(orderedrll1, orderedrll2, orderedrll3, orderedrll4))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedrll1.roadwayNumber), false)).thenReturn(Seq(rw2WithId))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom3.head, leftGeom3.head), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedlll1.roadwayNumber, orderedrll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom3.last, leftGeom3.last), roadNumberLimits)).thenReturn(Seq())
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom4.head, rightGeom4.head), roadNumberLimits)).thenReturn(Seq(orderedrll1, orderedrll2, orderedrll3, orderedrll4))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedrll2.roadwayNumber), false)).thenReturn(Seq(rw2WithId))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom4.last, rightGeom4.last), roadNumberLimits)).thenReturn(Seq())
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId))
+
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.head, leftGeom1.head), roadNumberLimits)).thenReturn(Seq())
+//      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set.empty[Long], false))
+//        .thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId).filter(r => Set.empty[Long].contains(r.roadwayNumber)))
+//
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom1.last, leftGeom1.last), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
+//      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedlll1.roadwayNumber, orderedrll1.roadwayNumber), false))
+//        .thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId).filter(r => Set(orderedlll1.roadwayNumber, orderedrll1.roadwayNumber).contains(r.roadwayNumber)))
+//
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.head, rightGeom1.head), roadNumberLimits)).thenReturn(Seq())
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom1.last, rightGeom1.last), roadNumberLimits)).thenReturn(Seq(orderedrll1, orderedrll2, orderedrll3, orderedrll4))
+//      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedrll2.roadwayNumber), false))
+//        .thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId).filter(r => Set(orderedrll2.roadwayNumber).contains(r.roadwayNumber)))
+//
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom2.last, rightGeom2.last), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
+//      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedlll1.roadwayNumber, orderedrll1.roadwayNumber), false))
+//        .thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId).filter(r => Set(orderedlll1.roadwayNumber, orderedrll1.roadwayNumber).contains(r.roadwayNumber)))
+//
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom2.head, leftGeom2.head), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
+//      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedlll1.roadwayNumber, orderedrll1.roadwayNumber), false))
+//        .thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId).filter(r => Set(orderedlll1.roadwayNumber, orderedrll1.roadwayNumber).contains(r.roadwayNumber)))
+//
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom2.last, leftGeom2.last), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
+//      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedrll1.roadwayNumber, orderedlll1.roadwayNumber), false))
+//        .thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId).filter(r => Set(orderedrll1.roadwayNumber, orderedlll1.roadwayNumber).contains(r.roadwayNumber)))
+//
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom3.head, rightGeom3.head), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
+//      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedlll1.roadwayNumber), false))
+//        .thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId).filter(r => Set(orderedlll1.roadwayNumber).contains(r.roadwayNumber)))
+//
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom3.last, rightGeom3.last), roadNumberLimits)).thenReturn(Seq(orderedrll1, orderedrll2, orderedrll3, orderedrll4))
+//      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedrll1.roadwayNumber), false))
+//        .thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId).filter(r => Set(orderedrll1.roadwayNumber).contains(r.roadwayNumber)))
+//
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom3.head, leftGeom3.head), roadNumberLimits)).thenReturn(Seq(orderedlll1, orderedlll2, orderedlll3, orderedrll1, orderedrll2, orderedrll3, orderedrll4))
+//      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedlll1.roadwayNumber, orderedrll1.roadwayNumber), false))
+//        .thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId).filter(r => Set(orderedlll1.roadwayNumber, orderedrll1.roadwayNumber).contains(r.roadwayNumber)))
+//
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(leftGeom3.last, leftGeom3.last), roadNumberLimits)).thenReturn(Seq())
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom4.head, rightGeom4.head), roadNumberLimits)).thenReturn(Seq(orderedrll1, orderedrll2, orderedrll3, orderedrll4))
+//      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(orderedrll2.roadwayNumber), false))
+//        .thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId, rw4WithId).filter(r => Set(orderedrll2.roadwayNumber).contains(r.roadwayNumber)))
+//
+//      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(rightGeom4.last, rightGeom4.last), roadNumberLimits)).thenReturn(Seq())
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
@@ -2325,11 +2351,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           , DateTime.now, Some(0L))
       )
 
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(orderedcll1, orderedcll2, orderedcll3, orderedcll4, orderedcll5))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.last, combGeom1.last), roadNumberLimits)).thenReturn(Seq(orderedcll1, orderedcll2, orderedcll3, orderedcll4, orderedcll5))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq(orderedcll1, orderedcll2, orderedcll3, orderedcll4, orderedcll5))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom3.last, combGeom3.last), roadNumberLimits)).thenReturn(Seq(orderedcll1, orderedcll2, orderedcll3, orderedcll4, orderedcll5))
-      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom5.last, combGeom5.last), roadNumberLimits)).thenReturn(Seq(orderedcll1, orderedcll2, orderedcll3, orderedcll4, orderedcll5))
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(orderedcll1, orderedcll2, orderedcll3, orderedcll4, orderedcll5))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(rw1WithId))
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
