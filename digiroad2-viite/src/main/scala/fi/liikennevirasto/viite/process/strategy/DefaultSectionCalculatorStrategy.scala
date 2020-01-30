@@ -291,7 +291,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           //In case there is some old starting link, we want to prioritize the one that didnt change or was not treated yet.
           // We could have more than two starting link since one of them can be Transferred from any part to this one.
           val oldFirst: Option[ProjectLink] =
-          if(foundConnectedLinks.nonEmpty){
+          if (foundConnectedLinks.nonEmpty) {
             foundConnectedLinks.find(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.NotHandled)
               .orElse(foundConnectedLinks.find(_.status == LinkStatus.Transfer))
           } else {
