@@ -1428,7 +1428,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             setReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadwayId != 0L))
           ).sortBy(_.endAddrMValue)
           if (newDiscontinuity.isDefined && newTrack.isDefined && roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
-            if(completelyNewLinkIds.nonEmpty){
+            if (completelyNewLinkIds.nonEmpty) {
               val (completelyNew, others) = calculatedLinks.partition(cl => completelyNewLinkIds.contains(cl.id))
               others ++ completelyNew.init :+ completelyNew.last.copy(discontinuity = newDiscontinuity.get)
             } else {
