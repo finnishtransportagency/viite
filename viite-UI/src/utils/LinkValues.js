@@ -226,6 +226,6 @@
 
     };
 
-    root.MaxAllowedDistanceForNodesToBeMoved = 200
+    root.MaxAllowedDistanceForNodesToBeMoved = 200;
 })(window.LinkValues = window.LinkValues || {});
 
