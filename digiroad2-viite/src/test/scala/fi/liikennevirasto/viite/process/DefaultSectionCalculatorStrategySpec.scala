@@ -519,4 +519,34 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test defaultSectionCalculatorStrategy.findStartingPoints() When adding new combined link before existing Unhandled links Then the starting point should be the loose candidate from the new link") {
+    runWithRollback {
+      val geomNewComb1 = Seq(Point(0.0, 20.0), Point(5.0, 15.0))
+      val geomTransferComb1 = Seq(Point(5.0, 15.0), Point(10.0, 10.0))
+      val geomTransferComb2 = Seq(Point(10.0, 10.0), Point(15.0, 5.0))
+      val plId = Sequences.nextViitePrimaryKeySeqValue
+
+
+      val projectLinkNewComb1Before = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0, 0, 0, None, None,
+        None, 12344L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        geomNewComb1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewComb1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val projectLinkComb1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
+        None, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        geomTransferComb1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val projectLinkComb2 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.EndOfRoad, 5L, 10L, 5L, 10L, None, None,
+        None, 12346L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        geomTransferComb2, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb2), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val transferProjectLinks = Seq(projectLinkComb1, projectLinkComb2)
+      val newProjectLinks = Seq(projectLinkNewComb1Before)
+      val otherPartLinks = Seq()
+
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, transferProjectLinks, otherPartLinks, Seq.empty[UserDefinedCalibrationPoint])
+      startingPointsForCalculations should be((projectLinkNewComb1Before.startingPoint, projectLinkNewComb1Before.startingPoint))
+    }
+  }
+
 }
