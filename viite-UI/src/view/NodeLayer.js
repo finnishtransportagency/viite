@@ -190,7 +190,11 @@
      * and stop the node movement when that limitation is not obeyed
      */
     nodeTranslate.on('translating', function (evt) {
-      if (verifyMovementLimitationsAreObeyed(selectedNodesAndJunctions.getStartingCoordinates(), evt.coordinate)) {
+      var coordinates = {
+        x: parseInt(evt.coordinate[0]),
+        y: parseInt(evt.coordinate[1])
+      };
+      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < LinkValues.MaxAllowedDistanceForNodesToBeMoved) {
         eventbus.trigger('node:setCoordinates', {
           x: parseInt(evt.coordinate[0]),
           y: parseInt(evt.coordinate[1])
@@ -199,27 +203,18 @@
     });
 
     nodeTranslate.on('translateend', function (evt) {
-      if (!verifyMovementLimitationsAreObeyed(selectedNodesAndJunctions.getStartingCoordinates(), evt.coordinate)){
-        eventbus.trigger('node:setCoordinates', selectedNodesAndJunctions.getStartingCoordinates());
-        eventbus.trigger('node:repositionNode', selectedNodesAndJunctions.getCurrentNode(), evt.coordinate);
+      var coordinates = {
+        x: parseInt(evt.coordinate[0]),
+        y: parseInt(evt.coordinate[1])
+      };
+      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < LinkValues.MaxAllowedDistanceForNodesToBeMoved) {
+        selectedNodesAndJunctions.setCoordinates(coordinates);
       } else {
-        selectedNodesAndJunctions.setCoordinates({
-          x: parseInt(evt.coordinate[0]),
-          y: parseInt(evt.coordinate[1])
-        });
+        var startingCoordinates = selectedNodesAndJunctions.getStartingCoordinates();
+        eventbus.trigger('node:setCoordinates', startingCoordinates);
+        eventbus.trigger('node:repositionNode', selectedNodesAndJunctions.getCurrentNode(), startingCoordinates);
       }
     });
-
-    /**
-     * Verifies if the new position is within the 200 meters limitation
-     * @param nodeInitialPosition initial position of the node
-     * @param coordinates contains coordinate X and coordinate Y
-     */
-    var verifyMovementLimitationsAreObeyed = function(nodeInitialPosition, coordinates) {
-      var parsedCoordXDif = parseInt(coordinates[0]) - nodeInitialPosition.x;
-      var parsedCoordYDif = parseInt(coordinates[1]) - nodeInitialPosition.y;
-      return parseInt(Math.sqrt(Math.pow(parsedCoordXDif, 2) + Math.pow(parsedCoordYDif, 2))) < 200;
-    };
 
     /**
      * This will add all the following interactions from the map:
@@ -506,11 +501,8 @@
 
     me.eventListener.listenTo(eventbus, 'node:repositionNode', function (node, coordinates) {
       _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
-        if (_.isEqual(nodeFeature.node, node)) {
-          var point = _.isUndefined(coordinates) ?
-              new ol.geom.Point([node.initialCoordX, node.initialCoordY]) :
-              new ol.geom.Point([coordinates[0], coordinates[1]]);
-          nodeFeature.setGeometry(point);
+        if (_.isEqual(_.omit(nodeFeature.node, 'startingCoordinates'), _.omit(node, 'startingCoordinates'))) {
+          nodeFeature.setGeometry(new ol.geom.Point([coordinates.x, coordinates.y]));
         }
       });
       return false;

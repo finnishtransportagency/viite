@@ -123,22 +123,22 @@
       var nodePointsEquality = false;
       var junctionsEquality = false;
       var junctionPointsEquality = false;
-      //comparing nodes without junctions or nodePoints
+      //  comparing nodes without junctions or nodePoints
       var nodesEquality = isEqualWithout(original, current.node, ['junctions', 'nodePoints']);
-      //comparing the nodePoints of both nodes
+      //  comparing the nodePoints of both nodes
       if (original.nodePoints.length === current.node.nodePoints.length && original.nodePoints.length !== 0){
         nodePointsEquality = !_.some(_.flatMap(_.zip(original.nodePoints, current.node.nodePoints), _.spread(function(originalNodePoint, currentNodePoint) {
           return {equality: isEqualWithout(originalNodePoint, currentNodePoint, 'coordinates')};
         })), ['equality', false]);
       }
-      //comparing the junctions of both nodes
+      //  comparing the junctions of both nodes
       if (original.junctions.length === current.node.junctions.length && original.junctions.length !== 0) {
         junctionsEquality = !_.some(_.flatMap(_.zip(original.junctions, current.node.junctions), _.spread(function (originalJunction, currentJunction) {
           // return isEqualWithout(originalJunction, currentJunction, 'junctionPoints');
           return {equality: isEqualWithout(originalJunction, currentJunction, 'junctionPoints')};
         })), ['equality', false]);
 
-        //comparing the junctionPoints of all junctions in both nodes
+        //  comparing the junctionPoints of all junctions in both nodes
         junctionPointsEquality = !_.some(_.flatMap(_.zip(original.junctions, current.node.junctions), _.spread(function(originalJunction, currentJunction) {
           if (originalJunction.junctionPoints.length === currentJunction.junctionPoints.length && originalJunction.junctionPoints.length !== 0) {
             return _.flatMap(_.zip(originalJunction.junctionPoints, currentJunction.junctionPoints), _.spread(function (originalJunctionPoint, currentJunctionPoint) {
@@ -148,12 +148,8 @@
           } else return false;
         })), ['equality', false]);
       }
-      //true equality implemented
+      //  true equality implemented
       return !(nodesEquality && nodePointsEquality && junctionsEquality && junctionPointsEquality);
-    };
-
-    var searchForFalseValue = function (value) {
-      return value === false;
     };
 
     var isEqualWithout = function (original, current, toIgnore) {
