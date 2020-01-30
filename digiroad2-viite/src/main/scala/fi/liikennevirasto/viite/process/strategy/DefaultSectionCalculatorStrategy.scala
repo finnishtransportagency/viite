@@ -291,9 +291,11 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           if (endPointsWithValues.size == 1) {
             val endLinkWithValues = endPointsWithValues.head._2
             val otherEndPoint = chainEndPoints.filterNot(_._2.id == endPointsWithValues.head._2.id)
-            val onceConnectLinks = if (linksWithoutValues.size <= 1) Map() else TrackSectionOrder.findOnceConnectedLinks(linksWithoutValues)
+            val onceConnectLinks = TrackSectionOrder.findOnceConnectedLinks(linksWithoutValues)
             val existsCloserProjectlink = linksWithValues.filter(pl => pl.startAddrMValue < endLinkWithValues.startAddrMValue && pl.id != endLinkWithValues.id)
             if (endPointsWithValues.nonEmpty && onceConnectLinks.nonEmpty && linksWithValues.nonEmpty
+              && (oldFirst.isDefined && points.count(p => GeometryUtils.areAdjacent(p._1, oldFirst.get.startingPoint)
+              || GeometryUtils.areAdjacent(p._2, oldFirst.get.startingPoint)) > 1) // New links before the old starting point
               && (onceConnectLinks.exists(connected => GeometryUtils.areAdjacent(connected._2.getEndPoints._2, endPointsWithValues.head._2.getEndPoints._1)
               || GeometryUtils.areAdjacent(connected._2.getEndPoints._1, endPointsWithValues.head._2.getEndPoints._1)
               || GeometryUtils.areAdjacent(linksWithValues.minBy(_.startAddrMValue).geometry, connected._2.getEndPoints._2)) || existsCloserProjectlink.nonEmpty)
