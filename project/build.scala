@@ -35,19 +35,24 @@ object Digiroad2Build extends Build {
       name := Digiroad2GeoName,
       version := Version,
       scalaVersion := ScalaVersion,
+      resolvers += Classpaths.typesafeReleases,
       scalacOptions ++= Seq("-unchecked", "-feature"),
-      resolvers := Seq(Classpaths.typesafeReleases,
-        "osgeo" at "http://download.osgeo.org/webdav/geotools/",
-        "opengeo" at "http://repo.boundlessgeo.com/main/"),
       libraryDependencies ++= Seq(
         "org.joda" % "joda-convert" % JodaConvertVersion,
         "joda-time" % "joda-time" % JodaTimeVersion,
         "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
-        "javax.media" % "jai_core" % "1.1.3" from "http://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-        "org.geotools" % "gt-graph" % "19.0",
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
-      )
-    )
+        "javax.media" % "jai_core" % "1.1.3" from "https://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+        "org.geotools" % "gt-graph" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-graph/19.0/gt-graph-19.0.jar",
+        "org.geotools" % "gt-main" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-main/19.0/gt-main-19.0.jar",
+        "org.geotools" % "gt-api" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-api/19.0/gt-api-19.0.jar",
+        "org.geotools" % "gt-referencing" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-referencing/19.0/gt-referencing-19.0.jar",
+        "org.geotools" % "gt-metadata" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-metadata/19.0/gt-metadata-19.0.jar",
+        "org.geotools" % "gt-opengis" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-opengis/19.0/gt-opengis-19.0.jar",
+        "jgridshift" % "jgridshift" % "1.0" from "http://download.osgeo.org/webdav/geotools/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
+        "com.vividsolutions" % "jts-core" % "1.14.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/vividsolutions/jts-core/1.14.0/jts-core-1.14.0.jar",
+  "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
+  )
+  )
   )
 
   val Digiroad2OracleName = "digiroad2-oracle"
@@ -59,9 +64,9 @@ object Digiroad2Build extends Build {
       name := Digiroad2OracleName,
       version := Version,
       scalaVersion := ScalaVersion,
-//      resolvers ++= Seq(Classpaths.typesafeReleases,
-//        "maven-public" at "http://livibuild04.vally.local/nexus/repository/maven-public/",
-//        "ivy-public" at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
+      //      resolvers ++= Seq(Classpaths.typesafeReleases,
+      //        "maven-public" at "http://livibuild04.vally.local/nexus/repository/maven-public/",
+      //        "ivy-public" at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
       resolvers += Classpaths.typesafeReleases,
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
@@ -81,9 +86,9 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1" % "test",
-//        "com.oracle" % "ojdbc6" % "11.2.0.3.0",
-//        "com.oracle" % "sdoapi" % "11.2.0",
-//        "com.oracle" % "sdoutl" % "11.2.0"
+        //        "com.oracle" % "ojdbc6" % "11.2.0.3.0",
+        //        "com.oracle" % "sdoapi" % "11.2.0",
+        //        "com.oracle" % "sdoutl" % "11.2.0"
         "com.oracle" % "ojdbc6" % "11.2.0.3.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.jar",
         "com.oracle" % "sdoapi" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoapi/11.2.0/sdoapi-11.2.0.jar",
         "com.oracle" % "sdoutl" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoutl/11.2.0/sdoutl-11.2.0.jar"
