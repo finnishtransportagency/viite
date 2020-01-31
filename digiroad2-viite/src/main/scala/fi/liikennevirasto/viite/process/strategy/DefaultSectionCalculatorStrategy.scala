@@ -286,13 +286,14 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           val endPointsWithValues = ListMap(chainEndPoints.filter(link => link._2.startAddrMValue >= 0 && link._2.endAddrMValue != 0).toSeq
             .sortWith(_._2.startAddrMValue < _._2.startAddrMValue): _*)
 
-          val foundConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks).values.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
+          val foundOldConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)).values
           //In case there is some old starting link, we want to prioritize the one that didnt change or was not treated yet.
           // We could have more than two starting link since one of them can be Transferred from any part to this one.
           val oldFirst: Option[ProjectLink] =
-          if (foundConnectedLinks.nonEmpty) {
-            foundConnectedLinks.find(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.NotHandled)
-              .orElse(foundConnectedLinks.find(_.status == LinkStatus.Transfer))
+          if (foundOldConnectedLinks.nonEmpty) {
+            foundOldConnectedLinks.find(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.NotHandled)
+              .orElse(foundOldConnectedLinks.find(_.status == LinkStatus.Transfer)
+                .orElse(foundOldConnectedLinks.find(_.status == LinkStatus.New)))
           } else {
             None
           }
@@ -335,8 +336,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               }
               else
                 candidateRightStartPoint
-            }
-            else {
+            } else {
               val startPoint1 = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
               val startPoint2 = chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
               val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1._1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2._1))
