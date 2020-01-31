@@ -292,7 +292,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           val oldFirst: Option[ProjectLink] =
           if (foundConnectedLinks.nonEmpty) {
             foundConnectedLinks.find(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.NotHandled)
-              .orElse(foundConnectedLinks.find(_.status == LinkStatus.Transfer))
+              .orElse(foundConnectedLinks.headOption)
           } else {
             None
           }
