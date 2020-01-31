@@ -127,6 +127,12 @@
         });
         return false;
       });
+      var saveBtnDisabled = (Environment.name() === 'integration' || Environment.name() === 'production');
+      if (! saveBtnDisabled ) {
+        $('.btn-edit-junction-save').prop('disabled', false);
+      } else {
+        $('.btn-edit-junction-save').prop('disabled', true);
+      }
     };
 
     bindEvents();

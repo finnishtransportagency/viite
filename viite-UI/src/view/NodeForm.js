@@ -399,8 +399,8 @@
       var textIsNonEmpty = $('#nodeName').val() !== "";
       var nodeTypeIsValid = $('#nodeTypeDropdown :selected').val() !== LinkValues.NodeType.UnknownNodeType.value.toString();
       var dateIsNonEmpty = $('#nodeStartDate').val() !== "";
-
-      if (textIsNonEmpty && nodeTypeIsValid && dateIsNonEmpty && selectedNode.isDirty()) {
+      var saveBtnDisabled = (Environment.name() === 'integration' || Environment.name() === 'production');
+      if (! saveBtnDisabled && textIsNonEmpty && nodeTypeIsValid && dateIsNonEmpty && selectedNode.isDirty()) {
         $('.btn-edit-node-save').prop('disabled', false);
       } else {
         $('.btn-edit-node-save').prop('disabled', true);
