@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinearLocation, LinearLocationDAO, LinkStatus, Project, ProjectDAO, ProjectLink, ProjectLinkCalibrationPoint, ProjectLinkDAO, ProjectReservedPartDAO, ProjectState, Roadway, RoadwayDAO, TerminationCode}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -203,6 +203,11 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     projectLinksWithAssignedValuesBefore.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value))
   }
 
+  /*
+                    \    <- Transfer
+                     \   <- Transfer
+      Terminated ->  |\  <- New
+   */
   test("Test defaultSectionCalculatorStrategy.findStartingPoints() When adding one (New) link before the existing (Transfer) road but where the first link was terminated Then the road should still maintain the previous existing direction") {
    runWithRollback {
     val geomTerminatedComb1 = Seq(Point(30.0, 10.0), Point(30.0, 20.0))
