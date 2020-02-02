@@ -243,6 +243,11 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
    }
   }
 
+  /*
+                    \    <- Transfer
+                     \   <- Transfer
+      Terminated ->  |\  <- New (inverted geometry)
+   */
   test("Test defaultSectionCalculatorStrategy.findStartingPoints() When adding one (New) link with inverted geometry before the existing (Transfer) road but where the first link was terminated Then the road should still maintain the previous existing direction") {
     runWithRollback {
     val geomTerminatedComb1 = Seq(Point(30.0, 10.0), Point(30.0, 20.0))
