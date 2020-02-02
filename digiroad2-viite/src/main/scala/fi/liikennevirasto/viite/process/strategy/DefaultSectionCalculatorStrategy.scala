@@ -286,14 +286,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           val endPointsWithValues = ListMap(chainEndPoints.filter(link => link._2.startAddrMValue >= 0 && link._2.endAddrMValue != 0).toSeq
             .sortWith(_._2.startAddrMValue < _._2.startAddrMValue): _*)
 
-          val foundOldConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)).values
+          val foundConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)).values
           //In case there is some old starting link, we want to prioritize the one that didnt change or was not treated yet.
           // We could have more than two starting link since one of them can be Transferred from any part to this one.
           val oldFirst: Option[ProjectLink] =
-          if (foundOldConnectedLinks.nonEmpty) {
-            foundOldConnectedLinks.find(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.NotHandled)
-              .orElse(foundOldConnectedLinks.find(_.status == LinkStatus.Transfer)
-                .orElse(foundOldConnectedLinks.find(_.status == LinkStatus.New)))
+          if (foundConnectedLinks.nonEmpty) {
+            foundConnectedLinks.find(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.NotHandled)
+              .orElse(foundConnectedLinks.headOption)
           } else {
             None
           }
