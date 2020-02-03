@@ -371,7 +371,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val newProjectLinks = Seq(projectLinkNew2, projectLinkNew3)
 
       val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, otherProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-      startingPointsForCalculations should be((geomNew3.head, geomNew2.head))
+      startingPointsForCalculations should be((geomNew2.head, geomNew3.head))
     }
   }
 
