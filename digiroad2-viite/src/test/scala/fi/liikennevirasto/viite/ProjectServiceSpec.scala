@@ -2692,6 +2692,41 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Test projectService.createProjectLinks() discontinuity assignment When creating some links Then the Discontinuity of the last (with bigger endAddrM) new created links should be the one the user gave and should not change any other link discontinuity that was previosly given.") {
+    runWithRollback {
+
+      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), Seq(), None)
+
+      val linkAfterRoundabout = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.EndOfRoad, 0L, 0L, 0L, 0L, None, None,
+        None, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        Seq(Point(15.0, 0.0), Point(20.0, 0.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(15.0, 0.0), Point(20.0, 0.0))), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val linkBeforeRoundaboutMinorDiscontinuous = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.MinorDiscontinuity, 0L, 0L, 0L, 0L, None, None,
+        None, 12346L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        Seq(Point(5.0, 0.0), Point(15.0, 0.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(5.0, 0.0), Point(15.0, 0.0))), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val linkBeforeRoundaboutContinuous = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12347L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        Seq(Point(0.0, 0.0), Point(5.0, 0.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(5.0, 0.0))), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+
+      val project = projectService.createRoadLinkProject(rap)
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq(linkAfterRoundabout).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12345L), project.id, 9999, 1, Track.Combined, Discontinuity.EndOfRoad, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq(linkBeforeRoundaboutMinorDiscontinuous, linkBeforeRoundaboutContinuous).map(toRoadLink))
+      projectService.createProjectLinks(Seq(12347L, 12346L), project.id, 9999, 1, Track.Combined, Discontinuity.MinorDiscontinuity, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+
+      val afterAllProjectLinksCreation = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
+
+      afterAllProjectLinksCreation.filter(_.linkId == 12345L).head.discontinuity should be (Discontinuity.EndOfRoad)
+      afterAllProjectLinksCreation.filter(_.linkId == 12346L).head.discontinuity should be (Discontinuity.MinorDiscontinuity)
+      afterAllProjectLinksCreation.filter(_.linkId == 12347L).head.discontinuity should be (Discontinuity.Continuous)
+    }
+  }
+
   test("Test updateRoadwaysAndLinearLocationsWithProjectLinks When VIITE-2236 situation Then don't violate unique constraint on roadway_point table.") {
     runWithRollback {
       sqlu"""Insert into LINK (ID,SOURCE,ADJUSTED_TIMESTAMP,CREATED_TIME) values ('568121','4','1446398762000',to_timestamp('27.12.2019 13:12:50','DD.MM.RRRR HH24:MI:SS'))""".execute
