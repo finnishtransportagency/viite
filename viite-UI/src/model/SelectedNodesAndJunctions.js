@@ -13,7 +13,7 @@
     };
 
     var setCurrentNode = function (node) {
-      current.node = _.cloneDeep(node);
+      current.node = node;
     };
 
     var templates = function (coordinates) {
@@ -43,8 +43,8 @@
 
     var setCurrentTemplates = function (nodePoints, junction) {
       current.templates = {
-        nodePoints: _.cloneDeep(nodePoints),
-        junction: _.cloneDeep(junction)
+        nodePoints: nodePoints,
+        junction: junction
       };
     };
 
