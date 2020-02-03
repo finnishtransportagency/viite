@@ -307,19 +307,24 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           }
           if (endPointsWithValues.size == 1) {
             val endLinkWithValues = endPointsWithValues.head._2
-            val otherEndPoint = chainEndPoints.filterNot(_._2.id == endPointsWithValues.head._2.id)
+            val (currentEndPoint, otherEndPoint) = chainEndPoints.partition(_._2.id == endPointsWithValues.head._2.id)
             val onceConnectLinks = TrackSectionOrder.findOnceConnectedLinks(linksWithoutValues)
             val existsCloserProjectlink = linksWithValues.filter(pl => pl.startAddrMValue < endLinkWithValues.startAddrMValue && pl.id != endLinkWithValues.id)
             if (endPointsWithValues.nonEmpty && onceConnectLinks.nonEmpty && linksWithValues.nonEmpty
-              && (oldFirst.isDefined && points.count(p => GeometryUtils.areAdjacent(p._1, oldFirst.get.startingPoint)
-              || GeometryUtils.areAdjacent(p._2, oldFirst.get.startingPoint)) > 1) // New links before the old starting point
               && (onceConnectLinks.exists(connected => GeometryUtils.areAdjacent(connected._2.getEndPoints._2, endPointsWithValues.head._2.getEndPoints._1)
               || GeometryUtils.areAdjacent(connected._2.getEndPoints._1, endPointsWithValues.head._2.getEndPoints._1)
-              || GeometryUtils.areAdjacent(linksWithValues.minBy(_.startAddrMValue).geometry, connected._2.getEndPoints._2)) || existsCloserProjectlink.nonEmpty)
+              || GeometryUtils.areAdjacent(linksWithValues.minBy(_.startAddrMValue).geometry, connected._2.getEndPoints._2))
+              || (oldFirst.isDefined && points.count(p => GeometryUtils.areAdjacent(p._1, oldFirst.get.startingPoint)
+              || GeometryUtils.areAdjacent(p._2, oldFirst.get.startingPoint)) > 1)
+              || existsCloserProjectlink.nonEmpty)
             )
               otherEndPoint.head
-            else
-              endPointsWithValues.head
+            else {
+              if(currentEndPoint.head._1 == endPointsWithValues.head._2.endPoint)
+                otherEndPoint.head
+              else
+                endPointsWithValues.head
+            }
           } else if (chainEndPoints.forall(_._2.endAddrMValue != 0) && oldFirst.isDefined) {
             (oldFirst.get.getEndPoints._1, oldFirst.get)
           } else {
