@@ -879,23 +879,23 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   }
 
   /*
-              #2
-        #0 /\  __
-          #1 \/ /\
+               #2
+      #0 /\    __
+        #1 \  / /\
                 ||
-                ||
-             #4 || #3 /  #11
-                ||  /|  #9/#10
+    Minor --^   ||
+    disc.       || #3 /  #11
+             #4 ||  /|  #9/#10
                 || //  #7
                 ||//  #5/#8
                 |_/  #6
 
    */
-  test("Test assignMValues When adding New link sections to existing ones Then Direction for those should always be the same as the existing section (which are for e.g. Transfer, Unchanged, Numbering) making the addressMValues be sequential") {
+  test("Test assignMValues When adding New link sections with minor discontinuity to the existing ones Then Direction for those should always be the same as the existing section (which are for e.g. Transfer, Unchanged, Numbering) making the addressMValues be sequential") {
     runWithRollback{
                               //(x,y)   -> (x,y)
       val idRoad0 = 0L //   N>  C(0, 90)   ->  (10, 100)
-      val idRoad1 = 1L //   N>  C(10, 100) ->  (20, 80)
+      val idRoad1 = 1L //   N>  C(10, 100) ->  (18, 78)
 
       val idRoad2 = 2L //   T>  C(20, 80)  ->  (30, 90)
       val idRoad3 = 3L //   T>  L(30, 90)  ->  (50, 20)
@@ -925,10 +925,10 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         0L, 14L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad2, 0.0, 14.1, SideCode.TowardsDigitizing, 0, (None, None), 
         Seq(Point(20.0, 80.0), Point(30.0, 90.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id, roadwayId = roadwayId, roadwayNumber = roadwayNumber, linearLocationId = linearLocationId)
       val projectLink3 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad3, 0, 5, 1, RoadType.Unknown, Track.LeftSide, Continuous,
-        14L, 87L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad3, 0.0, 72.8, SideCode.TowardsDigitizing, 0, (None, None), 
+        14L, 87L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad3, 0.0, 72.8, SideCode.AgainstDigitizing, 0, (None, None),
         Seq(Point(30.0, 90.0),Point(50.0, 20.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id, roadwayId = roadwayId+7, roadwayNumber = roadwayNumber+7, linearLocationId = linearLocationId+7)
       val projectLink4 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad4, 0, 5, 1, RoadType.Unknown, Track.RightSide, Continuous,
-        14L, 95L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad4, 0.0, 80.6, SideCode.TowardsDigitizing, 0, (None, None), 
+        14L, 95L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad4, 0.0, 80.6, SideCode.AgainstDigitizing, 0, (None, None),
         Seq(Point(30.0, 90.0), Point(40.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id, roadwayId = roadwayId+8, roadwayNumber = roadwayNumber+8, linearLocationId = linearLocationId+9)
       val projectLink5 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad5, 0, 5, 1, RoadType.Unknown, Track.LeftSide, Continuous,
         87L, 101L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad5, 0.0, 14.1, SideCode.TowardsDigitizing, 0, (None, None), 
@@ -972,7 +972,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
       val list1 = List(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6)
       val ordered = ProjectSectionCalculator.assignMValues(list1)
-      ordered.minBy(_.startAddrMValue).id should be (idRoad0) // TODO "5 was not equal to 0"
+      ordered.minBy(_.startAddrMValue).id should be (idRoad0) // TODO "6 was not equal to 0"
 
       val list2 = ordered.toList ::: List(projectLink7, projectLink8, projectLink9, projectLink10, projectLink11)
       val ordered2 = ProjectSectionCalculator.assignMValues(list2)
