@@ -52,9 +52,10 @@
       });
     };
 
-    this.getCoordinates = function (roadNumber, roadPartNumber, addrM, setCoordinates) {
+    var getCoordinates = function (roadNumber, roadPartNumber, addrM, setCoordinates) {
       locationSearch.search(roadNumber + ' ' + roadPartNumber + ' ' + addrM).then(setCoordinates);
     };
+    this.getCoordinates = getCoordinates;
 
     this.getNodePointTemplatesByCoordinates = function (coordinates) {
       return _.filter(mapNodePointTemplates, function (nodePointTemplate) {
@@ -75,21 +76,50 @@
         locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM).then(function (results) {
           if (results.length >= 1) {
             var result = results[0];
-            eventbus.trigger('template:clicked', {lon: result.lon, lat: result.lat, zoom: 12});
-            // TODO 2220 open node form with templates from link!
-            // backend.getNodesAndJunctions({boundingBox: [result.lon, result.lat, result.lon, result.lat].join(","), zoom: zoomlevels.minZoomForJunctions}, function(fetchedNodesAndJunctions) {
-            //   if (_.has(fetchedNodesAndJunctions, 'nodePointTemplates') || _.has(fetchedNodesAndJunctions, 'junctionTemplates')) {
-            //     var referencePoint = { x: parseFloat(result.lon).toFixed(3), y: parseFloat(result.lat).toFixed(3) };
-            //     eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
-            //       nodePoints: _.filter(fetchedNodesAndJunctions.nodePointTemplates, function (nodePoint) {
-            //         return _.isEqual(nodePoint.coordinates, referencePoint);
-            //       }),
-            //       junction: _.first(_.filter(fetchedNodesAndJunctions.junctionTemplates, function (junction) {
-            //         return _.isEqual(_.first(junction.junctionPoints).coordinates, referencePoint);
-            //       }))
-            //     });
-            //   }
-            // });
+            eventbus.trigger('coordinates:selected', {
+              lon: result.lon,
+              lat: result.lat,
+              zoom: zoomlevels.minZoomForJunctions
+            });
+            backend.getNodesAndJunctions({
+              boundingBox: [result.lon, result.lat, result.lon, result.lat].join(","),
+              zoom: zoomlevels.minZoomForJunctions
+            }, function (fetchedNodesAndJunctions) {
+              if (_.has(fetchedNodesAndJunctions, 'nodePointTemplates') || _.has(fetchedNodesAndJunctions, 'junctionTemplates')) {
+                var referencePoint = {x: parseFloat(result.lon).toFixed(3), y: parseFloat(result.lat).toFixed(3)};
+                var nodePointsFetched = fetchedNodesAndJunctions.nodePointTemplates;
+                var junctionsFetched = fetchedNodesAndJunctions.junctionTemplates;
+                var templates = _.concat(nodePointsFetched, _.flatMap(junctionsFetched, 'junctionPoints'));
+                Promise.all(_.map(templates, function (template) {
+                  return locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM);
+                }))
+                  .then(function (results) {
+                    _.partition(_.flatMap(_.zip(_.flatMap(results), templates), _.spread(function (coordinates, template) {
+                      // add coordinates to templates;
+                      return _.merge(template, {
+                        coordinates: {
+                          x: parseFloat(coordinates.lon).toFixed(3),
+                          y: parseFloat(coordinates.lat).toFixed(3)
+                        }
+                      });
+                    })), function (splittedTemplate) {
+                      return _.has(splittedTemplate, 'junctionId');
+                    });
+
+                    eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
+                      nodePoints: _.filter(nodePointsFetched, function (nodePoint) {
+                        return _.isEqual(nodePoint.coordinates, referencePoint);
+                      }),
+                      junction: _.filter(junctionsFetched, function (junction) {
+                        return !_.find(junction.junctionPoints, function (junctionPoint) {
+                          return !_.isEqual(junctionPoint.coordinates, referencePoint);
+                        });
+                      })
+                    });
+                    applicationModel.removeSpinner();
+                  });
+              }
+            });
           } else {
             applicationModel.removeSpinner();
           }
