@@ -375,16 +375,12 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test findStartingPoints When adding two (New) links before and after existing transfer links(s) but where the first link was terminated Then the road should maintain the previous direction") {
+  test("Test findStartingPoints When adding two (New) links before and after existing transfer links(s) Then the road should maintain the previous direction") {
     runWithRollback {
-      val geomTerminatedComb1 = Seq(Point(40.0, 20.0), Point(40.0, 30.0))
       val geomTransferComb1 = Seq(Point(40.0, 30.0), Point(30.0, 40.0))
       val geomTransferComb2 = Seq(Point(30.0, 40.0), Point(20.0, 50.0))
       val plId = Sequences.nextViitePrimaryKeySeqValue
-      val projectLinkComb3 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 0L, 15L, None, None,
-        None, 12344L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
-        geomTerminatedComb1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTerminatedComb1), 0L, 0, 0, reversed = false,
-        None, 86400L)
+
       val projectLinkComb1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 30L, 15L, 30L, None, None,
         None, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
         geomTransferComb1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1), 0L, 0, 0, reversed = false,
@@ -406,7 +402,6 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
         None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None),
         geomNewCombAfter, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewCombAfter), 0L, 0, 0, reversed = false,
         None, 86400L)
-
 
       val transferProjectLinks = Seq(projectLinkComb1, projectLinkComb2)
       val newProjectLinks = Seq(projectLinkCombNewBefore, projectLinkCombNewAfter)
