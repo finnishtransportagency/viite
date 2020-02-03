@@ -521,18 +521,6 @@
       }
     });
 
-    me.eventListener.listenTo(eventbus, 'template:clicked', function (coordinates) {
-      // TODO VIITE-2055 this trigger must be fixed!
-      eventbus.trigger('coordinates:selected', coordinates);
-      var xy = {x: coordinates.lon, y: coordinates.lat};
-      alert('NodeLayer @ {x: ' + xy.x + ', y: ' + xy.y + '}');
-      applicationModel.removeSpinner();
-
-      // selectedNodesAndJunctions.closeForm();
-      // clearHighlights();
-      // selectedNodesAndJunctions.openTemplates(junctionTemplate);
-    });
-
     var redraw = function () {
       if (applicationModel.getSelectedLayer() === 'node') {
 
