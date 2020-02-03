@@ -2,10 +2,10 @@
   root.SelectedNodesAndJunctions = function (nodeCollection) {
     var current = {};
 
-    var openNode = function (node) {
+    var openNode = function (node, templateJunctions) {
       clean();
       setCurrentNode(node);
-      eventbus.trigger('node:selected', node);
+      eventbus.trigger('node:selected', node, templateJunctions);
     };
 
     var getCurrentNode = function () {
@@ -56,6 +56,14 @@
       return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).nodePoints;
     };
 
+    var addNodePoints = function (nodePoints) {
+      _.each(nodePoints, function (nodePoint) { current.node.nodePoints.push(nodePoint); });
+    };
+
+    var addJunctions = function (junctions) {
+      _.each(junctions, function (junction) { current.node.junctions.push(junction); });
+    };
+
     var getStartingCoordinates = function () {
       return current.node.startingCoordinates;
     };
@@ -85,7 +93,9 @@
     };
 
     var typeHasChanged = function (nodeType) {
-      return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).type !== nodeType;
+      if (current.node.nodeNumber) {
+        return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).type !== nodeType;
+      } else return LinkValues.NodeType.UnknownNodeType.value !== nodeType;
     };
 
     var getInitialStartDate = function () {
@@ -119,20 +129,21 @@
     };
 
     var isDirty = function () {
-      var original = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber);
+      var original = false;
+      if (current.node.nodeNumber) { original = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber); }
       var nodePointsEquality = false;
       var junctionsEquality = false;
       var junctionPointsEquality = false;
       //  comparing nodes without junctions or nodePoints
       var nodesEquality = isEqualWithout(original, current.node, ['junctions', 'nodePoints']);
       //  comparing the nodePoints of both nodes
-      if (original.nodePoints.length === current.node.nodePoints.length && original.nodePoints.length !== 0){
+      if (original && original.nodePoints && original.nodePoints.length !== 0 && original.nodePoints.length === current.node.nodePoints.length) {
         nodePointsEquality = !_.some(_.flatMap(_.zip(original.nodePoints, current.node.nodePoints), _.spread(function(originalNodePoint, currentNodePoint) {
           return {equality: isEqualWithout(originalNodePoint, currentNodePoint, 'coordinates')};
         })), ['equality', false]);
       }
       //  comparing the junctions of both nodes
-      if (original.junctions.length === current.node.junctions.length && original.junctions.length !== 0) {
+      if (original && original.junctions && original.junctions.length !== 0 && original.junctions.length === current.node.junctions.length) {
         junctionsEquality = !_.some(_.flatMap(_.zip(original.junctions, current.node.junctions), _.spread(function (originalJunction, currentJunction) {
           // return isEqualWithout(originalJunction, currentJunction, 'junctionPoints');
           return {equality: isEqualWithout(originalJunction, currentJunction, 'junctionPoints')};
@@ -223,6 +234,8 @@
       getCurrentTemplates: getCurrentTemplates,
       getJunctions: getJunctions,
       getNodePoints: getNodePoints,
+      addNodePoints: addNodePoints,
+      addJunctions: addJunctions,
       getStartingCoordinates: getStartingCoordinates,
       setStartingCoordinates: setStartingCoordinates,
       setCoordinates: setCoordinates,

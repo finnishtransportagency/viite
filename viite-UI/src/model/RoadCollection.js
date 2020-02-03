@@ -372,9 +372,5 @@
         return new RoadLinkModel(rda);
       });
     };
-
-    eventbus.on('linkProperty:fetchedHistoryLinks',function (date){
-
-    });
   };
 })(this);

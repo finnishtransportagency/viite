@@ -232,8 +232,15 @@
         var asTemplate = _.has(asMessageOrTemplate, 'template') && asMessageOrTemplate.template;
         var asResume = asMessage || asTemplate;
         var htmlTable = "";
-        htmlTable += '<table class="node-junctions-table-dimension">';
+        htmlTable += '<table id="junctions-table-info" class="node-junctions-table-dimension">';
         htmlTable += headers(asResume);
+        htmlTable += toHtmlRows(junctionsInfo, asResume, asTemplate);
+        htmlTable += '</table>';
+        return htmlTable;
+      };
+
+      var toHtmlRows = function (junctionsInfo, asResume, asTemplate) {
+        var htmlTable = '';
         _.each(junctionsInfo, function (junction) {
           htmlTable += '<tr class="node-junctions-table-border-bottom">';
           if (asResume) {
@@ -245,7 +252,6 @@
           htmlTable += junctionInfoHtml(getJunctionPointsInfo(junction));
           htmlTable += '</tr>';
         });
-        htmlTable += '</table>';
         return htmlTable;
       };
 
@@ -282,8 +288,9 @@
 
       return {
         toMessage: toMessage,
-        toHtmlTable: toHtmlTable,
-        junctionIcon: junctionIcon
+        junctionIcon: junctionIcon,
+        toHtmlRows: toHtmlRows,
+        toHtmlTable: toHtmlTable
       };
     };
 
@@ -295,16 +302,22 @@
       var toHtmlTable = function(nodePointsInfo, asMessageOrTemplate) {
         var asResume = _.has(asMessageOrTemplate, 'message') && asMessageOrTemplate.message || _.has(asMessageOrTemplate, 'template') && asMessageOrTemplate.template;
         var htmlTable = "";
-        htmlTable += '<table class="node-points-table-dimension">';
+        htmlTable += '<table id="nodePoints-table-info" class="node-points-table-dimension">';
         htmlTable += headers(asResume);
+        htmlTable += toHtmlRows(nodePointsInfo, asResume);
+        htmlTable += '</table>';
+        return htmlTable;
+      };
+
+      var toHtmlRows = function (nodePointsInfo, asResume) {
         var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
+        var htmlTable = '';
         _.each(_.sortBy(rowsInfo, ['roadNumber', 'roadPartNumber', 'addr']), function(row){
           htmlTable += '<tr class="node-junctions-table-border-bottom">';
           if (!asResume) htmlTable += detachNodePointBox(row);
           htmlTable += nodePointInfoHtml(row);
           htmlTable += '</tr>';
         });
-        htmlTable += '</table>';
         return htmlTable;
       };
 
@@ -379,7 +392,8 @@
       };
       return {
         toMessage: toMessage,
-        toHtmlTable: toHtmlTable
+        toHtmlTable: toHtmlTable,
+        toHtmlRows: toHtmlRows
       };
     };
 
@@ -404,7 +418,7 @@
 
     var nodeChangeHandler = function () {
       var textIsEmpty = $('#nodeName').val() === "";
-      var nodeTypeInvalid = $('#nodeTypeDropdown :selected').val() === LinkValues.NodeType.UnknownNodeType.value.toString();
+      var nodeTypeInvalid = $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString();
       var startDateIsEmpty = $('#nodeStartDate').val() === "";
 
       if (textIsEmpty || nodeTypeInvalid || startDateIsEmpty) {
@@ -577,7 +591,7 @@
       });
 
       rootElement.on('click', '.btn-edit-node-cancel', function () {
-        // TODO PERUUTA! 2221
+        // TODO VIITE-2055 PERUUTA! 2221
         selectedNodesAndJunctions.revertFormChanges();
         closeNode();
       });
@@ -605,15 +619,34 @@
         }
       });
 
-      eventbus.on('node:selected', function (currentNode) {
+      eventbus.on('node:selected', function (currentNode, templates) {
         rootElement.empty();
         if (!_.isEmpty(currentNode)) {
           rootElement.html(nodeForm('Solmun tiedot:', currentNode));
           addDatePicker($('#nodeStartDate'), currentNode.oldStartDate || currentNode.startDate || moment("1.1.2000", dateutil.FINNISH_DATE_FORMAT).toDate());
+
+          //  setting nodePoints on the form
           var nodePointsElement = $('#node-points-info-content');
-          nodePointsElement.html(nodePointsTable.toHtmlTable(currentNode.nodePoints));
+
+          // TODO VIITE-2055 needs refactor !!
+          nodePointsElement.html(nodePointsTable.toHtmlTable(currentNode.nodePoints, {'template': !_.isUndefined(templates) ? templates.nodePoints.length > 0 : false }));
+
+          if(!_.isUndefined(templates) && templates.nodePoints.length > 0) {
+            $('#nodePoints-table-info').append(nodePointsTable.toHtmlRows(templates.nodePoints, true));
+            selectedNodesAndJunctions.addNodePoints(templates.nodePoints);
+          }
+
+          //  setting junctions on the form
           var junctionsElement = $('#junctions-info-content');
-          junctionsElement.html(junctionsTable.toHtmlTable(_.sortBy(currentNode.junctions, 'junctionNumber')));
+          junctionsElement.html(junctionsTable.toHtmlTable(_.sortBy(currentNode.junctions, 'junctionNumber'), {'template': true }));
+          if(!_.isUndefined(templates) && !_.isUndefined(templates.junction)) {
+            $('#junctions-table-info').append(junctionsTable.toHtmlRows([templates.junction], true, true));
+            selectedNodesAndJunctions.addJunctions([templates.junction]);
+          }
+
+          if(!_.isUndefined(templates)) {
+            nodeChangeHandler();
+          }
 
           eventbus.on('node:setCoordinates', function (coordinates) {
             $("#node-coordinates").text(coordinates.x + ', ' + coordinates.y);
@@ -634,6 +667,7 @@
           eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate ' +
                       'junction:detach nodePoint:detach junction:attach nodePoint:attach change:editNodeJunctions', function () {
             nodeChangeHandler();
+            return true;
           });
         }
       });
