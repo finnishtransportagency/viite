@@ -618,4 +618,44 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       startingPointsForCalculations should be((geomNew1.last, geomNew1.last))
     }
   }
+
+  /*
+                               |
+                               |    <- New #1 (Against digitization)
+                              / \
+    New #2 (Right track) ->  |   |  <- New #3 (Left track)
+                             v   v
+   */
+  test("Test defaultSectionCalculatorStrategy.findStartingPoints() When adding two track road (New) after the existing (New) road that goes against the digitization Then the road should still maintain the previous existing direction") {
+    runWithRollback {
+      val geomNew1 = Seq(Point(5.0, 10.0), Point(5.0, 20.0))
+      val plId = Sequences.nextViitePrimaryKeySeqValue
+
+      val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
+        None, 12344L, 0.0, 10.0, SideCode.AgainstDigitizing, (None, None),
+        geomNew1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val geomNew2 = Seq(Point(0.0, 0.0), Point(5.0, 10.0))
+
+      val projectLinkNew2 = ProjectLink(plId + 1, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val geomNew3 = Seq(Point(10.0, 0.0), Point(5.0, 10.0))
+
+      val projectLinkNew3 = ProjectLink(plId + 2, 9999L, 1L, Track.LeftSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        geomNew3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew3), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val otherProjectLinks = Seq(projectLinkNew1)
+      val newProjectLinks = Seq(projectLinkNew2, projectLinkNew3)
+
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, otherProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      startingPointsForCalculations should be((geomNew1.last, geomNew1.last))
+    }
+  }
+
 }
