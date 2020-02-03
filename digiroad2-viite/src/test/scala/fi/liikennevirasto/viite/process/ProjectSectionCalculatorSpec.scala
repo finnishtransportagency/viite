@@ -959,7 +959,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
       val list1 = List(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6)
       val ordered = ProjectSectionCalculator.assignMValues(list1)
-      ordered.minBy(_.startAddrMValue).id should be (idRoad0)
+      ordered.minBy(_.startAddrMValue).id should be (idRoad0) // TODO "5 was not equal to 0"
 
       val list2 = ordered.toList ::: List(projectLink7, projectLink8, projectLink9, projectLink10, projectLink11)
       val ordered2 = ProjectSectionCalculator.assignMValues(list2)

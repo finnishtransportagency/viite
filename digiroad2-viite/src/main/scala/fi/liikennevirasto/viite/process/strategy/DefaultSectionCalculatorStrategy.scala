@@ -183,6 +183,15 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     TrackSectionOrder.createCombinedSections(right, left)
   }
 
+  /**
+    * Find starting point(s) after adding new operations for links in project.
+    *
+    * @param newLinks new ProjectLinks
+    * @param oldLinks non-terminated already existing ProjectLinks
+    * @param otherRoadPartLinks
+    * @param calibrationPoints
+    * @return
+    */
   def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink], otherRoadPartLinks: Seq[ProjectLink],
                          calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
     val (rightStartPoint, pl) = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide), otherRoadPartLinks, calibrationPoints, (newLinks ++ oldLinks).filter(_.track == LeftSide))
