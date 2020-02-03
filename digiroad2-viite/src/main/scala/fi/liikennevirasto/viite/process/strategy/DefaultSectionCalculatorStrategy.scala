@@ -190,7 +190,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     * @param oldLinks non-terminated already existing ProjectLinks
     * @param otherRoadPartLinks
     * @param calibrationPoints
-    * @return
+    * @return Right and left starting points
     */
   def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink], otherRoadPartLinks: Seq[ProjectLink],
                          calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
