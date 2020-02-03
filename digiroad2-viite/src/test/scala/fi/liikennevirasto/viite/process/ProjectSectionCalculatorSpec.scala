@@ -878,6 +878,19 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
+  /*
+              #2
+        #0 /\  __
+          #1 \/ /\
+                ||
+                ||
+             #4 || #3 /  #11
+                ||  /|  #9/#10
+                || //  #7
+                ||//  #5/#8
+                |_/  #6
+
+   */
   test("Test assignMValues When adding New link sections to existing ones Then Direction for those should always be the same as the existing section (which are for e.g. Transfer, Unchanged, Numbering) making the addressMValues be sequential") {
     runWithRollback{
                               //(x,y)   -> (x,y)
