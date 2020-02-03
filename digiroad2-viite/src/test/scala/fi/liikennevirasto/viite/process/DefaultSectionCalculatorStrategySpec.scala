@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -648,6 +649,142 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, otherProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
       startingPointsForCalculations should be((geomNew1.last, geomNew1.last))
     }
+  }
+
+  /*
+       |   <- #2
+       |   <- #1
+       |   <- #3
+   */
+  private def testNewExistingNew(statusOfExisting: LinkStatus, sideCode: SideCode): Unit = {
+    runWithRollback {
+      val geom1 = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
+
+      val projectLink1 = ProjectLink(1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
+        None, 12344L, 0.0, 10.0, sideCode, (None, None),
+        geom1, 0L, statusOfExisting, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val geomNew2 = Seq(Point(0.0, 20.0), Point(0.0, 30.0))
+      val geomNew3 = Seq(Point(0.0, 0.0), Point(0.0, 10.0))
+
+      val projectLinkNew2 = ProjectLink(2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val projectLinkNew3 = ProjectLink(3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        geomNew3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew3), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val otherProjectLinks = Seq(projectLink1)
+      val newProjectLinks = Seq(projectLinkNew2, projectLinkNew3)
+
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, otherProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      if (sideCode == SideCode.AgainstDigitizing) {
+        startingPointsForCalculations should be((geomNew2.last, geomNew2.last))
+      } else {
+        startingPointsForCalculations should be((geomNew3.head, geomNew3.head))
+      }
+    }
+  }
+
+  test("Test findStartingPoints When adding (New) links before and after the existing (NotHandled) road that goes towards the digitization Then the road should still maintain the previous existing direction") {
+    testNewExistingNew(LinkStatus.NotHandled, SideCode.TowardsDigitizing)
+  }
+
+  test("Test findStartingPoints When adding (New) links before and after the existing (New) road that goes towards the digitization Then the road should still maintain the previous existing direction") {
+    testNewExistingNew(LinkStatus.New, SideCode.TowardsDigitizing)
+  }
+
+  test("Test findStartingPoints When adding (New) links before and after the existing (Transfer) road that goes towards the digitization Then the road should still maintain the previous existing direction") {
+    testNewExistingNew(LinkStatus.Transfer, SideCode.TowardsDigitizing)
+  }
+
+  test("Test findStartingPoints When adding (New) links before and after the existing (NotHandled) road that goes against the digitization Then the road should still maintain the previous existing direction") {
+    testNewExistingNew(LinkStatus.NotHandled, SideCode.AgainstDigitizing)
+  }
+
+  test("Test findStartingPoints When adding (New) links before and after the existing (New) road that goes against the digitization Then the road should still maintain the previous existing direction") {
+    testNewExistingNew(LinkStatus.New, SideCode.AgainstDigitizing)
+  }
+
+  test("Test findStartingPoints When adding (New) links before and after the existing (Transfer) road that goes against the digitization Then the road should still maintain the previous existing direction") {
+    testNewExistingNew(LinkStatus.Transfer, SideCode.AgainstDigitizing)
+  }
+
+  /*
+        |
+        |   <- #2
+       / \
+      |   |  <- #0 / #1
+       \ /
+        |   <- #3
+        |
+   */
+  private def testNewExistingTwoTrackNew(statusOfExisting: LinkStatus, sideCode: SideCode): Unit = {
+    runWithRollback {
+      val geom0 = Seq(Point(10.0, 10.0), Point(5.0, 15.0), Point(10.0, 20.0))
+      val geom1 = Seq(Point(10.0, 10.0), Point(15.0, 15.0), Point(10.0, 20.0))
+
+      val projectLink0 = ProjectLink(0, 9999L, 1L, if (sideCode == TowardsDigitizing) Track.LeftSide else Track.RightSide, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
+        None, 12344L, 0.0, GeometryUtils.geometryLength(geom0), sideCode, (None, None),
+        geom0, 0L, statusOfExisting, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom0), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val projectLink1 = ProjectLink(1, 9999L, 1L, if (sideCode == TowardsDigitizing) Track.RightSide else Track.LeftSide, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
+        None, 12344L, 0.0, GeometryUtils.geometryLength(geom1), sideCode, (None, None),
+        geom1, 0L, statusOfExisting, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val geomNew2 = Seq(Point(10.0, 20.0), Point(10.0, 30.0))
+      val geomNew3 = Seq(Point(10.0, 0.0), Point(10.0, 10.0))
+
+      val projectLinkNew2 = ProjectLink(2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val projectLinkNew3 = ProjectLink(3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        geomNew3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew3), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val otherProjectLinks = Seq(projectLink0, projectLink1)
+      val newProjectLinks = Seq(projectLinkNew2, projectLinkNew3)
+
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, otherProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      if (sideCode == SideCode.AgainstDigitizing) {
+        startingPointsForCalculations should be((geomNew2.last, geomNew2.last))
+      } else {
+        startingPointsForCalculations should be((geomNew3.head, geomNew3.head))
+      }
+    }
+  }
+
+  test("Test findStartingPoints When adding (New) links before and after the existing (NotHandled) two track road that goes towards the digitization Then the road should still maintain the previous existing direction") {
+    testNewExistingTwoTrackNew(LinkStatus.NotHandled, SideCode.TowardsDigitizing)
+  }
+
+  test("Test findStartingPoints When adding (New) links before and after the existing (New) two track road that goes towards the digitization Then the road should still maintain the previous existing direction") {
+    testNewExistingTwoTrackNew(LinkStatus.New, SideCode.TowardsDigitizing)
+  }
+
+  test("Test findStartingPoints When adding (New) links before and after the existing (Transfer) two track road that goes towards the digitization Then the road should still maintain the previous existing direction") {
+    testNewExistingTwoTrackNew(LinkStatus.Transfer, SideCode.TowardsDigitizing)
+  }
+
+  test("Test findStartingPoints When adding (New) links before and after the existing (NotHandled) two track road that goes against the digitization Then the road should still maintain the previous existing direction") {
+    testNewExistingTwoTrackNew(LinkStatus.NotHandled, SideCode.AgainstDigitizing)
+  }
+
+  test("Test findStartingPoints When adding (New) links before and after the existing (New) two track road that goes against the digitization Then the road should still maintain the previous existing direction") {
+    testNewExistingTwoTrackNew(LinkStatus.New, SideCode.AgainstDigitizing)
+  }
+
+  test("Test findStartingPoints When adding (New) links before and after the existing (Transfer) two track road that goes against the digitization Then the road should still maintain the previous existing direction") {
+    testNewExistingTwoTrackNew(LinkStatus.Transfer, SideCode.AgainstDigitizing)
   }
 
 }
