@@ -368,7 +368,7 @@
             return {id: first.id, nodeNumber: first.nodeNumber, roadNumber: first.roadNumber, roadPartNumber: first.roadPartNumber, addr: first.addr, beforeAfter: (first.beforeAfter === 1 ? "E" : "J"), type: first.type};
           });
 
-          return doubleRows.concat(singleRows);
+          return _.sortBy(doubleRows.concat(singleRows), ['roadNumber', 'roadPartNumber', 'track', 'addr', 'beforeAfter']);
         } else return [];
       };
 
@@ -416,16 +416,16 @@
       $('#nodeStartDate').prop('disabled', isDisabled);
     };
 
-    var nodeChangeHandler = function () {
-      var textIsEmpty = $('#nodeName').val() === "";
-      var nodeTypeInvalid = $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString();
-      var startDateIsEmpty = $('#nodeStartDate').val() === "";
+    var disableAutoComplete = function () {
+      $('#nodeName').attr('autocomplete', 'false');
+      $('#nodeStartDate').attr('autocomplete', 'false');
+    };
 
-      if (textIsEmpty || nodeTypeInvalid || startDateIsEmpty) {
-        $('.btn-edit-node-save').prop('disabled', true);
-      } else {
-        $('.btn-edit-node-save').prop('disabled', !selectedNodesAndJunctions.isDirty());
-      }
+    var formIsInvalid = function () {
+      return $('#nodeName').val() === "" ||
+        $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
+        $('#nodeStartDate').val() === "" ||
+        !selectedNodesAndJunctions.isDirty();
     };
 
     var closeNode = function () {
@@ -586,13 +586,11 @@
 
       rootElement.on('click', '.btn-edit-node-save', function () {
         var node = selectedNodesAndJunctions.getCurrentNode();
-        eventbus.trigger('node:repositionNode', node, [node.coordinates.x, node.coordinates.y]);
+        eventbus.trigger('node:repositionNode', node, node.coordinates);
         selectedNodesAndJunctions.saveNode();
       });
 
       rootElement.on('click', '.btn-edit-node-cancel', function () {
-        // TODO VIITE-2055 PERUUTA! 2221
-        selectedNodesAndJunctions.revertFormChanges();
         closeNode();
       });
 
@@ -624,6 +622,7 @@
         if (!_.isEmpty(currentNode)) {
           rootElement.html(nodeForm('Solmun tiedot:', currentNode));
           addDatePicker($('#nodeStartDate'), currentNode.oldStartDate || currentNode.startDate || moment("1.1.2000", dateutil.FINNISH_DATE_FORMAT).toDate());
+          disableAutoComplete(); // TODO VIITE-2055 check missing
 
           //  setting nodePoints on the form
           var nodePointsElement = $('#node-points-info-content');
@@ -644,9 +643,7 @@
             selectedNodesAndJunctions.addJunctions([templates.junction]);
           }
 
-          if(!_.isUndefined(templates)) {
-            nodeChangeHandler();
-          }
+          $('.btn-edit-node-save').prop('disabled', formIsInvalid());
 
           eventbus.on('node:setCoordinates', function (coordinates) {
             $("#node-coordinates").text(coordinates.x + ', ' + coordinates.y);
@@ -666,8 +663,7 @@
 
           eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate ' +
                       'junction:detach nodePoint:detach junction:attach nodePoint:attach change:editNodeJunctions', function () {
-            nodeChangeHandler();
-            return true;
+            $('.btn-edit-node-save').prop('disabled', formIsInvalid());
           });
         }
       });

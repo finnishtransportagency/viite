@@ -77,7 +77,7 @@
     var junctionTemplateSelectedLayer = new ol.layer.Vector({
       source: junctionTemplateVector.selected,
       name: 'junctionTemplateSelectedLayer',
-      zIndex: RoadZIndex.CalibrationPointLayer.value - 1
+      zIndex: RoadZIndex.CalibrationPointLayer.value + 1
     });
 
     var layers = [directionMarkerLayer, nodeMarkerLayer, nodeMarkerSelectedLayer, junctionMarkerLayer, junctionMarkerSelectedLayer, nodePointTemplateLayer, nodePointTemplateSelectedLayer, junctionTemplateLayer, junctionTemplateSelectedLayer];
@@ -333,9 +333,12 @@
       nodeLayerSelectInteraction.getFeatures().clear();
     };
 
-    me.eventListener.listenTo(eventbus, 'node:unselected', function (node) {
-      if (!_.isUndefined(node)) {
-        removeCurrentNodeMarker(node);
+    me.eventListener.listenTo(eventbus, 'node:unselected', function (current) {
+      var original = nodeCollection.getNodeByNodeNumber(current.nodeNumber);
+      if (original && original.nodeNumber) {
+        updateCurrentNodeMarker(original);
+      } else {
+        removeCurrentNodeMarker(current);
       }
     });
 
@@ -359,7 +362,6 @@
         case LinkValues.Tool.Add.value:
           toggleSelectInteractions(false);
           me.eventListener.listenToOnce(eventbus, 'map:clicked', createNewNodeMarker);
-          // TODO VIITE-2055 open templates on new node form
           setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
           break;
       }
@@ -374,7 +376,6 @@
       };
       addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(node),
         function (feature) { return feature.node.id === node.id; });
-      // selectNode(node);
       attachNode(node, selectedNodesAndJunctions.getCurrentTemplates());
       applicationModel.setSelectedTool(LinkValues.Tool.Select.value);
     };
@@ -390,8 +391,9 @@
     var updateCurrentNodeMarker = function (node) {
       if (!_.isUndefined(node)) {
         _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
-          if (_.isEqual(nodeFeature.node, node)) {
+          if (nodeFeature.node.id === node.id) {
             nodeFeature.setProperties({type: node.type});
+            nodeFeature.setGeometry(new ol.geom.Point([node.coordinates.x, node.coordinates.y]));
           }
         });
       }
@@ -515,7 +517,7 @@
 
     me.eventListener.listenTo(eventbus, 'node:repositionNode', function (node, coordinates) {
       _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
-        if (_.isEqual(_.omit(nodeFeature.node, 'startingCoordinates'), _.omit(node, 'startingCoordinates'))) {
+        if (nodeFeature.node.id === node.id) {
           nodeFeature.setGeometry(new ol.geom.Point([coordinates.x, coordinates.y]));
         }
       });
@@ -583,21 +585,19 @@
       eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, nodePointTemplates, junctionTemplates, zoom) {
         var filteredNodes = nodes;
         var currentNode = selectedNodesAndJunctions.getCurrentNode();
-        var selectedNode;
 
         if (currentNode) {
-          selectedNode = _.find(nodes, {'id': currentNode.id});
           filteredNodes = _.filter(nodes, function (node) {
-            return node.id !== selectedNode.id;
+            return node.id !== currentNode.id;
           });
         }
 
         if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
-          if (selectedNode) {
-            // adds node created by user which isn't saved yet.
-            addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(selectedNode, roadLinkForPoint, nodeCollection.getCoordinates),
-                function (feature) { return feature.node.id === selectedNode.id; });
+          if (currentNode) {
+            addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(currentNode, roadLinkForPoint, nodeCollection.getCoordinates),
+                function (feature) { return feature.node.id === currentNode.id; });
           }
+
           _.each(filteredNodes, function (node) {
             addFeature(nodeMarkerLayer, new NodeMarker().createNodeMarker(node, roadLinkForPoint, nodeCollection.getCoordinates),
                 function (feature) { return feature.node.id === node.id; });
@@ -616,8 +616,8 @@
         }
 
         if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions) {
-          if (selectedNode) {
-            _.each(selectedNode.junctions, function (junction) {
+          if (currentNode) {
+            _.each(currentNode.junctions, function (junction) {
               addJunctionToMap(junction, false, junctionMarkerSelectedLayer);
             });
           }
@@ -625,6 +625,7 @@
           _.each(_.flatten(_.map(filteredNodes, "junctions")), function (junction) {
             addJunctionToMap(junction);
           });
+
           _.each(junctionTemplates, function (junctionTemplate) {
             addJunctionToMap(junctionTemplate);
           });
@@ -636,11 +637,9 @@
 
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
             //  convert node points and junctions to templates if needed.
-            var nodePointsToDetach =  _.uniq(_.flatMap(selectedNodesAndJunctions.getNodePoints(), function (nodePoint) {
-              return _.concat(_.filter(currentNode.nodePoints, function (currentNodePoint) {
-                return currentNodePoint.id !== nodePoint.id;
-              }), _.isEmpty(currentNode.nodePoints) ? nodePoint : []);
-            }));
+            var nodePointsToDetach = _.filter(selectedNodesAndJunctions.getNodePoints(), function (nodePoint) {
+              return !_.includes(_.map(currentNode.nodePoints, 'id'), nodePoint.id);
+            });
 
             if (nodePointsToDetach.length > 0) {
               _.each(nodePointsToDetach, function (nodePointToDetach) {
@@ -650,11 +649,9 @@
           }
 
           if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions) {
-            var junctionsToDetach = _.uniq(_.flatMap(selectedNodesAndJunctions.getJunctions(), function (junction) {
-              return _.concat(_.filter(currentNode.junctions, function (currrentJunction) {
-                return currrentJunction.id !== junction.id;
-              }), _.isEmpty(currentNode.junctions) ? junction : []);
-            }));
+            var junctionsToDetach = _.filter(selectedNodesAndJunctions.getJunctions(), function (junction) {
+              return !_.includes(_.map(currentNode.junctions, 'id'), junction.id);
+            });
 
             if (junctionsToDetach.length > 0) {
               _.each(junctionsToDetach, function (junctionToDetach) {

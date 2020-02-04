@@ -135,7 +135,7 @@
       me.setNodes(nodes);
       me.setMapNodePointTemplates(nodePointTemplates);
       me.setMapJunctionTemplates(junctionTemplates);
-      eventbus.trigger('node:addNodesToMap', _.cloneDeep(nodes), _.cloneDeep(nodePointTemplates), _.cloneDeep(junctionTemplates), zoom);
+      eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionTemplates, zoom);
     });
 
     eventbus.on('node:save', function (node) {
