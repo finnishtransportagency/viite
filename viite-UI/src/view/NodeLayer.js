@@ -668,7 +668,7 @@
 
       eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers);
 
-      eventListener.listenTo(eventbus, 'change:type', function (node) {
+      eventListener.listenTo(eventbus, 'change:node', function (node) {
         updateCurrentNodeMarker(node);
       });
     };

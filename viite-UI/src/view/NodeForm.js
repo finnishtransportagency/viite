@@ -568,13 +568,13 @@
       rootElement.on('click', '#editNodeJunctions', function () {
         _.forEach(selectedNodesAndJunctions.getCurrentNode().junctions, function(junction) {
           var element = $('#junction-number-textbox-' + junction.id);
-          //  verify editing mode (on/off) by the current element being presented. On(#junction-number-textbox)/Off(#junction-number-icon)
+          //  verify editing mode (on/off) by the current element being presented. On(#junction-number-textbox) / Off(#junction-number-icon)
           if(_.isEmpty(element)){
             //  repaint junction icons to junction text boxes.
-            $('#junction-number-icon-' + junction.id).replaceWith(formCommon.nodeInputNumber('junction-number-textbox-' + junction.id, 2, junction.junctionNumber, 'width:20px;'));
+            $('#junction-number-icon-' + junction.id).replaceWith(formCommon.nodeInputNumber('junction-number-textbox-' + junction.id, 2, junction.junctionNumber || '', 'text-align: center; width: 20px;'));
           } else {
             //  replace junction.junctionNumber
-            junction.junctionNumber = _.isEmpty(element.val()) ? 0 : parseInt(element.val());
+            junction.junctionNumber = element.val() && parseInt(element.val());
             //  update junction number on the map
             eventbus.trigger('junction:mapNumberUpdate', junction);
             //  repaint junction text boxes to junction icons
@@ -609,26 +609,28 @@
       eventbus.on('templates:selected', function (templates) {
         rootElement.empty();
         if (!_.isEmpty(templates.nodePoints) || !_.isUndefined(templates.junction)) {
+          var options = {template: true};
           rootElement.html(templatesForm('Aihioiden tiedot:'));
           var nodePointsElement = $('#node-points-info-content');
-          nodePointsElement.html(nodePointsTable.toHtmlTable(templates.nodePoints, {template: true}));
+          nodePointsElement.html(nodePointsTable.toHtmlTable(templates.nodePoints, options));
           var junctionsElement = $('#junctions-info-content');
-          junctionsElement.html(junctionsTable.toHtmlTable(templates.junction, {template: true}));
+          junctionsElement.html(junctionsTable.toHtmlTable(templates.junction, options));
         }
       });
 
       eventbus.on('node:selected', function (currentNode, templates) {
         rootElement.empty();
+        // TODO VIITE-2055 needs refactor !!
         if (!_.isEmpty(currentNode)) {
+          var options = {template: !_.isUndefined(templates) && (templates.nodePoints.length > 0 || templates.junctions.length > 0) };
           rootElement.html(nodeForm('Solmun tiedot:', currentNode));
-          addDatePicker($('#nodeStartDate'), currentNode.oldStartDate || currentNode.startDate || moment("1.1.2000", dateutil.FINNISH_DATE_FORMAT).toDate());
-          disableAutoComplete(); // TODO VIITE-2055 check missing
+          addDatePicker($('#nodeStartDate'), currentNode.startDate || moment("1.1.2000", dateutil.FINNISH_DATE_FORMAT).toDate());
+          disableAutoComplete(); // this code should broke on different browsers
 
           //  setting nodePoints on the form
           var nodePointsElement = $('#node-points-info-content');
 
-          // TODO VIITE-2055 needs refactor !!
-          nodePointsElement.html(nodePointsTable.toHtmlTable(currentNode.nodePoints, {'template': !_.isUndefined(templates) ? templates.nodePoints.length > 0 : false }));
+          nodePointsElement.html(nodePointsTable.toHtmlTable(currentNode.nodePoints, options));
 
           if(!_.isUndefined(templates) && templates.nodePoints.length > 0) {
             $('#nodePoints-table-info').append(nodePointsTable.toHtmlRows(templates.nodePoints, true));
@@ -637,7 +639,7 @@
 
           //  setting junctions on the form
           var junctionsElement = $('#junctions-info-content');
-          junctionsElement.html(junctionsTable.toHtmlTable(_.sortBy(currentNode.junctions, 'junctionNumber'), {'template': true }));
+          junctionsElement.html(junctionsTable.toHtmlTable(_.sortBy(currentNode.junctions, 'junctionNumber'), options));
           if(!_.isUndefined(templates) && !_.isUndefined(templates.junction)) {
             $('#junctions-table-info').append(junctionsTable.toHtmlRows([templates.junction], true, true));
             selectedNodesAndJunctions.addJunctions([templates.junction]);
