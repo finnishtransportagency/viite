@@ -2,10 +2,10 @@
   root.SelectedNodesAndJunctions = function (nodeCollection) {
     var current = {};
 
-    var openNode = function (node, templateJunctions) {
+    var openNode = function (node, templates) {
       clean();
       setCurrentNode(node);
-      eventbus.trigger('node:selected', node, templateJunctions);
+      eventbus.trigger('node:selected', node, templates);
     };
 
     var getCurrentNode = function () {
@@ -13,7 +13,7 @@
     };
 
     var setCurrentNode = function (node) {
-      current.node = node;
+      current.node = _.cloneDeep(node);
     };
 
     var templates = function (coordinates) {
@@ -43,8 +43,8 @@
 
     var setCurrentTemplates = function (nodePoints, junction) {
       current.templates = {
-        nodePoints: nodePoints,
-        junction: junction
+        nodePoints: _.cloneDeep(nodePoints),
+        junction: _.cloneDeep(junction)
       };
     };
 
@@ -87,9 +87,7 @@
     };
 
     var setStartDate = function (startDate) {
-      // if (!current.node.startDateChanged) { current.node.oldStartDate = current.node.startDate; }
       current.node.startDate = startDate;
-      // current.node.startDateChanged = current.node.oldStartDate !== startDate;
     };
 
     var typeHasChanged = function (nodeType) {
@@ -184,12 +182,8 @@
     };
 
     var closeNode = function () {
-      var node = {};
-      if (!_.isUndefined(current.node) && _.isUndefined(current.node.id)) {
-        node = current.node;
-      }
+      close('node:unselected', current.node);
       clean();
-      close('node:unselected', node);
       eventbus.trigger('nodeLayer:refreshView');
     };
 
@@ -202,24 +196,16 @@
       eventbus.trigger('node:save', current.node);
     };
 
-    /**
-     * Checks for changes on form name, type, date and coordinates to revert them
-     * and triggers node reposition to it's old coordinates
-     */
-    var revertFormChanges = function() {
-        if(current.node.startNameChanged)
-            current.node.name = current.node.oldName;
-        if(current.node.typeChanged)
-            current.node.type = current.node.oldType;
-        if(current.node.startDateChanged)
-            current.node.startDate = current.node.oldStartDate;
-
-        if(current.node.oldCoordX && current.node.oldCoordY) {
-            current.node.coordX = current.node.oldCoordX;
-            current.node.coordY = current.node.oldCoordY;
-            eventbus.trigger('node:repositionNode', current.node, [current.node.oldCoordX, current.node.oldCoordY]);
-        }
-    };
+    // /**
+    //  * Checks for changes on form name, type, date and coordinates to revert them
+    //  * and triggers node reposition to it's old coordinates
+    //  */
+    // var revertFormChanges = function() {
+    //   if (current.node.nodeNumber) {
+    //     current.node = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber);
+    //     eventbus.trigger('node:repositionNode', current.node, { x: current.node.coordinates.x, y: current.node.coordinates.y });
+    //   }
+    // };
 
     eventbus.on('selectedNodesAndJunctions:openTemplates', function (templates) {
       openTemplates(templates);
@@ -250,8 +236,7 @@
       closeNode: closeNode,
       closeTemplates: closeTemplates,
       closeForm: closeForm,
-      saveNode: saveNode,
-      revertFormChanges: revertFormChanges
+      saveNode: saveNode
     };
   };
 })(this);
