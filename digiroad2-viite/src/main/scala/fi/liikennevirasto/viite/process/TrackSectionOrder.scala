@@ -82,8 +82,9 @@ object TrackSectionOrder {
     * @return
     */
   def findOnceConnectedLinks[T <: BaseRoadAddress](seq: Iterable[T]): Map[Point, T] = {
-    //Creates a mapping of (startPoint -> BaseRoadAddress, endPoint -> BaseRoadAddress
-    //Then groups it by points and reduces the mapped values to the distinct BaseRoadAddresses
+
+    // Creates a mapping of (startPoint -> BaseRoadAddress, endPoint -> BaseRoadAddress
+    // Then groups it by points and reduces the mapped values to the distinct BaseRoadAddresses
     val pointMap = seq.flatMap(l => {
       val (p1, p2) = l.getEndPoints
       Seq(p1 -> l, p2 -> l)
@@ -92,6 +93,7 @@ object TrackSectionOrder {
       val links = pointMap.filterKeys(m => GeometryUtils.areAdjacent(p, m, MaxDistanceForConnectedLinks)).values.flatten
       p -> links
     }.toMap.filter(_._2.size == 1).mapValues(_.head)
+
   }
 
   def isRoundabout[T <: BaseRoadAddress](seq: Iterable[T]): Boolean = {
