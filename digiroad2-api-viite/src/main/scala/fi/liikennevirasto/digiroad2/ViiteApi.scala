@@ -12,7 +12,6 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.DigiroadSerializers
@@ -979,13 +978,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val nodePointIds = NodePointConverter.toNodePointIds(nodeInfo.nodePointsToDetach)
         nodesAndJunctionsService.update(node, junctionsIds, nodePointIds, username) match {
           case Some(err) => Map("success" -> false, "errorMessage" -> err)
-          case None => Map("success" -> true)
-        }
-        nodesAndJunctionsService.calculateNodePointsForNode(id, username, node.nodeNumber) match {
-          case Some(err) => {
-            logger.error("Request PUT /nodes/:id, calculateNodePointsForNode failed.", err)
-            Map("success" -> false, "errorMessage" -> err)
-          }
           case None => Map("success" -> true)
         }
       } catch {

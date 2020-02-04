@@ -36,6 +36,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         detachJunctionsFromNode(junctionsIds, username)
         detachNodePointsFromNode(nodePointIds, username)
+        calculateNodePointsForNode(node.id, username, node.nodeNumber) match {
+          case Some(err) => {
+            val message = s"Failed to calculate node points for node (id: ${node.id})."
+            logger.error(message, err)
+            Some(message)
+          }
+          case _ => None
+        }
       } catch {
         case e: Exception => Some(e.getMessage)
       }
@@ -869,21 +877,22 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   /**
-  * Calculates node points for all the road parts of the node.
-  - Handle one node at the time
-  - Expire node points connected to node with type 2  (NODEPOINT.TYPE=2)
-  - Go through the road parts (road numbers 1-19999 and 40000-69999) of the node one by one (JUNCTION->JUNCTION_POINT->ROADWAY_POINT->ROADWAY)
-  - Fetch node points count for road and road part NODE->NODE_POINT.TYPE=1)>>ROADWAY_POINT>>ROADWAY.ROAD_NUMBER, ROADWAY.ROAD_PART_NUMBER
-  - If points exists, no calculated nodepoints. Go to the next road + roadpart.
-  - If no points exist, then calculated node point. Calculated node point only for lane 0 or 1.
-  - If road part is linked only to one(1) junction, calculated node points (before and after) are formed/based with handled
-    road part's junctions (used same ROADWAY_POINT row)
-  - If node is linked with several junctions, calculated node points and corresponding roadway_point are formed (before and after)
-    with average ADDR_M value, When calculating addrMValueAVG, also roadway_points in lane to are included to average.
-  *
-  * @param id, username, nodeNumber
+    * Calculates node points for all the road parts of the node.
+    *
+    * - Handle one node at the time
+    * - Expire node points connected to node with type 2 (NODEPOINT.TYPE = 2)
+    * - Go through the road parts (road numbers 1 - 19999 and 40000 - 69999) of the node one by one (JUNCTION -> JUNCTION_POINT -> ROADWAY_POINT -> ROADWAY)
+    * - Fetch node points count for road and road part NODE -> NODE_POINT.TYPE = 1) >> ROADWAY_POINT >> ROADWAY.ROAD_NUMBER, ROADWAY.ROAD_PART_NUMBER
+    * - If points exists, no calculated nodepoints. Go to the next road + roadpart.
+    * - If no points exist, then calculated node point. Calculated node point only for lane 0 or 1.
+    * - If road part is linked only to one(1) junction, calculated node points (before and after) are formed/based with handled
+    * road part's junctions (used same ROADWAY_POINT row)
+    * - If node is linked with several junctions, calculated node points and corresponding roadway_point are formed (before and after)
+    * with average ADDR_M value, When calculating addrMValueAVG, also roadway_points in lane to are included to average.
+    *
+    * @param id , username, nodeNumber
     */
-  def calculateNodePointsForNode(id: Long, username: String, nodeNumber: Long) : Option[String] = {
+  def calculateNodePointsForNode(id: Long, username: String, nodeNumber: Long): Option[String] = {
     withDynSession {
       try {
         nodePointDAO.expireByNodeNumberAndType(nodeNumber, NodePointType.CalculatedNodePoint.value)
@@ -902,20 +911,20 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             if (countNodePointsForRoadAndRoadPart.get == 0) {
               val addrMValueAVG = nodePointDAO.fetchAverageAddrM(roadPartInfo.roadway_number, roadPartInfo.road_part_number)
               logger.info("average addr_m for roadPartInfo.roadway_number= " + roadPartInfo.roadway_number + ", addrMValueAVG= " + addrMValueAVG)
-              logger.info("roadPartInfo.equals(addrMValueAVG) " + roadPartInfo.addr_m.equals(addrMValueAVG) )
-              if ( ! roadPartInfo.addr_m.equals(addrMValueAVG)) {
+              logger.info("roadPartInfo.equals(addrMValueAVG) " + roadPartInfo.addr_m.equals(addrMValueAVG))
+              if (!roadPartInfo.addr_m.equals(addrMValueAVG)) {
                 logger.info("roadPartInfo.addr_m != addrMValueAVG," + roadPartInfo.addr_m + ", " + addrMValueAVG)
                 val roadWayPointExists = checkRoadwayPointExist(roadPartInfo.roadway_number, addrMValueAVG)
-                if ( roadWayPointExists.nonEmpty) {
-                  roadWayPointExists.map( rwp =>{
+                if (roadWayPointExists.nonEmpty) {
+                  roadWayPointExists.foreach(rwp => {
                     insertCalculatedNodePoint(rwp.id, BeforeAfter.Before.value, nodeNumber)
                     insertCalculatedNodePoint(rwp.id, BeforeAfter.After.value, nodeNumber)
                     logger.info("roadWayPointExists ")
-                    logger.info("insertCalculatedNodePoint, roadway_point_id= " + rwp.id+ ", before_after= "
+                    logger.info("insertCalculatedNodePoint, roadway_point_id= " + rwp.id + ", before_after= "
                       + BeforeAfter.Before.value + ", nodeNumber= " + nodeNumber)
-                    logger.info("insertCalculatedNodePoint, roadway_point_id= " + rwp.id+ ", before_after= "
+                    logger.info("insertCalculatedNodePoint, roadway_point_id= " + rwp.id + ", before_after= "
                       + BeforeAfter.After.value + ", nodeNumber= " + nodeNumber)
-                   }
+                  }
                   )
                 } else {
                   val roadway_point_id_New = insertCalculatedRoadwayPoints(roadPartInfo.roadway_number, addrMValueAVG, username)
@@ -926,8 +935,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                   logger.info("insertCalculatedNodePoint, roadway_point_id= " + roadway_point_id_New + ", before_after= "
                     + roadPartInfo.before_after + ", nodeNumber= " + nodeNumber)
                 }
-
-
               } else {
                 insertCalculatedNodePoint(roadPartInfo.roadway_point_id, BeforeAfter.Before.value, nodeNumber)
                 insertCalculatedNodePoint(roadPartInfo.roadway_point_id, BeforeAfter.After.value, nodeNumber)
@@ -936,7 +943,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           }
         }
         None
-      }  catch {
+      } catch {
         case e: Exception => Some(e.getMessage)
       }
     }

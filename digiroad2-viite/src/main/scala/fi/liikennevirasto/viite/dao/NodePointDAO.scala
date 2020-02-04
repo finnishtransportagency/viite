@@ -5,13 +5,11 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import org.joda.time.DateTime
 import fi.liikennevirasto.viite.NewIdValue
-import fi.liikennevirasto.viite.dao.NodePointType.{CalculatedNodePoint, RoadNodePoint}
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{CalibrationPointMValues, UserDefinedCalibrationPoint}
+import fi.liikennevirasto.viite.dao.NodePointType.CalculatedNodePoint
+import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 sealed trait NodePointType {
@@ -354,8 +352,8 @@ class NodePointDAO extends BaseDAO {
   def updateRoadwayPointId(nodePointId: Any, roadwayPointId: Long) = {
     Q.updateNA(s"UPDATE NODE_POINT SET ROADWAY_POINT_ID = $roadwayPointId WHERE ID = $nodePointId").execute
   }
-  
-  def fetchCalculatedNodePoints(ids: Iterable[Long]) : Seq[NodePoint] = {
+
+  def fetchCalculatedNodePoints(ids: Iterable[Long]): Seq[NodePoint] = {
     val query =
       s"""
          SELECT DISTINCT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NULL AS NODE_NUMBER, NP."TYPE", NULL, NULL,
@@ -370,62 +368,52 @@ class NodePointDAO extends BaseDAO {
     queryList(query)
   }
 
-  def checkExistingdNodePointsForRoad(road_number: Long) : Seq[NodePoint] = {
-    val query =
-      s"""
-         SELECT RP.*
-         FROM ROADWAY R , ROADWAY_POINT RP -- , NODE_POINT NP
-         WHERE R.ROAD_NUMBER =4$road_number AND R.END_DATE IS NULL AND R.VALID_TO IS NULL
-         AND RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
-         -- AND NP.ROADWAY_POINT_ID = RP.ID
-         ORDER BY R.ROAD_PART_NUMBER
-       """
-    queryList(query)
-  }
   case class RoadPartInfo(road_number: Long, roadway_number: Long, road_part_number: Long, before_after: Long, roadway_point_id: Long, addr_m: Long)
 
-  def fetchRoadPartsInfoForNode(nodeId: Long) : Seq[RoadPartInfo] = {
+  def fetchRoadPartsInfoForNode(nodeId: Long): Seq[RoadPartInfo] = {
     val query =
       s"""
-         SELECT R.ROAD_NUMBER , R.ROADWAY_NUMBER, R.ROAD_PART_NUMBER, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, RP.ADDR_M
-         FROM ROADWAY R , ROADWAY_POINT RP , NODE N, JUNCTION_POINT JP, JUNCTION J
+         SELECT R.ROAD_NUMBER, R.ROADWAY_NUMBER, R.ROAD_PART_NUMBER, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, RP.ADDR_M
+         FROM ROADWAY R, ROADWAY_POINT RP , NODE N, JUNCTION_POINT JP, JUNCTION J
          WHERE N.ID = $nodeId
          AND J.NODE_NUMBER = N.NODE_NUMBER
          AND J.ID = JP.JUNCTION_ID
          AND JP.ROADWAY_POINT_ID = RP.ID
-         AND R.ROADWAY_NUMBER =RP.ROADWAY_NUMBER
+         AND R.ROADWAY_NUMBER = RP.ROADWAY_NUMBER
          AND R.END_DATE IS NULL AND R.VALID_TO IS NULL
-         AND (R.ROAD_NUMBER BETWEEN 1 AND 19999  OR  R.ROAD_NUMBER BETWEEN 40000 AND 69999)
+         AND (R.ROAD_NUMBER BETWEEN 1 AND 19999 OR R.ROAD_NUMBER BETWEEN 40000 AND 69999)
          ORDER BY R.ROAD_NUMBER, R.ROADWAY_NUMBER, R.ROAD_PART_NUMBER
        """
     Q.queryNA[(Long, Long, Long, Long, Long, Long)](query).list.map {
       case (road_number, roadway_number, road_part_number, before_after, roadway_point_id, addr_m) =>
-        RoadPartInfo(road_number, roadway_number, road_part_number, before_after, roadway_point_id, addr_m )
+        RoadPartInfo(road_number, roadway_number, road_part_number, before_after, roadway_point_id, addr_m)
     }
   }
-  def fetchNodePointsCountForRoadAndRoadPart(roadway_number: Long, road_part_number: Long, beforeAfter: Long) : Option[Long] = {
+
+  def fetchNodePointsCountForRoadAndRoadPart(roadway_number: Long, road_part_number: Long, beforeAfter: Long): Option[Long] = {
     val query =
       s"""
           SELECT count(NP.ID)
           FROM ROADWAY R, ROADWAY_POINT RP, NODE_POINT NP
-          WHERE R.ROADWAY_NUMBER =  $roadway_number
+          WHERE R.ROADWAY_NUMBER = $roadway_number
           AND R.ROAD_PART_NUMBER = $road_part_number
           AND R.END_DATE IS NULL AND R.VALID_TO IS NULL
           AND RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
           AND NP.ROADWAY_POINT_ID = RP.ID
           AND NP.BEFORE_AFTER != $beforeAfter
           AND NP.VALID_TO IS NULL
-          AND NP.TYPE=1
+          AND NP.TYPE = 1
           ORDER BY R.ROAD_PART_NUMBER
        """
     Q.queryNA[(Long)](query).firstOption
   }
-  def fetchAverageAddrM(roadway_number: Long, road_part_number: Long) : Long = {
+
+  def fetchAverageAddrM(roadway_number: Long, road_part_number: Long): Long = {
     val query =
       s"""
           SELECT AVG(RP.ADDR_M)
           FROM ROADWAY R, ROADWAY_POINT RP, JUNCTION_POINT JP
-          WHERE R.ROADWAY_NUMBER =  $roadway_number
+          WHERE R.ROADWAY_NUMBER = $roadway_number
           AND R.ROAD_PART_NUMBER = $road_part_number
           AND R.END_DATE IS NULL AND R.VALID_TO IS NULL
           AND RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
@@ -435,7 +423,7 @@ class NodePointDAO extends BaseDAO {
     Q.queryNA[(Long)](query).first
   }
 
-  def insertCalculatedNodePoint(roadway_point_id: Long, before_after: Long, nodeNumber: Option[Long]) : Unit ={
+  def insertCalculatedNodePoint(roadway_point_id: Long, before_after: Long, nodeNumber: Option[Long]): Unit = {
     create(Seq(NodePoint(NewIdValue, BeforeAfter.apply(before_after), roadway_point_id, nodeNumber, CalculatedNodePoint,
       None, None, DateTime.now(), None,
       "-", Some(DateTime.now()), 0L, 11,
