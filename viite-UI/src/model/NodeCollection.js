@@ -71,7 +71,7 @@
       });
     };
 
-    fetchCoordinates = function (collection, callBack) {
+    fetchCoordinates = function (collection, callback) {
       Promise.all(_.map(collection, function (template) {
         return locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM);
       }))
@@ -88,7 +88,9 @@
             return _.has(splittedTemplate, 'junctionId');
           });
 
-          callBack();
+          callback();
+
+          applicationModel.removeSpinner();
         });
     };
 
@@ -133,6 +135,12 @@
         });
       }
     };
+
+    // TODO VIITE-2055 [if spin takes too long, ask Policarpo! for a better solution] We can also get coordinates only when needed - i mean, later
+    eventbus.on('node:fetchCoordinates', function (node) {
+      applicationModel.addSpinner();
+      fetchCoordinates(_.concat(node.nodePoints, _.flatMap(node.junctions, 'junctionPoints')), applicationModel.removeSpinner);
+    });
 
     eventbus.on('node:fetched', function(fetchResult, zoom) {
       var nodes = fetchResult.nodes;

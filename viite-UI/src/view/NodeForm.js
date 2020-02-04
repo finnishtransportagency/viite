@@ -477,7 +477,7 @@
         var junction = _.find(selectedNodesAndJunctions.getJunctions(), function (junction) {
           var junctionPointsCoordinates = _.map(junction.junctionPoints, 'coordinates');
 
-          return !_.isEmpty(_.intersectionWith(junctionPointsCoordinates, [{x: nodePoint.coordinates.x, y: nodePoint.coordinates.y}], _.isEqual));
+          return !_.isEmpty(_.intersectionWith(junctionPointsCoordinates, [nodePoint.coordinates], _.isEqual));
         });
 
         if (!_.isUndefined(junction)) { return junctionAndNodePointsByJunctionPointsCoordinates(junction.id); }
@@ -659,7 +659,10 @@
             var typeHasChanged = selectedNodesAndJunctions.typeHasChanged(parseInt(nodeType));
             selectedNodesAndJunctions.setNodeType(parseInt(nodeType));
             //  revert date picker to it's original value when node type is changed back
-            if(!typeHasChanged) { $("#nodeStartDate").val(selectedNodesAndJunctions.getInitialStartDate()); }
+            if(!typeHasChanged) {
+              selectedNodesAndJunctions.setStartDate(selectedNodesAndJunctions.getInitialStartDate());
+              // $("#nodeStartDate").val(selectedNodesAndJunctions.getInitialStartDate());
+            }
             disabledDatePicker(!typeHasChanged);
           });
 
