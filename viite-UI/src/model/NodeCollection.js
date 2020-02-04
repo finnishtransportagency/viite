@@ -71,6 +71,27 @@
       });
     };
 
+    fetchCoordinates = function (collection, callBack) {
+      Promise.all(_.map(collection, function (template) {
+        return locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM);
+      }))
+        .then(function (results) {
+          _.partition(_.flatMap(_.zip(_.flatMap(results), collection), _.spread(function (coordinates, template) {
+            // add coordinates to templates;
+            return _.merge(template, {
+              coordinates: {
+                x: parseFloat(coordinates.lon).toFixed(3),
+                y: parseFloat(coordinates.lat).toFixed(3)
+              }
+            });
+          })), function (splittedTemplate) {
+            return _.has(splittedTemplate, 'junctionId');
+          });
+
+          callBack();
+        });
+    };
+
     this.moveToLocation = function (template) {
       if (!_.isUndefined(template)) {
         locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM).then(function (results) {
@@ -90,34 +111,20 @@
                 var nodePointsFetched = fetchedNodesAndJunctions.nodePointTemplates;
                 var junctionsFetched = fetchedNodesAndJunctions.junctionTemplates;
                 var templates = _.concat(nodePointsFetched, _.flatMap(junctionsFetched, 'junctionPoints'));
-                Promise.all(_.map(templates, function (template) {
-                  return locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM);
-                }))
-                  .then(function (results) {
-                    _.partition(_.flatMap(_.zip(_.flatMap(results), templates), _.spread(function (coordinates, template) {
-                      // add coordinates to templates;
-                      return _.merge(template, {
-                        coordinates: {
-                          x: parseFloat(coordinates.lon).toFixed(3),
-                          y: parseFloat(coordinates.lat).toFixed(3)
-                        }
+                fetchCoordinates(templates, function () {
+                  eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
+                    nodePoints: _.filter(nodePointsFetched, function (nodePoint) {
+                      return _.isEqual(nodePoint.coordinates, referencePoint);
+                    }),
+                    junction: _.filter(junctionsFetched, function (junction) {
+                      return !_.find(junction.junctionPoints, function (junctionPoint) {
+                        return !_.isEqual(junctionPoint.coordinates, referencePoint);
                       });
-                    })), function (splittedTemplate) {
-                      return _.has(splittedTemplate, 'junctionId');
-                    });
-
-                    eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
-                      nodePoints: _.filter(nodePointsFetched, function (nodePoint) {
-                        return _.isEqual(nodePoint.coordinates, referencePoint);
-                      }),
-                      junction: _.filter(junctionsFetched, function (junction) {
-                        return !_.find(junction.junctionPoints, function (junctionPoint) {
-                          return !_.isEqual(junctionPoint.coordinates, referencePoint);
-                        });
-                      })
-                    });
-                    applicationModel.removeSpinner();
+                    })
                   });
+
+                  applicationModel.removeSpinner();
+              });
               }
             });
           } else {

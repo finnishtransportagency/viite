@@ -79,11 +79,12 @@
 
     var setNodeName = function (name) {
       current.node.name = name;
+      eventbus.trigger('change:node', current.node);
     };
 
     var setNodeType = function (type) {
       current.node.type = type;
-      eventbus.trigger('change:type', current.node);
+      eventbus.trigger('change:node', current.node);
     };
 
     var setStartDate = function (startDate) {
@@ -195,17 +196,6 @@
     var saveNode = function () {
       eventbus.trigger('node:save', current.node);
     };
-
-    // /**
-    //  * Checks for changes on form name, type, date and coordinates to revert them
-    //  * and triggers node reposition to it's old coordinates
-    //  */
-    // var revertFormChanges = function() {
-    //   if (current.node.nodeNumber) {
-    //     current.node = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber);
-    //     eventbus.trigger('node:repositionNode', current.node, { x: current.node.coordinates.x, y: current.node.coordinates.y });
-    //   }
-    // };
 
     eventbus.on('selectedNodesAndJunctions:openTemplates', function (templates) {
       openTemplates(templates);
