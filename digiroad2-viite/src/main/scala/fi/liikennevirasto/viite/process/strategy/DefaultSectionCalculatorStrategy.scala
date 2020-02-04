@@ -183,16 +183,24 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     TrackSectionOrder.createCombinedSections(right, left)
   }
 
+  /**
+    * Find starting point(s) after adding new operation for links in project.
+    *
+    * @param newLinks new ProjectLinks
+    * @param oldLinks non-terminated already existing ProjectLinks
+    * @param otherRoadPartLinks
+    * @param calibrationPoints
+    * @return Right and left starting points
+    */
   def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink], otherRoadPartLinks: Seq[ProjectLink],
                          calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
     val (rightStartPoint, pl) = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide), otherRoadPartLinks, calibrationPoints, (newLinks ++ oldLinks).filter(_.track == LeftSide))
 
-    if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined))
+    if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined)) {
       (rightStartPoint, rightStartPoint)
-    else {
+    } else {
       // Get left track non-connected points and find the closest to right track starting point
-      val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
-      val rightLinks = newLinks.filter(_.track == Track.RightSide) ++ oldLinks.filter(_.track == Track.RightSide)
+      val (leftLinks, rightLinks) = (newLinks ++ oldLinks).filterNot(_.track == Track.Combined).partition(_.track == Track.LeftSide)
       val chainEndPoints = TrackSectionOrder.findChainEndpoints(leftLinks)
 
       if (chainEndPoints.isEmpty)
@@ -214,8 +222,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             endPointsWithValues.head._1
         } else if (chainEndPoints.forall(_._2.endAddrMValue != 0) && oldFirst.isDefined) {
           oldFirst.get.getEndPoints._1
-        }
-        else {
+        } else {
           if (leftLinks.forall(_.endAddrMValue == 0) && rightLinks.nonEmpty && rightLinks.exists(_.endAddrMValue != 0)) {
             val rightStartPoint = TrackSectionOrder.findChainEndpoints(rightLinks).find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
             chainEndPoints.minBy(p => p._2.geometry.head.distance2DTo(rightStartPoint.get._1))._1
@@ -229,16 +236,16 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val angle = startingPointsVector.angleXYWithNegativeValues(direction)
             if (candidateEndPoint.distance2DTo(rightStartPoint) > candidateEndPoint.distance2DTo(rightSideEndPoint.head) && angle > 0) {
               chainEndPoints.filterNot(_._1 == candidateEndPoint).head._1
-            }
-            else
+            } else {
               candidateEndPoint
+            }
           } else {
             val startPoint1 = chainEndPoints.minBy(p => p._1.distance2DTo(rightStartPoint))._1
             val startPoint2 = chainEndPoints.maxBy(p => p._1.distance2DTo(rightStartPoint))._1
             val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2))
-            if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty)
+            if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty) {
               startPoint1
-            else {
+            } else {
               chainEndPoints.maxBy(p => p._1.distance2DTo(rightStartPoint))._1
             }
           }
@@ -249,14 +256,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
 
   /**
-    * Find a starting point for this road part
+    * Find a starting point for this road part.
     *
     * @param newLinks          Status = New links that need to have an address
-    * @param oldLinks          Other links that already existed before the project
+    * @param oldLinks          Other non-terminated links that already existed before the current operation
     * @param calibrationPoints The calibration points set by user as fixed addresses
     * @return Starting point
     */
-
   private def findStartingPoint(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink], otherRoadPartLinks: Seq[ProjectLink],
                                 calibrationPoints: Seq[UserDefinedCalibrationPoint], oppositeTrackLinks: Seq[ProjectLink]): (Point, ProjectLink) = {
 
@@ -268,74 +274,87 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     // Pick the one with calibration point set to zero: or any old link with lowest address: or new links by direction
     calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse(
       oldLinks.filter(_.status == LinkStatus.UnChanged).sortBy(_.startAddrMValue).headOption.map(pl => (pl.startingPoint, pl)).getOrElse {
-        oldLinks.find(pl => pl.status == LinkStatus.NotHandled && pl.startAddrMValue == 0).map(pl => (pl.startingPoint, pl)).getOrElse {
-          val remainLinks = oldLinks ++ newLinks
-          if (remainLinks.isEmpty)
-            throw new InvalidAddressDataException("Missing right track starting project links")
-          // Grab all the endpoints of the links
-          val directionLinks = if (remainLinks.exists(_.sideCode != SideCode.Unknown)) remainLinks.filter(_.sideCode != SideCode.Unknown) else remainLinks
+        val remainLinks = oldLinks ++ newLinks
+        if (remainLinks.isEmpty)
+          throw new InvalidAddressDataException("Missing right track starting project links")
+        // Grab all the endpoints of the links
+        val directionLinks = if (remainLinks.exists(_.sideCode != SideCode.Unknown)) remainLinks.filter(_.sideCode != SideCode.Unknown) else remainLinks
 
-          val direction = directionLinks.map(p => p.getEndPoints._2 - p.getEndPoints._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
+        val direction = directionLinks.map(p => p.getEndPoints._2 - p.getEndPoints._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
 
-          val points = remainLinks.map(pl => pl.getEndPoints)
+        val points = remainLinks.map(pl => pl.getEndPoints)
 
-          // Approximate estimate of the mid point: averaged over count, not link length
-          val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0, 0, 0)) { case (x, p) =>
-            (p - Point(0, 0)).scale(1.0 / points.size) + x
-          }
-          val chainEndPoints = TrackSectionOrder.findChainEndpoints(remainLinks)
-          val (linksWithValues, linksWithoutValues) = remainLinks.partition(_.endAddrMValue != 0)
-          val endPointsWithValues = ListMap(chainEndPoints.filter(link => link._2.startAddrMValue >= 0 && link._2.endAddrMValue != 0).toSeq
-            .sortWith(_._2.startAddrMValue < _._2.startAddrMValue): _*)
+        // Approximate estimate of the mid point: averaged over count, not link length
+        val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0, 0, 0)) { case (x, p) =>
+          (p - Point(0, 0)).scale(1.0 / points.size) + x
+        }
+        val chainEndPoints = TrackSectionOrder.findChainEndpoints(remainLinks)
+        val (linksWithValues, linksWithoutValues) = remainLinks.partition(_.endAddrMValue != 0)
+        val endPointsWithValues = ListMap(chainEndPoints.filter(link => link._2.startAddrMValue >= 0 && link._2.endAddrMValue != 0).toSeq
+          .sortWith(_._2.startAddrMValue < _._2.startAddrMValue): _*)
 
-          val oldFirst = TrackSectionOrder.findOnceConnectedLinks(remainLinks).values.find(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
-          if (endPointsWithValues.size == 1) {
-            val endLinkWithValues = endPointsWithValues.head._2
-            val otherEndPoint = chainEndPoints.filterNot(_._2.id == endPointsWithValues.head._2.id)
-            val onceConnectLinks = TrackSectionOrder.findOnceConnectedLinks(linksWithoutValues)
-            val existsCloserProjectlink = linksWithValues.filter(pl => pl.startAddrMValue < endLinkWithValues.startAddrMValue && pl.id != endLinkWithValues.id)
-            if (endPointsWithValues.nonEmpty && onceConnectLinks.nonEmpty && linksWithValues.nonEmpty
-              && (onceConnectLinks.exists(connected => GeometryUtils.areAdjacent(connected._2.getEndPoints._2, endPointsWithValues.head._2.getEndPoints._1)
-              || GeometryUtils.areAdjacent(connected._2.getEndPoints._1, endPointsWithValues.head._2.getEndPoints._1)
-              || GeometryUtils.areAdjacent(linksWithValues.minBy(_.startAddrMValue).geometry, connected._2.getEndPoints._2)) || existsCloserProjectlink.nonEmpty)
-            )
+        val foundConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks).values.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
+
+        // In case there is some old starting link, we want to prioritize the one that didn't change or was not treated yet.
+        // We could have more than two starting link since one of them can be Transferred from any part to this one.
+        val oldFirst: Option[ProjectLink] =
+        if (foundConnectedLinks.nonEmpty) {
+          foundConnectedLinks.find(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.NotHandled)
+            .orElse(foundConnectedLinks.headOption)
+        } else {
+          None
+        }
+        if (endPointsWithValues.size == 1) {
+          val endLinkWithValues = endPointsWithValues.head._2
+          val (currentEndPoint, otherEndPoint) = chainEndPoints.partition(_._2.id == endPointsWithValues.head._2.id)
+          val onceConnectLinks = TrackSectionOrder.findOnceConnectedLinks(linksWithoutValues)
+          val existsCloserProjectlink = linksWithValues.filter(pl => pl.startAddrMValue < endLinkWithValues.startAddrMValue && pl.id != endLinkWithValues.id)
+          if (endPointsWithValues.nonEmpty && onceConnectLinks.nonEmpty && linksWithValues.nonEmpty
+            && (oldFirst.isDefined && points.count(p => GeometryUtils.areAdjacent(p._1, oldFirst.get.startingPoint)
+            || GeometryUtils.areAdjacent(p._2, oldFirst.get.startingPoint)) > 1) // New links before the old starting point
+            && (onceConnectLinks.exists(connected => GeometryUtils.areAdjacent(connected._2.getEndPoints._2, endPointsWithValues.head._2.getEndPoints._1)
+            || GeometryUtils.areAdjacent(connected._2.getEndPoints._1, endPointsWithValues.head._2.getEndPoints._1)
+            || GeometryUtils.areAdjacent(linksWithValues.minBy(_.startAddrMValue).geometry, connected._2.getEndPoints._2)) || existsCloserProjectlink.nonEmpty)
+          ) {
+            otherEndPoint.head
+          } else {
+            if (currentEndPoint.head._1 == endPointsWithValues.head._2.endPoint)
               otherEndPoint.head
             else
               endPointsWithValues.head
-          } else if (chainEndPoints.forall(_._2.endAddrMValue != 0) && oldFirst.isDefined) {
-            (oldFirst.get.getEndPoints._1, oldFirst.get)
-          } else {
-            if (remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.nonEmpty && oppositeTrackLinks.exists(_.endAddrMValue != 0)) {
-              val leftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
-              chainEndPoints.minBy(p => p._2.geometry.head.distance2DTo(leftStartPoint.get._1))
-            } else if (remainLinks.nonEmpty && oppositeTrackLinks.nonEmpty && remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.forall(_.endAddrMValue == 0)) {
-              val candidateRightStartPoint = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
-              val candidateRightOppositeEnd = getOppositeEnd(candidateRightStartPoint._2, candidateRightStartPoint._1)
-              val candidateLeftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).minBy(_._1.distance2DTo(candidateRightStartPoint._1))
-              val candidateLeftOppositeEnd = getOppositeEnd(candidateLeftStartPoint._2, candidateLeftStartPoint._1)
-              val startingPointsVector = Vector3d(candidateRightOppositeEnd.x - candidateLeftOppositeEnd.x, candidateRightOppositeEnd.y - candidateLeftOppositeEnd.y, candidateRightOppositeEnd.z - candidateLeftOppositeEnd.z)
-              val angle =
-                if (startingPointsVector == Vector3d(0.0, 0.0, 0.0)) {
-                  val startingPointVector = Vector3d(candidateRightStartPoint._1.x - candidateLeftStartPoint._1.x, candidateRightStartPoint._1.y - candidateLeftStartPoint._1.y, candidateRightStartPoint._1.z - candidateLeftStartPoint._1.z)
-                  startingPointVector.angleXYWithNegativeValues(direction)
-                }
-                else startingPointsVector.angleXYWithNegativeValues(direction)
-
-              if (angle > 0) {
-                chainEndPoints.filterNot(_._1.equals(candidateRightStartPoint._1)).head
-              }
-              else
-                candidateRightStartPoint
-            }
-            else {
-              val startPoint1 = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
-              val startPoint2 = chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
-              val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1._1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2._1))
-              if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty) {
-                startPoint1
+          }
+        } else if (chainEndPoints.forall(_._2.endAddrMValue != 0) && oldFirst.isDefined) {
+          (oldFirst.get.getEndPoints._1, oldFirst.get)
+        } else {
+          if (remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.nonEmpty && oppositeTrackLinks.exists(_.endAddrMValue != 0)) {
+            val leftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).find(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
+            chainEndPoints.minBy(p => p._2.geometry.head.distance2DTo(leftStartPoint.get._1))
+          } else if (remainLinks.nonEmpty && oppositeTrackLinks.nonEmpty && remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.forall(_.endAddrMValue == 0)) {
+            val candidateRightStartPoint = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
+            val candidateRightOppositeEnd = getOppositeEnd(candidateRightStartPoint._2, candidateRightStartPoint._1)
+            val candidateLeftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).minBy(_._1.distance2DTo(candidateRightStartPoint._1))
+            val candidateLeftOppositeEnd = getOppositeEnd(candidateLeftStartPoint._2, candidateLeftStartPoint._1)
+            val startingPointsVector = Vector3d(candidateRightOppositeEnd.x - candidateLeftOppositeEnd.x, candidateRightOppositeEnd.y - candidateLeftOppositeEnd.y, candidateRightOppositeEnd.z - candidateLeftOppositeEnd.z)
+            val angle =
+              if (startingPointsVector == Vector3d(0.0, 0.0, 0.0)) {
+                val startingPointVector = Vector3d(candidateRightStartPoint._1.x - candidateLeftStartPoint._1.x, candidateRightStartPoint._1.y - candidateLeftStartPoint._1.y, candidateRightStartPoint._1.z - candidateLeftStartPoint._1.z)
+                startingPointVector.angleXYWithNegativeValues(direction)
               } else {
-                chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
+                startingPointsVector.angleXYWithNegativeValues(direction)
               }
+            if (angle > 0) {
+              chainEndPoints.filterNot(_._1.equals(candidateRightStartPoint._1)).head
+            } else {
+              candidateRightStartPoint
+            }
+          } else {
+            val startPoint1 = chainEndPoints.minBy(p => direction.dot(p._1.toVector - midPoint))
+            val startPoint2 = chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
+            val connectingPoint = otherRoadPartLinks.find(l => GeometryUtils.areAdjacent(l.getLastPoint, startPoint1._1) || GeometryUtils.areAdjacent(l.getFirstPoint, startPoint2._1))
+            if (otherRoadPartLinks.isEmpty || connectingPoint.nonEmpty) {
+              startPoint1
+            } else {
+              chainEndPoints.maxBy(p => direction.dot(p._1.toVector - midPoint))
             }
           }
         }
