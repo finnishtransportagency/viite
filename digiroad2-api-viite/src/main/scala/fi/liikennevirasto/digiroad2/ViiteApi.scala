@@ -75,7 +75,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication
-    with ContentEncodingSupport
     with SwaggerSupport {
 
   protected val applicationDescription = "The user interface API "
