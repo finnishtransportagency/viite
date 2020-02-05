@@ -2077,6 +2077,6 @@ class SplittingException(s: String) extends RuntimeException {
 case class ProjectBoundingBoxResult(projectLinkResultF: Future[Seq[ProjectLink]], roadLinkF: Future[Seq[RoadLink]],
                                     complementaryF: Future[Seq[RoadLink]])
 
-case class ProjectRoadLinkChange(id: Long, roadwayId: Long, originalLinearLocationId: Long, linearLocationId: Long, originalRoadNumber: Long, originalRoadPartNumber: Long, roadNumber: Long, roadPartNumber: Long, originalStartAddr: Long, originalEndAddr: Long, newStartAddr: Long, newEndAddr: Long, status: LinkStatus, reversed: Boolean, oldRoadwayNumber: Long, newRoadwayNumber: Long)
+case class ProjectRoadLinkChange(id: Long, roadwayId: Long, originalLinearLocationId: Long, linearLocationId: Long, originalRoadNumber: Long, originalRoadPartNumber: Long, roadNumber: Long, roadPartNumber: Long, originalStartAddr: Long, originalEndAddr: Long, newStartAddr: Long, newEndAddr: Long, status: LinkStatus, reversed: Boolean, originalRoadwayNumber: Long, newRoadwayNumber: Long)
 
 
