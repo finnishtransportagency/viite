@@ -299,8 +299,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         // We could have more than two starting link since one of them can be Transferred from any part to this one.
         val oldFirst: Option[ProjectLink] =
         if (foundConnectedLinks.nonEmpty) {
-          foundConnectedLinks.find(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.NotHandled)
-            .orElse(foundConnectedLinks.find(_.status == LinkStatus.Transfer))
+          foundConnectedLinks.find(_.status == LinkStatus.New).orElse(foundConnectedLinks.find(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.NotHandled))
+            .orElse(foundConnectedLinks.headOption)
         } else {
           None
         }
@@ -310,6 +310,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           val onceConnectLinks = TrackSectionOrder.findOnceConnectedLinks(linksWithoutValues)
           val existsCloserProjectlink = linksWithValues.filter(pl => pl.startAddrMValue < endLinkWithValues.startAddrMValue && pl.id != endLinkWithValues.id)
           if (endPointsWithValues.nonEmpty && onceConnectLinks.nonEmpty && linksWithValues.nonEmpty
+            //TODO comment 2 lines added down below
             && (oldFirst.isDefined && points.count(p => GeometryUtils.areAdjacent(p._1, oldFirst.get.startingPoint)
             || GeometryUtils.areAdjacent(p._2, oldFirst.get.startingPoint)) > 1) // New links before the old starting point
             && (onceConnectLinks.exists(connected => GeometryUtils.areAdjacent(connected._2.getEndPoints._2, endPointsWithValues.head._2.getEndPoints._1)
