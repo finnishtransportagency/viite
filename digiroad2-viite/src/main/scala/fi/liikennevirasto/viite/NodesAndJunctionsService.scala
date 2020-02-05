@@ -876,6 +876,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   }
 
+  def calculateNodePointsForNodes(nodeNumbers: Seq[Long], username: String): Unit = {
+    nodeNumbers.foreach(nodeNumber => {
+      // calculateNodePointsForNode(nodeNumber, username)
+    })
+  }
+
   /**
     * Calculates node points for all the road parts of the node.
     *
@@ -892,6 +898,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     *
     * @param id , username, nodeNumber
     */
+  // TODO take only node number as parameter
   def calculateNodePointsForNode(id: Long, username: String, nodeNumber: Long): Option[String] = {
     withDynSession {
       try {
@@ -944,6 +951,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         None
       } catch {
+        // TODO In case of error, don't swallow the error and continue silently, but throw Exception.
         case e: Exception => Some(e.getMessage)
       }
     }
