@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, asset}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad, MinorDiscontinuity}
@@ -1422,7 +1422,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val geom3 = Seq(Point(20.0, 5.0), Point(10.0, 10.0))
 
       val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.6, SideCode.TowardsDigitizing,
+        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.6, SideCode.TowardsDigitizing,
         0, (None, None), geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, MinorDiscontinuity,
         0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 11.2, SideCode.TowardsDigitizing,
@@ -1442,6 +1442,12 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
           prev.endAddrMValue should be(next.startAddrMValue)
       }
 
+      output.foreach(pl => {
+        (pl.endAddrMValue - pl.startAddrMValue) should be >= 10L
+        pl.sideCode should be(asset.SideCode.TowardsDigitizing)
+        pl.reversed should be(false)
+      }
+      )
     }
   }
 
