@@ -185,8 +185,7 @@
 
       eventbus.on('tool:changed', function(name) {
         _.each(tools, function(tool) {
-          if (tool.name === name ||
-            (_.has(LinkValues.Tool[name], 'alias') && _.includes(LinkValues.Tool[name].alias, tool.name))) {
+          if (applicationModel.isSelectedTool(tool.name)) {
             tool.activate();
           } else {
             tool.deactivate();

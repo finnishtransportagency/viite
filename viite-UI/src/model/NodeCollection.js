@@ -3,17 +3,12 @@
     var me = this;
     var nodes = [];
     var nodesWithAttributes = [];
-    var mapNodePointTemplates = [];
-    var mapJunctionTemplates = [];
+    var mapTemplates = [];
     var userNodePointTemplates = [];
     var userJunctionTemplates = [];
 
-    this.setMapNodePointTemplates = function(list) {
-      mapNodePointTemplates = list;
-    };
-
-    this.setMapJunctionTemplates = function(list) {
-      mapJunctionTemplates = list;
+    this.setMapTemplates = function(templates) {
+      mapTemplates = templates;
     };
 
     this.setUserTemplates = function(nodePointTemplates, junctionTemplates) {
@@ -52,19 +47,14 @@
       });
     };
 
-    var getCoordinates = function (roadNumber, roadPartNumber, addrM, setCoordinates) {
-      locationSearch.search(roadNumber + ' ' + roadPartNumber + ' ' + addrM).then(setCoordinates);
-    };
-    this.getCoordinates = getCoordinates;
-
     this.getNodePointTemplatesByCoordinates = function (coordinates) {
-      return _.filter(mapNodePointTemplates, function (nodePointTemplate) {
+      return _.filter(mapTemplates.nodePoints, function (nodePointTemplate) {
         return _.isEqual(nodePointTemplate.coordinates, coordinates);
       });
     };
 
     this.getJunctionTemplateByCoordinates = function (coordinates) {
-      return _.filter(mapJunctionTemplates, function (junctionTemplate) {
+      return _.filter(mapTemplates.junctions, function (junctionTemplate) {
         return _.find(junctionTemplate.junctionPoints, function (junctionPoint) {
           return _.isEqual(junctionPoint.coordinates, coordinates);
         });
@@ -89,8 +79,6 @@
           });
 
           callback();
-
-          applicationModel.removeSpinner();
         });
     };
 
@@ -136,21 +124,26 @@
       }
     };
 
-    // TODO VIITE-2055 [if spin takes too long, ask Policarpo! for a better solution] We can also get coordinates only when needed - i mean, later
-    eventbus.on('node:fetchCoordinates', function (node) {
-      applicationModel.addSpinner();
-      fetchCoordinates(_.concat(node.nodePoints, _.flatMap(node.junctions, 'junctionPoints')), applicationModel.removeSpinner);
+    eventbus.on('node:fetchCoordinates', function (node, callback) {
+      fetchCoordinates(_.concat(node.nodePoints, _.flatMap(node.junctions, 'junctionPoints')), callback || applicationModel.removeSpinner);
     });
 
     eventbus.on('node:fetched', function(fetchResult, zoom) {
       var nodes = fetchResult.nodes;
-      var nodePointTemplates = fetchResult.nodePointTemplates;
-      var junctionTemplates = fetchResult.junctionTemplates;
+      var templates = {
+        nodePoints: fetchResult.nodePointTemplates,
+        junctions: fetchResult.junctionTemplates
+      };
 
+      //  add nodes to map
       me.setNodes(nodes);
-      me.setMapNodePointTemplates(nodePointTemplates);
-      me.setMapJunctionTemplates(junctionTemplates);
-      eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionTemplates, zoom);
+      eventbus.trigger('node:addNodesToMap', nodes, { nodePoints: [], junctions: [] }, zoom);
+
+      //  add templates to map
+      me.setMapTemplates(templates);
+      eventbus.trigger('node:fetchCoordinates', templates, function () {
+        eventbus.trigger('node:addNodesToMap', [], templates, zoom);
+      });
     });
 
     eventbus.on('node:save', function (node) {
