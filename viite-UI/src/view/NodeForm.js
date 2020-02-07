@@ -667,7 +667,7 @@
             //  revert date picker to it's original value when node type is changed back
             if(!typeHasChanged) {
               selectedNodesAndJunctions.setStartDate(selectedNodesAndJunctions.getInitialStartDate());
-              // $("#nodeStartDate").val(selectedNodesAndJunctions.getInitialStartDate());
+              $("#nodeStartDate").val(selectedNodesAndJunctions.getInitialStartDate());
             }
             disabledDatePicker(!typeHasChanged);
           });
