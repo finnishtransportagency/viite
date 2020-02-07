@@ -1501,8 +1501,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         c
         | #1
         | #4
-           #3  #2 #5
-           --  <----c
+        c  #3  #2 #5
+           --  c----c
    */
   test("Test assignMValues When new link with discontinuity on both sides is added in the between of four other links having calibration points at the beginning and end and discontinuity places Then the direction should stay same and new address values should be properly assigned") {
     runWithRollback {
