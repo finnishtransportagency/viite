@@ -62,24 +62,26 @@
     };
 
     fetchCoordinates = function (collection, callback) {
-      Promise.all(_.map(collection, function (template) {
-        return locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM);
-      }))
-        .then(function (results) {
-          _.partition(_.flatMap(_.zip(_.flatMap(results), collection), _.spread(function (coordinates, template) {
-            // add coordinates to templates;
-            return _.merge(template, {
-              coordinates: {
-                x: parseFloat(coordinates.lon).toFixed(3),
-                y: parseFloat(coordinates.lat).toFixed(3)
-              }
+      if (!_.isEmpty(collection)) {
+        Promise.all(_.map(collection, function (template) {
+          return locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM);
+        }))
+          .then(function (results) {
+            _.partition(_.flatMap(_.zip(_.flatMap(results), collection), _.spread(function (coordinates, template) {
+              // add coordinates to templates;
+              return _.merge(template, {
+                coordinates: {
+                  x: parseFloat(coordinates.lon.toFixed(3)),
+                  y: parseFloat(coordinates.lat.toFixed(3))
+                }
+              });
+            })), function (splittedTemplate) {
+              return _.has(splittedTemplate, 'junctionId');
             });
-          })), function (splittedTemplate) {
-            return _.has(splittedTemplate, 'junctionId');
-          });
 
-          callback();
-        });
+            callback();
+          });
+      }
     };
 
     this.moveToLocation = function (template) {
@@ -97,16 +99,17 @@
               zoom: zoomlevels.minZoomForJunctions
             }, function (fetchedNodesAndJunctions) {
               if (_.has(fetchedNodesAndJunctions, 'nodePointTemplates') || _.has(fetchedNodesAndJunctions, 'junctionTemplates')) {
-                var referencePoint = {x: parseFloat(result.lon).toFixed(3), y: parseFloat(result.lat).toFixed(3)};
-                var nodePointsFetched = fetchedNodesAndJunctions.nodePointTemplates;
-                var junctionsFetched = fetchedNodesAndJunctions.junctionTemplates;
-                var templates = _.concat(nodePointsFetched, _.flatMap(junctionsFetched, 'junctionPoints'));
-                fetchCoordinates(templates, function () {
+                var referencePoint = { x: parseFloat(result.lon.toFixed(3)), y: parseFloat(result.lat.toFixed(3)) };
+                var templates = {
+                  nodePoints: fetchedNodesAndJunctions.nodePointTemplates,
+                  junctions:  fetchedNodesAndJunctions.junctionTemplates
+                };
+                fetchCoordinates(_.concat(templates.nodePoints, _.flatMap(templates.junctions, 'junctionPoints')), function () {
                   eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
-                    nodePoints: _.filter(nodePointsFetched, function (nodePoint) {
+                    nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
                       return _.isEqual(nodePoint.coordinates, referencePoint);
                     }),
-                    junction: _.filter(junctionsFetched, function (junction) {
+                    junctions: _.filter(templates.junctions, function (junction) {
                       return !_.find(junction.junctionPoints, function (junctionPoint) {
                         return !_.isEqual(junctionPoint.coordinates, referencePoint);
                       });

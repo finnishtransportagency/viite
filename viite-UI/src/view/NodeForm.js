@@ -180,8 +180,8 @@
 
       var toMessage = function (junctionsInfo) {
         return toHtmlTable({
-          junctionTemplates: junctionsInfo,
-          options: {message: true}
+          currentJunctions: junctionsInfo,
+          options: {asResume: true}
         });
       };
 
