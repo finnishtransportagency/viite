@@ -1452,6 +1452,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   }
 
   /*
+        ^
         c
         | #1
         c  #3  #2
@@ -1498,6 +1499,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   }
 
   /*
+        ^
         c
         | #1
         | #4
