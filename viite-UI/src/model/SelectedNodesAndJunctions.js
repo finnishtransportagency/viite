@@ -5,7 +5,11 @@
     var openNode = function (node, templates) {
       clean();
       setCurrentNode(node);
-      eventbus.trigger('node:selected', node, templates);
+      applicationModel.addSpinner();
+      eventbus.trigger('node:fetchCoordinates', node, function () {
+        eventbus.trigger('node:selected', current.node, templates);
+        applicationModel.removeSpinner();
+      });
     };
 
     var getCurrentNode = function () {
@@ -14,7 +18,6 @@
 
     var setCurrentNode = function (node) {
       current.node = _.cloneDeep(node);
-      eventbus.trigger('node:fetchCoordinates', current.node);
     };
 
     var templates = function (coordinates) {
