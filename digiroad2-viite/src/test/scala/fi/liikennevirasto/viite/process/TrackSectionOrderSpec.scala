@@ -274,4 +274,29 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     endPoint.head.id should be (6L)
   }
 
+  test("Test findChainEndpoints When finding links in edges Then their points should also be on the edges") {
+    //
+    //                 (1,1)       (3,1)       (4,1)    (6,1)      (8,1)    (11,1)   (16,1)     (18,1)   (20,1)
+    //                   |-----------|-----------|        |----------|---------|        |----------|--------|
+    //                                                                                             | 7L     |8L
+    //                                                                                             v        v
+    //                                                                                           (18,0)  (20,0)
+    //                        1L          2L                   3L         4L               5L        6L
+    val projectLinks = List(
+      generateProjectLink(1L, Seq(Point(1, 1), Point(2, 1), Point(3, 1)), Track.Combined),
+      generateProjectLink(2L, Seq(Point(3, 1), Point(4, 1)), Track.Combined),
+      generateProjectLink(3L, Seq(Point(6, 1), Point(7, 1), Point(8, 1)), Track.Combined),
+      generateProjectLink(4L, Seq(Point(8, 1), Point(10, 1), Point(11, 1)), Track.Combined),
+      generateProjectLink(5L, Seq(Point(16, 1), Point(17, 1), Point(18, 1)), Track.Combined),
+      generateProjectLink(6L, Seq(Point(18, 1), Point(19, 1), Point(20, 1)), Track.Combined),
+      generateProjectLink(7L, Seq(Point(18, 1), Point(18, 0)), Track.RightSide),
+      generateProjectLink(8L, Seq(Point(20, 1), Point(20, 0)), Track.LeftSide)
+    )
+    val endPoints = TrackSectionOrder.findChainEndpoints(projectLinks)
+    endPoints.size should be (2)
+    val (chainStartPointLink, chainEndPointLink) = (endPoints.head, endPoints.last)
+    chainStartPointLink._1 should be (chainStartPointLink._2.startingPoint)
+    chainEndPointLink._1 should be (chainEndPointLink._2.endPoint)
+  }
+
 }
