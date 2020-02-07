@@ -106,16 +106,16 @@
       });
       var coordinate;
       if (!_.isUndefined(featureAtPixel) && !_.isUndefined(featureAtPixel.node)) {
-        var nodeData = featureAtPixel.node;
         coordinate = map.getEventCoordinate(event.originalEvent);
         if (infoContent !== null) {
-          var nodeName = "";
-          if (!_.isUndefined(nodeData.name)) {
-            nodeName = 'Nimi: ' + nodeData.name + '<br>';
+          var nodeName = '';
+          var name = featureAtPixel.getProperties().name;
+          if (!_.isUndefined(name)) {
+            nodeName = 'Nimi: ' + name + '<br>';
           }
           infoContent.innerHTML =
             nodeName +
-            'Solmutyyppi: ' + displayNodeType(nodeData.type) + '<br>'
+            'Solmutyyppi: ' + displayNodeType(featureAtPixel.getProperties().type) + '<br>'
           ;
         }
         overlay.setPosition(coordinate);

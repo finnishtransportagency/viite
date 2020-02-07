@@ -20,12 +20,12 @@
     var templates = function (coordinates) {
       return {
         nodePoints: nodeCollection.getNodePointTemplatesByCoordinates(coordinates),
-        junction: nodeCollection.getJunctionTemplateByCoordinates(coordinates)
+        junctions: nodeCollection.getJunctionTemplateByCoordinates(coordinates)
       };
     };
 
-    var openNodePointTemplates = function (nodePointTemplates) {
-      openTemplates(templates(_.first(nodePointTemplates).coordinates));
+    var openNodePointTemplate = function (nodePointTemplate) {
+      openTemplates(templates(nodePointTemplate.coordinates));
     };
 
     var openJunctionTemplate = function (junctionTemplate) {
@@ -34,7 +34,7 @@
 
     var openTemplates = function (templates) {
       clean();
-      setCurrentTemplates(templates.nodePoints, _.first(templates.junction));
+      setCurrentTemplates(templates.nodePoints, templates.junctions);
       eventbus.trigger('templates:selected', templates);
     };
 
@@ -42,10 +42,10 @@
       return current.templates;
     };
 
-    var setCurrentTemplates = function (nodePoints, junction) {
+    var setCurrentTemplates = function (nodePoints, junctions) {
       current.templates = {
         nodePoints: _.cloneDeep(nodePoints),
-        junction: _.cloneDeep(junction)
+        junctions: _.cloneDeep(junctions)
       };
     };
 
@@ -208,9 +208,8 @@
 
     return {
       openNode: openNode,
-      openNodePointTemplates: openNodePointTemplates,
+      openNodePointTemplate: openNodePointTemplate,
       openJunctionTemplate: openJunctionTemplate,
-      openTemplates: openTemplates,
       getCurrentNode: getCurrentNode,
       getCurrentTemplates: getCurrentTemplates,
       getJunctions: getJunctions,

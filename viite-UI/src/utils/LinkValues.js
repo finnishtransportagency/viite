@@ -209,11 +209,11 @@
     };
 
     root.Tool = {
-        Unknown:            {value: ""},
-        Default:            {value: "Select"},
         Select:             {value: "Select",   description: 'Solmun valinta'},
         Attach:             {value: "Attach",   alias:["Select"]},
-        Add:                {value: "Add"}
+        Add:                {value: "Add"},
+        Default:            {value: "Default",  alias:["Select"]},
+        Unknown:            {value: ""}
     };
 
     root.Discontinuity = {
