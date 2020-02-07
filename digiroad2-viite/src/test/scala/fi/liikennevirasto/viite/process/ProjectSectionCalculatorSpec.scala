@@ -1411,7 +1411,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
            #3  #2
            --  <--
    */
-  // TODO Populate test data in Project, ProjectLink and Roadway -tables.
   test("Test assignMValues When new link with discontinuity on both sides is added in the between of two other links Then the direction should stay same and new address values should be properly assigned") {
     runWithRollback {
       val idRoad1 = 1L
@@ -1422,7 +1421,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val geom2 = Seq(Point(50.0, 0.0), Point(40.0, 2.0))
       val geom3 = Seq(Point(20.0, 5.0), Point(10.0, 10.0))
 
-      val projectLink1 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad1, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
         20L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.6, SideCode.TowardsDigitizing,
         0, (None, None), geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, MinorDiscontinuity,
