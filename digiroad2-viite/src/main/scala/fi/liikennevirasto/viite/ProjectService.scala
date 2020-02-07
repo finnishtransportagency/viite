@@ -1428,15 +1428,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             setReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadwayId != 0L))
           ).sortBy(_.endAddrMValue)
           if (newDiscontinuity.isDefined && newTrack.isDefined && roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
-            if (completelyNewLinkIds.nonEmpty && completelyNewLinkIds.forall(l => calculatedLinks.map(_.linkId).contains(l))) {
+            if (completelyNewLinkIds.nonEmpty) {
               val (completelyNew, others) = calculatedLinks.partition(cl => completelyNewLinkIds.contains(cl.id))
-              others ++ completelyNew.init :+ completelyNew.last.copy(discontinuity = newDiscontinuity.get)
+              others ++ (if (completelyNew.nonEmpty) {
+                completelyNew.init :+ completelyNew.last.copy(discontinuity = newDiscontinuity.get)
+              } else {
+                Seq()
+              })
             } else {
               val (filtered, rest) = calculatedLinks.partition(_.track == newTrack.get)
-              rest ++
-                (filtered.nonEmpty match {
-                  case true => filtered.init :+ filtered.last.copy(discontinuity = newDiscontinuity.get)
-                  case _ => Seq()
+              rest ++ (if (filtered.nonEmpty) {
+                  filtered.init :+ filtered.last.copy(discontinuity = newDiscontinuity.get)
+                } else {
+                  Seq()
                 })
             }
           }
