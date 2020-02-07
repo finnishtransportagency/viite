@@ -646,6 +646,8 @@
           var filteredNodePointTemplates = templates.nodePoints;
 
           if (currentNode) {
+            applicationModel.addSpinner();
+            eventbus.trigger('node:fetchCoordinates', nodeCollection.getNodeByNodeNumber(currentNode.nodeNumber));
             filteredNodes = _.filter(nodes, function (node) {
               return node.id !== currentNode.id;
             });
