@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
@@ -1507,23 +1508,42 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
    */
   test("Test assignMValues When two new links with discontinuities are added before existing and transfer operation is done last Then the direction should stay same and new address values should be properly assigned") {
     runWithRollback {
-      val idRoad1 = 1L
-      val idRoad2 = 2L
-      val idRoad3 = 3L
-
       val geom1 = Seq(Point(0.0, 20.0), Point(0.0, 30.0))
       val geom2 = Seq(Point(50.0, 0.0), Point(40.0, 2.0))
       val geom3 = Seq(Point(20.0, 5.0), Point(11.0, 10.0))
 
-      val projectLink1 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad1, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        0, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.6, SideCode.TowardsDigitizing,
-        0, (Some(CalibrationPoint(12345L, 0, 10L)), Some(CalibrationPoint(12345L, 10.6, 20L))), geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, MinorDiscontinuity,
-        0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 11.2, SideCode.TowardsDigitizing,
-        0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 12.3, SideCode.TowardsDigitizing,
-        0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val roadNumber = 9999L
+      val roadPartNumber = 1L
+      val roadType = RoadType.PublicRoad
+      val track = Track.Combined
+      val roadwayId1 = Sequences.nextRoadwayId
+      val roadwayNumber1 = Sequences.nextRoadwayNumber
+      val roadway1 = Roadway(roadwayId1, roadwayNumber1, roadNumber, roadPartNumber, roadType, track, Discontinuity.Continuous,
+        0L, 10L, false, DateTime.parse("2000-01-01"), None, "Test", None, 0, NoTermination)
+      roadwayDAO.create(Seq(roadway1))
+
+      val linkId1 = 12345L
+      val link1 = Link(linkId1, LinkGeomSource.NormalLinkInterface.value, 0, None)
+      LinkDAO.create(link1.id, link1.adjustedTimestamp, link1.source)
+
+      val linearLocationId1 = Sequences.nextLinearLocationId
+      val linearLocation1 = LinearLocation(linearLocationId1, 1, linkId1, 0.0, 10.0, SideCode.TowardsDigitizing, 0L,
+        (Some(0L), Some(10L)), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber1)
+      linearLocationDAO.create(Seq(linearLocation1))
+
+      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None,
+        None, linkId1, 0.0, 10.0, SideCode.TowardsDigitizing, (Some(ProjectLinkCalibrationPoint(linkId1, 0, 0L)), Some(ProjectLinkCalibrationPoint(linkId1, 10.0, 10L))),
+        geom1, 0L, LinkStatus.Transfer, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), roadway1.id, 0, 0, reversed = false,
+        None, 86400L)
+      val projectLink2 = ProjectLink(plId + 2, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
+        None, 12346L, 0.0, 11.2, SideCode.TowardsDigitizing, (None, None),
+        geom2, 0L, LinkStatus.Transfer, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val projectLink3 = ProjectLink(plId + 3, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 10L, 20L, 0L, 0L, None, None,
+        None, 12347L, 0.0, 12.3, SideCode.TowardsDigitizing, (None, None),
+        geom3, 0L, LinkStatus.Transfer, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
+        None, 86400L)
 
       val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
 
