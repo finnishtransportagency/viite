@@ -1502,6 +1502,53 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         ^
         c
         | #1
+        c  #3  #2
+           --  --
+   */
+  test("Test assignMValues When two new links with discontinuities are added before existing and transfer operation is done last Then the direction should stay same and new address values should be properly assigned") {
+    runWithRollback {
+      val idRoad1 = 1L
+      val idRoad2 = 2L
+      val idRoad3 = 3L
+
+      val geom1 = Seq(Point(0.0, 20.0), Point(0.0, 30.0))
+      val geom2 = Seq(Point(50.0, 0.0), Point(40.0, 2.0))
+      val geom3 = Seq(Point(20.0, 5.0), Point(11.0, 10.0))
+
+      val projectLink1 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad1, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
+        0, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.6, SideCode.TowardsDigitizing,
+        0, (Some(CalibrationPoint(12345L, 0, 10L)), Some(CalibrationPoint(12345L, 10.6, 20L))), geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, MinorDiscontinuity,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 11.2, SideCode.TowardsDigitizing,
+        0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
+        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 12.3, SideCode.TowardsDigitizing,
+        0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+
+      val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
+
+      val output = ProjectSectionCalculator.assignMValues(projectLinkSeq)
+
+      output.length should be(3)
+
+      output.zip(output.tail).foreach {
+        case (prev, next) =>
+          prev.endAddrMValue should be(next.startAddrMValue)
+      }
+
+      output.foreach(pl => {
+        (pl.endAddrMValue - pl.startAddrMValue) should be(10L)
+        pl.sideCode should be(asset.SideCode.TowardsDigitizing)
+        pl.reversed should be(false)
+      }
+      )
+    }
+  }
+
+  /*
+        ^
+        c
+        | #1
         | #4
         c  #3  #2 #5
            --  c----c
