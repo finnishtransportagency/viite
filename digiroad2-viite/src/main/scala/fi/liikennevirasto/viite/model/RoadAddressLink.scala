@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.RoadType
 
@@ -48,6 +48,27 @@ case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: Long, geome
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
                            anomaly: Anomaly = Anomaly.None, roadwayNumber: Long = 0, newGeometry: Option[Seq[Point]] = None) extends RoadAddressLinkLike {
+
+  lazy val startingPoint: Point = if(sideCode == SideCode.TowardsDigitizing)
+      geometry.head
+    else
+      geometry.last
+
+
+  lazy val endPoint: Point = if(sideCode == SideCode.TowardsDigitizing)
+      geometry.last
+    else
+      geometry.head
+
+
+  def getEndPoints: (Point, Point) = {
+    if (sideCode == SideCode.Unknown) {
+      val direction = if (geometry.head.y == geometry.last.y) Vector3d(1.0, 0.0, 0.0) else Vector3d(0.0, 1.0, 0.0)
+      Seq((geometry.head, geometry.last), (geometry.last, geometry.head)).minBy(ps => direction.dot(ps._1.toVector - ps._2.toVector))
+    } else {
+      (startingPoint, endPoint)
+    }
+  }
 }
 
 sealed trait Anomaly {
