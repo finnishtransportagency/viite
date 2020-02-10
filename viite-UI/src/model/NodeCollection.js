@@ -97,7 +97,8 @@
             backend.getNodesAndJunctions({
               boundingBox: [result.lon, result.lat, result.lon, result.lat].join(","),
               zoom: zoomlevels.minZoomForJunctions
-            }, function (fetchedNodesAndJunctions) {
+            }, function (fetchedResult) {
+              var fetchedNodesAndJunctions = fetchedResult.fetchedNodes;
               if (_.has(fetchedNodesAndJunctions, 'nodePointTemplates') || _.has(fetchedNodesAndJunctions, 'junctionTemplates')) {
                 var referencePoint = { x: parseFloat(result.lon.toFixed(3)), y: parseFloat(result.lat.toFixed(3)) };
                 var templates = {
