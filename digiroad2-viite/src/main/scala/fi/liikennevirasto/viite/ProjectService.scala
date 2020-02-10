@@ -1430,10 +1430,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           if (newDiscontinuity.isDefined && newTrack.isDefined && roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
             if (completelyNewLinkIds.nonEmpty) {
               val (completelyNew, others) = calculatedLinks.partition(cl => completelyNewLinkIds.contains(cl.id))
-              others ++ completelyNew.init :+ completelyNew.last.copy(discontinuity = newDiscontinuity.get)
+              others ++ (if (completelyNew.nonEmpty) {
+                completelyNew.init :+ completelyNew.last.copy(discontinuity = newDiscontinuity.get)
+              } else {
+                Seq()
+              })
             } else {
               val (filtered, rest) = calculatedLinks.partition(_.track == newTrack.get)
-              rest ++ filtered.init :+ filtered.last.copy(discontinuity = newDiscontinuity.get)
+              rest ++ (if (filtered.nonEmpty) {
+                  filtered.init :+ filtered.last.copy(discontinuity = newDiscontinuity.get)
+                } else {
+                  Seq()
+                })
             }
           }
           else
