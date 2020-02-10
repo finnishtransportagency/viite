@@ -917,6 +917,66 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test defaultSectionCalculatorStrategy.findStartingPoint() When transferring existing first link of part 2 to part 1, that is after that last link of part 1 Then the starting point should be the one from first link of part 1 that is not handled and the direction of part 1 should not change") {
+    runWithRollback {
+      val geomNotHandledComb1Part1 = Seq(Point(0.0, 0.0), Point(5.0, 0.0))
+      val geomNotHandledComb2Part1 = Seq(Point(5.0, 0.0), Point(10.0, 0.0))
+      val geomTransferComb1Part2ToPart1 = Seq(Point(10.0, 0.0), Point(16.0, 0.0))
+      val plId = Sequences.nextViitePrimaryKeySeqValue
+
+
+      val projectLinkNotHandledComb1Part1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
+        None, 12344L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        geomNotHandledComb1Part1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledComb1Part1), 0L, 0L, 0L, reversed = false,
+        None, 86400L)
+      val projectLinkNotHandledComb2Part1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
+        None, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        geomNotHandledComb2Part1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledComb2Part1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val projectLinkTransferComb1Part2ToPart1 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.EndOfRoad, 0L, 6L, 0L, 6L, None, None,
+        None, 12346L, 0.0, 6.0, SideCode.TowardsDigitizing, (None, None),
+        geomTransferComb1Part2ToPart1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1Part2ToPart1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val transferProjectLinks = Seq(projectLinkTransferComb1Part2ToPart1, projectLinkNotHandledComb1Part1, projectLinkNotHandledComb2Part1)
+      val newProjectLinks = Seq()
+      val otherPartLinks = Seq()
+
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, transferProjectLinks, otherPartLinks, Seq.empty[UserDefinedCalibrationPoint])
+      startingPointsForCalculations should be((projectLinkNotHandledComb1Part1.startingPoint, projectLinkNotHandledComb1Part1.startingPoint))
+    }
+  }
+
+  test("Test defaultSectionCalculatorStrategy.findStartingPoint() When transferring existing first link of part 2 to part 1, that is before that first part 1 link Then the starting point should be the one from part2 that is being transferred and the direction of part 1 should not change") {
+    runWithRollback {
+      val geomTransferComb1Part2ToPart1 = Seq(Point(0.0, 0.0), Point(6.0, 0.0))
+      val geomNotHandledComb1Part1 = Seq(Point(6.0, 0.0), Point(11.0, 0.0))
+      val geomNotHandledComb2Part1 = Seq(Point(11.0, 0.0), Point(16.0, 0.0))
+      val plId = Sequences.nextViitePrimaryKeySeqValue
+
+
+      val projectLinkNotHandledComb1Part1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
+        None, 12344L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        geomNotHandledComb1Part1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledComb1Part1), 0L, 0L, 0L, reversed = false,
+        None, 86400L)
+      val projectLinkNotHandledComb2Part1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
+        None, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        geomNotHandledComb2Part1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledComb2Part1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val projectLinkTransferComb1Part2ToPart1 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.EndOfRoad, 0L, 6L, 0L, 6L, None, None,
+        None, 12346L, 0.0, 6.0, SideCode.TowardsDigitizing, (None, None),
+        geomTransferComb1Part2ToPart1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1Part2ToPart1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val transferProjectLinks = Seq(projectLinkTransferComb1Part2ToPart1, projectLinkNotHandledComb1Part1, projectLinkNotHandledComb2Part1)
+      val newProjectLinks = Seq()
+      val otherPartLinks = Seq()
+
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, transferProjectLinks, otherPartLinks, Seq.empty[UserDefinedCalibrationPoint])
+      startingPointsForCalculations should be((projectLinkTransferComb1Part2ToPart1.startingPoint, projectLinkTransferComb1Part2ToPart1.startingPoint))
+    }
+  }
+
   /*
                      |   <- New #2 (One more link added in the beginning)
                      |   <- New #1 (Against digitization)
@@ -1189,66 +1249,6 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
   test("Test findStartingPoints When adding (New) links before and after the existing (Transfer) two track road that goes against the digitization Then the road should still maintain the previous existing direction") {
     testNewExistingTwoTrackNew(LinkStatus.Transfer, SideCode.AgainstDigitizing)
-  }
-
-  test("Test defaultSectionCalculatorStrategy.findStartingPoint() When transferring existing first link of part 2 to part 1, that is after that last link of part 1 Then the starting point should be the one from first link of part 1 that is not handled and the direction of part 1 should not change") {
-    runWithRollback {
-      val geomNotHandledComb1Part1 = Seq(Point(0.0, 0.0), Point(5.0, 0.0))
-      val geomNotHandledComb2Part1 = Seq(Point(5.0, 0.0), Point(10.0, 0.0))
-      val geomTransferComb1Part2ToPart1 = Seq(Point(10.0, 0.0), Point(16.0, 0.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
-
-
-      val projectLinkNotHandledComb1Part1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12344L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
-        geomNotHandledComb1Part1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledComb1Part1), 0L, 0L, 0L, reversed = false,
-        None, 86400L)
-      val projectLinkNotHandledComb2Part1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
-        None, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
-        geomNotHandledComb2Part1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledComb2Part1), 0L, 0, 0, reversed = false,
-        None, 86400L)
-      val projectLinkTransferComb1Part2ToPart1 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.EndOfRoad, 0L, 6L, 0L, 6L, None, None,
-        None, 12346L, 0.0, 6.0, SideCode.TowardsDigitizing, (None, None),
-        geomTransferComb1Part2ToPart1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1Part2ToPart1), 0L, 0, 0, reversed = false,
-        None, 86400L)
-
-      val transferProjectLinks = Seq(projectLinkTransferComb1Part2ToPart1, projectLinkNotHandledComb1Part1, projectLinkNotHandledComb2Part1)
-      val newProjectLinks = Seq()
-      val otherPartLinks = Seq()
-
-      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, transferProjectLinks, otherPartLinks, Seq.empty[UserDefinedCalibrationPoint])
-      startingPointsForCalculations should be((projectLinkNotHandledComb1Part1.startingPoint, projectLinkNotHandledComb1Part1.startingPoint))
-    }
-  }
-
-  test("Test defaultSectionCalculatorStrategy.findStartingPoint() When transferring existing first link of part 2 to part 1, that is before that first part 1 link Then the starting point should be the one from part2 that is being transferred and the direction of part 1 should not change") {
-    runWithRollback {
-      val geomTransferComb1Part2ToPart1 = Seq(Point(0.0, 0.0), Point(6.0, 0.0))
-      val geomNotHandledComb1Part1 = Seq(Point(6.0, 0.0), Point(11.0, 0.0))
-      val geomNotHandledComb2Part1 = Seq(Point(11.0, 0.0), Point(16.0, 0.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
-
-
-      val projectLinkNotHandledComb1Part1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12344L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
-        geomNotHandledComb1Part1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledComb1Part1), 0L, 0L, 0L, reversed = false,
-        None, 86400L)
-      val projectLinkNotHandledComb2Part1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
-        None, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
-        geomNotHandledComb2Part1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledComb2Part1), 0L, 0, 0, reversed = false,
-        None, 86400L)
-      val projectLinkTransferComb1Part2ToPart1 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.EndOfRoad, 0L, 6L, 0L, 6L, None, None,
-        None, 12346L, 0.0, 6.0, SideCode.TowardsDigitizing, (None, None),
-        geomTransferComb1Part2ToPart1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1Part2ToPart1), 0L, 0, 0, reversed = false,
-        None, 86400L)
-
-      val transferProjectLinks = Seq(projectLinkTransferComb1Part2ToPart1, projectLinkNotHandledComb1Part1, projectLinkNotHandledComb2Part1)
-      val newProjectLinks = Seq()
-      val otherPartLinks = Seq()
-
-      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, transferProjectLinks, otherPartLinks, Seq.empty[UserDefinedCalibrationPoint])
-      startingPointsForCalculations should be((projectLinkTransferComb1Part2ToPart1.startingPoint, projectLinkTransferComb1Part2ToPart1.startingPoint))
-    }
   }
 
 }

@@ -299,7 +299,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         // We could have more than two starting link since one of them can be Transferred from any part to this one.
         val oldFirst: Option[ProjectLink] =
         if (foundConnectedLinks.nonEmpty) {
-          foundConnectedLinks.find(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.NotHandled)
+          foundConnectedLinks.find(_.status == LinkStatus.New).orElse(foundConnectedLinks.find(l => l.status == LinkStatus.UnChanged || l.status == LinkStatus.NotHandled))
             .orElse(foundConnectedLinks.headOption)
         } else {
           None
