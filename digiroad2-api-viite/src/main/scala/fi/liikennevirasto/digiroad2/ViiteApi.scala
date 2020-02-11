@@ -1239,7 +1239,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadwayNumber" -> nodePoint.roadwayNumber,
       "beforeAfter" -> nodePoint.beforeAfter.value,
       "type" -> nodePoint.nodePointType.value,
-      "coords" -> nodePoint.coords
+      "coordinates" -> nodePoint.coords
     )
   }
 
@@ -1258,7 +1258,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadPartNumber" -> nodePoint.roadPartNumber,
       "track" -> nodePoint.track,
       "type" -> nodePoint.nodePointType.value,
-      "coords" -> nodePoint.coords
+      "coordinates" -> nodePoint.coords
     )
   }
 
@@ -1292,7 +1292,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadNumber" -> junctionPoint.roadNumber,
       "roadPartNumber" -> junctionPoint.roadPartNumber,
       "track" -> junctionPoint.track,
-      "coords" -> junctionPoint.coords
+      "coordinates" -> junctionPoint.coords
     )
   }
 
@@ -1321,7 +1321,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "track" -> junctionPoint.track.value,
       "addrM" -> junctionPoint.addrM,
       "beforeAfter" -> junctionPoint.beforeAfter.value,
-      "coords" -> junctionPoint.coords
+      "coordinates" -> junctionPoint.coords
     )
   }
 
