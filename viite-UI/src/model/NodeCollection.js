@@ -95,8 +95,10 @@
               zoom: zoomlevels.minZoomForJunctions
             });
 
+            applicationModel.addSpinner();
             eventbus.trigger('nodeLayer:fetch');
             eventbus.once('node:fetched', function(fetchedNodes, zoom) {
+              applicationModel.removeSpinner();
               var fetchedNodesAndJunctions = fetchedNodes;
               if (_.has(fetchedNodesAndJunctions, 'nodePointTemplates') || _.has(fetchedNodesAndJunctions, 'junctionTemplates')) {
                 var referencePoint = { x: parseFloat(result.lon.toFixed(3)), y: parseFloat(result.lat.toFixed(3)) };
