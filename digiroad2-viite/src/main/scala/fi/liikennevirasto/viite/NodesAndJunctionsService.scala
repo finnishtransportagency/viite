@@ -120,7 +120,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     if(raLinks.nonEmpty){
       val rls = raLinks.get
       nPoints.map{ np =>
-        np.copy(coords = {
+        np.copy(coordinates = {
           val ra: Option[Either[RoadAddressLink, RoadAddressLink]] = if(rls.exists(ra => ra.startAddressM == np.addrM))
             Some(Left(rls.find(ra => ra.startAddressM == np.addrM).get))
             else if(rls.exists(ra => ra.endAddressM == np.addrM))
@@ -129,7 +129,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           ra match {
             case Some(r) if r.isLeft => r.left.get.startingPoint
             case Some(r) if r.isRight => r.right.get.endPoint
-            case _ => np.coords
+            case _ => np.coordinates
           }
         })
       }
@@ -142,7 +142,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     if(raLinks.nonEmpty){
       val rls = raLinks.get
       jPoints.map{ jp =>
-        jp.copy(coords = {
+        jp.copy(coordinates = {
           val ra: Option[Either[RoadAddressLink, RoadAddressLink]] = if(rls.exists(ra => ra.startAddressM == jp.addrM))
             Some(Left(rls.find(ra => ra.startAddressM == jp.addrM).get))
           else if(rls.exists(ra => ra.endAddressM == jp.addrM))
@@ -151,7 +151,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           ra match {
             case Some(r) if r.isLeft => r.left.get.startingPoint
             case Some(r) if r.isRight => r.right.get.endPoint
-            case _ => jp.coords
+            case _ => jp.coordinates
           }
         })
       }

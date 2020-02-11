@@ -14,7 +14,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class JunctionPoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, junctionId: Long,
                          validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM: Long,
-                         roadNumber: Long, roadPartNumber: Long, track: Track, coords: Point = Point(0.0, 0.0))
+                         roadNumber: Long, roadPartNumber: Long, track: Track, coordinates: Point = Point(0.0, 0.0))
 
 class JunctionPointDAO extends BaseDAO {
 

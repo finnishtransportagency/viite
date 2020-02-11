@@ -84,7 +84,7 @@ object BeforeAfter {
 case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeNumber: Option[Long], nodePointType: NodePointType = NodePointType.UnknownNodePointType,
                      validFrom: DateTime, validTo: Option[DateTime],
                      createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long,
-                     roadNumber: Long, roadPartNumber: Long, track: Track, elyCode: Long, coords: Point = Point(0.0, 0.0))
+                     roadNumber: Long, roadPartNumber: Long, track: Track, elyCode: Long, coordinates: Point = Point(0.0, 0.0))
 
 class NodePointDAO extends BaseDAO {
 

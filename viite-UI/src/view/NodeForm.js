@@ -621,6 +621,7 @@
             options: options
           }));
         }
+        applicationModel.removeSpinner();
       });
 
       eventbus.on('node:selected', function (currentNode, templates) {
