@@ -5,11 +5,10 @@
     var openNode = function (node, templates) {
       clean();
       setCurrentNode(node);
-      applicationModel.addSpinner();
-      eventbus.trigger('node:fetchCoordinates', node, function () {
+      // eventbus.trigger('node:fetchCoordinates', node, function () {
         eventbus.trigger('node:selected', current.node, templates);
-        applicationModel.removeSpinner();
-      });
+        // applicationModel.removeSpinner();
+      // });
     };
 
     var getCurrentNode = function () {

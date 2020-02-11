@@ -105,20 +105,30 @@
                   nodePoints: fetchedNodesAndJunctions.nodePointTemplates,
                   junctions:  fetchedNodesAndJunctions.junctionTemplates
                 };
-                fetchCoordinates(_.concat(templates.nodePoints, _.flatMap(templates.junctions, 'junctionPoints')), function () {
-                  eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
-                    nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
-                      return _.isEqual(nodePoint.coordinates, referencePoint);
-                    }),
-                    junctions: _.filter(templates.junctions, function (junction) {
-                      return !_.find(junction.junctionPoints, function (junctionPoint) {
-                        return !_.isEqual(junctionPoint.coordinates, referencePoint);
-                      });
-                    })
-                  });
-
-                  applicationModel.removeSpinner();
-              });
+                eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
+                  nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
+                    return _.isEqual(nodePoint.coordinates, referencePoint);
+                  }),
+                  junctions: _.filter(templates.junctions, function (junction) {
+                    return !_.find(junction.junctionPoints, function (junctionPoint) {
+                      return !_.isEqual(junctionPoint.coordinates, referencePoint);
+                    });
+                  })
+                });
+              //   fetchCoordinates(_.concat(templates.nodePoints, _.flatMap(templates.junctions, 'junctionPoints')), function () {
+              //     eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
+              //       nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
+              //         return _.isEqual(nodePoint.coordinates, referencePoint);
+              //       }),
+              //       junctions: _.filter(templates.junctions, function (junction) {
+              //         return !_.find(junction.junctionPoints, function (junctionPoint) {
+              //           return !_.isEqual(junctionPoint.coordinates, referencePoint);
+              //         });
+              //       })
+              //     });
+              //
+              //     applicationModel.removeSpinner();
+              // });
               }
             });
           } else {
@@ -128,9 +138,15 @@
       }
     };
 
-    eventbus.on('node:fetchCoordinates', function (node, callback) {
-      fetchCoordinates(_.concat(node.nodePoints, _.flatMap(node.junctions, 'junctionPoints')), callback || applicationModel.removeSpinner);
-    });
+    // // eventbus.on('node:fetchCoordinates', function (node, callback) {
+    // //   fetchCoordinates(_.concat(node.nodePoints, _.flatMap(node.junctions, 'junctionPoints')), callback || applicationModel.removeSpinner);
+    // // });
+    // eventbus.on('node:fetchCoordinates', function (node, callback) {
+    //   if (!(_.isEmpty(node.nodePoints) && _.isEmpty(_.flatMap(node.junctions, 'junctionPoints')))) {
+    //      applicationModel.addSpinner();
+    //     fetchCoordinates(_.concat(node.nodePoints, _.flatMap(node.junctions, 'junctionPoints')), callback || applicationModel.removeSpinner);
+    //   }
+    // });
 
     eventbus.on('node:fetched', function(fetchResult, zoom) {
       var nodes = fetchResult.nodes;
@@ -139,15 +155,14 @@
         junctions: fetchResult.junctionTemplates
       };
 
-      //  add nodes to map
       me.setNodes(nodes);
-      eventbus.trigger('node:addNodesToMap', nodes, { nodePoints: [], junctions: [] }, zoom);
-
-      //  add templates to map
       me.setMapTemplates(templates);
-      eventbus.trigger('node:fetchCoordinates', templates, function () {
-        eventbus.trigger('node:addNodesToMap', [], templates, zoom);
-      });
+
+      eventbus.trigger('node:addNodesToMap', nodes, templates, zoom);
+      // eventbus.trigger('node:fetchCoordinates', templates, function () {
+      //   eventbus.trigger('node:addNodesToMap', [], templates, zoom);
+      //   applicationModel.removeSpinner();
+      // });
     });
 
     eventbus.on('node:save', function (node) {
