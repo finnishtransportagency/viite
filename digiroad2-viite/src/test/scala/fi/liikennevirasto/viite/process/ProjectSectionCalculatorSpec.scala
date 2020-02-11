@@ -1517,9 +1517,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val roadType = RoadType.PublicRoad
       val track = Track.Combined
       val roadwayId1 = Sequences.nextRoadwayId
-      val roadwayNumber1 = Sequences.nextRoadwayNumber
-      val roadway1 = Roadway(roadwayId1, roadwayNumber1, roadNumber, roadPartNumber, roadType, track, Discontinuity.Continuous,
-        0L, 10L, false, DateTime.parse("2000-01-01"), None, "Test", None, 0, NoTermination)
+      val roadway1 = Roadway(roadwayId1, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, roadType, track, Discontinuity.Continuous,
+        0L, 10L, reversed = false, DateTime.parse("2000-01-01"), None, "Test", None, 0, NoTermination)
       roadwayDAO.create(Seq(roadway1))
 
       val linkId1 = 12345L
@@ -1528,21 +1527,23 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
       val linearLocationId1 = Sequences.nextLinearLocationId
       val linearLocation1 = LinearLocation(linearLocationId1, 1, linkId1, 0.0, 10.0, SideCode.TowardsDigitizing, 0L,
-        (Some(0L), Some(10L)), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber1)
+        (Some(0L), Some(10L)), geom1, LinkGeomSource.NormalLinkInterface, roadway1.roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation1))
 
       val plId = Sequences.nextViitePrimaryKeySeqValue
-      val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None,
-        None, linkId1, 0.0, 10.0, SideCode.TowardsDigitizing, (Some(ProjectLinkCalibrationPoint(linkId1, 0, 0L)), Some(ProjectLinkCalibrationPoint(linkId1, 10.0, 10L))),
-        geom1, 0L, LinkStatus.Transfer, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), roadway1.id, 0, 0, reversed = false,
-        None, 86400L)
+      val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, roadway1.discontinuity, 0L, 10L,
+        roadway1.startAddrMValue, roadway1.endAddrMValue, None, None, None, linkId1,
+        linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode,
+        (Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.startMValue, 0L)), Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.endMValue, 10L))),
+        linearLocation1.geometry, 0L, LinkStatus.Transfer, roadway1.roadType, LinkGeomSource.apply(link1.source.intValue()),
+        GeometryUtils.geometryLength(linearLocation1.geometry), roadway1.id, linearLocation1.id, 0, roadway1.reversed, None, 86400L)
       val projectLink2 = ProjectLink(plId + 2, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
         None, 12346L, 0.0, 11.2, SideCode.TowardsDigitizing, (None, None),
-        geom2, 0L, LinkStatus.Transfer, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
+        geom2, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLink3 = ProjectLink(plId + 3, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 10L, 20L, 0L, 0L, None, None,
         None, 12347L, 0.0, 12.3, SideCode.TowardsDigitizing, (None, None),
-        geom3, 0L, LinkStatus.Transfer, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
+        geom3, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
