@@ -2,7 +2,6 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -179,7 +178,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     roadAddresses.init :+ roadAddresses.last.copy(discontinuity = roadway.discontinuity)
   }
 
-  def mapLinearLocations(roadway: Roadway, projectLinks: Seq[ProjectLink], newLink: Boolean = false): Seq[LinearLocation] = {
+  def mapLinearLocations(roadway: Roadway, projectLinks: Seq[ProjectLink]): Seq[LinearLocation] = {
     projectLinks.sortBy(_.startAddrMValue).zip(1 to projectLinks.size).
       map {
         case (projectLink, key) =>
@@ -189,8 +188,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
             case (None, Some(_)) => (None, Some(projectLink.endAddrMValue))
             case (Some(_), Some(_)) => (Some(projectLink.startAddrMValue), Some(projectLink.endAddrMValue))
           }
-          val linearLocationId = if(newLink) projectLink.linearLocationId else NewIdValue
-          LinearLocation(linearLocationId, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
+          LinearLocation(projectLink.linearLocationId, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
             calibrationPoints, projectLink.geometry, projectLink.linkGeomSource, roadway.roadwayNumber, Some(DateTime.now()))
       }
   }

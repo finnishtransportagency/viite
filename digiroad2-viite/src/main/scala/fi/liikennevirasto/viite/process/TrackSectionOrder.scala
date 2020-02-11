@@ -26,6 +26,7 @@ object TrackSectionOrder {
   def findChainEndpoints(projectLinks: Seq[ProjectLink]): Map[Point, ProjectLink] = {
     case class ProjectLinkNonConnectedDistance(projectLink: ProjectLink, point: Point, distance: Double)
     case class ProjectLinkChain(sortedProjectLinks: Seq[ProjectLink], startPoint: Point, endPoint: Point)
+    @scala.annotation.tailrec
     def recursiveFindNearestProjectLinks(projectLinkChain: ProjectLinkChain, unprocessed: Seq[ProjectLink]): ProjectLinkChain = {
       def mapDistances(p: Point)(pl: ProjectLink): ProjectLinkNonConnectedDistance = {
         val (sP, eP) = pl.getEndPoints
@@ -36,7 +37,7 @@ object TrackSectionOrder {
       val startPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.startPoint)).minBy(_.distance)
       val endPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.endPoint)).minBy(_.distance)
       val (resultProjectLinkChain, newUnprocessed) = if (startPointMinDistance.distance > endPointMinDistance.distance || endPointMinDistance.projectLink.startAddrMValue == projectLinkChain.sortedProjectLinks.last.endAddrMValue && endPointMinDistance.projectLink.endAddrMValue != 0 && projectLinkChain.sortedProjectLinks.last.endAddrMValue != 0)
-        (projectLinkChain.copy(sortedProjectLinks = projectLinkChain.sortedProjectLinks :+ endPointMinDistance.projectLink, endPoint = endPointMinDistance.point), unprocessed.filterNot(pl => pl.id == endPointMinDistance.projectLink.id))
+        (projectLinkChain.copy(sortedProjectLinks = projectLinkChain.sortedProjectLinks :+ endPointMinDistance.projectLink, endPoint = endPointMinDistance.projectLink.endPoint), unprocessed.filterNot(pl => pl.id == endPointMinDistance.projectLink.id))
       else
         (projectLinkChain.copy(sortedProjectLinks = startPointMinDistance.projectLink +: projectLinkChain.sortedProjectLinks, startPoint = startPointMinDistance.point), unprocessed.filterNot(pl => pl.id == startPointMinDistance.projectLink.id))
       newUnprocessed match {
@@ -82,8 +83,9 @@ object TrackSectionOrder {
     * @return
     */
   def findOnceConnectedLinks[T <: BaseRoadAddress](seq: Iterable[T]): Map[Point, T] = {
-    //Creates a mapping of (startPoint -> BaseRoadAddress, endPoint -> BaseRoadAddress
-    //Then groups it by points and reduces the mapped values to the distinct BaseRoadAddresses
+
+    // Creates a mapping of (startPoint -> BaseRoadAddress, endPoint -> BaseRoadAddress
+    // Then groups it by points and reduces the mapped values to the distinct BaseRoadAddresses
     val pointMap = seq.flatMap(l => {
       val (p1, p2) = l.getEndPoints
       Seq(p1 -> l, p2 -> l)
@@ -92,6 +94,7 @@ object TrackSectionOrder {
       val links = pointMap.filterKeys(m => GeometryUtils.areAdjacent(p, m, MaxDistanceForConnectedLinks)).values.flatten
       p -> links
     }.toMap.filter(_._2.size == 1).mapValues(_.head)
+
   }
 
   def isRoundabout[T <: BaseRoadAddress](seq: Iterable[T]): Boolean = {
