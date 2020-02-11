@@ -110,13 +110,11 @@
 
     this.fetchWithNodes = function(boundingBox, zoom) {
       currentZoom = zoom;
-      // backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedRoadLinks) {
-        backend.getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function (fetchedNodesAndJunctions) {
-          currentAllRoadLinks = fetchedNodesAndJunctions.fetchedRoadLinks;
-          fetchProcess(currentAllRoadLinks, zoom);
-          eventbus.trigger('node:fetched', fetchedNodesAndJunctions.fetchedNodes, zoom);
-        });
-      // });
+      backend.getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function (fetchedNodesAndJunctions) {
+        currentAllRoadLinks = fetchedNodesAndJunctions.fetchedRoadLinks;
+        fetchProcess(currentAllRoadLinks, zoom);
+        eventbus.trigger('node:fetched', fetchedNodesAndJunctions.fetchedNodes, zoom);
+      });
     };
 
       eventbus.on("linkProperties:drawUnknowns", function () {

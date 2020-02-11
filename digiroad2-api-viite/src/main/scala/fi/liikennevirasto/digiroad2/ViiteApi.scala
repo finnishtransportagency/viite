@@ -171,7 +171,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     response.setHeader("Access-Control-Allow-Headers", "*")
     val zoom = chooseDrawType(params.getOrElse("zoom", "5"))
     time(logger, s"GET request for /roadlinks (zoom: $zoom)") {
-//      val (map, links): (Seq[Seq[Map[String, Any]]], Seq[RoadAddressLink]) = params.get("bbox").map(b => getRoadAddressLinks(zoom)(b)._1).getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
       params.get("bbox").map(b => getRoadAddressLinks(zoom)(b)._1).getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
     }
   }
@@ -194,7 +193,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val zoomNodes = chooseNodesDrawType(params.getOrElse("zoom", "1"))
     time(logger, s"GET request for /nodesAndJunctions") {
       val bbox = params.get("bbox")
-//      val (mapLinks, roadLinks): (Seq[Seq[Map[String, Any]]], Seq[RoadAddressLink]) = bbox.map(b => getRoadAddressLinks(zoom)(b))
       val map: Option[(Seq[Seq[Map[String, Any]]], Seq[RoadAddressLink])] = bbox.map(b => getRoadAddressLinks(zoomLinks)(b))
       val nodesJunctions = bbox.map(getNodesAndJunctions(zoomLevel = zoomNodes, map.get._2)).getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
       Map("fetchedNodes" -> nodesJunctions, "fetchedRoadLinks" -> map.get._1)
@@ -1058,7 +1056,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         Map("nodes" -> nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle, raLinks).toSeq.map(nodeToApi))
       }
       case _ => Map("nodes" -> nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi))
-//        Map("nodes" -> Seq())
     }
   }
 
@@ -1239,7 +1236,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadwayNumber" -> nodePoint.roadwayNumber,
       "beforeAfter" -> nodePoint.beforeAfter.value,
       "type" -> nodePoint.nodePointType.value,
-      "coordinates" -> nodePoint.coords
+      "coordinates" -> Map(
+        "x" ->  nodePoint.coordinates.x,
+        "y" ->  nodePoint.coordinates.y)
     )
   }
 
@@ -1258,7 +1257,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadPartNumber" -> nodePoint.roadPartNumber,
       "track" -> nodePoint.track,
       "type" -> nodePoint.nodePointType.value,
-      "coordinates" -> nodePoint.coords
+      "coordinates" -> Map(
+        "x" ->  nodePoint.coordinates.x,
+        "y" ->  nodePoint.coordinates.y)
     )
   }
 
@@ -1292,7 +1293,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadNumber" -> junctionPoint.roadNumber,
       "roadPartNumber" -> junctionPoint.roadPartNumber,
       "track" -> junctionPoint.track,
-      "coordinates" -> junctionPoint.coords
+      "coordinates" -> Map(
+        "x" ->  junctionPoint.coordinates.x,
+        "y" ->  junctionPoint.coordinates.y)
     )
   }
 
@@ -1321,7 +1324,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "track" -> junctionPoint.track.value,
       "addrM" -> junctionPoint.addrM,
       "beforeAfter" -> junctionPoint.beforeAfter.value,
-      "coordinates" -> junctionPoint.coords
+      "coordinates" -> Map(
+        "x" ->  junctionPoint.coordinates.x,
+        "y" ->  junctionPoint.coordinates.y)
     )
   }
 
