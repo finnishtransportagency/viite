@@ -1,12 +1,13 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, asset}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad, MinorDiscontinuity}
@@ -1403,6 +1404,328 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
           prev.endAddrMValue should be(next.startAddrMValue)
       }
     }
-
   }
+
+  /*
+        ^
+        | #1
+           #3  #2
+           --  <--
+   */
+  test("Test assignMValues When new link with discontinuity on both sides is added in the between of two other links Then the direction should stay same and new address values should be properly assigned") {
+    runWithRollback {
+      val idRoad1 = 1L
+      val idRoad2 = 2L
+      val idRoad3 = 3L
+
+      val geom1 = Seq(Point(0.0, 20.0), Point(0.0, 30.0))
+      val geom2 = Seq(Point(50.0, 0.0), Point(40.0, 2.0))
+      val geom3 = Seq(Point(20.0, 5.0), Point(10.0, 10.0))
+
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
+        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.6, SideCode.TowardsDigitizing,
+        0, (None, None), geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, MinorDiscontinuity,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 11.2, SideCode.TowardsDigitizing,
+        0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 12.3, SideCode.Unknown,
+        0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+
+      val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
+
+      val output = ProjectSectionCalculator.assignMValues(projectLinkSeq)
+
+      output.length should be(3)
+
+      output.zip(output.tail).foreach {
+        case (prev, next) =>
+          prev.endAddrMValue should be(next.startAddrMValue)
+      }
+
+      output.foreach(pl => {
+        (pl.endAddrMValue - pl.startAddrMValue) should be >= 10L
+        pl.sideCode should be(asset.SideCode.TowardsDigitizing)
+        pl.reversed should be(false)
+      }
+      )
+    }
+  }
+
+  /*
+        ^
+        c
+        | #1
+        c  #3  #2
+           --  c--c
+   */
+  test("Test assignMValues When new link with discontinuity on both sides is added in the between of two other links having calibration points at the beginning and end and discontinuity places Then the direction should stay same and new address values should be properly assigned") {
+    runWithRollback {
+      val idRoad1 = 1L
+      val idRoad2 = 2L
+      val idRoad3 = 3L
+
+      val geom1 = Seq(Point(0.0, 20.0), Point(0.0, 30.0))
+      val geom2 = Seq(Point(50.0, 0.0), Point(40.0, 2.0))
+      val geom3 = Seq(Point(20.0, 5.0), Point(11.0, 10.0))
+
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
+        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.6, SideCode.TowardsDigitizing,
+        0, (Some(CalibrationPoint(12345L, 0, 10L)), Some(CalibrationPoint(12345L, 10.6, 20L))), geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, MinorDiscontinuity,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 11.2, SideCode.TowardsDigitizing,
+        0, (Some(CalibrationPoint(12346L, 0, 0L)), Some(CalibrationPoint(12346L, 11.2, 10L))), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 12.3, SideCode.Unknown,
+        0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+
+      val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
+
+      val output = ProjectSectionCalculator.assignMValues(projectLinkSeq)
+
+      output.length should be(3)
+
+      output.zip(output.tail).foreach {
+        case (prev, next) =>
+          prev.endAddrMValue should be(next.startAddrMValue)
+      }
+
+      output.foreach(pl => {
+        (pl.endAddrMValue - pl.startAddrMValue) should be(10L)
+        pl.sideCode should be(asset.SideCode.TowardsDigitizing)
+        pl.reversed should be(false)
+      }
+      )
+    }
+  }
+
+  /*
+        ^
+        c
+        | #1
+        c  #3  #2
+           --  --
+   */
+  test("Test assignMValues When two new links with discontinuities are added before existing and transfer operation is done last Then the direction should stay same and new address values should be properly assigned") {
+    runWithRollback {
+      val geom1 = Seq(Point(0.0, 20.0), Point(0.0, 30.0))
+      val geom2 = Seq(Point(50.0, 0.0), Point(40.0, 2.0))
+      val geom3 = Seq(Point(20.0, 5.0), Point(11.0, 10.0))
+
+      val roadNumber = 9999L
+      val roadPartNumber = 1L
+      val roadType = RoadType.PublicRoad
+      val track = Track.Combined
+      val roadwayId1 = Sequences.nextRoadwayId
+      val roadway1 = Roadway(roadwayId1, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, roadType, track, Discontinuity.Continuous,
+        0L, 10L, reversed = false, DateTime.parse("2000-01-01"), None, "Test", None, 0, NoTermination)
+      roadwayDAO.create(Seq(roadway1))
+
+      val linkId1 = 12345L
+      val link1 = Link(linkId1, LinkGeomSource.NormalLinkInterface.value, 0, None)
+      LinkDAO.create(link1.id, link1.adjustedTimestamp, link1.source)
+
+      val linearLocationId1 = Sequences.nextLinearLocationId
+      val linearLocation1 = LinearLocation(linearLocationId1, 1, linkId1, 0.0, 10.0, SideCode.TowardsDigitizing, 0L,
+        (Some(0L), Some(10L)), geom1, LinkGeomSource.NormalLinkInterface, roadway1.roadwayNumber)
+      linearLocationDAO.create(Seq(linearLocation1))
+
+      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, roadway1.discontinuity, 0L, 10L,
+        roadway1.startAddrMValue, roadway1.endAddrMValue, None, None, None, linkId1,
+        linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode,
+        (Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.startMValue, 0L)), Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.endMValue, 10L))),
+        linearLocation1.geometry, 0L, LinkStatus.Transfer, roadway1.roadType, LinkGeomSource.apply(link1.source.intValue()),
+        GeometryUtils.geometryLength(linearLocation1.geometry), roadway1.id, linearLocation1.id, 0, roadway1.reversed, None, 86400L)
+      val projectLink2 = ProjectLink(plId + 2, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
+        None, 12346L, 0.0, 11.2, SideCode.TowardsDigitizing, (None, None),
+        geom2, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val projectLink3 = ProjectLink(plId + 3, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 10L, 20L, 0L, 0L, None, None,
+        None, 12347L, 0.0, 12.3, SideCode.TowardsDigitizing, (None, None),
+        geom3, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
+
+      val output = ProjectSectionCalculator.assignMValues(projectLinkSeq)
+
+      output.length should be(3)
+
+      output.zip(output.tail).foreach {
+        case (prev, next) =>
+          prev.endAddrMValue should be(next.startAddrMValue)
+      }
+
+      output.foreach(pl => {
+        (pl.endAddrMValue - pl.startAddrMValue) should be(10L)
+        pl.sideCode should be(asset.SideCode.TowardsDigitizing)
+        pl.reversed should be(false)
+      }
+      )
+    }
+  }
+
+  /*
+        | #1
+        v  #3  #2
+           --  -->
+   */
+  test("Test assignMValues When new link with discontinuity on both sides is added in the between of two other links (against digitizing) Then the direction should stay same and new address values should be properly assigned") {
+    runWithRollback {
+      val idRoad1 = 1L
+      val idRoad2 = 2L
+      val idRoad3 = 3L
+
+      val geom1 = Seq(Point(0.0, 20.0), Point(0.0, 30.0))
+      val geom2 = Seq(Point(50.0, 0.0), Point(40.0, 2.0))
+      val geom3 = Seq(Point(20.0, 5.0), Point(10.0, 10.0))
+
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, MinorDiscontinuity,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.6, SideCode.AgainstDigitizing,
+        0, (None, None), geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
+        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 11.2, SideCode.AgainstDigitizing,
+        0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 12.3, SideCode.Unknown,
+        0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+
+      val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
+
+      val output = ProjectSectionCalculator.assignMValues(projectLinkSeq)
+
+      output.length should be(3)
+
+      output.zip(output.tail).foreach {
+        case (prev, next) =>
+          prev.endAddrMValue should be(next.startAddrMValue)
+      }
+
+      output.foreach(pl => {
+        (pl.endAddrMValue - pl.startAddrMValue) should be >= 10L
+        pl.sideCode should be(asset.SideCode.AgainstDigitizing)
+        pl.reversed should be(false)
+      }
+      )
+    }
+  }
+
+  /*
+          #3  #2
+          --  <--
+    #1 |
+       v
+   */
+  test("Test assignMValues When new link with discontinuity on both sides is added in the between of two other links (against digitizing) (geom 2) Then the direction should stay same and new address values should be properly assigned") {
+    runWithRollback {
+      val geom1 = Seq(Point(0.0, 0.0), Point(0.0, 10.0))
+      val geom2 = Seq(Point(30.0, 22.0), Point(40.0, 23.0))
+      val geom3 = Seq(Point(10.0, 20.0), Point(20.0, 21.0))
+
+      val roadNumber = 5
+      val roadPartNumber = 1
+      val roadType = RoadType.MunicipalityStreetRoad
+      val track = Track.Combined
+      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
+        None, 12345L, 0.0, 10.0, SideCode.AgainstDigitizing, (None, None),
+        geom1, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val projectLink2 = ProjectLink(plId + 2, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
+        None, 12346L, 0.0, 11.2, SideCode.AgainstDigitizing, (None, None),
+        geom2, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val projectLink3 = ProjectLink(plId + 3, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 10L, 20L, 0L, 0L, None, None,
+        None, 12347L, 0.0, 12.3, SideCode.AgainstDigitizing, (None, None),
+        geom3, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
+
+      val output = ProjectSectionCalculator.assignMValues(projectLinkSeq)
+
+      output.length should be(3)
+
+      output.zip(output.tail).foreach {
+        case (prev, next) =>
+          prev.endAddrMValue should be(next.startAddrMValue)
+      }
+
+      output.foreach(pl => {
+        (pl.endAddrMValue - pl.startAddrMValue) should be >= 10L
+        pl.sideCode should be(asset.SideCode.AgainstDigitizing)
+        pl.reversed should be(false)
+      }
+      )
+    }
+  }
+
+  /*
+            #3  #2
+         ^  --  -->
+      #1 |
+   */
+  test("Test assignMValues When new link with discontinuity on both sides is added in the between of two other links (geom 2) Then the direction should stay same and new address values should be properly assigned") {
+    runWithRollback {
+      val idRoad2 = 2L
+      val idRoad3 = 3L
+
+      val geom1 = Seq(Point(0.0, 0.0), Point(0.0, 10.0))
+      val geom2 = Seq(Point(30.0, 22.0), Point(40.0, 23.0))
+      val geom3 = Seq(Point(10.0, 20.0), Point(20.0, 21.0))
+
+      val roadNumber = 5
+      val roadPartNumber = 1
+      val roadType = RoadType.MunicipalityStreetRoad
+      val track = Track.Combined
+      val roadwayId1 = Sequences.nextRoadwayId
+      val roadway1 = Roadway(roadwayId1, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, roadType, track, MinorDiscontinuity,
+        0L, 10L, reversed = false, DateTime.parse("1901-01-01"), None, "tester", None, 8, NoTermination)
+      roadwayDAO.create(Seq(roadway1))
+
+      val linkId1 = 12345L
+      val link1 = Link(linkId1, LinkGeomSource.NormalLinkInterface.value, 0, None)
+      LinkDAO.create(link1.id, link1.adjustedTimestamp, link1.source)
+
+      val linearLocationId1 = Sequences.nextLinearLocationId
+      val linearLocation1 = LinearLocation(linearLocationId1, 1, linkId1, 0.0, 10.0, SideCode.TowardsDigitizing, 0L,
+        (Some(0L), Some(10L)), geom1, LinkGeomSource.NormalLinkInterface, roadway1.roadwayNumber)
+      linearLocationDAO.create(Seq(linearLocation1))
+
+      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, roadway1.discontinuity, 0L, 10L,
+        roadway1.startAddrMValue, roadway1.endAddrMValue, None, None, None, linkId1,
+        linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode,
+        (Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.startMValue, 0L)), Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.endMValue, 10L))),
+        linearLocation1.geometry, 0L, LinkStatus.Transfer, roadway1.roadType, LinkGeomSource.apply(link1.source.intValue()),
+        GeometryUtils.geometryLength(linearLocation1.geometry), roadway1.id, linearLocation1.id, 0, roadway1.reversed, None, 86400L)
+
+      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
+        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 11.2, SideCode.TowardsDigitizing,
+        0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 12.3, SideCode.Unknown,
+        0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+
+      val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
+
+      val output = ProjectSectionCalculator.assignMValues(projectLinkSeq)
+
+      output.length should be(3)
+
+      output.zip(output.tail).foreach {
+        case (prev, next) =>
+          prev.endAddrMValue should be(next.startAddrMValue)
+      }
+
+      output.foreach(pl => {
+        (pl.endAddrMValue - pl.startAddrMValue) should be >= 10L
+        pl.sideCode should be(asset.SideCode.TowardsDigitizing)
+        pl.reversed should be(false)
+      }
+      )
+    }
+  }
+
 }
