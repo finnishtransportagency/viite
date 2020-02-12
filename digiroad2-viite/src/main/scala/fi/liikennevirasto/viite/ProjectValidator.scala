@@ -1144,7 +1144,7 @@ class ProjectValidator {
           // get all Minor Discontinuities in the current roadLinks
           val minorDiscontinuityLinks = pLink._2.filter { _.discontinuity == MinorDiscontinuity  }
           minorDiscontinuityLinks.flatMap(minorLink => {
-            //search por the parallel link in the opposite track sequence
+            // search for the parallel link in the opposite track sequence
             trackIntervals(Track.switch(minorLink.track).value - 1).filter {
               parallelLink => (parallelLink.startAddrMValue to parallelLink.endAddrMValue contains minorLink.endAddrMValue) && parallelLink.startAddrMValue != minorLink.endAddrMValue && parallelLink.discontinuity != MinorDiscontinuity && parallelLink.discontinuity != ParallelLink
             }
