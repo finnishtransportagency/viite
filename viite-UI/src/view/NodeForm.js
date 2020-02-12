@@ -440,11 +440,21 @@
       });
 
       var buildMessage = function (junction, nodePoints) {
+        var nodePointsHtmlTable = '';
+        if (!_.isUndefined(nodePoints)) {
+          nodePointsHtmlTable = '<p class="node-info">Solmukohdat :</p>' +
+            nodePointsTable.toMessage(nodePoints);
+        }
+
+        var junctionHtmlTable = '';
+        if (!_.isUndefined(junction)) {
+          junctionHtmlTable = '<p class="node-info">Liittyma :</p>' +
+            junctionsTable.toMessage([junction]);
+        }
+
         return 'Haluatko varmasti irrottaa solmukohdat ja liittymän solmusta ?' +
-          '<p class="node-info">Solmukohdat :</p>' +
-          nodePointsTable.toMessage(nodePoints) +
-          '<p class="node-info">Liittyma :</p>' +
-          junctionsTable.toMessage([junction]);
+          nodePointsHtmlTable +
+          junctionHtmlTable;
       };
 
       var junctionAndNodePointsByJunctionPointsCoordinates = function (junctionId) {
@@ -469,20 +479,25 @@
       };
 
       var junctionAndNodePointsByNodePointCoordinates = function (nodePointId) {
-        var nodePoint = _.find(selectedNodesAndJunctions.getNodePoints(), function (nodePoint) {
+        var nodePoints = selectedNodesAndJunctions.getNodePoints();
+        var targetNodePoint = _.find(nodePoints, function (nodePoint) {
           return nodePoint.id === nodePointId;
         });
 
         var junction = _.find(selectedNodesAndJunctions.getJunctions(), function (junction) {
           var junctionPointsCoordinates = _.map(junction.junctionPoints, 'coordinates');
 
-          return !_.isEmpty(_.intersectionWith(junctionPointsCoordinates, [nodePoint.coordinates], _.isEqual));
+          return !_.isEmpty(_.intersectionWith(junctionPointsCoordinates, [targetNodePoint.coordinates], _.isEqual));
         });
 
-        if (!_.isUndefined(junction)) { return junctionAndNodePointsByJunctionPointsCoordinates(junction.id); }
-        else if (nodePoint.type === LinkValues.NodePointType.RoadNodePoint.value || nodePoint.type === LinkValues.NodePointType.UnknownNodePointType.value) {
+        if (!_.isUndefined(junction)) {
+          return junctionAndNodePointsByJunctionPointsCoordinates(junction.id);
+        } else {
           return {
-            nodePoints: [nodePoint]
+            nodePoints: _.filter(nodePoints, function (nodePoint) {
+              return _.isEqual(nodePoint.coordinates, targetNodePoint.coordinates) &&
+                (nodePoint.type === LinkValues.NodePointType.RoadNodePoint.value || nodePoint.type === LinkValues.NodePointType.UnknownNodePointType.value);
+            })
           };
         }
       };
@@ -640,7 +655,7 @@
             nodePointTemplates: nodePointTemplates,
             options: options
           }));
-          selectedNodesAndJunctions.addNodePoints(nodePointTemplates);
+          selectedNodesAndJunctions.addNodePointTemplates(nodePointTemplates);
 
           //  setting junctions on the form
           var junctionsElement = $('#junctions-info-content');
@@ -649,7 +664,7 @@
               junctionTemplates: junctionTemplates,
               options: options
             }));
-          selectedNodesAndJunctions.addJunctions(junctionTemplates);
+          selectedNodesAndJunctions.addJunctionTemplates(junctionTemplates);
 
           $('.btn-edit-node-save').prop('disabled', formIsInvalid());
 

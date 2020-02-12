@@ -292,17 +292,21 @@
     };
 
     var highlightTemplates = function (templates) {
-      var nodePointTemplates = _.partition(nodePointTemplateLayer.getSource().getFeatures(), function (nodePointTemplateFeature) {
-        return _.includes(_.map(templates.nodePoints, 'id'), nodePointTemplateFeature.nodePointTemplate.id);
-      });
-      selectFeaturesToHighlight(nodePointTemplateVector, nodePointTemplates[0], nodePointTemplates[1]);
-      nodePointTemplateLayer.setOpacity(0.2);
+      if (!_.isUndefined(templates.nodePoints) && !_.isEmpty(templates.nodePoints)) {
+        var nodePointTemplates = _.partition(nodePointTemplateLayer.getSource().getFeatures(), function (nodePointTemplateFeature) {
+          return _.includes(_.map(templates.nodePoints, 'id'), nodePointTemplateFeature.nodePointTemplate.id);
+        });
+        selectFeaturesToHighlight(nodePointTemplateVector, nodePointTemplates[0], nodePointTemplates[1]);
+        nodePointTemplateLayer.setOpacity(0.2);
+      }
 
-      var junctionTemplates = _.partition(junctionTemplateLayer.getSource().getFeatures(), function (junctionTemplateFeature) {
-        return _.includes(_.map(templates.junctions, 'id'), junctionTemplateFeature.junctionTemplate.id);
-      });
-      selectFeaturesToHighlight(junctionTemplateVector, junctionTemplates[0], junctionTemplates[1]);
-      junctionTemplateLayer.setOpacity(0.2);
+      if (!_.isUndefined(templates.junctions) && !_.isEmpty(templates.junctions)) {
+        var junctionTemplates = _.partition(junctionTemplateLayer.getSource().getFeatures(), function (junctionTemplateFeature) {
+          return _.includes(_.map(templates.junctions, 'id'), junctionTemplateFeature.junctionTemplate.id);
+        });
+        selectFeaturesToHighlight(junctionTemplateVector, junctionTemplates[0], junctionTemplates[1]);
+        junctionTemplateLayer.setOpacity(0.2);
+      }
     };
 
     var highlightNode = function (node) {
@@ -356,6 +360,10 @@
       } else {
         removeCurrentNodeMarker(current);
       }
+    });
+
+    me.eventListener.listenTo(eventbus, 'nodePointTemplates:selected junctionTemplates:selected', function (templates) {
+      highlightTemplates(templates);
     });
 
     me.eventListener.listenTo(eventbus, 'node:unselected templates:unselected', function () {
@@ -646,7 +654,6 @@
           var filteredNodePointTemplates = templates.nodePoints;
 
           if (currentNode) {
-            applicationModel.addSpinner();
             eventbus.trigger('node:fetchCoordinates', nodeCollection.getNodeByNodeNumber(currentNode.nodeNumber));
             filteredNodes = _.filter(nodes, function (node) {
               return node.id !== currentNode.id;

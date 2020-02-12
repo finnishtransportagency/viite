@@ -128,7 +128,10 @@
     };
 
     eventbus.on('node:fetchCoordinates', function (node, callback) {
-      fetchCoordinates(_.concat(node.nodePoints, _.flatMap(node.junctions, 'junctionPoints')), callback || applicationModel.removeSpinner);
+      if (!(_.isEmpty(node.nodePoints) && _.isEmpty(_.flatMap(node.junctions, 'junctionPoints')))) {
+        applicationModel.addSpinner();
+        fetchCoordinates(_.concat(node.nodePoints, _.flatMap(node.junctions, 'junctionPoints')), callback || applicationModel.removeSpinner);
+      }
     });
 
     eventbus.on('node:fetched', function(fetchResult, zoom) {
@@ -146,42 +149,33 @@
       me.setMapTemplates(templates);
       eventbus.trigger('node:fetchCoordinates', templates, function () {
         eventbus.trigger('node:addNodesToMap', [], templates, zoom);
+        applicationModel.removeSpinner();
       });
     });
 
     eventbus.on('node:save', function (node) {
+      var fail = function (message) {
+        eventbus.trigger('node:saveFailed', message.errorMessage || 'Solmun tallennus epäonnistui.');
+      };
+
       applicationModel.addSpinner();
       if (!_.isUndefined(node)) {
-        var dataJson = {
-          coordinates: node.coordinates,
-          name: node.name,
-          nodeType: Number(node.type),
-          startDate: node.startDate
-        };
         if (!_.isUndefined(node.id)) {
-          dataJson = _.merge(dataJson, {
-            id: node.id,
-            nodeNumber: node.nodeNumber
-          });
-          backend.saveNodeInfo(dataJson, function (result) {
+          backend.updateNodeInfo(node, function (result) {
             if (result.success) {
               eventbus.trigger('node:saveSuccess');
             } else {
-              eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun tallennus epäonnistui.');
+              fail(result);
             }
-          }, function (result) {
-            eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun tallennus epäonnistui.');
-          });
+          }, fail);
         } else {
-          backend.createNodeInfo(dataJson, function (result) {
+          backend.createNodeInfo(node, function (result) {
             if (result.success) {
               eventbus.trigger('node:saveSuccess');
             } else {
-              eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun lisääminen epäonnistui.');
+             fail(result);
             }
-          }, function (result) {
-            eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun lisääminen epäonnistui.');
-          });
+          }, fail);
         }
       }
     });

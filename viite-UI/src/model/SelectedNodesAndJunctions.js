@@ -5,8 +5,8 @@
     var openNode = function (node, templates) {
       clean();
       setCurrentNode(node);
-      applicationModel.addSpinner();
-      eventbus.trigger('node:fetchCoordinates', node, function () {
+      //  TODO VIITE-2055 this must be modified, templates are not being included -> eventbus.trigger('node:fetchCoordinates', current.node `templates`, (...)
+      eventbus.trigger('node:fetchCoordinates', current.node, function () {
         eventbus.trigger('node:selected', current.node, templates);
         applicationModel.removeSpinner();
       });
@@ -60,12 +60,18 @@
       return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).nodePoints;
     };
 
-    var addNodePoints = function (nodePoints) {
-      _.each(nodePoints, function (nodePoint) { current.node.nodePoints.push(nodePoint); });
+    var addNodePointTemplates = function (nodePoints) {
+      _.each(nodePoints, function (nodePoint) {
+        current.node.nodePoints.push(nodePoint);
+      });
+      eventbus.trigger('nodePointTemplates:selected', { nodePoints: nodePoints });
     };
 
-    var addJunctions = function (junctions) {
-      _.each(junctions, function (junction) { current.node.junctions.push(junction); });
+    var addJunctionTemplates = function (junctions) {
+      _.each(junctions, function (junction) {
+        current.node.junctions.push(junction);
+      });
+      eventbus.trigger('junctionTemplates:selected', { junctions: junctions });
     };
 
     var getStartingCoordinates = function () {
@@ -217,8 +223,8 @@
       getCurrentTemplates: getCurrentTemplates,
       getJunctions: getJunctions,
       getNodePoints: getNodePoints,
-      addNodePoints: addNodePoints,
-      addJunctions: addJunctions,
+      addNodePointTemplates: addNodePointTemplates,
+      addJunctionTemplates: addJunctionTemplates,
       getStartingCoordinates: getStartingCoordinates,
       setStartingCoordinates: setStartingCoordinates,
       setCoordinates: setCoordinates,

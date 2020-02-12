@@ -690,7 +690,7 @@
       });
     }, 1000);
 
-    this.saveNodeInfo = _.throttle(function (data, success, failure) {
+    this.updateNodeInfo = _.throttle(function (data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",

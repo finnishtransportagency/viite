@@ -6,26 +6,22 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
-import fi.liikennevirasto.viite.util.DigiroadSerializers
+import fi.liikennevirasto.digiroad2.util.{RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
-import fi.liikennevirasto.viite.util.SplitOptions
+import fi.liikennevirasto.viite.util.DigiroadSerializers
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.swagger.Swagger
+import org.scalatra.swagger.{Swagger, _}
 import org.scalatra.{NotFound, _}
 import org.slf4j.{Logger, LoggerFactory}
-import org.scalatra.swagger._
 
 import scala.util.parsing.json.JSON._
 import scala.util.{Left, Right}
@@ -56,13 +52,17 @@ case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
 case class CutLineExtractor(linkId: Long, splitedPoint: Point)
 
-case class NodePointExtractor(id: Long)
+case class NodePointExtractor(id: Long, beforeAfter: Int, roadwayPointId: Long, nodeNumber: Option[Long], `type`: Int = NodePointType.UnknownNodePointType.value,
+                              validFrom: String, validTo: Option[String],
+                              createdBy: Option[String], createdTime: Option[String], roadwayNumber: Long, addrM : Long,
+                              roadNumber: Long, roadPartNumber: Long, track: Int, elyCode: Long)
 
-case class JunctionExtractor(id: Long, junctionNumber: Long, nodeNumber: Option[Long])
+case class JunctionExtractor(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: String, endDate: Option[String],
+                          validFrom: String, validTo: Option[String], createdBy: Option[String], createdTime: Option[String])
 
-case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, coordinates: Point, name: Option[String], nodeType: Int, startDate: String, endDate: Option[String], validFrom: Option[String], validTo: Option[String],
+case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, coordinates: Point, name: Option[String], `type`: Int, startDate: String, endDate: Option[String], validFrom: Option[String], validTo: Option[String],
                          createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None,
-                         junctionsToDetach: List[JunctionExtractor], nodePointsToDetach: List[NodePointExtractor])
+                         junctions: List[JunctionExtractor], nodePoints: List[NodePointExtractor])
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
@@ -972,11 +972,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   post("/nodes") {
     time(logger, s"POST request for /nodes") {
       val username = userProvider.getCurrentUser().username
-      val nodeInfo = parsedBody.extract[NodeExtractor]
-      val node: Node = NodeConverter.toNode(nodeInfo, username)
-      nodesAndJunctionsService.addOrUpdateNode(node, username) match {
-        case Some(err) => Map("success" -> false, "errorMessage" -> err)
-        case None => Map("success" -> true)
+      try {
+        val nodeInfo = parsedBody.extract[NodeExtractor]
+        val node: Node = NodesAndJunctionsConverter.toNode(nodeInfo, username)
+        val junctions = NodesAndJunctionsConverter.toJunctions(nodeInfo.junctions)
+        val nodePoints = NodesAndJunctionsConverter.toNodePoints(nodeInfo.nodePoints)
+        nodesAndJunctionsService.addOrUpdate(node, junctions, nodePoints, username) match {
+          case Left(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
+          case _ => Map("success" -> true)
+        }
+      } catch {
+        case ex: Exception => {
+          logger.error("Request POST /nodes failed.", ex)
+          BadRequest(s"Failed to save changes to node.")
+        }
       }
     }
   }
@@ -987,16 +996,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val username = userProvider.getCurrentUser().username
       try {
         val nodeInfo = parsedBody.extract[NodeExtractor]
-        val node: Node = NodeConverter.toNode(nodeInfo, username)
-        val junctionsIds = JunctionConverter.toJunctionIds(nodeInfo.junctionsToDetach)
-        val nodePointIds = NodePointConverter.toNodePointIds(nodeInfo.nodePointsToDetach)
-        nodesAndJunctionsService.update(node, junctionsIds, nodePointIds, username) match {
-          case Some(err) => Map("success" -> false, "errorMessage" -> err)
-          case None => Map("success" -> true)
+        val node: Node = NodesAndJunctionsConverter.toNode(nodeInfo, username)
+        val junctions = NodesAndJunctionsConverter.toJunctions(nodeInfo.junctions)
+        val nodePoints = NodesAndJunctionsConverter.toNodePoints(nodeInfo.nodePoints)
+        nodesAndJunctionsService.addOrUpdate(node, junctions, nodePoints, username) match {
+          case Left(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
+          case _ => Map("success" -> true)
         }
       } catch {
         case ex: Exception => {
-          logger.error("Request PUT /nodes/:id failed.", ex)
+          logger.error("Request PUT /nodes/$id failed.", ex)
           BadRequest(s"Failed to save changes to node (id: $id).")
         }
       }
@@ -1204,7 +1213,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "addrM" -> nodePoint.addrM,
       "roadwayNumber" -> nodePoint.roadwayNumber,
       "beforeAfter" -> nodePoint.beforeAfter.value,
-      "type" -> nodePoint.nodePointType.value
+      "type" -> nodePoint.nodePointType.value,
+      "roadwayPointId" -> nodePoint.roadwayPointId,
+      "validFrom" -> formatToString(nodePoint.validFrom.toString),
+      "validTo" -> formatDateTimeToString(nodePoint.validTo),
+      "createdBy" -> nodePoint.createdBy,
+      "createdTime" -> nodePoint.createdTime,
+      "track" -> nodePoint.track.value,
+      "elyCode" -> nodePoint.elyCode
     )
   }
 
@@ -1213,7 +1229,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "beforeAfter" -> nodePoint.beforeAfter.value,
       "roadwayPointId" -> nodePoint.roadwayPointId,
       "type" -> nodePoint.nodePointType.value,
-      "validFrom" -> formatDateTimeToString(Some(nodePoint.validFrom)),
+      "validFrom" -> formatToString(nodePoint.validFrom.toString),
       "validTo" -> formatDateTimeToString(nodePoint.validTo),
       "createdBy" -> nodePoint.createdBy,
       "roadwayNumber" -> nodePoint.roadwayNumber,
@@ -1247,7 +1263,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "junctionId" -> junctionPoint.junctionId,
       "beforeAfter" -> junctionPoint.beforeAfter.value,
       "roadwayPointId" -> junctionPoint.roadwayPointId,
-      "validFrom" -> formatDateTimeToString(Some(junctionPoint.validFrom)),
+      "validFrom" -> formatToString(junctionPoint.validFrom.toString),
       "validTo" -> formatDateTimeToString(junctionPoint.validTo),
       "createdBy" -> junctionPoint.createdBy,
       "roadwayNumber" -> junctionPoint.roadwayNumber,
@@ -1270,7 +1286,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("id" -> junction._1.id,
       "junctionNumber" -> junction._1.junctionNumber.orNull,
       "nodeNumber" -> junction._1.nodeNumber,
-      "junctionPoints" -> junction._2.map(junctionPointToApi))
+      "startDate" -> formatToString(junction._1.startDate.toString),
+      "endDate" -> (if (junction._1.endDate.isDefined) junction._1.endDate.get.toString else null),
+      "validFrom" -> formatToString(junction._1.validFrom.toString),
+      "validTo" -> (if (junction._1.validTo.isDefined) junction._1.validTo.get.toString else null),
+      "createdBy" -> junction._1.createdBy.orNull,
+      "createdTime" -> junction._1.createdTime,
+      "junctionPoints" -> junction._2.map(junctionPointToApi)
+    )
   }
 
   def junctionPointToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
@@ -1562,7 +1585,8 @@ object ProjectConverter {
   }
 }
 
-object NodeConverter {
+object NodesAndJunctionsConverter {
+
   def toNode(node: NodeExtractor, username: String) : Node = {
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val endDate = if (node.endDate.isDefined) Option(formatter.parseDateTime(node.endDate.get)) else None
@@ -1570,19 +1594,33 @@ object NodeConverter {
     val validTo = if (node.validTo.isDefined) Option(formatter.parseDateTime(node.validTo.get)) else None
     val createdTime = if (node.createdTime.isDefined) Option(formatter.parseDateTime(node.createdTime.get)) else None
 
-    Node(node.id, node.nodeNumber, node.coordinates, node.name, NodeType.apply(node.nodeType),
-         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, Some(username), createdTime)
+    Node(node.id, node.nodeNumber, node.coordinates, node.name, NodeType.apply(node.`type`),
+      formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, Some(username), createdTime)
   }
-}
 
-object JunctionConverter {
-  def toJunctionIds(junctions: Seq[JunctionExtractor]) : Seq[Long] = {
-    junctions.map(_.id)
+  def toJunctions(junctions: Seq[JunctionExtractor]): Seq[Junction] = {
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+
+    junctions.map { junction =>
+      val endDate = if (junction.endDate.isDefined) Option(formatter.parseDateTime(junction.endDate.get)) else None
+      val validTo = if (junction.validTo.isDefined) Option(formatter.parseDateTime(junction.validTo.get)) else None
+      val createdTime = if (junction.createdTime.isDefined) Option(formatter.parseDateTime(junction.createdTime.get)) else None
+
+      Junction(junction.id, junction.junctionNumber, junction.nodeNumber, formatter.parseDateTime(junction.startDate), endDate,
+        formatter.parseDateTime(junction.validFrom.toString), validTo, junction.createdBy, createdTime)
+    }
   }
-}
 
-object NodePointConverter {
-  def toNodePointIds(nodePoints: Seq[NodePointExtractor]) : Seq[Long] = {
-    nodePoints.map(_.id)
+  def toNodePoints(nodePoints: Seq[NodePointExtractor]): Seq[NodePoint] = {
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    nodePoints.map { nodePoint =>
+      val validTo = if (nodePoint.validTo.isDefined) Option(formatter.parseDateTime(nodePoint.validTo.get)) else None
+      val createdTime = if (nodePoint.createdTime.isDefined) Option(formatter.parseDateTime(nodePoint.createdTime.get)) else None
+
+      NodePoint(nodePoint.id, BeforeAfter.apply(nodePoint.beforeAfter), nodePoint.roadwayPointId, nodePoint.nodeNumber, NodePointType.apply(nodePoint.`type`),
+        formatter.parseDateTime(nodePoint.validFrom.toString), validTo,
+        nodePoint.createdBy, createdTime, nodePoint.roadwayNumber, nodePoint.addrM,
+        nodePoint.roadNumber, nodePoint.roadPartNumber, Track.apply(nodePoint.track), nodePoint.elyCode)
+    }
   }
 }
