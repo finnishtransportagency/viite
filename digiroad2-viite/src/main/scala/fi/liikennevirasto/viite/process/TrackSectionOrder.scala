@@ -36,7 +36,7 @@ object TrackSectionOrder {
 
       val startPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.startPoint)).minBy(_.distance)
       val endPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.endPoint)).minBy(_.distance)
-      val calculatedEndPoint = if(endPointMinDistance.projectLink.status == LinkStatus.New && endPointMinDistance.projectLink.endAddrMValue == 0) endPointMinDistance.point else endPointMinDistance.projectLink.endPoint
+      val calculatedEndPoint = if (endPointMinDistance.projectLink.status == LinkStatus.New && endPointMinDistance.projectLink.endAddrMValue == 0) endPointMinDistance.point else endPointMinDistance.projectLink.endPoint
       val (resultProjectLinkChain, newUnprocessed) = if (startPointMinDistance.distance > endPointMinDistance.distance || endPointMinDistance.projectLink.startAddrMValue == projectLinkChain.sortedProjectLinks.last.endAddrMValue && endPointMinDistance.projectLink.endAddrMValue != 0 && projectLinkChain.sortedProjectLinks.last.endAddrMValue != 0)
         (projectLinkChain.copy(sortedProjectLinks = projectLinkChain.sortedProjectLinks :+ endPointMinDistance.projectLink, endPoint = calculatedEndPoint), unprocessed.filterNot(pl => pl.id == endPointMinDistance.projectLink.id))
       else
