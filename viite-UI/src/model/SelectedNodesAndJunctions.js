@@ -6,10 +6,8 @@
       clean();
       setCurrentNode(node);
       //  TODO VIITE-2055 this must be modified, templates are not being included -> eventbus.trigger('node:fetchCoordinates', current.node `templates`, (...)
-      eventbus.trigger('node:fetchCoordinates', current.node, function () {
-        eventbus.trigger('node:selected', current.node, templates);
-        applicationModel.removeSpinner();
-      });
+      //  TODO VIITE-2055 conflicts {'node:fetchCoordinates'}
+      eventbus.trigger('node:selected', current.node, templates);
     };
 
     var getCurrentNode = function () {

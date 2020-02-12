@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -17,7 +18,7 @@ case class Junction(id: Long, junctionNumber: Option[Long], nodeNumber: Option[L
 
 case class JunctionInfo(id: Long, junctionNumber: Option[Long], startDate: DateTime, nodeNumber: Long, nodeName: String)
 
-case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long)
+case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long, coords: Point = Point(0.0, 0.0))
 
 class JunctionDAO extends BaseDAO {
 
