@@ -1038,6 +1038,45 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   }
 
   /*
+
+                      -|-
+               C1   /    \  C2
+                  |-       -|
+
+  Test specific case for two completely new links i.e. with Unknown side codes and the Combined link number 2  have its geometry against normal geometry grow
+  Then the starting point should never be their mutual connecting point, but instead one of the edges.
+
+
+   */
+  test("Test findStartingPoints When adding two completely (New) links both with end addresses 0, unknown side code and with one of them having inverted geometry grow, Then the direction should not be the one starting in the mid.") {
+    runWithRollback {
+      val geomNew1 = Seq(Point(723.562,44.87,94.7409999999945),
+          Point(792.515,54.912,95.8469999999943))
+      val plId = Sequences.nextViitePrimaryKeySeqValue
+
+      val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12344L, 0.0, 9.0, SideCode.Unknown, (None, None),
+        geomNew1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val geomNew2 = Seq(Point(973.346,33.188,93.2029999999941),
+        Point(847.231,62.266,94.823000000004),
+        Point(792.515,54.912,95.8469999999943))
+
+      val projectLinkNew2 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12345L, 0.0, 10.0, SideCode.Unknown, (None, None),
+        geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val otherProjectLinks = Seq()
+      val newProjectLinks = Seq(projectLinkNew1, projectLinkNew2)
+
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, otherProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      startingPointsForCalculations should not be((geomNew2.last, geomNew2.last))
+    }
+  }
+
+  /*
                                |
                                |    <- New #1 (Against digitization)
                               / \
