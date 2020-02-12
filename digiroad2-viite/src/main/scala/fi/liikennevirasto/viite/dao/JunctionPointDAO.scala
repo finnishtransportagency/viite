@@ -1,4 +1,5 @@
 package fi.liikennevirasto.viite.dao
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
@@ -13,7 +14,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class JunctionPoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, junctionId: Long,
                          validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM: Long,
-                         roadNumber: Long, roadPartNumber: Long, track: Track)
+                         roadNumber: Long, roadPartNumber: Long, track: Track, coordinates: Point = Point(0.0, 0.0))
 
 class JunctionPointDAO extends BaseDAO {
 

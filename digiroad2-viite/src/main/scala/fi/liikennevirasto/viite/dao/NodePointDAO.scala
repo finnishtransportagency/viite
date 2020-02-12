@@ -1,12 +1,13 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import org.joda.time.DateTime
 import fi.liikennevirasto.viite.NewIdValue
+import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
@@ -83,7 +84,7 @@ object BeforeAfter {
 case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeNumber: Option[Long], nodePointType: NodePointType = NodePointType.UnknownNodePointType,
                      validFrom: DateTime, validTo: Option[DateTime],
                      createdBy: Option[String], createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long,
-                     roadNumber: Long, roadPartNumber: Long, track: Track, elyCode: Long)
+                     roadNumber: Long, roadPartNumber: Long, track: Track, elyCode: Long, coordinates: Point = Point(0.0, 0.0))
 
 class NodePointDAO extends BaseDAO {
 
