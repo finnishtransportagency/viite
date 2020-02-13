@@ -333,7 +333,7 @@
         });
         var isDetachable = 'title="' + nodePointType.description + '"'; // added for testing purposes, needs to be confirm if this title is a good idea for production env.
         if (_.isEqual(nodePointType, LinkValues.NodePointType.CalculatedNodePoint)) {
-          isDetachable += ' disabled';
+          isDetachable += ' disabled hidden';
         }
         return '<td><input ' + isDetachable + ' type="checkbox" name="detach-node-point-' + nodePoint.id + '" value="' + nodePoint.id + '" id="detach-node-point-' + nodePoint.id + '"></td>';
       };
@@ -421,6 +421,8 @@
     };
 
     var formIsInvalid = function () {
+      //  TODO check if this is still necessary for this branch:
+      // var saveBtnDisabled = (Environment.name() === 'integration' || Environment.name() === 'production');
       return $('#nodeName').val() === "" ||
         $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||

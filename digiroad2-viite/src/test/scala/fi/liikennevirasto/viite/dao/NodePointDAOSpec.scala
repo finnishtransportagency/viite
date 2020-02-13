@@ -29,13 +29,13 @@ class NodePointDAOSpec extends FunSuite with Matchers {
 
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
 
-  val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType,
-    DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined, 0)
-  val testNodePoint2 = NodePoint(NewIdValue, BeforeAfter.After, -1, None, NodePointType.UnknownNodePointType,
-    DateTime.parse("2019-01-01"), None, None, None, -1, 10, 0, 0, Track.Combined, 0)
+  val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType, None, None,
+    DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, 0)
+  val testNodePoint2 = NodePoint(NewIdValue, BeforeAfter.After, -1, None, NodePointType.UnknownNodePointType, None, None,
+    DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, 0)
 
   val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
-    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, None, None)
+    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, "Test", None)
 
   val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l,
     (None, None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
@@ -71,7 +71,7 @@ class NodePointDAOSpec extends FunSuite with Matchers {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
       dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeNumber)),
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeNumber))))
-      val nodePoints = dao.fetchNodePointsByNodeNumbers(Seq(-1))
+      val nodePoints = dao.fetchByNodeNumber(-1)
       nodePoints.isEmpty should be(true)
     }
   }
@@ -86,7 +86,7 @@ class NodePointDAOSpec extends FunSuite with Matchers {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
       dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeNumber)),
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = Some(nodeNumber))))
-      val nodePoints = dao.fetchNodePointsByNodeNumbers(Seq(nodeNumber))
+      val nodePoints = dao.fetchByNodeNumber(nodeNumber)
       nodePoints.size should be(2)
       nodePoints.count(n => n.nodeNumber.contains(nodeNumber)) should be(2)
     }
@@ -109,7 +109,7 @@ class NodePointDAOSpec extends FunSuite with Matchers {
       val roadwayNumber = Sequences.nextRoadwayNumber
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
       dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = None),
-        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = None)), "Test")
+        testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = None)))
       linearLocationDAO.create(Seq(testLinearLocation1.copy(roadwayNumber = roadwayNumber)))
       val nodePoints = dao.fetchTemplatesByBoundingBox(BoundingRectangle(Point(98, 98), Point(102, 102)))
       nodePoints.size should be(2)

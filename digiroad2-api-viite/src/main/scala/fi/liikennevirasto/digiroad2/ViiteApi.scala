@@ -6,26 +6,23 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
-import fi.liikennevirasto.viite.util.DigiroadSerializers
+import fi.liikennevirasto.digiroad2.util.{RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
-import fi.liikennevirasto.viite.util.SplitOptions
+import fi.liikennevirasto.viite.util.DigiroadSerializers
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.swagger.Swagger
+import org.scalatra.swagger.{Swagger, _}
 import org.scalatra.{NotFound, _}
 import org.slf4j.{Logger, LoggerFactory}
-import org.scalatra.swagger._
 
 import scala.collection.parallel.immutable.ParSeq
 import scala.util.parsing.json.JSON._
@@ -83,7 +80,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication
-    with ContentEncodingSupport
     with SwaggerSupport {
 
   protected val applicationDescription = "The user interface API "
@@ -1276,7 +1272,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadNumber" -> nodePoint.roadNumber,
       "roadPartNumber" -> nodePoint.roadPartNumber,
       "track" -> nodePoint.track,
-      "type" -> nodePoint.nodePointType.value,
       "coordinates" -> Map(
         "x" ->  nodePoint.coordinates.x,
         "y" ->  nodePoint.coordinates.y)
@@ -1305,6 +1300,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "junctionId" -> junctionPoint.junctionId,
       "beforeAfter" -> junctionPoint.beforeAfter.value,
       "roadwayPointId" -> junctionPoint.roadwayPointId,
+      "startDate" -> formatDateTimeToString(junctionPoint.startDate),
+      "endDate" -> formatDateTimeToString(junctionPoint.endDate),
       "validFrom" -> formatToString(junctionPoint.validFrom.toString),
       "validTo" -> formatDateTimeToString(junctionPoint.validTo),
       "createdBy" -> junctionPoint.createdBy,
@@ -1645,7 +1642,7 @@ object NodesAndJunctionsConverter {
     val createdTime = if (node.createdTime.isDefined) Option(formatter.parseDateTime(node.createdTime.get)) else None
 
     Node(node.id, node.nodeNumber, node.coordinates, node.name, NodeType.apply(node.`type`),
-      formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, Some(username), createdTime)
+         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, username, createdTime)
   }
 
   def toJunctions(junctions: Seq[JunctionExtractor]): Seq[Junction] = {

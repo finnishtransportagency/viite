@@ -14,7 +14,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class Junction(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: DateTime, endDate: Option[DateTime],
-                    validFrom: DateTime, validTo: Option[DateTime], createdBy: Option[String], createdTime: Option[DateTime])
+                    validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
 case class JunctionInfo(id: Long, junctionNumber: Option[Long], startDate: DateTime, nodeNumber: Long, nodeName: String)
 
@@ -33,7 +33,7 @@ class JunctionDAO extends BaseDAO {
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = formatter.parseDateTime(r.nextDate.toString)
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val createdBy = r.nextStringOption()
+      val createdBy = r.nextString()
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       Junction(id, junctionNumber, nodeNumber, startDate, endDate, validFrom, validTo, createdBy, createdTime)
     }
@@ -104,11 +104,37 @@ class JunctionDAO extends BaseDAO {
         s"""
       SELECT ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
       FROM JUNCTION
-      WHERE ID IN (${ids.mkString(", ")}) AND VALID_TO IS NULL
+      WHERE ID IN (${ids.mkString(", ")}) AND VALID_TO IS NULL AND END_DATE IS NULL
       """
       queryList(query)
     }
   }
+
+  def fetchAllByIds(ids: Seq[Long]): Seq[Junction] = {
+    if (ids.isEmpty)
+      List()
+    else {
+      val query =
+        s"""
+      SELECT ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
+      FROM JUNCTION
+      WHERE ID IN (${ids.mkString(", ")})
+      """
+      queryList(query)
+    }
+  }
+
+  def fetchJunctionByIdWithValidPoints(id: Long): Seq[Junction] = {
+      val query =
+        s"""
+      SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_NUMBER, j.START_DATE, j.END_DATE, j.VALID_FROM, j.VALID_TO, j.CREATED_BY, j.CREATED_TIME
+      FROM JUNCTION j
+      INNER JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
+      WHERE j.ID = $id AND j.VALID_TO IS NULL AND j.END_DATE IS NULL
+      """
+      queryList(query)
+  }
+
   def fetchJunctionInfoByJunctionId(ids: Seq[Long]): Option[JunctionInfo] = {
     sql"""
       SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_NUMBER, j.START_DATE, n.NAME
@@ -117,31 +143,6 @@ class JunctionDAO extends BaseDAO {
       WHERE j.ID IN (${ids.mkString(", ")}) AND j.valid_to IS NULL AND j.END_DATE IS NULL
       """.as[JunctionInfo].firstOption
 
-  }
-
-  /**
-    * Search for Junctions that no longer have justification for the current network.
-    *
-    * @param ids : Iterable[Long] - The ids of the junctions to verify.
-    * @return
-    */
-  def fetchObsoleteById(ids: Iterable[Long]): Seq[Junction] = {
-    // An Obsolete junction are those that no longer have justification for the current network, and must be expired.
-    if (ids.isEmpty) {
-      Seq()
-    } else {
-      val query = s"""
-        SELECT ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME
-          FROM JUNCTION J
-          WHERE ID IN (${ids.mkString(", ")})
-          AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER) FROM JUNCTION_POINT JP
-            LEFT JOIN ROADWAY_POINT RP ON JP.ROADWAY_POINT_ID = RP.ID
-            LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
-            WHERE JP.JUNCTION_ID = J.ID AND JP.VALID_TO IS NULL) < 2
-          AND VALID_TO IS NULL AND END_DATE IS NULL
-        """
-      queryList(query)
-    }
   }
 
   def fetchTemplates() : Seq[JunctionTemplate] = {
@@ -172,8 +173,9 @@ class JunctionDAO extends BaseDAO {
   }
 
   def fetchTemplatesByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[JunctionTemplate] = {
-    val query =
-      s"""
+    if (roadwayNumbers.nonEmpty) {
+      val query =
+        s"""
          SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
          FROM JUNCTION j
          LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
@@ -182,21 +184,27 @@ class JunctionDAO extends BaseDAO {
          WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_NUMBER IS NULL
            AND rw.ROADWAY_NUMBER IN (${roadwayNumbers.mkString(", ")})
        """
-    queryListTemplate(query)
+      queryListTemplate(query)
+    } else {
+      Seq.empty[JunctionTemplate]
+    }
   }
 
-  def fetchTerminatedByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[Junction] = {
-    val query =
-      s"""
+  def fetchExpiredByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[Junction] = {
+    if (roadwayNumbers.nonEmpty) {
+      val query =
+        s"""
          SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_NUMBER, j.START_DATE, j.END_DATE, j.VALID_FROM, j.VALID_TO, j.CREATED_BY, j.CREATED_TIME
          FROM JUNCTION j
-         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
+         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID
          LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-         WHERE j.VALID_TO IS NULL AND j.END_DATE IS NOT NULL
-           AND rw.ROADWAY_NUMBER IN (${roadwayNumbers.mkString(", ")})
-       """
-    queryList(query)
+         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
+         WHERE rw.ROADWAY_NUMBER IN (${roadwayNumbers.mkString(", ")})
+        """
+      queryList(query)
+    } else {
+      Seq.empty[Junction]
+    }
   }
 
   def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionTemplate] = {
@@ -221,7 +229,7 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
-  def create(junctions: Iterable[Junction], createdBy: String = "-"): Seq[Long] = {
+  def create(junctions: Iterable[Junction]): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into JUNCTION (ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, CREATED_BY)
@@ -252,7 +260,7 @@ class JunctionDAO extends BaseDAO {
           case Some(date) => dateFormatter.print(date)
           case None => ""
         })
-        ps.setString(6, if (createdBy == null) "-" else createdBy)
+        ps.setString(6, junction.createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
