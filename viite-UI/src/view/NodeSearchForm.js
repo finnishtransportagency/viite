@@ -212,7 +212,7 @@
           eventbus.trigger('nodeSearchTool:clickNodePointTemplate', event.currentTarget.id);
         });
 
-        rootElement.one('click', '.junction-template-link', function (event) {
+        rootElement.on('click', '.junction-template-link', function (event) {
           eventbus.trigger('nodeSearchTool:clickJunctionTemplate', event.currentTarget.id);
         });
       });

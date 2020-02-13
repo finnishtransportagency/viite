@@ -421,8 +421,6 @@
     };
 
     var formIsInvalid = function () {
-      //  TODO check if this is still necessary for this branch:
-      // var saveBtnDisabled = (Environment.name() === 'integration' || Environment.name() === 'production');
       return $('#nodeName').val() === "" ||
         $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||
@@ -432,6 +430,12 @@
     var closeNode = function () {
       selectedNodesAndJunctions.closeNode();
       eventbus.off('change:nodeName, change:nodeTypeDropdown, change:nodeStartDate');
+    };
+
+    var toggleEditNodeJunctions = function (junctions, replace) {
+      _.forEach(junctions, function (junction) {
+        replace(junction);
+      });
     };
 
     var bindEvents = function () {
@@ -582,22 +586,20 @@
       });
 
       rootElement.on('click', '#editNodeJunctions', function () {
-        _.forEach(selectedNodesAndJunctions.getCurrentNode().junctions, function(junction) {
-          var element = $('#junction-number-textbox-' + junction.id);
-          //  verify editing mode (on/off) by the current element being presented. On(#junction-number-textbox) / Off(#junction-number-icon)
-          if(_.isEmpty(element)){
-            //  repaint junction icons to junction text boxes.
+        var junctions = selectedNodesAndJunctions.getCurrentNode().junctions;
+        var editMode = _.isEmpty($('#junction-number-textbox-' + _.first(junctions).id));
+        if (editMode) {
+          toggleEditNodeJunctions(junctions, function (junction) {
             $('#junction-number-icon-' + junction.id).replaceWith(formCommon.nodeInputNumber('junction-number-textbox-' + junction.id, 2, junction.junctionNumber || '', 'text-align: center; width: 20px;'));
-          } else {
-            //  replace junction.junctionNumber
+          });
+        } else {
+          toggleEditNodeJunctions(junctions, function (junction) {
+            var element = $('#junction-number-textbox-' + junction.id);
             junction.junctionNumber = element.val() && parseInt(element.val());
-            //  update junction number on the map
-            eventbus.trigger('junction:mapNumberUpdate', junction);
-            //  repaint junction text boxes to junction icons
             element.replaceWith(junctionsTable.junctionIcon(junction));
-          }
-          eventbus.trigger('change:editNodeJunctions');
-        });
+          });
+        }
+        $('.btn-edit-node-save').prop('disabled', !editMode || formIsInvalid());
       });
 
       rootElement.on('click', '.btn-edit-node-save', function () {
@@ -624,7 +626,7 @@
 
       eventbus.on('templates:selected', function (templates) {
         rootElement.empty();
-        if (!_.isEmpty(templates.nodePoints) || !_.isUndefined(templates.junction)) {
+        if (!_.isEmpty(templates.nodePoints) || !_.isEmpty(templates.junctions)) {
           var options = { asResume: true };
           rootElement.html(templatesForm('Aihioiden tiedot:'));
           var nodePointsElement = $('#node-points-info-content');
@@ -691,7 +693,7 @@
           });
 
           eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate ' +
-                      'junction:detach nodePoint:detach junction:attach nodePoint:attach change:editNodeJunctions', function () {
+                      'junction:detach nodePoint:detach junction:attach nodePoint:attach', function () {
             $('.btn-edit-node-save').prop('disabled', formIsInvalid());
           });
         }

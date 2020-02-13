@@ -542,9 +542,9 @@
       }
     });
 
-    me.eventListener.listenTo(eventbus, 'nodeLayer:fetch', function () {
+    me.eventListener.listenTo(eventbus, 'nodeLayer:fetch', function (callback) {
       map.getView().setZoom(Math.round(zoomlevels.getViewZoom(map)));
-      roadCollection.fetchWithNodes(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1);
+      roadCollection.fetchWithNodes(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, callback);
     });
 
     me.eventListener.listenTo(eventbus, 'nodeLayer:refreshView', function () {
