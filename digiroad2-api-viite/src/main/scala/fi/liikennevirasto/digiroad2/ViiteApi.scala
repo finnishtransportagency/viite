@@ -63,7 +63,7 @@ case class NodePointExtractor(id: Long, beforeAfter: Int, roadwayPointId: Long, 
                               roadNumber: Long, roadPartNumber: Long, track: Int, elyCode: Long)
 
 case class JunctionExtractor(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: String, endDate: Option[String],
-                          validFrom: String, validTo: Option[String], createdBy: Option[String], createdTime: Option[String])
+                          validFrom: Option[String], validTo: Option[String], createdBy: Option[String], createdTime: Option[String])
 
 case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, coordinates: Point, name: Option[String], `type`: Int, startDate: String, endDate: Option[String], validFrom: Option[String], validTo: Option[String],
                          createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None,
@@ -1652,12 +1652,13 @@ object NodesAndJunctionsConverter {
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
     junctions.map { junction =>
+      val validFrom = if (junction.validFrom.isDefined) formatter.parseDateTime(junction.validFrom.get) else new DateTime()
       val endDate = if (junction.endDate.isDefined) Option(formatter.parseDateTime(junction.endDate.get)) else None
       val validTo = if (junction.validTo.isDefined) Option(formatter.parseDateTime(junction.validTo.get)) else None
       val createdTime = if (junction.createdTime.isDefined) Option(formatter.parseDateTime(junction.createdTime.get)) else None
 
       Junction(junction.id, junction.junctionNumber, junction.nodeNumber, formatter.parseDateTime(junction.startDate), endDate,
-        formatter.parseDateTime(junction.validFrom.toString), validTo, junction.createdBy, createdTime)
+        validFrom, validTo, junction.createdBy, createdTime)
     }
   }
 
