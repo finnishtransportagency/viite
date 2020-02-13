@@ -1,16 +1,9 @@
 (function (root) {
   root.JunctionMarker = function () {
-    var createJunctionMarker = function (junction, referencePoint, roadLink) {
-      var point = [];
-
-      if ((roadLink.sideCode === LinkValues.SideCode.TowardsDigitizing.value && referencePoint.addrM === roadLink.endAddressM) || (roadLink.sideCode === LinkValues.SideCode.AgainstDigitizing.value && referencePoint.addrM === roadLink.startAddressM)) {
-        point = roadLink.points[roadLink.points.length - 1];
-      } else {
-        point = roadLink.points[0];
-      }
+    var createJunctionMarker = function (junction) {
 
       var marker = new ol.Feature({
-        geometry: new ol.geom.Point([point.x, point.y]),
+        geometry: new ol.geom.Point([_.first(junction.junctionPoints).coordinates.x, _.first(junction.junctionPoints).coordinates.y]),
         junctionNumber: junction.junctionNumber
       });
 
@@ -35,7 +28,6 @@
       });
 
       marker.junction = junction;
-      marker.roadLink = roadLink;
       marker.setStyle(junctionMarkerStyleProvider(junction.junctionNumber));
       return marker;
     };

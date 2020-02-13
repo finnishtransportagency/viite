@@ -1,16 +1,9 @@
 (function (root) {
   root.NodePointTemplateMarker = function () {
-    var createNodePointTemplateMarker = function (nodePoint, roadLink) {
-      var point = [];
-
-      if ((roadLink.sideCode === LinkValues.SideCode.TowardsDigitizing.value && nodePoint.addrM === roadLink.endAddressM) || (roadLink.sideCode === LinkValues.SideCode.AgainstDigitizing.value && nodePoint.addrM === roadLink.startAddressM)) {
-        point = roadLink.points[roadLink.points.length - 1];
-      } else {
-        point = roadLink.points[0];
-      }
+    var createNodePointTemplateMarker = function (nodePoint) {
 
       var marker = new ol.Feature({
-        geometry: new ol.geom.Point([point.x, point.y])
+        geometry: new ol.geom.Point([nodePoint.coordinates.x, nodePoint.coordinates.y])
       });
 
       var nodePointMarkerStyle = new ol.style.Style({
@@ -21,7 +14,6 @@
       });
 
       marker.nodePointTemplate = nodePoint;
-      marker.roadLink = roadLink;
       marker.setStyle(nodePointMarkerStyle);
       return marker;
     };
