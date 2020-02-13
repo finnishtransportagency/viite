@@ -268,7 +268,7 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
-  def create(nodePoints: Iterable[NodePoint]): Seq[Long] = {
+  def create(nodePoints: Iterable[NodePoint], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_NUMBER, "TYPE", CREATED_BY)
@@ -292,7 +292,7 @@ class NodePointDAO extends BaseDAO {
           ps.setNull(4, java.sql.Types.INTEGER)
         }
         ps.setInt(5, nodePoint.nodePointType.value)
-        ps.setString(6, nodePoint.createdBy)
+        ps.setString(6, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
