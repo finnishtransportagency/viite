@@ -2,7 +2,6 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -189,7 +188,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
             case (None, Some(_)) => (None, Some(projectLink.endAddrMValue))
             case (Some(_), Some(_)) => (Some(projectLink.startAddrMValue), Some(projectLink.endAddrMValue))
           }
-          LinearLocation(NewIdValue, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
+          LinearLocation(projectLink.linearLocationId, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
             calibrationPoints, projectLink.geometry, projectLink.linkGeomSource, roadway.roadwayNumber, Some(DateTime.now()))
       }
   }

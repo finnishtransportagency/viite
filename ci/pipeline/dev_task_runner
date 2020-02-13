@@ -48,9 +48,8 @@ pipeline {
                                        ])
 
         choice(name: 'IMPORT_TABLE', choices: [
-                                       'VVH_TIEOSOITE_JOULUKUU2018',
-                                       'VVH_TIEOSOITE_KESAKUU_2019',
-                                       'VVH_TIEOSOITE_MARRASKUU_2019'
+                                       'VVH_TIEOSOITE_JOULUKUU_2019',
+                                       'VVH_TIEOSOITE_TAMMIKUU_2020'
                                        ])
     }
 

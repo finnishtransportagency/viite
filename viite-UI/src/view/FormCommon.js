@@ -168,9 +168,9 @@
       if (isPartialReversed) {
         return '<label class="split-form-group">Osittain käännetty</label>';
       } else if (selected[0].reversed) {
-        return '<label class="split-form-group">&#9745; Käännetty</label>';
+        return '<label class="split-form-group"><span class="dingbats">&#9745;</span> Käännetty</label>';
       } else {
-        return '<label class="split-form-group">&#9744; Käännetty</label>';
+        return '<label class="split-form-group"><span class="dingbats">&#9744;</span> Käännetty</label>';
       }
     };
 

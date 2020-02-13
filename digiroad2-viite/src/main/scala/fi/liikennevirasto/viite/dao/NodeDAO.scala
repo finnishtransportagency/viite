@@ -122,7 +122,7 @@ object NodeType {
 }
 
 case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: DateTime, endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
-                createdBy: Option[String], createdTime: Option[DateTime], editor: Option[String] = None, publishedTime: Option[DateTime] = None)
+                createdBy: String, createdTime: Option[DateTime], editor: Option[String] = None, publishedTime: Option[DateTime] = None)
 
 case class RoadAttributes(roadNumber: Long, track: Long, roadPartNumber: Long, addrMValue: Long)
 
@@ -142,7 +142,7 @@ class NodeDAO extends BaseDAO {
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validFrom = formatter.parseDateTime(r.nextDate.toString)
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val createdBy = r.nextStringOption()
+      val createdBy = r.nextString()
       val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val editor = r.nextStringOption()
       val publishedTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
@@ -215,47 +215,13 @@ class NodeDAO extends BaseDAO {
       """
 
     Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Int], DateTime, Option[DateTime], DateTime, Option[DateTime],
-      Option[String], Option[DateTime], Long, Long, Long, Long)](query).list.map {
+      String, Option[DateTime], Long, Long, Long, Long)](query).list.map {
 
       case (id, nodeNumber, x, y, name, nodeType, startDate, endDate, validFrom, validTo,
       createdBy, createdTime, roadNumber, track, roadPartNumber, addrMValue) =>
 
         (Node(id, nodeNumber, Point(x, y), name, NodeType.apply(nodeType.getOrElse(NodeType.UnknownNodeType.value)), startDate, endDate, validFrom, validTo, createdBy, createdTime, None, None),
           RoadAttributes(roadNumber, track, roadPartNumber, addrMValue))
-    }
-  }
-
-  /**
-    * Search for Nodes that no longer have justification for the current network.
-    *
-    * @param nodeNumbers : Iterable[Long] - The node numbers of nodes to verify.
-    * @return
-    */
-  // TODO Do we need to check the node point type here too?
-  def fetchObsoleteByNodeNumbers(nodeNumbers: Iterable[Long]): Seq[Node] = {
-    // An Obsolete node are those that no longer have justification for the current network, and must be expired.
-    if (nodeNumbers.isEmpty) {
-      Seq()
-    } else {
-      val query = s"""
-        SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
-        FROM NODE N
-        CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
-        WHERE NODE_NUMBER IN (${nodeNumbers.mkString(", ")})
-          AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER) FROM JUNCTION_POINT JP
-            LEFT JOIN JUNCTION J ON JP.JUNCTION_ID = J.ID
-            LEFT JOIN ROADWAY_POINT RP ON JP.ROADWAY_POINT_ID = RP.ID
-            LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
-            WHERE J.NODE_NUMBER = N.NODE_NUMBER AND JP.VALID_TO IS NULL) < 2
-          AND ((SELECT COUNT(*) FROM NODE_POINT NP
-            WHERE NP.NODE_NUMBER = N.NODE_NUMBER AND NP.VALID_TO IS NULL) < 1
-          AND (SELECT COUNT(DISTINCT RW.ROAD_NUMBER || '-' || RW.ROAD_PART_NUMBER || ',' || RW.ROAD_TYPE) FROM NODE_POINT NP
-            LEFT JOIN ROADWAY_POINT RP ON NP.ROADWAY_POINT_ID = RP.ID
-            LEFT JOIN ROADWAY RW ON RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
-            WHERE NP.NODE_NUMBER = N.NODE_NUMBER AND NP.VALID_TO IS NULL) < 2)
-          AND VALID_TO IS NULL AND END_DATE IS NULL
-        """
-      queryList(query)
     }
   }
 
@@ -365,18 +331,20 @@ class NodeDAO extends BaseDAO {
     }
   }
 
-  def fetchEmptyNodes(nodeNumbers: Iterable[Long]): Seq[Node] = {
+  def fetchEmptyNodes(nodeNumbers: Seq[Long]): Seq[Node] = {
     if (nodeNumbers.isEmpty) {
       Seq()
     } else {
+      // TODO - Might be needed to check node point type here - since calculate node points should not be considered to identify empty nodes
       val query = s"""
         SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
         FROM NODE N
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
-          WHERE END_DATE IS NULL AND VALID_TO IS NULL AND NODE_NUMBER IN (${nodeNumbers.mkString(", ")}) AND NOT EXISTS (
+          WHERE END_DATE IS NULL AND VALID_TO IS NULL AND NODE_NUMBER IN (${nodeNumbers.mkString(", ")})
+          AND NOT EXISTS (
             SELECT NULL FROM JUNCTION J WHERE N.NODE_NUMBER = J.NODE_NUMBER AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
           ) AND NOT EXISTS (
-            SELECT NULL FROM NODE_POINT NP WHERE N.NODE_NUMBER = NP.NODE_NUMBER AND NP.VALID_TO IS NULL
+            SELECT NULL FROM NODE_POINT NP WHERE N.NODE_NUMBER = NP.NODE_NUMBER AND NP.VALID_TO IS NULL AND NP."TYPE" IN (${NodePointType.UnknownNodePointType.value}, ${NodePointType.RoadNodePoint.value})
           )
       """
       queryList(query)
