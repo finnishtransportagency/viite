@@ -5,8 +5,6 @@
     var openNode = function (node, templates) {
       clean();
       setCurrentNode(node);
-      //  TODO VIITE-2055 this must be modified, templates are not being included -> eventbus.trigger('node:fetchCoordinates', current.node `templates`, (...)
-      //  TODO VIITE-2055 conflicts {'node:fetchCoordinates'}
       eventbus.trigger('node:selected', current.node, templates);
     };
 
@@ -36,7 +34,7 @@
     var openTemplates = function (templates) {
       clean();
       setCurrentTemplates(templates.nodePoints, templates.junctions);
-      eventbus.trigger('templates:selected', templates);
+      eventbus.trigger('templates:selected', current.templates);
     };
 
     var getCurrentTemplates = function () {
