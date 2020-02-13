@@ -59,32 +59,32 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     withDynTransaction {
       try {
         addOrUpdateNode(node, username) match {
-          case Right(number) => {
-            val currentNodePoints = nodePointDAO.fetchNodePointsByNodeNumber(number)
+          case Right(nodeNumber) => {
+            val currentNodePoints = nodePointDAO.fetchNodePointsByNodeNumber(nodeNumber)
             val (_, nodePointsToDetach) = currentNodePoints.partition(nodePoint => nodePoints.map(_.id).contains(nodePoint.id))
 
             val roadNodePointsToDetach: Seq[NodePoint] = nodePointsToDetach.filter(_.nodePointType == NodePointType.RoadNodePoint)
             updateNodePoints(roadNodePointsToDetach, Map("nodeNumber" -> None))
 
             val nodePointsToAttach = nodePoints.filter(nodePoint => !currentNodePoints.map(_.id).contains(nodePoint.id))
-            updateNodePoints(nodePointsToAttach, Map("nodeNumber" -> Some(node.nodeNumber)))
+            updateNodePoints(nodePointsToAttach, Map("nodeNumber" -> Some(nodeNumber)))
 
-            val currentJunctions = junctionDAO.fetchJunctionByNodeNumber(number)
+            val currentJunctions = junctionDAO.fetchJunctionByNodeNumber(nodeNumber)
             val (filteredJunctions, junctionsToDetach: Seq[Junction]) = currentJunctions.partition(junction => junctions.map(_.id).contains(junction.id))
             updateJunctionsAndJunctionPoints(junctionsToDetach, Map("nodeNumber" -> None, "junctionNumber" -> None))
 
             val junctionsToAttach = junctions.filter(junction => !currentJunctions.map(_.id).contains(junction.id))
-            updateJunctionsAndJunctionPoints(junctionsToAttach, Map("nodeNumber" -> Some(node.nodeNumber)))
+            updateJunctionsAndJunctionPoints(junctionsToAttach, Map("nodeNumber" -> Some(nodeNumber)))
 
-            val (_, updatedJunctions) = junctions.partition { junction =>
+            val updatedJunctions = junctions.filterNot(junction => {
               filteredJunctions.exists { current =>
                 current.id == junction.id && current.junctionNumber.getOrElse(-1) == junction.junctionNumber.getOrElse(-1)
               }
-            }
+            }).filter(j => !junctionsToAttach.map(_.id).contains(j.id))
 
-            updateJunctionsAndJunctionPoints(updatedJunctions, Map("nodeNumber" -> Some(node.nodeNumber)))
+            updateJunctionsAndJunctionPoints(updatedJunctions, Map("nodeNumber" -> Some(nodeNumber)))
 
-            Right(number)
+            Right(nodeNumber)
           }
           case Left(err) => Left(err)
         }
