@@ -137,7 +137,6 @@
       me.setNodes(nodes);
       me.setMapTemplates(templates);
 
-      //  TODO VIITE-2055 conflicts {'node:fetchCoordinates'}
       eventbus.trigger('node:addNodesToMap', nodes, templates, zoom);
     });
 

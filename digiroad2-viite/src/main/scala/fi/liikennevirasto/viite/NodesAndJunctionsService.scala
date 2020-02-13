@@ -39,7 +39,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
 
     def updateJunctionsAndJunctionPoints(junctions: Seq[Junction], values: Map[String, Any]): Unit = {
-      //  TODO VIITE-2055 this process still needs some more tests
       //  This map `values` was added so other fields could be modified in the process
       val newNodeNumber = values.getOrElse("nodeNumber", None).asInstanceOf[Option[Long]]
       val junctionNumber = values.getOrElse("junctionNumber", None).asInstanceOf[Option[Long]]

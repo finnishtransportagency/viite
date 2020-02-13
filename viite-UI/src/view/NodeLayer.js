@@ -297,7 +297,6 @@
           return _.includes(_.map(templates.nodePoints, 'id'), nodePointTemplateFeature.nodePointTemplate.id);
         });
         selectFeaturesToHighlight(nodePointTemplateVector, nodePointTemplates[0], nodePointTemplates[1]);
-        nodePointTemplateLayer.setOpacity(0.2);
       }
 
       if (!_.isUndefined(templates.junctions) && !_.isEmpty(templates.junctions)) {
@@ -305,8 +304,10 @@
           return _.includes(_.map(templates.junctions, 'id'), junctionTemplateFeature.junctionTemplate.id);
         });
         selectFeaturesToHighlight(junctionTemplateVector, junctionTemplates[0], junctionTemplates[1]);
-        junctionTemplateLayer.setOpacity(0.2);
       }
+
+      nodePointTemplateLayer.setOpacity(0.2);
+      junctionTemplateLayer.setOpacity(0.2);
     };
 
     var highlightNode = function (node) {
@@ -362,7 +363,7 @@
       }
     });
 
-    me.eventListener.listenTo(eventbus, 'nodePointTemplates:selected junctionTemplates:selected', function (templates) {
+    me.eventListener.listenTo(eventbus, 'templates:selected', function (templates) {
       highlightTemplates(templates);
     });
 
