@@ -624,10 +624,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           }
         if (calibrationPoint.isEmpty) {
           logger.info(s"Creating mandatory start calibration point: roadway point: ${roadwayPointId}, link: ${cal.linkId})")
-          CalibrationPointDAO.create(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink.value, calType = CalibrationPointType.Mandatory, createdBy = username)
+          CalibrationPointDAO.create(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink, calType = CalibrationPointType.Mandatory, createdBy = username)
         } else {
           logger.info(s"Updating mandatory start calibration point: roadway point: ${roadwayPointId}, link: ${cal.linkId})")
-          CalibrationPointDAO.updateRoadwayPoint(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink.value)
+          CalibrationPointDAO.updateRoadwayPoint(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink)
         }
     }
     endCalibrationPointsToCheck.foreach {
@@ -644,10 +644,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           }
         if (calibrationPoint.isEmpty) {
           logger.info(s"Creating mandatory end calibration point: roadway point: $roadwayPointId, link: ${cal.linkId})")
-          CalibrationPointDAO.create(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink.value, calType = CalibrationPointType.Mandatory, createdBy = username)
+          CalibrationPointDAO.create(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink, calType = CalibrationPointType.Mandatory, createdBy = username)
         } else {
           logger.info(s"Updating mandatory end calibration point: roadway point: $roadwayPointId, link: ${cal.linkId})")
-          CalibrationPointDAO.updateRoadwayPoint(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink.value)
+          CalibrationPointDAO.updateRoadwayPoint(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink)
         }
     }
   }

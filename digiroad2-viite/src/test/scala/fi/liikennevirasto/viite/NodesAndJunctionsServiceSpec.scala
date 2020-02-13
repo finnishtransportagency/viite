@@ -2612,9 +2612,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val combGeom2 = Seq(Point(10.0, 0.0), Point(20.0, 0.0))
       val combGeom3 = Seq(Point(10.0, 0.0), Point(20.0, 1.0))
 
-      val combLink1 = dummyProjectLink(road, part1, Track.Combined, Discontinuity.Continuous, 0, 10, 0, 10, Some(DateTime.now()), None, 12345, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom1, rwNumber).copy(id = plId, projectId = projectId, roadwayId = rwId, linearLocationId = llId)
-      val combLink2 = dummyProjectLink(road, part1, Track.Combined, Discontinuity.Discontinuous, 10, 20, 10, 20, Some(DateTime.now()), None, 12346, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom2, rwNumber).copy(id = plId + 1, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 1)
-      val combLink3 = dummyProjectLink(road, part2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15, Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom3, rwNumber + 1).copy(id = plId + 2, projectId = projectId, roadwayId = rwId + 1, linearLocationId = llId + 2)
+      val combLink1 = dummyProjectLink(road, part1, Track.Combined, Discontinuity.Continuous, 0, 10, 0, 10, Some(DateTime.now()), None, 12345, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom1, rwNumber).copy(id = plId, projectId = projectId, roadwayId = rwId, linearLocationId = llId,
+        calibrationPoints = (Some(ProjectLinkCalibrationPoint(12345, 0.0, 0, CalibrationPointSource.ProjectLinkSource)), None))
+      val combLink2 = dummyProjectLink(road, part1, Track.Combined, Discontinuity.Discontinuous, 10, 20, 10, 20, Some(DateTime.now()), None, 12346, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom2, rwNumber).copy(id = plId + 1, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 1,
+        calibrationPoints = (None, Some(ProjectLinkCalibrationPoint(12346, 10.0, 20, CalibrationPointSource.ProjectLinkSource))))
+      val combLink3 = dummyProjectLink(road, part2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15, Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom3, rwNumber + 1).copy(id = plId + 2, projectId = projectId, roadwayId = rwId + 1, linearLocationId = llId + 2,
+        calibrationPoints = (Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, CalibrationPointSource.ProjectLinkSource)), Some(ProjectLinkCalibrationPoint(12347, 15.0, 15, CalibrationPointSource.ProjectLinkSource))))
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
@@ -2656,17 +2659,31 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
+      roadAddressService.handleCalibrationPoints(Seq(lc1, lc2, lc3), username = project.createdBy)
+      val createdCalibrationPoints = CalibrationPointDAO.fetchByLinkId(combPLinks.map(_.linkId))
+      createdCalibrationPoints.size should be (4)
+
+      createdCalibrationPoints.filter(cp => cp.linkId == combLink1.linkId && cp.startOrEnd == CalibrationPointLocation.StartOfLink).head.addrM should be (0)
+      createdCalibrationPoints.filter(cp => cp.linkId == combLink2.linkId && cp.startOrEnd == CalibrationPointLocation.EndOfLink).head.addrM should be (20)
+      createdCalibrationPoints.filter(cp => cp.linkId == combLink3.linkId && cp.startOrEnd == CalibrationPointLocation.StartOfLink).head.addrM should be (0)
+      createdCalibrationPoints.filter(cp => cp.linkId == combLink3.linkId && cp.startOrEnd == CalibrationPointLocation.EndOfLink).head.addrM should be (15)
       nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
       nodesAndJunctionsService.handleJunctionPointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
-      val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
-      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
+      val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber))
+      val roadwayPointIds = roadwayPoints.map(_.id)
+      val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPointIds)
       val templateRoadwayNumbers = junctionPointTemplates.map(_.roadwayNumber).distinct
       val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(templateRoadwayNumbers)
       junctionPointTemplates.length should be(3)
       junctionPointTemplates.count(_.beforeAfter == BeforeAfter.Before) should be(1)
       junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(2)
       junctions.size should be(1)
+
+      val calibrationPointsInJunctionPointsPlace = CalibrationPointDAO.fetchByLinkId(combPLinks.map(_.linkId)).filterNot(jcp => createdCalibrationPoints.map(_.id).contains(jcp.id))
+      calibrationPointsInJunctionPointsPlace.size should be (2)
+      calibrationPointsInJunctionPointsPlace.filter(cp => cp.linkId == combLink1.linkId && cp.startOrEnd == CalibrationPointLocation.EndOfLink).head.addrM should be (10)
+      calibrationPointsInJunctionPointsPlace.filter(cp => cp.linkId == combLink2.linkId && cp.startOrEnd == CalibrationPointLocation.StartOfLink).head.addrM should be (10)
 
       /*
       preparing expiring data
