@@ -113,8 +113,7 @@
       backend.getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function (fetchedNodesAndJunctions) {
         currentAllRoadLinks = fetchedNodesAndJunctions.fetchedRoadLinks;
         fetchProcess(currentAllRoadLinks, zoom);
-        // eventbus.trigger('node:fetched', fetchedNodesAndJunctions.fetchedNodes, zoom);
-        (_.isFunction(callback) && callback(fetchedNodesAndJunctions.fetchedNodes)) || eventbus.trigger('node:fetched', fetchedNodesAndJunctions.fetchedNodes, zoom);
+        return (_.isFunction(callback) && callback(fetchedNodesAndJunctions.fetchedNodes)) || eventbus.trigger('node:fetched', fetchedNodesAndJunctions.fetchedNodes, zoom);
       });
     };
 
