@@ -61,31 +61,9 @@
       });
     };
 
-    fetchCoordinates = function (collection, callback) {
-      if (!_.isEmpty(collection)) {
-        Promise.all(_.map(collection, function (template) {
-          return locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM);
-        }))
-          .then(function (results) {
-            _.partition(_.flatMap(_.zip(_.flatMap(results), collection), _.spread(function (coordinates, template) {
-              // add coordinates to templates;
-              return _.merge(template, {
-                coordinates: {
-                  x: parseFloat(coordinates.lon.toFixed(3)),
-                  y: parseFloat(coordinates.lat.toFixed(3))
-                }
-              });
-            })), function (splittedTemplate) {
-              return _.has(splittedTemplate, 'junctionId');
-            });
-
-            callback();
-          });
-      }
-    };
-
     this.moveToLocation = function (template) {
       if (!_.isUndefined(template)) {
+        applicationModel.addSpinner();
         locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM).then(function (results) {
           if (results.length >= 1) {
             var result = results[0];
@@ -95,11 +73,8 @@
               zoom: zoomlevels.minZoomForJunctions
             });
 
-            applicationModel.addSpinner();
-            eventbus.trigger('nodeLayer:fetch');
-            eventbus.once('node:fetched', function(fetchedNodes, zoom) {
+            eventbus.trigger('nodeLayer:fetch', function(fetchedNodesAndJunctions) {
               applicationModel.removeSpinner();
-              var fetchedNodesAndJunctions = fetchedNodes;
               if (_.has(fetchedNodesAndJunctions, 'nodePointTemplates') || _.has(fetchedNodesAndJunctions, 'junctionTemplates')) {
                 var referencePoint = { x: parseFloat(result.lon.toFixed(3)), y: parseFloat(result.lat.toFixed(3)) };
                 var templates = {
@@ -124,8 +99,6 @@
         });
       }
     };
-
-    //  TODO VIITE-2055 conflicts {'node:fetchCoordinates'}
 
     eventbus.on('node:fetched', function(fetchResult, zoom) {
       var nodes = fetchResult.nodes;
@@ -181,7 +154,6 @@
     });
 
     eventbus.on('nodeSearchTool:clickNodePointTemplate', function(id) {
-      applicationModel.addSpinner();
       var nodePointTemplate = _.find(userNodePointTemplates, function (template) {
         return template.id === parseInt(id);
       });
@@ -195,7 +167,6 @@
     });
 
     eventbus.on('nodeSearchTool:clickJunctionTemplate', function(id) {
-      applicationModel.addSpinner();
       var junctionTemplate = _.find(userJunctionTemplates, function (template) {
         return template.id === parseInt(id);
       });

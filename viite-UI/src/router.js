@@ -92,12 +92,10 @@
       },
 
       nodePointTemplate: function (nodePointTemplateId) {
-        eventbus.trigger('nodesAndJunctions:open');
         eventbus.trigger('nodeSearchTool:clickNodePointTemplate', nodePointTemplateId);
       },
 
       junctionTemplate: function (junctionTemplateId) {
-        eventbus.trigger('nodesAndJunctions:open');
         eventbus.trigger('nodeSearchTool:clickJunctionTemplate', junctionTemplateId);
       }
     });
