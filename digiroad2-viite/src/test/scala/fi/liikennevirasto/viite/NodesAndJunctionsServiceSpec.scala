@@ -2707,7 +2707,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       linearLocationDAO.expireByRoadwayNumbers(Set(combLink3.roadwayNumber))
       roadwayDAO.expireHistory(Set(combLink3.roadwayId))
       projectLinkDAO.moveProjectLinksToHistory(projectId)
-      val terminatingCombLink3 = dummyProjectLink(road, part2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15, Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId + 1, RoadType.PublicRoad, combGeom3, rwNumber + 1).copy(id = plId + 3, roadwayId = rwId + 1, linearLocationId = llId + 2)
+      val terminatingCombLink3 = dummyProjectLink(road, part2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15, Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId + 1, RoadType.PublicRoad, combGeom3, rwNumber + 1).copy(id = plId + 3, roadwayId = rwId + 1, linearLocationId = llId + 2, calibrationPoints = (Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, CalibrationPointSource.ProjectLinkSource)), Some(ProjectLinkCalibrationPoint(12347, 15.0, 15, CalibrationPointSource.ProjectLinkSource))))
 
       buildTestDataForProject(Some(project2),
         None,
@@ -2743,6 +2743,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       terminatedJunctionsAfterExpire.length should be(2)
       terminatedJunctionsAfterExpire count (_.endDate.isDefined) should be(1)
       terminatedJunctionsAfterExpire count (_.validTo.isDefined) should be(1)
+
+      val calibrationPointsAfterTermination = CalibrationPointDAO.fetchByLinkId(combPLinks.map(_.linkId))
+      calibrationPointsAfterTermination.size should be (2)
+      calibrationPointsAfterTermination.filter(cp => cp.linkId == combLink1.linkId && cp.startOrEnd == CalibrationPointLocation.StartOfLink).head.addrM should be (0)
+      calibrationPointsAfterTermination.filter(cp => cp.linkId == combLink2.linkId && cp.startOrEnd == CalibrationPointLocation.EndOfLink).head.addrM should be (20)
     }
   }
 
