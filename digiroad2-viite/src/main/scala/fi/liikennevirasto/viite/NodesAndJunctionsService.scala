@@ -29,7 +29,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
 
-  def addOrUpdate(node: Node, junctions: Seq[Junction], nodePoints: Seq[NodePoint], username: String = "-"): Either[String, Long] = {
+  def addOrUpdate(node: Node, junctions: Seq[Junction], nodePoints: Seq[NodePoint], username: String = "-"): Long = {
 
     def updateNodePoints(nodePoints: Seq[NodePoint], values: Map[String, Any]): Unit = {
       //  This map `values` was added so other fields could be modified in the process
@@ -56,80 +56,69 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
 
     withDynTransaction {
-      try {
-        addOrUpdateNode(node, username) match {
-          case Right(nodeNumber) => {
-            val currentNodePoints = nodePointDAO.fetchByNodeNumber(nodeNumber)
-            val (_, nodePointsToDetach) = currentNodePoints.partition(nodePoint => nodePoints.map(_.id).contains(nodePoint.id))
+      val nodeNumber = addOrUpdateNode(node, username)
 
-            val roadNodePointsToDetach: Seq[NodePoint] = nodePointsToDetach.filter(_.nodePointType == NodePointType.RoadNodePoint)
-            updateNodePoints(roadNodePointsToDetach, Map("nodeNumber" -> None))
+      val currentNodePoints = nodePointDAO.fetchByNodeNumber(nodeNumber)
+      val (_, nodePointsToDetach) = currentNodePoints.partition(nodePoint => nodePoints.map(_.id).contains(nodePoint.id))
 
-            val nodePointsToAttach = nodePoints.filter(nodePoint => !currentNodePoints.map(_.id).contains(nodePoint.id))
-            updateNodePoints(nodePointsToAttach, Map("nodeNumber" -> Some(nodeNumber)))
+      val roadNodePointsToDetach: Seq[NodePoint] = nodePointsToDetach.filter(_.nodePointType == NodePointType.RoadNodePoint)
+      updateNodePoints(roadNodePointsToDetach, Map("nodeNumber" -> None))
 
-            val currentJunctions = junctionDAO.fetchJunctionByNodeNumber(nodeNumber)
-            val (filteredJunctions, junctionsToDetach: Seq[Junction]) = currentJunctions.partition(junction => junctions.map(_.id).contains(junction.id))
-            updateJunctionsAndJunctionPoints(junctionsToDetach, Map("nodeNumber" -> None, "junctionNumber" -> None))
+      val nodePointsToAttach = nodePoints.filter(nodePoint => !currentNodePoints.map(_.id).contains(nodePoint.id))
+      updateNodePoints(nodePointsToAttach, Map("nodeNumber" -> Some(nodeNumber)))
 
-            val junctionsToAttach = junctions.filter(junction => !currentJunctions.map(_.id).contains(junction.id))
-            updateJunctionsAndJunctionPoints(junctionsToAttach, Map("nodeNumber" -> Some(nodeNumber)))
+      val currentJunctions = junctionDAO.fetchJunctionByNodeNumber(nodeNumber)
+      val (filteredJunctions, junctionsToDetach: Seq[Junction]) = currentJunctions.partition(junction => junctions.map(_.id).contains(junction.id))
+      updateJunctionsAndJunctionPoints(junctionsToDetach, Map("nodeNumber" -> None, "junctionNumber" -> None))
 
-            val updatedJunctions = junctions.filterNot(junction => {
-              filteredJunctions.exists { current =>
-                current.id == junction.id && current.junctionNumber.getOrElse(-1) == junction.junctionNumber.getOrElse(-1)
-              }
-            }).filter(j => !junctionsToAttach.map(_.id).contains(j.id))
+      val junctionsToAttach = junctions.filter(junction => !currentJunctions.map(_.id).contains(junction.id))
+      updateJunctionsAndJunctionPoints(junctionsToAttach, Map("nodeNumber" -> Some(nodeNumber)))
 
-            updateJunctionsAndJunctionPoints(updatedJunctions, Map("nodeNumber" -> Some(nodeNumber)))
-
-            Right(nodeNumber)
-          }
-          case Left(err) => Left(err)
+      val updatedJunctions = junctions.filterNot(junction => {
+        filteredJunctions.exists { current =>
+          current.id == junction.id && current.junctionNumber.getOrElse(-1) == junction.junctionNumber.getOrElse(-1)
         }
-      } catch {
-        case e: Exception => Left(e.getMessage)
-      }
+      }).filter(j => !junctionsToAttach.map(_.id).contains(j.id))
+
+      updateJunctionsAndJunctionPoints(updatedJunctions, Map("nodeNumber" -> Some(nodeNumber)))
+
+      nodeNumber
     }
   }
 
-  def addOrUpdateNode(node: Node, username: String = "-"): Either[String, Long] = {
+  def addOrUpdateNode(node: Node, username: String = "-"): Long = {
     withDynTransactionNewOrExisting {
-      try {
-        val nodeNumber = if (node.id == NewIdValue) {
-          nodeDAO.create(Seq(node), username).headOption.get
-        } else {
-          val old = nodeDAO.fetchById(node.id)
-          if (old.isDefined) {
-            val originalStartDate = old.get.startDate.withTimeAtStartOfDay
-            val startDate = node.startDate.withTimeAtStartOfDay
+      if (node.id == NewIdValue) {
+        nodeDAO.create(Seq(node), username).headOption.get
+      } else {
+        val old = nodeDAO.fetchById(node.id)
+        if (old.isDefined) {
+          val originalStartDate = old.get.startDate.withTimeAtStartOfDay
+          val startDate = node.startDate.withTimeAtStartOfDay
 
-            // Check that new start date is not earlier than before
-            if (startDate.getMillis < originalStartDate.getMillis) {
-              return Left(NodeStartDateUpdateErrorMessage)
-            }
-
-            if (node.name != old.get.name || old.get.nodeType != node.nodeType || originalStartDate != startDate || old.get.coordinates != node.coordinates) {
-              // Create new node and invalidate old one
-              if (old.get.nodeType != node.nodeType && originalStartDate != startDate) {
-
-                // Create a new history layer when the node type has changed
-                nodeDAO.expireById(Seq(old.get.id))
-                nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
-                nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
-
-              } else {
-                nodeDAO.update(Seq(node), username)
-              }
-            }
-          } else {
-            return Left(NodeNotFoundErrorMessage)
+          // Check that new start date is not earlier than before
+          if (startDate.getMillis < originalStartDate.getMillis) {
+            throw new Exception(NodeStartDateUpdateErrorMessage)
           }
-          node.nodeNumber
+
+          if (node.name != old.get.name || old.get.nodeType != node.nodeType || originalStartDate != startDate || old.get.coordinates != node.coordinates) {
+
+            // Invalidate old one
+            nodeDAO.expireById(Seq(old.get.id))
+
+            if (old.get.nodeType != node.nodeType && originalStartDate != startDate) {
+              // Create a new history layer when the node type has changed
+              nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
+            }
+
+            //  Create new node
+            nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
+          }
+
+          old.get.nodeNumber
+        } else {
+          throw new Exception(NodeNotFoundErrorMessage)
         }
-        Right(nodeNumber)
-      } catch {
-        case e: Exception => Left(e.getMessage)
       }
     }
   }
