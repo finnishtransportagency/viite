@@ -233,7 +233,7 @@
         $('#roadAddressProjectForm select').prop('disabled',true);
         $('#roadAddressProjectFormCut select').prop('disabled',true);
         $('.update').prop('disabled', true);
-        $('.btn-edit-project').prop('disabled', true);
+        $('.btn-pencil-edit').prop('disabled', true);
         if (projectCollection.getCurrentProject().project.statusCode === ProjectStatus.SendingToTR.value) {
           $(":input").prop('disabled',true);
           $(".project-form button.cancelLink").prop('disabled',false);

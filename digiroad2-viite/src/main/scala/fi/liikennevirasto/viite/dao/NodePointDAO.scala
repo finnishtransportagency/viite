@@ -1,12 +1,13 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import org.joda.time.DateTime
 import fi.liikennevirasto.viite.NewIdValue
+import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
@@ -83,7 +84,7 @@ object BeforeAfter {
 case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeNumber: Option[Long], nodePointType: NodePointType = NodePointType.UnknownNodePointType,
                      startDate: Option[DateTime], endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
                      createdBy: String, createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long,
-                     roadNumber: Long, roadPartNumber: Long, track: Track, elyCode: Long)
+                     roadNumber: Long, roadPartNumber: Long, track: Track, elyCode: Long, coordinates: Point = Point(0.0, 0.0))
 
 class NodePointDAO extends BaseDAO {
 
@@ -139,6 +140,10 @@ class NodePointDAO extends BaseDAO {
          """
       queryList(query)
     }
+  }
+
+  def fetchByNodeNumber(nodeNumber: Long): Seq[NodePoint] = {
+    fetchByNodeNumbers(Seq(nodeNumber))
   }
 
   def fetchByNodeNumbers(nodeNumbers: Seq[Long]): Seq[NodePoint] = {
@@ -263,7 +268,7 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
-  def create(nodePoints: Iterable[NodePoint]): Seq[Long] = {
+  def create(nodePoints: Iterable[NodePoint], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_NUMBER, "TYPE", CREATED_BY)
@@ -287,7 +292,7 @@ class NodePointDAO extends BaseDAO {
           ps.setNull(4, java.sql.Types.INTEGER)
         }
         ps.setInt(5, nodePoint.nodePointType.value)
-        ps.setString(6, nodePoint.createdBy)
+        ps.setString(6, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
     ps.executeBatch()

@@ -1,28 +1,34 @@
 (function (root) {
   root.JunctionTemplateMarker = function () {
-    var createJunctionTemplateMarker = function (junctionTemplate, junctionPoint, roadLink) {
-      var point = [];
-
-      if ((roadLink.sideCode === LinkValues.SideCode.TowardsDigitizing.value && junctionPoint.addrM === roadLink.endAddressM) || (roadLink.sideCode === LinkValues.SideCode.AgainstDigitizing.value && junctionPoint.addrM === roadLink.startAddressM)) {
-        point = roadLink.points[roadLink.points.length - 1];
-      } else {
-        point = roadLink.points[0];
-      }
+    var createJunctionTemplateMarker = function (junctionTemplate) {
 
       var marker = new ol.Feature({
-        geometry: new ol.geom.Point([point.x, point.y])
+        geometry: new ol.geom.Point([_.first(junctionTemplate.junctionPoints).coordinates.x, _.first(junctionTemplate.junctionPoints).coordinates.y]),
+        junctionNumber: junctionTemplate.junctionNumber
       });
 
-      var junctionTemplateMarkerStyle = new ol.style.Style({
-        image: new ol.style.Icon({
-          src: 'images/junction-template.svg',
-          scale: 1
-        })
+      var junctionTemplateStyleProvider = function(junctionNumber) {
+        return new ol.style.Style({
+          image: new ol.style.Icon({
+            src: 'images/junction-template.svg',
+            scale: 1
+          }),
+          text: new ol.style.Text({
+            text: junctionNumber ? junctionNumber.toString() : '',
+            font: '13px arial',
+            fill: new ol.style.Fill({
+              color: 'white'
+            })
+          })
+        });
+      };
+
+      marker.on('change:junctionNumber', function () {
+        this.setStyle(junctionTemplateStyleProvider(this.get('junctionNumber')));
       });
 
-      marker.setStyle(junctionTemplateMarkerStyle);
       marker.junctionTemplate = junctionTemplate;
-      marker.roadLink = roadLink;
+      marker.setStyle(junctionTemplateStyleProvider(junctionTemplate.junctionNumber));
       return marker;
     };
 

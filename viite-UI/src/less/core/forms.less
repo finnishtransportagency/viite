@@ -392,12 +392,16 @@ form.roadAddressProject p {
   min-width: 30px;
   max-width: 45px;
   height: 28px;
-  color: #fff;
+  color: @input-color-dark;
   font-size: 11px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   text-align: left;
+
+  &.template {
+    color: @warning !important;
+  }
 }
 
 #projectErrors .warning label {

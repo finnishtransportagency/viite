@@ -1,16 +1,17 @@
 package fi.liikennevirasto.viite.dao
 
 import java.sql.Timestamp
+
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.viite.NewIdValue
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.viite.NewIdValue
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
@@ -267,6 +268,36 @@ class NodeDAO extends BaseDAO {
     ps.executeBatch()
     ps.close()
     nodeNumbers
+  }
+
+  /**
+   * update nodes with new values
+   * @param nodes has new information to be updated
+   * @return Sequence of ids of the nodes updated
+   */
+  def update(nodes: Iterable[Node], createdBy: String = "-"): Seq[Long] = {
+    val ps = dynamicSession.prepareStatement(
+      """ UPDATE NODE
+          SET COORDINATES = ?, "NAME" = ?, "TYPE" = ?, START_DATE = TO_DATE(?, 'YYYY-MM-DD')
+          WHERE ID = ?""".stripMargin
+    )
+    var nodeIds = scala.collection.mutable.MutableList[Long]()
+
+    nodes.foreach {
+      node =>
+        nodeIds += node.id
+        ps.setObject(1, OracleDatabase.createRoadsJGeometry(
+          Seq(node.coordinates), dynamicSession.conn, 0)
+        )
+        ps.setString(2, node.name.get)
+        ps.setLong(3, node.nodeType.value)
+        ps.setString(4, dateFormatter.print(node.startDate))
+        ps.setLong(5, node.id)
+        ps.addBatch()
+    }
+    ps.executeBatch()
+    ps.close()
+    nodeIds
   }
 
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[Node] = {

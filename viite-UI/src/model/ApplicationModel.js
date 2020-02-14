@@ -102,7 +102,8 @@
     }
 
     function isSelectedTool(tool) {
-      return tool === selectedTool;
+      var alias = _.has(LinkValues.Tool[selectedTool], 'alias') ? LinkValues.Tool[selectedTool].alias : [];
+      return tool === selectedTool || _.includes(alias, tool);
     }
 
     function setSelectedTool(tool) {
@@ -182,11 +183,11 @@
         minDirtyZoomLevel = level;
       },
       selectLayer: function (layer, toggleStart, noSave) {
+        var tool = layer !== 'node' ? LinkValues.Tool.Default.value : LinkValues.Tool.Unknown.value;
+        setSelectedTool(tool);
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
-          var tool = layer !== 'node' ? LinkValues.Tool.Default.value : LinkValues.Tool.Unknown.value;
-          setSelectedTool(tool);
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
         } else if (layer === 'linkProperty' && toggleStart) {
           eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);

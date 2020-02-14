@@ -209,10 +209,11 @@
     };
 
     root.Tool = {
-        Unknown:            {value: ""},
-        Default:            {value: "Select"},
-        Select:             {value: "Select"},
-        Add:                {value: "Add"}
+        Select:             {value: "Select",   description: 'Solmun valinta'},
+        Attach:             {value: "Attach",   alias:["Select"]},
+        Add:                {value: "Add"},
+        Default:            {value: "Default",  alias:["Select"]},
+        Unknown:            {value: ""}
     };
 
     root.Discontinuity = {
@@ -224,5 +225,7 @@
         ParallelLink:          {value : 6, description:"Parallel Link"}
 
     };
+
+    root.MaxAllowedDistanceForNodesToBeMoved = 200;
 })(window.LinkValues = window.LinkValues || {});
 

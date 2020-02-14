@@ -1,19 +1,14 @@
 (function (root) {
-  root.NodeCollection = function (backend, locationSearch, selectedNodesAndJunctions) {
+  root.NodeCollection = function (backend, locationSearch) {
     var me = this;
     var nodes = [];
     var nodesWithAttributes = [];
-    var mapNodePointTemplates = [];
-    var mapJunctionTemplates = [];
+    var mapTemplates = [];
     var userNodePointTemplates = [];
     var userJunctionTemplates = [];
 
-    this.setMapNodePointTemplates = function(list) {
-      mapNodePointTemplates = list;
-    };
-
-    this.setMapJunctionTemplates = function(list) {
-      mapJunctionTemplates = list;
+    this.setMapTemplates = function(templates) {
+      mapTemplates = templates;
     };
 
     this.setUserTemplates = function(nodePointTemplates, junctionTemplates) {
@@ -52,56 +47,95 @@
       });
     };
 
-    this.getCoordinates = function (roadNumber, roadPartNumber, addrM, setCoordinates) {
-      locationSearch.search(roadNumber + ' ' + roadPartNumber + ' ' + addrM).then(setCoordinates);
+    this.getNodePointTemplatesByCoordinates = function (coordinates) {
+      return _.filter(mapTemplates.nodePoints, function (nodePointTemplate) {
+        return _.isEqual(nodePointTemplate.coordinates, coordinates);
+      });
+    };
+
+    this.getJunctionTemplateByCoordinates = function (coordinates) {
+      return _.filter(mapTemplates.junctions, function (junctionTemplate) {
+        return _.find(junctionTemplate.junctionPoints, function (junctionPoint) {
+          return _.isEqual(junctionPoint.coordinates, coordinates);
+        });
+      });
+    };
+
+    this.moveToLocation = function (template) {
+      if (!_.isUndefined(template)) {
+        applicationModel.addSpinner();
+        locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM).then(function (results) {
+          if (results.length >= 1) {
+            var result = results[0];
+            eventbus.trigger('coordinates:selected', {
+              lon: result.lon,
+              lat: result.lat,
+              zoom: zoomlevels.minZoomForJunctions
+            });
+
+            eventbus.trigger('nodeLayer:fetch', function(fetchedNodesAndJunctions) {
+              applicationModel.removeSpinner();
+              if (_.has(fetchedNodesAndJunctions, 'nodePointTemplates') || _.has(fetchedNodesAndJunctions, 'junctionTemplates')) {
+                var referencePoint = { x: parseFloat(result.lon.toFixed(3)), y: parseFloat(result.lat.toFixed(3)) };
+                var templates = {
+                  nodePoints: fetchedNodesAndJunctions.nodePointTemplates,
+                  junctions:  fetchedNodesAndJunctions.junctionTemplates
+                };
+                eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
+                  nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
+                    return _.isEqual(nodePoint.coordinates, referencePoint);
+                  }),
+                  junctions: _.filter(templates.junctions, function (junction) {
+                    return _.some(junction.junctionPoints, function (junctionPoint) {
+                      return _.isEqual(junctionPoint.coordinates, referencePoint);
+                    });
+                  })
+                });
+              }
+            });
+          } else {
+            applicationModel.removeSpinner();
+          }
+        });
+      }
     };
 
     eventbus.on('node:fetched', function(fetchResult, zoom) {
       var nodes = fetchResult.nodes;
-      var nodePointTemplates = fetchResult.nodePointTemplates;
-      var junctionTemplates = fetchResult.junctionTemplates;
+      var templates = {
+        nodePoints: fetchResult.nodePointTemplates,
+        junctions: fetchResult.junctionTemplates
+      };
 
       me.setNodes(nodes);
-      me.setMapNodePointTemplates(nodePointTemplates);
-      me.setMapJunctionTemplates(junctionTemplates);
-      eventbus.trigger('node:addNodesToMap', nodes, nodePointTemplates, junctionTemplates, zoom);
+      me.setMapTemplates(templates);
+
+      eventbus.trigger('node:addNodesToMap', nodes, templates, zoom);
     });
 
     eventbus.on('node:save', function (node) {
-      applicationModel.addSpinner();
-      var dataJson = {
-        coordinates: { x: Number(node.coordX), y: Number(node.coordY) },
-        name: node.name,
-        nodeType: Number(node.type),
-        startDate: node.startDate
+      var fail = function (message) {
+        eventbus.trigger('node:saveFailed', message.errorMessage || 'Solmun tallennus epäonnistui.');
       };
+
+      applicationModel.addSpinner();
       if (!_.isUndefined(node)) {
         if (!_.isUndefined(node.id)) {
-          dataJson = _.merge(dataJson, {
-            id: node.id,
-            nodeNumber: node.nodeNumber,
-            junctionsToDetach: node.junctionsToDetach,
-            nodePointsToDetach: node.nodePointsToDetach
-          });
-          backend.saveNodeInfo(dataJson, function (result) {
+          backend.updateNodeInfo(node, function (result) {
             if (result.success) {
               eventbus.trigger('node:saveSuccess');
             } else {
-              eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun tallennus epäonnistui.');
+              fail(result);
             }
-          }, function (result) {
-            eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun tallennus epäonnistui.');
-          });
+          }, fail);
         } else {
-          backend.createNodeInfo(dataJson, function (result) {
+          backend.createNodeInfo(node, function (result) {
             if (result.success) {
               eventbus.trigger('node:saveSuccess');
             } else {
-              eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun lisääminen epäonnistui.');
+             fail(result);
             }
-          }, function (result) {
-            eventbus.trigger('node:saveFailed', result.errorMessage || 'Solmun lisääminen epäonnistui.');
-          });
+          }, fail);
         }
       }
     });
@@ -113,63 +147,42 @@
     eventbus.on('nodeSearchTool:clickNode', function (index, map) {
       var node = nodesWithAttributes[index];
       map.getView().animate({
-        center: [node.coordX, node.coordY],
+        center: [node.coordinates.x, node.coordinates.y],
         zoom: 12,
         duration: 1500
       });
     });
 
     eventbus.on('nodeSearchTool:clickNodePointTemplate', function(id) {
-      var moveToLocation = function(nodePointTemplate) {
-        if (!_.isUndefined(nodePointTemplate)) {
-          locationSearch.search(nodePointTemplate.roadNumber + ' ' + nodePointTemplate.roadPartNumber + ' ' + nodePointTemplate.addrM).then(function (results) {
-            if (results.length >= 1) {
-              var result = results[0];
-              eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat, zoom: 12});
-            }
-            applicationModel.removeSpinner();
-          });
-        }
-      };
-
-      applicationModel.addSpinner();
       var nodePointTemplate = _.find(userNodePointTemplates, function (template) {
         return template.id === parseInt(id);
       });
       if (_.isUndefined(nodePointTemplate)) {
         backend.getNodePointTemplateById(id, function (nodePointTemplate) {
-          moveToLocation(nodePointTemplate);
-          selectedNodesAndJunctions.openNodePointTemplates([nodePointTemplate]);
+          me.moveToLocation(nodePointTemplate);
         });
       } else {
-        moveToLocation(nodePointTemplate);
-        selectedNodesAndJunctions.openNodePointTemplates([nodePointTemplate]);
+        me.moveToLocation(nodePointTemplate);
       }
     });
 
     eventbus.on('nodeSearchTool:clickJunctionTemplate', function(id) {
-      applicationModel.addSpinner();
       var junctionTemplate = _.find(userJunctionTemplates, function (template) {
         return template.id === parseInt(id);
       });
-      if (!_.isUndefined(junctionTemplate)) {
-        locationSearch.search(junctionTemplate.roadNumber + ' ' + junctionTemplate.roadPartNumber + ' ' + junctionTemplate.addrM).then(function (results) {
-          if (results.length >= 1) {
-            var result = results[0];
-            eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat, zoom: zoomlevels.minZoomForJunctions});
-          }
-          applicationModel.removeSpinner();
+      if (_.isUndefined(junctionTemplate)) {
+        backend.getJunctionTemplateById(id, function (junctionTemplate) {
+          me.moveToLocation(junctionTemplate);
         });
-        selectedNodesAndJunctions.openJunctionTemplate(_.head(_.uniq([junctionTemplate], "id")));
       } else {
-        applicationModel.removeSpinner();
+        me.moveToLocation(junctionTemplate);
       }
     });
 
     eventbus.on('nodeSearchTool:refreshView', function (map) {
       var coords = [];
       _.each(nodesWithAttributes, function(node) {
-        coords.push([node.coordX, node.coordY]);
+        coords.push([node.coordinates.x, node.coordinates.y]);
       });
       map.getView().fit(new ol.geom.Polygon([coords]), map.getSize());
     });
