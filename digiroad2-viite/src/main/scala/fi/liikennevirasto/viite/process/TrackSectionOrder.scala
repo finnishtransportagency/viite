@@ -381,15 +381,15 @@ object TrackSectionOrder {
     * @return
     */
   def setCalibrationPoints(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    val projectLinks = leftProjectLinks ++ rightProjectLinks
 
-    val raCalibrationPointsNSide = new LinearLocationDAO().getLinearLocationCalibrationCodeNSide(projectLinks.map(_.linearLocationId).filter(_ > 0).distinct)
-
-    (setOnSideCalibrationPoints(leftProjectLinks, raCalibrationPointsNSide, userDefinedCalibrationPoint),
-      setOnSideCalibrationPoints(rightProjectLinks, raCalibrationPointsNSide, userDefinedCalibrationPoint))
+    (setOnSideCalibrationPoints(leftProjectLinks, userDefinedCalibrationPoint),
+      setOnSideCalibrationPoints(rightProjectLinks, userDefinedCalibrationPoint))
   }
 
-  protected def setOnSideCalibrationPoints(projectLinks: Seq[ProjectLink], raCalibrationPointsNSide: Map[Long, (CalibrationCode, SideCode)], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
+  protected def setOnSideCalibrationPoints(projectLinks: Seq[ProjectLink], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
+
+    //        val junctionDefinedCalibrationPoint = new LinearLocationDAO().getJunctionDefinedCalibrationPoints(projectLinks.map(_.linearLocationId).filter(_ > 0).distinct)
+
     if (projectLinks.head.status == NotHandled)
       projectLinks
     else

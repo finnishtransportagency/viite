@@ -586,8 +586,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val currentCPs = CalibrationPointDAO.fetchByLinkId(linearLocations.map(l => l.linkId))
     val currentStartCP = currentCPs.filter(_.startOrEnd == CalibrationPointLocation.StartOfLink)
     val currentEndCP = currentCPs.filter(_.startOrEnd == CalibrationPointLocation.EndOfLink)
-    val startCPsToBeExpired = currentStartCP.filter(c => !startCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId && ((sc.startCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.StartOfLink) || sc.endCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.EndOfLink)))
-    val endCPsToBeExpired = currentEndCP.filter(c => !endCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId && ((sc.startCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.StartOfLink) || sc.endCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.EndOfLink)))
+//    val startCPsToBeExpired = currentStartCP.filter(c => !startCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId && ((sc.startCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.StartOfLink) || sc.endCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.EndOfLink)))
+    val startCPsToBeExpired = currentStartCP.filter(c => !startCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId && (sc.startCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.StartOfLink)))
+//    val endCPsToBeExpired = currentEndCP.filter(c => !endCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId && ((sc.startCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.StartOfLink) || sc.endCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.EndOfLink)))
+    val endCPsToBeExpired = currentEndCP.filter(c => !endCalibrationPointsToCheck.exists(sc => sc.linkId == c.linkId && (sc.endCalibrationPoint.isDefined && c.startOrEnd == CalibrationPointLocation.EndOfLink)))
 
     // Expire calibration points
     startCPsToBeExpired.foreach {

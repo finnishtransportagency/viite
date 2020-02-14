@@ -656,6 +656,7 @@ class LinearLocationDAO {
       withRoadNumbersFilter(roadNumbers.tail, alias,s"""$filter OR $filterAdd""")
   }
 
+  /*
   def getLinearLocationCalibrationCodeNSide(linearLocationIds: Seq[Long]): Map[Long, (CalibrationCode, SideCode)] = {
     if (linearLocationIds.isEmpty) {
       Map()
@@ -676,5 +677,27 @@ class LinearLocationDAO {
       }.toMap
     }
   }
+  */
+/*
+  def getJunctionDefinedCalibrationPoints(linearLocationIds: Seq[Long]): Map[Long, (CalibrationCode)] = {
+    if (linearLocationIds.isEmpty) {
+      Map()
+    } else {
+      val query =
+        s"""SELECT DISTINCT loc.ID,
+             (CASE
+             WHEN (SELECT count(*) FROM CALIBRATION_POINT WHERE LINK_ID = loc.LINK_ID AND cp.VALID_TO IS null) > 1 THEN 3
+             WHEN (SELECT count(*) FROM CALIBRATION_POINT WHERE LINK_ID = loc.LINK_ID AND START_END = 0 AND cp.VALID_TO IS null) = 1 THEN 1
+             WHEN (SELECT count(*) FROM CALIBRATION_POINT WHERE LINK_ID = loc.LINK_ID AND START_END = 1 AND cp.VALID_TO IS null) = 1 THEN 2
+             ELSE 0
+             END) AS calibrationCode
+             FROM LINEAR_LOCATION loc JOIN CALIBRATION_POINT cp ON (loc.LINK_ID = cp.LINK_ID AND cp.VALID_TO IS NULL)
+             WHERE loc.id in (${linearLocationIds.mkString(",")}) AND loc.VALID_TO IS NULL"""
+      Q.queryNA[(Long, Int)](query).list.map {
+        case (id, code) => id -> CalibrationCode(code)
+      }.toMap
+    }
+  }
+*/
 
 }
