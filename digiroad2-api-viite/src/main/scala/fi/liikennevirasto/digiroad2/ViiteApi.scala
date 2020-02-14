@@ -987,14 +987,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val node: Node = NodesAndJunctionsConverter.toNode(nodeInfo, username)
         val junctions = NodesAndJunctionsConverter.toJunctions(nodeInfo.junctions)
         val nodePoints = NodesAndJunctionsConverter.toNodePoints(nodeInfo.nodePoints)
-        nodesAndJunctionsService.addOrUpdate(node, junctions, nodePoints, username) match {
-          case Left(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
-          case _ => Map("success" -> true)
-        }
+        nodesAndJunctionsService.addOrUpdate(node, junctions, nodePoints, username)
+        Map("success" -> true)
       } catch {
         case ex: Exception => {
-          logger.error("Request POST /nodes failed.", ex)
-          BadRequest(s"Failed to save changes to node.")
+          logger.error("Request POST /nodes failed.", ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
         }
       }
     }
@@ -1009,14 +1007,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val node: Node = NodesAndJunctionsConverter.toNode(nodeInfo, username)
         val junctions = NodesAndJunctionsConverter.toJunctions(nodeInfo.junctions)
         val nodePoints = NodesAndJunctionsConverter.toNodePoints(nodeInfo.nodePoints)
-        nodesAndJunctionsService.addOrUpdate(node, junctions, nodePoints, username) match {
-          case Left(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
-          case _ => Map("success" -> true)
-        }
+        nodesAndJunctionsService.addOrUpdate(node, junctions, nodePoints, username)
+        Map("success" -> true)
       } catch {
         case ex: Exception => {
           logger.error("Request PUT /nodes/$id failed.", ex)
-          BadRequest(s"Failed to save changes to node (id: $id).")
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
         }
       }
     }
