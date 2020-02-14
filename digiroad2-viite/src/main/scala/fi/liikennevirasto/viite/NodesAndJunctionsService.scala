@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import fi.liikennevirasto.viite.dao.NodePointType.RoadNodePoint
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -27,58 +28,108 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
-  def update(node: Node, junctionsIds: Seq[Long], nodePointIds: Seq[Long], username: String = "-"): Option[String] = {
+
+  def addOrUpdate(node: Node, junctions: Seq[Junction], nodePoints: Seq[NodePoint], username: String = "-"): Either[String, Long] = {
+
+    def updateNodePoints(nodePoints: Seq[NodePoint], values: Map[String, Any]): Unit = {
+      //  This map `values` was added so other fields could be modified in the process
+      val newNodeNumber = values.getOrElse("nodeNumber", None).asInstanceOf[Option[Long]]
+      nodePointDAO.expireById(nodePoints.map(_.id))
+      nodePointDAO.create(nodePoints.map(_.copy(id = NewIdValue, nodeNumber = newNodeNumber)), createdBy = username)
+    }
+
+    def updateJunctionsAndJunctionPoints(junctions: Seq[Junction], values: Map[String, Any]): Unit = {
+      //  This map `values` was added so other fields could be modified in the process
+      val newNodeNumber = values.getOrElse("nodeNumber", None).asInstanceOf[Option[Long]]
+      val junctionNumber = values.getOrElse("junctionNumber", None).asInstanceOf[Option[Long]]
+      val updateJunctionNumber = values.contains("junctionNumber")
+      junctions.foreach { junction =>
+        val newJunctionNumber = if (updateJunctionNumber) {
+          junctionNumber
+        } else { junction.junctionNumber }
+        val junctionPoints = junctionPointDAO.fetchByJunctionIds(Seq(junction.id))
+        junctionDAO.expireById(Seq(junction.id))
+        junctionPointDAO.expireById(junctionPoints.map(_.id))
+        val junctionId = junctionDAO.create(Seq(junction.copy(id = NewIdValue, nodeNumber = newNodeNumber, junctionNumber = newJunctionNumber)), createdBy = username).head
+        junctionPointDAO.create(junctionPoints.map(_.copy(id = NewIdValue, junctionId = junctionId)), createdBy = username)
+      }
+    }
+
     withDynTransaction {
       try {
         addOrUpdateNode(node, username) match {
-          case Some(err) => return Some(err)
-          case _ => None
+          case Right(nodeNumber) => {
+            val currentNodePoints = nodePointDAO.fetchByNodeNumber(nodeNumber)
+            val (_, nodePointsToDetach) = currentNodePoints.partition(nodePoint => nodePoints.map(_.id).contains(nodePoint.id))
+
+            val roadNodePointsToDetach: Seq[NodePoint] = nodePointsToDetach.filter(_.nodePointType == NodePointType.RoadNodePoint)
+            updateNodePoints(roadNodePointsToDetach, Map("nodeNumber" -> None))
+
+            val nodePointsToAttach = nodePoints.filter(nodePoint => !currentNodePoints.map(_.id).contains(nodePoint.id))
+            updateNodePoints(nodePointsToAttach, Map("nodeNumber" -> Some(nodeNumber)))
+
+            val currentJunctions = junctionDAO.fetchJunctionByNodeNumber(nodeNumber)
+            val (filteredJunctions, junctionsToDetach: Seq[Junction]) = currentJunctions.partition(junction => junctions.map(_.id).contains(junction.id))
+            updateJunctionsAndJunctionPoints(junctionsToDetach, Map("nodeNumber" -> None, "junctionNumber" -> None))
+
+            val junctionsToAttach = junctions.filter(junction => !currentJunctions.map(_.id).contains(junction.id))
+            updateJunctionsAndJunctionPoints(junctionsToAttach, Map("nodeNumber" -> Some(nodeNumber)))
+
+            val updatedJunctions = junctions.filterNot(junction => {
+              filteredJunctions.exists { current =>
+                current.id == junction.id && current.junctionNumber.getOrElse(-1) == junction.junctionNumber.getOrElse(-1)
+              }
+            }).filter(j => !junctionsToAttach.map(_.id).contains(j.id))
+
+            updateJunctionsAndJunctionPoints(updatedJunctions, Map("nodeNumber" -> Some(nodeNumber)))
+
+            Right(nodeNumber)
+          }
+          case Left(err) => Left(err)
         }
-        detachJunctionsFromNode(junctionsIds, username)
-        detachNodePointsFromNode(nodePointIds, username)
       } catch {
-        case e: Exception => Some(e.getMessage)
+        case e: Exception => Left(e.getMessage)
       }
     }
   }
 
-  def addOrUpdateNode(node: Node, username: String = "-"): Option[String] = {
+  def addOrUpdateNode(node: Node, username: String = "-"): Either[String, Long] = {
     withDynTransactionNewOrExisting {
       try {
-        if (node.id == NewIdValue) {
-          nodeDAO.create(Seq(node), username)
+        val nodeNumber = if (node.id == NewIdValue) {
+          nodeDAO.create(Seq(node), username).headOption.get
         } else {
           val old = nodeDAO.fetchById(node.id)
           if (old.isDefined) {
-            val oldStartDate = old.get.startDate.withTimeAtStartOfDay
-            val newStartDate = node.startDate.withTimeAtStartOfDay
-            if (node.name != old.get.name || old.get.nodeType != node.nodeType || oldStartDate != newStartDate
-              || old.get.coordinates != node.coordinates) {
+            val originalStartDate = old.get.startDate.withTimeAtStartOfDay
+            val startDate = node.startDate.withTimeAtStartOfDay
 
-              // Update the node information
-              if (old.get.nodeType != node.nodeType && oldStartDate != newStartDate) {
+            // Check that new start date is not earlier than before
+            if (startDate.getMillis < originalStartDate.getMillis) {
+              return Left(NodeStartDateUpdateErrorMessage)
+            }
 
-                // Check that new start date is not earlier than before
-                if (newStartDate.getMillis < oldStartDate.getMillis) {
-                  return Some(NodeStartDateUpdateErrorMessage)
-                }
+            if (node.name != old.get.name || old.get.nodeType != node.nodeType || originalStartDate != startDate || old.get.coordinates != node.coordinates) {
+              // Create new node and invalidate old one
+              if (old.get.nodeType != node.nodeType && originalStartDate != startDate) {
 
                 // Create a new history layer when the node type has changed
+                nodeDAO.expireById(Seq(old.get.id))
                 nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
                 nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
 
               } else {
-                nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
+                nodeDAO.update(Seq(node), username)
               }
-              nodeDAO.expireById(Seq(node.id))
             }
           } else {
-            return Some(NodeNotFoundErrorMessage)
+            return Left(NodeNotFoundErrorMessage)
           }
+          node.nodeNumber
         }
-        None
+        Right(nodeNumber)
       } catch {
-        case e: Exception => Some(e.getMessage)
+        case e: Exception => Left(e.getMessage)
       }
     }
   }
@@ -116,22 +167,76 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getNodesWithJunctionByBoundingBox(boundingRectangle: BoundingRectangle): Map[Node, (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
+  def enrichNodePointCoordinates(raLinks: Option[Seq[RoadAddressLink]], nPoints: Seq[NodePoint]): Seq[NodePoint] = {
+    if(raLinks.nonEmpty){
+      val rls = raLinks.get
+      nPoints.map{ np =>
+        np.copy(coordinates = {
+          val ra: Option[Either[RoadAddressLink, RoadAddressLink]] = if(rls.exists(ra => ra.startAddressM == np.addrM))
+            Some(Left(rls.find(ra => ra.startAddressM == np.addrM).get))
+            else if(rls.exists(ra => ra.endAddressM == np.addrM))
+            Some(Right(rls.find(ra => ra.endAddressM == np.addrM).get))
+          else None
+          ra match {
+            case Some(r) if r.isLeft => r.left.get.startingPoint
+            case Some(r) if r.isRight => r.right.get.endPoint
+            case _ => np.coordinates
+          }
+        })
+      }
+    } else {
+      nPoints
+    }
+  }
+
+  def enrichJunctionPointCoordinates(raLinks: Option[Seq[RoadAddressLink]], jPoints: Seq[JunctionPoint]): Seq[JunctionPoint] = {
+    if(raLinks.nonEmpty){
+      val rls = raLinks.get
+      jPoints.map{ jp =>
+        jp.copy(coordinates = {
+          val ra: Option[Either[RoadAddressLink, RoadAddressLink]] = if(rls.exists(ra => ra.startAddressM == jp.addrM))
+            Some(Left(rls.find(ra => ra.startAddressM == jp.addrM).get))
+          else if(rls.exists(ra => ra.endAddressM == jp.addrM))
+            Some(Right(rls.find(ra => ra.endAddressM == jp.addrM).get))
+          else None
+          ra match {
+            case Some(r) if r.isLeft => r.left.get.startingPoint
+            case Some(r) if r.isRight => r.right.get.endPoint
+            case _ => jp.coordinates
+          }
+        })
+      }
+    } else {
+      jPoints
+    }
+  }
+
+  def getNodesWithJunctionByBoundingBox(boundingRectangle: BoundingRectangle, raLinks: Seq[RoadAddressLink]): Map[Node, (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
     withDynSession {
       time(logger, "Fetch nodes with junctions") {
         val nodes = nodeDAO.fetchByBoundingBox(boundingRectangle)
         val nodePoints = nodePointDAO.fetchByNodeNumbers(nodes.map(_.nodeNumber))
         val junctions = junctionDAO.fetchJunctionsByNodeNumbers(nodes.map(_.nodeNumber))
         val junctionPoints = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
+
+        val groupedRoadLinks = raLinks.groupBy(_.roadwayNumber)
+        val nodePointsWithCoords = nodePoints.groupBy(_.roadwayNumber).par.flatMap{ case (k, v) =>
+          enrichNodePointCoordinates(groupedRoadLinks.get(k), v)
+        }.toSeq.seq
+
+        val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap{ case (k, v) =>
+          enrichJunctionPointCoordinates(groupedRoadLinks.get(k), v)
+        }.toSeq.seq
+
         nodes.map {
           node =>
             (node,
               (
-                nodePoints.filter(np => np.nodeNumber.isDefined && np.nodeNumber.get == node.nodeNumber),
+                nodePointsWithCoords.filter(np => np.nodeNumber.isDefined && np.nodeNumber.get == node.nodeNumber),
                 junctions.filter(j => j.nodeNumber.isDefined && j.nodeNumber.get == node.nodeNumber).map {
                   junction =>
                     (
-                      junction, junctionPoints.filter(_.junctionId == junction.id)
+                      junction, junctionPointsWithCoords.filter(_.junctionId == junction.id)
                     )
                 }.toMap
               )
@@ -177,6 +282,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     withDynSession {
       time(logger, "Fetch node point template by id") {
         nodePointDAO.fetchNodePointTemplateById(id)
+      }
+    }
+  }
+
+  def getJunctionTemplatesById(id: Long): Option[JunctionTemplate] = {
+    withDynSession {
+      time(logger, "Fetch junction template by id") {
+        junctionDAO.fetchJunctionTemplateById(id)
       }
     }
   }
@@ -524,9 +637,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               else roadwayPointDAO.create(lastLink.roadwayNumber, lastLink.endAddrMValue, lastLink.createdBy.getOrElse("-"))
             }
 
-            /*
-      handle update of NODE_POINT in reverse cases
-    */
+            /*  Handle update of NODE_POINT in reverse cases  */
             val (startNodeReversed, endNodeReversed) =
               (roadwayChanges.exists(ch =>
                 ch.changeInfo.target.startAddressM.nonEmpty && headLink.startAddrMValue == ch.changeInfo.target.startAddressM.get && ch.changeInfo.reversed
@@ -583,23 +694,35 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getNodePointTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[NodePoint] = {
+  def getNodePointTemplatesByBoundingBox(boundingRectangle: BoundingRectangle, raLinks: Seq[RoadAddressLink]): Seq[NodePoint] = {
     withDynSession {
       time(logger, "Fetch nodes point templates") {
-        nodePointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+
+        val nodePointTemplate = nodePointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+        val groupedRoadLinks = raLinks.groupBy(_.roadwayNumber)
+        nodePointTemplate.groupBy(_.roadwayNumber).par.flatMap{ case (k, v) =>
+          enrichNodePointCoordinates(groupedRoadLinks.get(k), v)
+        }.toSeq.seq
       }
     }
   }
 
-  def getJunctionTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Map[JunctionTemplate, Seq[JunctionPoint]] = {
+  def getJunctionTemplatesByBoundingBox(boundingRectangle: BoundingRectangle, raLinks: Seq[RoadAddressLink]): Map[JunctionTemplate, Seq[JunctionPoint]] = {
     withDynSession {
       time(logger, "Fetch junction templates") {
         val junctions: Seq[JunctionTemplate] = junctionDAO.fetchTemplatesByBoundingBox(boundingRectangle)
         val junctionPoints: Seq[JunctionPoint] = junctionPointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+
+        val groupedRoadLinks = raLinks.groupBy(_.roadwayNumber)
+
+        val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap{ case (k, v) =>
+          enrichJunctionPointCoordinates(groupedRoadLinks.get(k), v)
+        }.toSeq.seq
+
         junctions.map {
           junction =>
             (junction,
-              junctionPoints.filter(_.junctionId == junction.id))
+              junctionPointsWithCoords.filter(_.junctionId == junction.id))
         }.toMap
       }
     }
@@ -742,83 +865,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     expireNodesAndNodePoints(obsoleteNodePoints, expiredJunctions)
   }
 
-  def getJunctionInfoByJunctionId(junctionIds: Seq[Long]): Option[JunctionInfo] = {
-    withDynSession {
-      junctionDAO.fetchJunctionInfoByJunctionId(junctionIds)
-    }
-  }
-
-  def detachJunctionsFromNode(junctionIds: Seq[Long], username: String = "-"): Option[String] = {
-    withDynTransactionNewOrExisting {
-      val junctionsToDetach = junctionDAO.fetchByIds(junctionIds).filter(_.nodeNumber.isDefined)
-      if (junctionsToDetach.nonEmpty) {
-
-        // Expire the current junction
-        junctionDAO.expireById(junctionsToDetach.map(_.id))
-
-        junctionsToDetach.foreach { j =>
-          // Create a new junction template
-          val junction = j.copy(id = NewIdValue, junctionNumber = None, nodeNumber = None, createdBy = username)
-          val newJunctionId = junctionDAO.create(Seq(junction)).head
-
-          // Expire the current junction points
-          val junctionPointsToExpire = junctionPointDAO.fetchByJunctionIds(Seq(j.id))
-          junctionPointDAO.expireById(junctionPointsToExpire.map(_.id))
-
-          // Create new junction points with new junction id
-          junctionPointDAO.create(junctionPointsToExpire.map(_.copy(id = NewIdValue, junctionId = newJunctionId, createdBy = username)))
-        }
-
-        // TODO Calculate node points again (implemented in VIITE-1862)
-
-        // If there are no node points left under the node, node can be terminated
-        val nodeNumber = junctionsToDetach.head.nodeNumber.get
-        terminateNodeIfNoNodePoints(nodeNumber, username)
-      }
-      None
-    }
-  }
-
-  private def terminateNodeIfNoNodePoints(nodeNumber: Long, username: String) = {
-    val nodePoints = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
-    if (nodePoints.isEmpty) {
-      val node = nodeDAO.fetchByNodeNumber(nodeNumber)
-      if (node.isDefined) {
-
-        // Terminate Node
-        nodeDAO.expireById(Seq(node.get.id))
-        nodeDAO.create(Seq(node.get.copy(id = NewIdValue, endDate = Some(DateTime.now), createdBy = username)))
-
-      } else {
-        throw new Exception(s"Could not find node with number $nodeNumber")
-      }
-    }
-  }
-
-  def detachNodePointsFromNode(nodePointIds: Seq[Long], username: String = "-"): Option[String] = {
-    withDynTransactionNewOrExisting {
-      val nodePointsToDetach = nodePointDAO.fetchByIds(nodePointIds).filter(n => n.nodeNumber.isDefined && n.nodePointType == NodePointType.RoadNodePoint)
-      if (nodePointsToDetach.nonEmpty) {
-
-        // Expire the current node point and create a new template
-        nodePointDAO.expireById(nodePointsToDetach.map(_.id))
-
-        nodePointsToDetach.foreach { np =>
-
-          // Create a new node point template
-          nodePointDAO.create(Seq(np.copy(id = NewIdValue, nodeNumber = None, createdBy = username)))
-
-        }
-
-        // If there are no node points left under the node, node can be terminated
-        val nodeNumber = nodePointsToDetach.head.nodeNumber.get
-        terminateNodeIfNoNodePoints(nodeNumber, username)
-
-      }
-      None
-    }
-  }
-
   object ObsoleteJunctionPointFilters {
 
     def multipleRoadNumberIntersection(junctionPointsToCheck: Seq[JunctionPoint]): Boolean = {
@@ -875,7 +921,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         isRoadEndingInItself(jpc, junctionPointsToCheck.filter(_.id != jpc.id))
       }
     }
-
   }
 
 }

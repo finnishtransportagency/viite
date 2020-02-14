@@ -3,7 +3,6 @@
     var className = 'road-link';
     var title = 'Selite';
     var selectToolIcon = '<img src="images/select-tool.svg"/>';
-    var addToolIcon = '<img src="images/add-tool.svg"/>';
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
@@ -142,13 +141,14 @@
     roadClassLegend.append(constructionTypeLegendEntries);
     roadClassLegend.append(calibrationPointPicture);
 
-    var Tool = function(toolName, icon) {
+    var Tool = function(toolName, icon, description) {
       var className = toolName.toLowerCase();
       var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).on('click', function() {
         executeOrShowConfirmDialog(function() {
           applicationModel.setSelectedTool(toolName);
         });
       });
+
       var deactivate = function() {
         element.removeClass('active');
       };
@@ -168,7 +168,8 @@
         element: element,
         deactivate: deactivate,
         activate: activate,
-        name: toolName
+        name: toolName,
+        description: description
       };
     };
 
@@ -176,6 +177,7 @@
       var element = $('<div class="panel-section panel-actions" />');
       _.each(tools, function(tool) {
         element.append(tool.element);
+        element.append('<div>' + tool.description + '</div>');
       });
 
       var hide = function() { element.hide(); };
@@ -183,10 +185,10 @@
 
       eventbus.on('tool:changed', function(name) {
         _.each(tools, function(tool) {
-          if (tool.name !== name) {
-            tool.deactivate();
-          } else {
+          if (applicationModel.isSelectedTool(tool.name)) {
             tool.activate();
+          } else {
+            tool.deactivate();
           }
         });
       });
@@ -212,8 +214,7 @@
     };
 
     var nodeToolSelection = new ToolSelection([
-      new Tool(LinkValues.Tool.Select.value, selectToolIcon),
-      new Tool(LinkValues.Tool.Add.value, addToolIcon)
+      new Tool(LinkValues.Tool.Select.value, selectToolIcon, LinkValues.Tool.Select.description)
     ]);
 
     var templateAttributes = {
