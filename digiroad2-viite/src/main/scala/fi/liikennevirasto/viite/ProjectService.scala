@@ -1937,7 +1937,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       handleRoadNames(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
       ProjectLinkNameDAO.removeByProject(projectID)
-      projectLinks.map(_.roadNumber).toSet
+      val projectLinksSet = projectLinks.map(_.roadNumber).toSet
+      nodesAndJunctionsService.calculateNodePointsForProject(projectID, username = project.createdBy)
+      return projectLinksSet
     } catch {
       case e: ProjectValidationException => {
         logger.error("Failed to validate project message:" + e.getMessage)
