@@ -421,10 +421,13 @@
     };
 
     var formIsInvalid = function () {
+      //  TODO remove this variable after Nodes and Junctions are imported.
+      var saveBtnDisabled = (Environment.name() === 'integration' || Environment.name() === 'production');
+
       return $('#nodeName').val() === "" ||
         $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||
-        !selectedNodesAndJunctions.isDirty();
+        !selectedNodesAndJunctions.isDirty() || saveBtnDisabled;
     };
 
     var closeNode = function () {
