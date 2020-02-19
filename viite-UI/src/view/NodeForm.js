@@ -422,7 +422,7 @@
 
     var formIsInvalid = function () {
       //  TODO remove this variable after Nodes and Junctions are imported.
-      var saveBtnDisabled = (Environment.name() === 'integration' || Environment.name() === 'production');
+      var saveBtnDisabled = Environment.name() === 'production';
 
       return $('#nodeName').val() === "" ||
         $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
