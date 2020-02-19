@@ -274,7 +274,6 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     endPoint.head.id should be (6L)
   }
 
-  // TODO Fix this test or the code it tests
   test("Test findChainEndpoints When adding completely new links before discontinuity Then when finding links in edges their points should also be on the edges") {
     //
     //                 (1,1)       (3,1)       (4,1)    (6,1)      (8,1)    (11,1)   (16,1)     (18,1)   (20,1)
