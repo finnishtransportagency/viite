@@ -111,7 +111,7 @@
           var nodeName = '';
           var name = featureAtPixel.getProperties().name;
           if (!_.isUndefined(name)) {
-            nodeName = 'Nimi: ' + name + '<br>';
+            nodeName = 'Nimi: ' + _.escape(name) + '<br>';
           }
           infoContent.innerHTML =
             nodeName +
