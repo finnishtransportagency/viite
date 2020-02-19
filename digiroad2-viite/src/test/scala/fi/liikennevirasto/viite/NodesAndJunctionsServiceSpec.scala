@@ -4233,19 +4233,26 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test calculateNodePointsForNode When two track road part has junction points on both tracks. Powerpoint slide 6 and roadwaypoint at end of roadway Then calculate node point") {
+  test("Test calculateNodePointsForNode When two track road part has junction points on both tracks. Powerpoint slide 6 and roadwaypoint at end of roadway Then calculate node point. Include expired data") {
     runWithRollback {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
       val roadwayNumber3 = Sequences.nextRoadwayNumber
-      val roadwayNumber4 = Sequences.nextRoadwayNumber
+      val roadwayNumber5 = Sequences.nextRoadwayNumber
       roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber3, track = Track.Combined, roadNumber = 991)))
-      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber4, startAddrMValue = 100, endAddrMValue = 200, track = Track.Combined, roadNumber = 991)))
+      val roadwayNumber4 = roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber5, startAddrMValue = 100, endAddrMValue = 200, track = Track.Combined, roadNumber = 991)))
+      roadwayDAO.expireById(roadwayNumber4.toSet)
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber5, startAddrMValue = 100, endAddrMValue = 200, track = Track.Combined, roadNumber = 991)))
       val roadwayPointId4 = roadwayPointDAO.create(testRoadwayPoint2.copy(roadwayNumber = roadwayNumber3, addrMValue = 20))
-      val roadwayPointId5 = roadwayPointDAO.create(testRoadwayPoint2.copy(roadwayNumber = roadwayNumber4, addrMValue = 180))
+      val roadwayPointId5 = roadwayPointDAO.create(testRoadwayPoint2.copy(roadwayNumber = roadwayNumber5, addrMValue = 180))
       val junctionId4 = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Option(nodeNumber)))).head
       val junctionId5 = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Option(nodeNumber)))).head
+      val junctionId6 = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Option(nodeNumber), validTo = Option(DateTime.now())))).head
+      junctionDAO.expireById(Seq(junctionId6))
+
       junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId4, roadwayPointId = roadwayPointId4)))
       junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId5, roadwayPointId = roadwayPointId5)))
+      val junctionPointDAO3 = junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId4, roadwayPointId = roadwayPointId4)))
+      junctionPointDAO.expireById(junctionPointDAO3)
 
       val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
       nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser")
