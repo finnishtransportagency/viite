@@ -97,7 +97,7 @@ pipeline {
                         STAGE_RUN_TASK = [
                             "./sbt",
                             "$java_opts",
-                            "-Ddigiroad2.env=ci-vahti",
+                            "-Ddigiroad2.env=ci-dev",
                             "\'project digiroad2-viite\'",
                             "\'test:run-main fi.liikennevirasto.viite.util.DataFixture $TASK $IMPORT_TABLE\'"
                         ].join(" ")
