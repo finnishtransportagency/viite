@@ -946,13 +946,13 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     var lastRoadPartNumber = 0: Long
     logger.debug("Start calculateNodePointsForNode: " + nodeNumber)
     roadPartInfos.foreach { roadPartInfo =>
-      if (lastRoadNumber != roadPartInfo.road_number || lastRoadPartNumber != roadPartInfo.road_part_number) {
+      if (lastRoadNumber != roadPartInfo.roadNumber || lastRoadPartNumber != roadPartInfo.roadPartNumber) {
         // set nodePointCount to zero so that road or road part has changed in for loop and we need to create nodepoint
         nodePointCount = 0
       }
-      lastRoadNumber = roadPartInfo.road_number
-      lastRoadPartNumber = roadPartInfo.road_part_number
-      val countNodePointsForRoadAndRoadPart = nodePointDAO.fetchNodePointsCountForRoadAndRoadPart(roadPartInfo.road_number, roadPartInfo.road_part_number, roadPartInfo.before_after, nodeNumber)
+      lastRoadNumber = roadPartInfo.roadNumber
+      lastRoadPartNumber = roadPartInfo.roadPartNumber
+      val countNodePointsForRoadAndRoadPart = nodePointDAO.fetchNodePointsCountForRoadAndRoadPart(roadPartInfo.roadNumber, roadPartInfo.roadPartNumber, roadPartInfo.beforeAfter, nodeNumber)
       /*
          If the road part doesn't have any "road node points", calculate node point by taking the average of the
          addresses of all junction points on both tracks and add this "calculated node point" on track 0 or 1
@@ -960,21 +960,21 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (countNodePointsForRoadAndRoadPart.get == 0 && (nodePointCount < 2)) {
         if (logger.isDebugEnabled) {
           // generate query debug for what are the input values for average calculation
-          nodePointDAO.fetchAddrMForAverage(roadPartInfo.road_number, roadPartInfo.road_part_number)
+          nodePointDAO.fetchAddrMForAverage(roadPartInfo.roadNumber, roadPartInfo.roadPartNumber)
         }
-        val addrMValueAVG = nodePointDAO.fetchAverageAddrM(roadPartInfo.road_number, roadPartInfo.road_part_number, nodeNumber)
-        val beforeAfterValue = if (roadPartInfo.end_addr_m == addrMValueAVG) {
+        val addrMValueAVG = nodePointDAO.fetchAverageAddrM(roadPartInfo.roadNumber, roadPartInfo.roadPartNumber, nodeNumber)
+        val beforeAfterValue = if (roadPartInfo.endAddrM == addrMValueAVG) {
           BeforeAfter.Before
-        } else if (roadPartInfo.start_addr_m == addrMValueAVG) {
+        } else if (roadPartInfo.startAddrM == addrMValueAVG) {
           BeforeAfter.After
         } else {
           BeforeAfter.UnknownBeforeAfter
         }
-        val existingRoadwayPoint = roadwayPointDAO.fetch(roadPartInfo.roadway_number, addrMValueAVG)
+        val existingRoadwayPoint = roadwayPointDAO.fetch(roadPartInfo.roadwayNumber, addrMValueAVG)
         val rwPoint = if (existingRoadwayPoint.nonEmpty) {
           existingRoadwayPoint.get.id
         } else {
-          roadwayPointDAO.create(roadPartInfo.roadway_number, addrMValueAVG, username)
+          roadwayPointDAO.create(roadPartInfo.roadwayNumber, addrMValueAVG, username)
         }
         if (beforeAfterValue == BeforeAfter.UnknownBeforeAfter) {
           nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.Before, nodeNumber)
