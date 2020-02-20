@@ -913,8 +913,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def calculateNodePointsForProject(projectID: Long, username: String): Unit = {
-    val nodeNumbers = nodeDAO.fetchNodeNumbersByProject(projectID)
+  def calculateNodePointsForProject(projectId: Long, username: String): Unit = {
+    val nodeNumbers = nodeDAO.fetchNodeNumbersByProject(projectId)
     nodeNumbers.foreach(nodeNumber => {
       calculateNodePointsForNode(nodeNumber, username)
     })
@@ -930,9 +930,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     * - If points exists, no calculated nodepoints. Go to the next road + roadpart.
     * - If no points exist, then calculated node point. Calculated node point only for lane 0 or 1.
     * - If road part is linked only to one(1) junction, calculated node points (before and after) are formed/based with handled
-    * road part's junctions (used same ROADWAY_POINT row)
+    *   road part's junctions (used same ROADWAY_POINT row)
     * - If node is linked with several junctions, calculated node points and corresponding roadway_point are formed (before and after)
-    * with average ADDR_M value, When calculating addrMValueAVG, also roadway_points in lane to are included to average.
+    *   with average ADDR_M value, When calculating addrMValueAVG, also roadway_points in lane to are included to average.
     *
     * @param nodeNumber , username
     */
