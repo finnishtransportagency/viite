@@ -341,8 +341,10 @@ class NodeDAO extends BaseDAO {
   def fetchNodeNumbersByProject(projectId: Long): Seq[Long] = {
     val query =
       s"""
-         SELECT DISTINCT NP.NODE_NUMBER
-         FROM NODE_POINT NP
+         SELECT DISTINCT N.NODE_NUMBER
+         FROM NODE N
+         INNER JOIN NODE_POINT NP
+           ON N.NODE_NUMBER = NP.NODE_NUMBER
          INNER JOIN ROADWAY_POINT RP
            ON NP.ROADWAY_POINT_ID = RP.ID
          INNER JOIN ROADWAY R
@@ -354,8 +356,9 @@ class NodeDAO extends BaseDAO {
          AND R.VALID_TO IS NULL
          AND R.END_DATE IS NULL
          AND NP.VALID_TO IS NULL
-         AND NP.NODE_NUMBER IS NOT NULL
-         ORDER BY NP.NODE_NUMBER
+         AND N.VALID_TO IS NULL
+         AND N.END_DATE IS NULL
+         ORDER BY N.NODE_NUMBER
        """
     Q.queryNA[(Long)](query).iterator.toSeq
   }
