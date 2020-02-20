@@ -963,7 +963,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           nodePointDAO.fetchAddrMForAverage(roadPartInfo.road_number, roadPartInfo.road_part_number)
         }
         val addrMValueAVG = nodePointDAO.fetchAverageAddrM(roadPartInfo.road_number, roadPartInfo.road_part_number)
-        var beforeAfterValue:BeforeAfter = BeforeAfter.UnknownBeforeAfter
+        var beforeAfterValue = BeforeAfter.UnknownBeforeAfter
         if (roadPartInfo.end_addr_m == addrMValueAVG) {
           beforeAfterValue = BeforeAfter.Before
         }
