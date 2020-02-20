@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
-import fi.liikennevirasto.viite.dao.NodePointType.RoadNodePoint
+import fi.liikennevirasto.viite.dao.NodePointType.{CalculatedNodePoint, RoadNodePoint}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -81,6 +81,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }).filter(j => !junctionsToAttach.map(_.id).contains(j.id))
 
       updateJunctionsAndJunctionPoints(updatedJunctions, Map("nodeNumber" -> Some(nodeNumber)))
+      calculateNodePointsForNode(nodeNumber, username)
 
       nodeNumber
     }
@@ -910,6 +911,82 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         isRoadEndingInItself(jpc, junctionPointsToCheck.filter(_.id != jpc.id))
       }
     }
+  }
+
+  def calculateNodePointsForProject(projectId: Long, username: String): Unit = {
+    val nodeNumbers = nodeDAO.fetchNodeNumbersByProject(projectId)
+    nodeNumbers.foreach(nodeNumber => {
+      calculateNodePointsForNode(nodeNumber, username)
+    })
+  }
+
+  /**
+    * Calculates node points for all the road parts of the node.
+    *
+    * - Handle one node at the time
+    * - Expire node points connected to node with type 2 (NODEPOINT.TYPE = 2)
+    * - Go through the road parts (road numbers 1 - 19999 and 40000 - 69999) of the node one by one (JUNCTION -> JUNCTION_POINT -> ROADWAY_POINT -> ROADWAY)
+    * - Fetch node points count for road and road part NODE -> NODE_POINT.TYPE = 1) >> ROADWAY_POINT >> ROADWAY.ROAD_NUMBER, ROADWAY.ROAD_PART_NUMBER
+    * - If points exists, no calculated nodepoints. Go to the next road + roadpart.
+    * - If no points exist, then calculated node point. Calculated node point only for lane 0 or 1.
+    * - If road part is linked only to one(1) junction, calculated node points (before and after) are formed/based with handled
+    *   road part's junctions (used same ROADWAY_POINT row)
+    * - If node is linked with several junctions, calculated node points and corresponding roadway_point are formed (before and after)
+    *   with average ADDR_M value, When calculating addrMValueAVG, also roadway_points in lane to are included to average.
+    *
+    * @param nodeNumber , username
+    */
+  def calculateNodePointsForNode(nodeNumber: Long, username: String): Option[String] = {
+    nodePointDAO.expireByNodeNumberAndType(nodeNumber, NodePointType.CalculatedNodePoint)
+    /* - Go through the road parts (road numbers 1-19999 and 40000-69999) of the node one by one
+     */
+    val roadPartInfos = nodePointDAO.fetchRoadPartsInfoForNode(nodeNumber)
+    var nodePointCount = 0
+    var lastRoadNumber = 0: Long
+    var lastRoadPartNumber = 0: Long
+    logger.debug("Start calculateNodePointsForNode: " + nodeNumber)
+    roadPartInfos.foreach { roadPartInfo =>
+      if (lastRoadNumber != roadPartInfo.roadNumber || lastRoadPartNumber != roadPartInfo.roadPartNumber) {
+        // set nodePointCount to zero so that road or road part has changed in for loop and we need to create nodepoint
+        nodePointCount = 0
+      }
+      lastRoadNumber = roadPartInfo.roadNumber
+      lastRoadPartNumber = roadPartInfo.roadPartNumber
+      val countNodePointsForRoadAndRoadPart = nodePointDAO.fetchNodePointsCountForRoadAndRoadPart(roadPartInfo.roadNumber, roadPartInfo.roadPartNumber, roadPartInfo.beforeAfter, nodeNumber)
+      /*
+         If the road part doesn't have any "road node points", calculate node point by taking the average of the
+         addresses of all junction points on both tracks and add this "calculated node point" on track 0 or 1
+       */
+      if (countNodePointsForRoadAndRoadPart.get == 0 && (nodePointCount < 2)) {
+        if (logger.isDebugEnabled) {
+          // generate query debug for what are the input values for average calculation
+          nodePointDAO.fetchAddrMForAverage(roadPartInfo.roadNumber, roadPartInfo.roadPartNumber)
+        }
+        val addrMValueAVG = nodePointDAO.fetchAverageAddrM(roadPartInfo.roadNumber, roadPartInfo.roadPartNumber, nodeNumber)
+        val beforeAfterValue = if (roadPartInfo.endAddrM == addrMValueAVG) {
+          BeforeAfter.Before
+        } else if (roadPartInfo.startAddrM == addrMValueAVG) {
+          BeforeAfter.After
+        } else {
+          BeforeAfter.UnknownBeforeAfter
+        }
+        val existingRoadwayPoint = roadwayPointDAO.fetch(roadPartInfo.roadwayNumber, addrMValueAVG)
+        val rwPoint = if (existingRoadwayPoint.nonEmpty) {
+          existingRoadwayPoint.get.id
+        } else {
+          roadwayPointDAO.create(roadPartInfo.roadwayNumber, addrMValueAVG, username)
+        }
+        if (beforeAfterValue == BeforeAfter.UnknownBeforeAfter) {
+          nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.Before, nodeNumber)
+          nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.After, nodeNumber)
+          nodePointCount = nodePointCount + 2
+        } else {
+          nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber)
+          nodePointCount = nodePointCount + 1
+        }
+      }
+    }
+    None
   }
 
 }
