@@ -392,11 +392,11 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
-  def fetchNodePointsCountForRoadAndRoadPart(road_number: Long, road_part_number: Long, beforeAfter: Long): Option[Long] = {
+  def fetchNodePointsCountForRoadAndRoadPart(road_number: Long, road_part_number: Long, beforeAfter: Long, nodeNumber: Long): Option[Long] = {
     val query =
       s"""
           SELECT count(NP.ID)
-          FROM ROADWAY R, ROADWAY_POINT RP, NODE_POINT NP
+          FROM ROADWAY R, ROADWAY_POINT RP, NODE_POINT NP, NODE N
           WHERE R.ROAD_NUMBER = $road_number
           AND R.ROAD_PART_NUMBER = $road_part_number
           AND R.END_DATE IS NULL AND R.VALID_TO IS NULL
@@ -405,52 +405,61 @@ class NodePointDAO extends BaseDAO {
           AND NP.NODE_NUMBER IS NOT NULL
           AND NP.VALID_TO IS NULL
           AND NP.TYPE = 1
+          AND NP.NODE_NUMBER = N.NODE_NUMBER
+          AND N.END_DATE IS NULL
+          AND N.VALID_TO IS NULL
+          AND N.NODE_NUMBER = $nodeNumber
           ORDER BY R.ROAD_PART_NUMBER
        """
     Q.queryNA[(Long)](query).firstOption
   }
 
-  def fetchAverageAddrM(road_number: Long, road_part_number: Long): Long = {
+  def fetchAverageAddrM(roadNumber: Long, roadPartNumber: Long, nodeNumber: Long): Long = {
     val query =
       s"""
           SELECT AVG(RP.ADDR_M)
           FROM ROADWAY_POINT RP
-		      INNER JOIN ROADWAY R
-		        ON (R.ROAD_NUMBER = $road_number
-              AND R.ROAD_PART_NUMBER = $road_part_number
+          INNER JOIN ROADWAY R
+            ON (R.ROAD_NUMBER = $roadNumber
+              AND R.ROAD_PART_NUMBER = $roadPartNumber
               AND R.END_DATE IS NULL AND R.VALID_TO IS NULL
               AND RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER)
-		      INNER JOIN JUNCTION_POINT JP
-		        ON (JP.ROADWAY_POINT_ID = RP.ID
-		        AND JP.VALID_TO IS NULL)
-		      INNER JOIN JUNCTION J
-   		      ON (J.ID = JP.JUNCTION_ID
-   		      AND J.VALID_TO IS NULL
-   		      AND J.END_DATE IS NULL
-   		      AND J.NODE_NUMBER IS NOT NULL)
+          INNER JOIN JUNCTION_POINT JP
+            ON (JP.ROADWAY_POINT_ID = RP.ID
+              AND JP.VALID_TO IS NULL)
+          INNER JOIN JUNCTION J
+            ON (J.ID = JP.JUNCTION_ID
+              AND J.VALID_TO IS NULL
+              AND J.END_DATE IS NULL)
+          INNER JOIN NODE N
+            ON (J.NODE_NUMBER = N.NODE_NUMBER
+              AND N.END_DATE IS NULL
+              AND N.VALID_TO IS NULL
+              AND N.NODE_NUMBER = $nodeNumber)
        """
     Q.queryNA[(Long)](query).first
   }
 
+  // Only for debugging
   def fetchAddrMForAverage(road_number: Long, road_part_number: Long): Seq[NodePoint] = {
     val query =
       s"""
           SELECT NULL, NULL, NULL, NULL, NULL, NULL, NULL,
           RP.CREATED_TIME, JP.VALID_TO, RP.CREATED_TIME, RP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, R.ROAD_NUMBER, R.ROAD_PART_NUMBER, R.TRACK, R.ELY
           FROM ROADWAY_POINT RP
-		      INNER JOIN ROADWAY R
-		        ON (R.ROAD_NUMBER = $road_number
+          INNER JOIN ROADWAY R
+            ON (R.ROAD_NUMBER = $road_number
               AND R.ROAD_PART_NUMBER = $road_part_number
               AND R.END_DATE IS NULL AND R.VALID_TO IS NULL
               AND RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER)
-		      INNER JOIN JUNCTION_POINT JP
-		        ON (JP.ROADWAY_POINT_ID = RP.ID AND JP.VALID_TO IS NULL)
-		      INNER JOIN JUNCTION J
-   		      ON (J.ID = JP.JUNCTION_ID
-   		      AND JP.VALID_TO IS NULL
-   		      AND J.VALID_TO IS NULL
-   		      AND J.END_DATE IS NULL
-   		      AND J.NODE_NUMBER IS NOT NULL)
+          INNER JOIN JUNCTION_POINT JP
+            ON (JP.ROADWAY_POINT_ID = RP.ID AND JP.VALID_TO IS NULL)
+          INNER JOIN JUNCTION J
+             ON (J.ID = JP.JUNCTION_ID
+             AND JP.VALID_TO IS NULL
+             AND J.VALID_TO IS NULL
+             AND J.END_DATE IS NULL
+             AND J.NODE_NUMBER IS NOT NULL)
           ORDER BY R.ROAD_NUMBER, R.ROAD_PART_NUMBER
        """
         queryList(query)
