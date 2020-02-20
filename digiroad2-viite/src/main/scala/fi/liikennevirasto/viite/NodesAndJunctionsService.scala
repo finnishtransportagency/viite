@@ -977,11 +977,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           roadwayPointDAO.create(roadPartInfo.roadway_number, addrMValueAVG, username)
         }
         if (beforeAfterValue == BeforeAfter.UnknownBeforeAfter) {
-          nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.Before, Option(nodeNumber))
-          nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.After, Option(nodeNumber))
+          nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.Before, nodeNumber)
+          nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.After, nodeNumber)
           nodePointCount = nodePointCount + 2
         } else {
-          nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, Option(nodeNumber))
+          nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber)
           nodePointCount = nodePointCount + 1
         }
       }

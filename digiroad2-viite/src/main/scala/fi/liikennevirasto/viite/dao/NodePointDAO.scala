@@ -465,8 +465,8 @@ class NodePointDAO extends BaseDAO {
         queryList(query)
   }
 
-  def insertCalculatedNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Option[Long]): Unit = {
-    create(Seq(NodePoint(NewIdValue, beforeAfter, roadwayPointId, nodeNumber, CalculatedNodePoint,
+  def insertCalculatedNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Long): Unit = {
+    create(Seq(NodePoint(NewIdValue, beforeAfter, roadwayPointId, Some(nodeNumber), CalculatedNodePoint,
       None, None, DateTime.now(), None,
       "-", Some(DateTime.now()), 0L, 11,
       0, 0, null, 8)))
