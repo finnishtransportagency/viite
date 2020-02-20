@@ -3943,7 +3943,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       historyRowEndDate should not be None
     }
   }
-    test("Test calculateNodePointsForNode When node not found Then not fail") {
+
+  test("Test calculateNodePointsForNode When node not found Then not fail") {
     runWithRollback {
       nodesAndJunctionsService.calculateNodePointsForNode(-1, "TestUser")
     }
