@@ -274,8 +274,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     endPoint.head.id should be (6L)
   }
 
-  // TODO Fix this test or the code it tests
-  ignore("Test findChainEndpoints When finding links in edges Then their points should also be on the edges") {
+  test("Test findChainEndpoints When adding completely new links before discontinuity Then when finding links in edges their points should also be on the edges") {
     //
     //                 (1,1)       (3,1)       (4,1)    (6,1)      (8,1)    (11,1)   (16,1)     (18,1)   (20,1)
     //                   |-----------|-----------|        |----------|---------|        |----------|--------|
@@ -286,12 +285,12 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     val projectLinks = List(
       generateProjectLink(1L, Seq(Point(1, 1), Point(2, 1), Point(3, 1)), Track.Combined),
       generateProjectLink(2L, Seq(Point(3, 1), Point(4, 1)), Track.Combined),
-      generateProjectLink(3L, Seq(Point(6, 1), Point(7, 1), Point(8, 1)), Track.Combined),
-      generateProjectLink(4L, Seq(Point(8, 1), Point(10, 1), Point(11, 1)), Track.Combined),
-      generateProjectLink(5L, Seq(Point(16, 1), Point(17, 1), Point(18, 1)), Track.Combined),
-      generateProjectLink(6L, Seq(Point(18, 1), Point(19, 1), Point(20, 1)), Track.Combined),
-      generateProjectLink(7L, Seq(Point(18, 1), Point(18, 0)), Track.RightSide),
-      generateProjectLink(8L, Seq(Point(20, 1), Point(20, 0)), Track.LeftSide)
+      generateProjectLink(3L, Seq(Point(6, 1), Point(7, 1), Point(8, 1)), Track.Combined).copy(startAddrMValue = 0L, endAddrMValue = 2L),
+      generateProjectLink(4L, Seq(Point(8, 1), Point(10, 1), Point(11, 1)), Track.Combined).copy(startAddrMValue = 2L, endAddrMValue = 5L),
+      generateProjectLink(5L, Seq(Point(16, 1), Point(17, 1), Point(18, 1)), Track.Combined).copy(startAddrMValue = 5L, endAddrMValue = 7L),
+      generateProjectLink(6L, Seq(Point(18, 1), Point(19, 1), Point(20, 1)), Track.Combined).copy(startAddrMValue = 7L, endAddrMValue = 9L),
+      generateProjectLink(7L, Seq(Point(18, 1), Point(18, 0)), Track.RightSide).copy(startAddrMValue = 9L, endAddrMValue = 10L),
+      generateProjectLink(8L, Seq(Point(20, 1), Point(20, 0)), Track.LeftSide).copy(startAddrMValue = 9L, endAddrMValue = 10L)
     )
     val endPoints = TrackSectionOrder.findChainEndpoints(projectLinks)
     endPoints.size should be (2)
