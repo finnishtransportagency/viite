@@ -3965,9 +3965,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test calculateNodePointsForNode most simple case Then calculate " +
-    "node point") {
-
+  test("Test calculateNodePointsForNode most simple case Then calculate node point") {
     runWithRollback {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
       val roadwayNumber1 = Sequences.nextRoadwayNumber
@@ -4011,8 +4009,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test calculateNodePointsForNode When one road part doesn't contain 'road node point' and second road contains 'road node point'. Then calculate " +
-    "node point") {
+  test("Test calculateNodePointsForNode When one road part doesn't contain 'road node point' and second road contains 'road node point'. Then calculate node point") {
     runWithRollback {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
       val roadwayNumber1 = Sequences.nextRoadwayNumber
@@ -4037,8 +4034,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test calculateNodePointsForNode When two track road part doesn't contain 'road node point'. Junction in Left Track. Then calculate " +
-    "node point") {
+  test("Test calculateNodePointsForNode When two track road part doesn't contain 'road node point'. Junction in Left Track. Then calculate node point") {
     runWithRollback {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
       val roadwayNumber1 = Sequences.nextRoadwayNumber
@@ -4061,8 +4057,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test calculateNodePointsForNode When two track road part doesn't contain 'road node point'. Junction in Right Track. Then calculate " +
-    "node point") {
+  test("Test calculateNodePointsForNode When two track road part doesn't contain 'road node point'. Junction in Right Track. Then calculate node point") {
     runWithRollback {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
       val roadwayNumber1 = Sequences.nextRoadwayNumber
