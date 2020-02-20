@@ -937,7 +937,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     * @param nodeNumber , username
     */
   def calculateNodePointsForNode(nodeNumber: Long, username: String): Option[String] = {
-    nodePointDAO.expireByNodeNumberAndType(nodeNumber, NodePointType.CalculatedNodePoint.value)
+    nodePointDAO.expireByNodeNumberAndType(nodeNumber, NodePointType.CalculatedNodePoint)
     /* - Go through the road parts (road numbers 1-19999 and 40000-69999) of the node one by one
      */
     val roadPartInfos = nodePointDAO.fetchRoadPartsInfoForNode(nodeNumber)
