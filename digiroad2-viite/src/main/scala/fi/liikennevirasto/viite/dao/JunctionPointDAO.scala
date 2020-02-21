@@ -20,6 +20,26 @@ class JunctionPointDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
+  val junctionPointQuery =
+    """
+      SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, J.START_DATE, J.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
+      RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.DISCONTINUITY
+      FROM JUNCTION_POINT JP
+      JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID AND J.VALID_TO IS NULL AND J.END_DATE IS NULL)
+      JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+      JOIN ROADWAY RW ON (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL)
+    """
+
+  val junctionPointHistoryQuery =
+    """
+      SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, J.START_DATE, J.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
+      RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.DISCONTINUITY
+      FROM JUNCTION_POINT JP
+      JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID)
+      JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+      JOIN ROADWAY RW ON (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
+    """
+
   implicit val getJunctionPoint: GetResult[JunctionPoint] = new GetResult[JunctionPoint] {
     def apply(r: PositionedResult): JunctionPoint = {
       val id = r.nextLong()
@@ -56,13 +76,8 @@ class JunctionPointDAO extends BaseDAO {
     } else {
       val query =
         s"""
-          SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, J.START_DATE, J.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
-          RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.DISCONTINUITY
-          FROM JUNCTION_POINT JP
-          JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID)
-          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
-          where JP.ID in (${ids.mkString(",")}) AND JP.VALID_TO IS NULL
+          $junctionPointQuery
+          WHERE JP.ID IN (${ids.mkString(",")}) AND JP.VALID_TO IS NULL
         """
       queryList(query)
     }
@@ -74,13 +89,8 @@ class JunctionPointDAO extends BaseDAO {
     } else {
       val query =
         s"""
-          SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, J.START_DATE, J.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
-          RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.DISCONTINUITY
-          FROM JUNCTION_POINT JP
-          JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID)
-          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL)
-          where J.ID in (${junctionIds.mkString(",")}) AND JP.VALID_TO IS NULL AND J.END_DATE IS NULL AND J.VALID_TO IS NULL
+          $junctionPointQuery
+          WHERE J.ID IN (${junctionIds.mkString(",")}) AND JP.VALID_TO IS NULL
         """
       queryList(query)
     }
@@ -92,13 +102,8 @@ class JunctionPointDAO extends BaseDAO {
     } else {
       val query =
         s"""
-          SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, J.START_DATE, J.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
-          RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.DISCONTINUITY
-          FROM JUNCTION_POINT JP
-          JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID)
-          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL)
-          where J.ID in (${junctionIds.mkString(",")}) AND JP.VALID_TO IS NULL
+          $junctionPointHistoryQuery
+          WHERE J.ID IN (${junctionIds.mkString(",")})
         """
       queryList(query)
     }

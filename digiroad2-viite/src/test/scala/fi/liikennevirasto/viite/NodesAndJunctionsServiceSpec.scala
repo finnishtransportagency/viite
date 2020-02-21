@@ -3652,14 +3652,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       // New junction should be created with end date
       val terminatedJunctions = junctionDAO.fetchExpiredByRoadwayNumbers(Seq(terminatedRoadLink.roadwayNumber))
       terminatedJunctions.length should be(2)
-      terminatedJunctions count (_.endDate.isDefined) should be(1)
-      terminatedJunctions count (_.validTo.isDefined) should be(1)
+      terminatedJunctions.count(_.endDate.isDefined) should be(1)
+      terminatedJunctions.count(_.validTo.isDefined) should be(1)
 
       // Old junction points should be expired
       junctionPointDAO.fetchByJunctionIds(junctionPointTemplates.map(_.junctionId)).length should be(0)
 
       // New junction points should be created for terminated junction
-      junctionPointDAO.fetchAllByJunctionIds(terminatedJunctions.map(_.id)).length should be(3)
+      val terminatedJunctionPoints = junctionPointDAO.fetchAllByJunctionIds(terminatedJunctions.map(_.id))
+      terminatedJunctionPoints.length should be(6)
+      terminatedJunctionPoints.count(_.validTo.isDefined) should be (3)
+      terminatedJunctionPoints.count(_.endDate.isDefined) should be (3)
+
+      junctionPointDAO.fetchByJunctionIds(terminatedJunctions.map(_.id)).length should be(0)
     }
   }
 
