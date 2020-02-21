@@ -292,10 +292,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       }
     };
 
-    var selectTool = function(tool) {
-      applicationModel.setSelectedTool(tool);
-    };
-
     return {
       getRoadLayerName: getRoadLayerName,
       getFloatingMarkerLayerName: getFloatingMarkerLayerName,
@@ -336,7 +332,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       getFeatureByLinkId: getFeatureByLinkId,
       getLinkDataByLinkId: getLinkDataByLinkId,
       selectSingleFeatureByInteraction: selectSingleFeatureByInteraction,
-      selectTool: selectTool,
       clickCancelButton: clickCancelButton
     };
   });

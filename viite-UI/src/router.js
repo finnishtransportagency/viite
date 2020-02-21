@@ -21,14 +21,15 @@
       },
 
       routes: {
-        'linkProperty/:linkId': 'linkProperty',
-        'linkProperty/mml/:mmlId': 'linkPropertyByMml',
-        'linkProperty/mtkid/:mtkid': 'linkPropertyByMtk',
-        'roadAddressProject/:projectId': 'roadAddressProject',
-        'historyLayer/:date': 'historyLayer',
+        'linkProperty/:linkId'          : 'linkProperty',
+        'linkProperty/mml/:mmlId'       : 'linkPropertyByMml',
+        'linkProperty/mtkid/:mtkid'     : 'linkPropertyByMtk',
+        'roadAddressProject/:projectId' : 'roadAddressProject',
+        'historyLayer/:date'            : 'historyLayer',
         'work-list/floatingRoadAddress' : 'floatingAddressesList',
-        'work-list/roadAddressErrors' : 'roadAddressErrorsList',
-        'node/nodePointTemplate/:id' : 'nodePointTemplate'
+        'work-list/roadAddressErrors'   : 'roadAddressErrorsList',
+        'node/nodePointTemplate/:id'    : 'nodePointTemplate',
+        'node/junctionTemplate/:id'     : 'junctionTemplate'
       },
 
       linkProperty: function (linkId) {
@@ -91,8 +92,11 @@
       },
 
       nodePointTemplate: function (nodePointTemplateId) {
-        eventbus.trigger('nodesAndJunctions:open');
-        eventbus.trigger('nodeSearchTool:clickNodePointTemplate', nodePointTemplateId, map);
+        eventbus.trigger('nodeSearchTool:clickNodePointTemplate', nodePointTemplateId);
+      },
+
+      junctionTemplate: function (junctionTemplateId) {
+        eventbus.trigger('nodeSearchTool:clickJunctionTemplate', junctionTemplateId);
       }
     });
 

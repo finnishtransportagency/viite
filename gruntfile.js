@@ -52,15 +52,29 @@ module.exports = function(grunt) {
       }
     },
     cachebreaker: {
-      options: {
-        match: ['viite.css'],
-        replacement: 'md5',
-        src: {
-          path: 'dist/css/viite.css'
+      css: {
+        options: {
+          match: ['viite.css'],
+          replacement: 'md5',
+          src: {
+            path: 'dist/css/viite.css'
+          }
+        },
+        files: {
+          src: ['viite-UI/index.html']
         }
       },
-      files: {
-        src: ['viite-UI/index.html']
+      js: {
+        options: {
+          match: ['viite.min.js'],
+          replacement: 'md5',
+          src: {
+            path: 'dist/js/viite.js'
+          }
+        },
+        files: {
+          src: ['viite-UI/index.html']
+        }
       }
     },
     clean: ['dist'],

@@ -1,4 +1,5 @@
 package fi.liikennevirasto.viite.dao
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
@@ -13,7 +14,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class JunctionPoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, junctionId: Long, startDate: Option[DateTime], endDate: Option[DateTime],
                          validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime], roadwayNumber: Long, addrM: Long,
-                         roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Discontinuity)
+                         roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Discontinuity, coordinates: Point = Point(0.0, 0.0))
 
 class JunctionPointDAO extends BaseDAO {
 
@@ -188,7 +189,7 @@ class JunctionPointDAO extends BaseDAO {
     }
   }
 
-  def create(junctionPoints: Iterable[JunctionPoint]): Seq[Long] = {
+  def create(junctionPoints: Iterable[JunctionPoint], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into JUNCTION_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, JUNCTION_ID, CREATED_BY)
@@ -207,7 +208,7 @@ class JunctionPointDAO extends BaseDAO {
         ps.setLong(2, junctionPoint.beforeAfter.value)
         ps.setLong(3, junctionPoint.roadwayPointId)
         ps.setLong(4, junctionPoint.junctionId)
-        ps.setString(5, junctionPoint.createdBy)
+        ps.setString(5, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
     ps.executeBatch()

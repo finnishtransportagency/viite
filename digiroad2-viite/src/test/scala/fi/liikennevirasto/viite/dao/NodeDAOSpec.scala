@@ -10,6 +10,7 @@ import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 class NodeDAOSpec extends FunSuite with Matchers {
 
@@ -123,6 +124,24 @@ class NodeDAOSpec extends FunSuite with Matchers {
       nodes.head.nodeNumber should be(nodeNumbers.head)
       nodes.head.coordinates.x should be(testNode1.coordinates.x)
       nodes.head.coordinates.y should be(testNode1.coordinates.y)
+    }
+  }
+
+  test("Test fetchNodeNumbersByProject When matching Then return them") {
+    runWithRollback {
+      roadwayDAO.create(Seq(testRoadway1))
+      val nodeId = Sequences.nextNodeId
+      val nodeNumber = dao.create(Seq(testNode1.copy(id = nodeId))).head
+      val roadwayPointId = Sequences.nextRoadwayPointId
+      roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId))
+      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId)))
+      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely, ROADWAY_CHANGE_ID) Values(100,1,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,8, 1) """.execute
+      val projectId = sql"""Select rac.project_id From ROADWAY_CHANGES rac where new_road_number = $roadNumber1 and new_road_part_number = $roadPartNumber1""".as[Long].first
+
+      val nodeNumbers = dao.fetchNodeNumbersByProject(projectId)
+
+      nodeNumbers.size should be(1)
+      nodeNumbers(0) should be(nodeNumber)
     }
   }
 
