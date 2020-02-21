@@ -141,7 +141,11 @@
         $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
         var currentProject = projectCollection.getCurrentProject();
         if ($('.change-table-frame').css('display') === "block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value || currentProject.project.statusCode === ProjectStatus.ErrorInTR.value)) {
-          $('#send-button').attr('disabled', false); //enables send button if changetable is open
+
+          // TODO Uncomment when projects can be sent to TR again
+          // 21.2.2020 Temporarily disabled sending projects to TR in order to prevent data corruption in TR for ramps.
+          //$('#send-button').attr('disabled', false); //enables send button if changetable is open
+
         }
       } else {
         $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
