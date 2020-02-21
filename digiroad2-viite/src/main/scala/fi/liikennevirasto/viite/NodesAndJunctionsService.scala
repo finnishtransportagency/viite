@@ -638,7 +638,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def expireObsoleteNodesAndJunctions(projectLinks: Seq[ProjectLink], endDate: Option[DateTime], username: String = "-"): Unit = {
+  def expireObsoleteNodesAndJunctions(projectLinks: Seq[ProjectLink], endDate: Option[DateTime], username: String = "-"): Seq[JunctionPoint] = {
 
     def getNodePointsAndJunctionPointsByTerminatedRoadwayNumbers(terminatedRoadwayNumbers: Seq[Long]): (Seq[NodePoint], Seq[JunctionPoint]) = {
       logger.info(s"Terminated roadway numbers : $terminatedRoadwayNumbers")
@@ -769,10 +769,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }.values.toSeq
 
     val obsoleteNodePoints = terminatedNodePoints ++ obsoletePointsFromModifiedRoadways.flatMap(_._1)
-    val obsoleteJunctionPoints = obsoletePointsFromModifiedRoadways.flatMap(_._2) ++ terminatedJunctionPoints
-
+    val obsoleteJunctionPoints = terminatedJunctionPoints ++ obsoletePointsFromModifiedRoadways.flatMap(_._2)
     val expiredJunctions = expireJunctionsAndJunctionPoints(obsoleteJunctionPoints)
     expireNodesAndNodePoints(obsoleteNodePoints, expiredJunctions)
+    obsoleteJunctionPoints.distinct
   }
 
   def getJunctionInfoByJunctionId(junctionIds: Seq[Long]): Option[JunctionInfo] = {

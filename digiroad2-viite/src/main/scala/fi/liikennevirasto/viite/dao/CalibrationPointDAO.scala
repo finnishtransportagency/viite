@@ -117,6 +117,26 @@ object CalibrationPointDAO {
      """.as[CalibrationPoint].firstOption
   }
 
+  def fetchIdByRoadwayNumberSection(roadwayNumber :Long, startAddr: Long, endAddr: Long) : Set[Long] = {
+    sql"""
+         SELECT CP.ID
+         FROM CALIBRATION_POINT CP
+         JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID
+         WHERE RP.roadway_number = $roadwayNumber AND RP.ADDR_M BETWEEN $startAddr AND $endAddr AND CP.VALID_TO IS NULL
+     """.as[Long].list.toSet
+  }
+
+  def fetchIdByRoadwayPointIdWithJunctionDefined(roadwayPointId:Long, addr: Long) : Set[Long] = {
+    sql"""
+         SELECT CP.ID
+         FROM CALIBRATION_POINT CP
+         JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID
+         JOIN JUNCTION_POINT JP ON JP.ROADWAY_POINT_ID = RP.ID
+         JOIN JUNCTION J ON J.ID = JP.JUNCTION_ID
+         WHERE cp.roadway_point_id = $roadwayPointId AND rp.addr_m = $addr AND CP.VALID_TO IS NULL AND JP.VALID_TO IS NOT NULL
+     """.as[Long].list.toSet
+  }
+
   def fetchByLinkId(linkIds: Iterable[Long]): Seq[CalibrationPoint] = {
     if (linkIds.isEmpty) {
       Seq()

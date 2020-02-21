@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, UnknownSource}
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
@@ -408,7 +408,7 @@ object TrackSectionOrder {
             if (list.isEmpty) {
               Seq(i)
             } else {
-              if (list.last.roadType != i.roadType || list.last.track != i.track || list.last.roadNumber != i.roadNumber || list.last.roadPartNumber != i.roadPartNumber || list.last.discontinuity == Discontinuous || list.last.discontinuity == MinorDiscontinuity) {
+              if (list.last.roadType != i.roadType || list.last.track != i.track || list.last.roadNumber != i.roadNumber || list.last.roadPartNumber != i.roadPartNumber || list.last.discontinuity == Discontinuous || list.last.discontinuity == MinorDiscontinuity || list.last.discontinuity == ParallelLink) {
                 val last = list.last
                 list.dropRight(1) ++ Seq(setCalibrationPoint(last, None, None, last.calibrationPoints._1.nonEmpty, endCP = true, ProjectLinkSource),
                   setCalibrationPoint(i, None, None, startCP = true, endCP = i.calibrationPoints._2.nonEmpty, ProjectLinkSource))
