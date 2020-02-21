@@ -671,7 +671,8 @@ class LinearLocationDAO {
              FROM LINEAR_LOCATION loc
              JOIN CALIBRATION_POINT cp ON (loc.LINK_ID = cp.LINK_ID AND cp.VALID_TO IS NULL)
              JOIN JUNCTION_POINT jp ON (jp.ROADWAY_POINT_ID = cp.ROADWAY_POINT_ID)
-             WHERE loc.id in (${linearLocationIds.mkString(",")}) AND loc.VALID_TO IS NULL AND jp.VALID_TO IS NULL"""
+             JOIN JUNCTION J ON (jp.junction_id = j.id)
+             WHERE loc.id in (${linearLocationIds.mkString(",")}) AND loc.VALID_TO IS NULL AND jp.VALID_TO IS NULL AND j.valid_to IS NULL and j.end_date IS NULL"""
       Q.queryNA[(Long, Int)](query).list.map {
         case (id, code) => id -> CalibrationCode(code)
       }.toMap
