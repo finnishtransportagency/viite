@@ -667,10 +667,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       val junctionPoints = junctionPointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After)
 
       nodePointDAO.expireById(nodePoints.map(_.id))
-      nodePointDAO.create(nodePoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId)))
+      nodePointDAO.create(nodePoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId, createdBy = username)))
 
       junctionPointDAO.expireById(junctionPoints.map(_.id))
-      junctionPointDAO.create(junctionPoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId)))
+      junctionPointDAO.create(junctionPoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId, createdBy = username)))
       disposedRoadwayPointId
     }
 

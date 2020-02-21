@@ -229,7 +229,7 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
-  def create(junctions: Iterable[Junction], createdBy: String = "-"): Seq[Long] = {
+  def create(junctions: Iterable[Junction]): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into JUNCTION (ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, CREATED_BY)
@@ -260,7 +260,7 @@ class JunctionDAO extends BaseDAO {
           case Some(date) => dateFormatter.print(date)
           case None => ""
         })
-        ps.setString(6, if (createdBy == null) "-" else createdBy)
+        ps.setString(6, junction.createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
