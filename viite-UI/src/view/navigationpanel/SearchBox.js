@@ -58,9 +58,11 @@
           moveToLocation();
         }
       });
+
       moveButton.on('click', function() {
         moveToLocation();
       });
+
       clearButton.on('click', function() {
         resultsSection.hide();
         clearSection.hide();

@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -17,7 +18,7 @@ case class Junction(id: Long, junctionNumber: Option[Long], nodeNumber: Option[L
 
 case class JunctionInfo(id: Long, junctionNumber: Option[Long], startDate: DateTime, nodeNumber: Long, nodeName: String)
 
-case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long)
+case class JunctionTemplate(id: Long, startDate: DateTime, roadNumber: Long, roadPartNumber: Long, track: Track, addrM: Long, elyCode: Long, coords: Point = Point(0.0, 0.0))
 
 class JunctionDAO extends BaseDAO {
 
@@ -157,6 +158,20 @@ class JunctionDAO extends BaseDAO {
     queryListTemplate(query)
   }
 
+  def fetchJunctionTemplateById(id: Long): Option[JunctionTemplate] = {
+    val query =
+      s"""
+         SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
+         FROM JUNCTION j
+         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
+         LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
+         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+            WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_NUMBER IS NULL
+            AND j.id = $id
+       """
+    queryListTemplate(query).headOption
+  }
+
   def fetchTemplatesByRoadwayNumbers(roadwayNumbers: Iterable[Long]) : Seq[JunctionTemplate] = {
     if (roadwayNumbers.nonEmpty) {
       val query =
@@ -214,7 +229,7 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
-  def create(junctions: Iterable[Junction]): Seq[Long] = {
+  def create(junctions: Iterable[Junction], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into JUNCTION (ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, CREATED_BY)
@@ -245,7 +260,7 @@ class JunctionDAO extends BaseDAO {
           case Some(date) => dateFormatter.print(date)
           case None => ""
         })
-        ps.setString(6, junction.createdBy)
+        ps.setString(6, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
     ps.executeBatch()

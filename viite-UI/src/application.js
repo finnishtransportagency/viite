@@ -11,8 +11,8 @@
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     window.applicationModel = new ApplicationModel([selectedLinkProperty]);
-    var selectedNodesAndJunctions = new SelectedNodesAndJunctions();
-    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel), selectedNodesAndJunctions);
+    var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel));
+    var selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
     ol.proj.proj4.register(proj4);
 
@@ -121,15 +121,13 @@
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel);
-    new JunctionEditForm(models.selectedNodesAndJunctions, backend);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
     new NodeForm(models.selectedNodesAndJunctions);
-    new NodePointForm(models.selectedNodesAndJunctions);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
-    new JunctionPointForm(backend);
+
     var layers = _.merge({
       road: roadLayer,
       roadAddressProject: projectLinkLayer,

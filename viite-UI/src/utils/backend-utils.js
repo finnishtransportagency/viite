@@ -653,19 +653,21 @@
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
+
     this.getJunctionPointsByJunctionId = _.throttle(function (junctionId, callback) {
       return $.get('api/viite/junctions/' + junctionId + '/junction-points', function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
-    }, 1000);
-    this.getJunctionInfoByJunctionId = _.throttle(function (junctionId, callback) {
-      return $.get('api/viite/junction-infos/' + junctionId, function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
     this.getNodePointTemplateById = _.throttle(function (nodePointTemplateId, callback) {
       return $.getJSON('api/viite/node-point-templates/' + nodePointTemplateId, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
+    this.getJunctionTemplateById = _.throttle(function (junctionTemplateId, callback) {
+      return $.getJSON('api/viite/junction-templates/' + junctionTemplateId, function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -682,7 +684,7 @@
       });
     }, 1000);
 
-    this.saveNodeInfo = _.throttle(function (data, success, failure) {
+    this.updateNodeInfo = _.throttle(function (data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",

@@ -269,7 +269,8 @@
 	}
 }
 
-.btn-edit-node-cancel {
+.btn-edit-node-cancel,
+.btn-edit-templates-cancel {
 	height: 30px;
 	width: 38%;
 	float: right;
@@ -527,6 +528,7 @@
 		box-shadow: inset 0 1px 0 rgba(red(@blue-darker), green(@blue-darker), blue(@blue-darker), .325);
 	}
 }
+
 .btn-send {
 	height: 30px;
 	width: 80%;
@@ -534,23 +536,7 @@
 	margin-top: 20px;
 	background-color: @green;
 }
-.btn-send-junction {
-	height: 30px;
-	width: 80%;
-	float: left;
-	margin-left: 40px;
-	margin-top: 20px;
-	background-color: @green;
-}
-.btn-detach-junction {
-	height: 30px;
-	width: 38%;
-	float: left;
-	margin-left: 40px;
-	margin-bottom: 10px;
-	border-color: @blue-darker;
-	background-color: @blue;
-}
+
 .btn-toFloating {
   height: 30px;
   width: 80%;
@@ -559,8 +545,8 @@
   background-color: @orange;
 }
 
-.btn-return-list,
-.btn-show-changes {
+.btn-show-changes,
+.btn-attach-node {
 	height: 30px;
 	width: 80%;
 	margin-left: 40px;
@@ -574,12 +560,13 @@
 	}
 }
 
-.btn-return-list {
-	margin-top: 20px;
+.btn-attach-node {
+	margin-bottom: 5px;
 }
 
-.btn-edit-project {
+.btn-pencil-edit {
 	color: @blue-dark;
+	margin-left: 1em;
 	cursor: pointer;        /* make the cursor like hovering over an <a> element */
 }
 
@@ -591,21 +578,7 @@
 	padding-left: 5px;
     cursor: pointer;
 }
-.btn-return-list-junction {
-	height: 30px;
-	width: 38%;
-	float: left;
-	margin-left: 15px;
-	margin-bottom: 10px;
-	border-color: @blue-darker;
-	background-color: @blue;
 
-	&:hover,
-	&:focus {
-		background-color: @blue-dark;
-		box-shadow: inset 0 1px 0 rgba(red(@blue-lighter), green(@blue-lighter), blue(@blue-lighter), .325), @btn-drop-shadow-hover;
-	}
-}
 .btn-refresh {
 	border: none;
 	padding-right: 6px !important;

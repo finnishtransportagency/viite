@@ -37,7 +37,7 @@ object GeometryUtils {
     def newPointOnSegment(measureOnSegment: Double, segment: (Point, Point)): Point = {
       val (firstPoint, secondPoint) = segment
       val directionVector = (secondPoint - firstPoint).normalize2D().scale(measureOnSegment)
-      firstPoint + directionVector
+      firstPoint += directionVector
     }
 
     if (startMeasure > endMeasure) throw new IllegalArgumentException

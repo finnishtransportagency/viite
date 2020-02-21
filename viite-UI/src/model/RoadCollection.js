@@ -108,14 +108,12 @@
       });
     };
 
-    this.fetchWithNodes = function(boundingBox, zoom) {
+    this.fetchWithNodes = function(boundingBox, zoom, callback) {
       currentZoom = zoom;
-      backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedRoadLinks) {
-        currentAllRoadLinks = fetchedRoadLinks;
-        backend.getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function(fetchedNodesAndJunctions) {
-          fetchProcess(fetchedRoadLinks, zoom);
-          eventbus.trigger('node:fetched', fetchedNodesAndJunctions, zoom);
-        });
+      backend.getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function (fetchedNodesAndJunctions) {
+        currentAllRoadLinks = fetchedNodesAndJunctions.fetchedRoadLinks;
+        fetchProcess(currentAllRoadLinks, zoom);
+        return (_.isFunction(callback) && callback(fetchedNodesAndJunctions.fetchedNodes)) || eventbus.trigger('node:fetched', fetchedNodesAndJunctions.fetchedNodes, zoom);
       });
     };
 
@@ -372,9 +370,5 @@
         return new RoadLinkModel(rda);
       });
     };
-
-    eventbus.on('linkProperty:fetchedHistoryLinks',function (date){
-
-    });
   };
 })(this);

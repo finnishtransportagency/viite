@@ -529,7 +529,7 @@
           nextStage();
         }
         if (!isProjectEditable()) {
-          $('.btn-edit-project').prop('disabled', true);
+          $('.btn-pencil-edit').prop('disabled', true);
         }
       });
 

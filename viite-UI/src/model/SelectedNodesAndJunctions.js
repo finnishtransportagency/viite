@@ -1,124 +1,186 @@
 (function (root) {
-  root.SelectedNodesAndJunctions = function () {
+  root.SelectedNodesAndJunctions = function (nodeCollection) {
     var current = {};
-    var dirty = false;
 
-    var openNode = function (node) {
+    var openNode = function (node, templates) {
       clean();
       setCurrentNode(node);
-      current.node.junctionsToDetach = [];
-      current.node.junctionsToUpdate = [];
-      current.node.nodePointsToDetach = [];
-      eventbus.trigger('node:selected', node);
-    };
-
-    var openNodePointTemplates = function (nodePointTemplates) {
-      clean();
-      setCurrentNodePointTemplates(nodePointTemplates);
-      eventbus.trigger('nodePointTemplate:selected');
-    };
-
-    var openJunctionTemplate = function (junctionTemplate) {
-      clean();
-      setCurrentJunctionTemplate(junctionTemplate);
-      eventbus.trigger('junctionTemplate:selected');
-    };
-
-    var setCurrentNode = function (node) {
-      current.node = node;
-    };
-
-    var setCurrentNodePointTemplates = function (nodePointTemplates) {
-      current.nodePointTemplates = nodePointTemplates;
-    };
-
-    var setCurrentJunctionTemplate = function (junctionTemplate) {
-      current.junctionTemplate = junctionTemplate;
+      eventbus.trigger('node:selected', current.node, templates);
     };
 
     var getCurrentNode = function () {
       return current.node;
     };
 
-    var getCurrentNodePointTemplates = function () {
-      return current.nodePointTemplates;
+    var setCurrentNode = function (node) {
+      current.node = _.cloneDeep(node);
     };
 
-    var getCurrentJunctionTemplate = function () {
-      return current.junctionTemplate;
+    var templates = function (coordinates) {
+      return {
+        nodePoints: nodeCollection.getNodePointTemplatesByCoordinates(coordinates),
+        junctions: nodeCollection.getJunctionTemplateByCoordinates(coordinates)
+      };
+    };
+
+    var openNodePointTemplate = function (nodePointTemplate) {
+      openTemplates(templates(nodePointTemplate.coordinates));
+    };
+
+    var openJunctionTemplate = function (junctionTemplate) {
+      openTemplates(templates(_.first(junctionTemplate.junctionPoints).coordinates));
+    };
+
+    var openTemplates = function (templates) {
+      clean();
+      setCurrentTemplates(templates.nodePoints, templates.junctions);
+      eventbus.trigger('templates:selected', current.templates);
+    };
+
+    var getCurrentTemplates = function () {
+      return current.templates;
+    };
+
+    var setCurrentTemplates = function (nodePoints, junctions) {
+      current.templates = {
+        nodePoints: _.cloneDeep(nodePoints),
+        junctions: _.cloneDeep(junctions)
+      };
+    };
+
+    var getJunctions = function () {
+      return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).junctions;
+    };
+
+    var getNodePoints = function () {
+      return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).nodePoints;
+    };
+
+    var addNodePointTemplates = function (nodePoints) {
+      _.each(nodePoints, function (nodePoint) {
+        current.node.nodePoints.push(nodePoint);
+      });
+      eventbus.trigger('nodePointTemplates:selected', { nodePoints: nodePoints });
+    };
+
+    var addJunctionTemplates = function (junctions) {
+      _.each(junctions, function (junction) {
+        current.node.junctions.push(junction);
+      });
+      eventbus.trigger('junctionTemplates:selected', { junctions: junctions });
+    };
+
+    var getStartingCoordinates = function () {
+      return current.node.startingCoordinates;
+    };
+
+    var setStartingCoordinates = function (coordinates) {
+      current.node.startingCoordinates = coordinates;
+    };
+
+    var setCoordinates = function (coordinates) {
+      current.node.coordinates = coordinates;
+      eventbus.trigger('change:node-coordinates');
     };
 
     var setNodeName = function (name) {
       current.node.name = name;
-      setDirty(true);
+      eventbus.trigger('change:node', current.node);
     };
 
     var setNodeType = function (type) {
-      if (!current.node.typeChanged) { current.node.oldType = current.node.type; }
       current.node.type = type;
-      current.node.typeChanged = current.node.oldType !== type;
-      eventbus.trigger('change:type', current.node);
-      if (!current.node.typeChanged) { eventbus.trigger('reset:startDate', current.node.oldStartDate || current.node.startDate); }
-      setDirty(true);
-    };
-
-    var typeHasChanged = function () {
-      return current.node.typeChanged;
+      eventbus.trigger('change:node', current.node);
     };
 
     var setStartDate = function (startDate) {
-      if (!current.node.startDateChanged) { current.node.oldStartDate = current.node.startDate; }
       current.node.startDate = startDate;
-      current.node.startDateChanged = current.node.oldStartDate !== startDate;
-      setDirty(true);
+    };
+
+    var typeHasChanged = function (nodeType) {
+      if (current.node.nodeNumber) {
+        return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).type !== nodeType;
+      } else return LinkValues.NodeType.UnknownNodeType.value !== nodeType;
+    };
+
+    var getInitialStartDate = function () {
+      return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).startDate;
     };
 
     var detachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
-        current.node.junctionsToDetach.push(junction);
         _.remove(current.node.junctions, function (j) {
           return j.id === junction.id;
         });
         eventbus.trigger('junction:detach', junction);
       }
       _.each(nodePoints, function (nodePoint) {
-        current.node.nodePointsToDetach.push(nodePoint);
         _.remove(current.node.nodePoints, function (np) {
           return np.id === nodePoint.id;
         });
         eventbus.trigger('nodePoint:detach', nodePoint);
       });
-      setDirty(true);
     };
 
     var attachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
-        current.node.junctions.push(junction);
-        _.remove(current.node.junctionsToDetach, function (j) {
-          return j.id === junction.id;
-        });
-        eventbus.trigger('junction:attach', junction);
+        if (_.filter(current.node.junctions, function (jp) { return jp.id === junction.id; }).length === 0) {
+          current.node.junctions.push(junction);
+          eventbus.trigger('junction:attach', junction);
+        }
       }
       _.each(nodePoints, function (nodePoint) {
-        current.node.nodePoints.push(nodePoint);
-        _.remove(current.node.nodePointsToDetach, function (np) {
-          return np.id === nodePoint.id;
-        });
-        eventbus.trigger('nodePoint:attach', nodePoint);
+        if (_.filter(current.node.nodePoints, function (np) { return np.id === nodePoint.id; }).length === 0) {
+          current.node.nodePoints.push(nodePoint);
+          eventbus.trigger('nodePoint:attach', nodePoint);
+        }
       });
     };
 
     var isDirty = function () {
-      return dirty;
+      var original = false;
+      if (current.node.nodeNumber) { original = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber); }
+      var nodePointsEquality = false;
+      var junctionsEquality = false;
+      var junctionPointsEquality = false;
+      //  comparing nodes without junctions or nodePoints
+      var nodesEquality = isEqualWithout(original, current.node, ['junctions', 'nodePoints']);
+      //  comparing the nodePoints of both nodes
+      if (original && original.nodePoints && original.nodePoints.length !== 0 && original.nodePoints.length === current.node.nodePoints.length) {
+        nodePointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.nodePoints, 'id'), _.sortBy(current.node.nodePoints, 'id')), _.spread(function(originalNodePoint, currentNodePoint) {
+          return {equality: isEqualWithout(originalNodePoint, currentNodePoint, 'coordinates')};
+        })), ['equality', false]);
+      }
+      //  comparing the junctions of both nodes
+      if (original && original.junctions && original.junctions.length !== 0 && original.junctions.length === current.node.junctions.length) {
+        junctionsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.junctions, 'id'), _.sortBy(current.node.junctions, 'id')), _.spread(function (originalJunction, currentJunction) {
+          // return isEqualWithout(originalJunction, currentJunction, 'junctionPoints');
+          return {equality: isEqualWithout(originalJunction, currentJunction, 'junctionPoints')};
+        })), ['equality', false]);
+
+        //  comparing the junctionPoints of all junctions in both nodes
+        junctionPointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.junctions, 'id'), _.sortBy(current.node.junctions, 'id')), _.spread(function(originalJunction, currentJunction) {
+          if (originalJunction.junctionPoints.length === currentJunction.junctionPoints.length && originalJunction.junctionPoints.length !== 0) {
+            return _.flatMap(_.zip(originalJunction.junctionPoints, currentJunction.junctionPoints), _.spread(function (originalJunctionPoint, currentJunctionPoint) {
+              // return isEqualWithout(originalJunctionPoint, currentJunctionPoint, 'coordinates');
+              return {equality: isEqualWithout(originalJunctionPoint, currentJunctionPoint, 'coordinates')};
+            }));
+          } else return false;
+        })), ['equality', false]);
+      }
+      //  true equality implemented
+      return !(nodesEquality && nodePointsEquality && junctionsEquality && junctionPointsEquality);
     };
 
-    var setDirty = function (value) {
-      dirty = value;
+    var isEqualWithout = function (original, current, toIgnore) {
+      return _.isEqual(
+          _.omit(original, toIgnore),
+          _.omit(current, toIgnore)
+      );
     };
 
     var clean = function () {
-      current = [];
-      dirty = false;
+      current = {};
     };
 
     var close = function (options, params) {
@@ -131,50 +193,49 @@
     };
 
     var closeNode = function () {
-      var node = {};
-      if (!_.isUndefined(current.node) && _.isUndefined(current.node.id)) {
-        node = current.node;
-      }
+      close('node:unselected', current.node);
       clean();
-      close('node:unselected', node);
       eventbus.trigger('nodeLayer:refreshView');
     };
 
-    var closeNodePoint = function () {
+    var closeTemplates = function () {
       clean();
-      close('nodePointTemplate:unselected');
-    };
-
-    var closeJunction = function () {
-      clean();
-      close('junctionTemplate:unselected');
+      close('templates:unselected');
     };
 
     var saveNode = function () {
       eventbus.trigger('node:save', current.node);
     };
 
+    eventbus.on('selectedNodesAndJunctions:openTemplates', function (templates) {
+      openTemplates(templates);
+    });
+
     return {
       openNode: openNode,
-      openNodePointTemplates: openNodePointTemplates,
+      openNodePointTemplate: openNodePointTemplate,
       openJunctionTemplate: openJunctionTemplate,
       getCurrentNode: getCurrentNode,
-      getCurrentNodePointTemplates: getCurrentNodePointTemplates,
-      getCurrentJunctionTemplate: getCurrentJunctionTemplate,
+      getCurrentTemplates: getCurrentTemplates,
+      getJunctions: getJunctions,
+      getNodePoints: getNodePoints,
+      addNodePointTemplates: addNodePointTemplates,
+      addJunctionTemplates: addJunctionTemplates,
+      getStartingCoordinates: getStartingCoordinates,
+      setStartingCoordinates: setStartingCoordinates,
+      setCoordinates: setCoordinates,
       setNodeName: setNodeName,
       setNodeType: setNodeType,
       typeHasChanged: typeHasChanged,
+      getInitialStartDate: getInitialStartDate,
       setStartDate: setStartDate,
       detachJunctionAndNodePoints: detachJunctionAndNodePoints,
       attachJunctionAndNodePoints: attachJunctionAndNodePoints,
       isDirty: isDirty,
-      setDirty: setDirty,
       closeNode: closeNode,
+      closeTemplates: closeTemplates,
       closeForm: closeForm,
-      closeNodePoint: closeNodePoint,
-      closeJunction: closeJunction,
       saveNode: saveNode
     };
-
   };
 })(this);

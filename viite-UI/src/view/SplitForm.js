@@ -193,7 +193,7 @@
       if (!isProjectEditable()) {
         $('#roadAddressProjectForm select').prop('disabled', true);
         $('#roadAddressProjectFormCut select').prop('disabled', true);
-        $('.btn-edit-project').prop('disabled', true);
+        $('.btn-pencil-edit').prop('disabled', true);
       }
     };
 
