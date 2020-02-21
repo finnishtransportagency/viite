@@ -269,7 +269,7 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
-  def create(nodePoints: Iterable[NodePoint], createdBy: String = "-"): Seq[Long] = {
+  def create(nodePoints: Iterable[NodePoint]): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_NUMBER, "TYPE", CREATED_BY)
@@ -293,7 +293,7 @@ class NodePointDAO extends BaseDAO {
           ps.setNull(4, java.sql.Types.INTEGER)
         }
         ps.setInt(5, nodePoint.nodePointType.value)
-        ps.setString(6, if (createdBy == null) "-" else createdBy)
+        ps.setString(6, nodePoint.createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
@@ -465,10 +465,10 @@ class NodePointDAO extends BaseDAO {
         queryList(query)
   }
 
-  def insertCalculatedNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Long): Unit = {
+  def insertCalculatedNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Long, username: String): Unit = {
     create(Seq(NodePoint(NewIdValue, beforeAfter, roadwayPointId, Some(nodeNumber), CalculatedNodePoint,
       None, None, DateTime.now(), None,
-      "-", Some(DateTime.now()), 0L, 11,
+      username, Some(DateTime.now()), 0L, 11,
       0, 0, null, 8)))
   }
 

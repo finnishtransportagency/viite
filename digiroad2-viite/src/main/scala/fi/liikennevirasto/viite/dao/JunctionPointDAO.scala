@@ -189,7 +189,7 @@ class JunctionPointDAO extends BaseDAO {
     }
   }
 
-  def create(junctionPoints: Iterable[JunctionPoint], createdBy: String = "-"): Seq[Long] = {
+  def create(junctionPoints: Iterable[JunctionPoint]): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into JUNCTION_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, JUNCTION_ID, CREATED_BY)
@@ -208,7 +208,7 @@ class JunctionPointDAO extends BaseDAO {
         ps.setLong(2, junctionPoint.beforeAfter.value)
         ps.setLong(3, junctionPoint.roadwayPointId)
         ps.setLong(4, junctionPoint.junctionId)
-        ps.setString(5, if (createdBy == null) "-" else createdBy)
+        ps.setString(5, junctionPoint.createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
@@ -248,10 +248,6 @@ class JunctionPointDAO extends BaseDAO {
       0
     else
       Q.updateNA(query).first
-  }
-
-  def updateRoadwayPointId(junctionPointId: Any, roadwayPointId: Long) = {
-    Q.updateNA(s"UPDATE JUNCTION_POINT SET ROADWAY_POINT_ID = $roadwayPointId WHERE ID = $junctionPointId").execute
   }
 
 }
