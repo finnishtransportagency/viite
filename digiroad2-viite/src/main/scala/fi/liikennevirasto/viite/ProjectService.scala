@@ -1427,7 +1427,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val calculatedLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map(rpl =>
             setReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadwayId != 0L))
           ).sortBy(_.endAddrMValue)
-          if (newDiscontinuity.isDefined && newTrack.isDefined && roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
+          if (!calculatedLinks.exists(_.isNotCalculated) && newDiscontinuity.isDefined && newTrack.isDefined &&
+            roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
             if (completelyNewLinkIds.nonEmpty) {
               val (completelyNew, others) = calculatedLinks.partition(cl => completelyNewLinkIds.contains(cl.id))
               others ++ (if (completelyNew.nonEmpty) {
@@ -1939,7 +1940,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ProjectLinkNameDAO.removeByProject(projectID)
       val projectLinksSet = projectLinks.map(_.roadNumber).toSet
       nodesAndJunctionsService.calculateNodePointsForProject(projectID, username = project.createdBy)
-      return projectLinksSet
+      projectLinksSet
     } catch {
       case e: ProjectValidationException => {
         logger.error("Failed to validate project message:" + e.getMessage)
