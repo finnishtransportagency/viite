@@ -296,7 +296,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   def getTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]) = {
     time(logger, "Fetch NodePoint and Junction + JunctionPoint templates") {
-      val junctionPoints = junctionPointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+      val junctionPoints = junctionPointDAO.fetchByBoundingBox(boundingRectangle)
       val junctions = junctionDAO.fetchByIds(junctionPoints.map(_.junctionId))
       val nodePoints = nodePointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
       (nodePoints, junctions.map { junction => (junction, junctionPoints.filter(_.junctionId == junction.id)) }.toMap)
@@ -701,7 +701,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     withDynSession {
       time(logger, "Fetch junction templates") {
         val junctions: Seq[JunctionTemplate] = junctionDAO.fetchTemplatesByBoundingBox(boundingRectangle)
-        val junctionPoints: Seq[JunctionPoint] = junctionPointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
+        val junctionPoints: Seq[JunctionPoint] = junctionPointDAO.fetchByBoundingBox(boundingRectangle)
 
         val groupedRoadLinks = raLinks.groupBy(_.roadwayNumber)
 

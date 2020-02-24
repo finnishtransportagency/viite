@@ -137,8 +137,8 @@ class JunctionPointDAO extends BaseDAO {
     }
   }
 
-  def fetchTemplatesByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionPoint] = {
-    time(logger, "Fetch JunctionPoint templates by bounding box") {
+  def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionPoint] = {
+    time(logger, "Fetch JunctionPoints by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
 
