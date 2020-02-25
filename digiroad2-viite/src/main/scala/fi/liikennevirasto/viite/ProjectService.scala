@@ -1938,22 +1938,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       handleRoadNames(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
       ProjectLinkNameDAO.removeByProject(projectID)
-      val projectLinksSet = projectLinks.map(_.roadNumber).toSet
       nodesAndJunctionsService.calculateNodePointsForProject(projectID, username = project.createdBy)
-      projectLinksSet
+      projectLinks.map(_.roadNumber).toSet
     } catch {
-      case e: ProjectValidationException => {
+      case e: ProjectValidationException =>
         logger.error("Failed to validate project message:" + e.getMessage)
         Set.empty[Long]
-      }
-      case f: SQLException => {
+      case f: SQLException =>
         logger.error("Failed to update roadways and linear locations with project links due to SQL error.", f)
         Set.empty[Long] // TODO Should we throw this exception so that the caller knows that something went wrong?
-      }
-      case ex: Exception => {
+      case ex: Exception =>
         logger.error("Failed to update roadways and linear locations with project links.", ex)
         throw ex
-      }
     }
   }
 
