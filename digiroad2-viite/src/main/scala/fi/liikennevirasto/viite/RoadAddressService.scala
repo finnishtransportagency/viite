@@ -704,8 +704,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         val roadwayNumbers = if (change.changeType == Termination) {
           terminatedRoadwayNumbersChanges.map(_.newRoadwayNumber).distinct
         } else {
-          val roadwayNumbersInOriginalRoadPart = projectLinkChanges.filter(lc => lc.originalRoadNumber == source.roadNumber.get && lc.originalRoadPartNumber == source.startRoadPartNumber.get)
-          roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber).filter(roadwayNumbersInOriginalRoadPart.map(_.originalRoadwayNumber).contains(_)).distinct }
+          val roadwayNumbersInOriginalRoadPart = projectLinkChanges.filter(lc => lc.originalRoadNumber == source.roadNumber.get && lc.originalRoadPartNumber == source.startRoadPartNumber.get && lc.status.value == change.changeType.value)
+          roadwayDAO.fetchAllBySectionAndTracks(target.roadNumber.get, target.startRoadPartNumber.get, Set(Track.apply(target.trackCode.get.toInt))).map(_.roadwayNumber).filter(roadwayNumbersInOriginalRoadPart.map(_.newRoadwayNumber).contains(_)).distinct
+        }
 
         val roadwayPoints = roadwayNumbers.flatMap { rwn =>
           val roadwayNumberInPoint = projectLinkChanges.filter(mrw => mrw.newRoadwayNumber == rwn
