@@ -773,7 +773,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               Seq.empty[JunctionPoint]
             else
               junctionPointsToCheck
-          case _ => Seq.empty[JunctionPoint]
         }
         affectedJunctionsPoints
       }
