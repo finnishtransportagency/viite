@@ -966,8 +966,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 //      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedLeftLink1.roadwayNumber, unchangedRightLink1.roadwayNumber, transferCombLink1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId, rwTransfer))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedLeftLink1.roadwayNumber, transferCombLink1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rwTransfer))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(transferCombLink1.geometry.last, transferCombLink1.geometry.last), roadNumberLimits)).thenReturn(Seq(rll1, transferLinearLocation, terminatedLinearLocation))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedRightLink1.roadwayNumber, transferCombLink1.roadwayNumber, terminatedCombLink2.roadwayNumber), false)).thenReturn(Seq(rw2WithId, rwTransfer, rwTerminated))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(terminatedCombLink2.roadwayNumber), false)).thenReturn(Seq(rwTerminated))
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(unchangedRightLink1.geometry.last, transferCombLink1.geometry.last), roadNumberLimits)).thenReturn(Seq(rll1, transferLinearLocation))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedRightLink1.roadwayNumber, transferCombLink1.roadwayNumber), false)).thenReturn(Seq(rw2WithId, rwTransfer))
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedLeftLink1.roadwayNumber, unchangedRightLink1.roadwayNumber, transferCombLink1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId, rwTransfer))
+
 
       buildTestDataForProject(Some(project2),
         Some(Seq(rwTransfer, rwTerminated)),

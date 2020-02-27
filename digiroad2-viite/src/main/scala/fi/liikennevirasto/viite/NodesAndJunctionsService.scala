@@ -725,7 +725,15 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val roadwayPointIds = roadwayPointDAO.fetchByRoadwayNumbers(terminatedRoadwayNumbers).map(_.id)
       logger.info(s"Roadway points for terminated roadways : $roadwayPointIds")
       val nodePointsToTerminate = nodePointDAO.fetchByRoadwayPointIds(roadwayPointIds)
-      val junctionPointsToTerminate = junctionPointDAO.fetchByRoadwayPointIds(roadwayPointIds)
+      /*
+       terminated roadway numbers already have roadways with end_date. so we should use fetchAllByRoadwayPointIds then, to have also history
+       However note that the handle dual roadway point will generate one completely new roadway point (and id).
+       So the existing JP.roadway_point_id is pointing to the the updated roadwaypoint with the id that belongs to the Transfer link,
+       not the Terminated Link.
+
+       TODO Solucao: checkar os junctions points que existem nos antigos roadwaynumbers e apanhar o anterior (o anterior é updated por isso o id ja tem de existir)
+       */
+      val junctionPointsToTerminate = junctionPointDAO.fetchAllByRoadwayPointIds(roadwayPointIds)
 
       logger.info(s"Node points to Expire : ${nodePointsToTerminate.map(_.id)}")
       logger.info(s"Junction points to Expire : ${junctionPointsToTerminate.map(_.id)}")
