@@ -2,7 +2,6 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kmtk.ChangeInfo
 import fi.liikennevirasto.digiroad2.client.vvh._
@@ -10,9 +9,11 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.viite.dao.{ProjectReservedPartDAO, _}
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.viite.Dummies._
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
+import fi.liikennevirasto.viite.dao.{ProjectReservedPartDAO, _}
 import fi.liikennevirasto.viite.process._
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
@@ -22,9 +23,6 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
-import fi.liikennevirasto.viite.Dummies._
-import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -434,7 +432,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //        where $filter and ra.valid_to is null order by ra.id asc"""
 //      val (linkId, endM) = StaticQuery.queryNA[(Long, Double)](query).firstOption.get
 //      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(endM + .5, 0.0)), endM + .5, Municipality, 1, TrafficDirection.TowardsDigitizing, Freeway, Some(modificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
-//      when(localMockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Seq[(Int,Int)]], any[Set[Int]], any[Boolean], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink))
+//      when(localMockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Seq[(Int,Int)]], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink))
 //      when(localMockRoadLinkService.getComplementaryRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq.empty)
 //      when(localMockRoadLinkService.getRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq.empty)
 //      when(localMockRoadLinkService.getChangeInfoFromVVHF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq.empty))
@@ -493,26 +491,26 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val geom2 = Seq(Point(5.0, 0.0), Point(20.0, 0.0))
       val roadwayNumber1 = Sequences.nextRoadwayNumber
       val roadwayNumber2 = roadwayNumber1+1
-      val roadwayNumber2AfterChanges = roadwayNumber2+1
 
       val projectId = Sequences.nextViitePrimaryKeySeqValue
       val rap =  dummyProject(projectId, ProjectState.Incomplete, Seq(), None).copy(startDate = DateTime.parse("2019-10-10"))
       val id1 = Sequences.nextRoadwayId
       val id2 = id1+1
+      val linearLocationId = Sequences.nextLinearLocationId
       val link1 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.Continuous, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId, RoadType.PublicRoad, geom1, roadwayNumber1)
       val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 5 , 20, Some(DateTime.now()), None, 12346, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.FerryRoad, geom2, roadwayNumber2)
-      val pls = Seq(link1, link2)
 
       //Roadways and linear location generated AFTER changes
       val (lc1, rw1): (LinearLocation, Roadway) = Seq(link1).map(toRoadwayAndLinearLocation).head
       val (lc2, rw2): (LinearLocation, Roadway) = Seq(link2).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(id = id1, ely = 8L)
-      val rw2WithId = rw2.copy(id = id2, ely = 8L, roadwayNumber = roadwayNumber2AfterChanges)
-      val lc2WithId = lc2.copy(roadwayNumber = roadwayNumber2AfterChanges)
+      val rw2WithId = rw2.copy(id = id2, ely = 8L)
+      val lc2WithId = lc2
       roadwayDAO.create(Seq(rw1WithId))
-      linearLocationDAO.create(Seq(lc1))
+      linearLocationDAO.create(Seq(lc1.copy(id = linearLocationId)))
       roadwayDAO.create(Seq(rw2WithId))
-      linearLocationDAO.create(Seq(lc2WithId))
+      linearLocationDAO.create(Seq(lc2WithId.copy(id = linearLocationId+1)))
+      val pls = Seq(link1.copy(roadwayId = id1, linearLocationId = linearLocationId), link2.copy(roadwayId = id2, linearLocationId = linearLocationId+1))
 
       when(mockRoadwayDAO.fetchAllByRoadwayId(any[Seq[Long]])).thenReturn(Seq(rw1WithId, rw2WithId))
       when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(Seq(lc1, lc2WithId))
@@ -543,8 +541,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val afterUpdateProjectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
       val (afterChangesTerminated, afterChangesTransfer): (Seq[ProjectLink], Seq[ProjectLink]) = afterUpdateProjectLinks.partition(_.status == LinkStatus.Terminated)
       val beforeChangesTransfer = afterChangesTransfer.head.copy(roadwayNumber = roadwayNumber2)
-      val generatedProperRoadwayNumbersAfterChanges = Seq(afterChangesTerminated.head, afterChangesTransfer.head.copy(roadwayNumber = roadwayNumber2AfterChanges))
-      val mappedRoadwayChanges = projectService.mapChangedRoadwayNumbers(afterChangesTerminated:+ beforeChangesTransfer, generatedProperRoadwayNumbersAfterChanges)
+      val generatedProperRoadwayNumbersAfterChanges = Seq(afterChangesTerminated.head, afterChangesTransfer.head)
+      val mappedRoadwayChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
 
       val newRoads = Seq()
       val terminated = Termination(Seq(
@@ -607,20 +605,21 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val rap =  dummyProject(projectId, ProjectState.Incomplete, Seq(), None).copy(startDate = DateTime.parse("2019-10-10"))
       val id1 = Sequences.nextRoadwayId
       val id2 = id1+1
+      val linearLocationId = Sequences.nextLinearLocationId
       val link1 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.Continuous, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId, RoadType.PublicRoad, geom1, roadwayNumber1)
       val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 5 , 20, Some(DateTime.now()), None, 12346, 0, 15, SideCode.AgainstDigitizing, LinkStatus.Transfer, projectId, RoadType.FerryRoad, geom2, roadwayNumber2)
-      val pls = Seq(link1, link2)
 
       //Roadways and linear location generated AFTER changes
       val (lc1, rw1): (LinearLocation, Roadway) = Seq(link1).map(toRoadwayAndLinearLocation).head
       val (lc2, rw2): (LinearLocation, Roadway) = Seq(link2).map(toRoadwayAndLinearLocation).head
       val rw1WithId = rw1.copy(id = id1, ely = 8L)
-      val rw2WithId = rw2.copy(id = id2, ely = 8L, roadwayNumber = roadwayNumber2AfterChanges)
-      val lc2WithId = lc2.copy(roadwayNumber = roadwayNumber2AfterChanges)
+      val rw2WithId = rw2.copy(id = id2, ely = 8L)
+      val lc2WithId = lc2
+      val pls = Seq(link1.copy(roadwayId = id1, linearLocationId = linearLocationId), link2.copy(roadwayId = id2, linearLocationId = linearLocationId+1))
       roadwayDAO.create(Seq(rw1WithId))
-      linearLocationDAO.create(Seq(lc1))
+      linearLocationDAO.create(Seq(lc1.copy(id = linearLocationId)))
       roadwayDAO.create(Seq(rw2WithId))
-      linearLocationDAO.create(Seq(lc2WithId))
+      linearLocationDAO.create(Seq(lc2WithId.copy(id = linearLocationId+1)))
 
       when(mockRoadwayDAO.fetchAllByRoadwayId(any[Seq[Long]])).thenReturn(Seq(rw1WithId, rw2WithId))
       when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(Seq(lc1, lc2WithId))
@@ -653,9 +652,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val afterUpdateProjectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
       val (afterChangesTerminated, afterChangesTransfer): (Seq[ProjectLink], Seq[ProjectLink]) = afterUpdateProjectLinks.partition(_.status == LinkStatus.Terminated)
       val beforeChangesTransfer = afterChangesTransfer.head.copy(roadwayNumber = roadwayNumber2)
-      val generatedProperRoadwayNumbersAfterChanges = Seq(afterChangesTerminated.head, afterChangesTransfer.head.copy(roadwayNumber = roadwayNumber2AfterChanges))
-      val mappedRoadwayChanges = projectService.mapChangedRoadwayNumbers(afterChangesTerminated:+ beforeChangesTransfer, generatedProperRoadwayNumbersAfterChanges)
-
+      val generatedProperRoadwayNumbersAfterChanges = Seq(afterChangesTerminated.head, afterChangesTransfer.head)
+      val mappedRoadwayChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
       val newRoads = Seq()
       val terminated = Termination(Seq(
         (
@@ -740,7 +738,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       when(mockRoadwayDAO.fetchAllByRoadwayId(any[Seq[Long]])).thenReturn(Seq(rw1WithId, rw2WithId))
       when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(Seq(lc1, lc2))
       when(mockRoadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq())
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(pls.map(toRoadLink))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(pls.map(toRoadLink))
 
       projectDAO.create(rap)
 
@@ -1357,7 +1355,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //  , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
 //  InUse, NormalLinkInterface)
 //
-//  when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn((Seq(roadLink1), Seq(toHistoryLink(ra))))
+//  when(mockRoadLinkService.getCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn((Seq(roadLink1), Seq(toHistoryLink(ra))))
 //
 //  runWithRollback {
 //  val createdId =  RoadAddressDAO.create(Seq(ra)).head

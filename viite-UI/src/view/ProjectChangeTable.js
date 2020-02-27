@@ -59,7 +59,7 @@
     changeTable.append(changeTableHeader);
 
     function show() {
-      $('.container').append(changeTable.toggle());
+      $('.container').append(changeTable);
       resetInteractions();
       interact('.change-table-frame').unset();
       bindEvents();
@@ -91,7 +91,7 @@
 
     function getChanges() {
       var currentProject = projectCollection.getCurrentProject();
-      projectChangeInfoModel.getChanges(currentProject.project.id,function () {
+      projectChangeInfoModel.getChanges(currentProject.project.id, function () {
         var source = $('[id=label-source-btn]');
         var target = $('[id=label-target-btn]');
         if (source.hasClass('fa-sort-down') || source.hasClass('fa-sort-up')) {
@@ -108,46 +108,50 @@
       $('.change-table-dimension-headers').height(changeTableHeight - headerHeight - 30);// scroll size = total - header - border
     }
 
+    function showChangeTable(projectChangeData){
+      var htmlTable = "";
+      var warningM = projectChangeData.warningMessage;
+      if (!_.isUndefined(warningM))
+        new ModalConfirm(warningM);
+      if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
+        _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq, index) {
+          var rowColorClass = '';
+          if (index % 2 !== 1) {
+            rowColorClass = 'white-row';
+          }
+          htmlTable += '<tr class="row-changes ' + rowColorClass + '">';
+          if (changeInfoSeq.changetype === LinkStatus.New.value) {
+            htmlTable += getEmptySource(changeInfoSeq);
+          } else {
+            htmlTable += getSourceInfo(changeInfoSeq);
+          }
+          htmlTable += getReversed(changeInfoSeq);
+          if (changeInfoSeq.changetype === LinkStatus.Terminated.value) {
+            htmlTable += getEmptyTarget();
+          } else {
+            htmlTable += getTargetInfo(changeInfoSeq);
+          }
+          htmlTable += '</tr>';
+        });
+        setTableHeight();
+      }
+      $('.row-changes').remove();
+      $('.change-table-dimensions').append($(htmlTable));
+      if (projectChangeData.validationErrors.length === 0) {
+        $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
+        var currentProject = projectCollection.getCurrentProject();
+        if ($('.change-table-frame').css('display') === "block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value || currentProject.project.statusCode === ProjectStatus.ErrorInTR.value)) {
+          $('#send-button').attr('disabled', false); //enables send button if changetable is open
+        }
+      } else {
+        $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
+      }
+    }
+
     function bindEvents() {
       $('.row-changes').remove();
       eventbus.on('projectChanges:fetched', function(projectChangeData) {
-        var htmlTable = "";
-        var warningM = projectChangeData.warningMessage;
-        if (!_.isUndefined(warningM))
-          new ModalConfirm(warningM);
-        if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
-          _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq, index) {
-            var rowColorClass = '';
-            if (index % 2 !== 1) {
-              rowColorClass = 'white-row';
-            }
-            htmlTable += '<tr class="row-changes ' + rowColorClass + '">';
-            if (changeInfoSeq.changetype === LinkStatus.New.value) {
-              htmlTable += getEmptySource(changeInfoSeq);
-            } else {
-              htmlTable += getSourceInfo(changeInfoSeq);
-            }
-            htmlTable += getReversed(changeInfoSeq);
-            if (changeInfoSeq.changetype === LinkStatus.Terminated.value) {
-              htmlTable += getEmptyTarget();
-            } else {
-              htmlTable += getTargetInfo(changeInfoSeq);
-            }
-            htmlTable += '</tr>';
-          });
-          setTableHeight();
-        }
-        $('.row-changes').remove();
-        $('.change-table-dimensions').append($(htmlTable));
-        if (projectChangeData.validationErrors.length === 0) {
-          $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
-          var currentProject = projectCollection.getCurrentProject();
-          if ($('.change-table-frame').css('display') === "block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value || currentProject.project.statusCode === ProjectStatus.ErrorInTR.value)) {
-            $('#send-button').attr('disabled', false); //enables send button if changetable is open
-          }
-        } else {
-          $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
-        }
+        showChangeTable(projectChangeData);
       });
 
       changeTable.on('click', 'button.max', function (){
@@ -204,11 +208,12 @@
       otherBtn.removeClass('fa-sort-up');
       otherBtn.addClass('fa-sort');
 
-      projectChangeInfoModel.sortChanges(side, btn.className.match('fa-sort-up'));
+      var projectChanges = projectChangeInfoModel.sortChanges(side, btn.className.match('fa-sort-up'));
+      eventbus.trigger('projectChanges:fetched', projectChanges);
     }
 
     function getReversed(changeInfoSeq){
-      return ((changeInfoSeq.reversed) ? '<td class="project-change-table-dimension">&#9745</td>': '<td class="project-change-table-dimension">&#9744</td>');
+      return ((changeInfoSeq.reversed) ? '<td class="project-change-table-dimension">&#10004;</td>': '<td class="project-change-table-dimension"></td>');
     }
 
     function getEmptySource(changeInfoSeq) {
@@ -242,7 +247,7 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.startAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.endAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + (changeInfoSeq.target.endAddressM - changeInfoSeq.target.startAddressM) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.discontinuity + '</td>' +
+        '<td class="project-change-table-dimension">' + replaceParallelLink(changeInfoSeq.target.discontinuity) + '</td>' +
         '<td class="project-change-table-dimension">'+ changeInfoSeq.target.roadType + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.ely + '</td>';
     }
@@ -255,7 +260,7 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.startAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.endAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + (changeInfoSeq.source.endAddressM - changeInfoSeq.source.startAddressM) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.discontinuity + '</td>' +
+        '<td class="project-change-table-dimension">' + replaceParallelLink(changeInfoSeq.source.discontinuity) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.roadType + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.ely + '</td>';
     }
@@ -271,7 +276,12 @@
       target.setAttribute('data-y', y);
     }
 
-
+    function replaceParallelLink(currentDiscontinuity){
+      if (currentDiscontinuity === LinkValues.Discontinuity.ParallelLink.value)
+         return LinkValues.Discontinuity.Continuous.value;
+      else
+        return currentDiscontinuity;
+    }
     function enableTableInteractions() {
       interact('.change-table-frame')
         .draggable({

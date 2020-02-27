@@ -1,7 +1,7 @@
 (function (root) {
   root.ProjectLinkMarker = function () {
 
-    var createProjectMarker = function (roadLink) {
+    var createProjectMarker = function (roadLink, f) { // create marker receives the function that will call addFeature
       var middlePoint = calculateMiddlePoint(roadLink);
       var box = new ol.Feature({
         geometry: new ol.geom.Point([middlePoint.x, middlePoint.y]),
@@ -13,13 +13,6 @@
         image: new ol.style.Icon({
           src: 'images/link-properties/flag-floating-plus-stick.svg',
           anchor: [0, 1]
-        }),
-        zIndex: 10
-      });
-
-      var boxStyleUnknown = new ol.style.Style({
-        image: new ol.style.Icon({
-          src: "images/speed-limits/unknown.svg"
         }),
         zIndex: 10
       });
@@ -70,13 +63,13 @@
       if (roadLink.roadLinkType === -1) {
         box.setStyle(boxStyleFloat);
       } else if (roadLink.id === 0 && roadLink.roadLinkType === LinkValues.RoadLinkType.UnknownRoadLinkType.value) {
-        box.setStyle(boxStyleUnknown);
+        return;
       } else {
         box.setStyle(boxStyleDirectional(roadLink));
       }
       box.id = roadLink.linkId;
       box.linkData = roadLink;
-      return box;
+      f(box);
     };
 
     var calculateMiddlePoint = function (link) {

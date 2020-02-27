@@ -132,6 +132,22 @@ input[type="checkbox"]:focus {
   margin-bottom: @input-margin-short;
 }
 
+.form-group-node-static-metadata, .form-group-junction-static-metadata,
+.form-group-node-input-metadata, .form-group-junction-input-metadata {
+  margin-top: @input-margin-short;
+  margin-bottom: @input-margin-short;
+  label {
+    width: 100px;
+    font-size: 11px;
+    line-height: 15px;
+    text-transform: none;
+  }
+
+  label.dropdown {
+    width: 97px;
+  }
+}
+
 // Checkboxes and radios
 //
 // Indent the labels to position radios/checkboxes as hanging controls.
@@ -350,6 +366,44 @@ form.roadAddressProject p {
   align-items: center;
 }
 
+.node-junctions-table-dimension, .node-points-table-dimension {
+  width:100%;
+}
+
+.node-junctions-table-header-border-bottom {
+  border-bottom: 2px solid @gray-light;
+}
+
+.node-points-table-header, .node-junctions-table-header {
+  width: 5.15%;
+  color: #fff;
+  font-weight: bold;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.node-junctions-table-border-bottom {
+  border-bottom: 1px solid @gray-light;
+}
+
+.node-points-table, .node-junctions-table {
+  min-width: 30px;
+  max-width: 45px;
+  height: 28px;
+  color: @input-color-dark;
+  font-size: 11px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: left;
+
+  &.template {
+    color: @warning !important;
+  }
+}
+
 #projectErrors .warning label {
   color: @warning;
 }
@@ -386,6 +440,40 @@ form.node-search .control-label-small {
 }
 
 form.node-search .form-control.node-input {
+  width: 55px !important;
+  margin-right: 11px;
+}
+
+form.node-point .form-control {
+  margin-top: 6px !important;
+}
+
+form.node-point .control-label-small {
+  margin-right: 11px;
+  margin-top: 30px;
+  margin-bottom: -10px;
+  width: 55px !important;
+  text-align:center
+}
+
+form.node-point .form-control.node-point-input {
+  width: 55px !important;
+  margin-right: 11px;
+}
+
+form.node .form-control {
+  margin-top: 6px !important;
+}
+
+form.node .control-label-small {
+  margin-right: 11px;
+  margin-top: 30px;
+  margin-bottom: -10px;
+  width: 55px !important;
+  text-align:center
+}
+
+form.node .form-control.node-input {
   width: 55px !important;
   margin-right: 11px;
 }
@@ -579,6 +667,14 @@ form.node-search .form-control.node-input {
   font-size: @font-size-xl;
   color: #fff;
 }
+.header-orange {
+  top: 0;
+  left: 0;
+  width: 100%;
+  border-bottom: 1px solid @gray-darker-2;
+  font-size: @font-size-xl;
+  color: #c09853;
+}
 
 p.center {
   text-align: center;
@@ -587,4 +683,40 @@ p.center {
 .tr-visible-checkbox {
   margin-left: 30px;
   width: 30% !important;
+}
+
+form.junction-points .form-control.junction-disabled-small-input {
+  margin-right: 11px;
+  margin-top: 30px;
+  margin-bottom: -10px;
+  width: 44px !important;
+  text-align: center;
+
+}
+form.junction-points .form-control.junction-small-input {
+  margin-right: 11px;
+  margin-top: 30px;
+  margin-bottom: -10px;
+  width: 44px !important;
+  text-align: center;
+  color: @input-color;
+  background-color: #FFFFFF;
+}
+form.junction-points .control-label-small {
+  margin-right: 11px;
+  margin-top: 30px;
+  margin-bottom: -10px;
+  width: 55px !important;
+  text-align: center;
+}
+form.junction-points .junction-control-label-small{
+  margin-right: 11px;
+  margin-top: 30px;
+  margin-bottom: -10px;
+  width: 44px !important;
+  text-align: center;
+}
+
+form.roadAddressProject .junction-label-projects.header {
+  color: @warning;
 }

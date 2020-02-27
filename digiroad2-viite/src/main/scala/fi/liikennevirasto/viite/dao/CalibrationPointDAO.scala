@@ -128,6 +128,14 @@ object CalibrationPointDAO {
       Q.updateNA(query).first
   }
 
+  def updateRoadwayPoint(roadwayPointId : Long, linkId : Long, startOrEnd : Long) : Long = {
+    val query =
+      s"""
+        Update CALIBRATION_POINT Set roadway_point_id = $roadwayPointId where VALID_TO IS NULL and LINK_ID = $linkId and START_END = $startOrEnd
+      """
+      Q.updateNA(query).first
+  }
+
   private def queryList(query: String): Seq[CalibrationPoint] = {
     Q.queryNA[CalibrationPoint](query).list
   }

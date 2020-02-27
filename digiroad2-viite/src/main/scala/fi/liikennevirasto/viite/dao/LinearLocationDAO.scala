@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{LinkDAO, Queries, Sequences}
+import fi.liikennevirasto.digiroad2.linearasset.KMTKID
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
@@ -149,7 +150,11 @@ class LinearLocationDAO {
 
     createLinearLocations.foreach {
       location =>
-        linkDAO.createIfEmptyFetch(location.linkId)
+
+        // TODO KMTKID, adjusted timestamp
+        // When do we need this? Should this be done completely differently?
+        linkDAO.createIfEmptyFetch(location.linkId, KMTKID("", 0), 0, location.linkGeomSource.value)
+
         val roadwayNumber = if (location.roadwayNumber == NewIdValue) {
           Sequences.nextRoadwayNumber
         } else {

@@ -89,13 +89,13 @@
 
     var getSplitPointBySideCode = function (link) {
       if (link.sideCode == SideCode.AgainstDigitizing.value) {
-        return _.first(link.points);
+        return _.head(link.points);
       } else {
         return _.last(link.points);
       }
     };
     var selectionFormCutted = function (project, selection, selected, road) {
-      var firstLink = _.first(_.sortBy(_.filter(selected, function (s) {
+      var firstLink = _.head(_.sortBy(_.filter(selected, function (s) {
         return s.endMValue !== 0;
       }), 'startAddressM'));
       var splitPoint = ((applicationModel.getSelectedTool() != "Cut" ? getSplitPointBySideCode(firstLink) : firstLink.splitPoint));
@@ -149,13 +149,13 @@
     };
 
     var isProjectEditable = function () {
-      return _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
+      return _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
     };
 
     var changeDropDownValue = function (statusCode, triggerChange) {
       var fireChange = _.isUndefined(triggerChange) ? true : triggerChange;
       var rootElement = $('#feature-attributes');
-      var link = _.first(_.filter(selectedProjectLink, function (l) {
+      var link = _.head(_.filter(selectedProjectLink, function (l) {
         return !_.isUndefined(l.status) && l.status == statusCode;
       }));
       if (statusCode === LinkStatus.Unchanged.value) {
@@ -193,7 +193,7 @@
       if (!isProjectEditable()) {
         $('#roadAddressProjectForm select').prop('disabled', true);
         $('#roadAddressProjectFormCut select').prop('disabled', true);
-        $('.btn-edit-project').prop('disabled', true);
+        $('.btn-pencil-edit').prop('disabled', true);
       }
     };
 

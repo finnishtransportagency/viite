@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kmtk.{ChangeInfo, KMTKClient, KMTKRoadLink}
 import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.dao.ComplementaryFilterDAO
 import fi.liikennevirasto.digiroad2.dao.LinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -35,6 +36,8 @@ case class ChangedRoadlink(link: RoadLink, value: String, createdAt: Option[Date
   */
 class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val eventbus: DigiroadEventBus, val serializer: RoadLinkSerializer) {
   val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  val complementaryFilterDAO = new ComplementaryFilterDAO
 
   val linkDAO: LinkDAO = new LinkDAO
 
@@ -86,6 +89,16 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
       roadLink =>
         GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, roadLink.length / 2.0).getOrElse(Point(roadLink.geometry.head.x, roadLink.geometry.head.y))
     }
+  }
+  /**
+    * Returns road link middle point by mtk id. Used to select a road link by url to be shown on map (for example: index.html#linkProperty/mtkid/12345).
+    *
+    *
+    */
+  def getRoadLinkMiddlePointByMtkId(mtkId: Long):  Option[Point] = {
+    kmtkClient.roadLinkData.fetchByMtkId(mtkId).flatMap { roadLink =>
+      Option(GeometryUtils.midPointGeometry(roadLink.geometry))
+    }.headOption
   }
 
   def getRoadLinkByLinkId(linkId: Long): Option[RoadLink] = {
@@ -159,7 +172,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
 
     val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
 
-    (enrichRoadLinksFromKMTK(links), changes, enrichRoadLinksFromVVH(complementaryLinks))
+    (enrichRoadLinksFromKMTK(links), changes, enrichRoadLinksFromVVH(filterComplementaryLinks(complementaryLinks)))
   }
 
   def getRoadLinksAndChangesFromKMTK(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
@@ -471,19 +484,19 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
 
   def getComplementaryRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
     val vvhRoadLinks = Await.result(vvhClient.complementaryData.fetchByBoundsAndMunicipalitiesF(bounds, municipalities), atMost = Duration.create(1, TimeUnit.HOURS))
-    (enrichRoadLinksFromVVH(vvhRoadLinks), Seq.empty[ChangeInfo])._1
+    (enrichRoadLinksFromVVH(filterComplementaryLinks(vvhRoadLinks)), Seq.empty[ChangeInfo])._1
   }
 
   def getComplementaryRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
     val vvhRoadLinks = Await.result(vvhClient.complementaryData.fetchByMunicipalityF(municipality), Duration.create(1, TimeUnit.HOURS))
-    enrichRoadLinksFromVVH(vvhRoadLinks)
+    enrichRoadLinksFromVVH(filterComplementaryLinks(vvhRoadLinks))
   }
 
   def getCurrentAndComplementaryRoadLinksByMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[RoadLink] = {
     val complementaryF = vvhClient.complementaryData.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers)
     val currentF = kmtkClient.roadLinkData.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers)
     val (compLinks, vvhRoadLinks) = Await.result(complementaryF.zip(currentF), atMost = Duration.create(1, TimeUnit.HOURS))
-    enrichRoadLinksFromKMTK(vvhRoadLinks) ++ enrichRoadLinksFromVVH(compLinks)
+    enrichRoadLinksFromKMTK(vvhRoadLinks) ++ enrichRoadLinksFromVVH(filterComplementaryLinks(compLinks))
   }
 
   def getCurrentAndComplementaryRoadLinks(linkIds: Set[Long]): Seq[RoadLink] = {
@@ -491,5 +504,12 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     val roadLinks = kmtkClient.roadLinkData.fetchByIds(links.map(_.kmtkId))
     val roadLinksVVH = vvhClient.complementaryData.fetchByLinkIds(linkIds.map(_.toString))
     enrichRoadLinksFromKMTK(roadLinks) ++ enrichRoadLinksFromVVH(roadLinksVVH)
+  }
+
+  def filterComplementaryLinks(links: Seq[VVHRoadlink]): Seq[VVHRoadlink] = {
+    val includedLinks = withDynSession {
+      complementaryFilterDAO.fetchAll()
+    }
+    links.filter(l => includedLinks.contains(l.linkId))
   }
 }

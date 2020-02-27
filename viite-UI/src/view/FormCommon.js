@@ -3,6 +3,7 @@
     var Track = LinkValues.Track;
     var RoadNameSource = LinkValues.RoadNameSource;
     var editableStatus = LinkValues.ProjectStatus.Incomplete.value;
+    var RoadType = LinkValues.RoadType;
 
     var title = function (titleName) {
           if (!titleName)
@@ -11,15 +12,19 @@
     };
 
       var titleWithEditingTool = function (project) {
-          return '<span class ="edit-mode-title">' + project.name + ' <i id="editProjectSpan" class="btn-edit-project fas fa-pencil-alt"' +
-              'value="' + project.id + '"></i></span>' +
+          return '<span class ="edit-mode-title">' + project.name + ' <i id="editProjectSpan" class=' +
+              '"btn-pencil-edit fas fa-pencil-alt" value="' + project.id + '"></i></span>' +
               '<span id="closeProjectSpan" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>';
     };
 
-    var addRoadNameField = function (name, isBlocked) {
+    var captionTitle = function (title) {
+      return '<span class="caption-title">' + title + '</span>';
+    };
+
+    var addRoadNameField = function (name, isBlocked, maxLength) {
       var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
       var disabled = nameToDisplay !== "" && isBlocked;
-      return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + '/>';
+      return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + '/>';
     };
 
     var projectButtons = function() {
@@ -32,9 +37,10 @@
       var part = road.roadPartNumber;
       var track = road.trackCode;
       var roadName = selected[0].roadName;
-      var link = _.first(_.filter(links, function (l) {
+      var link = _.head(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
+      var roadType = !_.isUndefined(link.roadTypeId) ? link.roadTypeId : RoadType.Empty.value;
       var projectEditable = project.statusCode === editableStatus;
       return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
@@ -49,9 +55,9 @@
         addSmallInputNumber('ely', link.elyCode, !projectEditable, 2) +
         addDiscontinuityDropdown(link) +
         addSmallLabel('TIETYYPPI') +
-          roadTypeDropdown() + '<br>' +
+          roadTypeDropdown(roadType) + '<br>' +
           addSmallLabel('NIMI') +
-          addRoadNameField(roadName, selected[0].roadNameBlocked) +
+          addRoadNameField(roadName, selected[0].roadNameBlocked, 50) +
           ((selected.length === 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
     };
@@ -75,19 +81,26 @@
           }
       };
 
-    var roadTypeDropdown = function() {
+    var roadTypeLabel = function(roadType){
+      var roadTypeInfo = _.find(LinkValues.RoadType, function (obj) {
+        return obj.value === roadType;
+      });
+      return roadTypeInfo.displayText;
+    };
+    var roadTypeDropdown = function(roadTypeDefaultValue) {
       return '<select class="'+prefix+'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
+        '<option value = "' + roadTypeDefaultValue+ '" selected hidden >' + roadTypeLabel(roadTypeDefaultValue) +'</option>' +
         '<option value = "1">1 Maantie</option>'+
         '<option value = "2">2 Lauttaväylä maantiellä</option>'+
         '<option value = "3">3 Kunnan katuosuus</option>'+
         '<option value = "4">4 Maantien työmaa</option>'+
         '<option value = "5">5 Yksityistie</option>'+
         '<option value = "9">9 Omistaja selvittämättä</option>' +
-        '<option value = "99">99 Ei määritelty</option>' +
+
         '</select>';
     };
 
-    var addSmallLabel = function(label){
+    var addSmallLabel = function(label) {
       return '<label class="control-label-small">'+label+'</label>';
     };
 
@@ -112,8 +125,12 @@
         disabled + (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
     };
 
-    var addSmallInputNumberDisabled = function(id, value) {
-      return '<input type="text" class="form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value)? '' : value ) + '" readonly="readonly"/>';
+    var nodeInputNumber = function (id, maxLength, value, style) {
+      return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)' +
+          '" class="form-control node-input" id = "' + id + '"' +
+          (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '" ') +
+          (_.isUndefined(value) ? '' : ' value="' + value + '" ') +
+          (_.isUndefined(style) ? '' : ' style="' + style + '" ')+ '/>';
     };
 
     var addDiscontinuityDropdown = function(link){
@@ -151,9 +168,9 @@
       if (isPartialReversed) {
         return '<label class="split-form-group">Osittain käännetty</label>';
       } else if (selected[0].reversed) {
-        return '<label class="split-form-group">&#9745; Käännetty</label>';
+        return '<label class="split-form-group"><span class="dingbats">&#9745;</span> Käännetty</label>';
       } else {
-        return '<label class="split-form-group">&#9744; Käännetty</label>';
+        return '<label class="split-form-group"><span class="dingbats">&#9744;</span> Käännetty</label>';
       }
     };
 
@@ -162,7 +179,7 @@
       if (!projectEditable) {
         return ''; // Don't show the button if project status is not incomplete
       }
-      var reversedInGroup = _.uniq(_.pluck(selected, 'reversed'));
+      var reversedInGroup = _.uniq(_.map(selected, 'reversed'));
       var isPartialReversed = reversedInGroup.length > 1;
       return '<div hidden class="' + prefix + 'form-group changeDirectionDiv" style="margin-top:15px">' +
         '<button class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
@@ -255,7 +272,7 @@
         '<img src="images/calibration-point.svg" style="margin-right: 5px" class="calibration-point"/>' +
         '<label class="control-label-small" style="display: inline">ETÄISYYSLUKEMA VALINNAN</label>' +
         '</div>' +
-        '<div class="'+prefix+'form-group">' +
+        '<div class="' + prefix + 'form-group">' +
         '<label class="control-label-small" style="float: left; margin-top: 10px">ALUSSA</label>' +
         addSmallInputNumber('beginDistance', '--', true, 5) +
         '<label class="control-label-small" style="float: left;margin-top: 10px">LOPUSSA</label>' +
@@ -325,7 +342,7 @@
       roadTypeDropdown: roadTypeDropdown,
       addSmallLabel: addSmallLabel,
       addSmallInputNumber: addSmallInputNumber,
-      addSmallInputNumberDisabled: addSmallInputNumberDisabled,
+      nodeInputNumber: nodeInputNumber,
       addDiscontinuityDropdown: addDiscontinuityDropdown,
       changeDirection: changeDirection,
       selectedData: selectedData,
@@ -339,6 +356,7 @@
       distanceValue: distanceValue,
       title: title,
       titleWithEditingTool: titleWithEditingTool,
+      captionTitle: captionTitle,
       projectButtons: projectButtons,
       staticField: staticField,
       getProjectErrors:getProjectErrors

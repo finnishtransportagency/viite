@@ -71,7 +71,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
   }
 
   private def linkStatement(): PreparedStatement = {
-    dynamicSession.prepareStatement(sql = "Insert into LINK (ID, UUID, VERSION, SOURCE) values(?, ?, ?, ?)")
+    dynamicSession.prepareStatement(sql = "Insert into LINK (ID, UUID, VERSION, SOURCE, ADJUSTED_TIMESTAMP) values(?, ?, ?)")
   }
 
   def datePrinter(date: Option[DateTime]): String = {
@@ -303,13 +303,10 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
         val minAddress = addresses.head._1
         val maxAddress = addresses.last._1
         val kmtkIds = addresses.map(a => KMTKID(a._1.uuid,  a._1.version))
-        val currentAddresses = currentConversionAddresses.filter(a => a.roadwayNumber == minAddress.roadwayNumber &&
-          kmtkIds.contains(KMTKID(a.uuid, a.version))).sortBy(_.startAddressM)
-        val isReversed = if (currentAddresses.nonEmpty && currentAddresses.head.uuid == minAddress.uuid && currentAddresses.head.version == minAddress.version
-          && currentAddresses.head.startM == minAddress.startM) 1 else 0
+        val currentAddresses = currentConversionAddresses.filter(add => add.roadwayNumber == minAddress.roadwayNumber && kmtkIds.contains(KMTKID(add.uuid, add.version))).sortBy(_.startAddressM)
 
         val roadAddress = IncomingRoadway(minAddress.roadwayNumber, minAddress.roadNumber, minAddress.roadPartNumber,
-          minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, isReversed, minAddress.startDate,
+          minAddress.trackCode, minAddress.startAddressM, maxAddress.endAddressM, minAddress.directionFlag, minAddress.startDate,
           minAddress.endDate, "import", minAddress.roadType, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity,
           terminated = NoTermination.value)
 
@@ -326,18 +323,18 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
   }
 
   private def handlePoints(roadwayPointPs: PreparedStatement, calibrationPointPs: PreparedStatement, startCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)], endCalibrationPoint: Option[(RoadwayPoint, CalibrationPoint)]): Unit = {
-    if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id == NewIdValue) {
+    if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.isNew) {
       val roadwayPointId = insertRoadwayPoint(roadwayPointPs, startCalibrationPoint.get._1)
       insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2.copy(roadwayPointId = roadwayPointId))
     }
-    else if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.id != NewIdValue && startCalibrationPoint.get._2.id == NewIdValue) {
+    else if (startCalibrationPoint.isDefined && startCalibrationPoint.get._1.isNotNew && startCalibrationPoint.get._2.id == NewIdValue) {
       insertCalibrationPoint(calibrationPointPs, startCalibrationPoint.get._2)
     }
-    if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id == NewIdValue) {
+    if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.isNew) {
       val roadwayPointId = insertRoadwayPoint(roadwayPointPs, endCalibrationPoint.get._1)
       insertCalibrationPoint(calibrationPointPs, endCalibrationPoint.get._2.copy(roadwayPointId = roadwayPointId))
     }
-    else if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.id != NewIdValue && endCalibrationPoint.get._2.id == NewIdValue) {
+    else if (endCalibrationPoint.isDefined && endCalibrationPoint.get._1.isNotNew && endCalibrationPoint.get._2.id == NewIdValue) {
       insertCalibrationPoint(calibrationPointPs, endCalibrationPoint.get._2)
     }
   }

@@ -12,6 +12,9 @@
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     window.applicationModel = new ApplicationModel([selectedLinkProperty]);
     var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel));
+    var selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
+    proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
+    ol.proj.proj4.register(proj4);
 
     var models = {
       roadCollection: roadCollection,
@@ -19,7 +22,8 @@
       selectedLinkProperty: selectedLinkProperty,
       linkPropertiesModel: linkPropertiesModel,
       selectedProjectLinkProperty : selectedProjectLinkProperty,
-      nodeCollection: nodeCollection
+      nodeCollection: nodeCollection,
+      selectedNodesAndJunctions: selectedNodesAndJunctions
     };
 
     bindEvents();
@@ -35,25 +39,25 @@
         instructionsPopup,
         new LocationSearch(backend, window.applicationModel)
       ),
-      new ProjectSelectBox(projectListModel),
-        linkGroups
+      linkGroups
     );
 
     WorkListView.initialize(backend);
 
+
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
-        startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection);
+        startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection,projectListModel);
     });
   };
 
-    var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection) {
+    var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel) {
     setupProjections();
       var url = 'rasteripalvelu/wmts/maasto?';
       fetch(url + 'service=wmts&request=GetCapabilities').then(function(response) {
       return response.text();
     }).then(function(arcConfig) {
-      var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection);
+      var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection, projectListModel);
       new URLRouter(map, backend, models);
       eventbus.trigger('application:initialized');
     });
@@ -105,20 +109,21 @@
     return map;
   };
 
-  var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection) {
+  var setupMap = function (backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection, projectListModel) {
     var tileMaps = new TileMapCollection(arcConfig);
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
     var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty, models.nodeCollection);
-    var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
+    var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty);
     var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel);
-    var nodeLayer = new NodeLayer(map, roadLayer, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
+    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, models.linkPropertiesModel, applicationModel);
     var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
 
-    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool);
+    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel);
 
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
+    new NodeForm(models.selectedNodesAndJunctions);
 
     new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
@@ -136,10 +141,23 @@
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 
-    // Show environment name next to Viite logo
-    var notification = jQuery('#notification');
-    notification.append(Environment.localizedName());
-    notification.append(' Tielinkkiaineisto : ' + startupParameters.date_of_data);
+    var toolTip = '<i class="fas fa-info-circle" title="Versio: ' + startupParameters.deploy_date + '"></i>\n';
+
+    var pictureTooltip = jQuery('#pictureTooltip');
+    pictureTooltip.empty();
+    pictureTooltip.append(toolTip);
+
+    backend.getRoadLinkDate (function (versionData) {
+      getRoadLinkDateInfo(versionData);
+    });
+
+    var getRoadLinkDateInfo = function (versionData) {
+
+      // Show environment name next to Viite logo
+      var notification = jQuery('#notification');
+      notification.append(Environment.localizedName());
+      notification.append(' Tielinkkiaineisto: ' +  versionData.result);
+    };
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {
