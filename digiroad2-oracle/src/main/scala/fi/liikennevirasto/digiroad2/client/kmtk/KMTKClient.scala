@@ -335,7 +335,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     val linkStatus = properties.constructionStatus
     linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
   }
-  
+
   /**
     * Returns KMTK road links in bounding box area. Municipalities are optional.
     */
