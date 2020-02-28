@@ -133,7 +133,7 @@
                 var added = _.difference(linkIds, me.ids);
                 me.ids = linkIds;
                 current = _.filter(current, function(link) {
-                        return _.contains(linkIds, link.getData().id || link.getData().linkId);
+                        return _.includes(linkIds, link.getData().id || link.getData().linkId);
                     }
                 );
                 current = current.concat(projectLinkCollection.getProjectLink(added));
@@ -195,7 +195,7 @@
         };
 
         var isSelected = function(linkId) {
-            return _.contains(me.ids, linkId);
+            return _.includes(me.ids, linkId);
         };
 
         var clean = function() {

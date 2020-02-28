@@ -486,7 +486,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   def fetchAllByRoadNumbers(roadNumbers: Set[Long]): Seq[Roadway] = {
-    time(logger, "Fetch road ways by road number") {
+    time(logger, "Fetch roadways by road number") {
       fetch(withRoadNumbersInValidDate(roadNumbers))
     }
   }
@@ -565,7 +565,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   def fetchAllByRoadwayId(roadwayIds: Seq[Long]): Seq[Roadway] = {
-    time(logger, "Fetch road ways by id") {
+    time(logger, "Fetch roadways by id") {
       if (roadwayIds.isEmpty) {
         Seq()
       } else {
@@ -764,7 +764,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumber(roadwayNumber: Long)(query: String): String = {
-    s"""$query where a.valid_to is null and end_date is null and a.ROADWAY_NUMBER = $roadwayNumber"""
+    s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER = $roadwayNumber"""
   }
 
   private def withRoadwayNumberEnded(roadwayNumber: Long)(query: String): String = {
@@ -772,7 +772,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false)(query: String): String = {
-    val endDateFilter = if (withHistory) "" else "and (a.end_date is null or a.end_date >= sysdate)"
+    val endDateFilter = if (withHistory) "" else "and a.end_date is null"
     if (roadwayNumbers.size > 1000) {
       MassQuery.withIds(roadwayNumbers) {
         idTableName =>

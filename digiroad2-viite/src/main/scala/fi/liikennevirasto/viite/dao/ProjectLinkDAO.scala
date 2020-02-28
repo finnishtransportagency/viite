@@ -253,6 +253,19 @@ class ProjectLinkDAO {
         	  LEFT JOIN project_link_name pln ON (pln.road_number = plh.road_number AND pln.project_id = plh.project_id)
      """.stripMargin
 
+  private val projectLinksChangeQueryBase =
+    s"""
+        select PROJECT_LINK.ID, ROADWAY.ID, PROJECT_LINK.LINEAR_LOCATION_ID, ROADWAY.ROAD_NUMBER, ROADWAY.ROAD_PART_NUMBER, PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.ORIGINAL_START_ADDR_M, PROJECT_LINK.ORIGINAL_END_ADDR_M,
+          PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
+          PROJECT_LINK.STATUS,
+          PROJECT_LINK.REVERSED,
+          ROADWAY.ROADWAY_NUMBER,
+          PROJECT_LINK.ROADWAY_NUMBER
+          from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID)
+          LEFT JOIN ROADWAY ON (ROADWAY.ID = PROJECT_LINK.ROADWAY_ID)
+          LEFT JOIN Linear_Location ON (Linear_Location.ID = PROJECT_LINK.Linear_Location_Id)
+      """
+
   implicit val getProjectLinkRow: GetResult[ProjectLink] = new GetResult[ProjectLink] {
     def apply(r: PositionedResult) = {
       val projectLinkId = r.nextLong()
@@ -307,8 +320,35 @@ class ProjectLinkDAO {
     }
   }
 
+  implicit val getProjectLinksChangeRow: GetResult[ProjectRoadLinkChange] = new GetResult[ProjectRoadLinkChange] {
+    def apply(r: PositionedResult) = {
+      val projectLinkId = r.nextLong()
+      val roadwayId = r.nextLong()
+      val originalLinearLocationId = r.nextLong()
+      val originalRoadNumber = r.nextLong()
+      val originalRoadPartNumber = r.nextLong()
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val originalStartAddrMValue = r.nextLong()
+      val originalEndAddrMValue = r.nextLong()
+      val startAddrM = r.nextLong()
+      val endAddrM = r.nextLong()
+      val status = LinkStatus.apply(r.nextInt())
+      val reversed = r.nextBoolean()
+      val roadwayNumber = r.nextLong()
+      val projectRoadwayNumber = r.nextLong()
+
+      ProjectRoadLinkChange(projectLinkId, roadwayId, originalLinearLocationId, 0, originalRoadNumber, originalRoadPartNumber, roadNumber, roadPartNumber, originalStartAddrMValue, originalEndAddrMValue, startAddrM, endAddrM,
+        status, reversed, roadwayNumber, projectRoadwayNumber)
+    }
+  }
+
   private def listQuery(query: String) = {
     Q.queryNA[ProjectLink](query).iterator.toSeq
+  }
+
+  private def changesListQuery(query: String) = {
+    Q.queryNA[ProjectRoadLinkChange](query).iterator.toSeq
   }
 
   def create(links: Seq[ProjectLink]): Seq[Long] = {
@@ -378,7 +418,7 @@ class ProjectLinkDAO {
         val links = projectLinks.map { pl =>
           if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
             val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
-            // Discontinuity, road type and calibration points may change with Unchanged (and NotHandled) status
+            // Discontinuity, road type and calibration points may change with Unchanged status
             pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
               startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
               reversed = false)
@@ -391,6 +431,11 @@ class ProjectLinkDAO {
           "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ?, ROADWAY_NUMBER = ? WHERE id = ?")
 
         for (projectLink <- links) {
+          val roadwayNumber = if (projectLink.roadwayNumber == NewIdValue) {
+            Sequences.nextRoadwayNumber
+          } else {
+            projectLink.roadwayNumber
+          }
           projectLinkPS.setLong(1, projectLink.roadNumber)
           projectLinkPS.setLong(2, projectLink.roadPartNumber)
           projectLinkPS.setInt(3, projectLink.track.value)
@@ -412,7 +457,7 @@ class ProjectLinkDAO {
           projectLinkPS.setDouble(19, projectLink.endMValue)
           projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB.value)
           projectLinkPS.setLong(21, projectLink.ely)
-          projectLinkPS.setLong(22, projectLink.roadwayNumber)
+          projectLinkPS.setLong(22, roadwayNumber)
           projectLinkPS.setLong(23, projectLink.id)
           projectLinkPS.addBatch()
         }
@@ -470,6 +515,15 @@ class ProjectLinkDAO {
         s"""$projectLinkQueryBase
                 where $filter PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
+    }
+  }
+
+  def fetchProjectLinksChange(projectId: Long): Seq[ProjectRoadLinkChange] = {
+    time(logger, "Get project links changes") {
+      val query =
+        s"""$projectLinksChangeQueryBase
+                where PROJECT_LINK.PROJECT_ID = $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+      changesListQuery(query)
     }
   }
 

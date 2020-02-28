@@ -33,11 +33,12 @@
         resultsSection.show();
         clearSection.show();
       };
+
       var moveToLocation = function() {
         var showDialog = function(message) {
           resultsSection.hide();
           clearSection.hide();
-          instructionsPopup.show(message, 3000);
+          instructionsPopup.show(_.isString(message) ? message : 'Yhteys Viitekehysmuuntimeen epäonnistui', 3000);
         };
 
         searchResults.html('Haku käynnissä…');
@@ -57,9 +58,11 @@
           moveToLocation();
         }
       });
+
       moveButton.on('click', function() {
         moveToLocation();
       });
+
       clearButton.on('click', function() {
         resultsSection.hide();
         clearSection.hide();

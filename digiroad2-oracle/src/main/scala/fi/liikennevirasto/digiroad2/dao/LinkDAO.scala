@@ -16,7 +16,7 @@ class LinkDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
 
   implicit val getLink: GetResult[Link] = new GetResult[Link] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): Link = {
       val id = r.nextLong()
       val uuid = r.nextString()
       val version = r.nextLong()
@@ -63,12 +63,19 @@ class LinkDAO {
   }
 
   // TODO KMTKID
-  def createIfEmptyFetch(id: Long): Unit = {
+  def createIfEmptyFetch(id: Long, kmtkId: KMTKID, adjustedTimestamp: Long, source: Long): Unit = {
     if (fetch(id).isEmpty) {
       sqlu"""
-        INSERT INTO LINK (ID) values ($id)
+        INSERT INTO LINK (id, source, adjusted_timestamp) values ($id, $source, $adjustedTimestamp)
       """.execute
     }
+  }
+
+  def fetchMaxAdjustedTimestamp(): Long = {
+    sql"""
+      SELECT max(adjusted_timestamp) FROM link WHERE SOURCE IN (1, 4)
+    """.as[Long].first
+
   }
 
 

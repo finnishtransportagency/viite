@@ -11,23 +11,22 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
-import fi.liikennevirasto.viite.util.DigiroadSerializers
+import fi.liikennevirasto.digiroad2.util.{RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
-import fi.liikennevirasto.viite.util.SplitOptions
+import fi.liikennevirasto.viite.util.DigiroadSerializers
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.swagger.Swagger
+import org.scalatra.swagger.{Swagger, _}
 import org.scalatra.{NotFound, _}
 import org.slf4j.{Logger, LoggerFactory}
-import org.scalatra.swagger._
 
+import scala.collection.parallel.immutable.ParSeq
 import scala.util.parsing.json.JSON._
 import scala.util.{Left, Right}
 
@@ -57,6 +56,18 @@ case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
 case class CutLineExtractor(linkId: Long, splitedPoint: Point)
 
+case class NodePointExtractor(id: Long, beforeAfter: Int, roadwayPointId: Long, nodeNumber: Option[Long], `type`: Int = NodePointType.UnknownNodePointType.value,
+                              startDate: Option[String], endDate: Option[String], validFrom: String, validTo: Option[String],
+                              createdBy: String, createdTime: Option[String], roadwayNumber: Long, addrM : Long,
+                              roadNumber: Long, roadPartNumber: Long, track: Int, elyCode: Long)
+
+case class JunctionExtractor(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: String, endDate: Option[String],
+                          validFrom: Option[String], validTo: Option[String], createdBy: Option[String], createdTime: Option[String])
+
+case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, coordinates: Point, name: Option[String], `type`: Int, startDate: String, endDate: Option[String], validFrom: Option[String], validTo: Option[String],
+                         createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None,
+                         junctions: List[JunctionExtractor], nodePoints: List[NodePointExtractor])
+
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val projectService: ProjectService,
@@ -65,14 +76,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val nodesAndJunctionsService: NodesAndJunctionsService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date,
-               val date_of_data: String = Digiroad2Context.date_of_data,
                implicit val swagger: Swagger
               )
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication
-    with ContentEncodingSupport
     with SwaggerSupport {
 
   protected val applicationDescription = "The user interface API "
@@ -82,11 +91,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   private val dtf: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
+  /*
+  Roads
+   */
   val DrawMainRoadPartsOnly = 1
   val DrawRoadPartsOnly = 2
   val DrawLinearPublicRoads = 3
   val DrawPublicRoads = 4
   val DrawAllRoads = 5
+  /*
+  Nodes
+   */
+  val DrawNone = 0
+  val DrawNodes = 1
+  val DrawAll = 2
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
@@ -122,7 +140,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val config = userProvider.getCurrentUser().configuration
         (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
       }
-      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date, date_of_data)
+      StartupParameters(east.getOrElse(DefaultLatitude), north.getOrElse(DefaultLongitude), zoom.getOrElse(DefaultZoomLevel), deploy_date)
     }
   }
 
@@ -155,9 +173,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     response.setHeader("Access-Control-Allow-Headers", "*")
     val zoom = chooseDrawType(params.getOrElse("zoom", "5"))
     time(logger, s"GET request for /roadlinks (zoom: $zoom)") {
-      params.get("bbox")
-        .map(getRoadAddressLinks(zoom))
-        .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+      params.get("bbox").map(b => getRoadAddressLinks(zoom)(b)._1).getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
     }
   }
 
@@ -175,11 +191,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/nodesjunctions", operation(getNodesAndJunctions)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
-    val zoom = chooseDrawType(params.getOrElse("zoom", "5"))
+    val zoomLinks = chooseDrawType(params.getOrElse("zoom", "5"))
+    val zoomNodes = chooseNodesDrawType(params.getOrElse("zoom", "1"))
     time(logger, s"GET request for /nodesAndJunctions") {
-      params.get("bbox")
-        .map(getNodesAndJunctions(zoomLevel = zoom))
-        .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+      val bbox = params.get("bbox")
+      val map: Option[(Seq[Seq[Map[String, Any]]], Seq[RoadAddressLink])] = bbox.map(b => getRoadAddressLinks(zoomLinks)(b))
+      val nodesJunctions = bbox.map(getNodesAndJunctions(zoomLevel = zoomNodes, map.get._2)).getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+      Map("fetchedNodes" -> nodesJunctions, "fetchedRoadLinks" -> map.get._1)
     }
   }
 
@@ -246,6 +264,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       roadLinkService.getMidPointByLinkId(KMTKID(uuid, version))
     }
   }
+  get("/roadlinks/mtkid/:mtkId") {
+    val mtkId = params("mtkId").toLong
+    time(logger, s"GET request for /roadlinks/mtkid/$mtkId") {
+      roadLinkService.getRoadLinkMiddlePointByMtkId(mtkId)
+    }
+  }
 
   get("/roadnames") {
     val roadNumber = params.get("roadNumber")
@@ -257,6 +281,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case Right(roadNameList) => Map("success" -> true, "roadNameInfo" -> roadNameList.map(roadNameToApi))
         case Left(errorMessage) => Map("success" -> false, "reason" -> errorMessage)
       }
+    }
+  }
+
+  get("/junctions/:id/junction-points") {
+    val junctionId = params("id").toLong
+    val x: Seq[Long] = Seq(junctionId)
+    time(logger, s"GET request for /junctions/$junctionId/junction-points") {
+      nodesAndJunctionsService.getJunctionPointsByJunctionIds(x).map(junctionPointsToApi)
     }
   }
 
@@ -425,18 +457,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   post("/roadlinks/roadaddress/project/sendToTR", operation(sendProjectToTRByProjectId)) {
     val projectID = (parsedBody \ "projectID").extract[Long]
     time(logger, s"POST request for /roadlinks/roadaddress/project/sendToTR (projectID: $projectID)") {
-      val writableProjectService = projectService.projectWritableCheck(projectID)
-      if (writableProjectService.isEmpty) {
+      val projectWritableError = projectService.projectWritableCheck(projectID)
+      if (projectWritableError.isEmpty) {
         val sendStatus = projectService.publishProject(projectID)
-        if (sendStatus.validationSuccess && sendStatus.sendSuccess)
+        if (sendStatus.validationSuccess && sendStatus.sendSuccess) {
           Map("sendSuccess" -> true)
-        else if (sendStatus.errorMessage.getOrElse("").toLowerCase == FailedToSendToTRMessage.toLowerCase) {
-          projectService.setProjectStatus(projectID, SendingToTR)
-          Map("sendSuccess" -> false, "errorMessage" -> TrConnectionError)
-        } else Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(""))
-      }
-      else {
-        Map("sendSuccess" -> false, "errorMessage" -> writableProjectService.get)
+        } else {
+          logger.error(s"Failed to send project ${projectID} to TR. Error: ${sendStatus.errorMessage.getOrElse("-")}")
+          Map("sendSuccess" -> false, "errorMessage" -> sendStatus.errorMessage.getOrElse(FailedToSendToTRMessage))
+        }
+      } else {
+        logger.error(s"Failed to send project ${projectID} to TR. Error: ${projectWritableError.get}")
+        Map("sendSuccess" -> false, "errorMessage" -> projectWritableError.get)
       }
     }
   }
@@ -889,34 +921,34 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   // TODO This might be needed in the future
 //  private val splitSuravageLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
-//    apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")
-//      .parameters(
-//        pathParam[Long]("linkID").description("LinkId of a projectLink")
-//      )
-//      tags "ViiteAPI - Project - SuravageSplit"
-//      summary "This effectively perform the split and save the results on the database."
-//      notes ""
-//    )
-//
-//  put("/project/split/:linkID", operation(splitSuravageLinkByLinkId)) {
-//    val linkID = params.get("linkID")
-//    time(logger, s"PUT request for /project/split/$linkID") {
-//      val user = userProvider.getCurrentUser()
-//      linkID.map(_.toLong) match {
-//        case Some(link) =>
-//          try {
-//            val options = parsedBody.extract[SplitOptions]
-//            val splitError = projectService.splitSuravageLink(options.trackCode.value, options.projectId, options.coordinates, link, user.username, options)
-//            val projectErrors = projectService.validateProjectById(options.projectId).map(errorPartsToApi)
-//            Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull, "projectErrors" -> projectErrors)
-//          } catch {
-//            case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
-//            case _: NumberFormatException => BadRequest("Missing mandatory data")
-//          }
-//        case _ => BadRequest("Missing Linkid from url")
-//      }
-//    }
-//  }
+  //    apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")
+  //      .parameters(
+  //        pathParam[Long]("linkID").description("LinkId of a projectLink")
+  //      )
+  //      tags "ViiteAPI - Project - SuravageSplit"
+  //      summary "This effectively perform the split and save the results on the database."
+  //      notes ""
+  //    )
+  //
+  //  put("/project/split/:linkID", operation(splitSuravageLinkByLinkId)) {
+  //    val linkID = params.get("linkID")
+  //    time(logger, s"PUT request for /project/split/$linkID") {
+  //      val user = userProvider.getCurrentUser()
+  //      linkID.map(_.toLong) match {
+  //        case Some(link) =>
+  //          try {
+  //            val options = parsedBody.extract[SplitOptions]
+  //            val splitError = projectService.splitSuravageLink(options.trackCode.value, options.projectId, options.coordinates, link, user.username, options)
+  //            val projectErrors = projectService.validateProjectById(options.projectId).map(errorPartsToApi)
+  //            Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull, "projectErrors" -> projectErrors)
+  //          } catch {
+  //            case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
+  //            case _: NumberFormatException => BadRequest("Missing mandatory data")
+  //          }
+  //        case _ => BadRequest("Missing Linkid from url")
+  //      }
+  //    }
+  //  }
 
   private val getRoadNamesByRoadNumberAndProjectId: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getRoadNamesByRoadNumberAndProjectId")
@@ -1019,6 +1051,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       notes ""
     )
 
+  get("/getRoadLinkDate") {
+    time(logger, s"GET request for getRoadLinkDate"){
+      projectService.getRoadLinkDate()
+    }
+  }
+
   get("/nodes", operation(getNodesByRoadAttributes)) {
     val roadNumber = params.get("roadNumber").map(_.toLong)
     val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
@@ -1036,14 +1074,73 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   get("/templates") {
-    time(logger, s"GET request for /templates"){
+    time(logger, s"GET request for /templates") {
       val authorizedElys = userProvider.getCurrentUser().getAuthorizedElys
-      nodesAndJunctionsService.getNodePointTemplates(authorizedElys.toSeq).map(nodePointTemplateToApi) ++
-      nodesAndJunctionsService.getJunctionTemplates(authorizedElys.toSeq).map(junctionTemplateToApi)
+      Map("nodePointTemplates" -> nodesAndJunctionsService.getNodePointTemplates(authorizedElys.toSeq).map(nodePointTemplateToApi),
+        "junctionTemplates" -> nodesAndJunctionsService.getJunctionTemplates(authorizedElys.toSeq).map(junctionTemplateToApi))
     }
   }
 
-  private def getRoadAddressLinks(zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+  get("/node-point-templates/:id") {
+    val id = params("id").toLong
+    time(logger, s"GET request for /node-point-templates/$id") {
+      nodesAndJunctionsService.getNodePointTemplateById(id) match {
+        case None => halt(NotFound("Node Points Template not found"))
+        case Some(nodePoint) => nodePointTemplateToApi(nodePoint)
+      }
+    }
+  }
+
+  get("/junction-templates/:id") {
+    val id = params("id").toLong
+    time(logger, s"GET request for /junction-templates/$id") {
+      nodesAndJunctionsService.getJunctionTemplatesById(id) match {
+        case None => halt(NotFound("Junction Template not found"))
+        case Some(junctionTemplate) => junctionTemplateToApi(junctionTemplate)
+      }
+    }
+  }
+
+  post("/nodes") {
+    time(logger, s"POST request for /nodes") {
+      val username = userProvider.getCurrentUser().username
+      try {
+        val nodeInfo = parsedBody.extract[NodeExtractor]
+        val node: Node = NodesAndJunctionsConverter.toNode(nodeInfo, username)
+        val junctions = NodesAndJunctionsConverter.toJunctions(nodeInfo.junctions)
+        val nodePoints = NodesAndJunctionsConverter.toNodePoints(nodeInfo.nodePoints)
+        nodesAndJunctionsService.addOrUpdate(node, junctions, nodePoints, username)
+        Map("success" -> true)
+      } catch {
+        case ex: Exception => {
+          logger.error("Request POST /nodes failed.", ex.getMessage)
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
+        }
+      }
+    }
+  }
+
+  put("/nodes/:id") {
+    val id = params("id").toLong
+    time(logger, s"PUT request for /nodes/$id") {
+      val username = userProvider.getCurrentUser().username
+      try {
+        val nodeInfo = parsedBody.extract[NodeExtractor]
+        val node: Node = NodesAndJunctionsConverter.toNode(nodeInfo, username)
+        val junctions = NodesAndJunctionsConverter.toJunctions(nodeInfo.junctions)
+        val nodePoints = NodesAndJunctionsConverter.toNodePoints(nodeInfo.nodePoints)
+        nodesAndJunctionsService.addOrUpdate(node, junctions, nodePoints, username)
+        Map("success" -> true)
+      } catch {
+        case ex: Exception => {
+          logger.error("Request PUT /nodes/$id failed.", ex)
+          Map("success" -> false, "errorMessage" -> ex.getMessage)
+        }
+      }
+    }
+  }
+
+  private def getRoadAddressLinks(zoomLevel: Int)(bbox: String): (Seq[Seq[Map[String, Any]]], Seq[RoadAddressLink]) = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val viiteRoadLinks = zoomLevel match {
       case DrawMainRoadPartsOnly =>
@@ -1064,25 +1161,28 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       }
     }
     time(logger, operationName = "Partition road links") {
-      val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(viiteRoadLinks)
-      partitionedRoadLinks.map {
-        _.map(roadAddressLinkToApi)
-      }
+      val partitionedRoadLinks = RoadAddressLinkPartitioner.groupByHomogeneousSection(viiteRoadLinks)
+      (partitionedRoadLinks.map{_.map(roadAddressLinkToApi)}, viiteRoadLinks)
     }
   }
 
-  private def getNodesAndJunctions(zoomLevel: Int)(bbox: String): Seq[Map[String, Any]] = {
+  private def getNodesAndJunctions(zoomLevel: Int, raLinks: Seq[RoadAddressLink])(bbox: String): Map[String, Any] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
+
     zoomLevel match {
-      case DrawLinearPublicRoads | DrawLinearPublicRoads => time(logger, operationName = "nodes fetch ")
-      {
-        nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi)
+      case zoom if zoom >= DrawAll => time(logger, operationName = "nodes with junctions fetch") {
+        val nodes = nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle, raLinks).toSeq.map(nodeToApi)
+        val nodePointTemplates = nodesAndJunctionsService.getNodePointTemplatesByBoundingBox(boundingRectangle, raLinks).map(nodePointTemplateToApi)
+        val junctionTemplates = nodesAndJunctionsService.getJunctionTemplatesByBoundingBox(boundingRectangle, raLinks).map(junctionTemplatesWithPointsToApi)
+
+        Map("nodes" -> nodes,
+          "nodePointTemplates" -> nodePointTemplates,
+          "junctionTemplates" -> junctionTemplates)
       }
-      case _ => time(logger, operationName = "nodes with junctions fetch") {
-        nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi) ++
-          nodesAndJunctionsService.getNodeTemplatesByBoundingBox(boundingRectangle).map(nodePointTemplateToApi) ++
-          nodesAndJunctionsService.getJunctionTemplatesByBoundingBox(boundingRectangle).map(junctionPointTemplateToApi)
+      case zoom if zoom >= DrawNodes => time(logger, operationName = "nodes fetch ") {
+        Map("nodes" -> nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle, raLinks).toSeq.map(nodeToApi))
       }
+      case _ => Map("nodes" -> nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi))
     }
   }
 
@@ -1133,6 +1233,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case C4() => DrawPublicRoads
         case C5() => DrawAllRoads
         case _ => DrawMainRoadPartsOnly
+      }
+    } catch {
+      case _: NumberFormatException => DrawMainRoadPartsOnly
+    }
+  }
+
+  private def chooseNodesDrawType(zoomLevel: String) = {
+    val C1 = new Contains(-10 to 8)
+    val C2 = new Contains(9 to 11)
+    val C3 = new Contains(12 to 16)
+    try {
+      val level: Int = Math.round(zoomLevel.toDouble).toInt
+      level match {
+        case C1() => DrawNone
+        case C2() => DrawNodes
+        case C3() => DrawAll
+        case _ => DrawNone
       }
     } catch {
       case _: NumberFormatException => DrawMainRoadPartsOnly
@@ -1219,94 +1336,136 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("id" -> node.id,
       "nodeNumber" -> node.nodeNumber,
       "name" -> node.name,
-      "coordX" -> node.coordinates.x,
-      "coordY" -> node.coordinates.y,
+      "coordinates" -> Map(
+        "x" -> node.coordinates.x,
+        "y" -> node.coordinates.y),
       "type" -> node.nodeType.value,
+      "startDate" -> formatToString(node.startDate.toString),
       "createdBy" -> node.createdBy,
       "createdTime" -> node.createdTime
     )
   }
 
   def nodePointToApi(nodePoint: NodePoint) : Map[String, Any] = {
-    //TODO
     Map("id" -> nodePoint.id,
-      "nodeId" -> nodePoint.nodeId)
+      "nodeNumber" -> nodePoint.nodeNumber,
+      "roadNumber" -> nodePoint.roadNumber,
+      "roadPartNumber" -> nodePoint.roadPartNumber,
+      "addrM" -> nodePoint.addrM,
+      "roadwayNumber" -> nodePoint.roadwayNumber,
+      "beforeAfter" -> nodePoint.beforeAfter.value,
+      "type" -> nodePoint.nodePointType.value,
+      "roadwayPointId" -> nodePoint.roadwayPointId,
+      "validFrom" -> formatToString(nodePoint.validFrom.toString),
+      "validTo" -> formatDateTimeToString(nodePoint.validTo),
+      "createdBy" -> nodePoint.createdBy,
+      "createdTime" -> nodePoint.createdTime,
+      "track" -> nodePoint.track.value,
+      "elyCode" -> nodePoint.elyCode,
+      "coordinates" -> Map(
+        "x" ->  nodePoint.coordinates.x,
+        "y" ->  nodePoint.coordinates.y)
+    )
   }
 
   def nodePointTemplateToApi(nodePoint: NodePoint) : Map[String, Any] = {
-    Map("nodePointTemplate" -> {
-      Map("id" -> nodePoint.id,
-        "nodeId" -> nodePoint.nodeId,
-        "beforeAfter" -> nodePoint.beforeAfter.value,
-        "roadwayPointId" -> nodePoint.roadwayPointId,
-        "startDate" -> formatDateTimeToString(Some(nodePoint.startDate)),
-        "endDate" -> formatDateTimeToString(nodePoint.endDate),
-        "validFrom" -> formatDateTimeToString(Some(nodePoint.validFrom)),
-        "validTo" -> formatDateTimeToString(nodePoint.validTo),
-        "createdBy" -> nodePoint.createdBy,
-        "roadwayNumber" -> nodePoint.roadwayNumber,
-        "addrM" -> nodePoint.addrM,
-        "elyCode" -> nodePoint.elyCode,
-        "roadNumber" -> nodePoint.roadNumber,
-        "roadPartNumber" -> nodePoint.roadPartNumber,
-        "track" -> nodePoint.track
-      )
-    }
+    Map("id" -> nodePoint.id,
+      "beforeAfter" -> nodePoint.beforeAfter.value,
+      "roadwayPointId" -> nodePoint.roadwayPointId,
+      "type" -> nodePoint.nodePointType.value,
+      "validFrom" -> formatToString(nodePoint.validFrom.toString),
+      "validTo" -> formatDateTimeToString(nodePoint.validTo),
+      "createdBy" -> nodePoint.createdBy,
+      "roadwayNumber" -> nodePoint.roadwayNumber,
+      "addrM" -> nodePoint.addrM,
+      "elyCode" -> nodePoint.elyCode,
+      "roadNumber" -> nodePoint.roadNumber,
+      "roadPartNumber" -> nodePoint.roadPartNumber,
+      "track" -> nodePoint.track,
+      "coordinates" -> Map(
+        "x" ->  nodePoint.coordinates.x,
+        "y" ->  nodePoint.coordinates.y)
     )
   }
 
   def junctionTemplateToApi(junctionTemplate: JunctionTemplate) : Map[String, Any] = {
-    Map("junctionTemplate" -> {
-      Map(
-        "junctionId" -> junctionTemplate.junctionId,
-        "roadNumber" -> junctionTemplate.roadNumber,
-        "roadPartNumber" -> junctionTemplate.roadPartNumber,
-        "track" -> junctionTemplate.track,
-        "addrM" -> junctionTemplate.addrM,
-        "elyCode" -> junctionTemplate.elyCode
-      )
-    }
+    Map(
+      "id" -> junctionTemplate.id,
+      "junctionNumber" -> null,
+      "startDate" -> formatToString(junctionTemplate.startDate.toString),
+      "roadNumber" -> junctionTemplate.roadNumber,
+      "roadPartNumber" -> junctionTemplate.roadPartNumber,
+      "track" -> junctionTemplate.track,
+      "addrM" -> junctionTemplate.addrM,
+      "elyCode" -> junctionTemplate.elyCode)
+  }
+
+  def junctionTemplatesWithPointsToApi(junctionPointTemplate: (JunctionTemplate, Seq[JunctionPoint])) : Map[String, Any] = {
+    junctionTemplateToApi(junctionPointTemplate._1) ++
+      Map("junctionPoints" -> junctionPointTemplate._2.map(junctionPointsToApi))
+  }
+
+  def junctionPointsToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
+    Map("id" -> junctionPoint.id,
+      "junctionId" -> junctionPoint.junctionId,
+      "beforeAfter" -> junctionPoint.beforeAfter.value,
+      "roadwayPointId" -> junctionPoint.roadwayPointId,
+      "startDate" -> formatDateTimeToString(junctionPoint.startDate),
+      "endDate" -> formatDateTimeToString(junctionPoint.endDate),
+      "validFrom" -> formatToString(junctionPoint.validFrom.toString),
+      "validTo" -> formatDateTimeToString(junctionPoint.validTo),
+      "createdBy" -> junctionPoint.createdBy,
+      "roadwayNumber" -> junctionPoint.roadwayNumber,
+      "addrM" -> junctionPoint.addrM,
+      "roadNumber" -> junctionPoint.roadNumber,
+      "roadPartNumber" -> junctionPoint.roadPartNumber,
+      "track" -> junctionPoint.track,
+      "coordinates" -> Map(
+        "x" ->  junctionPoint.coordinates.x,
+        "y" ->  junctionPoint.coordinates.y)
     )
   }
 
-  def junctionPointTemplateToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
-    Map("junctionPointTemplate" -> {
-      Map("id" -> junctionPoint.id,
-        "junctionId" -> junctionPoint.junctionId,
-        "beforeAfter" -> junctionPoint.beforeAfter.value,
-        "roadwayPointId" -> junctionPoint.roadwayPointId,
-        "startDate" -> formatDateTimeToString(Some(junctionPoint.startDate)),
-        "endDate" -> formatDateTimeToString(junctionPoint.endDate),
-        "validFrom" -> formatDateTimeToString(Some(junctionPoint.validFrom)),
-        "validTo" -> formatDateTimeToString(junctionPoint.validTo),
-        "createdBy" -> junctionPoint.createdBy,
-        "roadwayNumber" -> junctionPoint.roadwayNumber,
-        "addrM" -> junctionPoint.addrM
-      )
-    }
-    )
+  def junctionInfoToApi(junctionInfo: JunctionInfo) : Map[String, Any] = {
+    Map("junctionId" -> junctionInfo.id,
+      "junctionNumber" -> junctionInfo.junctionNumber.orNull,
+      "nodeNumber" -> junctionInfo.nodeNumber,
+      "startDate" -> formatDateTimeToShortPatternString(Some(junctionInfo.startDate)),
+      "nodeNumber" -> junctionInfo.nodeNumber,
+      "nodeName" -> junctionInfo.nodeName)
   }
 
   def junctionToApi(junction: (Junction, Seq[JunctionPoint])): Map[String, Any] = {
     Map("id" -> junction._1.id,
-      "junctionNumber" -> junction._1.junctionNumber,
-      "nodeId" -> junction._1.nodeId,
-      "junctionPoints" -> junction._2.map(junctionPointToApi))
+      "junctionNumber" -> junction._1.junctionNumber.orNull,
+      "nodeNumber" -> junction._1.nodeNumber,
+      "startDate" -> formatToString(junction._1.startDate.toString),
+      "endDate" -> (if (junction._1.endDate.isDefined) junction._1.endDate.get.toString else null),
+      "validFrom" -> formatToString(junction._1.validFrom.toString),
+      "validTo" -> (if (junction._1.validTo.isDefined) junction._1.validTo.get.toString else null),
+      "createdBy" -> junction._1.createdBy,
+      "createdTime" -> junction._1.createdTime,
+      "junctionPoints" -> junction._2.map(junctionPointToApi)
+    )
   }
 
   def junctionPointToApi(junctionPoint: JunctionPoint) : Map[String, Any] = {
     Map("id" -> junctionPoint.id,
       "junctionId" -> junctionPoint.junctionId,
       "roadwayNumber" -> junctionPoint.roadwayNumber,
+      "roadNumber" -> junctionPoint.roadNumber,
+      "roadPartNumber" -> junctionPoint.roadPartNumber,
+      "track" -> junctionPoint.track.value,
       "addrM" -> junctionPoint.addrM,
-      "beforeOrAfter" -> junctionPoint.beforeAfter.value)
+      "beforeAfter" -> junctionPoint.beforeAfter.value,
+      "coordinates" -> Map(
+        "x" ->  junctionPoint.coordinates.x,
+        "y" ->  junctionPoint.coordinates.y)
+    )
   }
 
-  def nodeToApi(node: (Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]))) : Map[String, Any] = {
-
-    (if(node._1.isDefined)
-      simpleNodeToApi(node._1.get)
-    else Map()) ++
+  def nodeToApi(node: (Node, (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]))) : Map[String, Any] = {
+    simpleNodeToApi(node._1) ++
       Map("nodePoints" -> node._2._1.map(nodePointToApi)) ++ Map("junctions" -> node._2._2.map(junctionToApi))
   }
 
@@ -1476,8 +1635,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val (node, roadAttr) = nodeAndRoadAttr
     Map("id" -> node.id,
       "nodeNumber" -> node.nodeNumber,
-      "coordX" -> node.coordinates.x,
-      "coordY" -> node.coordinates.y,
+      "coordinates" -> Map(
+        "x" -> node.coordinates.x,
+        "y" -> node.coordinates.y),
       "name" -> node.name,
       "type" -> node.nodeType.displayValue,
       "roadNumber" -> roadAttr.roadNumber,
@@ -1531,6 +1691,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private def formatDateTimeToString(dateOption: Option[DateTime]): Option[String] =
     dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy, HH:mm:ss")) }
 
+  private def formatDateTimeToShortPatternString(dateOption: Option[DateTime]): Option[String] =
+    dateOption.map { date => date.toString(DateTimeFormat.forPattern("dd.MM.yyyy")) }
+
   private def calibrationPointToApi(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]): Option[Map[String, Any]] = {
     calibrationPoint match {
       case Some(point) =>
@@ -1556,7 +1719,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
      projectService
    }*/
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String, date_of_data: String)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
   case class RoadAndPartNumberException(private val message: String = "", private val cause: Throwable = None.orNull) extends Exception(message, cause)
 
 }
@@ -1576,5 +1739,48 @@ object ProjectConverter {
     ProjectReservedPart(0L, rp.roadNumber, rp.roadPartNumber,
       None, None, Some(rp.ely),
       None, None, None, None)
+  }
+}
+
+object NodesAndJunctionsConverter {
+
+  def toNode(node: NodeExtractor, username: String) : Node = {
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    val endDate = if (node.endDate.isDefined) Option(formatter.parseDateTime(node.endDate.get)) else None
+    val validFrom = if (node.validFrom.isDefined) formatter.parseDateTime(node.validFrom.get) else new DateTime()
+    val validTo = if (node.validTo.isDefined) Option(formatter.parseDateTime(node.validTo.get)) else None
+    val createdTime = if (node.createdTime.isDefined) Option(formatter.parseDateTime(node.createdTime.get)) else None
+
+    Node(node.id, node.nodeNumber, node.coordinates, node.name, NodeType.apply(node.`type`),
+         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, username, createdTime)
+  }
+
+  def toJunctions(junctions: Seq[JunctionExtractor]): Seq[Junction] = {
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+
+    junctions.map { junction =>
+      val validFrom = if (junction.validFrom.isDefined) formatter.parseDateTime(junction.validFrom.get) else new DateTime()
+      val endDate = if (junction.endDate.isDefined) Option(formatter.parseDateTime(junction.endDate.get)) else None
+      val validTo = if (junction.validTo.isDefined) Option(formatter.parseDateTime(junction.validTo.get)) else None
+      val createdTime = if (junction.createdTime.isDefined) Option(formatter.parseDateTime(junction.createdTime.get)) else None
+
+      Junction(junction.id, junction.junctionNumber, junction.nodeNumber, formatter.parseDateTime(junction.startDate), endDate,
+        validFrom, validTo, junction.createdBy.getOrElse("-"), createdTime)
+    }
+  }
+
+  def toNodePoints(nodePoints: Seq[NodePointExtractor]): Seq[NodePoint] = {
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    nodePoints.map { nodePoint =>
+      val validTo = if (nodePoint.validTo.isDefined) Option(formatter.parseDateTime(nodePoint.validTo.get)) else None
+      val startDate = if (nodePoint.startDate.isDefined) Option(formatter.parseDateTime(nodePoint.startDate.get)) else None
+      val endDate = if (nodePoint.endDate.isDefined) Option(formatter.parseDateTime(nodePoint.endDate.get)) else None
+      val createdTime = if (nodePoint.createdTime.isDefined) Option(formatter.parseDateTime(nodePoint.createdTime.get)) else None
+
+      NodePoint(nodePoint.id, BeforeAfter.apply(nodePoint.beforeAfter), nodePoint.roadwayPointId, nodePoint.nodeNumber, NodePointType.apply(nodePoint.`type`),
+        startDate, endDate, formatter.parseDateTime(nodePoint.validFrom.toString), validTo,
+        nodePoint.createdBy, createdTime, nodePoint.roadwayNumber, nodePoint.addrM,
+        nodePoint.roadNumber, nodePoint.roadPartNumber, Track.apply(nodePoint.track), nodePoint.elyCode)
+    }
   }
 }

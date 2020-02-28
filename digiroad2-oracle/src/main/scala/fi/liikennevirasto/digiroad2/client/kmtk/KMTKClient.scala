@@ -320,6 +320,10 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   protected override val serviceName = "roadlink"
   protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
 
+  def fetchByMtkId(mtkId: Long): Seq[KMTKRoadLink] = {
+    throw new NotImplementedError("Fetching by MTKID not implemented yet.")
+  }
+
   /**
     * Constructions Types Allows to return
     * In Use - 0
@@ -331,7 +335,6 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     val linkStatus = properties.constructionStatus
     linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
   }
-
 
   /**
     * Returns KMTK road links in bounding box area. Municipalities are optional.

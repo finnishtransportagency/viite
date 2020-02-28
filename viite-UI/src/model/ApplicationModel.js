@@ -4,7 +4,7 @@
       level: undefined
     };
     var selectedLayer;
-    var selectedTool = 'Select';
+    var selectedTool = LinkValues.Tool.Unknown.value;
     var centerLonLat;
     var minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
     var minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
@@ -44,7 +44,7 @@
       if (readOnly !== newState) {
         readOnly = newState;
         setActiveButtons(false);
-        setSelectedTool('Select');
+        setSelectedTool(LinkValues.Tool.Default.value);
         eventbus.trigger('application:readOnly', newState);
       }
     };
@@ -82,7 +82,7 @@
     var roadTypeShown = true;
 
     var isDirty = function () {
-      return _.any(models, function (model) {
+      return _.some(models, function (model) {
         return model.isDirty();
       });
     };
@@ -101,14 +101,19 @@
       roadsVisibility = !roadsVisibility;
     }
 
+    function isSelectedTool(tool) {
+      var alias = _.has(LinkValues.Tool[selectedTool], 'alias') ? LinkValues.Tool[selectedTool].alias : [];
+      return tool === selectedTool || _.includes(alias, tool);
+    }
+
     function setSelectedTool(tool) {
-      if (tool !== selectedTool) {
+      if (!isSelectedTool(tool)) {
         selectedTool = tool;
-        eventbus.trigger('tool:changed', tool);
       } else {
-        selectedTool = '';
+        selectedTool = LinkValues.Tool.Unknown.value;
         eventbus.trigger('tool:clear');
       }
+      eventbus.trigger('tool:changed', selectedTool);
     }
 
     var getCurrentAction = function () {
@@ -167,6 +172,7 @@
       getSelectedTool: function () {
         return selectedTool;
       },
+      isSelectedTool: isSelectedTool,
       zoom: zoom,
       setZoomLevel: setZoomLevel,
       getRoadVisibility: function () {
@@ -177,27 +183,40 @@
         minDirtyZoomLevel = level;
       },
       selectLayer: function (layer, toggleStart, noSave) {
+        var tool = layer !== 'node' ? LinkValues.Tool.Default.value : LinkValues.Tool.Unknown.value;
+        setSelectedTool(tool);
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
-          setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
         } else if (layer === 'linkProperty' && toggleStart) {
           eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
         }
         var underConstructionVisibleCheckbox = $('#underConstructionVisibleCheckbox')[0];
-        if (layer === 'roadAddressProject') {
-          if (underConstructionVisibleCheckbox) {
-            $('#underConstructionVisibleCheckbox')[0].checked = false;
-            $('#underConstructionVisibleCheckbox')[0].disabled = true;
+        if (layer !== selectedLayer || toggleStart) {
+            if (underConstructionVisibleCheckbox) {
+                if (layer === 'roadAddressProject') {
+                    $('#underConstructionVisibleCheckbox')[0].checked = true;
+                    $('#underConstructionVisibleCheckbox')[0].disabled = false;
+                } else {
+                    $('#underConstructionVisibleCheckbox')[0].checked = true;
+                    $('#underConstructionVisibleCheckbox')[0].disabled = false;
+                }
+            }
+            eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
+        }
+        var unAddressedRoadsVisibleCheckbox = $('#unAddressedRoadsVisibleCheckbox')[0];
+        if (layer !== selectedLayer || toggleStart) {
+          if (unAddressedRoadsVisibleCheckbox) {
+            if (layer === 'roadAddressProject') {
+              $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
+              $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
+            } else {
+              $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
+              $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
+            }
           }
-          eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
-        } else {
-          if (underConstructionVisibleCheckbox) {
-            $('#underConstructionVisibleCheckbox')[0].checked = true;
-            $('#underConstructionVisibleCheckbox')[0].disabled = false;
-          }
-          eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
+          eventbus.trigger('unAddressedRoadsProjectRoads:toggleVisibility', true);
         }
       },
       getSelectedLayer: function () {

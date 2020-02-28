@@ -21,7 +21,7 @@
 
     var transitionModifiers = function(targetStatus, currentStatus) {
       var mod;
-      if (_.contains(targetStatus.transitionFrom, currentStatus))
+      if (_.includes(targetStatus.transitionFrom, currentStatus))
         mod = '';
       else
         mod = 'disabled hidden';
@@ -143,7 +143,7 @@
     };
 
     var isProjectEditable = function(){
-      return _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
+      return _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
     };
 
     var checkInputs = function () {
@@ -161,11 +161,15 @@
       var trackCodeDropdown = $('#trackCodeDropdown')[0];
       filled = filled && !_.isUndefined(trackCodeDropdown) && !_.isUndefined(trackCodeDropdown.value) && trackCodeDropdown.value !== '99';
 
+      var roadTypeCodeDropdown = $('#roadTypeDropdown')[0];
+      filled = filled && !_.isUndefined(roadTypeCodeDropdown) && !_.isUndefined(roadTypeCodeDropdown.value) && roadTypeCodeDropdown.value !== '0';
+
       if (filled) {
         rootElement.find('.project-form button.update').prop("disabled", false);
       } else {
         rootElement.find('.project-form button.update').prop("disabled", true);
       }
+
     };
 
     var changeDropDownValue = function (statusCode) {
@@ -189,9 +193,9 @@
           break;
         case LinkStatus.Numbering.value:
           $("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").attr('selected', 'selected').change();
+          break;
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
-      $('#roadTypeDropdown').val(selectedProjectLink[0].roadTypeId);
     };
 
     var removeNumberingFromDropdown = function () {
@@ -229,7 +233,7 @@
         $('#roadAddressProjectForm select').prop('disabled',true);
         $('#roadAddressProjectFormCut select').prop('disabled',true);
         $('.update').prop('disabled', true);
-        $('.btn-edit-project').prop('disabled', true);
+        $('.btn-pencil-edit').prop('disabled', true);
         if (projectCollection.getCurrentProject().project.statusCode === ProjectStatus.SendingToTR.value) {
           $(":input").prop('disabled',true);
           $(".project-form button.cancelLink").prop('disabled',false);
@@ -272,7 +276,7 @@
           removeNumberingFromDropdown();
         }
         disableFormInputs();
-        var selectedDiscontinuity = _.max(selectedProjectLink, function (projectLink) {
+        var selectedDiscontinuity = _.maxBy(selectedProjectLink, function (projectLink) {
           return projectLink.endAddressM;
         }).discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
@@ -547,6 +551,10 @@
         checkInputs('.project-');
       });
 
+      rootElement.on('change', '#roadTypeDropdown', function () {
+        checkInputs('.project-');
+      });
+
 
       rootElement.on('change', '.form-group', function() {
         rootElement.find('.action-selected-field').prop("hidden", false);
@@ -635,7 +643,7 @@
           LinkValues.ProjectError.DoubleEndOfRoad.value,
           LinkValues.ProjectError.RoadNotReserved.value
         ];
-        if (_.contains(roadPartErrors, error.errorCode)) {
+        if (_.includes(roadPartErrors, error.errorCode)) {
           var rootElement = $('#feature-attributes');
           rootElement.find('#editProjectSpan').click();
         } else {

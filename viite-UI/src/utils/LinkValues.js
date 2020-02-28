@@ -19,7 +19,7 @@
 
     root.LinkGeomSource = {
         NormalLinkInterface:        {value: 1,  descriptionFI: "MML",            description: "NormalLinkInterface"},
-        ComplimentaryLinkInterface: {value: 2,  descriptionFI: "Täydentävä",     description: "ComplimentaryLinkInterface"},
+        ComplementaryLinkInterface: {value: 2,  descriptionFI: "Täydentävä",     description: "ComplementaryLinkInterface"},
         SuravageLinkInterface:      {value: 3,  descriptionFI: "Suravage",       description: "SuravageLinkInterface"},
         FrozenLinkInterface:        {value: 4,  descriptionFI: "MML jäädytetty", description: "FrozenLinkInterface"},
         HistoryLinkInterface:       {value: 5,  descriptionFI: "MML historia",   description: "HistoryLinkInterface"},
@@ -101,25 +101,28 @@
 
     root.RoadZIndex = {
         VectorLayer:                {value: 1},
-        UnderConstructionLayer:     {value: 4},
         AnomalousMarkerLayer:       {value: 2},
         CalibrationPointLayer:      {value: 3},
+        UnderConstructionLayer:     {value: 4},
         GeometryChangedLayer:       {value: 5},
         ReservedRoadLayer:          {value: 6},
         HistoricRoadLayer:          {value: 7},
         DirectionMarkerLayer:       {value: 8},
         GreenLayer:                 {value: 10},
+        unAddressedRoadsLayer:      {value: 11},
         IndicatorLayer:             {value: 99}
     };
 
     root.RoadType = {
-        PublicRoad:                     {value:1, description:"Yleinen tie"},
-        FerryRoad:                      {value:2, description:"Lauttaväylä yleisellä tiellä"},
-        MunicipalityStreetRoad:         {value:3, description:"Kunnan katuosuus"},
-        PublicUnderConstructionRoad:    {value:4, description:"Yleisen tien työmaa"},
-        PrivateRoadType:                {value:5, description:"Yksityistie"},
-        UnknownOwnerRoad:               {value:9, description:"Omistaja selvittämättä"},
-        Unknown:                        {value:99, description:"Ei määritelty"}
+        Empty:                          {value:0, description:"", displayText:"--"},
+        PublicRoad:                     {value:1, description:"Yleinen tie", displayText:"1 Maantie"},
+        FerryRoad:                      {value:2, description:"Lauttaväylä yleisellä tiellä", displayText:"2 Lauttaväylä maantiellä"},
+        MunicipalityStreetRoad:         {value:3, description:"Kunnan katuosuus", displayText:"3 Kunnan katuosuus"},
+        PublicUnderConstructionRoad:    {value:4, description:"Yleisen tien työmaa", displayText:"4 Maantien työmaa"},
+        PrivateRoadType:                {value:5, description:"Yksityistie", displayText:"5 Yksityistie"},
+        UnknownOwnerRoad:               {value:9, description:"Omistaja selvittämättä", displayText:"9 Omistaja selvittämättä"},
+        Unknown:                        {value:99, description:"Ei määritelty", displayText:""}
+
     };
 
     root.RoadTypeShort = {
@@ -182,22 +185,47 @@
     };
 
     root.NodeType = {
-        NormalIntersection:             {value:1, description:"Normaali tasoliittymä"},
-        Roundabout:                     {value:3, description:"Kiertoliittymä"},
-        YIntersection:                  {value:4, description:"Y-liittymä"},
-        Interchange:                    {value:5, description:"Eritasoliittymä"},
-        RoadBoundary:                   {value:7, description:"Maantien/kadun raja"},
-        ELYBorder:                      {value:8, description:"ELY-raja"},
-        MultiTrackIntersection:         {value:10, description:"Moniajoratainen liittymä"},
-        DropIntersection:               {value:11, description:"Pisaraliittymä"},
-        AccessRoad:                     {value:12, description:"Liityntätie"},
-        EndOfRoad:                      {value:13, description:"Tien loppu"},
-        Bridge:                         {value:14, description:"Silta"},
-        MaintenanceOpening:             {value:15, description:"Huoltoaukko"},
-        PrivateRoad:                    {value:16, description:"Yksityistie-tai katuliittymä"},
-        StaggeredIntersection:          {value:17, description:"Porrastettu liittymä"},
-        UnkownNodeType:                 {value:99, description:"Ei määritelty"}
+        NormalIntersection:             {value:1,   description:"Normaali tasoliittymä"},
+        Roundabout:                     {value:3,   description:"Kiertoliittymä"},
+        YIntersection:                  {value:4,   description:"Y-liittymä"},
+        Interchange:                    {value:5,   description:"Eritasoliittymä"},
+        RoadBoundary:                   {value:7,   description:"Maantien/kadun raja"},
+        ELYBorder:                      {value:8,   description:"ELY-raja"},
+        MultiTrackIntersection:         {value:10,  description:"Moniajoratainen liittymä"},
+        DropIntersection:               {value:11,  description:"Pisaraliittymä"},
+        AccessRoad:                     {value:12,  description:"Liityntätie"},
+        EndOfRoad:                      {value:13,  description:"Tien loppu"},
+        Bridge:                         {value:14,  description:"Silta"},
+        MaintenanceOpening:             {value:15,  description:"Huoltoaukko"},
+        PrivateRoad:                    {value:16,  description:"Yksityistie-tai katuliittymä"},
+        StaggeredIntersection:          {value:17,  description:"Porrastettu liittymä"},
+        UnknownNodeType:                {value:99,  description:"Ei määritelty"}
     };
 
+    root.NodePointType = {
+        RoadNodePoint:                  {value:1,   description:"Tien solmukohta"},
+        CalculatedNodePoint:            {value:2,   description:"Laskettu solmukohta"},
+        UnknownNodePointType:           {value:99,  description:"Ei määritelty"}
+    };
+
+    root.Tool = {
+        Select:             {value: "Select",   description: 'Solmun valinta'},
+        Attach:             {value: "Attach",   alias:["Select"]},
+        Add:                {value: "Add"},
+        Default:            {value: "Default",  alias:["Select"]},
+        Unknown:            {value: ""}
+    };
+
+    root.Discontinuity = {
+        EndOfRoad:             {value : 1, description:"Tien loppu"},
+        Discontinuous:         {value : 2, description:"Epäjatkuva"},
+        ChangingELYCode:       {value : 3, description:"ELY:n raja"},
+        MinorDiscontinuity:    {value : 4, description:"Lievä epäjatkuvuus"},
+        Continuous:            {value : 5, description:"Jatkuva"},
+        ParallelLink:          {value : 6, description:"Parallel Link"}
+
+    };
+
+    root.MaxAllowedDistanceForNodesToBeMoved = 200;
 })(window.LinkValues = window.LinkValues || {});
 

@@ -14,3 +14,8 @@ yarn.lock
 package-lock.json
 digiroad2.boot.log
 keys.properties
+/build/
+.classpath
+.project
+.settings/
+WebContent/

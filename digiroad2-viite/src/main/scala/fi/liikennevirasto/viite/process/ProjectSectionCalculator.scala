@@ -114,7 +114,7 @@ object ProjectSectionCalculator {
 
         val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
 
-        (trackCalcResult.leftProjectLinks ++ adjustedRestLeft, trackCalcResult.rightProjectLinks ++ adjustedRestRight)
+        (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
       }
     }
 
@@ -126,7 +126,7 @@ object ProjectSectionCalculator {
       val leftLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(left, addrSt = 0)
       val rightLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(right, addrSt = 0)
       val (leftAdjusted, rightAdjusted) = adjustTracksToMatch(leftLinks, rightLinks, None)
-      val (completedAdjustedRight, completedAdjustedLeft) = TrackSectionOrder.setCalibrationPoints(leftAdjusted, rightAdjusted, Map())
+      val (completedAdjustedLeft, completedAdjustedRight) = TrackSectionOrder.setCalibrationPoints(leftAdjusted, rightAdjusted, Map())
       val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(completedAdjustedRight), groupIntoSections(completedAdjustedLeft))
       calculatedSections.flatMap { sec =>
         if (sec.right == sec.left)

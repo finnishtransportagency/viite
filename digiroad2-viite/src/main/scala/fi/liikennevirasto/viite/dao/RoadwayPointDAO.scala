@@ -7,7 +7,18 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, createdBy: String, createdTime: Option[DateTime] = None, modifiedBy: Option[String] = None, modifiedTime: Option[DateTime] = None)
+case class RoadwayPoint(id: Long, roadwayNumber: Long, addrMValue: Long, createdBy: String, createdTime: Option[DateTime] = None,
+                        modifiedBy: Option[String] = None, modifiedTime: Option[DateTime] = None) {
+
+  def isNew: Boolean = {
+    id == NewIdValue
+  }
+
+  def isNotNew: Boolean = {
+    id != NewIdValue
+  }
+
+}
 
 class RoadwayPointDAO extends BaseDAO {
 
@@ -26,11 +37,12 @@ class RoadwayPointDAO extends BaseDAO {
   }
 
   def create(roadwayPoint: RoadwayPoint): Long = {
-    val id = if (roadwayPoint.id == NewIdValue) {
+    val id = if (roadwayPoint.isNew) {
       Sequences.nextRoadwayPointId
     } else {
       roadwayPoint.id
     }
+    logger.info(s"Insert roadway_point ($id, ${roadwayPoint.roadwayNumber}, ${roadwayPoint.addrMValue})")
     sqlu"""
       Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) Values
       ($id, ${roadwayPoint.roadwayNumber}, ${roadwayPoint.addrMValue}, ${roadwayPoint.createdBy}, ${roadwayPoint.createdBy})
@@ -40,6 +52,7 @@ class RoadwayPointDAO extends BaseDAO {
 
   def create(roadwayNumber: Long, addrMValue: Long, createdBy: String): Long = {
     val id = Sequences.nextRoadwayPointId
+    logger.info(s"Insert roadway_point ($id, $roadwayNumber, $addrMValue)")
     sqlu"""
       Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) Values
       ($id, $roadwayNumber, $addrMValue, $createdBy, $createdBy)
@@ -47,21 +60,25 @@ class RoadwayPointDAO extends BaseDAO {
     id
   }
 
-  def update(roadwayPoints: Seq[(Long, Long, String, Long)]): Seq[Long] = {
+  def update(roadwayPoint: RoadwayPoint): Long = {
+    update(Seq(roadwayPoint)).head
+  }
 
+  def update(roadwayPoints: Seq[RoadwayPoint]): Seq[Long] = {
     val ps = dynamicSession.prepareStatement("update ROADWAY_POINT SET ROADWAY_NUMBER = ?, ADDR_M = ?, MODIFIED_BY = ?, MODIFIED_TIME = SYSDATE WHERE ID = ?")
 
     roadwayPoints.foreach {
       rwPoint =>
-        ps.setLong(1, rwPoint._1)
-        ps.setLong(2, rwPoint._2)
-        ps.setString(3, rwPoint._3)
-        ps.setLong(4, rwPoint._4)
+        logger.info(s"Update roadway_point (id: ${rwPoint.id}, roadwayNumber: ${rwPoint.roadwayNumber}, addr: ${rwPoint.addrMValue})")
+        ps.setLong(1, rwPoint.roadwayNumber)
+        ps.setLong(2, rwPoint.addrMValue)
+        ps.setString(3, rwPoint.modifiedBy.getOrElse("-"))
+        ps.setLong(4, rwPoint.id)
         ps.addBatch()
     }
     ps.executeBatch()
     ps.close()
-    roadwayPoints.map(_._1)
+    roadwayPoints.map(_.id)
   }
 
   def fetch(id: Long): RoadwayPoint = {

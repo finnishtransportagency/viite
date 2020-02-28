@@ -63,12 +63,22 @@
     }, this);
 
     var setCursor = function(tool) {
-      var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'crosshair', 'Copy': 'copy'};
+      var cursor = {
+        'Select': 'default',
+        'Attach': 'default',
+        'Add': 'crosshair',
+        'Cut': 'crosshair',
+        'Copy': 'copy'
+      };
       map.getViewport().style.cursor = tool ? cursor[tool] : 'default';
     };
 
     eventbus.on('tool:changed', function(tool) {
       setCursor(tool);
+    });
+
+    eventbus.on('tool:clear', function() {
+      map.getViewport().style.cursor = 'default';
     });
 
     eventbus.on('coordinates:selected', function(position) {
@@ -139,7 +149,7 @@
     });
 
     $('body').on('keyup', function(evt){
-        if (_.contains(metaKeyCodes, evt.which) && evt.originalEvent.key !== LinkValues.SelectKeyName) // ctrl key up
+        if (_.includes(metaKeyCodes, evt.which) && evt.originalEvent.key !== LinkValues.SelectKeyName) // ctrl key up
         map.getViewport().style.cursor = "initial";
     });
 

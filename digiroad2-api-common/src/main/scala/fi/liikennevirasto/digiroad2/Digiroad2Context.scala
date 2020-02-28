@@ -216,18 +216,16 @@ object Digiroad2Context {
   lazy val revision: String = {
     revisionInfo.getProperty("digiroad2.revision")
   }
+
   lazy val deploy_date: String = {
     revisionInfo.getProperty("digiroad2.latestDeploy")
-  }
-  lazy val date_of_data: String = {
-    revisionInfo.getProperty("digiroad2.dateofData")
   }
 
   val env: String = System.getProperty("env")
 
   def getProperty(name: String): String = {
     val property = properties.getProperty(name)
-    if(property != null)
+    if (property != null)
       property
     else
       throw new RuntimeException(s"cannot find property $name for enviroment: $env")

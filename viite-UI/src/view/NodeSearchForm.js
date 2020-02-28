@@ -1,7 +1,6 @@
 (function (root) {
   root.NodeSearchForm = function (instructionsPopup, map, nodeCollection, backend) {
-    var container = $('#legendDiv');
-    var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
+    var formCommon = new FormCommon('node-search-');
     var header = function() {
       return '<header>' +
         '<span id="close-node-search" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>' +
@@ -10,12 +9,6 @@
 
     var label = function(label) {
       return '<label class="control-label-small">' + label + '</label>';
-    };
-
-    var inputNumber = function (id, maxLength) {
-      return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)' +
-        '" class="form-control node-input" id = "' + id + '"' +
-        (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + '/>';
     };
 
     var searchButton = function () {
@@ -34,7 +27,7 @@
         label('Tie') + label('Aosa') + label('Losa') +
         '</div>' +
         '<div id= "road-attributes" class="form-group">' +
-        inputNumber('tie', 5) + inputNumber('aosa', 3) + inputNumber('losa', 3) +
+          formCommon.nodeInputNumber('tie', 5) + formCommon.nodeInputNumber('aosa', 3) + formCommon.nodeInputNumber('losa', 3) +
         searchButton() +
         '</div>' +
         '<button id="clear-node-search" type="button" class="btn btn-clean-node-search btn-block" disabled>Tyhjenn&auml; tulokset</button>' +
@@ -60,18 +53,19 @@
     };
 
     var nodePointTemplateLink = function(nodePointTemplate){
-      return '<a id=' + nodePointTemplate.id + ' class="node-point-template-link" href="#nodePointTemplate/' + nodePointTemplate.id + '" style="font-weight:bold;cursor:pointer;">' +
+      return '<a id=' + nodePointTemplate.id + ' class="node-point-template-link" href="#node/nodePointTemplate/' + nodePointTemplate.id + '" style="font-weight:bold;cursor:pointer;color: darkorange;">' +
         nodePointTemplate.roadNumber + ' / ' +
-        nodePointTemplate.track + ' / ' +
         nodePointTemplate.roadPartNumber + ' / ' +
         nodePointTemplate.addrM + '</a>';
     };
 
     var junctionTemplateLink = function(junctionTemplate){
-      return '<a id=' + junctionTemplate.junctionId + ' class="junction-template-link" href="#junctionTemplate/' + junctionTemplate.junctionId + '" style="font-weight:bold;cursor:pointer;color: darkorange;">' +
+      return '<a id=' + junctionTemplate.id + ' class="junction-template-link" href="#node/junctionTemplate/' + junctionTemplate.id + '" style="font-weight:bold;cursor:pointer;">' +
         junctionTemplate.roadNumber + ' / ' +
+        junctionTemplate.track + ' / ' +
         junctionTemplate.roadPartNumber + ' / ' +
         junctionTemplate.addrM + '</a>';
+
     };
 
     var nodesAndRoadAttributesHtmlList = function () {
@@ -86,8 +80,8 @@
       return text;
     };
 
-    var nodeTemplatesHtml = function (nodePointTemplates) {
-      var groups = _.groupBy(nodePointTemplates, function (template) {
+    var junctionTemplatesHtml = function (junctionTemplates) {
+      var groups = _.groupBy(junctionTemplates, function (template) {
         return template.elyCode;
       });
       var text = "";
@@ -102,16 +96,19 @@
             .value();
           text += elyNameLabel(sortedTemplates[0].elyCode);
           text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / AJR / OSA / AET)</label></br>';
-          _.each(sortedTemplates, function(nodePointTemplate){
-            text += nodePointTemplateLink(nodePointTemplate) + '</br>';
+          _.each(sortedTemplates, function(junctionTemplate) {
+            text += junctionTemplateLink(junctionTemplate) + '</br>';
           });
         });
       }
       return text;
     };
 
-    var junctionTemplatesHtml = function (junctionTemplates) {
-      var groups = _.groupBy(junctionTemplates, function (template) {
+    var nodePointTemplatesHtml = function (nodePointTemplates) {
+      var uniqueNPTemplates = _.uniqWith(nodePointTemplates, function (o1, o2) {
+        return o1.roadNumber === o2.roadNumber && o1.roadPartNumber === o2.roadPartNumber && o1.addrM === o2.addrM;
+      });
+      var groups = _.groupBy(uniqueNPTemplates, function (template) {
         return template.elyCode;
       });
       var text = "";
@@ -126,8 +123,8 @@
             .value();
           text += elyNameLabel(sortedTemplates[0].elyCode);
           text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / OSA / AET)</label></br>';
-          _.each(sortedTemplates, function(junctionTemplate){
-            text += junctionTemplateLink(junctionTemplate) + '</br>';
+          _.each(sortedTemplates, function(nodePointTemplate) {
+            text += nodePointTemplateLink(nodePointTemplate) + '</br>';
           });
         });
       }
@@ -151,18 +148,10 @@
 
       var getTemplates = function() {
         backend.getTemplates(function(data){
-          eventbus.trigger('templates:fetched', data);
-          var nodePointTemplates = _.map(_.filter(data, function(nodePoint){
-            return !_.isUndefined(nodePoint.nodePointTemplate) ;
-          }), function(template){
-            return template.nodePointTemplate;
-          });
-          var junctionTemplates = _.map(_.filter(data, function (junction) {
-            return !_.isUndefined(junction.junctionTemplate);
-          }), function(template) {
-            return template.junctionTemplate;
-          });
-          $('#nodes-and-junctions-content').html(nodeTemplatesHtml(nodePointTemplates) + junctionTemplatesHtml(junctionTemplates));
+          var nodePointTemplates = data.nodePointTemplates;
+          var junctionTemplates = data.junctionTemplates;
+          eventbus.trigger('templates:fetched', nodePointTemplates, junctionTemplates);
+          $('#nodes-and-junctions-content').html(junctionTemplatesHtml(junctionTemplates) + nodePointTemplatesHtml(nodePointTemplates));
           applicationModel.removeSpinner();
         });
       };
@@ -219,12 +208,12 @@
           eventbus.trigger('nodeSearchTool:clickNode', event.currentTarget.id, map);
         });
 
-        rootElement.on('click', '.node-point-template-link', function (event) {
-          eventbus.trigger('nodeSearchTool:clickNodePointTemplate', event.currentTarget.id, map);
+        rootElement.one('click', '.node-point-template-link', function (event) {
+          eventbus.trigger('nodeSearchTool:clickNodePointTemplate', event.currentTarget.id);
         });
 
         rootElement.on('click', '.junction-template-link', function (event) {
-          eventbus.trigger('nodeSearchTool:clickJunctionTemplate', event.currentTarget.id, map);
+          eventbus.trigger('nodeSearchTool:clickJunctionTemplate', event.currentTarget.id);
         });
       });
     };

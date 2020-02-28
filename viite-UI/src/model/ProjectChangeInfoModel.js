@@ -6,33 +6,32 @@
     var changeTable={id:0,name:"templateproject", user:"templateuser",changeDate:"1980-01-28",changeInfoSeq:changesInfo};
     var projectChanges={changeTable:changeTable, validationErrors:[]};
 
-    function loadChanges(changeData) {
-      if (!_.isUndefined(changeData) && changeData.discontinuity !== null) {
-        eventbus.trigger('projectChanges:fetched', changeData);
+    function loadChanges() {
+      var warningM = projectChanges.warningMessage;
+      if (!_.isUndefined(warningM))
+        new ModalConfirm(warningM);
+      if (!_.isUndefined(projectChanges) && projectChanges.discontinuity !== null) {
+        eventbus.trigger('projectChanges:fetched', projectChanges);
       }
     }
 
     function getChanges(projectID, sortFn){
       backend.getChangeTable(projectID, function(changeData) {
-        loadChanges(roadChangeAPIResultParser(changeData));
+        roadChangeAPIResultParser(changeData);
         sortFn();
+        loadChanges();
       });
     }
 
     function sortChanges(side, reverse) {
-        projectChanges.changeTable.changeInfoSeq =
-          _.sortBy(_.sortBy(_.sortBy(_.sortBy(projectChanges.changeTable.changeInfoSeq,
-            side + '.trackCode'),
-            side + '.startAddressM'),
-            side + '.startRoadPartNumber'),
-            side + '.roadNumber');
-        if (reverse) projectChanges.changeTable.changeInfoSeq.reverse();
-        loadChanges(projectChanges);
+      projectChanges.changeTable.changeInfoSeq = _.sortBy(projectChanges.changeTable.changeInfoSeq,
+        [side + ".roadNumber", side + ".startRoadPartNumber", side + ".startAddressM", side + ".trackCode"]);
+      if (reverse) projectChanges.changeTable.changeInfoSeq.reverse();
+      return projectChanges;
     }
 
     function roadChangeAPIResultParser(changeData) {
-      projectChanges=changeData;
-      return projectChanges;
+      projectChanges = changeData;
     }
 
     return{
