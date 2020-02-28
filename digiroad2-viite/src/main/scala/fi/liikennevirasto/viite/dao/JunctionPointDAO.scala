@@ -104,6 +104,7 @@ class JunctionPointDAO extends BaseDAO {
         s"""
           $junctionPointQuery
           WHERE J.ID IN (${junctionIds.mkString(",")}) AND JP.VALID_TO IS NULL
+          AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
         """
       queryList(query)
     }
