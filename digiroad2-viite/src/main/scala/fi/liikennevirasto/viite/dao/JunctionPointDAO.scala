@@ -137,24 +137,6 @@ class JunctionPointDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByRoadwayPointIds(roadwayPointIds: Seq[Long]): Seq[JunctionPoint] = {
-    if (roadwayPointIds.isEmpty) {
-      Seq()
-    } else {
-      val query =
-        s"""
-          SELECT JP.ID, JP.BEFORE_AFTER, JP.ROADWAY_POINT_ID, JP.JUNCTION_ID, J.START_DATE, J.END_DATE, JP.VALID_FROM, JP.VALID_TO, JP.CREATED_BY, JP.CREATED_TIME,
-          RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.DISCONTINUITY
-          FROM JUNCTION_POINT JP
-          JOIN JUNCTION J ON (J.ID = JP.JUNCTION_ID AND J.VALID_TO IS NULL AND J.END_DATE IS NULL)
-          JOIN ROADWAY_POINT RP ON (RP.ID = JP.ROADWAY_POINT_ID)
-          JOIN ROADWAY RW ON (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
-          WHERE JP.ROADWAY_POINT_ID IN (${roadwayPointIds.mkString(", ")})
-        """
-      queryList(query)
-    }
-  }
-
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionPoint] = {
     time(logger, "Fetch JunctionPoints by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),

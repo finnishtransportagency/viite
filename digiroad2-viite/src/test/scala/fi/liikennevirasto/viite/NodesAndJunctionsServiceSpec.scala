@@ -207,6 +207,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       }
     }
   }
+
 /*  TODO VIITE-2303 - Why can't I run this test now ?
   test("Test getTemplatesByBoundingBox When matching templates Then return them") {
     runWithRollback {
@@ -228,7 +229,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       templates._2.head._2.head.junctionId should be(junctionId)
     }
   }
-*/
+ */
+
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates roadsToHead case When creating projectlinks Then junction template and junctions points should be handled/created properly") {
     runWithRollback {
       /*
@@ -963,14 +965,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val transferLinearLocation = orderedcll1.copy(id = transferCombLink1.linearLocationId, roadwayNumber = transferCombLink1.roadwayNumber)
       val terminatedLinearLocation = orderedcll2.copy(id = terminatedCombLink2.linearLocationId, roadwayNumber = terminatedCombLink2.roadwayNumber)
 
-//      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedLeftLink1.roadwayNumber, unchangedRightLink1.roadwayNumber, transferCombLink1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId, rwTransfer))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedLeftLink1.roadwayNumber, transferCombLink1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rwTransfer))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(transferCombLink1.geometry.last, transferCombLink1.geometry.last), roadNumberLimits)).thenReturn(Seq(rll1, transferLinearLocation, terminatedLinearLocation))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(terminatedCombLink2.roadwayNumber), false)).thenReturn(Seq(rwTerminated))
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(unchangedRightLink1.geometry.last, transferCombLink1.geometry.last), roadNumberLimits)).thenReturn(Seq(rll1, transferLinearLocation))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedRightLink1.roadwayNumber, transferCombLink1.roadwayNumber), false)).thenReturn(Seq(rw2WithId, rwTransfer))
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(unchangedLeftLink1.roadwayNumber, unchangedRightLink1.roadwayNumber, transferCombLink1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId, rwTransfer))
-
 
       buildTestDataForProject(Some(project2),
         Some(Seq(rwTransfer, rwTerminated)),
@@ -1000,12 +1000,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val junctionPointsAfterTermination: Seq[JunctionPoint] = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
       junctionPointsAfterTermination.length should be(2)
 
-      val terminatedRoadwayPointId = roadwayPointDAO.fetchByRoadwayNumber(terminatedCombLink2.roadwayNumber).map(_.id)
-      val terminatedJunctionPoint = junctionPointDAO.fetchAllByRoadwayPointIds(terminatedRoadwayPointId)
-      terminatedJunctionPoint.length should be(1)
-      terminatedJunctionPoint count (_.validTo.isDefined) should be(1)
-
-      val junctionsAfterExpire = junctionDAO.fetchAllByIds((junctionPointsAfterTermination ++ terminatedJunctionPoint).map(_.junctionId))
+      val junctionsAfterExpire = junctionDAO.fetchByIds(junctionPointsAfterTermination.map(_.junctionId))
       junctionsAfterExpire.length should be(1)
     }
   }
@@ -1705,6 +1700,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  // TODO VIITE-2303 - this fails (1)
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts that connects to other existing part which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When changing the EndOfRoad link of last part to Discontinuous and creating a new one with EndOfRoad that does not connect to the same road Then the existing Junction and his points should be expired.") {
     runWithRollback {
@@ -1877,6 +1873,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  // TODO VIITE-2303 - this fails (2)
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts that connects to other existing part in the beginning point of its geometry which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When changing the EndOfRoad link of last part to Discontinuous and creating a new one with EndOfRoad that does not connect to the same road Then the existing Junction and his points should be expired.") {
     runWithRollback {
@@ -2044,6 +2041,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  // TODO VIITE-2303 - this fails (3)
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts that connects to other existing part in the ending point of its geometry which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When changing the EndOfRoad link of last part to Continuous and creating a new one with EndOfRoad that does not connect to the same road Then the existing Junction and his points should be expired.") {
     runWithRollback {
@@ -2399,6 +2397,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  // TODO VIITE-2303 - this fails (4)
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road that connects to other road Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When terminating the road that connects in the middle of the other one Then the existing Junction and his points should be expired.") {
     runWithRollback {
@@ -2552,6 +2551,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  // TODO VIITE-2303 - this fails (5)
   // <editor-fold desc="Ramps and roundabouts">
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new ramps road part that connects to other part in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When expiring the one part that will make the ramp road parts not intersecting itself Then the existing Junction and its Junction points should be expired.") {
@@ -3453,6 +3453,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  // TODO VIITE-2303 - this fails (6)
   /**
     * Test case for Termination:
     * Reserve road number 2 part 1
@@ -3550,6 +3551,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  // TODO VIITE-2303 - this fails (7)
   /**
     * Test case for Termination:
     * Reserve road number 2 part 1
@@ -3645,6 +3647,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  // TODO VIITE-2303 - this fails (8)
   test("Test expireObsoleteNodesAndJunctions When there is complex changes in the project Then Junction and its Junction points should be properly expired") {
     runWithRollback {
 
