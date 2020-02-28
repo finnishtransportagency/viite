@@ -780,7 +780,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       junctionPoints.length should be(10)
       junctionTemplates.size should be(3)
 
-      /*  VIITE-2068  Expiring process was expiring those valid junctions that were previously created  */
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(leftPLinks ++ rightPLinks, Some(project.startDate.minusDays(1)), username = project.createdBy)
 
       val shouldExistJunctionPoints = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -1698,7 +1697,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  // TODO VIITE-2303 - this fails (1)
+
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts that connects to other existing part which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When changing the EndOfRoad link of last part to Discontinuous and creating a new one with EndOfRoad that does not connect to the same road Then the existing Junction and his points should be expired.") {
     runWithRollback {
@@ -1852,7 +1851,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val rwPoints = roadwayPointDAO.fetchByRoadwayNumbers(Seq(combLink1, combLink2, transferLink, newLink).map(_.roadwayNumber)).map(_.id)
       val junctionPointsAfterTerminating = junctionPointDAO.fetchByRoadwayPointIds(rwPoints)
-      junctionPointsAfterTerminating.length should be(0) // 3 was not equal to 0
+      junctionPointsAfterTerminating.length should be(0)
 
       // Check that junctions for roadways were expired
       val junctionTemplatesAfterExpire = junctionDAO.fetchTemplatesByRoadwayNumbers(templateRoadwayNumbers)
@@ -1866,7 +1865,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  // TODO VIITE-2303 - this fails (2)
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts that connects to other existing part in the beginning point of its geometry which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When changing the EndOfRoad link of last part to Discontinuous and creating a new one with EndOfRoad that does not connect to the same road Then the existing Junction and his points should be expired.") {
     runWithRollback {
@@ -2020,7 +2018,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val rwPoints = roadwayPointDAO.fetchByRoadwayNumbers(Seq(combLink1, combLink2, transferLink, newLink).map(_.roadwayNumber)).map(_.id)
       val junctionPointsAfterTerminating = junctionPointDAO.fetchByRoadwayPointIds(rwPoints)
-      junctionPointsAfterTerminating.length should be(0) // 2 was not equal to 0
+      junctionPointsAfterTerminating.length should be(0)
 
       // Check that junctions for roadways were expired
       val junctionTemplatesAfterExpire = junctionDAO.fetchTemplatesByRoadwayNumbers(templateRoadwayNumbers)
@@ -2034,7 +2032,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  // TODO VIITE-2303 - this fails (3)
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts that connects to other existing part in the ending point of its geometry which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When changing the EndOfRoad link of last part to Continuous and creating a new one with EndOfRoad that does not connect to the same road Then the existing Junction and his points should be expired.") {
     runWithRollback {
@@ -2188,7 +2185,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val rwPoints = roadwayPointDAO.fetchByRoadwayNumbers(Seq(combLink1, combLink2, transferLink, newLink).map(_.roadwayNumber)).map(_.id)
       val junctionPointsAfterTerminating = junctionPointDAO.fetchByRoadwayPointIds(rwPoints)
-      junctionPointsAfterTerminating.length should be(0) // 2 was not equal to 0
+      junctionPointsAfterTerminating.length should be(0)
 
       // Check that junctions for roadways were expired
       val junctionTemplatesAfterExpire = junctionDAO.fetchTemplatesByRoadwayNumbers(templateRoadwayNumbers)
@@ -2543,7 +2540,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  // TODO VIITE-2303 - this fails (4)
   // <editor-fold desc="Ramps and roundabouts">
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new ramps road part that connects to other part in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When expiring the one part that will make the ramp road parts not intersecting itself Then the existing Junction and its Junction points should be expired.") {
@@ -2678,14 +2674,14 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val rwPoints = roadwayPointDAO.fetchByRoadwayNumbers(Seq(combLink1, combLink2, terminatedLink1).map(_.roadwayNumber)).map(_.id)
       val junctionPointsAfterTerminating = junctionPointDAO.fetchByRoadwayPointIds(rwPoints)
-      junctionPointsAfterTerminating.length should be(0) // 2 was not equal to 0
+      junctionPointsAfterTerminating.length should be(0)
       // Check that junctions for roadways were expired
       val junctionsAfterExpire = junctionDAO.fetchTemplatesByRoadwayNumbers(templateRoadwayNumbers)
       junctionsAfterExpire.length should be(0)
 
       // Check that terminated junction was created
       val terminatedJunctionsAfterExpire = junctionDAO.fetchExpiredByRoadwayNumbers(templateRoadwayNumbers)
-      terminatedJunctionsAfterExpire.length should be(2) // TODO (1) VIITE-2293 :> This is should return 0, since points are no longer valid
+      terminatedJunctionsAfterExpire.length should be(2)
       terminatedJunctionsAfterExpire count (_.endDate.isDefined) should be(1)
       terminatedJunctionsAfterExpire count (_.validTo.isDefined) should be(1)
     }
@@ -3616,7 +3612,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(Seq(terminatedRoadLink), Some(terminatedRoadLink.endDate.get))
 
       // Old junction should be expired
-      junctionDAO.fetchByIds(junctionPointTemplates.map(_.junctionId)).length should be(0) // TODO Wtf !? -- GG, WP !
+      junctionDAO.fetchByIds(junctionPointTemplates.map(_.junctionId)).length should be(0)
 
       // New junction should be created with end date
       val terminatedJunctions = junctionDAO.fetchExpiredByRoadwayNumbers(Seq(terminatedRoadLink.roadwayNumber))
@@ -3637,7 +3633,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  // TODO VIITE-2303 - this fails (5)
   test("Test expireObsoleteNodesAndJunctions When there is complex changes in the project Then Junction and its Junction points should be properly expired") {
     runWithRollback {
 
