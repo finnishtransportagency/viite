@@ -208,7 +208,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-/*  TODO VIITE-2303 - Why can't I run this test now ?
   test("Test getTemplatesByBoundingBox When matching templates Then return them") {
     runWithRollback {
       val roadwayNumber = Sequences.nextRoadwayNumber
@@ -229,7 +228,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       templates._2.head._2.head.junctionId should be(junctionId)
     }
   }
- */
 
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates roadsToHead case When creating projectlinks Then junction template and junctions points should be handled/created properly") {
     runWithRollback {
@@ -1704,18 +1702,16 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts that connects to other existing part which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When changing the EndOfRoad link of last part to Discontinuous and creating a new one with EndOfRoad that does not connect to the same road Then the existing Junction and his points should be expired.") {
     runWithRollback {
-      /*
-                   |
-                   |
-                   C3
-                   |
-                   v
-          |--C1-->|0|--C2-->|
+      /*            |
+                    C3
+                    |
+                    v
+           |--C1-->|0|--C2-->|
 
-        * Note:
-          0: Illustration where junction points should be created
-          C: Combined track
-        */
+          Note:
+            0: Illustration where junction points should be created
+            C: Combined track
+       */
       val road = 999L
       val part1 = 1L
       val part2 = 2L
@@ -1750,7 +1746,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(lc1, lc2, lc3)), Some(Seq(combLink1, combLink2)))
 
       val projectChanges = List(
-        //Combined
+        //  combined
         ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
           RoadwayChangeInfo(AddressChangeType.New,
             RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.Continuous), Some(8L)),
@@ -1789,21 +1785,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(templateRoadwayNumbers)
       junctions.size should be(1)
 
-      /*
-      preparing expiring data
-      /*
+      /*  Preparing expiring data
 
-                   |
-                   C3
-                   |
-                   v
-           |--C1-->|--C2-->|--C4-->|
+                  |
+                  C3
+                  |
+                  v
+          |--C1-->|--C2-->|--C4-->|
 
-      * Note:
-        C: Combined track
-      */
-
-    */
+          Note:
+            C: Combined track
+       */
       val project2 = Project(projectId + 1, ProjectState.Incomplete, "ProjectNewEndOfRoadLinks", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       val TerminatingProjectChanges = List(
@@ -1861,6 +1853,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwPoints = roadwayPointDAO.fetchByRoadwayNumbers(Seq(combLink1, combLink2, transferLink, newLink).map(_.roadwayNumber)).map(_.id)
       val junctionPointsAfterTerminating = junctionPointDAO.fetchByRoadwayPointIds(rwPoints)
       junctionPointsAfterTerminating.length should be(0) // 3 was not equal to 0
+
       // Check that junctions for roadways were expired
       val junctionTemplatesAfterExpire = junctionDAO.fetchTemplatesByRoadwayNumbers(templateRoadwayNumbers)
       junctionTemplatesAfterExpire.length should be(0)
