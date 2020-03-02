@@ -78,6 +78,8 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
   lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
+  lazy val isNotCalculated: Boolean = endAddrMValue == 0L
+
   def oppositeEndPoint(point: Point) : Point = {
     if (GeometryUtils.areAdjacent(point, geometry.head)) geometry.last else geometry.head
   }
