@@ -366,8 +366,8 @@ trait VVHClientOperations {
       } catch {
         case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
       } finally {
+        response.close()
         if (response != null) {
-          response.close()
           if (response.getStatusLine.getStatusCode >= 300) {
             return Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
           }
