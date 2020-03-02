@@ -178,41 +178,35 @@ trait KMTKClientOperations {
       "UTF-8")
   }
 
-  private def mcodeParam(municipalities: Iterable[Int]): String = {
-    s"""mcode=${municipalities.mkString(",")}"""
+  private def mcodeParam(municipality: Int): String = {
+    s"""municipalityCode=$municipality"""
   }
 
   private def linklistParam(kmtkIds: Iterable[KMTKID]): String = {
-    "linklist=" + URLEncoder.encode(
-      s"[${kmtkIds.map(k => s"""{"uuid":"${k.uuid}","version":${k.version}}""").mkString(",")}]",
+    "links=" + URLEncoder.encode(
+      s"[${kmtkIds.map(k => s"""{"kmtkId":"${k.uuid}"}""").mkString(",")}]",
       "UTF-8")
-  }
-
-  private[kmtk] def timespanParam(dateRange: (DateTime, DateTime)): String = {
-    val from = dateRange._1.toString(dateTimeFormatter)
-    val to = dateRange._2.toString(dateTimeFormatter)
-    "timespan=" + URLEncoder.encode(s"""{"from":"$from","to":"$to"}""", "UTF-8")
   }
 
   private def serviceUrlByBoundingBox(bounds: BoundingRectangle): String = {
     val bbox = bboxParam(bounds)
-    restApiEndPoint + serviceName + s"?$bbox"
+    restApiEndPoint + serviceName + s"/items?$bbox&bbox-crs=http://www.opengis.net/def/crs/EPSG/0/3067&crs=http://www.opengis.net/def/crs/EPSG/0/3067"
   }
 
-  private def serviceUrlByMunicipality(municipalities: Iterable[Int]): String = {
-    val mcode = mcodeParam(municipalities)
-    restApiEndPoint + serviceName + s"?$mcode"
+  private def serviceUrlByMunicipality(municipality: Int): String = {
+    val mcode = mcodeParam(municipality)
+    restApiEndPoint + serviceName + s"/items?$mcode"
   }
 
   protected def serviceUrlByIds(kmtkIds: Iterable[KMTKID]): String = {
     val linklist: String = linklistParam(kmtkIds)
-    restApiEndPoint + serviceName + s"?$linklist"
+    restApiEndPoint + serviceName + s"/items?$linklist"
   }
 
-  private def serviceUrlByBoundingBoxAndMunicipalities(bounds: BoundingRectangle, municipalities: Iterable[Int]): String = {
+  private def serviceUrlByBoundingBoxAndMunicipalities(bounds: BoundingRectangle, municipality: Option[Int]): String = {
     val bbox = bboxParam(bounds)
-    val mcode = if (municipalities.nonEmpty) "&" + mcodeParam(municipalities) else ""
-    restApiEndPoint + serviceName + s"?$bbox$mcode"
+    val mcode = if (municipality.isDefined) "&" + mcodeParam(municipality.get) else ""
+    restApiEndPoint + serviceName + s"/items?$bbox&bbox-crs=http://www.opengis.net/def/crs/EPSG/0/3067&crs=http://www.opengis.net/def/crs/EPSG/0/3067$mcode"
   }
 
   protected def createHttpClient: CloseableHttpClient = {
@@ -265,7 +259,7 @@ trait KMTKClientOperations {
     * Returns KMTK road links by municipality.
     */
   protected def queryByMunicipality(municipality: Int): Seq[KMTKFeature] = {
-    val url = serviceUrlByMunicipality(Set(municipality))
+    val url = serviceUrlByMunicipality(municipality)
     fetchFeaturesAndLog(url)
   }
 
@@ -283,8 +277,8 @@ trait KMTKClientOperations {
   /**
     * Returns KMTK road links in bounding box area. Municipalities are optional.
     */
-  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[KMTKFeature] = {
-    val url = serviceUrlByBoundingBoxAndMunicipalities(bounds, municipalities)
+  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipality: Option[Int]): Seq[KMTKFeature] = {
+    val url = serviceUrlByBoundingBoxAndMunicipalities(bounds, municipality)
     fetchFeaturesAndLog(url)
   }
 
@@ -317,7 +311,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   override type KMTKType = KMTKRoadLink
 
   protected override val restApiEndPoint: String = kmtkRestApiEndPoint
-  protected override val serviceName = "roadlink"
+  protected override val serviceName = "road_links"
   protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
 
   def fetchByMtkId(mtkId: Long): Seq[KMTKRoadLink] = {
@@ -340,13 +334,13 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     * Returns KMTK road links in bounding box area. Municipalities are optional.
     */
   // TODO filtering by road number ranges
-  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[KMTKFeature] = {
+  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipality: Option[Int] = None, includeAllPublicRoads: Boolean = false): Seq[KMTKFeature] = {
     /*val roadNumberFilters = */ if (roadNumbers.nonEmpty || includeAllPublicRoads)
       throw new NotImplementedError("Filtering by road number not supported yet.")
     // Some(withRoadNumbersFilter(roadNumbers, includeAllPublicRoads))
     else
       None
-    queryByMunicipalitiesAndBounds(bounds, municipalities /*, roadNumberFilters*/)
+    queryByMunicipalitiesAndBounds(bounds, municipality /*, roadNumberFilters*/)
   }
 
   // TODO
@@ -482,8 +476,8 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   /**
     * Returns KMTK road links. Uses Scala Future for concurrent operations.
     */
-  def fetchByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[KMTKRoadLink] = {
-    queryByMunicipalitiesAndBounds(bounds, municipalities).map(feature => kmtkFeatureToKMTKRoadLink(feature))
+  def fetchByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipality: Option[Int]): Seq[KMTKRoadLink] = {
+    queryByMunicipalitiesAndBounds(bounds, municipality).map(feature => kmtkFeatureToKMTKRoadLink(feature))
   }
 
   def fetchByBounds(bounds: BoundingRectangle): Seq[KMTKRoadLink] = {
@@ -493,20 +487,20 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   /**
     * Returns KMTK road links. Uses Scala Future for concurrent operations.
     */
-  def fetchByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[KMTKRoadLink]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, municipalities).map(feature => kmtkFeatureToKMTKRoadLink(feature)))
+  def fetchByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipality: Option[Int]): Future[Seq[KMTKRoadLink]] = {
+    Future(queryByMunicipalitiesAndBounds(bounds, municipality).map(feature => kmtkFeatureToKMTKRoadLink(feature)))
   }
 
-  def fetchByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[KMTKRoadLink] = {
-    queryByMunicipalitiesAndBounds(bounds, municipalities).map(feature => kmtkFeatureToKMTKRoadLink(feature))
+  def fetchByBoundsAndMunicipalities(bounds: BoundingRectangle, municipality: Option[Int]): Seq[KMTKRoadLink] = {
+    queryByMunicipalitiesAndBounds(bounds, municipality).map(feature => kmtkFeatureToKMTKRoadLink(feature))
   }
 
   /**
     * Returns KMTK road links. Uses Scala Future for concurrent operations.
     */
-  def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
+  def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipality: Option[Int], roadNumbers: Seq[(Int, Int)],
                                                  includeAllPublicRoads: Boolean = false): Future[Seq[KMTKRoadLink]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, roadNumbers, municipalities, includeAllPublicRoads).map(feature => kmtkFeatureToKMTKRoadLink(feature)))
+    Future(queryByMunicipalitiesAndBounds(bounds, roadNumbers, municipality, includeAllPublicRoads).map(feature => kmtkFeatureToKMTKRoadLink(feature)))
   }
 
   // TODO Is this needed?

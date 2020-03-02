@@ -22,12 +22,12 @@ import scala.concurrent.{Await, Future, Promise}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  class TestService(vvhClient: VVHClient, kmtkClient: KMTKClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: RoadLinkSerializer = new DummySerializer) extends RoadLinkService(vvhClient, kmtkClient, eventBus, vvhSerializer, false) {
+  class TestService(vvhClient: VVHClient, kmtkClient: KMTKClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: RoadLinkSerializer = new DummySerializer) extends RoadLinkService(vvhClient, kmtkClient, eventBus, vvhSerializer) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
 
-  class RoadLinkTestService(vvhClient: VVHClient, kmtkClient: KMTKClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: RoadLinkSerializer = new DummySerializer) extends RoadLinkService(vvhClient, kmtkClient, eventBus, vvhSerializer, false) {
+  class RoadLinkTestService(vvhClient: VVHClient, kmtkClient: KMTKClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: RoadLinkSerializer = new DummySerializer) extends RoadLinkService(vvhClient, kmtkClient, eventBus, vvhSerializer) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }

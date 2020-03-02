@@ -55,15 +55,6 @@ class KMTKClientSpec extends FunSuite with Matchers {
     p3.z should not be (0.0 +- epsilon)
   }
 
-  test("Test roadLinkData.timespanParam When valid given dates Then should return correctly formatted timespan parameter string") {
-    val from = "2019-07-01T01:02:03.123+03:00"
-    val to = "2019-12-31T04:05:06.456+02:00"
-    val fromDateTime = DateTime.parse(from)
-    val toDateTime = DateTime.parse(to)
-    val timespan = kmtkClient.roadLinkData.timespanParam(fromDateTime, toDateTime)
-    timespan should be("timespan=" + URLEncoder.encode(s"""{"from":"$from","to":"$to"}""", "UTF-8"))
-  }
-
   test("Test inputStreamToFeatureCollection When got valid json response Then should include dates") {
     val featureCollection = mockFeatureCollection
     val properties = featureCollection.get.features.head.properties
