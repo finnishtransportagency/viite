@@ -149,7 +149,8 @@ class JunctionPointDAO extends BaseDAO {
         s"""
           $junctionPointQuery
           LEFT JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-          WHERE JP.VALID_TO IS NULL AND $boundingBoxFilter
+          WHERE RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
+          AND JP.VALID_TO IS NULL AND $boundingBoxFilter
         """
       queryList(query)
     }
