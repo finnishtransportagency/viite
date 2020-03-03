@@ -33,6 +33,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
   private def roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, new ProjectLinkDAO)
 
+  val viiteVkmClient = new ViiteVkmClient
+
   /**
     * Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
     * See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
@@ -221,6 +223,57 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     withDynSession {
       roadwayDAO.fetchAllCurrentRoadNumbers()
     }
+  }
+
+  def collectResult(dataType: String, inputData: Seq[Any], oldSeq: Seq[Map[String, Seq[Any]]]): Seq[Map[String, Seq[Any]]] = {
+    val result: Seq[Map[String, Seq[Any]]] = Seq(Map((dataType, inputData)))
+    val newSeq: Seq[Map[String, Seq[Any]]] = oldSeq ++ result
+    return newSeq
+  }
+
+  def getSearchResults(searchString: Option[String]): Seq[Map[String, Seq[Any]]] = {
+    logger.debug("getSearchResults")
+    val parsedInput = locationInputParser(searchString)
+    val searchType = parsedInput.head._1
+    var searchResult: Seq[Any] = null
+    var resultSeq: Seq[Map[String, Seq[Any]]] = Seq.empty[Map[String, Seq[Any]]]
+    if (searchType == "road") {
+      val nums = parsedInput.head._2
+      if (nums.size == 3) {
+        searchResult = getRoadAddress(nums(0), nums(1), nums(2), None).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
+        resultSeq = collectResult("road", searchResult, resultSeq)
+      } else if (nums.size == 2) {
+        searchResult = getRoadAddressWithRoadNumberParts(nums(0), Set(nums(1)), Set(Track.Combined, Track.LeftSide, Track.RightSide)).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
+        resultSeq = collectResult("road", searchResult, resultSeq)
+      } else if (nums.size == 1) {
+        //          The number can be LINKID, MTKID or roadNumber
+        var searchResultPoint = roadLinkService.getMidPointByLinkId(nums(0))
+        resultSeq = collectResult("linkId", Seq(searchResultPoint), resultSeq)
+        searchResultPoint = roadLinkService.getRoadLinkMiddlePointByMtkId(nums(0))
+        resultSeq = collectResult("mtkId", Seq(searchResultPoint), resultSeq)
+        searchResult = getRoadAddressWithRoadNumberAddress(nums(0)).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
+        resultSeq = collectResult("road", searchResult, resultSeq)
+      }
+    }
+    if (searchType == "street") {
+      searchResult = Seq(viiteVkmClient.postFormUrlEncoded("/vkm/geocode", Map(("address",searchString.getOrElse("")))))
+      resultSeq = collectResult("street", searchResult, resultSeq)
+    }
+    return resultSeq
+  }
+
+  def locationInputParser(searchStringOption: Option[String]): Map[String, Seq[Long]] = {
+    val searchString = searchStringOption.getOrElse("")
+    val numRegex = """(\d+)""".r
+    val nums = numRegex.findAllIn(searchString).map(_.toLong).toSeq
+    var searchType = ""
+    if (nums.size == 0) {
+      searchType = "street"
+    } else {
+      searchType = "road"
+    }
+    val ret = Map((searchType, nums))
+    ret
   }
 
   /**
