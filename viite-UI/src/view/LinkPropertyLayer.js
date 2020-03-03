@@ -724,7 +724,7 @@
             feature.linkData = roadData;
           return feature;
         });
-
+        underConstructionRoadLayer.getSource().clear();
         underConstructionRoadLayer.getSource().addFeatures(ol3underConstructionRoads);
 
         var ol3noInfoRoads =
@@ -757,6 +757,7 @@
               feature.linkData = roadData;
               return feature;
             });
+        unAddressedRoadLayer.getSource().clear();
         unAddressedRoadLayer.getSource().addFeatures(ol3noInfoRoads);
       });
       eventListener.listenTo(eventbus, 'unAddressedRoads:toggleVisibility', function(visibility){
