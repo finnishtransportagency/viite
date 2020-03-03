@@ -148,7 +148,7 @@ class JunctionPointDAO extends BaseDAO {
       val query =
         s"""
           $junctionPointQuery
-          LEFT JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
+          INNER JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
           WHERE RW.VALID_TO IS NULL AND RW.END_DATE IS NULL
           AND JP.VALID_TO IS NULL AND $boundingBoxFilter
         """
