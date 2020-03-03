@@ -154,14 +154,6 @@ module.exports = function(grunt) {
             headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
           },
           {
-            context: '/vkm',
-            host: 'oag.liikennevirasto.fi',
-            port: '80',
-            https: true,
-            changeOrigin: true,
-            xforward: false
-          },
-          {
             context: '/test/components',
             host: 'localhost',
             port: '9003',
