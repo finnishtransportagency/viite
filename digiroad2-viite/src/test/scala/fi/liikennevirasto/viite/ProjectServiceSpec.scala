@@ -4,7 +4,7 @@ import java.sql.BatchUpdateException
 import java.util.Properties
 
 import fi.liikennevirasto.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
+import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
@@ -142,7 +142,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val newRoadLink1 = RoadLink(1, KMTKID(uuid, 1), Seq(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, AdministrativeClass.apply(1),
     0, TrafficDirection.BothDirections, UnknownLinkType, None, None, Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100)),
-    ConstructionType.UnknownConstructionType, LinkGeomSource.NormalLinkInterface)
+    LifecycleStatus.UnknownLifecycleStatus$, LinkGeomSource.NormalLinkInterface)
 
   private def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Int,
                                  discontinuity: Int, roadType: Int, roadLinkSource: Int,
@@ -184,7 +184,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       extractTrafficDirection(ral.sideCode, ral.track), Motorway, None, None, Map(
         "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
         "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
-      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+      LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface)
   }
 
   private def toRoadLink(ral: RoadAddressLinkLike): RoadLink = {
@@ -728,7 +728,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val calibrationPoints = projectLink.toCalibrationPoints
       val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geometry,
-        1, AdministrativeClass.apply(1), LinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, "Heinola", Some(""), Some("kmtk_modified"),
+        1, AdministrativeClass.apply(1), LinkType.apply(1), LifecycleStatus.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, "Heinola", Some(""), Some("kmtk_modified"),
         Map(), projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,
         projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
         projectLink.sideCode,

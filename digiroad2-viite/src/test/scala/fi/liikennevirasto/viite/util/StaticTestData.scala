@@ -265,10 +265,10 @@ class RoadLinkDeserializer extends RoadLinkSerializer {
       JInt(BigInt(geomSource.value))
   }))
 
-  case object ConstructionTypeSerializer extends CustomSerializer[ConstructionType](format => ( {
-    case JInt(typeInt) => ConstructionType(typeInt.toInt)
+  case object ConstructionTypeSerializer extends CustomSerializer[LifecycleStatus](format => ( {
+    case JInt(typeInt) => LifecycleStatus(typeInt.toInt)
   }, {
-    case constructionType: ConstructionType =>
+    case constructionType: LifecycleStatus =>
       JInt(BigInt(constructionType.value))
   }))
 

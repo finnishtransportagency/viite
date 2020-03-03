@@ -32,7 +32,7 @@ object FeatureClass {
 case class VVHRoadlink(linkId: Long, kmtkId: KMTKID, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
-                       constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
+                       constructionType: LifecycleStatus = LifecycleStatus.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
   val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 }
@@ -298,7 +298,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
   protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
     val linkStatus = extractAttributes(attributes).getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt]
-    linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
+    linkStatus == LifecycleStatus.InUse.value || linkStatus == LifecycleStatus.Planned.value || linkStatus == LifecycleStatus.UnderConstruction.value
   }
 
   /**
@@ -382,11 +382,11 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
       .getOrElse(Unknown)
   }
 
-  protected def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
+  protected def extractConstructionType(attributes: Map[String, Any]): LifecycleStatus = {
     Option(attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt])
       .map(_.toInt)
-      .map(ConstructionType.apply)
-      .getOrElse(ConstructionType.InUse)
+      .map(LifecycleStatus.apply)
+      .getOrElse(LifecycleStatus.InUse)
   }
 
   protected def extractLinkGeomSource(attributes: Map[String, Any]): LinkGeomSource = {

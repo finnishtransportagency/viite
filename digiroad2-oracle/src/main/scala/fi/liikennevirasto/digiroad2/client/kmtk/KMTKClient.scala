@@ -52,8 +52,6 @@ case class KMTKGeometry(/*`type`: String, */ coordinates: Seq[Seq[Double]]) {
 
 }
 
-case class KMTKRoadName(fin: Option[String], swe: Option[String], smn: Option[String], sms: Option[String], sme: Option[String])
-
 case class KMTKAddress(fromLeft: Option[Long], toLeft: Option[Long], fromRight: Option[Long], toRight: Option[Long])
 
 case class KMTKNode(/*`type`: String, */ coordinates: Seq[Double]) {
@@ -66,27 +64,30 @@ case class KMTKNode(/*`type`: String, */ coordinates: Seq[Double]) {
   }
 }
 
-case class KMTKProperties(id: KMTKID, adminClass: Option[Int], municipalityCode: Int, roadClass: Int, roadName: KMTKRoadName,
-                          roadNumber: Option[Long], roadPartNumber: Option[Long], surfaceType: Long, lifespanStatus: Long, directionType: Int,
-                          geometryLength: Double, geometryAttribute: Long, sourceStartDate: String, createdAt: String,
-                          modifiedAt: Option[String], endedAt: Option[String], address: KMTKAddress, sourceInfo: Long, mtkGroup: Long,
-                          sourceId: String, constructionStatus: Int, geoMetryFlip: Boolean, startNode: KMTKNode,
-                          endNode: KMTKNode, xyAccuracy: Long, zAccuracy: Long) {
+case class KMTKProperties(featureClass: String, kmtkId: String, version: Long, startTime: String, endTime: Option[String],
+                          versionStartTime: String, versionEndTime: Option[String], updateReason: Option[String],
+                          state: Option[String], dataSource: Long, municipalityCode: Int, adminClass: Option[Int],
+                          roadNumber: Option[Long], roadPartNumber: Option[Long], roadClass: Int,
+                          roadNameFin: Option[String], roadNameSwe: Option[String], roadNameSmn: Option[String], roadNameSms: Option[String], roadNameSme: Option[String],
+                          surfaceType: Int, surfaceRelation: Int, lifecycleStatus: Int, directionType: Int,
+                          sourceModificationTime: String, addressFromLeft: Option[Long], addressToLeft: Option[Long],
+                          addressFromRight: Option[Long], addressToRight: Option[Long], sourceId: String,
+                          geometryFlip: Boolean, horizontalLength: Double, widthType: Option[Int], xyAccuracy: Long, zAccuracy: Long) {
 
   def createdAtAsDateTime: Option[DateTime] = {
-    parseDateOption(createdAt)
+    parseDateOption(versionStartTime)
   }
 
   def modifiedAtAsDateTime: Option[DateTime] = {
-    parseDateOption(modifiedAt)
+    parseDateOption(versionStartTime)
   }
 
   def sourceStartDateAsDateTime: Option[DateTime] = {
-    parseDateOption(sourceStartDate)
+    parseDateOption(startTime)
   }
 
   def endedAtAsDateTime: Option[DateTime] = {
-    parseDateOption(endedAt)
+    parseDateOption(endTime)
   }
 
   private def parseDateOption(date: Option[String]): Option[DateTime] = {
@@ -113,7 +114,7 @@ case class KMTKFeatureCollection(/*`type`: String, */ features: Seq[KMTKFeature]
 case class KMTKRoadLink(linkId: Long, kmtkId: KMTKID = KMTKID("", 0), municipalityCode: Int, geometry: Seq[Point],
                         administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                         featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
-                        constructionType: ConstructionType = ConstructionType.InUse,
+                        constructionType: LifecycleStatus = LifecycleStatus.InUse,
                         linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
 
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
@@ -122,8 +123,8 @@ case class KMTKRoadLink(linkId: Long, kmtkId: KMTKID = KMTKID("", 0), municipali
 }
 
 case class KMTKHistoryRoadLink(linkId: Long, kmtkId: KMTKID, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
-                              trafficDirection: TrafficDirection, featureClass: FeatureClass, createdDate: BigInt, endDate: BigInt, attributes: Map[String, Any] = Map(),
-                              constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
+                               trafficDirection: TrafficDirection, featureClass: FeatureClass, createdDate: BigInt, endDate: BigInt, attributes: Map[String, Any] = Map(),
+                               constructionType: LifecycleStatus = LifecycleStatus.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
 
   val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
@@ -178,41 +179,35 @@ trait KMTKClientOperations {
       "UTF-8")
   }
 
-  private def mcodeParam(municipalities: Iterable[Int]): String = {
-    s"""mcode=${municipalities.mkString(",")}"""
+  private def mcodeParam(municipality: Int): String = {
+    s"""municipalityCode=$municipality"""
   }
 
   private def linklistParam(kmtkIds: Iterable[KMTKID]): String = {
-    "linklist=" + URLEncoder.encode(
-      s"[${kmtkIds.map(k => s"""{"uuid":"${k.uuid}","version":${k.version}}""").mkString(",")}]",
+    "links=" + URLEncoder.encode(
+      s"[${kmtkIds.map(k => s"""{"kmtkId":"${k.uuid}"}""").mkString(",")}]",
       "UTF-8")
-  }
-
-  private[kmtk] def timespanParam(dateRange: (DateTime, DateTime)): String = {
-    val from = dateRange._1.toString(dateTimeFormatter)
-    val to = dateRange._2.toString(dateTimeFormatter)
-    "timespan=" + URLEncoder.encode(s"""{"from":"$from","to":"$to"}""", "UTF-8")
   }
 
   private def serviceUrlByBoundingBox(bounds: BoundingRectangle): String = {
     val bbox = bboxParam(bounds)
-    restApiEndPoint + serviceName + s"?$bbox"
+    restApiEndPoint + serviceName + s"/items?$bbox&bbox-crs=http://www.opengis.net/def/crs/EPSG/0/3067&crs=http://www.opengis.net/def/crs/EPSG/0/3067"
   }
 
-  private def serviceUrlByMunicipality(municipalities: Iterable[Int]): String = {
-    val mcode = mcodeParam(municipalities)
-    restApiEndPoint + serviceName + s"?$mcode"
+  private def serviceUrlByMunicipality(municipality: Int): String = {
+    val mcode = mcodeParam(municipality)
+    restApiEndPoint + serviceName + s"/items?$mcode"
   }
 
   protected def serviceUrlByIds(kmtkIds: Iterable[KMTKID]): String = {
     val linklist: String = linklistParam(kmtkIds)
-    restApiEndPoint + serviceName + s"?$linklist"
+    restApiEndPoint + serviceName + s"/items?$linklist"
   }
 
-  private def serviceUrlByBoundingBoxAndMunicipalities(bounds: BoundingRectangle, municipalities: Iterable[Int]): String = {
+  private def serviceUrlByBoundingBoxAndMunicipalities(bounds: BoundingRectangle, municipality: Option[Int]): String = {
     val bbox = bboxParam(bounds)
-    val mcode = if (municipalities.nonEmpty) "&" + mcodeParam(municipalities) else ""
-    restApiEndPoint + serviceName + s"?$bbox$mcode"
+    val mcode = if (municipality.isDefined) "&" + mcodeParam(municipality.get) else ""
+    restApiEndPoint + serviceName + s"/items?$bbox&bbox-crs=http://www.opengis.net/def/crs/EPSG/0/3067&crs=http://www.opengis.net/def/crs/EPSG/0/3067$mcode"
   }
 
   protected def createHttpClient: CloseableHttpClient = {
@@ -265,7 +260,7 @@ trait KMTKClientOperations {
     * Returns KMTK road links by municipality.
     */
   protected def queryByMunicipality(municipality: Int): Seq[KMTKFeature] = {
-    val url = serviceUrlByMunicipality(Set(municipality))
+    val url = serviceUrlByMunicipality(municipality)
     fetchFeaturesAndLog(url)
   }
 
@@ -283,8 +278,8 @@ trait KMTKClientOperations {
   /**
     * Returns KMTK road links in bounding box area. Municipalities are optional.
     */
-  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[KMTKFeature] = {
-    val url = serviceUrlByBoundingBoxAndMunicipalities(bounds, municipalities)
+  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipality: Option[Int]): Seq[KMTKFeature] = {
+    val url = serviceUrlByBoundingBoxAndMunicipalities(bounds, municipality)
     fetchFeaturesAndLog(url)
   }
 
@@ -317,7 +312,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   override type KMTKType = KMTKRoadLink
 
   protected override val restApiEndPoint: String = kmtkRestApiEndPoint
-  protected override val serviceName = "roadlink"
+  protected override val serviceName = "road_links"
   protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
 
   def fetchByMtkId(mtkId: Long): Seq[KMTKRoadLink] = {
@@ -331,22 +326,22 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     * Planned - 3
     */
   // TODO Is this needed?
-  protected def roadLinkStatusFilter(properties: KMTKProperties): Boolean = {
-    val linkStatus = properties.constructionStatus
-    linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
-  }
+//  protected def roadLinkStatusFilter(properties: KMTKProperties): Boolean = {
+//    val linkStatus = properties.constructionStatus
+//    linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
+//  }
 
   /**
     * Returns KMTK road links in bounding box area. Municipalities are optional.
     */
   // TODO filtering by road number ranges
-  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[KMTKFeature] = {
+  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipality: Option[Int] = None, includeAllPublicRoads: Boolean = false): Seq[KMTKFeature] = {
     /*val roadNumberFilters = */ if (roadNumbers.nonEmpty || includeAllPublicRoads)
       throw new NotImplementedError("Filtering by road number not supported yet.")
     // Some(withRoadNumbersFilter(roadNumbers, includeAllPublicRoads))
     else
       None
-    queryByMunicipalitiesAndBounds(bounds, municipalities /*, roadNumberFilters*/)
+    queryByMunicipalitiesAndBounds(bounds, municipality /*, roadNumberFilters*/)
   }
 
   // TODO
@@ -382,46 +377,48 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     val linkGeometryForApi = Map("points" -> linkGeometryWithM.map(point => Map("x" -> point.x, "y" -> point.y, "z" -> point.z, "m" -> point.m)))
     val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + linkGeometryWithM.map(point => point.x + " " + point.y + " " + point.z + " " + point.m).mkString(", ") + ")"))
     val linkGeometry: Seq[Point] = feature.geometry.toPoints
-    val geometryLength = feature.properties.geometryLength
-    val kmtkId = feature.properties.id
+    val horizontalLength = feature.properties.horizontalLength
+    val kmtkId = feature.properties.kmtkId
+    val version = feature.properties.version
     val municipalityCode = feature.properties.municipalityCode
     val roadClass = feature.properties.roadClass
     val administrativeClass = AdministrativeClass.apply(feature.properties.adminClass.getOrElse(0))
     val trafficDirection = TrafficDirection.apply(feature.properties.directionType)
     val modifiedAt = feature.properties.modifiedAtAsDateTime.orElse(feature.properties.sourceStartDateAsDateTime)
-    val constructionType = ConstructionType.apply(feature.properties.constructionStatus) // TODO Is construction status same as construction type? Probably not?
+    val constructionType = LifecycleStatus.apply(feature.properties.lifecycleStatus)
 
     val featureClass = KMTKClient.featureClassCodeToFeatureClass.getOrElse(roadClass, FeatureClass.AllOthers)
 
-    KMTKRoadLink(0, kmtkId, municipalityCode, linkGeometry, administrativeClass, trafficDirection, featureClass, modifiedAt,
-      extractAttributes(feature.properties) ++ linkGeometryForApi ++ linkGeometryWKTForApi, constructionType, linkGeomSource, geometryLength)
+    KMTKRoadLink(0, KMTKID(kmtkId, version), municipalityCode, linkGeometry, administrativeClass, trafficDirection, featureClass, modifiedAt,
+      extractAttributes(feature.properties) ++ linkGeometryForApi ++ linkGeometryWKTForApi, constructionType, linkGeomSource, horizontalLength)
 
   }
 
   protected def extractAttributes(properties: KMTKProperties): Map[String, Any] = {
-    val roadName = properties.roadName
-    val roadNameSm = if (roadName.sme.isDefined) {
-      roadName.sme
-    } else if (roadName.smn.isDefined) {
-      roadName.smn
+    val roadNameFin = properties.roadNameFin
+    val roadNameSwe = properties.roadNameSwe
+    val roadNameSme = properties.roadNameSme
+    val roadNameSmn = properties.roadNameSmn
+    val roadNameSms = properties.roadNameSms
+    val roadNameSm = if (roadNameSme.isDefined) {
+      roadNameSme
+    } else if (roadNameSmn.isDefined) {
+      roadNameSmn
     } else {
-      roadName.sms
+      roadNameSms
     }
-    Map[String, Any]("MTKID" -> properties.id, // TODO Do we have MTKID anymore?
+    Map[String, Any]("MTKID" -> properties.sourceId,
       "MTKCLASS" -> properties.roadClass,
-      "CONSTRUCTIONTYPE" -> properties.constructionStatus, // TODO Is this same as construction type?
-      "ROADNAME_FI" -> roadName.fin.orNull,
+      "CONSTRUCTIONTYPE" -> properties.lifecycleStatus,
+      "ROADNAME_FI" -> roadNameFin.orNull,
       "ROADNAME_SM" -> roadNameSm.orNull,
-      "ROADNAME_SE" -> roadName.swe.orNull,
+      "ROADNAME_SE" -> roadNameSwe.orNull,
       "ROADNUMBER" -> properties.roadNumber.orNull,
       "ROADPARTNUMBER" -> properties.roadPartNumber.orNull,
       "MUNICIPALITYCODE" -> properties.municipalityCode,
-      "VALIDFROM" -> properties.sourceStartDate, // TODO Is this same as VALIDFROM?
-      "GEOMETRY_EDITED_DATE" -> properties.modifiedAt.orNull, // TODO From where to get geometry edit date?
-      "CREATED_DATE" -> dateToEpoch(properties.createdAt),
-      "LAST_EDITED_DATE" -> dateToEpoch(properties.modifiedAt.orNull), // TODO If modifiedAt is null, should we use createdAt?
-      "SUBTYPE" -> 0 // TODO What to put here?
-      // Not including "TRACK_CODE", used only with complementary in Viite
+      "VALIDFROM" -> dateToEpoch(properties.sourceModificationTime),
+      "CREATED_DATE" -> dateToEpoch(properties.startTime),
+      "LAST_EDITED_DATE" -> dateToEpoch(properties.versionStartTime)
     ).filter { case (_, value) =>
       value != null
     }
@@ -482,8 +479,8 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   /**
     * Returns KMTK road links. Uses Scala Future for concurrent operations.
     */
-  def fetchByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[KMTKRoadLink] = {
-    queryByMunicipalitiesAndBounds(bounds, municipalities).map(feature => kmtkFeatureToKMTKRoadLink(feature))
+  def fetchByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipality: Option[Int]): Seq[KMTKRoadLink] = {
+    queryByMunicipalitiesAndBounds(bounds, municipality).map(feature => kmtkFeatureToKMTKRoadLink(feature))
   }
 
   def fetchByBounds(bounds: BoundingRectangle): Seq[KMTKRoadLink] = {
@@ -493,20 +490,20 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   /**
     * Returns KMTK road links. Uses Scala Future for concurrent operations.
     */
-  def fetchByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[KMTKRoadLink]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, municipalities).map(feature => kmtkFeatureToKMTKRoadLink(feature)))
+  def fetchByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipality: Option[Int]): Future[Seq[KMTKRoadLink]] = {
+    Future(queryByMunicipalitiesAndBounds(bounds, municipality).map(feature => kmtkFeatureToKMTKRoadLink(feature)))
   }
 
-  def fetchByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[KMTKRoadLink] = {
-    queryByMunicipalitiesAndBounds(bounds, municipalities).map(feature => kmtkFeatureToKMTKRoadLink(feature))
+  def fetchByBoundsAndMunicipalities(bounds: BoundingRectangle, municipality: Option[Int]): Seq[KMTKRoadLink] = {
+    queryByMunicipalitiesAndBounds(bounds, municipality).map(feature => kmtkFeatureToKMTKRoadLink(feature))
   }
 
   /**
     * Returns KMTK road links. Uses Scala Future for concurrent operations.
     */
-  def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
+  def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipality: Option[Int], roadNumbers: Seq[(Int, Int)],
                                                  includeAllPublicRoads: Boolean = false): Future[Seq[KMTKRoadLink]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, roadNumbers, municipalities, includeAllPublicRoads).map(feature => kmtkFeatureToKMTKRoadLink(feature)))
+    Future(queryByMunicipalitiesAndBounds(bounds, roadNumbers, municipality, includeAllPublicRoads).map(feature => kmtkFeatureToKMTKRoadLink(feature)))
   }
 
   // TODO Is this needed?

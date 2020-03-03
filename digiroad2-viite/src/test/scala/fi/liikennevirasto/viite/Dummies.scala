@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
+import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.UnknownLifecycleStatus$
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kmtk.{ChangeInfo, ChangeType, KMTKHistoryRoadLink}
@@ -60,11 +60,11 @@ object Dummies {
 
   def dummyHistoryRoadLink(linkId: Long, yCoordinates: Seq[Double]): KMTKHistoryRoadLink = {
     val municipalityCode = 0
-    KMTKHistoryRoadLink(linkId, KMTKID("UUID", 1), municipalityCode, yCoordinates.map(y => Point(0.0, y)), Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, 0L, 0L, Map(), UnknownConstructionType, NormalLinkInterface, yCoordinates.sum)
+    KMTKHistoryRoadLink(linkId, KMTKID("UUID", 1), municipalityCode, yCoordinates.map(y => Point(0.0, y)), Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, 0L, 0L, Map(), UnknownLifecycleStatus$, NormalLinkInterface, yCoordinates.sum)
   }
 
   def dummyRoadLink(linkId: Long, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): RoadLink = {
-    RoadLink(linkId, KMTKID("UUID", 1), yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownConstructionType, linkGeomSource)
+    RoadLink(linkId, KMTKID("UUID", 1), yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownLifecycleStatus$, linkGeomSource)
   }
 
   def dummyChangeInfo(changeType: ChangeType, oldId: Long, newId: Long, oldStartMeasure: Double, oldEndMeasure: Double, newStartMeasure: Double, newEndMeasure: Double, timeStamp: Long): ChangeInfo = {

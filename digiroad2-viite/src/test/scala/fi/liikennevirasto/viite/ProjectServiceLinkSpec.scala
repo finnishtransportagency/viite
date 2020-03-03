@@ -4,7 +4,7 @@ import java.util.Properties
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
+import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
@@ -155,7 +155,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       extractTrafficDirection(ral.sideCode, ral.track), Motorway, None, None, Map(
         "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
         "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
-      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+      LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface)
   }
 
   private def toRoadLink(ral: RoadAddressLinkLike): RoadLink = {
@@ -179,7 +179,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       extractTrafficDirection(ral.sideCode, ral.track), LinkType.apply(99), Option(ral.startDate.toString), ral.createdBy, Map(
         "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
         "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
-      ConstructionType.InUse, ral.linkGeomSource)
+      LifecycleStatus.InUse, ral.linkGeomSource)
   }
 
   private def toMockAnswer(projectLinks: Seq[ProjectLink], roadLink: RoadLink, seq: Seq[RoadLink] = Seq()) = {
@@ -333,7 +333,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val calibrationPoints2 = CalibrationPointsUtils.toCalibrationPoints(projectLink2.calibrationPoints)
 
       val p1 = ProjectAddressLink(idr1, projectLink1.linkId, projectLink1.geometry,
-        1, AdministrativeClass.apply(1), LinkType.apply(1), ConstructionType.apply(1), projectLink1.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, "Heinola", Some(""), Some("kmtk_modified"),
+        1, AdministrativeClass.apply(1), LinkType.apply(1), LifecycleStatus.apply(1), projectLink1.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, "Heinola", Some(""), Some("kmtk_modified"),
         Map(), projectLink1.roadNumber, projectLink1.roadPartNumber, 2, -1, projectLink1.discontinuity.value,
         projectLink1.startAddrMValue, projectLink1.endAddrMValue, projectLink1.startMValue, projectLink1.endMValue,
         projectLink1.sideCode,
@@ -341,7 +341,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         calibrationPoints1._2, Anomaly.None, projectLink1.status, 0, 0)
 
       val p2 = ProjectAddressLink(idr2, projectLink2.linkId, projectLink2.geometry,
-        1, AdministrativeClass.apply(1), LinkType.apply(1), ConstructionType.apply(1), projectLink2.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, "Heinola", Some(""), Some("kmtk_modified"),
+        1, AdministrativeClass.apply(1), LinkType.apply(1), LifecycleStatus.apply(1), projectLink2.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, "Heinola", Some(""), Some("kmtk_modified"),
         Map(), projectLink2.roadNumber, projectLink2.roadPartNumber, 2, -1, projectLink2.discontinuity.value,
         projectLink2.startAddrMValue, projectLink2.endAddrMValue, projectLink2.startMValue, projectLink2.endMValue,
         projectLink2.sideCode,
@@ -552,11 +552,11 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val project = projectService.createRoadLinkProject(rap)
       val map = Map("MUNICIPALITYCODE" -> BigInt(456))
       val roadLinks = Seq(RoadLink(121L, KMTKID("121"), Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State, 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None,
-        None, map, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
+        None, map, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface),
         RoadLink(122L, KMTKID("122"), Seq(Point(10.0, 0.0), Point(5.0, 8.0)), 9.434, State, 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None,
-          None, map, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
+          None, map, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface),
         RoadLink(123L, KMTKID("123"), Seq(Point(0.0, 0.0), Point(5.0, 8.0)), 9.434, State, 1, TrafficDirection.AgainstDigitizing, LinkType.apply(1), None,
-          None, map, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
+          None, map, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface))
       when(mockRoadLinkService.getRoadLinksHistoryFromKMTK(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getRoadLinksAndComplementaryByLinkIds(any[Set[Long]])).thenAnswer(
         toMockAnswer(roadLinks))
@@ -595,7 +595,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
 
       val addProjectAddressLink552 = ProjectAddressLink(NewIdValue, 6552, geom, GeometryUtils.geometryLength(geom),
-        State, Motorway, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        State, Motorway, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, Some("X"), None, 749, "Siilinjärvi", None, None, Map.empty, 19999, 1, 2L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom),
         SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0, 0)
       val addresses = Seq(addProjectAddressLink552)

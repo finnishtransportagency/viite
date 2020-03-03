@@ -28,7 +28,7 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
         SideCode.TowardsDigitizing, 0L, (None, None), GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     val link = RoadLink(12L, KMTKID("UUID", 1), geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
-      Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+      Map(), LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface)
     networkChecker.isGeometryChange(link, roadAddressSeq) should be(false)
 
     val truncatedGeomLink = link.copy(
@@ -57,7 +57,7 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
         SideCode.TowardsDigitizing, 0L, (None, None), GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     val link = RoadLink(12L, KMTKID("UUID", 1), geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
-      Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+      Map(), LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface)
     networkChecker.isGeometryChange(link, roadAddressSeq) should be(false)
 
     networkChecker.isGeometryChange(link.copy(
@@ -77,7 +77,7 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
       SideCode.TowardsDigitizing, 1476392565000L, (None, None), roadLinkGeometry, LinkGeomSource.NormalLinkInterface, 4, TerminationCode.NoTermination, 0))
 
     val link = RoadLink(6474047L, KMTKID("UUID", 1), roadLinkGeometry, 69.87700000000001, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
-      Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+      Map(), LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface)
 
     networkChecker.isGeometryChange(link, roadAddressSeq) should be(false)
   }

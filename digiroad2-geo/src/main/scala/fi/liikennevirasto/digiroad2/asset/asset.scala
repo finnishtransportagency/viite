@@ -20,21 +20,22 @@ object LinkGeomSource{
   case object Unknown extends LinkGeomSource { def value = 99 }
 }
 
-sealed trait ConstructionType {
+sealed trait LifecycleStatus {
   def value: Int
 }
 
-object ConstructionType{
-  val values = Set[ConstructionType](InUse, UnderConstruction, Planned, UnknownConstructionType)
+// TODO Check values
+object LifecycleStatus {
+  val values = Set[LifecycleStatus](InUse, UnderConstruction, Planned, UnknownLifecycleStatus$)
 
-  def apply(intValue: Int): ConstructionType = {
-    values.find(_.value == intValue).getOrElse(InUse)
+  def apply(value: Int): LifecycleStatus = {
+    values.find(_.value == value).getOrElse(InUse)
   }
 
-  case object InUse extends ConstructionType { def value = 0 }
-  case object UnderConstruction extends ConstructionType { def value = 1 }
-  case object Planned extends ConstructionType { def value = 3 }
-  case object UnknownConstructionType extends ConstructionType { def value = 99 }
+  case object InUse extends LifecycleStatus { def value = 0 }
+  case object UnderConstruction extends LifecycleStatus { def value = 1 }
+  case object Planned extends LifecycleStatus { def value = 3 }
+  case object UnknownLifecycleStatus$ extends LifecycleStatus { def value = 99 }
 }
 
 sealed trait LinkType
@@ -94,8 +95,8 @@ sealed trait TrafficDirection {
 object TrafficDirection {
   val values = Set(BothDirections, AgainstDigitizing, TowardsDigitizing, UnknownDirection)
 
-  def apply(intValue: Int): TrafficDirection = {
-    values.find(_.value == intValue).getOrElse(UnknownDirection)
+  def apply(value: Int): TrafficDirection = {
+    values.find(_.value == value).getOrElse(UnknownDirection)
   }
 
   def apply(optionalValue: Option[Int]): TrafficDirection = {
@@ -119,8 +120,8 @@ sealed trait SideCode {
 object SideCode {
   val values = Set(BothDirections, TowardsDigitizing, AgainstDigitizing, Unknown)
 
-  def apply(intValue: Int): SideCode = {
-    values.find(_.value == intValue).getOrElse(Unknown)
+  def apply(value: Int): SideCode = {
+    values.find(_.value == value).getOrElse(Unknown)
   }
 
   def switch(sideCode: SideCode): SideCode = {
