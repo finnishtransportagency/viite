@@ -1,11 +1,9 @@
 package fi.liikennevirasto.digiroad2.client.kmtk
 
-import java.net.URLEncoder
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 
 class KMTKClientSpec extends FunSuite with Matchers {
@@ -33,7 +31,7 @@ class KMTKClientSpec extends FunSuite with Matchers {
 
   test("Test inputStreamToFeatureCollection When got valid json response Then should include points with correct m-values") {
     val featureCollection = mockFeatureCollection
-    val geometryLength = featureCollection.get.features.head.properties.geometryLength
+    val horizontalLength = featureCollection.get.features.head.properties.horizontalLength
     val geometryWithM = featureCollection.get.features.head.geometry.toPointsWithM
     val p1 = geometryWithM.head
     p1.x should be > epsilon
@@ -44,28 +42,29 @@ class KMTKClientSpec extends FunSuite with Matchers {
     p1b.x should be > epsilon
     p1b.y should be > epsilon
     p1b.z should be(0.0 +- epsilon)
-    p1b.m should be(geometryLength +- epsilon)
-    val p2 = featureCollection.get.features.head.properties.startNode.toPoint.get
+    p1b.m should be(horizontalLength +- epsilon)
+/*    val p2 = featureCollection.get.features.head.properties.startNode.toPoint.get
     p2.x should be > epsilon
     p2.y should be > epsilon
     p2.z should not be (0.0 +- epsilon)
     val p3 = featureCollection.get.features.head.properties.endNode.toPoint.get
     p3.x should be > epsilon
     p3.y should be > epsilon
-    p3.z should not be (0.0 +- epsilon)
+    p3.z should not be (0.0 +- epsilon)*/
   }
 
   test("Test inputStreamToFeatureCollection When got valid json response Then should include dates") {
     val featureCollection = mockFeatureCollection
     val properties = featureCollection.get.features.head.properties
-    properties.createdAt.length should be > 0
-    properties.sourceStartDate.length should be > 0
+    properties.createdAtAsDateTime.isDefined should be(true)
+    properties.sourceStartDateAsDateTime.isDefined should be(true)
   }
 
   test("Test KMTKProperties.*AsDateTime When valid date string Then should parse DateTime") {
     val dateString = "2019-06-26T12:12:47.354+03:00"
-    val p = KMTKProperties(null, None, 0, 0, null, None, None, 0, 0, 0, 0.0, 0, dateString, dateString, Some(dateString),
-      Some(dateString), null, 0, 0, "", 0, geoMetryFlip = false, null, null, 0, 0)
+    val p = KMTKProperties("", "", 0, dateString, Some(dateString), dateString, Some(dateString),
+      None, None, 0, 0, None, None, None, 0, None, None, None, None, None, 0, 0, 0, 0, "", None, None, None, None, "",
+      geometryFlip = false, 0.0, None, 0, 0)
     p.createdAtAsDateTime.isDefined should be(true)
     val expectedDate = "2019-06-26 12:12:47"
     p.createdAtAsDateTime.get.toString("yyyy-MM-dd HH:mm:ss") should be(expectedDate)
@@ -77,7 +76,7 @@ class KMTKClientSpec extends FunSuite with Matchers {
     p.endedAtAsDateTime.get.toString("yyyy-MM-dd HH:mm:ss") should be(expectedDate)
   }
 
-  // TODO Should we use mock response data instead of calling the real KMTK interface?
+  // TODO Use mock response data instead of calling the real KMTK interface (We cannot put the credentials in the version control)
   test("Test fetchByBounds When giving some bounding box Then should return some data") {
     val result = kmtkClient.roadLinkData.fetchByBounds(BoundingRectangle(Point(445000, 7000000), Point(446000, 7005244)))
     result.size should be > 1
