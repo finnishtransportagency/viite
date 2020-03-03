@@ -112,12 +112,7 @@ class RoadwayPointDAO extends BaseDAO {
   }
 
   def fetchByRoadwayNumber(roadwayNumber: Long): Seq[RoadwayPoint] = {
-    val query =
-      s"""
-      SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
-      from ROADWAY_POINT where ROADWAY_NUMBER= $roadwayNumber
-       """
-    queryList(query)
+    fetchByRoadwayNumbers(Seq(roadwayNumber))
   }
 
   def fetchByRoadwayNumberAndAddresses(roadwayNumber: Long, startAddrM: Long, endAddrM: Long): Seq[RoadwayPoint] = {

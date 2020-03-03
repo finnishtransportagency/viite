@@ -667,10 +667,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       val junctionPoints = junctionPointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After)
 
       nodePointDAO.expireById(nodePoints.map(_.id))
-      nodePointDAO.create(nodePoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId)))
+      nodePointDAO.create(nodePoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId, createdBy = username)))
 
       junctionPointDAO.expireById(junctionPoints.map(_.id))
-      junctionPointDAO.create(junctionPoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId)))
+      junctionPointDAO.create(junctionPoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId, createdBy = username)))
       disposedRoadwayPointId
     }
 
@@ -767,10 +767,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
                 change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get
               )
               if (terminatedRoadAddress.isDefined) {
-                val roadwayNumberInPoint = terminatedRoadAddress.get.newRoadwayNumber
-                val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint, addrMValue = rwp.addrMValue, modifiedBy = Some(username))
-                roadwayPointDAO.update(newRwp)
-                Seq(newRwp)
+                val (roadwayNumberInPoint, disposedRoadwayPointId) = getNewRoadwayNumberInPoint(rwp, rwp.addrMValue)
+                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) {
+                  val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = rwp.addrMValue, modifiedBy = Some(username))
+                  roadwayPointDAO.update(newRwp)
+                  Seq(newRwp)
+                } else Seq()
               } else Seq()
             }
             list ++ rwPoints
