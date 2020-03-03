@@ -31,7 +31,7 @@ trait RoadLinkLike extends PolyLine {
 
   def attributes: Map[String, Any]
 
-  def constructionType: ConstructionType
+  def constructionType: LifecycleStatus
 
   def timeStamp: Long
 }
@@ -40,7 +40,7 @@ case class RoadLink(linkId: Long, kmtkId: KMTKID, geometry: Seq[Point],
                     length: Double, administrativeClass: AdministrativeClass,
                     functionalClass: Int, trafficDirection: TrafficDirection,
                     linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
-                    attributes: Map[String, Any] = Map(), constructionType: ConstructionType = ConstructionType.InUse,
+                    attributes: Map[String, Any] = Map(), constructionType: LifecycleStatus = LifecycleStatus.InUse,
                     linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface) extends RoadLinkLike {
 
   def municipalityCode: Int = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue

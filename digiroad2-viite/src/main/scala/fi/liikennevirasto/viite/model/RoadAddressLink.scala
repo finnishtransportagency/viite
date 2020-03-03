@@ -13,7 +13,7 @@ trait RoadAddressLinkLike extends PolyLine {
   def length: Double
   def administrativeClass: AdministrativeClass
   def linkType: LinkType
-  def constructionType: ConstructionType
+  def constructionType: LifecycleStatus
   def roadLinkSource: LinkGeomSource
   def roadType: RoadType
 
@@ -43,7 +43,7 @@ trait RoadAddressLinkLike extends PolyLine {
 
 case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: Long, geometry: Seq[Point],
                            length: Double, administrativeClass: AdministrativeClass,
-                           linkType: LinkType, constructionType: ConstructionType, roadLinkSource: LinkGeomSource, roadType: RoadType, kmtkRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String],
+                           linkType: LinkType, constructionType: LifecycleStatus, roadLinkSource: LinkGeomSource, roadType: RoadType, kmtkRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String],
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],

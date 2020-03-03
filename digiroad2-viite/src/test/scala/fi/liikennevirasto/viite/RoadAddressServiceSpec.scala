@@ -95,7 +95,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       extractTrafficDirection(ral.sideCode, ral.track), Motorway, None, None, Map(
         "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
         "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
-      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+      LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface)
   }
 
   test("Test getRoadAddressesWithLinearGeometry When municipality has road addresses on top of suravage and complementary road links Then should not return floatings") {

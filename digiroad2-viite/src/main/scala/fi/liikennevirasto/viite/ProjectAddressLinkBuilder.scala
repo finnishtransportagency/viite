@@ -26,7 +26,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     val calibrationPoints = pl.toCalibrationPoints
 
     ProjectAddressLink(pl.id, pl.linkId, pl.geometry,
-      pl.geometryLength, fi.liikennevirasto.digiroad2.asset.Unknown, linkType, ConstructionType.UnknownConstructionType,
+      pl.geometryLength, fi.liikennevirasto.digiroad2.asset.Unknown, linkType, LifecycleStatus.UnknownLifecycleStatus$,
       pl.linkGeomSource, pl.roadType, pl.roadName, pl.roadName, 0L, "", None, Some("kmtk_modified"),
       Map(), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value,
       pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, calibrationPoints._1,

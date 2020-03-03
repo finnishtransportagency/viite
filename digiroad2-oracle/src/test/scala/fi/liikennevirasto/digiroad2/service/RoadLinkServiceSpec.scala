@@ -129,15 +129,15 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockKMTKChangeInfoClient = MockitoSugar.mock[KMTKChangeInfoClient]
     val service = new TestService(mockVVHClient, mockKMTKClient)
 
-    val complRoadLink1 = VVHRoadlink(1, KMTKID("1"), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
-    val complRoadLink2 = VVHRoadlink(2, KMTKID("2"), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.UnderConstruction)
-    val complRoadLink3 = VVHRoadlink(3, KMTKID("3"), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned)
-    val complRoadLink4 = VVHRoadlink(4, KMTKID("4"), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
+    val complRoadLink1 = VVHRoadlink(1, KMTKID("1"), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = LifecycleStatus.InUse)
+    val complRoadLink2 = VVHRoadlink(2, KMTKID("2"), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = LifecycleStatus.UnderConstruction)
+    val complRoadLink3 = VVHRoadlink(3, KMTKID("3"), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = LifecycleStatus.Planned)
+    val complRoadLink4 = VVHRoadlink(4, KMTKID("4"), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = LifecycleStatus.InUse)
 
-    val roadLink1 = KMTKRoadLink(5, KMTKID("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
-    val roadLink2 = KMTKRoadLink(6, KMTKID("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.UnderConstruction)
-    val roadLink3 = KMTKRoadLink(7, KMTKID("cccccccccccccccccccccccccccccccc", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned)
-    val roadLink4 = KMTKRoadLink(8, KMTKID("dddddddddddddddddddddddddddddddd", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
+    val roadLink1 = KMTKRoadLink(5, KMTKID("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = LifecycleStatus.InUse)
+    val roadLink2 = KMTKRoadLink(6, KMTKID("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = LifecycleStatus.UnderConstruction)
+    val roadLink3 = KMTKRoadLink(7, KMTKID("cccccccccccccccccccccccccccccccc", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = LifecycleStatus.Planned)
+    val roadLink4 = KMTKRoadLink(8, KMTKID("dddddddddddddddddddddddddddddddd", 1), 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = LifecycleStatus.InUse)
 
     OracleDatabase.withDynTransaction {
       when(mockKMTKClient.roadLinkData).thenReturn(mockKMTKRoadLinkClient)
@@ -176,5 +176,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       returnedChangeInfo.head.newId.get should be(newLinkId)
       returnedChangeInfo.head.mmlId should be(123l)
     }
+  }
+
+  test("Test ... When ... Then") {
+
   }
 }

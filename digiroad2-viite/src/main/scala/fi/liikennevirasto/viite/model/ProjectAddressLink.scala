@@ -11,7 +11,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def length: Double
   def administrativeClass: AdministrativeClass
   def linkType: LinkType
-  def constructionType: ConstructionType
+  def constructionType: LifecycleStatus
   def roadLinkSource: LinkGeomSource
   def roadType: RoadType
 
@@ -45,7 +45,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
 
 case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                               length: Double, administrativeClass: AdministrativeClass,
-                              linkType: LinkType, constructionType: ConstructionType,
+                              linkType: LinkType, constructionType: LifecycleStatus,
                               roadLinkSource: LinkGeomSource, roadType: RoadType, kmtkRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String],
                               attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                               startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,

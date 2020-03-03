@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.{InUse, UnknownConstructionType}
+import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.{InUse, UnknownLifecycleStatus$}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
@@ -35,7 +35,7 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   private def dummyRoadLink(linkId: Long, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): RoadLink = {
-    RoadLink(linkId, KMTKID(s"UUID$linkId", 1), yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum - yCoordinates.head, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownConstructionType, linkGeomSource)
+    RoadLink(linkId, KMTKID(s"UUID$linkId", 1), yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum - yCoordinates.head, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownLifecycleStatus$, linkGeomSource)
   }
 
   test("Test adjustToTopology When there is any exists a linear location to be adjusted Then should not have any change set") {
