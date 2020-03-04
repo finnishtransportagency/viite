@@ -95,7 +95,7 @@ class NodePointDAO extends BaseDAO {
                              FROM NODE_POINT NP
                              JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
                              LEFT OUTER JOIN NODE N ON (N.NODE_NUMBER = np.NODE_NUMBER AND N.VALID_TO IS NULL AND N.END_DATE IS NULL)
-                             JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER) """
+                             JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.END_DATE IS NULL AND RW.VALID_TO IS NULL) """
 
   implicit val getNodePoint: GetResult[NodePoint] = new GetResult[NodePoint] {
     def apply(r: PositionedResult): NodePoint = {
@@ -148,7 +148,6 @@ class NodePointDAO extends BaseDAO {
         s"""
          $selectFromNodePoint
          where N.node_number in (${nodeNumbers.mkString(", ")}) and NP.valid_to is null
-         and rw.end_date is null
        """
       queryList(query)
     }
@@ -160,9 +159,15 @@ class NodePointDAO extends BaseDAO {
     } else {
       val query =
         s"""
-       $selectFromNodePoint
-       where NP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")}) and NP.valid_to is null
-     """
+          SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", N.START_DATE, N.END_DATE,
+            NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M,
+            RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.ELY
+          FROM NODE_POINT NP
+          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+          LEFT OUTER JOIN NODE N ON (N.NODE_NUMBER = np.NODE_NUMBER AND N.VALID_TO IS NULL AND N.END_DATE IS NULL)
+          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
+          where NP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")}) and NP.valid_to is null
+        """
       queryList(query)
     }
   }
