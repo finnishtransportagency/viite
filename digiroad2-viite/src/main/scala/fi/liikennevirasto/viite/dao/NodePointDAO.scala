@@ -95,7 +95,7 @@ class NodePointDAO extends BaseDAO {
                              FROM NODE_POINT NP
                              JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
                              LEFT OUTER JOIN NODE N ON (N.NODE_NUMBER = np.NODE_NUMBER AND N.VALID_TO IS NULL AND N.END_DATE IS NULL)
-                             JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.end_date is NULL AND RW.VALID_TO IS NULL) """
+                             JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER) """
 
   implicit val getNodePoint: GetResult[NodePoint] = new GetResult[NodePoint] {
     def apply(r: PositionedResult): NodePoint = {
@@ -148,6 +148,7 @@ class NodePointDAO extends BaseDAO {
         s"""
          $selectFromNodePoint
          where N.node_number in (${nodeNumbers.mkString(", ")}) and NP.valid_to is null
+         and rw.end_date is null
        """
       queryList(query)
     }
