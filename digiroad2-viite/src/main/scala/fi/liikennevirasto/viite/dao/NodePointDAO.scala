@@ -236,8 +236,8 @@ class NodePointDAO extends BaseDAO {
          FROM NODE_POINT NP
          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
          JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-         JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.end_date is NULL AND RW.VALID_TO IS NULL)
-         where NP.id = $id AND NP.node_number is null and NP.valid_to is null
+         JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+         where NP.id = $id AND NP.node_number is null and NP.valid_to is null and RW.end_date is null
        """
     queryList(query).headOption
   }
@@ -256,8 +256,8 @@ class NodePointDAO extends BaseDAO {
           FROM NODE_POINT NP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
           JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.end_date is NULL AND RW.VALID_TO IS NULL)
-          where $boundingBoxFilter AND NP.node_number is null and NP.valid_to is null
+          LEFT JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+          where $boundingBoxFilter AND NP.node_number is null and NP.valid_to is null and RW.end_date is null
         """
       queryList(query)
     }
