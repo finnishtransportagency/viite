@@ -95,6 +95,8 @@ class NodePointDAOSpec extends FunSuite with Matchers {
   test("Test fetchTemplatesByBoundingBox When no matches Then return empty Seq") {
     runWithRollback {
       val roadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, roadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      roadwayDAO.create(Seq(roadway))
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
       dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = None),
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = None)))
@@ -107,6 +109,8 @@ class NodePointDAOSpec extends FunSuite with Matchers {
   test("Test fetchTemplatesByBoundingBox When matches Then return node points") {
     runWithRollback {
       val roadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, roadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      roadwayDAO.create(Seq(roadway))
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
       dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = None),
         testNodePoint2.copy(roadwayPointId = roadwayPointId1, nodeNumber = None)))
