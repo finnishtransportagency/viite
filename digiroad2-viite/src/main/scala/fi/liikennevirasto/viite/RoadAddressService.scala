@@ -580,12 +580,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
 
-  def handleProjectCalibrationPointChanges(linearLocations: Iterable[LinearLocation], username: String = "-", terminated: Seq[ProjectRoadLinkChange] = Seq()): Unit ={
+  def handleProjectCalibrationPointChanges(linearLocations: Iterable[LinearLocation], username: String = "-", terminated: Seq[ProjectRoadLinkChange] = Seq()): Unit = {
     def handleTerminatedCalibrationPointRoads(pls: Seq[ProjectRoadLinkChange]) = {
       val ids: Set[Long] = pls.flatMap(p => CalibrationPointDAO.fetchIdByRoadwayNumberSection(p.originalRoadwayNumber, p.originalStartAddr, p.originalEndAddr)).toSet
-      if(ids.nonEmpty) {
+      if (ids.nonEmpty) {
         logger.info(s"Expiring calibration point ids: " + ids.mkString(", "))
-      CalibrationPointDAO.expireById(ids)
+        CalibrationPointDAO.expireById(ids)
       }
     }
 
@@ -677,17 +677,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
       val roadsInAddr = roadPartAddressSection.filter(ra => ra.startAddrMValue == jp.addrM || ra.endAddrMValue == jp.addrM).sortBy(_.startAddrMValue)
 
-      roadsInAddr.size match{
+      roadsInAddr.size match {
         case 0 => //if None then if was probably already expired due to Termination in road
         case 1 => //if only one found then the addr is in the beginning/end of roadpart
         case _ =>
-          val (curr, next)  = (roadsInAddr.head, roadsInAddr.last)
+          val (curr, next) = (roadsInAddr.head, roadsInAddr.last)
           if (curr.roadType == next.roadType && curr.track == next.track && curr.roadNumber == next.roadNumber && curr.roadPartNumber == next.roadPartNumber
             && curr.discontinuity != Discontinuous && curr.discontinuity != MinorDiscontinuity && curr.discontinuity != ParallelLink) {
             val ids = CalibrationPointDAO.fetchIdByRoadwayPointIdWithJunctionDefined(jp.roadwayPointId, jp.addrM)
-            if(ids.nonEmpty) {
-                logger.info(s"Expiring calibration point ids: ${ids.mkString(", ")}")
-                CalibrationPointDAO.expireById(ids)
+            if (ids.nonEmpty) {
+              logger.info(s"Expiring calibration point ids: ${ids.mkString(", ")}")
+              CalibrationPointDAO.expireById(ids)
             }
           }
       }

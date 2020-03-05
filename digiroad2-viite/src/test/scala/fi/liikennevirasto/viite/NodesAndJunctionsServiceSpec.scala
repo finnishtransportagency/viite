@@ -993,9 +993,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val mappedAfterChanges: Seq[ProjectRoadLinkChange] = projectLinkDAO.fetchProjectLinksChange(projectId + 1)
         .map { l =>
           if (l.newRoadwayNumber == transferCombLink1.roadwayNumber) {
-            l.copy(originalLinearLocationId = combLink1.linearLocationId, linearLocationId = transferCombLink1.linearLocationId,originalRoadwayNumber = combLink1.roadwayNumber) }
+            l.copy(originalLinearLocationId = combLink1.linearLocationId, linearLocationId = transferCombLink1.linearLocationId, originalRoadwayNumber = combLink1.roadwayNumber)
+          }
           else if (l.newRoadwayNumber == terminatedCombLink2.roadwayNumber) {
-            l.copy(originalLinearLocationId = combLink2.linearLocationId, linearLocationId = terminatedCombLink2.linearLocationId, originalRoadwayNumber = combLink2.roadwayNumber) }
+            l.copy(originalLinearLocationId = combLink2.linearLocationId, linearLocationId = terminatedCombLink2.linearLocationId, originalRoadwayNumber = combLink2.roadwayNumber)
+          }
           else l
         }
 
@@ -2707,7 +2709,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       yetAnotherExpiredJunctions.size should be (2)
 
       when(mockRoadwayAddressMapper.getCurrentRoadAddressesBySection(road2, part1)).thenReturn(Seq())
-      val roadAddresses =  roadwayAddressMapper.mapRoadAddresses(rw1WithId, Seq(lc1, lc2))
+      val roadAddresses = roadwayAddressMapper.mapRoadAddresses(rw1WithId, Seq(lc1, lc2))
       when(mockRoadwayAddressMapper.getCurrentRoadAddressesBySection(road1, part1)).thenReturn(roadAddresses)
       roadAddressService.expireObsoleteCalibrationPointsInJunctions(yetAnotherExpiredJunctions)
 
@@ -2887,7 +2889,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       yetAnotherExpiredJunctions.size should be (3)
 
       when(mockRoadwayAddressMapper.getCurrentRoadAddressesBySection(road, part2)).thenReturn(Seq())
-      val roadAddresses =  roadwayAddressMapper.mapRoadAddresses(rw1WithId, Seq(lc1, lc2))
+      val roadAddresses = roadwayAddressMapper.mapRoadAddresses(rw1WithId, Seq(lc1, lc2))
       when(mockRoadwayAddressMapper.getCurrentRoadAddressesBySection(road, part1)).thenReturn(roadAddresses)
       roadAddressService.expireObsoleteCalibrationPointsInJunctions(yetAnotherExpiredJunctions)
 
@@ -3725,7 +3727,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       // Creation of junction points template
       nodesAndJunctionsService.handleJunctionPointTemplates(projectChanges, projectLinks, mappedRoadwayNumbers)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(
-      roadwayPointDAO.fetchByRoadwayNumbers(projectLinks.map(_.roadwayNumber)).map(_.id))
+        roadwayPointDAO.fetchByRoadwayNumbers(projectLinks.map(_.roadwayNumber)).map(_.id))
       junctionPointTemplates.length should be(2)
 
       val junctions = junctionDAO.fetchByIds(junctionPointTemplates.map(_.junctionId))
@@ -4003,7 +4005,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
 
       val mappedAfterRoadwayInserts = projectLinkDAO.fetchProjectLinksChange(projectId + 1)
-      val projectRoadLinkChangesAfterInserts = mappedAfterRoadwayInserts.map{ rlc =>
+      val projectRoadLinkChangesAfterInserts = mappedAfterRoadwayInserts.map { rlc =>
         val pl = changedProjectLinks.find(_.id == rlc.id)
         val oldPl = combPLinks.find(_.linkId == pl.get.linkId)
         rlc.copy(linearLocationId = pl.get.linearLocationId, originalRoadwayNumber = oldPl.get.roadwayNumber, originalRoadNumber = oldPl.get.roadNumber)
