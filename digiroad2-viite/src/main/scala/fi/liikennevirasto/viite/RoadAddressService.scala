@@ -266,12 +266,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val searchString = searchStringOption.getOrElse("")
     val numRegex = """(\d+)""".r
     val nums = numRegex.findAllIn(searchString).map(_.toLong).toSeq
-    var searchType = ""
-    if (nums.size == 0) {
-      searchType = "street"
-    } else {
-      searchType = "road"
-    }
+    val searchType =
+      if (nums.size == 0) {
+        "street"
+      } else {
+        "road"
+      }
     val ret = Map((searchType, nums))
     ret
   }
