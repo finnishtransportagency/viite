@@ -339,10 +339,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${r.roadwayNumber} addrM: ${r.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue, r.roadNumber, r.roadPartNumber, r.track, r.discontinuity))).head
-        if (CalibrationPointDAO.fetch(r.linkId, CalibrationPointLocation.EndOfLink, rwPoint).isEmpty) {
-          logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${r.linkId} startOrEnd: 1")
-          CalibrationPointDAO.create(rwPoint, r.linkId,  CalibrationPointLocation.EndOfLink, calType = CalibrationPointType.Mandatory, createdBy = username)
-        }
+        createCalibrationPointIfNeeded(rwPoint, r.linkId, CalibrationPointLocation.EndOfLink, username)
         Some(junctionId)
       } else Some(roadJunctionPoint.head.junctionId)
 
@@ -359,10 +356,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
-        if (CalibrationPointDAO.fetch(link.linkId, CalibrationPointLocation.StartOfLink, rwPoint).isEmpty) {
-          logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${link.linkId} startOrEnd: 0")
-          CalibrationPointDAO.create(rwPoint, link.linkId, CalibrationPointLocation.StartOfLink, calType = CalibrationPointType.Mandatory, createdBy = username)
-        }
+        createCalibrationPointIfNeeded(rwPoint, link.linkId, CalibrationPointLocation.StartOfLink, username)
       }
     }
 
@@ -380,10 +374,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${r.roadwayNumber} addrM: ${r.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), r.roadwayNumber, r.startAddrMValue, r.roadNumber, r.roadPartNumber, r.track, r.discontinuity))).head
-        if (CalibrationPointDAO.fetch(r.linkId, CalibrationPointLocation.StartOfLink, rwPoint).isEmpty) {
-          logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${r.linkId} startOrEnd: 0")
-          CalibrationPointDAO.create(rwPoint, r.linkId, CalibrationPointLocation.StartOfLink, calType = CalibrationPointType.Mandatory, createdBy = username)
-        }
+        createCalibrationPointIfNeeded(rwPoint, r.linkId, CalibrationPointLocation.StartOfLink, username)
         Some(junctionId)
       } else Some(roadJunctionPoint.head.junctionId)
 
@@ -400,10 +391,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
-        if (CalibrationPointDAO.fetch(link.linkId, CalibrationPointLocation.StartOfLink, rwPoint).isEmpty) {
-          logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${link.linkId} startOrEnd: 0")
-          CalibrationPointDAO.create(rwPoint, link.linkId, CalibrationPointLocation.StartOfLink, calType = CalibrationPointType.Mandatory, createdBy = username)
-        }
+        createCalibrationPointIfNeeded(rwPoint, link.linkId, CalibrationPointLocation.StartOfLink, username)
       }
     }
 
@@ -421,10 +409,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${r.roadwayNumber} addrM: ${r.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue, r.roadNumber, r.roadPartNumber, r.track, r.discontinuity))).head
-        if (CalibrationPointDAO.fetch(r.linkId, CalibrationPointLocation.EndOfLink, rwPoint).isEmpty) {
-          logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${r.linkId} startOrEnd: 1")
-          CalibrationPointDAO.create(rwPoint, r.linkId, CalibrationPointLocation.EndOfLink, calType = CalibrationPointType.Mandatory, createdBy = username)
-        }
+        createCalibrationPointIfNeeded(rwPoint, r.linkId, CalibrationPointLocation.EndOfLink, username)
         Some(junctionId)
       } else Some(roadJunctionPoint.head.junctionId)
 
@@ -441,10 +426,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
-        if (CalibrationPointDAO.fetch(link.linkId, CalibrationPointLocation.EndOfLink, rwPoint).isEmpty) {
-          logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${link.linkId} startOrEnd: 1")
-          CalibrationPointDAO.create(rwPoint, link.linkId, CalibrationPointLocation.EndOfLink, calType = CalibrationPointType.Mandatory, createdBy = username)
-        }
+        createCalibrationPointIfNeeded(rwPoint, link.linkId, CalibrationPointLocation.EndOfLink, username)
       }
     }
 
@@ -462,10 +444,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${r.roadwayNumber} addrM: ${r.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), r.roadwayNumber, r.startAddrMValue, r.roadNumber, r.roadPartNumber, r.track, r.discontinuity))).head
-        if (CalibrationPointDAO.fetch(r.linkId, CalibrationPointLocation.StartOfLink, rwPoint).isEmpty) {
-          logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${r.linkId} startOrEnd: 0")
-          CalibrationPointDAO.create(rwPoint, r.linkId, CalibrationPointLocation.StartOfLink, calType = CalibrationPointType.Mandatory, createdBy = username)
-        }
+        createCalibrationPointIfNeeded(rwPoint, r.linkId, CalibrationPointLocation.StartOfLink, username)
         Some(junctionId)
       } else Some(roadJunctionPoint.head.junctionId)
 
@@ -482,10 +461,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
-        if (CalibrationPointDAO.fetch(link.linkId, CalibrationPointLocation.EndOfLink, rwPoint).isEmpty) {
-          logger.info(s"Creating CalibrationPoint with roadwaypoint id : $rwPoint linkId : ${link.linkId} startOrEnd: 1")
-          CalibrationPointDAO.create(rwPoint, link.linkId, CalibrationPointLocation.EndOfLink, calType = CalibrationPointType.Mandatory, createdBy = username)
-        }
+        createCalibrationPointIfNeeded(rwPoint, link.linkId, CalibrationPointLocation.EndOfLink, username)
       }
     }
 
@@ -616,14 +592,20 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
+  private def createCalibrationPointIfNeeded(rwPoint: Long, linkId: Long, calibrationPointLocation: CalibrationPointLocation, username: String): Unit = {
+    if (CalibrationPointDAO.fetch(linkId, calibrationPointLocation, rwPoint).isEmpty) {
+      logger.info(s"Creating CalibrationPoint with RoadwayPoint id : $rwPoint linkId : $linkId startOrEnd: ${calibrationPointLocation.value}")
+      CalibrationPointDAO.create(rwPoint, linkId, calibrationPointLocation, calType = CalibrationPointType.Mandatory, createdBy = username)
+    }
+  }
 
   /*
-  1)  The nodes are created only for tracks 0 and 1
-  2)  A node template is always created if :
-    2.1)  road number is < 20000 or between 40000-70000
-    2.2)  and at the beginning/end of each road part, ely borders, or when road type changes
-    2.3)  on each junction with a road number (except number over 70 000)
-   */
+    1)  The nodes are created only for tracks 0 and 1
+    2)  A node template is always created if :
+      2.1)  road number is < 20000 or between 40000-70000
+      2.2)  and at the beginning/end of each road part, ely borders, or when road type changes
+      2.3)  on each junction with a road number (except number over 70 000)
+     */
   def handleNodePointTemplates(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
     time(logger, "Handling node point templates") {
       try {
