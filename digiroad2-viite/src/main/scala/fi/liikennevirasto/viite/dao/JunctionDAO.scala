@@ -10,7 +10,6 @@ import fi.liikennevirasto.viite.NewIdValue
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class Junction(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: DateTime, endDate: Option[DateTime],
@@ -135,24 +134,14 @@ class JunctionDAO extends BaseDAO {
       queryList(query)
   }
 
-  def fetchJunctionInfoByJunctionId(ids: Seq[Long]): Option[JunctionInfo] = {
-    sql"""
-      SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_NUMBER, j.START_DATE, n.NAME
-      FROM JUNCTION j
-      LEFT JOIN NODE n ON j.NODE_NUMBER = n.NODE_NUMBER AND n.valid_to IS NULL AND n.END_DATE IS NULL
-      WHERE j.ID IN (${ids.mkString(", ")}) AND j.valid_to IS NULL AND j.END_DATE IS NULL
-      """.as[JunctionInfo].firstOption
-
-  }
-
   def fetchTemplates() : Seq[JunctionTemplate] = {
     val query =
       s"""
          SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
          FROM JUNCTION j
-         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
-         LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+         JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
+         JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
+         JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
             WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_NUMBER IS NULL
        """
     queryListTemplate(query)
@@ -163,9 +152,9 @@ class JunctionDAO extends BaseDAO {
       s"""
          SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
          FROM JUNCTION j
-         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
-         LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+         JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
+         JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
+         JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
             WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_NUMBER IS NULL
             AND j.id = $id
        """
@@ -178,9 +167,9 @@ class JunctionDAO extends BaseDAO {
         s"""
          SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
          FROM JUNCTION j
-         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
-         LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+         JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
+         JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
+         JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
          WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_NUMBER IS NULL
            AND rw.ROADWAY_NUMBER IN (${roadwayNumbers.mkString(", ")})
        """
@@ -196,9 +185,9 @@ class JunctionDAO extends BaseDAO {
         s"""
          SELECT j.ID, j.JUNCTION_NUMBER, j.NODE_NUMBER, j.START_DATE, j.END_DATE, j.VALID_FROM, j.VALID_TO, j.CREATED_BY, j.CREATED_TIME
          FROM JUNCTION j
-         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID
-         LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
+         JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID
+         JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
+         JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
          WHERE rw.ROADWAY_NUMBER IN (${roadwayNumbers.mkString(", ")})
         """
       queryList(query)
@@ -218,10 +207,10 @@ class JunctionDAO extends BaseDAO {
         s"""
          SELECT DISTINCT j.ID, j.START_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rw.TRACK, rp.ADDR_M, rw.ELY
          FROM JUNCTION j
-         LEFT JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
-         LEFT JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
-         LEFT JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+         JOIN JUNCTION_POINT jp ON j.ID = jp.JUNCTION_ID AND jp.VALID_TO IS NULL
+         JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.ID
+         JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
+         JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
             WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL AND j.NODE_NUMBER IS NULL
             AND $boundingBoxFilter and JP.valid_to is null
         """
