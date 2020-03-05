@@ -199,7 +199,8 @@ object RoadwayFiller {
           sortedSections.foldLeft(Seq.empty[(ProjectRoadwayChange, Seq[ProjectLink])]){(changeList, section) =>
             if(changeList.isEmpty)
               Seq(section)
-            else if(changeList.last._1.changeInfo.target.endAddressM == section._1.changeInfo.target.startAddressM){
+            else if(changeList.last._1.changeInfo.target.endAddressM == section._1.changeInfo.target.startAddressM &&
+              changeList.last._2.head.roadwayNumber == section._2.head.roadwayNumber){
                 val adjustedSource = changeList.last._1.changeInfo.source.copy(endAddressM = section._1.changeInfo.source.endAddressM)
                 val adjustedTarget = changeList.last._1.changeInfo.target.copy(endAddressM = section._1.changeInfo.target.endAddressM)
                 val lastChangeInfo = changeList.last._1.changeInfo.copy(source = adjustedSource, target = adjustedTarget, discontinuity = section._1.changeInfo.discontinuity)
