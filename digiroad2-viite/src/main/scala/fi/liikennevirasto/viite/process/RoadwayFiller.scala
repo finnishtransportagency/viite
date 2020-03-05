@@ -200,12 +200,12 @@ object RoadwayFiller {
             if(changeList.isEmpty)
               Seq(section)
             else if(changeList.last._1.changeInfo.target.endAddressM == section._1.changeInfo.target.startAddressM){
-                val adjustedSource = changes.last._1.changeInfo.source.copy(endAddressM = section._1.changeInfo.source.endAddressM)
-                val adjustedTarget = changes.last._1.changeInfo.target.copy(endAddressM = section._1.changeInfo.target.endAddressM)
-                val lastChangeInfo = changes.last._1.changeInfo.copy(source = adjustedSource, target = adjustedTarget)
-                changeList.init :+ (changes.last._1.copy(changeInfo = lastChangeInfo), changes.last._2 ++ section._2)
+                val adjustedSource = changeList.last._1.changeInfo.source.copy(endAddressM = section._1.changeInfo.source.endAddressM)
+                val adjustedTarget = changeList.last._1.changeInfo.target.copy(endAddressM = section._1.changeInfo.target.endAddressM)
+                val lastChangeInfo = changeList.last._1.changeInfo.copy(source = adjustedSource, target = adjustedTarget, discontinuity = section._1.changeInfo.discontinuity)
+                changeList.init :+ (changeList.last._1.copy(changeInfo = lastChangeInfo), changeList.last._2 ++ section._2)
             }
-            else Seq(section) :+ section
+            else changeList :+ section
           }
         case _ => Seq.empty[(ProjectRoadwayChange, Seq[ProjectLink])]
       }
