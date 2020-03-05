@@ -75,7 +75,7 @@ class JunctionDAO extends BaseDAO {
   private def queryListTemplate(query: String): List[JunctionTemplate] = {
     Q.queryNA[JunctionTemplate](query).list.groupBy(_.id).map {
       case (_, list) =>
-        list.head
+        list.minBy(jt => (jt.roadNumber, jt.roadPartNumber, jt.addrM))
     }.toList
   }
 
