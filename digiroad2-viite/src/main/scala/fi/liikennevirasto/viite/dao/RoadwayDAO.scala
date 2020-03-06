@@ -141,9 +141,9 @@ object CalibrationCode {
   }
 
   def existsAtBeginning(calibrationCode: Option[CalibrationCode]): Boolean = {
-     calibrationCode match {
-       case Some(code) if code.equals(AtBeginning) || code.equals(AtBoth) => true
-        case _ => false
+    calibrationCode match {
+      case Some(code) if code.equals(AtBeginning) || code.equals(AtBoth) => true
+      case _ => false
     }
   }
 
