@@ -6,13 +6,12 @@ import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.dao.{SequenceResetterDAO, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.dao.{Node, NodeDAO, RoadwayPointDAO}
+import fi.liikennevirasto.viite.dao.RoadwayPointDAO
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
-
 
 
 class NodeImporter(conversionDatabase: DatabaseDef) {
@@ -68,16 +67,16 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
       conversionNode => (conversionNode, conversionNodePoints.filter(_.nodeId == conversionNode.id))
     )
 
-    nodesWithPoints.foreach{
+    nodesWithPoints.foreach {
       conversionNode =>
         println(s"Inserting node with TR id = ${conversionNode._1.id} and node_number = ${conversionNode._1.nodeNumber}")
         val newNodeId = Sequences.nextNodeId
         insertNode(nodePs, conversionNode._1.copy(id = newNodeId))
-        conversionNode._2.foreach{
-          conversionNodePoint =>{
+        conversionNode._2.foreach {
+          conversionNodePoint => {
             val existingRoadwayPoint = roadwayPointDAO.fetch(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR)
             println(s"Inserting node point with TR id = ${conversionNodePoint.id} and node_id = ${conversionNodePoint.nodeId} for node_number = ${conversionNode._1.nodeNumber}")
-            if(existingRoadwayPoint.isEmpty){
+            if (existingRoadwayPoint.isEmpty) {
               val newRoadwayPoint = roadwayPointDAO.create(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR, createdBy = "node_import")
               insertNodePoint(nodePointPs, conversionNodePoint, conversionNode._1.nodeNumber, newRoadwayPoint)
             }
@@ -90,6 +89,16 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodePointPs.executeBatch()
     nodePs.close()
     nodePointPs.close()
+    resetNodeNumberSequence()
+  }
+
+  def resetNodeNumberSequence(): Unit = {
+    val sequenceResetter = new SequenceResetterDAO()
+    sql"""select MAX(NODE_NUMBER) FROM NODE""".as[Long].firstOption match {
+      case Some(nodeNumber) =>
+        sequenceResetter.resetSequenceToNumber("NODE_NUMBER_SEQ", nodeNumber + 1)
+      case _ => sequenceResetter.resetSequenceToNumber("NODE_NUMBER_SEQ", 1)
+    }
   }
 
   protected def fetchNodesFromConversionTable(): Seq[ConversionNode] = {
