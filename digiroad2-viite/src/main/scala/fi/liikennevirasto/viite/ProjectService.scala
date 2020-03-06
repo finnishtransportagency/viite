@@ -1883,7 +1883,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     val project = projectDAO.fetchById(projectID).get
     val projectLinks = projectLinkDAO.fetchProjectLinks(projectID)
-    val projectRoadLinkChangesWithOldLinearLocationIds = projectLinkDAO.fetchProjectLinksChange(projectID)
+    val projectLinkChanges = projectLinkDAO.fetchProjectLinksChange(projectID)
     val currentRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
     val historyRoadways = roadwayDAO.fetchAllByRoadwayNumbers(currentRoadways.map(_._2.roadwayNumber).toSet, withHistory = true).filter(_.endDate.isDefined).map(roadway => (roadway.id, roadway)).toMap
     val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
@@ -1893,7 +1893,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val linksRelatedToChange = roadwayProjectLinkIds.filter(link => link._1 == change.changeInfo.orderInChangeTable).map(_._2)
         val projectLinksInChange = projectLinks.filter(pl => linksRelatedToChange.contains(pl.id))
         val assignedProperRoadwayNumbers = projectLinksInChange.map { pl =>
-          val properRoadwayNumber = projectRoadLinkChangesWithOldLinearLocationIds.find(_.id == pl.id)
+          val properRoadwayNumber = projectLinkChanges.find(_.id == pl.id)
           pl.copy(roadwayNumber = properRoadwayNumber.get.newRoadwayNumber)
         }
         (change, assignedProperRoadwayNumbers)
@@ -1920,19 +1920,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.debug(s"Inserting linear locations")
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       val projectLinksAfterChanges = if (generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
-      val projectRoadLinkChanges = projectRoadLinkChangesWithOldLinearLocationIds.map{ rlc =>
+      val enrichedProjectLinkChanges = projectLinkChanges.map{ rlc =>
         val generatedLinearLocation = projectLinksAfterChanges.find(_.id == rlc.id)
         rlc.copy(linearLocationId = generatedLinearLocation.get.linearLocationId)
       }
       logger.debug(s"Updating and inserting roadway points")
-      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, projectRoadLinkChanges, username = project.createdBy)
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, enrichedProjectLinkChanges, username = project.createdBy)
       logger.debug(s"Updating and inserting calibration points")
-      roadAddressService.handleCalibrationPoints(linearLocationsToInsert, username = project.createdBy)
+      roadAddressService.handleProjectCalibrationPointChanges(linearLocationsToInsert, username = project.createdBy, enrichedProjectLinkChanges.filter(_.status == LinkStatus.Terminated))
       logger.debug(s"Creating nodes and junctions templates")
-      nodesAndJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges, projectRoadLinkChanges, username = project.createdBy)
-      nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, projectRoadLinkChanges, username = project.createdBy)
+      nodesAndJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges, enrichedProjectLinkChanges, username = project.createdBy)
+      nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, enrichedProjectLinkChanges, username = project.createdBy)
       logger.debug(s"Expiring obsolete nodes and junctions")
-      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterChanges, Some(project.startDate.minusDays(1)), username = project.createdBy)
+      val expiredJunctionPoints = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterChanges, Some(project.startDate.minusDays(1)), username = project.createdBy)
+      logger.debug(s"Expiring obsolete calibration points in ex junction places")
+      roadAddressService.expireObsoleteCalibrationPointsInJunctions(expiredJunctionPoints)
       logger.debug(s"Handling road names")
       handleNewRoadNames(roadwayChanges)
       handleRoadNames(roadwayChanges)

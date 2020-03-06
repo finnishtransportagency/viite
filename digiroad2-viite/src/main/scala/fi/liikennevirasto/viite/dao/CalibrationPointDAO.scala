@@ -8,7 +8,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 object CalibrationPointDAO {
 
-  sealed trait CalibrationPointType {
+  trait CalibrationPointType {
     def value: Int
   }
 
@@ -24,7 +24,23 @@ object CalibrationPointDAO {
     case object Mandatory extends CalibrationPointType {def value = 2}
   }
 
-  case class CalibrationPoint(id: Long, roadwayPointId: Long, linkId: Long, roadwayNumber: Long, addrM: Long, startOrEnd: Long, typeCode: CalibrationPointType, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String, createdTime: Option[DateTime] = None)
+  trait CalibrationPointLocation {
+    def value: Int
+  }
+
+  object CalibrationPointLocation {
+    val values = Set(StartOfLink, EndOfLink, Unknown)
+
+    def apply(intValue: Int): CalibrationPointLocation = {
+      values.find(_.value == intValue).getOrElse(Unknown)
+    }
+
+    case object StartOfLink extends CalibrationPointLocation {def value = 0}
+    case object EndOfLink extends CalibrationPointLocation {def value = 1}
+    case object Unknown extends CalibrationPointLocation {def value = 99}
+  }
+
+  case class CalibrationPoint(id: Long, roadwayPointId: Long, linkId: Long, roadwayNumber: Long, addrM: Long, startOrEnd: CalibrationPointLocation, typeCode: CalibrationPointType, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, createdBy: String, createdTime: Option[DateTime] = None)
 
   implicit val getRoadwayPointRow = new GetResult[CalibrationPoint] {
     def apply(r: PositionedResult) = {
@@ -33,7 +49,7 @@ object CalibrationPointDAO {
       val linkId = r.nextLong()
       val roadwayNumber = r.nextLong()
       val addrMValue = r.nextLong()
-      val startOrEnd = r.nextLong()
+      val startOrEnd = CalibrationPointLocation.apply(r.nextInt())
       val typeCode = CalibrationPointType.apply(r.nextLong().toInt)
       val validFrom = r.nextDateOption().map(d => new DateTime(d.getTime))
       val validTo = r.nextDateOption().map(d => new DateTime(d.getTime))
@@ -48,18 +64,18 @@ object CalibrationPointDAO {
   def create(calibrationPoint: CalibrationPoint): Unit = {
     sqlu"""
       Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES
-      (${Sequences.nextCalibrationPointId}, ${calibrationPoint.roadwayPointId}, ${calibrationPoint.linkId}, ${calibrationPoint.startOrEnd}, ${calibrationPoint.typeCode.value}, ${calibrationPoint.createdBy})
+      (${Sequences.nextCalibrationPointId}, ${calibrationPoint.roadwayPointId}, ${calibrationPoint.linkId}, ${calibrationPoint.startOrEnd.value}, ${calibrationPoint.typeCode.value}, ${calibrationPoint.createdBy})
       """.execute
   }
 
-  def create(roadwayPointId: Long, linkId: Long, startOrEnd: Long, calType: CalibrationPointType, createdBy: String) = {
+  def create(roadwayPointId: Long, linkId: Long, startOrEnd: CalibrationPointLocation, calType: CalibrationPointType, createdBy: String) = {
     sqlu"""
       Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES
-      (${Sequences.nextCalibrationPointId}, $roadwayPointId, $linkId, $startOrEnd, ${calType.value}, $createdBy)
+      (${Sequences.nextCalibrationPointId}, $roadwayPointId, $linkId, ${startOrEnd.value}, ${calType.value}, $createdBy)
       """.execute
   }
 
-  def fetch(id:Long) : CalibrationPoint = {
+  def fetch(id: Long): CalibrationPoint = {
     sql"""
          SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
          FROM CALIBRATION_POINT CP
@@ -69,7 +85,7 @@ object CalibrationPointDAO {
      """.as[CalibrationPoint].first
   }
 
-  def fetch(linkId:Long, startOrEnd: Long) : Option[CalibrationPoint] = {
+  def fetch(linkId: Long, startOrEnd: Long): Option[CalibrationPoint] = {
     sql"""
          SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
          FROM CALIBRATION_POINT CP
@@ -79,14 +95,46 @@ object CalibrationPointDAO {
      """.as[CalibrationPoint].firstOption
   }
 
-  def fetchByRoadwayPoint(roadwayPointId:Long) : Option[CalibrationPoint] = {
+  def fetch(linkId: Long, startOrEnd: CalibrationPointLocation, roadwayPointId: Long): Option[CalibrationPoint] = {
     sql"""
-         SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+         SELECT CP.ID, CP.ROADWAY_POINT_ID, CP.LINK_ID, ROADWAY_NUMBER, ADDR_M, CP.START_END, CP.TYPE, CP.VALID_FROM, CP.VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+         FROM CALIBRATION_POINT CP
+         JOIN ROADWAY_POINT RWP ON (RWP.id = CP.ROADWAY_POINT_ID)
+         WHERE CP.ROADWAY_POINT_ID = $roadwayPointId
+         AND CP.LINK_ID = $linkId
+         AND CP.START_END = ${startOrEnd.value}
+         AND CP.VALID_TO IS NULL
+     """.as[CalibrationPoint].firstOption
+  }
+
+  def fetchByRoadwayPointId(roadwayPointId: Long): Option[CalibrationPoint] = {
+    sql"""
+         SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, CP.TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
          FROM CALIBRATION_POINT CP
          JOIN ROADWAY_POINT RP
           ON RP.ID = CP.ROADWAY_POINT_ID
          WHERE cp.roadway_point_id = $roadwayPointId
      """.as[CalibrationPoint].firstOption
+  }
+
+  def fetchIdByRoadwayNumberSection(roadwayNumber: Long, startAddr: Long, endAddr: Long): Set[Long] = {
+    sql"""
+         SELECT CP.ID
+         FROM CALIBRATION_POINT CP
+         JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID
+         WHERE RP.roadway_number = $roadwayNumber AND RP.ADDR_M BETWEEN $startAddr AND $endAddr AND CP.VALID_TO IS NULL
+     """.as[Long].list.toSet
+  }
+
+  def fetchByRoadwayPointInExpiredJunctionPoint(roadwayPointId: Long, addr: Long): Set[Long] = {
+    sql"""
+         SELECT CP.ID
+         FROM CALIBRATION_POINT CP
+         JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID
+         JOIN JUNCTION_POINT JP ON JP.ROADWAY_POINT_ID = RP.ID
+         JOIN JUNCTION J ON J.ID = JP.JUNCTION_ID
+         WHERE cp.roadway_point_id = $roadwayPointId AND rp.addr_m = $addr AND CP.VALID_TO IS NULL AND JP.VALID_TO IS NOT NULL
+     """.as[Long].list.toSet
   }
 
   def fetchByLinkId(linkIds: Iterable[Long]): Seq[CalibrationPoint] = {
@@ -95,7 +143,7 @@ object CalibrationPointDAO {
     } else {
       val query =
         s"""
-      SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+      SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, CP.START_END, CP.TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
       FROM CALIBRATION_POINT CP
       JOIN ROADWAY_POINT RP
       ON RP.ID = CP.ROADWAY_POINT_ID
@@ -128,12 +176,12 @@ object CalibrationPointDAO {
       Q.updateNA(query).first
   }
 
-  def updateRoadwayPoint(roadwayPointId : Long, linkId : Long, startOrEnd : Long) : Long = {
+  def updateRoadwayPoint(roadwayPointId: Long, linkId: Long, startOrEnd: CalibrationPointLocation): Long = {
     val query =
       s"""
-        Update CALIBRATION_POINT Set roadway_point_id = $roadwayPointId where VALID_TO IS NULL and LINK_ID = $linkId and START_END = $startOrEnd
+        Update CALIBRATION_POINT Set roadway_point_id = $roadwayPointId where VALID_TO IS NULL and LINK_ID = $linkId and START_END = ${startOrEnd.value}
       """
-      Q.updateNA(query).first
+    Q.updateNA(query).first
   }
 
   private def queryList(query: String): Seq[CalibrationPoint] = {
