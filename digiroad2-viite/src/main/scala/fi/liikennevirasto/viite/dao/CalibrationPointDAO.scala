@@ -126,7 +126,7 @@ object CalibrationPointDAO {
      """.as[Long].list.toSet
   }
 
-  def fetchIdByRoadwayPointIdWithJunctionDefined(roadwayPointId: Long, addr: Long): Set[Long] = {
+  def fetchByRoadwayPointInExpiredJunctionPoint(roadwayPointId: Long, addr: Long): Set[Long] = {
     sql"""
          SELECT CP.ID
          FROM CALIBRATION_POINT CP
