@@ -684,7 +684,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           val (curr, next) = (roadsInAddr.head, roadsInAddr.last)
           if (curr.roadType == next.roadType && curr.track == next.track && curr.roadNumber == next.roadNumber && curr.roadPartNumber == next.roadPartNumber
             && curr.discontinuity != Discontinuous && curr.discontinuity != MinorDiscontinuity && curr.discontinuity != ParallelLink) {
-            val ids = CalibrationPointDAO.fetchIdByRoadwayPointIdWithJunctionDefined(jp.roadwayPointId, jp.addrM)
+            val ids = CalibrationPointDAO.fetchByRoadwayPointInExpiredJunctionPoint(jp.roadwayPointId, jp.addrM)
             if (ids.nonEmpty) {
               logger.info(s"Expiring calibration point ids: ${ids.mkString(", ")}")
               CalibrationPointDAO.expireById(ids)
