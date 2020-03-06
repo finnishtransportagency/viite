@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.NodePointType.{CalculatedNodePoint, RoadNodePoint}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
@@ -330,30 +331,22 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val junctionId = if (junctionsInHead.isEmpty)
           junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, None, DateTime.now, None, username, Some(DateTime.now)))).head
         else junctionsInHead.head.id
-        val existingRoadwayPoint = roadwayPointDAO.fetch(r.roadwayNumber, r.endAddrMValue)
-        val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-          existingRoadwayPoint.get.id
-        } else {
-          roadwayPointDAO.create(r.roadwayNumber, r.endAddrMValue, username)
-        }
+        val rwPoint: Long = getRoadwayPoint(r.roadwayNumber, r.endAddrMValue, username)
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${r.roadwayNumber} addrM: ${r.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue, r.roadNumber, r.roadPartNumber, r.track, r.discontinuity))).head
+        createCalibrationPointIfNeeded(rwPoint, r.linkId, CalibrationPointLocation.EndOfLink, username)
         Some(junctionId)
       } else Some(roadJunctionPoint.head.junctionId)
 
       val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
         junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, None, DateTime.now, None, username, Some(DateTime.now)))).head
       else junctionIdentifier.getOrElse(junctionsInHead.head.id)
-      val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.startAddrMValue)
-      val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-        existingRoadwayPoint.get.id
-      } else {
-        roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, username)
-      }
+      val rwPoint: Long = getRoadwayPoint(link.roadwayNumber, link.startAddrMValue, username)
       val linkJunctionPoint = junctionPointDAO.fetchByRoadwayPoint(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
       if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
+        createCalibrationPointIfNeeded(rwPoint, link.linkId, CalibrationPointLocation.StartOfLink, username)
       }
     }
 
@@ -363,30 +356,22 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val junctionId = if (newJunctionsInHead.isEmpty)
           junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, None, DateTime.now, None, username, Some(DateTime.now)))).head
         else newJunctionsInHead.head.id
-        val existingRoadwayPoint = roadwayPointDAO.fetch(r.roadwayNumber, r.startAddrMValue)
-        val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-          existingRoadwayPoint.get.id
-        } else {
-          roadwayPointDAO.create(r.roadwayNumber, r.startAddrMValue, username)
-        }
+        val rwPoint: Long = getRoadwayPoint(r.roadwayNumber, r.startAddrMValue, username)
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${r.roadwayNumber} addrM: ${r.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), r.roadwayNumber, r.startAddrMValue, r.roadNumber, r.roadPartNumber, r.track, r.discontinuity))).head
+        createCalibrationPointIfNeeded(rwPoint, r.linkId, CalibrationPointLocation.StartOfLink, username)
         Some(junctionId)
       } else Some(roadJunctionPoint.head.junctionId)
 
       val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
         junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, link.endDate, DateTime.now, None, username, Some(DateTime.now)))).head
       else junctionIdentifier.getOrElse(junctionsInHead.head.id)
-      val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.startAddrMValue)
-      val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-        existingRoadwayPoint.get.id
-      } else {
-        roadwayPointDAO.create(link.roadwayNumber, link.startAddrMValue, username)
-      }
+      val rwPoint: Long = getRoadwayPoint(link.roadwayNumber, link.startAddrMValue, username)
       val linkJunctionPoint = junctionPointDAO.fetchByRoadwayPoint(link.roadwayNumber, link.startAddrMValue, BeforeAfter.After)
       if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), link.roadwayNumber, link.startAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
+        createCalibrationPointIfNeeded(rwPoint, link.linkId, CalibrationPointLocation.StartOfLink, username)
       }
     }
 
@@ -396,30 +381,22 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val junctionId = if (junctionsToTail.isEmpty)
           junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, None, DateTime.now, None, username, Some(DateTime.now)))).head
         else junctionsToTail.head.id
-        val existingRoadwayPoint = roadwayPointDAO.fetch(r.roadwayNumber, r.endAddrMValue)
-        val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-          existingRoadwayPoint.get.id
-        } else {
-          roadwayPointDAO.create(r.roadwayNumber, r.endAddrMValue, username)
-        }
+        val rwPoint: Long = getRoadwayPoint(r.roadwayNumber, r.endAddrMValue, username)
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${r.roadwayNumber} addrM: ${r.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), r.roadwayNumber, r.endAddrMValue, r.roadNumber, r.roadPartNumber, r.track, r.discontinuity))).head
+        createCalibrationPointIfNeeded(rwPoint, r.linkId, CalibrationPointLocation.EndOfLink, username)
         Some(junctionId)
       } else Some(roadJunctionPoint.head.junctionId)
 
       val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
         junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, link.endDate, DateTime.now, None, username, Some(DateTime.now)))).head
       else junctionIdentifier.getOrElse(junctionsInHead.head.id)
-      val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.endAddrMValue)
-      val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-        existingRoadwayPoint.get.id
-      } else {
-        roadwayPointDAO.create(link.roadwayNumber, link.endAddrMValue, username)
-      }
+      val rwPoint: Long = getRoadwayPoint(link.roadwayNumber, link.endAddrMValue, username)
       val linkJunctionPoint = junctionPointDAO.fetchByRoadwayPoint(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)
       if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
+        createCalibrationPointIfNeeded(rwPoint, link.linkId, CalibrationPointLocation.EndOfLink, username)
       }
     }
 
@@ -429,30 +406,22 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val junctionId = if (newJunctionsToTail.isEmpty)
           junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, None, DateTime.now, None, username, Some(DateTime.now)))).head
         else newJunctionsToTail.head.id
-        val existingRoadwayPoint = roadwayPointDAO.fetch(r.roadwayNumber, r.startAddrMValue)
-        val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-          existingRoadwayPoint.get.id
-        } else {
-          roadwayPointDAO.create(r.roadwayNumber, r.startAddrMValue, username)
-        }
+        val rwPoint: Long = getRoadwayPoint(r.roadwayNumber, r.startAddrMValue, username)
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${r.roadwayNumber} addrM: ${r.startAddrMValue} beforeAfter: ${BeforeAfter.After.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.After, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), r.roadwayNumber, r.startAddrMValue, r.roadNumber, r.roadPartNumber, r.track, r.discontinuity))).head
+        createCalibrationPointIfNeeded(rwPoint, r.linkId, CalibrationPointLocation.StartOfLink, username)
         Some(junctionId)
       } else Some(roadJunctionPoint.head.junctionId)
 
       val junctionId = if (junctionsInHead.isEmpty && junctionIdentifier.isEmpty)
         junctionDAO.create(Seq(Junction(NewIdValue, None, None, link.startDate.get, link.endDate, DateTime.now, None, username, Some(DateTime.now)))).head
       else junctionIdentifier.getOrElse(junctionsInHead.head.id)
-      val existingRoadwayPoint = roadwayPointDAO.fetch(link.roadwayNumber, link.endAddrMValue)
-      val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-        existingRoadwayPoint.get.id
-      } else {
-        roadwayPointDAO.create(link.roadwayNumber, link.endAddrMValue, username)
-      }
+      val rwPoint: Long = getRoadwayPoint(link.roadwayNumber, link.endAddrMValue, username)
       val linkJunctionPoint = junctionPointDAO.fetchByRoadwayPoint(link.roadwayNumber, link.endAddrMValue, BeforeAfter.Before)
       if (linkJunctionPoint.isEmpty) {
         logger.info(s"Creating JunctionPoint with roadwayNumber : ${link.roadwayNumber} addrM: ${link.endAddrMValue} beforeAfter: ${BeforeAfter.Before.value}, junctionId: $junctionId")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, BeforeAfter.Before, rwPoint, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), link.roadwayNumber, link.endAddrMValue, link.roadNumber, link.roadPartNumber, link.track, link.discontinuity)))
+        createCalibrationPointIfNeeded(rwPoint, link.linkId, CalibrationPointLocation.EndOfLink, username)
       }
     }
 
@@ -583,14 +552,30 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
+  private def getRoadwayPoint(roadwayNumber: Long, address: Long, username: String) = {
+    val existingRoadwayPoint = roadwayPointDAO.fetch(roadwayNumber, address)
+    val rwPoint = if (existingRoadwayPoint.nonEmpty) {
+      existingRoadwayPoint.get.id
+    } else {
+      roadwayPointDAO.create(roadwayNumber, address, username)
+    }
+    rwPoint
+  }
+
+  private def createCalibrationPointIfNeeded(rwPoint: Long, linkId: Long, calibrationPointLocation: CalibrationPointLocation, username: String): Unit = {
+    if (CalibrationPointDAO.fetch(linkId, calibrationPointLocation, rwPoint).isEmpty) {
+      logger.info(s"Creating CalibrationPoint with RoadwayPoint id : $rwPoint linkId : $linkId startOrEnd: ${calibrationPointLocation.value}")
+      CalibrationPointDAO.create(rwPoint, linkId, calibrationPointLocation, calType = CalibrationPointType.Mandatory, createdBy = username)
+    }
+  }
 
   /*
-  1)  The nodes are created only for tracks 0 and 1
-  2)  A node template is always created if :
-    2.1)  road number is < 20000 or between 40000-70000
-    2.2)  and at the beginning/end of each road part, ely borders, or when road type changes
-    2.3)  on each junction with a road number (except number over 70 000)
-   */
+    1)  The nodes are created only for tracks 0 and 1
+    2)  A node template is always created if :
+      2.1)  road number is < 20000 or between 40000-70000
+      2.2)  and at the beginning/end of each road part, ely borders, or when road type changes
+      2.3)  on each junction with a road number (except number over 70 000)
+     */
   def handleNodePointTemplates(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
     time(logger, "Handling node point templates") {
       try {
@@ -718,7 +703,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def expireObsoleteNodesAndJunctions(projectLinks: Seq[ProjectLink], endDate: Option[DateTime], username: String = "-"): Unit = {
+  def expireObsoleteNodesAndJunctions(projectLinks: Seq[ProjectLink], endDate: Option[DateTime], username: String = "-"): Seq[JunctionPoint] = {
 
     def getNodePointsAndJunctionPointsByTerminatedRoadwayNumbers(terminatedRoadwayNumbers: Seq[Long]): (Seq[NodePoint], Seq[JunctionPoint]) = {
       logger.info(s"Terminated roadway numbers : $terminatedRoadwayNumbers")
@@ -733,7 +718,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
 
     def getNodePointsAndJunctionPointsByModifiedRoadwayNumbers(roadwayNumbersSection: Seq[Long], terminatedJunctionPoints: Seq[JunctionPoint]): (Seq[NodePoint], Seq[JunctionPoint]) = {
-      logger.info(s"Modified roadway number: $roadwayNumbersSection")
+      logger.info(s"Modified roadway number: ${roadwayNumbersSection.toList}")
       val roadwayPointIds = roadwayPointDAO.fetchByRoadwayNumbers(roadwayNumbersSection).map(_.id)
       val sortedRoadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbersSection.toSet).sortBy(_.startAddrMValue)
       val obsoleteNodePoints = if (sortedRoadways.nonEmpty) {
@@ -850,10 +835,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }.values.toSeq
 
     val obsoleteNodePoints = terminatedNodePoints ++ obsoletePointsFromModifiedRoadways.flatMap(_._1)
-    val obsoleteJunctionPoints = obsoletePointsFromModifiedRoadways.flatMap(_._2) ++ terminatedJunctionPoints
-
+    val obsoleteJunctionPoints = terminatedJunctionPoints ++ obsoletePointsFromModifiedRoadways.flatMap(_._2)
     val expiredJunctions = expireJunctionsAndJunctionPoints(obsoleteJunctionPoints)
     expireNodesAndNodePoints(obsoleteNodePoints, expiredJunctions)
+    obsoleteJunctionPoints.distinct
   }
 
   object ObsoleteJunctionPointFilters {

@@ -11,13 +11,10 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
-import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -140,6 +137,20 @@ object CalibrationCode {
       case AtBeginning => AtEnd
       case AtEnd => AtBeginning
       case _ => calibrationCode
+    }
+  }
+
+  def existsAtBeginning(calibrationCode: Option[CalibrationCode]): Boolean = {
+    calibrationCode match {
+      case Some(code) if code.equals(AtBeginning) || code.equals(AtBoth) => true
+      case _ => false
+    }
+  }
+
+  def existsAtEnd(calibrationCode: Option[CalibrationCode]): Boolean = {
+    calibrationCode match {
+      case Some(code) if code.equals(AtEnd) || code.equals(AtBoth) => true
+      case _ => false
     }
   }
 
