@@ -204,12 +204,12 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changeInfos = Seq(
         RoadwayChangeInfo(AddressChangeType.Termination,
           source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(None, None, None, None, None, None, Some(Discontinuity.Continuous), Some(8L)),
           Continuous, RoadType.apply(1), reversed = false, 1),
 
         RoadwayChangeInfo(AddressChangeType.Transfer,
           source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, RoadType.apply(1), reversed = false, 2)
       )
 
@@ -247,7 +247,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
         RoadwayChangeInfo(AddressChangeType.Termination,
           source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(None, None, None, None, None, None, Some(Discontinuity.Continuous), Some(8L)),
           Continuous, RoadType.apply(1), reversed = false, 2),
 
         RoadwayChangeInfo(AddressChangeType.New,
