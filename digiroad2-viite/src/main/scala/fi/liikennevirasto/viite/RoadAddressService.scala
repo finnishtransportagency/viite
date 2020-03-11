@@ -246,7 +246,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         searchResult = getRoadAddressWithRoadNumberParts(nums(0), Set(nums(1)), Set(Track.Combined, Track.LeftSide, Track.RightSide)).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
         resultSeq = collectResult("road", searchResult, resultSeq)
       } else if (nums.size == 1) {
-        //          The number can be LINKID, MTKID or roadNumber
+        // The number can be LINKID, MTKID or roadNumber
         var searchResultPoint = roadLinkService.getMidPointByLinkId(nums(0))
         resultSeq = collectResult("linkId", Seq(searchResultPoint), resultSeq)
         searchResultPoint = roadLinkService.getRoadLinkMiddlePointByMtkId(nums(0))
@@ -254,8 +254,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         searchResult = getRoadAddressWithRoadNumberAddress(nums(0)).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
         resultSeq = collectResult("road", searchResult, resultSeq)
       }
-    }
-    if (searchType == "street") {
+    } else if (searchType == "street") {
       searchResult = Seq(viiteVkmClient.postFormUrlEncoded("/vkm/geocode", Map(("address",searchString.getOrElse("")))))
       resultSeq = collectResult("street", searchResult, resultSeq)
     }
