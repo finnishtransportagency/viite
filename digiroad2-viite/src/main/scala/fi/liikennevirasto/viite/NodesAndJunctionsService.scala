@@ -262,8 +262,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def getNodePointTemplates(authorizedElys: Seq[Int]): Seq[NodePoint] = {
     withDynSession {
       time(logger, "Fetch node point templates") {
-        val allNodePointTemplates = nodePointDAO.fetchTemplates()
-        allNodePointTemplates.filter(template => authorizedElys.contains(template.elyCode))
+        nodePointDAO.fetchTemplates().filter(template => authorizedElys.contains(template.elyCode))
       }
     }
   }
@@ -287,10 +286,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def getJunctionTemplates(authorizedElys: Seq[Int]): Seq[JunctionTemplate] = {
     withDynSession {
       time(logger, "Fetch Junction templates") {
-        val allJunctionTemplates = junctionDAO.fetchTemplates()
-        allJunctionTemplates.filter(jt => jt.roadNumber != 0 && authorizedElys.contains(jt.elyCode)).groupBy(_.id).map(junctionTemplate => {
-          junctionTemplate._2.minBy(jt => (jt.roadNumber, jt.roadPartNumber, jt.addrM))
-        }).toSeq
+        junctionDAO.fetchTemplates().filter(jt => authorizedElys.contains(jt.elyCode))
       }
     }
   }
