@@ -821,7 +821,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
 
     def continuousSectionByRoadType(section: Seq[ProjectLink], continuousSection: Seq[Seq[ProjectLink]] = Seq.empty): Seq[Seq[ProjectLink]] = {
-      if(section.isEmpty)
+      if (section.isEmpty)
         continuousSection
       else {
         val roadType = section.head.roadType
