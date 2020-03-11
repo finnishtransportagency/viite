@@ -4051,6 +4051,101 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  def dummyHorizontalRoad(projectId: Long, numberOfLinearLocations: Int, roadNumber: Long, roadPartNumber: Long, rwNumber: Long, track: Track = Track.Combined, roadType: RoadType = RoadType.PublicRoad,
+                          discontinuity: Discontinuity = Discontinuity.Continuous, firstPointAt: Point = Point(0.0, 0.0),
+                          linkId: Long = 0, plId: Long = 0, rwId: Long = 0, llId: Long = 0, size: Int = 10): (Seq[ProjectLink], Seq[LinearLocation], Seq[Roadway]) = {
+    val projectLinks = for (i: Int <- 0 until numberOfLinearLocations) yield {
+      val startAddrM = i * size + firstPointAt.x.toLong
+      val endAddrM = startAddrM + size
+      val startPoint = firstPointAt.x + (i * size)
+      val endPoint = startPoint + size
+      val geom = Seq(Point(startPoint, 0.0), Point(endPoint, 0.0))
+      val projectLink = dummyProjectLink(roadNumber, roadPartNumber, track, Discontinuity.Continuous, startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, 0, size,
+        SideCode.TowardsDigitizing, LinkStatus.New, projectId, roadType, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
+      projectLink
+    }
+    val (linearLocations, roadways) = projectLinks.map(toRoadwayAndLinearLocation).unzip
+    (projectLinks,
+        linearLocations,
+        roadways.map(rw => rw.copy(ely = 8L, id = projectLinks.find(_.roadwayNumber == rw.roadwayNumber).get.roadwayId)))
+  }
+
+  /**
+    * Test case for node points when road type changes
+    */
+  test("Test handleNodePointTemplates and expireObsoleteNodesAndJunctions when road type changes") {
+    runWithRollback {
+      /*  |--RT-1-->|--RT-1-->|--RT-1--|  */
+
+      val projectId: Long = Sequences.nextViiteProjectId
+      val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), Seq(), None, None)
+
+      val rwNumber = Sequences.nextRoadwayNumber
+      val rwId = Sequences.nextRoadwayId
+      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val llId = Sequences.nextLinearLocationId
+
+      val (pl1, ll1, rw1) = dummyHorizontalRoad(projectId, 1,
+        999L, 1L, rwNumber,
+        firstPointAt = Point(0.0, 0.0), linkId = 12345, plId = plId, rwId = rwId, llId = llId)
+      val (pl2, ll2, rw2) = dummyHorizontalRoad(projectId, 1, 999L, 1L, rwNumber + 1, roadType = RoadType.MunicipalityStreetRoad,
+        firstPointAt = Point(10.0, 0.0), linkId = 12346, plId = plId + 1, rwId = rwId + 1, llId = llId + 1)
+      val (pl3, ll3, rw3) = dummyHorizontalRoad(projectId, 1, 999L, 1L, rwNumber + 2, discontinuity = Discontinuity.EndOfRoad,
+        firstPointAt = Point(20.0, 0.0), linkId = 12347, plId = plId + 2, rwId = rwId + 2, llId = llId + 2)
+
+      val roadways = rw1 ++ rw2 ++ rw3
+      val projectLinks = pl1 ++ pl2 ++ pl3
+      val linearLocations = ll1 ++ ll2 ++ ll3
+
+      buildTestDataForProject(Some(project), Some(roadways), Some(linearLocations), Some(projectLinks))
+
+      val projectChanges = List(
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw1.head.roadNumber), Some(rw1.head.track.value), startRoadPartNumber = Some(rw1.head.roadPartNumber), endRoadPartNumber = Some(rw1.last.roadPartNumber), startAddressM = Some(rw1.head.startAddrMValue), endAddressM = Some(rw1.head.endAddrMValue), Some(rw1.head.roadType), Some(rw1.last.discontinuity), Some(rw1.head.ely)),
+            rw1.last.discontinuity, rw1.head.roadType, reversed = false, 1, rw1.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw2.head.roadNumber), Some(rw2.head.track.value), startRoadPartNumber = Some(rw2.head.roadPartNumber), endRoadPartNumber = Some(rw2.last.roadPartNumber), startAddressM = Some(rw2.head.startAddrMValue), endAddressM = Some(rw2.head.endAddrMValue), Some(rw2.head.roadType), Some(rw2.last.discontinuity), Some(rw2.head.ely)),
+            rw2.last.discontinuity, rw2.head.roadType, reversed = false, 2, rw2.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw3.head.roadNumber), Some(rw3.head.track.value), startRoadPartNumber = Some(rw3.head.roadPartNumber), endRoadPartNumber = Some(rw3.last.roadPartNumber), startAddressM = Some(rw3.head.startAddrMValue), endAddressM = Some(rw3.head.endAddrMValue), Some(rw3.head.roadType), Some(rw3.last.discontinuity), Some(rw3.head.ely)),
+            rw3.last.discontinuity, rw3.head.roadType, reversed = false, 3, rw3.head.ely)
+          , DateTime.now, Some(0L))
+      )
+
+      val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
+      roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
+
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 0.0)), roadNumberLimits)).thenReturn(ll1)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(10.0, 0.0), Point(10.0, 0.0)), roadNumberLimits)).thenReturn(ll1 ++ ll2)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(20.0, 0.0), Point(20.0, 0.0)), roadNumberLimits)).thenReturn(ll2 ++ ll3)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(30.0, 0.0), Point(30.0, 0.0)), roadNumberLimits)).thenReturn(ll3)
+
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1.map(_.roadwayNumber).toSet, false)).thenReturn(rw1)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2.map(_.roadwayNumber).toSet, false)).thenReturn(rw2)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1 ++ ll2).map(_.roadwayNumber).toSet, false)).thenReturn(rw1 ++ rw2)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2 ++ ll3).map(_.roadwayNumber).toSet, false)).thenReturn(rw2 ++ rw3)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3.map(_.roadwayNumber).toSet, false)).thenReturn(rw3)
+
+      nodesAndJunctionsService.handleJunctionPointTemplates(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinks, Some(project.startDate.minusDays(1)))
+
+      val nodePoints = projectLinks.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber))
+      nodePoints.size should be(6)
+    }
+  }
+
   test("Test addOrUpdateNode When creating new Then new is created successfully") {
     runWithRollback {
       val node = Node(NewIdValue, Sequences.nextNodeNumber, Point(0, 0), Some("Node name"), NodeType.EndOfRoad,
