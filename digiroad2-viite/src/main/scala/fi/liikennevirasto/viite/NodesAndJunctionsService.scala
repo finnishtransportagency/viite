@@ -426,7 +426,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
 
     time(logger, "Handling junction point templates") {
-      val nonTerminatedLinks: Seq[BaseRoadAddress] = projectLinks.filter(pl => pl.status != LinkStatus.Terminated)
+      val nonTerminatedLinks: Seq[BaseRoadAddress] = projectLinks.filter(pl => RoadClass.forJunctions.contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
       nonTerminatedLinks.foreach { projectLink =>
         val roadNumberLimits = Seq((RoadClass.forJunctions.start, RoadClass.forJunctions.end))
 
