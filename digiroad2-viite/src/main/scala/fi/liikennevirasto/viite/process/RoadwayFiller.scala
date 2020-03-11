@@ -193,14 +193,14 @@ object RoadwayFiller {
     def groupedSections(changes: Seq[(ProjectRoadwayChange, Seq[ProjectLink])]) = {
       changes.groupBy(c => (c._1.changeInfo.source.roadNumber, c._1.changeInfo.source.startRoadPartNumber, c._1.changeInfo.source.trackCode, c._1.changeInfo.source.roadType, c._1.changeInfo.source.ely,
         c._1.changeInfo.target.roadNumber, c._1.changeInfo.target.startRoadPartNumber, c._1.changeInfo.target.trackCode, c._1.changeInfo.target.roadType, c._1.changeInfo.target.ely))
-        .flatMap{
+        .flatMap {
         case (key, section) =>
           val sortedSections = section.sortBy(s => (s._1.changeInfo.changeType.value, s._1.changeInfo.target.startAddressM))
-          sortedSections.foldLeft(Seq.empty[(ProjectRoadwayChange, Seq[ProjectLink])]){(changeList, section) =>
-            if(changeList.isEmpty)
+          sortedSections.foldLeft(Seq.empty[(ProjectRoadwayChange, Seq[ProjectLink])]) {(changeList, section) =>
+            if (changeList.isEmpty)
               Seq(section)
-            else if(changeList.last._1.changeInfo.target.endAddressM == section._1.changeInfo.target.startAddressM &&
-              changeList.last._2.head.roadwayNumber == section._2.head.roadwayNumber){
+            else if (changeList.last._1.changeInfo.target.endAddressM == section._1.changeInfo.target.startAddressM &&
+              changeList.last._2.head.roadwayNumber == section._2.head.roadwayNumber) {
                 val adjustedSource = changeList.last._1.changeInfo.source.copy(endAddressM = section._1.changeInfo.source.endAddressM)
                 val adjustedTarget = changeList.last._1.changeInfo.target.copy(endAddressM = section._1.changeInfo.target.endAddressM)
                 val lastChangeInfo = changeList.last._1.changeInfo.copy(source = adjustedSource, target = adjustedTarget, discontinuity = section._1.changeInfo.discontinuity)
