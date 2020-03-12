@@ -1877,6 +1877,37 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def updateRoadwaysAndLinearLocationsWithProjectLinks(newState: ProjectState, projectID: Long): Set[Long] = {
+    def handleRoadPrimaryTables(currentRoadways: Map[Long, Roadway], historyRoadways: Map[Long, Roadway], roadwaysToInsert: Iterable[Roadway], historyRoadwaysToKeep: Seq[Long], linearLocationsToInsert: Iterable[LinearLocation], project: Project): Seq[Long] ={
+      logger.debug(s"Creating history rows based on operation")
+      linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
+      (currentRoadways ++ historyRoadways.filterNot(hist => historyRoadwaysToKeep.contains(hist._1))).map(roadway => expireHistoryRows(roadway._1))
+      logger.debug(s"Inserting roadways (history + current)")
+      val roadwayIds = roadwayDAO.create(roadwaysToInsert.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy)))
+      logger.debug(s"Inserting linear locations")
+      linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
+      roadwayIds
+    }
+
+    def handleRoadComplementaryTables(roadwayChanges: List[ProjectRoadwayChange], enrichedProjectLinkChanges: Seq[ProjectRoadLinkChange], linearLocationsToInsert: Iterable[LinearLocation], projectLinksAfterChanges: Seq[ProjectLink], endDate: Option[DateTime], username: String) = {
+      logger.debug(s"Updating and inserting roadway points")
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, enrichedProjectLinkChanges, username)
+      logger.debug(s"Updating and inserting calibration points")
+      roadAddressService.handleProjectCalibrationPointChanges(linearLocationsToInsert, username, enrichedProjectLinkChanges.filter(_.status == LinkStatus.Terminated))
+      logger.debug(s"Creating nodes and junctions templates")
+      nodesAndJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges, enrichedProjectLinkChanges, username)
+      nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, enrichedProjectLinkChanges, username)
+      logger.debug(s"Expiring obsolete nodes and junctions")
+      val expiredJunctionPoints = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterChanges, endDate, username)
+      logger.debug(s"Expiring obsolete calibration points in ex junction places")
+      roadAddressService.expireObsoleteCalibrationPointsInJunctions(expiredJunctionPoints)
+      logger.debug(s"Handling road names")
+      handleNewRoadNames(roadwayChanges)
+      handleRoadNames(roadwayChanges)
+      handleTerminatedRoadwayChanges(roadwayChanges)
+      ProjectLinkNameDAO.removeByProject(projectID)
+      nodesAndJunctionsService.calculateNodePointsForProject(projectID, username)
+    }
+
     if (newState != Saved2TR) {
       logger.error(s" Project state not at Saved2TR")
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
@@ -1912,13 +1943,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val linearLocationsToInsert = generatedRoadways.flatMap(_._2).groupBy(l => (l.roadwayNumber, l.orderNumber, l.linkId, l.startMValue, l.endMValue, l.validTo.map(_.toYearMonthDay), l.startCalibrationPoint, l.endCalibrationPoint, l.sideCode, l.linkGeomSource)).map(_._2.head)
       val roadwaysToInsert = generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).groupBy(roadway => (roadway.roadNumber, roadway.roadPartNumber, roadway.startAddrMValue, roadway.endAddrMValue, roadway.track, roadway.discontinuity, roadway.startDate.toYearMonthDay, roadway.endDate.map(_.toYearMonthDay),
         roadway.validFrom.toYearMonthDay, roadway.validTo.map(_.toYearMonthDay), roadway.ely, roadway.roadType, roadway.terminated)).map(_._2.head)
-      logger.debug(s"Creating history rows based on operation")
-      linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
-      (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
-      logger.debug(s"Inserting roadways (history + current)")
-      val roadwayIds = roadwayDAO.create(roadwaysToInsert.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy)))
-      logger.debug(s"Inserting linear locations")
-      linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
+
+      val roadwayIds = handleRoadPrimaryTables(currentRoadways, historyRoadways, roadwaysToInsert, historyRoadwaysToKeep, linearLocationsToInsert, project)
       val mappedRoadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(roadwayIds)
       val roadwayLinks = if (generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
       val projectLinksAfterChanges = roadwayLinks.map{ l=>
@@ -1929,23 +1955,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val pl: ProjectLink = projectLinksAfterChanges.find(_.id == rlc.id).get
         rlc.copy(linearLocationId = pl.linearLocationId, newStartAddr = pl.startAddrMValue, newEndAddr = pl.endAddrMValue)
       }
-      logger.debug(s"Updating and inserting roadway points")
-      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, enrichedProjectLinkChanges, username = project.createdBy)
-      logger.debug(s"Updating and inserting calibration points")
-      roadAddressService.handleProjectCalibrationPointChanges(linearLocationsToInsert, username = project.createdBy, enrichedProjectLinkChanges.filter(_.status == LinkStatus.Terminated))
-      logger.debug(s"Creating nodes and junctions templates")
-      nodesAndJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges, enrichedProjectLinkChanges, username = project.createdBy)
-      nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, enrichedProjectLinkChanges, username = project.createdBy)
-      logger.debug(s"Expiring obsolete nodes and junctions")
-      val expiredJunctionPoints = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterChanges, Some(project.startDate.minusDays(1)), username = project.createdBy)
-      logger.debug(s"Expiring obsolete calibration points in ex junction places")
-      roadAddressService.expireObsoleteCalibrationPointsInJunctions(expiredJunctionPoints)
-      logger.debug(s"Handling road names")
-      handleNewRoadNames(roadwayChanges)
-      handleRoadNames(roadwayChanges)
-      handleTerminatedRoadwayChanges(roadwayChanges)
-      ProjectLinkNameDAO.removeByProject(projectID)
-      nodesAndJunctionsService.calculateNodePointsForProject(projectID, username = project.createdBy)
+
+      handleRoadComplementaryTables(roadwayChanges, enrichedProjectLinkChanges, linearLocationsToInsert, projectLinksAfterChanges, Some(project.startDate.minusDays(1)), project.createdBy)
       projectLinks.map(_.roadNumber).toSet
     } catch {
       case e: ProjectValidationException =>
