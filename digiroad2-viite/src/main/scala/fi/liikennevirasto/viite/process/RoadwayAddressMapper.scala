@@ -81,7 +81,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
         val location = remaining.head
         //increment can also be negative
         val previewValue = if(remaining.size == 1){
-          Math.round(startAddr + (location.endMValue - location.startMValue) * coef) + increment
+          startAddr + Math.round((location.endMValue - location.startMValue) * coef) + increment
         } else {
           startAddr + (location.endMValue - location.startMValue) * coef + increment
         }
