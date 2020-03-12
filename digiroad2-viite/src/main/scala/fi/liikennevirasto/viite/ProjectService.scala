@@ -1916,13 +1916,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       linearLocationDAO.expireByRoadwayNumbers((currentRoadways ++ historyRoadways).map(_._2.roadwayNumber).toSet)
       (currentRoadways ++ historyRoadways.filterNot(hRoadway => historyRoadwaysToKeep.contains(hRoadway._1))).map(roadway => expireHistoryRows(roadway._1))
       logger.debug(s"Inserting roadways (history + current)")
-      roadwayDAO.create(roadwaysToInsert.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy)))
+      val roadwayIds = roadwayDAO.create(roadwaysToInsert.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy)))
       logger.debug(s"Inserting linear locations")
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
-      val projectLinksAfterChanges = if (generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
+      val mappedRoadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(roadwayIds)
+      val roadwayLinks = if (generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
+      val projectLinksAfterChanges = roadwayLinks.map{ l=>
+        val ra = mappedRoadAddresses.find(_.linearLocationId == l.linearLocationId).get
+        l.copy(startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue)
+      }
       val enrichedProjectLinkChanges = projectLinkChanges.map{ rlc =>
-        val generatedLinearLocation = projectLinksAfterChanges.find(_.id == rlc.id)
-        rlc.copy(linearLocationId = generatedLinearLocation.get.linearLocationId)
+        val pl: ProjectLink = projectLinksAfterChanges.find(_.id == rlc.id).get
+        rlc.copy(linearLocationId = pl.linearLocationId, newStartAddr = pl.startAddrMValue, newEndAddr = pl.endAddrMValue)
       }
       logger.debug(s"Updating and inserting roadway points")
       roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, enrichedProjectLinkChanges, username = project.createdBy)
