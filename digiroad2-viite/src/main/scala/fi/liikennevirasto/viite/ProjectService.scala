@@ -1882,6 +1882,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
     val project = projectDAO.fetchById(projectID).get
+    val nodeIds = nodeDAO.fetchNodeNumbersByProject(projectID)
     val projectLinks = projectLinkDAO.fetchProjectLinks(projectID)
     val projectLinkChanges = projectLinkDAO.fetchProjectLinksChange(projectID)
     val currentRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
@@ -1940,7 +1941,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       handleRoadNames(roadwayChanges)
       handleTerminatedRoadwayChanges(roadwayChanges)
       ProjectLinkNameDAO.removeByProject(projectID)
-      nodesAndJunctionsService.calculateNodePointsForProject(projectID, username = project.createdBy)
+      nodesAndJunctionsService.calculateNodePointsForNodes(nodeIds, username = project.createdBy)
       projectLinks.map(_.roadNumber).toSet
     } catch {
       case e: ProjectValidationException =>

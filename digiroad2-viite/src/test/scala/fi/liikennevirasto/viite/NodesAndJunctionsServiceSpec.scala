@@ -4240,9 +4240,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test calculateNodePointsForProject When project not found Then not fail") {
+  test("Test calculateNodePointsForNodes When nodes not found Then not fail") {
     runWithRollback {
-      nodesAndJunctionsService.calculateNodePointsForProject(-1, "TestUser")
+      nodesAndJunctionsService.calculateNodePointsForNodes(Seq.empty[Long], "TestUser")
     }
   }
 
