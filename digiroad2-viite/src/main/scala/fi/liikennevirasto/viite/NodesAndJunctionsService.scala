@@ -907,8 +907,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def calculateNodePointsForProject(projectId: Long, username: String): Unit = {
-    val nodeNumbers = nodeDAO.fetchNodeNumbersByProject(projectId)
+  def calculateNodePointsForNodes(nodeNumbers: Seq[Long], username: String): Unit = {
+    logger.debug("calculateNodePointsForNodes " + nodeNumbers.mkString(","))
     nodeNumbers.foreach(nodeNumber => {
       calculateNodePointsForNode(nodeNumber, username)
     })
