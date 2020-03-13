@@ -42,7 +42,7 @@ class ViiteVkmClient {
     parameters.foreach { case (key, value) =>
       nameValuePairs.add(new BasicNameValuePair(key, value))
     }
-    post.setEntity(new UrlEncodedFormEntity(nameValuePairs))
+    post.setEntity(new UrlEncodedFormEntity(nameValuePairs, "UTF-8"))
 
     post.setHeader("Content-type", "application/x-www-form-urlencoded")
     val url = new URL(getRestEndPoint)
