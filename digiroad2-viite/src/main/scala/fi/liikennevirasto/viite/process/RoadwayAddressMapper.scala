@@ -80,7 +80,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
       } else {
         val location = remaining.head
         //increment can also be negative
-        val previewValue = if(remaining.size == 1){
+        val previewValue = if (remaining.size == 1) {
           startAddr + Math.round((location.endMValue - location.startMValue) * coef) + increment
         } else {
           startAddr + (location.endMValue - location.startMValue) * coef + increment
@@ -209,7 +209,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     * Uses the RoadwayDAO to get the roadway information that is connected to the entries of given linearLocations.
     * Both information is then mixed and returned as fully fledged RoadAddress entries.
     *
-    * @param linearLocations: Seq[LinearLocation] - The collection of Linear Locations entries
+    * @param linearLocations : Seq[LinearLocation] - The collection of Linear Locations entries
     * @return
     */
   def getRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation]): Seq[RoadAddress] = {
@@ -239,8 +239,8 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     * Uses the RoadwayDAO to get the current roadway information the is associated with a specific version of the road network, said roadway information is connected to the entries of given linearLocations.
     * Both information is then mixed and returned as fully fledged RoadAddress entries.
     *
-    * @param linearLocations: Seq[LinearLocation] - The collection of Linear Locations entries
-    * @param roadNetworkId: Long - the id of the road network version
+    * @param linearLocations : Seq[LinearLocation] - The collection of Linear Locations entries
+    * @param roadNetworkId   : Long - the id of the road network version
     * @return
     */
   def getNetworkVersionRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation], roadNetworkId: Long): Seq[RoadAddress] = {
@@ -255,7 +255,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     * Uses the LinearLocationDAO to get the linear location information that is connected to the entries of given Roadway entries.
     * Both information is then mixed and returned as fully fledged RoadAddress entries.
     *
-    * @param roadwayAddresses: Seq[Roadway] - The collection of Roadway's entries
+    * @param roadwayAddresses : Seq[Roadway] - The collection of Roadway's entries
     * @return
     */
   def getRoadAddressesByRoadway(roadwayAddresses: Seq[Roadway]): Seq[RoadAddress] = {
