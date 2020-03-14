@@ -338,28 +338,48 @@ class NodeDAO extends BaseDAO {
     }
   }
 
+  // This query is designed to work in processing ROADWAY_CHANGES in phase where ROADWAY_CHANGES contains changes but other tables do not contain any updates yet
+  // First union part handles project changes and second part handles terminations
   def fetchNodeNumbersByProject(projectId: Long): Seq[Long] = {
     val query =
       s"""
          SELECT DISTINCT N.NODE_NUMBER
          FROM NODE N
-         INNER JOIN NODE_POINT NP
-           ON N.NODE_NUMBER = NP.NODE_NUMBER
+         INNER JOIN JUNCTION J
+           ON N.NODE_NUMBER = J.NODE_NUMBER
+         INNER JOIN JUNCTION_POINT JP
+           ON J.ID = JP.JUNCTION_ID
          INNER JOIN ROADWAY_POINT RP
-           ON NP.ROADWAY_POINT_ID = RP.ID
+           ON JP.ROADWAY_POINT_ID = RP.ID
          INNER JOIN ROADWAY R
            ON RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
          INNER JOIN ROADWAY_CHANGES RC
-           ON R.ROAD_NUMBER = RC.NEW_ROAD_NUMBER
-             AND R.ROAD_PART_NUMBER = RC.NEW_ROAD_PART_NUMBER
+           ON (R.ROAD_NUMBER = RC.NEW_ROAD_NUMBER
+             AND R.ROAD_PART_NUMBER = RC.NEW_ROAD_PART_NUMBER)
          WHERE RC.PROJECT_ID = $projectId
-         AND R.VALID_TO IS NULL
          AND R.END_DATE IS NULL
-         AND NP.VALID_TO IS NULL
+         AND JP.VALID_TO IS NULL
          AND N.VALID_TO IS NULL
          AND N.END_DATE IS NULL
-         ORDER BY N.NODE_NUMBER
-       """
+       UNION
+         SELECT DISTINCT N.NODE_NUMBER
+         FROM NODE N
+         INNER JOIN JUNCTION J
+           ON N.NODE_NUMBER = J.NODE_NUMBER
+         INNER JOIN JUNCTION_POINT JP
+           ON J.ID = JP.JUNCTION_ID
+         INNER JOIN ROADWAY_POINT RP
+           ON JP.ROADWAY_POINT_ID = RP.ID
+         INNER JOIN ROADWAY R
+           ON RP.ROADWAY_NUMBER = R.ROADWAY_NUMBER
+         INNER JOIN ROADWAY_CHANGES RC
+           ON (R.ROAD_NUMBER = RC.OLD_ROAD_NUMBER AND RC.NEW_ROAD_NUMBER IS NULL
+             AND R.ROAD_PART_NUMBER = RC.OLD_ROAD_PART_NUMBER)
+         WHERE RC.PROJECT_ID = $projectId
+         AND R.END_DATE IS NULL
+         AND JP.VALID_TO IS NULL
+         AND N.VALID_TO IS NULL
+         AND N.END_DATE IS NULL       """
     Q.queryNA[(Long)](query).iterator.toSeq
   }
 
