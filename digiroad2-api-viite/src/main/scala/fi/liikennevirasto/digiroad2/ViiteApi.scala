@@ -888,33 +888,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val getRoadAddressesByRoadNumberPartNumberAndAddrMValue: SwaggerSupportSyntax.OperationBuilder = (
+  private val getCoordinatesForSearch: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getRoadAddressesByRoadNumberPartNumberAndAddrMValue")
       .parameters(
-        queryParam[Long]("road").description("Road Number of a road address"),
-        queryParam[Long]("part").description("Road Part Number of a road address"),
-        queryParam[Long]("addrMValue").description("Address M Value of a road address")
+        queryParam[String]("search").description("Road name OR Road address (Road Number, [road part] and [distance]) OR linkId OR mtkId")
       )
-      tags "ViiteAPI - RoadAddresses"
-      summary "Returns all the road names that are identified by the road number, road part number and possibly addressM value."
-      notes ""
+      tags "ViiteAPI - General"
+      summary "Returns coordinates to support single box search."
+      description ""
     )
 
-  get("/roadlinks/roadaddress", operation(getRoadAddressesByRoadNumberPartNumberAndAddrMValue)) {
-    val roadNumber = params.get("road").map(_.toLong)
-    val roadPartNumber = params.get("part").map(_.toLong)
-    val addrMValue = params.get("addrMValue").map(_.toLong)
-    time(logger, s"GET request for api/viite/roadlinks/roadaddress/$roadNumber/$roadPartNumber") {
-      (roadNumber, roadPartNumber, addrMValue) match {
-        case (Some(road), Some(part), None) =>
-          roadAddressService.getRoadAddressWithRoadNumberParts(road, Set(part), Set(Track.Combined, Track.LeftSide, Track.RightSide)).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
-        case (Some(road), Some(part), Some(addrM)) =>
-          roadAddressService.getRoadAddress(road, part, addrM, None).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
-        case (Some(road), _, _) =>
-          roadAddressService.getRoadAddressWithRoadNumberAddress(road).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
-        case _ => BadRequest("Missing road number from URL")
-      }
-    }
+  get("/roadlinks/search", operation(getCoordinatesForSearch)) {
+    val searchString = params.get("search")
+    roadAddressService.getSearchResults(searchString)
   }
 
   val getNodesByRoadAttributes = (
