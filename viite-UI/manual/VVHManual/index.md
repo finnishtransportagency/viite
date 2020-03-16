@@ -242,7 +242,7 @@ Ty&ouml;kalulla voidaan valita:
 
 _Feature Coordinates -ty&ouml;kalu._
 
-Ikkuna koostuu kahdesta paneelista ja kohteiden valintalistasta. Ylempi paneeli listaa kaikki valitut kohteet ja mahdolliset kohteiden osat. Alempi paneeli listaa valitun kohteen karttakoordinaatit. Valintalista (Coordinates from) m&auml;&auml;r&auml;&auml; ty&ouml;kalun valintoihin k&auml;ytt&auml;m&auml;n kartattason.
+Ikkuna koostuu kahdesta paneelista ja kohteiden valintalistasta. Ylempi paneeli listaa kaikki valitut kohteet ja mahdolliset kohteiden osat. Alempi paneeli listaa valitun kohteen karttakoordinaatit. Valintalista (Coordinates from) m&auml;&auml;r&auml;&auml; ty&ouml;kalun valintoihin k&auml;ytt&auml;m&auml;n karttatason.
 
 Vaihtoehdot ovat Feature Info -ty&ouml;kalun mukaiset eli:
 

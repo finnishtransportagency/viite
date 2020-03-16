@@ -30,6 +30,8 @@ class NodeDAOSpec extends FunSuite with Matchers {
   val nodePointDAO = new NodePointDAO
   val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
+  val junctionDAO = new JunctionDAO
+  val junctionPointDAO = new JunctionPointDAO
 
   private val roadNumber1 = 990
   private val roadwayNumber1 = 1000000000l
@@ -127,14 +129,21 @@ class NodeDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test fetchNodeNumbersByProject When matching Then return them") {
+  test("Test fetchNodeNumbersByProject for changed road When matching Then return them") {
     runWithRollback {
       roadwayDAO.create(Seq(testRoadway1))
       val nodeId = Sequences.nextNodeId
       val nodeNumber = dao.create(Seq(testNode1.copy(id = nodeId))).head
       val roadwayPointId = Sequences.nextRoadwayPointId
       roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId))
-      nodePointDAO.create(Seq(testNodePoint1.copy(nodeNumber = Some(nodeNumber), roadwayPointId = roadwayPointId)))
+      val testJunction1 = Junction(NewIdValue, None, Option(nodeNumber), DateTime.parse("2019-01-01"), None,
+        DateTime.parse("2019-01-01"), None, "Test", None)
+      val testJunctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, None, None,
+        DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
+
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      val ids = junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
+
       sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely, ROADWAY_CHANGE_ID) Values(100,1,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,8, 1) """.execute
       val projectId = sql"""Select rac.project_id From ROADWAY_CHANGES rac where new_road_number = $roadNumber1 and new_road_part_number = $roadPartNumber1""".as[Long].first
 
@@ -144,5 +153,32 @@ class NodeDAOSpec extends FunSuite with Matchers {
       nodeNumbers(0) should be(nodeNumber)
     }
   }
+
+  test("Test fetchNodeNumbersByProject for terminated road When matching Then return them") {
+    runWithRollback {
+      roadwayDAO.create(Seq(testRoadway1))
+      val nodeId = Sequences.nextNodeId
+      val nodeNumber = dao.create(Seq(testNode1.copy(id = nodeId))).head
+      val roadwayPointId = Sequences.nextRoadwayPointId
+      roadwayPointDAO.create(testRoadwayPoint1.copy(id = roadwayPointId))
+      val testJunction1 = Junction(NewIdValue, None, Option(nodeNumber), DateTime.parse("2019-01-01"), None,
+        DateTime.parse("2019-01-01"), None, "Test", None)
+      val testJunctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, None, None,
+        DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
+
+      val junctionId = junctionDAO.create(Seq(testJunction1)).head
+      val ids = junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
+
+      sqlu""" insert into ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,old_road_type,new_road_type,old_ely,new_ely, ROADWAY_CHANGE_ID)
+                                   Values(100,2,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8, 1) """.execute
+      val projectId = sql"""Select rac.project_id From ROADWAY_CHANGES rac where old_road_number = $roadNumber1 and old_road_part_number = $roadPartNumber1""".as[Long].first
+
+      val nodeNumbers = dao.fetchNodeNumbersByProject(projectId)
+
+      nodeNumbers.size should be(1)
+      nodeNumbers(0) should be(nodeNumber)
+    }
+  }
+
 
 }

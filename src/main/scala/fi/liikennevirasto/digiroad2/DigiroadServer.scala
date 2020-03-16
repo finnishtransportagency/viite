@@ -43,8 +43,6 @@ trait DigiroadServer {
     appContext.addServlet(classOf[OAGProxyServlet], "/wmts/*")
     appContext.addServlet(classOf[ArcGisProxyServlet], "/arcgis/*")
     appContext.addServlet(classOf[OAGRasterServiceProxyServlet], "/rasteripalvelu/*")
-    appContext.addServlet(classOf[VKMProxyServlet], "/vkm/*")
-    appContext.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
     appContext.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     appContext.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     appContext.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
@@ -120,35 +118,5 @@ class ArcGisProxyServlet extends ProxyServlet {
       client.setIdleTimeout(60000)
     }
     client
-  }
-}
-
-class VKMProxyServlet extends ProxyServlet {
-  private val logger = LoggerFactory.getLogger(getClass)
-  def regex: Regex = "/(digiroad|viite)".r
-
-  override def rewriteURI(req: HttpServletRequest): java.net.URI = {
-
-    val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    val vkmUrl: String = properties.getProperty("digiroad2.VKMUrl")
-    java.net.URI.create(vkmUrl + regex.replaceFirstIn(req.getRequestURI, ""))
-  }
-
-  override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-    val parameters = clientRequest.getParameterMap
-    parameters.foreach { case(key, value) =>
-      proxyRequest.param(key, value.mkString(""))
-    }
-    logger.info(s"Sending proxy request to VKM: ${proxyRequest.getMethod} ${proxyRequest.getURI}")
-    super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
-  }
-}
-
-class VKMUIProxyServlet extends ProxyServlet {
-  def regex: Regex = "/(digiroad|viite)/viitekehysmuunnin/".r
-
-  override def rewriteURI(req: HttpServletRequest): java.net.URI = {
-    java.net.URI.create("http://localhost:3000" + regex.replaceFirstIn(req.getRequestURI, ""))
   }
 }

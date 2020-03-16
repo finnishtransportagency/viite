@@ -67,7 +67,7 @@
     var templatesForm = function (title) {
       var formButtons = function () {
         return '<div class="form form-controls">' +
-          ' <button id="attachToMapNode" class="btn btn-block btn-attach-node">Valitse kartatta solmu, johon haluat liittää aihiot</button>' +
+          ' <button id="attachToMapNode" class="btn btn-block btn-attach-node">Valitse kartalta solmu, johon haluat liittää aihiot</button>' +
           ' <button id="attachToNewNode" class="btn btn-block btn-attach-node">Luo uusi solmu, johon haluat liittää aihiot</button>' +
           ' <button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
           ' <button class="cancel btn btn-edit-templates-cancel">Peruuta</button>' +

@@ -7,7 +7,8 @@
      * @returns {*}
      */
     var geocode = function(street) {
-      return backend.getGeocode(street.address).then(function(result) {
+      return backend.getSearchResults(street.search).then(function (coordinateData) {
+        var result = coordinateData[0].street[0];
         var resultLength = _.get(result, 'results.length');
         var vkmResultToCoordinates = function(r) {
           return { title: r.address, lon: r.x, lat: r.y};
@@ -52,26 +53,42 @@
 
 
     /**
-     * Get road address coordinates
+     * Get coordinates for road address, linkId and mtkId
      *
-     * @param road
+     * @param input
      * @returns {*}
      */
-    var getCoordinatesFromRoadAddress = function (road) {
-      return backend.getCoordinatesFromRoadAddress(road.roadNumber, road.section, road.distance).then(function (roadData) {
-        if (!_.isUndefined(roadData) && roadData.length > 0) {
-          var sortedRoad = _.sortBy(_.sortBy(roadData, function (addr) {
-            return addr.startAddrMValue;
-          }), function (road) {
-            return road.roadPartNumber;
+    var getCoordinatesFromSearchInput = function (input) {
+      return backend.getSearchResults(input.search).then(function (coordinateData) {
+        var searchResult = [];
+        if (!_.isUndefined(coordinateData)) {
+          coordinateData.forEach(function (item) {
+            if (item && item.linkId && item.linkId[0]) {
+              item.linkId[0].lon = item.linkId[0].x;
+              item.linkId[0].lat = item.linkId[0].y;
+              item.linkId[0].title = 'linkId, ' + input.search;
+              searchResult.push(item.linkId[0]);
+            } else if (item && item.mtkId && item.mtkId[0]) {
+              item.mtkId[0].lon = item.mtkId[0].x;
+              item.mtkId[0].lat = item.mtkId[0].y;
+              item.mtkId[0].title = 'mtkId, ' + input.search;
+              searchResult.push(item.mtkId[0]);
+            } else if (item && item.road && item.road[0]) {
+              var sortedRoad = _.sortBy(_.sortBy(item.road, function (addr) {
+                return addr.startAddrMValue;
+              }), function (road) {
+                return road.roadPartNumber;
+              });
+              var parsed = _.map(_.words(input.search), _.parseInt);
+              searchResult = searchResult.concat(roadLocationAPIResultParser(sortedRoad[0], parsed[2]));
+            }
           });
-          var searchResult = roadLocationAPIResultParser(sortedRoad[0], road.distance);
-          if (searchResult.length === 0) {
-            return $.Deferred().reject('Tuntematon tieosoite');
-          } else {
-            return searchResult;
-          }
         } else return [];
+        if (searchResult.length === 0) {
+          return $.Deferred().reject('Tuntematon tieosoite');
+        } else {
+          return searchResult;
+        }
       });
     };
 
@@ -96,7 +113,7 @@
       var resultByInputType = {
         coordinate: resultFromCoordinates,
         street: geocode,
-        road: getCoordinatesFromRoadAddress,
+        road: getCoordinatesFromSearchInput,
         invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
       };
 
