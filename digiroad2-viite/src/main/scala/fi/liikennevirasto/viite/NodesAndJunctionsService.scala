@@ -575,14 +575,13 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def handleNodePointTemplates(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
     time(logger, "Handling node point templates") {
       try {
-        def continuousNodeSections(seq: Seq[ProjectLink], roadTypesSection: Seq[Seq[ProjectLink]]): (Seq[ProjectLink], Seq[Seq[ProjectLink]]) = {
-          if (seq.isEmpty) {
-            (Seq(), roadTypesSection)
-          } else {
-            val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
-            val continuousProjectLinks = seq.takeWhile(pl => pl.roadType.value == roadType)
-            continuousNodeSections(seq.drop(continuousProjectLinks.size), roadTypesSection :+ continuousProjectLinks)
-          }
+        @scala.annotation.tailrec
+        def continuousNodeSections(seq: Seq[ProjectLink], roadTypesSection: Seq[Seq[ProjectLink]]): (Seq[ProjectLink], Seq[Seq[ProjectLink]]) = if (seq.isEmpty) {
+          (Seq(), roadTypesSection)
+        } else {
+          val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
+          val continuousProjectLinks = seq.takeWhile(pl => pl.roadType.value == roadType)
+          continuousNodeSections(seq.drop(continuousProjectLinks.size), roadTypesSection :+ continuousProjectLinks)
         }
 
         val filteredLinks = projectLinks.filter(pl => RoadClass.forNodes.contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated).filterNot(_.track == Track.LeftSide)
