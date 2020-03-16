@@ -330,9 +330,9 @@
       });
     };
 
-    this.getGeocode = function (address) {
-      return $.post("vkm/geocode", {address: address}).then(function (x) {
-        return JSON.parse(x);
+    this.getSearchResults = function(searchString) {
+      return $.get("api/viite/roadlinks/search", {search: searchString}).then(function (x) {
+        return x;
       });
     };
 
