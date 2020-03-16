@@ -289,6 +289,7 @@ class NodePointDAO extends BaseDAO {
 
     createNodePoints.foreach {
       nodePoint =>
+        logger.info(s"Creating NodePoint with roadwayNumber : ${nodePoint.roadwayNumber} addrM: ${nodePoint.addrM} beforeAfter: ${nodePoint.beforeAfter.value}")
         ps.setLong(1, nodePoint.id)
         ps.setLong(2, nodePoint.beforeAfter.value)
         ps.setLong(3, nodePoint.roadwayPointId)
