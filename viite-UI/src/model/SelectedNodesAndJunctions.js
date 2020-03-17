@@ -87,12 +87,12 @@
 
     var setNodeName = function (name) {
       current.node.name = name;
-      eventbus.trigger('change:node', current.node);
+      updateNodesAndJunctionsMarker();
     };
 
     var setNodeType = function (type) {
       current.node.type = type;
-      eventbus.trigger('change:node', current.node);
+      updateNodesAndJunctionsMarker();
     };
 
     var setStartDate = function (startDate) {
@@ -113,9 +113,12 @@
       var junction = _.find(current.node.junctions, function (junction) {
         return junction.id === id;
       });
-      junction.junctionNumber = junctionNumber;
-      eventbus.trigger('junction:validate');
-      eventbus.trigger('change:node', current.node);
+
+      if (!_.isUndefined(junction)) {
+        junction.junctionNumber = junctionNumber;
+        eventbus.trigger('junction:validate');
+        updateNodesAndJunctionsMarker();
+      }
     };
 
     var detachJunctionAndNodePoints = function (junction, nodePoints) {
@@ -236,6 +239,10 @@
       eventbus.trigger('node:save', current.node);
     };
 
+    var updateNodesAndJunctionsMarker = function (junction) {
+      eventbus.trigger('change:node', current.node, junction);
+    };
+
     eventbus.on('selectedNodesAndJunctions:openTemplates', function (templates) {
       openTemplates(templates);
     });
@@ -267,7 +274,8 @@
       closeNode: closeNode,
       closeTemplates: closeTemplates,
       closeForm: closeForm,
-      saveNode: saveNode
+      saveNode: saveNode,
+      updateNodesAndJunctionsMarker: updateNodesAndJunctionsMarker
     };
   };
 })(this);

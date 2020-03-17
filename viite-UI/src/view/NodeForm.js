@@ -149,7 +149,7 @@
           '     <tr><th class="node-junctions-table-header">solmusta</th></tr>' +
           '   </table>' +
           ' </th>' : '') +
-          ((options && (options.junctionIcon || options.junctionInputNumber)) ? '<th class="node-junctions-table-header">NRO</th>' : '') +
+          ((options && options.junctionInputNumber) ? '<th class="node-junctions-table-header">NRO</th>' : '') +
           ' <th class="node-junctions-table-header">TIE</th>' +
           ' <th class="node-junctions-table-header">AJR</th>' +
           ' <th class="node-junctions-table-header">OSA</th>' +
@@ -163,18 +163,13 @@
           ' data-junction-number=" ' + junction.junctionNumber + ' "></td>';
       };
 
-      var junctionIcon = function (junction) {
-        return '<td><object type="image/svg+xml" id="junction-number-icon-' + junction.id + '" data="images/junction.svg">' +
-          ' <param name="number"  value="' + junction.junctionNumber + '"/></object></td>';
-      };
-
       var junctionInputNumber = function (junction) {
         return '<td><input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)' +
           '" class="form-control junction-number-input" id = "junction-number-textbox-' + junction.id + '" junctionId="' + junction.id + '" maxlength="2" value="' + (junction.junctionNumber || '') + '"/></td>';
       };
 
       var toMessage = function (junctionsInfo) {
-        return toHtmlTable({ currentJunctions: junctionsInfo, options: { junctionIcon: true } });
+        return toHtmlTable({ currentJunctions: junctionsInfo });
       };
 
       var toHtmlTemplateTable = function (junctionsInfo) {
@@ -237,7 +232,6 @@
         _.each(junctionsInfo, function (junction) {
           htmlTable += '<tr class="node-junctions-table-border-bottom">' +
               ((options && options.checkbox) ? detachJunctionBox(junction) : '') +
-              ((options && options.junctionIcon) ? junctionIcon(junction) : '') +
               ((options && options.junctionInputNumber) ? junctionInputNumber(junction) : '') +
               junctionInfoHtml(getJunctionPointsInfo(junction)) +
             '</tr>';
@@ -491,9 +485,19 @@
         }
       };
 
+      var toggleJunctionInputNumber = function (junction, disabled) {
+        var junctionInputNumber = $('[id="junction-number-textbox-' + junction.id + '"]');
+        junction.junctionNumber = disabled ? '' : junction.junctionNumber; // clears junction number upon detach
+        junctionInputNumber.prop('disabled', disabled);
+        junctionInputNumber.val(junction.junctionNumber);
+        selectedNodesAndJunctions.verifyJunctionNumbers();
+        selectedNodesAndJunctions.updateNodesAndJunctionsMarker([junction]);
+      };
+
       var markJunctionAndNodePoints = function (junction, nodePoints, checked) {
         if (!_.isUndefined(junction)) {
           $('[id^="detach-junction-' + junction.id + '"]').prop('checked', checked);
+          toggleJunctionInputNumber(junction, checked);
         }
         _.each(nodePoints, function (nodePoint) {
           $('[id^="detach-node-point-' + nodePoint.id + '"]').prop('checked', checked);
@@ -669,7 +673,6 @@
               document.getElementById('junction-number-textbox-' + junction.id).setCustomValidity(errorMessage);
             });
           });
-
 
           selectedNodesAndJunctions.addJunctionTemplates(junctionTemplates);
         }
