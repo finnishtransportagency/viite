@@ -169,7 +169,8 @@
       };
 
       var junctionInputNumber = function (junction) {
-        return '<td>' + formCommon.nodeInputNumber('junction-number-textbox-' + junction.id, 2, junction.junctionNumber || '', 'text-align: center; width: 20px;') + '</td>';
+        return '<td><input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)' +
+          '" class="form-control junction-number-input" id = "junction-number-textbox-' + junction.id + '" junctionId="' + junction.id + '" maxlength="2" value="' + (junction.junctionNumber || '') + '"/></td>';
       };
 
       var toMessage = function (junctionsInfo) {
@@ -384,6 +385,7 @@
 
     var addDatePicker = function (fromElement, minDate) {
       picker = dateutil.addSingleDatePickerWithMinDate(fromElement, minDate);
+      fromElement.on('input', function () { $(this).change(); });
       fromElement.change(function () {
         selectedNodesAndJunctions.setStartDate(this.value);
       });
@@ -410,6 +412,7 @@
       return $('#nodeName').val() === "" ||
         $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||
+        !selectedNodesAndJunctions.areJunctionNumbersVerified() ||
         !selectedNodesAndJunctions.isDirty() || saveBtnDisabled;
     };
 
@@ -624,7 +627,6 @@
             currentJunctions:   _.sortBy(currentNode.junctions, 'junctionNumber'),
             options:            { checkbox: _.isUndefined(templates), junctionInputNumber: true }
           }));
-          selectedNodesAndJunctions.addJunctionTemplates(junctionTemplates);
 
           $('.btn-edit-node-save').prop('disabled', formIsInvalid());
 
@@ -632,6 +634,7 @@
             $("#node-coordinates").text(coordinates.x + ', ' + coordinates.y);
           });
 
+          $('[id=nodeName]').on('input', function () { $(this).change(); });
           eventbus.on('change:nodeName', function (nodeName) {
             selectedNodesAndJunctions.setNodeName(nodeName);
           });
@@ -647,10 +650,28 @@
             disabledDatePicker(!typeHasChanged);
           });
 
+          $('[id^=junction-number-textbox-]').on('input', function () { $(this).change(); });
+          rootElement.on('change', '[id^=junction-number-textbox-]', function () {
+            selectedNodesAndJunctions.setJunctionNumber(parseInt($(this).attr('junctionId')), parseInt(this.value));
+          });
+
+          eventbus.on('junction:validate', function () {
+            selectedNodesAndJunctions.verifyJunctionNumbers();
+          });
+
           eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate ' +
-                      'junction:detach nodePoint:detach junction:attach nodePoint:attach', function () {
+                      'junction:validate junction:detach nodePoint:detach junction:attach nodePoint:attach', function () {
             $('.btn-edit-node-save').prop('disabled', formIsInvalid());
           });
+
+          eventbus.on('junction:setCustomValidity', function (junctions, errorMessage) {
+            _.each(junctions, function (junction) {
+              document.getElementById('junction-number-textbox-' + junction.id).setCustomValidity(errorMessage);
+            });
+          });
+
+
+          selectedNodesAndJunctions.addJunctionTemplates(junctionTemplates);
         }
       });
 

@@ -1,6 +1,7 @@
 (function (root) {
   root.SelectedNodesAndJunctions = function (nodeCollection) {
     var current = {};
+    var junctionNumbersVerified = true;
 
     var openNode = function (node, templates) {
       clean();
@@ -67,6 +68,7 @@
       _.each(junctions, function (junction) {
         current.node.junctions.push(junction);
       });
+      eventbus.trigger('junction:validate');
       eventbus.trigger('junctionTemplates:selected', { junctions: junctions });
     };
 
@@ -107,6 +109,15 @@
       return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).startDate;
     };
 
+    var setJunctionNumber = function (id, junctionNumber) {
+      var junction = _.find(current.node.junctions, function (junction) {
+        return junction.id === id;
+      });
+      junction.junctionNumber = junctionNumber;
+      eventbus.trigger('junction:validate');
+      eventbus.trigger('change:node', current.node);
+    };
+
     var detachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
         _.remove(current.node.junctions, function (j) {
@@ -135,6 +146,24 @@
           eventbus.trigger('nodePoint:attach', nodePoint);
         }
       });
+    };
+
+    var verifyJunctionNumbers = function () {
+      junctionNumbersVerified = true;
+      var errorMessage = '';
+      _.each(_.groupBy(current.node.junctions, 'junctionNumber'), function (junctions) {
+        if (junctions.length !== 1) { // junction number is already in use
+          errorMessage = 'Liittymänumero on jo käytössä';
+        } else if (_.isNaN(_.first(junctions).junctionNumber) || !_.isEmpty(_.find(junctions, function (j) { return j.junctionNumber <= 0; }))) { // junction number is compulsory information
+          errorMessage = 'Liittymänumero on pakollinen tieto';
+        }
+        junctionNumbersVerified = _.isEmpty(errorMessage);
+        eventbus.trigger('junction:setCustomValidity', junctions, errorMessage);
+      });
+    };
+
+    var areJunctionNumbersVerified = function () {
+      return junctionNumbersVerified;
     };
 
     var isDirty = function () {
@@ -229,8 +258,11 @@
       typeHasChanged: typeHasChanged,
       getInitialStartDate: getInitialStartDate,
       setStartDate: setStartDate,
+      setJunctionNumber: setJunctionNumber,
       detachJunctionAndNodePoints: detachJunctionAndNodePoints,
       attachJunctionAndNodePoints: attachJunctionAndNodePoints,
+      verifyJunctionNumbers: verifyJunctionNumbers,
+      areJunctionNumbersVerified: areJunctionNumbersVerified,
       isDirty: isDirty,
       closeNode: closeNode,
       closeTemplates: closeTemplates,
