@@ -441,12 +441,6 @@
           junctionFeature.setProperties({junctionNumber: junction.junctionNumber});
         }
       });
-
-      // _.each(_.intersection(_.map(junctionMarkerSelectedLayer.getSource().getFeatures(), 'junction.id'), _.map(_.map(node.junctions, 'id'))), function (junctionId) {
-      //   updateFeature(junctionMarkerSelectedLayer,
-      //     function (feature) { return feature.junction.id === junctionId; },
-      //     [{junctionNumber: junction.junctionNumber}]);
-      // });
     };
 
     var addJunctionToMap = function (junction, layer) {
