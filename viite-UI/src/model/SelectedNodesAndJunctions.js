@@ -183,8 +183,8 @@
       current = {};
     };
 
-    var close = function (options, params) {
-      eventbus.trigger(options, params);
+    var close = function (options, params, cancel) {
+      eventbus.trigger(options, params, cancel);
       eventbus.trigger('nodesAndJunctions:open');
     };
 
@@ -192,8 +192,8 @@
       eventbus.trigger('nodeLayer:closeForm', current); // all nodes and junctions forms should listen to this trigger
     };
 
-    var closeNode = function () {
-      close('node:unselected', current.node);
+    var closeNode = function (cancel) {
+      close('node:unselected', current.node, cancel);
       clean();
       eventbus.trigger('nodeLayer:refreshView');
     };
