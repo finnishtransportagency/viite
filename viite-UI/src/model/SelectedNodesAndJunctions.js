@@ -172,6 +172,12 @@
       return !(nodesEquality && nodePointsEquality && junctionsEquality && junctionPointsEquality);
     };
 
+    var isObsoleteNode = function(node) {
+     return _.isEmpty(node.junctions) && _.isEmpty(_.filter(node.nodePoints, function(np){
+       return np.type !== LinkValues.NodePointType.CalculatedNodePoint.value;
+     }));
+    };
+
     var isEqualWithout = function (original, current, toIgnore) {
       return _.isEqual(
           _.omit(original, toIgnore),
@@ -232,6 +238,7 @@
       detachJunctionAndNodePoints: detachJunctionAndNodePoints,
       attachJunctionAndNodePoints: attachJunctionAndNodePoints,
       isDirty: isDirty,
+      isObsoleteNode: isObsoleteNode,
       closeNode: closeNode,
       closeTemplates: closeTemplates,
       closeForm: closeForm,
