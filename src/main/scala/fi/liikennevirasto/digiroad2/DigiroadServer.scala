@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import java.lang.management.ManagementFactory
-import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
@@ -34,8 +33,6 @@ trait DigiroadServer {
 
   def createViiteContext(): WebAppContext = {
     val appContext = new WebAppContext()
-    val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     appContext.setDescriptor("src/main/webapp/WEB-INF/web.xml")
     appContext.setResourceBase("src/main/webapp/viite")
     appContext.setContextPath(viiteContextPath)
@@ -110,8 +107,6 @@ class ArcGisProxyServlet extends ProxyServlet {
 
   override def getHttpClient: HttpClient = {
     val client = super.getHttpClient
-    val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     if (ViiteProperties.httpProxySet) {
       val proxy = new HttpProxy("127.0.0.1", 3128)
       proxy.getExcludedAddresses.addAll(ViiteProperties.httpNonProxyHosts.split("|").toList)

@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite.util
 
-import java.util.Properties
-
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import javax.sql.DataSource
 import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
@@ -31,7 +29,7 @@ object DataImporter {
 
   case object TemporaryTables extends ImportDataSet {
     lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/import.bonecp.properties"))
+      val cfg = new BoneCPConfig(ViiteProperties.importBonecpProperties)
       new BoneCPDataSource(cfg)
     }
 
@@ -40,7 +38,7 @@ object DataImporter {
 
   case object Conversion extends ImportDataSet {
     lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
+      val cfg = new BoneCPConfig(ViiteProperties.conversionBonecpProperties)
       new BoneCPDataSource(cfg)
     }
 

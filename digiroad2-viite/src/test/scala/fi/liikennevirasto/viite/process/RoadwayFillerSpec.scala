@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite.process
 
-import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHComplementaryClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -29,11 +27,6 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
   val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
