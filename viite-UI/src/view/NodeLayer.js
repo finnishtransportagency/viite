@@ -447,8 +447,16 @@
 
     var addJunctionToMap = function (junction, layer) {
       if (_.has(junction, 'junctionPoints') && !_.isEmpty(junction.junctionPoints)) {
-        addFeature(layer, new JunctionMarker().createJunctionMarker(junction),
-          function (feature) { return feature.junction.id === junction.id; });
+        var distinctCoordinates = _.uniqWith(_.map(junction.junctionPoints, "coordinates"), _.isEqual);
+        _.each(distinctCoordinates, function(coord){
+          var coordMarker = new JunctionMarker().createJunctionMarker(junction, coord);
+          addFeature(layer, coordMarker, function (feature) {
+            if (!_.isUndefined(feature.junction)) {
+              return feature.junction.id === junction.id &&
+                feature.getGeometry().flatCoordinates === coordMarker.getGeometry().flatCoordinates;
+            }
+          });
+        });
       }
     };
 
