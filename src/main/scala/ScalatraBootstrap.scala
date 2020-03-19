@@ -1,5 +1,6 @@
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import org.scalatra._
 import javax.servlet.ServletContext
 import org.scalatra.swagger._
@@ -18,8 +19,8 @@ class ScalatraBootstrap extends LifeCycle {
     context.mount(new ViiteApi(Digiroad2Context.roadLinkService, Digiroad2Context.vvhClient,
       Digiroad2Context.roadAddressService, Digiroad2Context.projectService, Digiroad2Context.roadNetworkService,
       Digiroad2Context.roadNameService, Digiroad2Context.nodesAndJunctionsService, swagger = swagger), "/api/viite/*")
-    if (Digiroad2Context.getProperty("digiroad2.tierekisteri.enabled").toBoolean) {
-      val url = Digiroad2Context.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
+    if (ViiteProperties.tierekisteriEnabled) {
+      val url = ViiteProperties.tierekisteriViiteRestApiEndPoint
       if ("http://localhost.*/api/trrest/".r.findFirstIn(url).nonEmpty) {
         println("Using local tierekisteri mock at /api/trrest/")
         context.mount(new ViiteTierekisteriMockApi, "/api/trrest/*")
