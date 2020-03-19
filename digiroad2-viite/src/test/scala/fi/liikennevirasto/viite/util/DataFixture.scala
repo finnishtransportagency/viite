@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner}
+import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
@@ -22,24 +22,13 @@ import scala.language.postfixOps
 
 object DataFixture {
   val TestAssetId = 300000
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    props
-  }
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
 
   val dataImporter = new DataImporter
   lazy val vvhClient: VVHClient = {
-    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(ViiteProperties.vvhRestApiEndPoint)
   }
 
-  private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
+  private lazy val geometryFrozen: Boolean = ViiteProperties.vvhRoadlinkFrozen
 
   val eventBus = new DummyEventBus
   val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, geometryFrozen)
@@ -49,7 +38,7 @@ object DataFixture {
   val roadwayPointDAO = new RoadwayPointDAO
   val nodePointDAO = new NodePointDAO
   val junctionPointDAO = new JunctionPointDAO
-  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+  val roadAddressService = new RoadAddressService(linkService, roadAddressDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadAddressDAO, linearLocationDAO), eventBus, ViiteProperties.vvhRoadlinkFrozen)
 
   lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen))
 
@@ -68,7 +57,7 @@ object DataFixture {
 
   def importRoadAddresses(importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
     importTableName match {
       case None => // shouldn't get here because args size test
         throw new Exception("****** Import failed! Conversion table name required as a second input ******")
@@ -77,7 +66,7 @@ object DataFixture {
           onlyComplementaryLinks = false,
           useFrozenLinkService = geometryFrozen,
           tableName,
-          onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
+          onlyCurrentRoads = ViiteProperties.importOnlyCurrent)
         dataImporter.importRoadAddressData(Conversion.database(), vvhClient, importOptions)
         println(s"Road address import complete at time: ${DateTime.now()}")
     }
@@ -99,7 +88,7 @@ object DataFixture {
 
   def updateLinearLocationGeometry(): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
     dataImporter.updateLinearLocationGeometry(vvhClient, geometryFrozen)
     println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
@@ -107,8 +96,8 @@ object DataFixture {
 
   def checkRoadNetwork(): Unit = {
     println(s"\nstart checking road network at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val username = properties.getProperty("bonecp.username")
+    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+    val username = ViiteProperties.bonecpUsername
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen)
     OracleDatabase.withDynTransaction {
       val checker = new RoadNetworkChecker(roadLinkService)
@@ -286,7 +275,7 @@ object DataFixture {
   def main(args: Array[String]): Unit = {
     import scala.util.control.Breaks._
     val operation = args.headOption
-    val username = properties.getProperty("bonecp.username")
+    val username = ViiteProperties.bonecpUsername
     if (!username.startsWith("dr2dev") && !operation.getOrElse("").equals("test_integration_api_all_municipalities")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
