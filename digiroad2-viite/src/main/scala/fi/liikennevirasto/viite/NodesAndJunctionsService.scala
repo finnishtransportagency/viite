@@ -84,12 +84,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }).filter(j => !junctionsToAttach.map(_.id).contains(j.id))
 
       updateJunctionsAndJunctionPoints(updatedJunctions, Map("nodeNumber" -> Some(nodeNumber)))
-      if(isObsoleteNode(junctions, nodePoints)){
+      if (isObsoleteNode(junctions, nodePoints)) {
         val old = nodeDAO.fetchById(node.id)
         nodeDAO.expireById(Seq(old.get.id))
         nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)), validFrom = DateTime.now())), username)
       } else
-      calculateNodePointsForNode(nodeNumber, username)
+        calculateNodePointsForNode(nodeNumber, username)
 
     }
   }
