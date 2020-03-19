@@ -454,12 +454,18 @@
 
     var addJunctionTemplateToMap = function (junction, layer) {
       if (_.has(junction, 'junctionPoints') && !_.isEmpty(junction.junctionPoints)) {
-        addFeature(layer, new JunctionTemplateMarker().createJunctionTemplateMarker(junction), function (feature) {
-          if (!_.isUndefined(feature.junctionTemplate)) {
-            return feature.junctionTemplate.id === junction.id;
-          } else {
-            return feature.junction.id === junction.id;
-          }
+        var distinctCoordinates = _.uniqWith(_.map(junction.junctionPoints, "coordinates"), _.isEqual);
+        _.each(distinctCoordinates, function(coord){
+          var coordMarker = new JunctionTemplateMarker().createJunctionTemplateMarker(junction, coord);
+          addFeature(layer, coordMarker, function (feature) {
+            if (!_.isUndefined(feature.junctionTemplate)) {
+              return feature.junctionTemplate.id === junction.id &&
+                feature.getGeometry().flatCoordinates === coordMarker.getGeometry().flatCoordinates;
+            } else {
+              return feature.junction.id === junction.id &&
+                feature.getGeometry().flatCoordinates === coordMarker.getGeometry().flatCoordinates;
+            }
+          });
         });
       }
     };

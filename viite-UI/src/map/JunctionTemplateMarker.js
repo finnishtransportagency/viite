@@ -1,9 +1,9 @@
 (function (root) {
   root.JunctionTemplateMarker = function () {
-    var createJunctionTemplateMarker = function (junctionTemplate) {
+    var createJunctionTemplateMarker = function (junctionTemplate, point) {
 
       var marker = new ol.Feature({
-        geometry: new ol.geom.Point([_.first(junctionTemplate.junctionPoints).coordinates.x, _.first(junctionTemplate.junctionPoints).coordinates.y]),
+        geometry: new ol.geom.Point([point.x, point.y]),
         junctionNumber: junctionTemplate.junctionNumber
       });
 
