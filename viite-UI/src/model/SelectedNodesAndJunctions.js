@@ -173,7 +173,7 @@
     };
 
     var isObsoleteNode = function(node) {
-     return _.isEmpty(node.junctions) && _.isEmpty(_.filter(node.nodePoints, function(np){
+     return _.isEmpty(node.junctions) && _.isEmpty(_.filter(node.nodePoints, function(np) {
        return np.type !== LinkValues.NodePointType.CalculatedNodePoint.value;
      }));
     };
