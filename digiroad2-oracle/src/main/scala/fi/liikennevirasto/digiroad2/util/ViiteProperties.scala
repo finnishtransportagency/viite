@@ -8,6 +8,16 @@ class ViiteProperties {
     props.load(getClass.getResourceAsStream("/bonecp.properties"))
     props
   }
+  private lazy val importBonecpPropertiesFromFile: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/import.bonecp.properties"))
+    props
+  }
+  private lazy val conversionBonecpPropertiesFromFile: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/conversion.bonecp.properties"))
+    props
+  }
   private lazy val dr2Properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
@@ -37,7 +47,7 @@ class ViiteProperties {
   lazy val vvhRestApiEndPoint: String = dr2Properties.getProperty("digiroad2.VVHRestApiEndPoint")
   lazy val vvhRoadlinkFrozen: Boolean = dr2Properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
   lazy val vkmUrl: String = dr2Properties.getProperty("digiroad2.VKMUrl")
-  lazy val tierekisteriViiteRestApiEndPoint: String = dr2Properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
+  lazy val tierekisteriViiteRestApiEndPoint: String = dr2Properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
   lazy val tierekisteriEnabled: Boolean = dr2Properties.getProperty("digiroad2.tierekisteri.enabled", "false").toBoolean
   lazy val cacheDirectory: String = dr2Properties.getProperty("digiroad2.cache.directory")
   lazy val importTimeStamp: String = dr2Properties.getProperty("digiroad2.viite.importTimeStamp")
@@ -49,6 +59,12 @@ class ViiteProperties {
   lazy val bonecpJdbcUrl: String = bonecpPropertiesFromFile.getProperty("bonecp.jdbcUrl")
   lazy val bonecpUsername: String = bonecpPropertiesFromFile.getProperty("bonecp.username")
   lazy val bonecpPassword: String = bonecpPropertiesFromFile.getProperty("bonecp.password")
+  lazy val importBonecpJdbcUrl: String = importBonecpPropertiesFromFile.getProperty("bonecp.jdbcUrl")
+  lazy val importBonecpUsername: String = importBonecpPropertiesFromFile.getProperty("bonecp.username")
+  lazy val importBonecpPassword: String = importBonecpPropertiesFromFile.getProperty("bonecp.password")
+  lazy val conversionBonecpJdbcUrl: String = conversionBonecpPropertiesFromFile.getProperty("bonecp.jdbcUrl")
+  lazy val conversionBonecpUsername: String = conversionBonecpPropertiesFromFile.getProperty("bonecp.username")
+  lazy val conversionBonecpPassword: String = conversionBonecpPropertiesFromFile.getProperty("bonecp.password")
   lazy val authenticationBasicUsername: String = authenticationProperties.getProperty("authentication.basic.username")
   lazy val authenticationBasicPassword: String = authenticationProperties.getProperty("authentication.basic.password")
   lazy val authenticationServiceRoadBasicUsername: String = authenticationProperties.getProperty("authentication.serviceRoad.basic.username")
@@ -68,9 +84,41 @@ class ViiteProperties {
       props.setProperty("bonecp.username", ViiteProperties.bonecpUsername)
       props.setProperty("bonecp.password", ViiteProperties.bonecpPassword)
     } catch {
-      case e: Exception => throw new RuntimeException("Can't load local.properties for env: " + System.getProperty("env"), e)
+      case e: Exception => throw new RuntimeException("Can't load bonecp properties for env: " + System.getProperty("env"), e)
     }
     props
+  }
+
+  lazy val importBonecpProperties: Properties = {
+    val props = new Properties()
+    try {
+      props.setProperty("bonecp.jdbcUrl", ViiteProperties.importBonecpJdbcUrl)
+      props.setProperty("bonecp.username", ViiteProperties.importBonecpUsername)
+      props.setProperty("bonecp.password", ViiteProperties.importBonecpPassword)
+    } catch {
+      case e: Exception => throw new RuntimeException("Can't load import bonecp properties for env: " + System.getProperty("env"), e)
+    }
+    props
+  }
+
+  lazy val conversionBonecpProperties: Properties = {
+    val props = new Properties()
+    try {
+      props.setProperty("bonecp.jdbcUrl", ViiteProperties.conversionBonecpJdbcUrl)
+      props.setProperty("bonecp.username", ViiteProperties.conversionBonecpUsername)
+      props.setProperty("bonecp.password", ViiteProperties.conversionBonecpPassword)
+    } catch {
+      case e: Exception => throw new RuntimeException("Can't load conversion bonecp properties for env: " + System.getProperty("env"), e)
+    }
+    props
+  }
+
+  def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
+    authenticationProperties.getProperty("authentication." + baseAuth + "basic.username")
+  }
+
+  def getAuthenticationBasicPassword(baseAuth: String = ""): String = {
+    authenticationProperties.getProperty("authentication." + baseAuth + "basic.password")
   }
 }
 

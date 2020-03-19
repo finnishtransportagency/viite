@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite.util
 
-import java.util.Properties
-
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -51,7 +49,7 @@ object DataFixture {
         case _ => value.asInstanceOf[String].toInt
       }
     } catch {
-      case e: Exception => numberThreads
+      case _: Exception => numberThreads
     }
   }
 

@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite.process
 
-import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{InUse, UnknownConstructionType}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
