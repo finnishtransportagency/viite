@@ -608,12 +608,12 @@
       rootElement.on('click', '.btn-edit-node-save', function () {
         var node = selectedNodesAndJunctions.getCurrentNode();
         eventbus.trigger('node:repositionNode', node, node.coordinates);
-        if(selectedNodesAndJunctions.isObsoleteNode(node)){
-        new GenericConfirmPopup('Tämä toiminto päättää solmun, tallennetaanko muutokset?', {
-          successCallback: function () {
-            selectedNodesAndJunctions.saveNode();
-          },
-        });
+        if (selectedNodesAndJunctions.isObsoleteNode(node)) {
+          new GenericConfirmPopup('Tämä toiminto päättää solmun, tallennetaanko muutokset?', {
+            successCallback: function () {
+              selectedNodesAndJunctions.saveNode();
+            },
+          });
         } else {
           selectedNodesAndJunctions.saveNode();
         }
