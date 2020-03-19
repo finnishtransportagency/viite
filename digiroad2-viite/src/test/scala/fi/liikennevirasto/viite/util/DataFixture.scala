@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite.util
 
-import java.util.Properties
-
 import org.flywaydb.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -14,11 +12,8 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
-import org.joda.time.format.PeriodFormatterBuilder
 import org.joda.time.DateTime
-import org.scalatra.BadRequest
 
-import scala.collection.mutable.ListBuffer
 import scala.collection.parallel.immutable.ParSet
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.language.postfixOps
@@ -51,7 +46,7 @@ object DataFixture {
         case _ => value.asInstanceOf[String].toInt
       }
     } catch {
-      case e: Exception => numberThreads
+      case _: Exception => numberThreads
     }
   }
 

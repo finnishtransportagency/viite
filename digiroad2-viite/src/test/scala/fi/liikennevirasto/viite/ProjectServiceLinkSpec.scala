@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite
 
-import java.util.Properties
-
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
@@ -36,11 +34,6 @@ import slick.jdbc.StaticQuery.interpolation
 import scala.util.parsing.json.JSON
 
 class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter {
-  val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
   val mockProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
