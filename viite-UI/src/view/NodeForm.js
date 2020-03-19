@@ -406,7 +406,7 @@
       return $('#nodeName').val() === "" ||
         $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||
-        !selectedNodesAndJunctions.areJunctionNumbersVerified() ||
+        !selectedNodesAndJunctions.verifyJunctionNumbers() ||
         !selectedNodesAndJunctions.isDirty() || saveBtnDisabled;
     };
 
