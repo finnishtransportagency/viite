@@ -3,22 +3,22 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 
 class ViiteProperties {
-  lazy val userProvider: String = scala.util.Properties.envOrElse("digiroad2.userProvider", null)
-  lazy val municipalityProvider: String = scala.util.Properties.envOrElse("digiroad2.municipalityProvider", null)
-  lazy val eventBus: String = scala.util.Properties.envOrElse("digiroad2.eventBus", null)
-  lazy val vvhServiceHost: String = scala.util.Properties.envOrElse("digiroad2.VVHServiceHost", null)
-  lazy val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("digiroad2.VVHRestApiEndPoint", null)
-  lazy val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("digiroad2.VVHRoadlink.frozen", "false").toBoolean
-  lazy val vkmUrl: String = scala.util.Properties.envOrElse("digiroad2.VKMUrl", null)
-  lazy val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
-  lazy val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("digiroad2.tierekisteri.enabled", "false").toBoolean
-  lazy val cacheDirectory: String = scala.util.Properties.envOrElse("digiroad2.cache.directory", null)
-  lazy val importTimeStamp: String = scala.util.Properties.envOrElse("digiroad2.viite.importTimeStamp", null)
-  lazy val httpProxySet: Boolean = scala.util.Properties.envOrElse("digiroad2.http.proxySet", "false").toBoolean
-  lazy val httpProxyHost: String = scala.util.Properties.envOrElse("digiroad2.http.proxyHost", null)
-  lazy val httpNonProxyHosts: String = scala.util.Properties.envOrElse("digiroad2.http.nonProxyHosts", "")
-  lazy val importOnlyCurrent: Boolean = scala.util.Properties.envOrElse("digiroad2.importOnlyCurrent", "false").toBoolean
-  lazy val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("digiroad2.authenticationTestMode", "false").toBoolean
+  lazy val userProvider: String = scala.util.Properties.envOrElse("userProvider", null)
+  lazy val municipalityProvider: String = scala.util.Properties.envOrElse("municipalityProvider", null)
+  lazy val eventBus: String = scala.util.Properties.envOrElse("eventBus", null)
+  lazy val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", null)
+  lazy val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
+  lazy val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
+  lazy val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
+  lazy val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
+  lazy val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("tierekisteri.enabled", "false").toBoolean
+  lazy val cacheDirectory: String = scala.util.Properties.envOrElse("cache.directory", null)
+  lazy val importTimeStamp: String = scala.util.Properties.envOrElse("viite.importTimeStamp", null)
+  lazy val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
+  lazy val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
+  lazy val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", "")
+  lazy val importOnlyCurrent: Boolean = scala.util.Properties.envOrElse("importOnlyCurrent", "false").toBoolean
+  lazy val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "false").toBoolean
   lazy val bonecpJdbcUrl: String = scala.util.Properties.envOrElse("bonecp.jdbcUrl", null)
   lazy val bonecpUsername: String = scala.util.Properties.envOrElse("bonecp.username", null)
   lazy val bonecpPassword: String = scala.util.Properties.envOrElse("bonecp.password", null)
@@ -34,10 +34,10 @@ class ViiteProperties {
   lazy val authenticationServiceRoadBasicPassword: String = scala.util.Properties.envOrElse("authentication.serviceRoad.basic.password", null)
   lazy val authenticationMunicipalityBasicUsername: String = scala.util.Properties.envOrElse("authentication.municipality.basic.username", null)
   lazy val authenticationMunicipalityBasicPassword: String = scala.util.Properties.envOrElse("authentication.municipality.basic.password", null)
-  lazy val viitetierekisteriUsername: String = scala.util.Properties.envOrElse("viitetierekisteri.username", null)
-  lazy val viitetierekisteriPassword: String = scala.util.Properties.envOrElse("viitetierekisteri.password", null)
-  lazy val revision: String = scala.util.Properties.envOrElse("digiroad2.revision", null)
-  lazy val latestDeploy: String = scala.util.Properties.envOrElse("digiroad2.latestDeploy", null)
+  lazy val viitetierekisteriUsername: String = scala.util.Properties.envOrElse("viiteTierekisteri.username", null)
+  lazy val viitetierekisteriPassword: String = scala.util.Properties.envOrElse("viiteTierekisteri.password", null)
+  lazy val revision: String = scala.util.Properties.envOrElse("revision", null)
+  lazy val latestDeploy: String = scala.util.Properties.envOrElse("latestDeploy", null)
   lazy val env: String = System.getProperty("env")
 
   lazy val bonecpProperties: Properties = {
