@@ -18,8 +18,6 @@
         </encoder>
     </appender>
 
-    <logger name="fi.liikennevirasto.viite.dao" level="debug" />
-
     <root level="info">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
