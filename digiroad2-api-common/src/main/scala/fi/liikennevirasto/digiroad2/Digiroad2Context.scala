@@ -124,7 +124,7 @@ object Digiroad2Context {
   }
 
   lazy val authenticationTestModeUser: String = {
-    properties.getProperty("digiroad2.authenticationTestUser", "")
+    ViiteProperties.authenticationTestUser
   }
 
   lazy val userProvider: UserProvider = {

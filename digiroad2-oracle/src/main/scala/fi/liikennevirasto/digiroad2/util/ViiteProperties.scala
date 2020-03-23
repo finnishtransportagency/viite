@@ -51,6 +51,7 @@ class ViiteProperties {
   lazy val httpNonProxyHosts: String = dr2Properties.getProperty("digiroad2.http.nonProxyHosts", "")
   lazy val importOnlyCurrent: Boolean = dr2Properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean
   lazy val authenticationTestMode: Boolean = dr2Properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
+  lazy val authenticationTestUser: String = dr2Properties.getProperty("digiroad2.authenticationTestUser")
   lazy val bonecpJdbcUrl: String = bonecpPropertiesFromFile.getProperty("bonecp.jdbcUrl")
   lazy val bonecpUsername: String = bonecpPropertiesFromFile.getProperty("bonecp.username")
   lazy val bonecpPassword: String = bonecpPropertiesFromFile.getProperty("bonecp.password")
