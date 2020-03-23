@@ -4,11 +4,15 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
 import fi.liikennevirasto.viite.dao._
+import org.slf4j.LoggerFactory
 
 object CalibrationPointsUtils {
+
+  private val logger = LoggerFactory.getLogger(getClass)
 
   def calibrations(calibrationCode: CalibrationCode, projectLink: ProjectLink): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     calibrations(calibrationCode, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.sideCode)
@@ -115,6 +119,19 @@ object CalibrationPointsUtils {
       } else if (atStart) {
         roadAddress.copy(calibrationPoints = (startCP, None))
       } else roadAddress
+    }
+  }
+
+  def createCalibrationPointIfNeeded(rwPoint: Long, linkId: Long, calibrationPointLocation: CalibrationPointLocation,
+                                     calibrationPointType: CalibrationPointType, username: String): Unit = {
+    val existing = CalibrationPointDAO.fetch(linkId, calibrationPointLocation.value)
+    val (existingCorrect, existingDifferent) = existing.partition(cp => cp.roadwayPointId == rwPoint && cp.typeCode == calibrationPointType)
+    if (existingDifferent.nonEmpty) {
+      CalibrationPointDAO.expireById(existing.map(_.id))
+    }
+    if (existingCorrect.isEmpty) {
+      logger.info(s"Creating CalibrationPoint with RoadwayPoint id : $rwPoint linkId : $linkId startOrEnd: ${calibrationPointLocation.value}")
+      CalibrationPointDAO.create(rwPoint, linkId, calibrationPointLocation, calType = calibrationPointType, createdBy = username)
     }
   }
 
