@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorSystem, Props}
@@ -8,9 +7,10 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.util.JsonSerializer
 import fi.liikennevirasto.viite.dao.{LinearLocationDAO, _}
-import fi.liikennevirasto.viite.process.RoadAddressFiller.{ChangeSet, LinearLocationAdjustment}
+import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.slf4j.LoggerFactory
@@ -56,16 +56,6 @@ class RoadNetworkChecker(roadNetworkService: RoadNetworkService) extends Actor {
 
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-  lazy val revisionInfo: Properties = {
-    val props = new Properties()
-      props.load(getClass.getResourceAsStream("/revision.properties"))
-    props
-  }
 
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
@@ -88,9 +78,6 @@ object Digiroad2Context {
     }
   }
 
-
-
-
 //  val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
 //  eventbus.subscribe(roadAddressUpdater, "roadAddress:persistUnaddressedRoadLink")
 
@@ -110,11 +97,11 @@ object Digiroad2Context {
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, roadwayAddressMapper, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+    new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, roadwayAddressMapper, eventbus, ViiteProperties.vvhRoadlinkFrozen)
   }
 
   lazy val projectService: ProjectService = {
-    new ProjectService(roadAddressService, roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
+    new ProjectService(roadAddressService, roadLinkService, eventbus, ViiteProperties.vvhRoadlinkFrozen)
   }
 
   lazy val roadNetworkService: RoadNetworkService = {
@@ -130,23 +117,23 @@ object Digiroad2Context {
   }
 
   lazy val authenticationTestModeEnabled: Boolean = {
-    properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
+    ViiteProperties.authenticationTestMode
   }
 
   lazy val userProvider: UserProvider = {
-    Class.forName(properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+    Class.forName(ViiteProperties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
 
   lazy val municipalityProvider: MunicipalityProvider = {
-    Class.forName(properties.getProperty("digiroad2.municipalityProvider")).newInstance().asInstanceOf[MunicipalityProvider]
+    Class.forName(ViiteProperties.municipalityProvider).newInstance().asInstanceOf[MunicipalityProvider]
   }
 
   lazy val eventbus: DigiroadEventBus = {
-    Class.forName(properties.getProperty("digiroad2.eventBus")).newInstance().asInstanceOf[DigiroadEventBus]
+    Class.forName(ViiteProperties.eventBus).newInstance().asInstanceOf[DigiroadEventBus]
   }
 
   lazy val vvhClient: VVHClient = {
-    new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(ViiteProperties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService: RoadLinkService = {
@@ -166,18 +153,11 @@ object Digiroad2Context {
   }
 
   lazy val revision: String = {
-    revisionInfo.getProperty("digiroad2.revision")
+    ViiteProperties.revision
   }
   lazy val deploy_date: String = {
-    revisionInfo.getProperty("digiroad2.latestDeploy")
+    ViiteProperties.latestDeploy
   }
 
-  val env = System.getProperty("env")
-  def getProperty(name: String) = {
-    val property = properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name for enviroment: $env")
-  }
+  val env = ViiteProperties.env
 }
