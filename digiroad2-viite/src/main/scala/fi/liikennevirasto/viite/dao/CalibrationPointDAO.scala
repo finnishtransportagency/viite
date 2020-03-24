@@ -8,8 +8,11 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 object CalibrationPointDAO {
 
-  trait CalibrationPointType {
+  trait CalibrationPointType extends Ordered[CalibrationPointType] {
     def value: Int
+    def compare(that: CalibrationPointType): Int = {
+      this.value - that.value
+    }
   }
 
   object CalibrationPointType {
