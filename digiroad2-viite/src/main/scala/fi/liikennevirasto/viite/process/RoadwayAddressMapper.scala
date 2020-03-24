@@ -271,16 +271,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     val linearLocations = linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
     val roadways = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet)
-//    roadways.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
-    val roadAddresses = roadways.flatMap { r =>
-      logger.info(s"Handling roadway {roadwayNumber: ${r.roadwayNumber}}")  // testing purposes
-      val linearLocations: Seq[LinearLocation] = groupedLinearLocations(r.roadwayNumber)
-      linearLocations.foreach {ll => logger.info(s"LinearLocation: {roadwayNumber: ${ll.roadwayNumber}, startMValue: ${ll.startMValue}, endMValue: ${ll.endMValue}}")} // testing purposes
-      val roadAddresses: Seq[RoadAddress] = mapRoadAddresses(r, linearLocations)
-      roadAddresses.foreach {roadAddr => logger.info(s"RoadAddress: {roadwayNumber: ${roadAddr.roadwayNumber}, startAddrMValue: ${roadAddr.startAddrMValue}, endAddrMValue: ${roadAddr.endAddrMValue}}")} // testing purposes
-      roadAddresses
-    }
-    roadAddresses
+    roadways.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }
 
 }
