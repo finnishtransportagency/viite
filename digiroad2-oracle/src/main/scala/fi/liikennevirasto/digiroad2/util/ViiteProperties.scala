@@ -28,6 +28,11 @@ class ViiteProperties {
     props.load(getClass.getResourceAsStream("/authentication.properties"))
     props
   }
+  private lazy val keysProperties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/keys.properties"))
+    props
+  }
   private lazy val revisionProperties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/revision.properties"))
