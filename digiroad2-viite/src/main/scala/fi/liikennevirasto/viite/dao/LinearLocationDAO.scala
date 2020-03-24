@@ -122,8 +122,8 @@ class LinearLocationDAO {
   val selectFromLinearLocation =
     s"""
       select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.SIDE,
-      (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 0 AND cp.VALID_TO IS NULL AND cp."TYPE" = ${CalibrationPointType.RoadAddressCP.value}) AS cal_start_addr_m,
-      (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 1 AND cp.VALID_TO IS NULL AND cp."TYPE" = ${CalibrationPointType.RoadAddressCP.value}) AS cal_end_addr_m,
+      (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_addr_m,
+      (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_addr_m,
       link.SOURCE, link.ADJUSTED_TIMESTAMP, geometry, loc.valid_from, loc.valid_to
       from LINEAR_LOCATION loc
       JOIN LINK ON (link.id = loc.link_id)
