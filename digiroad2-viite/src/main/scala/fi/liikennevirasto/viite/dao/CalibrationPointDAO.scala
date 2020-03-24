@@ -16,15 +16,15 @@ object CalibrationPointDAO {
   }
 
   object CalibrationPointType {
-    val values = Set(Optional, SemiMandatory, Mandatory)
+    val values = Set(UserDefinedCP, JunctionPointCP, RoadAddressCP)
 
     def apply(intValue: Int): CalibrationPointType = {
-      values.find(_.value == intValue).getOrElse(Optional)
+      values.find(_.value == intValue).getOrElse(UserDefinedCP)
     }
 
-    case object Optional extends CalibrationPointType {def value = 0}
-    case object SemiMandatory extends CalibrationPointType {def value = 1}
-    case object Mandatory extends CalibrationPointType {def value = 2}
+    case object UserDefinedCP extends CalibrationPointType {def value = 0}
+    case object JunctionPointCP extends CalibrationPointType {def value = 1}
+    case object RoadAddressCP extends CalibrationPointType {def value = 2}
   }
 
   trait CalibrationPointLocation {

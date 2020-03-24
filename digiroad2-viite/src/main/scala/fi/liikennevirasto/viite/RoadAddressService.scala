@@ -692,7 +692,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, username)
           }
         // TODO Check which type this calibration point should be (0, 1, 2)
-        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink, CalibrationPointType.Mandatory, username)
+        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, username)
     }
     endCalibrationPointsToCheck.foreach {
       cal =>
@@ -705,7 +705,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, username)
           }
         // TODO Check which type this calibration point should be (0, 1, 2)
-        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink, CalibrationPointType.Mandatory, username)
+        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP, username)
     }
   }
 
