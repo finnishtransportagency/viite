@@ -16,9 +16,9 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
   }
 
   test("Test compare calibration point types When compared Then comparison works correctly") {
-    val a = CalibrationPointType.Optional
-    val b = CalibrationPointType.SemiMandatory
-    val c = CalibrationPointType.Mandatory
+    val a = CalibrationPointType.UserDefinedCP
+    val b = CalibrationPointType.JunctionPointCP
+    val c = CalibrationPointType.RoadAddressCP
     a < b should be(true)
     b < c should be(true)
     b > a should be(true)

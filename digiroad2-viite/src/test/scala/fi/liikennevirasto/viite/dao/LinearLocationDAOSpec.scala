@@ -67,7 +67,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
         calibrationPoints, geometry, linkSource, roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation))
       val roadwayPointId = roadwayPointDAO.create(linearLocation.roadwayNumber, linearLocation.startCalibrationPoint.get, "test")
-      CalibrationPointDAO.create(roadwayPointId, linearLocation.linkId, startOrEnd = CalibrationPointLocation.StartOfLink, calType = CalibrationPointType.Mandatory, createdBy = "test")
+      CalibrationPointDAO.create(roadwayPointId, linearLocation.linkId, startOrEnd = CalibrationPointLocation.StartOfLink, calType = CalibrationPointType.RoadAddressCP, createdBy = "test")
       val loc = linearLocationDAO.fetchById(id).getOrElse(fail())
 
       // Check that the values were saved correctly in database
