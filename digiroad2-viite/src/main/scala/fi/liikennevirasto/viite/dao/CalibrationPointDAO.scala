@@ -91,19 +91,7 @@ object CalibrationPointDAO {
          FROM CALIBRATION_POINT CP
          JOIN ROADWAY_POINT RP
           ON RP.ID = CP.ROADWAY_POINT_ID
-         WHERE cp.link_id = $linkId and start_end = $startOrEnd
-     """.as[CalibrationPoint].firstOption
-  }
-
-  def fetch(linkId: Long, startOrEnd: CalibrationPointLocation, roadwayPointId: Long): Option[CalibrationPoint] = {
-    sql"""
-         SELECT CP.ID, CP.ROADWAY_POINT_ID, CP.LINK_ID, ROADWAY_NUMBER, ADDR_M, CP.START_END, CP.TYPE, CP.VALID_FROM, CP.VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
-         FROM CALIBRATION_POINT CP
-         JOIN ROADWAY_POINT RWP ON (RWP.id = CP.ROADWAY_POINT_ID)
-         WHERE CP.ROADWAY_POINT_ID = $roadwayPointId
-         AND CP.LINK_ID = $linkId
-         AND CP.START_END = ${startOrEnd.value}
-         AND CP.VALID_TO IS NULL
+         WHERE CP.LINK_ID = $linkId AND CP.START_END = $startOrEnd AND CP.VALID_TO IS NULL
      """.as[CalibrationPoint].firstOption
   }
 
@@ -174,14 +162,6 @@ object CalibrationPointDAO {
       0
     else
       Q.updateNA(query).first
-  }
-
-  def updateRoadwayPoint(roadwayPointId: Long, linkId: Long, startOrEnd: CalibrationPointLocation): Long = {
-    val query =
-      s"""
-        Update CALIBRATION_POINT Set roadway_point_id = $roadwayPointId where VALID_TO IS NULL and LINK_ID = $linkId and START_END = ${startOrEnd.value}
-      """
-    Q.updateNA(query).first
   }
 
   private def queryList(query: String): Seq[CalibrationPoint] = {
