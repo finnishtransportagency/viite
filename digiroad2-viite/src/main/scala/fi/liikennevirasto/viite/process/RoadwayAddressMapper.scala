@@ -142,7 +142,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
 
     def getUntilCalibrationPoint(seq: Seq[LinearLocation]): (Seq[LinearLocation], Seq[LinearLocation]) = {
       // TODO CALIBRATION_POINT - this should be verified, since currently we don't need to include JunctionCP in this process - but it's possible that we will in the future.
-      val linearLocationsUntilCp = seq.takeWhile(l => l.endCalibrationPoint.isDefined && l.endCalibrationPoint.isRoadAddressCP)
+      val linearLocationsUntilCp = seq.takeWhile(l => l.endCalibrationPoint.isEmpty || l.endCalibrationPoint.isJunctionPointCP)
       val rest = seq.drop(linearLocationsUntilCp.size)
       if (rest.headOption.isEmpty)
         (linearLocationsUntilCp, rest)

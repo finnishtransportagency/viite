@@ -59,7 +59,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val endMValue = 100.0
       val sideCode = SideCode.TowardsDigitizing
       val adjustedTimestamp = 10000000000l
-      val calibrationPoints = (CalibrationPointReference(Some(0l)), CalibrationPointReference.None)
+      val calibrationPoints = (CalibrationPointReference(Some(0l), Some(CalibrationPointType.RoadAddressCP)), CalibrationPointReference.None)
       val geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0))
       val linkSource = LinkGeomSource.NormalLinkInterface
       val roadwayNumber = 200l

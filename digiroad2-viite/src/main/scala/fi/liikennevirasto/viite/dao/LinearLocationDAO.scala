@@ -10,8 +10,8 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.RoadAddressCP
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, RoadAddressCP}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -90,7 +90,14 @@ case class CalibrationPointReference(addrM: Option[Long], typeCode: Option[Calib
 
   def isRoadAddressCP(): Boolean = {
     this.typeCode match {
-      case Some(loc) if loc.equals(RoadAddressCP) => true
+      case Some(t) if t.equals(RoadAddressCP) => true
+      case _ => false
+    }
+  }
+
+  def isJunctionPointCP(): Boolean = {
+    this.typeCode match {
+      case Some(t) if t.equals(JunctionPointCP) => true
       case _ => false
     }
   }
