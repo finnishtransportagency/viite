@@ -8,9 +8,11 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointLocation
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -104,18 +106,12 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   }
 
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
-    def calibrationPoint(cp: Option[ProjectLinkCalibrationPoint]): Option[Long] = {
-      cp match {
-        case Some(x) =>
-          Some(x.addressMValue)
-        case _ => Option.empty[Long]
-      }
-    }
-
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
     (LinearLocation(-1000, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
-      (calibrationPoint(p.calibrationPoints._1), calibrationPoint(p.calibrationPoints._2)), p.geometry, p.linkGeomSource,
+      (CalibrationPointsUtils.projectToCalibrationPointReference(p.startCalibrationPoint),
+        CalibrationPointsUtils.projectToCalibrationPointReference(p.endCalibrationPoint)),
+      p.geometry, p.linkGeomSource,
       p.roadwayNumber, Some(startDate), p.endDate),
       Roadway(-1000, p.roadwayNumber, p.roadNumber, p.roadPartNumber, p.roadType, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
         p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))

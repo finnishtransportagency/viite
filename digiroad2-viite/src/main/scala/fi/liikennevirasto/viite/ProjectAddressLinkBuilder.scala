@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 
 object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
