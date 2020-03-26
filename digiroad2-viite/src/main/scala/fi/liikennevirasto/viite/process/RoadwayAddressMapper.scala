@@ -186,8 +186,8 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
       map {
         case (projectLink, key) =>
           LinearLocation(projectLink.linearLocationId, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
-            (CalibrationPointsUtils.projectToCalibrationPointReference(projectLink.startCalibrationPoint),
-              CalibrationPointsUtils.projectToCalibrationPointReference(projectLink.endCalibrationPoint)),
+            (CalibrationPointsUtils.toCalibrationPointReference(projectLink.startCalibrationPoint),
+              CalibrationPointsUtils.toCalibrationPointReference(projectLink.endCalibrationPoint)),
             projectLink.geometry, projectLink.linkGeomSource, roadway.roadwayNumber, Some(DateTime.now()))
       }
   }
