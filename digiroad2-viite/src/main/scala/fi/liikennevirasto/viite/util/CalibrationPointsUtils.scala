@@ -125,7 +125,10 @@ object CalibrationPointsUtils {
   def createCalibrationPointIfNeeded(rwPoint: Long, linkId: Long, calibrationPointLocation: CalibrationPointLocation,
                                      calibrationPointType: CalibrationPointType, username: String): Unit = {
     val existing = CalibrationPointDAO.fetch(linkId, calibrationPointLocation.value)
+
+    // The existing correct kind of calibration point has the same roadwayPointId and the same or a higher type.
     val (existingCorrect, existingWrong) = existing.partition(cp => cp.roadwayPointId == rwPoint && cp.typeCode >= calibrationPointType)
+    
     if (existingWrong.nonEmpty) {
       CalibrationPointDAO.expireById(existingWrong.map(_.id))
     }
