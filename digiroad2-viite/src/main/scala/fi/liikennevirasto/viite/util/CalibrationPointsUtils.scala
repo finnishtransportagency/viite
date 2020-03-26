@@ -135,7 +135,7 @@ object CalibrationPointsUtils {
     }
   }
 
-  def projectToCalibrationPointReference(cp: Option[ProjectLinkCalibrationPoint]): CalibrationPointReference = {
+  def toCalibrationPointReference(cp: Option[ProjectLinkCalibrationPoint]): CalibrationPointReference = {
     cp match {
       case Some(x) =>
         // TODO VIITE-2344 - CALIBRATION_POINT - this SOURCE should be verified

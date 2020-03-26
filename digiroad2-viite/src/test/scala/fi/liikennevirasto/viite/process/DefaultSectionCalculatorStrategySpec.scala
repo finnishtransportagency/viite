@@ -109,8 +109,8 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
     (LinearLocation(-1000, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
-      (CalibrationPointsUtils.projectToCalibrationPointReference(p.startCalibrationPoint),
-        CalibrationPointsUtils.projectToCalibrationPointReference(p.endCalibrationPoint)),
+      (CalibrationPointsUtils.toCalibrationPointReference(p.startCalibrationPoint),
+        CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
       p.geometry, p.linkGeomSource,
       p.roadwayNumber, Some(startDate), p.endDate),
       Roadway(-1000, p.roadwayNumber, p.roadNumber, p.roadPartNumber, p.roadType, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
