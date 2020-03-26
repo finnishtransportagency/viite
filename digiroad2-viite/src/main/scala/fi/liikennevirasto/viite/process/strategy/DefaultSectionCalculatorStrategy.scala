@@ -106,12 +106,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val roadwayNumber = links.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val firstLinkStatus = links.headOption.map(_.status).getOrElse(LinkStatus.Unknown)
       val originalHistorySection = if (firstLinkStatus == LinkStatus.New) Seq() else links.takeWhile(pl => pl.roadwayNumber == roadwayNumber)
-//      val originalHistorySection = links.takeWhile(pl => pl.roadwayNumber == roadwayNumber)
-//      val continuousProjectLinks =
-//        if (firstLinkStatus == LinkStatus.New)
-//          links.takeWhile(pl => pl.status.equals(LinkStatus.New)).sortBy(_.startAddrMValue)
-//        else
-//          links.takeWhile(pl => pl.roadwayNumber == roadwayNumber).sortBy(_.startAddrMValue)
     val continuousRoadwayNumberSection =
         links.takeWhile(pl => pl.roadwayNumber == roadwayNumber).sortBy(_.startAddrMValue)
 
@@ -125,11 +119,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
 
-//    val continuousProjectLinks =
-//      if (firstLinkStatus == LinkStatus.New)
-//        seq.takeWhile(pl => pl.status.equals(LinkStatus.New) && pl.track == track && pl.roadType.value == roadType).sortBy(_.startAddrMValue)
-//      else
-//        seq.takeWhile(pl => !pl.status.equals(LinkStatus.New) && pl.track == track && pl.roadType.value == roadType).sortBy(_.startAddrMValue)
     val continuousProjectLinks =
         seq.takeWhile(pl => pl.track == track && pl.roadType.value == roadType).sortBy(_.startAddrMValue)
 
