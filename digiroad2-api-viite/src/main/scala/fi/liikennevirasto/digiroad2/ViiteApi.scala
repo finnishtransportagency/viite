@@ -12,7 +12,6 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.DigiroadSerializers
@@ -24,8 +23,6 @@ import org.scalatra.swagger.{Swagger, _}
 import org.scalatra.{NotFound, _}
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.parallel.immutable.ParSeq
-import scala.util.control.NonFatal
 import scala.util.parsing.json.JSON._
 import scala.util.{Left, Right}
 
@@ -172,14 +169,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     response.setHeader("Access-Control-Allow-Headers", "*")
     val zoom = chooseDrawType(params.getOrElse("zoom", "5"))
     time(logger, s"GET request for /roadlinks (zoom: $zoom)") {
-      try {
-        params.get("bbox").map(b => getRoadAddressLinks(zoom)(b)._1).getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
-      } catch {
-        case ex: Exception =>
-          logger.error("Failed to load linear locations.", ex)
-        case e if NonFatal(e) =>
-          logger.error("Failed to load linear locations.", e)
-      }
+      params.get("bbox").map(b => getRoadAddressLinks(zoom)(b)._1).getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
     }
   }
 
