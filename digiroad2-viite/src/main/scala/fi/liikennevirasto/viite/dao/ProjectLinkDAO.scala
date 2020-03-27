@@ -60,11 +60,11 @@ object LinkStatus {
   }
 }
 
-case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue: Double, override val addressMValue: Long, source: CalibrationPointSource = UnknownSource, typeCode: CalibrationPointType = RoadAddressCP)
+case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue: Double, override val addressMValue: Long, source: CalibrationPointSource = UnknownSource)
   extends BaseCalibrationPoint {
 
   def toCalibrationPoint: CalibrationPoint = {
-    CalibrationPoint(linkId, segmentMValue, addressMValue, typeCode)
+    CalibrationPoint(linkId, segmentMValue, addressMValue)
   }
 }
 
@@ -80,7 +80,6 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
   override lazy val startCalibrationPoint: Option[ProjectLinkCalibrationPoint] = calibrationPoints._1
   override lazy val endCalibrationPoint: Option[ProjectLinkCalibrationPoint] = calibrationPoints._2
-
 
   lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
