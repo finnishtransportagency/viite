@@ -60,11 +60,11 @@ object LinkStatus {
   }
 }
 
-case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue: Double, override val addressMValue: Long, source: CalibrationPointSource = UnknownSource)
+case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue: Double, override val addressMValue: Long, source: CalibrationPointSource = UnknownSource, typeCode: CalibrationPointType = RoadAddressCP)
   extends BaseCalibrationPoint {
 
   def toCalibrationPoint: CalibrationPoint = {
-    CalibrationPoint(linkId, segmentMValue, addressMValue)
+    CalibrationPoint(linkId, segmentMValue, addressMValue, typeCode)
   }
 }
 
