@@ -1,6 +1,5 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
@@ -15,7 +14,6 @@ object ProjectCalibrationPointDAO {
 
   trait BaseCalibrationPoint extends CalibrationPointMValues {
     def linkId: Long
-    def typeCode: CalibrationPointType
   }
 
   case class UserDefinedCalibrationPoint(id: Long, projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues

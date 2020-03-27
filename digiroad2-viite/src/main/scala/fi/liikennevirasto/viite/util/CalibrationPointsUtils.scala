@@ -143,7 +143,7 @@ object CalibrationPointsUtils {
       case Some(x) =>
         CalibrationPointReference(
           Some(x.addressMValue),
-          Some(CalibrationPointType.RoadAddressCP))
+          Some(CalibrationPointType.RoadAddressCP)) // type from project must be handled if needed in the future.
       case _ => CalibrationPointReference.None
     }
   }
