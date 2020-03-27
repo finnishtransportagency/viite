@@ -2839,8 +2839,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       createdCalibrationPoints.filter(cp => cp.linkId == combLink3.linkId && cp.startOrEnd == CalibrationPointLocation.EndOfLink).head.addrM should be (15)
       nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
       nodesAndJunctionsService.handleJunctionPointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      val expiredJunctions = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(combPLinks, None)
-      roadAddressService.expireObsoleteCalibrationPointsInJunctions(expiredJunctions)
+      val expiredJunctionPoints = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(combPLinks, None)
+      roadAddressService.expireObsoleteCalibrationPointsInJunctions(expiredJunctionPoints)
       val createdCalibrationPointsAfterJunctionPointHandler = CalibrationPointDAO.fetchByLinkId(combPLinks.map(_.linkId))
       createdCalibrationPointsAfterJunctionPointHandler.size should be (6)
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber))
@@ -2853,7 +2853,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(2)
       junctions.size should be(1)
 
-      val calibrationPointsInJunctionPointsPlace = CalibrationPointDAO.fetchByLinkId(combPLinks.map(_.linkId)).filterNot(jcp => createdCalibrationPoints.map(_.id).contains(jcp.id))
+      val calibrationPointsInJunctionPointsPlace = createdCalibrationPointsAfterJunctionPointHandler.filterNot(jcp => createdCalibrationPoints.map(_.id).contains(jcp.id))
       calibrationPointsInJunctionPointsPlace.size should be (2)
       calibrationPointsInJunctionPointsPlace.filter(cp => cp.linkId == combLink1.linkId && cp.startOrEnd == CalibrationPointLocation.EndOfLink).head.addrM should be (10)
       calibrationPointsInJunctionPointsPlace.filter(cp => cp.linkId == combLink2.linkId && cp.startOrEnd == CalibrationPointLocation.StartOfLink).head.addrM should be (10)
@@ -4169,7 +4169,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     runWithRollback {
       val node = Node(NewIdValue, Sequences.nextNodeNumber, Point(0, 0), Some("Node name"), NodeType.EndOfRoad,
         DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
-      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy) should be (node.nodeNumber)
+      nodesAndJunctionsService.addOrUpdateNode(node, false, node.createdBy) should be (node.nodeNumber)
       val fetched = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("No node found"))
       fetched.startDate should be(node.startDate)
       fetched.nodeType should be(node.nodeType)
@@ -4192,7 +4192,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
       nodeDAO.create(Seq(node), node.createdBy)
       nodeDAO.fetchById(node.id) should not be None
-      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1)), node.createdBy) should be (node.nodeNumber)
+      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1)), false, node.createdBy) should be (node.nodeNumber)
       nodeDAO.fetchById(node.id) should be(None)
       val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
       updated.id should not be node.id
@@ -4213,7 +4213,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
       nodeDAO.create(Seq(node), node.createdBy)
       nodeDAO.fetchById(node.id) should not be None
-      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1), nodeType = NodeType.Bridge), node.createdBy) should be (node.nodeNumber)
+      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1), nodeType = NodeType.Bridge), false, node.createdBy) should be (node.nodeNumber)
       nodeDAO.fetchById(node.id) should be(None)
       val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
       updated.id should not be node.id
@@ -4237,7 +4237,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodeDAO.create(Seq(node), node.createdBy)
       nodeDAO.fetchById(node.id) should not be None
       nodesAndJunctionsService.addOrUpdateNode(node.copy(startDate = DateTime.now().plusDays(1).withTimeAtStartOfDay(),
-        nodeType = NodeType.Bridge), node.createdBy) should be (node.nodeNumber)
+        nodeType = NodeType.Bridge), false, node.createdBy) should be (node.nodeNumber)
       nodeDAO.fetchById(node.id) should be(None)
       val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
       updated.id should not be node.id
@@ -4250,6 +4250,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val historyRowEndDate = sql"""SELECT END_DATE from NODE
         WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
       historyRowEndDate should not be None
+    }
+  }
+
+  test("Test addOrUpdate When detached all junctions and nodePoints Then existing node is expired and new created new to history") {
+    runWithRollback {
+      val node = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, Point(0, 0), Some("Node name"), NodeType.EndOfRoad,
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
+      nodeDAO.create(Seq(node), node.createdBy)
+      val junctions = Seq()
+      val nodePoints = Seq()
+      nodeDAO.fetchById(node.id) should not be None
+      nodesAndJunctionsService.addOrUpdate(node.copy(coordinates = Point(1, 1)), junctions, nodePoints, node.createdBy)
+      nodeDAO.fetchById(node.id) should be(None)
     }
   }
 
