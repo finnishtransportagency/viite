@@ -116,7 +116,6 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     sortedLinearLocations.zip(addresses.zip(addresses.tail)).map {
       case (linearLocation, (st, en)) =>
         val geometryLength = linearLocation.endMValue - linearLocation.startMValue
-//        val (stCalibration, enCalibration) = linearLocation.calibrationPoints
         val (stCalibration, enCalibration) = (linearLocation.startCalibrationPoint.addrM, linearLocation.endCalibrationPoint.addrM)
 
         val calibrationPoints = (
@@ -141,7 +140,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
   private def recursiveMapRoadAddresses(roadway: Roadway, linearLocations: Seq[LinearLocation]): Seq[RoadAddress] = {
 
     def getUntilCalibrationPoint(seq: Seq[LinearLocation]): (Seq[LinearLocation], Seq[LinearLocation]) = {
-      val linearLocationsUntilCp = seq.takeWhile(l => l.endCalibrationPoint.isEmpty || l.endCalibrationPoint.isJunctionPointCP)
+      val linearLocationsUntilCp = seq.takeWhile(l => l.endCalibrationPoint.isEmpty || !l.endCalibrationPoint.isRoadAddressCP())
       val rest = seq.drop(linearLocationsUntilCp.size)
       if (rest.headOption.isEmpty)
         (linearLocationsUntilCp, rest)
