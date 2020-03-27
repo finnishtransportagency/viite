@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
-import fi.liikennevirasto.viite.dao.NodePointType.{CalculatedNodePoint, RoadNodePoint}
+import fi.liikennevirasto.viite.dao.NodePointType.RoadNodePoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -30,7 +30,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
-  def addOrUpdate(node: Node, junctions: Seq[Junction], nodePoints: Seq[NodePoint], username: String = "-"): Long = {
+  def addOrUpdate(node: Node, junctions: Seq[Junction], nodePoints: Seq[NodePoint], username: String = "-"): Unit = {
+    def isObsoleteNode(junctions: Seq[Junction], nodePoints: Seq[NodePoint]): Boolean = {
+      junctions.isEmpty && !nodePoints.exists(_.nodePointType == NodePointType.RoadNodePoint)
+    }
 
     def updateNodePoints(nodePoints: Seq[NodePoint], values: Map[String, Any]): Unit = {
       //  This map `values` was added so other fields could be modified in the process
@@ -39,7 +42,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       nodePointDAO.create(nodePoints.map(_.copy(id = NewIdValue, nodeNumber = newNodeNumber, createdBy = username)))
     }
 
-    def updateJunctionsAndJunctionPoints(junctions: Seq[Junction], values: Map[String, Any]): Unit = {
+      def updateJunctionsAndJunctionPoints(junctions: Seq[Junction], values: Map[String, Any]): Unit = {
       //  This map `values` was added so other fields could be modified in the process
       val newNodeNumber = values.getOrElse("nodeNumber", None).asInstanceOf[Option[Long]]
       val junctionNumber = values.getOrElse("junctionNumber", None).asInstanceOf[Option[Long]]
@@ -57,7 +60,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
 
     withDynTransaction {
-      val nodeNumber = addOrUpdateNode(node, username)
+      val nodeNumber = addOrUpdateNode(node, isObsoleteNode(junctions, nodePoints), username)
 
       val currentNodePoints = nodePointDAO.fetchByNodeNumber(nodeNumber)
       val (_, nodePointsToDetach) = currentNodePoints.partition(nodePoint => nodePoints.map(_.id).contains(nodePoint.id))
@@ -82,41 +85,47 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }).filter(j => !junctionsToAttach.map(_.id).contains(j.id))
 
       updateJunctionsAndJunctionPoints(updatedJunctions, Map("nodeNumber" -> Some(nodeNumber)))
-      calculateNodePointsForNode(nodeNumber, username)
+      if (isObsoleteNode(junctions, nodePoints)) {
+        val old = nodeDAO.fetchById(node.id)
+        nodeDAO.expireById(Seq(old.get.id))
+        nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)), validFrom = DateTime.now())), username)
+      } else
+        calculateNodePointsForNode(nodeNumber, username)
 
-      nodeNumber
     }
   }
 
-  def addOrUpdateNode(node: Node, username: String = "-"): Long = {
+  def addOrUpdateNode(node: Node, isObsoleteNode: Boolean = false, username: String = "-"): Long = {
+
     withDynTransactionNewOrExisting {
       if (node.id == NewIdValue) {
         nodeDAO.create(Seq(node), username).headOption.get
       } else {
         val old = nodeDAO.fetchById(node.id)
         if (old.isDefined) {
-          val originalStartDate = old.get.startDate.withTimeAtStartOfDay
-          val startDate = node.startDate.withTimeAtStartOfDay
+          if (!isObsoleteNode) {
+            val originalStartDate = old.get.startDate.withTimeAtStartOfDay
+            val startDate = node.startDate.withTimeAtStartOfDay
 
-          // Check that new start date is not earlier than before
-          if (startDate.getMillis < originalStartDate.getMillis) {
-            throw new Exception(NodeStartDateUpdateErrorMessage)
-          }
-
-          if (node.name != old.get.name || old.get.nodeType != node.nodeType || originalStartDate != startDate || old.get.coordinates != node.coordinates) {
-
-            // Invalidate old one
-            nodeDAO.expireById(Seq(old.get.id))
-
-            if (old.get.nodeType != node.nodeType && originalStartDate != startDate) {
-              // Create a new history layer when the node type has changed
-              nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
+            // Check that new start date is not earlier than before
+            if (startDate.getMillis < originalStartDate.getMillis) {
+              throw new Exception(NodeStartDateUpdateErrorMessage)
             }
 
-            //  Create new node
-            nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
-          }
+            if (node.name != old.get.name || old.get.nodeType != node.nodeType || originalStartDate != startDate || old.get.coordinates != node.coordinates) {
 
+              // Invalidate old one
+              nodeDAO.expireById(Seq(old.get.id))
+
+              if (old.get.nodeType != node.nodeType && originalStartDate != startDate) {
+                // Create a new history layer when the node type has changed
+                nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
+              }
+
+              //  Create new node
+              nodeDAO.create(Seq(node.copy(id = NewIdValue)), username)
+            }
+          }
           old.get.nodeNumber
         } else {
           throw new Exception(NodeNotFoundErrorMessage)
@@ -651,9 +660,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           }
         }.toSeq
       } catch {
-        case ex: Exception => {
+        case ex: Exception =>
           println("Failed nodepoints: ", ex.printStackTrace())
-        }
       }
     }
   }

@@ -974,10 +974,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         nodesAndJunctionsService.addOrUpdate(node, junctions, nodePoints, username)
         Map("success" -> true)
       } catch {
-        case ex: Exception => {
+        case ex: Exception =>
           logger.error("Request POST /nodes failed.", ex.getMessage)
           Map("success" -> false, "errorMessage" -> ex.getMessage)
-        }
       }
     }
   }
@@ -994,10 +993,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         nodesAndJunctionsService.addOrUpdate(node, junctions, nodePoints, username)
         Map("success" -> true)
       } catch {
-        case ex: Exception => {
+        case ex: Exception =>
           logger.error("Request PUT /nodes/$id failed.", ex)
           Map("success" -> false, "errorMessage" -> ex.getMessage)
-        }
       }
     }
   }
