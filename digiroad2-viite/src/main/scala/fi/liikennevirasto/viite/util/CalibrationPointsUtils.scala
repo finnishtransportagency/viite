@@ -141,10 +141,7 @@ object CalibrationPointsUtils {
   def toCalibrationPointReference(cp: Option[ProjectLinkCalibrationPoint]): CalibrationPointReference = {
     cp match {
       case Some(x) =>
-        // TODO VIITE-2344 - CALIBRATION_POINT - this SOURCE should be verified
-        CalibrationPointReference(
-          Some(x.addressMValue),
-          Some(CalibrationPointType.apply(x.source.value)))
+        CalibrationPointReference(Some(x.addressMValue))
       case _ => CalibrationPointReference.None
     }
   }
