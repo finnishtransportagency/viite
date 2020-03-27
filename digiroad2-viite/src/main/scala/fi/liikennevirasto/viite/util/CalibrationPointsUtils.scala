@@ -41,13 +41,13 @@ object CalibrationPointsUtils {
 
   def toProjectLinkCalibrationPoint(originalCalibrationPoint: BaseCalibrationPoint, roadwayId: Long = 0L): ProjectLinkCalibrationPoint = {
     roadwayId match {
-      case 0L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, ProjectLinkSource)
-      case _ => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, RoadAddressSource)
+      case 0L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, ProjectLinkSource, originalCalibrationPoint.typeCode)
+      case _ => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, RoadAddressSource, originalCalibrationPoint.typeCode)
     }
   }
 
   def toProjectLinkCalibrationPointWithSourceInfo(originalCalibrationPoint: BaseCalibrationPoint, source: CalibrationPointSource = UnknownSource): ProjectLinkCalibrationPoint = {
-    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source)
+    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source, originalCalibrationPoint.typeCode)
   }
 
   def toProjectLinkCalibrationPoints(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), roadwayId: Long = 0L): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
@@ -141,7 +141,9 @@ object CalibrationPointsUtils {
   def toCalibrationPointReference(cp: Option[ProjectLinkCalibrationPoint]): CalibrationPointReference = {
     cp match {
       case Some(x) =>
-        CalibrationPointReference(Some(x.addressMValue))
+        CalibrationPointReference(
+          Some(x.addressMValue),
+          Some(CalibrationPointType.apply(x.typeCode.value)))
       case _ => CalibrationPointReference.None
     }
   }
