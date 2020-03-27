@@ -141,7 +141,9 @@ object CalibrationPointsUtils {
   def toCalibrationPointReference(cp: Option[ProjectLinkCalibrationPoint]): CalibrationPointReference = {
     cp match {
       case Some(x) =>
-        CalibrationPointReference(Some(x.addressMValue))
+        CalibrationPointReference(
+          Some(x.addressMValue),
+          Some(CalibrationPointType.RoadAddressCP))
       case _ => CalibrationPointReference.None
     }
   }
