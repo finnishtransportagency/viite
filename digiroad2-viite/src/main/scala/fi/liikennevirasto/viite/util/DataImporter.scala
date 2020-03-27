@@ -346,6 +346,16 @@ class DataImporter {
     }
   }
 
+  def updateCalibrationPointTypesQuery() = {
+    withDynTransaction {
+      val source = io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("db/migration/V0_32__calibration_point_type_update.sql"))
+      var text = try source.mkString finally source.close()
+      // remove ; at end of SQL
+      text = text.substring(0,text.length -2)
+      sqlu"""#$text""".execute
+    }
+  }
+
   private[this] def initDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
     val cfg = new BoneCPConfig(localProperties)
