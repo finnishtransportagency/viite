@@ -1,6 +1,5 @@
 UPDATE CALIBRATION_POINT cpu SET "TYPE" = (SELECT CASE
--- leave expired calibration points to original value 2
-		WHEN (cp.VALID_TO IS NOT NULL) THEN 2
+-- leave expired calibration points and user assigned points to original value
 -- [TYPE = 2] Includes templates, points where ADDR_M is equal to START_ADDR_M or END_ADDR_M of the road (road_number, road_part_number and track) and when ROAD_TYPE changes
 		WHEN (rw.DISCONTINUITY IN (1,2,3,4,6)) THEN 2 -- There is DISCONTINUITY
 		WHEN (rp.ADDR_M = (SELECT MIN(roadAddr.START_ADDR_M) FROM ROADWAY roadAddr
@@ -32,4 +31,4 @@ UPDATE CALIBRATION_POINT cpu SET "TYPE" = (SELECT CASE
 	FROM CALIBRATION_POINT cp
 		LEFT JOIN ROADWAY_POINT rp ON cp.ROADWAY_POINT_ID = rp.ID
 	LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-WHERE cp.ID = cpu.ID AND ROWNUM = 1) where cpu.type != 0;
+WHERE cp.ID = cpu.ID AND ROWNUM = 1) WHERE cpu.type != 0 AND cpu.VALID_TO IS NULL ;
