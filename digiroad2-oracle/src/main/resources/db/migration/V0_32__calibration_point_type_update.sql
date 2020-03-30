@@ -1,7 +1,7 @@
 UPDATE CALIBRATION_POINT cpu SET "TYPE" = (SELECT CASE
 -- leave expired calibration points and user assigned points to original value
 -- [TYPE = 2] Includes templates, points where ADDR_M is equal to START_ADDR_M or END_ADDR_M of the road (road_number, road_part_number and track) and when ROAD_TYPE changes
-		WHEN (rw.DISCONTINUITY IN (1,2,3,4,6)) THEN 2 -- There is DISCONTINUITY
+		WHEN (rp.ADDR_M = rw.END_ADDR_M AND rw.DISCONTINUITY IN (1,2,3,4,6)) THEN 2 -- There is DISCONTINUITY
 		WHEN (rp.ADDR_M = (SELECT MIN(roadAddr.START_ADDR_M) FROM ROADWAY roadAddr
 				WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
 				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 2 -- ADDR_M is equal to START_ADDR_M
