@@ -136,6 +136,10 @@ object Digiroad2Context {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
   }
 
+  lazy val authenticationTestModeUser: String = {
+    properties.getProperty("digiroad2.authenticationTestUser", "")
+  }
+
   lazy val userProvider: UserProvider = {
     Class.forName(properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
   }
