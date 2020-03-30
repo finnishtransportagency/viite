@@ -684,28 +684,28 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     startCalibrationPointsToCheck.foreach {
       cal =>
         val roadwayPointId =
-          roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
+          roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.addrM.get) match {
             case Some(roadwayPoint) =>
               roadwayPoint.id
             case _ =>
-              logger.info(s"Creating roadway point for start calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.startCalibrationPoint.get})")
-              roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, username)
+              logger.info(s"Creating roadway point for start calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.startCalibrationPoint.addrM.get})")
+              roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.addrM.get, username)
           }
         // TODO Check which type this calibration point should be (0, 1, 2)
-        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink, CalibrationPointType.Mandatory, username)
+        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, username)
     }
     endCalibrationPointsToCheck.foreach {
       cal =>
         val roadwayPointId =
-          roadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.get) match {
+          roadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.addrM.get) match {
             case Some(roadwayPoint) =>
               roadwayPoint.id
             case _ =>
-              logger.info(s"Creating roadway point for end calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.endCalibrationPoint.get})")
-              roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, username)
+              logger.info(s"Creating roadway point for end calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.endCalibrationPoint.addrM.get})")
+              roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.addrM.get, username)
           }
         // TODO Check which type this calibration point should be (0, 1, 2)
-        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink, CalibrationPointType.Mandatory, username)
+        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP, username)
     }
   }
 

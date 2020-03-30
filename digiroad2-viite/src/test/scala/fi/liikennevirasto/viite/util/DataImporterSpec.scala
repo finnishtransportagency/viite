@@ -176,12 +176,12 @@ class DataImporterSpec extends FunSuite with Matchers {
       linearLocation1.endMValue should be(73.448 +- 0.001)
       linearLocation2.endMValue should be(64.138 +- 0.001)
       linearLocation3.endMValue should be(120.0 +- 0.001)
-      linearLocation1.startCalibrationPoint.get should be(756)
-      linearLocation1.endCalibrationPoint should be(None)
-      linearLocation2.startCalibrationPoint should be(None)
-      linearLocation2.endCalibrationPoint should be(None)
-      linearLocation3.startCalibrationPoint should be(None)
-      linearLocation3.endCalibrationPoint.get should be(810)
+      linearLocation1.startCalibrationPoint.addrM.get should be(756)
+      linearLocation1.endCalibrationPoint should be(CalibrationPointReference(None, None))
+      linearLocation2.startCalibrationPoint should be(CalibrationPointReference(None, None))
+      linearLocation2.endCalibrationPoint should be(CalibrationPointReference(None, None))
+      linearLocation3.startCalibrationPoint should be(CalibrationPointReference(None, None))
+      linearLocation3.endCalibrationPoint.addrM.get should be(810)
 
     }
     withDynSession {
