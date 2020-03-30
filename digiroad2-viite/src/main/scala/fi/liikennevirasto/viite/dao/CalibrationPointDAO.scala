@@ -8,20 +8,25 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 object CalibrationPointDAO {
 
-  trait CalibrationPointType {
+  case class CalibrationPointLike(addrM: Option[Long], typeCode: Option[CalibrationPointType], startOrEnd: Option[CalibrationPointLocation]) {}
+
+  trait CalibrationPointType extends Ordered[CalibrationPointType] {
     def value: Int
+    def compare(that: CalibrationPointType): Int = {
+      this.value - that.value
+    }
   }
 
   object CalibrationPointType {
-    val values = Set(Optional, SemiMandatory, Mandatory)
+    val values = Set(UserDefinedCP, JunctionPointCP, RoadAddressCP)
 
     def apply(intValue: Int): CalibrationPointType = {
-      values.find(_.value == intValue).getOrElse(Optional)
+      values.find(_.value == intValue).getOrElse(UserDefinedCP)
     }
 
-    case object Optional extends CalibrationPointType {def value = 0}
-    case object SemiMandatory extends CalibrationPointType {def value = 1}
-    case object Mandatory extends CalibrationPointType {def value = 2}
+    case object UserDefinedCP extends CalibrationPointType {def value = 0}
+    case object JunctionPointCP extends CalibrationPointType {def value = 1}
+    case object RoadAddressCP extends CalibrationPointType {def value = 2}
   }
 
   trait CalibrationPointLocation {

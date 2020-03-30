@@ -125,13 +125,26 @@ object CalibrationPointsUtils {
   def createCalibrationPointIfNeeded(rwPoint: Long, linkId: Long, calibrationPointLocation: CalibrationPointLocation,
                                      calibrationPointType: CalibrationPointType, username: String): Unit = {
     val existing = CalibrationPointDAO.fetch(linkId, calibrationPointLocation.value)
-    val (existingCorrect, existingWrong) = existing.partition(cp => cp.roadwayPointId == rwPoint && cp.typeCode == calibrationPointType)
+
+    // The existing correct kind of calibration point has the same roadwayPointId and the same or a higher type.
+    val (existingCorrect, existingWrong) = existing.partition(cp => cp.roadwayPointId == rwPoint && cp.typeCode >= calibrationPointType)
+    
     if (existingWrong.nonEmpty) {
       CalibrationPointDAO.expireById(existingWrong.map(_.id))
     }
     if (existingCorrect.isEmpty) {
       logger.info(s"Creating CalibrationPoint with RoadwayPoint id : $rwPoint linkId : $linkId startOrEnd: ${calibrationPointLocation.value}")
       CalibrationPointDAO.create(rwPoint, linkId, calibrationPointLocation, calType = calibrationPointType, createdBy = username)
+    }
+  }
+
+  def toCalibrationPointReference(cp: Option[ProjectLinkCalibrationPoint]): CalibrationPointReference = {
+    cp match {
+      case Some(x) =>
+        CalibrationPointReference(
+          Some(x.addressMValue),
+          Some(CalibrationPointType.RoadAddressCP)) // type from project must be handled if needed in the future.
+      case _ => CalibrationPointReference.None
     }
   }
 
