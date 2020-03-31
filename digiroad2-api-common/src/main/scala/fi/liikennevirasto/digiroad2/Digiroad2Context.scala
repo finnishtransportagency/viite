@@ -126,11 +126,7 @@ object Digiroad2Context {
   lazy val authenticationTestModeUser: String = {
     ViiteProperties.authenticationTestUser
   }
-
-  lazy val authenticationTestModeUser: String = {
-    properties.getProperty("digiroad2.authenticationTestUser", "")
-  }
-
+  
   lazy val userProvider: UserProvider = {
     Class.forName(ViiteProperties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
