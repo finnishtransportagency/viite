@@ -28,7 +28,7 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, yCoordinates, LinkGeomSource.NormalLinkInterface)
 
   private def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): LinearLocation = {
-    LinearLocation(id, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (None, None),
+    LinearLocation(id, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (CalibrationPointReference.None, CalibrationPointReference.None),
       yCoordinates.map(y => Point(0.0, y)), linkGeomSource, roadwayNumber)
   }
 
