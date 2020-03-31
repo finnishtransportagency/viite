@@ -12,6 +12,7 @@ import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointLocation
 import fi.liikennevirasto.viite.dao.{BeforeAfter, _}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -100,7 +101,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
 
   val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l,
-    (None, None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
+    (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
 
   def dummyProjectLink(roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuityType: Discontinuity, startAddrM: Long, endAddrM: Long, originalStartAddr: Long = 0, originalEndAddr: Long = 0, startDate: Option[DateTime], endDate: Option[DateTime] = None, linkId: Long = 0, startMValue: Double = 0,
                        endMValue: Double = 0, sideCode: SideCode = SideCode.Unknown, status: LinkStatus, projectId: Long = 0, roadType: RoadType = RoadType.PublicRoad, geometry: Seq[Point] = Seq(), roadwayNumber: Long) = {
@@ -139,8 +140,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
     (LinearLocation(p.linearLocationId, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
-      (calibrationPoint(p.calibrationPoints._1), calibrationPoint(p.calibrationPoints._2)), p.geometry, p.linkGeomSource,
-      p.roadwayNumber, Some(startDate), p.endDate),
+      (CalibrationPointsUtils.toCalibrationPointReference(p.startCalibrationPoint),
+        CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
+      p.geometry, p.linkGeomSource, p.roadwayNumber, Some(startDate), p.endDate),
       Roadway(p.roadwayId, p.roadwayNumber, p.roadNumber, p.roadPartNumber, p.roadType, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
         p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
   }
@@ -251,7 +253,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadway = Roadway(rwId, roadwayNumber, road999, part, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
       val roadway2 = Roadway(rwId + 1, roadwayNumber + 1, road1000, part, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 20L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
       val linearLocationId = Sequences.nextLinearLocationId
-      val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (Some(0), Some(10)), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
+      val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.TowardsDigitizing, 0L,
+        calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))),
+        geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
       val projectId = Sequences.nextViitePrimaryKeySeqValue
       val plId1 = projectId + 1
 
@@ -263,13 +267,16 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 12345, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), None), Seq(Point(0.0, 0.0), Point(10.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference.None),
+          Seq(Point(0.0, 0.0), Point(10.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber, Some(DateTime.parse("2000-01-01")), None),
         LinearLocation(linearLocationId + 1, 1, 12346, 0.0, 11.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, None), Seq(Point(0.0, 0.0), Point(11.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference.None, CalibrationPointReference.None),
+          Seq(Point(0.0, 0.0), Point(11.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber + 1, Some(DateTime.parse("2000-01-01")), None),
         LinearLocation(linearLocationId + 2, 2, 12347, 0.0, 9.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, None), Seq(Point(11.0, 0.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference.None, CalibrationPointReference.None),
+          Seq(Point(11.0, 0.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber + 1, Some(DateTime.parse("2000-01-01")), None)
       )
       val pls = Seq(link1, link2)
@@ -332,7 +339,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadway = Roadway(rwId, roadwayNumber, road999, part, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
       val roadway2 = Roadway(rwId + 1, roadwayNumber + 1, road1000, part, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
       val linearLocationId = Sequences.nextLinearLocationId
-      val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (Some(0), Some(10)), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
+      val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.TowardsDigitizing, 0L,
+        calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))),
+        geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
       val projectId = Sequences.nextViitePrimaryKeySeqValue
       val plId1 = projectId + 1
 
@@ -344,10 +353,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), None), Seq(Point(0.0, 0.0), Point(10.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference.None),
+          Seq(Point(0.0, 0.0), Point(10.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber, Some(DateTime.parse("2000-01-01")), None),
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, None), Seq(Point(10.0, 0.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference.None, CalibrationPointReference.None),
+          Seq(Point(10.0, 0.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber + 1, Some(DateTime.parse("2000-01-01")), None)
       )
       val pls = Seq(link1)
@@ -426,8 +437,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val linearLocationId = Sequences.nextLinearLocationId
       val roadway = Roadway(rwId, roadwayNumber, road999, part, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
       val roadway2 = Roadway(rwId + 1, roadwayNumber + 1, road1000, part, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
-      val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.AgainstDigitizing, 0L, calibrationPoints = (None, Some(10)), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
-      val linearLocation2 = LinearLocation(linearLocationId + 1, 1, 12346, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (None, Some(10)), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber + 1, None, None)
+      val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.AgainstDigitizing, 0L,
+        calibrationPoints = (CalibrationPointReference.None, CalibrationPointReference(Some(10))),
+        geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
+      val linearLocation2 = LinearLocation(linearLocationId + 1, 1, 12346, 0L, 10L, SideCode.TowardsDigitizing, 0L,
+        calibrationPoints = (CalibrationPointReference.None, CalibrationPointReference(Some(10))),
+        geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber + 1, None, None)
 
       val projectId = Sequences.nextViitePrimaryKeySeqValue
 
@@ -509,8 +524,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val linearLocationId = Sequences.nextLinearLocationId
       val roadway = Roadway(rwId, roadwayNumber, road999, part, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
       val roadway2 = Roadway(rwId + 1, roadwayNumber + 1, road1000, part, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
-      val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (Some(0), Some(10)), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
-      val linearLocation2 = LinearLocation(linearLocationId + 1, 1, 12346, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (Some(0), Some(10)), geom2, LinkGeomSource.NormalLinkInterface, roadwayNumber + 1, None, None)
+      val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.TowardsDigitizing, 0L,
+        calibrationPoints = (CalibrationPointReference(Some(0L)), CalibrationPointReference(Some(10L))),
+        geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
+      val linearLocation2 = LinearLocation(linearLocationId + 1, 1, 12346, 0L, 10L, SideCode.TowardsDigitizing, 0L,
+        calibrationPoints = (CalibrationPointReference(Some(0L)), CalibrationPointReference(Some(10L))),
+        geom2, LinkGeomSource.NormalLinkInterface, roadwayNumber + 1, None, None)
       val projectId = Sequences.nextViitePrimaryKeySeqValue
 
       val link1 = dummyProjectLink(road1000, part, Track.Combined, Discontinuity.EndOfRoad, 0, 10, 0, 10, Some(DateTime.now()), None, 12346, 0, 10, SideCode.AgainstDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, geom2, roadwayNumber + 1).copy(id = projectId + 1, roadwayId = rwId + 1, linearLocationId = linearLocationId + 1)
@@ -591,8 +610,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val linearLocationId = Sequences.nextLinearLocationId
       val roadway = Roadway(rwId, roadwayNumber, road999, part, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
       val roadway2 = Roadway(rwId + 1, roadwayNumber + 1, road1000, part, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
-      val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.AgainstDigitizing, 0L, calibrationPoints = (Some(0), Some(10)), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
-      val linearLocation2 = LinearLocation(linearLocationId + 1, 1, 12346, 0L, 10L, SideCode.AgainstDigitizing, 0L, calibrationPoints = (Some(0), Some(10)), geom2, LinkGeomSource.NormalLinkInterface, roadwayNumber + 1, None, None)
+      val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.AgainstDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
+      val linearLocation2 = LinearLocation(linearLocationId + 1, 1, 12346, 0L, 10L, SideCode.AgainstDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))), geom2, LinkGeomSource.NormalLinkInterface, roadwayNumber + 1, None, None)
 
       val projectId = Sequences.nextViitePrimaryKeySeqValue
 
@@ -2820,8 +2839,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       createdCalibrationPoints.filter(cp => cp.linkId == combLink3.linkId && cp.startOrEnd == CalibrationPointLocation.EndOfLink).head.addrM should be (15)
       nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
       nodesAndJunctionsService.handleJunctionPointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      val expiredJunctions = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(combPLinks, None)
-      roadAddressService.expireObsoleteCalibrationPointsInJunctions(expiredJunctions)
+      val expiredJunctionPoints = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(combPLinks, None)
+      roadAddressService.expireObsoleteCalibrationPointsInJunctions(expiredJunctionPoints)
       val createdCalibrationPointsAfterJunctionPointHandler = CalibrationPointDAO.fetchByLinkId(combPLinks.map(_.linkId))
       createdCalibrationPointsAfterJunctionPointHandler.size should be (6)
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber))
@@ -2834,7 +2853,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       junctionPointTemplates.count(_.beforeAfter == BeforeAfter.After) should be(2)
       junctions.size should be(1)
 
-      val calibrationPointsInJunctionPointsPlace = CalibrationPointDAO.fetchByLinkId(combPLinks.map(_.linkId)).filterNot(jcp => createdCalibrationPoints.map(_.id).contains(jcp.id))
+      val calibrationPointsInJunctionPointsPlace = createdCalibrationPointsAfterJunctionPointHandler.filterNot(jcp => createdCalibrationPoints.map(_.id).contains(jcp.id))
       calibrationPointsInJunctionPointsPlace.size should be (2)
       calibrationPointsInJunctionPointsPlace.filter(cp => cp.linkId == combLink1.linkId && cp.startOrEnd == CalibrationPointLocation.EndOfLink).head.addrM should be (10)
       calibrationPointsInJunctionPointsPlace.filter(cp => cp.linkId == combLink2.linkId && cp.startOrEnd == CalibrationPointLocation.StartOfLink).head.addrM should be (10)
@@ -3218,16 +3237,16 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), None), Seq(Point(0.0, 0.0), Point(50.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(50.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber, Some(DateTime.parse("2000-01-01")), None),
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, None), Seq(Point(0.0, 10.0), Point(50.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(0.0, 10.0), Point(50.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber + 1, Some(DateTime.parse("2000-01-01")), None),
         LinearLocation(linearLocationId + 2, 1, 3000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, None), Seq(Point(50.0, 5.0), Point(100.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(50.0, 5.0), Point(100.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber + 2, Some(DateTime.parse("2000-01-01")), None),
         LinearLocation(linearLocationId + 3, 1, 3000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, Some(150l)), Seq(Point(100.0, 5.0), Point(150.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference.None, CalibrationPointReference(Some(150l))), Seq(Point(100.0, 5.0), Point(150.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber + 3, Some(DateTime.parse("2000-01-01")), None)
       )
       val roadwayIds = roadwayDAO.create(roadways)
@@ -3386,8 +3405,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         Roadway(NewIdValue, roadLink1.roadwayNumber, roadLink1.roadNumber, roadLink1.roadPartNumber, roadLink1.roadType, roadLink1.track, roadLink1.discontinuity, roadLink1.startAddrMValue, roadLink1.endAddrMValue, reversed = false, roadLink1.startDate.get, roadLink1.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None),
         Roadway(NewIdValue, roadLink2.roadwayNumber, roadLink2.roadNumber, roadLink2.roadPartNumber, roadLink2.roadType, roadLink2.track, roadLink2.discontinuity, roadLink2.startAddrMValue, roadLink2.endAddrMValue, reversed = false, roadLink2.startDate.get, roadLink2.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None))
       val linearLocations = Seq(
-        LinearLocation(NewIdValue, 1, roadLink1.linkId, roadLink1.startAddrMValue, roadLink1.endAddrMValue, roadLink1.sideCode, 0L, calibrationPoints = (Some(roadLink1.startAddrMValue), Some(roadLink1.endAddrMValue)), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink1.roadwayNumber, Some(DateTime.now), None),
-        LinearLocation(NewIdValue, 1, roadLink2.linkId, roadLink2.startAddrMValue, roadLink2.endAddrMValue, roadLink2.sideCode, 0L, calibrationPoints = (Some(roadLink2.startAddrMValue), Some(roadLink2.endAddrMValue)), roadGeom2, LinkGeomSource.NormalLinkInterface, roadLink2.roadwayNumber, Some(DateTime.now), None))
+        LinearLocation(NewIdValue, 1, roadLink1.linkId, roadLink1.startAddrMValue, roadLink1.endAddrMValue, roadLink1.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(roadLink1.startAddrMValue)), CalibrationPointReference(Some(roadLink1.endAddrMValue))), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink1.roadwayNumber, Some(DateTime.now), None),
+        LinearLocation(NewIdValue, 1, roadLink2.linkId, roadLink2.startAddrMValue, roadLink2.endAddrMValue, roadLink2.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(roadLink2.startAddrMValue)), CalibrationPointReference(Some(roadLink2.endAddrMValue))), roadGeom2, LinkGeomSource.NormalLinkInterface, roadLink2.roadwayNumber, Some(DateTime.now), None))
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(linearLocations)
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
@@ -3485,7 +3504,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadways = Seq(
         Roadway(NewIdValue, roadLink.roadwayNumber, roadLink.roadNumber, roadLink.roadPartNumber, roadLink.roadType, roadLink.track, roadLink.discontinuity, roadLink.startAddrMValue, roadLink.endAddrMValue, reversed = false, roadLink.startDate.get, roadLink.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None))
       val linearLocations = Seq(
-        LinearLocation(NewIdValue, 1, roadLink.linkId, roadLink.startAddrMValue, roadLink.endAddrMValue, roadLink.sideCode, 0L, calibrationPoints = (Some(roadLink.startAddrMValue), Some(roadLink.endAddrMValue)), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink.roadwayNumber, Some(DateTime.now), None))
+        LinearLocation(NewIdValue, 1, roadLink.linkId, roadLink.startAddrMValue, roadLink.endAddrMValue, roadLink.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(roadLink.startAddrMValue)), CalibrationPointReference(Some(roadLink.endAddrMValue))), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink.roadwayNumber, Some(DateTime.now), None))
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(linearLocations)
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
@@ -3541,8 +3560,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         Roadway(NewIdValue, roadLink.roadwayNumber, roadLink.roadNumber, roadLink.roadPartNumber, roadLink.roadType, roadLink.track, roadLink.discontinuity, roadLink.startAddrMValue, roadLink.endAddrMValue, reversed = false, roadLink.startDate.get, roadLink.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None),
         Roadway(NewIdValue, newRoadLink.roadwayNumber, newRoadLink.roadNumber, newRoadLink.roadPartNumber, newRoadLink.roadType, newRoadLink.track, newRoadLink.discontinuity, newRoadLink.startAddrMValue, newRoadLink.endAddrMValue, reversed = false, newRoadLink.startDate.get, newRoadLink.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None))
       val newLinearLocations = Seq(
-        LinearLocation(NewIdValue, 1, roadLink.linkId, roadLink.startAddrMValue, roadLink.endAddrMValue, roadLink.sideCode, 0L, calibrationPoints = (Some(roadLink.startAddrMValue), Some(roadLink.endAddrMValue)), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink.roadwayNumber, Some(DateTime.now), None),
-        LinearLocation(NewIdValue, 2, newRoadLink.linkId, newRoadLink.startAddrMValue, newRoadLink.endAddrMValue, newRoadLink.sideCode, 0L, calibrationPoints = (Some(newRoadLink.startAddrMValue), Some(newRoadLink.endAddrMValue)), roadGeom2, LinkGeomSource.NormalLinkInterface, newRoadLink.roadwayNumber, Some(DateTime.now), None))
+        LinearLocation(NewIdValue, 1, roadLink.linkId, roadLink.startAddrMValue, roadLink.endAddrMValue, roadLink.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(roadLink.startAddrMValue)), CalibrationPointReference(Some(roadLink.endAddrMValue))), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink.roadwayNumber, Some(DateTime.now), None),
+        LinearLocation(NewIdValue, 2, newRoadLink.linkId, newRoadLink.startAddrMValue, newRoadLink.endAddrMValue, newRoadLink.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(newRoadLink.startAddrMValue)), CalibrationPointReference(Some(newRoadLink.endAddrMValue))), roadGeom2, LinkGeomSource.NormalLinkInterface, newRoadLink.roadwayNumber, Some(DateTime.now), None))
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(newLinearLocations)
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(newRoadways)
@@ -3583,7 +3602,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadways = Seq(
         Roadway(NewIdValue, roadLink.roadwayNumber, roadLink.roadNumber, roadLink.roadPartNumber, roadLink.roadType, roadLink.track, roadLink.discontinuity, roadLink.startAddrMValue, roadLink.endAddrMValue, reversed = false, roadLink.startDate.get, roadLink.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None))
       val linearLocations = Seq(
-        LinearLocation(NewIdValue, 1, roadLink.linkId, roadLink.startAddrMValue, roadLink.endAddrMValue, roadLink.sideCode, 0L, calibrationPoints = (Some(roadLink.startAddrMValue), Some(roadLink.endAddrMValue)), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink.roadwayNumber, Some(DateTime.now), None))
+        LinearLocation(NewIdValue, 1, roadLink.linkId, roadLink.startAddrMValue, roadLink.endAddrMValue, roadLink.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(roadLink.startAddrMValue)), CalibrationPointReference(Some(roadLink.endAddrMValue))), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink.roadwayNumber, Some(DateTime.now), None))
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(linearLocations)
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
@@ -3634,8 +3653,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         Roadway(NewIdValue, roadLink.roadwayNumber, roadLink.roadNumber, roadLink.roadPartNumber, roadLink.roadType, roadLink.track, roadLink.discontinuity, roadLink.startAddrMValue, roadLink.endAddrMValue, reversed = false, roadLink.startDate.get, roadLink.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None),
         Roadway(NewIdValue, newRoadLink.roadwayNumber, newRoadLink.roadNumber, newRoadLink.roadPartNumber, newRoadLink.roadType, newRoadLink.track, newRoadLink.discontinuity, newRoadLink.startAddrMValue, newRoadLink.endAddrMValue, reversed = false, newRoadLink.startDate.get, newRoadLink.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None))
       val newLinearLocations = Seq(
-        LinearLocation(NewIdValue, 1, roadLink.linkId, roadLink.startAddrMValue, roadLink.endAddrMValue, roadLink.sideCode, 0L, calibrationPoints = (Some(roadLink.startAddrMValue), Some(roadLink.endAddrMValue)), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink.roadwayNumber, Some(DateTime.now), None),
-        LinearLocation(NewIdValue, 2, newRoadLink.linkId, newRoadLink.startAddrMValue, newRoadLink.endAddrMValue, newRoadLink.sideCode, 0L, calibrationPoints = (Some(newRoadLink.startAddrMValue), Some(newRoadLink.endAddrMValue)), roadGeom2, LinkGeomSource.NormalLinkInterface, newRoadLink.roadwayNumber, Some(DateTime.now), None))
+        LinearLocation(NewIdValue, 1, roadLink.linkId, roadLink.startAddrMValue, roadLink.endAddrMValue, roadLink.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(roadLink.startAddrMValue)), CalibrationPointReference(Some(roadLink.endAddrMValue))), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink.roadwayNumber, Some(DateTime.now), None),
+        LinearLocation(NewIdValue, 2, newRoadLink.linkId, newRoadLink.startAddrMValue, newRoadLink.endAddrMValue, newRoadLink.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(newRoadLink.startAddrMValue)), CalibrationPointReference(Some(newRoadLink.endAddrMValue))), roadGeom2, LinkGeomSource.NormalLinkInterface, newRoadLink.roadwayNumber, Some(DateTime.now), None))
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(newLinearLocations)
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(newRoadways)
@@ -3700,8 +3719,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         Roadway(NewIdValue, road1Link.roadwayNumber, road1Link.roadNumber, road1Link.roadPartNumber, road1Link.roadType, road1Link.track, road1Link.discontinuity, road1Link.startAddrMValue, road1Link.endAddrMValue, reversed = false, road1Link.startDate.get, road1Link.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None),
         Roadway(NewIdValue, road2Link.roadwayNumber, road2Link.roadNumber, road2Link.roadPartNumber, road2Link.roadType, road2Link.track, road2Link.discontinuity, road2Link.startAddrMValue, road2Link.endAddrMValue, reversed = false, road2Link.startDate.get, road2Link.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None))
       val linearLocations = Seq(
-        LinearLocation(NewIdValue, 1, road1Link.linkId, road1Link.startAddrMValue, road1Link.endAddrMValue, road1Link.sideCode, 0L, calibrationPoints = (Some(road1Link.startAddrMValue), Some(road1Link.endAddrMValue)), roadGeom1, LinkGeomSource.NormalLinkInterface, road1Link.roadwayNumber, Some(DateTime.now), None),
-        LinearLocation(NewIdValue, 1, road2Link.linkId, road2Link.startAddrMValue, road2Link.endAddrMValue, road2Link.sideCode, 0L, calibrationPoints = (Some(road2Link.startAddrMValue), Some(road2Link.endAddrMValue)), roadGeom2, LinkGeomSource.NormalLinkInterface, road2Link.roadwayNumber, Some(DateTime.now), None))
+        LinearLocation(NewIdValue, 1, road1Link.linkId, road1Link.startAddrMValue, road1Link.endAddrMValue, road1Link.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(road1Link.startAddrMValue)), CalibrationPointReference(Some(road1Link.endAddrMValue))), roadGeom1, LinkGeomSource.NormalLinkInterface, road1Link.roadwayNumber, Some(DateTime.now), None),
+        LinearLocation(NewIdValue, 1, road2Link.linkId, road2Link.startAddrMValue, road2Link.endAddrMValue, road2Link.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(road2Link.startAddrMValue)), CalibrationPointReference(Some(road2Link.endAddrMValue))), roadGeom2, LinkGeomSource.NormalLinkInterface, road2Link.roadwayNumber, Some(DateTime.now), None))
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(linearLocations)
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
@@ -3797,9 +3816,9 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         Roadway(NewIdValue, road1Link1.roadwayNumber, road1Link1.roadNumber, road1Link1.roadPartNumber, road1Link1.roadType, road1Link1.track, road1Link1.discontinuity, road1Link1.startAddrMValue, road1Link2.endAddrMValue, reversed = false, road1Link1.startDate.get, road1Link1.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None),
         Roadway(NewIdValue, road2Link.roadwayNumber, road2Link.roadNumber, road2Link.roadPartNumber, road2Link.roadType, road2Link.track, road2Link.discontinuity, road2Link.startAddrMValue, road2Link.endAddrMValue, reversed = false, road2Link.startDate.get, road2Link.endDate, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None))
       val linearLocations = Seq(
-        LinearLocation(NewIdValue, 1, road1Link1.linkId, road1Link1.startAddrMValue, road1Link1.endAddrMValue, road1Link1.sideCode, 0L, calibrationPoints = (Some(road1Link1.startAddrMValue), Some(road1Link1.endAddrMValue)), roadGeom1Link1, LinkGeomSource.NormalLinkInterface, road1Link1.roadwayNumber, Some(DateTime.now), None),
-        LinearLocation(NewIdValue, 2, road1Link2.linkId, road1Link2.startAddrMValue, road1Link2.endAddrMValue, road1Link2.sideCode, 0L, calibrationPoints = (Some(road1Link2.startAddrMValue), Some(road1Link2.endAddrMValue)), roadGeom1Link2, LinkGeomSource.NormalLinkInterface, road1Link2.roadwayNumber, Some(DateTime.now), None),
-        LinearLocation(NewIdValue, 1, road2Link.linkId, road2Link.startAddrMValue, road2Link.endAddrMValue, road2Link.sideCode, 0L, calibrationPoints = (Some(road2Link.startAddrMValue), Some(road2Link.endAddrMValue)), roadGeom2, LinkGeomSource.NormalLinkInterface, road2Link.roadwayNumber, Some(DateTime.now), None))
+        LinearLocation(NewIdValue, 1, road1Link1.linkId, road1Link1.startAddrMValue, road1Link1.endAddrMValue, road1Link1.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(road1Link1.startAddrMValue)), CalibrationPointReference(Some(road1Link1.endAddrMValue))), roadGeom1Link1, LinkGeomSource.NormalLinkInterface, road1Link1.roadwayNumber, Some(DateTime.now), None),
+        LinearLocation(NewIdValue, 2, road1Link2.linkId, road1Link2.startAddrMValue, road1Link2.endAddrMValue, road1Link2.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(road1Link2.startAddrMValue)), CalibrationPointReference(Some(road1Link2.endAddrMValue))), roadGeom1Link2, LinkGeomSource.NormalLinkInterface, road1Link2.roadwayNumber, Some(DateTime.now), None),
+        LinearLocation(NewIdValue, 1, road2Link.linkId, road2Link.startAddrMValue, road2Link.endAddrMValue, road2Link.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(road2Link.startAddrMValue)), CalibrationPointReference(Some(road2Link.endAddrMValue))), roadGeom2, LinkGeomSource.NormalLinkInterface, road2Link.roadwayNumber, Some(DateTime.now), None))
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(linearLocations)
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
@@ -4150,7 +4169,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     runWithRollback {
       val node = Node(NewIdValue, Sequences.nextNodeNumber, Point(0, 0), Some("Node name"), NodeType.EndOfRoad,
         DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
-      nodesAndJunctionsService.addOrUpdateNode(node, node.createdBy) should be (node.nodeNumber)
+      nodesAndJunctionsService.addOrUpdateNode(node, false, node.createdBy) should be (node.nodeNumber)
       val fetched = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("No node found"))
       fetched.startDate should be(node.startDate)
       fetched.nodeType should be(node.nodeType)
@@ -4173,7 +4192,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
       nodeDAO.create(Seq(node), node.createdBy)
       nodeDAO.fetchById(node.id) should not be None
-      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1)), node.createdBy) should be (node.nodeNumber)
+      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1)), false, node.createdBy) should be (node.nodeNumber)
       nodeDAO.fetchById(node.id) should be(None)
       val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
       updated.id should not be node.id
@@ -4194,7 +4213,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
       nodeDAO.create(Seq(node), node.createdBy)
       nodeDAO.fetchById(node.id) should not be None
-      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1), nodeType = NodeType.Bridge), node.createdBy) should be (node.nodeNumber)
+      nodesAndJunctionsService.addOrUpdateNode(node.copy(coordinates = Point(1, 1), nodeType = NodeType.Bridge), false, node.createdBy) should be (node.nodeNumber)
       nodeDAO.fetchById(node.id) should be(None)
       val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
       updated.id should not be node.id
@@ -4218,7 +4237,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       nodeDAO.create(Seq(node), node.createdBy)
       nodeDAO.fetchById(node.id) should not be None
       nodesAndJunctionsService.addOrUpdateNode(node.copy(startDate = DateTime.now().plusDays(1).withTimeAtStartOfDay(),
-        nodeType = NodeType.Bridge), node.createdBy) should be (node.nodeNumber)
+        nodeType = NodeType.Bridge), false, node.createdBy) should be (node.nodeNumber)
       nodeDAO.fetchById(node.id) should be(None)
       val updated = nodeDAO.fetchByNodeNumber(node.nodeNumber).getOrElse(fail("Node not found"))
       updated.id should not be node.id
@@ -4231,6 +4250,19 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val historyRowEndDate = sql"""SELECT END_DATE from NODE
         WHERE NODE_NUMBER = ${node.nodeNumber} and valid_to is null and end_date is not null""".as[Date].firstOption
       historyRowEndDate should not be None
+    }
+  }
+
+  test("Test addOrUpdate When detached all junctions and nodePoints Then existing node is expired and new created new to history") {
+    runWithRollback {
+      val node = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, Point(0, 0), Some("Node name"), NodeType.EndOfRoad,
+        DateTime.now().withTimeAtStartOfDay(), None, DateTime.now(), None, "user", Some(DateTime.now()))
+      nodeDAO.create(Seq(node), node.createdBy)
+      val junctions = Seq()
+      val nodePoints = Seq()
+      nodeDAO.fetchById(node.id) should not be None
+      nodesAndJunctionsService.addOrUpdate(node.copy(coordinates = Point(1, 1)), junctions, nodePoints, node.createdBy)
+      nodeDAO.fetchById(node.id) should be(None)
     }
   }
 

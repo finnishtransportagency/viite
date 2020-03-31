@@ -10,11 +10,13 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, Vector3d}
 import fi.liikennevirasto.viite.RoadType.FerryRoad
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointLocation
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, EndOfRoad, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinearLocationDAO, _}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -93,18 +95,12 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   }
 
   def toRoadwayAndLinearLocation(p: ProjectLink): (LinearLocation, Roadway) = {
-    def calibrationPoint(cp: Option[ProjectLinkCalibrationPoint]): Option[Long] = {
-      cp match {
-        case Some(x) =>
-          Some(x.addressMValue)
-        case _ => Option.empty[Long]
-      }
-    }
-
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
     (LinearLocation(-1000, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
-      (calibrationPoint(p.calibrationPoints._1), calibrationPoint(p.calibrationPoints._2)), p.geometry, p.linkGeomSource,
+      (CalibrationPointsUtils.toCalibrationPointReference(p.startCalibrationPoint),
+        CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
+      p.geometry, p.linkGeomSource,
       p.roadwayNumber, Some(startDate), p.endDate),
       Roadway(-1000, p.roadwayNumber, p.roadNumber, p.roadPartNumber, p.roadType, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
         p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
@@ -212,7 +208,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         0L, 10L, reversed = false, DateTime.parse("1901-01-01"), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
       val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(0.0, 10.0), Point(10.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(0.0, 10.0), Point(10.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
       roadwayDAO.create(Seq(roadway))
       linearLocationDAO.create(Seq(linearLocation))
@@ -342,15 +339,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val linearLocationId = Sequences.nextLinearLocationId
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), None), Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, Some(20l)), Seq(Point(0.0, 5.0), Point(10.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference.None, CalibrationPointReference(Some(20l))), Seq(Point(0.0, 5.0), Point(10.0, 5.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None),
 
         LinearLocation(linearLocationId + 2, 1, 3000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, Some(20l)), Seq(Point(0.0, 10.0), Point(10.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference.None, CalibrationPointReference(Some(20l))), Seq(Point(0.0, 10.0), Point(10.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber3, Some(startDate), None)
       )
       linearLocationDAO.create(linearLocations)
@@ -417,15 +414,15 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       val linearLocationId = Sequences.nextLinearLocationId
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), None), Seq(Point(10.0, 0.0), Point(10.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(10.0, 0.0), Point(10.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, Some(20l)), Seq(Point(10.0, 10.0), Point(0.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference.None, CalibrationPointReference(Some(20l))), Seq(Point(10.0, 10.0), Point(0.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None),
 
         LinearLocation(linearLocationId + 2, 1, 3000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, Some(20l)), Seq(Point(10.0, 0.0), Point(0.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference.None, CalibrationPointReference(Some(20l))), Seq(Point(10.0, 0.0), Point(0.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber3, Some(startDate), None)
       )
       linearLocationDAO.create(linearLocations)
@@ -526,7 +523,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None)
 
       val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(startDate), None)
 
       roadwayDAO.create(Seq(roadway))
@@ -564,7 +562,8 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None)
 
       val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(startDate), None)
 
       roadwayDAO.create(Seq(roadway))
@@ -628,11 +627,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -686,11 +687,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -739,11 +742,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -795,11 +800,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -850,11 +857,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -908,11 +917,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -988,11 +999,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1057,11 +1070,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1124,11 +1139,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1177,11 +1194,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1231,11 +1250,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1283,11 +1304,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1344,11 +1367,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1414,13 +1439,16 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
         LinearLocation(linearLocationId + 1, 2, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(2.0, 30.0), Point(7.0, 35.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(2.0, 30.0), Point(7.0, 35.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
         LinearLocation(linearLocationId + 2, 3, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(7.0, 35.0), Point(0.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(7.0, 35.0), Point(0.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1461,11 +1489,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1509,11 +1539,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1586,11 +1618,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1641,11 +1675,13 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 30.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1706,15 +1742,18 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 10.0), Point(10.0, 15.0), Point(20.0, 15.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 10.0), Point(10.0, 15.0), Point(20.0, 15.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 2, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(10.0, 10.0), Point(10.0, 15.0), Point(20.0, 15.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(10.0, 10.0), Point(10.0, 15.0), Point(20.0, 15.0), Point(20.0, 0.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None),
 
         LinearLocation(linearLocationId + 3, 3, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(20.0, 0.0), Point(10.0, 0.0), Point(10.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(20.0, 0.0), Point(10.0, 0.0), Point(10.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber3, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1770,11 +1809,11 @@ Left|      |Right
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, None), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 2, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (None, None), Seq(Point(0.0, 40.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(0.0, 40.0), Point(10.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -1812,7 +1851,8 @@ Left|      |Right
         0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None)
 
       val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(startDate), None)
 
       roadwayDAO.create(Seq(roadway))
@@ -1852,7 +1892,8 @@ Left|      |Right
         6109L, 6559L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, startDate, None)
 
       val linearLocation = LinearLocation(linearLocationId, 1, linkId, 0.0, 450.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(startDate), None)
 
       roadwayDAO.create(Seq(roadway))
@@ -1959,15 +2000,18 @@ Left|      |Right
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(2.0, 30.0), Point(0.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(2.0, 30.0), Point(0.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 1, 2, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(2.0, 30.0), Point(7.0, 35.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(2.0, 30.0), Point(7.0, 35.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(startDate), None),
 
         LinearLocation(linearLocationId + 3, 1, 2000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(7.0, 35.0), Point(0.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(7.0, 35.0), Point(0.0, 40.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(startDate), None)
       )
       roadwayDAO.create(ra)
@@ -2001,7 +2045,8 @@ Left|      |Right
         0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
       val linearLocation = LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(10.0, 40.0), Point(10.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
       roadwayDAO.create(Seq(roadway))
@@ -2045,11 +2090,14 @@ Left|      |Right
         Roadway(raId + 1, roadwayNumber2, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None))
 
-      val linearLocations = Seq(LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
-        roadwayNumber1, Some(DateTime.now()), None), LinearLocation(linearLocationId + 1, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(0.0, 10.0), Point(0.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
-        roadwayNumber2, Some(DateTime.now()), None))
+      val linearLocations = Seq(
+        LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber1, Some(DateTime.now()), None),
+
+        LinearLocation(linearLocationId + 1, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(0.0, 10.0), Point(0.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface, roadwayNumber2, Some(DateTime.now()), None))
 
       roadwayDAO.create(roadways)
       linearLocationDAO.create(linearLocations)
@@ -2106,7 +2154,8 @@ Left|      |Right
         0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
       val linearLocation = LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
       roadwayDAO.create(Seq(roadway))
@@ -2148,10 +2197,12 @@ Left|      |Right
 
       val linearLocations = Seq(
         LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber1, Some(DateTime.parse("1901-01-01")), None),
         LinearLocation(linearLocationId + 1, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-          (Some(0l), Some(10l)), Seq(Point(5.0, 40.0), Point(5.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
+          (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+          Seq(Point(5.0, 40.0), Point(5.0, 50.0)), LinkGeomSource.ComplementaryLinkInterface,
           roadwayNumber2, Some(DateTime.parse("1901-01-01")), None)
       )
 
@@ -2187,7 +2238,8 @@ Left|      |Right
         0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
       val linearLocation = LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
       roadwayDAO.create(Seq(roadway))
@@ -2250,7 +2302,8 @@ Left|      |Right
         0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
       val linearLocation = LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
       roadwayDAO.create(Seq(roadway))
@@ -2486,9 +2539,11 @@ Left|      |Right
           0L, 10L, reversed = false, DateTime.now(), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None))
 
       val linearLocations = Seq(LinearLocation(linearLocationId, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(0.0, 0.0), Point(0.0, 10.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.now()), None), LinearLocation(linearLocationId + 1, 1, 1000, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
-        (Some(0l), Some(10l)), Seq(Point(0.0, 10.0), Point(0.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
+        (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))),
+        Seq(Point(0.0, 10.0), Point(0.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber2, Some(DateTime.now()), None))
 
       roadwayDAO.create(roadways)

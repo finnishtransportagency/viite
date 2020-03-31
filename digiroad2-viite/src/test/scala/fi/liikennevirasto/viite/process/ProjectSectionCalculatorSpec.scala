@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, asset}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointLocation
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -67,18 +68,12 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     List.empty[ProjectReservedPart], Seq(), None)
 
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
-    def calibrationPoint(cp: Option[ProjectLinkCalibrationPoint]): Option[Long] = {
-      cp match {
-        case Some(x) =>
-          Some(x.addressMValue)
-        case _ => Option.empty[Long]
-      }
-    }
-
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
     (LinearLocation(-1000, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
-      (calibrationPoint(p.calibrationPoints._1), calibrationPoint(p.calibrationPoints._2)), p.geometry, p.linkGeomSource,
+      (CalibrationPointsUtils.toCalibrationPointReference(p.startCalibrationPoint),
+        CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
+      p.geometry, p.linkGeomSource,
       p.roadwayNumber, Some(startDate), p.endDate),
       Roadway(-1000, p.roadwayNumber, p.roadNumber, p.roadPartNumber, p.roadType, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
         p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
@@ -846,16 +841,16 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
 
       val linearLocation1 = LinearLocation(linearLocationId1, 1, 12345, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000L,
-        (Some(0L), None), Seq(Point(0.0, 0.0), Point(50.0, 5.0)), LinkGeomSource.NormalLinkInterface,
-        roadwayNumber1)
+        (CalibrationPointReference(Some(0L)), CalibrationPointReference.None),
+        Seq(Point(0.0, 0.0), Point(50.0, 5.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber1)
 
       val linearLocation2 = LinearLocation(linearLocationId2, 1, 12346, 0.0, 55.0, SideCode.TowardsDigitizing, 10000000000L,
-        (None, Some(105)), Seq(Point(0.0, 0.0), Point(100.0, 10.0)), LinkGeomSource.NormalLinkInterface,
-        roadwayNumber2)
+        (CalibrationPointReference.None, CalibrationPointReference(Some(105))),
+        Seq(Point(0.0, 0.0), Point(100.0, 10.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber2)
 
       val linearLocation3 = LinearLocation(linearLocationId3, 1, 12347, 0.0, 57.0, SideCode.TowardsDigitizing, 10000000000L,
-        (None, Some(107)), Seq(Point(0.0, 0.0), Point(100.0, 0.0)), LinkGeomSource.NormalLinkInterface,
-        roadwayNumber3)
+        (CalibrationPointReference.None, CalibrationPointReference(Some(107))),
+        Seq(Point(0.0, 0.0), Point(100.0, 0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber3)
 
       roadwayDAO.create(List(testRoadway1, testRoadway2, testRoadway3))
 
@@ -1527,7 +1522,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
       val linearLocationId1 = Sequences.nextLinearLocationId
       val linearLocation1 = LinearLocation(linearLocationId1, 1, linkId1, 0.0, 10.0, SideCode.TowardsDigitizing, 0L,
-        (Some(0L), Some(10L)), geom1, LinkGeomSource.NormalLinkInterface, roadway1.roadwayNumber)
+        (CalibrationPointReference(Some(0L)), CalibrationPointReference(Some(10L))),
+        geom1, LinkGeomSource.NormalLinkInterface, roadway1.roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation1))
 
       val plId = Sequences.nextViitePrimaryKeySeqValue
@@ -1690,7 +1686,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
       val linearLocationId1 = Sequences.nextLinearLocationId
       val linearLocation1 = LinearLocation(linearLocationId1, 1, linkId1, 0.0, 10.0, SideCode.TowardsDigitizing, 0L,
-        (Some(0L), Some(10L)), geom1, LinkGeomSource.NormalLinkInterface, roadway1.roadwayNumber)
+        (CalibrationPointReference(Some(0L)), CalibrationPointReference(Some(10L))),
+        geom1, LinkGeomSource.NormalLinkInterface, roadway1.roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation1))
 
       val plId = Sequences.nextViitePrimaryKeySeqValue
