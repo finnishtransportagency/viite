@@ -232,7 +232,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates roadsToHead case When creating projectlinks Then junction template and junctions points should be handled/created properly") {
+  test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case When creating projectlinks Then junction template and junctions points should be handled/created properly") {
     runWithRollback {
       /*
      v0---R---|
@@ -323,7 +323,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates roadsToHead case When creating projectlinks Then junction template and junctions points should be handled/created properly and" +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case When creating projectlinks Then junction template and junctions points should be handled/created properly and" +
     " When reverse, the junction points BeforeAfter should be reversed") {
     runWithRollback {
       /*
@@ -421,7 +421,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates roadsFromHead case When creating projectLinks Then junction template and junctions points should be handled/created properly and " +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates roadsFromHead case When creating projectLinks Then junction template and junctions points should be handled/created properly and " +
     "When reverse, the junction points BeforeAfter should be reversed") {
     runWithRollback {
       /*
@@ -508,7 +508,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates roadsToTail case When creating projectLinks Then junction template and junctions points should be handled/created properly and " +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToTail case When creating projectLinks Then junction template and junctions points should be handled/created properly and " +
     "When reverse, the junction points BeforeAfter should be reversed") {
     runWithRollback {
       /*
@@ -594,7 +594,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates roadsFromTail case When creating projectLinks Then junction template and junctions points should be handled/created properly and" +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates roadsFromTail case When creating projectLinks Then junction template and junctions points should be handled/created properly and" +
     " When reverse, the junction points BeforeAfter should be reversed") {
     runWithRollback {
       /*
@@ -677,7 +677,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating one road that intersects itself with discontinuous address values Then junction template and junctions points should be handled/created properly") {
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating one road that intersects itself with discontinuous address values Then junction template and junctions points should be handled/created properly") {
     runWithRollback {
       /*
      |--L1-->|
@@ -825,7 +825,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating one road that connects itself with the tail point of one link being discontinuous Then junction template and junctions points should be handled/created properly." +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating one road that connects itself with the tail point of one link being discontinuous Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When terminating one link that had junction point Then only the terminated junction point should be expired, not all of them, neither his Junction.") {
     runWithRollback {
       /*  |--L-->|
@@ -1037,7 +1037,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating two track Discontinuous links and one combined EndOfRoad that are not connected by geometry, only by address Then junction template and junctions points should not be created") {
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating two track Discontinuous links and one combined EndOfRoad that are not connected by geometry, only by address Then junction template and junctions points should not be created") {
     runWithRollback {
       /*
      |--L*-->|
@@ -1126,7 +1126,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating two track MinorDiscontinuous links and one combined MinorDiscontinuous and one combined EndOfRoad that are not connected by geometry, only by address Then junction template and junctions points should not be created") {
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating two track MinorDiscontinuous links and one combined MinorDiscontinuous and one combined EndOfRoad that are not connected by geometry, only by address Then junction template and junctions points should not be created") {
     runWithRollback {
       /*
      |--L*-->|
@@ -1230,7 +1230,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating two track Discontinuous links and one combined Continuous and one combined EndOfRoad that are not connected by geometry, only by address Then junction template and junctions points should not be created.") {
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating two track Discontinuous links and one combined Continuous and one combined EndOfRoad that are not connected by geometry, only by address Then junction template and junctions points should not be created.") {
     runWithRollback {
       /*
      |--L*-->|
@@ -1334,7 +1334,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating one track Discontinuous links and one opposite track Continuous and one combined EndOfRoad that are not connected by geometry with the discontinuous link, only by address, Then junction template and junctions points should be not be created.") {
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating one track Discontinuous links and one opposite track Continuous and one combined EndOfRoad that are not connected by geometry with the discontinuous link, only by address, Then junction template and junctions points should be not be created.") {
     runWithRollback {
       /*
      |--L-->|-
@@ -1450,7 +1450,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts where one of them ends in the same road and which link is EndOfRoad Then junction template and junctions points should be handled/created properly") {
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating new road parts where one of them ends in the same road and which link is EndOfRoad Then junction template and junctions points should be handled/created properly") {
     runWithRollback {
       /*
               |
@@ -1543,7 +1543,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts where one of them ends in the beginning geometry point of same road and which link is EndOfRoad Then junction template and junctions points should be handled/created properly") {
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating new road parts where one of them ends in the beginning geometry point of same road and which link is EndOfRoad Then junction template and junctions points should be handled/created properly") {
     runWithRollback {
       /*
       |
@@ -1638,7 +1638,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts where one of them ends in the ending geometry point of same road and which link is EndOfRoad Then junction template and junctions points should be handled/created properly") {
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating new road parts where one of them ends in the ending geometry point of same road and which link is EndOfRoad Then junction template and junctions points should be handled/created properly") {
     runWithRollback {
       /*
                         |
@@ -1733,7 +1733,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
 
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts that connects to other existing part which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating new road parts that connects to other existing part which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When changing the EndOfRoad link of last part to Discontinuous and creating a new one with EndOfRoad that does not connect to the same road Then the existing Junction and his points should be expired.") {
     runWithRollback {
       /*            |
@@ -1900,7 +1900,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts that connects to other existing part in the beginning point of its geometry which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating new road parts that connects to other existing part in the beginning point of its geometry which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When changing the EndOfRoad link of last part to Discontinuous and creating a new one with EndOfRoad that does not connect to the same road Then the existing Junction and his points should be expired.") {
     runWithRollback {
       /*  |
@@ -2067,7 +2067,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road parts that connects to other existing part in the ending point of its geometry which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating new road parts that connects to other existing part in the ending point of its geometry which link is EndOfRoad and ends in some link of this new roads in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When changing the EndOfRoad link of last part to Continuous and creating a new one with EndOfRoad that does not connect to the same road Then the existing Junction and his points should be expired.") {
     runWithRollback {
       /*                    |
@@ -2234,7 +2234,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating one road part that intersects itself and still all links are continuous Then junction template and junctions points should be handled/created properly." +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating one road part that intersects itself and still all links are continuous Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When expiring the 2 last links that will make the road not intersecting itself Then the existing Junction and its Junction points should be expired.") {
     runWithRollback {
       /*
@@ -2422,7 +2422,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new road that connects to other road Then junction template and junctions points should be handled/created properly." +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating new road that connects to other road Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When terminating the road that connects in the middle of the other one Then the existing Junction and his points should be expired.") {
     runWithRollback {
       /*
@@ -2578,7 +2578,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new different road numbers that connects each other Then junction template and junctions points should be handled/created properly." +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating new different road numbers that connects each other Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When expiring the one part that will make the ramp road parts not intersecting itself Then the existing Junction and its Junction points should be expired.") {
     runWithRollback {
       /*
@@ -2753,7 +2753,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
 
   // <editor-fold desc="Ramps and roundabouts">
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating new ramps road part that connects to other part in same road number Then junction template and junctions points should be handled/created properly." +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating new ramps road part that connects to other part in same road number Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When expiring the one part that will make the ramp road parts not intersecting itself Then the existing Junction and its Junction points should be expired.") {
     runWithRollback {
       /*
@@ -2932,7 +2932,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating one roundabout road part that connects to same part in same road number and the connecting link is EndOfRoad Then junction template and junctions points should be handled/created properly") {
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating one roundabout road part that connects to same part in same road number and the connecting link is EndOfRoad Then junction template and junctions points should be handled/created properly") {
     runWithRollback {
       /*
 
@@ -3019,7 +3019,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating one roundabout road part that connects to same part in same road number and the connecting link is Discontinuous Then junction template and junctions points should be handled/created properly") {
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating one roundabout road part that connects to same part in same road number and the connecting link is Discontinuous Then junction template and junctions points should be handled/created properly") {
     runWithRollback {
       /*
 
@@ -3110,7 +3110,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  test("Test nodesAndJunctionsService.handleJunctionPointTemplates When creating one roundabout road part that connects to same part in same road number and the connecting link is MinorDiscontinuity Then junction template and junctions points should be handled/created properly") {
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating one roundabout road part that connects to same part in same road number and the connecting link is MinorDiscontinuity Then junction template and junctions points should be handled/created properly") {
     runWithRollback {
       /*
 
