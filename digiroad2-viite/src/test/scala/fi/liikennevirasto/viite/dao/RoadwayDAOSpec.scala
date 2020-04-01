@@ -50,8 +50,8 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
 
   val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
-    (Some(0l), None),  Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
-    roadwayNumber1)
+    (CalibrationPointReference(Some(0l)), CalibrationPointReference.None),
+    Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber1)
 
   // fetchByRoadwayNumber
 

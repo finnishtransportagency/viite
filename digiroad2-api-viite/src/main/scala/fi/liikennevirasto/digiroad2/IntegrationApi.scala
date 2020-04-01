@@ -215,8 +215,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
             "linkGeomSource" -> l.linkGeomSource.value,
             "startMValue" -> l.startMValue,
             "endMValue" -> l.endMValue,
-            "startCalibrationPoint" -> l.startCalibrationPoint,
-            "endCalibrationPoint" -> l.endCalibrationPoint,
+            "startCalibrationPoint" -> l.startCalibrationPoint.addrM,
+            "endCalibrationPoint" -> l.endCalibrationPoint.addrM,
             "validFrom" -> formatDate(l.validFrom),
             "validTo" -> formatDate(l.validTo),
             "adjustedTimestamp" -> l.adjustedTimestamp

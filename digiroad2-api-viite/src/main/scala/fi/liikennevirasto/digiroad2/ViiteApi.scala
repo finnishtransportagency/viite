@@ -12,7 +12,6 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.ProjectState.SendingToTR
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.DigiroadSerializers
@@ -24,7 +23,6 @@ import org.scalatra.swagger.{Swagger, _}
 import org.scalatra.{NotFound, _}
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.parallel.immutable.ParSeq
 import scala.util.parsing.json.JSON._
 import scala.util.{Left, Right}
 
@@ -976,10 +974,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         nodesAndJunctionsService.addOrUpdate(node, junctions, nodePoints, username)
         Map("success" -> true)
       } catch {
-        case ex: Exception => {
+        case ex: Exception =>
           logger.error("Request POST /nodes failed.", ex.getMessage)
           Map("success" -> false, "errorMessage" -> ex.getMessage)
-        }
       }
     }
   }
@@ -996,10 +993,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         nodesAndJunctionsService.addOrUpdate(node, junctions, nodePoints, username)
         Map("success" -> true)
       } catch {
-        case ex: Exception => {
+        case ex: Exception =>
           logger.error("Request PUT /nodes/$id failed.", ex)
           Map("success" -> false, "errorMessage" -> ex.getMessage)
-        }
       }
     }
   }
