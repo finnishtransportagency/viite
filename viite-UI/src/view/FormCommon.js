@@ -125,12 +125,10 @@
         disabled + (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
     };
 
-    var nodeInputNumber = function (id, maxLength, value, style) {
+    var nodeInputNumber = function (id, maxLength) {
       return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)' +
           '" class="form-control node-input" id = "' + id + '"' +
-          (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '" ') +
-          (_.isUndefined(value) ? '' : ' value="' + value + '" ') +
-          (_.isUndefined(style) ? '' : ' style="' + style + '" ')+ '/>';
+          (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '" ') + '/>';
     };
 
     var addDiscontinuityDropdown = function(link){
