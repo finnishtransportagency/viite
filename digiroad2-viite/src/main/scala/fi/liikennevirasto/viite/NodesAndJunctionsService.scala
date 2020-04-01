@@ -325,7 +325,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     def createJunctionPointIfNeeded(r: BaseRoadAddress, pos: BeforeAfter, addr: Long, roadsTo: Seq[BaseRoadAddress], roadsFrom: Seq[BaseRoadAddress],
                                     newJunctionId: Option[Long] = Option.empty[Long]): Unit = {
       val roadwayPointId = getRoadwayPointId(r.roadwayNumber, addr, username)
-      val junctionPoint = junctionPointDAO.fetchByRoadwayPoint(r.roadwayNumber, r.endAddrMValue, pos)
+      val junctionPoint = junctionPointDAO.fetchByRoadwayPoint(r.roadwayNumber, addr, pos)
       if (junctionPoint.isEmpty) {
         val junctionId = newJunctionId match {
           case Some(junctionId) => if (junctionId == NewIdValue) {
