@@ -198,16 +198,16 @@
       return !(nodesEquality && nodePointsEquality && junctionsEquality && junctionPointsEquality);
     };
 
-    var isObsoleteNode = function(node) {
-     return _.isEmpty(node.junctions) && _.isEmpty(_.filter(node.nodePoints, function(np) {
-       return np.type !== LinkValues.NodePointType.CalculatedNodePoint.value;
-     }));
+    var isObsoleteNode = function() {
+      return _.isEmpty(current.node.junctions) && _.isEmpty(_.filter(current.node.nodePoints, function(np) {
+        return np.type !== LinkValues.NodePointType.CalculatedNodePoint.value;
+      }));
     };
 
     var isEqualWithout = function (original, current, toIgnore) {
       return _.isEqual(
-          _.omit(original, toIgnore),
-          _.omit(current, toIgnore)
+        _.omit(original, toIgnore),
+        _.omit(current, toIgnore)
       );
     };
 
