@@ -67,6 +67,7 @@
       _.each(junctions, function (junction) {
         current.node.junctions.push(junction);
       });
+      eventbus.trigger('junction:validate');
       eventbus.trigger('junctionTemplates:selected', { junctions: junctions });
     };
 
@@ -85,12 +86,12 @@
 
     var setNodeName = function (name) {
       current.node.name = name;
-      eventbus.trigger('change:node', current.node);
+      updateNodesAndJunctionsMarker();
     };
 
     var setNodeType = function (type) {
       current.node.type = type;
-      eventbus.trigger('change:node', current.node);
+      updateNodesAndJunctionsMarker();
     };
 
     var setStartDate = function (startDate) {
@@ -105,6 +106,18 @@
 
     var getInitialStartDate = function () {
       return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).startDate;
+    };
+
+    var setJunctionNumber = function (id, junctionNumber) {
+      var junction = _.find(current.node.junctions, function (junction) {
+        return junction.id === id;
+      });
+
+      if (!_.isUndefined(junction)) {
+        junction.junctionNumber = junctionNumber;
+        eventbus.trigger('junction:validate');
+        updateNodesAndJunctionsMarker();
+      }
     };
 
     var detachJunctionAndNodePoints = function (junction, nodePoints) {
@@ -135,6 +148,19 @@
           eventbus.trigger('nodePoint:attach', nodePoint);
         }
       });
+    };
+
+    var verifyJunctionNumbers = function () {
+      var errorMessage = '';
+      _.each(_.groupBy(current.node.junctions, 'junctionNumber'), function (junctions) {
+        if (junctions.length !== 1) { // junction number is already in use
+          errorMessage = 'Liittymänumero on jo käytössä';
+        } else if (_.isNaN(_.first(junctions).junctionNumber) || !_.isEmpty(_.find(junctions, function (j) { return j.junctionNumber <= 0; }))) { // junction number is compulsory information
+          errorMessage = 'Liittymänumero on pakollinen tieto';
+        }
+        eventbus.trigger('junction:setCustomValidity', junctions, errorMessage);
+      });
+      return _.isEmpty(errorMessage);
     };
 
     var isDirty = function () {
@@ -213,6 +239,10 @@
       eventbus.trigger('node:save', current.node);
     };
 
+    var updateNodesAndJunctionsMarker = function (junction) {
+      eventbus.trigger('change:node', current.node, junction);
+    };
+
     eventbus.on('selectedNodesAndJunctions:openTemplates', function (templates) {
       openTemplates(templates);
     });
@@ -235,14 +265,17 @@
       typeHasChanged: typeHasChanged,
       getInitialStartDate: getInitialStartDate,
       setStartDate: setStartDate,
+      setJunctionNumber: setJunctionNumber,
       detachJunctionAndNodePoints: detachJunctionAndNodePoints,
       attachJunctionAndNodePoints: attachJunctionAndNodePoints,
+      verifyJunctionNumbers: verifyJunctionNumbers,
       isDirty: isDirty,
       isObsoleteNode: isObsoleteNode,
       closeNode: closeNode,
       closeTemplates: closeTemplates,
       closeForm: closeForm,
-      saveNode: saveNode
+      saveNode: saveNode,
+      updateNodesAndJunctionsMarker: updateNodesAndJunctionsMarker
     };
   };
 })(this);
