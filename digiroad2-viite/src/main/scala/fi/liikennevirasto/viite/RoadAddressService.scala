@@ -16,6 +16,7 @@ import fi.liikennevirasto.viite.dao.{RoadwayPointDAO, _}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.process._
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -682,41 +683,29 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     // Check other calibration points
     startCalibrationPointsToCheck.foreach {
       cal =>
-        val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, CalibrationPointLocation.StartOfLink.value)
         val roadwayPointId =
-          roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.get) match {
+          roadwayPointDAO.fetch(cal.roadwayNumber, cal.startCalibrationPoint.addrM.get) match {
             case Some(roadwayPoint) =>
               roadwayPoint.id
             case _ =>
-              logger.info(s"Creating roadway point for start calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.startCalibrationPoint.get})")
-              roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.get, username)
+              logger.info(s"Creating roadway point for start calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.startCalibrationPoint.addrM.get})")
+              roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.addrM.get, username)
           }
-        if (calibrationPoint.isEmpty) {
-          logger.info(s"Creating mandatory CalibrationPoint with roadwaypoint id: $roadwayPointId, link: ${cal.linkId}, startOrEnd: ${CalibrationPointLocation.StartOfLink.value})")
-          CalibrationPointDAO.create(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink, calType = CalibrationPointType.Mandatory, createdBy = username)
-        } else {
-          logger.info(s"Updating mandatory CalibrationPoint with roadwaypoint id: $roadwayPointId, link: ${cal.linkId}, startOrEnd: ${CalibrationPointLocation.StartOfLink.value})")
-          CalibrationPointDAO.updateRoadwayPoint(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink)
-        }
+        // TODO Check which type this calibration point should be (0, 1, 2)
+        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, username)
     }
     endCalibrationPointsToCheck.foreach {
       cal =>
-        val calibrationPoint = CalibrationPointDAO.fetch(cal.linkId, CalibrationPointLocation.EndOfLink.value)
         val roadwayPointId =
-          roadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.get) match {
+          roadwayPointDAO.fetch(cal.roadwayNumber, cal.endCalibrationPoint.addrM.get) match {
             case Some(roadwayPoint) =>
               roadwayPoint.id
             case _ =>
-              logger.info(s"Creating roadway point for end calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.endCalibrationPoint.get})")
-              roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.get, username)
+              logger.info(s"Creating roadway point for end calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.endCalibrationPoint.addrM.get})")
+              roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.addrM.get, username)
           }
-        if (calibrationPoint.isEmpty) {
-          logger.info(s"Creating mandatory CalibrationPoint with roadwaypoint id: $roadwayPointId, link: ${cal.linkId}, startOrEnd: ${CalibrationPointLocation.EndOfLink.value})")
-          CalibrationPointDAO.create(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink, calType = CalibrationPointType.Mandatory, createdBy = username)
-        } else {
-          logger.info(s"Updating mandatory CalibrationPoint with roadwaypoint id: $roadwayPointId, link: ${cal.linkId}, startOrEnd: ${CalibrationPointLocation.EndOfLink.value})")
-          CalibrationPointDAO.updateRoadwayPoint(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink)
-        }
+        // TODO Check which type this calibration point should be (0, 1, 2)
+        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP, username)
     }
   }
 

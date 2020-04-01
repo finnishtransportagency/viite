@@ -89,12 +89,19 @@ object DataFixture {
     dataImporter.importNodesAndJunctions(Conversion.database())
   }
 
+  def updateCalibrationPointTypes(): Unit = {
+    println("\nUpdating Calibration point types started at time: ")
+    println(DateTime.now())
+    dataImporter.updateCalibrationPointTypesQuery()
+  }
+
   def initialImport(importTableName: Option[String]): Unit = {
     println("\nImporting road addresses, updating geometry and importing nodes and junctions started at time: ")
     println(DateTime.now())
     importRoadAddresses(importTableName)
     updateLinearLocationGeometry()
     importNodesAndJunctions()
+    updateCalibrationPointTypes()
   }
 
   def updateLinearLocationGeometry(): Unit = {
@@ -339,11 +346,13 @@ object DataFixture {
           initialImport(Some(args(1)))
         else
           throw new Exception("****** Import failed! conversiontable name required as second input ******")
+      case Some("update_calibration_point_types") =>
+        updateCalibrationPointTypes()
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | update_missing " +
         "| import_complementary_road_address " +
         "| update_road_addresses_geometry | import_road_address_change_test_data " +
         "| apply_change_information_to_road_address_links | import_road_names | check_road_network" +
-        "| test | flyway_init | import_nodes_and_junctions | initial_import")
+        "| test | flyway_init | import_nodes_and_junctions | initial_import | update_calibration_point_types")
     }
   }
 

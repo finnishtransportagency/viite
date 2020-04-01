@@ -473,9 +473,13 @@ form.node .control-label-small {
   text-align:center
 }
 
-form.node .form-control.node-input {
-  width: 55px !important;
+input.junction-number-input {
+  text-align: center;
+  width: 20px !important;
   margin-right: 11px;
+  &:invalid, &:invalid:focus {
+    border-color: @error;
+  }
 }
 
 // Help text

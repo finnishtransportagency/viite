@@ -46,7 +46,7 @@ object LinkRoadAddressCalculator {
     if (addresses.isEmpty)
       return processed
     val calibrationPointsS = addresses.flatMap(ra =>
-      ra.calibrationPoints._1).sortBy(_.addressMValue)
+      ra.startCalibrationPoint).sortBy(_.addressMValue)
     val calibrationPointsE = addresses.flatMap(ra =>
       ra.calibrationPoints._2).sortBy(_.addressMValue)
     if (calibrationPointsS.isEmpty || calibrationPointsE.isEmpty)
