@@ -410,8 +410,8 @@
         !selectedNodesAndJunctions.isDirty() || saveBtnDisabled;
     };
 
-    var closeNode = function () {
-      selectedNodesAndJunctions.closeNode();
+    var closeNode = function (cancel) {
+      selectedNodesAndJunctions.closeNode(cancel);
       eventbus.off('change:nodeName, change:nodeTypeDropdown, change:nodeStartDate');
     };
 
@@ -573,21 +573,18 @@
       });
 
       rootElement.on('click', '.btn-edit-node-save', function () {
-        var node = selectedNodesAndJunctions.getCurrentNode();
-        eventbus.trigger('node:repositionNode', node, node.coordinates);
-        if (selectedNodesAndJunctions.isObsoleteNode(node)) {
+        if (selectedNodesAndJunctions.isObsoleteNode()) {
           new GenericConfirmPopup('Tämä toiminto päättää solmun, tallennetaanko muutokset?', {
             successCallback: function () {
               selectedNodesAndJunctions.saveNode();
-            },
+            }
           });
         } else {
           selectedNodesAndJunctions.saveNode();
         }
       });
-
       rootElement.on('click', '.btn-edit-node-cancel', function () {
-        closeNode();
+        closeNode(true);
       });
 
       rootElement.on('click', '#attachToMapNode', function () {
@@ -642,7 +639,7 @@
 
           $('.btn-edit-node-save').prop('disabled', formIsInvalid());
 
-          eventbus.on('node:setCoordinates', function (coordinates) {
+          eventbus.on('node:displayCoordinates', function (coordinates) {
             $("#node-coordinates").text(coordinates.x + ', ' + coordinates.y);
           });
 
@@ -691,14 +688,15 @@
       });
 
       eventbus.on('nodeLayer:closeForm', function (current) {
+        // templates should be handled here, by the time it's possible to change anything in templates form.
         if (!_.isUndefined(current) && !_.isUndefined(current.node)) {
-          closeNode();
+          closeNode(true);
         }
       });
 
       eventbus.on('node:saveSuccess', function () {
         applicationModel.removeSpinner();
-        closeNode();
+        closeNode(false);
       });
 
       eventbus.on('node:saveFailed', function (errorMessage) {

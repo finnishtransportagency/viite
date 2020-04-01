@@ -198,16 +198,16 @@
       return !(nodesEquality && nodePointsEquality && junctionsEquality && junctionPointsEquality);
     };
 
-    var isObsoleteNode = function(node) {
-     return _.isEmpty(node.junctions) && _.isEmpty(_.filter(node.nodePoints, function(np) {
-       return np.type !== LinkValues.NodePointType.CalculatedNodePoint.value;
-     }));
+    var isObsoleteNode = function() {
+      return _.isEmpty(current.node.junctions) && _.isEmpty(_.filter(current.node.nodePoints, function(np) {
+        return np.type !== LinkValues.NodePointType.CalculatedNodePoint.value;
+      }));
     };
 
     var isEqualWithout = function (original, current, toIgnore) {
       return _.isEqual(
-          _.omit(original, toIgnore),
-          _.omit(current, toIgnore)
+        _.omit(original, toIgnore),
+        _.omit(current, toIgnore)
       );
     };
 
@@ -215,8 +215,8 @@
       current = {};
     };
 
-    var close = function (options, params) {
-      eventbus.trigger(options, params);
+    var close = function (options, params, cancel) {
+      eventbus.trigger(options, params, cancel);
       eventbus.trigger('nodesAndJunctions:open');
     };
 
@@ -224,8 +224,8 @@
       eventbus.trigger('nodeLayer:closeForm', current); // all nodes and junctions forms should listen to this trigger
     };
 
-    var closeNode = function () {
-      close('node:unselected', current.node);
+    var closeNode = function (cancel) {
+      close('node:unselected', current.node, cancel);
       clean();
       eventbus.trigger('nodeLayer:refreshView');
     };
