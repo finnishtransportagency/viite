@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
@@ -8,7 +7,6 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
 import scala.io.Source
 
@@ -47,19 +45,10 @@ class MunicipalityCodeImporter {
 
   private[this] def initDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
-    val cfg = new BoneCPConfig(localProperties)
+    val cfg = new BoneCPConfig(ViiteProperties.bonecpProperties)
     new BoneCPDataSource(cfg)
   }
 
-  lazy val localProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load local.properties for env: " + System.getProperty("env"), e)
-    }
-    props
-  }
 }
 
 object MunicipalityCodeImporter extends App {

@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite
 
 import java.sql.BatchUpdateException
-import java.util.Properties
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
@@ -39,11 +38,6 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
   val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]

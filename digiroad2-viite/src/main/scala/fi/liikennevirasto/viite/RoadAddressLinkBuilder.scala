@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite
 
-import java.util.Properties
-
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
@@ -9,22 +7,17 @@ import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 
 class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, projectLinkDAO: ProjectLinkDAO) extends AddressLinkBuilder {
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
 
-  val vvhClient = new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+  val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
   val eventBus = new DummyEventBus
-  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
-  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, new RoadwayPointDAO, new NodePointDAO, new JunctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean){
+  val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, ViiteProperties.vvhRoadlinkFrozen)
+  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, new RoadwayPointDAO, new NodePointDAO, new JunctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, ViiteProperties.vvhRoadlinkFrozen) {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }

@@ -1,34 +1,28 @@
 package fi.liikennevirasto.viite
 
-import java.util.Properties
-
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost}
-import org.apache.http.impl.client.{HttpClientBuilder}
+import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.json4s.{DefaultFormats, StreamInput}
 import org.json4s.jackson.JsonMethods.parse
 import org.slf4j.LoggerFactory
 import java.net.URL
 
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
+
 import scala.util.control.NonFatal
 
 
 class ViiteVkmClient {
 
-  lazy val digiroadProperties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
   val logger = LoggerFactory.getLogger(getClass)
 
   private def getRestEndPoint: String = {
-    val loadedKeyString =
-      digiroadProperties.getProperty("digiroad2.VKMUrl")
+    val loadedKeyString = ViiteProperties.vkmUrl
     if (loadedKeyString == null)
-      throw new IllegalArgumentException("Missing digiroad2.VKMUrl")
+      throw new IllegalArgumentException("Missing property: VKM URL")
     loadedKeyString
   }
 
