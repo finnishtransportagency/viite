@@ -374,6 +374,7 @@
     });
 
     me.eventListener.listenTo(eventbus, 'tool:changed', function (tool) {
+      toggleSelectInteractions(!applicationModel.isSelectedTool(LinkValues.Tool.Add.value));
       switch (tool) {
         case LinkValues.Tool.Unknown.value:
           me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
@@ -387,7 +388,6 @@
           setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
           break;
         case LinkValues.Tool.Add.value:
-          toggleSelectInteractions(false);
           me.eventListener.listenToOnce(eventbus, 'map:clicked', createNewNodeMarker);
           setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
           break;
@@ -524,7 +524,7 @@
         toggleJunctionToTemplate(junction, true);
       }
     });
-    
+
     me.eventListener.listenTo(eventbus, 'junction:attach', function (junction) {
       if (!_.isUndefined(junction)) {
         toggleJunctionToTemplate(junction);
@@ -549,7 +549,6 @@
     });
 
     me.eventListener.listenTo(eventbus, 'nodeLayer:refreshView', function () {
-      toggleSelectInteractions(!applicationModel.isSelectedTool(LinkValues.Tool.Add.value));
       applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
     });
 
@@ -586,7 +585,7 @@
           }), rl.linkId);
         });
         me.clearLayers(layers);
-        
+
         if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
           var directionRoadMarker = _.filter(roadLinks, function (roadLink) {
