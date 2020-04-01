@@ -127,7 +127,7 @@
         '     <p class="node-info">' + NODE_POINTS_TITLE + '</p>' +
         '     <div id="node-points-info-content">' +
         '     </div>' +
-        '     <p class="node-info">' + JUNCTIONS_TITLE + '<i id="editNodeJunctions" class="btn-pencil-edit fas fa-pencil-alt"> </i> </p>' +
+        '     <p class="node-info">' + JUNCTIONS_TITLE + '</p>' +
         '     <div id="junctions-info-content">' +
         '     </div>' +
         '   </div>' +
@@ -140,63 +140,51 @@
     };
 
     var Junctions = function () {
-      var headers = function(asResume) {
-        var checkbox = '';
-        if (!asResume) {
-          checkbox += '<th class="node-junctions-table-header">' +
-            ' <table class="node-junctions-table-dimension">' +
-            '   <tr><th class="node-junctions-table-header">Irrota</th></tr>' +
-            '   <tr><th class="node-junctions-table-header">liittymä</th></tr>' +
-            '   <tr><th class="node-junctions-table-header">solmusta</th></tr>' +
-            ' </table>' +
-            '</th>';
-        }
+      var headers = function(options) {
         return '<tr class="node-junctions-table-header-border-bottom">' +
-          checkbox +
-          '<th class="node-junctions-table-header">NRO</th>' +
-          '<th class="node-junctions-table-header">TIE</th>' +
-          '<th class="node-junctions-table-header">AJR</th>' +
-          '<th class="node-junctions-table-header">OSA</th>' +
-          '<th class="node-junctions-table-header">ET</th>' +
-          '<th class="node-junctions-table-header">EJ</th>' +
+          ((options && options.checkbox) ? '<th class="node-junctions-table-header">' +
+          '   <table class="node-junctions-table-dimension">' +
+          '     <tr><th class="node-junctions-table-header">Irrota</th></tr>' +
+          '     <tr><th class="node-junctions-table-header">liittymä</th></tr>' +
+          '     <tr><th class="node-junctions-table-header">solmusta</th></tr>' +
+          '   </table>' +
+          ' </th>' : '') +
+          ((options && options.junctionInputNumber) ? '<th class="node-junctions-table-header">NRO</th>' : '') +
+          ' <th class="node-junctions-table-header">TIE</th>' +
+          ' <th class="node-junctions-table-header">AJR</th>' +
+          ' <th class="node-junctions-table-header">OSA</th>' +
+          ' <th class="node-junctions-table-header">ET</th>' +
+          ' <th class="node-junctions-table-header">EJ</th>' +
           '</tr>';
       };
 
       var detachJunctionBox = function(junction) {
         return '<td><input type="checkbox" name="detach-junction-' + junction.id + '" value="' + junction.id + '" id="detach-junction-' + junction.id + '"' +
-          'data-junction-number=" ' + junction.junctionNumber + ' "' +
-          '></td>';
+          ' data-junction-number=" ' + junction.junctionNumber + ' "></td>';
       };
 
-      var junctionIcon = function (junction) {
-        var text = '';
-        if (junction.junctionNumber) { text = ' <param name="number"  value="' + junction.junctionNumber + '"/></object>'; }
-        if (!_.has(junction, 'nodeNumber') || !junction.nodeNumber) {
-          return '<object type="image/svg+xml" id="junction-number-icon-' + junction.id + '" data="images/junction-template.svg">' + text;
-        } else {
-          return '<object type="image/svg+xml" id="junction-number-icon-' + junction.id + '" data="images/junction.svg">' + text;
-        }
+      var junctionInputNumber = function (junction) {
+        return '<td><input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)' +
+          '" class="form-control junction-number-input" id = "junction-number-textbox-' + junction.id + '" junctionId="' + junction.id + '" maxlength="2" value="' + (junction.junctionNumber || '') + '"/></td>';
       };
 
       var toMessage = function (junctionsInfo) {
-        return toHtmlTable({
-          currentJunctions: junctionsInfo,
-          options: {asResume: true}
-        });
+        return toHtmlTable({ currentJunctions: junctionsInfo });
+      };
+
+      var toHtmlTemplateTable = function (junctionsInfo) {
+        return toHtmlTable({ junctionTemplates: junctionsInfo });
       };
 
       var toHtmlTable = function(data) {
-        var asResume = _.has(data.options, 'asResume') && data.options.asResume;
-        var htmlTable = "";
-        htmlTable += '<table id="junctions-table-info" class="node-junctions-table-dimension">';
-        htmlTable += headers(asResume);
-        htmlTable += toHtmlRows(data.junctionTemplates, asResume, 'node-junctions-table template');
-        htmlTable += toHtmlRows(data.currentJunctions, asResume, 'node-junctions-table');
-        htmlTable += '</table>';
-        return htmlTable;
+        return '<table id="junctions-table-info" class="node-junctions-table-dimension">' +
+            headers(data.options) +
+            toHtmlRows(data.junctionTemplates, data.options, 'node-junctions-table template') +
+            toHtmlRows(data.currentJunctions, data.options, 'node-junctions-table') +
+          '</table>';
       };
 
-      var toHtmlRows = function (junctionsInfo, asResume, tableRowClass) {
+      var toHtmlRows = function (junctionsInfo, options, tableRowClass) {
         var junctionInfoHtml = function(junctionPointsInfo) {
           var roads = _.map(_.map(junctionPointsInfo, 'roadNumber'), function (roadNumber) {
             return '<tr><td class="' + tableRowClass + '">' + roadNumber + '</td></tr>';
@@ -242,11 +230,11 @@
 
         var htmlTable = '';
         _.each(junctionsInfo, function (junction) {
-          htmlTable += '<tr class="node-junctions-table-border-bottom">';
-          if (!asResume) htmlTable += detachJunctionBox(junction);
-          htmlTable += '<td>' + junctionIcon(junction) + '</td>';
-          htmlTable += junctionInfoHtml(getJunctionPointsInfo(junction));
-          htmlTable += '</tr>';
+          htmlTable += '<tr class="node-junctions-table-border-bottom">' +
+              ((options && options.checkbox) ? detachJunctionBox(junction) : '') +
+              ((options && options.junctionInputNumber) ? junctionInputNumber(junction) : '') +
+              junctionInfoHtml(getJunctionPointsInfo(junction)) +
+            '</tr>';
         });
         return htmlTable;
       };
@@ -284,31 +272,25 @@
 
       return {
         toMessage: toMessage,
-        junctionIcon: junctionIcon,
+        toHtmlTemplateTable: toHtmlTemplateTable,
         toHtmlTable: toHtmlTable
       };
     };
 
     var NodePoints = function () {
       var toMessage = function (nodePointsInfo) {
-        return toHtmlTable({
-          currentNodePoints: nodePointsInfo,
-          options: { asResume: true }
-        });
+        return toHtmlTable({ currentNodePoints: nodePointsInfo });
       };
 
       var toHtmlTable = function(data) {
-        var asResume = _.has(data.options, 'asResume') && data.options.asResume;
-        var htmlTable = "";
-        htmlTable += '<table id="nodePoints-table-info" class="node-points-table-dimension">';
-        htmlTable += headers(asResume);
-        htmlTable += toHtmlRows(data.nodePointTemplates, asResume, 'node-points-table template');
-        htmlTable += toHtmlRows(data.currentNodePoints, asResume, 'node-points-table');
-        htmlTable += '</table>';
-        return htmlTable;
+        return '<table id="nodePoints-table-info" class="node-points-table-dimension">' +
+            headers(data.options) +
+            toHtmlRows(data.nodePointTemplates, data.options, 'node-points-table template') +
+            toHtmlRows(data.currentNodePoints, data.options, 'node-points-table') +
+          '</table>';
       };
 
-      var toHtmlRows = function (nodePointsInfo, asResume, tableRowClass) {
+      var toHtmlRows = function (nodePointsInfo, options, tableRowClass) {
         var nodePointInfoHtml = function(rowInfo) {
           return '<td class="' + tableRowClass + '">' + rowInfo.roadNumber + '</td>' +
             '<td class="' + tableRowClass + '">' + rowInfo.roadPartNumber + '</td>' +
@@ -318,11 +300,11 @@
 
         var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
         var htmlTable = '';
-        _.each(_.sortBy(rowsInfo, ['roadNumber', 'roadPartNumber', 'addr']), function(row){
-          htmlTable += '<tr class="node-junctions-table-border-bottom">';
-          if (!asResume) htmlTable += detachNodePointBox(row);
-          htmlTable += nodePointInfoHtml(row);
-          htmlTable += '</tr>';
+        _.each(_.sortBy(rowsInfo, ['roadNumber', 'roadPartNumber', 'addr']), function(row) {
+          htmlTable += '<tr class="node-junctions-table-border-bottom">' +
+              ((options && options.checkbox) ?  detachNodePointBox(row) : '') +
+              nodePointInfoHtml(row) +
+            '</tr>';
         });
         return htmlTable;
       };
@@ -371,22 +353,18 @@
         } else return [];
       };
 
-      var headers = function(asResume) {
-        var checkbox = '';
-        if (!asResume) {
-          checkbox += '<th class="node-points-table-header">' +
-            ' <table class="node-points-table-dimension">' +
-            '   <tr><th class="node-points-table-header">Irrota</th></tr>' +
-            '   <tr><th class="node-points-table-header">solmukohta</th></tr>' +
-            ' </table>' +
-            '</th>';
-        }
+      var headers = function(options) {
         return '<tr class="node-junctions-table-header-border-bottom">' +
-          checkbox +
-          '<th class="node-points-table-header">TIE</th>' +
-          '<th class="node-points-table-header">OSA</th>' +
-          '<th class="node-points-table-header">ET</th>' +
-          '<th class="node-points-table-header">EJ</th>' +
+          ((options && options.checkbox) ? '<th class="node-points-table-header">' +
+          '   <table class="node-points-table-dimension">' +
+          '     <tr><th class="node-points-table-header">Irrota</th></tr>' +
+          '     <tr><th class="node-points-table-header">solmukohta</th></tr>' +
+          '   </table>' +
+          ' </th>' : '') +
+          ' <th class="node-points-table-header">TIE</th>' +
+          ' <th class="node-points-table-header">OSA</th>' +
+          ' <th class="node-points-table-header">ET</th>' +
+          ' <th class="node-points-table-header">EJ</th>' +
           '</tr>';
       };
 
@@ -401,6 +379,7 @@
 
     var addDatePicker = function (fromElement, minDate) {
       picker = dateutil.addSingleDatePickerWithMinDate(fromElement, minDate);
+      fromElement.on('input', function () { $(this).change(); });
       fromElement.change(function () {
         selectedNodesAndJunctions.setStartDate(this.value);
       });
@@ -416,8 +395,8 @@
     };
 
     var disableAutoComplete = function () {
-      $('#nodeName').attr('autocomplete', 'false');
-      $('#nodeStartDate').attr('autocomplete', 'false');
+      $('[id=nodeName]').attr('autocomplete', 'false');
+      $('[id=nodeStartDate]').attr('autocomplete', 'false');
     };
 
     var formIsInvalid = function () {
@@ -427,18 +406,13 @@
       return $('#nodeName').val() === "" ||
         $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||
+        !selectedNodesAndJunctions.verifyJunctionNumbers() ||
         !selectedNodesAndJunctions.isDirty() || saveBtnDisabled;
     };
 
     var closeNode = function (cancel) {
       selectedNodesAndJunctions.closeNode(cancel);
       eventbus.off('change:nodeName, change:nodeTypeDropdown, change:nodeStartDate');
-    };
-
-    var toggleEditNodeJunctions = function (junctions, replace) {
-      _.forEach(junctions, function (junction) {
-        replace(junction);
-      });
     };
 
     var bindEvents = function () {
@@ -511,9 +485,19 @@
         }
       };
 
+      var toggleJunctionInputNumber = function (junction, disabled) {
+        var junctionInputNumber = $('[id="junction-number-textbox-' + junction.id + '"]');
+        junction.junctionNumber = disabled ? '' : junction.junctionNumber; // clears junction number upon detach
+        junctionInputNumber.prop('disabled', disabled);
+        junctionInputNumber.val(junction.junctionNumber);
+        selectedNodesAndJunctions.verifyJunctionNumbers();
+        selectedNodesAndJunctions.updateNodesAndJunctionsMarker([junction]);
+      };
+
       var markJunctionAndNodePoints = function (junction, nodePoints, checked) {
         if (!_.isUndefined(junction)) {
           $('[id^="detach-junction-' + junction.id + '"]').prop('checked', checked);
+          toggleJunctionInputNumber(junction, checked);
         }
         _.each(nodePoints, function (nodePoint) {
           $('[id^="detach-node-point-' + nodePoint.id + '"]').prop('checked', checked);
@@ -588,27 +572,18 @@
         }
       });
 
-      rootElement.on('click', '#editNodeJunctions', function () {
-        var junctions = selectedNodesAndJunctions.getCurrentNode().junctions;
-        var editMode = _.isEmpty($('#junction-number-textbox-' + _.first(junctions).id));
-        if (editMode) {
-          toggleEditNodeJunctions(junctions, function (junction) {
-            $('#junction-number-icon-' + junction.id).replaceWith(formCommon.nodeInputNumber('junction-number-textbox-' + junction.id, 2, junction.junctionNumber || '', 'text-align: center; width: 20px;'));
+      rootElement.on('click', '.btn-edit-node-save', function () {
+        var node = selectedNodesAndJunctions.getCurrentNode();
+        if (selectedNodesAndJunctions.isObsoleteNode(node)) {
+          new GenericConfirmPopup('Tämä toiminto päättää solmun, tallennetaanko muutokset?', {
+            successCallback: function () {
+              selectedNodesAndJunctions.saveNode();
+            }
           });
         } else {
-          toggleEditNodeJunctions(junctions, function (junction) {
-            var element = $('#junction-number-textbox-' + junction.id);
-            junction.junctionNumber = element.val() && parseInt(element.val());
-            element.replaceWith(junctionsTable.junctionIcon(junction));
-          });
+          selectedNodesAndJunctions.saveNode();
         }
-        $('.btn-edit-node-save').prop('disabled', !editMode || formIsInvalid());
       });
-
-      rootElement.on('click', '.btn-edit-node-save', function () {
-        selectedNodesAndJunctions.saveNode();
-      });
-
       rootElement.on('click', '.btn-edit-node-cancel', function () {
         closeNode(true);
       });
@@ -628,18 +603,11 @@
       eventbus.on('templates:selected', function (templates) {
         rootElement.empty();
         if (!_.isEmpty(templates.nodePoints) || !_.isEmpty(templates.junctions)) {
-          var options = { asResume: true };
           rootElement.html(templatesForm('Aihioiden tiedot:'));
           var nodePointsElement = $('#node-points-info-content');
-          nodePointsElement.html(nodePointsTable.toHtmlTable({
-            nodePointTemplates: templates.nodePoints,
-            options: options
-          }));
+          nodePointsElement.html(nodePointsTable.toHtmlTable({ nodePointTemplates: templates.nodePoints }));
           var junctionsElement = $('#junctions-info-content');
-          junctionsElement.html(junctionsTable.toHtmlTable({
-            junctionTemplates: templates.junctions,
-            options: options
-          }));
+          junctionsElement.html(junctionsTable.toHtmlTemplateTable(templates.junctions));
         }
         applicationModel.removeSpinner();
       });
@@ -647,7 +615,6 @@
       eventbus.on('node:selected', function (currentNode, templates) {
         rootElement.empty();
         if (!_.isEmpty(currentNode)) {
-          var options = { asResume: !_.isUndefined(templates) && (templates.nodePoints.length > 0 || templates.junctions.length > 0) };
           var nodePointTemplates = !_.isUndefined(templates) && _.has(templates, 'nodePoints') && templates.nodePoints;
           var junctionTemplates = !_.isUndefined(templates) && _.has(templates, 'junctions') && templates.junctions;
           rootElement.html(nodeForm('Solmun tiedot:', currentNode));
@@ -657,20 +624,19 @@
           //  setting nodePoints on the form
           var nodePointsElement = $('#node-points-info-content');
           nodePointsElement.html(nodePointsTable.toHtmlTable({
-            currentNodePoints: currentNode.nodePoints,
             nodePointTemplates: nodePointTemplates,
-            options: options
+            currentNodePoints:  currentNode.nodePoints,
+            options:            { checkbox: _.isUndefined(templates), junctionInputNumber: true }
           }));
           selectedNodesAndJunctions.addNodePointTemplates(nodePointTemplates);
 
           //  setting junctions on the form
           var junctionsElement = $('#junctions-info-content');
           junctionsElement.html(junctionsTable.toHtmlTable({
-              currentJunctions: _.sortBy(currentNode.junctions, 'junctionNumber'),
-              junctionTemplates: junctionTemplates,
-              options: options
-            }));
-          selectedNodesAndJunctions.addJunctionTemplates(junctionTemplates);
+            junctionTemplates:  junctionTemplates,
+            currentJunctions:   _.sortBy(currentNode.junctions, 'junctionNumber'),
+            options:            { checkbox: _.isUndefined(templates), junctionInputNumber: true }
+          }));
 
           $('.btn-edit-node-save').prop('disabled', formIsInvalid());
 
@@ -678,6 +644,7 @@
             $("#node-coordinates").text(coordinates.x + ', ' + coordinates.y);
           });
 
+          $('[id=nodeName]').on('input', function () { $(this).change(); });
           eventbus.on('change:nodeName', function (nodeName) {
             selectedNodesAndJunctions.setNodeName(nodeName);
           });
@@ -693,10 +660,27 @@
             disabledDatePicker(!typeHasChanged);
           });
 
+          $('[id^=junction-number-textbox-]').on('input', function () { $(this).change(); });
+          rootElement.on('change', '[id^=junction-number-textbox-]', function () {
+            selectedNodesAndJunctions.setJunctionNumber(parseInt($(this).attr('junctionId')), parseInt(this.value));
+          });
+
+          eventbus.on('junction:validate', function () {
+            selectedNodesAndJunctions.verifyJunctionNumbers();
+          });
+
           eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate ' +
-                      'junction:detach nodePoint:detach junction:attach nodePoint:attach', function () {
+                      'junction:validate junction:detach nodePoint:detach junction:attach nodePoint:attach', function () {
             $('.btn-edit-node-save').prop('disabled', formIsInvalid());
           });
+
+          eventbus.on('junction:setCustomValidity', function (junctions, errorMessage) {
+            _.each(junctions, function (junction) {
+              document.getElementById('junction-number-textbox-' + junction.id).setCustomValidity(errorMessage);
+            });
+          });
+
+          selectedNodesAndJunctions.addJunctionTemplates(junctionTemplates);
         }
       });
 
