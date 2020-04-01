@@ -688,7 +688,7 @@
       });
 
       eventbus.on('nodeLayer:closeForm', function (current) {
-        // templates should be handle here, by the time it's possible to change anything in templates form.
+        // templates should be handled here, by the time it's possible to change anything in templates form.
         if (!_.isUndefined(current) && !_.isUndefined(current.node)) {
           closeNode(true);
         }
