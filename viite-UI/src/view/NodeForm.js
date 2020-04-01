@@ -573,8 +573,7 @@
       });
 
       rootElement.on('click', '.btn-edit-node-save', function () {
-        var node = selectedNodesAndJunctions.getCurrentNode();
-        if (selectedNodesAndJunctions.isObsoleteNode(node)) {
+        if (selectedNodesAndJunctions.isObsoleteNode()) {
           new GenericConfirmPopup('Tämä toiminto päättää solmun, tallennetaanko muutokset?', {
             successCallback: function () {
               selectedNodesAndJunctions.saveNode();
