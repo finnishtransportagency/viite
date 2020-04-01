@@ -4094,7 +4094,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     */
   test("Test handleNodePointTemplates and expireObsoleteNodesAndJunctions when road type changes") {
     runWithRollback {
-      /*  |--RT-1-->|--RT-1-->|--RT-1--|  */
+      /*  |--RT-1-->|--RT-3-->|--RT-1--|  */
 
       val projectId: Long = Sequences.nextViiteProjectId
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
@@ -4158,7 +4158,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3.map(_.roadwayNumber).toSet, false)).thenReturn(rw3)
 
       nodesAndJunctionsService.handleJunctionPointTemplates(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinks, Some(project.startDate.minusDays(1)))
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(pl2++ pl1 ++ pl3, Some(project.startDate.minusDays(1)))
 
       val nodePoints = projectLinks.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber))
       nodePoints.size should be(6)
