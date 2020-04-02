@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.oracle
 
 import java.sql.Date
-import java.util.Properties
 
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource, ConnectionHandle}
@@ -11,6 +10,7 @@ import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.Point
 import oracle.spatial.geometry.JGeometry
@@ -18,10 +18,6 @@ import oracle.sql.STRUCT
 
 object OracleDatabase {
   lazy val ds: DataSource = initDataSource
-
-  lazy val localProperties: Properties = {
-    loadProperties("/bonecp.properties")
-  }
 
   private val transactionOpen = new ThreadLocal[Boolean] {
     override def initialValue(): Boolean = { false }
@@ -89,18 +85,8 @@ object OracleDatabase {
 
   def initDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
-    val cfg = new BoneCPConfig(localProperties)
+    val cfg = new BoneCPConfig(ViiteProperties.bonecpProperties)
     new BoneCPDataSource(cfg)
-  }
-
-  def loadProperties(resourcePath: String): Properties = {
-    val props = new Properties()
-    try {
-      props.load(getClass.getResourceAsStream(resourcePath))
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load " + resourcePath + " for env: " + System.getProperty("digiroad2.env"), e)
-    }
-    props
   }
 
   def boundingBoxFilter(bounds: BoundingRectangle, geometryColumn: String): String = {
