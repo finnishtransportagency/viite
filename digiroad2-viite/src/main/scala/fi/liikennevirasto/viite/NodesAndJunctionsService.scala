@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.NodePointType.RoadNodePoint
@@ -649,7 +650,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     def getNodePointsAndJunctionPointsByModifiedRoadwayNumbers(roadwayNumbersSection: Seq[Long], terminatedJunctionPoints: Seq[JunctionPoint]): (Seq[NodePoint], Seq[JunctionPoint]) = {
       logger.info(s"Modified roadway number: ${roadwayNumbersSection.toList}")
       val roadwayPointIds = roadwayPointDAO.fetchByRoadwayNumbers(roadwayNumbersSection).map(_.id)
-      val sortedRoadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbersSection.toSet).sortBy(_.startAddrMValue)
+      val sortedRoadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbersSection.toSet).filterNot(_.track == LeftSide).sortBy(_.startAddrMValue)
       val obsoleteNodePoints = if (sortedRoadways.nonEmpty) {
         val (startAddrMValue, endAddrMValue) = (sortedRoadways.head.startAddrMValue, sortedRoadways.last.endAddrMValue)
         nodePointDAO.fetchByRoadwayPointIds(roadwayPointIds)
@@ -755,7 +756,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       else {
         val roadType = section.head.roadType
         val sectionByRoadType: Seq[ProjectLink] = section.takeWhile(p => p.roadType == roadType)
-        continuousSectionByRoadType(section.drop(sectionByRoadType.size), (continuousSection :+ sectionByRoadType))
+        continuousSectionByRoadType(section.drop(sectionByRoadType.size), continuousSection :+ sectionByRoadType)
       }
     }
 
@@ -769,8 +770,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     val projectLinkSections = filteredProjectLinks.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber))
     val obsoletePointsFromModifiedRoadways: Seq[(Seq[NodePoint], Seq[JunctionPoint])] = projectLinkSections.mapValues { section: Seq[ProjectLink] =>
-      continuousSectionByRoadType(section).map { continousSection =>
-        val modifiedRoadwayNumbers = continousSection.map(_.roadwayNumber).distinct
+      continuousSectionByRoadType(section.sortBy(_.startAddrMValue)).map { continuousSection =>
+        val modifiedRoadwayNumbers = continuousSection.map(_.roadwayNumber).distinct
         getNodePointsAndJunctionPointsByModifiedRoadwayNumbers(modifiedRoadwayNumbers, terminatedJunctionPoints)
       }
     }.values.flatten.toSeq
