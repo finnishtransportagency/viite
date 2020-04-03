@@ -90,9 +90,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val old = nodeDAO.fetchById(node.id)
         nodeDAO.expireById(Seq(old.get.id))
         nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)), validFrom = DateTime.now())), username)
-      } else
+      } else {
         calculateNodePointsForNode(nodeNumber, username)
-
+      }
+      publishNodes(Seq(nodeNumber), username)
     }
   }
 
@@ -910,8 +911,16 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
+  def publishNodes(nodeNumbers: Seq[Long], username: String): Unit = {
+    logger.debug("setPublishingInfoForNodes: " + nodeNumbers.mkString(","))
+    nodeNumbers.foreach(nodeNumber => {
+      val id = nodeDAO.fetchId(nodeNumber)
+      nodeDAO.publish(id.getOrElse(0), username)
+    })
+  }
+
   def calculateNodePointsForNodes(nodeNumbers: Seq[Long], username: String): Unit = {
-    logger.debug("calculateNodePointsForNodes " + nodeNumbers.mkString(","))
+    logger.debug("calculateNodePointsForNodes: " + nodeNumbers.mkString(","))
     nodeNumbers.foreach(nodeNumber => {
       calculateNodePointsForNode(nodeNumber, username)
     })
