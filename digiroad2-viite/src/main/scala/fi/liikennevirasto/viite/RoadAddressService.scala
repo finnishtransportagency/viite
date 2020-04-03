@@ -867,7 +867,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         logger.info(s"Updated ${allUpdatableRoadwayPoints.length} roadway points: ${allUpdatableRoadwayPoints.mkString(", ")}")
       }
     } catch {
-      case ex: Exception => logger.error("Failed to update roadway points.", ex)
+      case ex: Exception =>
+        logger.error("Failed to update roadway points.", ex)
+        throw ex
     }
   }
 
