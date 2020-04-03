@@ -105,7 +105,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
    */
     test("Test isNotAvailableForProject case (1) When START_DATE > PROJ_DATE, END_DATE = null Then should be reservable") {
       runWithRollback {
-        val id1 = Sequences.nextViitePrimaryKeySeqValue
+        val id1 = Sequences.nextViiteProjectId
         val rap1 = Project(id1, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap1)
         // Check that the DB contains only null values in end dates
@@ -117,7 +117,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
     test("Test isNotAvailableForProject case (2a) When START_DATE > PROJ_DATE, END_DATE = null Then should NOT be reservable") {
       runWithRollback {
-        val id = Sequences.nextViitePrimaryKeySeqValue
+        val id = Sequences.nextViiteProjectId
         val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap)
         val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(5,205,id)
@@ -128,7 +128,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     test("Test isNotAvailableForProject case (2b) When START_DATE == PROJ_DATE, END_DATE = null Then should be reservable") {
       // Update: after VIITE-1411 we can have start date equal to project date
       runWithRollback {
-        val id3 = Sequences.nextViitePrimaryKeySeqValue
+        val id3 = Sequences.nextViiteProjectId
         val rap3 = Project(id3, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1962-11-01"),
           "TestUser", DateTime.parse("1962-11-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap3)
@@ -141,7 +141,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     test("Test isNotAvailableForProject case (3a) When START_DATE < PROJ_DATE, END_DATE < PROJ_DATE - 1 Then should be reservable") {
       runWithRollback {
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"), endDate = Some(DateTime.parse("1999-12-31")))))
-        val id4 = Sequences.nextViitePrimaryKeySeqValue
+        val id4 = Sequences.nextViiteProjectId
         val rap4 = Project(id4, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap4)
         val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id4)
@@ -152,7 +152,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     test("Test isNotAvailableForProject case (3b) When START_DATE < PROJ_DATE, END_DATE == PROJ_DATE - 1 Then should be reservable") {
       runWithRollback {
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"), endDate = Some(DateTime.parse("2699-12-31")))))
-        val id5 = Sequences.nextViitePrimaryKeySeqValue
+        val id5 = Sequences.nextViiteProjectId
         val rap5 = Project(id5, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap5)
         val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id5)
@@ -163,7 +163,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     test("Test isNotAvailableForProject case (4a) When START_DATE < PROJ_DATE, END_DATE > PROJ_DATE - 1 Then should NOT be reservable") {
       runWithRollback {
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"), endDate = Some(DateTime.parse("2799-12-31")))))
-        val id6 = Sequences.nextViitePrimaryKeySeqValue
+        val id6 = Sequences.nextViiteProjectId
         val rap6 = Project(id6, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap6)
         val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id6)
@@ -174,7 +174,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     test("Test isNotAvailableForProject case (4b) When START_DATE == PROJ_DATE, END_DATE > PROJ_DATE - 1 Then should NOT be reservable") {
       runWithRollback {
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("2700-01-01"), endDate = Some(DateTime.parse("2799-12-31")))))
-        val id7 = Sequences.nextViitePrimaryKeySeqValue
+        val id7 = Sequences.nextViiteProjectId
         val rap7 = Project(id7, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap7)
         val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id7)
@@ -185,7 +185,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     test("Test isNotAvailableForProject case (5a) When START_DATE > PROJ_DATE, END_DATE > PROJ_DATE - 1 Then should NOT be reservable") {
       runWithRollback {
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"), endDate = Some(DateTime.parse("1989-12-31")))))
-        val id8 = Sequences.nextViitePrimaryKeySeqValue
+        val id8 = Sequences.nextViiteProjectId
         val rap8 = Project(id8, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1975-01-01"),
           "TestUser", DateTime.parse("1975-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap8)
@@ -197,7 +197,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     test("Test isNotAvailableForProject case (5b) When START_DATE > PROJ_DATE, END_DATE > PROJ_DATE - 1 Then should NOT be reservable") {
       runWithRollback {
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1974-12-31"))))
-        val id9 = Sequences.nextViitePrimaryKeySeqValue
+        val id9 = Sequences.nextViiteProjectId
         val rap9 = Project(id9, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1975-01-01"),
           "TestUser", DateTime.parse("1975-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap9)
@@ -211,7 +211,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"), endDate = Some(DateTime.parse("1999-12-31")))))
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("2000-01-01"), endDate = Some(DateTime.parse("2000-12-31")))))
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("2001-01-01"))))
-        val id = Sequences.nextViitePrimaryKeySeqValue
+        val id = Sequences.nextViiteProjectId
         val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2017-01-01"),
           "TestUser", DateTime.parse("2017-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap)
@@ -223,7 +223,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     test("Test isNotAvailableForProject case (7) When START_DATE > PROJ_DATE, END_DATE > PROJ_DATE - 1 Then invalidated rows don't affect reservation") {
       runWithRollback {
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"), endDate = Some(DateTime.parse("1999-12-31")))))
-        val id = Sequences.nextViitePrimaryKeySeqValue
+        val id = Sequences.nextViiteProjectId
         val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1997-01-01"),
           "TestUser", DateTime.parse("1997-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap)
@@ -236,7 +236,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
     test("Test isNotAvailableForProject When there is no reserved part for project Then road part can be reserved") {
       runWithRollback {
-        val id = Sequences.nextViitePrimaryKeySeqValue
+        val id = Sequences.nextViiteProjectId
         val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap)
         val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(123456789,1,id)
@@ -248,7 +248,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       runWithRollback {
         val idr = roadwayDAO.getNextRoadwayId
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1901-01-01"), endDate = Some(DateTime.parse("1901-12-31")))))
-        val id = Sequences.nextViitePrimaryKeySeqValue
+        val id = Sequences.nextViiteProjectId
         val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap)
         val reserveNotAvailable = projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id)
@@ -259,9 +259,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   test("Test reserveRoadPart When having reserved one project with that part Then should fetch it without any problems") {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
-      val linearLocationIds = linearLocationDAO.create(dummyLinearLocations)
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val projectLinkId = id + 1
+      val id = Sequences.nextViiteProjectId
+      val projectLinkId = Sequences.nextProjectLinkId
 
       val reservedParts = Seq(ProjectReservedPart(id: Long, roadNumber1: Long, roadPartNumber1: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, reservedParts, None)
@@ -282,8 +281,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
       val linearLocationIds = linearLocationDAO.create(dummyLinearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val projectLinkId = id + 1
+      val id = Sequences.nextViiteProjectId
+      val projectLinkId = Sequences.nextProjectLinkId
       val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
@@ -320,8 +319,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
         val roadwayIds = roadwayDAO.create(dummyRoadways)
         val linearLocationIds = linearLocationDAO.create(dummyLinearLocations)
 
-        val id = Sequences.nextViitePrimaryKeySeqValue
-        val projectLinkId = id + 1
+        val id = Sequences.nextViiteProjectId
+        val projectLinkId = Sequences.nextProjectLinkId
         val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
         projectDAO.create(rap)
         projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
@@ -335,10 +334,9 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   test("Test roadPartReservedByProject When road parts are reserved by project Then it should return the project name") {
       runWithRollback {
         val roadwayIds = roadwayDAO.create(dummyRoadways)
-        val linearLocationIds = linearLocationDAO.create(dummyLinearLocations)
 
-        val id = Sequences.nextViitePrimaryKeySeqValue
-        val projectLinkId = id + 1
+        val id = Sequences.nextViiteProjectId
+        val projectLinkId = Sequences.nextProjectLinkId
         val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
         projectDAO.create(rap)
         projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
@@ -381,10 +379,9 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   test("Test fetchReservedRoadParts When finding reserved parts by road number and part Then it should return the project reserved parts") {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
-      val linearLocationIds = linearLocationDAO.create(dummyLinearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val projectLinkId = id + 1
+      val id = Sequences.nextViiteProjectId
+      val projectLinkId = Sequences.nextProjectLinkId
       val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)

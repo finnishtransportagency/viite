@@ -172,14 +172,7 @@ class DataImporter {
     sequenceResetter.resetSequenceToNumber("CALIBRATION_POINT_SEQ", 1)
     sequenceResetter.resetSequenceToNumber("ROADWAY_POINT_SEQ", 1)
     sequenceResetter.resetSequenceToNumber("ROADWAY_SEQ", 1)
-
-    // Road names use VIITE_GENERAL_SEQ, so we have to reset it to the max(road_name.id) + 1
-    sql"""select MAX(ID) FROM ROAD_NAME""".as[Long].firstOption match {
-      case Some(roadNameId) =>
-        sequenceResetter.resetSequenceToNumber("VIITE_GENERAL_SEQ", roadNameId + 1)
-      case _ => sequenceResetter.resetSequenceToNumber("VIITE_GENERAL_SEQ", 1)
-    }
-
+    sequenceResetter.resetSequenceToNumber("VIITE_GENERAL_SEQ", 1)
   }
 
   def resetNodesAndJunctionSequences(): Unit = {

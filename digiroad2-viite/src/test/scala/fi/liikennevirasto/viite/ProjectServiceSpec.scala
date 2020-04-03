@@ -235,7 +235,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false, roadNumber: Long = 19999L,
                                     roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L, startDate: Option[DateTime] = None) = {
-    val id = Sequences.nextViitePrimaryKeySeqValue
+    val id = Sequences.nextViiteProjectId
 
     def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
                     roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: Long = 0L, roadwayId: Long = 0L, linearLocationId: Long = 0L, startDate: Option[DateTime] = None) = {
@@ -481,7 +481,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test getRotatingTRProjectId, removeRotatingTRId and addRotatingTRProjectId  When project has just been created, when project has no TR_ID and when project already has a TR_ID Then returning no TR_ID, then returning a TR_ID") {
     runWithRollback {
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val rap = Project(projectId, ProjectState.apply(3), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       runWithRollback {
         projectDAO.create(rap)
@@ -546,7 +546,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test projectService.updateProjectsWaitingResponseFromTR() When project has been created with no reserved parts nor project links Then return project status info should be \"\" ") {
     runWithRollback {
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val rap = Project(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       runWithRollback {
         projectDAO.create(rap)
@@ -561,7 +561,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test projectService.updateProjectsWaitingResponseFromTR() When project has been created with no reserved parts nor project links Then return project status info should be \"Failed to find TR-ID\" ") {
     runWithRollback {
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val rap = Project(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       runWithRollback {
         projectDAO.create(rap)
@@ -694,7 +694,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test addNewLinksToProject When reserving part already used in other project Then return error message") {
     runWithRollback {
       val idr = Sequences.nextRoadwayId
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
       val projectLink = toProjectLink(rap, LinkStatus.New)(RoadAddress(idr, 123, 5, 207, RoadType.Unknown, Track.Combined, Discontinuous,
         0L, 10L, Some(DateTime.parse("1963-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
@@ -775,7 +775,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val project = projectService.createRoadLinkProject(roadAddressProject)
 
-      sqlu""" Insert into project_link_name values (VIITE_GENERAL_SEQ.nextval, ${project.id}, 100, 'TestRoadName_Project_Link')""".execute
+      sqlu""" Insert into project_link_name values (PROJECT_LINK_NAME_SEQ.nextval, ${project.id}, 100, 'TestRoadName_Project_Link')""".execute
 
       val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
       val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
@@ -794,7 +794,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val project = projectService.createRoadLinkProject(roadAddressProject)
 
       sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.nextval, 100, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
-      sqlu""" Insert into project_link_name values (VIITE_GENERAL_SEQ.nextval, ${project.id}, 100, 'TestRoadName_Project_Link')""".execute
+      sqlu""" Insert into project_link_name values (PROJECT_LINK_NAME_SEQ.nextval, ${project.id}, 100, 'TestRoadName_Project_Link')""".execute
 
       val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
       val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
@@ -1577,10 +1577,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       // Create project link
       val roadAddressLength = roadway.endAddrMValue - roadway.startAddrMValue
-      val projectId = Sequences.nextProjectId
+      val projectId = Sequences.nextViiteProjectId
       val newLength = 110.123
       val newEndAddr = 110
-      val projectLink = ProjectLink(Sequences.nextViitePrimaryKeySeqValue, roadway.roadNumber, roadway.roadPartNumber,
+      val projectLink = ProjectLink(Sequences.nextProjectLinkId, roadway.roadNumber, roadway.roadPartNumber,
         roadway.track, roadway.discontinuity, roadway.startAddrMValue, roadway.endAddrMValue + 10,
         roadway.startAddrMValue, roadway.endAddrMValue, Some(DateTime.now().plusMonths(1)), None, Some("test"),
         linkId, 0.0, newLength, SideCode.TowardsDigitizing,
@@ -1614,7 +1614,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
         InUse, NormalLinkInterface)
 
-      val projectId = Sequences.nextProjectId
+      val projectId = Sequences.nextViiteProjectId
 
       val roadwayId = Sequences.nextRoadwayId
 
@@ -1637,13 +1637,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test Road names should not have valid road name for any roadnumber after TR response") {
     runWithRollback {
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.nextval, 66666, 'ROAD TEST', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
 
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, NULL, NULL, 1, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
 
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, NULL, NULL, NULL, NULL, 1543328166000, 1, 0, NULL, 0, 85.617, NULL)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, NULL, NULL, NULL, NULL, 1543328166000, 1, 0, NULL, 0, 85.617, NULL)""".execute
 
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'ROAD TEST')""".execute
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
@@ -1753,11 +1753,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test getLatestRoadName When having no road name for given road number Then road name should not be saved on TR success response if road number > 70.000 (even though it has no name)") {
     runWithRollback {
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 70001, 1, $projectId, '-')""".execute
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
-                VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 70001, 1, 0, 86, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 5, 3, 1, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1)""".execute
+                VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 70001, 1, 0, 86, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 5, 3, 1, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1)""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 70001, NULL)""".execute
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(70001)
       namesBeforeUpdate.isEmpty should be(true)
@@ -1773,12 +1773,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test getLatestRoadName road name exists on TR success response") {
     runWithRollback {
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       sqlu"""INSERT INTO ROAD_NAME VALUES (ROAD_NAME_SEQ.nextval, 66666, 'road name test', TIMESTAMP '2018-03-23 12:26:36.000000', null, TIMESTAMP '2018-03-23 12:26:36.000000', null, 'test user', TIMESTAMP '2018-03-23 12:26:36.000000')""".execute
 
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86, NULL)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86, NULL)""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'another road name test')""".execute
 
       val changeInfos = List(
@@ -1803,10 +1803,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test getLatestRoadName When existing TR success response Then the road name should be saved") {
     runWithRollback {
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86, NULL)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86, NULL)""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'road name test')""".execute
       val changeInfos = List(
         RoadwayChangeInfo(AddressChangeType.New,
@@ -1831,12 +1831,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test getLatestRoadName When existing TR success response Then multiple names should be saved") {
     runWithRollback {
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 55555, 1, $projectId, '-')""".execute
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86, NULL)""".execute
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextViitePrimaryKeySeqValue}, $projectId, 0, 5, 55555, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170980, 1500079296000, 1, 0, NULL, 0, 86, NULL)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86, NULL)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 55555, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170980, 1500079296000, 1, 0, NULL, 0, 86, NULL)""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'road name test')""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 55555, 'road name test2')""".execute
       RoadNameDAO.getLatestRoadName(55555).isEmpty should be (true)

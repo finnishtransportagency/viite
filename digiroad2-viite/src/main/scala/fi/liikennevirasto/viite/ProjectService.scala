@@ -181,7 +181,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return the created project
     */
   private def createProject(roadAddressProject: Project): Project = {
-    val id = Sequences.nextViitePrimaryKeySeqValue
+    val id = Sequences.nextViiteProjectId
     val project = roadAddressProject.copy(id = id)
     projectDAO.create(project)
     val error = addLinksToProject(project)
