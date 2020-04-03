@@ -55,16 +55,16 @@ object ProjectSectionCalculator {
         } catch {
           case ex: InvalidAddressDataException =>
             logger.info(s"Can't calculate terminated road/road part ${part._1}/${part._2}: " + ex.getMessage)
-            terminated
+            terminated // TODO Should we throw this exception and log the message in error level?
           case ex: NoSuchElementException =>
             logger.info("Delta terminated calculation failed: " + ex.getMessage, ex)
-            terminated
+            terminated // TODO Should we throw this exception and log the message in error level?
           case ex: NullPointerException =>
             logger.info("Delta terminated calculation failed (NPE)", ex)
-            terminated
+            terminated // TODO Should we throw this exception and log the message in error level?
           case ex: Throwable =>
             logger.info("Delta terminated calculation not possible: " + ex.getMessage)
-            terminated
+            terminated // TODO Should we throw this exception and log the message in error level?
         }
       }.toSeq
 
