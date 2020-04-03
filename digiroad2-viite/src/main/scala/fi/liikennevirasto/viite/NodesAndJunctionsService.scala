@@ -323,6 +323,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       rwPoint
     }
 
+    /**
+      * @return the junction id only if the road address r is connected to the road address projectLink
+      */
     def getJunctionIdIfConnected(r: BaseRoadAddress, projectLink: BaseRoadAddress, addr: Long, pos: BeforeAfter) = {
       if (RoadAddressFilters.connected(r)(projectLink)) {
         junctionPointDAO.fetchByRoadwayPoint(projectLink.roadwayNumber, addr, pos).map(_.junctionId)
@@ -330,7 +333,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
 
     /**
-      * Creates if needed: new roadway point, new junction, new junction point and new calibration point
+      * Creates if needed: new roadway point, new junction, new junction point and new calibration point as JunctioncCP
       * @param target                road address for the new junction point and calibration point
       * @param pos              position of the junction point
       * @param addr             address of the junction poitn
