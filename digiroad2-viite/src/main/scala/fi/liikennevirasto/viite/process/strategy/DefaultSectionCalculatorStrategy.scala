@@ -56,16 +56,16 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       } catch {
         case ex: InvalidAddressDataException =>
           logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
-          projectLinks ++ oldLinks
+          projectLinks ++ oldLinks // TODO Should we throw this exception and log the error in error level?
         case ex: NoSuchElementException =>
           logger.info("Delta calculation failed: " + ex.getMessage, ex)
-          projectLinks ++ oldLinks
+          projectLinks ++ oldLinks // TODO Should we throw this exception and log the error in error level?
         case ex: NullPointerException =>
           logger.info("Delta calculation failed (NPE)", ex)
-          projectLinks ++ oldLinks
+          projectLinks ++ oldLinks // TODO Should we throw this exception and log the error in error level?
         case ex: Throwable =>
           logger.info("Delta calculation not possible: " + ex.getMessage)
-          projectLinks ++ oldLinks
+          projectLinks ++ oldLinks // TODO Should we throw this exception and log the error in error level?
       }
     }.toSeq
   }
