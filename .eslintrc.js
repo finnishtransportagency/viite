@@ -158,7 +158,7 @@ module.exports = {
         "keyword-spacing": "off",
         "line-comment-position": "off",
         "linebreak-style": [
-            "error",
+            "off",
             "windows"
         ],
         "lines-around-comment": "off",
