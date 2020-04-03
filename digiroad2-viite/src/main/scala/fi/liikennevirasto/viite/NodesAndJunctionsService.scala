@@ -344,10 +344,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         case Some(jp) => Some(jp.junctionId)
         case _ =>
           val junctionId = validJunctionId
-            .orElse(roadsTo.filter(to => RoadAddressFilters.connected(to)(r))
-              .flatMap(to => junctionPointDAO.fetchByRoadwayPoint(to.roadwayNumber, to.endAddrMValue, BeforeAfter.Before)).headOption.map(_.junctionId))
-            .orElse(roadsFrom.filter(from => RoadAddressFilters.connected(from)(r))
-              .flatMap(from => junctionPointDAO.fetchByRoadwayPoint(from.roadwayNumber, from.startAddrMValue, BeforeAfter.After)).headOption.map(_.junctionId)) match {
+            .orElse(roadsTo.flatMap(to => junctionPointDAO.fetchByRoadwayPoint(to.roadwayNumber, to.endAddrMValue, BeforeAfter.Before)).headOption.map(_.junctionId))
+            .orElse(roadsFrom.flatMap(from => junctionPointDAO.fetchByRoadwayPoint(from.roadwayNumber, from.startAddrMValue, BeforeAfter.After)).headOption.map(_.junctionId)) match {
             case Some(id) => id
             case _ =>
               logger.info(s"Creating Junction for roadwayNumber: ${r.roadwayNumber}, beforeAfter: ${pos.value}, addrM: $addr")
@@ -482,34 +480,22 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         // handle junction points for other roads, connected to each project link
         roadsToHead.foreach { roadAddress: BaseRoadAddress =>
           val validJunctionId = if (RoadAddressFilters.connected(projectLink)(roadAddress)) junctionInHead else None
-          createJunctionAndJunctionPointIfNeeded(roadAddress, pos = BeforeAfter.Before, roadAddress.endAddrMValue,
-            roadsToHead.filter(to => RoadAddressFilters.connected(to)(projectLink)),
-            roadsFromHead.filter(from => RoadAddressFilters.connected(from)(projectLink)),
-            validJunctionId)
+          createJunctionAndJunctionPointIfNeeded(roadAddress, pos = BeforeAfter.Before, roadAddress.endAddrMValue, roadsToHead, roadsFromHead, validJunctionId)
         }
 
         roadsFromHead.foreach { roadAddress: BaseRoadAddress =>
           val validJunctionId = if (RoadAddressFilters.connected(projectLink)(roadAddress)) junctionInHead else None
-          createJunctionAndJunctionPointIfNeeded(roadAddress, pos = BeforeAfter.After, roadAddress.startAddrMValue,
-            roadsToHead.filter(to => RoadAddressFilters.connected(to)(projectLink)),
-            roadsFromHead.filter(from => RoadAddressFilters.connected(from)(projectLink)),
-            validJunctionId)
+          createJunctionAndJunctionPointIfNeeded(roadAddress, pos = BeforeAfter.After, roadAddress.startAddrMValue, roadsToHead, roadsFromHead, validJunctionId)
         }
 
         roadsToTail.foreach { roadAddress: BaseRoadAddress =>
           val validJunctionId = if (RoadAddressFilters.connected(projectLink)(roadAddress)) junctionInTail else None
-          createJunctionAndJunctionPointIfNeeded(roadAddress, pos = BeforeAfter.Before, roadAddress.endAddrMValue,
-            roadsToTail.filter(to => RoadAddressFilters.connected(to)(projectLink)),
-            roadsFromTail.filter(from => RoadAddressFilters.connected(from)(projectLink)),
-            validJunctionId)
+          createJunctionAndJunctionPointIfNeeded(roadAddress, pos = BeforeAfter.Before, roadAddress.endAddrMValue, roadsToTail, roadsFromTail, validJunctionId)
         }
 
         roadsFromTail.foreach { roadAddress: BaseRoadAddress =>
           val validJunctionId = if (RoadAddressFilters.connected(projectLink)(roadAddress)) junctionInTail else None
-          createJunctionAndJunctionPointIfNeeded(roadAddress, pos = BeforeAfter.After, roadAddress.startAddrMValue,
-            roadsToTail.filter(to => RoadAddressFilters.connected(to)(projectLink)),
-            roadsFromTail.filter(from => RoadAddressFilters.connected(from)(projectLink)),
-            validJunctionId)
+          createJunctionAndJunctionPointIfNeeded(roadAddress, pos = BeforeAfter.After, roadAddress.startAddrMValue, roadsToTail, roadsFromTail, validJunctionId)
         }
       }
     }
