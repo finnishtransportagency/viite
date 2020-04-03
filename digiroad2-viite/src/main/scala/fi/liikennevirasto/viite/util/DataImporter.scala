@@ -138,6 +138,7 @@ class DataImporter {
       sqlu"""DELETE FROM NODE""".execute
       sqlu"""DELETE FROM LINK""".execute
       sqlu"""DELETE FROM ROADWAY""".execute
+      resetRoadAddressSequences()
 
       println(s"${DateTime.now()} - Old address data removed")
 
@@ -159,6 +160,34 @@ class DataImporter {
       enableRoadwayTriggers
       roadwayResetter()
     }
+  }
+
+  def resetRoadAddressSequences() = {
+    val sequenceResetter = new SequenceResetterDAO()
+    sequenceResetter.resetSequenceToNumber("PROJECT_LINK_NAME_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("ROADWAY_CHANGE_LINK", 1)
+    sequenceResetter.resetSequenceToNumber("ROAD_NETWORK_ERROR_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("PUBLISHED_ROAD_NETWORK_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("LINEAR_LOCATION_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("CALIBRATION_POINT_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("ROADWAY_POINT_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("ROADWAY_SEQ", 1)
+
+    // Road names use VIITE_GENERAL_SEQ, so we have to reset it to the max(road_name.id) + 1
+    sql"""select MAX(ID) FROM ROAD_NAME""".as[Long].firstOption match {
+      case Some(roadNameId) =>
+        sequenceResetter.resetSequenceToNumber("VIITE_GENERAL_SEQ", roadNameId + 1)
+      case _ => sequenceResetter.resetSequenceToNumber("VIITE_GENERAL_SEQ", 1)
+    }
+
+  }
+
+  def resetNodesAndJunctionSequences(): Unit = {
+    val sequenceResetter = new SequenceResetterDAO()
+    sequenceResetter.resetSequenceToNumber("JUNCTION_POINT_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("NODE_POINT_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("JUNCTION_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("NODE_SEQ", 1)
   }
 
   private def updateNodePointType() = {
@@ -196,6 +225,7 @@ class DataImporter {
       sqlu"""DELETE FROM NODE_POINT""".execute
       sqlu"""DELETE FROM JUNCTION""".execute
       sqlu"""DELETE FROM NODE""".execute
+      resetNodesAndJunctionSequences()
 
       println(s"${DateTime.now()} - Old nodes and junctions data removed")
       val nodeImporter = getNodeImporter(conversionDatabase)
