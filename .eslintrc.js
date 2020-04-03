@@ -10,6 +10,7 @@ module.exports = {
     },
     "extends": "eslint:recommended",
     "globals": {
+        "Analytics": "writable",
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly",
         "_": "writable",
