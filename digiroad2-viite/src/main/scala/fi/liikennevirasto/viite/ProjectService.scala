@@ -1955,10 +1955,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     } catch {
       case e: ProjectValidationException =>
         logger.error("Failed to validate project message:" + e.getMessage)
-        Set.empty[Long]
+        throw e
       case f: SQLException =>
         logger.error("Failed to update roadways and linear locations with project links due to SQL error.", f)
-        Set.empty[Long] // TODO Should we throw this exception so that the caller knows that something went wrong?
+        throw f
       case ex: Exception =>
         logger.error("Failed to update roadways and linear locations with project links.", ex)
         throw ex
