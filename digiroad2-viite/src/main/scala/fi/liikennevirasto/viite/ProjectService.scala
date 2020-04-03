@@ -1951,6 +1951,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       handleRoadComplementaryTables(roadwayChanges, enrichedProjectRoadLinkChanges, linearLocationsToInsert,
         enrichedProjectLinks, Some(project.startDate.minusDays(1)), nodeIds, project.createdBy)
+      nodesAndJunctionsService.publishNodes(nodeIds, project.createdBy)
       projectLinks.map(_.roadNumber).toSet
     } catch {
       case e: ProjectValidationException =>

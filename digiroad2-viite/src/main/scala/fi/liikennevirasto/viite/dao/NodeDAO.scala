@@ -225,6 +225,12 @@ class NodeDAO extends BaseDAO {
     }
   }
 
+  def publish(id: Long, editor: String = "-"): Unit = {
+      sqlu"""
+        Update NODE Set PUBLISHED_TIME = SYSDATE, EDITOR = $editor Where ID = $id
+      """.execute
+  }
+
   def create(nodes: Iterable[Node], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
