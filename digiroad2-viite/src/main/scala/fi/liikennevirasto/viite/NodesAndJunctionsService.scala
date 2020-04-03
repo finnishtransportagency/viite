@@ -337,7 +337,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       * @param roadsTo          roads ending in the current road address r
       * @param roadsFrom        roads starting in the current road address r
       */
-    def createJunctionAndJunctionPointIfNeeded(target: BaseRoadAddress, existingJunctionId: Option[Long] = None, pos: BeforeAfter, addr: Long, roadsTo: Seq[BaseRoadAddress], roadsFrom: Seq[BaseRoadAddress]): Unit = {
+    def createJunctionAndJunctionPointIfNeeded(target: BaseRoadAddress, existingJunctionId: Option[Long] = null, pos: BeforeAfter, addr: Long, roadsTo: Seq[BaseRoadAddress], roadsFrom: Seq[BaseRoadAddress]): Unit = {
       def createJunction(): Long = {
         logger.info(s"Creating Junction for roadwayNumber: ${target.roadwayNumber}, (${target.roadNumber}, ${target.roadPartNumber}, ${target.track}, $addr)")
         junctionDAO.create(Seq(Junction(NewIdValue, None, None, target.startDate.get, None, DateTime.now, None, username, Some(DateTime.now)))).head
@@ -347,13 +347,17 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val existingJunctionPoint = junctionPointDAO.fetchByRoadwayPoint(target.roadwayNumber, addr, pos)
 
       if (existingJunctionPoint.isEmpty) {
-        val junctionId = existingJunctionId
-            .orElse(roadsTo.flatMap(to => junctionPointDAO.fetchByRoadwayPoint(to.roadwayNumber, to.endAddrMValue, BeforeAfter.Before)).headOption.map(_.junctionId))
-            .orElse(roadsFrom.flatMap(from => junctionPointDAO.fetchByRoadwayPoint(from.roadwayNumber, from.startAddrMValue, BeforeAfter.After)).headOption.map(_.junctionId)) match {
-            case Some(id) => id
-            case _ =>
-              createJunction()
-          }
+        val junctionId = existingJunctionId match {
+          case Some(id) => id
+          case None => createJunction()
+          case _ =>
+            roadsTo.flatMap(to => junctionPointDAO.fetchByRoadwayPoint(to.roadwayNumber, to.endAddrMValue, BeforeAfter.Before)).headOption.map(_.junctionId)
+              .orElse(roadsFrom.flatMap(from => junctionPointDAO.fetchByRoadwayPoint(from.roadwayNumber, from.startAddrMValue, BeforeAfter.After)).headOption.map(_.junctionId)) match {
+              case Some(id) => id
+              case _ =>
+                createJunction()
+            }
+        }
 
         logger.info(s"Creating JunctionPoint with junctionId: $junctionId, beforeAfter: ${pos.value}, addrM: $addr for roadwayNumber: ${target.roadwayNumber}, (${target.roadNumber}, ${target.roadPartNumber}, ${target.track}, $addr)")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, pos, roadwayPointId, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), target.roadwayNumber, addr, target.roadNumber, target.roadPartNumber, target.track, target.discontinuity)))
