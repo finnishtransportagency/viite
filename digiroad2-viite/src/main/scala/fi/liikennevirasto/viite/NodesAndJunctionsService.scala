@@ -608,7 +608,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }.toSeq
       } catch {
         case ex: Exception =>
-          println("Failed nodepoints: ", ex.printStackTrace())
+          logger.error("Failed to handle node points.", ex)
+          throw ex
       }
     }
   }
