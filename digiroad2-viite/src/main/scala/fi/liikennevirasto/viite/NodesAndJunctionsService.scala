@@ -340,25 +340,21 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       * @param roadsTo          roads ending in the current road address r
       * @param roadsFrom        roads starting in the current road address r
       */
-    def createJunctionAndJunctionPointIfNeeded(target: BaseRoadAddress, existingJunctionId: Option[Long] = null, pos: BeforeAfter, addr: Long, roadsTo: Seq[BaseRoadAddress], roadsFrom: Seq[BaseRoadAddress]): Unit = {
-      def createJunction(): Long = {
-        logger.info(s"Creating Junction for roadwayNumber: ${target.roadwayNumber}, (${target.roadNumber}, ${target.roadPartNumber}, ${target.track}, $addr)")
-        junctionDAO.create(Seq(Junction(NewIdValue, None, None, target.startDate.get, None, DateTime.now, None, username, Some(DateTime.now)))).head
-      }
-
+    def createJunctionAndJunctionPointIfNeeded(target: BaseRoadAddress, existingJunctionId: Option[Long] = None, pos: BeforeAfter, addr: Long,
+                                               roadsTo: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress], roadsFrom: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress]): Unit = {
       val roadwayPointId = getRoadwayPointId(target.roadwayNumber, addr, username)
       val existingJunctionPoint = junctionPointDAO.fetchByRoadwayPoint(target.roadwayNumber, addr, pos)
 
       if (existingJunctionPoint.isEmpty) {
         val junctionId = existingJunctionId match {
           case Some(id) => id
-          case None => createJunction()
           case _ =>
             roadsTo.flatMap(to => junctionPointDAO.fetchByRoadwayPoint(to.roadwayNumber, to.endAddrMValue, BeforeAfter.Before)).headOption.map(_.junctionId)
               .orElse(roadsFrom.flatMap(from => junctionPointDAO.fetchByRoadwayPoint(from.roadwayNumber, from.startAddrMValue, BeforeAfter.After)).headOption.map(_.junctionId)) match {
               case Some(id) => id
               case _ =>
-                createJunction()
+                logger.info(s"Creating Junction for roadwayNumber: ${target.roadwayNumber}, (${target.roadNumber}, ${target.roadPartNumber}, ${target.track}, $addr)")
+                junctionDAO.create(Seq(Junction(NewIdValue, None, None, target.startDate.get, None, DateTime.now, None, username, Some(DateTime.now)))).head
             }
         }
 
@@ -494,22 +490,22 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         // handle junction points for other roads, connected to each project link
         roadsToHead.foreach { roadAddress: BaseRoadAddress =>
           val junctionId = getJunctionIdIfConnected(roadAddress, projectLink, addr = projectLink.startAddrMValue, pos = BeforeAfter.After)
-          createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.Before, roadAddress.endAddrMValue, roadsToHead, roadsFromHead)
+          createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.Before, roadAddress.endAddrMValue)
         }
 
         roadsFromHead.foreach { roadAddress: BaseRoadAddress =>
           val junctionId = getJunctionIdIfConnected(roadAddress, projectLink, addr = projectLink.startAddrMValue, pos = BeforeAfter.After)
-          createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.After, roadAddress.startAddrMValue, roadsToHead, roadsFromHead)
+          createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.After, roadAddress.startAddrMValue)
         }
 
         roadsToTail.foreach { roadAddress: BaseRoadAddress =>
           val junctionId = getJunctionIdIfConnected(roadAddress, projectLink, addr = projectLink.endAddrMValue, pos = BeforeAfter.Before)
-          createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.Before, roadAddress.endAddrMValue, roadsToTail, roadsFromTail)
+          createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.Before, roadAddress.endAddrMValue)
         }
 
         roadsFromTail.foreach { roadAddress: BaseRoadAddress =>
           val junctionId = getJunctionIdIfConnected(roadAddress, projectLink, addr = projectLink.endAddrMValue, pos = BeforeAfter.Before)
-          createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.After, roadAddress.startAddrMValue, roadsToTail, roadsFromTail)
+          createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.After, roadAddress.startAddrMValue)
         }
       }
     }
