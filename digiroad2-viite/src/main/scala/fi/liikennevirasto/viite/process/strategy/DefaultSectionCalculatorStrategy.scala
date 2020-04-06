@@ -215,7 +215,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val chainEndPoints = TrackSectionOrder.findChainEndpoints(leftLinks)
 
       if (chainEndPoints.isEmpty)
-        throw new InvalidAddressDataException("Missing left track starting points")
+        throw new InvalidAddressDataException("Missing left track starting project links")
 
       val oldFirst = TrackSectionOrder.findOnceConnectedLinks(leftLinks).values.find(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
       val endPointsWithValues = chainEndPoints.filter(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
