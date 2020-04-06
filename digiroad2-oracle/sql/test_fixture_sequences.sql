@@ -61,14 +61,6 @@ create sequence ROAD_NETWORK_ERROR_SEQ
   increment by 1
   cache 100
   cycle;
-drop sequence VIITE_PROJECT_SEQ;
-create sequence VIITE_PROJECT_SEQ
-  minvalue 1
-  maxvalue 999999999999999999999999999
-  start with 1000000
-  increment by 1
-  cache 100
-  cycle;
 
 drop sequence ROADWAY_CHANGE_LINK;
 create sequence ROADWAY_CHANGE_LINK
