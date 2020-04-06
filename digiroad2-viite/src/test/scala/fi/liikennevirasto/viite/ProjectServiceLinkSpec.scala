@@ -6,23 +6,20 @@ import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
-import fi.liikennevirasto.viite.dao.AddressChangeType.{Termination, Transfer}
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
-import fi.liikennevirasto.viite.util.{SplitOptions, StaticTestData, _}
+import fi.liikennevirasto.viite.process.{InvalidAddressDataException, ProjectSectionCalculator, RoadwayAddressMapper}
+import fi.liikennevirasto.viite.util.{StaticTestData, _}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
-import org.scalatest.mockito.MockitoSugar
 import org.mockito.Mockito.{reset, when}
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
@@ -30,7 +27,6 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 
 import scala.util.parsing.json.JSON
 
@@ -593,9 +589,16 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         SideCode.TowardsDigitizing, None, None, Anomaly.None, LinkStatus.New, 0, 0)
       val addresses = Seq(addProjectAddressLink552)
       mockForProject(id, addresses)
-      projectService.addNewLinksToProject(addresses.map(backToProjectLink(rap)), id, "U", addresses.head.linkId, true, Continuous) should be(None)
+
+      //adding left track alone
+      intercept[InvalidAddressDataException]{
+        projectService.addNewLinksToProject(addresses.map(backToProjectLink(rap)), id, "U", addresses.head.linkId, true, Continuous) should be(None)
+      }.getMessage should be ("Missing right track starting project links")
+
       val links = projectLinkDAO.fetchProjectLinks(id)
       projectReservedPartDAO.fetchReservedRoadParts(id) should have size 1
+
+      //update link to become track 0
       projectService.updateProjectLinks(id, Set(), links.map(_.linkId), LinkStatus.New, "test", 19999, 1, 0, None,
         RoadType.FerryRoad.value, Discontinuity.EndOfRoad.value, Some(8))
       val linksAfterUpdate = projectLinkDAO.fetchProjectLinks(id)

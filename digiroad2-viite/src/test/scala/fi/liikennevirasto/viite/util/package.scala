@@ -203,7 +203,7 @@ package object util {
         roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
         roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), roadAddress.geometry, project.id, status, roadAddress.roadType,
         roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely,reversed = false,
-        None, roadAddress.adjustedTimestamp, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
+        None, roadAddress.adjustedTimestamp, roadwayNumber = roadAddress.roadwayNumber, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
     }
   }
 
