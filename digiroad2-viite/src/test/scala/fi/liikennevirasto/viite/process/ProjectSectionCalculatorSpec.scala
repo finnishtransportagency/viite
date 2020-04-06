@@ -380,11 +380,9 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 1L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), 
         Seq(Point(28.0, 15.0), Point(38, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
-      val output = ProjectSectionCalculator.assignMValues(Seq(projectLink0, projectLink1))
-      output.foreach { pl =>
-        pl.startAddrMValue should be(0L)
-        pl.endAddrMValue should be(0L)
-      }
+      intercept[InvalidAddressDataException] {
+        ProjectSectionCalculator.assignMValues(Seq(projectLink0, projectLink1))
+      }.getMessage should be ("Missing left track starting project links")
     }
   }
 
