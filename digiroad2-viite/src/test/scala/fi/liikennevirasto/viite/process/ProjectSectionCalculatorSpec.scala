@@ -1221,9 +1221,17 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val listRight = List(projectLink1, projectLink3, projectLink5, projectLink7,
         projectLink9, projectLink11)
 
-      val rightList = ProjectSectionCalculator.assignMValues(listRight).toList
+      intercept[InvalidAddressDataException] {
+        ProjectSectionCalculator.assignMValues(listRight).toList
+      }.getMessage should be ("Missing left track starting project links")
 
-      val list = ProjectSectionCalculator.assignMValues(rightList ::: List(projectLink0, projectLink2, projectLink4, projectLink6, projectLink8, projectLink10))
+      val listLeft = List(projectLink0, projectLink2, projectLink4, projectLink6, projectLink8, projectLink10)
+
+      intercept[InvalidAddressDataException] {
+        ProjectSectionCalculator.assignMValues(listLeft).toList
+      }.getMessage should be ("Missing right track starting project links")
+
+      val list = ProjectSectionCalculator.assignMValues(listRight ::: listLeft)
       val (left, right) = list.partition(_.track == Track.LeftSide)
 
       val (sortedLeft, sortedRight) = (left.sortBy(_.startAddrMValue), right.sortBy(_.startAddrMValue))
