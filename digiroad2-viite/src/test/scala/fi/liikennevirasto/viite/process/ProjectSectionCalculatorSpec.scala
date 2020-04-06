@@ -79,6 +79,19 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
   }
 
+  def toRoadwaysAndLinearLocations(pls: Seq[ProjectLink]): (Seq[LinearLocation], Seq[Roadway]) = {
+    pls.foldLeft((Seq.empty[LinearLocation], Seq.empty[Roadway])) { (list, p) =>
+      val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
+
+      (list._1 :+ LinearLocation(p.linearLocationId, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
+        (CalibrationPointsUtils.toCalibrationPointReference(p.startCalibrationPoint),
+          CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
+        p.geometry, p.linkGeomSource,
+        p.roadwayNumber, Some(startDate), p.endDate), list._2 :+ Roadway(p.roadwayId, p.roadwayNumber, p.roadNumber, p.roadPartNumber, p.roadType, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
+        p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
+    }
+  }
+
   def buildTestDataForProject(project: Option[Project], rws: Option[Seq[Roadway]], lil: Option[Seq[LinearLocation]], pls: Option[Seq[ProjectLink]]): Unit = {
     if (rws.nonEmpty)
       roadwayDAO.create(rws.get)
@@ -1330,7 +1343,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val idRoad12 = 12L
       val idRoad13 = 13L
       val idRoad14 = 14L
-      val idRoad15 = 15L
 
       val geom1 = Seq(Point(4070.023, 474.741), Point(4067.966, 485.143))
       val geom2 = Seq(Point(4067.966, 485.143), Point(4060.025, 517.742))
@@ -1395,6 +1407,11 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
           0, (None, None), geom14, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber+14)
       )
 
+
+      val projId = Sequences.nextViitePrimaryKeySeqValue
+      val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), Seq(), None, None)
+
       //Left pls
       val projectLink1 = toProjectLink(rap, LinkStatus.Transfer)(raMap(idRoad1))
       val projectLink2 = toProjectLink(rap, LinkStatus.Transfer)(raMap(idRoad2))
@@ -1413,37 +1430,13 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink13 = toProjectLink(rap, LinkStatus.NotHandled)(raMap(idRoad13))
       val projectLink14 = toProjectLink(rap, LinkStatus.NotHandled)(raMap(idRoad14))
 
-      //Left rws, lls
-      val (linearLocation1, roadway1) = toRoadwayAndLinearLocation(projectLink1)
-      val (linearLocation2, roadway2) = toRoadwayAndLinearLocation(projectLink2)
-      val (linearLocation3, roadway3) = toRoadwayAndLinearLocation(projectLink3)
-      val (linearLocation4, roadway4) = toRoadwayAndLinearLocation(projectLink4)
-      val (linearLocation5, roadway5) = toRoadwayAndLinearLocation(projectLink5)
-      val (linearLocation6, roadway6) = toRoadwayAndLinearLocation(projectLink6)
-      val (linearLocation7, roadway7) = toRoadwayAndLinearLocation(projectLink7)
-
-      //Right rws, lls
-      val (linearLocation8, roadway8) = toRoadwayAndLinearLocation(projectLink8)
-      val (linearLocation9, roadway9) = toRoadwayAndLinearLocation(projectLink9)
-      val (linearLocation10, roadway10) = toRoadwayAndLinearLocation(projectLink10)
-      val (linearLocation11, roadway11) = toRoadwayAndLinearLocation(projectLink11)
-      val (linearLocation12, roadway12) = toRoadwayAndLinearLocation(projectLink12)
-      val (linearLocation13, roadway13) = toRoadwayAndLinearLocation(projectLink13)
-      val (linearLocation14, roadway14) = toRoadwayAndLinearLocation(projectLink14)
-
-      val leftRoadways = Seq(roadway1, roadway2, roadway3, roadway4, roadway5, roadway6, roadway7)
-      val leftLinearLocations = Seq(linearLocation1, linearLocation2, linearLocation3, linearLocation4, linearLocation5, linearLocation6, linearLocation7)
-
-      val rightRoadways = Seq(roadway8, roadway9, roadway10, roadway11, roadway12, roadway13, roadway14)
-      val rightLinearLocations = Seq(linearLocation8, linearLocation9, linearLocation10, linearLocation11, linearLocation12, linearLocation13, linearLocation14)
-
-      val projId = Sequences.nextViitePrimaryKeySeqValue
-      val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
-        "", Seq(), Seq(), None, None)
 
       val leftProjectLinks = Seq(projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7).map(_.copy(projectId = projId))
       val rightProjectLinks = Seq(projectLink8, projectLink9, projectLink10,
         projectLink11, projectLink12, projectLink13, projectLink14).map(_.copy(projectId = projId))
+
+      val (leftLinearLocations, leftRoadways) = toRoadwaysAndLinearLocations(leftProjectLinks)
+      val (rightLinearLocations, rightRoadways) = toRoadwaysAndLinearLocations(rightProjectLinks)
 
       buildTestDataForProject(Some(project), Some(leftRoadways++rightRoadways), Some(leftLinearLocations++rightLinearLocations), Some(leftProjectLinks++rightProjectLinks))
 
