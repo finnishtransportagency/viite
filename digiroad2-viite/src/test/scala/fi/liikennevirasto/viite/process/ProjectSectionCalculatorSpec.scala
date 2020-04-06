@@ -539,29 +539,49 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
   test("Test assignMValues When giving created + unchanged links Then links should be calculated properly") {
     runWithRollback {
-      val idRoad0 = 0L //   U>
       val idRoad1 = 1L //   U>
-      val idRoad2 = 2L //   N>
+      val idRoad2 = 2L //   U>
+      val idRoad3 = 3L //   N>
       /*
       |--U-->|--U-->|--N-->|
        */
-      val projectLink0 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(idRoad0, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 9L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad0, 0.0, 8.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad0, 0.0, 0L)), None),
-        Seq(Point(20.0, 10.0), Point(28, 10)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-      val projectLink1 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(idRoad1, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        9L, 19L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad1, 0.0, 9.0, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(idRoad1, 9.0, 19L))),
-        Seq(Point(28, 10), Point(28, 19)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad2, 0.0, 11.0, SideCode.TowardsDigitizing, 0, (None, None),
-        Seq(Point(28, 19), Point(28, 30)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-      val list = List(projectLink0, projectLink1, projectLink2)
+      val linearLocationId = Sequences.nextLinearLocationId
+      val roadwayNumber = Sequences.nextRoadwayNumber
+
+      val raMap: Map[Long, RoadAddress] = Map(
+        idRoad1 -> RoadAddress(idRoad1, linearLocationId, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+          0L, 9L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad1, 0.0, 8.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad1, 0.0, 0L)), None),
+          Seq(Point(20.0, 10.0), Point(28, 10)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber),
+        idRoad2 -> RoadAddress(idRoad2, linearLocationId+1, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+          9L, 19L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad2, 0.0, 9.0, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(idRoad2, 9.0, 19L))),
+          Seq(Point(28, 10), Point(28, 19)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber+1),
+        idRoad3 -> RoadAddress(idRoad3, linearLocationId+2, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+          0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad3, 0.0, 11.0, SideCode.TowardsDigitizing, 0, (None, None),
+          Seq(Point(28, 19), Point(28, 30)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber+2)
+      )
+
+      val projId = Sequences.nextViitePrimaryKeySeqValue
+      val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), Seq(), None, None)
+
+      val projectLink1 = toProjectLink(rap, LinkStatus.UnChanged)(raMap(idRoad1))
+      val projectLink2 = toProjectLink(rap, LinkStatus.UnChanged)(raMap(idRoad2))
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(raMap(idRoad3))
+      val list = List(projectLink1, projectLink2, projectLink3).map(_.copy(projectId = projId))
+
+      val (linearLocation1, roadway1) = toRoadwayAndLinearLocation(projectLink1)
+      val (linearLocation2, roadway2) = toRoadwayAndLinearLocation(projectLink2)
+
+      buildTestDataForProject(Some(project), Some(Seq(roadway1, roadway2)), Some(Seq(linearLocation1, linearLocation2)), Some(list))
+
       val (created, unchanged) = list.partition(_.status == LinkStatus.New)
       val ordered = ProjectSectionCalculator.assignMValues(created ++ unchanged)
-      val road2 = ordered.find(_.linkId == idRoad2).get
-      road2.startAddrMValue should be(19L)
-      road2.endAddrMValue should be(30L)
-      road2.calibrationPoints._1 should be(None)
-      road2.calibrationPoints._2.nonEmpty should be(true)
+      val road3 = ordered.find(_.linkId == idRoad3).get
+      road3.startAddrMValue should be(19L)
+      road3.endAddrMValue should be(30L)
+      road3.calibrationPoints._1 should be(None)
+      road3.calibrationPoints._2.nonEmpty should be(true)
+      ordered.size should be (3)
       ordered.count(_.calibrationPoints._2.nonEmpty) should be(1)
     }
   }
