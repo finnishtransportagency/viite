@@ -17,14 +17,13 @@ import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointLocation
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectRoadwayChange, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -2508,7 +2507,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }*/
 
-  test("Test changeDirection When after the creation of valid project links on a project Then the side code of road addresses should be reversed.") {
+  test("Test changeDirection When after the creation of valid project links on a project Then the side code of road addresses should be successfully reversed.") {
     runWithRollback {
 
       val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
@@ -2584,7 +2583,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val project = projectService.createRoadLinkProject(rap)
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq(pl1, pl2, pl3, pl4, pl5, pl6, pl7).map(toRoadLink))
-      projectService.createProjectLinks(Seq(12345L, 12346L, 12347L, 12348L, 12349L, 12350L, 12351L), project.id, roadNumber = 9999, roadPartNumber = 1, track = Track.RightSide, discontinuity = Discontinuity.Continuous, roadType = RoadType.PublicRoad, roadLinkSource = LinkGeomSource.NormalLinkInterface, roadEly = 8L, user = "test", roadName = "road name")
+
+      intercept[InvalidAddressDataException] {
+        projectService.createProjectLinks(Seq(12345L, 12346L, 12347L, 12348L, 12349L, 12350L, 12351L), project.id, roadNumber = 9999, roadPartNumber = 1, track = Track.RightSide, discontinuity = Discontinuity.Continuous, roadType = RoadType.PublicRoad, roadLinkSource = LinkGeomSource.NormalLinkInterface, roadEly = 8L, user = "test", roadName = "road name")
+      }.getMessage should be ("Missing left track starting project links")
+
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(12352L, 12353L, 12354L))).thenReturn(Seq(pl8, pl9, pl10).map(toRoadLink))
       projectService.createProjectLinks(Seq(12352L, 12353L, 12354L), project.id, roadNumber = 9999, roadPartNumber = 1, track = Track.LeftSide, discontinuity = Discontinuity.Continuous, roadType = RoadType.PublicRoad, roadLinkSource = LinkGeomSource.NormalLinkInterface, roadEly = 8L, user = "test", roadName = "road name")
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(12355L, 12356L, 12357L))).thenReturn(Seq(pl11, pl12, pl13).map(toRoadLink))
