@@ -355,8 +355,8 @@ object TrackSectionOrder {
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
                 Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
             CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, l, r)
-          case Track.RightSide => if(leftSection.exists(_.track == Track.LeftSide)){
-          val l = leftSection.filter(_.track == Track.LeftSide).minBy(l =>
+          case Track.RightSide => if (leftSection.exists(_.track == Track.LeftSide)) {
+            val l = leftSection.filter(_.track == Track.LeftSide).minBy(l =>
               Math.min(
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
                 Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
@@ -368,7 +368,6 @@ object TrackSectionOrder {
             throw new RoadAddressException(s"Incorrect track code ${r.track}")
         }
       }
-
     }
 
     combineSections(rightSections, leftSections)
