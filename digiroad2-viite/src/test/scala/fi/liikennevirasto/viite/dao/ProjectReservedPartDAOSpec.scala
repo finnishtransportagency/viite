@@ -5,14 +5,14 @@ import java.sql.SQLIntegrityConstraintViolationException
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
-import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -332,20 +332,23 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   }
 
   test("Test roadPartReservedByProject When road parts are reserved by project Then it should return the project name") {
-      runWithRollback {
-        val roadwayIds = roadwayDAO.create(dummyRoadways)
+    runWithRollback {
+      val roadwayIds = roadwayDAO.create(dummyRoadways)
+      linearLocationDAO.create(dummyLinearLocations)
 
-        val id = Sequences.nextViiteProjectId
-        val projectLinkId = Sequences.nextProjectLinkId
-        val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
-        projectDAO.create(rap)
-        projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
-        val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1,  0, 100, 0.0, 100.0, None, (None, None), Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
-        )
-        projectLinkDAO.create(projectLinks)
-        val project = projectReservedPartDAO.fetchProjectReservedPart(roadNumber1, roadPartNumber1)
-        project should be(Some("'Test Project"))
-      }
+      val id = Sequences.nextViiteProjectId
+      val projectLinkId = Sequences.nextProjectLinkId
+      val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
+      projectDAO.create(rap)
+      projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1,
+        roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0,
+        None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
+      )
+      projectLinkDAO.create(projectLinks)
+      val project = projectReservedPartDAO.fetchProjectReservedPart(roadNumber1, roadPartNumber1)
+      project should be(Some("'Test Project"))
+    }
   }
 
   test("Test fetchHistoryRoadParts When fetching road parts history Then it should return the reserved history") {
