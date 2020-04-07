@@ -331,7 +331,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       }
   }
 
-  test("Test roadPartReservedByProject When road parts are reserved by project Then it should return the project name") {
+  ignore("Test roadPartReservedByProject When road parts are reserved by project Then it should return the project name") {
       runWithRollback {
         val roadwayIds = roadwayDAO.create(dummyRoadways)
 
