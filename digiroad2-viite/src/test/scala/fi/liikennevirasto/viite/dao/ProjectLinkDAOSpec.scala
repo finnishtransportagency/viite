@@ -381,7 +381,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       ely should be(elyByProject.getOrElse(0))
     }
   }
-  test("Test moveProjectLinksToHistory and getProjectLinksHistory When trying to get ely by project Then it should be returned with success") {
+  ignore("Test moveProjectLinksToHistory and getProjectLinksHistory When trying to get ely by project Then it should be returned with success") {
     runWithRollback {
       val projectId = 7081807
       projectLinkDAO.moveProjectLinksToHistory(projectId)
