@@ -44,7 +44,7 @@ class RoadwayPointDAO extends BaseDAO {
     } else {
       roadwayPoint.id
     }
-    logger.info(s"Insert roadway_point ($id, ${roadwayPoint.roadwayNumber}, ${roadwayPoint.addrMValue})")
+    logger.info(s"Insert roadway_point $id (roadwayNumber: ${roadwayPoint.roadwayNumber}, addrM: ${roadwayPoint.addrMValue})")
     sqlu"""
       Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) Values
       ($id, ${roadwayPoint.roadwayNumber}, ${roadwayPoint.addrMValue}, ${roadwayPoint.createdBy}, ${roadwayPoint.createdBy})
@@ -54,7 +54,7 @@ class RoadwayPointDAO extends BaseDAO {
 
   def create(roadwayNumber: Long, addrMValue: Long, createdBy: String): Long = {
     val id = Sequences.nextRoadwayPointId
-    logger.info(s"Insert roadway_point ($id, $roadwayNumber, $addrMValue)")
+    logger.info(s"Insert roadway_point $id (roadwayNumber: $roadwayNumber, addrM: $addrMValue)")
     sqlu"""
       Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) Values
       ($id, $roadwayNumber, $addrMValue, $createdBy, $createdBy)
