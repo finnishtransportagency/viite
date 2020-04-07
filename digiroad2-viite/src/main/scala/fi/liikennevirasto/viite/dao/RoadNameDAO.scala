@@ -183,7 +183,7 @@ object RoadNameDAO {
     val namesPS = dynamicSession.prepareStatement(query)
 
     roadNames.foreach(roadName => {
-      val nextId = Sequences.nextViitePrimaryKeySeqValue
+      val nextId = Sequences.nextRoadNameId
       namesPS.setLong(1, nextId)
       namesPS.setLong(2, roadName.roadNumber)
       namesPS.setString(3, roadName.roadName)

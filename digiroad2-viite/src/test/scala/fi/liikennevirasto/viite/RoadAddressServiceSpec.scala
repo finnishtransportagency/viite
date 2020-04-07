@@ -626,7 +626,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadwayNumber1 = Sequences.nextRoadwayNumber
       val roadwayNumber2 = roadwayNumber1+1
 
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val rap =  dummyProject(projectId, ProjectState.Incomplete, Seq(), None).copy(startDate = DateTime.parse("2019-10-10"))
       val id1 = Sequences.nextRoadwayId
       val id2 = id1+1
@@ -735,7 +735,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadwayNumber2 = roadwayNumber1+1
       val roadwayNumber2AfterChanges = roadwayNumber2+1
 
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val rap =  dummyProject(projectId, ProjectState.Incomplete, Seq(), None).copy(startDate = DateTime.parse("2019-10-10"))
       val id1 = Sequences.nextRoadwayId
       val id2 = id1+1
