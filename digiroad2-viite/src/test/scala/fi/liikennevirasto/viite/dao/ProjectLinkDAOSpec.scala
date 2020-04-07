@@ -206,7 +206,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     projectLinkDAO.removeProjectLinksById(Set())
   }
 
-  ignore("Test updateProjectLinks When giving one new projectLink with new values Then it should update project link") {
+  test("Test updateProjectLinks When giving one new projectLink with new values Then it should update project link") {
     runWithRollback {
       val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
@@ -232,7 +232,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  ignore("Test updateProjectLinksGeometry When giving one link with updated geometry Then it should be updated") {
+  test("Test updateProjectLinksGeometry When giving one link with updated geometry Then it should be updated") {
     runWithRollback {
       val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
@@ -246,7 +246,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  ignore("Test updateProjectLinkNumbering When giving one link with updated road number and part Then it should be updated") {
+  test("Test updateProjectLinkNumbering When giving one link with updated road number and part Then it should be updated") {
     runWithRollback {
       val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
@@ -289,7 +289,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  ignore("Test updateProjectLinksStatus When giving one link with updated road number and part Then it should be updated") {
+  test("Test updateProjectLinksStatus When giving one link with updated road number and part Then it should be updated") {
     runWithRollback {
       val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
@@ -300,7 +300,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  ignore("Test updateAddrMValues When giving one link with updated road number and part Then it should be updated") {
+  test("Test updateAddrMValues When giving one link with updated road number and part Then it should be updated") {
     runWithRollback {
       val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)
       val header = projectLinks.head
@@ -372,7 +372,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  ignore("Test getElyFromProjectLinks When trying to get ely by project Then it should be returned with success") {
+  test("Test getElyFromProjectLinks When trying to get ely by project Then it should be returned with success") {
     runWithRollback {
       val projectId = 7081807
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
