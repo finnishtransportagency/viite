@@ -206,10 +206,10 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomLeft1 = Seq(Point(0.0, 0.0), Point(0.0, 30.0))
       val geomLeft2 = Seq(Point(0.0, 30.0), Point(0.0, 60.0))
 
-      val projId = Sequences.nextViitePrimaryKeySeqValue
+      val projId = Sequences.nextViiteProjectId
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
-      val projectLinkId = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId = Sequences.nextProjectLinkId
       val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
@@ -253,10 +253,10 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomLeft1 = Seq(Point(0.0, 0.0), Point(0.0, 30.0))
       val geomLeft2 = Seq(Point(0.0, 30.0), Point(0.0, 60.0))
 
-      val projId = Sequences.nextViitePrimaryKeySeqValue
+      val projId = Sequences.nextViiteProjectId
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
-      val projectLinkId = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId = Sequences.nextProjectLinkId
       val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
@@ -299,10 +299,10 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     runWithRollback {
       val geomLeft1 = Seq(Point(0.0, 0.0), Point(0.0, 60.0))
 
-      val projId = Sequences.nextViitePrimaryKeySeqValue
+      val projId = Sequences.nextViiteProjectId
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
-      val projectLinkId = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId = Sequences.nextProjectLinkId
       val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
@@ -346,7 +346,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     runWithRollback {
       val geomTransfer1 = Seq(Point(30.0, 20.0), Point(20.0, 30.0))
       val geomTransfer2 = Seq(Point(20.0, 30.0), Point(10.0, 40.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 15L, 30L, None, None,
         None, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
@@ -382,7 +382,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     runWithRollback {
       val geomTransfer1 = Seq(Point(30.0, 20.0), Point(20.0, 30.0))
       val geomTransfer2 = Seq(Point(20.0, 30.0), Point(10.0, 40.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 15L, 30L, None, None,
         None, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
@@ -416,7 +416,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   private def testFindStartingPointsWithOneMinorDiscontinuity(sideCode: SideCode, linkStatus: LinkStatus): Unit = {
     runWithRollback {
       val geom1 = Seq(Point(10.0, 20.0), Point(0.0, 30.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 0L, 15L, None, None,
         None, 12345L, 0.0, 15.0, sideCode, (None, None),
@@ -513,7 +513,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   private def testFindStartingPointsWithTwoMinorDiscontinuitiesNewInMiddle(sideCode: SideCode, linkStatus: LinkStatus): Unit = {
     runWithRollback {
       val geom1 = Seq(Point(10.0, 40.0), Point(0.0, 50.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 0L, 15L, None, None,
         None, 12345L, 0.0, 15.0, sideCode, (None, None),
@@ -629,7 +629,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geom1 = Seq(Point(10.0, 40.0), Point(0.0, 50.0))
       val geom3 = Seq(Point(45.0, 0.0), Point(35.0, 10.0))
       val geom4 = Seq(Point(55.0, 0.0), Point(45.0, 10.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val startAddr1 = if (sideCode == SideCode.TowardsDigitizing) 15L else 0
       val endAddr1 = if (sideCode == SideCode.TowardsDigitizing) 30L else 15L
@@ -750,7 +750,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   test("Test findStartingPoints When adding two track road (New) with minor discontinuity before the existing (Transfer) road Then the road should still maintain the previous existing direction") {
     runWithRollback {
       val geomTransfer1 = Seq(Point(10.0, 20.0), Point(0.0, 30.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 0L, 15L, None, None,
         None, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
@@ -782,7 +782,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     runWithRollback {
       val geomTransferComb1 = Seq(Point(40.0, 30.0), Point(30.0, 40.0))
       val geomTransferComb2 = Seq(Point(30.0, 40.0), Point(20.0, 50.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLinkComb1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 30L, 15L, 30L, None, None,
         None, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
@@ -861,7 +861,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomTransferRight4 = Seq(Point(19.0, 5.0), Point(18.0, 10.0))
       val geomTransferRight5 = Seq(Point(18.0, 10.0), Point(15.0, 25.0))
 
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
       val roadwayNumber = Sequences.nextRoadwayNumber
@@ -985,7 +985,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomTransferComb1 = Seq(Point(20.0, 5.0), Point(15.0, 10.0))//against
       val geomTransferComb2 = Seq(Point(25.0, 0.0), Point(20.0, 5.0))//against
       val otherPartGeomTransferComb1 = Seq(Point(35.0, 0.0), Point(30.0, 0.0))//against
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val projectLinkOtherPartComb1 = ProjectLink(plId + 1, 9999L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
@@ -1028,7 +1028,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomNewComb1 = Seq(Point(0.0, 20.0), Point(5.0, 15.0))
       val geomTransferComb1 = Seq(Point(5.0, 15.0), Point(10.0, 10.0))
       val geomTransferComb2 = Seq(Point(10.0, 10.0), Point(15.0, 5.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val projectLinkNewComb1Before = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0, 0, 0, None, None,
@@ -1058,7 +1058,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomNotHandledComb1Part1 = Seq(Point(0.0, 0.0), Point(5.0, 0.0))
       val geomNotHandledComb2Part1 = Seq(Point(5.0, 0.0), Point(10.0, 0.0))
       val geomTransferComb1Part2ToPart1 = Seq(Point(10.0, 0.0), Point(16.0, 0.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val projectLinkNotHandledComb1Part1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
@@ -1088,7 +1088,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomTransferComb1Part2ToPart1 = Seq(Point(0.0, 0.0), Point(6.0, 0.0))
       val geomNotHandledComb1Part1 = Seq(Point(6.0, 0.0), Point(11.0, 0.0))
       val geomNotHandledComb2Part1 = Seq(Point(11.0, 0.0), Point(16.0, 0.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val projectLinkNotHandledComb1Part1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
@@ -1121,7 +1121,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   test("Test findStartingPoints When adding one (New) link before the existing (New) road that goes against the digitization Then the road should still maintain the previous existing direction") {
     runWithRollback {
       val geomNew1 = Seq(Point(0.0, 0.0), Point(0.0, 10.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
         None, 12344L, 0.0, 10.0, SideCode.AgainstDigitizing, (None, None),
@@ -1151,7 +1151,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   test("Test findStartingPoints When adding one (New) link after the existing (New) road that goes against the digitization Then the road should still maintain the previous existing direction") {
     runWithRollback {
       val geomNew1 = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
         None, 12344L, 0.0, 10.0, SideCode.AgainstDigitizing, (None, None),
@@ -1188,7 +1188,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     runWithRollback {
       val geomNew1 = Seq(Point(723.562,44.87,94.7409999999945),
           Point(792.515,54.912,95.8469999999943))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
         None, 12344L, 0.0, 9.0, SideCode.Unknown, (None, None),
@@ -1222,7 +1222,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   test("Test findStartingPoints When adding two track road (New) after the existing (New) road that goes against the digitization Then the road should still maintain the previous existing direction") {
     runWithRollback {
       val geomNew1 = Seq(Point(5.0, 10.0), Point(5.0, 20.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
         None, 12344L, 0.0, 10.0, SideCode.AgainstDigitizing, (None, None),
@@ -1261,7 +1261,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   test("Test findStartingPoints When adding left side of two track road (New) before the existing (New) road Then the road should still maintain the previous existing direction") {
     runWithRollback {
       val geomNew1 = Seq(Point(5.0, 10.0), Point(5.0, 20.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
         None, 12344L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None),
