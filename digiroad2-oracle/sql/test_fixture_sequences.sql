@@ -35,6 +35,15 @@ create sequence project_link_seq
   cache 100
   cycle;
 
+drop sequence project_link_name_seq;
+create sequence project_link_name_seq
+  minvalue 1
+  maxvalue 999999999999999999999999999
+  start with 1000000
+  increment by 1
+  cache 100
+  cycle;
+
 drop sequence viite_general_seq;
 create sequence viite_general_seq
   minvalue 1
