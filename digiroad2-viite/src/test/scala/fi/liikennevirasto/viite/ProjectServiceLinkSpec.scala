@@ -587,15 +587,15 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val addresses = Seq(addProjectAddressLink552)
       mockForProject(id, addresses)
 
-      //adding left track alone
-      intercept[InvalidAddressDataException]{
+      // Adding left track alone
+      intercept[InvalidAddressDataException] {
         projectService.addNewLinksToProject(addresses.map(backToProjectLink(rap)), id, "U", addresses.head.linkId, true, Continuous) should be(None)
-      }.getMessage should be ("Missing right track starting project links")
+      }.getMessage should be("Missing right track starting project links")
 
       val links = projectLinkDAO.fetchProjectLinks(id)
       projectReservedPartDAO.fetchReservedRoadParts(id) should have size 1
 
-      //update link to become track 0
+      // Update link to become track 0
       projectService.updateProjectLinks(id, Set(), links.map(_.linkId), LinkStatus.New, "test", 19999, 1, 0, None,
         RoadType.FerryRoad.value, Discontinuity.EndOfRoad.value, Some(8))
       val linksAfterUpdate = projectLinkDAO.fetchProjectLinks(id)
