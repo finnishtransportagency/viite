@@ -62,6 +62,10 @@ object Sequences {
     Queries.nextCalibrationPointId.as[Long].first
   }
 
+  def fetchCalibrationPointIds(len: Int): List[Long] = {
+    Queries.fetchCalibrationPointIds(len)
+  }
+
   def nextNodeId: Long = {
     Queries.nextNodeId.as[Long].first
   }

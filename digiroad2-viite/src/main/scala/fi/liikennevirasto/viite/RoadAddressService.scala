@@ -736,45 +736,61 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   def handleRoadwayPointsUpdate(roadwayChanges: List[ProjectRoadwayChange], projectLinkChanges: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
-    def handleDualRoadwayPoints(oldRoadwayPointId: Long, newRoadwayNumber: Long, newStartAddr: Long): Option[Long] = {
-      val existingRoadwayPoint = roadwayPointDAO.fetch(newRoadwayNumber, newStartAddr)
-      var disposedRoadwayPointId: Option[Long] = None
-      val roadwayPointId = if (existingRoadwayPoint.nonEmpty) {
-        existingRoadwayPoint.get.id
+    def handleDualRoadwayPoint(oldRoadwayPointId: Long, point: ProjectRoadLinkChange): Unit = {
+      // get new address for roadway point, new beforeAfter value for node point and junction point and new startOrEnd for calibration point
+      val (newAddr, beforeAfter, startOrEnd) = if (point.reversed) {
+        (point.newEndAddr, BeforeAfter.Before, CalibrationPointLocation.EndOfLink)
       } else {
-        logger.info(s"handleDualRoadwayPoints: Creating roadway point: roadway number: ${newRoadwayNumber}, address: $newStartAddr)")
-        disposedRoadwayPointId = Some(oldRoadwayPointId)
-        roadwayPointDAO.create(newRoadwayNumber, newStartAddr, username)
+        (point.newStartAddr, BeforeAfter.After, CalibrationPointLocation.StartOfLink)
       }
-      val nodePoints = nodePointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After)
-      val junctionPoints = junctionPointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After)
 
-      nodePointDAO.expireById(nodePoints.map(_.id))
-      nodePointDAO.create(nodePoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId, createdBy = username)))
+      val existingRoadwayPoint = roadwayPointDAO.fetch(point.newRoadwayNumber, newAddr)
+      if (existingRoadwayPoint.isEmpty) {
+        logger.info(s"Handled dual roadway point for roadway number: ${point.newRoadwayNumber}, address: $newAddr:")
+        val newRoadwayPointId = roadwayPointDAO.create(point.newRoadwayNumber, newAddr, username)
 
-      junctionPointDAO.expireById(junctionPoints.map(_.id))
-      junctionPointDAO.create(junctionPoints.map(_.copy(id = NewIdValue, roadwayPointId = roadwayPointId, createdBy = username)))
-      disposedRoadwayPointId
+        val nodePoint = nodePointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After)
+        logger.info(s"Update node point (${nodePoint.map(_.id)}) for after roadway point id: $oldRoadwayPointId to $newRoadwayPointId, beforeAfter: $beforeAfter")
+        nodePointDAO.expireById(nodePoint.map(_.id))
+        nodePointDAO.create(nodePoint.map(_.copy(id = NewIdValue, roadwayPointId = newRoadwayPointId, beforeAfter = beforeAfter, createdBy = username)))
+
+        val junctionPoint = junctionPointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.beforeAfter == BeforeAfter.After)
+        logger.info(s"Update junction point (${junctionPoint.map(_.id)}) for after roadway point id: $oldRoadwayPointId to $newRoadwayPointId, beforeAfter: $beforeAfter")
+        junctionPointDAO.expireById(junctionPoint.map(_.id))
+        junctionPointDAO.create(junctionPoint.map(_.copy(id = NewIdValue, roadwayPointId = newRoadwayPointId, beforeAfter = beforeAfter, createdBy = username)))
+
+        val calibrationPoint = CalibrationPointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.startOrEnd == CalibrationPointLocation.StartOfLink)
+        if (calibrationPoint.nonEmpty) {
+          logger.info(s"Update calibration point (${calibrationPoint.map(_.id)}) for after roadway point id: $oldRoadwayPointId to $newRoadwayPointId, startOrEnd: $startOrEnd")
+          CalibrationPointDAO.expireById(calibrationPoint.map(_.id))
+          try {
+            CalibrationPointDAO.create(calibrationPoint.map(_.copy(id = NewIdValue, roadwayPointId = newRoadwayPointId, startOrEnd = startOrEnd, createdBy = username)))
+          } catch {
+            case e: Exception =>
+              logger.info(s"Query is f'cked up!")
+          }
+        }
+      }
     }
 
-    def getNewRoadwayNumberInPoint(roadwayPoint: RoadwayPoint, newAddrM: Long): (Option[Long], Option[Long]) = {
+    def getNewRoadwayNumberInPoint(roadwayPoint: RoadwayPoint): Option[Long] = {
       projectLinkChanges.filter(mrw => roadwayPoint.roadwayNumber == mrw.originalRoadwayNumber
         && roadwayPoint.addrMValue >= mrw.originalStartAddr && roadwayPoint.addrMValue <= mrw.originalEndAddr) match {
-        case linkChanges if linkChanges.size == 2 && linkChanges.map(_.newRoadwayNumber).distinct.size > 1 =>
+        case linkChanges: Seq[ProjectRoadLinkChange] if linkChanges.size == 2 && linkChanges.map(_.newRoadwayNumber).distinct.size > 1 =>
           val sortedLinkChanges = linkChanges.sortBy(_.originalStartAddr)
           val beforePoint = sortedLinkChanges.head
-          val afterPoint = sortedLinkChanges.last
-          val disposedRoadwayPointId = handleDualRoadwayPoints(roadwayPoint.id, afterPoint.newRoadwayNumber, newAddrM)
-          (Some(beforePoint.newRoadwayNumber), disposedRoadwayPointId)
-        case linkChanges if linkChanges.nonEmpty => (Some(linkChanges.head.newRoadwayNumber), None)
-        case linkChanges if linkChanges.isEmpty => (None, None)
+          val afterPoint: ProjectRoadLinkChange = sortedLinkChanges.last
+          handleDualRoadwayPoint(roadwayPoint.id, afterPoint)
+          Some(beforePoint.newRoadwayNumber)
+        case linkChanges if linkChanges.nonEmpty => Some(linkChanges.head.newRoadwayNumber)
+        case linkChanges if linkChanges.isEmpty => None
       }
     }
 
     try {
 
       val projectRoadwayChanges = roadwayChanges.filter(rw => List(Transfer, ReNumeration, Unchanged, Termination).contains(rw.changeInfo.changeType))
-      val allUpdatableRoadwayPoints: Seq[RoadwayPoint] = projectRoadwayChanges.sortBy(_.changeInfo.target.startAddressM).foldLeft(
+      val updatedRoadwayPoints: Seq[RoadwayPoint] = projectRoadwayChanges.sortBy(_.changeInfo.target.startAddressM).foldLeft(
         Seq.empty[RoadwayPoint]) { (list, rwc) =>
         val change = rwc.changeInfo
         val source = change.source
@@ -806,8 +822,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             if (!change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
-                val (roadwayNumberInPoint, disposedRoadwayPointId) = getNewRoadwayNumberInPoint(rwp, newAddrM)
-                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) {
+                val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp)
+                if (roadwayNumberInPoint.isDefined) {
                   val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
                   roadwayPointDAO.update(newRwp)
                   Seq(newRwp)
@@ -818,8 +834,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             } else {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
-                val (roadwayNumberInPoint, disposedRoadwayPointId) = getNewRoadwayNumberInPoint(rwp, newAddrM)
-                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) {
+                val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp)
+                if (roadwayNumberInPoint.isDefined) {
                   val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
                   roadwayPointDAO.update(newRwp)
                   Seq(newRwp)
@@ -832,8 +848,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             if (change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
-                val (roadwayNumberInPoint, disposedRoadwayPointId) = getNewRoadwayNumberInPoint(rwp, newAddrM)
-                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) {
+                val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp)
+                if (roadwayNumberInPoint.isDefined) {
                   val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
                   roadwayPointDAO.update(newRwp)
                   Seq(newRwp)
@@ -850,8 +866,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
                 change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get
               )
               if (terminatedRoadAddress.isDefined) {
-                val (roadwayNumberInPoint, disposedRoadwayPointId) = getNewRoadwayNumberInPoint(rwp, rwp.addrMValue)
-                if (roadwayNumberInPoint.isDefined && disposedRoadwayPointId.isEmpty) {
+                val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp)
+                if (roadwayNumberInPoint.isDefined) {
                   val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = rwp.addrMValue, modifiedBy = Some(username))
                   roadwayPointDAO.update(newRwp)
                   Seq(newRwp)
@@ -863,8 +879,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         } else list
       }
 
-      if (allUpdatableRoadwayPoints.nonEmpty) {
-        logger.info(s"Updated ${allUpdatableRoadwayPoints.length} roadway points: ${allUpdatableRoadwayPoints.mkString(", ")}")
+      if (updatedRoadwayPoints.nonEmpty) {
+        logger.info(s"Updated ${updatedRoadwayPoints.length} roadway points: ${updatedRoadwayPoints.map(rp => s"(id: ${rp.id}, roadwayNumber: ${rp.roadwayNumber}, addrM: ${rp.addrMValue})").mkString(" and ")}")
       }
     } catch {
       case ex: Exception =>

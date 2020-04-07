@@ -49,6 +49,10 @@ object Queries {
     sql"""select ROADWAY_SEQ.nextval from dual connect by level <= $len""".as[Long].list
   }
 
+  def fetchCalibrationPointIds(len: Int) = {
+    sql"""select CALIBRATION_POINT_SEQ.nextval from dual connect by level <= $len""".as[Long].list
+  }
+
   def fetchNodeIds(len: Int) = {
     sql"""select NODE_SEQ.nextval from dual connect by level <= $len""".as[Long].list
   }
