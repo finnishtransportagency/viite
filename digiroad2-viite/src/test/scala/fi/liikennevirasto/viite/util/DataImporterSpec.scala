@@ -98,13 +98,22 @@ class DataImporterSpec extends FunSuite with Matchers {
 
   val dataImporter = new DataImporter {
     override def withDynTransaction(f: => Unit): Unit = f
+
     override def withDynSession[T](f: => T): T = f
+
     override def getRoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) = {
       roadAddressImporter
     }
+
     override def disableRoadwayTriggers: Unit = {}
+
     override def enableRoadwayTriggers: Unit = {}
+
     override def roadwayResetter(): Unit = {}
+
+    override def resetRoadAddressSequences(): Unit = {}
+
+    override def resetNodesAndJunctionSequences(): Unit = {}
   }
 
   test("Test importRoadAddressData When importing addresses Then they are saved in database") {
