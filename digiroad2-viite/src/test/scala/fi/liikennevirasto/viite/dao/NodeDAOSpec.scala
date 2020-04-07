@@ -180,5 +180,14 @@ class NodeDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test Node publish") {
+    runWithRollback {
+      val nodeId = Sequences.nextNodeId
+      val nodeNumber = dao.create(Seq(testNode1.copy(id = nodeId))).head
+      dao.publish(nodeId,"testuser")
+      val node = dao.fetchById(nodeId)
+      node.get.editor should be(Some("testuser"))
+    }
+  }
 
 }
