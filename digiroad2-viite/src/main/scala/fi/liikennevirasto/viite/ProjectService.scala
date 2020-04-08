@@ -1896,7 +1896,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.debug(s"Updating and inserting calibration points")
       roadAddressService.handleProjectCalibrationPointChanges(linearLocationsToInsert, username, enrichedProjectLinkChanges.filter(_.status == LinkStatus.Terminated))
       logger.debug(s"Creating nodes and junctions templates")
-      nodesAndJunctionsService.handleJunctionPointTemplates(roadwayChanges, projectLinksAfterChanges, enrichedProjectLinkChanges, username)
+      nodesAndJunctionsService.handleJunctionTemplates(roadwayChanges, projectLinksAfterChanges, enrichedProjectLinkChanges, username)
       nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, enrichedProjectLinkChanges, username)
       logger.debug(s"Expiring obsolete nodes and junctions")
       val expiredJunctionPoints = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterChanges, endDate, username)
