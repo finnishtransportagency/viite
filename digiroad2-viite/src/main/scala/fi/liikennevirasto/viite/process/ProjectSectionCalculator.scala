@@ -55,16 +55,16 @@ object ProjectSectionCalculator {
         } catch {
           case ex: InvalidAddressDataException =>
             logger.info(s"Can't calculate terminated road/road part ${part._1}/${part._2}: " + ex.getMessage)
-            throw ex
+            terminated
           case ex: NoSuchElementException =>
             logger.info("Delta terminated calculation failed: " + ex.getMessage, ex)
-            throw ex
+            terminated
           case ex: NullPointerException =>
             logger.info("Delta terminated calculation failed (NPE)", ex)
-            throw ex
+            terminated
           case ex: Throwable =>
             logger.info("Delta terminated calculation not possible: " + ex.getMessage)
-            throw ex
+            terminated
         }
       }.toSeq
 

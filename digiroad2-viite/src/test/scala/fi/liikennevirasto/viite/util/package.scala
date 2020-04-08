@@ -116,7 +116,7 @@ package object util {
   def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false, roads: Seq[(Long, Long, String)] = Seq((1999L, 1L, "Test road")),
                             discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, withRoadAddress: Boolean = true): (Project, Seq[ProjectLink]) = {
 
-    val projectId = Sequences.nextViitePrimaryKeySeqValue
+    val projectId = Sequences.nextViiteProjectId
 
     def createRoadAddresses(roadNumber: Long, roadPartNumber: Long, track: Long, start: Long, end: Long): (Long, Long) = {
      val roadwayId = Sequences.nextRoadwayId
@@ -165,7 +165,7 @@ package object util {
   }
 
   def setUpProjectWithRampLinks(linkStatus: LinkStatus, addrM: Seq[Long]) = {
-    val id = Sequences.nextViitePrimaryKeySeqValue
+    val id = Sequences.nextViiteProjectId
     val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
       "", Seq(), Seq(), None, None)
     projectDAO.create(project)
@@ -203,7 +203,7 @@ package object util {
         roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
         roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), roadAddress.geometry, project.id, status, roadAddress.roadType,
         roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely,reversed = false,
-        None, roadAddress.adjustedTimestamp, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
+        None, roadAddress.adjustedTimestamp, roadwayNumber = roadAddress.roadwayNumber, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
     }
   }
 

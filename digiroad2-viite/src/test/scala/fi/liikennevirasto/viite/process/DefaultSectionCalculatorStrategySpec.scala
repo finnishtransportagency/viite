@@ -118,85 +118,87 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
   test("Test defaultSectionCalculatorStrategy.assignMValues() and findStartingPoints When using 4 geometries that end up in a point " +
     "Then return the same project links, but now with correct MValues and directions") {
-    val geomLeft1 = Seq(Point(10.0, 10.0), Point(20.0, 10.0))
-    val geomLeft2 = Seq(Point(20.0, 10.0), Point(30.0, 10.0))
+    runWithRollback {
+      val geomLeft1 = Seq(Point(10.0, 10.0), Point(20.0, 10.0))
+      val geomLeft2 = Seq(Point(20.0, 10.0), Point(30.0, 10.0))
 
-    val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None),
-      geomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 0, reversed = false,
-      None, 86400L)
-    val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None),
-      geomLeft2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 0, reversed = false,
-      None, 86400L)
+      val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        geomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        geomLeft2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 0, reversed = false,
+        None, 86400L)
 
-    val geomRight1 = Seq(Point(10.0, 20.0), Point(20.0, 20.0))
-    val geomRight2 = Seq(Point(20.0, 20.0), Point(30.0, 20.0))
+      val geomRight1 = Seq(Point(10.0, 20.0), Point(20.0, 20.0))
+      val geomRight2 = Seq(Point(20.0, 20.0), Point(30.0, 20.0))
 
-    val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None),
-      geomRight1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), 0L, 0, 0, reversed = false,
-      None, 86400L)
+      val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        geomRight1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), 0L, 0, 0, reversed = false,
+        None, 86400L)
 
-    val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None),
-      geomRight2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), 0L, 0, 0, reversed = false,
-      None, 86400L)
+      val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        geomRight2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), 0L, 0, 0, reversed = false,
+        None, 86400L)
 
-    val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2)
-    val rightSideProjectLinks = Seq(projectLinkRight1, projectLinkRight2)
-    val newProjectLinks = leftSideProjectLinks ++ rightSideProjectLinks
+      val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2)
+      val rightSideProjectLinks = Seq(projectLinkRight1, projectLinkRight2)
+      val newProjectLinks = leftSideProjectLinks ++ rightSideProjectLinks
 
-    val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy.assignMValues(newProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-    val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, Seq.empty[ProjectLink], Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-    projectLinksWithAssignedValues.forall(_.sideCode == projectLinksWithAssignedValues.head.sideCode) should be(true)
-    startingPointsForCalculations should be((geomRight2.last, geomLeft2.last))
+      val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy.assignMValues(newProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, Seq.empty[ProjectLink], Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      projectLinksWithAssignedValues.forall(_.sideCode == projectLinksWithAssignedValues.head.sideCode) should be(true)
+      startingPointsForCalculations should be((geomRight2.last, geomLeft2.last))
 
-    val additionalGeomLeft1 = Seq(Point(40.0, 10.0), Point(30.0, 10.0))
-    val additionalGeomRight1 = Seq(Point(40.0, 20.0), Point(30.0, 20.0))
+      val additionalGeomLeft1 = Seq(Point(40.0, 10.0), Point(30.0, 10.0))
+      val additionalGeomRight1 = Seq(Point(40.0, 20.0), Point(30.0, 20.0))
 
-    val additionalProjectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None),
-      additionalGeomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomLeft1), 0L, 0, 0, reversed = false,
-      None, 86400L)
+      val additionalProjectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        additionalGeomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomLeft1), 0L, 0, 0, reversed = false,
+        None, 86400L)
 
-    val additionalProjectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12350L, 0.0, 0.0, SideCode.Unknown, (None, None),
-      additionalGeomRight1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomRight1), 0L, 0, 0, reversed = false,
-      None, 86400L)
+      val additionalProjectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12350L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        additionalGeomRight1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomRight1), 0L, 0, 0, reversed = false,
+        None, 86400L)
 
-    val leftSideAdditionalProjectLinks = Seq(additionalProjectLinkLeft1)
-    val rightSideAdditionalProjectLinks = Seq(additionalProjectLinkRight1)
-    val additionalProjectLinks = leftSideAdditionalProjectLinks ++ rightSideAdditionalProjectLinks
+      val leftSideAdditionalProjectLinks = Seq(additionalProjectLinkLeft1)
+      val rightSideAdditionalProjectLinks = Seq(additionalProjectLinkRight1)
+      val additionalProjectLinks = leftSideAdditionalProjectLinks ++ rightSideAdditionalProjectLinks
 
-    val projectLinksWithAssignedValuesPlus = defaultSectionCalculatorStrategy.assignMValues(projectLinksWithAssignedValues ++ additionalProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-    val findStartingPointsPlus = defaultSectionCalculatorStrategy.findStartingPoints(projectLinksWithAssignedValues ++ additionalProjectLinks, Seq.empty[ProjectLink], Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-    projectLinksWithAssignedValuesPlus.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).forall(_.sideCode == projectLinksWithAssignedValuesPlus.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).head.sideCode) should be(true)
-    projectLinksWithAssignedValuesPlus.map(_.sideCode.value).sorted.containsSlice(projectLinksWithAssignedValues.map(_.sideCode.value).sorted) should be(true)
-    projectLinksWithAssignedValues.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value))
-    findStartingPointsPlus should be(startingPointsForCalculations)
+      val projectLinksWithAssignedValuesPlus = defaultSectionCalculatorStrategy.assignMValues(projectLinksWithAssignedValues ++ additionalProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      val findStartingPointsPlus = defaultSectionCalculatorStrategy.findStartingPoints(projectLinksWithAssignedValues ++ additionalProjectLinks, Seq.empty[ProjectLink], Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      projectLinksWithAssignedValuesPlus.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).forall(_.sideCode == projectLinksWithAssignedValuesPlus.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).head.sideCode) should be(true)
+      projectLinksWithAssignedValuesPlus.map(_.sideCode.value).sorted.containsSlice(projectLinksWithAssignedValues.map(_.sideCode.value).sorted) should be(true)
+      projectLinksWithAssignedValues.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value))
+      findStartingPointsPlus should be(startingPointsForCalculations)
 
 
-    val additionalGeomLeftBefore = Seq(Point(10.0, 10.0), Point(0.0, 10.0))
-    val additionalGeomRightBefore = Seq(Point(10.0, 20.0), Point(0.0, 20.0))
+      val additionalGeomLeftBefore = Seq(Point(10.0, 10.0), Point(0.0, 10.0))
+      val additionalGeomRightBefore = Seq(Point(10.0, 20.0), Point(0.0, 20.0))
 
-    val additionalProjectLinkLeftBefore = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12351L, 0.0, 0.0, SideCode.Unknown, (None, None),
-      additionalGeomLeftBefore, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomLeftBefore), 0L, 0, 0, reversed = false,
-      None, 86400L)
+      val additionalProjectLinkLeftBefore = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12351L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        additionalGeomLeftBefore, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomLeftBefore), 0L, 0, 0, reversed = false,
+        None, 86400L)
 
-    val additionalProjectLinkRightBefore = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12352L, 0.0, 0.0, SideCode.Unknown, (None, None),
-      additionalGeomRightBefore, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomRightBefore), 0L, 0, 0, reversed = false,
-      None, 86400L)
+      val additionalProjectLinkRightBefore = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12352L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        additionalGeomRightBefore, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomRightBefore), 0L, 0, 0, reversed = false,
+        None, 86400L)
 
-    val leftSideBeforeProjectLinks = Seq(additionalProjectLinkLeftBefore)
-    val rightSideBeforeProjectLinks = Seq(additionalProjectLinkRightBefore)
-    val beforeProjectLinks = leftSideBeforeProjectLinks ++ rightSideBeforeProjectLinks
+      val leftSideBeforeProjectLinks = Seq(additionalProjectLinkLeftBefore)
+      val rightSideBeforeProjectLinks = Seq(additionalProjectLinkRightBefore)
+      val beforeProjectLinks = leftSideBeforeProjectLinks ++ rightSideBeforeProjectLinks
 
-    val projectLinksWithAssignedValuesBefore = defaultSectionCalculatorStrategy.assignMValues(projectLinksWithAssignedValues ++ beforeProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
-    projectLinksWithAssignedValuesBefore.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).forall(_.sideCode == projectLinksWithAssignedValuesBefore.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).head.sideCode) should be(true)
-    projectLinksWithAssignedValuesBefore.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value))
+      val projectLinksWithAssignedValuesBefore = defaultSectionCalculatorStrategy.assignMValues(projectLinksWithAssignedValues ++ beforeProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      projectLinksWithAssignedValuesBefore.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).forall(_.sideCode == projectLinksWithAssignedValuesBefore.filter(p => projectLinksWithAssignedValues.map(_.linkId).contains(p.linkId)).head.sideCode) should be(true)
+      projectLinksWithAssignedValuesBefore.map(_.sideCode.value).containsSlice(projectLinksWithAssignedValuesPlus.filter(p => additionalProjectLinks.map(_.linkId).contains(p.linkId)).map(_.sideCode).map(SideCode.switch).map(_.value))
+    }
   }
 
   test("Test defaultSectionCalculatorStrategy.assignMValues() When using 2 tracks with huge discontinuity and not proper road type sections Then they will fail if the sections cannot be adjusted for two tracks due to their huge discontinuity") {
@@ -204,10 +206,10 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomLeft1 = Seq(Point(0.0, 0.0), Point(0.0, 30.0))
       val geomLeft2 = Seq(Point(0.0, 30.0), Point(0.0, 60.0))
 
-      val projId = Sequences.nextViitePrimaryKeySeqValue
+      val projId = Sequences.nextViiteProjectId
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
-      val projectLinkId = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId = Sequences.nextProjectLinkId
       val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
@@ -215,7 +217,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
         Some("user"), 12345L, 0.0, 0.0, SideCode.Unknown, (None, None),
         geomLeft1, projId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 0, reversed = false,
         None, 86400L, roadwayNumber = 12345L)
-      val projectLinkLeft2 = ProjectLink(projectLinkId+1, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
+      val projectLinkLeft2 = ProjectLink(projectLinkId + 1, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
         Some("user"), 12346L, 0.0, 0.0, SideCode.Unknown, (None, None),
         geomLeft2, projId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 0, reversed = false,
         None, 86400L, roadwayNumber = 12345L)
@@ -223,14 +225,14 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomRight1 = Seq(Point(5.0, 0.0), Point(5.0, 5.0))
       val geomRight2 = Seq(Point(5.0, 5.0), Point(5.0, 62.0))
 
-      val projectLinkRight1 = ProjectLink(projectLinkId+2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        Some("user"), 12347L, 0.0, 5.0, SideCode.Unknown, (Some(ProjectLinkCalibrationPoint(123457L,0.0, 0, CalibrationPointSource.ProjectLinkSource)), None),
+      val projectLinkRight1 = ProjectLink(projectLinkId + 2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
+        Some("user"), 12347L, 0.0, 5.0, SideCode.Unknown, (Some(ProjectLinkCalibrationPoint(123457L, 0.0, 0, CalibrationPointSource.ProjectLinkSource)), None),
         geomRight1, projId, LinkStatus.Transfer, RoadType.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId, linearLocationId, 0, reversed = false,
         None, 86400L, roadwayNumber = 12346L)
 
-      val projectLinkRight2 = ProjectLink(projectLinkId+3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None,
+      val projectLinkRight2 = ProjectLink(projectLinkId + 3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None,
         Some("user"), 12348L, 0.0, 57.0, SideCode.Unknown, (None, Some(ProjectLinkCalibrationPoint(123458L, 57.0, 62, CalibrationPointSource.ProjectLinkSource))),
-        geomRight2, projId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId+1, linearLocationId+1, 0, reversed = false,
+        geomRight2, projId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId + 1, linearLocationId + 1, 0, reversed = false,
         None, 86400L, roadwayNumber = 12347L)
 
       val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2)
@@ -240,21 +242,21 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
       buildTestDataForProject(Some(project), Some(Seq(roadway1, roadway2)), Some(Seq(linearLocation1, linearLocation2)), Some(leftSideProjectLinks ++ rightSideProjectLinks))
 
-      val projectLinksWithAssignedValues = defaultSectionCalculatorStrategy.assignMValues(leftSideProjectLinks, rightSideProjectLinks, Seq.empty[UserDefinedCalibrationPoint])
-      projectLinksWithAssignedValues.filter(_.track == Track.LeftSide).forall(lpl => lpl.startAddrMValue == 0L) should be(true)
-      projectLinksWithAssignedValues.filter(_.track == Track.LeftSide).forall(lpl => lpl.endAddrMValue == 0L) should be(true)
+      intercept[NoSuchElementException] {
+        defaultSectionCalculatorStrategy.assignMValues(leftSideProjectLinks, rightSideProjectLinks, Seq.empty[UserDefinedCalibrationPoint])
+      }
     }
-}
+  }
 
   test("Test defaultSectionCalculatorStrategy.assignMValues() When using 2 tracks with proper pairing road type sections Then they will calculate values properly") {
     runWithRollback {
       val geomLeft1 = Seq(Point(0.0, 0.0), Point(0.0, 30.0))
       val geomLeft2 = Seq(Point(0.0, 30.0), Point(0.0, 60.0))
 
-      val projId = Sequences.nextViitePrimaryKeySeqValue
+      val projId = Sequences.nextViiteProjectId
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
-      val projectLinkId = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId = Sequences.nextProjectLinkId
       val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
@@ -297,10 +299,10 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     runWithRollback {
       val geomLeft1 = Seq(Point(0.0, 0.0), Point(0.0, 60.0))
 
-      val projId = Sequences.nextViitePrimaryKeySeqValue
+      val projId = Sequences.nextViiteProjectId
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
-      val projectLinkId = Sequences.nextViitePrimaryKeySeqValue
+      val projectLinkId = Sequences.nextProjectLinkId
       val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
@@ -344,7 +346,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     runWithRollback {
       val geomTransfer1 = Seq(Point(30.0, 20.0), Point(20.0, 30.0))
       val geomTransfer2 = Seq(Point(20.0, 30.0), Point(10.0, 40.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 15L, 30L, None, None,
         None, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
@@ -380,7 +382,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     runWithRollback {
       val geomTransfer1 = Seq(Point(30.0, 20.0), Point(20.0, 30.0))
       val geomTransfer2 = Seq(Point(20.0, 30.0), Point(10.0, 40.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 15L, 30L, None, None,
         None, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
@@ -414,7 +416,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   private def testFindStartingPointsWithOneMinorDiscontinuity(sideCode: SideCode, linkStatus: LinkStatus): Unit = {
     runWithRollback {
       val geom1 = Seq(Point(10.0, 20.0), Point(0.0, 30.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 0L, 15L, None, None,
         None, 12345L, 0.0, 15.0, sideCode, (None, None),
@@ -511,7 +513,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   private def testFindStartingPointsWithTwoMinorDiscontinuitiesNewInMiddle(sideCode: SideCode, linkStatus: LinkStatus): Unit = {
     runWithRollback {
       val geom1 = Seq(Point(10.0, 40.0), Point(0.0, 50.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 0L, 15L, None, None,
         None, 12345L, 0.0, 15.0, sideCode, (None, None),
@@ -627,7 +629,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geom1 = Seq(Point(10.0, 40.0), Point(0.0, 50.0))
       val geom3 = Seq(Point(45.0, 0.0), Point(35.0, 10.0))
       val geom4 = Seq(Point(55.0, 0.0), Point(45.0, 10.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val startAddr1 = if (sideCode == SideCode.TowardsDigitizing) 15L else 0
       val endAddr1 = if (sideCode == SideCode.TowardsDigitizing) 30L else 15L
@@ -748,7 +750,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   test("Test findStartingPoints When adding two track road (New) with minor discontinuity before the existing (Transfer) road Then the road should still maintain the previous existing direction") {
     runWithRollback {
       val geomTransfer1 = Seq(Point(10.0, 20.0), Point(0.0, 30.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 0L, 15L, None, None,
         None, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
@@ -780,7 +782,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     runWithRollback {
       val geomTransferComb1 = Seq(Point(40.0, 30.0), Point(30.0, 40.0))
       val geomTransferComb2 = Seq(Point(30.0, 40.0), Point(20.0, 50.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLinkComb1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 30L, 15L, 30L, None, None,
         None, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, (None, None),
@@ -859,7 +861,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomTransferRight4 = Seq(Point(19.0, 5.0), Point(18.0, 10.0))
       val geomTransferRight5 = Seq(Point(18.0, 10.0), Point(15.0, 25.0))
 
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val roadwayId = Sequences.nextRoadwayId
       val linearLocationId = Sequences.nextLinearLocationId
       val roadwayNumber = Sequences.nextRoadwayNumber
@@ -983,7 +985,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomTransferComb1 = Seq(Point(20.0, 5.0), Point(15.0, 10.0))//against
       val geomTransferComb2 = Seq(Point(25.0, 0.0), Point(20.0, 5.0))//against
       val otherPartGeomTransferComb1 = Seq(Point(35.0, 0.0), Point(30.0, 0.0))//against
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val projectLinkOtherPartComb1 = ProjectLink(plId + 1, 9999L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
@@ -1026,7 +1028,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomNewComb1 = Seq(Point(0.0, 20.0), Point(5.0, 15.0))
       val geomTransferComb1 = Seq(Point(5.0, 15.0), Point(10.0, 10.0))
       val geomTransferComb2 = Seq(Point(10.0, 10.0), Point(15.0, 5.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val projectLinkNewComb1Before = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0, 0, 0, None, None,
@@ -1056,7 +1058,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomNotHandledComb1Part1 = Seq(Point(0.0, 0.0), Point(5.0, 0.0))
       val geomNotHandledComb2Part1 = Seq(Point(5.0, 0.0), Point(10.0, 0.0))
       val geomTransferComb1Part2ToPart1 = Seq(Point(10.0, 0.0), Point(16.0, 0.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val projectLinkNotHandledComb1Part1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
@@ -1086,7 +1088,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomTransferComb1Part2ToPart1 = Seq(Point(0.0, 0.0), Point(6.0, 0.0))
       val geomNotHandledComb1Part1 = Seq(Point(6.0, 0.0), Point(11.0, 0.0))
       val geomNotHandledComb2Part1 = Seq(Point(11.0, 0.0), Point(16.0, 0.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val projectLinkNotHandledComb1Part1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
@@ -1119,7 +1121,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   test("Test findStartingPoints When adding one (New) link before the existing (New) road that goes against the digitization Then the road should still maintain the previous existing direction") {
     runWithRollback {
       val geomNew1 = Seq(Point(0.0, 0.0), Point(0.0, 10.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
         None, 12344L, 0.0, 10.0, SideCode.AgainstDigitizing, (None, None),
@@ -1149,7 +1151,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   test("Test findStartingPoints When adding one (New) link after the existing (New) road that goes against the digitization Then the road should still maintain the previous existing direction") {
     runWithRollback {
       val geomNew1 = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
         None, 12344L, 0.0, 10.0, SideCode.AgainstDigitizing, (None, None),
@@ -1186,7 +1188,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     runWithRollback {
       val geomNew1 = Seq(Point(723.562,44.87,94.7409999999945),
           Point(792.515,54.912,95.8469999999943))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
         None, 12344L, 0.0, 9.0, SideCode.Unknown, (None, None),
@@ -1220,7 +1222,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   test("Test findStartingPoints When adding two track road (New) after the existing (New) road that goes against the digitization Then the road should still maintain the previous existing direction") {
     runWithRollback {
       val geomNew1 = Seq(Point(5.0, 10.0), Point(5.0, 20.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
         None, 12344L, 0.0, 10.0, SideCode.AgainstDigitizing, (None, None),
@@ -1259,7 +1261,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
   test("Test findStartingPoints When adding left side of two track road (New) before the existing (New) road Then the road should still maintain the previous existing direction") {
     runWithRollback {
       val geomNew1 = Seq(Point(5.0, 10.0), Point(5.0, 20.0))
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
         None, 12344L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None),

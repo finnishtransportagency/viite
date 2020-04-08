@@ -181,7 +181,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return the created project
     */
   private def createProject(roadAddressProject: Project): Project = {
-    val id = Sequences.nextViitePrimaryKeySeqValue
+    val id = Sequences.nextViiteProjectId
     val project = roadAddressProject.copy(id = id)
     projectDAO.create(project)
     val error = addLinksToProject(project)
@@ -1951,6 +1951,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       handleRoadComplementaryTables(roadwayChanges, enrichedProjectRoadLinkChanges, linearLocationsToInsert,
         enrichedProjectLinks, Some(project.startDate.minusDays(1)), nodeIds, project.createdBy)
+      nodesAndJunctionsService.publishNodes(nodeIds, project.createdBy)
       projectLinks.map(_.roadNumber).toSet
     } catch {
       case e: ProjectValidationException =>

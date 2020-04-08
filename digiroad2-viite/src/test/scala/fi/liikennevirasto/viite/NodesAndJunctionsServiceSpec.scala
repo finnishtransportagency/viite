@@ -256,7 +256,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.TowardsDigitizing, 0L,
         calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))),
         geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val plId1 = projectId + 1
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
@@ -342,7 +342,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.TowardsDigitizing, 0L,
         calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))),
         geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val plId1 = projectId + 1
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
@@ -444,7 +444,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         calibrationPoints = (CalibrationPointReference.None, CalibrationPointReference(Some(10))),
         geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber + 1, None, None)
 
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
 
       val link1 = dummyProjectLink(road1000, part, Track.Combined, Discontinuity.EndOfRoad, 0, 10, 0, 10, Some(DateTime.now()), None, 12346, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, geom2, roadwayNumber + 1).copy(id = projectId + 1, roadwayId = rwId + 1, linearLocationId = linearLocationId + 1)
 
@@ -530,13 +530,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val linearLocation2 = LinearLocation(linearLocationId + 1, 1, 12346, 0L, 10L, SideCode.TowardsDigitizing, 0L,
         calibrationPoints = (CalibrationPointReference(Some(0L)), CalibrationPointReference(Some(10L))),
         geom2, LinkGeomSource.NormalLinkInterface, roadwayNumber + 1, None, None)
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
 
       val link1 = dummyProjectLink(road1000, part, Track.Combined, Discontinuity.EndOfRoad, 0, 10, 0, 10, Some(DateTime.now()), None, 12346, 0, 10, SideCode.AgainstDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, geom2, roadwayNumber + 1).copy(id = projectId + 1, roadwayId = rwId + 1, linearLocationId = linearLocationId + 1)
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
-      val pls = Seq(link1).map(_.copy(id = Sequences.nextViitePrimaryKeySeqValue))
+      val pls = Seq(link1).map(_.copy(id = Sequences.nextProjectLinkId))
 
       buildTestDataForProject(Some(project), Some(Seq(roadway, roadway2)), Some(Seq(linearLocation, linearLocation2)), Some(pls))
 
@@ -613,7 +613,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val linearLocation = LinearLocation(linearLocationId, 1, 12345, 0L, 10L, SideCode.AgainstDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
       val linearLocation2 = LinearLocation(linearLocationId + 1, 1, 12346, 0L, 10L, SideCode.AgainstDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))), geom2, LinkGeomSource.NormalLinkInterface, roadwayNumber + 1, None, None)
 
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
 
       val link1 = dummyProjectLink(road1000, part, Track.Combined, Discontinuity.EndOfRoad, 0, 10, 0, 10, Some(DateTime.now()), None, 12346, 0, 10, SideCode.AgainstDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, geom2, roadwayNumber + 1).copy(id = projectId + 1, roadwayId = rwId + 1, linearLocationId = linearLocationId + 1)
 
@@ -707,7 +707,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val leftGeom1 = Seq(Point(0.0, 50.0), Point(5.0, 50.0))
@@ -852,7 +852,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val leftGeom1 = Seq(Point(0.0, 50.0), Point(5.0, 50.0))
       val rightGeom1 = Seq(Point(0.0, 40.0), Point(5.0, 40.0))
@@ -1057,7 +1057,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val leftGeom1 = Seq(Point(0.0, 50.0), Point(5.0, 50.0))
       val rightGeom1 = Seq(Point(0.0, 40.0), Point(5.0, 40.0))
@@ -1147,7 +1147,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val leftGeom1 = Seq(Point(0.0, 50.0), Point(5.0, 50.0))
@@ -1251,7 +1251,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val leftGeom1 = Seq(Point(0.0, 50.0), Point(5.0, 50.0))
@@ -1359,7 +1359,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val leftGeom1 = Seq(Point(0.0, 50.0), Point(5.0, 50.0))
@@ -1473,7 +1473,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val combGeom1 = Seq(Point(0.0, 0.0), Point(10.0, 0.0))
@@ -1566,7 +1566,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val combGeom1 = Seq(Point(0.0, 0.0), Point(10.0, 0.0))
@@ -1661,7 +1661,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val combGeom1 = Seq(Point(0.0, 0.0), Point(10.0, 0.0))
@@ -1754,7 +1754,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val combGeom1 = Seq(Point(0.0, 0.0), Point(10.0, 0.0))
@@ -1921,7 +1921,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val combGeom1 = Seq(Point(0.0, 0.0), Point(10.0, 0.0))
       val combGeom2 = Seq(Point(10.0, 0.0), Point(20.0, 0.0))
@@ -2088,7 +2088,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val combGeom1 = Seq(Point(0.0, 0.0), Point(10.0, 0.0))
       val combGeom2 = Seq(Point(10.0, 0.0), Point(20.0, 0.0))
@@ -2261,7 +2261,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val combGeom1 = Seq(Point(0.0, 5.0), Point(5.0, 5.0))
@@ -2444,7 +2444,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val combGeom1 = Seq(Point(0.0, 0.0), Point(10.0, 0.0))
@@ -2600,7 +2600,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val combGeom1 = Seq(Point(0.0, 0.0), Point(10.0, 0.0))
@@ -2775,7 +2775,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val combGeom1 = Seq(Point(0.0, 0.0), Point(10.0, 0.0))
@@ -2954,7 +2954,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val combGeom1 = Seq(Point(0.0, 5.0), Point(5.0, 5.0))
@@ -3041,7 +3041,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val combGeom1 = Seq(Point(0.0, 5.0), Point(5.0, 5.0))
@@ -3132,7 +3132,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
 
       val combGeom1 = Seq(Point(0.0, 5.0), Point(5.0, 5.0))
@@ -3216,13 +3216,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val combGeom2 = Seq(Point(100.0, 5.0), Point(150.0, 5.0))
 
       val roadwayNumber = Sequences.nextRoadwayNumber
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val linearLocationId = Sequences.nextLinearLocationId
       val roadwayId = Sequences.nextRoadwayId
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextProjectLinkId
 
 
       val roadways = Seq(Roadway(roadwayId, roadwayNumber, 999, 999, RoadType.PublicRoad, Track.LeftSide, Discontinuity.Continuous,
@@ -3391,7 +3391,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadGeom2 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
 
       val roadwayNumber = Sequences.nextRoadwayNumber
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val plId1 = projectId + 1
       val plId2 = projectId + 2
       val roadLink1 = dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous, 0, 100, 0, 100, Some(DateTime.now()), None, 12345, 0, 100.0, SideCode.TowardsDigitizing, LinkStatus.New, projectId, RoadType.PublicRoad, roadGeom1, roadwayNumber).copy(id = plId1)
@@ -3498,7 +3498,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadGeom1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
 
       val roadwayNumber = Sequences.nextRoadwayNumber
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val roadLink = dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous, 0, 100, 0, 100, Some(DateTime.now()), None, 12345, 0, 100.0, SideCode.TowardsDigitizing, LinkStatus.New, projectId, RoadType.PublicRoad, roadGeom1, roadwayNumber)
 
       val roadways = Seq(
@@ -3591,7 +3591,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadGeom1 = Seq(Point(100.0, 0.0), Point(250.0, 0.0))
 
       val roadwayNumber = Sequences.nextRoadwayNumber
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
 
       val roadLink = dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous, 100, 250, 100, 250, Some(DateTime.now()), None, 12345, 100, 250.0, SideCode.TowardsDigitizing, LinkStatus.New, projectId, RoadType.PublicRoad, roadGeom1, roadwayNumber)
 
@@ -3704,7 +3704,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val roadwayNumber1 = Sequences.nextRoadwayNumber
       val roadwayNumber2 = Sequences.nextRoadwayNumber
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val plId1 = projectId + 1
       val plId2 = projectId + 2
       val road1Link = dummyProjectLink(1, 1, Track.Combined, Discontinuity.Continuous, 0, 100, 0, 100, Some(DateTime.now()), None, 12345, 0, 100.0, SideCode.TowardsDigitizing, LinkStatus.New, projectId, RoadType.PublicRoad, roadGeom1, roadwayNumber1).copy(id = plId1)
@@ -3802,7 +3802,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val roadGeom2 = Seq(Point(5.0, 0.0), Point(5.0, 5.0))
 
       val roadwayNumber = Sequences.nextRoadwayNumber
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val plId1 = projectId + 1
       val plId2 = projectId + 2
       val plId3 = projectId + 3
@@ -3901,7 +3901,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwId = Sequences.nextRoadwayId
       val llId = Sequences.nextLinearLocationId
       val rwNumber = Sequences.nextRoadwayNumber
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
 
       val combGeom1 = Seq(Point(10.0, 0.0), Point(10.0, 10.0))
       val combGeom2 = Seq(Point(10.0, 10.0), Point(10.0, 20.0))
@@ -4102,7 +4102,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val rwNumber = Sequences.nextRoadwayNumber
       val rwId = Sequences.nextRoadwayId
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
       val llId = Sequences.nextLinearLocationId
 
       val (pl1, ll1, rw1) = dummyHorizontalRoad(projectId, 1,

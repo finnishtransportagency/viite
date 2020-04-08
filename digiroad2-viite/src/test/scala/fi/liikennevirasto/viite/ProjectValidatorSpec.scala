@@ -111,7 +111,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
                                     roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L,
                                     lastLinkDiscontinuity: Discontinuity = Discontinuity.Continuous, withRoadInfo: Boolean = false) = {
 
-    val id = Sequences.nextViitePrimaryKeySeqValue
+    val id = Sequences.nextViiteProjectId
 
     val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
       "", Seq(), Seq(), None, None)
@@ -121,7 +121,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
   }
 
   private def setUpProjectWithRampLinks(linkStatus: LinkStatus, addrM: Seq[Long]) = {
-    val id = Sequences.nextViitePrimaryKeySeqValue
+    val id = Sequences.nextViiteProjectId
     val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
       "", Seq(), Seq(), None, None)
     projectDAO.create(project)
@@ -360,7 +360,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         rightleftAddresses.head -> Seq(linearLocations.tail.head),
         rightleftAddresses.last -> Seq(linearLocations.last))
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -435,7 +435,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
         rightleftAddresses.head -> Seq(linearLocations.tail.head),
         rightleftAddresses.last -> Seq(linearLocations.last))
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -639,7 +639,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -698,7 +698,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       )
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -754,7 +754,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -812,7 +812,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -869,7 +869,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -929,7 +929,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1011,7 +1011,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1082,7 +1082,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1151,7 +1151,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1206,7 +1206,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1262,7 +1262,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1316,7 +1316,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1378,7 +1378,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       )
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1501,7 +1501,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1552,7 +1552,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       linearLocationDAO.create(linearLocations)
 
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1631,7 +1631,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       linearLocationDAO.create(linearLocations)
 
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1688,7 +1688,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       linearLocationDAO.create(linearLocations)
 
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1759,7 +1759,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -1819,7 +1819,7 @@ Left|      |Right
       roadwayDAO.create(ra)
       linearLocationDAO.create(linearLocations)
 
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val project = Project(id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
       projectDAO.create(project)
@@ -2348,7 +2348,7 @@ Left|      |Right
   test("Test checkRoadContinuityCodes for incorrect discontinuity on parallel links of a minor discontinuity") {
     runWithRollback {
 
-      val project = Project(Sequences.nextViitePrimaryKeySeqValue, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),"", Seq(), Seq(), None, None)
+      val project = Project(Sequences.nextViiteProjectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),"", Seq(), Seq(), None, None)
       projectDAO.create(project)
 
       val ra = Seq(

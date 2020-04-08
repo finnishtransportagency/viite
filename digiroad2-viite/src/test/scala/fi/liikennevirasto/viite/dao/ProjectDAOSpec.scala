@@ -81,11 +81,11 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
 
-      val projId1 = Sequences.nextViitePrimaryKeySeqValue
+      val projId1 = Sequences.nextViiteProjectId
       val rap =  dummyProject(projId1, ProjectState.Incomplete, List(), None)
       projectDAO.create(rap)
 
-      val projId2 = Sequences.nextViitePrimaryKeySeqValue
+      val projId2 = Sequences.nextViiteProjectId
       val rap2 =  dummyProject(projId2, ProjectState.Incomplete, List(), None)
       projectDAO.create(rap2)
 
@@ -95,8 +95,8 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       val waitingCountP1 = projectDAO.fetchAllIdsByLinkId(linkId1).length
       val waitingCountP2 = projectDAO.fetchAllIdsByLinkId(linkId2).length
 
-      val projectLinkId1 = projId1 + 3
-      val projectLinkId2 = projId1 + 4
+      val projectLinkId1 = Sequences.nextProjectLinkId
+      val projectLinkId2 = Sequences.nextProjectLinkId
       val projectLinks = Seq(
         dummyProjectLink(projectLinkId1, projId1, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None),  Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true),
         dummyProjectLink(projectLinkId2, projId2, linkId2, roadwayIds.last, roadwayNumber1, roadNumber2, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None),  Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true)
@@ -111,7 +111,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchTRIdByProjectId When the project has Tierekisteri identifier Then should return Tierekisteri identifier") {
     runWithRollback {
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val project =  dummyProject(projectId, ProjectState.Incomplete, List(), None)
       projectDAO.create(project)
 
@@ -126,7 +126,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test assignNewProjectTRId When the project has Tierekisteri identifier Then should assign a new Tierekisteri identifier to the project") {
     runWithRollback {
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val project =  dummyProject(projectId, ProjectState.Incomplete, List(), None)
       projectDAO.create(project)
 
@@ -142,7 +142,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test removeProjectTRId When the project has Tierekisteri identifier Then should be removed") {
     runWithRollback {
-      val projectId = Sequences.nextViitePrimaryKeySeqValue
+      val projectId = Sequences.nextViiteProjectId
       val project =  dummyProject(projectId, ProjectState.Incomplete, List(), None)
       projectDAO.create(project)
 
@@ -158,7 +158,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test updateProjectStateInfo When project info is updated Then project info should change") {
     runWithRollback {
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val rap = dummyProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], coordinates = None)
       projectDAO.create(rap)
       projectDAO.fetchById(id) match {
@@ -177,7 +177,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test updateProjectCoordinates When using a recently created project Then the zoom level of the project should be the updated one.") {
     runWithRollback {
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val rap =  dummyProject(id, ProjectState.Incomplete, List(), None)
       projectDAO.create(rap)
       projectDAO.fetchById(id).get.coordinates.get.zoom should be(0)
@@ -189,7 +189,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test isUniqueName When creating two different project with different names Then  the check for the uniqueness should return true.") {
     runWithRollback {
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val rap1 =  dummyProject(id, ProjectState.Incomplete, List(), None)
       val rap2 =  dummyProject(id+1, ProjectState.Incomplete, List(), None)
       projectDAO.create(rap1)
@@ -201,7 +201,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test create When having valid data and empty parts Then should create project without any reserved part") {
     runWithRollback {
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val rap = dummyProject(id, ProjectState.Incomplete, Seq(), None)
       projectDAO.create(rap)
       projectDAO.fetchById(id).nonEmpty should be(true)
@@ -213,7 +213,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
     val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
       val waitingCountP = projectDAO.fetchProjectIdsWithWaitingTRStatus.length
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val rap =  dummyProject(id, ProjectState.Sent2TR, List(reservedPart), None)
         projectDAO.create(rap)
       val waitingCountNow = projectDAO.fetchProjectIdsWithWaitingTRStatus.length
@@ -223,7 +223,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test updateProjectStatus When Update project status Then project status should be updated") {
     runWithRollback {
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val rap =  dummyProject(id, ProjectState.Sent2TR, List(), None)
       projectDAO.create(rap)
       projectDAO.updateProjectStatus(id, ProjectState.Saved2TR)
@@ -234,7 +234,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   test("Test update When Update project info Then should update the project infos such as project name, additional info, startDate") {
     val reservedPart = ProjectReservedPart(5: Long, 203: Long, 203: Long, Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None)
     runWithRollback {
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val rap = dummyProject(id, ProjectState.Incomplete, List(), None)
       val updatedRap = Project(id, ProjectState.apply(1), "newname", "TestUser", DateTime.parse("1901-01-02"), "TestUser", DateTime.parse("1901-01-02"), DateTime.now(), "updated info", List(reservedPart), Seq(), None)
       projectDAO.create(rap)
@@ -253,7 +253,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   test("Test getRoadAddressProjects When adding one new project Then outcome size of projects should be bigger than before") {
     runWithRollback {
       val projectListSize = projectDAO.fetchAll().length
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val rap = dummyProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], None)
       projectDAO.create(rap)
       val projectList = projectDAO.fetchAll()
@@ -263,7 +263,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
 
   test("Test updateProjectEly When updating Ely for project Then ely should change") {
     runWithRollback {
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val rap = dummyProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], None)
       projectDAO.create(rap)
       projectDAO.fetchById(id).nonEmpty should be(true)
@@ -274,7 +274,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   test("Test fetchProjectIdsWithSendingToTRStatus When there is one project in SendingToTR status Then should return that one project") {
     runWithRollback {
       val waitingCountP = projectDAO.fetchProjectIdsWithSendingToTRStatus.length
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = Sequences.nextViiteProjectId
       val rap = dummyProject(id, ProjectState.SendingToTR, List.empty[ProjectReservedPart], None)
       projectDAO.create(rap)
       val waitingCountNow = projectDAO.fetchProjectIdsWithSendingToTRStatus.length

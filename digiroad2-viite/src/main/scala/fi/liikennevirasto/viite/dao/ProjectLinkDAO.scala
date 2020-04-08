@@ -367,7 +367,7 @@ class ProjectLinkDAO {
         "link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
         "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
       val (ready, idLess) = links.partition(_.id != NewIdValue)
-      val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
+      val plIds = Sequences.fetchProjectLinkIds(idLess.size)
       val projectLinks = ready ++ idLess.zip(plIds).map(x =>
         x._1.copy(id = x._2)
       )
