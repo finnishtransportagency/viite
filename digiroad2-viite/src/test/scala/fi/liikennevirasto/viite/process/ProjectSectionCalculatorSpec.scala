@@ -1608,7 +1608,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         geom1, LinkGeomSource.NormalLinkInterface, roadway1.roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation1))
 
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
       val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, roadway1.discontinuity, 0L, 10L,
         roadway1.startAddrMValue, roadway1.endAddrMValue, None, None, None, linkId1,
         linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode,
@@ -1705,7 +1705,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val roadPartNumber = 1
       val roadType = RoadType.MunicipalityStreetRoad
       val track = Track.Combined
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
       val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
         None, 12345L, 0.0, 10.0, SideCode.AgainstDigitizing, (None, None),
         geom1, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
@@ -1772,7 +1772,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         geom1, LinkGeomSource.NormalLinkInterface, roadway1.roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation1))
 
-      val plId = Sequences.nextViitePrimaryKeySeqValue
+      val plId = Sequences.nextProjectLinkId
       val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, roadway1.discontinuity, 0L, 10L,
         roadway1.startAddrMValue, roadway1.endAddrMValue, None, None, None, linkId1,
         linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode,

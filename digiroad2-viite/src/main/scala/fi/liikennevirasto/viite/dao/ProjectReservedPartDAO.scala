@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite._
 import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.jdbc.{StaticQuery => Q}
 
 //TODO naming SQL conventions
 
@@ -330,21 +330,26 @@ class ProjectReservedPartDAO {
     time(logger, "Road part reserved by other project") {
       val filter = (withProjectId, projectId != 0) match {
         case (_, false) => ""
-        case (Some(inProject), true) => if(inProject) s" AND prj.ID = $projectId " else s" AND prj.ID != $projectId "
+        case (Some(inProject), true) => if (inProject) s" AND prj.ID = $projectId " else s" AND prj.ID != $projectId "
         case _ => ""
       }
 
       val query =
-        s"""SELECT prj.NAME FROM PROJECT prj
-            JOIN PROJECT_RESERVED_ROAD_PART res ON res.PROJECT_ID = prj.ID
-            WHERE res.road_number = $roadNumber AND res.road_part_number = $roadPart
-            AND prj.ID IN (
-            SELECT DISTINCT(link.PROJECT_ID) FROM PROJECT_LINK link
-            WHERE LINK_ID IN (
-            SELECT link.LINK_ID FROM LINEAR_LOCATION link
-            INNER JOIN ROADWAY road ON link.ROADWAY_NUMBER = road.ROADWAY_NUMBER
-            WHERE road.ROAD_NUMBER = $roadNumber
-            AND road.ROAD_PART_NUMBER = $roadPart)) $filter"""
+        s"""
+        SELECT prj.NAME FROM PROJECT prj
+        JOIN PROJECT_RESERVED_ROAD_PART res ON res.PROJECT_ID = prj.ID
+        WHERE res.road_number = $roadNumber AND res.road_part_number = $roadPart
+          AND prj.ID IN (
+            SELECT DISTINCT(pl.PROJECT_ID) FROM PROJECT_LINK pl
+            WHERE pl.LINK_ID IN (
+              SELECT ll.LINK_ID FROM LINEAR_LOCATION ll
+              INNER JOIN ROADWAY rw ON ll.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
+              WHERE rw.ROAD_NUMBER = $roadNumber
+              AND rw.ROAD_PART_NUMBER = $roadPart
+            )
+          )
+        $filter
+        """
       Q.queryNA[String](query).firstOption
     }
   }
