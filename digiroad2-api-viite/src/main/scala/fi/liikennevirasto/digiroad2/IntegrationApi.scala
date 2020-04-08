@@ -60,10 +60,6 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
-  def clearCache(): Int = {
-    roadLinkService.clearCache()
-  }
-
   before() {
     basicAuth
   }
