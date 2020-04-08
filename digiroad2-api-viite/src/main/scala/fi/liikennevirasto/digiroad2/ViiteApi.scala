@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import java.text.SimpleDateFormat
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
+import fi.liikennevirasto.digiroad2.authentication.{JWTAuthentication, RequestHeaderAuthentication}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -68,6 +68,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     with JacksonJsonSupport
     with CorsSupport
     with RequestHeaderAuthentication
+    with JWTAuthentication
     with ContentEncodingSupport
     with SwaggerSupport {
 
