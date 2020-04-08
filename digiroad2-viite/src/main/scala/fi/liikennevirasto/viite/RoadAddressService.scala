@@ -688,10 +688,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             case Some(roadwayPoint) =>
               roadwayPoint.id
             case _ =>
-              logger.info(s"Creating roadway point for start calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.startCalibrationPoint.addrM.get})")
+              logger.info(s"Creating roadway point for start calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.startCalibrationPoint.addrM.get}")
               roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.addrM.get, username)
           }
-        // TODO Check which type this calibration point should be (0, 1, 2)
         CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, username)
     }
     endCalibrationPointsToCheck.foreach {
@@ -701,10 +700,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             case Some(roadwayPoint) =>
               roadwayPoint.id
             case _ =>
-              logger.info(s"Creating roadway point for end calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.endCalibrationPoint.addrM.get})")
+              logger.info(s"Creating roadway point for end calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.endCalibrationPoint.addrM.get}")
               roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.addrM.get, username)
           }
-        // TODO Check which type this calibration point should be (0, 1, 2)
         CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP, username)
     }
   }
@@ -1134,6 +1132,13 @@ object RoadAddressFilters {
 
   def discontinuousAddressInSamePart(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
     !continuousAddress(curr)(next) && sameRoadPart(curr)(next)
+  }
+
+  def connected(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    Seq(curr.startingPoint, curr.endPoint).exists(targetPoint =>
+      Seq(next.startingPoint, next.endPoint).foldLeft(false)((isContinuous, nextPoint) =>
+        nextPoint.connected(targetPoint) || isContinuous)
+    )
   }
 
   def continuousTopology(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
