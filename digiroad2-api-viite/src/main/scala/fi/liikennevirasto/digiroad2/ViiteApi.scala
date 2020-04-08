@@ -67,7 +67,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
-    with RequestHeaderAuthentication
     with JWTAuthentication
     with ContentEncodingSupport
     with SwaggerSupport {
