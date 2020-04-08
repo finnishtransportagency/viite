@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -39,6 +40,14 @@ object CalibrationPointDAO {
 
     def apply(intValue: Int): CalibrationPointLocation = {
       values.find(_.value == intValue).getOrElse(Unknown)
+    }
+
+    def apply(pos: BeforeAfter): CalibrationPointLocation = {
+      pos match {
+        case After => StartOfLink
+        case Before => EndOfLink
+        case _ => Unknown
+      }
     }
 
     case object StartOfLink extends CalibrationPointLocation {def value = 0}
