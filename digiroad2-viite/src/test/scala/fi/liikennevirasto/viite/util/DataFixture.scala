@@ -169,10 +169,6 @@ object DataFixture {
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer)
     val linearLocationDAO = new LinearLocationDAO
 
-    println("Clearing cache...")
-    roadLinkService.clearCache()
-    println("Cache cleaned.")
-
     val linearLocations =
       OracleDatabase.withDynTransaction {
         linearLocationDAO.fetchCurrentLinearLocations
