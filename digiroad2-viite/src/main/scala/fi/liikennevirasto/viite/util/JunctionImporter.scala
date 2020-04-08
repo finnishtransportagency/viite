@@ -47,7 +47,7 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
   }
 
   def insertJunctionPoint(junctionPointStatement: PreparedStatement, conversionJunctionPoint: ConversionJunctionPoint, junctionId: Long, roadwayPointId: Long): Unit = {
-    junctionPointStatement.setLong(1, conversionJunctionPoint.id)
+    junctionPointStatement.setLong(1, Sequences.nextJunctionPointId)
     junctionPointStatement.setLong(2, conversionJunctionPoint.beforeOrAfter)
     junctionPointStatement.setLong(3, roadwayPointId)
     junctionPointStatement.setLong(4, junctionId)
@@ -72,7 +72,7 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
 
     junctionsWithPoints.foreach{
       conversionJunction =>
-        println(s"Inserting junction with TR id = ${conversionJunction._1.id} ")
+        println(s"Inserting junction with id = ${conversionJunction._1.id} ")
         insertJunction(junctionPs, conversionJunction._1, conversionJunction._1.nodeNumber)
 
         conversionJunction._2.foreach{
