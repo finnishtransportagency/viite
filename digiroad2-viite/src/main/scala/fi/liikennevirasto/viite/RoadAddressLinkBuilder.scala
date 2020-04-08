@@ -17,7 +17,10 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
   val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
   val eventBus = new DummyEventBus
   val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, ViiteProperties.vvhRoadlinkFrozen)
-  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, new RoadwayPointDAO, new NodePointDAO, new JunctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, ViiteProperties.vvhRoadlinkFrozen) {
+  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO,
+    new RoadwayPointDAO, new NodePointDAO, new JunctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO),
+    eventBus, ViiteProperties.vvhRoadlinkFrozen) {
+
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
   }
