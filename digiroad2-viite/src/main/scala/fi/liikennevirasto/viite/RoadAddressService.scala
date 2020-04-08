@@ -758,16 +758,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         junctionPointDAO.create(junctionPoint.map(_.copy(id = NewIdValue, roadwayPointId = newRoadwayPointId, beforeAfter = beforeAfter, createdBy = username)))
 
         val calibrationPoint = CalibrationPointDAO.fetchByRoadwayPointId(oldRoadwayPointId).filter(_.startOrEnd == CalibrationPointLocation.StartOfLink)
-        if (calibrationPoint.nonEmpty) {
-          logger.info(s"Update calibration point (${calibrationPoint.map(_.id)}) for after roadway point id: $oldRoadwayPointId to $newRoadwayPointId, startOrEnd: $startOrEnd")
-          CalibrationPointDAO.expireById(calibrationPoint.map(_.id))
-          try {
-            CalibrationPointDAO.create(calibrationPoint.map(_.copy(id = NewIdValue, roadwayPointId = newRoadwayPointId, startOrEnd = startOrEnd, createdBy = username)))
-          } catch {
-            case e: Exception =>
-              logger.info(s"Query is f'cked up!")
-          }
-        }
+        logger.info(s"Update calibration point (${calibrationPoint.map(_.id)}) for after roadway point id: $oldRoadwayPointId to $newRoadwayPointId, startOrEnd: $startOrEnd")
+        CalibrationPointDAO.expireById(calibrationPoint.map(_.id))
+        CalibrationPointDAO.create(calibrationPoint.map(_.copy(id = NewIdValue, roadwayPointId = newRoadwayPointId, startOrEnd = startOrEnd, typeCode = CalibrationPointType.RoadAddressCP, createdBy = username)))
       }
     }
 
