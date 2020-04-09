@@ -1,0 +1,394 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  Environment:
+    Description: Environment
+    Type: String
+    Default: Dev
+    AllowedValues:
+      - Dev
+      - Test
+      - Prod
+  Application:
+    Description: Application tag
+    Type: String
+    Default: Viite
+  VPCId:
+    Description: Id of the VPC
+    Type: 'AWS::EC2::VPC::Id'
+  SubnetA:
+    Description: Id of the Subnet A
+    Type: 'AWS::EC2::Subnet::Id'
+  SubnetB:
+    Description: Id of the Subnet B
+    Type: 'AWS::EC2::Subnet::Id'
+  SubnetC:
+    Description: Id of the Subnet C
+    Type: 'AWS::EC2::Subnet::Id'
+  SecurityGroup:
+    Description: Default Security group in VPC
+    Type: 'AWS::EC2::SecurityGroup::Id'
+  ServiceName:
+    Type: String
+    Default: Test
+    Description: A name for the service
+  ServerContainerTag:
+    Type: String
+    Default: latest
+    Description: Server container tag
+  RepositoryURI:
+    Type: String
+    Description: URI to ECR repository or Dockerhub container name
+    Default: nginx
+  ContainerPort:
+    Type: Number
+    Description: Port that the container listens to
+    Default: 8080
+  HealthCheckPath:
+    Type: String
+    Description: 'Application URI, which it used for healthcheck'
+    Default: /
+  HealthCheckStatus:
+    Type: Number
+    Description: 'HTTP status code, that is expected from the container application'
+    Default: 200
+Metadata:
+  'AWS::CloudFormation::Designer':
+    fab74560-74c8-4f66-91e7-505948c270e3:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 490
+        'y': 210
+      z: 0
+      embeds: []
+    30fd4f1b-3080-4fc9-ad76-246ae5bb712a:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 550
+        'y': 310
+      z: 0
+      embeds: []
+      dependson:
+        - 80ccccbb-93a9-4944-af14-25beb4119829
+        - 3fb5765c-eebf-4f85-83bf-3f112cfde627
+        - fab74560-74c8-4f66-91e7-505948c270e3
+        - 4e2d8aa1-cc04-45d0-817b-409ea3ba4be5
+    3fb5765c-eebf-4f85-83bf-3f112cfde627:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 600
+        'y': 210
+      z: 0
+      embeds: []
+      dependson:
+        - bd0022e4-7648-4612-a26c-0e4081af95eb
+    fc10a1cc-8458-4019-bd51-b267fddc5774:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 480
+        'y': 410
+      z: 0
+      embeds: []
+      isassociatedwith:
+        - 012553b5-bf05-41d5-aaba-556e039f2478
+    4e2d8aa1-cc04-45d0-817b-409ea3ba4be5:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 590
+        'y': 410
+      z: 0
+      embeds: []
+      dependson:
+        - fc10a1cc-8458-4019-bd51-b267fddc5774
+    e73cfafb-f705-4080-b3c2-6d13b49af8d0:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 510
+        'y': 520
+      z: 0
+      embeds: []
+      dependson:
+        - fc10a1cc-8458-4019-bd51-b267fddc5774
+    80ccccbb-93a9-4944-af14-25beb4119829:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 590
+        'y': 520
+      z: 0
+      embeds: []
+      dependson:
+        - e73cfafb-f705-4080-b3c2-6d13b49af8d0
+    0d061451-4f97-4c26-b53d-56570326a6cb:
+      size:
+        width: 110
+        height: 80
+      position:
+        x: 910
+        'y': 210
+      z: 0
+      embeds: []
+    012553b5-bf05-41d5-aaba-556e039f2478:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 380
+        'y': 410
+      z: 0
+      embeds: []
+    bd0022e4-7648-4612-a26c-0e4081af95eb:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 710
+        'y': 260
+      z: 0
+      embeds: []
+    17b96d88-f38a-46fd-9d90-9d27e610c46b:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 810
+        'y': 260
+      z: 0
+      embeds: []
+Resources:
+  PrivateLoadBalancerSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Access to the private application load balancer
+      VpcId: !Ref VPCId
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 012553b5-bf05-41d5-aaba-556e039f2478
+  LoadBalancerRule:
+    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+    DependsOn:
+      - ApplicationLoadBalancerListener
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - '*'
+      ListenerArn: !Ref ApplicationLoadBalancerListener
+      Priority: 2
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 80ccccbb-93a9-4944-af14-25beb4119829
+  TargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      HealthCheckIntervalSeconds: 300
+      HealthCheckPath: !Ref HealthCheckPath
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 60
+      Matcher:
+        HttpCode: !Ref HealthCheckStatus
+      HealthyThresholdCount: 2
+      TargetType: ip
+      Name: !Ref ServiceName
+      Port: !Ref ContainerPort
+      Protocol: HTTP
+      UnhealthyThresholdCount: 10
+      VpcId: !Ref VPCId
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 4e2d8aa1-cc04-45d0-817b-409ea3ba4be5
+    DependsOn:
+      - ApplicationLoadBalancer
+  TaskExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: AmazonECSTaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 17b96d88-f38a-46fd-9d90-9d27e610c46b
+  Cluster:
+    Type: 'AWS::ECS::Cluster'
+    Properties:
+      ClusterName: !Join 
+        - '-'
+        - - !Ref ServiceName
+          - ECS-Cluster
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: fab74560-74c8-4f66-91e7-505948c270e3
+  TaskDefinition:
+    Type: 'AWS::ECS::TaskDefinition'
+    DependsOn:
+      - Role
+    Properties:
+      Family: !Ref ServiceName
+      Cpu: 1024
+      Memory: 2048
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: !Ref ServiceName
+          Image: !Join 
+            - ':'
+            - - !Ref RepositoryURI
+              - !Ref ServerContainerTag
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+          Essential: true
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref ServiceName
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: !Ref ServiceName
+          Memory: 512
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 3fb5765c-eebf-4f85-83bf-3f112cfde627
+  Service:
+    Type: 'AWS::ECS::Service'
+    DependsOn:
+      - LoadBalancerRule
+      - TaskDefinition
+      - Cluster
+      - TargetGroup
+    Properties:
+      Cluster: !Ref Cluster
+      ServiceName: ECS-Fargate-Service
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - !Ref SecurityGroup
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+            - !Ref SubnetC
+      LaunchType: FARGATE
+      LoadBalancers:
+        - ContainerName: !Ref ServiceName
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref TargetGroup
+      TaskDefinition: !Ref TaskDefinition
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 30fd4f1b-3080-4fc9-ad76-246ae5bb712a
+  LogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: !Ref ServiceName
+      RetentionInDays: 14
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 0d061451-4f97-4c26-b53d-56570326a6cb
+  Role:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: ecs-service
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ec2:AttachNetworkInterface'
+                  - 'ec2:CreateNetworkInterface'
+                  - 'ec2:CreateNetworkInterfacePermission'
+                  - 'ec2:DeleteNetworkInterface'
+                  - 'ec2:DeleteNetworkInterfacePermission'
+                  - 'ec2:Describe*'
+                  - 'ec2:DetachNetworkInterface'
+                  - 'elasticloadbalancing:DeregisterInstancesFromLoadBalancer'
+                  - 'elasticloadbalancing:DeregisterTargets'
+                  - 'elasticloadbalancing:Describe*'
+                  - 'elasticloadbalancing:RegisterInstancesWithLoadBalancer'
+                  - 'elasticloadbalancing:RegisterTargets'
+                Resource: '*'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: bd0022e4-7648-4612-a26c-0e4081af95eb
+  ApplicationLoadBalancer:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Subnets:
+        - !Ref SubnetA
+        - !Ref SubnetB
+        - !Ref SubnetC
+      SecurityGroups:
+        - !Ref SecurityGroup
+        - !Ref PrivateLoadBalancerSG
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: fc10a1cc-8458-4019-bd51-b267fddc5774
+  ApplicationLoadBalancerListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    DependsOn:
+      - TargetGroup
+      - ApplicationLoadBalancer
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: e73cfafb-f705-4080-b3c2-6d13b49af8d0
+Outputs:
+  ALBDNSName:
+    Description: DNSname for the Application Load Balancer
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
