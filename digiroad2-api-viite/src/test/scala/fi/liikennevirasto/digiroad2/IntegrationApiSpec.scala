@@ -34,13 +34,6 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     get(uri, Seq.empty, Map("Authorization" -> authorizationToken))(f)
   }
 
-  before {
-    integrationApi.clearCache()
-  }
-  after {
-    integrationApi.clearCache()
-  }
-
   test("Test get() and getWithBasicUserAuth() When using no credentials or wrong credentials Then return status code 401.", Tag("db")) {
     get("/road_address") {
       status should equal(401)
