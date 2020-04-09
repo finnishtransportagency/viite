@@ -25,7 +25,10 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
-class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, roadNetworkDAO: RoadNetworkDAO, roadwayPointDAO: RoadwayPointDAO, nodePointDAO: NodePointDAO, junctionPointDAO: JunctionPointDAO, roadwayAddressMapper: RoadwayAddressMapper, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
+class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO,
+                         roadNetworkDAO: RoadNetworkDAO, roadwayPointDAO: RoadwayPointDAO, nodePointDAO: NodePointDAO,
+                         junctionPointDAO: JunctionPointDAO, roadwayAddressMapper: RoadwayAddressMapper,
+                         eventbus: DigiroadEventBus, frozenVVH: Boolean) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -97,8 +100,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val allRoadLinks = roadLinks ++ complementaryRoadLinks
 
     //removed apply changes before adjusting topology since in future NLS will give perfect geometry and supposedly, we will not need any changes
-    val (adjustedLinearLocations, changeSet) = if (frozenTimeVVHAPIServiceEnabled) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
-    if (!frozenTimeVVHAPIServiceEnabled)
+    val (adjustedLinearLocations, changeSet) = if (frozenVVH) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
+    if (!frozenVVH)
       eventbus.publish("roadAddress:persistChangeSet", changeSet)
 
     val roadAddresses = withDynSession {
@@ -196,8 +199,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         linearLocationDAO.fetchRoadwayByLinkId(roadLinks.map(_.linkId).toSet)
       }
     }
-    val (adjustedLinearLocations, changeSet) = if (frozenTimeVVHAPIServiceEnabled) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(roadLinks, linearLocations)
-    if (!frozenTimeVVHAPIServiceEnabled) {
+    val (adjustedLinearLocations, changeSet) = if (frozenVVH) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(roadLinks, linearLocations)
+    if (!frozenVVH) {
       //TODO we should think to update both servers with cache at the same time, and before the apply change batch that way we will not need to do any kind of changes here
       eventbus.publish("roadAddress:persistChangeSet", changeSet)
     }
