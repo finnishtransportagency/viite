@@ -19,10 +19,6 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
-  def clearCache(): Int = {
-    roadLinkService.clearCache()
-  }
-
   before() {
     basicAuth
     contentType = formats("json")
