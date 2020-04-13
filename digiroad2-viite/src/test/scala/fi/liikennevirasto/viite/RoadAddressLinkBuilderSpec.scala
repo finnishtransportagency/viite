@@ -59,7 +59,9 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   val junctionPointDAO = new JunctionPointDAO
   val roadwayChangesDAO = new RoadwayChangesDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, mockRoadwayPointDAO, mockNodePointDAO, mockJunctionPointDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO,
+    mockRoadNetworkDAO, mockRoadwayPointDAO, mockNodePointDAO, mockJunctionPointDAO, mockRoadwayAddressMapper, mockEventBus, frozenVVH = false) {
+
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f

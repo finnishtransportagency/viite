@@ -149,7 +149,7 @@ object RoadwayFiller {
           historyRoadway
         }
       }
-      val projectLinksWithGivenAttributes = projectLinks.map(pl => pl.copy(roadwayNumber = roadways.head.roadwayNumber, linearLocationId = NewIdValue))
+      val projectLinksWithGivenAttributes = projectLinks.map(pl => pl.copy(roadwayNumber = roadways.head.roadwayNumber, linearLocationId = Sequences.nextLinearLocationId))
       (roadways ++ newHistoryRoadways, roadwayAddressMapper.mapLinearLocations(roadways.find(_.endDate.isEmpty).getOrElse(throw new Exception), projectLinksWithGivenAttributes), projectLinksWithGivenAttributes)
     }
   }

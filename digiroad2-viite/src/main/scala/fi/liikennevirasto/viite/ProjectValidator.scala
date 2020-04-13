@@ -31,7 +31,10 @@ class ProjectValidator {
   val roadwayPointDAO = new RoadwayPointDAO
   val nodePointDAO = new NodePointDAO
   val junctionPointDAO = new JunctionPointDAO
-  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus, ViiteProperties.vvhRoadlinkFrozen) {
+  val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, roadNetworkDAO,
+    roadwayPointDAO, nodePointDAO, junctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus,
+    ViiteProperties.vvhRoadlinkFrozen) {
+
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
