@@ -235,15 +235,15 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   }
 
   val nodesToGeoJson: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("nodesToGeoJson")
+    apiOperation[List[Map[String, Any]]]("nodesToGeoJson")
       .parameters(
         queryParam[String]("since").description("Start date of nodes"),
         queryParam[String]("until").description("End date of the nodes")
       )
-      tags "ChangeAPI"
+      tags "Integration (kalpa)"
       summary "This will return all the changes found on the nodes that are between the period defined by the \"since\" and  \"until\" parameters."
-      notes ""
     )
+
   get(transformers = "/nodes_junctions/changes", operation(nodesToGeoJson)) {
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
