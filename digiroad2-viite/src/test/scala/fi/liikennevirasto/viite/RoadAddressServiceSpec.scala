@@ -11,7 +11,6 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.Dummies._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointLocation
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{ProjectReservedPartDAO, _}
 import fi.liikennevirasto.viite.process._
@@ -833,6 +832,127 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       roadwayPointsAfterChangesTransferLink.head.roadwayNumber should be (generatedProperRoadwayNumbersAfterChanges.last.roadwayNumber)
       roadwayPointsAfterChangesTransferLink.head.addrMValue should be (generatedProperRoadwayNumbersAfterChanges.last.startAddrMValue)
       roadwayPointsAfterChangesTransferLink.last.addrMValue should be (generatedProperRoadwayNumbersAfterChanges.last.endAddrMValue)
+    }
+  }
+
+  test("Test handleRoadwayPoints When dual roadway point is handled") {
+    runWithRollback {
+      val geom1 = Seq(Point(0.0, 0.0), Point(5.0, 0.0))
+      val geom2 = Seq(Point(5.0, 0.0), Point(20.0, 0.0))
+      val roadwayNumber1 = Sequences.nextRoadwayNumber
+      val roadwayNumber2 = Sequences.nextRoadwayNumber
+      val roadwayNumber3 = Sequences.nextRoadwayNumber
+
+      val projectId = Sequences.nextViiteProjectId
+      val rap =  dummyProject(projectId, ProjectState.Incomplete, Seq(), None).copy(startDate = DateTime.parse("2019-10-10"))
+      val link1 = dummyProjectLink(99, 1, Track.Combined, Discontinuity.EndOfRoad, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.UnChanged, projectId, RoadType.PublicRoad, geom1, roadwayNumber2)
+      val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 0 , 15, Some(DateTime.now()), None, 12346, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.FerryRoad, geom2, roadwayNumber3)
+
+//      val link1 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.Continuous, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId, RoadType.PublicRoad, geom1, roadwayNumber1)
+//      val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 5 , 20, Some(DateTime.now()), None, 12346, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.FerryRoad, geom2, roadwayNumber2)
+
+      //Roadways and linear location generated AFTER changes
+      val (lc1, rw1): (LinearLocation, Roadway) = Seq(link1).map(toRoadwayAndLinearLocation).head
+      val (lc2, rw2): (LinearLocation, Roadway) = Seq(link2).map(toRoadwayAndLinearLocation).head
+      val rw1WithId = rw1.copy(id = Sequences.nextRoadwayId, ely = 8L)
+      val rw2WithId = rw2.copy(id = Sequences.nextRoadwayId, ely = 8L)
+      val lc1WithId = lc1.copy(id = Sequences.nextLinearLocationId)
+      val lc2WithId = lc2.copy(id = Sequences.nextLinearLocationId)
+      roadwayDAO.create(Seq(rw1WithId))
+      linearLocationDAO.create(Seq(lc1WithId))
+      roadwayDAO.create(Seq(rw2WithId))
+      linearLocationDAO.create(Seq(lc2WithId))
+      val pls = Seq(link1.copy(roadwayId = rw1WithId.id, linearLocationId = lc1WithId.id), link2.copy(roadwayId = rw2WithId.id, linearLocationId = lc2WithId.id))
+
+      when(mockRoadwayDAO.fetchAllByRoadwayId(any[Seq[Long]])).thenReturn(Seq(rw1WithId, rw2WithId))
+      when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(Seq(lc1WithId, lc2WithId))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(pls.map(toRoadLink))
+
+      projectDAO.create(rap)
+
+      val ra1 = RoadAddress(0, lc1WithId.id, rw1WithId.roadNumber, rw1WithId.roadPartNumber, rw1WithId.roadType, rw1WithId.track, rw1WithId.discontinuity,
+        rw1WithId.startAddrMValue, rw1WithId.endAddrMValue, Some(rw1WithId.startDate), rw1WithId.endDate, Some(rw1WithId.createdBy),
+        lc1WithId.linkId, lc1WithId.startMValue, lc1WithId.endMValue, lc1WithId.sideCode, 1000000, (None, None),
+        lc1WithId.geometry, lc1WithId.linkGeomSource, rw1WithId.ely, NoTermination, rw1WithId.roadwayNumber, None, None, None)
+
+      val ra2 = RoadAddress(0, lc2WithId.id, rw2WithId.roadNumber, rw2WithId.roadPartNumber, rw2WithId.roadType, rw2WithId.track, rw2WithId.discontinuity,
+        rw2WithId.startAddrMValue, rw2WithId.endAddrMValue, Some(rw2WithId.startDate), rw2.endDate, Some(rw2.createdBy),
+        lc2WithId.linkId, lc2WithId.startMValue, lc2WithId.endMValue, lc2WithId.sideCode, 1000000, (None, None),
+        lc2WithId.geometry, lc2WithId.linkGeomSource, rw2WithId.ely, NoTermination, rw2WithId.roadwayNumber, None, None, None)
+
+      when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra1, ra2))
+      when(mockLinearLocationDAO.fetchByRoadways(Set(rw1.roadwayNumber))).thenReturn(Seq(lc1))
+      when(mockLinearLocationDAO.fetchByRoadways(Set(rw2.roadwayNumber))).thenReturn(Seq(lc2))
+      when(mockRoadwayDAO.fetchAllByRoadAndPart(99, 2)).thenReturn(Seq(rw2WithId))
+
+      projectReservedPartDAO.reserveRoadPart(projectId, 99, 1, "u")
+      projectReservedPartDAO.reserveRoadPart(projectId, 99, 2, "u")
+      projectLinkDAO.create(pls.map(_.copy(id = NewIdValue)))
+      val projectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
+
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.linkId), LinkStatus.UnChanged, "-", 99, 1, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
+
+      roadwayPointDAO.create(roadwayNumber1, 0, link1.createdBy.getOrElse("test"))
+      roadwayPointDAO.create(roadwayNumber1, 5, link2.createdBy.getOrElse("test"))
+      roadwayPointDAO.create(roadwayNumber1, 20, link2.createdBy.getOrElse("test"))
+
+      val afterUpdateProjectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
+      val beforeDualPoint = afterUpdateProjectLinks.head.copy(roadwayNumber = roadwayNumber2)
+      val afterDualPoint = afterUpdateProjectLinks.last.copy(roadwayNumber = roadwayNumber3)
+      val generatedProperRoadwayNumbersAfterChanges = Seq(beforeDualPoint, afterDualPoint)
+      val mappedRoadwayChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
+
+      val newRoads = Seq()
+      val terminated = Termination(Seq())
+      val unchanged = Unchanged(Seq(
+        (
+          dummyRoadAddress(roadwayNumber1, 99, 1, 0, 5, Some(DateTime.now()),None, 12345, 0 , 5, LinkGeomSource.NormalLinkInterface, geom1),
+          beforeDualPoint
+        )
+      )
+      )
+      val transferred = Transferred(Seq(
+        (
+          dummyRoadAddress(roadwayNumber1, 99, 1, 5, 20, Some(DateTime.now()),None, 12346, 0 , 15, LinkGeomSource.NormalLinkInterface, geom2),
+          afterDualPoint
+        )
+      )
+      )
+      val renumbered = ReNumeration(Seq())
+
+      val roadwayPointsBeforeTransferLink = Seq(afterDualPoint).filter(_.status == LinkStatus.Transfer).map(_.roadwayNumber).distinct.flatMap{ rwp=>
+        roadwayPointDAO.fetchByRoadwayNumber(rwp)
+      }
+      val delta = Delta(DateTime.now, newRoads , terminated, unchanged, transferred, renumbered)
+
+      val reservedParts = Seq(ProjectReservedPart(0, 99, 2, Some(20), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L)))
+
+      val project = projectDAO.fetchById(projectId).get
+      roadwayChangesDAO.insertDeltaToRoadChangeTable(delta, projectId, Some(project.copy(reservedParts = reservedParts)))
+
+      val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
+
+      when(mockRoadwayDAO.fetchAllBySectionAndTracks(any[Long], any[Long], any[Set[Track]])).thenReturn(Seq(rw1WithId, rw2WithId))
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, mappedRoadwayChanges.map { rwc =>
+        rwc.originalRoadPartNumber match {
+          case 1 => rwc.copy(originalRoadwayNumber = roadwayNumber1)
+          case 2 => rwc.copy(originalRoadPartNumber = 1, originalStartAddr = 5, originalEndAddr = 20, originalRoadwayNumber = roadwayNumber1)
+          case _ => rwc
+        }
+      }, "user")
+
+      val roadwayPointsForExpiredRoadwayNumber = roadwayPointDAO.fetchByRoadwayNumber(roadwayNumber1).sortBy(_.addrMValue)
+      roadwayPointsForExpiredRoadwayNumber.size should be (0)
+
+      val roadwayPointsBeforeDual = roadwayPointDAO.fetchByRoadwayNumber(beforeDualPoint.roadwayNumber).sortBy(_.addrMValue)
+      roadwayPointsBeforeDual.size should be (2)
+      roadwayPointsBeforeDual.head.addrMValue should be (beforeDualPoint.startAddrMValue)
+      roadwayPointsBeforeDual.last.addrMValue should be (beforeDualPoint.endAddrMValue)
+
+      val roadwayPointsAfterDual = roadwayPointDAO.fetchByRoadwayNumber(afterDualPoint.roadwayNumber).sortBy(_.addrMValue)
+      roadwayPointsAfterDual.head.addrMValue should be (afterDualPoint.startAddrMValue)
+      roadwayPointsAfterDual.last.addrMValue should be (afterDualPoint.endAddrMValue)
     }
   }
 
