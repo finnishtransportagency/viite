@@ -9,11 +9,19 @@ import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.json4s.Formats
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.{BadRequest, ScalatraServlet}
+import org.scalatra.swagger.{Swagger, _}
+import org.scalatra.{BadRequest, HttpMethod, Post, ScalatraServlet}
 import org.slf4j.{Logger, LoggerFactory}
 
 
-class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet with JacksonJsonSupport with ViiteAuthenticationSupport {
+class SearchApi(roadAddressService: RoadAddressService,
+                implicit val swagger: Swagger)
+  extends ScalatraServlet
+    with JacksonJsonSupport
+    with ViiteAuthenticationSupport
+    with SwaggerSupport {
+  protected val applicationDescription = "The Search API "
+
   val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
 
@@ -28,7 +36,18 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     contentType = formats("json")
   }
 
-  get("/road_address/?") {
+  private val getRoadAddress: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[List[Map[String, Any]]]("getRoadAddress")
+      .parameters(
+        queryParam[Long]("linkId").description("linkId of a road address"),
+        queryParam[Double]("startMeasure").description("startMeasure of a road address"),
+        queryParam[Double]("endMeasure").description("endMeasure of a road address")
+      )
+      tags "SearchAPI"
+      summary "getRoadAddress."
+      )
+
+  get("/road_address/?", operation(getRoadAddress)) {
     val linkId = params.getOrElse("linkId", halt(BadRequest("Missing mandatory field linkId"))).toLong
     val startMeasure = params.get("startMeasure").map(_.toDouble)
     val endMeasure = params.get("endMeasure").map(_.toDouble)
@@ -38,13 +57,28 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     }
   }
 
-  get("/road_numbers?") {
+  private val getRoadNumbers: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[Seq[Long]]("getRoadNumbers")
+      tags "SearchAPI"
+      summary "getRoadNumbers."
+      )
+
+  get("/road_numbers?", operation(getRoadNumbers)) {
     time(logger, "GET request for /road_numbers?") {
       roadAddressService.getRoadNumbers
     }
   }
 
-  get("/road_address/:road/?") {
+  private val getRoadAddressWithRoadNumber: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[List[Map[String, Any]]]("getRoadAddressWithRoadNumber")
+      .parameters(
+        pathParam[Long]("road").description("roadNumber")
+      )
+      tags "SearchAPI"
+      summary "getRoadAddressWithRoadNumber"
+    )
+
+  get("/road_address/:road/?", operation(getRoadAddressWithRoadNumber)) {
     val roadNumber = params("road").toLong
     time(logger, s"GET request for /road_address/$roadNumber/?") {
       val trackCodes = multiParams.getOrElse("tracks", Seq()).map(_.toInt)
@@ -52,7 +86,17 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     }
   }
 
-  get("/road_address/:road/:roadPart/?") {
+  private val getRoadAddressesFiltered: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[List[Map[String, Any]]]("getRoadAddressesFiltered")
+      .parameters(
+        pathParam[Long]("road").description("roadNumber"),
+        pathParam[Long]("roadPart").description("roadPart")
+      )
+      tags "SearchAPI"
+      summary "getRoadAddressesFiltered"
+    )
+
+  get("/road_address/:road/:roadPart/?", operation(getRoadAddressesFiltered)) {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
     time(logger, s"GET request for /road_address/$roadNumber/$roadPart/?") {
@@ -60,7 +104,19 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     }
   }
 
-  get("/road_address/:road/:roadPart/:address/?") {
+  private val getRoadAddressesFiltered2: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[List[Map[String, Any]]]("getRoadAddressesFiltered2")
+      .parameters(
+        pathParam[Long]("road").description("roadNumber"),
+        pathParam[Long]("roadPart").description("roadPart"),
+        pathParam[Long]("address").description("address"),
+        queryParam[Long]("track").description("track")
+      )
+      tags "SearchAPI"
+      summary "getRoadAddressesFiltered2"
+    )
+
+  get("/road_address/:road/:roadPart/:address/?", operation(getRoadAddressesFiltered2)) {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
     val address = params("address").toLong
@@ -71,7 +127,19 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     }
   }
 
-  get("/road_address/:road/:roadPart/:startAddress/:endAddress/?") {
+  private val getRoadAddressesFiltered3: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[List[Map[String, Any]]]("getRoadAddressesFiltered3")
+      .parameters(
+        pathParam[Long]("road").description("roadNumber"),
+        pathParam[Long]("roadPart").description("roadPart"),
+        pathParam[Long]("startAddress").description("startAddress"),
+        pathParam[Long]("endAddress").description("endAddress")
+      )
+      tags "SearchAPI"
+      summary "getRoadAddressesFiltered3"
+    )
+
+  get("/road_address/:road/:roadPart/:startAddress/:endAddress/?", operation(getRoadAddressesFiltered3)) {
     val roadNumber = params("road").toLong
     val roadPart = params("roadPart").toLong
     val startAddress = params("startAddress").toLong
@@ -82,14 +150,33 @@ class SearchApi(roadAddressService: RoadAddressService) extends  ScalatraServlet
     }
   }
 
-  post("/road_address/?") {
+  private val getRoadAddressByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[List[Map[String, Any]]]("getRoadAddressByLinkIds")
+      .parameters(
+        bodyParam[Set[Long]]("linkIds").description("List of linkIds\r\n")
+      )
+      tags "SearchAPI"
+      summary "getRoadAddressByLinkIds."
+    )
+
+  post("/road_address/?", operation(getRoadAddressByLinkIds)) {
     time(logger, s"POST request for /road_address/?") {
       val linkIds = parsedBody.extract[Set[Long]]
       roadAddressService.getRoadAddressByLinkIds(linkIds).map(roadAddressMapper)
     }
   }
 
-  post("/road_address/:road/?") {
+  private val getRoadAddressWithRoadNumberParts: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[List[Map[String, Any]]]("getRoadAddressWithRoadNumberParts")
+      .parameters(
+        pathParam[Long]("road").description("roadNumber"),
+        bodyParam[Any]("getLists").description("List of roadParts and List of tracks\r\n")
+      )
+      tags "SearchAPI"
+      summary "getRoadAddressWithRoadNumberParts."
+    )
+
+  post("/road_address/:road/?", operation(getRoadAddressWithRoadNumberParts)) {
     time(logger, s"POST request for /road_address/:road/?"){
       val roadNumber = params("road").toLong
       val roadParts = (parsedBody \ "roadParts").extract[Seq[Long]]
