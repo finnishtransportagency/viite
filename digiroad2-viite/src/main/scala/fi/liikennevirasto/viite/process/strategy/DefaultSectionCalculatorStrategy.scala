@@ -133,26 +133,37 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
                                             userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[CombinedSection] = {
 
     def adjustTracksToMatch(leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+
       def adjustTwoTrackRoadwayNumbers(firstRight: Seq[ProjectLink], restRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink], restLeft: Seq[ProjectLink])
       : ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
         val (transferLinks, newLinks) = if (firstRight.exists(_.status == LinkStatus.Transfer)) (firstRight, firstLeft) else (firstLeft, firstRight)
         val groupedTransfer: ListMap[Long, Seq[ProjectLink]] = ListMap(transferLinks.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
 
-        val adjustedNewLinks = groupedTransfer.foldLeft(Seq.empty[ProjectLink], newLinks) {
-          case ((adjustedLinks, linksToProcess), group) =>
-            val newRoadwayNumber = Sequences.nextRoadwayNumber
-            val links = linksToProcess.take(group._2.size).map(_.copy(roadwayNumber = newRoadwayNumber))
-            val linksLeft = linksToProcess.drop(group._2.size)
-            (adjustedLinks ++ links, linksLeft)
-        }._1
+          if(newLinks.size >= groupedTransfer.size){
 
-        val (right, left) = if (adjustedNewLinks.exists(_.track == Track.RightSide)) (adjustedNewLinks, transferLinks) else (transferLinks, adjustedNewLinks)
-        ((right, restRight), (left, restLeft))
+//            val zippedAll = newLinks.zipAll(transferLinks, "", "").map({ case (n, t) =>
+//            })
+            //TODO assignRoadwayNumbers proporcionally
+          val (equatedNewLinks, restNewLinks) = groupedTransfer.foldLeft(Seq.empty[ProjectLink], newLinks) {
+            case ((adjustedLinks, linksToProcess), group) =>
+              val newRoadwayNumber = Sequences.nextRoadwayNumber
+              val links = linksToProcess.take(group._2.size).map(_.copy(roadwayNumber = newRoadwayNumber))
+              val rest = linksToProcess.drop(group._2.size)
+              (adjustedLinks ++ links, rest)
+          }
+          val adjustedNewLinks = equatedNewLinks ++ restNewLinks.map(_.copy(roadwayNumber = equatedNewLinks.last.roadwayNumber))
+
+          val (right, left) = if (adjustedNewLinks.exists(_.track == Track.RightSide)) (adjustedNewLinks, transferLinks) else (transferLinks, adjustedNewLinks)
+          ((right, restRight), (left, restLeft))
+          } else {
+            //TODO split links case here
+          ((Seq.empty[ProjectLink], Seq.empty[ProjectLink]), (Seq.empty[ProjectLink], Seq.empty[ProjectLink]))
+          }
       }
 
       def adjustableToRoadwayNumberAttribution(firstRight: Seq[ProjectLink], restRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink], restLeft: Seq[ProjectLink]): Boolean = {
         ((firstRight.forall(_.status == LinkStatus.New) && firstLeft.forall(_.status == LinkStatus.Transfer))
-          || (firstRight.forall(_.status == LinkStatus.Transfer) && firstLeft.forall(_.status == LinkStatus.New))) && firstRight.size == firstLeft.size
+          || (firstRight.forall(_.status == LinkStatus.Transfer) && firstLeft.forall(_.status == LinkStatus.New)))
       }
 
       if (rightLinks.isEmpty && leftLinks.isEmpty) {
@@ -164,7 +175,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
           if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
-            adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
+              adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
           } else {
             val newRoadwayNumber1 = Sequences.nextRoadwayNumber
             val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
