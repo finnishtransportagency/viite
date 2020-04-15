@@ -21,9 +21,6 @@ Parameters:
   SubnetB:
     Description: Id of the Subnet B
     Type: 'AWS::EC2::Subnet::Id'
-  SubnetC:
-    Description: Id of the Subnet C
-    Type: 'AWS::EC2::Subnet::Id'
   SecurityGroup:
     Description: Default Security group in VPC
     Type: 'AWS::EC2::SecurityGroup::Id'
@@ -173,11 +170,11 @@ Resources:
     Properties:
       GroupDescription: Access to the private application load balancer
       VpcId: !Ref VPCId
-      SecurityGroupIngress:
-        - CidrIp: 0.0.0.0/0
-          IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
+#      SecurityGroupIngress:
+#        - CidrIp: 0.0.0.0/0
+#          IpProtocol: tcp
+#          FromPort: 80
+#          ToPort: 80
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 012553b5-bf05-41d5-aaba-556e039f2478
@@ -308,7 +305,6 @@ Resources:
           Subnets:
             - !Ref SubnetA
             - !Ref SubnetB
-            - !Ref SubnetC
       LaunchType: FARGATE
       LoadBalancers:
         - ContainerName: !Ref ServiceName
@@ -366,7 +362,6 @@ Resources:
       Subnets:
         - !Ref SubnetA
         - !Ref SubnetB
-        - !Ref SubnetC
       SecurityGroups:
         - !Ref SecurityGroup
         - !Ref PrivateLoadBalancerSG

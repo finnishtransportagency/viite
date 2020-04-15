@@ -57,7 +57,12 @@ Resources:
         - !Ref SubnetA
         - !Ref SubnetB
       Tags: 
-        - 
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - DBSubnetGroup
+        -
           Key: Application
           Value: !Ref Application
         -
@@ -81,7 +86,12 @@ Resources:
         - !Ref SecurityGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
       Tags: 
-        - 
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - DBInstance
+        -
           Key: Application
           Value: !Ref Application
         -
