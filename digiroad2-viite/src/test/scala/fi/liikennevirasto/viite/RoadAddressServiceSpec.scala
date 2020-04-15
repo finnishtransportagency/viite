@@ -850,9 +850,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val link1 = dummyProjectLink(99, 1, Track.Combined, Discontinuity.EndOfRoad, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.UnChanged, projectId, RoadType.PublicRoad, geom1, roadwayNumber2)
       val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 0 , 15, Some(DateTime.now()), None, 12346, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.FerryRoad, geom2, roadwayNumber3)
 
-//      val link1 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.Continuous, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId, RoadType.PublicRoad, geom1, roadwayNumber1)
-//      val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 5 , 20, Some(DateTime.now()), None, 12346, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.FerryRoad, geom2, roadwayNumber2)
-
       //Roadways and linear location generated AFTER changes
       val (lc1, rw1): (LinearLocation, Roadway) = Seq(link1).map(toRoadwayAndLinearLocation).head
       val (lc2, rw2): (LinearLocation, Roadway) = Seq(link2).map(toRoadwayAndLinearLocation).head
@@ -902,7 +899,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val afterUpdateProjectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
       val beforeDualPoint = afterUpdateProjectLinks.head.copy(roadwayNumber = roadwayNumber2)
       val afterDualPoint = afterUpdateProjectLinks.last.copy(roadwayNumber = roadwayNumber3)
-      val generatedProperRoadwayNumbersAfterChanges = Seq(beforeDualPoint, afterDualPoint)
       val mappedRoadwayChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
 
       val newRoads = Seq()
@@ -923,9 +919,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       )
       val renumbered = ReNumeration(Seq())
 
-      val roadwayPointsBeforeTransferLink = Seq(afterDualPoint).filter(_.status == LinkStatus.Transfer).map(_.roadwayNumber).distinct.flatMap{ rwp=>
-        roadwayPointDAO.fetchByRoadwayNumber(rwp)
-      }
       val delta = Delta(DateTime.now, newRoads , terminated, unchanged, transferred, renumbered)
 
       val reservedParts = Seq(ProjectReservedPart(0, 99, 2, Some(20), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L)))
@@ -953,6 +946,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       roadwayPointsBeforeDual.last.addrMValue should be (beforeDualPoint.endAddrMValue)
 
       val roadwayPointsAfterDual = roadwayPointDAO.fetchByRoadwayNumber(afterDualPoint.roadwayNumber).sortBy(_.addrMValue)
+      roadwayPointsAfterDual.size should be (2)
       roadwayPointsAfterDual.head.addrMValue should be (afterDualPoint.startAddrMValue)
       roadwayPointsAfterDual.last.addrMValue should be (afterDualPoint.endAddrMValue)
     }
