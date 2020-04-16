@@ -242,9 +242,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
       buildTestDataForProject(Some(project), Some(Seq(roadway1, roadway2)), Some(Seq(linearLocation1, linearLocation2)), Some(leftSideProjectLinks ++ rightSideProjectLinks))
 
-      intercept[NoSuchElementException] {
-        defaultSectionCalculatorStrategy.assignMValues(leftSideProjectLinks, rightSideProjectLinks, Seq.empty[UserDefinedCalibrationPoint])
-      }
+      defaultSectionCalculatorStrategy.assignMValues(leftSideProjectLinks, rightSideProjectLinks, Seq.empty[UserDefinedCalibrationPoint])
     }
   }
 
