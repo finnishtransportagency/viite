@@ -4,7 +4,7 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.digiroad2.util.{MismatchingTracksException, RoadAddressException, Track}
+import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -54,7 +54,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           }
         }
       } catch {
-        case ex: MismatchingTracksException =>
+        case ex: MissingTrackException =>
           logger.info(ex.getMessage)
           projectLinks ++ oldLinks
         case ex: InvalidAddressDataException =>
