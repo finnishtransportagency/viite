@@ -6,6 +6,7 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import fi.liikennevirasto.viite.NewIdValue
 
 object CalibrationPointDAO {
 
@@ -75,11 +76,31 @@ object CalibrationPointDAO {
   }
 
 
-  def create(calibrationPoint: CalibrationPoint): Unit = {
-    sqlu"""
-      Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) VALUES
-      (${Sequences.nextCalibrationPointId}, ${calibrationPoint.roadwayPointId}, ${calibrationPoint.linkId}, ${calibrationPoint.startOrEnd.value}, ${calibrationPoint.typeCode.value}, ${calibrationPoint.createdBy})
-      """.execute
+  def create(calibrationPoints: Iterable[CalibrationPoint]): Seq[Long] = {
+    val ps = dynamicSession.prepareStatement(
+      """INSERT INTO CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, "TYPE", CREATED_BY)
+      VALUES (?, ?, ?, ?, ?, ?)""".stripMargin)
+
+    // set ids for the calibration points without one
+    val (ready, idLess) = calibrationPoints.partition(_.id != NewIdValue)
+    val newIds = Sequences.fetchCalibrationPointIds(idLess.size)
+    val createCalibrationPoints = ready ++ idLess.zip(newIds).map(x =>
+      x._1.copy(id = x._2)
+    )
+
+    createCalibrationPoints.foreach {
+      calibrationPoint =>
+        ps.setLong(1, calibrationPoint.id)
+        ps.setLong(2, calibrationPoint.roadwayPointId)
+        ps.setLong(3, calibrationPoint.linkId)
+        ps.setInt(4, calibrationPoint.startOrEnd.value)
+        ps.setInt(5, calibrationPoint.typeCode.value)
+        ps.setString(6, calibrationPoint.createdBy)
+    }
+
+    ps.executeBatch()
+    ps.close()
+    createCalibrationPoints.map(_.id).toSeq
   }
 
   def create(roadwayPointId: Long, linkId: Long, startOrEnd: CalibrationPointLocation, calType: CalibrationPointType, createdBy: String) = {
@@ -109,14 +130,14 @@ object CalibrationPointDAO {
      """.as[CalibrationPoint].firstOption
   }
 
-  def fetchByRoadwayPointId(roadwayPointId: Long): Option[CalibrationPoint] = {
-    sql"""
-         SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, CP.TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
-         FROM CALIBRATION_POINT CP
-         JOIN ROADWAY_POINT RP
-          ON RP.ID = CP.ROADWAY_POINT_ID
-         WHERE cp.roadway_point_id = $roadwayPointId
-     """.as[CalibrationPoint].firstOption
+  def fetchByRoadwayPointId(roadwayPointId: Long): Seq[CalibrationPoint] = {
+    val query = s"""
+        SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, CP.TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+        FROM CALIBRATION_POINT CP
+        JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID
+          WHERE cp.roadway_point_id = $roadwayPointId AND cp.valid_to is null
+      """
+    queryList(query)
   }
 
   def fetchIdByRoadwayNumberSection(roadwayNumber: Long, startAddr: Long, endAddr: Long): Set[Long] = {
