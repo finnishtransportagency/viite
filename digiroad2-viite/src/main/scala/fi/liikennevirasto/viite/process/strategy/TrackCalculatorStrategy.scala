@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.util.{MismatchingTracksException, RoadAddressException}
+import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException}
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource, UnknownSource}
@@ -168,7 +168,7 @@ trait TrackCalculatorStrategy {
   protected def adjustTwoTracks(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint],
                                 restLeftProjectLinks: Seq[ProjectLink] = Seq(), restRightProjectLinks: Seq[ProjectLink] = Seq()): TrackCalculatorResult = {
     if (leftProjectLinks.isEmpty || rightProjectLinks.isEmpty)
-      throw new MismatchingTracksException(s"Mismatching tracks, R ${rightProjectLinks.size}, L ${leftProjectLinks.size}")
+      throw new MissingTrackException(s"Mismatching tracks, R ${rightProjectLinks.size}, L ${leftProjectLinks.size}")
 
     // Find a calibration point annexed to the projectLink Id
     val availableCalibrationPoint = calibrationPoints.get(rightProjectLinks.last.id).orElse(calibrationPoints.get(leftProjectLinks.last.id))
