@@ -1398,7 +1398,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     } catch {
       case ex: RoadAddressException =>
         logger.info("Road address Exception: " + ex.getMessage)
-        Some(s"Tieosoitevirhe: (${ex.getMessage}")
+        Some(s"Tieosoitevirhe: ${ex.getMessage}")
       case ex: ProjectValidationException => Some(ex.getMessage)
       case ex: Exception => Some(ex.getMessage)
     }
