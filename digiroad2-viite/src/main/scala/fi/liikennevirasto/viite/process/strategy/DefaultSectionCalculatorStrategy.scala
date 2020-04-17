@@ -290,7 +290,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       oldLinks.filter(_.status == LinkStatus.UnChanged).sortBy(_.startAddrMValue).headOption.map(pl => (pl.startingPoint, pl)).getOrElse {
         val remainLinks = oldLinks ++ newLinks
         if (remainLinks.isEmpty)
-          throw new InvalidAddressDataException("Missing right track starting project links")
+          throw new MissingTrackException("Missing right track starting project links")
         // Grab all the endpoints of the links
         val directionLinks = if (remainLinks.exists(_.sideCode != SideCode.Unknown)) remainLinks.filter(_.sideCode != SideCode.Unknown) else remainLinks
 
