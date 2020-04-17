@@ -4,7 +4,7 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
+import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -54,6 +54,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           }
         }
       } catch {
+        case ex: MissingTrackException =>
+          logger.info(ex.getMessage)
+          projectLinks ++ oldLinks
         case ex: InvalidAddressDataException =>
           logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
           throw ex
@@ -215,7 +218,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val chainEndPoints = TrackSectionOrder.findChainEndpoints(leftLinks)
 
       if (chainEndPoints.isEmpty)
-        throw new InvalidAddressDataException("Missing left track starting project links")
+        throw new MissingTrackException("Missing left track starting project links")
 
       val oldFirst = TrackSectionOrder.findOnceConnectedLinks(leftLinks).values.find(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
       val endPointsWithValues = chainEndPoints.filter(link => link._2.startAddrMValue == 0 && link._2.endAddrMValue != 0)
@@ -287,7 +290,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       oldLinks.filter(_.status == LinkStatus.UnChanged).sortBy(_.startAddrMValue).headOption.map(pl => (pl.startingPoint, pl)).getOrElse {
         val remainLinks = oldLinks ++ newLinks
         if (remainLinks.isEmpty)
-          throw new InvalidAddressDataException("Missing right track starting project links")
+          throw new MissingTrackException("Missing right track starting project links")
         // Grab all the endpoints of the links
         val directionLinks = if (remainLinks.exists(_.sideCode != SideCode.Unknown)) remainLinks.filter(_.sideCode != SideCode.Unknown) else remainLinks
 
