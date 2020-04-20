@@ -310,7 +310,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
         "", Seq(), Seq(), None, None)
 
       val projectLinkLeft1 = ProjectLink(projectLinkId, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
-        Some("user"), 12345L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        Some("user"), 12345L, 0.0, 60.0, SideCode.Unknown, (None, None),
         geomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 0, reversed = false,
         None, 86400L, roadwayNumber = 12345L)
 
