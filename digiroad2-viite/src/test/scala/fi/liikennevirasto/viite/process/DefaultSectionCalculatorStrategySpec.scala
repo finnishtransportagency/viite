@@ -1369,6 +1369,7 @@ Left     |      |
       val roadwayNumber1 = Sequences.nextRoadwayNumber
       val roadwayNumber2 = Sequences.nextRoadwayNumber
       val roadwayNumber3 = Sequences.nextRoadwayNumber
+      val roadwayNumber4 = Sequences.nextRoadwayNumber
       val linearLocationId1 = Sequences.nextLinearLocationId
       val linearLocationId2 = Sequences.nextLinearLocationId
       val linearLocationId3 = Sequences.nextLinearLocationId
@@ -1413,7 +1414,7 @@ Left     |      |
       val projectLinkRight3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 24L, 30, 23L, 30L, None, None,
         None, 12347L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
         geomTransferRight3, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight3), roadwayId3, linearLocationId5, 8L, reversed = false,
-        None, 86400L, roadwayNumber = roadwayNumber3)
+        None, 86400L, roadwayNumber = roadwayNumber4)
 
       //create before transfer data
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 5, reversed = false, DateTime.now(), None,
@@ -1451,7 +1452,7 @@ Left     |      |
       val (left, right) = assignedValues.filterNot(_.track == Track.Combined).partition(_.track == Track.LeftSide)
       assignedValues.size should be (8)
       left.map(_.roadwayNumber).distinct.size should be (right.map(_.roadwayNumber).size)
-      left.map(_.roadwayNumber).distinct.size should be (2)
+      left.map(_.roadwayNumber).distinct.size should be (3)
     }
   }
 
