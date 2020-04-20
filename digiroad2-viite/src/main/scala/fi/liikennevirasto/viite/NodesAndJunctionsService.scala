@@ -89,7 +89,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (isObsoleteNode(junctions, nodePoints)) {
         val old = nodeDAO.fetchById(node.id)
         nodeDAO.expireById(Seq(old.get.id))
-        nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)), validFrom = DateTime.now())), username)
+        nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
       } else {
         calculateNodePointsForNode(nodeNumber, username)
       }
