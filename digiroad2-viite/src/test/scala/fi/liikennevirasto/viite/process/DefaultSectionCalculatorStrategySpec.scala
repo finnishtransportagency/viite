@@ -1335,10 +1335,12 @@ Left     |  ^   Right
     runWithRollback {
 
       /*geoms
-         ^  ^
-         |  |
-Left     |  ^   Right
-         |  |
+         ^  ^----
+         |      |
+Left     |      |
+         |      ^  Right
+         |      |
+         ^  ---->
          |  |
           ^
           | Combined
@@ -1444,7 +1446,7 @@ Left     |  ^   Right
         roadwayNumber3, Some(DateTime.now().minusDays(1)), None)
 
       buildTestDataForProject(Some(project), Some(Seq(roadwayCombined1, roadwayCombined2, roadwayCombined3)), Some(Seq(linearCombined1, linearCombined2, linearCombined3, linearCombined4)), None)
-      val assignedValues = defaultSectionCalculatorStrategy.assignMValues(Seq(projectLinkLeft1), Seq(projectLinkCombined1, projectLinkCombined2, projectLinkRight1, projectLinkRight2), Seq.empty[UserDefinedCalibrationPoint])
+      val assignedValues = defaultSectionCalculatorStrategy.assignMValues(Seq(projectLinkLeft1, projectLinkLeft2), Seq(projectLinkCombined1, projectLinkCombined2, projectLinkRight1, projectLinkRight2, projectLinkRight3), Seq.empty[UserDefinedCalibrationPoint])
 
       val (left, right) = assignedValues.filterNot(_.track == Track.Combined).partition(_.track == Track.LeftSide)
       assignedValues.size should be (8)
@@ -1452,9 +1454,6 @@ Left     |  ^   Right
       left.map(_.roadwayNumber).distinct.size should be (2)
     }
   }
-
-//  test("Test defaultSectionCalculatorStrategy.assignMValues() and the attribution of roadway_numbers for new Left Right sections with diff number of links Then " +
-//    "if there are for e.g. 3 (three) consecutive links with diff roadway number (and all Transfer status), the opposite track (New), should split their link(s) if the amount of links is lower than three, to have the same amount of roadway numbers, and not split the first one if the first transfer link found is too long when comparing to the opposite first New link") {
 
   test("Test defaultSectionCalculatorStrategy.assignMValues() and the attribution of roadway_numbers for new Left Right sections with diff number of links Then " +
     "if there are some consecutive links with diff roadway_number (and all Transfer status), the opposite track, should split their link(s) if the amount of links is lower than the Transfer track side with same end addresses as the other side and different roadway numbers") {
