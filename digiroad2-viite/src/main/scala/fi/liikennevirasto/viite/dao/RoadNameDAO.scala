@@ -177,8 +177,8 @@ object RoadNameDAO {
   }
 
   def create(roadNames: Seq[RoadName]): Unit = {
-    val query = s"insert into ROAD_NAME (id, road_number, road_name, start_date, valid_from, valid_to, created_by, end_date) values " +
-      s"(?, ?, ?, ?, ?, ?, ? ,?)"
+    val query = s"insert into ROAD_NAME (id, road_number, road_name, start_date, valid_to, created_by, end_date) values " +
+      s"(?, ?, ?, ?, ?, ? ,?)"
 
     val namesPS = dynamicSession.prepareStatement(query)
 
@@ -188,13 +188,12 @@ object RoadNameDAO {
       namesPS.setLong(2, roadName.roadNumber)
       namesPS.setString(3, roadName.roadName)
       namesPS.setDate(4, new Date(roadName.startDate.get.getMillis))
-      namesPS.setDate(5, new Date(new java.util.Date().getTime))
-      namesPS.setString(6, "")
-      namesPS.setString(7, roadName.createdBy)
+      namesPS.setString(5, "")
+      namesPS.setString(6, roadName.createdBy)
       if (roadName.endDate.nonEmpty) {
-        namesPS.setDate(8, new Date(roadName.endDate.get.getMillis))
+        namesPS.setDate(7, new Date(roadName.endDate.get.getMillis))
       } else {
-        namesPS.setString(8, "")
+        namesPS.setString(7, "")
       }
       namesPS.addBatch()
     })
