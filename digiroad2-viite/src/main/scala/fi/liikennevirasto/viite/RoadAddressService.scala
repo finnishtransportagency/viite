@@ -781,6 +781,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       }
     }
 
+    def updateRoadwayPoint(rwp: RoadwayPoint, newAddrM: Long): Seq[RoadwayPoint] = {
+      val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp)
+      if (roadwayNumberInPoint.isDefined) {
+        if (rwp.roadwayNumber != roadwayNumberInPoint.get || rwp.addrMValue != newAddrM) {
+          val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
+          roadwayPointDAO.update(newRwp)
+          Seq(newRwp)
+        } else {
+          Seq()
+        }
+      } else {
+        Seq()
+      }
+    }
+
     try {
 
       val projectRoadwayChanges = roadwayChanges.filter(rw => List(Transfer, ReNumeration, Unchanged, Termination).contains(rw.changeInfo.changeType))
@@ -816,25 +831,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             if (!change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
-                val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp)
-                if (roadwayNumberInPoint.isDefined) {
-                  val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
-                  roadwayPointDAO.update(newRwp)
-                  Seq(newRwp)
-                }
-                else Seq()
+                updateRoadwayPoint(rwp, newAddrM)
               }
               list ++ rwPoints
             } else {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = target.endAddressM.get - (rwp.addrMValue - source.startAddressM.get)
-                val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp)
-                if (roadwayNumberInPoint.isDefined) {
-                  val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
-                  roadwayPointDAO.update(newRwp)
-                  Seq(newRwp)
-                }
-                else Seq()
+                updateRoadwayPoint(rwp, newAddrM)
               }
               list ++ rwPoints
             }
@@ -842,13 +845,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             if (change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
                 val newAddrM = Seq(source.endAddressM.get, target.endAddressM.get).max - rwp.addrMValue
-                val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp)
-                if (roadwayNumberInPoint.isDefined) {
-                  val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
-                  roadwayPointDAO.update(newRwp)
-                  Seq(newRwp)
-                }
-                else Seq()
+                updateRoadwayPoint(rwp, newAddrM)
               }
               list ++ rwPoints
             } else {
@@ -860,12 +857,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
                 change.originalStartAddr >= source.startAddressM.get && change.originalEndAddr <= source.endAddressM.get
               )
               if (terminatedRoadAddress.isDefined) {
-                val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp)
-                if (roadwayNumberInPoint.isDefined) {
-                  val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = rwp.addrMValue, modifiedBy = Some(username))
-                  roadwayPointDAO.update(newRwp)
-                  Seq(newRwp)
-                } else Seq()
+                updateRoadwayPoint(rwp, rwp.addrMValue)
               } else Seq()
             }
             list ++ rwPoints
