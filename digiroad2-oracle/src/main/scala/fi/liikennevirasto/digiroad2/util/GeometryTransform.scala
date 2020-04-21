@@ -53,3 +53,4 @@ object Track {
 
 class RoadAddressException(response: String) extends RuntimeException(response)
 class RoadPartReservedException(response: String) extends RoadAddressException(response)
+class MissingTrackException(response: String) extends RoadAddressException(response)
