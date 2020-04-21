@@ -11,11 +11,9 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.RoadAddressCP
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
@@ -359,6 +357,7 @@ class ProjectLinkDAO {
   }
 
   def create(links: Seq[ProjectLink]): Seq[Long] = {
+    if(links.nonEmpty)
     time(logger, "Create project links") {
       val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
         "road_number, road_part_number, " +
@@ -414,8 +413,8 @@ class ProjectLinkDAO {
       addressPS.executeBatch()
       addressPS.close()
       projectLinks.map(_.id)
-    }
-
+    } else
+      Seq.empty[Long]
   }
 
   def updateProjectLinks(projectLinks: Seq[ProjectLink], modifier: String, addresses: Seq[RoadAddress]): Unit = {
