@@ -177,7 +177,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       def splitLinks(remainingTransfer: ListMap[Long, Seq[ProjectLink]], processedTransfer: Seq[ProjectLink], remainingNew: Seq[ProjectLink], processedNew: Seq[ProjectLink], totalTransferMLength: Double, totalNewMLength: Double, missingRoadwayNumbers: Int) : Seq[ProjectLink]= {
         if(missingRoadwayNumbers == 0){//if links size the same as the diff roadwayNumbers in Transfer side, then
           processedNew ++ remainingNew.map(_.copy(roadwayNumber = Sequences.nextRoadwayNumber))
-         }else if(remainingNew.isEmpty && remainingTransfer.isEmpty) {
+        } else if(remainingNew.isEmpty && remainingTransfer.isEmpty) {
           processedNew
         } else if (remainingNew.isEmpty && remainingTransfer.nonEmpty){
           splitLinks(remainingTransfer, processedTransfer, remainingNew:+processedNew.last, processedNew.init,
@@ -214,7 +214,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               remainingNew.head.copy(endMValue = firstSplitedEndMValue,
                 geometry = firstSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitedLinkGeom), endAddrMValue = firstSplitedEndAddr,
                 roadwayNumber = Sequences.nextRoadwayNumber),
-              remainingNew.head.copy(startMValue = firstSplitedEndMValue,
+              remainingNew.head.copy(id = NewIdValue, startMValue = firstSplitedEndMValue,
                 geometry = secondSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(secondSplitedLinkGeom), startAddrMValue = firstSplitedEndAddr,
                 endAddrMValue = secondSplitedEndAddr, roadwayNumber = Sequences.nextRoadwayNumber)),
               totalTransferMLength, totalNewMLength, missingRoadwayNumbers-1)
