@@ -161,6 +161,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       if (rightLinks.isEmpty && leftLinks.isEmpty) {
         (Seq(), Seq())
       } else {
+        if (rightLinks.isEmpty || leftLinks.isEmpty) {
+          throw new MissingTrackException(s"Missing track, R: ${rightLinks.size}, L: ${leftLinks.size}")
+        }
 
         val right = continuousWOutRoadwayNumberSection(rightLinks)
         val left = continuousWOutRoadwayNumberSection(leftLinks)

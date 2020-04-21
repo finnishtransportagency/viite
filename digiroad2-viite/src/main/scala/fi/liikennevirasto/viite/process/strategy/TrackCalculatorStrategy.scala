@@ -168,7 +168,7 @@ trait TrackCalculatorStrategy {
   protected def adjustTwoTracks(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint],
                                 restLeftProjectLinks: Seq[ProjectLink] = Seq(), restRightProjectLinks: Seq[ProjectLink] = Seq()): TrackCalculatorResult = {
     if (leftProjectLinks.isEmpty || rightProjectLinks.isEmpty)
-      throw new MissingTrackException(s"Missing track, R ${rightProjectLinks.size}, L ${leftProjectLinks.size}")
+      throw new MissingTrackException(s"Missing track, R: ${rightProjectLinks.size}, L: ${leftProjectLinks.size}")
 
     // Find a calibration point annexed to the projectLink Id
     val availableCalibrationPoint = calibrationPoints.get(rightProjectLinks.last.id).orElse(calibrationPoints.get(leftProjectLinks.last.id))
