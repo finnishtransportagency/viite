@@ -786,6 +786,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       if (roadwayNumberInPoint.isDefined) {
         if (rwp.roadwayNumber != roadwayNumberInPoint.get || rwp.addrMValue != newAddrM) {
           val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
+          logger.info(s"Updating roadway_point ${rwp.id}: (roadwayNumber: ${rwp.roadwayNumber} -> ${newRwp.roadwayNumber}, addr: ${rwp.addrMValue} -> ${newRwp.addrMValue})")
           roadwayPointDAO.update(newRwp)
           Seq(newRwp)
         } else {
