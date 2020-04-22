@@ -234,8 +234,8 @@ class NodeDAO extends BaseDAO {
   def create(nodes: Iterable[Node], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
-      """insert into NODE (ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, CREATED_BY, VALID_FROM)
-      values (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'))""".stripMargin)
+      """insert into NODE (ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, CREATED_BY)
+      values (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""".stripMargin)
 
     // Set ids for the nodes without one
     val (ready, idLess) = nodes.partition(_.id != NewIdValue)
@@ -268,7 +268,6 @@ class NodeDAO extends BaseDAO {
           case None => ""
         })
         ps.setString(8, if (createdBy == null) "-" else createdBy)
-        ps.setString(9, dateFormatter.print(node.validFrom))
         ps.addBatch()
     }
     ps.executeBatch()
