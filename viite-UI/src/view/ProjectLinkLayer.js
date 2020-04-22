@@ -157,11 +157,11 @@
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
-        if(!_.isUndefined(selection.linkData.connectedLinkId)){
-          selectedProjectLinkProperty.openSplit(selection.linkData.linkId, true);
-        } else {
+        // if(!_.isUndefined(selection.linkData.connectedLinkId)){
+        //   selectedProjectLinkProperty.openSplit(selection.linkData.linkId, true);
+        // } else {
           selectedProjectLinkProperty.open(getSelectedId(selection.linkData), true);
-        }
+        // }
       } else {
         eventbus.trigger('roadAddressProject:discardChanges'); // Background map was clicked so discard changes
       }
@@ -219,11 +219,11 @@
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
-        if (!_.isUndefined(selection.linkData.connectedLinkId)) {
-          selectedProjectLinkProperty.openSplit(selection.linkData.linkId, true);
-        } else {
+        // if (!_.isUndefined(selection.linkData.connectedLinkId)) {
+        //   selectedProjectLinkProperty.openSplit(selection.linkData.linkId, true);
+        // } else {
           selectedProjectLinkProperty.open(getSelectedId(selection.linkData));
-        }
+        // }
       }
     };
 
