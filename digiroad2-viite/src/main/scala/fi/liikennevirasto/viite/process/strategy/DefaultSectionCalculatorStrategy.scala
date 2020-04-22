@@ -212,10 +212,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             splitLinks(remainingTransfer.tail, processedTransfer++remainingTransfer.head._2, remainingNew.tail, processedNew++Seq(
               remainingNew.head.copy(endMValue = firstSplitedEndMValue,
                 geometry = firstSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitedLinkGeom), endAddrMValue = firstSplitedEndAddr,
-                roadwayNumber = Sequences.nextRoadwayNumber),
+                roadwayNumber = Sequences.nextRoadwayNumber, connectedLinkId = Some(remainingNew.head.linkId)),
               remainingNew.head.copy(id = NewIdValue, startMValue = firstSplitedEndMValue,
                 geometry = secondSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(secondSplitedLinkGeom), startAddrMValue = firstSplitedEndAddr,
-                endAddrMValue = secondSplitedEndAddr, roadwayNumber = Sequences.nextRoadwayNumber)),
+                endAddrMValue = secondSplitedEndAddr, roadwayNumber = Sequences.nextRoadwayNumber, connectedLinkId = Some(remainingNew.head.linkId))),
               totalTransferMLength, totalNewMLength, missingRoadwayNumbers-1)
           }
         }
