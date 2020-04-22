@@ -857,7 +857,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def publishNodes(nodeNumbers: Seq[Long], username: String): Unit = {
     logger.debug("setPublishingInfoForNodes: " + nodeNumbers.mkString(","))
     nodeNumbers.foreach(nodeNumber => {
-      val id = nodeDAO.fetchId(nodeNumber)
+      val id = nodeDAO.fetchLatestId(nodeNumber)
       nodeDAO.publish(id.getOrElse(0), username)
     })
   }
