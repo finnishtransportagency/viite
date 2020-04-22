@@ -138,14 +138,14 @@ class NodeDAO extends BaseDAO {
       val coordY = r.nextLong()
       val name = r.nextStringOption()
       val nodeType = NodeType.apply(r.nextInt())
-      val startDate = formatter.parseDateTime(r.nextDate.toString)
-      val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
-      val validFrom = formatter.parseDateTime(r.nextDate.toString)
-      val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val startDate = new DateTime(r.nextDate())
+      val endDate = r.nextDateOption().map(d => new DateTime(d))
+      val validFrom = new DateTime(r.nextDate()) // r.nextTimestampOption() do not work here
+      val validTo = r.nextTimestampOption().map(d => new DateTime(d))
       val createdBy = r.nextString()
-      val createdTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val createdTime = r.nextTimestampOption().map(d => new DateTime(d))
       val editor = r.nextStringOption()
-      val publishedTime = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
+      val publishedTime = r.nextTimestampOption().map(d => new DateTime(d))
 
       Node(id, nodeNumber, Point(coordX, coordY), name, nodeType, startDate, endDate, validFrom, validTo, createdBy, createdTime, editor, publishedTime)
     }
@@ -181,6 +181,15 @@ class NodeDAO extends BaseDAO {
       SELECT ID
       from NODE
       where NODE_NUMBER = $nodeNumber and valid_to is null and end_date is null
+      """.as[Long].firstOption
+  }
+
+  def fetchLatestId(nodeNumber: Long): Option[Long] = {
+    sql"""
+      SELECT ID
+      from NODE
+      where NODE_NUMBER = $nodeNumber and valid_to is null
+      order by created_time desc, end_date desc
       """.as[Long].firstOption
   }
 
@@ -334,10 +343,10 @@ class NodeDAO extends BaseDAO {
          SELECT ID, NODE_NUMBER, coords.X, coords.Y, "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME
          FROM NODE N
          CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
-         WHERE
+         WHERE NODE_NUMBER IN (SELECT NODE_NUMBER FROM NODE NC WHERE
          PUBLISHED_TIME >= to_timestamp('${new Timestamp(sinceDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
-         $untilString AND PUBLISHED_TIME IS NOT NULL
-         AND END_DATE IS NULL AND VALID_TO IS NULL
+         $untilString)
+         AND VALID_TO IS NULL AND PUBLISHED_TIME IS NOT NULL
        """
       queryList(query)
     }
