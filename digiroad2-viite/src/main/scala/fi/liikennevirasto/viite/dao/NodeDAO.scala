@@ -347,7 +347,7 @@ class NodeDAO extends BaseDAO {
   // This query is designed to work in processing ROADWAY_CHANGES in phase where ROADWAY_CHANGES contains changes but other tables do not contain any updates yet
   // First and third union part handles project changes and second and forth part handles terminations
   // First and second union part finds nodes via junctions and third and fourth union find nodes via node_points
-  // We find also nodes that have end_date not null to support change detection for tierekisteri for expired nodes
+  // We find also nodes that have end_date not null to support change detection for tierekisteri for terminated nodes
   def fetchNodeNumbersByProject(projectId: Long): Seq[Long] = {
     val query =
       s"""
@@ -365,6 +365,7 @@ class NodeDAO extends BaseDAO {
            ON (R.ROAD_NUMBER = RC.NEW_ROAD_NUMBER
              AND R.ROAD_PART_NUMBER = RC.NEW_ROAD_PART_NUMBER)
          WHERE RC.PROJECT_ID = $projectId
+         AND R.VALID_TO IS NULL
          AND R.END_DATE IS NULL
          AND JP.VALID_TO IS NULL
          AND N.VALID_TO IS NULL
@@ -383,6 +384,7 @@ class NodeDAO extends BaseDAO {
            ON (R.ROAD_NUMBER = RC.OLD_ROAD_NUMBER AND RC.NEW_ROAD_NUMBER IS NULL
              AND R.ROAD_PART_NUMBER = RC.OLD_ROAD_PART_NUMBER)
          WHERE RC.PROJECT_ID = $projectId
+         AND R.VALID_TO IS NULL
          AND R.END_DATE IS NULL
          AND JP.VALID_TO IS NULL
          AND N.VALID_TO IS NULL
@@ -399,6 +401,7 @@ class NodeDAO extends BaseDAO {
            ON (R.ROAD_NUMBER = RC.NEW_ROAD_NUMBER
              AND R.ROAD_PART_NUMBER = RC.NEW_ROAD_PART_NUMBER)
          WHERE RC.PROJECT_ID = $projectId
+         AND R.VALID_TO IS NULL
          AND R.END_DATE IS NULL
          AND NP.VALID_TO IS NULL
          AND N.VALID_TO IS NULL
@@ -415,6 +418,7 @@ class NodeDAO extends BaseDAO {
            ON (R.ROAD_NUMBER = RC.OLD_ROAD_NUMBER AND RC.NEW_ROAD_NUMBER IS NULL
              AND R.ROAD_PART_NUMBER = RC.OLD_ROAD_PART_NUMBER)
          WHERE RC.PROJECT_ID = $projectId
+         AND R.VALID_TO IS NULL
          AND R.END_DATE IS NULL
          AND NP.VALID_TO IS NULL
          AND N.VALID_TO IS NULL
