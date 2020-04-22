@@ -132,14 +132,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
 
   def toRoadwayAndLinearLocation(p: ProjectLink): (LinearLocation, Roadway) = {
-    def calibrationPoint(cp: Option[ProjectLinkCalibrationPoint]): Option[Long] = {
-      cp match {
-        case Some(x) =>
-          Some(x.addressMValue)
-        case _ => Option.empty[Long]
-      }
-    }
-
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
     (LinearLocation(p.linearLocationId, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
@@ -4074,22 +4066,47 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
 
   def dummyHorizontalRoad(projectId: Long, numberOfLinearLocations: Int, roadNumber: Long, roadPartNumber: Long, rwNumber: Long, track: Track = Track.Combined, roadType: RoadType = RoadType.PublicRoad,
-                          discontinuity: Discontinuity = Discontinuity.Continuous, firstPointAt: Point = Point(0.0, 0.0),
+                          discontinuity: Discontinuity = Discontinuity.Continuous, firstPointAt: Point = Point(0.0, 0.0), startAddrMValue: Long = 0,
                           linkId: Long = 0, plId: Long = 0, rwId: Long = 0, llId: Long = 0, size: Int = 10): (Seq[ProjectLink], Seq[LinearLocation], Seq[Roadway]) = {
     val projectLinks = for (i: Int <- 0 until numberOfLinearLocations) yield {
       val startAddrM = i * size + firstPointAt.x.toLong
       val endAddrM = startAddrM + size
       val startPoint = firstPointAt.x + (i * size)
       val endPoint = startPoint + size
-      val geom = Seq(Point(startPoint, 0.0), Point(endPoint, 0.0))
-      val projectLink = dummyProjectLink(roadNumber, roadPartNumber, track, Discontinuity.Continuous, startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, 0, size,
+      val geom = Seq(Point(startPoint, firstPointAt.y), Point(endPoint, firstPointAt.y))
+      val discontinuityCode = if ( i === (numberOfLinearLocations - 1) ) { discontinuity } else { Discontinuity.Continuous }
+      dummyProjectLink(roadNumber, roadPartNumber, track, discontinuityCode, startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, 0, size,
         SideCode.TowardsDigitizing, LinkStatus.New, projectId, roadType, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
-      projectLink
     }
     val (linearLocations, roadways) = projectLinks.map(toRoadwayAndLinearLocation).unzip
-    (projectLinks,
-        linearLocations,
-        roadways.map(rw => rw.copy(ely = 8L, id = projectLinks.find(_.roadwayNumber == rw.roadwayNumber).get.roadwayId)))
+    val startDate = DateTime.now
+    (
+      projectLinks,
+      linearLocations,
+      roadways.map(rw => rw.copy(id = rwId, roadwayNumber = rwNumber, startAddrMValue = startAddrMValue, endAddrMValue = startAddrMValue + (size * numberOfLinearLocations), discontinuity = discontinuity, startDate = startDate)).distinct
+    )
+  }
+
+  def dummyVerticalRoad(projectId: Long, numberOfLinearLocations: Int, roadNumber: Long, roadPartNumber: Long, rwNumber: Long, track: Track = Track.Combined, roadType: RoadType = RoadType.PublicRoad,
+                          discontinuity: Discontinuity = Discontinuity.Continuous, firstPointAt: Point = Point(0.0, 0.0), startAddrMValue: Long = 0,
+                          linkId: Long = 0, plId: Long = 0, rwId: Long = 0, llId: Long = 0, size: Int = 10): (Seq[ProjectLink], Seq[LinearLocation], Seq[Roadway]) = {
+    val projectLinks = for (i: Int <- 0 until numberOfLinearLocations) yield {
+      val startAddrM = i * size + startAddrMValue
+      val endAddrM = startAddrM + size
+      val startPoint = firstPointAt.y + (i * size)
+      val endPoint = startPoint + size
+      val geom = Seq(Point(firstPointAt.x, startPoint), Point(firstPointAt.x, endPoint))
+      val discontinuityCode = if ( i === (numberOfLinearLocations - 1) ) { discontinuity } else { Discontinuity.Continuous }
+      dummyProjectLink(roadNumber, roadPartNumber, track, discontinuityCode, startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, 0, size,
+        SideCode.TowardsDigitizing, LinkStatus.New, projectId, roadType, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
+    }
+    val (linearLocations, roadways) = projectLinks.map(toRoadwayAndLinearLocation).unzip
+    val startDate = DateTime.now
+    (
+      projectLinks,
+      linearLocations,
+      roadways.map(rw => rw.copy(id = rwId, roadwayNumber = rwNumber, startAddrMValue = startAddrMValue, endAddrMValue = startAddrMValue + (size * numberOfLinearLocations), discontinuity = discontinuity, startDate = startDate)).distinct
+    )
   }
 
   /**
@@ -4165,6 +4182,127 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val nodePoints = projectLinks.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber))
       nodePoints.size should be(6)
+    }
+  }
+
+  /**
+    * Test case for extra junctions after discontinuity place - if it's not connected by geomerty
+    */
+  test("Test handleJunctionTemplates when extra junction is needed after discontinuity place.") {
+    runWithRollback {
+      /*
+                          T2    T1
+                          ^      ^
+                          |      |
+          |--T2-->|--T2-->|--T2->|
+                          |      |
+          |--T1-->|--T1-->|--T1->|
+      */
+
+      val projectId: Long = Sequences.nextViiteProjectId
+      val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), Seq(), None, None)
+
+      val rwNumber1T1 = Sequences.nextRoadwayNumber
+      val rwNumber1T2 = Sequences.nextRoadwayNumber
+      val rwNumber2T1 = Sequences.nextRoadwayNumber
+      val rwNumber2T2 = Sequences.nextRoadwayNumber
+      val rw1Id = Sequences.nextRoadwayId
+      val rw2Id = Sequences.nextRoadwayId
+      val rw3Id = Sequences.nextRoadwayId
+      val rw4Id = Sequences.nextRoadwayId
+      val plId = Sequences.nextProjectLinkId
+      val llId = Sequences.nextLinearLocationId
+
+      val (pl1T2, ll1T2, rw1T2) = dummyHorizontalRoad(projectId, 3, 999L, 1L, rwNumber1T2,
+        track = Track.LeftSide, discontinuity = Discontinuity.MinorDiscontinuity, firstPointAt = Point(0.0, 10.0),
+        linkId = 12345, plId = plId, rwId = rw1Id, llId = llId)
+      val (pl1T1, ll1T1, rw1T1) = dummyHorizontalRoad(projectId, 3, 999L, 1L, rwNumber1T1,
+        track = Track.RightSide, discontinuity = Discontinuity.ParallelLink, firstPointAt = Point(0.0, 0.0),
+        linkId = 12348, plId = plId + 3, rwId = rw2Id, llId = llId + 3)
+
+      val (pl2T2, ll2T2, rw2T2) = dummyVerticalRoad(projectId, 2, 999L, 1L, rwNumber2T2,
+        track = Track.LeftSide, discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(20.0, 0.0), startAddrMValue = 30,
+        linkId = 12351, plId = plId + 6, rwId = rw3Id, llId = llId + 6)
+      val (pl2T1, ll2T1, rw2T1) = dummyVerticalRoad(projectId, 2, 999L, 1L, rwNumber2T1,
+        track = Track.RightSide, discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(30.0, 0.0), startAddrMValue = 30,
+        linkId = 12353, plId = plId + 8, rwId = rw4Id, llId = llId + 8)
+
+      val roadways = rw1T1 ++ rw1T2 ++ rw2T1 ++ rw2T2
+      val projectLinks = pl1T1 ++ pl1T2 ++ pl2T1 ++ pl2T2
+      val linearLocations = ll1T1.zipWithIndex.map { case (ll, index) => ll.copy(orderNumber = index+1) } ++
+        ll1T2.zipWithIndex.map { case (ll, index) => ll.copy(orderNumber = index+1) } ++
+        ll2T1.zipWithIndex.map { case (ll, index) => ll.copy(orderNumber = index+1) } ++
+        ll2T2.zipWithIndex.map { case (ll, index) => ll.copy(orderNumber = index+1) }
+
+      buildTestDataForProject(Some(project), Some(roadways), Some(linearLocations), Some(projectLinks))
+
+      val projectChanges = List(
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw1T1.head.roadNumber), Some(rw1T1.head.track.value), startRoadPartNumber = Some(rw1T1.head.roadPartNumber), endRoadPartNumber = Some(rw1T1.last.roadPartNumber), startAddressM = Some(rw1T1.head.startAddrMValue), endAddressM = Some(rw1T1.last.endAddrMValue), Some(rw1T1.head.roadType), Some(rw1T1.last.discontinuity), Some(rw1T1.head.ely)),
+            rw1T1.last.discontinuity, rw1T1.head.roadType, reversed = false, 1, rw1T1.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw1T2.head.roadNumber), Some(rw1T2.head.track.value), startRoadPartNumber = Some(rw1T2.head.roadPartNumber), endRoadPartNumber = Some(rw1T2.last.roadPartNumber), startAddressM = Some(rw1T2.head.startAddrMValue), endAddressM = Some(rw1T2.last.endAddrMValue), Some(rw1T2.head.roadType), Some(rw1T2.last.discontinuity), Some(rw1T2.head.ely)),
+            rw1T2.last.discontinuity, rw1T2.head.roadType, reversed = false, 2, rw1T2.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw2T1.head.roadNumber), Some(rw2T1.head.track.value), startRoadPartNumber = Some(rw2T1.head.roadPartNumber), endRoadPartNumber = Some(rw2T1.last.roadPartNumber), startAddressM = Some(rw2T1.head.startAddrMValue), endAddressM = Some(rw2T1.last.endAddrMValue), Some(rw2T1.head.roadType), Some(rw2T1.last.discontinuity), Some(rw2T1.head.ely)),
+            rw2T1.last.discontinuity, rw2T1.head.roadType, reversed = false, 1, rw2T1.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(projectId, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw2T2.head.roadNumber), Some(rw2T2.head.track.value), startRoadPartNumber = Some(rw2T2.head.roadPartNumber), endRoadPartNumber = Some(rw2T2.last.roadPartNumber), startAddressM = Some(rw2T2.head.startAddrMValue), endAddressM = Some(rw2T2.last.endAddrMValue), Some(rw2T2.head.roadType), Some(rw2T2.last.discontinuity), Some(rw2T2.head.ely)),
+            rw2T2.last.discontinuity, rw2T2.head.roadType, reversed = false, 2, rw2T2.head.ely)
+          , DateTime.now, Some(0L))
+      )
+
+      val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
+      roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
+
+      linearLocations.foreach { ll =>
+        when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(ll.getFirstPoint, ll.getFirstPoint), roadNumberLimits))
+            .thenReturn(linearLocations.filter { curr =>
+              val roadwayNumbers = linearLocations.filter(curr => curr.getFirstPoint == ll.getFirstPoint || curr.getLastPoint == ll.getFirstPoint).map(_.roadwayNumber)
+              roadwayNumbers.contains(curr.roadwayNumber)
+            })
+        when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(ll.getLastPoint, ll.getLastPoint), roadNumberLimits))
+          .thenReturn(linearLocations.filter { curr =>
+            val roadwayNumbers = linearLocations.filter(curr => curr.getFirstPoint == ll.getLastPoint || curr.getLastPoint == ll.getLastPoint).map(_.roadwayNumber)
+            roadwayNumbers.contains(curr.roadwayNumber)
+          })
+      }
+
+      roadways.foreach { rw =>
+        when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(rw.roadwayNumber), false))
+          .thenReturn(roadways.filter(_.roadwayNumber == rw.roadwayNumber))
+      }
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((rw1T1.map(_.roadwayNumber) ++ rw2T1.map(_.roadwayNumber)).toSet, false)).thenReturn(rw1T1 ++ rw2T1)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((rw1T1.map(_.roadwayNumber) ++ rw2T2.map(_.roadwayNumber)).toSet, false)).thenReturn(rw1T1 ++ rw2T2)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((rw1T2.map(_.roadwayNumber) ++ rw2T1.map(_.roadwayNumber)).toSet, false)).thenReturn(rw1T2 ++ rw2T1)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((rw1T2.map(_.roadwayNumber) ++ rw2T2.map(_.roadwayNumber)).toSet, false)).thenReturn(rw1T2 ++ rw2T2)
+
+      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
+
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(roadways.map(_.roadwayNumber).toSet, false)).thenReturn(roadways)
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinks, Some(project.startDate.minusDays(1)))
+
+      val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(roadways.map(_.roadwayNumber))
+      junctions.size should be (3)
+
+      val junctionPoints = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
+      junctionPoints.size should be (10)
     }
   }
 
