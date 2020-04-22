@@ -59,7 +59,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           projectLinks ++ oldLinks
         case ex: InvalidAddressDataException =>
           logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
-          throw ex
+          projectLinks ++ oldLinks
         case ex: NoSuchElementException =>
           logger.info("Delta calculation failed: " + ex.getMessage, ex)
           throw ex
