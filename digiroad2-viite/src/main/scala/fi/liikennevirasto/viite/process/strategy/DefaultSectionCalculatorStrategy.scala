@@ -143,11 +143,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           val (equatedNewLinks, restNewLinks) = groupedTransfer.foldLeft(Seq.empty[ProjectLink], newLinks) {
             case ((adjustedLinks, linksToProcess), group) =>
               val newRoadwayNumber = Sequences.nextRoadwayNumber
-              val links = linksToProcess.take(group._2.size).map(_.copy(roadwayNumber = newRoadwayNumber))
+              val links = linksToProcess.take(group._2.size).map(l => l.copy(roadwayNumber = newRoadwayNumber))
               val rest = linksToProcess.drop(group._2.size)
-              (adjustedLinks ++ links, rest)
+              (adjustedLinks ++ links.init :+ links.last.copy(connectedLinkId = Some(links.last.linkId), endAddrMValue = group._2.last.endAddrMValue), if(rest.nonEmpty)
+                rest.head.copy(startAddrMValue = group._2.last.endAddrMValue) +: rest.tail else rest)
           }
-          val adjustedNewLinks = equatedNewLinks ++ restNewLinks.map(_.copy(roadwayNumber = equatedNewLinks.last.roadwayNumber))
+          val adjustedNewLinks = equatedNewLinks ++ restNewLinks.map(l => l.copy(roadwayNumber = equatedNewLinks.last.roadwayNumber))
 
           val (right, left) = if (adjustedNewLinks.exists(_.track == Track.RightSide)) (adjustedNewLinks, transferLinks) else (transferLinks, adjustedNewLinks)
           ((right, restRight), (left, restLeft))
@@ -202,7 +203,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             splitLinks(remainingTransfer, processedTransfer, remainingNew.tail, processedNew:+remainingNew.head,
               totalTransferMLength, totalNewMLength, missingRoadwayNumbers)
           } else {
-            //TODO entao fazer o split da current new link
             val firstSplitedEndAddr = remainingTransfer.head._2.last.endAddrMValue
             val secondSplitedEndAddr = remainingTransfer.tail.head._2.last.endAddrMValue
             val firstSplitedEndMValue = transferGroupCoeff*currentLinkLength
