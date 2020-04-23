@@ -33,12 +33,12 @@ object CalibrationPointsUtils {
     sideCode match {
       case BothDirections => (None, None) // Invalid choice
       case TowardsDigitizing => (
-        if (startCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, 0.0, startAddrMValue, startCalibrationPoint)) else None,
-        if (endCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, endMValue - startMValue, endAddrMValue, endCalibrationPoint)) else None
+        if (startCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, 0.0, startAddrMValue, source = startCalibrationPoint)) else None,
+        if (endCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, endMValue - startMValue, endAddrMValue, source = endCalibrationPoint)) else None
       )
       case AgainstDigitizing => (
-        if (startCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, endMValue - startMValue, startAddrMValue, startCalibrationPoint)) else None,
-        if (endCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, 0.0, endAddrMValue, endCalibrationPoint)) else None
+        if (startCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, endMValue - startMValue, startAddrMValue, source = startCalibrationPoint)) else None,
+        if (endCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, 0.0, endAddrMValue, source = endCalibrationPoint)) else None
       )
       case Unknown => (None, None)  // Invalid choice
     }
