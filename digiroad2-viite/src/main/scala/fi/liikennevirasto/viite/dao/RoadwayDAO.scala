@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -156,7 +157,8 @@ object CalibrationCode {
 
 }
 
-case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends BaseCalibrationPoint
+// TODO source doesn't belong here but in Project's calibration point
+case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP, source: CalibrationPointSource = CalibrationPointSource.UnknownSource) extends BaseCalibrationPoint
 
 sealed trait TerminationCode {
   def value: Int
@@ -337,6 +339,16 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
 
   override lazy val startCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._1
   override lazy val endCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._2
+
+  def startCalibrationPointSource: CalibrationPointSource =
+    if (startCalibrationPoint.isDefined) startCalibrationPoint.get.source else CalibrationPointSource.NoCalibrationPoint
+  def endCalibrationPointSource: CalibrationPointSource =
+    if (endCalibrationPoint.isDefined) endCalibrationPoint.get.source else CalibrationPointSource.NoCalibrationPoint
+
+  def startCalibrationPointType: CalibrationPointType =
+    if (startCalibrationPoint.isDefined) startCalibrationPoint.get.typeCode else CalibrationPointType.NoCP
+  def endCalibrationPointType: CalibrationPointType =
+    if (endCalibrationPoint.isDefined) endCalibrationPoint.get.typeCode else CalibrationPointType.NoCP
 
   def reversed: Boolean = false
 

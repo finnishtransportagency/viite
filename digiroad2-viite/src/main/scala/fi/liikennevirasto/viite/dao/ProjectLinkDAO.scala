@@ -12,10 +12,9 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.RoadAddressCP
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
@@ -31,13 +30,14 @@ sealed trait CalibrationPointSource {
 }
 
 object CalibrationPointSource {
-  val values = Set(RoadAddressSource, ProjectLinkSource, UnknownSource)
+  val values = Set(RoadAddressSource, ProjectLinkSource, JunctionPointSource, UnknownSource)
 
   def apply(intValue: Int): CalibrationPointSource = values.find(_.value == intValue).getOrElse(UnknownSource)
 
   case object NoCalibrationPoint extends CalibrationPointSource {def value = 0;}
   case object RoadAddressSource extends CalibrationPointSource {def value = 1;}
   case object ProjectLinkSource extends CalibrationPointSource {def value = 2;}
+  case object JunctionPointSource extends CalibrationPointSource {def value = 3;}
   case object UnknownSource extends CalibrationPointSource{def value = 99;}
 }
 
@@ -64,7 +64,7 @@ case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue:
   extends BaseCalibrationPoint {
 
   def toCalibrationPoint: CalibrationPoint = {
-    CalibrationPoint(linkId, segmentMValue, addressMValue)
+    CalibrationPoint(linkId, segmentMValue, addressMValue, source = source)
   }
 }
 
@@ -72,6 +72,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, originalStartAddrMValue: Long, originalEndAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None),
+                       originalCalibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadwayId: Long, linearLocationId: Long,
                        ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None, linkGeometryTimeStamp: Long, roadwayNumber: Long = NewIdValue, roadName: Option[String] = None, roadAddressLength: Option[Long] = None,
@@ -188,6 +189,16 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       case  _ => true
     }
   }
+
+  def startCalibrationPointSource: CalibrationPointSource = {
+    if (startCalibrationPoint.isDefined) startCalibrationPoint.get.source
+    else CalibrationPointSource.NoCalibrationPoint
+  }
+
+  def endCalibrationPointSource: CalibrationPointSource = {
+    if (endCalibrationPoint.isDefined) endCalibrationPoint.get.source
+    else CalibrationPointSource.NoCalibrationPoint
+  }
 }
 
 class ProjectLinkDAO {
@@ -200,7 +211,7 @@ class ProjectLinkDAO {
   PROJECT_LINK.ORIGINAL_START_ADDR_M, PROJECT_LINK.ORIGINAL_END_ADDR_M,
   PROJECT_LINK.START_MEASURE, PROJECT_LINK.END_MEASURE, PROJECT_LINK.SIDE,
   PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, PROJECT_LINK.LINK_ID, PROJECT_LINK.GEOMETRY,
-  (PROJECT_LINK.END_MEASURE - PROJECT_LINK.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
+  (PROJECT_LINK.END_MEASURE - PROJECT_LINK.START_MEASURE) as length, PROJECT_LINK.START_CALIBRATION_POINT, PROJECT_LINK.END_CALIBRATION_POINT, PROJECT_LINK.STATUS,
   PROJECT_LINK.ROAD_TYPE, PROJECT_LINK.LINK_SOURCE as source, PROJECT_LINK.ROADWAY_ID, PROJECT_LINK.LINEAR_LOCATION_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID,
   CASE
     WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
@@ -218,7 +229,6 @@ class ProjectLinkDAO {
   ROADWAY.ROAD_NUMBER as ROAD_NUMBER,
   ROADWAY.ROAD_PART_NUMBER as ROAD_PART_NUMBER,
   ROADWAY.ROADWAY_NUMBER,
-  PROJECT_LINK.CALIBRATION_POINTS_SOURCE,
   PROJECT_LINK.ROADWAY_NUMBER
   from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID)
     LEFT JOIN ROADWAY ON (ROADWAY.ID = PROJECT_LINK.ROADWAY_ID)
@@ -233,7 +243,7 @@ class ProjectLinkDAO {
           plh.ORIGINAL_START_ADDR_M, plh.ORIGINAL_END_ADDR_M,
           plh.START_MEASURE, plh.END_MEASURE, plh.SIDE,
           plh.CREATED_BY, plh.MODIFIED_BY, plh.LINK_ID, plh.GEOMETRY,
-          (plh.END_MEASURE - plh.START_MEASURE) as length, plh.CALIBRATION_POINTS, plh.STATUS,
+          (plh.END_MEASURE - plh.START_MEASURE) as length, plh.START_CALIBRATION_POINT, plh.END_CALIBRATION_POINT, plh.STATUS,
           plh.ROAD_TYPE, plh.LINK_SOURCE as source, plh.ROADWAY_ID, plh.Linear_Location_Id, plh.ELY, plh.REVERSED, plh.CONNECTED_LINK_ID,
           CASE
             WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
@@ -251,7 +261,6 @@ class ProjectLinkDAO {
           ROADWAY.ROAD_NUMBER as ROAD_NUMBER,
           ROADWAY.ROAD_PART_NUMBER as ROAD_PART_NUMBER,
           ROADWAY.ROADWAY_NUMBER,
-          plh.CALIBRATION_POINTS_SOURCE,
           plh.ROADWAY_NUMBER
           from PROJECT prj JOIN PROJECT_LINK_HISTORY plh ON (prj.id = plh.PROJECT_ID)
             LEFT JOIN ROADWAY ON (ROADWAY.ID = plh.ROADWAY_ID)
@@ -274,7 +283,7 @@ class ProjectLinkDAO {
       """
 
   implicit val getProjectLinkRow: GetResult[ProjectLink] = new GetResult[ProjectLink] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): ProjectLink = {
       val projectLinkId = r.nextLong()
       val projectId = r.nextLong()
       val trackCode = Track.apply(r.nextInt())
@@ -291,11 +300,12 @@ class ProjectLinkDAO {
       val createdBy = r.nextStringOption()
       val modifiedBy = r.nextStringOption()
       val linkId = r.nextLong()
-      val geom=r.nextObjectOption()
+      val geom = r.nextObjectOption()
       val length = r.nextDouble()
       val calibrationPoints =
-        CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt), linkId, startMValue, endMValue,
-          startAddrM, endAddrM, sideCode)
+        CalibrationPointsUtils.calibrations(CalibrationPointSource.apply(r.nextInt), CalibrationPointSource.apply(r.nextInt),
+          linkId, startMValue, endMValue, startAddrM, endAddrM, sideCode)
+      val originalCalibrationPointTypes = (CalibrationPointType.apply(r.nextInt), CalibrationPointType.apply(r.nextInt))
       val status = LinkStatus.apply(r.nextInt())
       val roadType = RoadType.apply(r.nextInt())
       val source = LinkGeomSource.apply(r.nextInt())
@@ -314,16 +324,16 @@ class ProjectLinkDAO {
       val roadAddressRoadNumber = r.nextLongOption()
       val roadAddressRoadPart = r.nextLongOption()
       val roadwayNumber = r.nextLong()
-      val calibrationPointsSource = CalibrationPointSource.apply(r.nextIntOption().getOrElse(99))
       val projectRoadwayNumber = r.nextLong()
 
-
-      ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddrMValue, originalEndAddrMValue, startDate, endDate,
-        modifiedBy, linkId, startMValue, endMValue, sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints, calibrationPointsSource), OracleDatabase.loadJGeometryToGeometry(geom), projectId,
-        status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, if (roadwayNumber != 0) roadwayNumber else projectRoadwayNumber, Some(roadName),
+      ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM,
+        originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, modifiedBy, linkId, startMValue, endMValue,
+        sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints),
+        originalCalibrationPointTypes, OracleDatabase.loadJGeometryToGeometry(geom), projectId, status, roadType,
+        source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp,
+        if (roadwayNumber != 0) roadwayNumber else projectRoadwayNumber, Some(roadName),
         roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
-        roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack,
-        roadAddressRoadNumber, roadAddressRoadPart)
+        roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack, roadAddressRoadNumber, roadAddressRoadPart)
     }
   }
 
@@ -360,12 +370,14 @@ class ProjectLinkDAO {
 
   def create(links: Seq[ProjectLink]): Seq[Long] = {
     time(logger, "Create project links") {
-      val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
-        "road_number, road_part_number, " +
-        "TRACK, discontinuity_type, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, created_by, " +
-        "calibration_points, status, road_type, roadway_id, linear_location_id, connected_link_id, ely, roadway_number, reversed, geometry, " +
-        "link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
-        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      val addressPS = dynamicSession.prepareStatement("""
+        insert into PROJECT_LINK (id, project_id, road_number, road_part_number, TRACK, discontinuity_type,
+          START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, created_by,
+          start_calibration_point, end_calibration_point, orig_start_calibration_point, orig_end_calibration_point,
+          status, road_type, roadway_id, linear_location_id, connected_link_id, ely, roadway_number, reversed, geometry,
+          link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source)
+          values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """)
       val (ready, idLess) = links.partition(_.id != NewIdValue)
       val plIds = Sequences.fetchProjectLinkIds(idLess.size)
       val projectLinks = ready ++ idLess.zip(plIds).map(x =>
@@ -383,32 +395,34 @@ class ProjectLinkDAO {
         addressPS.setLong(9, pl.originalStartAddrMValue)
         addressPS.setLong(10, pl.originalEndAddrMValue)
         addressPS.setString(11, pl.createdBy.orNull)
-        addressPS.setDouble(12, CalibrationCode.getFromAddress(pl).value)
-        addressPS.setLong(13, pl.status.value)
-        addressPS.setLong(14, pl.roadType.value)
+        addressPS.setLong(12, pl.startCalibrationPointSource.value)
+        addressPS.setLong(13, pl.endCalibrationPointSource.value)
+        addressPS.setLong(14, pl.originalCalibrationPointTypes._1.value)
+        addressPS.setLong(15, pl.originalCalibrationPointTypes._2.value)
+        addressPS.setLong(16, pl.status.value)
+        addressPS.setLong(17, pl.roadType.value)
         if (pl.roadwayId == 0)
-          addressPS.setString(15, null)
+          addressPS.setString(18, null)
         else
-          addressPS.setLong(15, pl.roadwayId)
+          addressPS.setLong(18, pl.roadwayId)
         if (pl.linearLocationId == 0)
-          addressPS.setString(16, null)
+          addressPS.setString(19, null)
         else
-          addressPS.setLong(16, pl.linearLocationId)
+          addressPS.setLong(19, pl.linearLocationId)
         if (pl.connectedLinkId.isDefined)
-          addressPS.setLong(17, pl.connectedLinkId.get)
+          addressPS.setLong(20, pl.connectedLinkId.get)
         else
-          addressPS.setString(17, null)
-        addressPS.setLong(18, pl.ely)
-        addressPS.setLong(19, pl.roadwayNumber)
-        addressPS.setBoolean(20, pl.reversed)
-        addressPS.setObject(21, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
-        addressPS.setLong(22, pl.linkId)
-        addressPS.setLong(23, pl.sideCode.value)
-        addressPS.setDouble(24, pl.startMValue)
-        addressPS.setDouble(25, pl.endMValue)
-        addressPS.setDouble(26, pl.linkGeometryTimeStamp)
-        addressPS.setInt(27, pl.linkGeomSource.value)
-        addressPS.setInt(28, pl.calibrationPointsSourcesToDB.value)
+          addressPS.setString(20, null)
+        addressPS.setLong(21, pl.ely)
+        addressPS.setLong(22, pl.roadwayNumber)
+        addressPS.setBoolean(23, pl.reversed)
+        addressPS.setObject(24, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
+        addressPS.setLong(25, pl.linkId)
+        addressPS.setLong(26, pl.sideCode.value)
+        addressPS.setDouble(27, pl.startMValue)
+        addressPS.setDouble(28, pl.endMValue)
+        addressPS.setDouble(29, pl.linkGeometryTimeStamp)
+        addressPS.setInt(30, pl.linkGeomSource.value)
         addressPS.addBatch()
       }
       addressPS.executeBatch()
@@ -432,10 +446,14 @@ class ProjectLinkDAO {
           } else
             pl
         }
-        val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK = ?, " +
-          "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, ORIGINAL_START_ADDR_M=?, ORIGINAL_END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
-          "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
-          "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ?, ROADWAY_NUMBER = ? WHERE id = ?")
+        val projectLinkPS = dynamicSession.prepareStatement("""
+          UPDATE project_link
+          SET ROAD_NUMBER = ?, ROAD_PART_NUMBER = ?, TRACK = ?, DISCONTINUITY_TYPE = ?, START_ADDR_M = ?, END_ADDR_M = ?,
+            ORIGINAL_START_ADDR_M = ?, ORIGINAL_END_ADDR_M = ?, MODIFIED_DATE = ?, MODIFIED_BY = ?, PROJECT_ID = ?,
+            START_CALIBRATION_POINT = ?, END_CALIBRATION_POINT = ?, ORIG_START_CALIBRATION_POINT = ?, ORIG_END_CALIBRATION_POINT = ?,
+            STATUS = ?, ROAD_TYPE = ?, REVERSED = ?, GEOMETRY = ?, SIDE = ?, START_MEASURE = ?, END_MEASURE = ?, ELY = ?,
+            ROADWAY_NUMBER = ?
+          WHERE id = ?""")
 
         for (projectLink <- links) {
           val roadwayNumber = if (projectLink.roadwayNumber == NewIdValue) {
@@ -454,18 +472,20 @@ class ProjectLinkDAO {
           projectLinkPS.setDate(9, new java.sql.Date(new Date().getTime))
           projectLinkPS.setString(10, modifier)
           projectLinkPS.setLong(11, projectLink.projectId)
-          projectLinkPS.setInt(12, CalibrationCode.getFromAddress(projectLink).value)
-          projectLinkPS.setInt(13, projectLink.status.value)
-          projectLinkPS.setInt(14, projectLink.roadType.value)
-          projectLinkPS.setInt(15, if (projectLink.reversed) 1 else 0)
-          projectLinkPS.setObject(16, OracleDatabase.createJGeometry(projectLink.geometry, dynamicSession.conn))
-          projectLinkPS.setInt(17, projectLink.sideCode.value)
-          projectLinkPS.setDouble(18, projectLink.startMValue)
-          projectLinkPS.setDouble(19, projectLink.endMValue)
-          projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB.value)
-          projectLinkPS.setLong(21, projectLink.ely)
-          projectLinkPS.setLong(22, roadwayNumber)
-          projectLinkPS.setLong(23, projectLink.id)
+          projectLinkPS.setInt(12, projectLink.startCalibrationPointSource.value)
+          projectLinkPS.setInt(13, projectLink.endCalibrationPointSource.value)
+          projectLinkPS.setInt(14, projectLink.originalCalibrationPointTypes._1.value)
+          projectLinkPS.setInt(15, projectLink.originalCalibrationPointTypes._2.value)
+          projectLinkPS.setInt(16, projectLink.status.value)
+          projectLinkPS.setInt(17, projectLink.roadType.value)
+          projectLinkPS.setInt(18, if (projectLink.reversed) 1 else 0)
+          projectLinkPS.setObject(19, OracleDatabase.createJGeometry(projectLink.geometry, dynamicSession.conn))
+          projectLinkPS.setInt(20, projectLink.sideCode.value)
+          projectLinkPS.setDouble(21, projectLink.startMValue)
+          projectLinkPS.setDouble(22, projectLink.endMValue)
+          projectLinkPS.setLong(23, projectLink.ely)
+          projectLinkPS.setLong(24, roadwayNumber)
+          projectLinkPS.setLong(25, projectLink.id)
           projectLinkPS.addBatch()
         }
         projectLinkPS.executeBatch()
@@ -652,8 +672,13 @@ class ProjectLinkDAO {
   }
 
   def updateAddrMValues(projectLink: ProjectLink): Unit = {
-    sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue}, calibration_points = ${CalibrationCode.getFromAddress(projectLink).value} where id = ${projectLink.id}
-          """.execute
+    sqlu"""
+      update project_link
+      set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue},
+          start_calibration_point = ${projectLink.startCalibrationPointSource.value},
+          end_calibration_point = ${projectLink.endCalibrationPointSource.value}
+      where id = ${projectLink.id}
+    """.execute
   }
 
   /**
@@ -716,15 +741,20 @@ class ProjectLinkDAO {
       val geometryQuery = s"MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(${points.mkString(",")}))"
       val updateGeometry = if (updateGeom) s", GEOMETRY = $geometryQuery" else s""
 
-      val updateProjectLink = s"UPDATE PROJECT_LINK SET ROAD_NUMBER = ${roadAddress.roadNumber}, " +
-        s" ROAD_PART_NUMBER = ${roadAddress.roadPartNumber}, TRACK = ${roadAddress.track.value}, " +
-        s" DISCONTINUITY_TYPE = ${roadAddress.discontinuity.value}, ROAD_TYPE = ${roadAddress.roadType.value}, " +
-        s" STATUS = ${LinkStatus.NotHandled.value}, START_ADDR_M = ${roadAddress.startAddrMValue}, END_ADDR_M = ${roadAddress.endAddrMValue}, " +
-        s" CALIBRATION_POINTS = ${CalibrationCode.getFromAddress(roadAddress).value}, CONNECTED_LINK_ID = null, REVERSED = 0, " +
-        s" CALIBRATION_POINTS_SOURCE = ${CalibrationPointSource.RoadAddressSource.value}, " +
-        s" SIDE = ${roadAddress.sideCode.value}, ELY = ${roadAddress.ely}," +
-        s" start_measure = ${roadAddress.startMValue}, end_measure = ${roadAddress.endMValue} $updateGeometry" +
-        s" WHERE LINEAR_LOCATION_ID = ${roadAddress.linearLocationId} AND PROJECT_ID = $projectId"
+      val updateProjectLink = s"""
+        UPDATE PROJECT_LINK SET ROAD_NUMBER = ${roadAddress.roadNumber},
+          ROAD_PART_NUMBER = ${roadAddress.roadPartNumber}, TRACK = ${roadAddress.track.value},
+          DISCONTINUITY_TYPE = ${roadAddress.discontinuity.value}, ROAD_TYPE = ${roadAddress.roadType.value},
+          STATUS = ${LinkStatus.NotHandled.value}, START_ADDR_M = ${roadAddress.startAddrMValue}, END_ADDR_M = ${roadAddress.endAddrMValue},
+          START_CALIBRATION_POINT = ${roadAddress.startCalibrationPointSource.value},
+          END_CALIBRATION_POINT = ${roadAddress.endCalibrationPointSource.value},
+          ORIG_START_CALIBRATION_POINT = ${roadAddress.startCalibrationPointType.value},
+          ORIG_END_CALIBRATION_POINT = ${roadAddress.endCalibrationPointType.value},
+          CONNECTED_LINK_ID = null, REVERSED = 0,
+          SIDE = ${roadAddress.sideCode.value}, ELY = ${roadAddress.ely},
+          start_measure = ${roadAddress.startMValue}, end_measure = ${roadAddress.endMValue} $updateGeometry
+        WHERE LINEAR_LOCATION_ID = ${roadAddress.linearLocationId} AND PROJECT_ID = $projectId
+      """
       Q.updateNA(updateProjectLink).execute
     }
   }
@@ -744,13 +774,16 @@ class ProjectLinkDAO {
          where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber
          and project_link.status != ${LinkStatus.Terminated.value}
          """.as[Long].firstOption.getOrElse(0L)
-      val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN ${CalibrationCode.No.value} THEN ${CalibrationCode.No.value} WHEN ${CalibrationCode.AtEnd.value} THEN ${CalibrationCode.AtBeginning.value} WHEN ${CalibrationCode.AtBeginning.value} THEN ${CalibrationCode.AtEnd.value} ELSE ${CalibrationCode.AtBoth.value} END), " +
-        s"(start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id), " +
-        s"TRACK = (CASE TRACK WHEN ${Track.Combined.value} THEN ${Track.Combined.value} WHEN ${Track.RightSide.value} THEN ${Track.LeftSide.value} WHEN ${Track.LeftSide.value} THEN ${Track.RightSide.value} ELSE ${Track.Unknown.value} END), " +
-        s"SIDE = (CASE SIDE WHEN ${SideCode.TowardsDigitizing.value} THEN ${SideCode.AgainstDigitizing.value} ELSE ${SideCode.TowardsDigitizing.value} END), " +
-        s"reversed = (CASE WHEN reversed = 0 AND status != ${LinkStatus.New.value} THEN 1 WHEN reversed = 1 AND status != ${LinkStatus.New.value} THEN 0 ELSE 0 END)" +
-        s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber " +
-        s"and project_link.status != ${LinkStatus.Terminated.value}"
+      val updateProjectLink = s"""
+        update project_link
+        set start_calibration_point = end_calibration_point, end_calibration_point = start_calibration_point,
+          orig_start_calibration_point = orig_end_calibration_point, orig_end_calibration_point = orig_start_calibration_point,
+          (start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id),
+          TRACK = (CASE TRACK WHEN ${Track.Combined.value} THEN ${Track.Combined.value} WHEN ${Track.RightSide.value} THEN ${Track.LeftSide.value} WHEN ${Track.LeftSide.value} THEN ${Track.RightSide.value} ELSE ${Track.Unknown.value} END),
+          SIDE = (CASE SIDE WHEN ${SideCode.TowardsDigitizing.value} THEN ${SideCode.AgainstDigitizing.value} ELSE ${SideCode.TowardsDigitizing.value} END),
+          reversed = (CASE WHEN reversed = 0 AND status != ${LinkStatus.New.value} THEN 1 WHEN reversed = 1 AND status != ${LinkStatus.New.value} THEN 0 ELSE 0 END)
+        where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber
+          and project_link.status != ${LinkStatus.Terminated.value}"""
       Q.updateNA(updateProjectLink).execute
     }
   }
@@ -860,9 +893,10 @@ class ProjectLinkDAO {
   def moveProjectLinksToHistory(projectId: Long): Unit = {
       sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT DISTINCT ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE,
             ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE,
-            MODIFIED_DATE, STATUS, CALIBRATION_POINTS, ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY,
-            REVERSED, SIDE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
-            LINK_SOURCE, CALIBRATION_POINTS_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER
+            MODIFIED_DATE, STATUS, START_CALIBRATION_POINT, END_CALIBRATION_POINT,
+            ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT, ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID,
+            CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE, LINK_ID, ADJUSTED_TIMESTAMP,
+            LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER
           FROM PROJECT_LINK WHERE PROJECT_ID = $projectId)""".execute
     sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
     sqlu"""DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId""".execute
