@@ -15,6 +15,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -1609,7 +1610,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     ProjectLink(NewIdValue, ra.roadNumber, ra.roadPartNumber, ra.track, ra.discontinuity, ra.startAddrMValue,
       ra.endAddrMValue, ra.startAddrMValue, ra.endAddrMValue, ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue,
-      ra.sideCode, ra.toProjectLinkCalibrationPoints(), geometry,
+      ra.sideCode, ra.toProjectLinkCalibrationPoints(), (ra.startCalibrationPointType, ra.endCalibrationPointType), geometry,
       project.id, LinkStatus.NotHandled, ra.roadType, ra.linkGeomSource, GeometryUtils.geometryLength(geometry),
       ra.id, ra.linearLocationId, newEly, ra.reversed, None, ra.adjustedTimestamp, roadAddressLength = Some(ra.endAddrMValue - ra.startAddrMValue))
   }
@@ -1619,7 +1620,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                              ely: Long, roadName: String = "", reversed: Boolean = false): ProjectLink = {
     ProjectLink(NewIdValue, roadNumber, roadPartNumber, trackCode, discontinuity,
       0L, 0L, 0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length,
-      SideCode.Unknown, (None, None), rl.geometry,
+      SideCode.Unknown, (None, None), (CalibrationPointType.NoCP, CalibrationPointType.NoCP), rl.geometry,
       project.id, LinkStatus.New, roadType, rl.linkSource, rl.length,
       0L, 0L, ely, reversed, None, rl.vvhTimeStamp, roadName = Some(roadName))
   }
