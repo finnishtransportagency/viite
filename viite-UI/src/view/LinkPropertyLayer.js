@@ -432,37 +432,37 @@
       });
     };
 
-    var drawIndicators = function(links) {
-      var features = [];
-
-      var markerContainer = function(link, position) {
-        var style = new ol.style.Style({
-          image : new ol.style.Icon({
-            src: 'images/center-marker2.svg'
-          }),
-          text : new ol.style.Text({
-            text : link.marker,
-            fill: new ol.style.Fill({
-              color: '#ffffff'
-            }),
-            font : '12px sans-serif'
-          })
-        });
-        var marker = new ol.Feature({
-          geometry : new ol.geom.Point([position.x, position.y])
-        });
-        marker.setStyle(style);
-        features.push(marker);
-      };
-
-      var indicators = function() {
-        return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
-          markerContainer(link, middlePoint);
-        });
-      };
-      indicators();
-      indicatorLayer.getSource().addFeatures(features);
-    };
+    // var drawIndicators = function(links) {
+    //   var features = [];
+    //
+    //   var markerContainer = function(link, position) {
+    //     var style = new ol.style.Style({
+    //       image : new ol.style.Icon({
+    //         src: 'images/center-marker2.svg'
+    //       }),
+    //       text : new ol.style.Text({
+    //         text : link.marker,
+    //         fill: new ol.style.Fill({
+    //           color: '#ffffff'
+    //         }),
+    //         font : '12px sans-serif'
+    //       })
+    //     });
+    //     var marker = new ol.Feature({
+    //       geometry : new ol.geom.Point([position.x, position.y])
+    //     });
+    //     marker.setStyle(style);
+    //     features.push(marker);
+    //   };
+    //
+    //   var indicators = function() {
+    //     return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+    //       markerContainer(link, middlePoint);
+    //     });
+    //   };
+    //   indicators();
+    //   indicatorLayer.getSource().addFeatures(features);
+    // };
 
     var redraw = function() {
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
@@ -584,9 +584,9 @@
       var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true);
       var indicators = adjacents;
       indicatorLayer.getSource().clear();
-      if(indicators.length !== 0){
-        drawIndicators(indicators);
-      }
+      // if(indicators.length !== 0){
+      //   drawIndicators(indicators);
+      // }
 
       if (applicationModel.selectionTypeIs(SelectionType.Unknown) && targetFeature.linkData.floating !== SelectionType.Floating.value && targetFeature.linkData.anomaly === Anomaly.NoAddressGiven.value) {
         if (applicationModel.isReadOnly()) {
@@ -776,15 +776,15 @@
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, adjacents, targets) {
         applicationModel.addSpinner();
-        if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated) {
-          drawIndicators(adjacents);
-          selectedLinkProperty.addTargets(targets, adjacents);
-        }
+        // if (applicationModel.getCurrentAction() !== applicationModel.actionCalculated) {
+        //   drawIndicators(adjacents);
+        //   selectedLinkProperty.addTargets(targets, adjacents);
+        // }
         redrawNextSelectedTarget(targets, adjacents);
       });
       eventListener.listenTo(eventbus, 'adjacents:added', function(sources, targets) {
         clearIndicators();
-        drawIndicators(targets);
+        // drawIndicators(targets);
         _.map(_.filter(selectedLinkProperty.getFeaturesToKeep(), function(link) {
           return link.roadNumber === 0;
         }), function (roads) {
@@ -794,13 +794,13 @@
 
       eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(sources, targets) {
           clearIndicators();
-          drawIndicators(targets);
+          // drawIndicators(targets);
       });
 
       eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(floatings) {
         var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true,true);
         selectedLinkProperty.processOLFeatures(visibleFeatures);
-        drawIndicators(floatings);
+        // drawIndicators(floatings);
       });
 
       eventListener.listenTo(eventbus, 'linkProperties:clearIndicators', function(){
