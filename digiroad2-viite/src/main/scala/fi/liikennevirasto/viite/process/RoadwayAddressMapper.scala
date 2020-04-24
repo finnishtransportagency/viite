@@ -119,8 +119,12 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
         val (stCalibration, enCalibration) = (linearLocation.startCalibrationPoint.addrM, linearLocation.endCalibrationPoint.addrM)
 
         val calibrationPoints = (
-          stCalibration.map(address => CalibrationPoint(linearLocation.linkId, if (linearLocation.sideCode == SideCode.TowardsDigitizing) 0 else geometryLength, address)),
-          enCalibration.map(address => CalibrationPoint(linearLocation.linkId, if (linearLocation.sideCode == SideCode.AgainstDigitizing) 0 else geometryLength, address))
+          stCalibration.map(address => CalibrationPoint(linearLocation.linkId,
+            if (linearLocation.sideCode == SideCode.TowardsDigitizing) 0 else geometryLength,
+            address, linearLocation.startCalibrationPointType)),
+          enCalibration.map(address => CalibrationPoint(linearLocation.linkId,
+            if (linearLocation.sideCode == SideCode.AgainstDigitizing) 0 else geometryLength,
+            address, linearLocation.endCalibrationPointType))
         )
 
         RoadAddress(roadway.id, linearLocation.id, roadway.roadNumber, roadway.roadPartNumber, roadway.roadType, roadway.track, Discontinuity.Continuous, st, en,

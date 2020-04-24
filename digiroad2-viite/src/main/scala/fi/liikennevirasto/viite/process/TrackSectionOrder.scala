@@ -164,7 +164,7 @@ object TrackSectionOrder {
         // Put calibration point at the end
         val last = ready.last
         ready.init ++ Seq(adjust(last, startCalibrationPoint = Some(None), endCalibrationPoint = Some(Some(
-          CalibrationPoint(last.linkId, if (last.sideCode == AgainstDigitizing) 0.0 else last.geometryLength, last.endAddrMValue)))))
+          CalibrationPoint(last.linkId, if (last.sideCode == AgainstDigitizing) 0.0 else last.geometryLength, last.endAddrMValue, source = last.endCalibrationPointSource)))))
       }
       else {
         val hit = unprocessed.find(pl => GeometryUtils.areAdjacent(pl.geometry, currentPoint, MaxDistanceForConnectedLinks))
@@ -194,7 +194,7 @@ object TrackSectionOrder {
           Math.round(firstLink.geometryLength)
         else
           firstLink.endAddrMValue - firstLink.startAddrMValue),
-      startCalibrationPoint = Some(Some(CalibrationPoint(firstLink.linkId, 0.0, 0L))),
+      startCalibrationPoint = Some(Some(CalibrationPoint(firstLink.linkId, 0.0, 0L, source = firstLink.startCalibrationPointSource))),
       endCalibrationPoint = Some(None))), seq.tail)
     if (isCounterClockwise(ordered.map(firstPoint)))
       ordered
@@ -207,7 +207,7 @@ object TrackSectionOrder {
               Math.round(firstLink.geometryLength)
             else
               firstLink.endAddrMValue - firstLink.startAddrMValue),
-          startCalibrationPoint = Some(Some(CalibrationPoint(firstLink.linkId, firstLink.geometryLength, 0L))),
+          startCalibrationPoint = Some(Some(CalibrationPoint(firstLink.linkId, firstLink.geometryLength, 0L, source = firstLink.startCalibrationPointSource))),
           endCalibrationPoint = Some(None))),
         seq.tail)
       if (isCounterClockwise(reOrdered.map(firstPoint)))
