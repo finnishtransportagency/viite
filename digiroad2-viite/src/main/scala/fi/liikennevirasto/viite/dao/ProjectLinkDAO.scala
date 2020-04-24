@@ -330,7 +330,7 @@ class ProjectLinkDAO {
       val projectRoadwayNumber = r.nextLong()
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM,
-        originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, modifiedBy, linkId, startMValue, endMValue,
+        originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue,
         sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints),
         originalCalibrationPointTypes, OracleDatabase.loadJGeometryToGeometry(geom), projectId, status, roadType,
         source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp,
