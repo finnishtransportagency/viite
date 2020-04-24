@@ -36,13 +36,6 @@ object CalibrationPointsUtils {
     }
   }
 
-  def toProjectLinkCalibrationPointWithSource(originalCalibrationPoint: ProjectLinkCalibrationPoint, roadwayId: Long = 0L): ProjectLinkCalibrationPoint = {
-    roadwayId match {
-      case 0L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, ProjectLinkSource)
-      case _ => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, originalCalibrationPoint.source)
-    }
-  }
-
   def toProjectLinkCalibrationPointWithSourceInfo(originalCalibrationPoint: BaseCalibrationPoint, source: CalibrationPointSource): ProjectLinkCalibrationPoint = {
     ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source)
   }
