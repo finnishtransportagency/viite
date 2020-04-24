@@ -615,8 +615,6 @@
       me.redraw();
       _.defer(function () {
         highlightFeatures();
-        if (selectedProjectLinkProperty.isSplit())
-          drawIndicators(selectedProjectLinkProperty.get());
       });
     });
 
