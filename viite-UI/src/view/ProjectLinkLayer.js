@@ -231,46 +231,6 @@
     map.addInteraction(selectSingleClick);
     map.addInteraction(selectDoubleClick);
 
-    var drawIndicators = function (links) {
-      var features = [];
-
-      var markerContainer = function (link, position) {
-        var imageSettings = {src: 'images/center-marker2.svg'};
-        var textSettings = {
-          text: link.marker,
-          fill: new ol.style.Fill({
-            color: '#ffffff'
-          }),
-          font: '12px sans-serif'
-        };
-        var style = new ol.style.Style({
-          image: new ol.style.Icon(imageSettings),
-          text: new ol.style.Text(textSettings),
-          zIndex: 11
-        });
-        var marker = new ol.Feature({
-          geometry: new ol.geom.Point([position.x, position.y]),
-          type: 'cutter'
-        });
-        marker.setStyle(style);
-        features.push(marker);
-      };
-
-      var indicatorsForSplit = function () {
-        return _.map(_.filter(links, function (fl) {
-          return !_.isUndefined(fl.middlePoint);
-        }), function (link) {
-          markerContainer(link, link.middlePoint);
-        });
-      };
-
-      var indicators = function () {
-        return indicatorsForSplit();
-      };
-      indicators();
-      addFeaturesToSelection(features);
-    };
-
     var canBeAddedToSelection = function(selectionData) {
       if (selectedProjectLinkProperty.get().length === 0) {
         return true;
@@ -456,10 +416,7 @@
       projectLinkVector.clear();
       directionMarkerLayer.getSource().clear();
       me.eventListener.listenToOnce(eventbus, 'roadAddressProject:fetched', function () {
-        if (selectedProjectLinkProperty.isSplit())
-          selectedProjectLinkProperty.openSplit(selectedProjectLinkProperty.get()[0].linkId, true);
-        else
-          selectedProjectLinkProperty.open(getSelectedId(selectedProjectLinkProperty.get()[0]), selectedProjectLinkProperty.isMultiLink());
+        selectedProjectLinkProperty.open(getSelectedId(selectedProjectLinkProperty.get()[0]), selectedProjectLinkProperty.isMultiLink());
       });
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
     });
