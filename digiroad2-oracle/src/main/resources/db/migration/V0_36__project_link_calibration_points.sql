@@ -1,3 +1,22 @@
+-- CALIBRATION_POINTS values:
+-- 0 No calibration points
+-- 1 Calibration point at the end of the link
+-- 2 Calibration point at the beginning of the link
+-- 3 Calibration point at the beginning and at the end of the link
+--
+-- CALIBRATION_POINTS_SOURCE values:
+-- 0 No calibration point
+-- 1 Road address source
+-- 2 Project link source
+--
+-- START_CALIBRATION_POINT and END_CALIBRATION_POINT contain CALIBRATION_POINTS_SOURCE values.
+--
+-- ORIG_START_CALIBRATION_POINT and ORIG_END_CALIBRATION_POINT values:
+-- 0 No calibration point
+-- 1 User added calibration point
+-- 2 Junction calibration point
+-- 3 Road address calibration point
+
 ALTER TABLE PROJECT_LINK ADD (START_CALIBRATION_POINT NUMBER(2,0) DEFAULT 0 NOT NULL);
 ALTER TABLE PROJECT_LINK ADD (END_CALIBRATION_POINT NUMBER(2,0) DEFAULT 0 NOT NULL);
 ALTER TABLE PROJECT_LINK ADD (ORIG_START_CALIBRATION_POINT NUMBER(2,0) DEFAULT 0 NOT NULL);
