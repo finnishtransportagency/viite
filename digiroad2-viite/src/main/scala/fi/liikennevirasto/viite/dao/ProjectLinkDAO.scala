@@ -79,7 +79,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   override lazy val startCalibrationPoint: Option[ProjectLinkCalibrationPoint] = calibrationPoints._1
   override lazy val endCalibrationPoint: Option[ProjectLinkCalibrationPoint] = calibrationPoints._2
 
-  lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
+  val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
   lazy val isNotCalculated: Boolean = endAddrMValue == 0L
 
@@ -434,7 +434,7 @@ class ProjectLinkDAO {
         val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK = ?, " +
           "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, ORIGINAL_START_ADDR_M=?, ORIGINAL_END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
           "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
-          "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ?, ROADWAY_NUMBER = ? WHERE id = ?")
+          "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ?, ROADWAY_NUMBER = ?, CONNECTED_LINK_ID = ? WHERE id = ?")
 
         for (projectLink <- links) {
           val roadwayNumber = if (projectLink.roadwayNumber == NewIdValue) {
@@ -464,7 +464,11 @@ class ProjectLinkDAO {
           projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB.value)
           projectLinkPS.setLong(21, projectLink.ely)
           projectLinkPS.setLong(22, roadwayNumber)
-          projectLinkPS.setLong(23, projectLink.id)
+          if (projectLink.connectedLinkId.isDefined)
+            projectLinkPS.setLong(23, projectLink.connectedLinkId.get)
+          else
+            projectLinkPS.setString(23, null)
+          projectLinkPS.setLong(24, projectLink.id)
           projectLinkPS.addBatch()
         }
         projectLinkPS.executeBatch()
