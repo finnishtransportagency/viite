@@ -14,20 +14,6 @@ object CalibrationPointsUtils {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def calibrations(calibrationCode: CalibrationCode, projectLink: ProjectLink): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-    calibrations(calibrationCode, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.sideCode)
-  }
-
-  def calibrations(calibrationCode: CalibrationCode, linkId: Long, startMValue: Double, endMValue: Double,
-                           startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-    sideCode match {
-      case BothDirections => (None, None) // Invalid choice
-      case TowardsDigitizing => calibrations(calibrationCode, linkId, 0.0, endMValue - startMValue, startAddrMValue, endAddrMValue)
-      case AgainstDigitizing => calibrations(calibrationCode, linkId, endMValue - startMValue, 0.0, startAddrMValue, endAddrMValue)
-      case Unknown => (None, None)  // Invalid choice
-    }
-  }
-
   def calibrations(startCalibrationPoint: CalibrationPointSource, endCalibrationPoint: CalibrationPointSource, linkId: Long, startMValue: Double, endMValue: Double,
                    startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     sideCode match {
@@ -41,17 +27,6 @@ object CalibrationPointsUtils {
         if (endCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, 0.0, endAddrMValue, source = endCalibrationPoint)) else None
       )
       case Unknown => (None, None)  // Invalid choice
-    }
-  }
-
-  def calibrations(calibrationCode: CalibrationCode, linkId: Long, segmentStartMValue: Double, segmentEndMValue: Double,
-                           startAddrMValue: Long, endAddrMValue: Long): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-    calibrationCode match {
-      case No => (None, None)
-      case AtEnd => (None, Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
-      case AtBeginning => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)), None)
-      case AtBoth => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)),
-        Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
     }
   }
 
@@ -170,7 +145,7 @@ object CalibrationPointsUtils {
       case Some(x) =>
         CalibrationPointReference(
           Some(x.addressMValue),
-          Some(CalibrationPointType.RoadAddressCP)) // type from project must be handled if needed in the future.
+          Some(CalibrationPointType.RoadAddressCP)) // TODO type from project must be handled if needed in the future.
       case _ => CalibrationPointReference.None
     }
   }

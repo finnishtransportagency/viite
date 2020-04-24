@@ -30,7 +30,7 @@ sealed trait CalibrationPointSource {
 }
 
 object CalibrationPointSource {
-  val values = Set(RoadAddressSource, ProjectLinkSource, JunctionPointSource, UnknownSource)
+  val values = Set(NoCalibrationPoint, RoadAddressSource, ProjectLinkSource, JunctionPointSource, UnknownSource)
 
   def apply(intValue: Int): CalibrationPointSource = values.find(_.value == intValue).getOrElse(UnknownSource)
 
