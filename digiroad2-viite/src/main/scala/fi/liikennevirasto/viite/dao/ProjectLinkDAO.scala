@@ -361,10 +361,10 @@ class ProjectLinkDAO {
     time(logger, "Create project links") {
       val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
         "road_number, road_part_number, " +
-        "TRACK, discontinuity_type, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, created_by, " +
+        "TRACK, discontinuity_type, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, created_by, modified_by, " +
         "calibration_points, status, road_type, roadway_id, linear_location_id, connected_link_id, ely, roadway_number, reversed, geometry, " +
-        "link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
-        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        "link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source, modified_date) values " +
+        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
       val (ready, idLess) = links.partition(_.id != NewIdValue)
       val plIds = Sequences.fetchProjectLinkIds(idLess.size)
       val projectLinks = ready ++ idLess.zip(plIds).map(x =>
@@ -382,32 +382,34 @@ class ProjectLinkDAO {
         addressPS.setLong(9, pl.originalStartAddrMValue)
         addressPS.setLong(10, pl.originalEndAddrMValue)
         addressPS.setString(11, pl.createdBy.orNull)
-        addressPS.setDouble(12, CalibrationCode.getFromAddress(pl).value)
-        addressPS.setLong(13, pl.status.value)
-        addressPS.setLong(14, pl.roadType.value)
+        addressPS.setString(12, pl.createdBy.orNull)
+        addressPS.setDouble(13, CalibrationCode.getFromAddress(pl).value)
+        addressPS.setLong(14, pl.status.value)
+        addressPS.setLong(15, pl.roadType.value)
         if (pl.roadwayId == 0)
-          addressPS.setString(15, null)
-        else
-          addressPS.setLong(15, pl.roadwayId)
-        if (pl.linearLocationId == 0)
           addressPS.setString(16, null)
         else
-          addressPS.setLong(16, pl.linearLocationId)
-        if (pl.connectedLinkId.isDefined)
-          addressPS.setLong(17, pl.connectedLinkId.get)
-        else
+          addressPS.setLong(16, pl.roadwayId)
+        if (pl.linearLocationId == 0)
           addressPS.setString(17, null)
-        addressPS.setLong(18, pl.ely)
-        addressPS.setLong(19, pl.roadwayNumber)
-        addressPS.setBoolean(20, pl.reversed)
-        addressPS.setObject(21, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
-        addressPS.setLong(22, pl.linkId)
-        addressPS.setLong(23, pl.sideCode.value)
-        addressPS.setDouble(24, pl.startMValue)
-        addressPS.setDouble(25, pl.endMValue)
-        addressPS.setDouble(26, pl.linkGeometryTimeStamp)
-        addressPS.setInt(27, pl.linkGeomSource.value)
-        addressPS.setInt(28, pl.calibrationPointsSourcesToDB.value)
+        else
+          addressPS.setLong(17, pl.linearLocationId)
+        if (pl.connectedLinkId.isDefined)
+          addressPS.setLong(18, pl.connectedLinkId.get)
+        else
+          addressPS.setString(18, null)
+        addressPS.setLong(19, pl.ely)
+        addressPS.setLong(20, pl.roadwayNumber)
+        addressPS.setBoolean(21, pl.reversed)
+        addressPS.setObject(22, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
+        addressPS.setLong(23, pl.linkId)
+        addressPS.setLong(24, pl.sideCode.value)
+        addressPS.setDouble(25, pl.startMValue)
+        addressPS.setDouble(26, pl.endMValue)
+        addressPS.setDouble(27, pl.linkGeometryTimeStamp)
+        addressPS.setInt(28, pl.linkGeomSource.value)
+        addressPS.setInt(29, pl.calibrationPointsSourcesToDB.value)
+        addressPS.setDate(30, new java.sql.Date(new Date().getTime))
         addressPS.addBatch()
       }
       addressPS.executeBatch()
