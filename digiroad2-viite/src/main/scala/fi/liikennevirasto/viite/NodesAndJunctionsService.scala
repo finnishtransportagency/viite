@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
@@ -89,7 +90,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (isObsoleteNode(junctions, nodePoints)) {
         val old = nodeDAO.fetchById(node.id)
         nodeDAO.expireById(Seq(old.get.id))
-        nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)), validFrom = DateTime.now())), username)
+        nodeDAO.create(Seq(old.get.copy(id = NewIdValue, endDate = Some(node.startDate.minusDays(1)))), username)
       } else {
         calculateNodePointsForNode(nodeNumber, username)
       }
@@ -327,9 +328,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     /**
       * @return the junction id only if the road address r is connected to the road address projectLink
       */
-    def getJunctionIdIfConnected(r: BaseRoadAddress, projectLink: BaseRoadAddress, addr: Long, pos: BeforeAfter) = {
-      if (RoadAddressFilters.connected(r)(projectLink)) {
-        junctionPointDAO.fetchByRoadwayPoint(projectLink.roadwayNumber, addr, pos).map(_.junctionId)
+    def getJunctionIdIfConnected(roadPoint: Point, projectLinkPoint: Point, roadwayNumber: Long, addr: Long, pos: BeforeAfter) = {
+      if (roadPoint.connected(projectLinkPoint)) {
+        junctionPointDAO.fetchByRoadwayPoint(roadwayNumber, addr, pos).map(_.junctionId)
       } else None
     }
 
@@ -478,34 +479,34 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         // handle junction points for each project links
         if ((roadsToHead ++ roadsFromHead).nonEmpty) {
           createJunctionAndJunctionPointIfNeeded(projectLink, pos = BeforeAfter.After, addr = projectLink.startAddrMValue,
-            roadsTo = roadsToHead.filter(to => RoadAddressFilters.connected(to)(projectLink)),
-            roadsFrom = roadsFromHead.filter(from => RoadAddressFilters.connected(from)(projectLink)))
+            roadsTo = roadsToHead.filter(_.endPoint.connected(projectLink.startingPoint)),
+            roadsFrom = roadsFromHead.filter(_.startingPoint.connected(projectLink.startingPoint)))
         }
 
         if ((roadsToTail ++ roadsFromTail).nonEmpty) {
           createJunctionAndJunctionPointIfNeeded(projectLink, pos = BeforeAfter.Before, addr = projectLink.endAddrMValue,
-            roadsTo = roadsToTail.filter(to => RoadAddressFilters.connected(to)(projectLink)),
-            roadsFrom = roadsFromTail.filter(from => RoadAddressFilters.connected(from)(projectLink)))
+            roadsTo = roadsToTail.filter(_.endPoint.connected(projectLink.endPoint)),
+            roadsFrom = roadsFromTail.filter(_.startingPoint.connected(projectLink.endPoint)))
         }
 
         // handle junction points for other roads, connected to each project link
         roadsToHead.foreach { roadAddress: BaseRoadAddress =>
-          val junctionId = getJunctionIdIfConnected(roadAddress, projectLink, addr = projectLink.startAddrMValue, pos = BeforeAfter.After)
+          val junctionId = getJunctionIdIfConnected(roadAddress.endPoint, projectLink.startingPoint, roadwayNumber = projectLink.roadwayNumber, addr = projectLink.startAddrMValue, pos = BeforeAfter.After)
           createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.Before, roadAddress.endAddrMValue)
         }
 
         roadsFromHead.foreach { roadAddress: BaseRoadAddress =>
-          val junctionId = getJunctionIdIfConnected(roadAddress, projectLink, addr = projectLink.startAddrMValue, pos = BeforeAfter.After)
+          val junctionId = getJunctionIdIfConnected(roadAddress.startingPoint, projectLink.startingPoint, roadwayNumber = projectLink.roadwayNumber, addr = projectLink.startAddrMValue, pos = BeforeAfter.After)
           createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.After, roadAddress.startAddrMValue)
         }
 
         roadsToTail.foreach { roadAddress: BaseRoadAddress =>
-          val junctionId = getJunctionIdIfConnected(roadAddress, projectLink, addr = projectLink.endAddrMValue, pos = BeforeAfter.Before)
+          val junctionId = getJunctionIdIfConnected(roadAddress.endPoint, projectLink.endPoint, roadwayNumber = projectLink.roadwayNumber, addr = projectLink.endAddrMValue, pos = BeforeAfter.Before)
           createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.Before, roadAddress.endAddrMValue)
         }
 
         roadsFromTail.foreach { roadAddress: BaseRoadAddress =>
-          val junctionId = getJunctionIdIfConnected(roadAddress, projectLink, addr = projectLink.endAddrMValue, pos = BeforeAfter.Before)
+          val junctionId = getJunctionIdIfConnected(roadAddress.startingPoint, projectLink.endPoint, roadwayNumber = projectLink.roadwayNumber, addr = projectLink.endAddrMValue, pos = BeforeAfter.Before)
           createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.After, roadAddress.startAddrMValue)
         }
       }
@@ -856,7 +857,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def publishNodes(nodeNumbers: Seq[Long], username: String): Unit = {
     logger.debug("setPublishingInfoForNodes: " + nodeNumbers.mkString(","))
     nodeNumbers.foreach(nodeNumber => {
-      val id = nodeDAO.fetchId(nodeNumber)
+      val id = nodeDAO.fetchLatestId(nodeNumber)
       nodeDAO.publish(id.getOrElse(0), username)
     })
   }
