@@ -145,7 +145,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val transferLength: Double = groupedTransfer.values.flatten.map(l => l.endMValue - l.startMValue).sum
         val newLinksMValues = newLinks.map(l => l.endMValue - l.startMValue).sum
         val resetNewLinksIfNeed = if(newLinks.exists(_.connectedLinkId.nonEmpty)) newLinks else newLinks.map(_.copy(roadwayNumber = NewIdValue))
-        val assignedNewLinks = if(groupedTransfer.size == resetNewLinksIfNeed.map(_.roadwayNumber).distinct.size) newLinks else splitLinksIfNeed(groupedTransfer, Seq(), resetNewLinksIfNeed, Seq(), transferLength, newLinksMValues, groupedTransfer.size - resetNewLinksIfNeed.map(_.roadwayNumber).distinct.size)
+        val assignedNewLinks = if(groupedTransfer.size == resetNewLinksIfNeed.map(_.roadwayNumber).distinct.size) newLinks else splitLinksIfNeed(groupedTransfer, Seq(), resetNewLinksIfNeed, Seq(), transferLength, newLinksMValues, groupedTransfer.size)
 
         val (right, left) = if (assignedNewLinks.exists(_.track == Track.RightSide)) (assignedNewLinks, transferLinks) else (transferLinks, assignedNewLinks)
         ((right, restRight), (left, restLeft))
