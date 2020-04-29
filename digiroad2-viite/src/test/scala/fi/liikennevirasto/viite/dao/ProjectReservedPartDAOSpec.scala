@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import org.joda.time.DateTime
@@ -72,7 +73,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     ProjectLink(id, roadNumber, roadPartNumber, Track.Combined,
       Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")),
       endDate, Some("testUser"), linkId, startMValue, endMValue,
-      TowardsDigitizing, calibrationPoints, geometry, projectId, status, roadType,
+      TowardsDigitizing, calibrationPoints, (NoCP, NoCP), geometry, projectId, status, roadType,
       LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, reversed,
       connectedLinkId = None, 631152000, roadwayNumber, roadAddressLength = Some(endAddrMValue - startAddrMValue))
 

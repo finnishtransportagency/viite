@@ -1,8 +1,7 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, UnknownSource}
+import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -106,11 +105,11 @@ object ProjectDeltaCalculator {
       (!pl1.reversed && existing.get.endMAddr == pl2.startAddrMValue) || (pl1.reversed && existing.get.endMAddr == pl2.endAddrMValue)
     else {
       pl1 match {
-        case x: RoadAddress => (!x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtEnd) && ra1.roadwayNumber != ra2.roadwayNumber) || (x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtBeginning) && ra1.roadwayNumber != ra2.roadwayNumber)
+        case x: RoadAddress => (!x.reversed && x.hasCalibrationPointAtEnd() && ra1.roadwayNumber != ra2.roadwayNumber) ||
+          (x.reversed && x.hasCalibrationPointAtStart() && ra1.roadwayNumber != ra2.roadwayNumber)
         case x: ProjectLink =>
-          val (sourceL, sourceR) = x.getCalibrationSources
-          (!x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtEnd) || x.reversed && x.hasCalibrationPointAt(CalibrationCode.AtBeginning)) &&
-            (sourceL.getOrElse(UnknownSource) == ProjectLinkSource || sourceR.getOrElse(UnknownSource) == ProjectLinkSource)
+          (!x.reversed && x.hasCalibrationPointAtEnd() || x.reversed && x.hasCalibrationPointAtStart()) &&
+            x.hasCalibrationPointCreatedInProject
       }
 
     }
@@ -135,11 +134,8 @@ object ProjectDeltaCalculator {
   }
 
   private def combineTwo(r1: ProjectLink, r2: ProjectLink): Seq[ProjectLink] = {
-    val hasCalibrationPoint = r1.hasCalibrationPointAt(CalibrationCode.AtEnd)
-    val openBasedOnSource = hasCalibrationPoint && {
-      val (sourceL, sourceR) = r1.getCalibrationSources
-      sourceL.getOrElse(UnknownSource) == ProjectLinkSource || sourceR.getOrElse(UnknownSource) == ProjectLinkSource
-    }
+    val hasCalibrationPoint = r1.hasCalibrationPointAtEnd()
+    val openBasedOnSource = hasCalibrationPoint && r1.hasCalibrationPointCreatedInProject
     if (r1.endAddrMValue == r2.startAddrMValue)
       r1.status match {
         case LinkStatus.Terminated =>

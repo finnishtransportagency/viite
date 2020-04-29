@@ -12,7 +12,8 @@ import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.{NoCalibrationPoint, ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
@@ -157,8 +158,21 @@ object CalibrationCode {
 
 }
 
-// TODO source doesn't belong here but in Project's calibration point
-case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP, source: CalibrationPointSource = CalibrationPointSource.UnknownSource) extends BaseCalibrationPoint
+case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP) extends BaseCalibrationPoint {
+
+  // TODO Remove this temporary solution
+  def source: CalibrationPointSource = {
+    typeCode match {
+      case CalibrationPointType.NoCP => CalibrationPointSource.NoCalibrationPoint
+      case CalibrationPointType.ProjectCP => CalibrationPointSource.ProjectLinkSource
+      case CalibrationPointType.JunctionPointCP => CalibrationPointSource.JunctionPointSource
+      case CalibrationPointType.RoadAddressCP => CalibrationPointSource.RoadAddressSource
+      case CalibrationPointType.UserDefinedCP => CalibrationPointSource.RoadAddressSource
+      case _ => CalibrationPointSource.UnknownSource
+    }
+  }
+
+}
 
 sealed trait TerminationCode {
   def value: Int
@@ -233,21 +247,12 @@ trait BaseRoadAddress {
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
-  def getCalibrationCode: CalibrationCode = {
-    calibrationPoints match {
-      case (Some(_), Some(_)) => CalibrationCode.AtBoth
-      case (Some(_), _) => CalibrationCode.AtBeginning
-      case (_, Some(_)) => CalibrationCode.AtEnd
-      case _ => CalibrationCode.No
-    }
+  def hasCalibrationPointAtStart(): Boolean = {
+    startCalibrationPoint.getOrElse(NoCP) != NoCP
   }
 
-  def hasCalibrationPointAt(calibrationCode: CalibrationCode): Boolean = {
-    val raCalibrationCode = getCalibrationCode
-    if (calibrationCode == CalibrationCode.No || calibrationCode == CalibrationCode.AtBoth)
-      raCalibrationCode == calibrationCode
-    else
-      raCalibrationCode == CalibrationCode.AtBoth || raCalibrationCode == calibrationCode
+  def hasCalibrationPointAtEnd(): Boolean = {
+    endCalibrationPoint.getOrElse(NoCP) != NoCP
   }
 
   def liesInBetween(ra: BaseRoadAddress): Boolean = {
@@ -339,11 +344,6 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
 
   override lazy val startCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._1
   override lazy val endCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._2
-
-  def startCalibrationPointSource: CalibrationPointSource =
-    if (startCalibrationPoint.isDefined) startCalibrationPoint.get.source else CalibrationPointSource.NoCalibrationPoint
-  def endCalibrationPointSource: CalibrationPointSource =
-    if (endCalibrationPoint.isDefined) endCalibrationPoint.get.source else CalibrationPointSource.NoCalibrationPoint
 
   def startCalibrationPointType: CalibrationPointType =
     if (startCalibrationPoint.isDefined) startCalibrationPoint.get.typeCode else CalibrationPointType.NoCP

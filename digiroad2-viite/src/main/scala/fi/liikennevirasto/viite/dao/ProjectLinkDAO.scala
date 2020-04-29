@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
@@ -64,7 +65,19 @@ case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue:
   extends BaseCalibrationPoint {
 
   def toCalibrationPoint: CalibrationPoint = {
-    CalibrationPoint(linkId, segmentMValue, addressMValue, source = source)
+    CalibrationPoint(linkId, segmentMValue, addressMValue,
+      if (source == CalibrationPointSource.RoadAddressSource) CalibrationPointType.RoadAddressCP
+      else if (source == CalibrationPointSource.JunctionPointSource) CalibrationPointType.JunctionPointCP
+      else if (source == CalibrationPointSource.ProjectLinkSource) CalibrationPointType.ProjectCP
+      else CalibrationPointType.UnknownCP
+    )
+  }
+
+  def typeCode: CalibrationPointType = {
+    if (source == CalibrationPointSource.RoadAddressSource) CalibrationPointType.RoadAddressCP
+    else if (source == CalibrationPointSource.JunctionPointSource) CalibrationPointType.JunctionPointCP
+    else if (source == CalibrationPointSource.ProjectLinkSource) CalibrationPointType.ProjectCP
+    else CalibrationPointType.UnknownCP
   }
 }
 
@@ -156,24 +169,6 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     }
   }
 
-  def getCalibrationSources:(Option[CalibrationPointSource],Option[CalibrationPointSource]) = {
-    calibrationPoints match {
-      case (None, None) => (Option.empty[CalibrationPointSource], Option.empty[CalibrationPointSource])
-      case (Some(cp1), None) => (Option(cp1.source) ,Option.empty[CalibrationPointSource])
-      case (None, Some(cp1)) => (Option.empty[CalibrationPointSource], Option(cp1.source))
-      case (Some(cp1),Some(cp2)) => (Option(cp1.source), Option(cp2.source))
-    }
-  }
-
-  def calibrationPointsSourcesToDB: CalibrationPointSource = {
-    calibrationPoints match {
-      case (None, None) => CalibrationPointSource.NoCalibrationPoint
-      case (Some(cp1), None) => cp1.source
-      case (None, Some(cp1)) => cp1.source
-      case (Some(cp1),Some(cp2)) => cp1.source
-    }
-  }
-
   def hasCalibrationPointAt(addressMValue: Long): Boolean = {
     calibrationPoints match {
       case (None, None) => false
@@ -190,14 +185,34 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     }
   }
 
-  def startCalibrationPointSource: CalibrationPointSource = {
-    if (startCalibrationPoint.isDefined) startCalibrationPoint.get.source
-    else CalibrationPointSource.NoCalibrationPoint
+  def hasCalibrationPointCreatedInProject: Boolean = {
+    isStartCalibrationPointCreatedInProject || isEndCalibrationPointCreatedInProject
   }
 
-  def endCalibrationPointSource: CalibrationPointSource = {
-    if (endCalibrationPoint.isDefined) endCalibrationPoint.get.source
-    else CalibrationPointSource.NoCalibrationPoint
+  def isStartCalibrationPointCreatedInProject: Boolean = {
+    startCalibrationPoint.isDefined && originalStartCalibrationPointType == NoCP
+  }
+
+  def isEndCalibrationPointCreatedInProject: Boolean = {
+    endCalibrationPoint.isDefined && originalStartCalibrationPointType == NoCP
+  }
+
+  def startCalibrationPointType: CalibrationPointType = {
+    if (startCalibrationPoint.isDefined) startCalibrationPoint.get.typeCode
+    else CalibrationPointType.NoCP
+  }
+
+  def endCalibrationPointType: CalibrationPointType = {
+    if (endCalibrationPoint.isDefined) endCalibrationPoint.get.typeCode
+    else CalibrationPointType.NoCP
+  }
+
+  def originalStartCalibrationPointType: CalibrationPointType = {
+    originalCalibrationPointTypes._1
+  }
+
+  def originalEndCalibrationPointType: CalibrationPointType = {
+    originalCalibrationPointTypes._2
   }
 }
 
@@ -306,7 +321,7 @@ class ProjectLinkDAO {
       val geom = r.nextObjectOption()
       val length = r.nextDouble()
       val calibrationPoints =
-        CalibrationPointsUtils.calibrations(CalibrationPointSource.apply(r.nextInt), CalibrationPointSource.apply(r.nextInt),
+        CalibrationPointsUtils.calibrations(CalibrationPointType.apply(r.nextInt), CalibrationPointType.apply(r.nextInt),
           linkId, startMValue, endMValue, startAddrM, endAddrM, sideCode)
       val originalCalibrationPointTypes = (CalibrationPointType.apply(r.nextInt), CalibrationPointType.apply(r.nextInt))
       val status = LinkStatus.apply(r.nextInt())
@@ -398,10 +413,10 @@ class ProjectLinkDAO {
         addressPS.setLong(9, pl.originalStartAddrMValue)
         addressPS.setLong(10, pl.originalEndAddrMValue)
         addressPS.setString(11, pl.createdBy.orNull)
-        addressPS.setLong(12, pl.startCalibrationPointSource.value)
-        addressPS.setLong(13, pl.endCalibrationPointSource.value)
-        addressPS.setLong(14, pl.originalCalibrationPointTypes._1.value)
-        addressPS.setLong(15, pl.originalCalibrationPointTypes._2.value)
+        addressPS.setLong(12, pl.startCalibrationPointType.value)
+        addressPS.setLong(13, pl.endCalibrationPointType.value)
+        addressPS.setLong(14, pl.originalStartCalibrationPointType.value)
+        addressPS.setLong(15, pl.originalEndCalibrationPointType.value)
         addressPS.setLong(16, pl.status.value)
         addressPS.setLong(17, pl.roadType.value)
         if (pl.roadwayId == 0)
@@ -475,10 +490,10 @@ class ProjectLinkDAO {
           projectLinkPS.setDate(9, new java.sql.Date(new Date().getTime))
           projectLinkPS.setString(10, modifier)
           projectLinkPS.setLong(11, projectLink.projectId)
-          projectLinkPS.setInt(12, projectLink.startCalibrationPointSource.value)
-          projectLinkPS.setInt(13, projectLink.endCalibrationPointSource.value)
-          projectLinkPS.setInt(14, projectLink.originalCalibrationPointTypes._1.value)
-          projectLinkPS.setInt(15, projectLink.originalCalibrationPointTypes._2.value)
+          projectLinkPS.setInt(12, projectLink.startCalibrationPointType.value)
+          projectLinkPS.setInt(13, projectLink.endCalibrationPointType.value)
+          projectLinkPS.setInt(14, projectLink.originalStartCalibrationPointType.value)
+          projectLinkPS.setInt(15, projectLink.originalEndCalibrationPointType.value)
           projectLinkPS.setInt(16, projectLink.status.value)
           projectLinkPS.setInt(17, projectLink.roadType.value)
           projectLinkPS.setInt(18, if (projectLink.reversed) 1 else 0)
@@ -678,8 +693,8 @@ class ProjectLinkDAO {
     sqlu"""
       update project_link
       set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue},
-          start_calibration_point = ${projectLink.startCalibrationPointSource.value},
-          end_calibration_point = ${projectLink.endCalibrationPointSource.value}
+          start_calibration_point = ${projectLink.startCalibrationPointType.value},
+          end_calibration_point = ${projectLink.endCalibrationPointType.value}
       where id = ${projectLink.id}
     """.execute
   }
@@ -749,8 +764,8 @@ class ProjectLinkDAO {
           ROAD_PART_NUMBER = ${roadAddress.roadPartNumber}, TRACK = ${roadAddress.track.value},
           DISCONTINUITY_TYPE = ${roadAddress.discontinuity.value}, ROAD_TYPE = ${roadAddress.roadType.value},
           STATUS = ${LinkStatus.NotHandled.value}, START_ADDR_M = ${roadAddress.startAddrMValue}, END_ADDR_M = ${roadAddress.endAddrMValue},
-          START_CALIBRATION_POINT = ${roadAddress.startCalibrationPointSource.value},
-          END_CALIBRATION_POINT = ${roadAddress.endCalibrationPointSource.value},
+          START_CALIBRATION_POINT = ${roadAddress.startCalibrationPointType.value},
+          END_CALIBRATION_POINT = ${roadAddress.endCalibrationPointType.value},
           ORIG_START_CALIBRATION_POINT = ${roadAddress.startCalibrationPointType.value},
           ORIG_END_CALIBRATION_POINT = ${roadAddress.endCalibrationPointType.value},
           CONNECTED_LINK_ID = null, REVERSED = 0,
