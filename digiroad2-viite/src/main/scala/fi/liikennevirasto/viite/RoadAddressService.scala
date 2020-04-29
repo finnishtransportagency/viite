@@ -1130,13 +1130,6 @@ object RoadAddressFilters {
     !continuousAddress(curr)(next) && sameRoadPart(curr)(next)
   }
 
-  def connected(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
-    Seq(curr.startingPoint, curr.endPoint).exists(targetPoint =>
-      Seq(next.startingPoint, next.endPoint).foldLeft(false)((isContinuous, nextPoint) =>
-        nextPoint.connected(targetPoint) || isContinuous)
-    )
-  }
-
   def continuousTopology(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
     curr.endPoint.connected(next.startingPoint)
   }

@@ -56,19 +56,19 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         }
       } catch {
         case ex: MissingTrackException =>
-          logger.info(ex.getMessage)
+          logger.warn(ex.getMessage)
           projectLinks ++ oldLinks
         case ex: InvalidAddressDataException =>
-          logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
-          throw ex
+          logger.warn(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
+          projectLinks ++ oldLinks
         case ex: NoSuchElementException =>
-          logger.info("Delta calculation failed: " + ex.getMessage, ex)
+          logger.error("Delta calculation failed: " + ex.getMessage, ex)
           throw ex
         case ex: NullPointerException =>
-          logger.info("Delta calculation failed (NPE)", ex)
+          logger.error("Delta calculation failed (NPE)", ex)
           throw ex
-        case ex: Throwable =>
-          logger.info("Delta calculation not possible: " + ex.getMessage)
+        case ex: Exception =>
+          logger.error("Delta calculation not possible: " + ex.getMessage)
           throw ex
       }
     }.toSeq
