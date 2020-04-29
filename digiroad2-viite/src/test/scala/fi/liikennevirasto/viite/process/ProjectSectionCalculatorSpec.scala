@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, asset}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -1602,14 +1603,15 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         roadway1.startAddrMValue, roadway1.endAddrMValue, None, None, None, linkId1,
         linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode,
         (Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.startMValue, 0L)), Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.endMValue, 10L))),
+        (NoCP, NoCP),
         linearLocation1.geometry, 0L, LinkStatus.Transfer, roadway1.roadType, LinkGeomSource.apply(link1.source.intValue()),
         GeometryUtils.geometryLength(linearLocation1.geometry), roadway1.id, linearLocation1.id, 0, roadway1.reversed, None, 86400L)
       val projectLink2 = ProjectLink(plId + 2, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
-        None, 12346L, 0.0, 11.2, SideCode.TowardsDigitizing, (None, None),
+        None, 12346L, 0.0, 11.2, SideCode.TowardsDigitizing, (None, None), (NoCP, NoCP),
         geom2, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLink3 = ProjectLink(plId + 3, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 10L, 20L, 0L, 0L, None, None,
-        None, 12347L, 0.0, 12.3, SideCode.TowardsDigitizing, (None, None),
+        None, 12347L, 0.0, 12.3, SideCode.TowardsDigitizing, (None, None), (NoCP, NoCP),
         geom3, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -1696,15 +1698,15 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val track = Track.Combined
       val plId = Sequences.nextProjectLinkId
       val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
-        None, 12345L, 0.0, 10.0, SideCode.AgainstDigitizing, (None, None),
+        None, 12345L, 0.0, 10.0, SideCode.AgainstDigitizing, (None, None), (NoCP, NoCP),
         geom1, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLink2 = ProjectLink(plId + 2, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
-        None, 12346L, 0.0, 11.2, SideCode.AgainstDigitizing, (None, None),
+        None, 12346L, 0.0, 11.2, SideCode.AgainstDigitizing, (None, None), (NoCP, NoCP),
         geom2, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLink3 = ProjectLink(plId + 3, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 10L, 20L, 0L, 0L, None, None,
-        None, 12347L, 0.0, 12.3, SideCode.AgainstDigitizing, (None, None),
+        None, 12347L, 0.0, 12.3, SideCode.AgainstDigitizing, (None, None), (NoCP, NoCP),
         geom3, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -1766,6 +1768,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         roadway1.startAddrMValue, roadway1.endAddrMValue, None, None, None, linkId1,
         linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode,
         (Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.startMValue, 0L)), Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.endMValue, 10L))),
+        (NoCP, NoCP),
         linearLocation1.geometry, 0L, LinkStatus.Transfer, roadway1.roadType, LinkGeomSource.apply(link1.source.intValue()),
         GeometryUtils.geometryLength(linearLocation1.geometry), roadway1.id, linearLocation1.id, 0, roadway1.reversed, None, 86400L)
 

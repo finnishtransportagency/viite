@@ -13,17 +13,17 @@ object CalibrationPointsUtils {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def calibrations(startCalibrationPoint: CalibrationPointSource, endCalibrationPoint: CalibrationPointSource, linkId: Long, startMValue: Double, endMValue: Double,
+  def calibrations(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType, linkId: Long, startMValue: Double, endMValue: Double,
                    startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     sideCode match {
       case BothDirections => (None, None) // Invalid choice
       case TowardsDigitizing => (
-        if (startCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, 0.0, startAddrMValue, source = startCalibrationPoint)) else None,
-        if (endCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, endMValue - startMValue, endAddrMValue, source = endCalibrationPoint)) else None
+        if (startCalibrationPoint != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId, 0.0, startAddrMValue, startCalibrationPoint)) else None,
+        if (endCalibrationPoint != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId, endMValue - startMValue, endAddrMValue, endCalibrationPoint)) else None
       )
       case AgainstDigitizing => (
-        if (startCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, endMValue - startMValue, startAddrMValue, source = startCalibrationPoint)) else None,
-        if (endCalibrationPoint != CalibrationPointSource.NoCalibrationPoint) Some(CalibrationPoint(linkId, 0.0, endAddrMValue, source = endCalibrationPoint)) else None
+        if (startCalibrationPoint != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId, endMValue - startMValue, startAddrMValue, startCalibrationPoint)) else None,
+        if (endCalibrationPoint != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId, 0.0, endAddrMValue, endCalibrationPoint)) else None
       )
       case Unknown => (None, None)  // Invalid choice
     }
@@ -37,6 +37,10 @@ object CalibrationPointsUtils {
   }
 
   def toProjectLinkCalibrationPointWithSourceInfo(originalCalibrationPoint: BaseCalibrationPoint, source: CalibrationPointSource): ProjectLinkCalibrationPoint = {
+    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source)
+  }
+
+  def toProjectLinkCalibrationPointWithTypeInfo(originalCalibrationPoint: BaseCalibrationPoint, source: CalibrationPointSource): ProjectLinkCalibrationPoint = {
     ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source)
   }
 

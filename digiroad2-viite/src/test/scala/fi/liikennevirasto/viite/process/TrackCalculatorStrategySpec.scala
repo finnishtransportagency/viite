@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
 import fi.liikennevirasto.viite.process.strategy.{LinkStatusChangeTrackCalculatorStrategy, TrackCalculatorContext, TrackCalculatorResult}
 import org.scalatest.{FunSuite, Matchers}
@@ -17,11 +18,11 @@ class TrackCalculatorStrategySpec extends FunSuite with Matchers {
     val geomLeft2 = Seq(Point(20.0, 10.0), Point(30.0, 10.0))
 
     val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None),
+      None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None), (NoCP, NoCP),
       geomLeft1, 0L, LinkStatus.UnChanged, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 1L, reversed = false,
       None, 86400L)
     val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None),
+      None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None), (NoCP, NoCP),
       geomLeft2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 1L, reversed = false,
       None, 86400L)
 
@@ -29,12 +30,12 @@ class TrackCalculatorStrategySpec extends FunSuite with Matchers {
     val geomRight2 = Seq(Point(20.0, 20.0), Point(30.0, 20.0))
 
     val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None),
+      None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None), (NoCP, NoCP),
       geomRight1, 0L, LinkStatus.UnChanged, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), 0L, 0, 1L, reversed = false,
       None, 86400L)
 
     val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None),
+      None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None), (NoCP, NoCP),
       geomRight2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), 0L, 0,1L, reversed = false,
       None, 86400L)
 
@@ -57,15 +58,15 @@ class TrackCalculatorStrategySpec extends FunSuite with Matchers {
 
 
     val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None,
-      None, 12345L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None),
+      None, 12345L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None), (NoCP, NoCP),
       geomLeft1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 1L, reversed = false,
       None, 86400L)
     val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 10L, 20L, 10L, 20L, None, None,
-      None, 12346L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None),
+      None, 12346L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None), (NoCP, NoCP),
       geomLeft2, 0L, LinkStatus.Transfer, RoadType.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 1L, reversed = false,
       None, 86400L)
     val projectLinkLeft3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 20L, 30L, 20L, 30L, None, None,
-      None, 12347L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None),
+      None, 12347L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None), (NoCP, NoCP),
       geomLeft2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft3), 0L, 0, 1L, reversed = false,
       None, 86400L)
 
@@ -74,17 +75,17 @@ class TrackCalculatorStrategySpec extends FunSuite with Matchers {
     val geomRight3 = Seq(Point(30.0, 10.0), Point(40.0, 10.0))
 
     val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None,
-      None, 12348L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None),
+      None, 12348L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None), (NoCP, NoCP),
       geomRight1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), 0L, 0, 1L, reversed = false,
       None, 86400L)
 
     val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 10L, 20L, 10L, 20L, None, None,
-      None, 12349L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None),
+      None, 12349L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None), (NoCP, NoCP),
       geomRight2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), 0L, 0,1L, reversed = false,
       None, 86400L)
 
     val projectLinkRight3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 20L, 30L, 20L, 30L, None, None,
-      None, 12350L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None),
+      None, 12350L, 0.0, 10.0, SideCode.TowardsDigitizing, (None, None), (NoCP, NoCP),
       geomRight2, 0L, LinkStatus.Transfer, RoadType.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight3), 0L, 0,1L, reversed = false,
       None, 86400L)
 
