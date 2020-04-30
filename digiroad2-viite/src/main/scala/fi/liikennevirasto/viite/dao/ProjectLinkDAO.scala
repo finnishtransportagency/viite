@@ -233,8 +233,11 @@ class ProjectLinkDAO {
           plh.ORIGINAL_START_ADDR_M, plh.ORIGINAL_END_ADDR_M,
           plh.START_MEASURE, plh.END_MEASURE, plh.SIDE,
           plh.CREATED_BY, plh.MODIFIED_BY, plh.LINK_ID, plh.GEOMETRY,
-          (plh.END_MEASURE - plh.START_MEASURE) as length, plh.START_CALIBRATION_POINT, plh.END_CALIBRATION_POINT, plh.STATUS,
-          plh.ROAD_TYPE, plh.LINK_SOURCE as source, plh.ROADWAY_ID, plh.Linear_Location_Id, plh.ELY, plh.REVERSED, plh.CONNECTED_LINK_ID,
+          (plh.END_MEASURE - plh.START_MEASURE) as length,
+          plh.START_CALIBRATION_POINT, plh.END_CALIBRATION_POINT,
+          plh.ORIG_START_CALIBRATION_POINT, plh.ORIG_END_CALIBRATION_POINT,
+          plh.STATUS, plh.ROAD_TYPE, plh.LINK_SOURCE as source, plh.ROADWAY_ID, plh.Linear_Location_Id, plh.ELY,
+          plh.REVERSED, plh.CONNECTED_LINK_ID,
           CASE
             WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
             WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROADWAY.START_DATE
