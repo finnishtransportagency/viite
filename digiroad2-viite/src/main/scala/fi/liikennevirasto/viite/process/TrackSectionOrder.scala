@@ -403,8 +403,8 @@ object TrackSectionOrder {
 
           // TODO Strange code: After resetting project link calibration points to none, calibration point sources are always ProjectLinkSource
           val resetedPlsCps = projectLinks.map(_.copy(calibrationPoints = (None, None)))
-          val calPointType1 = if (resetedPlsCps.tail.head.hasCalibrationPointAtStart()) resetedPlsCps.tail.head.startCalibrationPointType else ProjectCP
-          val calPointType2 = if (resetedPlsCps.init.last.hasCalibrationPointAtEnd()) resetedPlsCps.init.last.endCalibrationPointType else ProjectCP
+          val calPointType1 = if (resetedPlsCps.tail.head.hasCalibrationPointAtStart) resetedPlsCps.tail.head.startCalibrationPointType else ProjectCP
+          val calPointType2 = if (resetedPlsCps.init.last.hasCalibrationPointAtEnd) resetedPlsCps.init.last.endCalibrationPointType else ProjectCP
           val raCPs = Seq(setCalibrationPoint(resetedPlsCps.head, userCalibrationPoint.get(resetedPlsCps.head.id), junctionDefinedCalibrationPoint.get(resetedPlsCps.head.linearLocationId), startCP = true, endCP = resetedPlsCps.tail.head.calibrationPoints._1.isDefined, calPointType1)) ++ resetedPlsCps.init.tail ++
             Seq(setCalibrationPoint(resetedPlsCps.last, userCalibrationPoint.get(resetedPlsCps.last.id), junctionDefinedCalibrationPoint.get(resetedPlsCps.last.linearLocationId), resetedPlsCps.init.last.calibrationPoints._2.isDefined, endCP = true, calPointType2))
 

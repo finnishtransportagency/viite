@@ -1,19 +1,19 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, Vector3d}
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -122,15 +122,62 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
       val projectId = Sequences.nextViiteProjectId
-      val projectLinkId = projectId + 1
+      val projectLinkId = Sequences.nextProjectLinkId
       val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)
-      val projectLinks = Seq(dummyProjectLink(projectLinkId, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, projectId, linkId1, roadwayIds.head, roadwayNumber1,
+        roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None,
+        (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
       )
       projectLinkDAO.create(projectLinks)
       val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       returnedProjectLinks.count(x => x.reversed) should be(0)
+    }
+  }
+
+  test("Test create When having calibration points Then should save and fetch the calibration point types correctly") {
+    runWithRollback {
+      val roadwayIds = roadwayDAO.create(dummyRoadways)
+      val projectId = Sequences.nextViiteProjectId
+      val projectLinkId1 = Sequences.nextProjectLinkId
+      val projectLinkId2 = Sequences.nextProjectLinkId
+      val project = dummyRoadAddressProject(projectId, ProjectState.Incomplete, Seq(), None)
+      projectDAO.create(project)
+      projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, project.createdBy)
+      val projectLinks = Seq(
+        dummyProjectLink(projectLinkId1, projectId, linkId1, roadwayIds.head, roadwayNumber1,
+          roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None,
+          (Some(ProjectLinkCalibrationPoint(linkId1, 0.0, 0, ProjectCP)), None), Seq(), LinkStatus.New, RoadType.PublicRoad, reversed = false, 0)
+          .copy(originalCalibrationPointTypes = (NoCP, NoCP)),
+        dummyProjectLink(projectLinkId2, projectId, linkId2, roadwayIds.head, roadwayNumber1,
+          roadNumber1, roadPartNumber1, 100, 200, 0.0, 100.0, None,
+          (None, Some(ProjectLinkCalibrationPoint(linkId2, 100.0, 200, ProjectCP))), Seq(), LinkStatus.New, RoadType.PublicRoad, reversed = false, 0)
+          .copy(originalCalibrationPointTypes = (NoCP, NoCP))
+      )
+      projectLinkDAO.create(projectLinks)
+      val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+      val linksWithStartCP = returnedProjectLinks.filter(p => p.hasCalibrationPointAtStart)
+      val linksWithEndCP = returnedProjectLinks.filter(p => p.hasCalibrationPointAtEnd)
+      linksWithStartCP.size should be(1)
+      linksWithEndCP.size should be(1)
+      val firstLink = linksWithStartCP.head
+      val lastLink = linksWithEndCP.head
+
+      firstLink.hasCalibrationPointAtStart should be(true)
+      lastLink.hasCalibrationPointAtEnd should be(true)
+
+      firstLink.hasCalibrationPointCreatedInProject should be(true)
+      lastLink.hasCalibrationPointCreatedInProject should be(true)
+
+      firstLink.hasCalibrationPointAtEnd should be(false)
+      lastLink.hasCalibrationPointAtStart should be(false)
+
+      firstLink.startCalibrationPointType should be(ProjectCP)
+      lastLink.endCalibrationPointType should be(ProjectCP)
+
+      firstLink.endCalibrationPointType should be(NoCP)
+      lastLink.startCalibrationPointType should be(NoCP)
     }
   }
 

@@ -20,7 +20,7 @@ object CalibrationPointDAO {
   }
 
   object CalibrationPointType {
-    val values = Set(NoCP, UserDefinedCP, JunctionPointCP, RoadAddressCP, UnknownCP)
+    val values = Set(NoCP, UserDefinedCP, JunctionPointCP, RoadAddressCP, ProjectCP, UnknownCP)
 
     def apply(intValue: Int): CalibrationPointType = {
       values.find(_.value == intValue).getOrElse(UnknownCP)
