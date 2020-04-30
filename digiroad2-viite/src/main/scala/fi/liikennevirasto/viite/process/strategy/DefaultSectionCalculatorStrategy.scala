@@ -217,11 +217,11 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             //processedLinks without and with roadwayNumber
             val (unassignedRwnLinks, assignedRwnLinks) = processedNew.partition(_.roadwayNumber == NewIdValue)
             val nextRoadwayNumber = Sequences.nextRoadwayNumber
-            val processedNewWithSplitedLink = assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+linkToBeSplited.copy(endMValue = splitMValue,
+            val processedNewWithSplitedLink = assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+linkToBeSplited.copy(endMValue = linkToBeSplited.startMValue + splitMValue,
               geometry = firstSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitedLinkGeom), endAddrMValue = firstSplitedEndAddr,
               roadwayNumber = nextRoadwayNumber, connectedLinkId = Some(linkToBeSplited.linkId))
 
-            splitLinksIfNeed(remainingTransfer.tail, processedTransfer++remainingTransfer.head._2, linkToBeSplited.copy(id = NewIdValue, startMValue = splitMValue,
+            splitLinksIfNeed(remainingTransfer.tail, processedTransfer++remainingTransfer.head._2, linkToBeSplited.copy(id = NewIdValue, startMValue = linkToBeSplited.startMValue + splitMValue,
               geometry = secondSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(secondSplitedLinkGeom), startAddrMValue = firstSplitedEndAddr) +: remainingNew.tail,
               processedNewWithSplitedLink, totalTransferMLength, totalNewMLength, missingRoadwayNumbers-1)
           }
