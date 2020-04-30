@@ -171,12 +171,12 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
   def startCalibrationPointType: CalibrationPointType = {
     if (startCalibrationPoint.isDefined) startCalibrationPoint.get.typeCode
-    else CalibrationPointType.NoCP
+    else NoCP
   }
 
   def endCalibrationPointType: CalibrationPointType = {
     if (endCalibrationPoint.isDefined) endCalibrationPoint.get.typeCode
-    else CalibrationPointType.NoCP
+    else NoCP
   }
 
   def originalStartCalibrationPointType: CalibrationPointType = {

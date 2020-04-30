@@ -105,10 +105,10 @@ object ProjectDeltaCalculator {
       (!pl1.reversed && existing.get.endMAddr == pl2.startAddrMValue) || (pl1.reversed && existing.get.endMAddr == pl2.endAddrMValue)
     else {
       pl1 match {
-        case x: RoadAddress => (!x.reversed && x.hasCalibrationPointAtEnd() && ra1.roadwayNumber != ra2.roadwayNumber) ||
-          (x.reversed && x.hasCalibrationPointAtStart() && ra1.roadwayNumber != ra2.roadwayNumber)
+        case x: RoadAddress => (!x.reversed && x.hasCalibrationPointAtEnd && ra1.roadwayNumber != ra2.roadwayNumber) ||
+          (x.reversed && x.hasCalibrationPointAtStart && ra1.roadwayNumber != ra2.roadwayNumber)
         case x: ProjectLink =>
-          (!x.reversed && x.hasCalibrationPointAtEnd() || x.reversed && x.hasCalibrationPointAtStart()) &&
+          (!x.reversed && x.hasCalibrationPointAtEnd || x.reversed && x.hasCalibrationPointAtStart) &&
             x.hasCalibrationPointCreatedInProject
       }
 
@@ -134,7 +134,7 @@ object ProjectDeltaCalculator {
   }
 
   private def combineTwo(r1: ProjectLink, r2: ProjectLink): Seq[ProjectLink] = {
-    val hasCalibrationPoint = r1.hasCalibrationPointAtEnd()
+    val hasCalibrationPoint = r1.hasCalibrationPointAtEnd
     val openBasedOnSource = hasCalibrationPoint && r1.hasCalibrationPointCreatedInProject
     if (r1.endAddrMValue == r2.startAddrMValue)
       r1.status match {

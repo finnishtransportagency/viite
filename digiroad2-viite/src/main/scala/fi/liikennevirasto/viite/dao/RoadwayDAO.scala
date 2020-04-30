@@ -232,11 +232,11 @@ trait BaseRoadAddress {
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
-  def hasCalibrationPointAtStart(): Boolean = {
+  def hasCalibrationPointAtStart: Boolean = {
     startCalibrationPoint.getOrElse(NoCP) != NoCP
   }
 
-  def hasCalibrationPointAtEnd(): Boolean = {
+  def hasCalibrationPointAtEnd: Boolean = {
     endCalibrationPoint.getOrElse(NoCP) != NoCP
   }
 
