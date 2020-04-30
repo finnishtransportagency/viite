@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
-import fi.liikennevirasto.viite.NewIdValue
+import fi.liikennevirasto.viite.{MaxThreshHoldDistance, NewIdValue}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
@@ -168,12 +168,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         } else if(remainingNew.isEmpty && remainingTransfer.isEmpty) {
           processedNew
         } else {
-          val threshHoldMaxDistance = 2
-
           //Transfer M length coeff
           val groupTransferMLength = remainingTransfer.head._2.map(l => l.endMValue - l.startMValue).sum
-          val minAllowedTransferGroupCoeff = (groupTransferMLength-threshHoldMaxDistance)/totalTransferMLength
-          val maxAllowedTransferGroupCoeff = (groupTransferMLength+threshHoldMaxDistance)/totalTransferMLength
+          val minAllowedTransferGroupCoeff = (groupTransferMLength-MaxThreshHoldDistance)/totalTransferMLength
+          val maxAllowedTransferGroupCoeff = (groupTransferMLength+MaxThreshHoldDistance)/totalTransferMLength
 
           //New M length coeff
           val processedNewToBeAssigned = processedNew.filter(_.roadwayNumber == NewIdValue)
@@ -184,7 +182,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               }
           val currentNewLinksGroupCoeff: Double = processingLength/totalNewMLength
           if(minAllowedTransferGroupCoeff <= currentNewLinksGroupCoeff && currentNewLinksGroupCoeff <= maxAllowedTransferGroupCoeff){
-            splitLinksIfNeed(remainingTransfer.tail, processedTransfer ++ remainingTransfer.head._2, remainingNew.tail, processedNew:+remainingNew.head,
+            val (unassignedRwnLinks, assignedRwnLinks) = (processedNew:+remainingNew.head).partition(_.roadwayNumber == NewIdValue)
+            val nextRoadwayNumber = Sequences.nextRoadwayNumber
+            splitLinksIfNeed(remainingTransfer.tail, processedTransfer ++ remainingTransfer.head._2, if(remainingNew.tail.nonEmpty) remainingNew.tail.head.copy(startAddrMValue = remainingTransfer.head._2.last.endAddrMValue) +: remainingNew.tail.tail else remainingNew.tail, assignedRwnLinks ++ unassignedRwnLinks.init.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
+              unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber, endAddrMValue = remainingTransfer.head._2.last.endAddrMValue, connectedLinkId = Some(unassignedRwnLinks.last.linkId)),
               totalTransferMLength, totalNewMLength, missingRoadwayNumbers - 1)
           } else if(minAllowedTransferGroupCoeff > currentNewLinksGroupCoeff){
             splitLinksIfNeed(remainingTransfer, processedTransfer, remainingNew.tail, processedNew:+remainingNew.head,
@@ -201,7 +202,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val previousProcessedLength: Double = previousProcessed.map(l => l.endMValue - l.startMValue).sum
 
             val perfectTransferGroupCoeff = groupTransferMLength/totalTransferMLength
-            //finally high school math serves for something
             /*
               (previousProcessedLength+m)/totalNewMLength = perfectTransferGroupCoeff <=>
               <=> previousProcessedLength+m = perfectTransferGroupCoeff*totalNewMLength <=>
