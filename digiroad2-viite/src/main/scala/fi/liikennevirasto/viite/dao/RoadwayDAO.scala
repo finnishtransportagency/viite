@@ -157,21 +157,7 @@ object CalibrationCode {
 
 }
 
-case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP) extends BaseCalibrationPoint {
-
-  // TODO Remove this temporary solution
-  def source: CalibrationPointSource = {
-    typeCode match {
-      case CalibrationPointType.NoCP => CalibrationPointSource.NoCalibrationPoint
-      case CalibrationPointType.ProjectCP => CalibrationPointSource.ProjectLinkSource
-      case CalibrationPointType.JunctionPointCP => CalibrationPointSource.JunctionPointSource
-      case CalibrationPointType.RoadAddressCP => CalibrationPointSource.RoadAddressSource
-      case CalibrationPointType.UserDefinedCP => CalibrationPointSource.RoadAddressSource
-      case _ => CalibrationPointSource.UnknownSource
-    }
-  }
-
-}
+case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP) extends BaseCalibrationPoint
 
 sealed trait TerminationCode {
   def value: Int

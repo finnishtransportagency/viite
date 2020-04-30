@@ -8,7 +8,6 @@ import fi.liikennevirasto.digiroad2.{Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{ProjectCP, UnknownCP}
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, UnknownSource}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint

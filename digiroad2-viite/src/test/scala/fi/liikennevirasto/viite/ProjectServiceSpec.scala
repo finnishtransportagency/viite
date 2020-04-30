@@ -18,7 +18,6 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP, RoadAddressCP}
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
