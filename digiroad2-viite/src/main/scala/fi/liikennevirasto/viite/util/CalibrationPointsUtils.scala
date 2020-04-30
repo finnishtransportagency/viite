@@ -5,7 +5,6 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.{NoCalibrationPoint, ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
 import fi.liikennevirasto.viite.dao._
 import org.slf4j.LoggerFactory
@@ -34,17 +33,6 @@ object CalibrationPointsUtils {
     roadwayId match {
       case 0L | -1000L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, ProjectCP)
       case _ => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, RoadAddressCP)
-    }
-  }
-
-  def typeCodeToSource(pointType: CalibrationPointDAO.CalibrationPointType): CalibrationPointSource = {
-    pointType match {
-      case NoCP => NoCalibrationPoint
-      case CalibrationPointType.UserDefinedCP => CalibrationPointSource.RoadAddressSource
-      case CalibrationPointType.JunctionPointCP => CalibrationPointSource.JunctionPointSource
-      case CalibrationPointType.RoadAddressCP => CalibrationPointSource.RoadAddressSource
-      case CalibrationPointType.ProjectCP => CalibrationPointSource.ProjectLinkSource
-      case _ => CalibrationPointSource.UnknownSource
     }
   }
 

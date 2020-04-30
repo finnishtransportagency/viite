@@ -13,7 +13,6 @@ import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, UnknownCP}
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
@@ -25,22 +24,6 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 //TODO naming SQL conventions
-
-sealed trait CalibrationPointSource {
-  def value: Int
-}
-
-object CalibrationPointSource {
-  val values = Set(NoCalibrationPoint, RoadAddressSource, ProjectLinkSource, JunctionPointSource, UnknownSource)
-
-  def apply(intValue: Int): CalibrationPointSource = values.find(_.value == intValue).getOrElse(UnknownSource)
-
-  case object NoCalibrationPoint extends CalibrationPointSource {def value = 0;}
-  case object RoadAddressSource extends CalibrationPointSource {def value = 1;}
-  case object ProjectLinkSource extends CalibrationPointSource {def value = 2;}
-  case object JunctionPointSource extends CalibrationPointSource {def value = 3;}
-  case object UnknownSource extends CalibrationPointSource{def value = 99;}
-}
 
 sealed trait LinkStatus {
   def value: Int
