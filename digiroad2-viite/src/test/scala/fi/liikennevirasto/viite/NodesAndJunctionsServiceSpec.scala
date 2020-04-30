@@ -2732,6 +2732,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val endDate = Some(project2.startDate.minusDays(1))
       val terminatedLink1 = terminatingCombLink3.copy(endDate = endDate, status = LinkStatus.Terminated)
       val yetAnotherExpiredJunctions = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(Seq(combLink1, combLink2, terminatedLink1), endDate)
+      // Check that junctions for roadways were expired
       yetAnotherExpiredJunctions.size should be (2)
 
       when(mockRoadwayAddressMapper.getCurrentRoadAddressesBySection(road2, part1)).thenReturn(Seq())
@@ -2742,9 +2743,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val rwPoints = roadwayPointDAO.fetchByRoadwayNumbers(Seq(combLink1, combLink2, terminatedLink1).map(_.roadwayNumber)).map(_.id)
       val junctionPointsAfterTerminating = junctionPointDAO.fetchByRoadwayPointIds(rwPoints)
       junctionPointsAfterTerminating.length should be(0)
-      // Check that junctions for roadways were expired
-      val junctionsAfterExpire = junctionDAO.fetchAllByIds(templateRoadwayNumbers)
-      junctionsAfterExpire.length should be(0)
 
       // Check that terminated junction was created
       val terminatedJunctionsAfterExpire = junctionDAO.fetchExpiredByRoadwayNumbers(templateRoadwayNumbers)
