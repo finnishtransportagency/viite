@@ -32,18 +32,9 @@ object CalibrationPointsUtils {
 
   def toProjectLinkCalibrationPoint(originalCalibrationPoint: BaseCalibrationPoint, roadwayId: Long = 0L): ProjectLinkCalibrationPoint = {
     roadwayId match {
-      case 0L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, ProjectLinkSource)
+      case 0L | -1000L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, ProjectLinkSource)
       case _ => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, RoadAddressSource)
     }
-  }
-
-  def toProjectLinkCalibrationPointWithSourceInfo(originalCalibrationPoint: BaseCalibrationPoint, source: CalibrationPointSource): ProjectLinkCalibrationPoint = {
-    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source)
-  }
-
-  def toProjectLinkCalibrationPointWithTypeInfo(originalCalibrationPoint: BaseCalibrationPoint, typeCode: CalibrationPointType): ProjectLinkCalibrationPoint = {
-    val source = typeCodeToSource(typeCode)
-    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source)
   }
 
   def typeCodeToSource(pointType: CalibrationPointDAO.CalibrationPointType): CalibrationPointSource = {
@@ -57,8 +48,8 @@ object CalibrationPointsUtils {
     }
   }
 
-  def toProjectLinkCalibrationPointWithTypeInfo(originalCalibrationPoint: BaseCalibrationPoint, source: CalibrationPointSource): ProjectLinkCalibrationPoint = {
-    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source)
+  def toProjectLinkCalibrationPointWithTypeInfo(originalCalibrationPoint: BaseCalibrationPoint, typeCode: CalibrationPointType): ProjectLinkCalibrationPoint = {
+    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, typeCodeToSource(typeCode))
   }
 
   def toProjectLinkCalibrationPoints(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), roadwayId: Long = 0L): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
@@ -70,14 +61,14 @@ object CalibrationPointsUtils {
     }
   }
 
-  def toProjectLinkCalibrationPointsWithSourceInfo(originalCalibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])):
+  def toProjectLinkCalibrationPoints(originalCalibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])):
   (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
 
     originalCalibrationPoints match {
       case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-      case (Some(cp), None) => (Option(toProjectLinkCalibrationPointWithSourceInfo(cp, cp.source)), Option.empty[ProjectLinkCalibrationPoint])
-      case (None, Some(cp)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPointWithSourceInfo(cp, cp.source)))
-      case (Some(cp1), Some(cp2)) => (Option(toProjectLinkCalibrationPointWithSourceInfo(cp1, cp1.source)), Option(toProjectLinkCalibrationPointWithSourceInfo(cp2, cp2.source)))
+      case (Some(cp), None) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp, cp.typeCode)), Option.empty[ProjectLinkCalibrationPoint])
+      case (None, Some(cp)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPointWithTypeInfo(cp, cp.typeCode)))
+      case (Some(cp1), Some(cp2)) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp1, cp1.typeCode)), Option(toProjectLinkCalibrationPointWithTypeInfo(cp2, cp2.typeCode)))
     }
   }
 
