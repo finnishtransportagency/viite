@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.util
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.{NoCalibrationPoint, ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
@@ -32,8 +32,8 @@ object CalibrationPointsUtils {
 
   def toProjectLinkCalibrationPoint(originalCalibrationPoint: BaseCalibrationPoint, roadwayId: Long = 0L): ProjectLinkCalibrationPoint = {
     roadwayId match {
-      case 0L | -1000L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, ProjectLinkSource)
-      case _ => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, RoadAddressSource)
+      case 0L | -1000L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, ProjectCP)
+      case _ => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, RoadAddressCP)
     }
   }
 
@@ -49,7 +49,7 @@ object CalibrationPointsUtils {
   }
 
   def toProjectLinkCalibrationPointWithTypeInfo(originalCalibrationPoint: BaseCalibrationPoint, typeCode: CalibrationPointType): ProjectLinkCalibrationPoint = {
-    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, typeCodeToSource(typeCode))
+    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, typeCode)
   }
 
   def toProjectLinkCalibrationPoints(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), roadwayId: Long = 0L): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
@@ -156,7 +156,7 @@ object CalibrationPointsUtils {
       case Some(x) =>
         CalibrationPointReference(
           Some(x.addressMValue),
-          Some(CalibrationPointType.RoadAddressCP)) // TODO type from project must be handled if needed in the future.
+          Some(x.typeCode))
       case _ => CalibrationPointReference.None
     }
   }
