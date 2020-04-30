@@ -710,9 +710,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
-  /*
-   Should only expire calibration points that existed only due to existing junction places, not because road places
-    */
   /**
     * Should only expire junction calibration points
     * @param junctionPoints
@@ -724,27 +721,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       CalibrationPointDAO.expireById(obsoleteCalibrationPointsIds)
     }
   }
-
-//    junctionPoints.foreach { jp =>
-//      val roadPartAddressSection: Seq[RoadAddress] = roadwayAddressMapper.getCurrentRoadAddressesBySection(jp.roadNumber, jp.roadPartNumber)
-//
-//      val roadsInAddr = roadPartAddressSection.filter(ra => ra.startAddrMValue == jp.addrM || ra.endAddrMValue == jp.addrM).sortBy(_.startAddrMValue)
-//
-//      roadsInAddr.size match {
-//        case 0 => //if None then if was probably already expired due to Termination in road
-//        case 1 => //if only one found then the addr is in the beginning/end of roadpart
-//        case _ =>
-//          val (curr, next) = (roadsInAddr.head, roadsInAddr.last)
-//          if (curr.roadType == next.roadType && curr.track == next.track && curr.roadNumber == next.roadNumber && curr.roadPartNumber == next.roadPartNumber
-//            && curr.discontinuity != Discontinuous && curr.discontinuity != MinorDiscontinuity && curr.discontinuity != ParallelLink) {
-//            val ids = CalibrationPointDAO.fetchByRoadwayPointInExpiredJunctionPoint(jp.roadwayPointId, jp.addrM)
-//            if (ids.nonEmpty) {
-//              logger.info(s"Expiring calibration point ids: ${ids.mkString(", ")}")
-//              CalibrationPointDAO.expireById(ids)
-//            }
-//          }
-//      }
-//    }
 
   def handleRoadwayPointsUpdate(roadwayChanges: List[ProjectRoadwayChange], projectLinkChanges: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
     def handleDualRoadwayPoint(oldRoadwayPointId: Long, point: ProjectRoadLinkChange): Unit = {
