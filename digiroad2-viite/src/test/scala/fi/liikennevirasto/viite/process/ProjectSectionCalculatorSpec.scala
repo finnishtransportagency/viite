@@ -9,8 +9,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, asset}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinkStatus, _}
@@ -161,9 +160,9 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       output.head.startAddrMValue should be(0L)
       output.head.endAddrMValue should be(10L)
 
-      output(3).calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(12346, Math.round(9.799999999999997*10.0)/10.0, 40, ProjectLinkSource)))
+      output(3).calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(12346, Math.round(9.799999999999997*10.0)/10.0, 40, ProjectCP)))
 
-      output.head.calibrationPoints should be(Some(ProjectLinkCalibrationPoint(12345, 0.0, 0, ProjectLinkSource)), None)
+      output.head.calibrationPoints should be(Some(ProjectLinkCalibrationPoint(12345, 0.0, 0, ProjectCP)), None)
     }
   }
 
@@ -379,10 +378,10 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val against = ProjectSectionCalculator.assignMValues(Seq(projectLink0A)).head
       towards.sideCode should be(SideCode.TowardsDigitizing)
       against.sideCode should be(SideCode.AgainstDigitizing)
-      towards.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(0, 0.0, 0, ProjectLinkSource)))
-      towards.calibrationPoints._2 should be(Some(ProjectLinkCalibrationPoint(0, projectLink0T.geometryLength, 9, ProjectLinkSource)))
-      against.calibrationPoints._2 should be(Some(ProjectLinkCalibrationPoint(0, 0.0, 9, ProjectLinkSource)))
-      against.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(0, projectLink0A.geometryLength, 0, ProjectLinkSource)))
+      towards.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(0, 0.0, 0, ProjectCP)))
+      towards.calibrationPoints._2 should be(Some(ProjectLinkCalibrationPoint(0, projectLink0T.geometryLength, 9, ProjectCP)))
+      against.calibrationPoints._2 should be(Some(ProjectLinkCalibrationPoint(0, 0.0, 9, ProjectCP)))
+      against.calibrationPoints._1 should be(Some(ProjectLinkCalibrationPoint(0, projectLink0A.geometryLength, 0, ProjectCP)))
     }
   }
 
@@ -668,12 +667,12 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         r.endAddrMValue should be(projectLink0.endAddrMValue + maxAddr - projectLink3.endAddrMValue)
       }
       output.filter(_.id == idRoad3).foreach { r =>
-        r.calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(12348, Math.round(10.399999999999999*10.0)/10.0, 44, ProjectLinkSource)))
+        r.calibrationPoints should be(None, Some(ProjectLinkCalibrationPoint(12348, Math.round(10.399999999999999*10.0)/10.0, 44, ProjectCP)))
         r.startAddrMValue should be(maxAddr + projectLink3.startAddrMValue - projectLink3.endAddrMValue)
         r.endAddrMValue should be(maxAddr)
       }
 
-      output.head.calibrationPoints should be(Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, ProjectLinkSource)), None)
+      output.head.calibrationPoints should be(Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, ProjectCP)), None)
     }
   }
 
@@ -1602,8 +1601,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, roadway1.discontinuity, 0L, 10L,
         roadway1.startAddrMValue, roadway1.endAddrMValue, None, None, None, linkId1,
         linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode,
-        (Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.startMValue, 0L)), Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.endMValue, 10L))),
-        (NoCP, NoCP),
+        (Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.startMValue, 0L, RoadAddressCP)), Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.endMValue, 10L, RoadAddressCP))),
+        (RoadAddressCP, RoadAddressCP),
         linearLocation1.geometry, 0L, LinkStatus.Transfer, roadway1.roadType, LinkGeomSource.apply(link1.source.intValue()),
         GeometryUtils.geometryLength(linearLocation1.geometry), roadway1.id, linearLocation1.id, 0, roadway1.reversed, None, 86400L)
       val projectLink2 = ProjectLink(plId + 2, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
@@ -1767,8 +1766,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, roadway1.discontinuity, 0L, 10L,
         roadway1.startAddrMValue, roadway1.endAddrMValue, None, None, None, linkId1,
         linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode,
-        (Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.startMValue, 0L)), Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.endMValue, 10L))),
-        (NoCP, NoCP),
+        (Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.startMValue, 0L, RoadAddressCP)), Some(ProjectLinkCalibrationPoint(linkId1, linearLocation1.endMValue, 10L, RoadAddressCP))),
+        (RoadAddressCP, RoadAddressCP),
         linearLocation1.geometry, 0L, LinkStatus.Transfer, roadway1.roadType, LinkGeomSource.apply(link1.source.intValue()),
         GeometryUtils.geometryLength(linearLocation1.geometry), roadway1.id, linearLocation1.id, 0, roadway1.reversed, None, 86400L)
 
