@@ -65,12 +65,7 @@ case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue:
   extends BaseCalibrationPoint {
 
   def toCalibrationPoint: CalibrationPoint = {
-    CalibrationPoint(linkId, segmentMValue, addressMValue,
-      if (source == CalibrationPointSource.RoadAddressSource) CalibrationPointType.RoadAddressCP
-      else if (source == CalibrationPointSource.JunctionPointSource) CalibrationPointType.JunctionPointCP
-      else if (source == CalibrationPointSource.ProjectLinkSource) CalibrationPointType.ProjectCP
-      else CalibrationPointType.UnknownCP
-    )
+    CalibrationPoint(linkId, segmentMValue, addressMValue, typeCode)
   }
 
   def typeCode: CalibrationPointType = {
@@ -346,7 +341,7 @@ class ProjectLinkDAO {
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM,
         originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue,
-        sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithSourceInfo(calibrationPoints),
+        sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPoints(calibrationPoints),
         originalCalibrationPointTypes, OracleDatabase.loadJGeometryToGeometry(geom), projectId, status, roadType,
         source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp,
         if (roadwayNumber != 0) roadwayNumber else projectRoadwayNumber, Some(roadName),
