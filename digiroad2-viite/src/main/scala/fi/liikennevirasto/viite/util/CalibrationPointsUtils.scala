@@ -3,8 +3,9 @@ package fi.liikennevirasto.viite.util
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
+import fi.liikennevirasto.viite.dao.CalibrationPointSource.{NoCalibrationPoint, ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
 import fi.liikennevirasto.viite.dao._
 import org.slf4j.LoggerFactory
@@ -40,6 +41,22 @@ object CalibrationPointsUtils {
     ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source)
   }
 
+  def toProjectLinkCalibrationPointWithTypeInfo(originalCalibrationPoint: BaseCalibrationPoint, typeCode: CalibrationPointType): ProjectLinkCalibrationPoint = {
+    val source = typeCodeToSource(typeCode)
+    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source)
+  }
+
+  def typeCodeToSource(pointType: CalibrationPointDAO.CalibrationPointType): CalibrationPointSource = {
+    pointType match {
+      case NoCP => NoCalibrationPoint
+      case CalibrationPointType.UserDefinedCP => CalibrationPointSource.RoadAddressSource
+      case CalibrationPointType.JunctionPointCP => CalibrationPointSource.JunctionPointSource
+      case CalibrationPointType.RoadAddressCP => CalibrationPointSource.RoadAddressSource
+      case CalibrationPointType.ProjectCP => CalibrationPointSource.ProjectLinkSource
+      case _ => CalibrationPointSource.UnknownSource
+    }
+  }
+
   def toProjectLinkCalibrationPointWithTypeInfo(originalCalibrationPoint: BaseCalibrationPoint, source: CalibrationPointSource): ProjectLinkCalibrationPoint = {
     ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, source)
   }
@@ -64,12 +81,12 @@ object CalibrationPointsUtils {
     }
   }
 
-  def toProjectLinkCalibrationPointsWithSourceInfo(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), source: CalibrationPointSource): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
+  def toProjectLinkCalibrationPointsWithTypeInfo(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), typeCode: CalibrationPointType): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
     originalCalibrationPoints match {
       case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-      case (Some(cp1), None) => (Option(toProjectLinkCalibrationPointWithSourceInfo(cp1, source)), Option.empty[ProjectLinkCalibrationPoint])
-      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPointWithSourceInfo(cp1, source)))
-      case (Some(cp1),Some(cp2)) => (Option(toProjectLinkCalibrationPointWithSourceInfo(cp1, source)), Option(toProjectLinkCalibrationPointWithSourceInfo(cp2, source)))
+      case (Some(cp1), None) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp1, typeCode)), Option.empty[ProjectLinkCalibrationPoint])
+      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPointWithTypeInfo(cp1, typeCode)))
+      case (Some(cp1),Some(cp2)) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp1, typeCode)), Option(toProjectLinkCalibrationPointWithTypeInfo(cp2, typeCode)))
     }
   }
 
