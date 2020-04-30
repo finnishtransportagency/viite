@@ -31,7 +31,18 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
     sqlu"""insert into project (id,state,name,created_by, start_date) VALUES (1,0,'testproject','automatedtest', sysdate)""".execute
     sqlu"""insert into project (id,state,name,created_by, start_date) VALUES (2,0,'testproject2','automatedtest', sysdate)""".execute
     sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (1, 1, 1, 1, '-')""".execute
-    sqlu"""INSERT INTO PROJECT_LINK VALUES (1, 1, 0, 5, 1, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 12:26:36.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, '', 0, 86, NULL)""".execute
+    sqlu"""
+      INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
+        START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
+        ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
+        LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
+        START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+      VALUES (1, 1, 0, 5, 1, 1,
+        0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 12:26:36.000000', 2,
+        1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
+        5170979, 1500079296000, 1, '', 0, 86, NULL,
+        3, 3, 3, 3
+      )""".execute
 
   }
 
