@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
@@ -28,10 +29,10 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
         (CalibrationPointReference.None, CalibrationPointReference.None),
         Seq(Point(45.0,0.0), Point(105.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
       LinearLocation(3L, 2, 123, 0.0, 49.0, SideCode.TowardsDigitizing, 0,
-        (CalibrationPointReference.None, CalibrationPointReference(Some(250))),
+        (CalibrationPointReference.None, CalibrationPointReference(Some(250), Some(RoadAddressCP))),
         Seq(Point(105.0,0.0), Point(154.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
       LinearLocation(4L, 3, 124, 0.0, 51.0, SideCode.TowardsDigitizing, 0,
-        (CalibrationPointReference(Some(250)), CalibrationPointReference(Some(300))),
+        (CalibrationPointReference(Some(250), Some(RoadAddressCP)), CalibrationPointReference(Some(300), Some(RoadAddressCP))),
         Seq(Point(154.0,0.0), Point(205.0,0.0)),LinkGeomSource.NormalLinkInterface, roadwayNumber)
     )
 
@@ -47,13 +48,13 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
     val roadAddress2 = roadAddresses.find(_.linkId == 123).get
     roadAddress2.startAddrMValue should be (roadAddress1.endAddrMValue)
     roadAddress2.endAddrMValue should be (250)
-    roadAddress2.calibrationPoints should be (None, Some(CalibrationPoint(123, 49.0, 250)))
+    roadAddress2.calibrationPoints should be (None, Some(CalibrationPoint(123, 49.0, 250, RoadAddressCP)))
     roadAddress2.discontinuity should be (Discontinuity.Continuous)
 
     val roadAddress3 = roadAddresses.find(_.linkId == 124).get
     roadAddress3.startAddrMValue should be (250)
     roadAddress3.endAddrMValue should be (300)
-    roadAddress3.calibrationPoints should be (Some(CalibrationPoint(124, 0.0, 250)), Some(CalibrationPoint(124, 51.0, 300)))
+    roadAddress3.calibrationPoints should be (Some(CalibrationPoint(124, 0.0, 250, RoadAddressCP)), Some(CalibrationPoint(124, 51.0, 300, RoadAddressCP)))
     roadAddress3.discontinuity should be (Discontinuity.Discontinuous)
   }
 
@@ -72,10 +73,10 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
         (CalibrationPointReference.None, CalibrationPointReference.None)
         , Seq(Point(45.0,0.0), Point(105.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
       LinearLocation(3L, 2, 123, 0.0, 49.0, SideCode.TowardsDigitizing, 0,
-        (CalibrationPointReference.None, CalibrationPointReference(Some(250)))
+        (CalibrationPointReference.None, CalibrationPointReference(Some(250), Some(RoadAddressCP)))
         , Seq(Point(105.0,0.0), Point(154.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
       LinearLocation(4L, 3, 124, 0.0, 51.0, SideCode.TowardsDigitizing, 0,
-        (CalibrationPointReference(Some(250)), CalibrationPointReference(Some(300)))
+        (CalibrationPointReference(Some(250), Some(RoadAddressCP)), CalibrationPointReference(Some(300), Some(RoadAddressCP)))
         , Seq(Point(154.0,0.0), Point(205.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber)
     )
 
@@ -93,13 +94,13 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
     val roadAddress2 = roadAddresses.find(_.linkId == 123).get
     roadAddress2.startAddrMValue should be (roadAddress1.endAddrMValue)
     roadAddress2.endAddrMValue should be (350)
-    roadAddress2.calibrationPoints should be (None, Some(CalibrationPoint(123, 49.0, 350)))
+    roadAddress2.calibrationPoints should be (None, Some(CalibrationPoint(123, 49.0, 350, RoadAddressCP)))
     roadAddress2.discontinuity should be (Discontinuity.Continuous)
 
     val roadAddress3 = roadAddresses.find(_.linkId == 124).get
     roadAddress3.startAddrMValue should be (350)
     roadAddress3.endAddrMValue should be (400)
-    roadAddress3.calibrationPoints should be (Some(CalibrationPoint(124, 0.0, 350)), Some(CalibrationPoint(124, 51.0, 400)))
+    roadAddress3.calibrationPoints should be (Some(CalibrationPoint(124, 0.0, 350, RoadAddressCP)), Some(CalibrationPoint(124, 51.0, 400, RoadAddressCP)))
     roadAddress3.discontinuity should be (Discontinuity.Discontinuous)
   }
 }
