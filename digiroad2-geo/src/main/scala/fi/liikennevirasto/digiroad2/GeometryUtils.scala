@@ -1,7 +1,5 @@
 package fi.liikennevirasto
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 
@@ -27,11 +25,6 @@ object GeometryUtils {
 
   def truncateGeometry2D(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
     truncateGeometry3D(geometry.map(p => to2DGeometry(p)), startMeasure, endMeasure)
-  }
-
-  def truncateGeometry3D(sideCode: SideCode, geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    if(sideCode == AgainstDigitizing) GeometryUtils.truncateGeometry3D(geometry.reverse, startMeasure, endMeasure).reverse
-    else truncateGeometry3D(geometry, startMeasure, endMeasure)
   }
 
   def truncateGeometry3D(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {

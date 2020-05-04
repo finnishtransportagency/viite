@@ -32,7 +32,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
   def build(roadLink: RoadLinkLike, roadAddress: RoadAddress): RoadAddressLink = {
-    val geom = GeometryUtils.truncateGeometry3D(roadAddress.sideCode, roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
     val roadName = roadAddress.roadName
