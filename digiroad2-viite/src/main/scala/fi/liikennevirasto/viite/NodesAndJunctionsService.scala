@@ -199,11 +199,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val junctionPoints = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
 
         val groupedRoadLinks = raLinks.groupBy(_.roadwayNumber)
-        val nodePointsWithCoords = nodePoints.groupBy(_.roadwayNumber).par.flatMap{ case (k, v) =>
+        val nodePointsWithCoords = nodePoints.groupBy(_.roadwayNumber).par.flatMap { case (k, v) =>
           groupedRoadLinks.get(k).map(rls => enrichNodePointCoordinates(rls, v)).getOrElse(v)
         }.toSeq.seq
 
-        val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap{ case (k, v) =>
+        val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap { case (k, v) =>
           groupedRoadLinks.get(k).map(rls => enrichJunctionPointCoordinates(rls, v)).getOrElse(v)
         }.toSeq.seq
 
