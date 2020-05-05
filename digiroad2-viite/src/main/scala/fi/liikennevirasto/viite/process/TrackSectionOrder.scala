@@ -399,13 +399,13 @@ object TrackSectionOrder {
         case 0 => projectLinks
         case 1 =>
           projectLinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id),
-            startCP = true, endCP = true, RoadAddressCP, RoadAddressCP))
+            hasStartCP = true, hasEndCP = true, RoadAddressCP, RoadAddressCP))
         case _ =>
           val raCPs = Seq(setCalibrationPoint(projectLinks.head, userCalibrationPoint.get(projectLinks.head.id),
-            startCP = true, endCP = projectLinks.tail.head.calibrationPoints._1.isDefined,
+            hasStartCP = true, hasEndCP = projectLinks.tail.head.calibrationPoints._1.isDefined,
             RoadAddressCP, projectLinks.tail.head.startCalibrationPointType)) ++ projectLinks.init.tail ++ Seq(setCalibrationPoint(projectLinks.last,
             userCalibrationPoint.get(projectLinks.last.id),
-            projectLinks.init.last.calibrationPoints._2.isDefined, endCP = true, projectLinks.init.last.endCalibrationPointType, RoadAddressCP))
+            projectLinks.init.last.calibrationPoints._2.isDefined, hasEndCP = true, projectLinks.init.last.endCalibrationPointType, RoadAddressCP))
 
           val linksWithCPs: Seq[ProjectLink] = raCPs.foldLeft(Seq.empty[ProjectLink]) { (list, i) =>
             if (list.isEmpty) {
@@ -415,8 +415,8 @@ object TrackSectionOrder {
                 list.last.roadPartNumber != i.roadPartNumber || list.last.discontinuity == Discontinuous ||
                 list.last.discontinuity == MinorDiscontinuity || list.last.discontinuity == ParallelLink) {
                 val last = list.last
-                list.dropRight(1) ++ Seq(setCalibrationPoint(last, None, last.calibrationPoints._1.nonEmpty, endCP = true, last.startCalibrationPointType, RoadAddressCP),
-                  setCalibrationPoint(i, None, startCP = true, endCP = i.calibrationPoints._2.nonEmpty, RoadAddressCP, i.endCalibrationPointType))
+                list.dropRight(1) ++ Seq(setCalibrationPoint(last, None, last.calibrationPoints._1.nonEmpty, hasEndCP = true, last.startCalibrationPointType, RoadAddressCP),
+                  setCalibrationPoint(i, None, hasStartCP = true, hasEndCP = i.calibrationPoints._2.nonEmpty, RoadAddressCP, i.endCalibrationPointType))
               } else {
                 list :+ i
               }
@@ -427,10 +427,10 @@ object TrackSectionOrder {
   }
 
   protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint],
-                                    startCP: Boolean, endCP: Boolean,
+                                    hasStartCP: Boolean, hasEndCP: Boolean,
                                     startType: CalibrationPointType, endType: CalibrationPointType): ProjectLink = {
-    val startCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
-    val endCP = if (endCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
+    val startCP = if (hasStartCP) CalibrationPointsUtils.makeStartCP(pl) else None
+    val endCP = if (hasEndCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
     pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo((startCP, endCP), startType, endType))
   }
 
