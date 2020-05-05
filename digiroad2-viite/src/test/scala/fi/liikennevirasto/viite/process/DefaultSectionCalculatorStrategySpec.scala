@@ -1077,29 +1077,33 @@ Left     |  ^   Right
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 5, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12345L, 0.0, 0))),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12345L, 0.0, 0))),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (Some(0), None),
         geomTransferCombined1, LinkGeomSource.NormalLinkInterface,
         roadwayNumber1, Some(DateTime.now().minusDays(1)), None)
 
       val roadwayCombined2 = Roadway(roadwayId2, roadwayNumber2, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 5, 18, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined2 = LinearLocation(linearLocationId2, 1, 12346L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (None, None),
         geomTransferCombined2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
       val linearCombined3 = LinearLocation(linearLocationId3, 2, 12346L, 5.0, 18.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (None, None),
         geomTransferRight1, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
 
       val roadwayCombined3 = Roadway(roadwayId3, roadwayNumber3, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Discontinuous, 0, 7, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, 0.0, 7.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12347L, 7.0, 30)))),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12347L, 7.0, 30)))),
+        (None, Some(30)),
         geomTransferRight2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber3, Some(DateTime.now().minusDays(1)), None)
 
@@ -1202,29 +1206,33 @@ Left     ^  ^   Right
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 5, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12345L, 0.0, 0))),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12345L, 0.0, 0))),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (Some(0), None),
         geomTransferCombined1, LinkGeomSource.NormalLinkInterface,
         roadwayNumber1, Some(DateTime.now().minusDays(1)), None)
 
       val roadwayCombined2 = Roadway(roadwayId2, roadwayNumber2, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 5, 18, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined2 = LinearLocation(linearLocationId2, 1, 12346L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (None, None),
         geomTransferCombined2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
       val linearCombined3 = LinearLocation(linearLocationId3, 2, 12346L, 5.0, 18.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (None, None),
         geomTransferRight1, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
 
       val roadwayCombined3 = Roadway(roadwayId3, roadwayNumber3, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Discontinuous, 0, 7, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, 0.0, 7.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12347L, 7.0, 30)))),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12347L, 7.0, 30)))),
+        (None, Some(30)),
         geomTransferRight2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber3, Some(DateTime.now().minusDays(1)), None)
 
@@ -1316,29 +1324,33 @@ Left     |  ^   Right
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 5, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12345L, 0.0, 0))),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12345L, 0.0, 0))),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (Some(0), None),
         geomTransferCombined1, LinkGeomSource.NormalLinkInterface,
         roadwayNumber1, Some(DateTime.now().minusDays(1)), None)
 
       val roadwayCombined2 = Roadway(roadwayId2, roadwayNumber2, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 5, 18, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined2 = LinearLocation(linearLocationId2, 1, 12346L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (None, None),
         geomTransferCombined2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
       val linearCombined3 = LinearLocation(linearLocationId3, 2, 12346L, 5.0, 18.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (None, None),
         geomTransferRight1, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
 
       val roadwayCombined3 = Roadway(roadwayId3, roadwayNumber3, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Discontinuous, 0, 7, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, 0.0, 7.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12347L, 7.0, 30)))),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12347L, 7.0, 30)))),
+        (None, Some(30)),
         geomTransferRight2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber3, Some(DateTime.now().minusDays(1)), None)
 
@@ -1444,29 +1456,33 @@ Left     |      |
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 5, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12345L, 0.0, 0))),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12345L, 0.0, 0))),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (Some(0), None),
         geomTransferCombined1, LinkGeomSource.NormalLinkInterface,
         roadwayNumber1, Some(DateTime.now().minusDays(1)), None)
 
       val roadwayCombined2 = Roadway(roadwayId2, roadwayNumber2, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 5, 18, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined2 = LinearLocation(linearLocationId2, 1, 12346L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (None, None),
         geomTransferCombined2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
       val linearCombined3 = LinearLocation(linearLocationId3, 2, 12346L, 5.0, 18.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (None, None),
         geomTransferRight1, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
 
       val roadwayCombined3 = Roadway(roadwayId3, roadwayNumber3, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Discontinuous, 0, 7, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, 0.0, 7.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12347L, 7.0, 30)))),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12347L, 7.0, 30)))),
+        (None, Some(30)),
         geomTransferRight2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber3, Some(DateTime.now().minusDays(1)), None)
 
@@ -1581,36 +1597,42 @@ Left1 ---<----  ^ Right1
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 13, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12345L, 0.0, 0))),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12345L, 0.0, 0))),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (Some(0), None),
         geomTransferCombined1, LinkGeomSource.NormalLinkInterface,
         roadwayNumber1, Some(DateTime.now().minusDays(1)), None)
       val linearCombined2 = LinearLocation(linearLocationId2, 2, 12346L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (None, None),
         geomTransferRight1, LinkGeomSource.NormalLinkInterface,
         roadwayNumber1, Some(DateTime.now().minusDays(1)), None)
       val linearCombined3 = LinearLocation(linearLocationId3, 3, 12347L, 3.0, 6.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (None, None),
         geomTransferRight2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber1, Some(DateTime.now().minusDays(1)), None)
 
       val roadwayCombined2 = Roadway(roadwayId2, roadwayNumber2, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.EndOfRoad, 13, 25, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, 0.0, 3.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (None, None),
         geomTransferRight3, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
       val linearCombined5 = LinearLocation(linearLocationId5, 2, 12348L, 0.0, 4.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(None)),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(None)),
+        (None, None),
         geomTransferRight4, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
       val linearCombined6 = LinearLocation(linearLocationId6, 3, 12349L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
-        (CalibrationPointsUtils.toCalibrationPointReference(None),
-          CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12349L, 5.0, 20)))),
+//        (CalibrationPointsUtils.toCalibrationPointReference(None),
+//          CalibrationPointsUtils.toCalibrationPointReference(Some(ProjectLinkCalibrationPoint(12349L, 5.0, 20)))),
+        (None, Some(20)),
         geomTransferCombined2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
 

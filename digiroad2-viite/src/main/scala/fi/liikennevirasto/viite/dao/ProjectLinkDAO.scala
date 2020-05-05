@@ -76,8 +76,8 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
 
-  override lazy val startCalibrationPoint: Option[ProjectLinkCalibrationPoint] = calibrationPoints._1
-  override lazy val endCalibrationPoint: Option[ProjectLinkCalibrationPoint] = calibrationPoints._2
+//  override lazy val startCalibrationPoint: Option[ProjectLinkCalibrationPoint] = calibrationPoints._1
+//  override lazy val endCalibrationPoint: Option[ProjectLinkCalibrationPoint] = calibrationPoints._2
 
   val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 

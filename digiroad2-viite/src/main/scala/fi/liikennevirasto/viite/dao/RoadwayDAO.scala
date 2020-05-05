@@ -308,6 +308,9 @@ trait BaseRoadAddress {
       (startingPoint, endPoint)
     }
   }
+
+//  lazy val startCalibrationPoint: Option[BaseCalibrationPoint] = calibrationPoints._1
+//  lazy val endCalibrationPoint: Option[BaseCalibrationPoint] = calibrationPoints._2
 }
 
 //TODO the start date and the created by should not be optional on the road address case class
@@ -320,6 +323,9 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
                        geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
                        terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
                        roadName: Option[String] = None) extends BaseRoadAddress {
+
+//  override lazy val startCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._1
+//  override lazy val endCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._2
 
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
