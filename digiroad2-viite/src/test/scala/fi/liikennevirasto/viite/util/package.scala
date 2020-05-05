@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
@@ -229,8 +229,8 @@ package object util {
   }
 
   def backToProjectLink(project: Project)(rl: ProjectAddressLink): ProjectLink = {
-    val startCPType = if (rl.roadwayId == NewIdValue || rl.roadwayId == 0) ProjectCP else rl.startCalibrationPointType
-    val endCPType = if (rl.roadwayId == NewIdValue || rl.roadwayId == 0) ProjectCP else rl.endCalibrationPointType
+    val startCPType = if (rl.roadwayId == NewIdValue || rl.roadwayId == 0) RoadAddressCP else rl.startCalibrationPointType
+    val endCPType = if (rl.roadwayId == NewIdValue || rl.roadwayId == 0) RoadAddressCP else rl.endCalibrationPointType
     ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt),
       Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, rl.startAddressM, rl.endAddressM, None,
       None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue,
@@ -243,8 +243,8 @@ package object util {
   }
 
   def addressToProjectLink(project: Project)(rl: ProjectAddressLink): ProjectLink = {
-    val startCPType = if (rl.roadwayId == NewIdValue || rl.roadwayId == 0) ProjectCP else rl.startCalibrationPointType
-    val endCPType = if (rl.roadwayId == NewIdValue || rl.roadwayId == 0) ProjectCP else rl.endCalibrationPointType
+    val startCPType = if (rl.roadwayId == NewIdValue || rl.roadwayId == 0) RoadAddressCP else rl.startCalibrationPointType
+    val endCPType = if (rl.roadwayId == NewIdValue || rl.roadwayId == 0) RoadAddressCP else rl.endCalibrationPointType
     ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt),
       Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, rl.startAddressM, rl.endAddressM, None,
       None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue,

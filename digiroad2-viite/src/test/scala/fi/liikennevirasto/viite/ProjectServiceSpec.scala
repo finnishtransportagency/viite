@@ -17,7 +17,7 @@ import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP, RoadAddressCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -1974,13 +1974,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(savedProject.id)
       updatedProjectLinks.exists { x => x.status == LinkStatus.UnChanged } should be(true)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Terminated } should be(true)
-      updatedProjectLinks.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, Some(ProjectLinkCalibrationPoint(5168579, 15.173, 4681, ProjectCP))))
+      updatedProjectLinks.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, Some(ProjectLinkCalibrationPoint(5168579, 15.173, 4681, RoadAddressCP))))
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168579), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
       val updatedProjectLinks2 = projectLinkDAO.fetchProjectLinks(savedProject.id)
       val sortedRoad206AfterTermination = updatedProjectLinks2.filter(_.roadPartNumber == 206).sortBy(_.startAddrMValue)
       updatedProjectLinks2.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, None))
       val lastValid = sortedRoad206AfterTermination.filter(_.status != LinkStatus.Terminated).last
-      sortedRoad206AfterTermination.filter(_.status != LinkStatus.Terminated).last.calibrationPoints should be((None, Some(ProjectLinkCalibrationPoint(lastValid.linkId, lastValid.endMValue, lastValid.endAddrMValue, ProjectCP))))
+      sortedRoad206AfterTermination.filter(_.status != LinkStatus.Terminated).last.calibrationPoints should be((None, Some(ProjectLinkCalibrationPoint(lastValid.linkId, lastValid.endMValue, lastValid.endAddrMValue, RoadAddressCP))))
       updatedProjectLinks2.filter(pl => pl.roadPartNumber == 205).exists { x => x.status == LinkStatus.Terminated } should be(false)
     }
     runWithRollback {
@@ -2027,14 +2027,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sortedProjectLinks.head.calibrationPoints._1.nonEmpty should be (true)
       sortedProjectLinks.head.calibrationPoints._1.get.segmentMValue should be (0.0)
       sortedProjectLinks.head.calibrationPoints._1.get.addressMValue should be (0)
-      sortedProjectLinks.head.startCalibrationPointType should be (ProjectCP)
+      sortedProjectLinks.head.startCalibrationPointType should be (RoadAddressCP)
       sortedProjectLinks.head.calibrationPoints._2.isEmpty should be (true)
 
       sortedProjectLinks.last.calibrationPoints._1.isEmpty should be (true)
       sortedProjectLinks.last.calibrationPoints._2.nonEmpty should be (true)
       sortedProjectLinks.last.calibrationPoints._2.get.segmentMValue should be (442.89)
       sortedProjectLinks.last.calibrationPoints._2.get.addressMValue should be (highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue)
-      sortedProjectLinks.last.endCalibrationPointType should be (ProjectCP)
+      sortedProjectLinks.last.endCalibrationPointType should be (RoadAddressCP)
 
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int]) should be(None)
       val updatedProjectLinks2 = projectLinkDAO.fetchProjectLinks(savedProject.id)
@@ -2044,7 +2044,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sortedProjectLinks2.last.calibrationPoints._2.nonEmpty should be (true)
       sortedProjectLinks2.last.calibrationPoints._2.get.segmentMValue should be (442.89)
       sortedProjectLinks2.last.calibrationPoints._2.get.addressMValue should be (highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue - updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.endAddrMValue)
-      sortedProjectLinks2.last.endCalibrationPointType should be (ProjectCP)
+      sortedProjectLinks2.last.endCalibrationPointType should be (RoadAddressCP)
     }
 
   }
@@ -2088,14 +2088,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sortedProjectLinks.head.calibrationPoints._1.nonEmpty should be (true)
       sortedProjectLinks.head.calibrationPoints._1.get.segmentMValue should be (0.0)
       sortedProjectLinks.head.calibrationPoints._1.get.addressMValue should be (0)
-      sortedProjectLinks.head.startCalibrationPointType should be (ProjectCP)
+      sortedProjectLinks.head.startCalibrationPointType should be (RoadAddressCP)
       sortedProjectLinks.head.calibrationPoints._2.isEmpty should be (true)
 
       sortedProjectLinks.last.calibrationPoints._1.isEmpty should be (true)
       sortedProjectLinks.last.calibrationPoints._2.nonEmpty should be (true)
       sortedProjectLinks.last.calibrationPoints._2.get.segmentMValue should be (442.89)
       sortedProjectLinks.last.calibrationPoints._2.get.addressMValue should be (highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue)
-      sortedProjectLinks.last.endCalibrationPointType should be (ProjectCP)
+      sortedProjectLinks.last.endCalibrationPointType should be (RoadAddressCP)
 
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int])
       val updatedProjectLinks2 = projectLinkDAO.fetchProjectLinks(savedProject.id)
@@ -2105,7 +2105,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sortedProjectLinks2.last.calibrationPoints._2.nonEmpty should be (true)
       sortedProjectLinks2.last.calibrationPoints._2.get.segmentMValue should be (442.89)
       sortedProjectLinks2.last.calibrationPoints._2.get.addressMValue should be (highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue - updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.endAddrMValue)
-      sortedProjectLinks2.last.endCalibrationPointType should be (ProjectCP)
+      sortedProjectLinks2.last.endCalibrationPointType should be (RoadAddressCP)
     }
 
   }

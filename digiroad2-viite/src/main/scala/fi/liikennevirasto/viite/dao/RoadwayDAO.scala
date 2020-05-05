@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP, RoadAddressCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
@@ -379,8 +379,8 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
   }
 
   def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    val startCP = if (id == noRoadwayId || id == NewIdValue) ProjectCP else startCalibrationPointType
-    val endCP = if (id == noRoadwayId || id == NewIdValue) ProjectCP else endCalibrationPointType
+    val startCP = if (id == noRoadwayId || id == NewIdValue) RoadAddressCP else startCalibrationPointType
+    val endCP = if (id == noRoadwayId || id == NewIdValue) RoadAddressCP else endCalibrationPointType
     calibrationPoints match {
       case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
       case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint],

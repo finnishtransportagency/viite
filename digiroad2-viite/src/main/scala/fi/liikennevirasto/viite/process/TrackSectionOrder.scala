@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressExce
 import fi.liikennevirasto.digiroad2.{Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP, UnknownCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -130,17 +130,18 @@ object TrackSectionOrder {
        Some(None)      = Clear if there was any
        Some(Some(...)) = Set to this value
       */
+    // TODO Check that this works with André's roundabout case
     def adjust(pl: ProjectLink, sideCode: Option[SideCode] = None, startAddrMValue: Option[Long] = None,
                endAddrMValue: Option[Long] = None, startCalibrationPoint: Option[Option[CalibrationPoint]] = None,
                endCalibrationPoint: Option[Option[CalibrationPoint]] = None) = {
 
-      val startCpType = if (pl.originalStartCalibrationPointType == NoCP) ProjectCP else pl.startCalibrationPointType
+      val startCpType = if (pl.originalStartCalibrationPointType == NoCP) RoadAddressCP else pl.startCalibrationPointType
       val startCp = startCalibrationPoint.getOrElse(pl.calibrationPoints._1) match {
         case None => Option.empty[ProjectLinkCalibrationPoint]
         case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPointWithTypeInfo(cp, startCpType))
       }
 
-      val endCpType = if (pl.originalStartCalibrationPointType == NoCP) ProjectCP else pl.startCalibrationPointType
+      val endCpType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
       val endCP = endCalibrationPoint.getOrElse(pl.calibrationPoints._2) match {
         case None => Option.empty[ProjectLinkCalibrationPoint]
         case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPointWithTypeInfo(cp, endCpType))
@@ -398,13 +399,13 @@ object TrackSectionOrder {
         case 0 => projectLinks
         case 1 =>
           projectLinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id),
-            startCP = true, endCP = true, ProjectCP, ProjectCP))
+            startCP = true, endCP = true, RoadAddressCP, RoadAddressCP))
         case _ =>
           val raCPs = Seq(setCalibrationPoint(projectLinks.head, userCalibrationPoint.get(projectLinks.head.id),
             startCP = true, endCP = projectLinks.tail.head.calibrationPoints._1.isDefined,
-            ProjectCP, projectLinks.tail.head.endCalibrationPointType)) ++ projectLinks.init.tail ++ Seq(setCalibrationPoint(projectLinks.last,
+            RoadAddressCP, projectLinks.tail.head.startCalibrationPointType)) ++ projectLinks.init.tail ++ Seq(setCalibrationPoint(projectLinks.last,
             userCalibrationPoint.get(projectLinks.last.id),
-            projectLinks.init.last.calibrationPoints._2.isDefined, endCP = true, projectLinks.init.last.startCalibrationPointType, ProjectCP))
+            projectLinks.init.last.calibrationPoints._2.isDefined, endCP = true, projectLinks.init.last.endCalibrationPointType, RoadAddressCP))
 
           val linksWithCPs: Seq[ProjectLink] = raCPs.foldLeft(Seq.empty[ProjectLink]) { (list, i) =>
             if (list.isEmpty) {
@@ -414,8 +415,8 @@ object TrackSectionOrder {
                 list.last.roadPartNumber != i.roadPartNumber || list.last.discontinuity == Discontinuous ||
                 list.last.discontinuity == MinorDiscontinuity || list.last.discontinuity == ParallelLink) {
                 val last = list.last
-                list.dropRight(1) ++ Seq(setCalibrationPoint(last, None, last.calibrationPoints._1.nonEmpty, endCP = true, last.startCalibrationPointType, ProjectCP),
-                  setCalibrationPoint(i, None, startCP = true, endCP = i.calibrationPoints._2.nonEmpty, ProjectCP, i.endCalibrationPointType))
+                list.dropRight(1) ++ Seq(setCalibrationPoint(last, None, last.calibrationPoints._1.nonEmpty, endCP = true, last.startCalibrationPointType, RoadAddressCP),
+                  setCalibrationPoint(i, None, startCP = true, endCP = i.calibrationPoints._2.nonEmpty, RoadAddressCP, i.endCalibrationPointType))
               } else {
                 list :+ i
               }

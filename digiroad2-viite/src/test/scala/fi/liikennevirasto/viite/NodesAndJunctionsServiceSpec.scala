@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointLocation
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.{BeforeAfter, _}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -2612,11 +2612,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val combGeom3 = Seq(Point(20.0, 0.0), Point(20.0, 15.0))
 
       val combLink1 = dummyProjectLink(road1, part1, Track.Combined, Discontinuity.Continuous, 0, 10, 0, 10, Some(DateTime.now()), None, 12345, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom1, rwNumber).copy(id = plId, projectId = projectId, roadwayId = rwId, linearLocationId = llId,
-        calibrationPoints = (Some(ProjectLinkCalibrationPoint(12345, 0.0, 0, ProjectCP)), None))
+        calibrationPoints = (Some(ProjectLinkCalibrationPoint(12345, 0.0, 0, RoadAddressCP)), None))
       val combLink2 = dummyProjectLink(road1, part1, Track.Combined, Discontinuity.Discontinuous, 10, 20, 10, 20, Some(DateTime.now()), None, 12346, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom2, rwNumber).copy(id = plId + 1, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 1,
-        calibrationPoints = (None, Some(ProjectLinkCalibrationPoint(12346, 10.0, 20, ProjectCP))))
+        calibrationPoints = (None, Some(ProjectLinkCalibrationPoint(12346, 10.0, 20, RoadAddressCP))))
       val combLink3 = dummyProjectLink(road2, part1, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15, Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom3, rwNumber + 1).copy(id = plId + 2, projectId = projectId, roadwayId = rwId + 1, linearLocationId = llId + 2,
-        calibrationPoints = (Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, ProjectCP)), Some(ProjectLinkCalibrationPoint(12347, 15.0, 15, ProjectCP))))
+        calibrationPoints = (Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, RoadAddressCP)), Some(ProjectLinkCalibrationPoint(12347, 15.0, 15, RoadAddressCP))))
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
@@ -2707,7 +2707,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val terminatingCombLink3 = dummyProjectLink(road2, part1, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15,
         Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Terminated,
         projectId + 1, RoadType.PublicRoad, combGeom3, rwNumber + 1).copy(id = plId + 3, roadwayId = rwId + 1, linearLocationId = llId + 2,
-        calibrationPoints = (Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, ProjectCP)), Some(ProjectLinkCalibrationPoint(12347, 15.0, 15, ProjectCP))))
+        calibrationPoints = (Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, RoadAddressCP)), Some(ProjectLinkCalibrationPoint(12347, 15.0, 15, RoadAddressCP))))
 
       buildTestDataForProject(Some(project2),
         None,
@@ -2788,11 +2788,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val combGeom3 = Seq(Point(10.0, 0.0), Point(20.0, 1.0))
 
       val combLink1 = dummyProjectLink(road, part1, Track.Combined, Discontinuity.Continuous, 0, 10, 0, 10, Some(DateTime.now()), None, 12345, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom1, rwNumber).copy(id = plId, projectId = projectId, roadwayId = rwId, linearLocationId = llId,
-        calibrationPoints = (Some(ProjectLinkCalibrationPoint(12345, 0.0, 0, ProjectCP)), None))
+        calibrationPoints = (Some(ProjectLinkCalibrationPoint(12345, 0.0, 0, RoadAddressCP)), None))
       val combLink2 = dummyProjectLink(road, part1, Track.Combined, Discontinuity.Discontinuous, 10, 20, 10, 20, Some(DateTime.now()), None, 12346, 0, 10, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom2, rwNumber).copy(id = plId + 1, projectId = projectId, roadwayId = rwId, linearLocationId = llId + 1,
-        calibrationPoints = (None, Some(ProjectLinkCalibrationPoint(12346, 10.0, 20, ProjectCP))))
+        calibrationPoints = (None, Some(ProjectLinkCalibrationPoint(12346, 10.0, 20, RoadAddressCP))))
       val combLink3 = dummyProjectLink(road, part2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15, Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.PublicRoad, combGeom3, rwNumber + 1).copy(id = plId + 2, projectId = projectId, roadwayId = rwId + 1, linearLocationId = llId + 2,
-        calibrationPoints = (Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, ProjectCP)), Some(ProjectLinkCalibrationPoint(12347, 15.0, 15, ProjectCP))))
+        calibrationPoints = (Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, RoadAddressCP)), Some(ProjectLinkCalibrationPoint(12347, 15.0, 15, RoadAddressCP))))
 
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
@@ -2885,7 +2885,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       linearLocationDAO.expireByRoadwayNumbers(Set(combLink3.roadwayNumber))
       roadwayDAO.expireHistory(Set(combLink3.roadwayId))
       projectLinkDAO.moveProjectLinksToHistory(projectId)
-      val terminatingCombLink3 = dummyProjectLink(road, part2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15, Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId + 1, RoadType.PublicRoad, combGeom3, rwNumber + 1).copy(id = plId + 3, roadwayId = rwId + 1, linearLocationId = llId + 2, calibrationPoints = (Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, ProjectCP)), Some(ProjectLinkCalibrationPoint(12347, 15.0, 15, ProjectCP))))
+      val terminatingCombLink3 = dummyProjectLink(road, part2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15, Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId + 1, RoadType.PublicRoad, combGeom3, rwNumber + 1).copy(id = plId + 3, roadwayId = rwId + 1, linearLocationId = llId + 2, calibrationPoints = (Some(ProjectLinkCalibrationPoint(12347, 0.0, 0, RoadAddressCP)), Some(ProjectLinkCalibrationPoint(12347, 15.0, 15, RoadAddressCP))))
 
       buildTestDataForProject(Some(project2),
         None,
