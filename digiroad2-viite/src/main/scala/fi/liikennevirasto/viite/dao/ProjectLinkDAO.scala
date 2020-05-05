@@ -442,7 +442,7 @@ class ProjectLinkDAO {
         val projectLinkPS = dynamicSession.prepareStatement("""
           UPDATE project_link
           SET ROAD_NUMBER = ?, ROAD_PART_NUMBER = ?, TRACK = ?, DISCONTINUITY_TYPE = ?, START_ADDR_M = ?, END_ADDR_M = ?,
-            ORIGINAL_START_ADDR_M = ?, ORIGINAL_END_ADDR_M = ?, MODIFIED_DATE = ?, MODIFIED_BY = ?, PROJECT_ID = ?,
+            ORIGINAL_START_ADDR_M = ?, ORIGINAL_END_ADDR_M = ?, MODIFIED_DATE = SYSDATE, MODIFIED_BY = ?, PROJECT_ID = ?,
             START_CALIBRATION_POINT = ?, END_CALIBRATION_POINT = ?, ORIG_START_CALIBRATION_POINT = ?, ORIG_END_CALIBRATION_POINT = ?,
             STATUS = ?, ROAD_TYPE = ?, REVERSED = ?, GEOMETRY = ?, SIDE = ?, START_MEASURE = ?, END_MEASURE = ?, ELY = ?,
             ROADWAY_NUMBER = ?
@@ -462,23 +462,22 @@ class ProjectLinkDAO {
           projectLinkPS.setLong(6, projectLink.endAddrMValue)
           projectLinkPS.setLong(7, projectLink.originalStartAddrMValue)
           projectLinkPS.setLong(8, projectLink.originalEndAddrMValue)
-          projectLinkPS.setDate(9, new java.sql.Date(new Date().getTime))
-          projectLinkPS.setString(10, modifier)
-          projectLinkPS.setLong(11, projectLink.projectId)
-          projectLinkPS.setInt(12, projectLink.startCalibrationPointType.value)
-          projectLinkPS.setInt(13, projectLink.endCalibrationPointType.value)
-          projectLinkPS.setInt(14, projectLink.originalStartCalibrationPointType.value)
-          projectLinkPS.setInt(15, projectLink.originalEndCalibrationPointType.value)
-          projectLinkPS.setInt(16, projectLink.status.value)
-          projectLinkPS.setInt(17, projectLink.roadType.value)
-          projectLinkPS.setInt(18, if (projectLink.reversed) 1 else 0)
-          projectLinkPS.setObject(19, OracleDatabase.createJGeometry(projectLink.geometry, dynamicSession.conn))
-          projectLinkPS.setInt(20, projectLink.sideCode.value)
-          projectLinkPS.setDouble(21, projectLink.startMValue)
-          projectLinkPS.setDouble(22, projectLink.endMValue)
-          projectLinkPS.setLong(23, projectLink.ely)
-          projectLinkPS.setLong(24, roadwayNumber)
-          projectLinkPS.setLong(25, projectLink.id)
+          projectLinkPS.setString(9, modifier)
+          projectLinkPS.setLong(10, projectLink.projectId)
+          projectLinkPS.setInt(11, projectLink.startCalibrationPointType.value)
+          projectLinkPS.setInt(12, projectLink.endCalibrationPointType.value)
+          projectLinkPS.setInt(13, projectLink.originalStartCalibrationPointType.value)
+          projectLinkPS.setInt(14, projectLink.originalEndCalibrationPointType.value)
+          projectLinkPS.setInt(15, projectLink.status.value)
+          projectLinkPS.setInt(16, projectLink.roadType.value)
+          projectLinkPS.setInt(17, if (projectLink.reversed) 1 else 0)
+          projectLinkPS.setObject(18, OracleDatabase.createJGeometry(projectLink.geometry, dynamicSession.conn))
+          projectLinkPS.setInt(19, projectLink.sideCode.value)
+          projectLinkPS.setDouble(20, projectLink.startMValue)
+          projectLinkPS.setDouble(21, projectLink.endMValue)
+          projectLinkPS.setLong(22, projectLink.ely)
+          projectLinkPS.setLong(23, roadwayNumber)
+          projectLinkPS.setLong(24, projectLink.id)
           projectLinkPS.addBatch()
         }
         projectLinkPS.executeBatch()
