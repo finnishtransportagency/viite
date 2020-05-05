@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -125,8 +126,18 @@ object ProjectDeltaCalculator {
         },
         pl1 match {
           case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(pl2.calibrationPoints)).asInstanceOf[P]
-          case x: ProjectLink if x.reversed => x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(pl1.calibrationPoints, x.linearLocationId)).asInstanceOf[P]
-          case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(pl2.calibrationPoints, x.linearLocationId)).asInstanceOf[P]
+          case x: ProjectLink if x.reversed =>
+            val startCPType = if (x.originalStartCalibrationPointType == NoCP) ProjectCP else x.startCalibrationPointType
+            val endCPType = if (x.originalEndCalibrationPointType == NoCP) ProjectCP else x.endCalibrationPointType
+            x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity,
+              calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo(pl1.calibrationPoints,
+                startCPType, endCPType)).asInstanceOf[P]
+          case x: ProjectLink =>
+            val startCPType = if (x.originalStartCalibrationPointType == NoCP) ProjectCP else x.startCalibrationPointType
+            val endCPType = if (x.originalEndCalibrationPointType == NoCP) ProjectCP else x.endCalibrationPointType
+            x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
+              calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo(pl2.calibrationPoints,
+                startCPType, endCPType)).asInstanceOf[P]
         }))
     else {
       Seq(tr2, tr1)

@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.process.strategy
 
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, ProjectLink}
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackSectionOrder}
@@ -30,13 +31,22 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
           case s if s.size == 2 =>
             val (st, en) = (s.minBy(_.addressMValue), s.maxBy(_.addressMValue))
             val calibrationPoints = toCalibrationPoints(pl.linkId, Some(st), Some(en))
-            pl.copy(startAddrMValue = st.addressMValue, endAddrMValue = en.addressMValue, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(calibrationPoints, pl.linearLocationId))
+            val startCPType = if (pl.originalStartCalibrationPointType == NoCP) ProjectCP else pl.startCalibrationPointType
+            val endCPType = if (pl.originalEndCalibrationPointType == NoCP) ProjectCP else pl.endCalibrationPointType
+            pl.copy(startAddrMValue = st.addressMValue, endAddrMValue = en.addressMValue,
+              calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo(calibrationPoints, startCPType, endCPType))
           case s if s.size == 1 && s.head.segmentMValue == 0.0 =>
             val calibrationPoints = toCalibrationPoints(pl.linkId, Some(s.head), None)
-            pl.copy(startAddrMValue = s.head.addressMValue, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(calibrationPoints, pl.linearLocationId))
+            val startCPType = if (pl.originalStartCalibrationPointType == NoCP) ProjectCP else pl.startCalibrationPointType
+            val endCPType = if (pl.originalEndCalibrationPointType == NoCP) ProjectCP else pl.endCalibrationPointType
+            pl.copy(startAddrMValue = s.head.addressMValue,
+              calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo(calibrationPoints, startCPType, endCPType))
           case s if s.size == 1 && s.head.segmentMValue != 0.0 =>
             val calibrationPoints = toCalibrationPoints(pl.linkId, None, Some(s.head))
-            pl.copy(endAddrMValue = s.head.addressMValue, calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPoints(calibrationPoints, pl.linearLocationId))
+            val startCPType = if (pl.originalStartCalibrationPointType == NoCP) ProjectCP else pl.startCalibrationPointType
+            val endCPType = if (pl.originalEndCalibrationPointType == NoCP) ProjectCP else pl.endCalibrationPointType
+            pl.copy(endAddrMValue = s.head.addressMValue,
+              calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo(calibrationPoints, startCPType, endCPType))
           case _ =>
             pl.copy(calibrationPoints = (None, None))
         }
