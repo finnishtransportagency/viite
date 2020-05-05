@@ -166,7 +166,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
 
   def isEndCalibrationPointCreatedInProject: Boolean = {
-    endCalibrationPoint.isDefined && originalStartCalibrationPointType == NoCP
+    endCalibrationPoint.isDefined && originalEndCalibrationPointType == NoCP
   }
 
   def startCalibrationPointType: CalibrationPointType = {

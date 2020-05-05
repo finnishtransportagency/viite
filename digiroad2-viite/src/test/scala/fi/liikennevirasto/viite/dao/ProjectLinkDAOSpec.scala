@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, Vector3d}
 import fi.liikennevirasto.viite.Dummies.dummyLinearLocation
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.{NewIdValue, RoadType}
@@ -148,11 +148,11 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val projectLinks = Seq(
         dummyProjectLink(projectLinkId1, projectId, linkId1, roadwayIds.head, roadwayNumber1,
           roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None,
-          (Some(ProjectLinkCalibrationPoint(linkId1, 0.0, 0, ProjectCP)), None), Seq(), LinkStatus.New, RoadType.PublicRoad, reversed = false, 0)
+          (Some(ProjectLinkCalibrationPoint(linkId1, 0.0, 0, RoadAddressCP)), None), Seq(), LinkStatus.New, RoadType.PublicRoad, reversed = false, 0)
           .copy(originalCalibrationPointTypes = (NoCP, NoCP)),
         dummyProjectLink(projectLinkId2, projectId, linkId2, roadwayIds.head, roadwayNumber1,
           roadNumber1, roadPartNumber1, 100, 200, 0.0, 100.0, None,
-          (None, Some(ProjectLinkCalibrationPoint(linkId2, 100.0, 200, ProjectCP))), Seq(), LinkStatus.New, RoadType.PublicRoad, reversed = false, 0)
+          (None, Some(ProjectLinkCalibrationPoint(linkId2, 100.0, 200, RoadAddressCP))), Seq(), LinkStatus.New, RoadType.PublicRoad, reversed = false, 0)
           .copy(originalCalibrationPointTypes = (NoCP, NoCP))
       )
       projectLinkDAO.create(projectLinks)
@@ -173,8 +173,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       firstLink.hasCalibrationPointAtEnd should be(false)
       lastLink.hasCalibrationPointAtStart should be(false)
 
-      firstLink.startCalibrationPointType should be(ProjectCP)
-      lastLink.endCalibrationPointType should be(ProjectCP)
+      firstLink.startCalibrationPointType should be(RoadAddressCP)
+      lastLink.endCalibrationPointType should be(RoadAddressCP)
 
       firstLink.endCalibrationPointType should be(NoCP)
       lastLink.startCalibrationPointType should be(NoCP)

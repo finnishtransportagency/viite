@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
@@ -56,7 +56,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   }
 
   private def createCalibrationPoints(a: RoadAddress): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    (Some(ProjectLinkCalibrationPoint(a.linkId, a.endMValue, a.endAddrMValue, ProjectCP)), Some(ProjectLinkCalibrationPoint(a.linkId, a.endMValue, a.endAddrMValue, ProjectCP)))
+    (Some(ProjectLinkCalibrationPoint(a.linkId, a.endMValue, a.endAddrMValue, RoadAddressCP)), Some(ProjectLinkCalibrationPoint(a.linkId, a.endMValue, a.endAddrMValue, RoadAddressCP)))
   }
 
   test("Test ProjectDeltaCalculator.partition When executing multiple transfers on single road part Then returns the correct From RoadSection -> To RoadSection mapping.") {
