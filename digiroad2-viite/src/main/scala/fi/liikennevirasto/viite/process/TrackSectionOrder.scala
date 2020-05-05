@@ -135,22 +135,22 @@ object TrackSectionOrder {
                endAddrMValue: Option[Long] = None, startCalibrationPoint: Option[Option[CalibrationPoint]] = None,
                endCalibrationPoint: Option[Option[CalibrationPoint]] = None) = {
 
-      val startCpType = if (pl.originalStartCalibrationPointType == NoCP) RoadAddressCP else pl.startCalibrationPointType
-      val startCp = startCalibrationPoint.getOrElse(pl.calibrationPoints._1) match {
+      val startCPType = if (pl.originalStartCalibrationPointType == NoCP) RoadAddressCP else pl.startCalibrationPointType
+      val startCP = startCalibrationPoint.getOrElse(pl.calibrationPoints._1) match {
         case None => Option.empty[ProjectLinkCalibrationPoint]
-        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPointWithTypeInfo(cp, startCpType))
+        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPointWithTypeInfo(cp, startCPType))
       }
 
-      val endCpType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
+      val endCPType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
       val endCP = endCalibrationPoint.getOrElse(pl.calibrationPoints._2) match {
         case None => Option.empty[ProjectLinkCalibrationPoint]
-        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPointWithTypeInfo(cp, endCpType))
+        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPointWithTypeInfo(cp, endCPType))
       }
 
       pl.copy(sideCode = sideCode.getOrElse(pl.sideCode),
         startAddrMValue = startAddrMValue.getOrElse(pl.startAddrMValue),
         endAddrMValue = endAddrMValue.getOrElse(pl.endAddrMValue),
-        calibrationPoints = (startCp, endCP)
+        calibrationPoints = (startCP, endCP)
       )
     }
 
@@ -429,9 +429,9 @@ object TrackSectionOrder {
   protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint],
                                     startCP: Boolean, endCP: Boolean,
                                     startType: CalibrationPointType, endType: CalibrationPointType): ProjectLink = {
-    val sCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
-    val eCP = if (endCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
-    pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo((sCP, eCP), startType, endType))
+    val startCP = if (startCP) CalibrationPointsUtils.makeStartCP(pl) else None
+    val endCP = if (endCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
+    pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo((startCP, endCP), startType, endType))
   }
 
 
