@@ -157,11 +157,7 @@
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
-        // if(!_.isUndefined(selection.linkData.connectedLinkId)){
-        //   selectedProjectLinkProperty.openSplit(selection.linkData.linkId, true);
-        // } else {
-          selectedProjectLinkProperty.open(getSelectedId(selection.linkData), true);
-        // }
+        selectedProjectLinkProperty.open(getSelectedId(selection.linkData), true);
       } else {
         eventbus.trigger('roadAddressProject:discardChanges'); // Background map was clicked so discard changes
       }
@@ -219,11 +215,7 @@
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
-        // if (!_.isUndefined(selection.linkData.connectedLinkId)) {
-        //   selectedProjectLinkProperty.openSplit(selection.linkData.linkId, true);
-        // } else {
-          selectedProjectLinkProperty.open(getSelectedId(selection.linkData));
-        // }
+        selectedProjectLinkProperty.open(getSelectedId(selection.linkData));
       }
     };
 
@@ -247,10 +239,6 @@
       clearHighlights();
       var featuresToHighlight = [];
       _.each(projectLinkVector.getFeatures().concat(underConstructionRoadProjectLayer.getSource().getFeatures()).concat(unAddressedRoadsProjectLayer.getSource().getFeatures()), function (feature) {
-        // var canIHighlight = ((!_.isUndefined(feature.linkData.linkId) && _.isUndefined(feature.linkData.connectedLinkId)) ||
-        // (!_.isUndefined(feature.linkData.connectedLinkId) && feature.linkData.status === LinkStatus.Terminated.value) ?
-        //   selectedProjectLinkProperty.isSelected(getSelectedId(feature.linkData)) : false);
-
         var canIHighlight = (!_.isUndefined(feature.linkData.linkId) || feature.linkData.status === LinkStatus.Terminated.value ?
           selectedProjectLinkProperty.isSelected(getSelectedId(feature.linkData)) : false);
         if (canIHighlight) {
