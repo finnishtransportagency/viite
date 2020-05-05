@@ -3,7 +3,6 @@ package fi.liikennevirasto.viite.util
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, ProjectCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
 import fi.liikennevirasto.viite.dao._
@@ -29,24 +28,8 @@ object CalibrationPointsUtils {
     }
   }
 
-  def toProjectLinkCalibrationPoint(originalCalibrationPoint: BaseCalibrationPoint, roadwayId: Long = 0L): ProjectLinkCalibrationPoint = {
-    roadwayId match {
-      case 0L | -1000L => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, ProjectCP)
-      case _ => ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, RoadAddressCP)
-    }
-  }
-
   def toProjectLinkCalibrationPointWithTypeInfo(originalCalibrationPoint: BaseCalibrationPoint, typeCode: CalibrationPointType): ProjectLinkCalibrationPoint = {
     ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, typeCode)
-  }
-
-  def toProjectLinkCalibrationPoints(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), roadwayId: Long = 0L): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    originalCalibrationPoints match {
-      case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-      case (Some(cp1), None) => (Option(toProjectLinkCalibrationPoint(cp1, roadwayId)), Option.empty[ProjectLinkCalibrationPoint])
-      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPoint(cp1, roadwayId)))
-      case (Some(cp1),Some(cp2)) => (Option(toProjectLinkCalibrationPoint(cp1, roadwayId)), Option(toProjectLinkCalibrationPoint(cp2, roadwayId)))
-    }
   }
 
   def toProjectLinkCalibrationPoints(originalCalibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])):
@@ -60,12 +43,13 @@ object CalibrationPointsUtils {
     }
   }
 
-  def toProjectLinkCalibrationPointsWithTypeInfo(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]), typeCode: CalibrationPointType): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
+  def toProjectLinkCalibrationPointsWithTypeInfo(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]),
+                                                 startType: CalibrationPointType, endType: CalibrationPointType): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
     originalCalibrationPoints match {
       case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-      case (Some(cp1), None) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp1, typeCode)), Option.empty[ProjectLinkCalibrationPoint])
-      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPointWithTypeInfo(cp1, typeCode)))
-      case (Some(cp1),Some(cp2)) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp1, typeCode)), Option(toProjectLinkCalibrationPointWithTypeInfo(cp2, typeCode)))
+      case (Some(cp), None) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp, startType)), Option.empty[ProjectLinkCalibrationPoint])
+      case (None, Some(cp)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPointWithTypeInfo(cp, endType)))
+      case (Some(cp1), Some(cp2)) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp1, startType)), Option(toProjectLinkCalibrationPointWithTypeInfo(cp2, endType)))
     }
   }
 
@@ -76,28 +60,28 @@ object CalibrationPointsUtils {
   def toCalibrationPoints(ocp: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint])): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     ocp match {
       case (None, None) => (Option.empty[CalibrationPoint], Option.empty[CalibrationPoint])
-      case (None, Some(cp1)) => (Option.empty[CalibrationPoint], Option(toCalibrationPoint(cp1)))
-      case (Some(cp1), None) => (Option(toCalibrationPoint(cp1)) , Option.empty[CalibrationPoint])
+      case (None, Some(cp)) => (Option.empty[CalibrationPoint], Option(toCalibrationPoint(cp)))
+      case (Some(cp), None) => (Option(toCalibrationPoint(cp)) , Option.empty[CalibrationPoint])
       case (Some(cp1), Some(cp2)) => (Option(toCalibrationPoint(cp1)), Option(toCalibrationPoint(cp2)))
     }
   }
 
   def makeStartCP(roadAddress: RoadAddress) = {
-    Some(CalibrationPoint(roadAddress.linkId, if (roadAddress.sideCode == TowardsDigitizing)
-      0.0 else
-      GeometryUtils.geometryLength(roadAddress.geometry),
-      roadAddress.startAddrMValue))
+    Some(CalibrationPoint(roadAddress.linkId,
+      if (roadAddress.sideCode == TowardsDigitizing) 0.0
+      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.startAddrMValue, roadAddress.startCalibrationPointType))
   }
 
   def makeStartCP(projectLink: ProjectLink) = {
-    Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == TowardsDigitizing) 0.0 else projectLink.geometryLength, projectLink.startAddrMValue))
+    Some(CalibrationPoint(projectLink.linkId,
+      if (projectLink.sideCode == TowardsDigitizing) 0.0
+      else projectLink.geometryLength, projectLink.startAddrMValue, projectLink.startCalibrationPointType))
   }
 
   def makeEndCP(roadAddress: RoadAddress) = {
-    Some(CalibrationPoint(roadAddress.linkId, if (roadAddress.sideCode == AgainstDigitizing)
-      0.0 else
-      GeometryUtils.geometryLength(roadAddress.geometry),
-      roadAddress.endAddrMValue))
+    Some(CalibrationPoint(roadAddress.linkId,
+      if (roadAddress.sideCode == AgainstDigitizing) 0.0
+      else GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.endAddrMValue, roadAddress.endCalibrationPointType))
   }
 
   def makeEndCP(projectLink: ProjectLink, userDefinedCalibrationPoint: Option[UserDefinedCalibrationPoint]) = {
@@ -106,7 +90,7 @@ object CalibrationPointsUtils {
       case Some(userCalibrationPoint) => if (userCalibrationPoint.addressMValue < projectLink.startAddrMValue) projectLink.endAddrMValue else userCalibrationPoint.addressMValue
       case None => projectLink.endAddrMValue
     }
-    Some(CalibrationPoint(projectLink.linkId, segmentValue, addressValue))
+    Some(CalibrationPoint(projectLink.linkId, segmentValue, addressValue, projectLink.endCalibrationPointType))
   }
 
   def fillCPs(roadAddress: RoadAddress, atStart: Boolean = false, atEnd: Boolean = false): RoadAddress = {

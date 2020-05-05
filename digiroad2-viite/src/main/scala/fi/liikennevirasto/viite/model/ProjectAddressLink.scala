@@ -3,6 +3,8 @@ package fi.liikennevirasto.viite.model
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus}
 
 trait ProjectAddressLinkLike extends RoadAddressLinkLike {
@@ -64,5 +66,15 @@ case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
   }
 
   val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+
+  def startCalibrationPointType: CalibrationPointType = {
+    if (startCalibrationPoint.isDefined) startCalibrationPoint.get.typeCode
+    else NoCP
+  }
+
+  def endCalibrationPointType: CalibrationPointType = {
+    if (endCalibrationPoint.isDefined) endCalibrationPoint.get.typeCode
+    else NoCP
+  }
 
 }
