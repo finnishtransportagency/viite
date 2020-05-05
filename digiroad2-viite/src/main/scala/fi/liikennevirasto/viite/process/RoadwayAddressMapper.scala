@@ -116,13 +116,13 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     sortedLinearLocations.zip(addresses.zip(addresses.tail)).map {
       case (linearLocation, (st, en)) =>
         val geometryLength = linearLocation.endMValue - linearLocation.startMValue
-        val (stCalibration, enCalibration) = (linearLocation.startCalibrationPoint.addrM, linearLocation.endCalibrationPoint.addrM)
+        val (startCP, endCP) = (linearLocation.startCalibrationPoint.addrM, linearLocation.endCalibrationPoint.addrM)
 
         val calibrationPoints = (
-          stCalibration.map(address => CalibrationPoint(linearLocation.linkId,
+          startCP.map(address => CalibrationPoint(linearLocation.linkId,
             if (linearLocation.sideCode == SideCode.TowardsDigitizing) 0 else geometryLength,
             address, linearLocation.startCalibrationPointType)),
-          enCalibration.map(address => CalibrationPoint(linearLocation.linkId,
+          endCP.map(address => CalibrationPoint(linearLocation.linkId,
             if (linearLocation.sideCode == SideCode.AgainstDigitizing) 0 else geometryLength,
             address, linearLocation.endCalibrationPointType))
         )
