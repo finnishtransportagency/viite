@@ -32,7 +32,7 @@ package object viite {
 
   val MinDistanceForGeometryUpdate = 0.5
 
-  val MaxThreshHoldDistance = 2
+  val MaxThresholdDistance = 2
 
   val MaxAdjustmentRange = 10L
 
