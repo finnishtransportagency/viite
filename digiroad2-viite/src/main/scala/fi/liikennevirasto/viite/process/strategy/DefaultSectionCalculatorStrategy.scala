@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
-import fi.liikennevirasto.viite.{MaxThreshHoldDistance, NewIdValue}
+import fi.liikennevirasto.viite.{MaxThresholdDistance, NewIdValue}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
@@ -174,8 +174,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         } else {
           //Transfer M length coeff
           val groupTransferMLength = remainingTransfer.head._2.map(l => l.endMValue - l.startMValue).sum
-          val minAllowedTransferGroupCoeff = (groupTransferMLength-MaxThreshHoldDistance)/totalTransferMLength
-          val maxAllowedTransferGroupCoeff = (groupTransferMLength+MaxThreshHoldDistance)/totalTransferMLength
+          val minAllowedTransferGroupCoeff = (groupTransferMLength-MaxThresholdDistance)/totalTransferMLength
+          val maxAllowedTransferGroupCoeff = (groupTransferMLength+MaxThresholdDistance)/totalTransferMLength
 
           //New M length coeff
           val processedNewToBeAssigned = processedNew.filter(_.roadwayNumber == NewIdValue)
