@@ -12,7 +12,6 @@ import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, Mi
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 
 
 object TrackSectionOrder {
@@ -134,23 +133,10 @@ object TrackSectionOrder {
     def adjust(pl: ProjectLink, sideCode: Option[SideCode] = None, startAddrMValue: Option[Long] = None,
                endAddrMValue: Option[Long] = None, startCalibrationPoint: Option[Option[CalibrationPoint]] = None,
                endCalibrationPoint: Option[Option[CalibrationPoint]] = None) = {
-
       val startCPType = if (pl.originalStartCalibrationPointType == NoCP) RoadAddressCP else pl.startCalibrationPointType
-      val startCP = startCalibrationPoint.getOrElse(pl.calibrationPoints._1) match {
-        case None => Option.empty[ProjectLinkCalibrationPoint]
-        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPointWithTypeInfo(cp, startCPType))
-      }
-
       val endCPType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
-      val endCP = endCalibrationPoint.getOrElse(pl.calibrationPoints._2) match {
-        case None => Option.empty[ProjectLinkCalibrationPoint]
-        case Some(cp) => Option(CalibrationPointsUtils.toProjectLinkCalibrationPointWithTypeInfo(cp, endCPType))
-      }
-
-      pl.copy(sideCode = sideCode.getOrElse(pl.sideCode),
-        startAddrMValue = startAddrMValue.getOrElse(pl.startAddrMValue),
-        endAddrMValue = endAddrMValue.getOrElse(pl.endAddrMValue),
-        calibrationPoints = (startCP, endCP)
+      pl.copy(sideCode = sideCode.getOrElse(pl.sideCode), startAddrMValue = startAddrMValue.getOrElse(pl.startAddrMValue),
+        endAddrMValue = endAddrMValue.getOrElse(pl.endAddrMValue), calibrationPointTypes = (startCPType, endCPType)
       )
     }
 
@@ -429,9 +415,9 @@ object TrackSectionOrder {
   protected def setCalibrationPoint(pl: ProjectLink, userCalibrationPoint: Option[UserDefinedCalibrationPoint],
                                     hasStartCP: Boolean, hasEndCP: Boolean,
                                     startType: CalibrationPointType, endType: CalibrationPointType): ProjectLink = {
-    val startCP = if (hasStartCP) CalibrationPointsUtils.makeStartCP(pl) else None
-    val endCP = if (hasEndCP) CalibrationPointsUtils.makeEndCP(pl, userCalibrationPoint) else None
-    pl.copy(calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo((startCP, endCP), startType, endType))
+    val startCP = if (hasStartCP) startType else NoCP
+    val endCP = if (hasEndCP) endType else NoCP
+    pl.copy(calibrationPointTypes = (startCP, endCP))
   }
 
 

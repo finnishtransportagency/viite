@@ -181,7 +181,7 @@ package object util {
   def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
                   roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: Long = 0L, roadwayId: Long = 0L, linearLocationId: Long = 0L) = {
     ProjectLink(NewIdValue, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startAddrM, endAddrM, None, None,
-      Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None), (NoCP, NoCP),
+      Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
       Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
       LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
   }
@@ -195,7 +195,7 @@ package object util {
       ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
         roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
         roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-        roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), (NoCP, NoCP),
+        roadAddress.sideCode, roadAddress.calibrationPointTypes, (NoCP, NoCP),
         roadAddress.geometry, project.id, status, roadAddress.roadType,
         roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, 0, roadAddress.ely,reversed = false,
         None, roadAddress.adjustedTimestamp, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
@@ -203,7 +203,7 @@ package object util {
       ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
         roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
         roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-        roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType),
+        roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType),
         roadAddress.geometry, project.id, status, roadAddress.roadType,
         roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely,reversed = false,
         None, roadAddress.adjustedTimestamp, roadwayNumber = roadAddress.roadwayNumber, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
@@ -214,7 +214,7 @@ package object util {
     ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(),  (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType),
+      roadAddress.sideCode, roadAddress.calibrationPointTypes,  (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType),
       roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
       roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely,reversed = false,
       None, roadAddress.adjustedTimestamp, roadAddressLength = Some(roadAddress.endAddrMValue - roadAddress.startAddrMValue))
@@ -229,31 +229,13 @@ package object util {
   }
 
   def backToProjectLink(project: Project)(rl: ProjectAddressLink): ProjectLink = {
-    val startCPType = if (rl.roadwayId == NewIdValue || rl.roadwayId == 0) RoadAddressCP else rl.startCalibrationPointType
-    val endCPType = if (rl.roadwayId == NewIdValue || rl.roadwayId == 0) RoadAddressCP else rl.endCalibrationPointType
     ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt),
       Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, rl.startAddressM, rl.endAddressM, None,
       None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue,
-      rl.sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo((rl.startCalibrationPoint, rl.endCalibrationPoint), startCPType, endCPType),
-      (NoCP, NoCP), // TODO Do we need to set original calibration points?
-      rl.geometry, project.id,
-      LinkStatus.NotHandled, RoadType.PublicRoad,
-      rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == LinkStatus.New) 0 else rl.id, if (rl.status == LinkStatus.New) 0 else rl.linearLocationId,  rl.elyCode, reversed = false,
-      None, rl.vvhTimeStamp)
-  }
-
-  def addressToProjectLink(project: Project)(rl: ProjectAddressLink): ProjectLink = {
-    val startCPType = if (rl.roadwayId == NewIdValue || rl.roadwayId == 0) RoadAddressCP else rl.startCalibrationPointType
-    val endCPType = if (rl.roadwayId == NewIdValue || rl.roadwayId == 0) RoadAddressCP else rl.endCalibrationPointType
-    ProjectLink(rl.id, rl.roadNumber, rl.roadPartNumber, Track.apply(rl.trackCode.toInt),
-      Discontinuity.apply(rl.discontinuity), rl.startAddressM, rl.endAddressM, rl.startAddressM, rl.endAddressM, None,
-      None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue,
-      rl.sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo((rl.startCalibrationPoint, rl.endCalibrationPoint), startCPType, endCPType),
-      (NoCP, NoCP), // TODO Do we need to set original calibration points?
-      rl.geometry, project.id,
-      rl.status, RoadType.PublicRoad,
-      rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), 0, 0, rl.elyCode, reversed = false,
-      None, rl.vvhTimeStamp)
+      rl.sideCode, (rl.startCalibrationPointType, rl.endCalibrationPointType), (rl.startCalibrationPointType, rl.endCalibrationPointType),
+      rl.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
+      rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == LinkStatus.New) 0 else rl.id,
+      if (rl.status == LinkStatus.New) 0 else rl.linearLocationId,  rl.elyCode, reversed = false, None, rl.vvhTimeStamp)
   }
 
 }
