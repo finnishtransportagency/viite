@@ -170,47 +170,23 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def enrichNodePointCoordinates(raLinks: Option[Seq[RoadAddressLink]], nPoints: Seq[NodePoint]): Seq[NodePoint] = {
-    if(raLinks.nonEmpty){
-      val rls = raLinks.get
-      nPoints.map{ np =>
-        np.copy(coordinates = {
-          val ra: Option[Either[RoadAddressLink, RoadAddressLink]] = if(rls.exists(ra => ra.startAddressM == np.addrM))
-            Some(Left(rls.find(ra => ra.startAddressM == np.addrM).get))
-            else if(rls.exists(ra => ra.endAddressM == np.addrM))
-            Some(Right(rls.find(ra => ra.endAddressM == np.addrM).get))
-          else None
-          ra match {
-            case Some(r) if r.isLeft => r.left.get.startingPoint
-            case Some(r) if r.isRight => r.right.get.endPoint
-            case _ => np.coordinates
-          }
+  def enrichNodePointCoordinates(roadAddressLinks: Seq[RoadAddressLink], nodePoints: Seq[NodePoint]): Seq[NodePoint] = {
+      nodePoints.map { np =>
+        np.copy(coordinates = np.beforeAfter match {
+          case Before if roadAddressLinks.exists(_.endAddressM == np.addrM) => roadAddressLinks.find(_.endAddressM == np.addrM).get.endPoint
+          case After if roadAddressLinks.exists(_.startAddressM == np.addrM) => roadAddressLinks.find(_.startAddressM == np.addrM).get.startingPoint
+          case _ => np.coordinates
         })
       }
-    } else {
-      nPoints
-    }
   }
 
-  def enrichJunctionPointCoordinates(raLinks: Option[Seq[RoadAddressLink]], jPoints: Seq[JunctionPoint]): Seq[JunctionPoint] = {
-    if(raLinks.nonEmpty){
-      val rls = raLinks.get
-      jPoints.map{ jp =>
-        jp.copy(coordinates = {
-          val ra: Option[Either[RoadAddressLink, RoadAddressLink]] = if(rls.exists(ra => ra.startAddressM == jp.addrM))
-            Some(Left(rls.find(ra => ra.startAddressM == jp.addrM).get))
-          else if(rls.exists(ra => ra.endAddressM == jp.addrM))
-            Some(Right(rls.find(ra => ra.endAddressM == jp.addrM).get))
-          else None
-          ra match {
-            case Some(r) if r.isLeft => r.left.get.startingPoint
-            case Some(r) if r.isRight => r.right.get.endPoint
-            case _ => jp.coordinates
-          }
-        })
-      }
-    } else {
-      jPoints
+  def enrichJunctionPointCoordinates(roadAddressLinks: Seq[RoadAddressLink], jPoints: Seq[JunctionPoint]): Seq[JunctionPoint] = {
+    jPoints.map { jp =>
+      jp.copy(coordinates = jp.beforeAfter match {
+        case Before if roadAddressLinks.exists(_.endAddressM == jp.addrM) => roadAddressLinks.find(_.endAddressM == jp.addrM).get.endPoint
+        case After if roadAddressLinks.exists(_.startAddressM == jp.addrM) => roadAddressLinks.find(_.startAddressM == jp.addrM).get.startingPoint
+        case _ => jp.coordinates
+      })
     }
   }
 
@@ -223,12 +199,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val junctionPoints = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
 
         val groupedRoadLinks = raLinks.groupBy(_.roadwayNumber)
-        val nodePointsWithCoords = nodePoints.groupBy(_.roadwayNumber).par.flatMap{ case (k, v) =>
-          enrichNodePointCoordinates(groupedRoadLinks.get(k), v)
+        val nodePointsWithCoords = nodePoints.groupBy(_.roadwayNumber).par.flatMap { case (k, v) =>
+          groupedRoadLinks.get(k).map(rls => enrichNodePointCoordinates(rls, v)).getOrElse(v)
         }.toSeq.seq
 
-        val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap{ case (k, v) =>
-          enrichJunctionPointCoordinates(groupedRoadLinks.get(k), v)
+        val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap { case (k, v) =>
+          groupedRoadLinks.get(k).map(rls => enrichJunctionPointCoordinates(rls, v)).getOrElse(v)
         }.toSeq.seq
 
         nodes.map {
@@ -618,8 +594,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
         val nodePointTemplate = nodePointDAO.fetchTemplatesByBoundingBox(boundingRectangle)
         val groupedRoadLinks = raLinks.groupBy(_.roadwayNumber)
-        nodePointTemplate.groupBy(_.roadwayNumber).par.flatMap{ case (k, v) =>
-          enrichNodePointCoordinates(groupedRoadLinks.get(k), v)
+        nodePointTemplate.groupBy(_.roadwayNumber).par.flatMap { case (k, v) =>
+          groupedRoadLinks.get(k).map(rls => enrichNodePointCoordinates(rls, v)).getOrElse(v)
         }.toSeq.seq
       }
     }
@@ -629,18 +605,16 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     withDynSession {
       time(logger, "Fetch junction templates") {
         val junctions: Seq[JunctionTemplate] = junctionDAO.fetchTemplatesByBoundingBox(boundingRectangle)
-        val junctionPoints: Seq[JunctionPoint] = junctionPointDAO.fetchByBoundingBox(boundingRectangle)
+        val junctionPoints: Seq[JunctionPoint] = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
 
-        val groupedRoadLinks = raLinks.groupBy(_.roadwayNumber)
+        val groupedRoadLinks: Map[Long, Seq[RoadAddressLink]] = raLinks.groupBy(_.roadwayNumber)
 
-        val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap{ case (k, v) =>
-          enrichJunctionPointCoordinates(groupedRoadLinks.get(k), v)
+        val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap { case (k, v) => 
+          groupedRoadLinks.get(k).map(rls => enrichJunctionPointCoordinates(rls, v)).getOrElse(v)
         }.toSeq.seq
 
         junctions.map {
-          junction =>
-            (junction,
-              junctionPointsWithCoords.filter(_.junctionId == junction.id))
+          junction => (junction, junctionPointsWithCoords.filter(_.junctionId == junction.id))
         }.toMap
       }
     }
