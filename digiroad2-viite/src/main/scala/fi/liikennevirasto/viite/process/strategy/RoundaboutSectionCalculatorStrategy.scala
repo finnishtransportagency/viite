@@ -2,9 +2,8 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, ProjectLink}
+import fi.liikennevirasto.viite.dao.{ProjectLink}
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackSectionOrder}
-import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 
 class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
 
@@ -15,11 +14,6 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
   }
 
   override def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink], userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
-    def toCalibrationPoints(linkId: Long, st: Option[UserDefinedCalibrationPoint], en: Option[UserDefinedCalibrationPoint]) = {
-      (st.map(cp => CalibrationPoint(linkId, cp.segmentMValue, cp.addressMValue)),
-        en.map(cp => CalibrationPoint(linkId, cp.segmentMValue, cp.addressMValue)))
-    }
-
     val startingLink = oldProjectLinks.sortBy(_.startAddrMValue).headOption.orElse(
       newProjectLinks.find(pl => pl.endAddrMValue != 0 && pl.startAddrMValue == 0)).orElse(
       newProjectLinks.headOption).toSeq
@@ -30,25 +24,19 @@ class RoundaboutSectionCalculatorStrategy extends RoadAddressSectionCalculatorSt
         userCalibrationPoints.filter(_.projectLinkId == pl.id) match {
           case s if s.size == 2 =>
             val (st, en) = (s.minBy(_.addressMValue), s.maxBy(_.addressMValue))
-            val calibrationPoints = toCalibrationPoints(pl.linkId, Some(st), Some(en))
             val startCPType = if (pl.originalStartCalibrationPointType == NoCP) RoadAddressCP else pl.startCalibrationPointType
             val endCPType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
-            pl.copy(startAddrMValue = st.addressMValue, endAddrMValue = en.addressMValue,
-              calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo(calibrationPoints, startCPType, endCPType))
+            pl.copy(startAddrMValue = st.addressMValue, endAddrMValue = en.addressMValue, calibrationPointTypes = (startCPType, endCPType))
           case s if s.size == 1 && s.head.segmentMValue == 0.0 =>
-            val calibrationPoints = toCalibrationPoints(pl.linkId, Some(s.head), None)
             val startCPType = if (pl.originalStartCalibrationPointType == NoCP) RoadAddressCP else pl.startCalibrationPointType
             val endCPType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
-            pl.copy(startAddrMValue = s.head.addressMValue,
-              calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo(calibrationPoints, startCPType, endCPType))
+            pl.copy(startAddrMValue = s.head.addressMValue, calibrationPointTypes = (startCPType, endCPType))
           case s if s.size == 1 && s.head.segmentMValue != 0.0 =>
-            val calibrationPoints = toCalibrationPoints(pl.linkId, None, Some(s.head))
             val startCPType = if (pl.originalStartCalibrationPointType == NoCP) RoadAddressCP else pl.startCalibrationPointType
             val endCPType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
-            pl.copy(endAddrMValue = s.head.addressMValue,
-              calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo(calibrationPoints, startCPType, endCPType))
+            pl.copy(endAddrMValue = s.head.addressMValue, calibrationPointTypes = (startCPType, endCPType))
           case _ =>
-            pl.copy(calibrationPoints = (None, None))
+            pl.copy(calibrationPointTypes = (NoCP, NoCP))
         }
       )
       val factors = ProjectSectionMValueCalculator.calculateAddressingFactors(withCalibration)

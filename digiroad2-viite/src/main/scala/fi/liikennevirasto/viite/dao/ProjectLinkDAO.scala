@@ -1,8 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
-import java.util.Date
-
 import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
@@ -56,7 +55,7 @@ case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue:
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, originalStartAddrMValue: Long, originalEndAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
-                       calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None),
+                       calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (NoCP, NoCP),
                        originalCalibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (NoCP, NoCP),
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadwayId: Long, linearLocationId: Long,
@@ -130,6 +129,10 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       case (SideCode.BothDirections, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
       case (SideCode.Unknown, _) => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on project link")
     }
+  }
+
+  def calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
+    CalibrationPointsUtils.projectLinkCalibrationPoints(calibrationPointTypes._1, calibrationPointTypes._2, linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, sideCode)
   }
 
   def toCalibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
@@ -295,9 +298,7 @@ class ProjectLinkDAO {
       val linkId = r.nextLong()
       val geom = r.nextObjectOption()
       val length = r.nextDouble()
-      val calibrationPoints =
-        CalibrationPointsUtils.calibrations(CalibrationPointType.apply(r.nextInt), CalibrationPointType.apply(r.nextInt),
-          linkId, startMValue, endMValue, startAddrM, endAddrM, sideCode)
+      val calibrationPoints = (CalibrationPointType.apply(r.nextInt), CalibrationPointType.apply(r.nextInt))
       val originalCalibrationPointTypes = (CalibrationPointType.apply(r.nextInt), CalibrationPointType.apply(r.nextInt))
       val status = LinkStatus.apply(r.nextInt())
       val roadType = RoadType.apply(r.nextInt())
@@ -321,10 +322,9 @@ class ProjectLinkDAO {
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM,
         originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue,
-        sideCode, CalibrationPointsUtils.toProjectLinkCalibrationPoints(calibrationPoints),
-        originalCalibrationPointTypes, OracleDatabase.loadJGeometryToGeometry(geom), projectId, status, roadType,
-        source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp,
-        if (roadwayNumber != 0) roadwayNumber else projectRoadwayNumber, Some(roadName),
+        sideCode, calibrationPoints, originalCalibrationPointTypes, OracleDatabase.loadJGeometryToGeometry(geom),
+        projectId, status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId,
+        geometryTimeStamp, if (roadwayNumber != 0) roadwayNumber else projectRoadwayNumber, Some(roadName),
         roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
         roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack, roadAddressRoadNumber, roadAddressRoadPart)
     }
