@@ -53,10 +53,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodePointStatement.setLong(3, roadwayPointId)
     nodePointStatement.setLong(4, nodeNumber)
     nodePointStatement.setString(5, datePrinter(nodePoint.validFrom))
-    nodePointStatement.setString(6, nodeEndDate match {
-      case Some(_) => dateFormatter.print(DateTime.now())
-      case None => ""
-    })
+    nodePointStatement.setString(6, datePrinter(nodeEndDate))
     nodePointStatement.setString(7, nodePoint.createdBy)
     nodePointStatement.addBatch()
   }
