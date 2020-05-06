@@ -16,6 +16,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.JunctionPointCP
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -1349,8 +1350,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case LinkStatus.Transfer =>
             val (replaceable, road, part) = checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Transfer, toUpdateLinks)
             val updated = toUpdateLinks.map(l => {
+
+              // These old calibration points have the old address, but it doesn't seem to create problems in calculating the addresses
+              val startCP = if (l.startCalibrationPointType == JunctionPointCP) l.startCalibrationPoint else None
+              val endCP = if (l.endCalibrationPointType == JunctionPointCP) l.endCalibrationPoint else None
               l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode),
-                status = linkStatus, calibrationPoints = (None, None), ely = ely.getOrElse(l.ely), roadType = RoadType.apply(roadType.toInt))
+                status = linkStatus, calibrationPoints = (startCP, endCP), ely = ely.getOrElse(l.ely), roadType = RoadType.apply(roadType.toInt))
+
             })
             val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(updated.map(_.roadwayId))
             projectLinkDAO.updateProjectLinks(updated, userName, originalAddresses)
