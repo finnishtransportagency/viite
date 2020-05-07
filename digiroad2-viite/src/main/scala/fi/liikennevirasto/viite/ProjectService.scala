@@ -1892,18 +1892,27 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadwayIds
     }
 
-    def handleRoadComplementaryTables(roadwayChanges: List[ProjectRoadwayChange], enrichedProjectLinkChanges: Seq[ProjectRoadLinkChange],
-                                      linearLocationsToInsert: Iterable[LinearLocation], projectLinksAfterChanges: Seq[ProjectLink],
+    def handleRoadComplementaryTables(roadwayChanges: List[ProjectRoadwayChange], projectLinkChanges: Seq[ProjectRoadLinkChange], linearLocationsToInsert: Iterable[LinearLocation],
+                                      roadwayIds: Seq[Long], generatedRoadways: Seq[(Seq[Roadway], Seq[LinearLocation], Seq[ProjectLink])], projectLinks: Seq[ProjectLink],
                                       endDate: Option[DateTime], nodeIds: Seq[Long], username: String): Unit = {
       logger.debug(s"Updating and inserting roadway points")
-      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, enrichedProjectLinkChanges, username)
+      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, projectLinkChanges, username)
+
       logger.debug(s"Updating and inserting calibration points")
-      roadAddressService.handleProjectCalibrationPointChanges(linearLocationsToInsert, username, enrichedProjectLinkChanges.filter(_.status == LinkStatus.Terminated))
+      val linearLocations: Iterable[LinearLocation] = linearLocationsToInsert.filter(l => generatedRoadways.flatMap(_._1).filter(_.endDate.isEmpty).map(_.roadwayNumber).contains(l.roadwayNumber))
+      roadAddressService.handleProjectCalibrationPointChanges(linearLocations, username, projectLinkChanges.filter(_.status == LinkStatus.Terminated))
       logger.debug(s"Creating nodes and junctions templates")
-      nodesAndJunctionsService.handleJunctionTemplates(roadwayChanges, projectLinksAfterChanges, enrichedProjectLinkChanges, username)
-      nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, projectLinksAfterChanges, enrichedProjectLinkChanges, username)
+
+      val mappedRoadAddressesProjection: Seq[RoadAddress] = roadAddressService.getRoadAddressesByRoadwayIds(roadwayIds)
+      val roadwayLinks = if (generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
+
+      val (enrichedProjectLinks: Seq[ProjectLink], enrichedProjectRoadLinkChanges: Seq[ProjectRoadLinkChange]) = ProjectChangeFiller.mapAddressProjectionsToLinks(
+        roadwayLinks, projectLinkChanges, mappedRoadAddressesProjection)
+
+      nodesAndJunctionsService.handleJunctionTemplates(roadwayChanges, enrichedProjectLinks, enrichedProjectRoadLinkChanges, username)
+      nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, enrichedProjectLinks, enrichedProjectRoadLinkChanges, username)
       logger.debug(s"Expiring obsolete nodes and junctions")
-      val expiredJunctionPoints = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterChanges, endDate, username)
+      val expiredJunctionPoints = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(enrichedProjectLinks, endDate, username)
       logger.debug(s"Expiring obsolete calibration points in ex junction places")
       roadAddressService.expireObsoleteCalibrationPointsInJunctions(expiredJunctionPoints)
       logger.debug(s"Handling road names")
@@ -1947,14 +1956,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           roadway.discontinuity, roadway.startDate.toYearMonthDay, roadway.endDate.map(_.toYearMonthDay),
         roadway.validFrom.toYearMonthDay, roadway.validTo.map(_.toYearMonthDay), roadway.ely, roadway.roadType, roadway.terminated)).map(_._2.head)
       val roadwayIds = handleRoadPrimaryTables(currentRoadways, historyRoadways, roadwaysToInsert, historyRoadwaysToKeep, linearLocationsToInsert, project)
-      val mappedRoadAddressesProjection = roadAddressService.getRoadAddressesByRoadwayIds(roadwayIds)
-      val roadwayLinks = if (generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
-
-      val (enrichedProjectLinks, enrichedProjectRoadLinkChanges) = ProjectChangeFiller.mapAddressProjectionsToLinks(
-        roadwayLinks, projectLinkChanges, mappedRoadAddressesProjection)
-
-      handleRoadComplementaryTables(roadwayChanges, enrichedProjectRoadLinkChanges, linearLocationsToInsert,
-        enrichedProjectLinks, Some(project.startDate.minusDays(1)), nodeIds, project.createdBy)
+      handleRoadComplementaryTables(roadwayChanges, projectLinkChanges, linearLocationsToInsert,
+        roadwayIds, generatedRoadways, projectLinks,
+        Some(project.startDate.minusDays(1)), nodeIds, project.createdBy)
       nodesAndJunctionsService.publishNodes(nodeIds, project.createdBy)
       projectLinks.map(_.roadNumber).toSet
     } catch {
