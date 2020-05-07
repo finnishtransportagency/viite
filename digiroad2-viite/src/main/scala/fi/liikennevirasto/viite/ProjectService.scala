@@ -1453,6 +1453,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val assignedTerminatedRoadwayNumbers = assignTerminatedRoadwayNumbers(others ++ recalculatedTerminated)
       val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ recalculatedTerminated).map(_.roadwayId))
       projectLinkDAO.updateProjectLinks(recalculated ++ assignedTerminatedRoadwayNumbers, userName, originalAddresses)
+      projectLinkDAO.create(recalculated.filterNot(r => others.exists(_.id == r.id)).map(_.copy(createdBy = Some(userName))))
     }
   }
 

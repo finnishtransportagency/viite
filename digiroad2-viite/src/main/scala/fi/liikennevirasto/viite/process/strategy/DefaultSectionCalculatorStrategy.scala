@@ -2,11 +2,12 @@ package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
-import fi.liikennevirasto.viite.NewIdValue
+import fi.liikennevirasto.viite.{MaxThresholdDistance, NewIdValue}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
@@ -136,26 +137,108 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
                                             userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[CombinedSection] = {
 
     def adjustTracksToMatch(leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+
       def adjustTwoTrackRoadwayNumbers(firstRight: Seq[ProjectLink], restRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink], restLeft: Seq[ProjectLink])
       : ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
         val (transferLinks, newLinks) = if (firstRight.exists(_.status == LinkStatus.Transfer)) (firstRight, firstLeft) else (firstLeft, firstRight)
         val groupedTransfer: ListMap[Long, Seq[ProjectLink]] = ListMap(transferLinks.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
+        val transferLength: Double = groupedTransfer.values.flatten.map(l => l.endMValue - l.startMValue).sum
+        val newLinksMValues = newLinks.map(l => l.endMValue - l.startMValue).sum
+        val resetNewLinksIfNeed = if(newLinks.exists(_.connectedLinkId.nonEmpty)) newLinks else newLinks.map(_.copy(roadwayNumber = NewIdValue))
+        val assignedNewLinks = if(groupedTransfer.size == resetNewLinksIfNeed.filterNot(_.roadwayNumber == NewIdValue).map(_.roadwayNumber).distinct.size) newLinks else splitLinksIfNeed(groupedTransfer, Seq(), resetNewLinksIfNeed, Seq(), transferLength, newLinksMValues, groupedTransfer.size)
 
-        val adjustedNewLinks = groupedTransfer.foldLeft(Seq.empty[ProjectLink], newLinks) {
-          case ((adjustedLinks, linksToProcess), group) =>
-            val newRoadwayNumber = Sequences.nextRoadwayNumber
-            val links = linksToProcess.take(group._2.size).map(_.copy(roadwayNumber = newRoadwayNumber))
-            val linksLeft = linksToProcess.drop(group._2.size)
-            (adjustedLinks ++ links, linksLeft)
-        }._1
-
-        val (right, left) = if (adjustedNewLinks.exists(_.track == Track.RightSide)) (adjustedNewLinks, transferLinks) else (transferLinks, adjustedNewLinks)
+        val (right, left) = if (assignedNewLinks.exists(_.track == Track.RightSide)) (assignedNewLinks, transferLinks) else (transferLinks, assignedNewLinks)
         ((right, restRight), (left, restLeft))
+      }
+
+      /**
+        *
+        * @param remainingTransfer
+        * @param processedTransfer
+        * @param remainingNew
+        * @param processedNew
+        * @param totalTransferMLength
+        * @param totalNewMLength
+        * @param missingRoadwayNumbers
+        * @return matched new links by roadwaynumbers according to their same size proportion
+        */
+      @scala.annotation.tailrec
+      def splitLinksIfNeed(remainingTransfer: ListMap[Long, Seq[ProjectLink]], processedTransfer: Seq[ProjectLink], remainingNew: Seq[ProjectLink], processedNew: Seq[ProjectLink], totalTransferMLength: Double, totalNewMLength: Double, missingRoadwayNumbers: Int) : Seq[ProjectLink] = {
+        if(missingRoadwayNumbers == 0 || (remainingNew.nonEmpty && remainingTransfer.isEmpty)){
+          val remainingRoadwayNumber = Sequences.nextRoadwayNumber
+          val unassignedRoadwayNumber = Sequences.nextRoadwayNumber
+          val (unassignedRwnLinks, assignedRwnLinks) = processedNew.partition(_.roadwayNumber == NewIdValue)
+          assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = unassignedRoadwayNumber)) ++ remainingNew.map(_.copy(roadwayNumber = remainingRoadwayNumber))
+        } else if(remainingNew.isEmpty && remainingTransfer.isEmpty) {
+          processedNew
+        } else {
+          //Transfer M length coeff
+          val groupTransferMLength = remainingTransfer.head._2.map(l => l.endMValue - l.startMValue).sum
+          val minAllowedTransferGroupCoeff = (groupTransferMLength-MaxThresholdDistance)/totalTransferMLength
+          val maxAllowedTransferGroupCoeff = (groupTransferMLength+MaxThresholdDistance)/totalTransferMLength
+
+          //New M length coeff
+          val processedNewToBeAssigned = processedNew.filter(_.roadwayNumber == NewIdValue)
+          val processingLength: Double = if(processedNewToBeAssigned.isEmpty){ remainingNew.head.endMValue - remainingNew.head.startMValue
+              } else {
+                (remainingNew.head.endMValue - remainingNew.head.startMValue) +
+                  processedNewToBeAssigned.map(l => l.endMValue - l.startMValue).sum
+              }
+          val currentNewLinksGroupCoeff: Double = processingLength/totalNewMLength
+          if(minAllowedTransferGroupCoeff <= currentNewLinksGroupCoeff && currentNewLinksGroupCoeff <= maxAllowedTransferGroupCoeff){
+            val (unassignedRwnLinks, assignedRwnLinks) = (processedNew:+remainingNew.head).partition(_.roadwayNumber == NewIdValue)
+            val nextRoadwayNumber = Sequences.nextRoadwayNumber
+            splitLinksIfNeed(remainingTransfer.tail, processedTransfer ++ remainingTransfer.head._2, if(remainingNew.tail.nonEmpty) remainingNew.tail.head.copy(startAddrMValue = remainingTransfer.head._2.last.endAddrMValue) +: remainingNew.tail.tail else remainingNew.tail, assignedRwnLinks ++ unassignedRwnLinks.init.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
+              unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber, endAddrMValue = remainingTransfer.head._2.last.endAddrMValue, connectedLinkId = Some(unassignedRwnLinks.last.linkId)),
+              totalTransferMLength, totalNewMLength, missingRoadwayNumbers - 1)
+          } else if(minAllowedTransferGroupCoeff > currentNewLinksGroupCoeff){
+            splitLinksIfNeed(remainingTransfer, processedTransfer, remainingNew.tail, processedNew:+remainingNew.head,
+              totalTransferMLength, totalNewMLength, missingRoadwayNumbers)
+          } else {
+            /*
+              calculate missing geometry left to fulfill the exactly groupTransfer coefficient
+              Note: and by that we want to pick previous processedLinks
+             */
+
+            val processedNewToBeAssigned = processedNew.filter(_.roadwayNumber == NewIdValue)
+            val previousProcessed = if(processedNewToBeAssigned.isEmpty) Seq() else processedNewToBeAssigned
+            val linkToBeSplited = remainingNew.head
+            val previousProcessedLength: Double = previousProcessed.map(l => l.endMValue - l.startMValue).sum
+
+            val perfectTransferGroupCoeff = groupTransferMLength/totalTransferMLength
+            /*
+              (previousProcessedLength+m)/totalNewMLength = perfectTransferGroupCoeff <=>
+              <=> previousProcessedLength+m = perfectTransferGroupCoeff*totalNewMLength <=>
+              <=> m = (perfectTransferGroupCoeff*totalNewMLength) - previousProcessedLength
+             */
+            val splitMValue = (perfectTransferGroupCoeff*totalNewMLength) - previousProcessedLength
+            val firstSplitedEndAddr = remainingTransfer.head._2.last.endAddrMValue
+            val firstSplitedLinkGeom = if(linkToBeSplited.sideCode == TowardsDigitizing) GeometryUtils.truncateGeometry2D(linkToBeSplited.geometry, 0.0, splitMValue)
+            else GeometryUtils.truncateGeometry2D(linkToBeSplited.geometry, linkToBeSplited.endMValue - splitMValue, linkToBeSplited.endMValue)
+            val (firstSplitedStartMeasure, firstSplitedEndMeasure) = if(linkToBeSplited.sideCode == TowardsDigitizing) (linkToBeSplited.startMValue, linkToBeSplited.startMValue + splitMValue) else
+              (linkToBeSplited.endMValue - splitMValue, linkToBeSplited.endMValue)
+            val (secondSplitedStartMeasure, secondSplitedEndMeasure) = if(linkToBeSplited.sideCode == TowardsDigitizing) (linkToBeSplited.startMValue + splitMValue, linkToBeSplited.endMValue) else
+              (linkToBeSplited.startMValue, linkToBeSplited.endMValue - splitMValue)
+            val secondSplitedLinkGeom = if(linkToBeSplited.sideCode == TowardsDigitizing) GeometryUtils.truncateGeometry2D(linkToBeSplited.geometry, splitMValue, linkToBeSplited.endMValue)
+            else GeometryUtils.truncateGeometry2D(linkToBeSplited.geometry, 0.0, linkToBeSplited.endMValue - splitMValue)
+
+            //processedLinks without and with roadwayNumber
+            val (unassignedRwnLinks, assignedRwnLinks) = processedNew.partition(_.roadwayNumber == NewIdValue)
+            val nextRoadwayNumber = Sequences.nextRoadwayNumber
+            val processedNewWithSplitedLink = assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+linkToBeSplited.copy(startMValue = firstSplitedStartMeasure, endMValue = firstSplitedEndMeasure,
+              geometry = firstSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitedLinkGeom), endAddrMValue = firstSplitedEndAddr,
+              roadwayNumber = nextRoadwayNumber, connectedLinkId = Some(linkToBeSplited.linkId))
+
+            splitLinksIfNeed(remainingTransfer.tail, processedTransfer++remainingTransfer.head._2, linkToBeSplited.copy(id = NewIdValue, startMValue = secondSplitedStartMeasure, endMValue = secondSplitedEndMeasure,
+              geometry = secondSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(secondSplitedLinkGeom), startAddrMValue = firstSplitedEndAddr) +: remainingNew.tail,
+              processedNewWithSplitedLink, totalTransferMLength, totalNewMLength, missingRoadwayNumbers-1)
+          }
+        }
       }
 
       def adjustableToRoadwayNumberAttribution(firstRight: Seq[ProjectLink], restRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink], restLeft: Seq[ProjectLink]): Boolean = {
         ((firstRight.forall(_.status == LinkStatus.New) && firstLeft.forall(_.status == LinkStatus.Transfer))
-          || (firstRight.forall(_.status == LinkStatus.Transfer) && firstLeft.forall(_.status == LinkStatus.New))) && firstRight.size == firstLeft.size
+          || (firstRight.forall(_.status == LinkStatus.Transfer) && firstLeft.forall(_.status == LinkStatus.New)))
       }
 
       if (rightLinks.isEmpty && leftLinks.isEmpty) {
@@ -170,7 +253,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
           if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
-            adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
+              adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
           } else {
             val newRoadwayNumber1 = Sequences.nextRoadwayNumber
             val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
