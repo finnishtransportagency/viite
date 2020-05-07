@@ -65,6 +65,10 @@ object BeforeAfter {
     }
   }
 
+  def switch(beforeAfter: BeforeAfter, when: Boolean): BeforeAfter = {
+    if (when) switch(beforeAfter) else beforeAfter
+  }
+
   case object Before extends BeforeAfter {
     def value = 1
     def acronym = "E"
@@ -187,13 +191,20 @@ class NodePointDAO extends BaseDAO {
     queryList(query)
   }
 
-  def fetchNodePoint(roadwayNumber: Long): Option[NodePoint] = {
-    val query =
-      s"""
+  def fetchByRoadwayNumber(roadwayNumber: Long): Seq[NodePoint] = {
+    fetchByRoadwayNumbers(Seq(roadwayNumber))
+  }
+
+  def fetchByRoadwayNumbers(roadwayNumbers: Seq[Long]): Seq[NodePoint] = {
+    if (roadwayNumbers.isEmpty) Seq()
+    else {
+      val query =
+        s"""
          $selectFromNodePoint
-         where RP.roadway_number = $roadwayNumber and NP.valid_to is null
+         where RP.roadway_number in (${roadwayNumbers.mkString(", ")}) and NP.valid_to is null
        """
-    queryList(query).headOption
+      queryList(query)
+    }
   }
 
   def fetchTemplatesByRoadwayNumber(roadwayNumber: Long): List[NodePoint] = {
@@ -204,12 +215,12 @@ class NodePointDAO extends BaseDAO {
         FROM NODE_POINT NP
         JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
         JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.end_date is NULL AND RW.VALID_TO IS NULL)
-        where RP.roadway_number = $roadwayNumber and NP.valid_to is null
+        where RP.roadway_number = $roadwayNumber and NP.valid_to is null and NP.node_number is null
       """
     queryList(query)
   }
 
-  def fetchNodePointsTemplates(roadwayNumbers: Set[Long]): List[NodePoint] = {
+  def fetchTemplatesByRoadwayNumbers(roadwayNumbers: Set[Long]): List[NodePoint] = {
     val query =
       if (roadwayNumbers.isEmpty) {
         ""
