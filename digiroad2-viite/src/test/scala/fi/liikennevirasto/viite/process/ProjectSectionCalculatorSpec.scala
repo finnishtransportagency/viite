@@ -481,8 +481,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val idRoad3 = 3L //   L<
       // Right track = 83.154 meters
       val idRoad4 = 4L //   R>
-      val idRoad5 = 5L
-      //   R>
+      val idRoad5 = 5L //   R>
+
       val geom0 = Seq(Point(20.0, 10.0), Point(28, 15))
       val geom1 = Seq(Point(28, 15), Point(42, 19))
       val geom2 = Seq(Point(42, 19), Point(75, 29.2))
