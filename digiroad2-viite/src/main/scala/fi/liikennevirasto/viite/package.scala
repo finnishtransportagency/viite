@@ -32,6 +32,8 @@ package object viite {
 
   val MinDistanceForGeometryUpdate = 0.5
 
+  val MaxThresholdDistance = 2
+
   val MaxAdjustmentRange = 10L
 
   val noRoadwayId: Long = 0L

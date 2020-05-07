@@ -11,11 +11,9 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.RoadAddressCP
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.CalibrationPointSource.UnknownSource
 import fi.liikennevirasto.viite.dao.LinkStatus.{NotHandled, UnChanged}
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
@@ -81,7 +79,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   override lazy val startCalibrationPoint: Option[ProjectLinkCalibrationPoint] = calibrationPoints._1
   override lazy val endCalibrationPoint: Option[ProjectLinkCalibrationPoint] = calibrationPoints._2
 
-  lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
+  val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
   lazy val isNotCalculated: Boolean = endAddrMValue == 0L
 
@@ -359,13 +357,14 @@ class ProjectLinkDAO {
   }
 
   def create(links: Seq[ProjectLink]): Seq[Long] = {
+    if(links.nonEmpty)
     time(logger, "Create project links") {
       val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, " +
         "road_number, road_part_number, " +
-        "TRACK, discontinuity_type, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, created_by, " +
+        "TRACK, discontinuity_type, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, created_by, modified_by, " +
         "calibration_points, status, road_type, roadway_id, linear_location_id, connected_link_id, ely, roadway_number, reversed, geometry, " +
-        "link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
-        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        "link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source, modified_date) values " +
+        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
       val (ready, idLess) = links.partition(_.id != NewIdValue)
       val plIds = Sequences.fetchProjectLinkIds(idLess.size)
       val projectLinks = ready ++ idLess.zip(plIds).map(x =>
@@ -383,39 +382,41 @@ class ProjectLinkDAO {
         addressPS.setLong(9, pl.originalStartAddrMValue)
         addressPS.setLong(10, pl.originalEndAddrMValue)
         addressPS.setString(11, pl.createdBy.orNull)
-        addressPS.setDouble(12, CalibrationCode.getFromAddress(pl).value)
-        addressPS.setLong(13, pl.status.value)
-        addressPS.setLong(14, pl.roadType.value)
+        addressPS.setString(12, pl.createdBy.orNull)
+        addressPS.setDouble(13, CalibrationCode.getFromAddress(pl).value)
+        addressPS.setLong(14, pl.status.value)
+        addressPS.setLong(15, pl.roadType.value)
         if (pl.roadwayId == 0)
-          addressPS.setString(15, null)
-        else
-          addressPS.setLong(15, pl.roadwayId)
-        if (pl.linearLocationId == 0)
           addressPS.setString(16, null)
         else
-          addressPS.setLong(16, pl.linearLocationId)
-        if (pl.connectedLinkId.isDefined)
-          addressPS.setLong(17, pl.connectedLinkId.get)
-        else
+          addressPS.setLong(16, pl.roadwayId)
+        if (pl.linearLocationId == 0)
           addressPS.setString(17, null)
-        addressPS.setLong(18, pl.ely)
-        addressPS.setLong(19, pl.roadwayNumber)
-        addressPS.setBoolean(20, pl.reversed)
-        addressPS.setObject(21, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
-        addressPS.setLong(22, pl.linkId)
-        addressPS.setLong(23, pl.sideCode.value)
-        addressPS.setDouble(24, pl.startMValue)
-        addressPS.setDouble(25, pl.endMValue)
-        addressPS.setDouble(26, pl.linkGeometryTimeStamp)
-        addressPS.setInt(27, pl.linkGeomSource.value)
-        addressPS.setInt(28, pl.calibrationPointsSourcesToDB.value)
+        else
+          addressPS.setLong(17, pl.linearLocationId)
+        if (pl.connectedLinkId.isDefined)
+          addressPS.setLong(18, pl.connectedLinkId.get)
+        else
+          addressPS.setString(18, null)
+        addressPS.setLong(19, pl.ely)
+        addressPS.setLong(20, pl.roadwayNumber)
+        addressPS.setBoolean(21, pl.reversed)
+        addressPS.setObject(22, OracleDatabase.createJGeometry(pl.geometry, dynamicSession.conn))
+        addressPS.setLong(23, pl.linkId)
+        addressPS.setLong(24, pl.sideCode.value)
+        addressPS.setDouble(25, pl.startMValue)
+        addressPS.setDouble(26, pl.endMValue)
+        addressPS.setDouble(27, pl.linkGeometryTimeStamp)
+        addressPS.setInt(28, pl.linkGeomSource.value)
+        addressPS.setInt(29, pl.calibrationPointsSourcesToDB.value)
+        addressPS.setDate(30, new java.sql.Date(new Date().getTime))
         addressPS.addBatch()
       }
       addressPS.executeBatch()
       addressPS.close()
       projectLinks.map(_.id)
-    }
-
+    } else
+      Seq.empty[Long]
   }
 
   def updateProjectLinks(projectLinks: Seq[ProjectLink], modifier: String, addresses: Seq[RoadAddress]): Unit = {
@@ -435,7 +436,7 @@ class ProjectLinkDAO {
         val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK = ?, " +
           "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, ORIGINAL_START_ADDR_M=?, ORIGINAL_END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
           "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ?, " +
-          "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ?, ROADWAY_NUMBER = ? WHERE id = ?")
+          "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ?, ROADWAY_NUMBER = ?, CONNECTED_LINK_ID = ? WHERE id = ?")
 
         for (projectLink <- links) {
           val roadwayNumber = if (projectLink.roadwayNumber == NewIdValue) {
@@ -465,7 +466,11 @@ class ProjectLinkDAO {
           projectLinkPS.setLong(20, projectLink.calibrationPointsSourcesToDB.value)
           projectLinkPS.setLong(21, projectLink.ely)
           projectLinkPS.setLong(22, roadwayNumber)
-          projectLinkPS.setLong(23, projectLink.id)
+          if (projectLink.connectedLinkId.isDefined)
+            projectLinkPS.setLong(23, projectLink.connectedLinkId.get)
+          else
+            projectLinkPS.setString(23, null)
+          projectLinkPS.setLong(24, projectLink.id)
           projectLinkPS.addBatch()
         }
         projectLinkPS.executeBatch()
