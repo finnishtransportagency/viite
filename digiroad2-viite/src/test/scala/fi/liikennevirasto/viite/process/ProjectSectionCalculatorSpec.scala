@@ -9,7 +9,8 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, asset}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinkStatus, _}
@@ -472,7 +473,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test assignMValues When giving links in different tracks Then proper calibration points should be created for each track") {
+  test("Test assignMValues When giving links in different tracks and RoadAddressCP in the middle Then proper calibration points should be created for each track and RoadAddressCPs cleared from the middle") {
     runWithRollback {
       // Left track = 85.308 meters
       val idRoad0 = 0L //   L>
@@ -517,6 +518,80 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val ordered = ProjectSectionCalculator.assignMValues(list)
       ordered.flatMap(_.calibrationPoints._1) should have size 2
       ordered.flatMap(_.calibrationPoints._2) should have size 2
+    }
+  }
+
+  test("Test assignMValues When giving links in one track with JunctionPointCP in the middle Then proper calibration points should be created and JunctionPointCPs kept in place") {
+    runWithRollback {
+      val idRoad0 = 0L
+      val idRoad1 = 1L
+      val idRoad2 = 2L
+      val idRoad3 = 3L
+
+      val geom0 = Seq(Point(20.0, 10.0), Point(28, 15))
+      val geom1 = Seq(Point(28, 15), Point(42, 19))
+      val geom2 = Seq(Point(42, 19), Point(75, 29.2))
+      val geom3 = Seq(Point(103.0, 15.0), Point(75, 29.2))
+      val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+        0L, 9L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad0,
+        0.0, GeometryUtils.geometryLength(geom0), SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(idRoad0, 9.0, 9L, JunctionPointCP))),
+        geom0, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+        9L, 20L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad1,
+        0.0, GeometryUtils.geometryLength(geom1), SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad1, 0.0, 9L, JunctionPointCP)), None),
+        geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad2,
+        0.0, GeometryUtils.geometryLength(geom2), SideCode.TowardsDigitizing, 0, (None, None),
+        geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3,
+        0.0, GeometryUtils.geometryLength(geom3), SideCode.AgainstDigitizing, 0, (None, None),
+        geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
+      val ordered = ProjectSectionCalculator.assignMValues(list)
+      ordered.flatMap(_.calibrationPoints._1) should have size 2
+      ordered.flatMap(_.calibrationPoints._2) should have size 2
+      ordered.head.startCalibrationPointType should be(RoadAddressCP)
+      ordered.filter(p => p.startAddrMValue == 0).head.endCalibrationPointType should be(JunctionPointCP)
+      ordered.filter(p => p.startAddrMValue == 9).head.startCalibrationPointType should be(JunctionPointCP)
+      ordered.last.endCalibrationPointType should be(RoadAddressCP)
+    }
+  }
+
+  test("Test assignMValues When giving links in one track with JunctionPointCP at the beginning and end Then JunctionPointCPs should be changed to RoadAddressCPs") {
+    runWithRollback {
+      val idRoad0 = 0L
+      val idRoad1 = 1L
+      val idRoad2 = 2L
+      val idRoad3 = 3L
+
+      val geom0 = Seq(Point(20.0, 10.0), Point(28, 15))
+      val geom1 = Seq(Point(28, 15), Point(42, 19))
+      val geom2 = Seq(Point(42, 19), Point(75, 29.2))
+      val geom3 = Seq(Point(103.0, 15.0), Point(75, 29.2))
+      val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+        0L, 9L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad0,
+        0.0, GeometryUtils.geometryLength(geom0), SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad0, 0.0, 0L, JunctionPointCP)), None),
+        geom0, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+        9L, 20L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad1,
+        0.0, GeometryUtils.geometryLength(geom1), SideCode.TowardsDigitizing, 0, (None, None),
+        geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+        20L, 30L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad2,
+        0.0, GeometryUtils.geometryLength(geom2), SideCode.TowardsDigitizing, 0, (None, None),
+        geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+        30L, 40L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3,
+        0.0, GeometryUtils.geometryLength(geom3), SideCode.AgainstDigitizing, 0, (None, Some(CalibrationPoint(idRoad3, GeometryUtils.geometryLength(geom3), 40L, JunctionPointCP))),
+        geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
+      val ordered = ProjectSectionCalculator.assignMValues(list)
+      ordered.flatMap(_.calibrationPoints._1) should have size 1
+      ordered.flatMap(_.calibrationPoints._2) should have size 1
+      ordered.head.startCalibrationPointType should be(RoadAddressCP)
+      ordered.last.endCalibrationPointType should be(RoadAddressCP)
     }
   }
 

@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressExce
 import fi.liikennevirasto.digiroad2.{Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -376,17 +376,20 @@ object TrackSectionOrder {
       setOnSideCalibrationPoints(rightProjectLinks, userDefinedCalibrationPoint))
   }
 
-  protected def setOnSideCalibrationPoints(projectLinks: Seq[ProjectLink], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
+  protected def setOnSideCalibrationPoints(initialProjectLinks: Seq[ProjectLink], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
 
-    if (projectLinks.head.status == NotHandled)
-      projectLinks
+    if (initialProjectLinks.head.status == NotHandled)
+      initialProjectLinks
     else
-      projectLinks.size match {
-        case 0 => projectLinks
+      initialProjectLinks.size match {
+        case 0 => initialProjectLinks
         case 1 =>
-          projectLinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id),
+          initialProjectLinks.map(pl => setCalibrationPoint(pl, userCalibrationPoint.get(pl.id),
             hasStartCP = true, hasEndCP = true, RoadAddressCP, RoadAddressCP))
         case _ =>
+          val projectLinks = initialProjectLinks.map(p => p.copy(calibrationPointTypes =
+            (if (p.startCalibrationPointType != RoadAddressCP) p.startCalibrationPointType else NoCP,
+              if (p.endCalibrationPointType != RoadAddressCP) p.endCalibrationPointType else NoCP)))
           val raCPs = Seq(setCalibrationPoint(projectLinks.head, userCalibrationPoint.get(projectLinks.head.id),
             hasStartCP = true, hasEndCP = projectLinks.tail.head.calibrationPoints._1.isDefined,
             RoadAddressCP, projectLinks.tail.head.startCalibrationPointType)) ++ projectLinks.init.tail ++ Seq(setCalibrationPoint(projectLinks.last,
