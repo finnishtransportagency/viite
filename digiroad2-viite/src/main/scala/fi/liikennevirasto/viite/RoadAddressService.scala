@@ -483,8 +483,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     */
   def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long]): Seq[RoadAddress] = {
     val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
-    val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
-    roadAddresses
+    roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
   }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
@@ -645,7 +644,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
 
     handleTerminatedCalibrationPointRoads(terminated)
-    handleCalibrationPoints(linearLocations.filterNot(l => terminated.map(_.linearLocationId).contains(l.id)), username)
+    handleCalibrationPoints(linearLocations, username)
   }
 
   def handleCalibrationPoints(linearLocations: Iterable[LinearLocation], username: String = "-"): Unit = {

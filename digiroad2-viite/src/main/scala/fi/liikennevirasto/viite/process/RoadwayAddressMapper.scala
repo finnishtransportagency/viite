@@ -260,11 +260,8 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     * @return
     */
   def getRoadAddressesByRoadway(roadwayAddresses: Seq[Roadway]): Seq[RoadAddress] = {
-
     val linearLocations = linearLocationDAO.fetchByRoadways(roadwayAddresses.map(_.roadwayNumber).toSet)
-
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
-
     roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }
 
