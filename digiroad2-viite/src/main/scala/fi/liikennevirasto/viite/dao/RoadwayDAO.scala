@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
@@ -330,10 +330,16 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
   override lazy val startCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._1
   override lazy val endCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._2
 
-  def startCalibrationPointType: CalibrationPointType =
-    if (startCalibrationPoint.isDefined) startCalibrationPoint.get.typeCode else CalibrationPointType.NoCP
-  def endCalibrationPointType: CalibrationPointType =
-    if (endCalibrationPoint.isDefined) endCalibrationPoint.get.typeCode else CalibrationPointType.NoCP
+  def startCalibrationPointType: CalibrationPointType = startCalibrationPoint match {
+    case Some(cp) => cp.typeCode
+    case None => NoCP
+  }
+  def endCalibrationPointType: CalibrationPointType = endCalibrationPoint match {
+    case Some(cp) => cp.typeCode
+    case None => NoCP
+  }
+
+  def calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (startCalibrationPointType, endCalibrationPointType)
 
   def reversed: Boolean = false
 
@@ -376,20 +382,6 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
 
   def copyWithGeometry(newGeometry: Seq[Point]) = {
     this.copy(geometry = newGeometry)
-  }
-
-  def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    val startCP = if (id == noRoadwayId || id == NewIdValue) RoadAddressCP else startCalibrationPointType
-    val endCP = if (id == noRoadwayId || id == NewIdValue) RoadAddressCP else endCalibrationPointType
-    calibrationPoints match {
-      case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint],
-        Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, endCP)))
-      case (Some(cp1), None) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, startCP)),
-        Option.empty[ProjectLinkCalibrationPoint])
-      case (Some(cp1), Some(cp2)) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, startCP)),
-        Option(ProjectLinkCalibrationPoint(cp2.linkId, cp2.segmentMValue, cp2.addressMValue, endCP)))
-    }
   }
 
   def getFirstPoint: Point = {

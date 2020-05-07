@@ -86,7 +86,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     ProjectLink(id, roadNumber, roadPartNumber, track,
       Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")),
       endDate, Some("testUser"), linkId, startMValue, endMValue,
-      TowardsDigitizing, calibrationPoints, (NoCP, NoCP), geometry, projectId, status, roadType,
+      TowardsDigitizing, (if (calibrationPoints._1.isDefined) calibrationPoints._1.get.typeCode else NoCP, if (calibrationPoints._2.isDefined) calibrationPoints._2.get.typeCode else NoCP),
+      (NoCP, NoCP), geometry, projectId, status, roadType,
       LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, reversed,
       connectedLinkId = connectedLinkId, 631152000, roadwayNumber, roadAddressLength = Some(endAddrMValue - startAddrMValue))
 
@@ -103,7 +104,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
       val projectId = Sequences.nextViiteProjectId
-      val projectLinkId = projectId + 1
+      val projectLinkId = Sequences.nextProjectLinkId
       val rap = dummyRoadAddressProject(projectId, ProjectState.Incomplete, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, rap.createdBy)

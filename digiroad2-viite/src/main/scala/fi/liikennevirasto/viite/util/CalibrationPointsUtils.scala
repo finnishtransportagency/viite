@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.util
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
 import fi.liikennevirasto.viite.dao._
@@ -28,6 +29,15 @@ object CalibrationPointsUtils {
     }
   }
 
+  def projectLinkCalibrationPoints(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType,
+                                   linkId: Long, startMValue: Double, endMValue: Double, startAddrMValue: Long,
+                                   endAddrMValue: Long, sideCode: SideCode):
+  (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
+    toProjectLinkCalibrationPoints(calibrations(startCalibrationPoint: CalibrationPointType,
+      endCalibrationPoint: CalibrationPointType, linkId: Long, startMValue: Double, endMValue: Double,
+      startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode))
+  }
+
   def toProjectLinkCalibrationPointWithTypeInfo(originalCalibrationPoint: BaseCalibrationPoint, typeCode: CalibrationPointType): ProjectLinkCalibrationPoint = {
     ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, typeCode)
   }
@@ -40,6 +50,17 @@ object CalibrationPointsUtils {
       case (Some(cp), None) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp, cp.typeCode)), Option.empty[ProjectLinkCalibrationPoint])
       case (None, Some(cp)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPointWithTypeInfo(cp, cp.typeCode)))
       case (Some(cp1), Some(cp2)) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp1, cp1.typeCode)), Option(toProjectLinkCalibrationPointWithTypeInfo(cp2, cp2.typeCode)))
+    }
+  }
+
+  def toProjectLinkCalibrationPointTypes(originalCalibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])):
+  (CalibrationPointType, CalibrationPointType) = {
+
+    originalCalibrationPoints match {
+      case (None, None) => (NoCP, NoCP)
+      case (Some(cp), None) => (cp.typeCode, NoCP)
+      case (None, Some(cp)) => (NoCP, cp.typeCode)
+      case (Some(cp1), Some(cp2)) => (cp1.typeCode, cp2.typeCode)
     }
   }
 

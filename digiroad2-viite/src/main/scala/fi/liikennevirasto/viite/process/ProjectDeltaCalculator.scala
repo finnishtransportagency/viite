@@ -130,14 +130,12 @@ object ProjectDeltaCalculator {
             val startCPType = if (x.originalStartCalibrationPointType == NoCP) RoadAddressCP else x.startCalibrationPointType
             val endCPType = if (x.originalEndCalibrationPointType == NoCP) RoadAddressCP else x.endCalibrationPointType
             x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity,
-              calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo(pl1.calibrationPoints,
-                startCPType, endCPType)).asInstanceOf[P]
+              calibrationPointTypes = (startCPType, endCPType)).asInstanceOf[P]
           case x: ProjectLink =>
             val startCPType = if (x.originalStartCalibrationPointType == NoCP) RoadAddressCP else x.startCalibrationPointType
             val endCPType = if (x.originalEndCalibrationPointType == NoCP) RoadAddressCP else x.endCalibrationPointType
             x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
-              calibrationPoints = CalibrationPointsUtils.toProjectLinkCalibrationPointsWithTypeInfo(pl2.calibrationPoints,
-                startCPType, endCPType)).asInstanceOf[P]
+              calibrationPointTypes = (startCPType, endCPType)).asInstanceOf[P]
         }))
     else {
       Seq(tr2, tr1)
@@ -155,10 +153,10 @@ object ProjectDeltaCalculator {
           else if (openBasedOnSource)
             Seq(r2, r1)
           else
-            Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPoints = r2.calibrationPoints))
+            Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes))
         case LinkStatus.New =>
           if (!hasCalibrationPoint && r1.discontinuity.value != Discontinuity.ParallelLink.value) {
-            Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPoints = r2.calibrationPoints))
+            Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPointTypes = r2.calibrationPointTypes))
           } else if (!hasCalibrationPoint && r1.discontinuity.value == Discontinuity.ParallelLink.value) {
             Seq(r2, r1)
           } else {
