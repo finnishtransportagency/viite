@@ -564,19 +564,28 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val roadwayNumber1 = Sequences.nextRoadwayNumber
       val roadwayNumber2 = Sequences.nextRoadwayNumber
 
+      val geom1 = Seq(Point(20.0, 10.0), Point(28, 10))
+      val geom2 = Seq(Point(28, 10), Point(28, 19))
+      val geom3 = Seq(Point(28, 19), Point(28, 30))
       val raMap: Map[Long, RoadAddress] = Map(
         idRoad1 -> RoadAddress(idRoad1, linearLocationId, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-          0L, 9L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad1, 0.0, 8.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad1, 0.0, 0L, RoadAddressCP)), None),
-          Seq(Point(20.0, 10.0), Point(28, 10)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1),
-        idRoad2 -> RoadAddress(idRoad2, linearLocationId+1, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-          9L, 19L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad2, 0.0, 9.0, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(idRoad2, 9.0, 19L, RoadAddressCP))),
-          Seq(Point(28, 10), Point(28, 19)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber2),
+          0L, 9L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad1,
+          0.0, GeometryUtils.geometryLength(geom1), SideCode.TowardsDigitizing, 0,
+          (Some(CalibrationPoint(idRoad1, 0.0, 0L, RoadAddressCP)), None), geom1, LinkGeomSource.NormalLinkInterface, 8,
+          NoTermination, roadwayNumber1),
+        idRoad2 -> RoadAddress(idRoad2, linearLocationId + 1, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+          9L, 19L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad2,
+          0.0, GeometryUtils.geometryLength(geom2), SideCode.TowardsDigitizing, 0,
+          (None, Some(CalibrationPoint(idRoad2, 9.0, 19L, RoadAddressCP))), geom2, LinkGeomSource.NormalLinkInterface, 8,
+          NoTermination, roadwayNumber2),
         idRoad3 -> RoadAddress(idRoad3, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-          0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad3, 0.0, 11.0, SideCode.TowardsDigitizing, 0, (None, None),
-          Seq(Point(28, 19), Point(28, 30)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, NewIdValue)
+          0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad3,
+          0.0, GeometryUtils.geometryLength(geom3), SideCode.TowardsDigitizing, 0,
+          (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8,
+          NoTermination, NewIdValue)
       )
 
-      val projId = Sequences.nextViitePrimaryKeySeqValue
+      val projId = Sequences.nextViiteProjectId
       val project = Project(projId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
