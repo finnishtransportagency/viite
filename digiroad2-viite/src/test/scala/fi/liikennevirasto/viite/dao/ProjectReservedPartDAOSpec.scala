@@ -376,7 +376,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
           'Test', 'Test', to_date('01.01.2018','DD.MM.RRRR'), to_date('01.01.2018','DD.MM.RRRR'), 2, 3, 123456, 123458,
           8, 0, null, 2, 0, 10, 99999, 1533576206000, 1,
           null, 0, 10, NULL,
-          4, 4, 3, 3)
+          3, 3, 3, 3)
       """.execute
       val fetched = projectReservedPartDAO.fetchHistoryRoadParts(projectId)
       fetched.size should be (1)
