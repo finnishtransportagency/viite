@@ -127,15 +127,11 @@ object ProjectDeltaCalculator {
         pl1 match {
           case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(pl2.calibrationPoints)).asInstanceOf[P]
           case x: ProjectLink if x.reversed =>
-            val startCPType = if (x.originalStartCalibrationPointType == NoCP) RoadAddressCP else x.startCalibrationPointType
-            val endCPType = if (x.originalEndCalibrationPointType == NoCP) RoadAddressCP else x.endCalibrationPointType
             x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity,
-              calibrationPointTypes = (startCPType, endCPType)).asInstanceOf[P]
+              calibrationPointTypes = (x.startCalibrationPointType, x.endCalibrationPointType)).asInstanceOf[P]
           case x: ProjectLink =>
-            val startCPType = if (x.originalStartCalibrationPointType == NoCP) RoadAddressCP else x.startCalibrationPointType
-            val endCPType = if (x.originalEndCalibrationPointType == NoCP) RoadAddressCP else x.endCalibrationPointType
             x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
-              calibrationPointTypes = (startCPType, endCPType)).asInstanceOf[P]
+              calibrationPointTypes = (x.startCalibrationPointType, x.endCalibrationPointType)).asInstanceOf[P]
         }))
     else {
       Seq(tr2, tr1)

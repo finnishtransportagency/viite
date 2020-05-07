@@ -1,15 +1,10 @@
 package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.Dummies.dummyRoadwayChangeSection
-import fi.liikennevirasto.viite.{ProjectService, RoadType}
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
-import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
-import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process._
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
