@@ -212,8 +212,8 @@ object RoadwayFiller {
       }
     }
 
-    val (unchangedTransfer, rest) = changesWithLinks.partition(c => List(AddressChangeType.Unchanged, AddressChangeType.Transfer).contains(c._1.changeInfo.changeType))
-    (groupedSections(unchangedTransfer).toSeq ++ rest).sortBy(_._1.changeInfo.orderInChangeTable)
+    val (operationsToCheck, rest) = changesWithLinks.partition(c => List(AddressChangeType.Unchanged, AddressChangeType.Transfer, AddressChangeType.ReNumeration).contains(c._1.changeInfo.changeType))
+    (groupedSections(operationsToCheck).toSeq ++ rest).sortBy(_._1.changeInfo.orderInChangeTable)
   }
 }
 

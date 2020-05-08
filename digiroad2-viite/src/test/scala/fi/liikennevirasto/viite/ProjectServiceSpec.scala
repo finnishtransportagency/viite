@@ -17,7 +17,7 @@ import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -149,7 +149,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     ProjectLink(id = NewIdValue, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), roadAddress.geometry, project.id, status, RoadType.PublicRoad,
+      roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType),
+      roadAddress.geometry, project.id, status, RoadType.PublicRoad,
       roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), if (status == LinkStatus.New) 0 else roadAddress.id, if (status == LinkStatus.New) 0 else roadAddress.linearLocationId, roadAddress.ely, reversed = false,
       None, roadAddress.adjustedTimestamp)
   }
@@ -244,7 +245,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
                     roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: Long = 0L, roadwayId: Long = 0L, linearLocationId: Long = 0L, startDate: Option[DateTime] = None) = {
       ProjectLink(NewIdValue, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startAddrM, endAddrM, startDate, None,
-        Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
+        Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
         LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
     }
@@ -273,7 +274,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     ProjectLink(id = NewIdValue, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, createdBy = Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.toProjectLinkCalibrationPoints(), roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
+      roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
       roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, 0, roadAddress.ely, reversed = false,
       None, roadAddress.adjustedTimestamp)
   }
@@ -720,7 +721,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, 0.0, 9.8,
         SideCode.TowardsDigitizing, 0, (None, None),  Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
-      val calibrationPoints = projectLink.toCalibrationPoints
+      val calibrationPoints = projectLink.calibrationPoints
       val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geometry,
         1, AdministrativeClass.apply(1), LinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, Some(""), None, 111, "Heinola", Some(""), Some("vvh_modified"),
         Map(), projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,
@@ -818,7 +819,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
         Seq(), Seq(), None)
       val newLink = Seq(ProjectLink(-1000L, 5L, 206L, Track.apply(99), Discontinuity.Continuous, 0L, 50L, 0L, 50L, None, None,
-        None, 12345L, 0.0, 43.1, SideCode.Unknown, (None, None),
+        None, 12345L, 0.0, 43.1, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 49704009, 1000570, 8L, reversed = false, None, 123456L, 12345L))
       val project = projectService.createRoadLinkProject(rap)
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(newLink.map(toRoadLink))
@@ -1017,23 +1018,23 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         Seq(), Seq(), None)
 
       val pl1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12345L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(10.0, 10.0), Point(20.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(10.0, 10.0), Point(20.0, 10.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val pl2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12346L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(20.0, 10.0), Point(30.0, 15.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(30.0, 15.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val pl3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12347L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(30.0, 15.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(30.0, 15.0), Point(45.0, 10.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val pl4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12348L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val pl5 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12349L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(45.0, 10.0), Point(60.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(45.0, 10.0), Point(60.0, 10.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -1188,23 +1189,23 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         Seq(), Seq(), None)
 
       val pl1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12345L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(10.0, 10.0), Point(20.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(10.0, 10.0), Point(20.0, 10.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val pl2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12346L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(20.0, 10.0), Point(30.0, 15.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(30.0, 15.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val pl3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12347L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(30.0, 15.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(30.0, 15.0), Point(45.0, 10.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val pl4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12348L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val pl5 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12349L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(45.0, 10.0), Point(60.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(45.0, 10.0), Point(60.0, 10.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -1253,23 +1254,23 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         Seq(), Seq(), None)
 
       val pl1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12345L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(10.0, 10.0), Point(20.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(10.0, 10.0), Point(20.0, 10.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val pl2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12346L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(20.0, 10.0), Point(30.0, 15.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(30.0, 15.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val pl3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12347L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(30.0, 15.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(30.0, 15.0), Point(45.0, 10.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val pl4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12348L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(20.0, 10.0), Point(25.0, 5.0), Point(45.0, 10.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val pl5 = ProjectLink(-1000L, 9998L, 1L, Track.apply(0), Discontinuity.EndOfRoad, 0L, 0L, 0L, 0L, None, None,
-        None, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12349L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(45.0, 10.0), Point(60.0, 10.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(45.0, 10.0), Point(60.0, 10.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -1587,9 +1588,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectLink = ProjectLink(Sequences.nextProjectLinkId, roadway.roadNumber, roadway.roadPartNumber,
         roadway.track, roadway.discontinuity, roadway.startAddrMValue, roadway.endAddrMValue + 10,
         roadway.startAddrMValue, roadway.endAddrMValue, Some(DateTime.now().plusMonths(1)), None, Some("test"),
-        linkId, 0.0, newLength, SideCode.TowardsDigitizing,
-        (Some(ProjectLinkCalibrationPoint(linkId, 0, 0, CalibrationPointSource.RoadAddressSource)),
-          Some(ProjectLinkCalibrationPoint(linkId, newLength, newEndAddr, CalibrationPointSource.RoadAddressSource))),
+        linkId, 0.0, newLength, SideCode.TowardsDigitizing, (RoadAddressCP, RoadAddressCP), (NoCP, NoCP),
         Seq(Point(0.0, 0.0), Point(0.0, newLength)), projectId, LinkStatus.Numbering,
         roadway.roadType, LinkGeomSource.NormalLinkInterface, newLength, roadway.id, 1234, roadway.ely, reversed = false, None,
         DateTime.now().minusMonths(10).getMillis, roadway.roadwayNumber, roadway.roadName, Some(roadAddressLength),
@@ -1647,7 +1646,16 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, NULL, NULL, 1, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
 
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, NULL, NULL, NULL, NULL, 1543328166000, 1, 0, NULL, 0, 85.617, NULL)""".execute
+      sqlu"""INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
+          START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
+          ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
+          LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
+          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+        VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1,
+          0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2,
+          1, NULL, NULL, NULL, 8, 0, NULL, 0, 85.617,
+          NULL, 1543328166000, 1, NULL, 0, 0, NULL,
+          3, 3, 0, 0)""".execute
 
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'ROAD TEST')""".execute
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(66666)
@@ -1760,8 +1768,18 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectId = Sequences.nextViiteProjectId
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 70001, 1, $projectId, '-')""".execute
-      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE)
-                VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 70001, 1, 0, 86, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 5, 3, 1, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1)""".execute
+
+      sqlu"""INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
+          START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
+          ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
+          LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
+          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+        VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 70001, 1,
+          0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 5,
+          1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
+          5170979, 1500079296000, 1, NULL, 0, 86, NULL,
+          3, 3, 3, 3)""".execute
+
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 70001, NULL)""".execute
       val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(70001)
       namesBeforeUpdate.isEmpty should be(true)
@@ -1782,7 +1800,18 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86, NULL)""".execute
+
+      sqlu"""INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
+          START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
+          ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
+          LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
+          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+        VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1,
+          0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2,
+          1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
+          5170979, 1500079296000, 1, NULL, 0, 86, NULL,
+          3, 3, 3, 3)""".execute
+
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'another road name test')""".execute
 
       val changeInfos = List(
@@ -1810,7 +1839,18 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectId = Sequences.nextViiteProjectId
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86, NULL)""".execute
+
+      sqlu"""INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
+          START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
+          ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
+          LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
+          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+        VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1,
+          0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2,
+          1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
+          5170979, 1500079296000, 1, NULL, 0, 86, NULL,
+          3, 3, 3, 3)""".execute
+
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'road name test')""".execute
       val changeInfos = List(
         RoadwayChangeInfo(AddressChangeType.New,
@@ -1839,8 +1879,29 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""INSERT INTO PROJECT VALUES($projectId, 2, 'test project', 'silari', TIMESTAMP '2018-03-23 11:36:15.000000', '-', TIMESTAMP '2018-03-23 12:26:33.000000', NULL, TIMESTAMP '2018-03-23 00:00:00.000000', NULL, 0, 533406.572, 6994060.048, 12)""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 66666, 1, $projectId, '-')""".execute
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (${Sequences.nextViitePrimaryKeySeqValue}, 55555, 1, $projectId, '-')""".execute
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170979, 1500079296000, 1, 0, NULL, 0, 86, NULL)""".execute
-      sqlu"""INSERT INTO PROJECT_LINK VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 55555, 1, 0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2, 3, 1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617, 5170980, 1500079296000, 1, 0, NULL, 0, 86, NULL)""".execute
+
+      sqlu"""INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
+          START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
+          ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
+          LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
+          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+        VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 66666, 1,
+          0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2,
+          1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
+          5170979, 1500079296000, 1, NULL, 0, 86, NULL,
+          3, 3, 3, 3)""".execute
+
+      sqlu"""INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER,
+          START_ADDR_M, END_ADDR_M, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE, STATUS,
+          ROAD_TYPE, ROADWAY_ID, LINEAR_LOCATION_ID, CONNECTED_LINK_ID, ELY, REVERSED, SIDE, START_MEASURE, END_MEASURE,
+          LINK_ID, ADJUSTED_TIMESTAMP, LINK_SOURCE, GEOMETRY, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, ROADWAY_NUMBER,
+          START_CALIBRATION_POINT, END_CALIBRATION_POINT, ORIG_START_CALIBRATION_POINT, ORIG_END_CALIBRATION_POINT)
+        VALUES (${Sequences.nextProjectLinkId}, $projectId, 0, 5, 55555, 1,
+          0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 00:00:00.000000', 2,
+          1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
+          5170980, 1500079296000, 1, NULL, 0, 86, NULL,
+          3, 3, 3, 3)""".execute
+
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 66666, 'road name test')""".execute
       sqlu"""INSERT INTO PROJECT_LINK_NAME VALUES (PROJECT_LINK_NAME_SEQ.nextval, $projectId, 55555, 'road name test2')""".execute
       RoadNameDAO.getLatestRoadName(55555).isEmpty should be (true)
@@ -1910,13 +1971,13 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(savedProject.id)
       updatedProjectLinks.exists { x => x.status == LinkStatus.UnChanged } should be(true)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Terminated } should be(true)
-      updatedProjectLinks.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, Some(ProjectLinkCalibrationPoint(5168579, 15.173, 4681, ProjectLinkSource))))
+      updatedProjectLinks.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, Some(CalibrationPoint(5168579, 15.173, 4681, RoadAddressCP))))
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168579), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
       val updatedProjectLinks2 = projectLinkDAO.fetchProjectLinks(savedProject.id)
       val sortedRoad206AfterTermination = updatedProjectLinks2.filter(_.roadPartNumber == 206).sortBy(_.startAddrMValue)
       updatedProjectLinks2.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, None))
       val lastValid = sortedRoad206AfterTermination.filter(_.status != LinkStatus.Terminated).last
-      sortedRoad206AfterTermination.filter(_.status != LinkStatus.Terminated).last.calibrationPoints should be((None, Some(ProjectLinkCalibrationPoint(lastValid.linkId, lastValid.endMValue, lastValid.endAddrMValue, ProjectLinkSource))))
+      sortedRoad206AfterTermination.filter(_.status != LinkStatus.Terminated).last.calibrationPoints should be((None, Some(CalibrationPoint(lastValid.linkId, lastValid.endMValue, lastValid.endAddrMValue, RoadAddressCP))))
       updatedProjectLinks2.filter(pl => pl.roadPartNumber == 205).exists { x => x.status == LinkStatus.Terminated } should be(false)
     }
     runWithRollback {
@@ -1963,14 +2024,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sortedProjectLinks.head.calibrationPoints._1.nonEmpty should be (true)
       sortedProjectLinks.head.calibrationPoints._1.get.segmentMValue should be (0.0)
       sortedProjectLinks.head.calibrationPoints._1.get.addressMValue should be (0)
-      sortedProjectLinks.head.calibrationPoints._1.get.source should be (ProjectLinkSource)
+      sortedProjectLinks.head.startCalibrationPointType should be (RoadAddressCP)
       sortedProjectLinks.head.calibrationPoints._2.isEmpty should be (true)
 
       sortedProjectLinks.last.calibrationPoints._1.isEmpty should be (true)
       sortedProjectLinks.last.calibrationPoints._2.nonEmpty should be (true)
       sortedProjectLinks.last.calibrationPoints._2.get.segmentMValue should be (442.89)
       sortedProjectLinks.last.calibrationPoints._2.get.addressMValue should be (highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue)
-      sortedProjectLinks.last.calibrationPoints._2.get.source should be (ProjectLinkSource)
+      sortedProjectLinks.last.endCalibrationPointType should be (RoadAddressCP)
 
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int]) should be(None)
       val updatedProjectLinks2 = projectLinkDAO.fetchProjectLinks(savedProject.id)
@@ -1980,7 +2041,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sortedProjectLinks2.last.calibrationPoints._2.nonEmpty should be (true)
       sortedProjectLinks2.last.calibrationPoints._2.get.segmentMValue should be (442.89)
       sortedProjectLinks2.last.calibrationPoints._2.get.addressMValue should be (highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue - updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.endAddrMValue)
-      sortedProjectLinks2.last.calibrationPoints._2.get.source should be (ProjectLinkSource)
+      sortedProjectLinks2.last.endCalibrationPointType should be (RoadAddressCP)
     }
 
   }
@@ -2024,14 +2085,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sortedProjectLinks.head.calibrationPoints._1.nonEmpty should be (true)
       sortedProjectLinks.head.calibrationPoints._1.get.segmentMValue should be (0.0)
       sortedProjectLinks.head.calibrationPoints._1.get.addressMValue should be (0)
-      sortedProjectLinks.head.calibrationPoints._1.get.source should be (ProjectLinkSource)
+      sortedProjectLinks.head.startCalibrationPointType should be (RoadAddressCP)
       sortedProjectLinks.head.calibrationPoints._2.isEmpty should be (true)
 
       sortedProjectLinks.last.calibrationPoints._1.isEmpty should be (true)
       sortedProjectLinks.last.calibrationPoints._2.nonEmpty should be (true)
       sortedProjectLinks.last.calibrationPoints._2.get.segmentMValue should be (442.89)
       sortedProjectLinks.last.calibrationPoints._2.get.addressMValue should be (highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue)
-      sortedProjectLinks.last.calibrationPoints._2.get.source should be (ProjectLinkSource)
+      sortedProjectLinks.last.endCalibrationPointType should be (RoadAddressCP)
 
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int])
       val updatedProjectLinks2 = projectLinkDAO.fetchProjectLinks(savedProject.id)
@@ -2041,7 +2102,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sortedProjectLinks2.last.calibrationPoints._2.nonEmpty should be (true)
       sortedProjectLinks2.last.calibrationPoints._2.get.segmentMValue should be (442.89)
       sortedProjectLinks2.last.calibrationPoints._2.get.addressMValue should be (highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue - updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.endAddrMValue)
-      sortedProjectLinks2.last.calibrationPoints._2.get.source should be (ProjectLinkSource)
+      sortedProjectLinks2.last.endCalibrationPointType should be (RoadAddressCP)
     }
 
   }
@@ -2074,7 +2135,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectLinkDAO.create(projectLinksFromRoadAddresses)
 
       val numberingLink = Seq(ProjectLink(-1000L, newRoadNumber, newRoadPart, Track.apply(0), Discontinuity.Continuous, 0L, 5L, 0L, 10L, None, None,
-        Option(user), projectLinksFromRoadAddresses.head.linkId, 0.0, 10.0, SideCode.Unknown, (None, None),
+        Option(user), projectLinksFromRoadAddresses.head.linkId, 0.0, 10.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         smallerRoadGeom, rap.id, LinkStatus.Numbering, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 10.0, roadAddresses.head.id, roadwayNumber+Math.round(linearLocation.orderNumber), 0, reversed = false,
         None, 86400L))
       projectReservedPartDAO.reserveRoadPart(projectId, newRoadNumber, newRoadPart, "Test")
@@ -2534,55 +2595,55 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val geom13 = Seq(Point(451.695, 5947.231), Point(580.822, 5990.441))
 
       val pl1 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12345L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12345L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
         None, NewIdValue)
       val pl2 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12346L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12346L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
         None, NewIdValue)
       val pl3 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12347L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
         None, NewIdValue)
       val pl4 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12348L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12348L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom4, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom4), 0L, 0, 0, reversed = false,
         None, NewIdValue)
       val pl5 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12349L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12349L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom5, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom5), 0L, 0, 0, reversed = false,
         None, NewIdValue)
       val pl6 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12350L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12350L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom6, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom6), 0L, 0, 0, reversed = false,
         None, NewIdValue)
       val pl7 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12351L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12351L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom7, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom7), 0L, 0, 0, reversed = false,
         None, NewIdValue)
       val pl8 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12352L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12352L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom8, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom8), 0L, 0, 0, reversed = false,
         None, NewIdValue)
       val pl9 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12353L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12353L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom9, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom9), 0L, 0, 0, reversed = false,
         None, NewIdValue)
       val pl10 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12354L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12354L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom10, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom10), 0L, 0, 0, reversed = false,
         None, NewIdValue)
       val pl11 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12355L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12355L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom11, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom11), 0L, 0, 0, reversed = false,
         None, NewIdValue)
       val pl12 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12356L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12356L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom12, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom12), 0L, 0, 0, reversed = false,
         None, NewIdValue)
       val pl13 = ProjectLink(-1000L, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12357L, 0.0, 0.0, SideCode.Unknown, (None, None),
+        None, 12357L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geom13, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom13), 0L, 0, 0, reversed = false,
         None, NewIdValue)
 
@@ -2703,15 +2764,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         Seq(), Seq(), None)
 
       val linkAfterRoundabout = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.EndOfRoad, 0L, 0L, 0L, 0L, None, None,
-        None, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        None, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(15.0, 0.0), Point(20.0, 0.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(15.0, 0.0), Point(20.0, 0.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val linkBeforeRoundaboutMinorDiscontinuous = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.MinorDiscontinuity, 0L, 0L, 0L, 0L, None, None,
-        None, 12346L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        None, 12346L, 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(5.0, 0.0), Point(15.0, 0.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(5.0, 0.0), Point(15.0, 0.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
       val linkBeforeRoundaboutContinuous = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, 0.0, 5.0, SideCode.TowardsDigitizing, (None, None),
+        None, 12347L, 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         Seq(Point(0.0, 0.0), Point(5.0, 0.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(5.0, 0.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -2774,14 +2835,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019243','41000','300','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.RRRR HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.RRRR HH24:MI:SS'))""".execute
       sqlu"""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('1019244','41000','127','k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.RRRR HH24:MI:SSXFF'),'k567997',to_timestamp('27.12.2019 13:26:55','DD.MM.RRRR HH24:MI:SS'))""".execute
 
-      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020345','1019231','7256596','0','2',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
-      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020346','1019232','7256596','1','2',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
-      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020347','1019233','568164','0','2',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
-      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020348','1019234','7256586','1','2',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
-      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020349','1019235','7256594','0','2',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
-      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020350','1019236','7256594','1','2',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
-      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020351','1019237','7256590','0','2',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
-      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020352','1019238','568122','1','2',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
+      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020345','1019231','7256596','0','3',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
+      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020346','1019232','7256596','1','3',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
+      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020347','1019233','568164','0','3',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
+      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020348','1019234','7256586','1','3',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
+      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020349','1019235','7256594','0','3',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
+      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020350','1019236','7256594','1','3',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
+      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020351','1019237','7256590','0','3',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
+      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('1020352','1019238','568122','1','3',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
 
       sqlu"""Insert into PROJECT (ID,STATE,NAME,CREATED_BY,CREATED_DATE,MODIFIED_BY,MODIFIED_DATE,ADD_INFO,START_DATE,STATUS_INFO,TR_ID,COORD_X,COORD_Y,ZOOM) values ('1000351','2','aa','silari',to_date('27.12.2019','DD.MM.RRRR'),'-',to_date('27.12.2019','DD.MM.RRRR'),null,to_date('01.01.2020','DD.MM.RRRR'),null,'1000109',267287.82,6789454.18,'12')""".execute
 
@@ -2794,15 +2855,16 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""Insert into PROJECT_RESERVED_ROAD_PART (ID,ROAD_NUMBER,ROAD_PART_NUMBER,PROJECT_ID,CREATED_BY) values ('1000355','22006','45','1000351','silari')""".execute
       sqlu"""Insert into PROJECT_RESERVED_ROAD_PART (ID,ROAD_NUMBER,ROAD_PART_NUMBER,PROJECT_ID,CREATED_BY) values ('1000368','22006','67','1000351','-')""".execute
 
-      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,CALIBRATION_POINTS_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER) values ('1000356','1000351','0','2','22006','67','169','177','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','1','1','1052907','1039047',null,'2','1','2',0,7.685,'568164','1449097206000','4','2',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267444.126, 6789234.9, 53.176999999996, 267440.935, 6789235.99, 53.2259999999951, 267437.206395653, 6789238.15776997, 53.2499974535623)),'0','8','166883765')""".execute
-      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,CALIBRATION_POINTS_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER) values ('1000357','1000351','0','5','22006','67','0','169','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','3','1','1052907','1039048',null,'2','1','3',0,171.504,'7256584','1498959782000','4','1',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267444.126, 6789234.9, 53.176999999996, 267464.548, 6789227.526, 52.8959999999934, 267496.884, 6789219.216, 52.2939999999944, 267515.938, 6789216.916, 51.7979999999952, 267535.906, 6789218.028, 51.1319999999978, 267556.73, 6789224.333, 50.304999999993, 267574.187, 6789234.039, 49.5789999999979, 267588.124, 6789247.565, 49.0240000000049, 267597.460867063, 6789260.63281394, 48.7730035736591)),'8','177','166883765')""".execute
-      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,CALIBRATION_POINTS_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER) values ('1000358','1000351','0','5','22006','56','80','118','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','3','1','1052907','1039049',null,'2','1','3',0,38.688,'7256586','1503961971000','4','1',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267597.461, 6789260.633, 48.773000000001, 267597.534, 6789260.792, 48.7719999999972, 267600.106, 6789269.768, 48.6059999999998, 267600.106, 6789280.257, 48.4780000000028, 267597.713, 6789287.648, 48.4360000000015, 267591.642, 6789293.381, 48.4370000000054, 267589.345139337, 6789294.52943033, 48.4244527667907)),'177','215','166883761')""".execute
-      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,CALIBRATION_POINTS_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER) values ('1000359','1000351','0','5','22006','56','0','80','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','2','1','1052908','1039050',null,'2','1','3',38.688,120.135,'7256586','1503961971000','4','2',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267589.345139337, 6789294.52943033, 48.4244527667907, 267578.828, 6789299.788, 48.3669999999984, 267559.269, 6789308.892, 48.2510000000038, 267546.792, 6789314.963, 48.2390000000014, 267533.979, 6789321.707, 48.2140000000072, 267524.2, 6789327.103, 48.226999999999, 267521.164, 6789329.463, 48.247000000003, 267518.603162863, 6789333.45774594, 48.2559994276524)),'215','295','166883589')""".execute
-      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,CALIBRATION_POINTS_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER) values ('1000360','1000351','0','1','22006','68','0','45','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','3','1','1052909','1039051',null,'2','1','2',0,44.211,'7256594','1533681057000','4','2',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267597.461, 6789260.633, 48.773000000001, 267603.782, 6789267.752, 48.6589999999997, 267610.19, 6789273.485, 48.5580000000045, 267616.597, 6789277.869, 48.4689999999973, 267623.131, 6789280.868, 48.4400000000023, 267633.897953407, 6789283.72598763, 48.4409999956788)),'0','45','6446223')""".execute
-      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,CALIBRATION_POINTS_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER) values ('1000361','1000351','0','5','22006','12','0','127','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','3','1','1052910','1039052',null,'2','0','2',0,130.538,'7256590','1498959782000','4','2',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267431.685, 6789375.9, 48.4470000000001, 267424.673, 6789383.39, 48.4180000000051, 267415.075, 6789389.356, 48.448000000004, 267401.067, 6789396.879, 48.5190000000002, 267384.985, 6789404.661, 48.6150000000052, 267366.307, 6789414.259, 48.6889999999985, 267356.079, 6789421.259, 48.6999999999971, 267351.522, 6789425.931, 48.7119999999995, 267349.187, 6789432.416, 48.7799999999988, 267348.928, 6789442.533, 48.9700000000012, 267352.041, 6789450.574, 49.1230000000069, 267357.266, 6789458.693, 49.3099999999977)),'0','127','166883763')""".execute
-      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,CALIBRATION_POINTS_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER) values ('1000362','1000351','0','5','22006','23','0','174','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','2','1','1052910','1039053',null,'2','0','3',0,177.547,'568121','1446398762000','4','2',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267525.375, 6789455.936, 52.7309999999998, 267499.516, 6789463.571, 52.426999999996, 267458.911, 6789473.392, 52.0339999999997, 267426.281, 6789480.881, 51.4360000000015, 267403.97, 6789481.494, 50.7459999999992, 267378.849, 6789475.013, 49.9879999999976, 267357.54, 6789459.007, 49.3179999999993, 267357.266194778, 6789458.69322321, 49.3100056869441)),'127','301','166883762')""".execute
-      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,CALIBRATION_POINTS_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER) values ('1000363','1000351','0','2','22006','23','174','183','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','1','1','1052910','1039054',null,'2','0','3',0,9.514,'568122','1449097206000','4','2',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267534.612, 6789453.659, 52.7939999999944, 267529.741, 6789454.905, 52.8300000000017, 267525.375, 6789455.936, 52.7309999999998)),'301','310','166883762')""".execute
-      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,CALIBRATION_POINTS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,CALIBRATION_POINTS_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER) values ('1000364','1000351','0','2','22006','24','0','248','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','3','1','1052906','1039046',null,'2','1','2',0,248.793,'7256596','1498959782000','4','2',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267357.266, 6789458.693, 49.3099999999977, 267343.965, 6789448.141, 49.0489999999991, 267334.962, 6789442.665, 48.8600000000006, 267328.617, 6789440.381, 48.7949999999983, 267322.527, 6789439.365, 48.8000000000029, 267314.914, 6789441.141, 48.8439999999973, 267303.749, 6789445.455, 48.976999999999, 267287.508, 6789453.576, 49.0160000000033, 267268.999, 6789462.419, 49.2119999999995, 267228.658, 6789482.321, 49.3870000000024, 267201.225, 6789496.844, 49.4649999999965, 267167.876, 6789511.367, 49.7329999999929, 267147.437, 6789519.436, 49.9670000000042, 267131.966200167, 6789520.78998248, 50.2599962090907)),'0','248','6446225')""".execute
+      //                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000356','1000351','0','2','22006','67','169','177','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','1','1052907','1039047',null,'2','1','2',0,7.685,'568164','1449097206000','4',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267444.126, 6789234.9, 53.176999999996, 267440.935, 6789235.99, 53.2259999999951, 267437.206395653, 6789238.15776997, 53.2499974535623)),'0','8','166883765',0,3,0,0)""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000357','1000351','0','5','22006','67','0','169','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','1','1052907','1039048',null,'2','1','3',0,171.504,'7256584','1498959782000','4',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267444.126, 6789234.9, 53.176999999996, 267464.548, 6789227.526, 52.8959999999934, 267496.884, 6789219.216, 52.2939999999944, 267515.938, 6789216.916, 51.7979999999952, 267535.906, 6789218.028, 51.1319999999978, 267556.73, 6789224.333, 50.304999999993, 267574.187, 6789234.039, 49.5789999999979, 267588.124, 6789247.565, 49.0240000000049, 267597.460867063, 6789260.63281394, 48.7730035736591)),'8','177','166883765',3,3,0,0)""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000358','1000351','0','5','22006','56','80','118','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','1','1052907','1039049',null,'2','1','3',0,38.688,'7256586','1503961971000','4',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267597.461, 6789260.633, 48.773000000001, 267597.534, 6789260.792, 48.7719999999972, 267600.106, 6789269.768, 48.6059999999998, 267600.106, 6789280.257, 48.4780000000028, 267597.713, 6789287.648, 48.4360000000015, 267591.642, 6789293.381, 48.4370000000054, 267589.345139337, 6789294.52943033, 48.4244527667907)),'177','215','166883761',3,3,0,0)""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000359','1000351','0','5','22006','56','0','80','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','1','1052908','1039050',null,'2','1','3',38.688,120.135,'7256586','1503961971000','4',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267589.345139337, 6789294.52943033, 48.4244527667907, 267578.828, 6789299.788, 48.3669999999984, 267559.269, 6789308.892, 48.2510000000038, 267546.792, 6789314.963, 48.2390000000014, 267533.979, 6789321.707, 48.2140000000072, 267524.2, 6789327.103, 48.226999999999, 267521.164, 6789329.463, 48.247000000003, 267518.603162863, 6789333.45774594, 48.2559994276524)),'215','295','166883589',3,0,0,0)""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000360','1000351','0','1','22006','68','0','45','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','1','1052909','1039051',null,'2','1','2',0,44.211,'7256594','1533681057000','4',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267597.461, 6789260.633, 48.773000000001, 267603.782, 6789267.752, 48.6589999999997, 267610.19, 6789273.485, 48.5580000000045, 267616.597, 6789277.869, 48.4689999999973, 267623.131, 6789280.868, 48.4400000000023, 267633.897953407, 6789283.72598763, 48.4409999956788)),'0','45','6446223',3,3,0,0)""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000361','1000351','0','5','22006','12','0','127','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','1','1052910','1039052',null,'2','0','2',0,130.538,'7256590','1498959782000','4',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267431.685, 6789375.9, 48.4470000000001, 267424.673, 6789383.39, 48.4180000000051, 267415.075, 6789389.356, 48.448000000004, 267401.067, 6789396.879, 48.5190000000002, 267384.985, 6789404.661, 48.6150000000052, 267366.307, 6789414.259, 48.6889999999985, 267356.079, 6789421.259, 48.6999999999971, 267351.522, 6789425.931, 48.7119999999995, 267349.187, 6789432.416, 48.7799999999988, 267348.928, 6789442.533, 48.9700000000012, 267352.041, 6789450.574, 49.1230000000069, 267357.266, 6789458.693, 49.3099999999977)),'0','127','166883763',3,3,0,0)""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000362','1000351','0','5','22006','23','0','174','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','1','1052910','1039053',null,'2','0','3',0,177.547,'568121','1446398762000','4',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267525.375, 6789455.936, 52.7309999999998, 267499.516, 6789463.571, 52.426999999996, 267458.911, 6789473.392, 52.0339999999997, 267426.281, 6789480.881, 51.4360000000015, 267403.97, 6789481.494, 50.7459999999992, 267378.849, 6789475.013, 49.9879999999976, 267357.54, 6789459.007, 49.3179999999993, 267357.266194778, 6789458.69322321, 49.3100056869441)),'127','301','166883762',3,0,0,0)""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000363','1000351','0','2','22006','23','174','183','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','1','1052910','1039054',null,'2','0','3',0,9.514,'568122','1449097206000','4',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267534.612, 6789453.659, 52.7939999999944, 267529.741, 6789454.905, 52.8300000000017, 267525.375, 6789455.936, 52.7309999999998)),'301','310','166883762',0,3,0,0)""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,START_ADDR_M,END_ADDR_M,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,ROAD_TYPE,ROADWAY_ID,LINEAR_LOCATION_ID,CONNECTED_LINK_ID,ELY,REVERSED,SIDE,START_MEASURE,END_MEASURE,LINK_ID,ADJUSTED_TIMESTAMP,LINK_SOURCE,GEOMETRY,ORIGINAL_START_ADDR_M,ORIGINAL_END_ADDR_M,ROADWAY_NUMBER,START_CALIBRATION_POINT,END_CALIBRATION_POINT,ORIG_START_CALIBRATION_POINT,ORIG_END_CALIBRATION_POINT) values ('1000364','1000351','0','2','22006','24','0','248','silari','silari',to_date('27.12.2019','DD.MM.RRRR'),to_date('27.12.2019','DD.MM.RRRR'),'3','1','1052906','1039046',null,'2','1','2',0,248.793,'7256596','1498959782000','4',MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 2, 1), MDSYS.SDO_ORDINATE_ARRAY(267357.266, 6789458.693, 49.3099999999977, 267343.965, 6789448.141, 49.0489999999991, 267334.962, 6789442.665, 48.8600000000006, 267328.617, 6789440.381, 48.7949999999983, 267322.527, 6789439.365, 48.8000000000029, 267314.914, 6789441.141, 48.8439999999973, 267303.749, 6789445.455, 48.976999999999, 267287.508, 6789453.576, 49.0160000000033, 267268.999, 6789462.419, 49.2119999999995, 267228.658, 6789482.321, 49.3870000000024, 267201.225, 6789496.844, 49.4649999999965, 267167.876, 6789511.367, 49.7329999999929, 267147.437, 6789519.436, 49.9670000000042, 267131.966200167, 6789520.78998248, 50.2599962090907)),'0','248','6446225',3,3,0,0)""".execute
 
       sqlu"""Insert into PROJECT_LINK_NAME (ID,PROJECT_ID,ROAD_NUMBER,ROAD_NAME) values ('17','1000351','22006','MOMMOLAN RAMPIT')""".execute
 
@@ -2887,7 +2949,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
                           roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L, linearLocationId: Long = 0L) = {
     val startDate = if (status !== LinkStatus.New) Some(DateTime.now()) else None
     ProjectLink(NewIdValue, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startAddrM, endAddrM, startDate, None,
-      Some("User"), startAddrM, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (None, None),
+      Some("User"), startAddrM, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
       Seq(Point(0.0, startAddrM), Point(0.0, endAddrM)), projectId, status, RoadType.PublicRoad,
       LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
   }
