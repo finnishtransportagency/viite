@@ -9,6 +9,7 @@ CALIBRATION_POINTS_SOURCE values:
 0 No calibration point
 1 Road address source
 2 Project link source
+3 Junction point source (There should not be any of these)
 
 CalibrationPointType values:
 0 No calibration point
