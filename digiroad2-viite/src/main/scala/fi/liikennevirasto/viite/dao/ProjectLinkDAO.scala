@@ -44,15 +44,6 @@ object LinkStatus {
   }
 }
 
-case class ProjectLinkCalibrationPoint(linkId: Long, override val segmentMValue: Double, override val addressMValue: Long, typeCode: CalibrationPointType = UnknownCP)
-  extends BaseCalibrationPoint {
-
-  def toCalibrationPoint: CalibrationPoint = {
-    CalibrationPoint(linkId, segmentMValue, addressMValue, typeCode)
-  }
-
-}
-
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, originalStartAddrMValue: Long, originalEndAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
@@ -64,8 +55,8 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadNumber: Option[Long] = None, roadAddressRoadPart: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
 
-  override lazy val startCalibrationPoint: Option[ProjectLinkCalibrationPoint] = calibrationPoints._1
-  override lazy val endCalibrationPoint: Option[ProjectLinkCalibrationPoint] = calibrationPoints._2
+  override lazy val startCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._1
+  override lazy val endCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._2
 
   val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
@@ -132,17 +123,8 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     }
   }
 
-  def calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    CalibrationPointsUtils.projectLinkCalibrationPoints(calibrationPointTypes._1, calibrationPointTypes._2, linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, sideCode)
-  }
-
-  def toCalibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-    calibrationPoints match {
-      case (None, None) => (Option.empty[CalibrationPoint], Option.empty[CalibrationPoint])
-      case (Some(cp1), None) => (Option(cp1.toCalibrationPoint), Option.empty[CalibrationPoint])
-      case (None, Some(cp1)) => (Option.empty[CalibrationPoint], Option(cp1.toCalibrationPoint))
-      case (Some(cp1),Some(cp2)) => (Option(cp1.toCalibrationPoint), Option(cp2.toCalibrationPoint))
-    }
+  def calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
+    CalibrationPointsUtils.toCalibrationPoints(calibrationPointTypes._1, calibrationPointTypes._2, linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, sideCode)
   }
 
   def hasCalibrationPointAt(addressMValue: Long): Boolean = {

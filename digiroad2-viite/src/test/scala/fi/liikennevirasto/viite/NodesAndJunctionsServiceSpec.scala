@@ -133,14 +133,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
 
   def toRoadwayAndLinearLocation(p: ProjectLink): (LinearLocation, Roadway) = {
-    def calibrationPoint(cp: Option[ProjectLinkCalibrationPoint]): Option[Long] = {
-      cp match {
-        case Some(x) =>
-          Some(x.addressMValue)
-        case _ => Option.empty[Long]
-      }
-    }
-
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
     (LinearLocation(p.linearLocationId, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
