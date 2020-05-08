@@ -116,11 +116,15 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     sortedLinearLocations.zip(addresses.zip(addresses.tail)).map {
       case (linearLocation, (st, en)) =>
         val geometryLength = linearLocation.endMValue - linearLocation.startMValue
-        val (stCalibration, enCalibration) = (linearLocation.startCalibrationPoint.addrM, linearLocation.endCalibrationPoint.addrM)
+        val (startCP, endCP) = (linearLocation.startCalibrationPoint.addrM, linearLocation.endCalibrationPoint.addrM)
 
         val calibrationPoints = (
-          stCalibration.map(address => CalibrationPoint(linearLocation.linkId, if (linearLocation.sideCode == SideCode.TowardsDigitizing) 0 else geometryLength, address)),
-          enCalibration.map(address => CalibrationPoint(linearLocation.linkId, if (linearLocation.sideCode == SideCode.AgainstDigitizing) 0 else geometryLength, address))
+          startCP.map(address => CalibrationPoint(linearLocation.linkId,
+            if (linearLocation.sideCode == SideCode.TowardsDigitizing) 0 else geometryLength,
+            address, linearLocation.startCalibrationPointType)),
+          endCP.map(address => CalibrationPoint(linearLocation.linkId,
+            if (linearLocation.sideCode == SideCode.AgainstDigitizing) 0 else geometryLength,
+            address, linearLocation.endCalibrationPointType))
         )
 
         RoadAddress(roadway.id, linearLocation.id, roadway.roadNumber, roadway.roadPartNumber, roadway.roadType, roadway.track, Discontinuity.Continuous, st, en,
@@ -140,8 +144,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
   private def recursiveMapRoadAddresses(roadway: Roadway, linearLocations: Seq[LinearLocation]): Seq[RoadAddress] = {
 
     def getUntilCalibrationPoint(seq: Seq[LinearLocation]): (Seq[LinearLocation], Seq[LinearLocation]) = {
-      // user calibration points must be considered here in the future
-      val linearLocationsUntilCp = seq.takeWhile(l => l.endCalibrationPoint.isEmpty || l.endCalibrationPoint.isJunctionPointCP)
+      val linearLocationsUntilCp = seq.takeWhile(l => l.endCalibrationPoint.isEmpty)
       val rest = seq.drop(linearLocationsUntilCp.size)
       if (rest.headOption.isEmpty)
         (linearLocationsUntilCp, rest)

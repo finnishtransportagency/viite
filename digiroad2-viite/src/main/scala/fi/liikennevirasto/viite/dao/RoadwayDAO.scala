@@ -11,7 +11,8 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
@@ -156,7 +157,7 @@ object CalibrationCode {
 
 }
 
-case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends BaseCalibrationPoint
+case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP) extends BaseCalibrationPoint
 
 sealed trait TerminationCode {
   def value: Int
@@ -231,21 +232,12 @@ trait BaseRoadAddress {
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
-  def getCalibrationCode: CalibrationCode = {
-    calibrationPoints match {
-      case (Some(_), Some(_)) => CalibrationCode.AtBoth
-      case (Some(_), _) => CalibrationCode.AtBeginning
-      case (_, Some(_)) => CalibrationCode.AtEnd
-      case _ => CalibrationCode.No
-    }
+  def hasCalibrationPointAtStart: Boolean = {
+    startCalibrationPoint.getOrElse(NoCP) != NoCP
   }
 
-  def hasCalibrationPointAt(calibrationCode: CalibrationCode): Boolean = {
-    val raCalibrationCode = getCalibrationCode
-    if (calibrationCode == CalibrationCode.No || calibrationCode == CalibrationCode.AtBoth)
-      raCalibrationCode == calibrationCode
-    else
-      raCalibrationCode == CalibrationCode.AtBoth || raCalibrationCode == calibrationCode
+  def hasCalibrationPointAtEnd: Boolean = {
+    endCalibrationPoint.getOrElse(NoCP) != NoCP
   }
 
   def liesInBetween(ra: BaseRoadAddress): Boolean = {
@@ -338,6 +330,17 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
   override lazy val startCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._1
   override lazy val endCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._2
 
+  def startCalibrationPointType: CalibrationPointType = startCalibrationPoint match {
+    case Some(cp) => cp.typeCode
+    case None => NoCP
+  }
+  def endCalibrationPointType: CalibrationPointType = endCalibrationPoint match {
+    case Some(cp) => cp.typeCode
+    case None => NoCP
+  }
+
+  def calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (startCalibrationPointType, endCalibrationPointType)
+
   def reversed: Boolean = false
 
   def isBetweenAddresses(rangeStartAddr: Long, rangeEndAddr: Long): Boolean = {
@@ -379,16 +382,6 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
 
   def copyWithGeometry(newGeometry: Seq[Point]) = {
     this.copy(geometry = newGeometry)
-  }
-
-  def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    val calibrationPointSource = if (id == noRoadwayId || id == NewIdValue) ProjectLinkSource else RoadAddressSource
-    calibrationPoints match {
-      case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)))
-      case (Some(cp1), None) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)), Option.empty[ProjectLinkCalibrationPoint])
-      case (Some(cp1), Some(cp2)) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)), Option(ProjectLinkCalibrationPoint(cp2.linkId, cp2.segmentMValue, cp2.addressMValue, calibrationPointSource)))
-    }
   }
 
   def getFirstPoint: Point = {

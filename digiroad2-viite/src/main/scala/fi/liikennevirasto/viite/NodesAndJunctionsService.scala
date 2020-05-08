@@ -320,7 +320,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       * @param roadsFrom        roads starting in the current road address r
       */
     def createJunctionAndJunctionPointIfNeeded(target: BaseRoadAddress, existingJunctionId: Option[Long] = None, pos: BeforeAfter, addr: Long,
-                                               roadsTo: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress], roadsFrom: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress]): Unit = {
+                                               roadsTo: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress], roadsFrom: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress]): Option[(Long, Long, CalibrationPointLocation)] = {
       val roadwayPointId = getRoadwayPointId(target.roadwayNumber, addr, username)
       val existingJunctionPoint = junctionPointDAO.fetchByRoadwayPoint(target.roadwayNumber, addr, pos)
 
@@ -339,13 +339,15 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
         logger.info(s"Creating JunctionPoint with junctionId: $junctionId, beforeAfter: ${pos.value}, addrM: $addr for roadwayNumber: ${target.roadwayNumber}, (${target.roadNumber}, ${target.roadPartNumber}, ${target.track}, $addr)")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, pos, roadwayPointId, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), target.roadwayNumber, addr, target.roadNumber, target.roadPartNumber, target.track, target.discontinuity)))
-        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, target.linkId, CalibrationPointLocation.apply(pos), CalibrationPointType.JunctionPointCP, username)
+        Some((roadwayPointId, target.linkId, CalibrationPointLocation.apply(pos)))
+      } else {
+        None
       }
     }
 
     time(logger, "Handling junction point templates") {
       val nonTerminatedLinks: Seq[BaseRoadAddress] = projectLinks.filter(pl => RoadClass.forJunctions.contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
-      nonTerminatedLinks.foreach { projectLink =>
+      val junctionCalibrationPoints: Set[(Long, Long, CalibrationPointLocation)] = nonTerminatedLinks.flatMap { projectLink =>
         val roadNumberLimits = Seq((RoadClass.forJunctions.start, RoadClass.forJunctions.end))
 
         val roadsInFirstPoint: Seq[BaseRoadAddress] = roadwayAddressMapper.getRoadAddressesByBoundingBox(BoundingRectangle(projectLink.startingPoint, projectLink.startingPoint), roadNumberLimits).filterNot(_.linearLocationId == projectLink.linearLocationId)
@@ -454,38 +456,45 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         }
 
         // handle junction points for each project links
-        if ((roadsToHead ++ roadsFromHead).nonEmpty) {
+        val startCp: Option[(Long, Long, CalibrationPointLocation)] = if ((roadsToHead ++ roadsFromHead).nonEmpty) {
           createJunctionAndJunctionPointIfNeeded(projectLink, pos = BeforeAfter.After, addr = projectLink.startAddrMValue,
             roadsTo = roadsToHead.filter(_.endPoint.connected(projectLink.startingPoint)),
             roadsFrom = roadsFromHead.filter(_.startingPoint.connected(projectLink.startingPoint)))
-        }
+        } else { None }
 
-        if ((roadsToTail ++ roadsFromTail).nonEmpty) {
+        val endCp: Option[(Long, Long, CalibrationPointLocation)] = if ((roadsToTail ++ roadsFromTail).nonEmpty) {
           createJunctionAndJunctionPointIfNeeded(projectLink, pos = BeforeAfter.Before, addr = projectLink.endAddrMValue,
             roadsTo = roadsToTail.filter(_.endPoint.connected(projectLink.endPoint)),
             roadsFrom = roadsFromTail.filter(_.startingPoint.connected(projectLink.endPoint)))
-        }
+        } else { None }
 
         // handle junction points for other roads, connected to each project link
-        roadsToHead.foreach { roadAddress: BaseRoadAddress =>
+        val toHeadCp = roadsToHead.flatMap { roadAddress: BaseRoadAddress =>
           val junctionId = getJunctionIdIfConnected(roadAddress.endPoint, projectLink.startingPoint, roadwayNumber = projectLink.roadwayNumber, addr = projectLink.startAddrMValue, pos = BeforeAfter.After)
           createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.Before, roadAddress.endAddrMValue)
         }
 
-        roadsFromHead.foreach { roadAddress: BaseRoadAddress =>
+        val fromHeadCp = roadsFromHead.flatMap { roadAddress: BaseRoadAddress =>
           val junctionId = getJunctionIdIfConnected(roadAddress.startingPoint, projectLink.startingPoint, roadwayNumber = projectLink.roadwayNumber, addr = projectLink.startAddrMValue, pos = BeforeAfter.After)
           createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.After, roadAddress.startAddrMValue)
         }
 
-        roadsToTail.foreach { roadAddress: BaseRoadAddress =>
+        val toTailCp = roadsToTail.flatMap { roadAddress: BaseRoadAddress =>
           val junctionId = getJunctionIdIfConnected(roadAddress.endPoint, projectLink.endPoint, roadwayNumber = projectLink.roadwayNumber, addr = projectLink.endAddrMValue, pos = BeforeAfter.Before)
           createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.Before, roadAddress.endAddrMValue)
         }
 
-        roadsFromTail.foreach { roadAddress: BaseRoadAddress =>
+        val fromTailCp = roadsFromTail.flatMap { roadAddress: BaseRoadAddress =>
           val junctionId = getJunctionIdIfConnected(roadAddress.startingPoint, projectLink.endPoint, roadwayNumber = projectLink.roadwayNumber, addr = projectLink.endAddrMValue, pos = BeforeAfter.Before)
           createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.After, roadAddress.startAddrMValue)
         }
+
+        startCp ++ endCp ++ toHeadCp ++ fromHeadCp ++ toTailCp ++ fromTailCp
+      }.toSet
+
+      // handle junction calibration points
+      junctionCalibrationPoints.foreach { case (rwPoint, linkId, calibrationPointLocation) =>
+        CalibrationPointsUtils.createCalibrationPointIfNeeded(rwPoint, linkId, calibrationPointLocation, CalibrationPointType.JunctionPointCP, username)
       }
     }
   }
