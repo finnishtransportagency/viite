@@ -673,38 +673,4 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test setCalibrationPoints When links in the middle have calibration point created by junction Then they should preserve it in the right place"){
-    runWithRollback {
-      //                                         Road 1
-      //                 (0, 0)      (2, 0)      (4, 0)     (6, 0)    (8, 0)
-      //                   |---------->|---------->|--------->|-------->|
-      //                        1L          2L     ^    3l         4L
-      //                                           |
-      //                                           | Road 2
-      val roadwayNumber = 11111111111l
-      val (linkId1, linkId2, linkId3, linkId4) = (11111111111l, 22222222222l, 33333333333l, 44444444444l)
-      val ids = linearLocationDAO.create(Seq(
-        testLinearLocation.copy(linkId = linkId1, roadwayNumber = roadwayNumber),
-        testLinearLocation.copy(linkId = linkId2, roadwayNumber = roadwayNumber),
-        testLinearLocation.copy(linkId = linkId3, roadwayNumber = roadwayNumber),
-        testLinearLocation.copy(linkId = linkId4, roadwayNumber = roadwayNumber)
-      ))
-
-      sqlu"""Insert into ROADWAY_POINT (ID,ROADWAY_NUMBER,ADDR_M,CREATED_BY,CREATED_TIME,MODIFIED_BY,MODIFIED_TIME) values ('10000', '11111111111','4','import',to_timestamp('27.12.2019 13:12:50','DD.MM.RRRR HH24:MI:SSXFF'),'import',to_timestamp('27.12.2019 13:12:50','DD.MM.RRRR HH24:MI:SS'))""".execute
-      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('12345','10000','22222222222','1','2',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
-      sqlu"""Insert into CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,TYPE,VALID_FROM,VALID_TO,CREATED_BY,CREATED_TIME) values ('12346','10000','33333333333','0','2',to_date('27.12.2019','DD.MM.RRRR'),null,'import',to_timestamp('27.12.2019 13:12:51','DD.MM.RRRR HH24:MI:SS'))""".execute
-      sqlu"""insert into JUNCTION (ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, CREATED_BY)
-      values ('200', '99', null, to_timestamp('27.12.2019 13:12:50','DD.MM.RRRR HH24:MI:SSXFF'), null, 'user')""".execute
-      sqlu"""insert into JUNCTION_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, JUNCTION_ID, CREATED_BY)
-      values ('100', '1', '10000', '200', 'user')""".execute
-      sqlu"""insert into JUNCTION_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, JUNCTION_ID, CREATED_BY)
-      values ('101', '2', '10000', '200', 'user')""".execute
-
-
-      val junctionCPs: Map[Long, CalibrationCode] = linearLocationDAO.getJunctionDefinedCalibrationPoints(ids)
-      junctionCPs.get(ids.tail.head) should be (Some(CalibrationCode.AtEnd))
-      junctionCPs.get(ids.tail.tail.head) should be (Some(CalibrationCode.AtBeginning))
-    }
-  }
-
 }

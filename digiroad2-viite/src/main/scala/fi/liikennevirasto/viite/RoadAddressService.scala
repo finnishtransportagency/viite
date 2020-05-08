@@ -11,7 +11,6 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.AddressChangeType.{ReNumeration, Termination, Transfer, Unchanged}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
-import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.{RoadwayPointDAO, _}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
@@ -484,8 +483,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     */
   def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long]): Seq[RoadAddress] = {
     val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
-    val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
-    roadAddresses
+    roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
   }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
@@ -646,7 +644,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
 
     handleTerminatedCalibrationPointRoads(terminated)
-    handleCalibrationPoints(linearLocations.filterNot(l => terminated.map(_.linearLocationId).contains(l.id)), username)
+    handleCalibrationPoints(linearLocations, username)
   }
 
   def handleCalibrationPoints(linearLocations: Iterable[LinearLocation], username: String = "-"): Unit = {
@@ -694,7 +692,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               logger.info(s"Creating roadway point for start calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.startCalibrationPoint.addrM.get}")
               roadwayPointDAO.create(cal.roadwayNumber, cal.startCalibrationPoint.addrM.get, username)
           }
-        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, username)
+        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.StartOfLink, cal.startCalibrationPointType, username)
     }
     endCalibrationPointsToCheck.foreach {
       cal =>
@@ -706,33 +704,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
               logger.info(s"Creating roadway point for end calibration point: roadway number: ${cal.roadwayNumber}, address: ${cal.endCalibrationPoint.addrM.get}")
               roadwayPointDAO.create(cal.roadwayNumber, cal.endCalibrationPoint.addrM.get, username)
           }
-        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP, username)
+        CalibrationPointsUtils.createCalibrationPointIfNeeded(roadwayPointId, cal.linkId, CalibrationPointLocation.EndOfLink, cal.endCalibrationPointType, username)
     }
   }
 
-  /*
-   Should only expire calibration points that existed only due to existing junction places, not because road places
+  /**
+    * Should only expire junction calibration points
+    * @param junctionPoints
     */
   def expireObsoleteCalibrationPointsInJunctions(junctionPoints: Seq[JunctionPoint]): Unit = {
-    junctionPoints.foreach { jp =>
-      val roadPartAddressSection: Seq[RoadAddress] = roadwayAddressMapper.getCurrentRoadAddressesBySection(jp.roadNumber, jp.roadPartNumber)
-
-      val roadsInAddr = roadPartAddressSection.filter(ra => ra.startAddrMValue == jp.addrM || ra.endAddrMValue == jp.addrM).sortBy(_.startAddrMValue)
-
-      roadsInAddr.size match {
-        case 0 => //if None then if was probably already expired due to Termination in road
-        case 1 => //if only one found then the addr is in the beginning/end of roadpart
-        case _ =>
-          val (curr, next) = (roadsInAddr.head, roadsInAddr.last)
-          if (curr.roadType == next.roadType && curr.track == next.track && curr.roadNumber == next.roadNumber && curr.roadPartNumber == next.roadPartNumber
-            && curr.discontinuity != Discontinuous && curr.discontinuity != MinorDiscontinuity && curr.discontinuity != ParallelLink) {
-            val ids = CalibrationPointDAO.fetchByRoadwayPointInExpiredJunctionPoint(jp.roadwayPointId, jp.addrM)
-            if (ids.nonEmpty) {
-              logger.info(s"Expiring calibration point ids: ${ids.mkString(", ")}")
-              CalibrationPointDAO.expireById(ids)
-            }
-          }
-      }
+    val obsoleteCalibrationPointsIds = CalibrationPointDAO.fetchByRoadwayPointIds(junctionPoints.map(_.roadwayPointId)).filter(_.typeCode == CalibrationPointType.JunctionPointCP).map(_.id)
+    if (obsoleteCalibrationPointsIds.nonEmpty) {
+      logger.info(s"Expiring calibration point ids: ${obsoleteCalibrationPointsIds.mkString(", ")}")
+      CalibrationPointDAO.expireById(obsoleteCalibrationPointsIds)
     }
   }
 

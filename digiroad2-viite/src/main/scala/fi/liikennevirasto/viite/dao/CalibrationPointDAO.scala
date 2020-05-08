@@ -10,8 +10,6 @@ import fi.liikennevirasto.viite.NewIdValue
 
 object CalibrationPointDAO {
 
-  case class CalibrationPointLike(addrM: Option[Long], typeCode: Option[CalibrationPointType], startOrEnd: Option[CalibrationPointLocation]) {}
-
   trait CalibrationPointType extends Ordered[CalibrationPointType] {
     def value: Int
     def compare(that: CalibrationPointType): Int = {
@@ -20,15 +18,17 @@ object CalibrationPointDAO {
   }
 
   object CalibrationPointType {
-    val values = Set(UserDefinedCP, JunctionPointCP, RoadAddressCP)
+    val values = Set(NoCP, UserDefinedCP, JunctionPointCP, RoadAddressCP, UnknownCP)
 
     def apply(intValue: Int): CalibrationPointType = {
-      values.find(_.value == intValue).getOrElse(UserDefinedCP)
+      values.find(_.value == intValue).getOrElse(UnknownCP)
     }
 
-    case object UserDefinedCP extends CalibrationPointType {def value = 0}
-    case object JunctionPointCP extends CalibrationPointType {def value = 1}
-    case object RoadAddressCP extends CalibrationPointType {def value = 2}
+    case object NoCP extends CalibrationPointType {def value = 0}
+    case object UserDefinedCP extends CalibrationPointType {def value = 1}
+    case object JunctionPointCP extends CalibrationPointType {def value = 2}
+    case object RoadAddressCP extends CalibrationPointType {def value = 3}
+    case object UnknownCP extends CalibrationPointType {def value = 99}
   }
 
   trait CalibrationPointLocation {
@@ -138,6 +138,22 @@ object CalibrationPointDAO {
           WHERE cp.roadway_point_id = $roadwayPointId AND cp.valid_to is null
       """
     queryList(query)
+  }
+
+  def fetchByRoadwayPointIds(roadwayPointIds: Seq[Long]): Seq[CalibrationPoint] = {
+    if (roadwayPointIds.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+          SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, CP.TYPE, VALID_FROM, VALID_TO,
+            CP.CREATED_BY, CP.CREATED_TIME
+          FROM CALIBRATION_POINT CP
+          JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID
+          WHERE cp.roadway_point_id in (${roadwayPointIds.mkString(", ")}) AND cp.valid_to is null
+        """
+      queryList(query)
+    }
   }
 
   def fetchIdByRoadwayNumberSection(roadwayNumber: Long, startAddr: Long, endAddr: Long): Set[Long] = {

@@ -35,7 +35,7 @@ trait BaseLinearLocation {
 
   def adjustedTimestamp: Long
 
-  def calibrationPoints: (CalibrationPointReference, CalibrationPointReference)
+  def calibrationPoints: (CalibrationPointReference, CalibrationPointReference) // TODO These should be optional and the values in CPR should not be optional
 
   def geometry: Seq[Point]
 
@@ -82,6 +82,12 @@ trait BaseLinearLocation {
 
   lazy val startCalibrationPoint: CalibrationPointReference = calibrationPoints._1
   lazy val endCalibrationPoint: CalibrationPointReference = calibrationPoints._2
+
+  def startCalibrationPointType: CalibrationPointType =
+    if (startCalibrationPoint.typeCode.isDefined) startCalibrationPoint.typeCode.get else CalibrationPointType.NoCP
+
+  def endCalibrationPointType: CalibrationPointType =
+    if (endCalibrationPoint.typeCode.isDefined) endCalibrationPoint.typeCode.get else CalibrationPointType.NoCP
 }
 
 case class CalibrationPointReference(addrM: Option[Long], typeCode: Option[CalibrationPointType] = Option.empty) {
@@ -146,10 +152,10 @@ class LinearLocationDAO {
   val selectFromLinearLocation =
     """
        SELECT loc.ID, loc.ROADWAY_NUMBER, loc.ORDER_NUMBER, loc.LINK_ID, loc.START_MEASURE, loc.END_MEASURE, loc.SIDE,
-              (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_addr_m,
-              (SELECT CP."TYPE" FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_type,
-              (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_addr_m,
-              (SELECT CP."TYPE" FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_type,
+              (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_addr_m,
+              (SELECT CP."TYPE" FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_type,
+              (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_addr_m,
+              (SELECT CP."TYPE" FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_type,
               link.SOURCE, link.ADJUSTED_TIMESTAMP, geometry, loc.valid_from, loc.valid_to
         FROM LINEAR_LOCATION loc
         JOIN LINK link ON (link.ID = loc.LINK_ID)
@@ -689,37 +695,6 @@ class LinearLocationDAO {
       withRoadNumbersFilter(roadNumbers.tail, alias, filterAdd)
     else
       withRoadNumbersFilter(roadNumbers.tail, alias,s"""$filter OR $filterAdd""")
-  }
-
-
-  /*
-    CalibrationPointLocation: StartOfLink = 0
-    CalibrationPointLocation: EndOfLink = 1
-    CalibrationCode: AtEnd = 1
-    CalibrationCode: AtBeginning = 2
-    CalibrationCode: AtBoth = 3
-   */
-  def getJunctionDefinedCalibrationPoints(linearLocationIds: Seq[Long]): Map[Long, CalibrationCode] = {
-    if (linearLocationIds.isEmpty) {
-      Map()
-    } else {
-      val query =
-        s"""SELECT DISTINCT loc.ID,
-             (CASE
-             WHEN (SELECT count(distinct(cp.id)) FROM CALIBRATION_POINT WHERE LINK_ID = loc.LINK_ID AND cp.VALID_TO IS null) > 1 THEN 3
-             WHEN (SELECT count(distinct(cp.id)) FROM CALIBRATION_POINT WHERE LINK_ID = loc.LINK_ID AND START_END = 0 AND cp.VALID_TO IS null) = 1 THEN 2
-             WHEN (SELECT count(distinct(cp.id)) FROM CALIBRATION_POINT WHERE LINK_ID = loc.LINK_ID AND START_END = 1 AND cp.VALID_TO IS null) = 1 THEN 1
-             ELSE 0
-             END) AS calibrationCode
-             FROM LINEAR_LOCATION loc
-             JOIN CALIBRATION_POINT cp ON (loc.LINK_ID = cp.LINK_ID AND cp.VALID_TO IS NULL)
-             JOIN JUNCTION_POINT jp ON (jp.ROADWAY_POINT_ID = cp.ROADWAY_POINT_ID)
-             JOIN JUNCTION J ON (jp.junction_id = j.id)
-             WHERE loc.id in (${linearLocationIds.mkString(",")}) AND loc.VALID_TO IS NULL AND jp.VALID_TO IS NULL AND j.valid_to IS NULL and j.end_date IS NULL"""
-      Q.queryNA[(Long, Int)](query).list.map {
-        case (id, code) => id -> CalibrationCode(code)
-      }.toMap
-    }
   }
 
 }

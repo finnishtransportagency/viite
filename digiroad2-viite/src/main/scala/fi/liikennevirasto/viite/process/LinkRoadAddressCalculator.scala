@@ -2,11 +2,12 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
-import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectLink, RoadAddress}
+import fi.liikennevirasto.viite.dao.{BaseRoadAddress, ProjectLink, RoadAddress}
 
 trait LinkRoadAddressCalculator {
   def recalculate[T <: BaseRoadAddress](addressList: Seq[T]): Seq[T]
 }
+
 object LinkRoadAddressCalculator {
   /**
     * Recalculate road address mapping to links for one road. This should only be run after ContinuityChecker has been
@@ -17,7 +18,7 @@ object LinkRoadAddressCalculator {
   def recalculate[T <: BaseRoadAddress](addressList: Seq[T]): Seq[T] = {
     if (!addressList.forall(ra => ra.roadNumber == addressList.head.roadNumber))
       throw new InvalidAddressDataException("Multiple road numbers present in source data")
-    addressList.groupBy(_.roadPartNumber).flatMap{ case (_, seq) => recalculatePart(seq) }.toSeq
+    addressList.groupBy(_.roadPartNumber).flatMap { case (_, seq) => recalculatePart(seq) }.toSeq
   }
 
   /**
@@ -33,6 +34,7 @@ object LinkRoadAddressCalculator {
       recalculateTrack(trackOne) ++
       recalculateTrack(trackTwo)
   }
+
   private def recalculateTrack[T <: BaseRoadAddress](addressList: Seq[T]): Seq[T] = {
     val groupedList = addressList.groupBy(_.roadPartNumber)
     groupedList.mapValues {
@@ -67,7 +69,7 @@ object LinkRoadAddressCalculator {
   }
 
   private def adjustGeometry[T <: BaseRoadAddress](segments: Seq[T], startingCP: BaseCalibrationPoint, endingCP: BaseCalibrationPoint): Seq[T] = {
-    val newGeom = segments.scanLeft((0.0, 0.0))({ case (runningLen, address) => (runningLen._2, runningLen._2 + linkLength(address))}).tail
+    val newGeom = segments.scanLeft((0.0, 0.0))({ case (runningLen, address) => (runningLen._2, runningLen._2 + linkLength(address)) }).tail
     val coefficient = (endingCP.addressMValue - startingCP.addressMValue) / newGeom.last._2
     segments.zip(newGeom).map {
       case (t, (cumStart, cumEnd)) =>
