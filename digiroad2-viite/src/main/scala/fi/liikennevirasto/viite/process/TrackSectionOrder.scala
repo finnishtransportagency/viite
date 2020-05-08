@@ -133,10 +133,9 @@ object TrackSectionOrder {
     def adjust(pl: ProjectLink, sideCode: Option[SideCode] = None, startAddrMValue: Option[Long] = None,
                endAddrMValue: Option[Long] = None, startCalibrationPoint: Option[Option[CalibrationPoint]] = None,
                endCalibrationPoint: Option[Option[CalibrationPoint]] = None) = {
-      val startCPType = if (pl.originalStartCalibrationPointType == NoCP) RoadAddressCP else pl.startCalibrationPointType
-      val endCPType = if (pl.originalEndCalibrationPointType == NoCP) RoadAddressCP else pl.endCalibrationPointType
       pl.copy(sideCode = sideCode.getOrElse(pl.sideCode), startAddrMValue = startAddrMValue.getOrElse(pl.startAddrMValue),
-        endAddrMValue = endAddrMValue.getOrElse(pl.endAddrMValue), calibrationPointTypes = (startCPType, endCPType)
+        endAddrMValue = endAddrMValue.getOrElse(pl.endAddrMValue),
+        calibrationPointTypes = (pl.startCalibrationPointType, pl.endCalibrationPointType)
       )
     }
 
