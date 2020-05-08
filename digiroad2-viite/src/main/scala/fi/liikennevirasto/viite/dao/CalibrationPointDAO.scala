@@ -10,8 +10,6 @@ import fi.liikennevirasto.viite.NewIdValue
 
 object CalibrationPointDAO {
 
-  case class CalibrationPointLike(addrM: Option[Long], typeCode: Option[CalibrationPointType], startOrEnd: Option[CalibrationPointLocation]) {}
-
   trait CalibrationPointType extends Ordered[CalibrationPointType] {
     def value: Int
     def compare(that: CalibrationPointType): Int = {
