@@ -3,7 +3,6 @@ package fi.liikennevirasto.viite.util
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
 import fi.liikennevirasto.viite.dao._
@@ -13,64 +12,21 @@ object CalibrationPointsUtils {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def calibrations(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType, linkId: Long, startMValue: Double, endMValue: Double,
-                   startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-    sideCode match {
+  def toCalibrationPoints(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType,
+                          linkId: Long, startMValue: Double, endMValue: Double, startAddrMValue: Long,
+                          endAddrMValue: Long, sideCode: SideCode):
+  (Option[CalibrationPoint], Option[CalibrationPoint]) = {
+    (sideCode: SideCode) match {
       case BothDirections => (None, None) // Invalid choice
       case TowardsDigitizing => (
-        if (startCalibrationPoint != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId, 0.0, startAddrMValue, startCalibrationPoint)) else None,
-        if (endCalibrationPoint != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId, endMValue - startMValue, endAddrMValue, endCalibrationPoint)) else None
+        if ((startCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: Long, 0.0, startAddrMValue: Long, startCalibrationPoint: CalibrationPointType)) else None,
+        if ((endCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: Long, (endMValue: Double) - (startMValue: Double), endAddrMValue: Long, endCalibrationPoint: CalibrationPointType)) else None
       )
       case AgainstDigitizing => (
-        if (startCalibrationPoint != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId, endMValue - startMValue, startAddrMValue, startCalibrationPoint)) else None,
-        if (endCalibrationPoint != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId, 0.0, endAddrMValue, endCalibrationPoint)) else None
+        if ((startCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: Long, (endMValue: Double) - (startMValue: Double), startAddrMValue: Long, startCalibrationPoint: CalibrationPointType)) else None,
+        if ((endCalibrationPoint: CalibrationPointType) != CalibrationPointType.NoCP) Some(CalibrationPoint(linkId: Long, 0.0, endAddrMValue: Long, endCalibrationPoint: CalibrationPointType)) else None
       )
-      case Unknown => (None, None)  // Invalid choice
-    }
-  }
-
-  def projectLinkCalibrationPoints(startCalibrationPoint: CalibrationPointType, endCalibrationPoint: CalibrationPointType,
-                                   linkId: Long, startMValue: Double, endMValue: Double, startAddrMValue: Long,
-                                   endAddrMValue: Long, sideCode: SideCode):
-  (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    toProjectLinkCalibrationPoints(calibrations(startCalibrationPoint: CalibrationPointType,
-      endCalibrationPoint: CalibrationPointType, linkId: Long, startMValue: Double, endMValue: Double,
-      startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode))
-  }
-
-  def toProjectLinkCalibrationPointWithTypeInfo(originalCalibrationPoint: BaseCalibrationPoint, typeCode: CalibrationPointType): ProjectLinkCalibrationPoint = {
-    ProjectLinkCalibrationPoint(originalCalibrationPoint.linkId, originalCalibrationPoint.segmentMValue, originalCalibrationPoint.addressMValue, typeCode)
-  }
-
-  def toProjectLinkCalibrationPoints(originalCalibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])):
-  (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-
-    originalCalibrationPoints match {
-      case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-      case (Some(cp), None) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp, cp.typeCode)), Option.empty[ProjectLinkCalibrationPoint])
-      case (None, Some(cp)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPointWithTypeInfo(cp, cp.typeCode)))
-      case (Some(cp1), Some(cp2)) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp1, cp1.typeCode)), Option(toProjectLinkCalibrationPointWithTypeInfo(cp2, cp2.typeCode)))
-    }
-  }
-
-  def toProjectLinkCalibrationPointTypes(originalCalibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])):
-  (CalibrationPointType, CalibrationPointType) = {
-
-    originalCalibrationPoints match {
-      case (None, None) => (NoCP, NoCP)
-      case (Some(cp), None) => (cp.typeCode, NoCP)
-      case (None, Some(cp)) => (NoCP, cp.typeCode)
-      case (Some(cp1), Some(cp2)) => (cp1.typeCode, cp2.typeCode)
-    }
-  }
-
-  def toProjectLinkCalibrationPointsWithTypeInfo(originalCalibrationPoints: (Option[BaseCalibrationPoint], Option[BaseCalibrationPoint]),
-                                                 startType: CalibrationPointType, endType: CalibrationPointType): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    originalCalibrationPoints match {
-      case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-      case (Some(cp), None) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp, startType)), Option.empty[ProjectLinkCalibrationPoint])
-      case (None, Some(cp)) => (Option.empty[ProjectLinkCalibrationPoint], Option(toProjectLinkCalibrationPointWithTypeInfo(cp, endType)))
-      case (Some(cp1), Some(cp2)) => (Option(toProjectLinkCalibrationPointWithTypeInfo(cp1, startType)), Option(toProjectLinkCalibrationPointWithTypeInfo(cp2, endType)))
+      case Unknown => (None, None) // Invalid choice
     }
   }
 
@@ -144,7 +100,7 @@ object CalibrationPointsUtils {
     }
   }
 
-  def toCalibrationPointReference(cp: Option[ProjectLinkCalibrationPoint]): CalibrationPointReference = {
+  def toCalibrationPointReference(cp: Option[CalibrationPoint]): CalibrationPointReference = {
     cp match {
       case Some(x) =>
         CalibrationPointReference(

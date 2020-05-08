@@ -81,7 +81,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   }
 
   def dummyProjectLink(id: Long, projectId: Long, linkId: Long, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadNumber: Long = roadNumber1, roadPartNumber: Long = roadPartNumber1, startAddrMValue: Long, endAddrMValue: Long,
-                       startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = (None, None),
+                       startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                        geometry: Seq[Point] = Seq(), status: LinkStatus, roadType: RoadType, reversed: Boolean, linearLocationId: Long, connectedLinkId: Option[Long] = None, track: Track = Track.Combined): ProjectLink =
     ProjectLink(id, roadNumber, roadPartNumber, track,
       Discontinuity.Continuous, startAddrMValue, endAddrMValue, startAddrMValue, endAddrMValue, Some(DateTime.parse("1901-01-01")),
@@ -149,11 +149,11 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val projectLinks = Seq(
         dummyProjectLink(projectLinkId1, projectId, linkId1, roadwayIds.head, roadwayNumber1,
           roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None,
-          (Some(ProjectLinkCalibrationPoint(linkId1, 0.0, 0, RoadAddressCP)), None), Seq(), LinkStatus.New, RoadType.PublicRoad, reversed = false, 0)
+          (Some(CalibrationPoint(linkId1, 0.0, 0, RoadAddressCP)), None), Seq(), LinkStatus.New, RoadType.PublicRoad, reversed = false, 0)
           .copy(originalCalibrationPointTypes = (NoCP, NoCP)),
         dummyProjectLink(projectLinkId2, projectId, linkId2, roadwayIds.head, roadwayNumber1,
           roadNumber1, roadPartNumber1, 100, 200, 0.0, 100.0, None,
-          (None, Some(ProjectLinkCalibrationPoint(linkId2, 100.0, 200, RoadAddressCP))), Seq(), LinkStatus.New, RoadType.PublicRoad, reversed = false, 0)
+          (None, Some(CalibrationPoint(linkId2, 100.0, 200, RoadAddressCP))), Seq(), LinkStatus.New, RoadType.PublicRoad, reversed = false, 0)
           .copy(originalCalibrationPointTypes = (NoCP, NoCP))
       )
       projectLinkDAO.create(projectLinks)

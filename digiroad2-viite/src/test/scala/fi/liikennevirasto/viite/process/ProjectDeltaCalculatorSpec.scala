@@ -55,10 +55,6 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       None, 748800L)
   }
 
-  private def createCalibrationPoints(a: RoadAddress): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    (Some(ProjectLinkCalibrationPoint(a.linkId, a.endMValue, a.endAddrMValue, RoadAddressCP)), Some(ProjectLinkCalibrationPoint(a.linkId, a.endMValue, a.endAddrMValue, RoadAddressCP)))
-  }
-
   test("Test ProjectDeltaCalculator.partition When executing multiple transfers on single road part Then returns the correct From RoadSection -> To RoadSection mapping.") {
     val transfer1 = (0 to 10).map(x => (createRoadAddress(x * 10, 10), createTransferProjectLink(x * 10, 10)))
     val transfer2 = (12 to 15).map(x => (createRoadAddress(x * 10, 10), createTransferProjectLink(x * 10, 10)))
