@@ -523,7 +523,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             } else {
               logger.info(s"Expired calculated node point ${np.id}")
               nodePointDAO.expireById(Seq(np.id))
-              // TODO VIITE-2398 reverse case needs to be tested
               nodePointDAO.create(Seq(np.copy(id = id, nodePointType = RoadNodePoint, beforeAfter = BeforeAfter.switch(np.beforeAfter, when = reversed))))
             }
           }
@@ -539,7 +538,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val filteredLinks = projectLinks.filter(pl => RoadClass.forNodes.contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated).filterNot(_.track == Track.LeftSide)
         val groupSections = filteredLinks.groupBy(l => (l.roadNumber, l.roadPartNumber))
 
-        groupSections.foreach { case (_, group) =>
+        groupSections.values.foreach { group =>
           val roadTypeSections: Seq[Seq[ProjectLink]] = continuousNodeSections(group.sortBy(_.startAddrMValue))._2
           roadTypeSections.foreach { section =>
 
