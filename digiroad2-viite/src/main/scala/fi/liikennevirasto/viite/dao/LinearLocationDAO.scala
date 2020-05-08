@@ -83,8 +83,11 @@ trait BaseLinearLocation {
   lazy val startCalibrationPoint: CalibrationPointReference = calibrationPoints._1
   lazy val endCalibrationPoint: CalibrationPointReference = calibrationPoints._2
 
-  def startCalibrationPointType: CalibrationPointType = if (startCalibrationPoint.typeCode.isDefined) startCalibrationPoint.typeCode.get else CalibrationPointType.NoCP
-  def endCalibrationPointType: CalibrationPointType = if (endCalibrationPoint.typeCode.isDefined) endCalibrationPoint.typeCode.get else CalibrationPointType.NoCP
+  def startCalibrationPointType: CalibrationPointType =
+    if (startCalibrationPoint.typeCode.isDefined) startCalibrationPoint.typeCode.get else CalibrationPointType.NoCP
+
+  def endCalibrationPointType: CalibrationPointType =
+    if (endCalibrationPoint.typeCode.isDefined) endCalibrationPoint.typeCode.get else CalibrationPointType.NoCP
 }
 
 case class CalibrationPointReference(addrM: Option[Long], typeCode: Option[CalibrationPointType] = Option.empty) {

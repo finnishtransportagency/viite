@@ -146,11 +146,12 @@ object CalibrationPointDAO {
     } else {
       val query =
         s"""
-        SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, CP.TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
-        FROM CALIBRATION_POINT CP
-        JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID
+          SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, CP.TYPE, VALID_FROM, VALID_TO,
+            CP.CREATED_BY, CP.CREATED_TIME
+          FROM CALIBRATION_POINT CP
+          JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID
           WHERE cp.roadway_point_id in (${roadwayPointIds.mkString(", ")}) AND cp.valid_to is null
-      """
+        """
       queryList(query)
     }
   }
