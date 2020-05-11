@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import org.joda.time.DateTime
@@ -142,14 +142,25 @@ class NodePointDAO extends BaseDAO {
   }
 
   def fetchByNodeNumbers(nodeNumbers: Seq[Long]): Seq[NodePoint] = {
-    if (nodeNumbers.isEmpty) Seq()
-    else {
-      val query =
+    if (nodeNumbers.isEmpty) {
+      Seq()
+    } else {
+      val query = if (nodeNumbers.size > 1000) {
+        MassQuery.withIds(nodeNumbers) {
+          idTableName =>
+            s"""
+              $selectFromNodePoint
+              join $idTableName i on i.id = N.node_number
+              where NP.valid_to is null and rw.end_date is null
+            """
+        }
+      } else {
         s"""
-         $selectFromNodePoint
-         where N.node_number in (${nodeNumbers.mkString(", ")}) and NP.valid_to is null
-         and rw.end_date is null
-       """
+          $selectFromNodePoint
+          where N.node_number in (${nodeNumbers.mkString(", ")}) and NP.valid_to is null
+          and rw.end_date is null
+        """
+      }
       queryList(query)
     }
   }
