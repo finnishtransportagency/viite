@@ -555,16 +555,16 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             val headReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && headProjectLink.startAddrMValue == ch.changeInfo.target.startAddressM.get && ch.changeInfo.reversed)
 
             val headNodePoint = mappedRoadwayNumbers.find { rl =>
-              headProjectLink.startAddrMValue == rl.newStartAddr && headProjectLink.endAddrMValue == rl.newEndAddr && headProjectLink.roadwayNumber == rl.newRoadwayNumber
-            }.flatMap { rl =>
-              if (headReversed) {
-                nodePointDAO.fetchByRoadwayNumbers(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber))
-                  .find(np => np.beforeAfter == Before && np.addrM == rl.newStartAddr)
-              } else {
-                nodePointDAO.fetchByRoadwayNumbers(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber).distinct)
-                  .find(np => np.beforeAfter == After && np.addrM == headProjectLink.startAddrMValue)
-              }
+            headProjectLink.startAddrMValue == rl.newStartAddr && headProjectLink.endAddrMValue == rl.newEndAddr && headProjectLink.roadwayNumber == rl.newRoadwayNumber
+          }.flatMap { rl =>
+            if (headReversed) {
+              nodePointDAO.fetchByRoadwayNumbers(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber))
+                .find(np => np.beforeAfter == Before && np.addrM == rl.newStartAddr)
+            } else {
+              nodePointDAO.fetchByRoadwayNumbers(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber).distinct)
+                .find(np => np.beforeAfter == After && np.addrM == headProjectLink.startAddrMValue)
             }
+          }
 
             createNodePointIfNeeded(headProjectLink, headProjectLink.startAddrMValue, BeforeAfter.After, headReversed, headNodePoint)
 
@@ -738,9 +738,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         nodeDAO.create(Seq(n.copy(id = NewIdValue, endDate = endDate, createdBy = username))).head
       })
 
-      val calculatedNodePointsOfExpiredNodes = nodePointDAO.fetchByNodeNumbers(nodeNumbersToExpire)
-      logger.info(s"Expiring node points of expired nodes : $calculatedNodePointsOfExpiredNodes")
-      nodePointDAO.expireById(calculatedNodePointsOfExpiredNodes.map(_.id))
+      val nodePointsOfExpiredNodes = nodePointDAO.fetchByNodeNumbers(nodeNumbersToExpire)
+      logger.info(s"Expiring node points of expired nodes : $nodePointsOfExpiredNodes")
+      nodePointDAO.expireById(nodePointsOfExpiredNodes.map(_.id))
     }
 
     def continuousSectionByRoadType(section: Seq[ProjectLink], continuousSection: Seq[Seq[ProjectLink]] = Seq.empty): Seq[Seq[ProjectLink]] = {
