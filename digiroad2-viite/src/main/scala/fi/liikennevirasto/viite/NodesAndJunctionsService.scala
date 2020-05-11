@@ -518,11 +518,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }
     }
 
-    def createNodePointIfNeeded(projectLink: ProjectLink, addrM: Long, pos: BeforeAfter, reversed: Boolean, currentNodePoints: Option[(Seq[NodePoint], Seq[NodePoint])]): Unit = {
+    def createNodePointIfNeeded(projectLink: ProjectLink, addrM: Long, pos: BeforeAfter, reversed: Boolean, currentNodePoint: Option[NodePoint]): Unit = {
       val roadwayPointId = roadwayPointDAO.fetch(projectLink.roadwayNumber, addrM).map(_.id)
         .getOrElse(roadwayPointDAO.create(projectLink.roadwayNumber, addrM, username))
 
-      val (existingCorrect, existingWrong) = currentNodePoints.map { case (correct: Seq[NodePoint], wrong: Seq[NodePoint]) => (correct, wrong) }.getOrElse((Seq.empty, Seq.empty))
+      val (existingCorrect, existingWrong) = currentNodePoint.partition { np => np.roadwayPointId == roadwayPointId && np.beforeAfter == pos && np.addrM == addrM }
 
       if (existingWrong.nonEmpty) {
         nodePointDAO.expireById(existingWrong.map(_.id))
@@ -530,7 +530,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       if (existingCorrect.isEmpty) {
         nodePointDAO.create {
-          Seq(NodePoint(NewIdValue, pos, roadwayPointId, None, RoadNodePoint, None, None, DateTime.now(), None, username, Some(DateTime.now()), projectLink.roadwayNumber, projectLink.startAddrMValue, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.ely))
+          Seq(NodePoint(NewIdValue, pos, roadwayPointId, None, RoadNodePoint, None, None, DateTime.now(), None, username, Some(DateTime.now()), projectLink.roadwayNumber, addrM, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.ely))
         }
       }
     }
@@ -547,15 +547,15 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             val headProjectLink = section.head
             val headReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && headProjectLink.startAddrMValue == ch.changeInfo.target.startAddressM.get && ch.changeInfo.reversed)
 
-            val headNodePoint: Option[(Seq[NodePoint], Seq[NodePoint])] = mappedRoadwayNumbers.find { rl =>
+            val headNodePoint: Option[NodePoint] = mappedRoadwayNumbers.find { rl =>
               headProjectLink.startAddrMValue == rl.newStartAddr && headProjectLink.endAddrMValue == rl.newEndAddr && headProjectLink.roadwayNumber == rl.newRoadwayNumber
-            }.map { rl =>
+            }.flatMap { rl =>
               if (headReversed) {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber))
-                  .partition(np => np.beforeAfter == Before && np.addrM == rl.newStartAddr)
+                  .find(np => np.beforeAfter == Before && np.addrM == rl.newStartAddr)
               } else {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, headProjectLink.roadwayNumber).distinct)
-                  .partition(np => np.beforeAfter == After && np.addrM == headProjectLink.startAddrMValue)
+                  .find(np => np.beforeAfter == After && np.addrM == headProjectLink.startAddrMValue)
               }
             }
 
@@ -566,13 +566,13 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
             val lastNodePoint = mappedRoadwayNumbers.find { rl =>
               lastLink.startAddrMValue == rl.newStartAddr && lastLink.endAddrMValue == rl.newEndAddr && lastLink.roadwayNumber == rl.newRoadwayNumber
-            }.map { rl =>
+            }.flatMap { rl =>
               if (lastReversed) {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, lastLink.roadwayNumber))
-                  .partition(np => np.beforeAfter == After && np.addrM == rl.newEndAddr)
+                  .find(np => np.beforeAfter == After && np.addrM == rl.newEndAddr)
               } else {
                 nodePointDAO.fetchRoadAddressNodePoints(Seq(rl.originalRoadwayNumber, lastLink.roadwayNumber))
-                  .partition(np => np.beforeAfter == Before && np.addrM == lastLink.endAddrMValue)
+                  .find(np => np.beforeAfter == Before && np.addrM == lastLink.endAddrMValue)
               }
             }
 
