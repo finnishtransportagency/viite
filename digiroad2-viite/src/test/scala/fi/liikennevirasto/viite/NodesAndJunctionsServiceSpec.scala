@@ -3368,7 +3368,6 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val fetchedReversedNodesPoints = reversedPls.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber)).sortBy(_.id)
       fetchedNodesPoints.size should be(fetchedReversedNodesPoints.size)
       fetchedNodesPoints.zip(fetchedReversedNodesPoints).foreach { case (before, after) =>
-        before.id should be(after.id)
         before.beforeAfter should be(BeforeAfter.switch(after.beforeAfter))
       }
     }
