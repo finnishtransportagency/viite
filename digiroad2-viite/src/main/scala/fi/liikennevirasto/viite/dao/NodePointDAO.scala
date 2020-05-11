@@ -192,16 +192,22 @@ class NodePointDAO extends BaseDAO {
   }
 
   def fetchByRoadwayNumber(roadwayNumber: Long): Seq[NodePoint] = {
-    fetchByRoadwayNumbers(Seq(roadwayNumber))
+    val query =
+      s"""
+         $selectFromNodePoint
+         where RP.roadway_number = $roadwayNumber and NP.valid_to is null
+       """
+    queryList(query)
   }
 
-  def fetchByRoadwayNumbers(roadwayNumbers: Seq[Long]): Seq[NodePoint] = {
+  def fetchRoadAddressNodePoints(roadwayNumbers: Seq[Long]): Seq[NodePoint] = {
     if (roadwayNumbers.isEmpty) Seq()
     else {
       val query =
         s"""
          $selectFromNodePoint
          where RP.roadway_number in (${roadwayNumbers.mkString(", ")}) and NP.valid_to is null
+         AND NP."TYPE" = ${NodePointType.RoadNodePoint.value}
        """
       queryList(query)
     }
@@ -316,33 +322,6 @@ class NodePointDAO extends BaseDAO {
     ps.executeBatch()
     ps.close()
     createNodePoints.map(_.id).toSeq
-  }
-
-  // TODO expire current row and create new row
-  def update(nodePoints: Iterable[NodePoint], updatedBy: String = "-"): Seq[Long] = {
-
-    val ps = dynamicSession.prepareStatement(
-      "update NODE_POINT SET BEFORE_AFTER = ?, ROADWAY_POINT_ID = ?, NODE_NUMBER = ?, VALID_TO = TO_DATE(?, 'YYYY-MM-DD') WHERE ID = ?")
-
-    nodePoints.foreach {
-      nodePoint =>
-        ps.setLong(1, nodePoint.beforeAfter.value)
-        ps.setLong(2, nodePoint.roadwayPointId)
-        if (nodePoint.nodeNumber.isDefined) {
-          ps.setLong(3, nodePoint.nodeNumber.get)
-        } else {
-          ps.setNull(3, java.sql.Types.INTEGER)
-        }
-        ps.setString(4, nodePoint.validTo match {
-          case Some(date) => dateFormatter.print(date)
-          case None => ""
-        })
-        ps.setLong(5, nodePoint.id)
-        ps.addBatch()
-    }
-    ps.executeBatch()
-    ps.close()
-    nodePoints.map(_.id).toSeq
   }
 
   /**
