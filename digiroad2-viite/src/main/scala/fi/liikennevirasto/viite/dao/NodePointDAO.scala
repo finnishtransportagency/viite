@@ -65,10 +65,6 @@ object BeforeAfter {
     }
   }
 
-  def switch(beforeAfter: BeforeAfter, when: Boolean): BeforeAfter = {
-    if (when) switch(beforeAfter) else beforeAfter
-  }
-
   case object Before extends BeforeAfter {
     def value = 1
     def acronym = "E"
