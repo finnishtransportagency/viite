@@ -147,7 +147,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val resetNewLinksIfNeed = if(newLinks.exists(_.connectedLinkId.nonEmpty)) newLinks else newLinks.map(_.copy(roadwayNumber = NewIdValue))
         val assignedNewLinks = if(groupedTransfer.size == resetNewLinksIfNeed.filterNot(_.roadwayNumber == NewIdValue).map(_.roadwayNumber).distinct.size) newLinks else splitLinksIfNeed(groupedTransfer, Seq(), resetNewLinksIfNeed, Seq(), transferLength, newLinksMValues, groupedTransfer.size)
 
-        val (right, left) = if (assignedNewLinks.exists(_.track == Track.RightSide)) (assignedNewLinks, transferLinks) else (transferLinks, assignedNewLinks)
+        val reassignedTransferRoadwayNumbers = continuousRoadwaySection(transferLinks, Sequences.nextRoadwayNumber)._1
+        val (right, left) = if (assignedNewLinks.exists(_.track == Track.RightSide)) (assignedNewLinks, reassignedTransferRoadwayNumbers) else (reassignedTransferRoadwayNumbers, assignedNewLinks)
         ((right, restRight), (left, restLeft))
       }
 

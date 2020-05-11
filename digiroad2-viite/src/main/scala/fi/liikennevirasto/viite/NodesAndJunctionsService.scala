@@ -376,7 +376,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               case Discontinuity.EndOfRoad =>
                 // Discontinuity EndOfRoad for same road number - The road ends in itself.
                 val head = roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
-                val tail = roadsInLastPoint
+                val tail = roadsInLastPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
                 (head, tail)
               case Discontinuity.MinorDiscontinuity =>
                 // Discontinuity cases for same road number
