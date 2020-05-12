@@ -1917,8 +1917,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val (enrichedProjectLinks: Seq[ProjectLink], enrichedProjectRoadLinkChanges: Seq[ProjectRoadLinkChange]) = ProjectChangeFiller.mapAddressProjectionsToLinks(
         roadwayLinks, projectLinkChanges, mappedRoadAddressesProjection)
 
-      nodesAndJunctionsService.handleJunctionTemplates(roadwayChanges, enrichedProjectLinks, enrichedProjectRoadLinkChanges, username)
-      nodesAndJunctionsService.handleNodePointTemplates(roadwayChanges, enrichedProjectLinks, enrichedProjectRoadLinkChanges, username)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(roadwayChanges, enrichedProjectLinks, enrichedProjectRoadLinkChanges, username)
+      nodesAndJunctionsService.handleNodePoints(roadwayChanges, enrichedProjectLinks, enrichedProjectRoadLinkChanges, username)
       logger.debug(s"Expiring obsolete nodes and junctions")
       val expiredJunctionPoints = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(enrichedProjectLinks, endDate, username)
       logger.debug(s"Expiring obsolete calibration points in ex junction places")

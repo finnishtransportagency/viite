@@ -187,13 +187,26 @@ class NodePointDAO extends BaseDAO {
     queryList(query)
   }
 
-  def fetchNodePoint(roadwayNumber: Long): Option[NodePoint] = {
+  def fetchByRoadwayNumber(roadwayNumber: Long): Seq[NodePoint] = {
     val query =
       s"""
          $selectFromNodePoint
          where RP.roadway_number = $roadwayNumber and NP.valid_to is null
        """
-    queryList(query).headOption
+    queryList(query)
+  }
+
+  def fetchRoadAddressNodePoints(roadwayNumbers: Seq[Long]): Seq[NodePoint] = {
+    if (roadwayNumbers.isEmpty) Seq()
+    else {
+      val query =
+        s"""
+         $selectFromNodePoint
+         where RP.roadway_number in (${roadwayNumbers.mkString(", ")}) and NP.valid_to is null
+         AND NP."TYPE" = ${NodePointType.RoadNodePoint.value}
+       """
+      queryList(query)
+    }
   }
 
   def fetchTemplatesByRoadwayNumber(roadwayNumber: Long): List[NodePoint] = {
@@ -204,12 +217,12 @@ class NodePointDAO extends BaseDAO {
         FROM NODE_POINT NP
         JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
         JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.end_date is NULL AND RW.VALID_TO IS NULL)
-        where RP.roadway_number = $roadwayNumber and NP.valid_to is null
+        where RP.roadway_number = $roadwayNumber and NP.valid_to is null and NP.node_number is null
       """
     queryList(query)
   }
 
-  def fetchNodePointsTemplates(roadwayNumbers: Set[Long]): List[NodePoint] = {
+  def fetchTemplatesByRoadwayNumbers(roadwayNumbers: Set[Long]): List[NodePoint] = {
     val query =
       if (roadwayNumbers.isEmpty) {
         ""
@@ -305,33 +318,6 @@ class NodePointDAO extends BaseDAO {
     ps.executeBatch()
     ps.close()
     createNodePoints.map(_.id).toSeq
-  }
-
-  // TODO expire current row and create new row
-  def update(nodePoints: Iterable[NodePoint], updatedBy: String = "-"): Seq[Long] = {
-
-    val ps = dynamicSession.prepareStatement(
-      "update NODE_POINT SET BEFORE_AFTER = ?, ROADWAY_POINT_ID = ?, NODE_NUMBER = ?, VALID_TO = TO_DATE(?, 'YYYY-MM-DD') WHERE ID = ?")
-
-    nodePoints.foreach {
-      nodePoint =>
-        ps.setLong(1, nodePoint.beforeAfter.value)
-        ps.setLong(2, nodePoint.roadwayPointId)
-        if (nodePoint.nodeNumber.isDefined) {
-          ps.setLong(3, nodePoint.nodeNumber.get)
-        } else {
-          ps.setNull(3, java.sql.Types.INTEGER)
-        }
-        ps.setString(4, nodePoint.validTo match {
-          case Some(date) => dateFormatter.print(date)
-          case None => ""
-        })
-        ps.setLong(5, nodePoint.id)
-        ps.addBatch()
-    }
-    ps.executeBatch()
-    ps.close()
-    nodePoints.map(_.id).toSeq
   }
 
   /**
