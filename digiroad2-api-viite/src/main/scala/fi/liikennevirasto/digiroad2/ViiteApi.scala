@@ -84,11 +84,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   private val dtf: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
+  /*
+  Roads
+   */
   val DrawMainRoadPartsOnly = 1
   val DrawRoadPartsOnly = 2
   val DrawLinearPublicRoads = 3
   val DrawPublicRoads = 4
   val DrawAllRoads = 5
+  /*
+  Nodes
+   */
+  val DrawNone = 0
+  val DrawNodes = 1
+  val DrawAll = 2
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
@@ -177,10 +186,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/nodesjunctions", operation(getNodesAndJunctions)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
-    val zoom = chooseDrawType(params.getOrElse("zoom", "5"))
+    val zoomNodes = chooseNodesDrawType(params.getOrElse("zoom", "1"))
     time(logger, s"GET request for /nodesAndJunctions") {
       params.get("bbox")
-        .map(getNodesAndJunctions(zoomLevel = zoom))
+        .map(getNodesAndJunctions(zoomLevel = zoomNodes))
         .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
     }
   }
@@ -1019,15 +1028,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   private def getNodesAndJunctions(zoomLevel: Int)(bbox: String): Map[String, Any] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
+
     zoomLevel match {
-      case DrawLinearPublicRoads | DrawLinearPublicRoads => time(logger, operationName = "nodes fetch ") {
-        Map("nodes" -> nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi))
-      }
-      case _ => time(logger, operationName = "nodes with junctions fetch") {
+      case zoom if zoom >= DrawAll => time(logger, operationName = "nodes with junctions fetch") {
         Map("nodes" -> nodesAndJunctionsService.getNodesWithJunctionByBoundingBox(boundingRectangle).toSeq.map(nodeToApi),
           "nodePointTemplates" -> nodesAndJunctionsService.getNodePointTemplatesByBoundingBox(boundingRectangle).map(nodePointTemplateToApi),
           "junctionTemplates" -> nodesAndJunctionsService.getJunctionTemplatesByBoundingBox(boundingRectangle).map(junctionTemplatesWithPointsToApi))
       }
+      case zoom if zoom >= DrawNodes => time(logger, operationName = "nodes fetch ") {
+        Map("nodes" -> nodesAndJunctionsService.getNodesByBoundingBox(boundingRectangle).map(simpleNodeToApi))
+      }
+      case _ => Map("nodes" -> Seq())
     }
   }
 
@@ -1086,6 +1097,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case C4() => DrawPublicRoads
         case C5() => DrawAllRoads
         case _ => DrawMainRoadPartsOnly
+      }
+    } catch {
+      case _: NumberFormatException => DrawMainRoadPartsOnly
+    }
+  }
+
+  private def chooseNodesDrawType(zoomLevel: String) = {
+    val C1 = new Contains(-10 to 8)
+    val C2 = new Contains(9 to 11)
+    val C3 = new Contains(12 to 16)
+    try {
+      val level: Int = Math.round(zoomLevel.toDouble).toInt
+      level match {
+        case C1() => DrawNone
+        case C2() => DrawNodes
+        case C3() => DrawAll
+        case _ => DrawNone
       }
     } catch {
       case _: NumberFormatException => DrawMainRoadPartsOnly
