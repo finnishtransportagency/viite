@@ -127,8 +127,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private val getStartupParameters: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getStartupParameters")
       tags "ViiteAPI - General"
-      summary "Show all statup parameters"
-      notes "Shows all the start. You can search it too.")
+      summary "Show all startup parameters")
 
   get("/startupParameters", operation(getStartupParameters)) {
     time(logger, "GET request for /startupParameters") {
@@ -143,8 +142,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private val getUser: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[Map[String,Any]]("getUser")
       tags "ViiteAPI - General"
-      summary "Shows the current user and it's roles."
-      notes "Appears at the start of the application. One can search it too"
+      summary "Shows the current user's username and it's roles."
       )
 
   get("/user", operation(getUser)) {
@@ -162,7 +160,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - RoadAddresses"
       summary "Returns all the road addresses that fit inside the viewport."
-      notes getRoadAddressNotes
     )
 
   get("/roadaddress", operation(getRoadAddress)) {
@@ -182,7 +179,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - NodesAndJunctions"
       summary "Returns all the road nodes that fit inside the viewport."
-      notes getRoadAddressNotes
     )
 
   get("/nodesjunctions", operation(getNodesAndJunctions)) {
@@ -201,7 +197,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     apiOperation[Map[Long, List[Map[String, Long]]]]("getRoadAddressErrors")
       tags "ViiteAPI - RoadAddresses"
       summary "Returns all the road addresses that are in a error state."
-      notes "The error states are:" +
+      description "The error states are:" +
       "OverlappingRoadAddresses \n" +
       "InconsistentTopology \n" +
       "InconsistentLrmHistory \n" +
@@ -227,7 +223,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - RoadAddresses"
       summary "Returns the RoadAddressLink object of the given linkId"
-      notes ""
     )
 
   get("/roadaddress/linkid/:linkId", operation(getRoadAddressLinkByLinkId)) {
@@ -247,7 +242,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         queryParam[Long]("currentProjectId").description("currentProjectId")
       )
       tags "ViiteAPI - Project"
-      summary "fetchPreFillFromVVH"
+      summary "Fetch prefill information from VVH like roadNumber, roadPartNumber, roadName, roadNameSource"
     )
 
   get("/roadlinks/project/prefillfromvvh", operation(fetchPreFillFromVVH)) {
@@ -297,13 +292,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private val getRoadNames: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getRoadNames")
       .parameters(
-        queryParam[Long]("roadNumber").description("roadNumber"),
-        queryParam[Long]("roadName").description("roadName"),
+        queryParam[Long]("roadNumber").description("Road Number of a road address"),
+        queryParam[Long]("roadName").description("Road Name of a road address"),
         queryParam[String]("startDate").description("startDate"),
         queryParam[String]("endDate").description("endDate")
       )
       tags "ViiteAPI - RoadAddresses"
-      summary "getRoadNames"
+      summary "Searches road names by road number, road name and between history"
     )
 
   get("/roadnames", operation(getRoadNames)) {
@@ -322,10 +317,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private val getJunctionPointsByJunctionIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getJunctionPointsByJunctionIds")
       .parameters(
-        pathParam[Long]("id").description("junctionId")
+        pathParam[Long]("id").description("Id of junction")
       )
       tags "ViiteAPI - NodesAndJunctions"
-      summary "getJunctionPointsByJunctionIds"
+      summary "Get junctionpoints by ids of junctions"
     )
 
   get("/junctions/:id/junction-points", operation(getJunctionPointsByJunctionIds)) {
@@ -347,7 +342,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - RoadAddresses"
       summary "Submits one, or many, rows of RoadAddressNames to either be created or updated on the database."
-      notes ""
     )
 
   put("/roadnames/:roadNumber", operation(saveRoadNamesByRoadNumber)) {
@@ -365,10 +359,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private val getProjectStatusFromTR: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getProjectStatusFromTR")
       .parameters(
-        queryParam[Long]("projectId").description("projectId")
+        queryParam[Long]("projectId").description("Id of project")
       )
       tags "ViiteAPI - Project"
-      summary "getProjectStatusFromTR"
+      summary "Get project status from Tierekisteri"
     )
 
   get("/roadlinks/checkproject/", operation(getProjectStatusFromTR)) {
@@ -385,7 +379,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "Returns a sequence of all ProjectAddressLinks that share the same LinkId."
-      notes ""
     )
 
   get("/project/roadaddress/linkid/:linkId", operation(getProjectAddressLinksByLinkIds)) {
@@ -408,7 +401,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "This is responsible of creating a new Road address project."
-      notes ""
     )
 
   post("/roadlinks/roadaddress/project",operation(createRoadAddressProject)) {
@@ -445,7 +437,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "This is responsible of saving any changes on a Road address project."
-      notes ""
     )
 
   put("/roadlinks/roadaddress/project", operation(saveRoadAddressProject)) {
@@ -478,7 +469,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "This will delete a project and all dependant information, that shares the given Id."
-      notes ""
     )
 
   delete("/roadlinks/roadaddress/project", operation(deleteProjectById)) {
@@ -504,9 +494,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         bodyParam[Long]("projectID").description("The id of the project to send to TR.")
       )
       tags "ViiteAPI - Project"
-      summary "This will send a project and all dependant information, that shares the given ProjectId to TR for further analysis."
-      notes "We assume that the project has no validation issues."
-
+      summary "This will send a project and all dependant information, that shares the given ProjectId to TR for further analysis. We assume that the project has no validation issues."
     )
 
   post("/roadlinks/roadaddress/project/sendToTR", operation(sendProjectToTRByProjectId)) {
@@ -536,7 +524,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "This will send all the data necessary to perform the reversal of project links"
-      notes ""
     )
 
   put("/project/reverse", operation(changeDirection)) {
@@ -564,7 +551,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     apiOperation[Seq[Map[String, Any]]]("getAllRoadAddressProjects")
       tags "ViiteAPI - Project"
       summary "Returns all the necessary information on all available projects to be shown on the project selection window."
-      notes ""
     )
 
   get("/roadlinks/roadaddress/project/all", operation(getAllRoadAddressProjects)) {
@@ -583,7 +569,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "This will retrive all the information of a specific project, identifiable by it's id."
-      notes ""
     )
 
   get("/roadlinks/roadaddress/project/all/projectId/:id", operation(getSingleProjectById)) {
@@ -621,7 +606,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "This will retrieve all the information of a specific project, identifiable by it's id."
-      notes ""
     )
 
   get("/roadlinks/roadaddress/project/validatereservedlink/", operation(checkRoadPartExistsAndReservable)) {
@@ -650,7 +634,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "This will return all the supplied project links to their ininital state (LinkStatus.Unhandled in the case of already pre-existing ones and simple removal in the case of new project links)."
-      notes ""
     )
 
   put("/roadlinks/roadaddress/project/revertchangesroadlink", operation(revertLinks)) {
@@ -735,7 +718,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "This will receive all the project link data with changes to be commited on the system."
-      notes ""
     )
 
   put("/roadlinks/roadaddress/project/links", operation(updateProjectLinks)) {
@@ -787,14 +769,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "Akin to the one used by the road addresses, this one will return all road addresses and project links that are within the viewport defined by the bounding box."
-      notes ""
     )
 
   get("/project/roadlinks", operation(getProjectLinksByBoundingBox)) {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val zoom = chooseDrawType(params.getOrElse("zoom", "5"))
     val id: Long = params.get("id") match {
-      case Some(s) if s != "" && s.toLong != 0 => s.toLong
+      case Some(s) if s != "" && s != "undefined" && s.toLong != 0 => s.toLong
       case _ => 0L
     }
     time(logger, s"GET request for /project/roadlinks (zoom: $zoom, id: $id)") {
@@ -815,7 +796,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "Akin to the one used by the road addresses, this one will return all road addresses and project links of a specific project.."
-      notes ""
     )
 
   get("/project/links/:projectId", operation(getProjectLinksByProjectId)) {
@@ -839,7 +819,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "This is a part of the re-opening of a project, this one will remove the TRId of a project that has the projectId supplied."
-      notes ""
     )
 
   delete("/project/trid/:projectId", operation(removeRotatingTRIdByProjectId)) {
@@ -863,7 +842,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - Project"
       summary "Given a valid projectId, this will run the validations to the project in question and it will also fetch all the changes made on said project."
-      notes ""
     )
 
   get("/project/getchangetable/:projectId", operation(validateProjectAndReturnChangeTableById)) {
@@ -926,7 +904,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - RoadAddresses"
       summary "Returns all the road names that are related to a certain project (referenced by the projectID) and within a certain roadNumber."
-      notes ""
     )
 
   get("/roadlinks/roadname/:roadNumber/:projectID", operation(getRoadNamesByRoadNumberAndProjectId)) {
@@ -963,7 +940,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private val getRoadLinkDate: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getRoadLinkDate")
       tags "ViiteAPI - General"
-      summary "projectService.getRoadLinkDate."
+      summary "Get maximum of adjusted timestamp of Road Link Date from projectService."
     )
 
   get("/getRoadLinkDate", operation(getRoadLinkDate)) {
@@ -981,7 +958,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       )
       tags "ViiteAPI - NodesAndJunctions"
       summary "Returns all the nodes belonging to the road number and possibly withing the given range of road part numbers."
-      notes ""
     )
 
   get("/nodes", operation(getNodesByRoadAttributes)) {
@@ -1003,7 +979,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private val getNodePointAndJunctionTemplates: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getNodePointAndJunctionTemplates")
       tags "ViiteAPI - NodesAndJunctions"
-      summary "getNodePointAndJunctionTemplates"
+      summary "Get NodePoint And JunctionTemplates"
     )
 
   get("/templates", operation(getNodePointAndJunctionTemplates)) {
@@ -1020,7 +996,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         pathParam[Long]("id").description("id")
       )
       tags "ViiteAPI - NodesAndJunctions"
-      summary "getNodePointTemplateById"
+      summary "Get NodePointTemplate by Id"
     )
 
   get("/node-point-templates/:id", operation(getNodePointTemplateById)) {
@@ -1039,7 +1015,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         pathParam[Long]("id").description("id")
       )
       tags "ViiteAPI - NodesAndJunctions"
-      summary "getJunctionTemplatesById"
+      summary "Get JunctionTemplates by Id"
     )
 
   get("/junction-templates/:id", operation(getJunctionTemplatesById)) {
@@ -1058,7 +1034,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         bodyParam[NodeExtractor]("nodeData")
       )
       tags "ViiteAPI - NodesAndJunctions"
-      summary "addOrUpdate."
+      summary "Add or update nodes, junctions and nodepoints."
     )
 
   post("/nodes", operation(addOrUpdate)) {
@@ -1086,7 +1062,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         bodyParam[NodeExtractor]("nodeData")
       )
       tags "ViiteAPI - NodesAndJunctions"
-      summary "update."
+      summary "Update nodes, junctions and nodepoints."
     )
 
   put("/nodes/:id", operation(update)) {

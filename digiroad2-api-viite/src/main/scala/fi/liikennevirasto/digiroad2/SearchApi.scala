@@ -39,12 +39,12 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddress: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadAddress")
       .parameters(
-        queryParam[Long]("linkId").description("linkId of a road address"),
-        queryParam[Double]("startMeasure").description("startMeasure of a road address"),
-        queryParam[Double]("endMeasure").description("endMeasure of a road address")
+        queryParam[Long]("linkId").description("LinkId of a road address"),
+        queryParam[Double]("startMeasure").description("startMeasure of a road address").optional,
+        queryParam[Double]("endMeasure").description("endMeasure of a road address").optional
       )
       tags "SearchAPI"
-      summary "getRoadAddress."
+      summary "Gets all the road addresses in between the given linear location."
       )
 
   get("/road_address/?", operation(getRoadAddress)) {
@@ -60,7 +60,7 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadNumbers: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[Seq[Long]]("getRoadNumbers")
       tags "SearchAPI"
-      summary "getRoadNumbers."
+      summary "Gets all the existing road numbers at the current road network."
       )
 
   get("/road_numbers?", operation(getRoadNumbers)) {
@@ -72,10 +72,11 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressWithRoadNumber: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressWithRoadNumber")
       .parameters(
-        pathParam[Long]("road").description("roadNumber")
+        pathParam[Long]("road").description("Road Number of a road address"),
+        queryParam[Long]("tracks").description("Track Number (0,1,2) tracks=1&tracks=2 returns both left and right track").optional
       )
       tags "SearchAPI"
-      summary "getRoadAddressWithRoadNumber"
+      summary "Gets all the road addresses in the same road number and track codes."
     )
 
   get("/road_address/:road/?", operation(getRoadAddressWithRoadNumber)) {
@@ -89,11 +90,11 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressesFiltered: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressesFiltered")
       .parameters(
-        pathParam[Long]("road").description("roadNumber"),
-        pathParam[Long]("roadPart").description("roadPart")
+        pathParam[Long]("road").description("Road Number of a road address"),
+        pathParam[Long]("roadPart").description("Road Part Number of a road address")
       )
       tags "SearchAPI"
-      summary "getRoadAddressesFiltered"
+      summary "Gets all the road address in the given road number and road part"
     )
 
   get("/road_address/:road/:roadPart/?", operation(getRoadAddressesFiltered)) {
@@ -107,13 +108,13 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressesFiltered2: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressesFiltered2")
       .parameters(
-        pathParam[Long]("road").description("roadNumber"),
-        pathParam[Long]("roadPart").description("roadPart"),
-        pathParam[Long]("address").description("address"),
-        queryParam[Long]("track").description("track")
+        pathParam[Long]("road").description("Road Number of a road address"),
+        pathParam[Long]("roadPart").description("Road Part Number of a road address"),
+        pathParam[Long]("address").description("Road Measure of a road address"),
+        pathParam[Long]("track").description("Road Track of a road address. Optional")
       )
       tags "SearchAPI"
-      summary "getRoadAddressesFiltered2"
+      summary "Gets all the road addresses in the same road number, road part number with start address less than the given address measure. If trackOption parameter is given it will also filter by track code."
     )
 
   get("/road_address/:road/:roadPart/:address/?", operation(getRoadAddressesFiltered2)) {
@@ -130,13 +131,13 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressesFiltered3: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressesFiltered3")
       .parameters(
-        pathParam[Long]("road").description("roadNumber"),
-        pathParam[Long]("roadPart").description("roadPart"),
-        pathParam[Long]("startAddress").description("startAddress"),
-        pathParam[Long]("endAddress").description("endAddress")
+        pathParam[Long]("road").description("Road Number of a road address"),
+        pathParam[Long]("roadPart").description("Road Part Number of a road address"),
+        pathParam[Long]("startAddress").description("Road start measure of a road address"),
+        pathParam[Long]("endAddress").description("Road end measure of a road address")
       )
       tags "SearchAPI"
-      summary "getRoadAddressesFiltered3"
+      summary "Gets all the road addresses in given road number, road part number and between given address measures. The road address measures should be in [startAddrM, endAddrM]"
     )
 
   get("/road_address/:road/:roadPart/:startAddress/:endAddress/?", operation(getRoadAddressesFiltered3)) {
@@ -153,10 +154,10 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressByLinkIds: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressByLinkIds")
       .parameters(
-        bodyParam[Set[Long]]("linkIds").description("List of linkIds\r\n")
+        bodyParam[Set[Long]]("linkIds").description("List of LinkIds\r\n")
       )
       tags "SearchAPI"
-      summary "getRoadAddressByLinkIds."
+      summary "Gets all the road addresses on top of given road links."
     )
 
   post("/road_address/?", operation(getRoadAddressByLinkIds)) {
@@ -169,11 +170,11 @@ class SearchApi(roadAddressService: RoadAddressService,
   private val getRoadAddressWithRoadNumberParts: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[List[Map[String, Any]]]("getRoadAddressWithRoadNumberParts")
       .parameters(
-        pathParam[Long]("road").description("roadNumber"),
+        pathParam[Long]("road").description("Road Number of a road address"),
         bodyParam[Any]("getLists").description("List of roadParts and List of tracks\r\n")
       )
       tags "SearchAPI"
-      summary "getRoadAddressWithRoadNumberParts."
+      summary "Gets all the road addresses in the same road number, road parts and track codes. If the road part number sequence or track codes sequence is empty."
     )
 
   post("/road_address/:road/?", operation(getRoadAddressWithRoadNumberParts)) {
