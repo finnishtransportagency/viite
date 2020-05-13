@@ -5,7 +5,8 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.LeftSide
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide}
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.NodePointType.RoadNodePoint
@@ -645,18 +646,25 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     def getNodePointsAndJunctionPointsByModifiedRoadwayNumbers(roadwayNumbersSection: Seq[Long], terminatedJunctionPoints: Seq[JunctionPoint]): (Seq[NodePoint], Seq[JunctionPoint]) = {
       logger.info(s"Modified roadway number: ${roadwayNumbersSection.toList}")
-      val roadwayPointIds = roadwayPointDAO.fetchByRoadwayNumbers(roadwayNumbersSection).map(_.id)
-      val sortedRoadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbersSection.toSet).filterNot(_.track == LeftSide).sortBy(_.startAddrMValue)
-      val obsoleteNodePoints = if (sortedRoadways.nonEmpty) {
-        val (startAddrMValue, endAddrMValue) = (sortedRoadways.head.startAddrMValue, sortedRoadways.last.endAddrMValue)
-        nodePointDAO.fetchByRoadwayPointIds(roadwayPointIds)
-          .filter(_.nodePointType == NodePointType.RoadNodePoint)
-          .filterNot(n => (n.beforeAfter == BeforeAfter.After && n.addrM == startAddrMValue) || (n.beforeAfter == BeforeAfter.Before && n.addrM == endAddrMValue))
+      val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(roadwayNumbersSection)
+      val sortedRoadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbersSection.toSet).sortBy(_.startAddrMValue)
 
-      } else Seq.empty[NodePoint]
+      val (startAddrMValue, endAddrMValue) = (sortedRoadways.headOption.map(_.startAddrMValue), sortedRoadways.lastOption.map(_.endAddrMValue))
+
+      val obsoleteNodePoints = sortedRoadways.flatMap { rw =>
+        val nodePoints = nodePointDAO.fetchByRoadwayPointIds(roadwayPoints.filter(_.roadwayNumber == rw.roadwayNumber).map(_.id))
+          .filter(_.nodePointType == NodePointType.RoadNodePoint)
+        rw.track match {
+          case LeftSide => nodePoints
+          case _ => nodePoints.filterNot { n =>
+            (n.beforeAfter == BeforeAfter.After && startAddrMValue.contains(n.addrM)) || (n.beforeAfter == BeforeAfter.Before && endAddrMValue.contains(n.addrM)
+          }
+        }
+      }
+
       val groupedTerminatedJunctionPoints = terminatedJunctionPoints.groupBy(_.junctionId)
 
-      val junctions = junctionDAO.fetchByIds(junctionPointDAO.fetchByRoadwayPointIds(roadwayPointIds).map(_.junctionId))
+      val junctions = junctionDAO.fetchByIds(junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id)).map(_.junctionId))
       val obsoleteJunctionPoints: Seq[JunctionPoint] = junctions.flatMap { junction =>
         val terminatedJunctionPoints = groupedTerminatedJunctionPoints.getOrElse(junction.id, Seq.empty[JunctionPoint])
         val affectedJunctionsPoints = junctionPointDAO.fetchByJunctionIds(Seq(junction.id)) match {
