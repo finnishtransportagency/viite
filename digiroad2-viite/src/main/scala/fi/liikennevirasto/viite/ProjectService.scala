@@ -1429,7 +1429,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           ).sortBy(_.endAddrMValue)
           if (newDiscontinuity.isDefined && newTrack.isDefined && roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
             if (completelyNewLinkIds.nonEmpty) {
-              val (completelyNew, others) = calculatedLinks.partition(cl => completelyNewLinkIds.contains(cl.id))
+              val (completelyNew, others) = calculatedLinks.partition(cl => completelyNewLinkIds.contains(cl.id) || cl.id == NewIdValue)
               others ++ (if (completelyNew.nonEmpty) {
                 completelyNew.init :+ completelyNew.last.copy(discontinuity = newDiscontinuity.get)
               } else {
