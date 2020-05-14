@@ -657,7 +657,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         rw.track match {
           case LeftSide => nodePoints
           case _ => nodePoints.filterNot { n =>
-            (n.beforeAfter == BeforeAfter.After && startAddrMValue.contains(n.addrM)) || (n.beforeAfter == BeforeAfter.Before && endAddrMValue.contains(n.addrM)
+            (n.beforeAfter == BeforeAfter.After && startAddrMValue.contains(n.addrM)) || (n.beforeAfter == BeforeAfter.Before && endAddrMValue.contains(n.addrM))
           }
         }
       }
