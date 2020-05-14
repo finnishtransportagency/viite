@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  (1.0) Vayla / Viite AWS CloudFormation Template to launch a VPC with 2 subnets.
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: VPC Configuration
+        Parameters:
+          - VPCCIDR
+          - AZForSubnet1
+          - AZForSubnet2
+          - Subnet1
+          - Subnet2
+Parameters:
+  VPCCIDR:
+    Type: String
+    Default: 100.64.206.0/23
+    Description: Enter the VPC CIDR that you want to use
+  AZForSubnet1:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Default: eu-west-1a
+    Description: Enter the AZ for the primary subnet
+  AZForSubnet2:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Default: eu-west-1b
+    Description: Enter the AZ for the secondary subnet
+  Subnet1CIDR:
+    Type: String
+    Default: 100.64.206.0/24
+    Description: Enter the value of the subnet 1
+  Subnet2CIDR:
+    Type: String
+    Default: 100.64.207.0/24
+    Description: Enter the value of the subnet 2
+  TransitGatewayId:
+    Type: String
+    Default: tgw-0cf1eb7c72778eaad
+    Description: Choose the transit gateway
+Conditions: {}
+Resources:
+  VPCID:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !Ref VPCCIDR
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - Vpc
+  Subnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPCID
+      CidrBlock: !Ref Subnet1CIDR
+      AvailabilityZone: !Ref AZForSubnet1
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - Subnet1
+  Subnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPCID
+      CidrBlock: !Ref Subnet2CIDR
+      AvailabilityZone: !Ref AZForSubnet2
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - Subnet2
+  RouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPCID
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - RouteTable
+  AttachGateway:
+    Type: 'AWS::EC2::TransitGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPCID
+      TransitGatewayId: !Ref TransitGatewayId
+      SubnetIds:
+        - !Ref Subnet1
+        - !Ref Subnet2
+  Route1:
+    Type: 'AWS::EC2::Route'
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      TransitGatewayId: !Ref TransitGatewayId
+  SubnetRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Subnet1
+      RouteTableId: !Ref RouteTable
+  SubnetRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Subnet2
+      RouteTableId: !Ref RouteTable

@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  Environment:
+    Description: Environment
+    Type: String
+    Default: Dev
+    AllowedValues:
+      - Dev
+      - Test
+      - Prod
+  Application:
+    Description: Application tag
+    Type: String
+    Default: Viite
+  Vpc:
+    Description: VPC
+    Type: 'AWS::EC2::VPC::Id'
+  SecurityGroup:
+    Description: Security group
+    Type: 'AWS::EC2::SecurityGroup::Id'
+  MasterUserPassword:
+    Description: Password for the postgres -user
+    Type: String
+  DBInstanceClass:
+    Description: DBInstance DBInstanceClass
+    Default: db.t2.medium
+    Type: String
+  DBDeletionProtection:
+    Type: String
+    Description: Prevent deletion of the database
+    Default: true
+    AllowedValues:
+      - true
+      - false
+  SubnetA:
+    Description: First subnet in the database subnet group
+    Type: 'AWS::EC2::Subnet::Id'
+  SubnetB:
+    Description: Second subnet in the database subnet group
+    Type: 'AWS::EC2::Subnet::Id'
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties: 
+      DBSubnetGroupDescription: !Join 
+            - ' '
+            - - !Ref Application
+              - !Ref Environment
+              - 'DBSubnetGroup'
+      DBSubnetGroupName: !Join 
+            - ''
+            - - !Ref Application
+              - !Ref Environment
+              - 'DBSubnetGroup'
+      SubnetIds: 
+        - !Ref SubnetA
+        - !Ref SubnetB
+      Tags: 
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - DBSubnetGroup
+        -
+          Key: Application
+          Value: !Ref Application
+        -
+          Key: Env
+          Value: !Ref Environment
+  DBInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      AvailabilityZone: !Select 
+        - 0
+        - !GetAZs ''
+      DBInstanceClass: !Ref DBInstanceClass
+      DBName: viite
+      DeletionProtection: !Ref DBDeletionProtection
+      Engine: postgres
+      AllocatedStorage: 100
+      StorageType: gp2
+      MasterUsername: postgres
+      MasterUserPassword: !Ref MasterUserPassword
+      VPCSecurityGroups:
+        - !Ref SecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Tags: 
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - DBInstance
+        -
+          Key: Application
+          Value: !Ref Application
+        -
+          Key: Env
+          Value: !Ref Environment
+    DependsOn:
+      - DBSubnetGroup
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: ce56302f-fd28-4a57-b896-85837035877a
+Metadata:
+  'AWS::CloudFormation::Designer':
+    ce56302f-fd28-4a57-b896-85837035877a:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 180
+        'y': 90
+      z: 1
+      embeds: []
+      dependson:
+        - 534fb193-987a-4025-a04e-f7bebee5de6c
+    534fb193-987a-4025-a04e-f7bebee5de6c:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 60
+        'y': 90
+      z: 0
+      embeds: []
