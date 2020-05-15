@@ -76,16 +76,16 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
   @scala.annotation.tailrec
   private def continuousSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-      if(seq.isEmpty)
+      if (seq.isEmpty)
         (processed, seq)
-      else if(processed.isEmpty)
+      else if (processed.isEmpty)
         continuousSection(seq.tail, Seq(seq.head))
       else {
         val track = processed.last.track
         val roadType = processed.last.roadType
         val discontinuity = processed.last.discontinuity
         val discontinuousSections = List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
-        if((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.roadType == roadType) && !discontinuousSections.contains(discontinuity)){
+        if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.roadType == roadType) && !discontinuousSections.contains(discontinuity)) {
           continuousSection(seq.tail, processed :+ seq.head)
         } else {
           (processed, seq)
@@ -177,12 +177,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         */
       @scala.annotation.tailrec
       def splitLinksIfNeed(remainingTransfer: ListMap[Long, Seq[ProjectLink]], processedTransfer: Seq[ProjectLink], remainingNew: Seq[ProjectLink], processedNew: Seq[ProjectLink], totalTransferMLength: Double, totalNewMLength: Double, missingRoadwayNumbers: Int) : Seq[ProjectLink] = {
-        if(missingRoadwayNumbers == 0 || (remainingNew.nonEmpty && remainingTransfer.isEmpty)){
+        if (missingRoadwayNumbers == 0 || (remainingNew.nonEmpty && remainingTransfer.isEmpty)) {
           val remainingRoadwayNumber = Sequences.nextRoadwayNumber
           val unassignedRoadwayNumber = Sequences.nextRoadwayNumber
           val (unassignedRwnLinks, assignedRwnLinks) = processedNew.partition(_.roadwayNumber == NewIdValue)
           assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = unassignedRoadwayNumber)) ++ remainingNew.map(_.copy(roadwayNumber = remainingRoadwayNumber))
-        } else if(remainingNew.isEmpty && remainingTransfer.isEmpty) {
+        } else if (remainingNew.isEmpty && remainingTransfer.isEmpty) {
           processedNew
         } else {
           //Transfer M length coeff
@@ -198,7 +198,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
                   processedNewToBeAssigned.map(l => l.endMValue - l.startMValue).sum
               }
           val currentNewLinksGroupCoeff: Double = processingLength/totalNewMLength
-          if(minAllowedTransferGroupCoeff <= currentNewLinksGroupCoeff && currentNewLinksGroupCoeff <= maxAllowedTransferGroupCoeff){
+          if (minAllowedTransferGroupCoeff <= currentNewLinksGroupCoeff && currentNewLinksGroupCoeff <= maxAllowedTransferGroupCoeff) {
             val (unassignedRwnLinks, assignedRwnLinks) = (processedNew:+remainingNew.head).partition(_.roadwayNumber == NewIdValue)
             val nextRoadwayNumber = Sequences.nextRoadwayNumber
             splitLinksIfNeed(remainingTransfer.tail, processedTransfer ++ remainingTransfer.head._2, if(remainingNew.tail.nonEmpty) remainingNew.tail.head.copy(startAddrMValue = remainingTransfer.head._2.last.endAddrMValue) +: remainingNew.tail.tail else remainingNew.tail, assignedRwnLinks ++ unassignedRwnLinks.init.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
