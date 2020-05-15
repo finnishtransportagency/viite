@@ -1140,7 +1140,7 @@ Left     |  ^   Right
 
 
       //Left New
-      val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
+      val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
         None, 12348L, 0.0, 3.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft1, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft1), -1000, -1000, 8L, reversed = false,
         None, 86400L)
@@ -1261,11 +1261,11 @@ Left     ^  ^   Right
 
 
       //Left New
-      val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
+      val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
         None, 12348L, 0.0, 3.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft1, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft1), -1000, -1000, 8L, reversed = false,
         None, 86400L)
-      val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
+      val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
         None, 12349L, 0.0, 6.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft2, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft2), -1000, -1000, 8L, reversed = false,
         None, 86400L)
