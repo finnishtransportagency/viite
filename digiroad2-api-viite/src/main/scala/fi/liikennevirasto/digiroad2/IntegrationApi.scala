@@ -108,7 +108,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     (apiOperation[List[Map[String, Any]]]("getRoadNameChanges")
       tags "Integration (kalpa)"
       summary "Returns all the changes to road names between given dates."
-      parameter queryParam[String]("since").description("Date in format ISO8601")
+      parameter queryParam[String]("since").description(" Date in format ISO8601. For example 2020-04-29T13:59:59")
       parameter queryParam[String]("until").description("Date in format ISO8601").optional)
 
   get("/roadnames/changes", operation(getRoadNameChanges)) {
@@ -141,7 +141,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     (apiOperation[List[Map[String, Any]]]("getRoadwayChanges")
       tags "Integration (kalpa)"
       summary "Returns all the changes to roadways after the given date (including the given date)."
-      parameter queryParam[String]("since").description("Date in format ISO8601"))
+      parameter queryParam[String]("since").description("Date in format ISO8601. For example 2020-04-29T13:59:59"))
 
   get("/roadway/changes", operation(getRoadwayChanges)) {
     contentType = formats("json")
@@ -192,7 +192,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     (apiOperation[List[Map[String, Any]]]("getLinearLocationChanges")
       tags "Integration (kalpa)"
       summary "Returns all the changes to roadways after the given date (including the given date)."
-      parameter queryParam[String]("since").description("Date in format ISO8601"))
+      parameter queryParam[String]("since").description("Date in format ISO8601. For example 2020-04-29T13:59:59"))
 
   get("/linear_location/changes", operation(getLinearLocationChanges)) {
     contentType = formats("json")
@@ -235,15 +235,15 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   }
 
   val nodesToGeoJson: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("nodesToGeoJson")
+    apiOperation[List[Map[String, Any]]]("nodesToGeoJson")
       .parameters(
-        queryParam[String]("since").description("Start date of nodes"),
-        queryParam[String]("until").description("End date of the nodes")
+        queryParam[String]("since").description("Start date of nodes. Date in format ISO8601. For example 2020-04-29T13:59:59"),
+        queryParam[String]("until").description("End date of the nodes. Date in format ISO8601").optional
       )
-      tags "ChangeAPI"
-      summary "This will return all the changes found on the nodes that are between the period defined by the \"since\" and  \"until\" parameters."
-      notes ""
+      tags "Integration (kalpa)"
+      summary "This will return all the changes found on the nodes that are published between the period defined by the \"since\" and  \"until\" parameters."
     )
+
   get(transformers = "/nodes_junctions/changes", operation(nodesToGeoJson)) {
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
