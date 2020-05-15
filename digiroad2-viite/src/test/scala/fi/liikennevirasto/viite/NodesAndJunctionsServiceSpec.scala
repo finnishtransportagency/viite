@@ -291,7 +291,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
 
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, pls, mappedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, pls, mappedRoadwayNumbers)
 
       val roadJunctionPoints = junctionPointDAO.fetchByRoadwayPoint(roadway.roadwayNumber, roadway.endAddrMValue, BeforeAfter.Before)
       val junction1 = junctionDAO.fetchByIds(Seq(roadJunctionPoints.head.junctionId))
@@ -379,7 +379,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       sqlu"""INSERT INTO LINK (ID) VALUES (12345)""".execute
       sqlu"""INSERT INTO LINK (ID) VALUES (12346)""".execute
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, pls, mappedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, pls, mappedRoadwayNumbers)
 
       val roadJunctionPoints = junctionPointDAO.fetchByRoadwayPoint(roadway.roadwayNumber, roadway.endAddrMValue, BeforeAfter.Before)
       val junction1 = junctionDAO.fetchByIds(Seq(roadJunctionPoints.head.junctionId))
@@ -410,7 +410,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(reversedProjectChanges, mappedReservedRoadwayNumbers)
       val roadwayPointsAfterUpdate = roadwayPointDAO.fetchByRoadwayNumber(link1.roadwayNumber)
-      nodesAndJunctionsService.handleJunctionTemplates(reversedProjectChanges, reversedPls, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(reversedProjectChanges, reversedPls, mappedReservedRoadwayNumbers)
       val reversedLinkJunctionPoints = junctionPointDAO.fetchByRoadwayPoint(link1.roadwayNumber, roadwayPointsAfterUpdate.head.addrMValue, BeforeAfter.Before)
       linkJunctionPoints.head.id should be(reversedLinkJunctionPoints.head.id)
       reversedLinkJunctionPoints.head.beforeAfter should be(BeforeAfter.switch(linkJunctionPoints.head.beforeAfter))
@@ -467,7 +467,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val reversedProjectChanges = projectChanges.map(p => p.copy(changeInfo = p.changeInfo.copy(changeType = AddressChangeType.Transfer, source = p.changeInfo.target, reversed = true)))
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, pls, mappedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, pls, mappedRoadwayNumbers)
 
       val roadJunctionPoints = junctionPointDAO.fetchByRoadwayPoint(roadway.roadwayNumber, roadway.startAddrMValue, BeforeAfter.After)
       val junction1 = junctionDAO.fetchByIds(Seq(roadJunctionPoints.head.junctionId))
@@ -497,7 +497,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val mappedReversedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(reversedProjectChanges, mappedReversedRoadwayNumbers)
       val roadwayPointsAfterUpdate = roadwayPointDAO.fetchByRoadwayNumber(link1.roadwayNumber)
-      nodesAndJunctionsService.handleJunctionTemplates(reversedProjectChanges, reversedPls, mappedReversedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(reversedProjectChanges, reversedPls, mappedReversedRoadwayNumbers)
       val reversedLinkJunctionPoints = junctionPointDAO.fetchByRoadwayPoint(link1.roadwayNumber, roadwayPointsAfterUpdate.head.addrMValue, BeforeAfter.Before)
       linkJunctionPoints.head.id should be(reversedLinkJunctionPoints.head.id)
       reversedLinkJunctionPoints.head.beforeAfter should be(BeforeAfter.switch(linkJunctionPoints.head.beforeAfter))
@@ -553,7 +553,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val reversedProjectChanges = projectChanges.map(p => p.copy(changeInfo = p.changeInfo.copy(changeType = AddressChangeType.Transfer, source = p.changeInfo.target, reversed = true)))
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, pls, mappedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, pls, mappedRoadwayNumbers)
 
       val roadJunctionPoints = junctionPointDAO.fetchByRoadwayPoint(roadway.roadwayNumber, roadway.endAddrMValue, BeforeAfter.Before)
       val junction1 = junctionDAO.fetchByIds(Seq(roadJunctionPoints.head.junctionId))
@@ -583,7 +583,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val mappedReversedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(reversedProjectChanges, mappedReversedRoadwayNumbers)
       val roadwayPointsAfterUpdate = roadwayPointDAO.fetchByRoadwayNumber(link1.roadwayNumber)
-      nodesAndJunctionsService.handleJunctionTemplates(reversedProjectChanges, reversedPls, mappedReversedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(reversedProjectChanges, reversedPls, mappedReversedRoadwayNumbers)
       val reversedLinkJunctionPoints = junctionPointDAO.fetchByRoadwayPoint(link1.roadwayNumber, roadwayPointsAfterUpdate.head.addrMValue, BeforeAfter.After)
       linkJunctionPoints.head.id should be(reversedLinkJunctionPoints.head.id)
       reversedLinkJunctionPoints.head.beforeAfter should be(BeforeAfter.switch(linkJunctionPoints.head.beforeAfter))
@@ -636,7 +636,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val reversedProjectChanges = projectChanges.map(p => p.copy(changeInfo = p.changeInfo.copy(changeType = AddressChangeType.Transfer, source = p.changeInfo.target, reversed = true)))
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, pls, mappedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, pls, mappedRoadwayNumbers)
 
       val roadJunctionPoints = junctionPointDAO.fetchByRoadwayPoint(roadway.roadwayNumber, roadway.startAddrMValue, BeforeAfter.After)
       val junction1 = junctionDAO.fetchByIds(Seq(roadJunctionPoints.head.junctionId))
@@ -666,7 +666,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val mappedReversedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(reversedProjectChanges, mappedReversedRoadwayNumbers)
       val roadwayPointsAfterUpdate = roadwayPointDAO.fetchByRoadwayNumber(link1.roadwayNumber)
-      nodesAndJunctionsService.handleJunctionTemplates(reversedProjectChanges, reversedPls, mappedReversedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(reversedProjectChanges, reversedPls, mappedReversedRoadwayNumbers)
       val reversedLinkJunctionPoints = junctionPointDAO.fetchByRoadwayPoint(link1.roadwayNumber, roadwayPointsAfterUpdate.head.addrMValue, BeforeAfter.After)
       linkJunctionPoints.head.id should be(reversedLinkJunctionPoints.head.id)
       reversedLinkJunctionPoints.head.beforeAfter should be(BeforeAfter.switch(linkJunctionPoints.head.beforeAfter))
@@ -787,7 +787,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, leftPLinks ++ rightPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, leftPLinks ++ rightPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks ++ rightPLinks).map(_.roadwayNumber)).map(_.id)
       val junctionPoints = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -929,8 +929,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
 
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(lll1.roadwayNumber, rll1.roadwayNumber, orderedcll1.roadwayNumber), false)).thenReturn(Seq(rw1WithId, rw2WithId, rw3WithId))
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(leftPLinks ++ rightPLinks ++ combPLinks, Some(project.startDate.minusDays(1)))
@@ -1018,8 +1018,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       projectLinkDAO.moveProjectLinksToHistory(projectId + 1)
       roadAddressService.handleRoadwayPointsUpdate(terminatingProjectChanges, mappedAfterChanges)
-      nodesAndJunctionsService.handleNodePointTemplates(terminatingProjectChanges, Seq(leftLink1) ++ Seq(rightLink1) ++ Seq(transferCombLink1, terminatedCombLink2), mappedAfterChanges)
-      nodesAndJunctionsService.handleJunctionTemplates(terminatingProjectChanges, Seq(leftLink1) ++ Seq(rightLink1) ++ Seq(transferCombLink1, terminatedCombLink2), mappedAfterChanges)
+      nodesAndJunctionsService.handleNodePoints(terminatingProjectChanges, Seq(leftLink1) ++ Seq(rightLink1) ++ Seq(transferCombLink1, terminatedCombLink2), mappedAfterChanges)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(terminatingProjectChanges, Seq(leftLink1) ++ Seq(rightLink1) ++ Seq(transferCombLink1, terminatedCombLink2), mappedAfterChanges)
 
       /*  Ending expiring data  */
       val endDate = Some(project2.startDate.minusDays(1))
@@ -1114,7 +1114,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks ++ rightPLinks ++ combPLinks).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -1218,7 +1218,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks ++ rightPLinks ++ combPLinks).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -1322,7 +1322,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks ++ rightPLinks ++ combPLinks).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -1438,7 +1438,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, leftPLinks ++ rightPLinks ++ combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((leftPLinks ++ rightPLinks ++ combPLinks).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -1525,7 +1525,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -1619,8 +1619,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -1714,8 +1714,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -1802,8 +1802,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((combPLinks :+ combLink3).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -1868,8 +1868,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedAfterNewRoadwayNumber = projectLinkDAO.fetchProjectLinksChange(projectId + 1)
       roadAddressService.handleRoadwayPointsUpdate(TerminatingProjectChanges, mappedAfterNewRoadwayNumber)
-      nodesAndJunctionsService.handleNodePointTemplates(TerminatingProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
-      nodesAndJunctionsService.handleJunctionTemplates(TerminatingProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
+      nodesAndJunctionsService.handleNodePoints(TerminatingProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(TerminatingProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
 
       /*  Ending expiring data  */
       val terminatedJunctionsBeforeExpire = junctionDAO.fetchExpiredByRoadwayNumbers(templateRoadwayNumbers)
@@ -1966,8 +1966,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((combPLinks :+ combLink3).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -2035,8 +2035,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       projectLinkDAO.moveProjectLinksToHistory(projectId + 1)
 
       roadAddressService.handleRoadwayPointsUpdate(NewProjectChanges, mappedAfterNewRoadwayNumber)
-      nodesAndJunctionsService.handleNodePointTemplates(NewProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
-      nodesAndJunctionsService.handleJunctionTemplates(NewProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
+      nodesAndJunctionsService.handleNodePoints(NewProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(NewProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
 
       /*  Ending expiring data  */
       val terminatedJunctionsBeforeExpire = junctionDAO.fetchExpiredByRoadwayNumbers(templateRoadwayNumbers)
@@ -2134,8 +2134,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((combPLinks :+ combLink3).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -2203,8 +2203,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedAfterNewRoadwayNumber = projectLinkDAO.fetchProjectLinksChange(projectId + 1)
       roadAddressService.handleRoadwayPointsUpdate(TerminatingProjectChanges, mappedAfterNewRoadwayNumber)
-      nodesAndJunctionsService.handleNodePointTemplates(TerminatingProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
-      nodesAndJunctionsService.handleJunctionTemplates(TerminatingProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
+      nodesAndJunctionsService.handleNodePoints(TerminatingProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(TerminatingProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
 
       /*  Ending expiring data  */
       val terminatedJunctionsBeforeExpire = junctionDAO.fetchExpiredByRoadwayNumbers(templateRoadwayNumbers)
@@ -2311,8 +2311,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
@@ -2390,8 +2390,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedAfterTerminationRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId + 1)
       roadAddressService.handleRoadwayPointsUpdate(TerminatingProjectChanges, mappedAfterTerminationRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(TerminatingProjectChanges, combPLinks, mappedAfterTerminationRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(TerminatingProjectChanges, combPLinks, mappedAfterTerminationRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(TerminatingProjectChanges, combPLinks, mappedAfterTerminationRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(TerminatingProjectChanges, combPLinks, mappedAfterTerminationRoadwayNumbers)
 
       /*  Ending expiring data  */
       val terminatedJunctionsBeforeExpire = junctionDAO.fetchExpiredByRoadwayNumbers(templateRoadwayNumbers)
@@ -2488,8 +2488,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers((combPLinks :+ combLink3).map(_.roadwayNumber)).map(_.id)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints)
@@ -2547,8 +2547,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       projectLinkDAO.moveProjectLinksToHistory(projectId + 1)
 
       roadAddressService.handleRoadwayPointsUpdate(terminatingProjectChanges, mappedAfterNewRoadwayNumber)
-      nodesAndJunctionsService.handleNodePointTemplates(terminatingProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
-      nodesAndJunctionsService.handleJunctionTemplates(terminatingProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
+      nodesAndJunctionsService.handleNodePoints(terminatingProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(terminatingProjectChanges, combPLinks, mappedAfterNewRoadwayNumber)
       /*
       ending expiring data
        */
@@ -2658,8 +2658,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       createdCalibrationPoints.filter(cp => cp.linkId == combLink2.linkId && cp.startOrEnd == CalibrationPointLocation.EndOfLink).head.addrM should be (20)
       createdCalibrationPoints.filter(cp => cp.linkId == combLink3.linkId && cp.startOrEnd == CalibrationPointLocation.StartOfLink).head.addrM should be (0)
       createdCalibrationPoints.filter(cp => cp.linkId == combLink3.linkId && cp.startOrEnd == CalibrationPointLocation.EndOfLink).head.addrM should be (15)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
       val expiredJunctions = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(combPLinks, None)
       roadAddressService.expireObsoleteCalibrationPointsInJunctions(expiredJunctions)
       val createdCalibrationPointsAfterJunctionPointHandler = CalibrationPointDAO.fetchByLinkId(combPLinks.map(_.linkId))
@@ -2713,8 +2713,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       roadAddressService.handleProjectCalibrationPointChanges(Seq.empty[LinearLocation], username = project.createdBy, mappedAfterTerminationRoadwayNumbers)
       val existingCalibrationPointsForTerminatingRoad = CalibrationPointDAO.fetchByLinkId(Seq(terminatingCombLink3.linkId))
       existingCalibrationPointsForTerminatingRoad.size should be (0)
-      nodesAndJunctionsService.handleNodePointTemplates(terminatingProjectChanges, combPLinks, mappedAfterTerminationRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(terminatingProjectChanges, combPLinks, mappedAfterTerminationRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(terminatingProjectChanges, combPLinks, mappedAfterTerminationRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(terminatingProjectChanges, combPLinks, mappedAfterTerminationRoadwayNumbers)
       /*
       ending expiring data
        */
@@ -2834,8 +2834,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       createdCalibrationPoints.filter(cp => cp.linkId == combLink2.linkId && cp.startOrEnd == CalibrationPointLocation.EndOfLink).head.addrM should be (20)
       createdCalibrationPoints.filter(cp => cp.linkId == combLink3.linkId && cp.startOrEnd == CalibrationPointLocation.StartOfLink).head.addrM should be (0)
       createdCalibrationPoints.filter(cp => cp.linkId == combLink3.linkId && cp.startOrEnd == CalibrationPointLocation.EndOfLink).head.addrM should be (15)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
       val expiredJunctionPoints = nodesAndJunctionsService.expireObsoleteNodesAndJunctions(combPLinks, None)
       roadAddressService.expireObsoleteCalibrationPointsInJunctions(expiredJunctionPoints)
       val createdCalibrationPointsAfterJunctionPointHandler = CalibrationPointDAO.fetchByLinkId(combPLinks.map(_.linkId))
@@ -2894,8 +2894,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       roadAddressService.handleProjectCalibrationPointChanges(Seq.empty[LinearLocation], username = project.createdBy, mappedAfterTerminationRoadwayNumbers)
       val existingCalibrationPointsForTerminatingRoad = CalibrationPointDAO.fetchByLinkId(Seq(terminatingCombLink3.linkId))
       existingCalibrationPointsForTerminatingRoad.size should be (0)
-      nodesAndJunctionsService.handleNodePointTemplates(terminatingProjectChanges, combPLinks, mappedAfterTerminationRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(terminatingProjectChanges, combPLinks, mappedAfterTerminationRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(terminatingProjectChanges, combPLinks, mappedAfterTerminationRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(terminatingProjectChanges, combPLinks, mappedAfterTerminationRoadwayNumbers)
       /*
       ending expiring data
        */
@@ -3004,8 +3004,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
@@ -3095,8 +3095,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
@@ -3186,8 +3186,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber)).map(_.id)
 
@@ -3288,7 +3288,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           , DateTime.now, Some(0L))
       )
       val mappedChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, pls, mappedChanges)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, pls, mappedChanges)
 
       val fetchedNodesPoints = pls.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber)).sortBy(_.id)
       val np1 = fetchedNodesPoints.find(n => n.roadwayNumber == left.roadwayNumber && n.beforeAfter == BeforeAfter.After)
@@ -3364,11 +3364,10 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       projectLinkDAO.updateProjectLinks(reversedPls, "user", Seq())
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(reversedProjectChanges, mappedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(reversedProjectChanges, reversedPls, mappedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(reversedProjectChanges, reversedPls, mappedRoadwayNumbers)
       val fetchedReversedNodesPoints = reversedPls.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber)).sortBy(_.id)
       fetchedNodesPoints.size should be(fetchedReversedNodesPoints.size)
-      fetchedNodesPoints.zip(fetchedReversedNodesPoints).foreach { case (before, after) =>
-        before.id should be(after.id)
+      fetchedNodesPoints.zip(fetchedReversedNodesPoints.reverse).foreach { case (before, after) =>
         before.beforeAfter should be(BeforeAfter.switch(after.beforeAfter))
       }
     }
@@ -3433,7 +3432,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       )
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       // Creation of nodes and node points
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, projectLinks, mappedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, projectLinks, mappedRoadwayNumbers)
 
       val nodeNumber1 = Sequences.nextNodeNumber
       val nodeNumber2 = Sequences.nextNodeNumber
@@ -3528,7 +3527,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           , DateTime.now, Some(0L))
       )
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, projectLinks, mappedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, projectLinks, mappedRoadwayNumbers)
 
       val node1 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, "user", Some(DateTime.now()))
       val node2 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink.geometry.last, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, "user", Some(DateTime.now()))
@@ -3622,7 +3621,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       )
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       // Creation of nodes and node points
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, projectLinks, mappedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, projectLinks, mappedRoadwayNumbers)
 
       val node1 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink.geometry.head, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, "user", Some(DateTime.now()))
       val node2 = Node(Sequences.nextNodeId, Sequences.nextNodeNumber, roadLink.geometry.last, None, NodeType.EndOfRoad, DateTime.now(), None, DateTime.now(), None, "user", Some(DateTime.now()))
@@ -3675,7 +3674,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
           , DateTime.now, Some(0L))
       )
       val mappedRoadwayNumbers2 = projectLinkDAO.fetchProjectLinksChange(projectId)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChangesAfterChanges, Seq(roadLink, newRoadLink), mappedRoadwayNumbers2)
+      nodesAndJunctionsService.handleNodePoints(projectChangesAfterChanges, Seq(roadLink, newRoadLink), mappedRoadwayNumbers2)
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(Seq(roadLink, newRoadLink), Some(DateTime.now().minusDays(1)))
 
       // Test expired node and node points
@@ -3744,7 +3743,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       )
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       // Creation of junction points template
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, projectLinks, mappedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, projectLinks, mappedRoadwayNumbers)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(
         roadwayPointDAO.fetchByRoadwayNumbers(projectLinks.map(_.roadwayNumber)).map(_.id))
       junctionPointTemplates.length should be(2)
@@ -3844,7 +3843,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       )
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       // Creation of junction points template
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, projectLinks, mappedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, projectLinks, mappedRoadwayNumbers)
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(
         roadwayPointDAO.fetchByRoadwayNumbers(projectLinks.map(_.roadwayNumber)).map(_.id))
       junctionPointTemplates.length should be(3)
@@ -3948,8 +3947,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, combPLinks, mappedReservedRoadwayNumbers)
 
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(combPLinks.map(_.roadwayNumber))
       val junctionPointTemplates = junctionPointDAO.fetchByRoadwayPointIds(roadwayPoints.map(_.id))
@@ -4036,8 +4035,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       projectLinkDAO.moveProjectLinksToHistory(projectId + 1)
 
       roadAddressService.handleRoadwayPointsUpdate(terminateAndTransferProjectChanges, projectRoadLinkChangesAfterInserts)
-      nodesAndJunctionsService.handleNodePointTemplates(terminateAndTransferProjectChanges, changedProjectLinks, projectRoadLinkChangesAfterInserts)
-      nodesAndJunctionsService.handleJunctionTemplates(terminateAndTransferProjectChanges, changedProjectLinks, projectRoadLinkChangesAfterInserts)
+      nodesAndJunctionsService.handleNodePoints(terminateAndTransferProjectChanges, changedProjectLinks, projectRoadLinkChangesAfterInserts)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(terminateAndTransferProjectChanges, changedProjectLinks, projectRoadLinkChangesAfterInserts)
 
       /*
       ending expired data
@@ -4144,7 +4143,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
 
       val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
       roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
-      nodesAndJunctionsService.handleNodePointTemplates(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
 
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 0.0)), roadNumberLimits)).thenReturn(ll1)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(10.0, 0.0), Point(10.0, 0.0)), roadNumberLimits)).thenReturn(ll1 ++ ll2)
@@ -4157,7 +4156,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2 ++ ll3).map(_.roadwayNumber).toSet, false)).thenReturn(rw2 ++ rw3)
       when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3.map(_.roadwayNumber).toSet, false)).thenReturn(rw3)
 
-      nodesAndJunctionsService.handleJunctionTemplates(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
       nodesAndJunctionsService.expireObsoleteNodesAndJunctions(pl2++ pl1 ++ pl3, Some(project.startDate.minusDays(1)))
 
       val nodePoints = projectLinks.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber))
