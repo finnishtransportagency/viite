@@ -204,7 +204,7 @@ class NodeDAO extends BaseDAO {
     val query =
       s"""
         SELECT DISTINCT node.ID, node.NODE_NUMBER, coords.X, coords.Y, node.NAME, node."TYPE", node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
-                        node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M
+                        node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M
         FROM NODE node
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(node.COORDINATES)) coords
         JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER AND np.VALID_TO IS NULL
@@ -220,7 +220,7 @@ class NodeDAO extends BaseDAO {
                 AND rw_c.ROAD_NUMBER = rw.ROAD_NUMBER AND rw_c.ROAD_PART_NUMBER != rw.ROAD_PART_NUMBER) THEN 0
             ELSE 1
           END = 1)
-        ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M, rw.TRACK
+        ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M
       """
 
     Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Int], DateTime, Option[DateTime], DateTime, Option[DateTime],
