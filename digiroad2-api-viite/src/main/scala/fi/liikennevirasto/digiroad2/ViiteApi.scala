@@ -1585,7 +1585,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "name" -> node.name,
       "type" -> node.nodeType.displayValue,
       "roadNumber" -> roadAttr.roadNumber,
-      "track" -> roadAttr.track,
       "roadPartNumber" -> roadAttr.roadPartNumber,
       "addrMValue" -> roadAttr.addrMValue)
   }

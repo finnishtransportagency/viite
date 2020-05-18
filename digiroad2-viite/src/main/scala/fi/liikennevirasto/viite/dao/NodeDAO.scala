@@ -124,7 +124,7 @@ object NodeType {
 case class Node(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: NodeType, startDate: DateTime, endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
                 createdBy: String, createdTime: Option[DateTime], editor: Option[String] = None, publishedTime: Option[DateTime] = None)
 
-case class RoadAttributes(roadNumber: Long, track: Long, roadPartNumber: Long, addrMValue: Long)
+case class RoadAttributes(roadNumber: Long, roadPartNumber: Long, addrMValue: Long)
 
 class NodeDAO extends BaseDAO {
 
@@ -204,7 +204,7 @@ class NodeDAO extends BaseDAO {
     val query =
       s"""
         SELECT DISTINCT node.ID, node.NODE_NUMBER, coords.X, coords.Y, node.NAME, node."TYPE", node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
-                        node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.TRACK, rw.ROAD_PART_NUMBER, rp.ADDR_M
+                        node.CREATED_BY, node.CREATED_TIME, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M
         FROM NODE node
         CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(node.COORDINATES)) coords
         JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER AND np.VALID_TO IS NULL
@@ -220,17 +220,17 @@ class NodeDAO extends BaseDAO {
                 AND rw_c.ROAD_NUMBER = rw.ROAD_NUMBER AND rw_c.ROAD_PART_NUMBER != rw.ROAD_PART_NUMBER) THEN 0
             ELSE 1
           END = 1)
-        ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M, rw.TRACK
+        ORDER BY rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M
       """
 
     Q.queryNA[(Long, Long, Long, Long, Option[String], Option[Int], DateTime, Option[DateTime], DateTime, Option[DateTime],
-      String, Option[DateTime], Long, Long, Long, Long)](query).list.map {
+      String, Option[DateTime], Long, Long, Long)](query).list.map {
 
       case (id, nodeNumber, x, y, name, nodeType, startDate, endDate, validFrom, validTo,
-      createdBy, createdTime, roadNumber, track, roadPartNumber, addrMValue) =>
+      createdBy, createdTime, roadNumber, roadPartNumber, addrMValue) =>
 
         (Node(id, nodeNumber, Point(x, y), name, NodeType.apply(nodeType.getOrElse(NodeType.UnknownNodeType.value)), startDate, endDate, validFrom, validTo, createdBy, createdTime, None, None),
-          RoadAttributes(roadNumber, track, roadPartNumber, addrMValue))
+          RoadAttributes(roadNumber, roadPartNumber, addrMValue))
     }
   }
 
