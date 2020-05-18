@@ -4283,8 +4283,8 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val nodePoints = projectLinks.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber))
       nodePoints.size should be(12)
       /*
-        ------>----->-----> 997, 1, track = 0
-        X-----X-----X----X> 998, 1, track = 0
+        ------>----->-----> 999, 1, track = 2
+        X-----X-----X----X> 998, 1, track = 1
 
        * Note:
           X: Existence node points in project
