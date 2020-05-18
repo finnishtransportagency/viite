@@ -784,6 +784,36 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test findStartingPoints When creating New Left track link which have its geometry reversed and Transfer Combined to RightSide before existing NotHandled link road Then the road should still maintain the previous existing direction") {
+    runWithRollback {
+      val geomNotHandled1 = Seq(Point(10.0, 5.0), Point(20.0, 5.0))
+      val plId = Sequences.nextProjectLinkId
+
+      val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 10L, 25L, 10L, 25L, None, None,
+        None, 12345L, 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        geomNotHandled1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandled1), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val geomNewLeft = Seq(Point(10.0, 5.0), Point(0.0, 10.0))
+      val geomTransferRight = Seq(Point(0.0, 0.0), Point(10.0, 5.0))
+
+      val projectLinkTransfer = ProjectLink(plId + 2, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None,
+        None, 12347L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        geomTransferRight, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val projectLinkNew = ProjectLink(plId + 3, 9999L, 1L, Track.LeftSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+        None, 12347L, 0.0, 10.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        geomNewLeft, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val otherProjectLinks = Seq(projectLink1, projectLinkTransfer)
+      val projectLinks = Seq(projectLinkNew)
+
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(projectLinks, otherProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      startingPointsForCalculations should be((geomTransferRight.head, geomNewLeft.last))
+    }
+  }
+
   test("Test findStartingPoints When adding two (New) links before and after existing transfer links(s) Then the road should maintain the previous direction") {
     runWithRollback {
       val geomTransferComb1 = Seq(Point(40.0, 30.0), Point(30.0, 40.0))
