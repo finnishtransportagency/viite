@@ -4164,6 +4164,254 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  /**
+    * Test case for node points when track changes from track zero to track two
+    */
+  test("Test handleNodePointTemplates and expireObsoleteNodesAndJunctions when track zero becomes track 2") {
+    runWithRollback {
+      /*
+        X-----X-----X----X> 997, 1, track = 0
+        X-----X-----X----X> 998, 1, track = 0
+
+       * Note:
+          X: Existence node points in project
+
+       */
+      val project1Id: Long = Sequences.nextViiteProjectId
+      val project1 = Project(project1Id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), Seq(), None, None)
+
+      val (pl1, ll1, rw1) = dummyHorizontalRoad(project1Id, 1,
+        997L, 1L, Sequences.nextRoadwayNumber,
+        firstPointAt = Point(0.0, 10.0), linkId = 12345, plId = Sequences.nextProjectLinkId, rwId = Sequences.nextRoadwayId, llId = Sequences.nextLinearLocationId)
+      val (pl2, ll2, rw2) = dummyHorizontalRoad(project1Id, 1,
+        997L, 1L, Sequences.nextRoadwayNumber, roadType = RoadType.MunicipalityStreetRoad,
+        firstPointAt = Point(10.0, 10.0), linkId = 12346, plId = Sequences.nextProjectLinkId, rwId = Sequences.nextRoadwayId, llId = Sequences.nextLinearLocationId)
+      val (pl3, ll3, rw3) = dummyHorizontalRoad(project1Id, 1,
+        997L, 1L, Sequences.nextRoadwayNumber, discontinuity = Discontinuity.EndOfRoad,
+        firstPointAt = Point(20.0, 10.0), linkId = 12347, plId = Sequences.nextProjectLinkId, rwId = Sequences.nextRoadwayId, llId = Sequences.nextLinearLocationId)
+
+      val (pl4, ll4, rw4) = dummyHorizontalRoad(project1Id, 1,
+        998L, 1L, Sequences.nextRoadwayNumber,
+        firstPointAt = Point(0.0, 0.0), linkId = 12355, plId = Sequences.nextProjectLinkId, rwId = Sequences.nextRoadwayId, llId = Sequences.nextLinearLocationId)
+      val (pl5, ll5, rw5) = dummyHorizontalRoad(project1Id, 1,
+        998L, 1L, Sequences.nextRoadwayNumber, roadType = RoadType.MunicipalityStreetRoad,
+        firstPointAt = Point(10.0, 0.0), linkId = 12356, plId = Sequences.nextProjectLinkId, rwId = Sequences.nextRoadwayId, llId = Sequences.nextLinearLocationId)
+      val (pl6, ll6, rw6) = dummyHorizontalRoad(project1Id, 1,
+        998L, 1L, Sequences.nextRoadwayNumber, discontinuity = Discontinuity.EndOfRoad,
+        firstPointAt = Point(20.0, 0.0), linkId = 12357, plId = Sequences.nextProjectLinkId, rwId = Sequences.nextRoadwayId, llId = Sequences.nextLinearLocationId)
+
+      val roadways = rw1 ++ rw2 ++ rw3 ++ rw4 ++ rw5 ++ rw6
+      val projectLinks = pl1 ++ pl2 ++ pl3 ++ pl4 ++ pl5 ++ pl6
+      val linearLocations = ll1 ++ ll2 ++ ll3 ++ ll4 ++ ll5 ++ ll6
+
+      buildTestDataForProject(Some(project1), Some(roadways), Some(linearLocations), Some(projectLinks))
+
+      val projectChanges = List(
+        ProjectRoadwayChange(project1Id, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw1.head.roadNumber), Some(rw1.head.track.value), startRoadPartNumber = Some(rw1.head.roadPartNumber), endRoadPartNumber = Some(rw1.last.roadPartNumber), startAddressM = Some(rw1.head.startAddrMValue), endAddressM = Some(rw1.head.endAddrMValue), Some(rw1.head.roadType), Some(rw1.last.discontinuity), Some(rw1.head.ely)),
+            rw1.last.discontinuity, rw1.head.roadType, reversed = false, 1, rw1.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(project1Id, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw2.head.roadNumber), Some(rw2.head.track.value), startRoadPartNumber = Some(rw2.head.roadPartNumber), endRoadPartNumber = Some(rw2.last.roadPartNumber), startAddressM = Some(rw2.head.startAddrMValue), endAddressM = Some(rw2.head.endAddrMValue), Some(rw2.head.roadType), Some(rw2.last.discontinuity), Some(rw2.head.ely)),
+            rw2.last.discontinuity, rw2.head.roadType, reversed = false, 2, rw2.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(project1Id, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw3.head.roadNumber), Some(rw3.head.track.value), startRoadPartNumber = Some(rw3.head.roadPartNumber), endRoadPartNumber = Some(rw3.last.roadPartNumber), startAddressM = Some(rw3.head.startAddrMValue), endAddressM = Some(rw3.head.endAddrMValue), Some(rw3.head.roadType), Some(rw3.last.discontinuity), Some(rw3.head.ely)),
+            rw3.last.discontinuity, rw3.head.roadType, reversed = false, 3, rw3.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(project1Id, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw4.head.roadNumber), Some(rw4.head.track.value), startRoadPartNumber = Some(rw4.head.roadPartNumber), endRoadPartNumber = Some(rw4.last.roadPartNumber), startAddressM = Some(rw4.head.startAddrMValue), endAddressM = Some(rw4.head.endAddrMValue), Some(rw4.head.roadType), Some(rw4.last.discontinuity), Some(rw4.head.ely)),
+            rw4.last.discontinuity, rw4.head.roadType, reversed = false, 4, rw4.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(project1Id, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw5.head.roadNumber), Some(rw5.head.track.value), startRoadPartNumber = Some(rw5.head.roadPartNumber), endRoadPartNumber = Some(rw5.last.roadPartNumber), startAddressM = Some(rw5.head.startAddrMValue), endAddressM = Some(rw5.head.endAddrMValue), Some(rw5.head.roadType), Some(rw5.last.discontinuity), Some(rw5.head.ely)),
+            rw5.last.discontinuity, rw5.head.roadType, reversed = false, 5, rw5.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(project1Id, Some("project name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.New,
+            RoadwayChangeSection(None, None, None, None, None, None, Some(PublicRoad), Some(Discontinuity.MinorDiscontinuity), Some(8L)),
+            RoadwayChangeSection(Some(rw6.head.roadNumber), Some(rw6.head.track.value), startRoadPartNumber = Some(rw6.head.roadPartNumber), endRoadPartNumber = Some(rw6.last.roadPartNumber), startAddressM = Some(rw6.head.startAddrMValue), endAddressM = Some(rw6.head.endAddrMValue), Some(rw6.head.roadType), Some(rw6.last.discontinuity), Some(rw6.head.ely)),
+            rw6.last.discontinuity, rw6.head.roadType, reversed = false, 6, rw6.head.ely)
+          , DateTime.now, Some(0L))
+      )
+
+      val mappedReservedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(project1Id)
+      roadAddressService.handleRoadwayPointsUpdate(projectChanges, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.handleNodePoints(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
+
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(0.0, 10.0), Point(0.0, 10.0)), roadNumberLimits)).thenReturn(ll1)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(10.0, 10.0), Point(10.0, 10.0)), roadNumberLimits)).thenReturn(ll1 ++ ll2)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(20.0, 10.0), Point(20.0, 10.0)), roadNumberLimits)).thenReturn(ll2 ++ ll3)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(30.0, 10.0), Point(30.0, 10.0)), roadNumberLimits)).thenReturn(ll3)
+
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 0.0)), roadNumberLimits)).thenReturn(ll4)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(10.0, 0.0), Point(10.0, 0.0)), roadNumberLimits)).thenReturn(ll4 ++ ll5)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(20.0, 0.0), Point(20.0, 0.0)), roadNumberLimits)).thenReturn(ll5 ++ ll6)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(30.0, 0.0), Point(30.0, 0.0)), roadNumberLimits)).thenReturn(ll6)
+
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1.map(_.roadwayNumber).toSet, false)).thenReturn(rw1)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2.map(_.roadwayNumber).toSet, false)).thenReturn(rw2)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3.map(_.roadwayNumber).toSet, false)).thenReturn(rw3)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1 ++ ll2).map(_.roadwayNumber).toSet, false)).thenReturn(rw1 ++ rw2)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2 ++ ll3).map(_.roadwayNumber).toSet, false)).thenReturn(rw2 ++ rw3)
+
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll4.map(_.roadwayNumber).toSet, false)).thenReturn(rw4)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll5.map(_.roadwayNumber).toSet, false)).thenReturn(rw5)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll6.map(_.roadwayNumber).toSet, false)).thenReturn(rw6)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll4 ++ ll5).map(_.roadwayNumber).toSet, false)).thenReturn(rw4 ++ rw5)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll5 ++ ll6).map(_.roadwayNumber).toSet, false)).thenReturn(rw5 ++ rw6)
+
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectChanges, projectLinks, mappedReservedRoadwayNumbers)
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinks, Some(project1.startDate.minusDays(1)))
+
+      val nodePoints = projectLinks.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber))
+      nodePoints.size should be(12)
+      /*
+        ------>----->-----> 997, 1, track = 0
+        X-----X-----X----X> 998, 1, track = 0
+
+       * Note:
+          X: Existence node points in project
+
+       */
+      val project2Id: Long = Sequences.nextViiteProjectId
+      val project2 = Project(project2Id, ProjectState.Incomplete, "n", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
+        "", Seq(), Seq(), None, None)
+
+      val (pl1t2, ll1t2, rw1t2) = dummyHorizontalRoad(project1Id, 1,
+        999L, 1L, rw1.head.roadwayNumber, track = Track.LeftSide,
+        firstPointAt = Point(0.0, 10.0), linkId = 12345, plId = Sequences.nextProjectLinkId, rwId = Sequences.nextRoadwayId, llId = Sequences.nextLinearLocationId)
+      val (pl2t2, ll2t2, rw2t2) = dummyHorizontalRoad(project1Id, 1,
+        999L, 1L, rw2.head.roadwayNumber, track = Track.LeftSide, roadType = RoadType.MunicipalityStreetRoad,
+        firstPointAt = Point(10.0, 10.0), linkId = 12346, plId = Sequences.nextProjectLinkId, rwId = Sequences.nextRoadwayId, llId = Sequences.nextLinearLocationId)
+      val (pl3t2, ll3t2, rw3t2) = dummyHorizontalRoad(project1Id, 1,
+        999L, 1L, rw3.head.roadwayNumber, track = Track.LeftSide, discontinuity = Discontinuity.EndOfRoad,
+        firstPointAt = Point(20.0, 10.0), linkId = 12347, plId = Sequences.nextProjectLinkId, rwId = Sequences.nextRoadwayId, llId = Sequences.nextLinearLocationId)
+
+      val (pl1t1, ll1t1, rw1t1) = dummyHorizontalRoad(project1Id, 1,
+        999L, 1L, rw4.head.roadwayNumber, track = Track.RightSide,
+        firstPointAt = Point(0.0, 0.0), linkId = 12355, plId = Sequences.nextProjectLinkId, rwId = Sequences.nextRoadwayId, llId = Sequences.nextLinearLocationId)
+      val (pl2t1, ll2t1, rw2t1) = dummyHorizontalRoad(project1Id, 1,
+        999L, 1L, rw5.head.roadwayNumber, track = Track.RightSide, roadType = RoadType.MunicipalityStreetRoad,
+        firstPointAt = Point(10.0, 0.0), linkId = 12356, plId = Sequences.nextProjectLinkId, rwId = Sequences.nextRoadwayId, llId = Sequences.nextLinearLocationId)
+      val (pl3t1, ll3t1, rw3t1) = dummyHorizontalRoad(project1Id, 1,
+        999L, 1L, rw6.head.roadwayNumber, track = Track.RightSide, discontinuity = Discontinuity.EndOfRoad,
+        firstPointAt = Point(20.0, 0.0), linkId = 12357, plId = Sequences.nextProjectLinkId, rwId = Sequences.nextRoadwayId, llId = Sequences.nextLinearLocationId)
+
+      val rwt2 = rw1t2 ++ rw2t2 ++ rw3t2
+      val rwt1 = rw1t1 ++ rw2t1 ++ rw3t1
+
+      val plt2 = pl1t2 ++ pl2t2 ++ pl3t2
+      val plt1 = pl1t1 ++ pl2t1 ++ pl3t1
+
+      val llt2 = ll1t2 ++ ll2t2 ++ ll3t2
+      val llt1 = ll1t1 ++ ll2t1 ++ ll3t1
+
+      val projectLinksAfterTrackChange = plt1 ++ plt2
+
+      linearLocationDAO.expireByRoadwayNumbers(roadways.map(_.roadwayNumber).toSet)
+      roadwayDAO.expireHistory(roadways.map(_.id).toSet)
+
+      buildTestDataForProject(Some(project2), Some(rwt1 ++ rwt2), Some(llt1 ++ llt2), Some(projectLinksAfterTrackChange))
+
+      val projectTrackChanges = List(
+        ProjectRoadwayChange(project2Id, Some("project another name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.Transfer,
+            RoadwayChangeSection(Some(rw4.head.roadNumber), Some(rw4.head.track.value), startRoadPartNumber = Some(rw4.head.roadPartNumber), endRoadPartNumber = Some(rw4.last.roadPartNumber), startAddressM = Some(rw4.head.startAddrMValue), endAddressM = Some(rw4.head.endAddrMValue), Some(rw4.head.roadType), Some(rw4.last.discontinuity), Some(rw4.head.ely)),
+            RoadwayChangeSection(Some(rw1t1.head.roadNumber), Some(rw1t1.head.track.value), startRoadPartNumber = Some(rw1t1.head.roadPartNumber), endRoadPartNumber = Some(rw1t1.last.roadPartNumber), startAddressM = Some(rw1t1.head.startAddrMValue), endAddressM = Some(rw1t1.head.endAddrMValue), Some(rw1t1.head.roadType), Some(rw1t1.last.discontinuity), Some(rw1t1.head.ely)),
+            rw1t1.last.discontinuity, rw1t1.head.roadType, reversed = false, 1, rw1t1.head.ely)
+          , DateTime.now, Some(0L)),
+
+      ProjectRoadwayChange(project2Id, Some("project another name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.Transfer,
+            RoadwayChangeSection(Some(rw1.head.roadNumber), Some(rw1.head.track.value), startRoadPartNumber = Some(rw1.head.roadPartNumber), endRoadPartNumber = Some(rw1.last.roadPartNumber), startAddressM = Some(rw1.head.startAddrMValue), endAddressM = Some(rw1.head.endAddrMValue), Some(rw1.head.roadType), Some(rw1.last.discontinuity), Some(rw1.head.ely)),
+            RoadwayChangeSection(Some(rw1t2.head.roadNumber), Some(rw1t2.head.track.value), startRoadPartNumber = Some(rw1t2.head.roadPartNumber), endRoadPartNumber = Some(rw1t2.last.roadPartNumber), startAddressM = Some(rw1t2.head.startAddrMValue), endAddressM = Some(rw1t2.head.endAddrMValue), Some(rw1t2.head.roadType), Some(rw1t2.last.discontinuity), Some(rw1t2.head.ely)),
+            rw1t2.last.discontinuity, rw1t2.head.roadType, reversed = false, 2, rw1t2.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(project2Id, Some("project another name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.Transfer,
+            RoadwayChangeSection(Some(rw5.head.roadNumber), Some(rw5.head.track.value), startRoadPartNumber = Some(rw5.head.roadPartNumber), endRoadPartNumber = Some(rw5.last.roadPartNumber), startAddressM = Some(rw5.head.startAddrMValue), endAddressM = Some(rw5.head.endAddrMValue), Some(rw5.head.roadType), Some(rw5.last.discontinuity), Some(rw5.head.ely)),
+            RoadwayChangeSection(Some(rw2t1.head.roadNumber), Some(rw2t1.head.track.value), startRoadPartNumber = Some(rw2t1.head.roadPartNumber), endRoadPartNumber = Some(rw2t1.last.roadPartNumber), startAddressM = Some(rw2t1.head.startAddrMValue), endAddressM = Some(rw2t1.head.endAddrMValue), Some(rw2t1.head.roadType), Some(rw2t1.last.discontinuity), Some(rw2t1.head.ely)),
+            rw2t1.last.discontinuity, rw2t1.head.roadType, reversed = false, 3, rw2t1.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(project2Id, Some("project another name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.Transfer,
+            RoadwayChangeSection(Some(rw2.head.roadNumber), Some(rw2.head.track.value), startRoadPartNumber = Some(rw2.head.roadPartNumber), endRoadPartNumber = Some(rw2.last.roadPartNumber), startAddressM = Some(rw2.head.startAddrMValue), endAddressM = Some(rw2.head.endAddrMValue), Some(rw2.head.roadType), Some(rw2.last.discontinuity), Some(rw2.head.ely)),
+            RoadwayChangeSection(Some(rw2t2.head.roadNumber), Some(rw2t2.head.track.value), startRoadPartNumber = Some(rw2t2.head.roadPartNumber), endRoadPartNumber = Some(rw2t2.last.roadPartNumber), startAddressM = Some(rw2t2.head.startAddrMValue), endAddressM = Some(rw2t2.head.endAddrMValue), Some(rw2t2.head.roadType), Some(rw2t2.last.discontinuity), Some(rw2t2.head.ely)),
+            rw2t2.last.discontinuity, rw2t2.head.roadType, reversed = false, 4, rw2t2.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(project2Id, Some("project another name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.Transfer,
+            RoadwayChangeSection(Some(rw6.head.roadNumber), Some(rw6.head.track.value), startRoadPartNumber = Some(rw6.head.roadPartNumber), endRoadPartNumber = Some(rw6.last.roadPartNumber), startAddressM = Some(rw6.head.startAddrMValue), endAddressM = Some(rw6.head.endAddrMValue), Some(rw6.head.roadType), Some(rw6.last.discontinuity), Some(rw6.head.ely)),
+            RoadwayChangeSection(Some(rw3t1.head.roadNumber), Some(rw3t1.head.track.value), startRoadPartNumber = Some(rw3t1.head.roadPartNumber), endRoadPartNumber = Some(rw3t1.last.roadPartNumber), startAddressM = Some(rw3t1.head.startAddrMValue), endAddressM = Some(rw3t1.head.endAddrMValue), Some(rw3t1.head.roadType), Some(rw3t1.last.discontinuity), Some(rw3t1.head.ely)),
+            rw3t1.last.discontinuity, rw3t1.head.roadType, reversed = false, 5, rw3t1.head.ely)
+          , DateTime.now, Some(0L)),
+
+        ProjectRoadwayChange(project2Id, Some("project another name"), 8L, "test user", DateTime.now,
+          RoadwayChangeInfo(AddressChangeType.Transfer,
+            RoadwayChangeSection(Some(rw3.head.roadNumber), Some(rw3.head.track.value), startRoadPartNumber = Some(rw3.head.roadPartNumber), endRoadPartNumber = Some(rw3.last.roadPartNumber), startAddressM = Some(rw3.head.startAddrMValue), endAddressM = Some(rw3.head.endAddrMValue), Some(rw3.head.roadType), Some(rw3.last.discontinuity), Some(rw3.head.ely)),
+            RoadwayChangeSection(Some(rw3t2.head.roadNumber), Some(rw3t2.head.track.value), startRoadPartNumber = Some(rw3t2.head.roadPartNumber), endRoadPartNumber = Some(rw3t2.last.roadPartNumber), startAddressM = Some(rw3t2.head.startAddrMValue), endAddressM = Some(rw3t2.head.endAddrMValue), Some(rw3t2.head.roadType), Some(rw3t2.last.discontinuity), Some(rw3t2.head.ely)),
+            rw3t2.last.discontinuity, rw3t2.head.roadType, reversed = false, 6, rw3t2.head.ely)
+          , DateTime.now, Some(0L))
+      )
+
+      val mappedReservedRoadwayNumbersAfterTrackChange = projectLinkDAO.fetchProjectLinksChange(project2Id)
+      roadAddressService.handleRoadwayPointsUpdate(projectTrackChanges, mappedReservedRoadwayNumbersAfterTrackChange)
+      nodesAndJunctionsService.handleNodePoints(projectTrackChanges, projectLinksAfterTrackChange, mappedReservedRoadwayNumbersAfterTrackChange)
+
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(0.0, 10.0), Point(0.0, 10.0)), roadNumberLimits)).thenReturn(ll1t2)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(10.0, 10.0), Point(10.0, 10.0)), roadNumberLimits)).thenReturn(ll1t2 ++ ll2t2)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(20.0, 10.0), Point(20.0, 10.0)), roadNumberLimits)).thenReturn(ll2t2 ++ ll3t2)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(30.0, 10.0), Point(30.0, 10.0)), roadNumberLimits)).thenReturn(ll3t2)
+
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(0.0, 0.0)), roadNumberLimits)).thenReturn(ll1t1)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(10.0, 0.0), Point(10.0, 0.0)), roadNumberLimits)).thenReturn(ll1t1 ++ ll2t1)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(20.0, 0.0), Point(20.0, 0.0)), roadNumberLimits)).thenReturn(ll2t1 ++ ll3t1)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(30.0, 0.0), Point(30.0, 0.0)), roadNumberLimits)).thenReturn(ll3t1)
+
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1t1.map(_.roadwayNumber).toSet, false)).thenReturn(rw1t1)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2t1.map(_.roadwayNumber).toSet, false)).thenReturn(rw2t1)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3t1.map(_.roadwayNumber).toSet, false)).thenReturn(rw3t1)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1t1 ++ ll2t1).map(_.roadwayNumber).toSet, false)).thenReturn(rw1t1 ++ rw2t1)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2t1 ++ ll3t1).map(_.roadwayNumber).toSet, false)).thenReturn(rw2t1 ++ rw3t1)
+
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll1t2.map(_.roadwayNumber).toSet, false)).thenReturn(rw1t2)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll2t2.map(_.roadwayNumber).toSet, false)).thenReturn(rw2t2)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(ll3t2.map(_.roadwayNumber).toSet, false)).thenReturn(rw3t2)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1t2 ++ ll2t2).map(_.roadwayNumber).toSet, false)).thenReturn(rw1t2 ++ rw2t2)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2t2 ++ ll3t2).map(_.roadwayNumber).toSet, false)).thenReturn(rw2t2 ++ rw3t2)
+
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll1t1 ++ ll1t2).map(_.roadwayNumber).toSet, false)).thenReturn(rw1t1 ++ rw1t2)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll2t1 ++ ll2t2).map(_.roadwayNumber).toSet, false)).thenReturn(rw2t1 ++ rw2t2)
+      when(mockRoadwayDAO.fetchAllByRoadwayNumbers((ll3t1 ++ ll3t2).map(_.roadwayNumber).toSet, false)).thenReturn(rw3t1 ++ rw3t2)
+
+      nodesAndJunctionsService.handleJunctionAndJunctionPoints(projectTrackChanges, projectLinksAfterTrackChange, mappedReservedRoadwayNumbersAfterTrackChange)
+      nodesAndJunctionsService.expireObsoleteNodesAndJunctions(projectLinksAfterTrackChange, Some(project2.startDate.minusDays(1)))
+
+      val nodePointsAfterTrackChange = projectLinksAfterTrackChange.flatMap(pl => nodePointDAO.fetchTemplatesByRoadwayNumber(pl.roadwayNumber))
+      nodePointsAfterTrackChange.size should be(6)
+    }
+  }
+
   test("Test addOrUpdateNode When creating new Then new is created successfully") {
     runWithRollback {
       val node = Node(NewIdValue, Sequences.nextNodeNumber, Point(0, 0), Some("Node name"), NodeType.EndOfRoad,
