@@ -194,7 +194,11 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def getNodesWithJunctionByBoundingBox(boundingRectangle: BoundingRectangle, raLinks: Seq[RoadAddressLink]): Map[Node, (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]])] = {
     withDynSession {
       time(logger, "Fetch nodes with junctions") {
-        val nodes = nodeDAO.fetchByBoundingBox(boundingRectangle)
+        val junctionsByBoundingBox = getJunctionsByBoundingBox(boundingRectangle, raLinks)
+        val nodesByBoundingBox = nodeDAO.fetchByBoundingBox(boundingRectangle)
+
+        val nodes = (nodesByBoundingBox ++ junctionsByBoundingBox.flatMap { case (junction, _) if junction.nodeNumber.isDefined => nodeDAO.fetchByNodeNumber(junction.nodeNumber.get) }).distinct
+
         val nodePoints = nodePointDAO.fetchByNodeNumbers(nodes.map(_.nodeNumber))
         val junctions = junctionDAO.fetchJunctionsByNodeNumbers(nodes.map(_.nodeNumber))
         val junctionPoints = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
@@ -596,6 +600,25 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         nodePointTemplate.groupBy(_.roadwayNumber).par.flatMap { case (k, v) =>
           groupedRoadLinks.get(k).map(rls => enrichNodePointCoordinates(rls, v)).getOrElse(v)
         }.toSeq.seq
+      }
+    }
+  }
+
+  def getJunctionsByBoundingBox(boundingRectangle: BoundingRectangle, raLinks: Seq[RoadAddressLink]): Map[Junction, Seq[JunctionPoint]] = {
+    withDynTransactionNewOrExisting {
+      time(logger, "Fetch junctions") {
+        val junctions: Seq[Junction] = junctionDAO.fetchByBoundingBox(boundingRectangle)
+        val junctionPoints: Seq[JunctionPoint] = junctionPointDAO.fetchByJunctionIds(junctions.map(_.id))
+
+        val groupedRoadLinks: Map[Long, Seq[RoadAddressLink]] = raLinks.groupBy(_.roadwayNumber)
+
+        val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap { case (k, v) =>
+          groupedRoadLinks.get(k).map(rls => enrichJunctionPointCoordinates(rls, v)).getOrElse(v)
+        }.toSeq.seq
+
+        junctions.map {
+          junction => (junction, junctionPointsWithCoords.filter(_.junctionId == junction.id))
+        }.toMap
       }
     }
   }
