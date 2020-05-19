@@ -1,0 +1,134 @@
+{
+    "ipcMode": null,
+    "executionRoleArn": "arn:aws:iam::783354560127:role/TaskExecutionRole",
+    "containerDefinitions": [
+        {
+            "dnsSearchDomains": null,
+            "environmentFiles": null,
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "secretOptions": null,
+                "options": {
+                    "awslogs-group": "/ecs/Viite-dev",
+                    "awslogs-region": "eu-west-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "entryPoint": null,
+            "portMappings": [
+                {
+                    "hostPort": 80,
+                    "protocol": "tcp",
+                    "containerPort": 80
+                }
+            ],
+            "command": null,
+            "linuxParameters": null,
+            "cpu": 0,
+            "environment": [
+                { "name": "userProvider", "value": "fi.liikennevirasto.digiroad2.dao.OracleUserProvider" },
+                { "name": "municipalityProvider", "value": "fi.liikennevirasto.digiroad2.dao.OracleMunicipalityProvider" },
+                { "name": "eventBus", "value": "fi.liikennevirasto.digiroad2.DigiroadEventBus" },
+                { "name": "vvhServiceHost", "value": "oag.vayla.fi" },
+                { "name": "vvhRestApiEndPoint", "value": "https://oag.vayla.fi/vvhdata/" },
+                { "name": "vvhRoadlink.frozen", "value": "true" },
+                { "name": "vkmUrl", "value": "http://172.17.200.24:8997" },
+                { "name": "tierekisteriViiteRestApiEndPoint", "value": "" },
+                { "name": "tierekisteri.enabled", "value": "false" },
+                { "name": "viite.importTimeStamp", "value": "1545091200000" },
+                { "name": "http.proxySet", "value": "false" },
+                { "name": "http.proxyHost", "value": "127.0.0.1" },
+                { "name": "http.nonProxyHosts", "value": "127.0.0.1" },
+                { "name": "importOnlyCurrent", "value": "false" },
+                { "name": "authenticationTestMode", "value": "false" },
+                { "name": "bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1g916wf1lodch.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/viite_dev" },
+                { "name": "bonecp.username", "value": "viite_dev" },
+                { "name": "import.bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1g916wf1lodch.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv" },
+                { "name": "import.bonecp.username", "value": "drkonv" },
+                { "name": "conversion.bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1g916wf1lodch.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv" },
+                { "name": "conversion.bonecp.username", "value": "drkonv" },
+                { "name": "authentication.basic.username", "value": "kalpa" },
+                { "name": "authentication.serviceRoad.basic.username", "value": "livi" },
+                { "name": "authentication.municipality.basic.username", "value": "municipality" },
+                { "name": "viiteTierekisteri.username", "value": "trrestviite" },
+                { "name": "env", "value": "Dev" }
+            ],
+            "resourceRequirements": null,
+            "ulimits": null,
+            "dnsServers": null,
+            "mountPoints": [],
+            "workingDirectory": null,
+            "secrets": [
+                {
+                    "name": "bonecp.password",
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/bonecp.password"
+                },
+                {
+                    "name": "import.bonecp.password",
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/import.bonecp.password"
+                },
+                {
+                    "name": "conversion.bonecp.password",
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/conversion.bonecp.password"
+                },
+                {
+                    "name": "authentication.basic.password",
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/authentication.basic.password"
+                },
+                {
+                    "name": "authentication.serviceRoad.basic.password",
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/authentication.serviceRoad.basic.password"
+                },
+                {
+                    "name": "authentication.municipality.basic.password",
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/authentication.municipality.basic.password"
+                },
+                {
+                    "name": "viiteTierekisteri.password",
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/viiteTierekisteri.password"
+                }
+            ],
+            "dockerSecurityOptions": null,
+            "memory": null,
+            "memoryReservation": 2048,
+            "volumesFrom": [],
+            "stopTimeout": null,
+            "image": "vayla/viite:latest",
+            "startTimeout": null,
+            "firelensConfiguration": null,
+            "dependsOn": null,
+            "disableNetworking": null,
+            "interactive": null,
+            "healthCheck": null,
+            "essential": true,
+            "links": null,
+            "hostname": null,
+            "extraHosts": null,
+            "pseudoTerminal": null,
+            "user": null,
+            "readonlyRootFilesystem": null,
+            "dockerLabels": null,
+            "systemControls": null,
+            "privileged": null,
+            "name": "viite"
+        }
+    ],
+    "memory": "2048",
+    "taskRoleArn": "arn:aws:iam::783354560127:role/TaskExecutionRole",
+    "family": "Viite-dev",
+    "pidMode": null,
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "networkMode": "awsvpc",
+    "cpu": "1024",
+    "inferenceAccelerators": [],
+    "proxyConfiguration": null,
+    "volumes": [],
+    "tags": [
+        {
+            "key": "Application",
+            "value": "Viite"
+        }
+    ]
+}
