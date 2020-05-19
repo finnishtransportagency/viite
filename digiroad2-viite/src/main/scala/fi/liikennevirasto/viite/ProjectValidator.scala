@@ -46,8 +46,6 @@ class ProjectValidator {
   val defaultSectionCalculatorStrategy = new DefaultSectionCalculatorStrategy
   val defaultZoomlevel = 12
 
-  private def distanceToPoint = 10.0
-
   def checkReservedExistence(currentProject: Project, newRoadNumber: Long, newRoadPart: Long, linkStatus: LinkStatus, projectLinks: Seq[ProjectLink]): Unit = {
     if (LinkStatus.New.value == linkStatus.value) {
       if (roadAddressService.getRoadAddressesFiltered(newRoadNumber, newRoadPart).nonEmpty) {
@@ -404,6 +402,14 @@ class ProjectValidator {
       def value = 30
 
       def message: String = DiscontinuityOnParallelLinksMessage
+
+      def notification = true
+    }
+
+    case object WrongParallelLinks extends ValidationError {
+      def value = 31
+
+      def message: String = WrongParallelLinksMessage
 
       def notification = true
     }
@@ -916,7 +922,24 @@ class ProjectValidator {
         }
       }.toSeq
 
-      error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(discontinuous).toSeq
+      val parallel = roadProjectLinks.filter(_.track.value != Track.Combined.value)
+        .groupBy(p => (p.roadNumber, p.roadPartNumber))
+        .flatMap { pLink =>
+          // divide the the tracks in [RightSide(value = 1), LeftSide(value = 2)]
+          val trackIntervals = Seq(pLink._2.filter(_.track == RightSide), pLink._2.filter(_.track == LeftSide))
+          // get all Minor Discontinuities in the current roadLinks
+          val parallelLink = pLink._2.filter(_.discontinuity == ParallelLink)
+          parallelLink.flatMap{parLink =>
+            // search for the possible minor discontinuity link in the opposite track
+            if(trackIntervals(Track.switch(parLink.track).value - 1).exists(
+              opposite => opposite.endAddrMValue == parLink.endAddrMValue && opposite.discontinuity != MinorDiscontinuity))
+              Some(parLink)
+            else None
+          }
+        }.toSeq
+
+      error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(discontinuous).toSeq ++
+        error(project.id, ValidationErrorList.WrongParallelLinks)(parallel).toSeq
     }
 
     def checkMinorDiscontinuityBetweenLinksOnPart: Seq[ValidationErrorDetails] = {
@@ -1132,19 +1155,18 @@ class ProjectValidator {
      */
     def checkDiscontinuityOnParallelLinks: Seq[ValidationErrorDetails] = {
       error(project.id, ValidationErrorList.DiscontinuityOnParallelLinks)(roadProjectLinks
-        .filter (_.track.value != Track.Combined.value)
+        .filter(_.track.value != Track.Combined.value)
         .groupBy(p => (p.roadNumber, p.roadPartNumber))
         .flatMap { pLink =>
           // divide the the tracks in [RightSide(value = 1), LeftSide(value = 2)]
           val trackIntervals = Seq(pLink._2.filter(_.track == RightSide), pLink._2.filter(_.track == LeftSide))
           // get all Minor Discontinuities in the current roadLinks
-          val minorDiscontinuityLinks = pLink._2.filter { _.discontinuity == MinorDiscontinuity  }
-          minorDiscontinuityLinks.flatMap(minorLink => {
+          val minorDiscontinuityLinks = pLink._2.filter(_.discontinuity == MinorDiscontinuity)
+          minorDiscontinuityLinks.flatMap(minorLink =>
             // search for the parallel link in the opposite track sequence
-            trackIntervals(Track.switch(minorLink.track).value - 1).filter {
+            trackIntervals(Track.switch(minorLink.track).value - 1).filter(
               parallelLink => (parallelLink.startAddrMValue to parallelLink.endAddrMValue contains minorLink.endAddrMValue) && parallelLink.startAddrMValue != minorLink.endAddrMValue && parallelLink.discontinuity != MinorDiscontinuity && parallelLink.discontinuity != ParallelLink
-            }
-          })
+            ))
         }.toSeq
       ).toSeq
     }
