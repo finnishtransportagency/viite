@@ -19,7 +19,7 @@ import scala.util.matching.Regex
 trait DigiroadServer {
   val viiteContextPath: String
   def startServer() {
-    val server = new Server(9080)
+    val server = new Server(80)
     val handler = new ContextHandlerCollection()
     val mbContainer = new MBeanContainer(ManagementFactory.getPlatformMBeanServer)
     server.addEventListener(mbContainer)
