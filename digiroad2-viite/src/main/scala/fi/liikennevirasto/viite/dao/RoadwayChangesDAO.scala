@@ -476,6 +476,7 @@ class RoadwayChangesDAO {
         AND R.VALID_FROM >= to_timestamp('${new Timestamp(startValidFromDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
         $untilString
         AND R.VALID_TO IS NULL
+        ORDER BY R.VALID_FROM
      """
 
     Q.queryNA[RoadwayChangesInfo](query).iterator.toSeq

@@ -233,8 +233,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
                 "tie" -> roadwayChangesInfo.old_road_number,
                 "osa" -> roadwayChangesInfo.old_road_part_number,
                 "ajorata" -> roadwayChangesInfo.old_TRACK,
-                "alkuetaisyys" -> roadwayChangesInfo.old_start_addr_m,
-                "loppuetaisyys" -> roadwayChangesInfo.old_end_addr_m,
+                "etaisyys" -> roadwayChangesInfo.old_start_addr_m,
+                "etaisyys_loppu" -> roadwayChangesInfo.old_end_addr_m,
                 "jatkuvuuskoodi" -> roadwayChangesInfo.old_discontinuity,
                 "tietyyppi" -> roadwayChangesInfo.old_road_type,
                 "ely" -> roadwayChangesInfo.old_ely
@@ -244,8 +244,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
                 "tie" -> roadwayChangesInfo.new_road_number,
                 "osa" -> roadwayChangesInfo.new_road_part_number,
                 "ajorata" -> roadwayChangesInfo.new_TRACK,
-                "alkuetaisyys" -> roadwayChangesInfo.new_start_addr_m,
-                "loppuetaisyys" -> roadwayChangesInfo.new_end_addr_m,
+                "etaisyys" -> roadwayChangesInfo.new_start_addr_m,
+                "etaisyys_loppu" -> roadwayChangesInfo.new_end_addr_m,
                 "jatkuvuuskoodi" -> roadwayChangesInfo.new_discontinuity,
                 "tietyyppi" -> roadwayChangesInfo.new_road_type,
                 "ely" -> roadwayChangesInfo.new_ely
@@ -497,7 +497,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   private def formatDateTimeToIsoUtcString(dateOption: Option[DateTime]): Option[String] =
     dateOption.map { date => ISODateTimeFormat.dateTimeNoMillis().print(date.withZone(DateTimeZone.UTC)) }
 
-  def parseIsoDate(dateString: Option[String]): Option[DateTime] = {
+  private def parseIsoDate(dateString: Option[String]): Option[DateTime] = {
     var dateTime = None: Option[DateTime]
     if (dateString.nonEmpty) {
       try {
