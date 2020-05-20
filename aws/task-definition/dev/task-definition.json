@@ -61,31 +61,31 @@
             "secrets": [
                 {
                     "name": "bonecp.password",
-                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/bonecp.password"
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg:bonecp.password::"
                 },
                 {
                     "name": "import.bonecp.password",
-                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/import.bonecp.password"
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg:import.bonecp.password::"
                 },
                 {
                     "name": "conversion.bonecp.password",
-                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/conversion.bonecp.password"
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg:conversion.bonecp.password::"
                 },
                 {
                     "name": "authentication.basic.password",
-                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/authentication.basic.password"
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg:authentication.basic.password::"
                 },
                 {
                     "name": "authentication.serviceRoad.basic.password",
-                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/authentication.serviceRoad.basic.password"
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg:authentication.serviceRoad.basic.password::"
                 },
                 {
                     "name": "authentication.municipality.basic.password",
-                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/authentication.municipality.basic.password"
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg:authentication.municipality.basic.password::"
                 },
                 {
                     "name": "viiteTierekisteri.password",
-                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg/viiteTierekisteri.password"
+                    "valueFrom": "arn:aws:secretsmanager:eu-west-1:783354560127:secret:Viite-Dev-FFNPfg:viiteTierekisteri.password::"
                 }
             ],
             "dockerSecurityOptions": null,
@@ -113,7 +113,7 @@
             "name": "viite"
         }
     ],
-    "memory": "2048",
+    "memory": "4096",
     "taskRoleArn": "arn:aws:iam::783354560127:role/TaskExecutionRole",
     "family": "Viite-dev",
     "pidMode": null,
@@ -121,7 +121,7 @@
         "FARGATE"
     ],
     "networkMode": "awsvpc",
-    "cpu": "1024",
+    "cpu": "2048",
     "inferenceAccelerators": [],
     "proxyConfiguration": null,
     "volumes": [],
