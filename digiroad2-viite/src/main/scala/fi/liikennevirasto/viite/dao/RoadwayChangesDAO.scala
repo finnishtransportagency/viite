@@ -470,7 +470,7 @@ class RoadwayChangesDAO {
              AND R.ROAD_PART_NUMBER = RC.OLD_ROAD_PART_NUMBER)
             )
       INNER JOIN PROJECT P
-        ON P.ID =    RC.PROJECT_ID
+        ON P.ID = RC.PROJECT_ID
       WHERE
         RC.CHANGE_TYPE <> 1
         AND R.VALID_FROM >= to_timestamp('${new Timestamp(startValidFromDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')

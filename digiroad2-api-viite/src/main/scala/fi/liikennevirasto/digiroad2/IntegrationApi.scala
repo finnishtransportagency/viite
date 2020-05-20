@@ -72,7 +72,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val getRoadAddressesByMunicipality: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadAddressesByMunicipality")
-      tags "Integration (kalpa)"
+      tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
       summary "Shows all the road address non floating for a given municipalities."
       parameter queryParam[Int]("municipality").description("The municipality identifier"))
 
@@ -107,7 +107,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val getRoadNameChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadNameChanges")
-      tags "Integration (kalpa)"
+      tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
       summary "Returns all the changes to road names between given dates."
       parameter queryParam[String]("since").description(" Date in format ISO8601. For example 2020-04-29T13:59:59")
       parameter queryParam[String]("until").description("Date in format ISO8601").optional)
@@ -140,7 +140,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val getRoadwayChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadwayChanges")
-      tags "Integration (kalpa)"
+      tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
       summary "Returns all the changes to roadways after the given date (including the given date)."
       parameter queryParam[String]("since").description("Date in format ISO8601. For example 2020-04-29T13:59:59"))
 
@@ -195,7 +195,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         queryParam[String]("since").description("Start date of ValidFrom. Date in format ISO8601. For example 2020-04-29T13:59:59"),
         queryParam[String]("until").description("End date of the ValidFrom. Date in format ISO8601").optional
       )
-      tags "Integration (kalpa)"
+      tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
       summary "Returns all the Roadway_change changes after the given date (including the given date)."
       )
 
@@ -256,7 +256,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val getLinearLocationChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getLinearLocationChanges")
-      tags "Integration (kalpa)"
+      tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
       summary "Returns all the changes to roadways after the given date (including the given date)."
       parameter queryParam[String]("since").description("Date in format ISO8601. For example 2020-04-29T13:59:59"))
 
@@ -306,7 +306,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         queryParam[String]("since").description("Start date of nodes. Date in format ISO8601. For example 2020-04-29T13:59:59"),
         queryParam[String]("until").description("End date of the nodes. Date in format ISO8601").optional
       )
-      tags "Integration (kalpa)"
+      tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
       summary "This will return all the changes found on the nodes that are published between the period defined by the \"since\" and  \"until\" parameters."
     )
 

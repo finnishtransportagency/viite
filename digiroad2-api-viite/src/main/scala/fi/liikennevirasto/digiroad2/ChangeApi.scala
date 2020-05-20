@@ -30,7 +30,7 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
         queryParam[String]("since").description("Start date of the road addresses changes. Date in format ISO8601. For example 2020-04-29T13:59:59"),
         queryParam[String]("until").description("End date of the road addresses changes. Date in format ISO8601")
       )
-      tags "ChangeAPI"
+      tags "ChangeAPI (TN-ITS)"
       summary "This will return all the changes found on the road addresses that are between the period defined by the \"since\" and  \"until\" parameters."
   )
 
