@@ -206,12 +206,10 @@ class RoadwayChangesDAO {
     def checkContinuityMergingRows(previousRow: ChangeRow, nextRow: ChangeRow): Boolean = {
       // Checking sourceDiscontinuity
       (((previousRow.sourceDiscontinuity == nextRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty) && previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value))
-        || (previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value))) &&
-        !previousRow.sourceDiscontinuity.contains(Discontinuity.ParallelLink.value)  &&
-      // Checking targetDiscontinuity
-      (((previousRow.targetDiscontinuity == nextRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty) && previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value))
-        || (previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.targetDiscontinuity.contains(Discontinuity.Continuous.value))) &&
-        !previousRow.targetDiscontinuity.contains(Discontinuity.ParallelLink.value)
+        || (previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value))) && nextRow.sourceDiscontinuity.get != Discontinuity.ParallelLink.value  &&
+        // Checking targetDiscontinuity
+        (((previousRow.targetDiscontinuity == nextRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty) && previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value))
+          || (previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.targetDiscontinuity.contains(Discontinuity.Continuous.value))) && nextRow.targetDiscontinuity.get != Discontinuity.ParallelLink.value
     }
 
     resultList.groupBy(r =>
