@@ -1,24 +1,23 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.util.{toProjectLink, toTransition}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.viite.util.toProjectLink
-import fi.liikennevirasto.viite.util.toTransition
 
 class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -343,7 +342,8 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
         (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
     })
     val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp, Seq()).adjustedSections.keys
-    partitionCp.size should be(2)
+    //all rows at equal before, and equal after
+    partitionCp.size should be(1)
     val firstSection = partitionCp.last
     val secondSection = partitionCp.head
     val cutPoint = projectLinksWithCp.find(_._2.roadwayId == 10L).get._2
