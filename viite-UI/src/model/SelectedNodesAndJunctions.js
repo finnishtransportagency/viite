@@ -151,16 +151,21 @@
     };
 
     var verifyJunctionNumbers = function () {
-      var errorMessage = '';
-      _.each(_.groupBy(current.node.junctions, 'junctionNumber'), function (junctions) {
-        if (junctions.length !== 1) { // junction number is already in use
-          errorMessage = 'Liittymänumero on jo käytössä';
-        } else if (_.isNaN(_.first(junctions).junctionNumber) || !_.isEmpty(_.find(junctions, function (j) { return j.junctionNumber <= 0; }))) { // junction number is compulsory information
-          errorMessage = 'Liittymänumero on pakollinen tieto';
+      const errorMessage = function (junctions) {
+        let message = '';
+
+        if (junctions.length !== 1) {
+          message = 'Liittymänumero on jo käytössä'; // junction number is already in use
+        } else if (_.isNaN(_.first(junctions).junctionNumber) || !_.isEmpty(_.find(junctions, function (j) { return j.junctionNumber <= 0; }))) {
+          message = 'Liittymänumero on pakollinen tieto'; // junction number is compulsory information
         }
-        eventbus.trigger('junction:setCustomValidity', junctions, errorMessage);
+
+        return message;
+      };
+
+      _.each(_.groupBy(current.node.junctions, 'junctionNumber'), function (junctions) {
+        eventbus.trigger('junction:setCustomValidity', junctions, errorMessage(junctions));
       });
-      return _.isEmpty(errorMessage);
     };
 
     var isDirty = function () {
