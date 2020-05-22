@@ -328,28 +328,28 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Partitioner should separate links containing calibration points whose origin is ProjectLink") {
+  test("Partitioner should separate links containing calibration points due to roadType change whose origin is ProjectLink") {
     val addresses = (0 to 9).map(i => {
       createRoadAddress(i * 2, 2L)
     })
     val projectLinksWithCp = addresses.sortBy(_.startAddrMValue).map(a => {
       val projectLink = toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5))
       if (a.id == 10L)
-        (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = a.calibrationPointTypes, roadwayNumber = 1))
+        (a.copy(roadwayNumber = 1), projectLink.copy(calibrationPointTypes = a.calibrationPointTypes, roadwayNumber = 1, roadType = RoadType.MunicipalityStreetRoad))
       else if(a.id > 10L)
-        (a.copy(roadwayNumber = 2), projectLink.copy(roadwayNumber = 2))
+        (a.copy(roadwayNumber = 2), projectLink.copy(roadwayNumber = 2, roadType = RoadType.MunicipalityStreetRoad))
       else
         (a.copy(roadwayNumber = 1), projectLink.copy(roadwayNumber = 1))
     })
-    val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp, Seq()).adjustedSections.keys
+    val partitionCp = ProjectDeltaCalculator.partition(projectLinksWithCp, Seq()).adjustedSections.keys.toSeq.sortBy(_._1.startMAddr)
     //all rows at equal before, and equal after
-    partitionCp.size should be(1)
-    val firstSection = partitionCp.last
-    val secondSection = partitionCp.head
-    val cutPoint = projectLinksWithCp.find(_._2.roadwayId == 10L).get._2
+    partitionCp.size should be(2)
+    val firstSection = partitionCp.head
+    val secondSection = partitionCp.last
+    val nextChangeRowFirstLink = projectLinksWithCp.find(_._2.roadwayId == 10L).get._2
     firstSection._1.startMAddr should be(projectLinksWithCp.head._2.startAddrMValue)
-    firstSection._1.endMAddr should be(cutPoint.endAddrMValue)
-    secondSection._1.startMAddr should be(cutPoint.endAddrMValue)
+    firstSection._1.endMAddr should be(nextChangeRowFirstLink.startAddrMValue)
+    secondSection._1.startMAddr should be(nextChangeRowFirstLink.startAddrMValue)
     secondSection._1.endMAddr should be(projectLinksWithCp.last._2.endAddrMValue)
   }
 }
