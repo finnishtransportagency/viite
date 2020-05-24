@@ -101,7 +101,7 @@ object DataFixture {
     println()
   }
 
-  private def importComplementaryRoadAddress(): Unit = {
+  def importComplementaryRoadAddress(): Unit = {
     println(s"\nCommencing complementary road address import at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
@@ -113,13 +113,13 @@ object DataFixture {
     println()
   }
 
-  private def importRoadNames(): Unit = {
+  def importRoadNames(): Unit = {
     SqlScriptRunner.runViiteScripts(List(
       "roadnames.sql"
     ))
   }
 
-  private def importRoadAddressChangeTestData(): Unit = {
+  def importRoadAddressChangeTestData(): Unit = {
     println(s"\nCommencing road address change test data import at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
@@ -164,7 +164,7 @@ object DataFixture {
     }
   }
 
-  private def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
+  def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
 
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new JsonSerializer)
     val linearLocationDAO = new LinearLocationDAO
