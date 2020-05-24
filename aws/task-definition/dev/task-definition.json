@@ -41,6 +41,7 @@
                 { "name": "conversion.bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1g916wf1lodch.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv" },
                 { "name": "conversion.bonecp.username", "value": "drkonv" },
                 { "name": "authentication.basic.username", "value": "kalpa" },
+                { "name": "authentication.admin.basic.username", "value": "admin" },
                 { "name": "authentication.serviceRoad.basic.username", "value": "livi" },
                 { "name": "authentication.municipality.basic.username", "value": "municipality" },
                 { "name": "viiteTierekisteri.username", "value": "trrestviite" },
@@ -63,6 +64,10 @@
                 {
                     "name": "authentication.basic.password",
                     "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.basic.password"
+                },
+                {
+                    "name": "authentication.admin.basic.password",
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.admin.basic.password"
                 },
                 {
                     "name": "authentication.serviceRoad.basic.password",
