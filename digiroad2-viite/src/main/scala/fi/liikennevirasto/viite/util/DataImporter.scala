@@ -15,6 +15,7 @@ import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
@@ -22,6 +23,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
 object DataImporter {
+
   sealed trait ImportDataSet {
     def database(): DatabaseDef
   }
@@ -54,6 +56,8 @@ object DataImporter {
 class DataImporter {
   val logger = LoggerFactory.getLogger(getClass)
   lazy val ds: DataSource = initDataSource
+
+  private lazy val geometryFrozen: Boolean = ViiteProperties.vvhRoadlinkFrozen
 
   val Modifier = "dr1conversion"
 
@@ -113,7 +117,31 @@ class DataImporter {
 
   }
 
-  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
+  def importRoadAddresses(importTableName: Option[String]): Unit = {
+    println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
+    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+    val geometryAdjustedTimeStamp = ViiteProperties.importTimeStamp
+    if (geometryAdjustedTimeStamp == "" || geometryAdjustedTimeStamp.toLong == 0L) {
+      println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
+    } else {
+      println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
+      importTableName match {
+        case None => // shouldn't get here because args size test
+          throw new Exception("****** Import failed! conversiontable name required as second input ******")
+        case Some(tableName) =>
+          val importOptions = ImportOptions(
+            onlyComplementaryLinks = false,
+            useFrozenLinkService = geometryFrozen,
+            geometryAdjustedTimeStamp.toLong, tableName,
+            onlyCurrentRoads = ViiteProperties.importOnlyCurrent)
+          importRoadAddressData(Conversion.database(), vvhClient, importOptions)
+
+      }
+      println(s"Road address import complete at time: ${DateTime.now()}")
+    }
+  }
+
+  private def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
                             importOptions: ImportOptions): Unit = {
 
     withDynTransaction {
@@ -164,8 +192,15 @@ class DataImporter {
     }
   }
 
+  def importNodesAndJunctions(): Unit = {
+    importNodesAndJunctions(Conversion.database())
+  }
+
   def importNodesAndJunctions(conversionDatabase: DatabaseDef) = {
-    withDynTransaction{
+    withDynTransaction {
+      println("\nImporting nodes and junctions started at time: ")
+      println(DateTime.now())
+
       sqlu"""DELETE FROM JUNCTION_POINT""".execute
       sqlu"""DELETE FROM NODE_POINT""".execute
       sqlu"""DELETE FROM JUNCTION""".execute
@@ -177,6 +212,14 @@ class DataImporter {
       val junctionImporter = getJunctionImporter(conversionDatabase)
       junctionImporter.importJunctions()
     }
+  }
+
+  def updateLinearLocationGeometry(): Unit = {
+    println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
+    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+    updateLinearLocationGeometry(vvhClient)
+    println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
+    println()
   }
 
   def enableRoadwayTriggers = {
@@ -261,7 +304,7 @@ class DataImporter {
     }
 
 
-  def updateLinearLocationGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
+  private def updateLinearLocationGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
     val eventBus = new DummyEventBus
     val linearLocationDAO = new LinearLocationDAO
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)

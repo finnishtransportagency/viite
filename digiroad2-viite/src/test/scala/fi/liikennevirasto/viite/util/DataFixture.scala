@@ -51,41 +51,15 @@ object DataFixture {
   }
 
   def importRoadAddresses(importTableName: Option[String]): Unit = {
-    println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
-    val geometryAdjustedTimeStamp = ViiteProperties.importTimeStamp
-    if (geometryAdjustedTimeStamp == "" || geometryAdjustedTimeStamp.toLong == 0L) {
-      println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
-    } else {
-      println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
-      importTableName match {
-        case None => // shouldn't get here because args size test
-          throw new Exception("****** Import failed! conversiontable name required as second input ******")
-        case Some(tableName) =>
-          val importOptions = ImportOptions(
-            onlyComplementaryLinks = false,
-            useFrozenLinkService = geometryFrozen,
-            geometryAdjustedTimeStamp.toLong, tableName,
-            onlyCurrentRoads = ViiteProperties.importOnlyCurrent)
-          dataImporter.importRoadAddressData(Conversion.database(), vvhClient, importOptions)
-
-      }
-      println(s"Road address import complete at time: ${DateTime.now()}")
-    }
+    dataImporter.importRoadAddresses(importTableName)
   }
 
   def importNodesAndJunctions(): Unit = {
-    println("\nImporting nodes and junctions started at time: ")
-    println(DateTime.now())
     dataImporter.importNodesAndJunctions(Conversion.database())
   }
 
   def updateLinearLocationGeometry(): Unit = {
-    println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
-    dataImporter.updateLinearLocationGeometry(vvhClient)
-    println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
-    println()
+    dataImporter.updateLinearLocationGeometry()
   }
 
   def checkRoadNetwork(): Unit = {

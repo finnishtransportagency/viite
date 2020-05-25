@@ -88,7 +88,7 @@
             "name": "viite",
             "healthCheck": {
                 "startPeriod": 60,
-                "command": [ "CMD-SHELL", "curl -f http://localhost/ || exit 1" ]
+                "command": [ "CMD-SHELL", "curl -f http://localhost/viite/ || exit 1" ]
             }
         }
     ],

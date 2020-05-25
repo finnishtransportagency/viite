@@ -13,6 +13,7 @@ class ScalatraBootstrap extends LifeCycle {
   override def init(context: ServletContext) {
     context.mount(new SessionApi, "/api/auth/*")
     context.mount(new PingApi, "/api/ping/*")
+    context.mount(new AdminApi(Digiroad2Context.dataImporter, swagger), "/api/admin/*")
     context.mount(new IntegrationApi(Digiroad2Context.roadAddressService, Digiroad2Context.roadNameService, swagger), "/api/viite/integration/*")
     context.mount(new ChangeApi(Digiroad2Context.roadAddressService, swagger), "/api/viite/changes/*")
     context.mount(new SearchApi(Digiroad2Context.roadAddressService), "/api/viite/search/*")
