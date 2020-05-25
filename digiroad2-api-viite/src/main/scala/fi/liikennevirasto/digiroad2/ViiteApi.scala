@@ -87,17 +87,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   private val dtf: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
-  /*
-  Roads
-   */
+
+  /*  Roads */
   val DrawMainRoadPartsOnly = 1
   val DrawRoadPartsOnly = 2
   val DrawLinearPublicRoads = 3
   val DrawPublicRoads = 4
   val DrawAllRoads = 5
-  /*
-  Nodes
-   */
+
+  /*  Nodes */
   val DrawNone = 0
   val DrawNodes = 1
   val DrawAll = 2
