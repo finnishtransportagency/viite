@@ -287,7 +287,7 @@ object TrackSectionOrder {
               }
             }
           case _ =>
-            val l = pickForwardMost(ready.last, connected)
+            val l = if (ready.isEmpty) connected.head else pickForwardMost(ready.last, connected)
             (getOppositeEnd(l, currentPoint), l)
         }
         // Check if link direction needs to be turned and choose next point
