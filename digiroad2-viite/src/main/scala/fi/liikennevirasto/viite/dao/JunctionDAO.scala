@@ -213,6 +213,7 @@ class JunctionDAO extends BaseDAO {
          JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
             WHERE j.VALID_TO IS NULL AND j.END_DATE IS NULL
             AND $boundingBoxFilter and JP.valid_to is null
+            AND j.NODE_NUMBER IS NOT NULL
         """
       queryList(query)
     }
