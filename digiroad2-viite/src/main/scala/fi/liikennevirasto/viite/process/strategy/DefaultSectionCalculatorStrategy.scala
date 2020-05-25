@@ -13,7 +13,6 @@ import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.{MaxThresholdDistance, NewIdValue}
 import org.slf4j.LoggerFactory
 
-import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 
 class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
@@ -75,7 +74,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     }.toSeq
   }
 
-  @tailrec
+  @scala.annotation.tailrec
   private def continuousSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       if (seq.isEmpty)
         (processed, seq)
@@ -138,10 +137,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
-    val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
 
     val continuousProjectLinks =
-      seq.takeWhile(pl => pl.track == track && pl.roadType.value == roadType && pl.roadwayNumber == roadwayNumber).sortBy(_.startAddrMValue)
+        seq.takeWhile(pl => pl.track == track && pl.roadType.value == roadType).sortBy(_.startAddrMValue)
 
     val assignedContinuousSection = assignRoadwayNumbersInContinuousSection(continuousProjectLinks, givenRoadwayNumber)
     (assignedContinuousSection, seq.drop(assignedContinuousSection.size))
@@ -177,7 +175,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         * @param missingRoadwayNumbers
         * @return matched new links by roadwaynumbers according to their same size proportion
         */
-      @tailrec
+      @scala.annotation.tailrec
       def splitLinksIfNeed(remainingTransfer: ListMap[Long, Seq[ProjectLink]], processedTransfer: Seq[ProjectLink], remainingNew: Seq[ProjectLink], processedNew: Seq[ProjectLink], totalTransferMLength: Double, totalNewMLength: Double, missingRoadwayNumbers: Int) : Seq[ProjectLink] = {
         if (missingRoadwayNumbers == 0 || (remainingNew.nonEmpty && remainingTransfer.isEmpty)) {
           val remainingRoadwayNumber = Sequences.nextRoadwayNumber

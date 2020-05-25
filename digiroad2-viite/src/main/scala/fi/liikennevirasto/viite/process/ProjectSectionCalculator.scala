@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.{RoadAddressSectionCalculatorContext, TrackCalculatorContext}
@@ -95,7 +95,8 @@ object ProjectSectionCalculator {
 
     def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       val track = seq.headOption.map(_.roadAddressTrack.getOrElse(Track.Unknown)).getOrElse(Track.Unknown)
-      val continuousProjectLinks = seq.takeWhile(pl => pl.roadAddressTrack.getOrElse(Track.Unknown) == track)
+      val roadwayNumber = seq.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
+      val continuousProjectLinks = seq.takeWhile(pl => pl.roadAddressTrack.getOrElse(Track.Unknown) == track && pl.roadwayNumber == roadwayNumber)
       (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
     }
 
