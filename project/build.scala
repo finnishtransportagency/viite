@@ -67,7 +67,7 @@ object Digiroad2Build extends Build {
         "org.postgresql" % "postgresql" % "42.2.5",
         "net.postgis" % "postgis-jdbc" % "2.3.0",
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
-        "org.flywaydb" % "flyway-core" % "6.0.0-beta" % "test",
+        "org.flywaydb" % "flyway-core" % "6.0.0-beta",
         "com.oracle" % "ojdbc6" % "11.2.0.3.0",
         "com.oracle" % "sdoapi" % "11.2.0",
         "com.oracle" % "sdoutl" % "11.2.0"
