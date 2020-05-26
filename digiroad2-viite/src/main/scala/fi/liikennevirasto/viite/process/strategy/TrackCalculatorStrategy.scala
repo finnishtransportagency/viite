@@ -174,19 +174,12 @@ trait TrackCalculatorStrategy {
     val rightRoadwayNumber = rightProjectLinks.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val continuousRightProjectLinks = rightProjectLinks.takeWhile(pl => pl.roadwayNumber == rightRoadwayNumber)
 
-    //    val continuousProjectLinks = seq.takeWhile(pl => pl.roadAddressTrack.getOrElse(Track.Unknown) == track && pl.roadwayNumber == roadwayNumber)
-    //    (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
-
     // Find a calibration point annexed to the projectLink Id
-//    val availableCalibrationPoint = calibrationPoints.get(rightProjectLinks.last.id).orElse(calibrationPoints.get(leftProjectLinks.last.id))
     val availableCalibrationPoint = calibrationPoints.get(continuousRightProjectLinks.last.id).orElse(calibrationPoints.get(continuousLeftProjectLinks.last.id))
 
-//    val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
     val startSectionAddress = startAddress.getOrElse(getFixedAddress(continuousLeftProjectLinks.head, continuousRightProjectLinks.head)._1)
-//    val estimatedEnd = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
     val estimatedEnd = getFixedAddress(continuousLeftProjectLinks.last, continuousRightProjectLinks.last, availableCalibrationPoint)._2
 
-//    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
 
     //The getFixedAddress method have to be called twice because when we do it the first time we are getting the estimated end measure, that will be used for the calculation of
