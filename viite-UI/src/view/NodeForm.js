@@ -118,7 +118,7 @@
         ' <div class="form form-horizontal form-dark">' +
         '   <div>' +
         staticField('Solmunumero:', nodeNumber) +
-        staticField('Koordinaatit (<i>P</i>, <i>I</i>):', '<label id="node-coordinates">' + node.coordinates.y + ', ' + node.coordinates.x + '</label>') +
+        staticField('Koordinaatit (<i>P</i>, <i>I</i>):', '<span id="node-coordinates">' + node.coordinates.y + ', ' + node.coordinates.x + '</span>') +
         inputFieldRequired('Solmun nimi', 'nodeName', '', nodeName, 'maxlength', 32) +
         addNodeTypeDropdown('Solmutyyppi', 'nodeTypeDropdown', getNodeType(node.type)) +
         inputFieldRequired('Alkupvm', 'nodeStartDate', 'pp.kk.vvvv', startDate, 'disabled', true) +
@@ -640,7 +640,7 @@
           $('.btn-edit-node-save').prop('disabled', formIsInvalid());
 
           eventbus.on('node:displayCoordinates', function (coordinates) {
-            $("#node-coordinates").text(coordinates.x + ', ' + coordinates.y);
+            $("#node-coordinates").text(coordinates.y + ', ' + coordinates.x);
           });
 
           $('[id=nodeName]').on('input', function () { $(this).change(); });
