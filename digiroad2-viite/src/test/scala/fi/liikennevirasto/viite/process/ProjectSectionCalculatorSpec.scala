@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, asset}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad, MinorDiscontinuity}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, EndOfRoad, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinkStatus, _}
 import fi.liikennevirasto.viite.util._
@@ -1513,7 +1513,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         idRoad9 -> RoadAddress(idRoad9, linearLocationId + 9, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
           10L, 41L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12353L, 0.0, 34.77, SideCode.TowardsDigitizing,
           0, (None, None), geom9, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 9),
-        idRoad10 -> RoadAddress(idRoad10, linearLocationId + 10, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
+        idRoad10 -> RoadAddress(idRoad10, linearLocationId + 10, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, ParallelLink,
           41L, 52L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12354L, 0.0, 11.74, SideCode.TowardsDigitizing,
           0, (None, None), geom10, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 10),
         idRoad11 -> RoadAddress(idRoad11, linearLocationId + 11, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
@@ -1525,7 +1525,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         idRoad13 -> RoadAddress(idRoad13, linearLocationId + 13, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
           155L, 173L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12357L, 0.0, 19.2, SideCode.AgainstDigitizing,
           0, (None, None), geom13, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 13),
-        idRoad14 -> RoadAddress(idRoad14, linearLocationId + 14, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
+        idRoad14 -> RoadAddress(idRoad14, linearLocationId + 14, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, ParallelLink,
           173L, 224L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12358L, 0.0, 55.94, SideCode.AgainstDigitizing,
           0, (None, None), geom14, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 14)
       )
@@ -1545,13 +1545,13 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink7 = toProjectLink(rap, LinkStatus.Transfer)(raMap(idRoad7))
 
       // Right pls
-      val projectLink8 = toProjectLink(rap, LinkStatus.NotHandled)(raMap(idRoad8))
-      val projectLink9 = toProjectLink(rap, LinkStatus.NotHandled)(raMap(idRoad9))
-      val projectLink10 = toProjectLink(rap, LinkStatus.NotHandled)(raMap(idRoad10))
-      val projectLink11 = toProjectLink(rap, LinkStatus.NotHandled)(raMap(idRoad11))
-      val projectLink12 = toProjectLink(rap, LinkStatus.NotHandled)(raMap(idRoad12))
-      val projectLink13 = toProjectLink(rap, LinkStatus.NotHandled)(raMap(idRoad13))
-      val projectLink14 = toProjectLink(rap, LinkStatus.NotHandled)(raMap(idRoad14))
+      val projectLink8 = toProjectLink(rap, LinkStatus.Transfer)(raMap(idRoad8))
+      val projectLink9 = toProjectLink(rap, LinkStatus.Transfer)(raMap(idRoad9))
+      val projectLink10 = toProjectLink(rap, LinkStatus.Transfer)(raMap(idRoad10))
+      val projectLink11 = toProjectLink(rap, LinkStatus.Transfer)(raMap(idRoad11))
+      val projectLink12 = toProjectLink(rap, LinkStatus.Transfer)(raMap(idRoad12))
+      val projectLink13 = toProjectLink(rap, LinkStatus.Transfer)(raMap(idRoad13))
+      val projectLink14 = toProjectLink(rap, LinkStatus.Transfer)(raMap(idRoad14))
 
 
       val leftProjectLinks = Seq(projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7).map(_.copy(projectId = projId))
@@ -1563,7 +1563,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
       buildTestDataForProject(Some(project), Some(leftRoadways ++ rightRoadways), Some(leftLinearLocations ++ rightLinearLocations), Some(leftProjectLinks ++ rightProjectLinks))
 
-        ProjectSectionCalculator.assignMValues(leftProjectLinks)
+      ProjectSectionCalculator.assignMValues(leftProjectLinks)
 
       val output = ProjectSectionCalculator.assignMValues(leftProjectLinks ++ rightProjectLinks)
 
