@@ -14,7 +14,7 @@
                 {
                     "hostPort": 80,
                     "protocol": "tcp",
-                    "containerPort": 80
+                    "containerPort": 9080
                 }
             ],
             "cpu": 0,
@@ -88,7 +88,7 @@
             "name": "viite",
             "healthCheck": {
                 "startPeriod": 60,
-                "command": [ "CMD-SHELL", "curl -f http://localhost/viite/ || exit 1" ]
+                "command": [ "CMD-SHELL", "curl -f http://localhost:9080/viite/api/ping/ || exit 1" ]
             }
         }
     ],
