@@ -151,7 +151,7 @@
     };
 
     var verifyJunctionNumbers = function () {
-      const errorMessage = function (junctions) {
+      var errorMessage = function (junctions) {
         var message = '';
 
         if (junctions.length !== 1) {
