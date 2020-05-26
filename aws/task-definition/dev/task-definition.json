@@ -12,7 +12,7 @@
             },
             "portMappings": [
                 {
-                    "hostPort": 80,
+                    "hostPort": 9080,
                     "protocol": "tcp",
                     "containerPort": 9080
                 }
@@ -84,11 +84,11 @@
             ],
             "memoryReservation": 2048,
             "volumesFrom": [],
-            "image": "783354560127.dkr.ecr.eu-west-1.amazonaws.com/vayla/viite:latest",
+            "image": "783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite:latest",
             "name": "viite",
             "healthCheck": {
                 "startPeriod": 60,
-                "command": [ "CMD-SHELL", "curl -f http://localhost:9080/viite/api/ping/ || exit 1" ]
+                "command": [ "CMD-SHELL", "curl -f http://127.0.0.1:9080/viite/ || exit 1" ]
             }
         }
     ],
