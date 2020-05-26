@@ -152,7 +152,7 @@
 
     var verifyJunctionNumbers = function () {
       const errorMessage = function (junctions) {
-        let message = '';
+        var message = '';
 
         if (junctions.length !== 1) {
           message = 'Liittymänumero on jo käytössä'; // junction number is already in use
