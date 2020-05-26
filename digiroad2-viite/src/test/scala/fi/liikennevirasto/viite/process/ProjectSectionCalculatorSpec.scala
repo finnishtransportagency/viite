@@ -1563,8 +1563,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
       buildTestDataForProject(Some(project), Some(leftRoadways ++ rightRoadways), Some(leftLinearLocations ++ rightLinearLocations), Some(leftProjectLinks ++ rightProjectLinks))
 
-      ProjectSectionCalculator.assignMValues(leftProjectLinks)
-
       val output = ProjectSectionCalculator.assignMValues(leftProjectLinks ++ rightProjectLinks)
 
       output.length should be(14)
