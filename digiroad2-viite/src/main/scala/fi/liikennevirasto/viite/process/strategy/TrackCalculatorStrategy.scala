@@ -66,6 +66,8 @@ case class TrackCalculatorResult(leftProjectLinks: Seq[ProjectLink], rightProjec
   */
 trait TrackCalculatorStrategy {
 
+  val name: String
+
   /**
     * Split the project link at the specified address
     *
