@@ -216,7 +216,7 @@ module.exports = function(grunt) {
     watch: {
       viite: {
         files: ['<%= eslint.src %>', 'viite-UI/src/**/*.less', 'viite-UI/**/*.html'],
-        tasks: ['properties', 'eslint', 'env:development', 'preprocess:development', 'less:viitedev', 'mocha:viite_unit', 'mocha:viite_integration', 'configureProxies:viite'],
+        tasks: ['properties', 'eslint', 'env:development', 'preprocess:development', 'less:viitedev', 'mocha:viite_unit', 'configureProxies:viite'],
         options: {
           livereload: true
         }
