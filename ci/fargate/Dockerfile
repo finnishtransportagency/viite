@@ -1,4 +1,5 @@
 FROM openjdk:jre-alpine
+RUN apk --no-cache add curl
 RUN mkdir /src
 RUN mkdir /src/main
 RUN mkdir /src/main/webapp
