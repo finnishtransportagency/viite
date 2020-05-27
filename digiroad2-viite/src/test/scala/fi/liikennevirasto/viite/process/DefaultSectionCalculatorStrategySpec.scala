@@ -338,6 +338,46 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       projectLinksWithAssignedValues.filter(pl => pl.endAddrMValue == 0L).isEmpty should be (true)
     }
   }
+
+  test("Test findStartingPoints When transfering some links from one two track road to the beginning of another two track road that is not been handled yet Then the road should still maintain the previous existing direction") {
+    runWithRollback {
+      val geomRoad1TransferLeft = Seq(Point(0.0, 5.0), Point(10.0, 5.0))
+      val geomRoad1TransferRight = Seq(Point(0.0, 0.0), Point(10.0, 0.0))
+      val geomRoad2NotHandledLeft = Seq(Point(10.0, 5.0), Point(20.0, 3.0))
+      val geomRoad2NotHandledRight = Seq(Point(10.0, 0.0), Point(20.0, 3.0))
+      val geomRoad2NotHandledCombined = Seq(Point(20.0, 3.0), Point(30.0, 3.0))
+      val plId = Sequences.nextProjectLinkId
+
+      val Road1TransferLeftLink = ProjectLink(plId + 1, 9999L, 1L, Track.LeftSide, Discontinuity.Continuous, 0L, 10L, 890L, 900L, None, None,
+        None, 12345L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        geomRoad1TransferLeft, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRoad1TransferLeft), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val Road1TransferRightLink = ProjectLink(plId + 2, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 890L, 900L, 890L, 900L, None, None,
+        None, 12346L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        geomRoad1TransferRight, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRoad1TransferRight), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val Road2NotHandledLeftLink = ProjectLink(plId + 3, 9999L, 1L, Track.LeftSide, Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None,
+        None, 12345L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        geomRoad2NotHandledLeft, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRoad2NotHandledLeft), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val Road2NotHandledRightLink = ProjectLink(plId + 4, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None,
+        None, 12346L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        geomRoad2NotHandledRight, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRoad2NotHandledRight), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val Road2NotHandledCombinedLink = ProjectLink(plId + 4, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 10L, 20L, 10L, 20L, None, None,
+        None, 12346L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        geomRoad2NotHandledCombined, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRoad2NotHandledCombined), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+
+      val otherProjectLinks = Seq(Road2NotHandledRightLink, Road2NotHandledLeftLink, Road1TransferLeftLink, Road2NotHandledCombinedLink, Road1TransferRightLink)
+      val newProjectLinks = Seq()
+
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, otherProjectLinks, Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+      startingPointsForCalculations should be((Road1TransferRightLink.geometry.head, Road1TransferLeftLink.geometry.head))
+    }
+  }
+
   /*
        ^
         \    <- #2 Transfer
