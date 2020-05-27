@@ -860,6 +860,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
+  val roadwayChangesDAO = new RoadwayChangesDAO
+
+  def fetchUpdatedRoadwayChanges(since: DateTime, until: Option[DateTime]): Seq[RoadwayChangesInfo] = {
+    withDynSession {
+      roadwayChangesDAO.fetchRoadwayChangesInfo(since, until)
+    }
+  }
+
 }
 
 sealed trait RoadClass {

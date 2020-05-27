@@ -9,7 +9,8 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
-import org.joda.time.DateTime
+import org.joda.time.format.{ISODateTimeFormat}
+import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
@@ -71,7 +72,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val getRoadAddressesByMunicipality: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadAddressesByMunicipality")
-      tags "Integration (kalpa)"
+      tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
       summary "Shows all the road address non floating for a given municipalities."
       parameter queryParam[Int]("municipality").description("The municipality identifier"))
 
@@ -106,7 +107,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val getRoadNameChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadNameChanges")
-      tags "Integration (kalpa)"
+      tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
       summary "Returns all the changes to road names between given dates."
       parameter queryParam[String]("since").description(" Date in format ISO8601. For example 2020-04-29T13:59:59")
       parameter queryParam[String]("until").description("Date in format ISO8601").optional)
@@ -139,7 +140,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
 
   val getRoadwayChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadwayChanges")
-      tags "Integration (kalpa)"
+      tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
       summary "Returns all the changes to roadways after the given date (including the given date)."
       parameter queryParam[String]("since").description("Date in format ISO8601. For example 2020-04-29T13:59:59"))
 
@@ -188,9 +189,74 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
+  val getRoadwayChangesChanges: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[List[Map[String, Any]]]("getRoadwayChangesChanges")
+      .parameters(
+        queryParam[String]("since").description("Start date of ValidFrom. Date in format ISO8601. For example 2020-04-29T13:59:59"),
+        queryParam[String]("until").description("End date of the ValidFrom. Date in format ISO8601").optional
+      )
+      tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
+      summary "Returns all the Roadway_change changes after the given date (including the given date)."
+      )
+
+  get("/roadway_changes/changes", operation(getRoadwayChangesChanges)) {
+    contentType = formats("json")
+    try {
+      val since = parseIsoDate(params.get("since"))
+      val until = parseIsoDate(params.get("until"))
+      time(logger, s"GET request for /roadway_changes/changes (since: $since, until: $until)") {
+        roadwayChangesToApi(roadAddressService.fetchUpdatedRoadwayChanges(since.get, until))
+      }
+    } catch {
+      case error: IllegalArgumentException =>
+        val message = "The parameter of the service should be in the form ISO8601. " + error.getMessage
+        logger.warn(message,error)
+        BadRequest(message)
+      case error: Exception  =>
+        logger.error(error.getMessage,error)
+        BadRequest(error.getMessage)
+    }
+  }
+
+  private def roadwayChangesToApi(roadwayChangesInfos: Seq[RoadwayChangesInfo]) =
+    Map(
+      "muutos_tieto" ->
+        roadwayChangesInfos.map { roadwayChangesInfo =>
+          Map(
+            "muutostunniste" -> roadwayChangesInfo.roadwayChangeId,
+            "muutospaiva" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.startDate)),
+            "laatimisaika" -> formatDateTimeToIsoString(Option(roadwayChangesInfo.validFrom)),
+            "muutostyyppi" -> roadwayChangesInfo.change_type,
+            "kaannetty" -> roadwayChangesInfo.reversed,
+            "lahde" ->
+              Map(
+                "tie" -> roadwayChangesInfo.old_road_number,
+                "osa" -> roadwayChangesInfo.old_road_part_number,
+                "ajorata" -> roadwayChangesInfo.old_TRACK,
+                "etaisyys" -> roadwayChangesInfo.old_start_addr_m,
+                "etaisyys_loppu" -> roadwayChangesInfo.old_end_addr_m,
+                "jatkuvuuskoodi" -> roadwayChangesInfo.old_discontinuity,
+                "tietyyppi" -> roadwayChangesInfo.old_road_type,
+                "ely" -> roadwayChangesInfo.old_ely
+              ),
+            "kohde" ->
+              Map(
+                "tie" -> roadwayChangesInfo.new_road_number,
+                "osa" -> roadwayChangesInfo.new_road_part_number,
+                "ajorata" -> roadwayChangesInfo.new_TRACK,
+                "etaisyys" -> roadwayChangesInfo.new_start_addr_m,
+                "etaisyys_loppu" -> roadwayChangesInfo.new_end_addr_m,
+                "jatkuvuuskoodi" -> roadwayChangesInfo.new_discontinuity,
+                "tietyyppi" -> roadwayChangesInfo.new_road_type,
+                "ely" -> roadwayChangesInfo.new_ely
+              )
+          )
+        }
+    )
+
   val getLinearLocationChanges: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getLinearLocationChanges")
-      tags "Integration (kalpa)"
+      tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
       summary "Returns all the changes to roadways after the given date (including the given date)."
       parameter queryParam[String]("since").description("Date in format ISO8601. For example 2020-04-29T13:59:59"))
 
@@ -240,7 +306,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
         queryParam[String]("since").description("Start date of nodes. Date in format ISO8601. For example 2020-04-29T13:59:59"),
         queryParam[String]("until").description("End date of the nodes. Date in format ISO8601").optional
       )
-      tags "Integration (kalpa)"
+      tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
       summary "This will return all the changes found on the nodes that are published between the period defined by the \"since\" and  \"until\" parameters."
     )
 
@@ -423,6 +489,30 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     } else {
       Seq.empty[LinearLocation]
     }
+  }
+
+  private def formatDateTimeToIsoString(dateOption: Option[DateTime]): Option[String] =
+  dateOption.map { date => ISODateTimeFormat.dateTimeNoMillis().print(date) }
+
+  private def formatDateTimeToIsoUtcString(dateOption: Option[DateTime]): Option[String] =
+    dateOption.map { date => ISODateTimeFormat.dateTimeNoMillis().print(date.withZone(DateTimeZone.UTC)) }
+
+  private def parseIsoDate(dateString: Option[String]): Option[DateTime] = {
+    var dateTime = None: Option[DateTime]
+    if (dateString.nonEmpty) {
+      try {
+        dateTime = Option(ISODateTimeFormat.dateTime.parseDateTime(dateString.get))
+      } catch {
+        case _: Exception =>
+          try {
+            dateTime = Option(ISODateTimeFormat.dateTimeNoMillis().parseDateTime(dateString.get))
+          } catch {
+            case _: Exception =>
+                dateTime = Option(DateTime.parse(dateString.get))
+          }
+      }
+    }
+    dateTime
   }
 
   def formatDate(date: DateTime): String = {
