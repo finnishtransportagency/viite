@@ -14,12 +14,11 @@ class PingApi extends ScalatraServlet {
     withDynSession {
       try {
         val dbTime = PingDAO.getDbTime()
-        logger.info(s"Ping OK. DB Time: $dbTime")
         Ok(s"OK (DB Time: $dbTime)\n")
       } catch {
         case e: Exception =>
-          logger.error("DB connection error", e)
-          InternalServerError("Database ping failed")
+          logger.error("Ping failed. DB connection error.", e)
+          InternalServerError("Ping failed. DB connection error.")
       }
     }
   }

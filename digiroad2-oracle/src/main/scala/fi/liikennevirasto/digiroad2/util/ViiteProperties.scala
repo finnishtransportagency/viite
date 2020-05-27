@@ -76,12 +76,13 @@ class ViiteProperties {
   }
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
-    scala.util.Properties.envOrElse("authentication." + baseAuth + "basic.username", null)
+    scala.util.Properties.envOrElse("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username", null)
   }
 
   def getAuthenticationBasicPassword(baseAuth: String = ""): String = {
-    scala.util.Properties.envOrElse("authentication." + baseAuth + "basic.password", null)
+    scala.util.Properties.envOrElse("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.password", null)
   }
+
 }
 
 class ViitePropertiesFromFiles extends ViiteProperties {
@@ -202,9 +203,13 @@ class ViitePropertiesFromFiles extends ViiteProperties {
   * If bonecp.properties is found in classpath, then all the properties are read from the property files.
   */
 object ViiteProperties extends ViiteProperties {
-  if (getClass.getResource("/bonecp.properties").getFile.isEmpty) {
+
+// TODO Current SBT build adds bonecp.properties in jar, so another method must be implemented to figure out if we want
+// to read properties from environment variables or from property files
+
+//  if (getClass.getResource("/bonecp.properties").getFile.isEmpty) {
     new ViiteProperties
-  } else {
-    new ViitePropertiesFromFiles
-  }
+//  } else {
+//    new ViitePropertiesFromFiles
+//  }
 }
