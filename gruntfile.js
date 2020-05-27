@@ -44,13 +44,14 @@ module.exports = function(grunt) {
         }
       }
     },
-    uglify: {
+    terser: {
       options: {
-        banner: '/*! <%= pkg.name %> <%= grunt.template.today("dd-mm-yyyy") %> */\n'
+        // Task-specific options go here.
       },
-      dist: {
+      main: {
         files: {
           'dist/js/<%= pkg.name %>.min.js': ['dist/js/<%= pkg.name %>.js']
+          // Target-specific file lists and/or options go here.
         }
       }
     },
@@ -236,7 +237,7 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks("grunt-terser");
   grunt.loadNpmTasks("gruntify-eslint");
   grunt.loadNpmTasks('grunt-mocha');
   grunt.loadNpmTasks('grunt-contrib-watch');
@@ -256,15 +257,13 @@ module.exports = function(grunt) {
 
   grunt.registerTask('server', ['properties', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
 
-  grunt.registerTask('test', ['properties', 'eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit', 'mocha:viite_integration']);
+  grunt.registerTask('test', ['properties', 'eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
 
-  grunt.registerTask('default', ['properties', 'eslint', 'env:production', 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'mocha:viite_integration', 'clean', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['properties', 'eslint', 'env:production', 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'clean', 'less:viiteprod', 'concat', 'terser', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:'+target, 'preprocess:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:'+target, 'preprocess:production', 'less:viiteprod', 'concat', 'terser', 'cachebreaker', 'save_deploy_info']);
 
   grunt.registerTask('unit-test', ['properties', 'eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
-
-  grunt.registerTask('integration-test', ['eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_integration']);
 
   grunt.registerTask('save_deploy_info',
     function() {
