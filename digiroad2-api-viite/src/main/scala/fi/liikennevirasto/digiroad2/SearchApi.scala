@@ -43,7 +43,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         queryParam[Double]("startMeasure").description("startMeasure of a road address").optional,
         queryParam[Double]("endMeasure").description("endMeasure of a road address").optional
       )
-      tags "SearchAPI"
+      tags "SearchAPI (oth)"
       summary "Gets all the road addresses in between the given linear location."
       )
 
@@ -59,7 +59,7 @@ class SearchApi(roadAddressService: RoadAddressService,
 
   private val getRoadNumbers: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[Seq[Long]]("getRoadNumbers")
-      tags "SearchAPI"
+      tags "SearchAPI (oth)"
       summary "Gets all the existing road numbers at the current road network."
       )
 
@@ -75,7 +75,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("road").description("Road Number of a road address"),
         queryParam[Long]("tracks").description("Track Number (0,1,2) tracks=1&tracks=2 returns both left and right track").optional
       )
-      tags "SearchAPI"
+      tags "SearchAPI (oth)"
       summary "Gets all the road addresses in the same road number and track codes."
     )
 
@@ -93,7 +93,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("road").description("Road Number of a road address"),
         pathParam[Long]("roadPart").description("Road Part Number of a road address")
       )
-      tags "SearchAPI"
+      tags "SearchAPI (oth)"
       summary "Gets all the road address in the given road number and road part"
     )
 
@@ -113,7 +113,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("address").description("Road Measure of a road address"),
         pathParam[Long]("track").description("Road Track of a road address. Optional")
       )
-      tags "SearchAPI"
+      tags "SearchAPI (oth)"
       summary "Gets all the road addresses in the same road number, road part number with start address less than the given address measure. If trackOption parameter is given it will also filter by track code."
     )
 
@@ -136,7 +136,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("startAddress").description("Road start measure of a road address"),
         pathParam[Long]("endAddress").description("Road end measure of a road address")
       )
-      tags "SearchAPI"
+      tags "SearchAPI (oth)"
       summary "Gets all the road addresses in given road number, road part number and between given address measures. The road address measures should be in [startAddrM, endAddrM]"
     )
 
@@ -156,7 +156,7 @@ class SearchApi(roadAddressService: RoadAddressService,
       .parameters(
         bodyParam[Set[Long]]("linkIds").description("List of LinkIds\r\n")
       )
-      tags "SearchAPI"
+      tags "SearchAPI (oth)"
       summary "Gets all the road addresses on top of given road links."
     )
 
@@ -173,7 +173,7 @@ class SearchApi(roadAddressService: RoadAddressService,
         pathParam[Long]("road").description("Road Number of a road address"),
         bodyParam[Any]("getLists").description("List of roadParts and List of tracks\r\n")
       )
-      tags "SearchAPI"
+      tags "SearchAPI (oth)"
       summary "Gets all the road addresses in the same road number, road parts and track codes. If the road part number sequence or track codes sequence is empty."
     )
 

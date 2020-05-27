@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.PreparedStatement
+import java.sql.{PreparedStatement, Timestamp}
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.RoadType
@@ -70,6 +70,10 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
                      rotatingTRId: Option[Long], reversed: Boolean, orderInTable: Long)
 
 case class ChangeTableRows(adjustedSections: Map[(RoadwaySection, RoadwaySection), Option[String]], originalSections: Map[RoadwaySection, RoadwaySection])
+
+case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, validFrom: DateTime, change_type: Long, reversed: Long,
+                              old_road_number: Long, old_road_part_number: Long, old_TRACK: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, old_road_type: Long, old_ely: Long,
+                              new_road_number: Long, new_road_part_number: Long, new_TRACK: Long, new_start_addr_m: Long, new_end_addr_m: Long, new_discontinuity: Long, new_road_type: Long, new_ely: Long)
 
 class RoadwayChangesDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
@@ -431,4 +435,84 @@ class RoadwayChangesDAO {
   def fetchRoadwayChangesResume(projectIds: Set[Long]): List[ProjectRoadwayChange] = {
     fetchRoadwayChanges(projectIds, queryResumeList)
   }
+
+  // This query should return changes in roadway_change table
+  // Query should return information also about terminated roads
+  def fetchRoadwayChangesInfo(startValidFromDate: DateTime, endValidFromDate: Option[DateTime]): Seq[RoadwayChangesInfo] = {
+    val untilString = if (endValidFromDate.nonEmpty) s"AND R.VALID_FROM <= to_timestamp('${new Timestamp(endValidFromDate.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
+    val query =
+      s"""
+      Select
+      RC.ROADWAY_CHANGE_ID
+    , P.START_DATE
+    , R.VALID_FROM
+    , RC.change_type
+    , RC.reversed
+    , RC.old_road_number
+    , RC.old_road_part_number
+    , RC.old_TRACK
+    , RC.old_start_addr_m
+    , RC.old_end_addr_m
+    , RC.old_discontinuity
+    , RC.old_road_type
+    , RC.old_ely
+    , RC.new_road_number
+    , RC.new_road_part_number
+    , RC.new_TRACK
+    , RC.new_start_addr_m
+    , RC.new_end_addr_m
+    , RC.new_discontinuity
+    , RC.new_road_type
+    , RC.new_ely
+    FROM ROADWAY_CHANGES RC
+      INNER JOIN ROADWAY R
+        ON ((R.ROAD_NUMBER = RC.NEW_ROAD_NUMBER
+             AND R.ROAD_PART_NUMBER = RC.NEW_ROAD_PART_NUMBER) OR
+            (R.ROAD_NUMBER = RC.OLD_ROAD_NUMBER
+             AND R.ROAD_PART_NUMBER = RC.OLD_ROAD_PART_NUMBER)
+            )
+      INNER JOIN PROJECT P
+        ON P.ID = RC.PROJECT_ID
+      WHERE
+        RC.CHANGE_TYPE <> 1
+        AND R.VALID_FROM >= to_timestamp('${new Timestamp(startValidFromDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
+        $untilString
+        AND R.VALID_TO IS NULL
+        ORDER BY R.VALID_FROM
+     """
+
+    Q.queryNA[RoadwayChangesInfo](query).iterator.toSeq
+  }
+
+  private implicit val getRoadwayChangesInfo: GetResult[RoadwayChangesInfo] = new GetResult[RoadwayChangesInfo] {
+    def apply(r: PositionedResult) = {
+
+      val roadwayChangeId = r.nextLong()
+      val startDate = new DateTime(r.nextTimestamp())
+      val validFrom = new DateTime(r.nextTimestamp())
+      val change_type = r.nextLong()
+      val reversed = r.nextLong()
+      val old_road_number = r.nextLong()
+      val old_road_part_number = r.nextLong()
+      val old_TRACK = r.nextLong()
+      val old_start_addr_m = r.nextLong()
+      val old_end_addr_m = r.nextLong()
+      val old_discontinuity = r.nextLong()
+      val old_road_type = r.nextLong()
+      val old_ely = r.nextLong()
+      val new_road_number = r.nextLong()
+      val new_road_part_number = r.nextLong()
+      val new_TRACK = r.nextLong()
+      val new_start_addr_m = r.nextLong()
+      val new_end_addr_m = r.nextLong()
+      val new_discontinuity = r.nextLong()
+      val new_road_type = r.nextLong()
+      val new_ely = r.nextLong()
+
+      RoadwayChangesInfo(roadwayChangeId, startDate, validFrom, change_type, reversed,
+        old_road_number, old_road_part_number, old_TRACK, old_start_addr_m, old_end_addr_m, old_discontinuity, old_road_type, old_ely,
+        new_road_number, new_road_part_number, new_TRACK, new_start_addr_m, new_end_addr_m, new_discontinuity, new_road_type, new_ely)
+    }
+  }
+
 }
