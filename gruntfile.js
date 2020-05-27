@@ -209,17 +209,6 @@ module.exports = function(grunt) {
           reporter: 'Spec'
         }
       },
-      viite_integration: {
-        options: {
-          mocha: { ignoreLeaks: true },
-          urls: ['http://127.0.0.1:9003/test/integration-tests.html'],
-          run: false,
-          log: true,
-          logErrors: true,
-          timeout: 100000,
-          reporter: 'Spec'
-        }
-      },
       options: {
         growlOnSuccess: false
       }
