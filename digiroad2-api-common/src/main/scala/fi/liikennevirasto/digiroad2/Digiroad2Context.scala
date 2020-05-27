@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import fi.liikennevirasto.viite.util.JsonSerializer
+import fi.liikennevirasto.viite.util.{DataImporter, JsonSerializer}
 import fi.liikennevirasto.viite.dao.{LinearLocationDAO, _}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite._
@@ -151,6 +151,8 @@ object Digiroad2Context {
   lazy val roadwayAddressMapper: RoadwayAddressMapper = {
     new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   }
+
+  lazy val dataImporter: DataImporter = new DataImporter
 
   lazy val revision: String = {
     ViiteProperties.revision
