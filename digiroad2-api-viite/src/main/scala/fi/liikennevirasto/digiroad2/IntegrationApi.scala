@@ -24,8 +24,6 @@ trait ViiteAuthenticationSupport extends ScentrySupport[BasicAuthUser] with Basi
 
   val realm = "Viite Integration API"
 
-  val dateFormat = "dd.MM.yyyy"
-
   protected def fromSession: PartialFunction[String, BasicAuthUser] = {
     case id: String => BasicAuthUser(id)
   }
@@ -53,6 +51,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   with JacksonJsonSupport with ViiteAuthenticationSupport with SwaggerSupport {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  val dateFormat = "dd.MM.yyyy"
 
   protected val applicationDescription = "The integration API "
 
