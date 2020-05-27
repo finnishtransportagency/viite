@@ -203,13 +203,9 @@ class ViitePropertiesFromFiles extends ViiteProperties {
   * If bonecp.properties is found in classpath, then all the properties are read from the property files.
   */
 object ViiteProperties extends ViiteProperties {
-
-// TODO Current SBT build adds bonecp.properties in jar, so another method must be implemented to figure out if we want
-// to read properties from environment variables or from property files
-
-//  if (getClass.getResource("/bonecp.properties").getFile.isEmpty) {
+  if (getClass.getResource("/bonecp.properties").getFile.isEmpty) {
     new ViiteProperties
-//  } else {
-//    new ViitePropertiesFromFiles
-//  }
+  } else {
+    new ViitePropertiesFromFiles
+  }
 }
