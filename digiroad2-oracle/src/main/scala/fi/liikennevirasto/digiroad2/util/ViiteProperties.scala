@@ -76,12 +76,13 @@ class ViiteProperties {
   }
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
-    scala.util.Properties.envOrElse("authentication." + baseAuth + "basic.username", null)
+    scala.util.Properties.envOrElse("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username", null)
   }
 
   def getAuthenticationBasicPassword(baseAuth: String = ""): String = {
-    scala.util.Properties.envOrElse("authentication." + baseAuth + "basic.password", null)
+    scala.util.Properties.envOrElse("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.password", null)
   }
+
 }
 
 class ViitePropertiesFromFiles extends ViiteProperties {
