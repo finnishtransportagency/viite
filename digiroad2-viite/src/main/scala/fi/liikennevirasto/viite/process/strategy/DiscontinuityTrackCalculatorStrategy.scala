@@ -7,6 +7,8 @@ import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectLink}
 
 class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) extends TrackCalculatorStrategy {
 
+  override val name: String = "Discontinuity Track Section"
+
   protected def getUntilDiscontinuity(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val continuousProjectLinks = seq.takeWhile(pl => !discontinuities.contains(pl.discontinuity))
     val rest = seq.drop(continuousProjectLinks.size)
