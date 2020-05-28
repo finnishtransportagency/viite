@@ -277,7 +277,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         if (firstRight.isEmpty || firstLeft.isEmpty)
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
 
-        val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
+        val strategy: TrackCalculatorStrategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
+        logger.info(s"${strategy.name} strategy")
         val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, userDefinedCalibrationPoint)
 
         val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
