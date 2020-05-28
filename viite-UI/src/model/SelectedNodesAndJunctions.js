@@ -150,7 +150,8 @@
       });
     };
 
-    var verifyJunctionNumbers = function () {
+    var validateJunctionNumbers = function () {
+
       var errorMessage = function (junctions) {
         var message = '';
 
@@ -160,12 +161,17 @@
           message = 'Liittymänumero on pakollinen tieto'; // junction number is compulsory information
         }
 
+        verified = verified && _.isEmpty(message);
         return message;
       };
+
+      var verified = true;
 
       _.each(_.groupBy(current.node.junctions, 'junctionNumber'), function (junctions) {
         eventbus.trigger('junction:setCustomValidity', junctions, errorMessage(junctions));
       });
+
+      return verified;
     };
 
     var isDirty = function () {
@@ -273,7 +279,7 @@
       setJunctionNumber: setJunctionNumber,
       detachJunctionAndNodePoints: detachJunctionAndNodePoints,
       attachJunctionAndNodePoints: attachJunctionAndNodePoints,
-      verifyJunctionNumbers: verifyJunctionNumbers,
+      validateJunctionNumbers: validateJunctionNumbers,
       isDirty: isDirty,
       isObsoleteNode: isObsoleteNode,
       closeNode: closeNode,

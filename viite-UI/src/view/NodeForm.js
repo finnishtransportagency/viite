@@ -406,7 +406,7 @@
       return $('#nodeName').val() === "" ||
         $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||
-        !selectedNodesAndJunctions.verifyJunctionNumbers() ||
+        !selectedNodesAndJunctions.validateJunctionNumbers() ||
         !selectedNodesAndJunctions.isDirty() || saveBtnDisabled;
     };
 
@@ -490,7 +490,7 @@
         junction.junctionNumber = disabled ? '' : junction.junctionNumber; // clears junction number upon detach
         junctionInputNumber.prop('disabled', disabled);
         junctionInputNumber.val(junction.junctionNumber);
-        selectedNodesAndJunctions.verifyJunctionNumbers();
+        selectedNodesAndJunctions.validateJunctionNumbers();
         selectedNodesAndJunctions.updateNodesAndJunctionsMarker([junction]);
       };
 
@@ -665,7 +665,7 @@
           });
 
           eventbus.on('junction:validate', function () {
-            selectedNodesAndJunctions.verifyJunctionNumbers();
+            selectedNodesAndJunctions.validateJunctionNumbers();
           });
 
           eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate ' +
