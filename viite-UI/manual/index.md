@@ -618,7 +618,7 @@ Jos käyttäjä irrottaa solmusta solmukohdan, järjestelmä laskee liittymien p
 
 Työkalu avataan klikkaamalla karttanäkymän oikeassa reunassa sijaitsevaa Solmut ja liittymät -painiketta.
 
-![Solmut ja liittymät -työkalun avaaminen](k00.JPG)
+![Solmut ja liittymät -työkalun avaaminen](k59.jpg)
 
 _Kuva 9.1: Solmut ja liittymät -työkalun avaaminen._ 
 
@@ -628,7 +628,7 @@ Näkymän oikeassa reunassa on solmujen hakutoiminto (4).
 
 Hakutoiminnon alapuolella näytetään listat käsittelemättömistä liittymä- ja solmukohta-aihioista (5).
 
-![Solmut ja liittymät -työkalu](k00.JPG)
+![Solmut ja liittymät -työkalu](k60.jpg)
 
 _Kuva 9.2: Solmut ja liittymät -työkalu._ 
 
@@ -636,7 +636,7 @@ Kun hiiren vie kartalla jonkin solmun päälle, tulee näkyviin infolaatikko (6)
 
 Solmun liittymät tulevat näkyviin, kun zoomaa tasolle, jonka mittakaavajanassa on lukema 100 m. Liittymät esitetään sinisillä, numeroiduilla liittymäsymboleilla. Viemällä hiiren liittymän päälle käyttäjä saa esiin infolaatikon (7), jossa näytetään ko. liittymän tieosoite ja sen solmun nimi, johon liittymä on liitetty.
 
-![Solmun ja liittymän -infolaatikot](k00.JPG)
+![Solmun ja liittymän -infolaatikot](k61.jpg)
 
 _Kuva 9.3: Solmun ja liittymän infolaatikot._ 
 
@@ -680,7 +680,7 @@ Liittymäaihion osoite näytetään muodossa tie/ajr/osa/aet ja solmukohta-aihio
 
 Kun käyttäjä klikkaa vasemmassa reunassa sijaitsevaa Solmun valinta -työkalua, muokkaustoiminto aktivoituu ja painikkeen tausta muuttuu siniseksi.  Tämän jälkeen käyttäjä valitsee kartalta solmun, jonka tietoja haluaa katsella tai muokata, ja formille avautuu tiedot solmusta (1), solmukohdista (2) ja liittymistä (3).
 
-![Solmun tiedot, solmukohdat ja liittymät](k00.JPG)
+![Solmun tiedot, solmukohdat ja liittymät](k62.jpg)
 
 _Kuva 9.4: Solmun tiedot, solmukohdat ja liittymät._ 
 
@@ -700,7 +700,7 @@ Solmun solmukohdista näytetään tienumero, tieosa, etäisyyslukema ja ennen/j�
 
 Solmukohtatietorivin alussa on valintalaatikko solmukohdan irrotusta varten (6). Laskennallisia solmukohtia ei voi irrottaa, ja niiden riveiltä valintalaatikko puuttuu. 
 
-![Solmun solmukohdat](k00.JPG)
+![Solmun solmukohdat](k63.jpg)
 
 _Kuva 9.5: Solmun solmukohdat._ 
 
@@ -710,7 +710,7 @@ Liittymista näytetään liittymänumero, tienumero, ajorata, tieosa, etäisyysl
 
 Käyttäjä voi muokata liittymänumeroa kirjoittamalla uuden liittymänumeron vanhan numeron tilalle (9). Solmulla ei voi olla useita samalla numerolla olevia liittymiä. Viite estää tällaisen tallennuksen. 
 
-![Solmun liittymät](k00.JPG)
+![Solmun liittymät](k64.jpg)
 
 _Kuva 9.6: Solmun liittymät._ 
 
@@ -718,17 +718,17 @@ _Kuva 9.6: Solmun liittymät._
 
 Irrotettava solmukohta ja/tai liittymä valitaan klikkaamalla rivin alussa olevaa valintaruutua. Käyttäjä voi perua valintansa klikkaamalla valintaruutua uudestaan. 
 
-![Varmistus valinnan perumisesta](k00.JPG)
+![Varmistus valinnan perumisesta](k65.jpg)
 
 _Kuva 9.7: Varmistus valinnan perumisesta_ 
 
-![Solmukohtien ja liittymien irrotus](k00.JPG)
+![Solmukohtien ja liittymien irrotus](k66.jpg)
 
 _Kuva 9.8: Solmukohtien ja liittymien irrotus_ 
 
 Viite valitsee automaattisesti kaikki samassa kohdassa sijaitsevat solmukohdat ja liittymät irrotettaviksi. Käyttäjää pyydetään vahvistamaan irrotus (10).  Muutoksen tallennuksen jälkeen irrotetut solmukohdat/liittymät muuttuvat aihioiksi.
 
-![Tilanne solmukohdan ja liittymien irrotuksen jälkeen](k00.JPG)
+![Tilanne solmukohdan ja liittymien irrotuksen jälkeen](k67.jpg)
 
 _Kuva 9.9: Tilanne solmukohdan ja liittymien irrotuksen jälkeen_ 
 
@@ -739,7 +739,7 @@ _Kuva 9.9: Tilanne solmukohdan ja liittymien irrotuksen jälkeen_
 
 Uusi solmu luodaan aihioiden käsittelyn yhteydessä. Käyttäjä valitsee liittymä- tai solmukohta-aihion joko kartalta (1) tai aihiolistalta ja klikkaa “Luo uusi solmu, johon haluat liittää aihiot” -painiketta (2). Hiiren kursori muuttuu nuolesta ristiksi, jolla klikkaamalla asetetaan solmun sijainti kartalla (3).  Sijaintia voi muokata hiirellä vetämällä.
 
-![Aihion liittäminen uuteen solmuun](k00.JPG)
+![Aihion liittäminen uuteen solmuun](k68.jpg)
 
 _Kuva 9.10: Aihion liittäminen uuteen solmuun_ 
 
@@ -750,7 +750,7 @@ Tämän jälkeen formille avautuu solmun tiedot. Käyttäjä antaa solmulle nime
 Aihion (7) valinnan jälkeen käyttäjä voi liittää aihion nykyiseen solmuun  “Valitse kartalta solmu, johon haluat liittää aihiot” -painikkeella (8).
 
 
-![Aihion liittäminen nykyiseen solmuun](k00.JPG)
+![Aihion liittäminen nykyiseen solmuun](k69.jpg)
 
 _Kuva 9.11: Aihion liittäminen nykyiseen solmuun_ 
 
