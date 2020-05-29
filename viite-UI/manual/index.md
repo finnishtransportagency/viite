@@ -591,30 +591,34 @@ Kirjoitusvirheiden välttämiseksi Viitteessä on päivämäärärajaus. Nimen a
 9.1 Solmujen ja liittymien ylläpitoprosessit
 --------------------------
 
-9.1.1 Tieosoiteprojekti
+9.1.1 Tieosoitemuutosprojekti
 --------------------------
 
-Viite luo projektin solmukohta- ja liittymäaihiot. Samalla se poistaa nykyisiä solmukohtia, liittymiä ja solmuja.  Järjestelmä myös päivittää projektin solmukohtia ja liittymäkohtia.
+Tieosoitemuutoksista Viite tunnistaa uudet tien tai tieosan alku-tai loppupisteet sekä tietyypin vaihtumiskohdat, joihin se luo solmukohta-aihiot. Tieosoitemuutoksista Viite tunnistaa uudet liittymät, joihin Viite luo liittymäaihiot liittymäkohtineen. 
+
+Viite tunnistaa tieosoitemuutoksessa tarpeettomaksi jäävät solmut, solmukohdat ja liittymät, jolloin se päättää niitä. 
+
+Viite myös päivittää nykyisten solmujen solmukohtia ja nykyisten liittymien liittymäkohtia tieosoitemuutoksen mukaisesti.
 
 9.1.2 Solmut ja liittymät 
 --------------------------
  
-Käyttäjä luo uudet solmut sekä liittää solmukohta- ja liittymäaihiot solmuun. Jos jollakin solmun tiellä ei ole tien solmukohtaa, järjestelmä laskee solmuun liitettyjen liittymien perusteella näille teille solmukohdat.
+Käyttäjä liittää solmukohta- ja liittymäaihiot solmuun. Tarvittaessa käyttäjä luo liittämisen yhetydessä uuden solmun. Jos jollakin solmun tieosalla ei ole solmukohtaa, järjestelmä laskee solmuun liitettyjen liittymien perusteella näille solmun tieosille solmukohdat.
 
-Käyttäjä voi liittää samaan solmuun useita saman tien solmukohtia. Käyttäjä voi myös irrottaa tien solmukohdan tai liittymän solmusta.
+Käyttäjä voi liittää samaan solmuun useita saman tieosan solmukohtia. Käyttäjä voi myös irrottaa solmukohdan tai liittymän solmusta. Liittymien perusteella laskettuja solmukohtia käyttäjä ei voi irrottaa solmusta, ainoastaan tien tai tieosan alku-tai loppupisteen sekä tietyypin vaihtumiskohdan solmukohdat voi irrottaa solmusta. Irrotetettu solmukohta tai liittymä muuttuu takaisin aihioksi, jonka käyttäjä voi liittää toiseen solmuun.
 
-Jos käyttäjä lisää liittymäaihion solmuun tai poistaa liittymän solmusta, järjestelmä päivittää liittymien perusteella lasketut solmukohdat.
+Jos käyttäjä liittää liittymäaihion solmuun tai irrottaa liittymän solmusta, järjestelmä päivittää liittymien perusteella lasketut solmukohdat.
 
-Jos käyttäjä liittää solmuun tien solmukohta-aihion, järjestelmä poistaa ko. tieltä liittymien perusteella lasketun solmukohdan.
+Jos käyttäjä liittää solmuun solmukohta-aihion, järjestelmä poistaa ko. tieosalta liittymien perusteella lasketun solmukohdan.
 
-Jos käyttäjä irrottaa solmusta tien solmukohdan, järjestelmä laskee liittymien perusteella solmukohdat niille teille, joilla ei ole enää tien solmukohtia.
+Jos käyttäjä irrottaa solmusta solmukohdan, järjestelmä laskee liittymien perusteella solmukohdat niille tieosille, joilla ei ole enää  tien tai tieosan alku-tai loppupisteen sekä tietyypin vaihtumiskohdan solmukohtia.
 
 9.2 Solmujen ja liittymien ylläpitotyökalu
 --------------------------
 
 Työkalu avataan klikkaamalla karttanäkymän oikeassa reunassa sijaitsevaa Solmut ja liittymät -painiketta.
 
-![Solmut ja liittymät -työkalun avaaminen](k59.jpg)
+![Solmut ja liittymät -työkalun avaaminen](k00.JPG)
 
 _Kuva 9.1: Solmut ja liittymät -työkalun avaaminen._ 
 
@@ -624,7 +628,7 @@ Näkymän oikeassa reunassa on solmujen hakutoiminto (4).
 
 Hakutoiminnon alapuolella näytetään listat käsittelemättömistä liittymä- ja solmukohta-aihioista (5).
 
-![Solmut ja liittymät -työkalu](k60.jpg)
+![Solmut ja liittymät -työkalu](k00.JPG)
 
 _Kuva 9.2: Solmut ja liittymät -työkalu._ 
 
@@ -632,7 +636,7 @@ Kun hiiren vie kartalla jonkin solmun päälle, tulee näkyviin infolaatikko (6)
 
 Solmun liittymät tulevat näkyviin, kun zoomaa tasolle, jonka mittakaavajanassa on lukema 100 m. Liittymät esitetään sinisillä, numeroiduilla liittymäsymboleilla. Viemällä hiiren liittymän päälle käyttäjä saa esiin infolaatikon (7), jossa näytetään ko. liittymän tieosoite ja sen solmun nimi, johon liittymä on liitetty.
 
-![Solmun ja liittymän -infolaatikot](k61.jpg)
+![Solmun ja liittymän -infolaatikot](k00.JPG)
 
 _Kuva 9.3: Solmun ja liittymän infolaatikot._ 
 
@@ -676,7 +680,7 @@ Liittymäaihion osoite näytetään muodossa tie/ajr/osa/aet ja solmukohta-aihio
 
 Kun käyttäjä klikkaa vasemmassa reunassa sijaitsevaa Solmun valinta -työkalua, muokkaustoiminto aktivoituu ja painikkeen tausta muuttuu siniseksi.  Tämän jälkeen käyttäjä valitsee kartalta solmun, jonka tietoja haluaa katsella tai muokata, ja formille avautuu tiedot solmusta (1), solmukohdista (2) ja liittymistä (3).
 
-![Solmun tiedot, solmukohdat ja liittymät](k62.jpg)
+![Solmun tiedot, solmukohdat ja liittymät](k00.JPG)
 
 _Kuva 9.4: Solmun tiedot, solmukohdat ja liittymät._ 
 
@@ -696,7 +700,7 @@ Solmun solmukohdista näytetään tienumero, tieosa, etäisyyslukema ja ennen/j�
 
 Solmukohtatietorivin alussa on valintalaatikko solmukohdan irrotusta varten (6). Laskennallisia solmukohtia ei voi irrottaa, ja niiden riveiltä valintalaatikko puuttuu. 
 
-![Solmun solmukohdat](k63.jpg)
+![Solmun solmukohdat](k00.JPG)
 
 _Kuva 9.5: Solmun solmukohdat._ 
 
@@ -706,7 +710,7 @@ Liittymista näytetään liittymänumero, tienumero, ajorata, tieosa, etäisyysl
 
 Käyttäjä voi muokata liittymänumeroa kirjoittamalla uuden liittymänumeron vanhan numeron tilalle (9). Solmulla ei voi olla useita samalla numerolla olevia liittymiä. Viite estää tällaisen tallennuksen. 
 
-![Solmun liittymät](k64.jpg)
+![Solmun liittymät](k00.JPG)
 
 _Kuva 9.6: Solmun liittymät._ 
 
@@ -714,17 +718,17 @@ _Kuva 9.6: Solmun liittymät._
 
 Irrotettava solmukohta ja/tai liittymä valitaan klikkaamalla rivin alussa olevaa valintaruutua. Käyttäjä voi perua valintansa klikkaamalla valintaruutua uudestaan. 
 
-![Varmistus valinnan perumisesta](k65.jpg)
+![Varmistus valinnan perumisesta](k00.JPG)
 
 _Kuva 9.7: Varmistus valinnan perumisesta_ 
 
-![Solmukohtien ja liittymien irrotus](k66.jpg)
+![Solmukohtien ja liittymien irrotus](k00.JPG)
 
 _Kuva 9.8: Solmukohtien ja liittymien irrotus_ 
 
 Viite valitsee automaattisesti kaikki samassa kohdassa sijaitsevat solmukohdat ja liittymät irrotettaviksi. Käyttäjää pyydetään vahvistamaan irrotus (10).  Muutoksen tallennuksen jälkeen irrotetut solmukohdat/liittymät muuttuvat aihioiksi.
 
-![Tilanne solmukohdan ja liittymien irrotuksen jälkeen](k67.jpg)
+![Tilanne solmukohdan ja liittymien irrotuksen jälkeen](k00.JPG)
 
 _Kuva 9.9: Tilanne solmukohdan ja liittymien irrotuksen jälkeen_ 
 
@@ -735,7 +739,7 @@ _Kuva 9.9: Tilanne solmukohdan ja liittymien irrotuksen jälkeen_
 
 Uusi solmu luodaan aihioiden käsittelyn yhteydessä. Käyttäjä valitsee liittymä- tai solmukohta-aihion joko kartalta (1) tai aihiolistalta ja klikkaa “Luo uusi solmu, johon haluat liittää aihiot” -painiketta (2). Hiiren kursori muuttuu nuolesta ristiksi, jolla klikkaamalla asetetaan solmun sijainti kartalla (3).  Sijaintia voi muokata hiirellä vetämällä.
 
-![Aihion liittäminen uuteen solmuun](k68.jpg)
+![Aihion liittäminen uuteen solmuun](k00.JPG)
 
 _Kuva 9.10: Aihion liittäminen uuteen solmuun_ 
 
@@ -746,7 +750,7 @@ Tämän jälkeen formille avautuu solmun tiedot. Käyttäjä antaa solmulle nime
 Aihion (7) valinnan jälkeen käyttäjä voi liittää aihion nykyiseen solmuun  “Valitse kartalta solmu, johon haluat liittää aihiot” -painikkeella (8).
 
 
-![Aihion liittäminen nykyiseen solmuun](k69.jpg)
+![Aihion liittäminen nykyiseen solmuun](k00.JPG)
 
 _Kuva 9.11: Aihion liittäminen nykyiseen solmuun_ 
 
