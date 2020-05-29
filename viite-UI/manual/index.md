@@ -726,11 +726,13 @@ _Kuva 9.7: Varmistus valinnan perumisesta_
 
 _Kuva 9.8: Solmukohtien ja liittymien irrotus_ 
 
-Viite valitsee automaattisesti kaikki samassa kohdassa sijaitsevat solmukohdat ja liittymät irrotettaviksi. Käyttäjää pyydetään vahvistamaan irrotus (10).  Muutoksen tallennuksen jälkeen irrotetut solmukohdat/liittymät muuttuvat aihioiksi.
+Viite valitsee automaattisesti kaikki samassa kohdassa sijaitsevat solmukohdat ja liittymät irrotettaviksi. Käyttäjää pyydetään vahvistamaan irrotus (10).  
 
 ![Tilanne solmukohdan ja liittymien irrotuksen jälkeen](k67.jpg)
 
 _Kuva 9.9: Tilanne solmukohdan ja liittymien irrotuksen jälkeen_ 
+
+Muutoksen tallennuksen jälkeen irrotetut solmukohdat/liittymät muuttuvat aihioiksi (11) ja liittymänumero poistuu (12).
 
 9.6 Aihioiden liittäminen solmuun
 --------------------------
