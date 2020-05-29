@@ -619,7 +619,9 @@ Työkalu avataan klikkaamalla karttanäkymän oikeassa reunassa sijaitsevaa Solm
 _Kuva 9.1: Solmut ja liittymät -työkalun avaaminen._ 
 
 Avautuneessa näkymässä solmutyypit esitetään kartalla symboleilla, joiden selitteet (1) löytyvät vasemmasta reunasta. Sieltä löytyvät myös liittymä-, liittymäaihio- ja solmukohta-aihiosymboleiden selitteet (2) sekä työkalu solmun valintaan (3). 
+
 Näkymän oikeassa reunassa on solmujen hakutoiminto (4).
+
 Hakutoiminnon alapuolella näytetään listat käsittelemättömistä liittymä- ja solmukohta-aihioista (5).
 
 ![Solmut ja liittymät -työkalu](k00.JPG)
@@ -627,6 +629,7 @@ Hakutoiminnon alapuolella näytetään listat käsittelemättömistä liittymä-
 _Kuva 9.2: Solmut ja liittymät -työkalu._ 
 
 Kun hiiren vie kartalla jonkin solmun päälle, tulee näkyviin infolaatikko (6), joka kertoo kyseisen solmun nimen ja solmutyypin.
+
 Solmun liittymät tulevat näkyviin, kun zoomaa tasolle, jonka mittakaavajanassa on lukema 100 m. Liittymät esitetään sinisillä, numeroiduilla liittymäsymboleilla. Viemällä hiiren liittymän päälle käyttäjä saa esiin infolaatikon (7), jossa näytetään ko. liittymän tieosoite ja sen solmun nimi, johon liittymä on liitetty.
 
 ![Solmun ja liittymän -infolaatikot](k00.JPG)
