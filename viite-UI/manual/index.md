@@ -600,9 +600,13 @@ Viite luo projektin solmukohta- ja liittymäaihiot. Samalla se poistaa nykyisiä
 --------------------------
  
 Käyttäjä luo uudet solmut sekä liittää solmukohta- ja liittymäaihiot solmuun. Jos jollakin solmun tiellä ei ole tien solmukohtaa, järjestelmä laskee solmuun liitettyjen liittymien perusteella näille teille solmukohdat.
+
 Käyttäjä voi liittää samaan solmuun useita saman tien solmukohtia. Käyttäjä voi myös irrottaa tien solmukohdan tai liittymän solmusta.
+
 Jos käyttäjä lisää liittymäaihion solmuun tai poistaa liittymän solmusta, järjestelmä päivittää liittymien perusteella lasketut solmukohdat.
+
 Jos käyttäjä liittää solmuun tien solmukohta-aihion, järjestelmä poistaa ko. tieltä liittymien perusteella lasketun solmukohdan.
+
 Jos käyttäjä irrottaa solmusta tien solmukohdan, järjestelmä laskee liittymien perusteella solmukohdat niille teille, joilla ei ole enää tien solmukohtia.
 
 9.2 Solmujen ja liittymien ylläpitotyökalu
