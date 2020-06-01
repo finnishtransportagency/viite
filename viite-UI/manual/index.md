@@ -40,7 +40,7 @@ Jos kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, ei k
 1.1 Mistä saada opastusta
 --------------------------
 
-Viite-sovelluksen käytössä avustaa Janne Grekula, janne.grekula@cgi.com.
+Viite-sovelluksen käytössä avustaa Janne Grekula, viite.kehitys@vayla.fi.
 
 #### Ongelmatilanteet
 
@@ -48,7 +48,7 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oike
 
 - Lataa sivu uudelleen näppäimistön F5-painikkeella
 - Tarkista, että selaimestasi on käytössä ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
-- Jos edellä olevat eivät korjaa ongelmaa, ota yhteyttä janne.grekula@cgi.com
+- Jos edellä olevat eivät korjaa ongelmaa, ota yhteyttä viite.kehitys@vayla.fi
 
 Tämä ohje käsittelee pääasiassa vain Viite-sovelluksen käyttöä, ei niinkään tieosoitejärjestelmää. Tarkemmat tiedot tieosoitejärjestelmästä löydät täältä: https://vayla.fi/documents/20473/143621/tieosoitejärjestelmä.pdf.
 
@@ -145,6 +145,8 @@ Merkitse-painike (8) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki po
 Geometrialtaan yleistetty tieosoiteverkko tulee näkyviin, kun zoomaa tasolle, jonka mittakaavajanassa on lukema 5 km. Tästä tasosta ja sitä lähempää piirretään kartalle valtatiet, kantatiet, seututiet, yhdystiet ja numeroidut kadut. Yleistämätön tieverkko piirtyy mittakaavajanan lukemalla 2 km. 100 metriä (100 metrin mittakaavajanoja on kaksi kappaletta) suuremmilla mittakaavatasoilla tulevat näkyviin kaikki tieverkon kohteet.
 
 Tieosoiteverkko on värikoodattu tienumeroiden mukaan. Vasemman yläkulman selitteessä on kerrottu kunkin värikoodin tienumerot. Lisäksi kartalle piirtyvät etäisyyslukemasymbolit, kohdat, joissa vaihtuu tieosa tai ajoratakoodi. Tieverkon kasvusuunta näkyy kartalla pisaran mallisena nuolena.
+
+Kartalla näkyvä tieosoiteverkko on uusimman tieosoitteen mukainen verkko, jossa näkyvät tieosoitteiden viimeisimmät muutokset. Näiden muutosten alkupäivämäärä voi olla tulevaisuudessa, joten kartalla ei näy ns. tämän päivän tilanne.
 
 ![Mittakaavajanassa 2km](k4.jpg)
 
@@ -250,6 +252,13 @@ _kuva 6.2: Tieosoiteprojektin perustietojen täyttäminen._
 
 Projektin tieosat lisätään täydentämällä niiden tiedot kenttiin TIE, AOSA sekä LOSA ja painamalla painiketta Varaa (6). __Kaikki kentät tulee täyttää, jos haluaa varata tieosan!__ 
 
+Varauksen yhteydessä järjestelmä tekee varattaville tieosille tarkastukset:
+
+- Onko varattava tieosa olemassa projektin voimaantulopäivänä
+- Onko varattava tieosa vapaana vai onko se jo varattu toiseen projektiin
+
+Virheellisistä varausyrityksistä järjestelmä antaa virheilmoituksen.  __Käyttäjän tulee huomioida, että varauksen yhteydessä kaikki kentät (TIE, AOSA, LOSA) tulee täyttää, tai käyttäjä saa virheilmoituksen!__
+
 Varaa-painikkeen klikkauksen jälkeen tieosan tiedot tulevat näkyviin lomakkeelle (7).
 
 ![Uusi tieosoiteprojekti](k22.jpg)
@@ -260,18 +269,13 @@ Tieosoiteprojekti tallentuu automaattisesti painikkeesta Jatka toimenpiteisiin, 
 
 Käyttäjä voi poistaa varattuja tieosia klikkaamalla Roskakori-kuvaketta (8) valitsemansa tieosan kohdalla Projektiin varatut tieosat -listalla. Mikäli tieosille ei ole tehty muutoksia, vaan ne on vain varattu projektiin, varaus poistetaan projektista. Jos tieosille on tehty muutoksia, Viite pyytää käyttäjää vahvistamaan poiston.
 
+Käyttäjä voi poistaa projektissa muodostettuja tieosia klikkaamalla Roskakori-kuvaketta valitsemiensa tieosien kohdalla Projektissa muodostetut tieosat -listalla. Käyttäjää pyydetään vahvistamaan poisto.  
+
 Keskeneräisen projektin voi poistaa Poista projekti –painikkeella (9), jolloin projekti ja sen varaamat aihiot ja tehdyt muutokset poistetaan. Viite pyytää käyttäjää vahvistamaan poiston. 
 
 ![Uusi tieosoiteprojekti](k20.jpg)
 
 _Kuva 6.4: Kun tieosa on varattu projektiin, Viite kohdistaa kartan siten, että tieosa näkyy kartalla kokonaisuudessaan._  
-
-Varauksen yhteydessä järjestelmä tekee varattaville tieosille tarkastukset:
-
-- Onko varattava tieosa olemassa projektin voimaantulopäivänä
-- Onko varattava tieosa vapaana vai onko se jo varattu toiseen projektiin
-
-Virheellisistä varausyrityksistä järjestelmä antaa virheilmoituksen.  __Käyttäjän tulee huomioida, että varauksen yhteydessä kaikki kentät (TIE, AOSA, LOSA) tulee täyttää, tai käyttäjä saa virheilmoituksen!__
 
 6.2 Olemassa oleva tieosoiteprojekti
 --------------------------
@@ -337,6 +341,7 @@ Selite projektitilassa on erilainen kuin katselutilassa. Projektitilan selite ku
 
 7.1.1 Lakkautus
 --------------------------
+
 Kun halutaan lakkauttaa joko tieosia, tieosa tai osa tieosasta, ko. osat pitää ensin varata projektiin. Varaaminen tehdään luvussa 6.1 esitetyllä tavalla syöttämällä projektitietojen lomakkeelle haluttu tienumero ja tieosa sekä painamalla Varaa-painiketta.
 
 Tämän jälkeen klikataan Jatka toimenpiteisiin -painiketta, jolla siirrytään toimenpidelomakkeelle tekemään tieosoitemuutosta. Toimenpidelomakkeella valitaan kartalta projektiin varattu tieosa, -osat tai tarvittavat linkit valitusta tieosasta. Ne muuttuvat valittuina vihreiksi. (Shift+kaksoisklikkaus-painalluksella voi lisätä yksittäisiä linkkejä valintaan tai poistaa yksittäisiä linkkejä valinnasta.) Toimenpide-lomakkeelle tulee tiedot valituista linkeistä sekä pudotusvalikko, josta valitaan Lakkautus. Tämän jälkeen tallennetaan muutos projektiin. Lakkautettu linkki tulee näkyviin mustalla ja sen tiedot päivittyvät yhteenvetotaulukkoon, jonka voi avata sinisestä Avaa projektin yhteenvetotaulukko -painikkeesta. Yhteenvetotaulukon toiminta on kuvattu luvussa 7.2. Mikäli on lakkautettu vain osa tieosan linkeistä, tulee tieosan muut kuin lakkautetut linkit käsitellä joko Ennallaan- tai Siirto-toimenpiteillä tilanteesta riippuen. Kun tarvittavat muutokset projektissa on tehty, muutostiedot voi lähettää Tierekisteriin painamalla Lähetä muutosilmoitus Tierekisteriin -painiketta. 
@@ -583,4 +588,183 @@ Kirjoitusvirheiden välttämiseksi Viitteessä on päivämäärärajaus. Nimen a
 # 9. Solmut ja liittymät
 --------------------------
 
+9.1 Solmujen ja liittymien ylläpitoprosessit
+--------------------------
 
+9.1.1 Tieosoitemuutosprojekti
+--------------------------
+
+Tieosoitemuutoksista Viite tunnistaa uudet tien tai tieosan alku-tai loppupisteet sekä tietyypin vaihtumiskohdat, joihin se luo solmukohta-aihiot. Tieosoitemuutoksista Viite tunnistaa uudet liittymät, joihin Viite luo liittymäaihiot liittymäkohtineen. 
+
+Viite tunnistaa tieosoitemuutoksessa tarpeettomaksi jäävät solmut, solmukohdat ja liittymät, jolloin se päättää ne. 
+
+Viite myös päivittää nykyisten solmujen solmukohtia ja nykyisten liittymien liittymäkohtia tieosoitemuutoksen mukaisesti.
+
+9.1.2 Solmut ja liittymät 
+--------------------------
+ 
+Käyttäjä liittää solmukohta- ja liittymäaihiot solmuun. Tarvittaessa käyttäjä luo liittämisen yhetydessä uuden solmun. Jos jollakin solmun tieosalla ei ole solmukohtaa, järjestelmä laskee solmuun liitettyjen liittymien perusteella näille solmun tieosille solmukohdat.
+
+Käyttäjä voi liittää samaan solmuun useita saman tieosan solmukohtia. Käyttäjä voi myös irrottaa solmukohdan tai liittymän solmusta. Liittymien perusteella laskettuja solmukohtia käyttäjä ei voi irrottaa solmusta, ainoastaan tien tai tieosan alku-tai loppupisteen sekä tietyypin vaihtumiskohdan solmukohdat voi irrottaa solmusta. Irrotetettu solmukohta tai liittymä muuttuu takaisin aihioksi, jonka käyttäjä voi liittää toiseen solmuun.
+
+Jos käyttäjä liittää liittymäaihion solmuun tai irrottaa liittymän solmusta, järjestelmä päivittää liittymien perusteella lasketut solmukohdat.
+
+Jos käyttäjä liittää solmuun solmukohta-aihion, järjestelmä poistaa ko. tieosalta liittymien perusteella lasketun solmukohdan.
+
+Jos käyttäjä irrottaa solmusta solmukohdan, järjestelmä laskee liittymien perusteella solmukohdat niille tieosille, joilla ei ole enää  tien tai tieosan alku-tai loppupisteen sekä tietyypin vaihtumiskohdan solmukohtia.
+
+9.2 Solmujen ja liittymien ylläpitotyökalu
+--------------------------
+
+Työkalu avataan klikkaamalla karttanäkymän oikeassa reunassa sijaitsevaa Solmut ja liittymät -painiketta.
+
+![Solmut ja liittymät -työkalun avaaminen](k59.jpg)
+
+_Kuva 9.1: Solmut ja liittymät -työkalun avaaminen._ 
+
+Avautuneessa näkymässä solmutyypit esitetään kartalla symboleilla, joiden selitteet (1) löytyvät vasemmasta reunasta. Sieltä löytyvät myös liittymä-, liittymäaihio- ja solmukohta-aihiosymboleiden selitteet (2) sekä työkalu solmun valintaan (3). 
+
+Näkymän oikeassa reunassa on solmujen hakutoiminto (4).
+
+Hakutoiminnon alapuolella näytetään listat käsittelemättömistä liittymä- ja solmukohta-aihioista (5).
+
+![Solmut ja liittymät -työkalu](k60.jpg)
+
+_Kuva 9.2: Solmut ja liittymät -työkalu._ 
+
+Kun hiiren vie kartalla jonkin solmun päälle, tulee näkyviin infolaatikko (6), joka kertoo kyseisen solmun nimen ja solmutyypin.
+
+Solmun liittymät tulevat näkyviin, kun zoomaa tasolle, jonka mittakaavajanassa on lukema 100 m. Liittymät esitetään sinisillä, numeroiduilla liittymäsymboleilla. Viemällä hiiren liittymän päälle käyttäjä saa esiin infolaatikon (7), jossa näytetään ko. liittymän tieosoite ja sen solmun nimi, johon liittymä on liitetty.
+
+![Solmun ja liittymän -infolaatikot](k61.jpg)
+
+_Kuva 9.3: Solmun ja liittymän infolaatikot._ 
+
+Työkalusta poistutaan klikkaamalla oikean yläkulman Sulje-painiketta. 
+
+
+9.3 Solmujen haku
+--------------------------
+
+Solmujen tietoja voi hakea joko tienumeron tai tienumeron ja tieosien (AOSA, LOSA) perusteella. Käyttäjä syöttää haluamansa arvot kenttiin, painaa Hae solmut -painiketta ja Viite listaa hakua vastaavat solmut formille.
+
+Jos käyttäjä täyttää vain tienumeron, listataan kaikkien kyseisellä tiellä olevien solmujen tiedot. Jos käyttäjä antaa tienumeron ja tieosan, listataan kaikki kyseisen tieosan solmut. Jos käyttäjä on antanut sekä tieosien alku- että loppuosa-arvon, tuodaan näiden välisten tieosien solmujen tiedot. Mikäli käyttäjä antaa tiedon vain AOSA- tai LOSA-kenttään, tulkitaan haun kohdistuvan vain sille tieosalle.
+
+Haun jälkeen karttanäkymä zoomataan niin, että kaikki haetut solmut mahtuvat näytölle.
+Formilla näytetään solmuista seuraavat tiedot:
+- tieosoite muodossa tie/osa/etäisyys ja solmun nimi
+- solmutyyppi
+- solmunumero
+
+Lista järjestetään solmujen tieosoitteiden mukaisessa järjestyksessä pienimmästä suurimpaan.
+
+Solmun tieosoiteriviä klikkaamalla voi zoomata kartalla kyseiseen solmuun.
+
+Jos solmulla on samalle tienumerolle kaksi solmukohtaa, niistä käytetään solmukohdan jälkeen olevaa tieosoitetta. Jos solmukohdan tieosoite on hakualueen ulkopuolella, sitä ei näytetä tuloslistauksessa.
+
+Tien viimeinen solmu näytetään aina, samoin ennen epäjatkuvuuskohtaa edeltävä solmu, kun tie jatkuu toisen solmun jälkeen.
+Mikäli käyttäjän antama hakuehto tuottaa vastaukseksi yli 50 solmua, Viite antaa ilmoituksen: "Hakusi palauttaa yli 50 kohdetta, rajaa hakua pienemmäksi." Haun tuloksia ei listata.
+
+Tyhjennä tulokset -painike tyhjentää hakutuloslistan.
+
+9.4 Lista liittymä- ja solmukohta-aihioista
+--------------------------
+
+Formilla näytetään käyttäjän ELYn/ELYjen mukainen lista liittymä- ja solmukohta-aihioista kasvavassa tieosoitejärjestyksessä. Yhdestä liittymäkohdasta listataan yksi, pienimmällä tienumerolla oleva linkki. Tieosan vaihtumiskohdassa listataan alkavan tieosan 0-kohta.
+
+Liittymäaihion osoite näytetään muodossa tie/ajr/osa/aet ja solmukohta-aihion osoite muodossa tie/osa/ aet.  Osoite on linkki, jota klikkaamalla zoomataan kartalla kyseiseen kohtaan ja päästään käsittelemään aihiota. 
+
+
+9.5 Nykyisen solmun tietojen katselu/muokkaaminen
+--------------------------
+
+Kun käyttäjä klikkaa vasemmassa reunassa sijaitsevaa Solmun valinta -työkalua, muokkaustoiminto aktivoituu ja painikkeen tausta muuttuu siniseksi.  Tämän jälkeen käyttäjä valitsee kartalta solmun, jonka tietoja haluaa katsella tai muokata, ja formille avautuu tiedot solmusta (1), solmukohdista (2) ja liittymistä (3).
+
+![Solmun tiedot, solmukohdat ja liittymät](k62.jpg)
+
+_Kuva 9.4: Solmun tiedot, solmukohdat ja liittymät._ 
+
+Valinnan jälkeen muut kuin käyttäjän valitsema solmu ja sen liittymät näkyvät kartalla himmennettyinä.
+
+Solmun valinta -painike inaktivoituu tietojen tallennuksen tai peruutuksen jälkeen. 
+
+#### Solmun tiedot
+
+Formille avautuvassa nimikentässä voi muokata solmun nimeä. Solmun tyypin saa muutettua valitsemalla uuden tyypin pudotusvalikosta. Kun tyyppi on valittu, sille valitaan uusi alkupäivämäärä. Virheellisen solmutyypin voi korjata ilman päivämäärämuutosta.
+
+Lopuksi käyttäjä tallentaa muutokset tai peruuttaa ne (4).
+
+#### Solmun solmukohtien katselu
+
+Solmun solmukohdista näytetään tienumero, tieosa, etäisyyslukema ja ennen/jälkeen-arvo (5). Solmukohtien tietoja ei voi muokata. 
+
+Solmukohtatietorivin alussa on valintalaatikko solmukohdan irrotusta varten (6). Laskennallisia solmukohtia ei voi irrottaa, ja niiden riveiltä valintalaatikko puuttuu. 
+
+![Solmun solmukohdat](k63.jpg)
+
+_Kuva 9.5: Solmun solmukohdat._ 
+
+#### Solmun liittymien katselu ja liittymänumeron muokkaus
+
+Liittymista näytetään liittymänumero, tienumero, ajorata, tieosa, etäisyyslukema ja ennen/jälkeen-arvo (7). Liittymät näytetään numerojärjestyksessä (8), liittymäkohdat alekkain tieosoitejärjestyksessä.
+
+Käyttäjä voi muokata liittymänumeroa kirjoittamalla uuden liittymänumeron vanhan numeron tilalle (9). Solmulla ei voi olla useita samalla numerolla olevia liittymiä. Viite estää tällaisen tallennuksen. 
+
+![Solmun liittymät](k64.jpg)
+
+_Kuva 9.6: Solmun liittymät._ 
+
+#### Solmun ja liittymien irrotus solmusta
+
+Irrotettava solmukohta ja/tai liittymä valitaan klikkaamalla rivin alussa olevaa valintaruutua. Käyttäjä voi perua valintansa klikkaamalla valintaruutua uudestaan. 
+
+![Varmistus valinnan perumisesta](k65.jpg)
+
+_Kuva 9.7: Varmistus valinnan perumisesta_ 
+
+![Solmukohtien ja liittymien irrotus](k66.jpg)
+
+_Kuva 9.8: Solmukohtien ja liittymien irrotus_ 
+
+Viite valitsee automaattisesti kaikki samassa kohdassa sijaitsevat solmukohdat ja liittymät irrotettaviksi. Käyttäjää pyydetään vahvistamaan irrotus (10).  
+
+![Tilanne solmukohdan ja liittymien irrotuksen jälkeen](k67.jpg)
+
+_Kuva 9.9: Tilanne solmukohdan ja liittymien irrotuksen jälkeen_ 
+
+Kun käyttäjä on valinnut irrotettavat liittymät ja solmut, ko. solmukohdat/liittymät muuttuvat aihioiksi (11) kartalla ja liittymänumero poistuu (12) formilla.
+
+Nykyisen solmun muutokset tallennetaan Tallenna-painikeella tai peruutetaan Peruuta-painikkeella.
+
+9.6 Aihioiden liittäminen solmuun
+--------------------------
+
+#### Aihioiden liittäminen uuteen solmuun
+
+Uusi solmu luodaan aihioiden käsittelyn yhteydessä. Käyttäjä valitsee liittymä- tai solmukohta-aihion joko kartalta (1) tai aihiolistalta ja klikkaa “Luo uusi solmu, johon haluat liittää aihiot” -painiketta (2). Hiiren kursori muuttuu nuolesta ristiksi, jolla klikkaamalla asetetaan solmun sijainti kartalla (3).  Sijaintia voi muokata hiirellä vetämällä.
+
+![Aihion liittäminen uuteen solmuun](k68.jpg)
+
+_Kuva 9.10: Aihion liittäminen uuteen solmuun_ 
+
+Tämän jälkeen formille avautuu solmun tiedot. Käyttäjä antaa solmulle nimen, solmutyypin sekä alkupäivämäärän (4). Liittymäaihiolle käyttäjä antaa liittymänumeron (5). Tallenna-painike (6) aktivoituu, kun kaikki pakolliset tiedot on annettu. Tallennuksen jälkeen Viite luo uuden solmun ja formi palautuu Solmut ja liittymät -näytön alkutilaan.
+
+#### Aihioiden liittäminen nykyiseen solmuun
+
+Aihion (7) valinnan jälkeen käyttäjä voi liittää aihion nykyiseen solmuun  “Valitse kartalta solmu, johon haluat liittää aihiot” -painikkeella (8).
+
+
+![Aihion liittäminen nykyiseen solmuun](k69.jpg)
+
+_Kuva 9.11: Aihion liittäminen nykyiseen solmuun_ 
+
+Painikkeen painamisen jälkeen käyttäjä valitsee kartalta solmun (9) ja klikkaa sitä hiirellä. Solmun tiedot avautuvat formille. Aihioiden tieosoitteet näytetään formilla keltaisina riveinä.
+
+Käyttäjä antaa liittymäaihiolle liittymänumeron (10). Tarvittaessa käyttäjä voi muokata solmun nimeä ja solmutyyppiä (11).   Jos aihion solmutyyppi muuttuu liittämisen jälkeen, solmun alkupäivämäärä on muokattavissa.
+
+Tallenna-painike aktivoituu, kun kaikki pakolliset tiedot on annettu. Tallennuksen jälkeen formi palautuu Solmut ja liittymät -näytön alkutilaan. 
+
+9.7 Solmun sijainnin muokkaaminen
+--------------------------
+
+Siirrettävä solmu valitaan Solmun valinta -työkalulla. Käyttäjä vetää solmun haluamaansa paikkaan hiirellä. Solmua voi kerralla siirtää enintään 200 metriä.  Solmun saa siirrettyä yli 200 metrin päähän tekemällä sille useamman siirron. Solmun koordinaatit näkyvät formilla, josta sijainnin voi tarkistaa solmua siirrettäessä. Kun solmu on halutulla paikalla, tiedot tallennetaan.  
