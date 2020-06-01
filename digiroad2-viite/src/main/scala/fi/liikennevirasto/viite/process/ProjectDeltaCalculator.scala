@@ -285,16 +285,17 @@ object ProjectDeltaCalculator {
         src.zip(target)
     }
 
-    //adjusted the end of sources
+    //  adjusted the end of sources
     val adjustedEndSourceSections = sections.map { case (src, target) =>
-      val possibleExistingSameEndAddrMValue = sections.find(s => s._1.roadNumber == src.roadNumber && s._1.roadPartNumberStart == src.roadPartNumberStart && s._2.endMAddr == target.endMAddr
-      && s._1.track != src.track)
+      val possibleExistingSameEndAddrMValue = sections.find {
+        case (_, t) => t.roadNumber == target.roadNumber && t.roadPartNumberStart == target.roadPartNumberStart && t.endMAddr == target.endMAddr && t.track == Track.switch(target.track)
+      }
       if (possibleExistingSameEndAddrMValue.nonEmpty) {
-        val warningMessage = if (Math.abs(src.endMAddr - possibleExistingSameEndAddrMValue.head._1.endMAddr) > viite.MaxDistanceBetweenTracks)
+        val warningMessage = if (Math.abs(target.endMAddr - possibleExistingSameEndAddrMValue.head._2.endMAddr) > viite.MaxDistanceBetweenTracks)
           Some(viite.MaxDistanceBetweenTracksWarningMessage)
         else
           None
-      ((src.copy(endMAddr = adjustAddressValues(src.endMAddr + possibleExistingSameEndAddrMValue.head._1.endMAddr, src.endMAddr, src.track)), target), warningMessage)
+        ((src.copy(endMAddr = adjustAddressValues(src.endMAddr + possibleExistingSameEndAddrMValue.head._1.endMAddr, src.endMAddr, src.track)), target), warningMessage)
       } else {
         ((src, target), None)
       }
