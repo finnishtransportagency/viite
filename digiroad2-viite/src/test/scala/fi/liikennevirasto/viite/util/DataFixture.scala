@@ -88,9 +88,7 @@ object DataFixture {
   }
 
   def importRoadNames(): Unit = {
-    SqlScriptRunner.runViiteScripts(List(
-      "roadnames.sql"
-    ))
+    dataImporter.importRoadNames()
   }
 
   def importRoadAddressChangeTestData(): Unit = {

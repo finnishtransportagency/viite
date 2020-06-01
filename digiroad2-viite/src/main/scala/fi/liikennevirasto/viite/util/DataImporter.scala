@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.SequenceResetterDAO
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import fi.liikennevirasto.digiroad2.util.{SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite._
@@ -141,7 +141,7 @@ class DataImporter {
     }
   }
 
-  private def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
+  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
                             importOptions: ImportOptions): Unit = {
 
     withDynTransaction {
@@ -190,6 +190,12 @@ class DataImporter {
       enableRoadwayTriggers
       roadwayResetter()
     }
+  }
+
+  def importRoadNames(): Unit = {
+    SqlScriptRunner.runViiteScripts(List(
+      "roadnames.sql"
+    ))
   }
 
   def importNodesAndJunctions(): Unit = {
