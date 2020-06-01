@@ -895,14 +895,14 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0, 0, 5, 1, RoadType.PublicRoad, Track.Combined, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad0, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), 
         Seq(Point(20.0, 10.0), Point(28, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
-      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.PublicRoad, Track.Combined, Discontinuous,
+      val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.PublicRoad, Track.Combined, MinorDiscontinuity,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad1, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), 
         Seq(Point(28, 15), Point(41, 18)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.PublicRoad, Track.Combined, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), 
         Seq(Point(42, 19), Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.PublicRoad, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), 
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), idRoad3, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None),
         Seq(Point(103.0, 15.0),Point(75, 29.2)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
       val ordered = ProjectSectionCalculator.assignMValues(list)
