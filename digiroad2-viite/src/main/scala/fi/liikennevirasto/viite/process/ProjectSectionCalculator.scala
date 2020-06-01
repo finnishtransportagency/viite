@@ -41,7 +41,7 @@ object ProjectSectionCalculator {
   }
 
   def assignTerminatedMValues(terminated: Seq[ProjectLink], nonTerminatedLinks: Seq[ProjectLink]) : Seq[ProjectLink] = {
-    logger.info(s"Starting MValue assignment for ${terminated.size} links")
+    logger.info(s"Starting MValue assignment for ${terminated.size} terminated links")
     try {
 
       val allProjectLinks = nonTerminatedLinks.filter(_.status != LinkStatus.New) ++ terminated
