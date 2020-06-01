@@ -163,10 +163,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val groupedReferenceLinks: ListMap[Long, Seq[ProjectLink]] = ListMap(referenceLinks.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
         val referenceLength: Double = groupedReferenceLinks.values.flatten.map(l => l.endMValue - l.startMValue).sum
         val otherLength: Double = otherLinks.map(l => l.endMValue - l.startMValue).sum
-        val resetNewLinksIfNeed = if (otherLinks.exists(_.connectedLinkId.nonEmpty)) otherLinks else otherLinks.map(_.copy(roadwayNumber = NewIdValue))
+        val resetLinksIfNeed = if (otherLinks.exists(_.connectedLinkId.nonEmpty)) otherLinks else otherLinks.map(_.copy(roadwayNumber = NewIdValue))
 
         val oppositeTrackRoadwayNumbers =
-          if (groupedReferenceLinks.size == resetNewLinksIfNeed.filterNot(_.roadwayNumber == NewIdValue).map(_.roadwayNumber).distinct.size)
+          if (groupedReferenceLinks.size == resetLinksIfNeed.filterNot(_.roadwayNumber == NewIdValue).map(_.roadwayNumber).distinct.size)
             otherLinks
           else
             splitLinksIfNeed(groupedReferenceLinks, Seq(), otherLinks.map(_.copy(roadwayNumber = NewIdValue)), Seq(), referenceLength, otherLength, groupedReferenceLinks.size)
