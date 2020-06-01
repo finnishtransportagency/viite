@@ -40,7 +40,7 @@ Jos kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, ei k
 1.1 Mistä saada opastusta
 --------------------------
 
-Viite-sovelluksen käytössä avustaa Janne Grekula, janne.grekula@cgi.com.
+Viite-sovelluksen käytössä avustaa Janne Grekula, viite.kehitys@vayla.fi.
 
 #### Ongelmatilanteet
 
@@ -48,7 +48,7 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oike
 
 - Lataa sivu uudelleen näppäimistön F5-painikkeella
 - Tarkista, että selaimestasi on käytössä ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
-- Jos edellä olevat eivät korjaa ongelmaa, ota yhteyttä janne.grekula@cgi.com
+- Jos edellä olevat eivät korjaa ongelmaa, ota yhteyttä viite.kehitys@vayla.fi
 
 Tämä ohje käsittelee pääasiassa vain Viite-sovelluksen käyttöä, ei niinkään tieosoitejärjestelmää. Tarkemmat tiedot tieosoitejärjestelmästä löydät täältä: https://vayla.fi/documents/20473/143621/tieosoitejärjestelmä.pdf.
 
@@ -732,7 +732,9 @@ Viite valitsee automaattisesti kaikki samassa kohdassa sijaitsevat solmukohdat j
 
 _Kuva 9.9: Tilanne solmukohdan ja liittymien irrotuksen jälkeen_ 
 
-Muutoksen tallennuksen jälkeen irrotetut solmukohdat/liittymät muuttuvat aihioiksi (11) ja liittymänumero poistuu (12).
+Kun käyttäjä on valinnut irrotettavat liittymät ja solmut, ko. solmukohdat/liittymät muuttuvat aihioiksi (11) kartalla ja liittymänumero poistuu (12) formilla.
+
+Nykyisen solmun muutokset tallennetaan Tallenna-painikeella tai peruutetaan Peruuta-painikkeella.
 
 9.6 Aihioiden liittäminen solmuun
 --------------------------
@@ -760,7 +762,7 @@ Painikkeen painamisen jälkeen käyttäjä valitsee kartalta solmun (9) ja klikk
 
 Käyttäjä antaa liittymäaihiolle liittymänumeron (10). Tarvittaessa käyttäjä voi muokata solmun nimeä ja solmutyyppiä (11).   Jos aihion solmutyyppi muuttuu liittämisen jälkeen, solmun alkupäivämäärä on muokattavissa.
 
-Tallenna-painike aktivoituu, kun kaikki pakolliset tiedot on annettu. Tallennuksen jälkeen formi palautuu Solmut ja liittymät -näytön alkutilaan.
+Tallenna-painike aktivoituu, kun kaikki pakolliset tiedot on annettu. Tallennuksen jälkeen formi palautuu Solmut ja liittymät -näytön alkutilaan. 
 
 9.7 Solmun sijainnin muokkaaminen
 --------------------------
