@@ -161,18 +161,24 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           }
 
         val groupedReferenceLinks: ListMap[Long, Seq[ProjectLink]] = ListMap(referenceLinks.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
-        val referencesLength: Double = groupedReferenceLinks.values.flatten.map(l => l.endMValue - l.startMValue).sum
-        val othersLength: Double = otherLinks.map(l => l.endMValue - l.startMValue).sum
-        val resetLinksIfNeed = if (otherLinks.exists(_.connectedLinkId.nonEmpty)) otherLinks else otherLinks.map(_.copy(roadwayNumber = NewIdValue))
+        val referenceLength: Double = groupedReferenceLinks.values.flatten.map(l => l.endMValue - l.startMValue).sum
+        val otherLength: Double = otherLinks.map(l => l.endMValue - l.startMValue).sum
+        val resetNewLinksIfNeed = if (otherLinks.exists(_.connectedLinkId.nonEmpty)) otherLinks else otherLinks.map(_.copy(roadwayNumber = NewIdValue))
 
-        val assignedNewLinks =
-          if (groupedReferenceLinks.size == resetLinksIfNeed.filterNot(_.roadwayNumber == NewIdValue).map(_.roadwayNumber).distinct.size)
+        val oppositeTrackRoadwayNumbers =
+          if (groupedReferenceLinks.size == resetNewLinksIfNeed.filterNot(_.roadwayNumber == NewIdValue).map(_.roadwayNumber).distinct.size)
             otherLinks
           else
-            splitLinksIfNeed(groupedReferenceLinks, Seq(), otherLinks.map(_.copy(roadwayNumber = NewIdValue)), Seq(), referencesLength, othersLength, groupedReferenceLinks.size)
+            splitLinksIfNeed(groupedReferenceLinks, Seq(), otherLinks.map(_.copy(roadwayNumber = NewIdValue)), Seq(), referenceLength, otherLength, groupedReferenceLinks.size)
 
-        val reassignedTransferRoadwayNumbers = continuousRoadwaySection(referenceLinks, Sequences.nextRoadwayNumber)._1
-        val (right, left) = if (assignedNewLinks.exists(_.track == Track.RightSide)) (assignedNewLinks, reassignedTransferRoadwayNumbers) else (reassignedTransferRoadwayNumbers, assignedNewLinks)
+        val referenceTrackRoadwayNumbers = continuousRoadwaySection(referenceLinks, Sequences.nextRoadwayNumber)._1
+
+        val (right, left) =
+          if (oppositeTrackRoadwayNumbers.exists(_.track == Track.RightSide))
+            (oppositeTrackRoadwayNumbers, referenceTrackRoadwayNumbers)
+          else
+            (referenceTrackRoadwayNumbers, oppositeTrackRoadwayNumbers)
+
         (right, left)
       }
 
@@ -264,7 +270,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
       def handleRoadwayNumbers(firstRight: Seq[ProjectLink], restRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink], restLeft: Seq[ProjectLink])
       : ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
-        if (firstRight.map(_.roadwayNumber).distinct.size == firstLeft.map(_.roadwayNumber).distinct.size) {
+        if (firstRight.map(_.roadwayNumber).distinct.size == firstLeft.map(_.roadwayNumber).distinct.size || (firstRight ++ firstLeft).exists(_.status == LinkStatus.NotHandled)) {
           val newRoadwayNumber1 = Sequences.nextRoadwayNumber
           val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
           (continuousRoadwaySection(rightLinks, newRoadwayNumber1), continuousRoadwaySection(leftLinks, newRoadwayNumber2))
