@@ -50,13 +50,22 @@ object JWTReader {
 
   def getUsername(jwtPayload: String, kid: String, tryCount: Integer = 0): String = {
     val key: String = AWSPublicKeyRetriever.getPublicKey(kid)
+
+    // {"custom:rooli":"int_kayttajat,Extranet_Kayttaja,arn:aws:iam::117531223221:role/ViiteAdmin\\,arn:aws:iam::117531223221:saml-provider/VaylaTestOAM","sub":"2b5a2b65-ca06-46e2-8a52-a5190b495d12","email_verified":"false","custom:uid":"K567997","email":"sami.kosonen@cgi.com","username":"vaylatestoam_sami.kosonen@cgi.com","exp":1591117019,"iss":"https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_oNzPsiXEJ"}
     val decoded = decodeToken(jwtPayload, key)
+
     if (decoded.isFailure && tryCount < 1) {
       AWSPublicKeyRetriever.refreshPublicKey(kid)
-      val jsonString = getUsername(jwtPayload, kid, tryCount = 1)
+      val username = getUsername(jwtPayload, kid, tryCount = 1)
+      username
+    } else if (decoded.isFailure) {
+      logger.error(s"Decoding AWS payload failed. Token: $jwtPayload, kid: $kid")
+      throw UnauthenticatedException()
+    } else {
+      val jsonString = decoded.get._2
       val json = JSON.parseFull(jsonString)
       val username: String = json match {
-        case Some(map: Map[String, String]) => map("user")
+        case Some(map: Map[String, String]) => map("custom:uid")
         case None => {
           logger.error(s"Parsing of username failed. JSON: $jsonString")
           throw UnauthenticatedException()
@@ -67,11 +76,6 @@ object JWTReader {
         }
       }
       username
-    } else if (decoded.isFailure) {
-      logger.error(s"Decoding AWS payload failed. Token: $jwtPayload, kid: $kid")
-      throw UnauthenticatedException()
-    } else {
-      decoded.get._2
     }
   }
 
@@ -138,7 +142,7 @@ object AWSPublicKeyRetriever {
         .replaceFirst("-----END PUBLIC KEY-----", "")
 
       // TODO Remove
-      logger.info(s"Public key:\n $content")
+      logger.info(s"Public key:\n $publicKey")
 
     } catch {
       case NonFatal(e) =>
