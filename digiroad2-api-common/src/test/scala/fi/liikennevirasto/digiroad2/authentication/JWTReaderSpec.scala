@@ -9,26 +9,26 @@ class JWTReaderSpec extends FunSuite with Matchers {
   val secretKey = "secretKeySecretKey"
 
   test("Test getUsername When empty Then is failure.") {
-    JWTReader.getUsername("", secretKey).isFailure should be(true)
+    JWTReader.decodeToken("", secretKey).isFailure should be(true)
   }
 
   test("Test getUsername When wrong secret key Then is failure.") {
     val token = Jwt.encode("""{"user":1}""", "anotherSecretKey", JwtAlgorithm.RS256)
     assertThrows[java.security.spec.InvalidKeySpecException] {
-      JWTReader.getUsername(token, secretKey).isFailure should be(true)
+      JWTReader.decodeToken(token, secretKey).isFailure should be(true)
     }
   }
 
   test("Test getUsername When wrong algorithm Then is failure.") {
     val token = Jwt.encode("""{"user":1}""", secretKey, JwtAlgorithm.RS384)
     assertThrows[java.lang.IllegalArgumentException] {
-      JWTReader.getUsername(token, secretKey).isFailure should be(true)
+      JWTReader.decodeToken(token, secretKey).isFailure should be(true)
     }
   }
 
   test("Test getUsername When token given Then return user.") {
     val token = Jwt.encode("""{"user":"test"}""", secretKey, JwtAlgorithm.RS256)
-    JWTReader.getUsername(token, secretKey) should be("""{"user":"test"}""")
+    JWTReader.decodeToken(token, secretKey) should be("""{"user":"test"}""")
   }
 
   test("Test getAccessToken When header given Then return access token") {
