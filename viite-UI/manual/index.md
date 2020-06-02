@@ -40,7 +40,7 @@ Jos kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, ei k
 1.1 Mistä saada opastusta
 --------------------------
 
-Viite-sovelluksen käytössä avustaa sovellustoimittaja, viite.kehitys@vayla.fi.
+Viite-sovelluksen käytössä avustaa sovellustoimittaja, mailto:viite.kehitys@vayla.fi.
 
 #### Ongelmatilanteet
 
@@ -48,7 +48,7 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oike
 
 - Lataa sivu uudelleen näppäimistön F5-painikkeella
 - Tarkista, että selaimestasi on käytössä ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
-- Jos edellä olevat eivät korjaa ongelmaa, ota yhteyttä viite.kehitys@vayla.fi
+- Jos edellä olevat eivät korjaa ongelmaa, ota yhteyttä mailto:viite.kehitys@vayla.fi
 
 Tämä ohje käsittelee pääasiassa vain Viite-sovelluksen käyttöä, ei niinkään tieosoitejärjestelmää. Tarkemmat tiedot tieosoitejärjestelmästä löydät täältä: https://vayla.fi/documents/20473/143621/tieosoitejärjestelmä.pdf.
 
@@ -70,7 +70,7 @@ _Kuva 2.1: Tieosoitesegmenttejä (1) ja muita tielinkkejä (2) Viitteen karttaik
 
 Tieosoitesegmentit piirretään Viite-sovelluksessa kartalle erilaisin värein (ks. luku 5). Muut tielinkit, jotka eivät kuulu tieosoiteverkkoon, piirretään kartalle harmaalla. Näitä ovat esimerkiksi tieosoitteettomat kuntien omistamat tiet, ajopolut tai ajotiet.
 
-Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle, maasto@maanmittauslaitos.fi. Mukaan liitetään selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
+Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle, mailto:maasto@maanmittauslaitos.fi. Mukaan liitetään selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
 
 # 3. Automatiikka Viite-sovelluksessa
 --------------------------
