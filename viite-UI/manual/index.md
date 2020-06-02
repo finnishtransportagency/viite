@@ -40,7 +40,7 @@ Jos kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, ei k
 1.1 Mistä saada opastusta
 --------------------------
 
-Viite-sovelluksen käytössä avustaa Janne Grekula, viite.kehitys@vayla.fi.
+Viite-sovelluksen käytössä avustaa sovellustoimittaja, <viite.kehitys@vayla.fi>.
 
 #### Ongelmatilanteet
 
@@ -48,7 +48,7 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eivät lataudu oike
 
 - Lataa sivu uudelleen näppäimistön F5-painikkeella
 - Tarkista, että selaimestasi on käytössä ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
-- Jos edellä olevat eivät korjaa ongelmaa, ota yhteyttä viite.kehitys@vayla.fi
+- Jos edellä olevat eivät korjaa ongelmaa, ota yhteyttä <viite.kehitys@vayla.fi>
 
 Tämä ohje käsittelee pääasiassa vain Viite-sovelluksen käyttöä, ei niinkään tieosoitejärjestelmää. Tarkemmat tiedot tieosoitejärjestelmästä löydät täältä: https://vayla.fi/documents/20473/143621/tieosoitejärjestelmä.pdf.
 
@@ -70,7 +70,7 @@ _Kuva 2.1: Tieosoitesegmenttejä (1) ja muita tielinkkejä (2) Viitteen karttaik
 
 Tieosoitesegmentit piirretään Viite-sovelluksessa kartalle erilaisin värein (ks. luku 5). Muut tielinkit, jotka eivät kuulu tieosoiteverkkoon, piirretään kartalle harmaalla. Näitä ovat esimerkiksi tieosoitteettomat kuntien omistamat tiet, ajopolut tai ajotiet.
 
-Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle, maasto@maanmittauslaitos.fi. Mukaan liitetään selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
+Palautteet geometrian/tielinkkien virheistä voi laittaa Maanmittauslaitokselle, <maasto@maanmittauslaitos.fi>. Mukaan liitetään selvitys virheestä ja sen sijainnista (esim. kuvakaappaus).
 
 # 3. Automatiikka Viite-sovelluksessa
 --------------------------
@@ -708,7 +708,7 @@ _Kuva 9.5: Solmun solmukohdat._
 
 Liittymista näytetään liittymänumero, tienumero, ajorata, tieosa, etäisyyslukema ja ennen/jälkeen-arvo (7). Liittymät näytetään numerojärjestyksessä (8), liittymäkohdat alekkain tieosoitejärjestyksessä.
 
-Käyttäjä voi muokata liittymänumeroa kirjoittamalla uuden liittymänumeron vanhan numeron tilalle (9). Solmulla ei voi olla useita samalla numerolla olevia liittymiä. Viite estää tällaisen tallennuksen. 
+Käyttäjä voi muokata liittymänumeroa kirjoittamalla uuden liittymänumeron vanhan numeron tilalle (9). Solmulla ei voi olla useita samalla numerolla olevia liittymiä. Viite estää tällaisen tallennuksen. Tallennus on estetty myös silloin, jos liittymänumero(ita) puuttuu.
 
 ![Solmun liittymät](k64.jpg)
 
@@ -760,11 +760,11 @@ _Kuva 9.11: Aihion liittäminen nykyiseen solmuun_
 
 Painikkeen painamisen jälkeen käyttäjä valitsee kartalta solmun (9) ja klikkaa sitä hiirellä. Solmun tiedot avautuvat formille. Aihioiden tieosoitteet näytetään formilla keltaisina riveinä.
 
-Käyttäjä antaa liittymäaihiolle liittymänumeron (10). Tarvittaessa käyttäjä voi muokata solmun nimeä ja solmutyyppiä (11).   Jos aihion solmutyyppi muuttuu liittämisen jälkeen, solmun alkupäivämäärä on muokattavissa.
+Käyttäjä antaa liittymäaihiolle liittymänumeron (10). Tarvittaessa käyttäjä voi muokata solmun nimeä ja solmutyyppiä (11). Jos aihion liittämisen jälkeen käyttäjä muuttaa solmutyyppiä, tulee käyttäjän asettaa solmulle uusi alkupäivämäärä.
 
 Tallenna-painike aktivoituu, kun kaikki pakolliset tiedot on annettu. Tallennuksen jälkeen formi palautuu Solmut ja liittymät -näytön alkutilaan. 
 
 9.7 Solmun sijainnin muokkaaminen
 --------------------------
 
-Siirrettävä solmu valitaan Solmun valinta -työkalulla. Käyttäjä vetää solmun haluamaansa paikkaan hiirellä. Solmua voi kerralla siirtää enintään 200 metriä.  Solmun saa siirrettyä yli 200 metrin päähän tekemällä sille useamman siirron. Solmun koordinaatit näkyvät formilla, josta sijainnin voi tarkistaa solmua siirrettäessä. Kun solmu on halutulla paikalla, tiedot tallennetaan.  
+Siirrettävä solmu valitaan Solmun valinta -työkalulla. Käyttäjä vetää solmun haluamaansa paikkaan hiirellä. Solmua voi kerralla siirtää enintään 200 metriä.  Solmun saa siirrettyä yli 200 metrin päähän tekemällä sille useamman siirron. Solmun koordinaatit näkyvät formilla, josta sijainnin voi tarkistaa solmua siirrettäessä. Kun solmu on halutulla paikalla, käyttäjä tallentaa tiedot tallenna-painikkeesta.  
