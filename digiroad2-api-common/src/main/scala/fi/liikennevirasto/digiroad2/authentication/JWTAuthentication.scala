@@ -6,13 +6,15 @@ import java.util.Base64
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.viite.ViiteTierekisteriClient.logger
 import javax.servlet.http.HttpServletRequest
+import org.json4s
+import org.json4s.jackson.JsonMethods._
 import org.slf4j.LoggerFactory
-
-import scala.util.parsing.json.JSON
 
 object JWTReader {
 
   private val logger = LoggerFactory.getLogger(getClass)
+
+  implicit lazy val formats = org.json4s.DefaultFormats
 
   def getUsername(jwt: String): String = {
     val jwtParts = jwt.split('.')
@@ -23,17 +25,8 @@ object JWTReader {
   }
 
   def parseUsernameFromJWTPayloadJSONString(jsonString: String): String = {
-    val json = JSON.parseFull(jsonString)
-    val username: String = json match {
-      case Some(map: Map[String, String]) => map("custom:uid")
-      case None =>
-        logger.error(s"Parsing of username failed. JSON: $jsonString")
-        throw UnauthenticatedException()
-      case _ =>
-        logger.error(s"Parsing of username failed. Unknown data structure. JSON: $jsonString")
-        throw UnauthenticatedException()
-    }
-    username
+    val json: json4s.JValue = parse(jsonString)
+    (json \ "custom:uid").extractOrElse("")
   }
 
 }
@@ -51,8 +44,8 @@ trait JWTAuthentication extends Authentication {
 
     val username = JWTReader.getUsername(tokenHeaderValue)
 
-    if (username == null || username.isEmpty) {
-      jwtLogger.warn(s"Authentication failed. Username was empty.")
+    if (username.isEmpty) {
+      jwtLogger.warn(s"Authentication failed. Missing username in JWT payload.")
       throw UnauthenticatedException()
     }
     jwtLogger.info(s"Authenticated Väylä user: $username. Checking user privileges in Viite.")
