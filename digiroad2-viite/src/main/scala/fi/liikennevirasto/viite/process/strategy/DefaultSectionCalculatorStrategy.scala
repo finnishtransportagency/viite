@@ -464,7 +464,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           }
         } else if (chainEndPoints.forall(_._2.endAddrMValue != 0) && oldFirst.isDefined) {
           val otherEndPoint = chainEndPoints.filterNot(_._2.id == oldFirst.get.id)
-          if(otherEndPoint.nonEmpty && otherEndPoint.head._2.endPoint.connected(oldFirst.get.startingPoint)){
+          if (otherEndPoint.nonEmpty && otherEndPoint.head._2.endPoint.connected(oldFirst.get.startingPoint)) {
             (otherEndPoint.head._1, otherEndPoint.head._2)
           } else {
             (oldFirst.get.getEndPoints._1, oldFirst.get)
