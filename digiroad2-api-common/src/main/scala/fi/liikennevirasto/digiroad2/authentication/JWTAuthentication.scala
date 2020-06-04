@@ -7,10 +7,10 @@ import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.viite.ViiteTierekisteriClient.logger
 import javax.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
-import pdi.jwt.{Jwt, JwtAlgorithm}
 
-import scala.util.Try
 import scala.util.parsing.json.JSON
+
+trait StringMap extends Map[String, String]
 
 object JWTReader {
 
@@ -24,27 +24,18 @@ object JWTReader {
     parseUsernameFromJWTPayloadJSONString(jwtPayload)
   }
 
-  def parseUsernameFromJWTPayloadJSONString(jsonString: String) = {
+  def parseUsernameFromJWTPayloadJSONString(jsonString: String): String = {
     val json = JSON.parseFull(jsonString)
     val username: String = json match {
-      case Some(map: Map[String, String]) => map("custom:uid")
-      case None => {
+      case Some(map: StringMap) => map("custom:uid")
+      case None =>
         logger.error(s"Parsing of username failed. JSON: $jsonString")
         throw UnauthenticatedException()
-      }
-      case _ => {
+      case _ =>
         logger.error(s"Parsing of username failed. Unknown data structure. JSON: $jsonString")
         throw UnauthenticatedException()
-      }
     }
     username
-  }
-
-  def decodeToken(token: String, key: String): Try[(String, String, String)] = {
-
-    // Assuming that the JWT Algorithm will always be the same
-    Jwt.decodeRawAll(token, key, Seq(JwtAlgorithm.RS256))
-
   }
 
 }
