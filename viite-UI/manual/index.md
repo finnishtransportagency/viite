@@ -594,7 +594,7 @@ Kirjoitusvirheiden välttämiseksi Viitteessä on päivämäärärajaus. Nimen a
 9.1.1 Tieosoitemuutosprojekti
 --------------------------
 
-Tieosoitemuutoksista Viite tunnistaa uudet tien tai tieosan alku-tai loppupisteet sekä tietyypin vaihtumiskohdat, joihin se luo solmukohta-aihiot. Tieosoitemuutoksista Viite tunnistaa uudet liittymät, joihin Viite luo liittymäaihiot liittymäkohtineen. 
+Tieosoitemuutoksista Viite tunnistaa uudet tien tai tieosan alku- tai loppupisteet sekä tietyypin vaihtumiskohdat, joihin se luo solmukohta-aihiot. Tieosoitemuutoksista Viite tunnistaa uudet liittymät, joihin Viite luo liittymäaihiot liittymäkohtineen. 
 
 Viite tunnistaa tieosoitemuutoksessa tarpeettomaksi jäävät solmut, solmukohdat ja liittymät, jolloin se päättää ne. 
 
@@ -767,4 +767,4 @@ Tallenna-painike aktivoituu, kun kaikki pakolliset tiedot on annettu. Tallennuks
 9.7 Solmun sijainnin muokkaaminen
 --------------------------
 
-Siirrettävä solmu valitaan Solmun valinta -työkalulla. Käyttäjä vetää solmun haluamaansa paikkaan hiirellä. Solmua voi kerralla siirtää enintään 200 metriä.  Solmun saa siirrettyä yli 200 metrin päähän tekemällä sille useamman siirron. Solmun koordinaatit näkyvät formilla, josta sijainnin voi tarkistaa solmua siirrettäessä. Kun solmu on halutulla paikalla, käyttäjä tallentaa tiedot tallenna-painikkeesta.  
+Siirrettävä solmu valitaan Solmun valinta -työkalulla. Käyttäjä vetää solmun haluamaansa paikkaan hiirellä. Solmua voi kerralla siirtää enintään 200 metriä.  Solmun saa siirrettyä yli 200 metrin päähän tekemällä sille useamman siirron. Solmun koordinaatit näkyvät formilla, josta sijainnin voi tarkistaa solmua siirrettäessä. Kun solmu on halutulla paikalla, käyttäjä tallentaa tiedot Tallenna-painikkeesta.  
