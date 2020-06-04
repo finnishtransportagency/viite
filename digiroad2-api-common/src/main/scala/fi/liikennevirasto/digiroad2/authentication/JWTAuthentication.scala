@@ -10,8 +10,6 @@ import org.slf4j.LoggerFactory
 
 import scala.util.parsing.json.JSON
 
-trait StringMap extends Map[String, String]
-
 object JWTReader {
 
   private val logger = LoggerFactory.getLogger(getClass)
@@ -27,7 +25,7 @@ object JWTReader {
   def parseUsernameFromJWTPayloadJSONString(jsonString: String): String = {
     val json = JSON.parseFull(jsonString)
     val username: String = json match {
-      case Some(map: StringMap) => map("custom:uid")
+      case Some(map: Map[String, String]) => map("custom:uid")
       case None =>
         logger.error(s"Parsing of username failed. JSON: $jsonString")
         throw UnauthenticatedException()
