@@ -5,8 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide}
+import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.NodePointType.RoadNodePoint
@@ -404,13 +403,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                 else
                   roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
 
-                val tail = if (roadsInLastPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
-                  roadsInLastPoint
-                else if (roadsInLastPoint.exists(fl => RoadAddressFilters.halfContinuousHalfDiscontinuous(projectLink)(fl)))
-                  roadsInLastPoint
-                else
-                  roadsInLastPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
-
+                val tail = if (roadsInLastPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)
+                      || RoadAddressFilters.halfContinuousHalfDiscontinuous(projectLink)(fl))
+                      || roadsInLastPoint.exists(fl => RoadAddressFilters.discontinuousPartIntersection(projectLink)(fl)))
+                      roadsInLastPoint
+                    else
+                      roadsInLastPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
                 (head, tail)
             }
           }
