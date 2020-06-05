@@ -1919,6 +1919,36 @@ Left1 ---<----  ^ Right1
     }
   }
 
+  test("Test defaultSectionCalculatorStrategy.findStartingPoint() When transferring last link of part 1 to part 2, that is before the old first part 2 link Then the starting point should be the one from new link of part2 that is being transferred and the direction of both parts should not change") {
+    runWithRollback {
+      val geomNotHandledPart1 = Seq(Point(0.0, 0.0), Point(5.0, 0.0))
+      val geomTransferNewFirstLinkPart2 = Seq(Point(5.0, 0.0), Point(10.0, 0.0))
+      val geomTransferOldFirstLinkPart2 = Seq(Point(10.0, 0.0), Point(15.0, 0.0))
+      val plId = Sequences.nextProjectLinkId
+
+
+      val projectLinkNotHandledPart1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
+        None, 12344L, 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        geomNotHandledPart1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledPart1), 0L, 0L, 0L, reversed = false,
+        None, 86400L)
+      val projectLinkTransferNewFirstLinkPart2 = ProjectLink(plId + 1, 9999L, 2L, Track.Combined, Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
+        None, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        geomTransferNewFirstLinkPart2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferNewFirstLinkPart2), 0L, 0, 0, reversed = false,
+        None, 86400L)
+      val projectLinkTransferOldFirstLinkPart2 = ProjectLink(plId + 2, 9999L, 2L, Track.Combined, Discontinuity.EndOfRoad, 0L, 5L, 0L, 6L, None, None,
+        None, 12346L, 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        geomTransferOldFirstLinkPart2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferOldFirstLinkPart2), 0L, 0, 0, reversed = false,
+        None, 86400L)
+
+      val transferProjectLinks = Seq(projectLinkTransferNewFirstLinkPart2, projectLinkTransferOldFirstLinkPart2)
+      val newProjectLinks = Seq()
+      val otherPartLinks = Seq()
+
+      val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(newProjectLinks, transferProjectLinks, otherPartLinks, Seq.empty[UserDefinedCalibrationPoint])
+      startingPointsForCalculations should be((projectLinkTransferNewFirstLinkPart2.startingPoint, projectLinkTransferNewFirstLinkPart2.startingPoint))
+    }
+  }
+
   /*
                      |   <- New #2 (One more link added in the beginning)
                      |   <- New #1 (Against digitization)
