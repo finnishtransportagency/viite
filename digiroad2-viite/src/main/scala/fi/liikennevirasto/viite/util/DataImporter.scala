@@ -193,9 +193,7 @@ class DataImporter {
   }
 
   def importRoadNames(): Unit = {
-    SqlScriptRunner.runViiteScripts(List(
-      "roadnames.sql"
-    ))
+    SqlScriptRunner.runScriptInClasspath("/roadnames.sql")
   }
 
   def importNodesAndJunctions(): Unit = {
