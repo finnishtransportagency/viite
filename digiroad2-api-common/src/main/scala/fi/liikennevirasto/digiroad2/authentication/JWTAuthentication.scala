@@ -52,17 +52,11 @@ trait JWTAuthentication extends Authentication {
 
     val user = userProvider.getUser(username).getOrElse(viewerUser)
     if (user != null) {
-      jwtLogger.info(s"User ${user.username} has role '${
-        if (user.isViiteUser()) {
-          "user"
-        } else if (user.isOperator()) {
-          "operator"
-        } else if (user.isViewer()) {
-          "viewer"
-        } else {
-          "unknown"
-        }
-      }' in Viite.")
+      jwtLogger.info(s"User ${user.username} has roles: (${
+        (if (user.isViiteUser()) "user, " else "-, ") +
+          (if (user.isOperator()) "operator, " else "-, ") +
+          (if (user.isViewer()) "viewer" else "-")
+      }) in Viite.")
     } else {
       logger.warn("User is null.")
     }
