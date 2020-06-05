@@ -1921,7 +1921,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val junctions = junctionDAO.fetchTemplatesByRoadwayNumbers(templateRoadwayNumbers)
       junctions.size should be(1)
 
-      /*  Preparing Tranfer part 3 and new part 4 data
+      /*  Preparing Transfer part 3 and new part 4 data
 
                   |
                   C3
