@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import slick.jdbc.{StaticQuery => Q}
 
 import scala.io.{Codec, Source}
-import slick.driver.JdbcDriver.backend.Database
-import slick.jdbc.{StaticQuery => Q}
-import Database.dynamicSession
 
 object SqlScriptRunner {
   def runScripts(filenames: Seq[String]) {
