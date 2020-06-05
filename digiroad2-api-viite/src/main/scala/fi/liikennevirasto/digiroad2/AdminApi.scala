@@ -9,7 +9,7 @@ import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
-import org.scalatra.{InternalServerError, Ok, ScalatraBase}
+import org.scalatra.{InternalServerError, Ok, ScalatraBase, ScalatraServlet}
 import org.slf4j.{Logger, LoggerFactory}
 
 trait AdminAuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuthSupport[BasicAuthUser] {
@@ -38,8 +38,6 @@ trait AdminAuthenticationSupport extends ScentrySupport[BasicAuthUser] with Basi
   }
 }
 
-import org.scalatra.ScalatraServlet
-
 class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) extends ScalatraServlet
   with JacksonJsonSupport with AdminAuthenticationSupport with SwaggerSupport {
 
@@ -65,6 +63,20 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         case e: Exception => {
           logger.error("Importing road addresses failed.", e)
           InternalServerError(s"Importing road addresses failed: ${e.getMessage}")
+        }
+      }
+    }
+  }
+
+  get("/import_road_names") {
+    time(logger, "GET request for /import_road_names") {
+      try {
+        dataImporter.importRoadNames()
+        Ok("Importing road names successful.\n")
+      } catch {
+        case e: Exception => {
+          logger.error("Importing road names failed.", e)
+          InternalServerError(s"Importing road names failed: ${e.getMessage}")
         }
       }
     }
