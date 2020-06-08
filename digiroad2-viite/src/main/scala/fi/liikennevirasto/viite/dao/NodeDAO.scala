@@ -23,7 +23,7 @@ sealed trait NodeType {
 
 object NodeType {
   val values: Set[NodeType] = Set(NormalIntersection, Roundabout, YIntersection, Interchange, RoadBoundary, ELYBorder, MultitrackIntersection,
-    DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnknownNodeType)
+    AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnknownNodeType)
 
   def apply(intValue: Int): NodeType = {
     values.find(_.value == intValue).getOrElse(UnknownNodeType)
@@ -69,12 +69,6 @@ object NodeType {
     def value = 10
 
     def displayValue = "Moniajoratainen liittymä"
-  }
-
-  case object DropIntersection extends NodeType {
-    def value = 11
-
-    def displayValue = "Pisaraliittymä"
   }
 
   case object AccessRoad extends NodeType {
