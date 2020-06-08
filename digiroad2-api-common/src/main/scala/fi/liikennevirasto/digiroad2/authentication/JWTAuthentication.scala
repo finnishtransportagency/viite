@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
-import fi.liikennevirasto.viite.ViiteTierekisteriClient.logger
 import javax.servlet.http.HttpServletRequest
 import org.json4s
 import org.json4s.jackson.JsonMethods._
@@ -48,18 +47,13 @@ trait JWTAuthentication extends Authentication {
       jwtLogger.warn(s"Authentication failed. Missing username in JWT payload.")
       throw UnauthenticatedException()
     }
-    jwtLogger.info(s"Authenticated Väylä user: $username. Checking user privileges in Viite.")
 
     val user = userProvider.getUser(username).getOrElse(viewerUser)
-    if (user != null) {
-      jwtLogger.info(s"User ${user.username} has roles: (${
-        (if (user.isViiteUser()) "user, " else "-, ") +
-          (if (user.isOperator()) "operator, " else "-, ") +
-          (if (user.isViewer()) "viewer" else "-")
-      }) in Viite.")
-    } else {
-      logger.warn("User is null.")
-    }
+    jwtLogger.info(s"Authenticated user ${username}. Has roles: (${
+      (if (user.isViiteUser()) "user, " else "-, ") +
+        (if (user.isOperator()) "operator, " else "-, ") +
+        (if (user.isViewer()) "viewer" else "-")
+    }) in Viite.${if (user.isNotInViite()) " (User not added in Viite.)" else ""}")
     user
   }
 
