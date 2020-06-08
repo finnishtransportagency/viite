@@ -25,7 +25,7 @@
                 { "name": "vvhServiceHost", "value": "oag.vayla.fi" },
                 { "name": "vvhRestApiEndPoint", "value": "https://oag.vayla.fi/vvhdata/" },
                 { "name": "vvhRoadlink.frozen", "value": "true" },
-                { "name": "vkmUrl", "value": "http://172.17.200.24:8997" },
+                { "name": "vkmUrl", "value": "http://oag.liikennevirasto.fi" },
                 { "name": "tierekisteriViiteRestApiEndPoint", "value": "" },
                 { "name": "tierekisteri.enabled", "value": "false" },
                 { "name": "viite.importTimeStamp", "value": "1545091200000" },
