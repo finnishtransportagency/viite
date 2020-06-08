@@ -88,7 +88,7 @@
             "name": "viite",
             "healthCheck": {
                 "startPeriod": 15,
-                "command": [ "CMD-SHELL", "curl -f http://127.0.0.1:9080/viite/api/ping/ || exit 1" ]
+                "command": [ "CMD-SHELL", "curl -f http://127.0.0.1:9080/api/ping/ || exit 1" ]
             }
         }
     ],
