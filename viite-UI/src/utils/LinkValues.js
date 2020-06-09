@@ -192,7 +192,6 @@
         RoadBoundary:                   {value:7,   description:"Maantien/kadun raja"},
         ELYBorder:                      {value:8,   description:"ELY-raja"},
         MultiTrackIntersection:         {value:10,  description:"Moniajoratainen liittymä"},
-        DropIntersection:               {value:11,  description:"Pisaraliittymä"},
         AccessRoad:                     {value:12,  description:"Liityntätie"},
         EndOfRoad:                      {value:13,  description:"Tien loppu"},
         Bridge:                         {value:14,  description:"Silta"},

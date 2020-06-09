@@ -63,7 +63,6 @@
         [7, 'Maantien/kadun raja'],
         [8, 'ELY-raja'],
         [10, 'Moniajoratainen liittymä'],
-        [11,'Pisaraliittymä'],
         [12, 'Liityntätie'],
         [13,'Tien loppu'],
         [14,'Silta'],
