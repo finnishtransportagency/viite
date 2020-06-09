@@ -22,7 +22,7 @@ sealed trait NodeType {
 }
 
 object NodeType {
-  val values: Set[NodeType] = Set(NormalIntersection, Roundabout, YIntersection, Interchange, RoadBoundary, ELYBorder, MultitrackIntersection,
+  val values: Set[NodeType] = Set(NormalIntersection, Roundabout1, Roundabout, YIntersection, Interchange, InterchangeJunction, RoadBoundary, ELYBorder, SupportingPoint, MultitrackIntersection,
     DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnknownNodeType)
 
   def apply(intValue: Int): NodeType = {
@@ -35,11 +35,10 @@ object NodeType {
     def displayValue = "Normaali tasoliittymä"
   }
 
-  // Historical
-  case object Historical2 extends NodeType {
+  case object Roundabout1 extends NodeType {
     def value = 2
 
-    def displayValue = "Historiallinen solmutyyppi 2"
+    def displayValue = "Kiertoliittymä1"
   }
 
   case object Roundabout extends NodeType {
@@ -60,11 +59,10 @@ object NodeType {
     def displayValue = "Eritasoliittymä"
   }
 
-  // Historical
-  case object Historical6 extends NodeType {
+  case object InterchangeJunction extends NodeType {
     def value = 6
 
-    def displayValue = "Historiallinen solmutyyppi 6"
+    def displayValue = "Eritasoristeys"
   }
 
   case object RoadBoundary extends NodeType {
@@ -79,7 +77,6 @@ object NodeType {
     def displayValue = "ELY-raja"
   }
 
-  // Historical
   case object SupportingPoint extends NodeType {
     def value = 9
 
@@ -256,7 +253,7 @@ class NodeDAO extends BaseDAO {
   }
 
   def publish(id: Long, editor: String = "-"): Unit = {
-      sqlu"""
+    sqlu"""
         Update NODE Set PUBLISHED_TIME = SYSDATE, EDITOR = $editor Where ID = $id
       """.execute
   }
