@@ -196,6 +196,10 @@ class DataImporter {
     SqlScriptRunner.runScriptInClasspath("/roadnames.sql")
   }
 
+  def importMunicipalities(): Unit = {
+    SqlScriptRunner.runScriptInClasspath("/municipalities.sql")
+  }
+
   def importNodesAndJunctions(): Unit = {
     importNodesAndJunctions(Conversion.database())
   }

@@ -82,6 +82,20 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
     }
   }
 
+  get("/import_municipalities") {
+    time(logger, "GET request for /import_municipalities") {
+      try {
+        dataImporter.importMunicipalities()
+        Ok("Importing municipalities successful.\n")
+      } catch {
+        case e: Exception => {
+          logger.error("Importing municipalities failed.", e)
+          InternalServerError(s"Importing municipalities failed: ${e.getMessage}")
+        }
+      }
+    }
+  }
+
   get("/update_road_addresses_geometry") {
     time(logger, "GET request for /update_road_addresses_geometry") {
       try {
