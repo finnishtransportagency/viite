@@ -21,6 +21,10 @@ case class User(id: Long, username: String, configuration: Configuration) {
     configuration.roles(Role.Operator)
   }
 
+  def isNotInViite(): Boolean = {
+    id == 0
+  }
+
   def hasEarlyAccess(): Boolean = {
     configuration.roles(Role.Premium) || configuration.roles(Role.Operator)
   }
