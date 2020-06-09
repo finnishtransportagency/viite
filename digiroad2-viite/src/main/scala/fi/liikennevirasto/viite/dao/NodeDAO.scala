@@ -362,9 +362,9 @@ class NodeDAO extends BaseDAO {
          FROM NODE N
          CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(N.COORDINATES)) coords
          WHERE NODE_NUMBER IN (SELECT NODE_NUMBER FROM NODE NC WHERE
-         PUBLISHED_TIME >= to_timestamp('${new Timestamp(sinceDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
+         PUBLISHED_TIME IS NOT NULL AND PUBLISHED_TIME >= to_timestamp('${new Timestamp(sinceDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
          $untilString)
-         AND VALID_TO IS NULL AND PUBLISHED_TIME IS NOT NULL
+         AND VALID_TO IS NULL
        """
       queryList(query)
     }
