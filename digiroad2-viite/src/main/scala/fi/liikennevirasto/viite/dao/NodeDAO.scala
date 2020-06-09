@@ -22,7 +22,7 @@ sealed trait NodeType {
 }
 
 object NodeType {
-  val values: Set[NodeType] = Set(NormalIntersection, Roundabout1, Roundabout, YIntersection, Interchange, InterchangeJunction, RoadBoundary, ELYBorder, HelpPoint, MultitrackIntersection,
+  val values: Set[NodeType] = Set(NormalIntersection, Roundabout1, Roundabout, YIntersection, Interchange, InterchangeJunction, RoadBoundary, ELYBorder, SupportingPoint, MultitrackIntersection,
     DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnknownNodeType)
 
   def apply(intValue: Int): NodeType = {
@@ -77,7 +77,7 @@ object NodeType {
     def displayValue = "ELY-raja"
   }
 
-  case object HelpPoint extends NodeType {
+  case object SupportingPoint extends NodeType {
     def value = 9
 
     def displayValue = "Apupiste"
@@ -253,7 +253,7 @@ class NodeDAO extends BaseDAO {
   }
 
   def publish(id: Long, editor: String = "-"): Unit = {
-      sqlu"""
+    sqlu"""
         Update NODE Set PUBLISHED_TIME = SYSDATE, EDITOR = $editor Where ID = $id
       """.execute
   }
