@@ -35,6 +35,13 @@ object NodeType {
     def displayValue = "Normaali tasoliittymä"
   }
 
+  // Historical
+  case object Historical2 extends NodeType {
+    def value = 2
+
+    def displayValue = "Historiallinen solmutyyppi 2"
+  }
+
   case object Roundabout extends NodeType {
     def value = 3
 
@@ -53,6 +60,13 @@ object NodeType {
     def displayValue = "Eritasoliittymä"
   }
 
+  // Historical
+  case object Historical6 extends NodeType {
+    def value = 6
+
+    def displayValue = "Historiallinen solmutyyppi 6"
+  }
+
   case object RoadBoundary extends NodeType {
     def value = 7
 
@@ -63,6 +77,13 @@ object NodeType {
     def value = 8
 
     def displayValue = "ELY-raja"
+  }
+
+  // Historical
+  case object SupportingPoint extends NodeType {
+    def value = 9
+
+    def displayValue = "Apupiste"
   }
 
   case object MultitrackIntersection extends NodeType {
