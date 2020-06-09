@@ -22,8 +22,8 @@ sealed trait NodeType {
 }
 
 object NodeType {
-  val values: Set[NodeType] = Set(NormalIntersection, Roundabout, YIntersection, Interchange, RoadBoundary, ELYBorder, MultitrackIntersection,
-    AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnknownNodeType)
+  val values: Set[NodeType] = Set(NormalIntersection, Roundabout1, Roundabout, YIntersection, Interchange, InterchangeJunction, RoadBoundary, ELYBorder, HelpPoint, MultitrackIntersection,
+    DropIntersection, AccessRoad, EndOfRoad, Bridge, MaintenanceOpening, PrivateRoad, StaggeredIntersection, UnknownNodeType)
 
   def apply(intValue: Int): NodeType = {
     values.find(_.value == intValue).getOrElse(UnknownNodeType)
@@ -33,6 +33,12 @@ object NodeType {
     def value = 1
 
     def displayValue = "Normaali tasoliittymä"
+  }
+
+  case object Roundabout1 extends NodeType {
+    def value = 2
+
+    def displayValue = "Kiertoliittymä1"
   }
 
   case object Roundabout extends NodeType {
@@ -53,6 +59,12 @@ object NodeType {
     def displayValue = "Eritasoliittymä"
   }
 
+  case object InterchangeJunction extends NodeType {
+    def value = 6
+
+    def displayValue = "Eritasoristeys"
+  }
+
   case object RoadBoundary extends NodeType {
     def value = 7
 
@@ -65,10 +77,22 @@ object NodeType {
     def displayValue = "ELY-raja"
   }
 
+  case object HelpPoint extends NodeType {
+    def value = 9
+
+    def displayValue = "Apupiste"
+  }
+
   case object MultitrackIntersection extends NodeType {
     def value = 10
 
     def displayValue = "Moniajoratainen liittymä"
+  }
+
+  case object DropIntersection extends NodeType {
+    def value = 11
+
+    def displayValue = "Pisaraliittymä"
   }
 
   case object AccessRoad extends NodeType {
