@@ -1,15 +1,19 @@
 package fi.liikennevirasto.digiroad2
 
+import java.net.URLDecoder
+
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.DatabaseMigration
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.util.DataImporter
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
-import org.scalatra.{InternalServerError, Ok, ScalatraBase, ScalatraServlet}
+import org.scalatra._
 import org.slf4j.{Logger, LoggerFactory}
 
 trait AdminAuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuthSupport[BasicAuthUser] {
@@ -77,6 +81,26 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
         case e: Exception => {
           logger.error("Importing road names failed.", e)
           InternalServerError(s"Importing road names failed: ${e.getMessage}")
+        }
+      }
+    }
+  }
+
+  get("/test_get_request") {
+    val urlValue = params.get("url")
+    time(logger, "GET request for /test_get_request") {
+      try {
+        val decodedUrl = URLDecoder.decode(urlValue.get, "UTF-8")
+        logger.info(s"Testing connection to url: $decodedUrl")
+        val request = new HttpGet(decodedUrl)
+        val client = HttpClientBuilder.create().build
+        val response = client.execute(request)
+        val statusCode = response.getStatusLine.getStatusCode
+        Ok(s"Response status: $statusCode from url: $decodedUrl\n")
+      } catch {
+        case e: Exception => {
+          logger.error("Test connection failed.", e)
+          InternalServerError(s"Test connection failed: ${e.getMessage}")
         }
       }
     }
