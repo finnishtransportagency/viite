@@ -58,9 +58,9 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
   }
 
   get("/import_road_addresses") {
+    val conversionTable = params.get("conversion_table")
     time(logger, "GET request for /import_road_addresses") {
       try {
-        val conversionTable = params.get("conversion_table")
         dataImporter.importRoadAddresses(conversionTable)
         Ok("Importing road addresses successful.\n")
       } catch {
