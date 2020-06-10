@@ -87,16 +87,21 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
   }
 
   get("/test_get_request") {
-    val urlValue = params.get("url")
+    val urlParam = params.get("url")
     time(logger, "GET request for /test_get_request") {
       try {
-        val decodedUrl = URLDecoder.decode(urlValue.get, "UTF-8")
-        logger.info(s"Testing connection to url: $decodedUrl")
-        val request = new HttpGet(decodedUrl)
-        val client = HttpClientBuilder.create().build
-        val response = client.execute(request)
-        val statusCode = response.getStatusLine.getStatusCode
-        Ok(s"Response status: $statusCode from url: $decodedUrl\n")
+        if (urlParam.isEmpty) {
+          logger.info("Parameter 'url' was not given.")
+          BadRequest("Parameter 'url' is required.")
+        } else {
+          val url = urlParam.get
+          logger.info(s"Testing connection to url: $url")
+          val request = new HttpGet(url)
+          val client = HttpClientBuilder.create().build
+          val response = client.execute(request)
+          val statusCode = response.getStatusLine.getStatusCode
+          Ok(s"Response status: $statusCode from url: $url\n")
+        }
       } catch {
         case e: Exception => {
           logger.error("Test connection failed.", e)
