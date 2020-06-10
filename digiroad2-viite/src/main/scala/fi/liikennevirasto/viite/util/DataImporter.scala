@@ -231,11 +231,11 @@ class DataImporter {
   }
 
   def enableRoadwayTriggers = {
-    sqlu"""ALTER TABLE ROADWAY ENABLE TRIGGER ALL""".execute
+    sqlu"""ALTER TABLE ROADWAY ENABLE TRIGGER USER""".execute
   }
 
   def disableRoadwayTriggers = {
-    sqlu"""ALTER TABLE ROADWAY DISABLE TRIGGER ALL""".execute
+    sqlu"""ALTER TABLE ROADWAY DISABLE TRIGGER USER""".execute
   }
 
   def roadwayResetter(): Unit = {
