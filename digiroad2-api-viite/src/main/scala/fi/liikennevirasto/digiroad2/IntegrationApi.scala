@@ -334,7 +334,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   def simpleNodeToApi(node: Node): Map[String, Any] = {
     Map(
       "node_number" -> node.nodeNumber,
-      "change_date" -> node.validFrom.toString,
+      "change_date" -> node.registrationDate.toString, // TODO: change_date should be changed to registration_date
       "published_date" -> (if (node.publishedTime.isDefined) node.publishedTime.get.toString else null),
       "x" -> node.coordinates.x,
       "y" -> node.coordinates.y,
