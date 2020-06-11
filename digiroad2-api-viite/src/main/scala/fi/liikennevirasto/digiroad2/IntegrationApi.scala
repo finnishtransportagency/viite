@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
-import org.joda.time.format.{ISODateTimeFormat}
+import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.BasicAuthSupport
@@ -322,12 +322,13 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     }
   }
 
-  def nodeToApi(node: (Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]))) : Map[String, Any] = {
-    simpleNodeToApi(node._1.get) ++
-      Map("node_points" -> node._2._1.map(nodePointToApi)) ++
-      Map("junctions" -> node._2._2.map(junctionToApi)
-      )
-
+  def nodeToApi(node: (Option[Node], (Seq[NodePoint], Map[Junction, Seq[JunctionPoint]]))): Map[String, Any] = {
+    simpleNodeToApi(node._1.get) ++ {
+      if (node._1.get.endDate.isEmpty) {
+        Map("node_points" -> node._2._1.map(nodePointToApi)) ++
+          Map("junctions" -> node._2._2.map(junctionToApi))
+      } else Map.empty[String, Any]
+    }
   }
 
   def simpleNodeToApi(node: Node): Map[String, Any] = {
