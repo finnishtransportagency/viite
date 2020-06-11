@@ -20,14 +20,14 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
   val roadwayPointDAO = new RoadwayPointDAO
 
   case class ConversionNode(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: Long, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime],
-                            validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
+                            validTo: Option[DateTime], createdBy: String, registrationDate: Option[DateTime])
 
   case class ConversionNodePoint(id: Long, beforeOrAfter: Long, nodeId: Long, nodeNumber: Long, roadwayNumberTR: Long, addressMValueTR: Long,
                                  validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
   private def insertNodeStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)")
+      " (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)")
 
   private def insertNodePointStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_NUMBER, VALID_FROM, VALID_TO, CREATED_BY) VALUES " +
@@ -44,6 +44,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodeStatement.setString(7, datePrinter(conversionNode.endDate))
     nodeStatement.setString(8, datePrinter(conversionNode.validFrom))
     nodeStatement.setString(9, conversionNode.createdBy)
+    nodeStatement.setString(10, datePrinter(conversionNode.registrationDate))
     nodeStatement.addBatch()
   }
 
@@ -134,8 +135,8 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
       val endDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextString()
-      val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      ConversionNode(id, nodeNumber, Point(xValue, yValue), name, nodeType, startDate, endDate, validFrom, None, createdBy, createdTime)
+      val registrationDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      ConversionNode(id, nodeNumber, Point(xValue, yValue), name, nodeType, startDate, endDate, validFrom, None, createdBy, registrationDate)
     }
   }
 
