@@ -358,9 +358,9 @@ trait VVHClientOperations {
 
   protected def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
     time(logger, s"Fetch VVH features with url '$url'") {
-      val request = new HttpGet(url)
-      val client = HttpClientBuilder.create().build()
       try {
+        val request = new HttpGet(url)
+        val client = HttpClientBuilder.create().build()
         val response = client.execute(request)
         try {
           mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
@@ -371,7 +371,8 @@ trait VVHClientOperations {
           }
         }
       } catch {
-        case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
+        case e: IOException => Right(VVHError(Map(("VVH FETCH failure", s"IO Exception during VVH fetch. Check connection to VVH. Error message: ${e.getMessage}")), url))
+        case e: Exception => Right(VVHError(Map(("VVH FETCH failure", s"Exception during VVH fetch. Error message: ${e.getMessage}")), url))
       }
     }
   }
@@ -559,7 +560,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
                                   fetchGeometry: Boolean,
                                   resultTransition: (Map[String, Any], List[List[Double]]) => T,
                                   filter: Set[Long] => String): Seq[T] = {
-    val batchSize = 1000
+    val batchSize = 100
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
