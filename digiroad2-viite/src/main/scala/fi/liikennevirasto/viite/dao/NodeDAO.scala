@@ -297,7 +297,7 @@ class NodeDAO extends BaseDAO {
           case None => ""
         })
         ps.setString(8, if (createdBy == null) "-" else createdBy)
-        ps.setString(9, dateTimeFormatter.print(node.registrationDate))
+        ps.setDate(9, new java.sql.Date(node.registrationDate.getMillis))
         ps.addBatch()
     }
     ps.executeBatch()
