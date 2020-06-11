@@ -262,7 +262,7 @@ class NodeDAO extends BaseDAO {
   def create(nodes: Iterable[Node], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
-      """insert into NODE (ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, CREATED_BY)
+      """insert into NODE (ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, CREATED_BY, REGISTRATION_DATE)
       values (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)""".stripMargin)
 
     // Set ids for the nodes without one
