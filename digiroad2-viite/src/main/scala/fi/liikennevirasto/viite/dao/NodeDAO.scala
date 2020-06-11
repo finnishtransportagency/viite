@@ -147,6 +147,7 @@ case class RoadAttributes(roadNumber: Long, roadPartNumber: Long, addrMValue: Lo
 class NodeDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
+  val dateTimeFormatter: DateTimeFormatter = ISODateTimeFormat.basicDateTimeNoMillis()
 
   implicit val getNode: GetResult[Node] = new GetResult[Node] {
     def apply(r: PositionedResult): Node = {
@@ -296,7 +297,7 @@ class NodeDAO extends BaseDAO {
           case None => ""
         })
         ps.setString(8, if (createdBy == null) "-" else createdBy)
-        ps.setString(9, dateFormatter.print(node.registrationDate))
+        ps.setString(9, dateTimeFormatter.print(node.registrationDate))
         ps.addBatch()
     }
     ps.executeBatch()
