@@ -61,7 +61,7 @@ case class JunctionExtractor(id: Long, junctionNumber: Option[Long], nodeNumber:
                           validFrom: Option[String], validTo: Option[String], createdBy: Option[String], createdTime: Option[String])
 
 case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, coordinates: Point, name: Option[String], `type`: Int, startDate: String, endDate: Option[String], validFrom: Option[String], validTo: Option[String],
-                         createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None,
+                         createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None, registrationDate: Option[String] = None,
                          junctions: List[JunctionExtractor], nodePoints: List[NodePointExtractor])
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
@@ -1284,7 +1284,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "type" -> node.nodeType.value,
       "startDate" -> formatToString(node.startDate.toString),
       "createdBy" -> node.createdBy,
-      "createdTime" -> node.createdTime
+      "createdTime" -> node.createdTime,
+      "registrationDate" -> node.registrationDate
     )
   }
 
@@ -1691,9 +1692,10 @@ object NodesAndJunctionsConverter {
     val validFrom = if (node.validFrom.isDefined) formatter.parseDateTime(node.validFrom.get) else new DateTime()
     val validTo = if (node.validTo.isDefined) Option(formatter.parseDateTime(node.validTo.get)) else None
     val createdTime = if (node.createdTime.isDefined) Option(formatter.parseDateTime(node.createdTime.get)) else None
+    val registrationDate = if (node.registrationDate.isDefined) formatter.parseDateTime(node.registrationDate.get) else new DateTime()
 
     Node(node.id, node.nodeNumber, node.coordinates, node.name, NodeType.apply(node.`type`),
-         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, username, createdTime)
+         formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, username, createdTime, registrationDate = registrationDate)
   }
 
   def toJunctions(junctions: Seq[JunctionExtractor]): Seq[Junction] = {
