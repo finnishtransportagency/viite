@@ -165,7 +165,7 @@ class NodeDAO extends BaseDAO {
       val createdTime = r.nextTimestampOption().map(d => new DateTime(d))
       val editor = r.nextStringOption()
       val publishedTime = r.nextTimestampOption().map(d => new DateTime(d))
-      val registrationDate = new DateTime(r.nextDate())
+      val registrationDate = new DateTime(r.nextTimestamp())
 
       Node(id, nodeNumber, Point(coordX, coordY), name, nodeType, startDate, endDate, validFrom, validTo, createdBy, createdTime, editor, publishedTime, registrationDate)
     }
@@ -297,7 +297,7 @@ class NodeDAO extends BaseDAO {
           case None => ""
         })
         ps.setString(8, if (createdBy == null) "-" else createdBy)
-        ps.setDate(9, new java.sql.Date(node.registrationDate.getMillis))
+        ps.setTimestamp(9, new java.sql.Timestamp(node.registrationDate.getMillis))
         ps.addBatch()
     }
     ps.executeBatch()
