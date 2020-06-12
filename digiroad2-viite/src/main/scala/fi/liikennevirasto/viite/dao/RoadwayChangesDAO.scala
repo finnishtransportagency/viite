@@ -442,7 +442,17 @@ class RoadwayChangesDAO {
     val untilString = if (endValidFromDate.nonEmpty) s"AND R.VALID_FROM <= to_timestamp('${new Timestamp(endValidFromDate.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
     val query =
       s"""
-      Select
+WITH ROADWAYS AS (
+SELECT R.ROAD_NUMBER ,R.ROAD_PART_NUMBER ,
+NULLIF(MAX(COALESCE(END_DATE, TO_DATE('9999', 'yyyy'))),TO_DATE('9999', 'yyyy')) AS END_DATE,
+MAX(VALID_FROM) AS VALID_FROM
+   FROM ROADWAY R
+        WHERE R.VALID_FROM >= to_timestamp('${new Timestamp(startValidFromDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
+        $untilString
+        AND R.VALID_TO IS NULL
+        GROUP BY R.ROAD_NUMBER ,R.ROAD_PART_NUMBER
+)
+SELECT
       RC.ROADWAY_CHANGE_ID
     , P.START_DATE
     , R.VALID_FROM
@@ -465,7 +475,7 @@ class RoadwayChangesDAO {
     , RC.new_road_type
     , RC.new_ely
     FROM ROADWAY_CHANGES RC
-      INNER JOIN ROADWAY R
+      INNER JOIN ROADWAYS R
         ON ((R.ROAD_NUMBER = RC.NEW_ROAD_NUMBER
              AND R.ROAD_PART_NUMBER = RC.NEW_ROAD_PART_NUMBER) OR
             (R.ROAD_NUMBER = RC.OLD_ROAD_NUMBER
@@ -475,10 +485,7 @@ class RoadwayChangesDAO {
         ON P.ID = RC.PROJECT_ID
       WHERE
         RC.CHANGE_TYPE <> 1
-        AND R.VALID_FROM >= to_timestamp('${new Timestamp(startValidFromDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')
-        $untilString
-        AND R.VALID_TO IS NULL
-        ORDER BY R.VALID_FROM
+        ORDER BY R.VALID_FROM, RC.ROADWAY_CHANGE_ID
      """
 
     Q.queryNA[RoadwayChangesInfo](query).iterator.toSeq
