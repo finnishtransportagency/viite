@@ -1285,7 +1285,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "startDate" -> formatToString(node.startDate.toString),
       "createdBy" -> node.createdBy,
       "createdTime" -> node.createdTime,
-      "registrationDate" -> formatDateTimeToString(Option(node.registrationDate))
+      "registrationDate" -> node.registrationDate.toString
     )
   }
 
@@ -1692,7 +1692,7 @@ object NodesAndJunctionsConverter {
     val validFrom = if (node.validFrom.isDefined) formatter.parseDateTime(node.validFrom.get) else new DateTime()
     val validTo = if (node.validTo.isDefined) Option(formatter.parseDateTime(node.validTo.get)) else None
     val createdTime = if (node.createdTime.isDefined) Option(formatter.parseDateTime(node.createdTime.get)) else None
-    val registrationDate = if (node.registrationDate.isDefined) formatter.parseDateTime(node.registrationDate.get) else new DateTime()
+    val registrationDate = if (node.registrationDate.isDefined) DateTime.parse(node.registrationDate.get) else new DateTime()
 
     Node(node.id, node.nodeNumber, node.coordinates, node.name, NodeType.apply(node.`type`),
          formatter.parseDateTime(node.startDate), endDate, validFrom, validTo, username, createdTime, registrationDate = registrationDate)
