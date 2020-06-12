@@ -1285,7 +1285,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "startDate" -> formatToString(node.startDate.toString),
       "createdBy" -> node.createdBy,
       "createdTime" -> node.createdTime,
-      "registrationDate" -> formatToString(node.registrationDate.toString)
+      "registrationDate" -> formatDateTimeToString(Option(node.registrationDate))
     )
   }
 

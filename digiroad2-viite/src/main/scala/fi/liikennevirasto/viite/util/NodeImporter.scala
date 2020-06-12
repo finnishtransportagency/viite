@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.util
 
-import java.sql.PreparedStatement
+import java.sql.{Date, PreparedStatement}
 
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
@@ -44,7 +44,11 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodeStatement.setString(7, datePrinter(conversionNode.endDate))
     nodeStatement.setString(8, datePrinter(conversionNode.validFrom))
     nodeStatement.setString(9, conversionNode.createdBy)
-    nodeStatement.setString(10, datePrinter(conversionNode.registrationDate))
+    if (conversionNode.registrationDate.nonEmpty) {
+      nodeStatement.setDate(10, new Date(conversionNode.registrationDate.get.getMillis))
+    } else {
+      nodeStatement.setString(10, "")
+    }
     nodeStatement.addBatch()
   }
 
