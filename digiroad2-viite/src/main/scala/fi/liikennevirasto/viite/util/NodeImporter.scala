@@ -44,7 +44,11 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodeStatement.setString(7, datePrinter(conversionNode.endDate))
     nodeStatement.setString(8, datePrinter(conversionNode.validFrom))
     nodeStatement.setString(9, conversionNode.createdBy)
-    nodeStatement.setString(10, datePrinter(conversionNode.registrationDate))
+    if (conversionNode.registrationDate.nonEmpty) {
+      nodeStatement.setTimestamp(10, new java.sql.Timestamp(conversionNode.registrationDate.get.getMillis))
+    } else {
+      throw new RuntimeException(s"Registration date must be set for node number: ${conversionNode.nodeNumber}")
+    }
     nodeStatement.addBatch()
   }
 
