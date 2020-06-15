@@ -45,11 +45,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def roadwayStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "insert into ROADWAY (id, ROADWAY_NUMBER, road_number, road_part_number, TRACK, start_addr_m, end_addr_m, reversed, start_date, end_date, created_by, road_type, ely, valid_from, valid_to, discontinuity, terminated) " +
-      "values (nextval('ROADWAY_SEQ'), ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)")
+      "values (nextval('ROADWAY_SEQ'), ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYYMMDD'), TO_DATE(?, 'YYYYMMDD'), ?, ?, ?, TO_DATE(?, 'YYYYMMDD'), TO_DATE(?, 'YYYYMMDD'), ?, ?)")
 
   private def linearLocationStatement(): PreparedStatement =
-    dynamicSession.prepareStatement(sql = "insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by, valid_from, valid_to) " +
-      " values (nextval('LINEAR_LOCATION_SEQ'), ?, ?, ?, ?, ?, ?, ST_GeomFromText('LINESTRING(? ? 0.0 0.0, ? ? 0.0 ?)', 3067), ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'))")
+    dynamicSession.prepareStatement(sql = s"""
+        insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by, valid_from, valid_to)
+        values (nextval('LINEAR_LOCATION_SEQ'), ?, ?, ?, ?, ?, ?, ST_GeomFromText('LINESTRING('||?||' '||?||' 0.0 0.0, '||?||' '||?||' 0.0 '||?||')', 3067), ?, TO_DATE(?, 'YYYYMMDD'), TO_DATE(?, 'YYYYMMDD'))
+      """)
 
   private def roadwayPointStatement(): PreparedStatement = {
     dynamicSession.prepareStatement(sql = "Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) " +

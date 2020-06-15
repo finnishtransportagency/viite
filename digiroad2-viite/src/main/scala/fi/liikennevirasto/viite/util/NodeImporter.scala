@@ -28,7 +28,7 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
 
   private def insertNodeStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ST_GeomFromText('POINT(? ? 0.0)', 3067), ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)")
+      " (?, ?, ST_GeomFromText('POINT('||?||' '||?||' 0.0)', 3067), ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)")
 
   private def insertNodePointStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_ID, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +

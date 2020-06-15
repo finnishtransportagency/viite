@@ -132,7 +132,7 @@ class LinearLocationDAO {
 
     val ps = dynamicSession.prepareStatement(
       """insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by)
-      values (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText('?', 3067), ?)""".stripMargin)
+      values (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?, 3067), ?)""".stripMargin)
 
     // Set ids for the linear locations without one
     val (ready, idLess) = linearLocations.partition(_.id != NewIdValue)
