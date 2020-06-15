@@ -318,7 +318,7 @@ class ProjectLinkDAO {
         "TRACK, discontinuity_type, START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, created_by, " +
         "calibration_points, status, road_type, roadway_id, linear_location_id, connected_link_id, ely, roadway_number, reversed, geometry, " +
         "link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, calibration_points_source) values " +
-        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ST_GeomFromText('?', 3067), ?, ?, ?, ?, ?, ?, ?, ?)")
+        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?, 3067), ?, ?, ?, ?, ?, ?, ?, ?)")
       val (ready, idLess) = links.partition(_.id != NewIdValue)
       val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
       val projectLinks = ready ++ idLess.zip(plIds).map(x =>
@@ -387,7 +387,7 @@ class ProjectLinkDAO {
         }
         val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK = ?, " +
           "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, ORIGINAL_START_ADDR_M=?, ORIGINAL_END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, PROJECT_ID= ?, " +
-          "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ST_GeomFromText('?', 3067), " +
+          "CALIBRATION_POINTS= ? , STATUS=?, ROAD_TYPE=?, REVERSED = ?, GEOMETRY = ST_GeomFromText(?, 3067), " +
           "SIDE=?, START_MEASURE=?, END_MEASURE=?, CALIBRATION_POINTS_SOURCE=?, ELY = ?, ROADWAY_NUMBER = ? WHERE id = ?")
 
         for (projectLink <- links) {
@@ -429,7 +429,7 @@ class ProjectLinkDAO {
   def updateProjectLinksGeometry(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
     time(logger,
       "Update project links geometry") {
-      val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET  GEOMETRY = ST_GeomFromText('?', 3067), MODIFIED_BY= ?, ADJUSTED_TIMESTAMP = ? WHERE id = ?")
+      val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET  GEOMETRY = ST_GeomFromText(?, 3067), MODIFIED_BY= ?, ADJUSTED_TIMESTAMP = ? WHERE id = ?")
 
       for (projectLink <- projectLinks) {
         projectLinkPS.setString(1, OracleDatabase.createJGeometry(projectLink.geometry))
