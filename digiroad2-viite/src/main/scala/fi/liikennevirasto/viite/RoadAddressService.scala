@@ -765,8 +765,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       }
     }
 
-    def updateRoadwayPoint(rwp: RoadwayPoint, newAddrM: Long): Seq[RoadwayPoint] = {
-      val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp)
+    def updateRoadwayPoint(rwp: RoadwayPoint, newAddrM: Long, roadwayNumber: Option[Long] = None): Seq[RoadwayPoint] = {
+      val roadwayNumberInPoint = roadwayNumber match {
+        case None => getNewRoadwayNumberInPoint(rwp)
+        case rwn => rwn
+      }
       if (roadwayNumberInPoint.isDefined) {
         if (rwp.roadwayNumber != roadwayNumberInPoint.get || rwp.addrMValue != newAddrM) {
           val newRwp = rwp.copy(roadwayNumber = roadwayNumberInPoint.get, addrMValue = newAddrM, modifiedBy = Some(username))
@@ -815,8 +818,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           if (change.changeType == Transfer || change.changeType == Unchanged) {
             if (!change.reversed) {
               val rwPoints: Seq[RoadwayPoint] = roadwayPoints.flatMap { rwp =>
-                val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
-                updateRoadwayPoint(rwp, newAddrM)
+                //                val newAddrM = target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)
+                val roadwayNumberInPoint = getNewRoadwayNumberInPoint(rwp)
+
+                if (roadwayNumberInPoint.isDefined) {
+
+                  val newAddrM = projectLinkChanges.find(pl => pl.newRoadwayNumber == roadwayNumberInPoint.get && pl.originalStartAddr == rwp.addrMValue).map(pl => pl.newStartAddr)
+                    .getOrElse(projectLinkChanges.find(pl => pl.newRoadwayNumber == roadwayNumberInPoint && pl.originalEndAddr == rwp.addrMValue).map(pl => pl.newEndAddr)
+                      .getOrElse(target.startAddressM.get + (rwp.addrMValue - source.startAddressM.get)))
+
+                  //                val newAddrM: Option[Long] = projectLinkChanges.find(pl => pl.newRoadwayNumber == roadwayNumberInPoint && pl.originalStartAddr == rwp.addrMValue).map(pl => pl.newEndAddr)
+                  //                  .orElse( projectLinkChanges.find(pl => pl.newRoadwayNumber == roadwayNumberInPoint && pl.originalEndAddr == rwp.addrMValue).map(pl => pl.newEndAddr))
+                  updateRoadwayPoint(rwp, newAddrM, roadwayNumberInPoint)
+                } else Seq()
               }
               list ++ rwPoints
             } else {
