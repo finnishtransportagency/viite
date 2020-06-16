@@ -151,7 +151,7 @@ object RoadNameDAO {
   }
 
   def expire(id: Long, username: String) = {
-    val query = s"""Update ROAD_NAME Set valid_to = current_date, created_by = '$username' where id = $id"""
+    val query = s"""Update ROAD_NAME Set valid_to = current_timestamp, created_by = '$username' where id = $id"""
     Q.updateNA(query).first
   }
 
@@ -191,10 +191,10 @@ object RoadNameDAO {
       namesPS.setDate(5, new Date(new java.util.Date().getTime))
       namesPS.setString(6, "")
       namesPS.setString(7, roadName.createdBy)
-      if (roadName.endDate.nonEmpty) {
+      if (roadName.endDate.isDefined) {
         namesPS.setDate(8, new Date(roadName.endDate.get.getMillis))
       } else {
-        namesPS.setString(8, "")
+        namesPS.setNull(8, java.sql.Types.DATE)
       }
       namesPS.addBatch()
     })

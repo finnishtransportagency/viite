@@ -85,7 +85,7 @@ class JunctionPointDAO extends BaseDAO {
 
     val ps = dynamicSession.prepareStatement(
       """insert into JUNCTION_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, JUNCTION_ID, START_DATE, END_DATE, CREATED_BY)
-      values (?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""".stripMargin)
+      values (?, ?, ?, ?, ?, ?, ?)""".stripMargin)
 
     // Set ids for the junction points without one
     val (ready, idLess) = junctionPoints.partition(_.id != NewIdValue)
@@ -100,11 +100,12 @@ class JunctionPointDAO extends BaseDAO {
         ps.setLong(2, junctionPoint.beforeAfter.value)
         ps.setLong(3, junctionPoint.roadwayPointId)
         ps.setLong(4, junctionPoint.junctionId)
-        ps.setString(5, dateFormatter.print(junctionPoint.startDate))
-        ps.setString(6, junctionPoint.endDate match {
-          case Some(date) => dateFormatter.print(date)
-          case None => ""
-        })
+        ps.setDate(5, new java.sql.Date(junctionPoint.startDate.getMillis))
+        if (junctionPoint.endDate.isDefined) {
+          ps.setDate(6, new java.sql.Date(junctionPoint.endDate.get.getMillis))
+        } else {
+          ps.setNull(6, java.sql.Types.DATE)
+        }
         ps.setString(7, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }

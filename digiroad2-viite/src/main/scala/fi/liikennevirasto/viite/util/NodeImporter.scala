@@ -28,11 +28,11 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
 
   private def insertNodeStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ST_GeomFromText('POINT('||?||' '||?||' 0.0)', 3067), ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)")
+      " (?, ?, ST_GeomFromText('POINT('||?||' '||?||' 0.0)', 3067), ?, ?, ?, ?, ?, ?)")
 
   private def insertNodePointStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_ID, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?) ")
+      " (?, ?, ?, ?, ?, ?, ?, ?) ")
 
 
   def insertNode(nodeStatement: PreparedStatement, conversionNode: ConversionNode): Unit ={
@@ -42,9 +42,21 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodeStatement.setDouble(4, conversionNode.coordinates.y)
     nodeStatement.setString(5, conversionNode.name.getOrElse(""))
     nodeStatement.setLong(6, conversionNode.nodeType)
-    nodeStatement.setString(7, datePrinter(conversionNode.startDate))
-    nodeStatement.setString(8, datePrinter(conversionNode.endDate))
-    nodeStatement.setString(9, datePrinter(conversionNode.validFrom))
+    if (conversionNode.startDate.isDefined) {
+      nodeStatement.setDate(7, new java.sql.Date(conversionNode.startDate.get.getMillis))
+    } else {
+      nodeStatement.setNull(7, java.sql.Types.DATE)
+    }
+    if (conversionNode.endDate.isDefined) {
+      nodeStatement.setDate(8, new java.sql.Date(conversionNode.endDate.get.getMillis))
+    } else {
+      nodeStatement.setNull(8, java.sql.Types.DATE)
+    }
+    if (conversionNode.validFrom.isDefined) {
+      nodeStatement.setTimestamp(9, new java.sql.Timestamp(conversionNode.validFrom.get.getMillis))
+    } else {
+      nodeStatement.setNull(9, java.sql.Types.TIMESTAMP)
+    }
     nodeStatement.setString(10, conversionNode.createdBy)
     nodeStatement.addBatch()
   }
@@ -54,9 +66,21 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodePointStatement.setLong(2, nodePoint.beforeOrAfter)
     nodePointStatement.setLong(3, roadwayPointId)
     nodePointStatement.setLong(4, nodeId)
-    nodePointStatement.setString(5, datePrinter(nodePoint.startDate))
-    nodePointStatement.setString(6, datePrinter(nodePoint.endDate))
-    nodePointStatement.setString(7, datePrinter(nodePoint.validFrom))
+    if (nodePoint.startDate.isDefined) {
+      nodePointStatement.setDate(5, new java.sql.Date(nodePoint.startDate.get.getMillis))
+    } else {
+      nodePointStatement.setNull(5, java.sql.Types.DATE)
+    }
+    if (nodePoint.endDate.isDefined) {
+      nodePointStatement.setDate(6, new java.sql.Date(nodePoint.endDate.get.getMillis))
+    } else {
+      nodePointStatement.setNull(6, java.sql.Types.DATE)
+    }
+    if (nodePoint.validFrom.isDefined) {
+      nodePointStatement.setTimestamp(7, new java.sql.Timestamp(nodePoint.validFrom.get.getMillis))
+    } else {
+      nodePointStatement.setNull(7, java.sql.Types.TIMESTAMP)
+    }
     nodePointStatement.setString(8, nodePoint.createdBy)
     nodePointStatement.addBatch()
   }

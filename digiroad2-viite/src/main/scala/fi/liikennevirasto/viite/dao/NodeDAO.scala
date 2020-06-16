@@ -220,7 +220,7 @@ class NodeDAO extends BaseDAO {
 
     val ps = dynamicSession.prepareStatement(
       """insert into NODE (ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, CREATED_BY)
-      values (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""".stripMargin)
+      values (?, ?, ?, ?, ?, ?, ?, ?)""".stripMargin)
 
     // Set ids for the nodes without one
     val (ready, idLess) = nodes.partition(_.id != NewIdValue)
@@ -245,11 +245,12 @@ class NodeDAO extends BaseDAO {
           ps.setNull(4, java.sql.Types.VARCHAR)
         }
         ps.setLong(5, node.nodeType.value)
-        ps.setString(6, dateFormatter.print(node.startDate))
-        ps.setString(7, node.endDate match {
-          case Some(date) => dateFormatter.print(date)
-          case None => ""
-        })
+        ps.setDate(6, new java.sql.Date(node.startDate.getMillis))
+        if (node.endDate.isDefined) {
+          ps.setDate(7, new java.sql.Date(node.endDate.get.getMillis))
+        } else {
+          ps.setNull(7, java.sql.Types.DATE)
+        }
         ps.setString(8, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
