@@ -1988,7 +1988,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
-    * Expires roadways (valid_to = current_date)
+    * Expires roadways (valid_to = current_timestamp)
     *
     * @param projectLinks          ProjectLinks
     * @param expiringRoadAddresses A map of (RoadwayId -> RoadAddress)
