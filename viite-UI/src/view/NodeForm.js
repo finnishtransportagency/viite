@@ -400,14 +400,12 @@
     };
 
     var formIsInvalid = function () {
-      //  TODO remove this variable after Nodes and Junctions are imported.
-      var saveBtnDisabled = Environment.name() === 'production';
 
       return $('#nodeName').val() === "" ||
         $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||
         !selectedNodesAndJunctions.validateJunctionNumbers() ||
-        !selectedNodesAndJunctions.isDirty() || saveBtnDisabled;
+        !selectedNodesAndJunctions.isDirty();
     };
 
     var closeNode = function (cancel) {
