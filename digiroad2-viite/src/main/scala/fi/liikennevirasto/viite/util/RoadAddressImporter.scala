@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.util
 
-import java.sql.{PreparedStatement, Types}
+import java.sql.{PreparedStatement, Timestamp, Types}
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import org.joda.time.format.ISODateTimeFormat
@@ -45,12 +45,12 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
 
   private def roadwayStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "insert into ROADWAY (id, ROADWAY_NUMBER, road_number, road_part_number, TRACK, start_addr_m, end_addr_m, reversed, start_date, end_date, created_by, road_type, ely, valid_from, valid_to, discontinuity, terminated) " +
-      "values (nextval('ROADWAY_SEQ'), ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYYMMDD'), TO_DATE(?, 'YYYYMMDD'), ?, ?, ?, TO_DATE(?, 'YYYYMMDD'), TO_DATE(?, 'YYYYMMDD'), ?, ?)")
+      "values (nextval('ROADWAY_SEQ'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 
   private def linearLocationStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = s"""
         insert into LINEAR_LOCATION (id, ROADWAY_NUMBER, order_number, link_id, start_measure, end_measure, SIDE, geometry, created_by, valid_from, valid_to)
-        values (nextval('LINEAR_LOCATION_SEQ'), ?, ?, ?, ?, ?, ?, ST_GeomFromText('LINESTRING('||?||' '||?||' 0.0 0.0, '||?||' '||?||' 0.0 '||?||')', 3067), ?, TO_DATE(?, 'YYYYMMDD'), TO_DATE(?, 'YYYYMMDD'))
+        values (nextval('LINEAR_LOCATION_SEQ'), ?, ?, ?, ?, ?, ?, ST_GeomFromText('LINESTRING('||?||' '||?||' 0.0 0.0, '||?||' '||?||' 0.0 '||?||')', 3067), ?, ?, ?)
       """)
 
   private def roadwayPointStatement(): PreparedStatement = {
@@ -82,13 +82,29 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     roadwayStatement.setLong(5, roadway.startAddrM)
     roadwayStatement.setLong(6, roadway.endAddrM)
     roadwayStatement.setLong(7, roadway.reversed)
-    roadwayStatement.setString(8, datePrinter(roadway.startDate))
-    roadwayStatement.setString(9, datePrinter(roadway.endDate))
+    if (roadway.startDate.isDefined) {
+      roadwayStatement.setDate(8, new java.sql.Date(roadway.startDate.get.getMillis))
+    } else {
+      roadwayStatement.setNull(8, java.sql.Types.DATE)
+    }
+    if (roadway.endDate.isDefined) {
+      roadwayStatement.setDate(9, new java.sql.Date(roadway.endDate.get.getMillis))
+    } else {
+      roadwayStatement.setNull(9, java.sql.Types.DATE)
+    }
     roadwayStatement.setString(10, roadway.createdBy)
     roadwayStatement.setLong(11, roadway.roadType)
     roadwayStatement.setLong(12, roadway.ely)
-    roadwayStatement.setString(13, datePrinter(roadway.validFrom))
-    roadwayStatement.setString(14, datePrinter(roadway.validTo))
+    if (roadway.validFrom.isDefined) {
+      roadwayStatement.setTimestamp(13, new Timestamp(roadway.validFrom.get.getMillis))
+    } else {
+      roadwayStatement.setNull(13, java.sql.Types.TIMESTAMP)
+    }
+    if (roadway.validTo.isDefined) {
+      roadwayStatement.setTimestamp(14, new Timestamp(roadway.validTo.get.getMillis))
+    } else {
+      roadwayStatement.setNull(14, java.sql.Types.TIMESTAMP)
+    }
     roadwayStatement.setLong(15, roadway.discontinuity)
     roadwayStatement.setLong(16, roadway.terminated)
     roadwayStatement.addBatch()
@@ -107,8 +123,16 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
     linearLocationStatement.setDouble(10, linearLocation.y2.get)
     linearLocationStatement.setDouble(11, linearLocation.endMeasure)
     linearLocationStatement.setString(12, linearLocation.createdBy)
-    linearLocationStatement.setString(13, datePrinter(linearLocation.validFrom))
-    linearLocationStatement.setString(14, datePrinter(linearLocation.validTo))
+    if (linearLocation.validFrom.isDefined) {
+      linearLocationStatement.setTimestamp(13, new java.sql.Timestamp(linearLocation.validFrom.get.getMillis))
+    } else {
+      linearLocationStatement.setNull(13, java.sql.Types.TIMESTAMP)
+    }
+    if (linearLocation.validTo.isDefined) {
+      linearLocationStatement.setTimestamp(14, new Timestamp(linearLocation.validTo.get.getMillis))
+    } else {
+      linearLocationStatement.setNull(14, java.sql.Types.TIMESTAMP)
+    }
     linearLocationStatement.addBatch()
   }
 

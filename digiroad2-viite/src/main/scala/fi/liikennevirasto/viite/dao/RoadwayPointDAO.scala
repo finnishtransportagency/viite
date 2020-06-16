@@ -49,13 +49,13 @@ class RoadwayPointDAO extends BaseDAO {
 
   def update(id: Long, addressMValue: Long, modifiedBy: String) = {
     sqlu"""
-        Update ROADWAY_POINT Set ADDR_M = $addressMValue, MODIFIED_BY = $modifiedBy, MODIFIED_TIME = current_date Where ID = $id
+        Update ROADWAY_POINT Set ADDR_M = $addressMValue, MODIFIED_BY = $modifiedBy, MODIFIED_TIME = current_timestamp Where ID = $id
       """.execute
   }
 
   def update(id: Long, roadwayNumber: Long, addressMValue: Long, modifiedBy: String) = {
     sqlu"""
-        Update ROADWAY_POINT Set ROADWAY_NUMBER = $roadwayNumber, ADDR_M = $addressMValue, MODIFIED_BY = $modifiedBy, MODIFIED_TIME = current_date Where ID = $id
+        Update ROADWAY_POINT Set ROADWAY_NUMBER = $roadwayNumber, ADDR_M = $addressMValue, MODIFIED_BY = $modifiedBy, MODIFIED_TIME = current_timestamp Where ID = $id
       """.execute
   }
 
