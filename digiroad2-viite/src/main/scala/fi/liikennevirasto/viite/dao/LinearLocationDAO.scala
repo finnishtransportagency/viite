@@ -394,7 +394,7 @@ class LinearLocationDAO {
   def expireByIds(ids: Set[Long]): Int = {
     val query =
       s"""
-        Update LINEAR_LOCATION Set valid_to = current_date where valid_to IS NULL and id in (${ids.mkString(",")})
+        Update LINEAR_LOCATION Set valid_to = current_timestamp where valid_to IS NULL and id in (${ids.mkString(",")})
       """
     if (ids.isEmpty)
       0
@@ -405,7 +405,7 @@ class LinearLocationDAO {
   def expireByLinkId(linkIds: Set[Long]): Int = {
     val query =
       s"""
-        Update LINEAR_LOCATION Set valid_to = current_date Where valid_to IS NULL and link_id in (${linkIds.mkString(",")})
+        Update LINEAR_LOCATION Set valid_to = current_timestamp Where valid_to IS NULL and link_id in (${linkIds.mkString(",")})
       """
     if (linkIds.isEmpty)
       0
@@ -416,7 +416,7 @@ class LinearLocationDAO {
   def expireByRoadwayNumbers(roadwayNumbers: Set[Long]): Int = {
     val query =
       s"""
-        Update LINEAR_LOCATION Set valid_to = current_date Where valid_to IS NULL and roadway_number in (${roadwayNumbers.mkString(",")})
+        Update LINEAR_LOCATION Set valid_to = current_timestamp Where valid_to IS NULL and roadway_number in (${roadwayNumbers.mkString(",")})
       """
     if (roadwayNumbers.isEmpty)
       0

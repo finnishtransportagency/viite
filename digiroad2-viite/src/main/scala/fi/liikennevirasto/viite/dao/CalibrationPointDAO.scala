@@ -120,7 +120,7 @@ object CalibrationPointDAO {
   def expireById(ids: Iterable[Long]): Int = {
     val query =
       s"""
-        Update CALIBRATION_POINT Set valid_to = current_date where valid_to IS NULL and id in (${ids.mkString(", ")})
+        Update CALIBRATION_POINT Set valid_to = current_timestamp where valid_to IS NULL and id in (${ids.mkString(", ")})
       """
     if (ids.isEmpty)
       0

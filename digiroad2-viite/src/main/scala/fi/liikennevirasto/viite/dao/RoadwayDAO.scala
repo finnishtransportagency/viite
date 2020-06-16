@@ -866,7 +866,7 @@ class RoadwayDAO extends BaseDAO {
   def expireById(ids: Set[Long]): Int = {
     val query =
       s"""
-        Update ROADWAY Set valid_to = current_date where valid_to IS NULL and id in (${ids.mkString(",")})
+        Update ROADWAY Set valid_to = current_timestamp where valid_to IS NULL and id in (${ids.mkString(",")})
       """
     if (ids.isEmpty)
       0
@@ -910,8 +910,7 @@ class RoadwayDAO extends BaseDAO {
       """
         insert into ROADWAY (id, roadway_number, road_number, road_part_number,
         TRACK, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by,
-        road_type, ely, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, ?,
-        TO_DATE(?, 'YYYYMMDD'), TO_DATE(?, 'YYYYMMDD'), ?, ?, ?, ?)
+        road_type, ely, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       """)
     val (ready, idLess) = roadways.partition(_.id != NewIdValue)
     val plIds = Sequences.fetchRoadwayIds(idLess.size)
@@ -933,11 +932,12 @@ class RoadwayDAO extends BaseDAO {
       roadwayPS.setLong(7, address.endAddrMValue)
       roadwayPS.setInt(8, if (address.reversed) 1 else 0)
       roadwayPS.setInt(9, address.discontinuity.value)
-      roadwayPS.setString(10, dateFormatter.print(address.startDate))
-      roadwayPS.setString(11, address.endDate match {
-        case Some(dt) => dateFormatter.print(dt)
-        case None => ""
-      })
+      roadwayPS.setDate(10, new java.sql.Date(address.startDate.getMillis))
+      if (address.endDate.isDefined) {
+        roadwayPS.setDate(11, new java.sql.Date(address.endDate.get.getMillis))
+      } else {
+        roadwayPS.setNull(11, java.sql.Types.DATE)
+      }
       roadwayPS.setString(12, address.createdBy)
       roadwayPS.setInt(13, address.roadType.value)
       roadwayPS.setLong(14, address.ely)

@@ -227,7 +227,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
           "TestUser", DateTime.parse("1997-01-01"), DateTime.now(), "Some additional info", List.empty[ProjectReservedPart], Seq(), None)
         projectDAO.create(rap)
         projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id) should be (true)
-        sqlu"""update ROADWAY set valid_to = current_date WHERE road_number = $roadNumber1""".execute
+        sqlu"""update ROADWAY set valid_to = current_timestamp WHERE road_number = $roadNumber1""".execute
         roadwayDAO.create(Seq(dummyRoadways.head.copy(startDate = DateTime.parse("1975-11-18"))))
         projectReservedPartDAO.isNotAvailableForProject(roadNumber1, roadPartNumber1, id) should be (false)
       }
