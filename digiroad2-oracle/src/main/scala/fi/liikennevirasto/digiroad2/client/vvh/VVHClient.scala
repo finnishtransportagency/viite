@@ -527,8 +527,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     */
   protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
-    val linkStatus: ConstructionType = extractAttributes(attributes).getOrElse("CONSTRUCTIONTYPE", ConstructionType.InUse).asInstanceOf[ConstructionType]
-    ConstructionType.filteredLinkStatus.contains(linkStatus)
+    val linkStatusValue = extractAttributes(attributes).getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt].toInt
+    ConstructionType.filteredLinkStatus.contains(ConstructionType.apply(linkStatusValue))
   }
 
 
