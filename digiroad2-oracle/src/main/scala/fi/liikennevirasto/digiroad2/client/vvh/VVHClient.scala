@@ -522,11 +522,13 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     * In Use - 0
     * Under Construction - 1
     * Planned - 3
+    * Temporarily Not In Use - 4
+    * Expiring Soon - 5
     */
   protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
-    val linkStatus = extractAttributes(attributes).getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt]
-    linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
+    val linkStatus: ConstructionType = extractAttributes(attributes).getOrElse("CONSTRUCTIONTYPE", ConstructionType.InUse).asInstanceOf[ConstructionType]
+    ConstructionType.filteredLinkStatus.contains(linkStatus)
   }
 
 
