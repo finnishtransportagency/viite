@@ -1,10 +1,12 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 
 object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
@@ -22,7 +24,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       else
         None
 
-    val calibrationPoints = pl.toCalibrationPoints
+    val calibrationPoints = pl.calibrationPoints
 
     ProjectAddressLink(pl.id, pl.linkId, pl.geometry,
       pl.geometryLength, fi.liikennevirasto.digiroad2.asset.Unknown, linkType, ConstructionType.UnknownConstructionType,
@@ -68,7 +70,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       else
         None
 
-    val calibrationPoints = projectLink.toCalibrationPoints
+    val calibrationPoints = projectLink.calibrationPoints
 
     build(roadLink, projectLink.id, geom, length, roadNumber, roadPartNumber, trackCode, Some(roadName), municipalityCode,
       linkType, projectLink.roadType, projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,

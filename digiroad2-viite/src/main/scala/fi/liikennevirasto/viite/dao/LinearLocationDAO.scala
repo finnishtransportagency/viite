@@ -1,14 +1,17 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.{Timestamp, Types}
+import java.sql.Timestamp
 
+import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, RoadAddressCP}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -32,7 +35,7 @@ trait BaseLinearLocation {
 
   def adjustedTimestamp: Long
 
-  def calibrationPoints: (Option[Long], Option[Long])
+  def calibrationPoints: (CalibrationPointReference, CalibrationPointReference) // TODO These should be optional and the values in CPR should not be optional
 
   def geometry: Seq[Point]
 
@@ -47,7 +50,7 @@ trait BaseLinearLocation {
   def copyWithGeometry(newGeometry: Seq[Point]): BaseLinearLocation
 
   def getCalibrationCode: CalibrationCode = {
-    calibrationPoints match {
+    (startCalibrationPoint.addrM, endCalibrationPoint.addrM) match {
       case (Some(_), Some(_)) => CalibrationCode.AtBoth
       case (Some(_), _) => CalibrationCode.AtBeginning
       case (_, Some(_)) => CalibrationCode.AtEnd
@@ -76,26 +79,58 @@ trait BaseLinearLocation {
 
     GeometryUtils.areAdjacent(nextStartPoint, currEndPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
   }
+
+  lazy val startCalibrationPoint: CalibrationPointReference = calibrationPoints._1
+  lazy val endCalibrationPoint: CalibrationPointReference = calibrationPoints._2
+
+  def startCalibrationPointType: CalibrationPointType =
+    if (startCalibrationPoint.typeCode.isDefined) startCalibrationPoint.typeCode.get else CalibrationPointType.NoCP
+
+  def endCalibrationPointType: CalibrationPointType =
+    if (endCalibrationPoint.typeCode.isDefined) endCalibrationPoint.typeCode.get else CalibrationPointType.NoCP
+}
+
+case class CalibrationPointReference(addrM: Option[Long], typeCode: Option[CalibrationPointType] = Option.empty) {
+  def isEmpty: Boolean = addrM.isEmpty
+  def isDefined: Boolean = addrM.isDefined
+
+  def isRoadAddressCP(): Boolean = {
+    this.typeCode match {
+      case Some(t) if t.equals(RoadAddressCP) => true
+      case _ => false
+    }
+  }
+
+  def isJunctionPointCP(): Boolean = {
+    this.typeCode match {
+      case Some(t) if t.equals(JunctionPointCP) => true
+      case _ => false
+    }
+  }
+}
+
+object CalibrationPointReference {
+  val None: CalibrationPointReference = CalibrationPointReference(Option.empty[Long], Option.empty[CalibrationPointType])
 }
 
 // Notes:
 //  - Geometry on linear location is not directed: it isn't guaranteed to have a direction of digitization or road addressing
 //  - Order number is a Double in LinearLocation case class and Long on the database because when there is for example divided change type we need to add more linear locations
 case class LinearLocation(id: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
-                          adjustedTimestamp: Long, calibrationPoints: (Option[Long], Option[Long]) = (None, None),
+                          adjustedTimestamp: Long, calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None),
                           geometry: Seq[Point], linkGeomSource: LinkGeomSource,
                           roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None) extends BaseLinearLocation {
 
-  val startCalibrationPoint: Option[Long] = calibrationPoints._1
-  val endCalibrationPoint: Option[Long] = calibrationPoints._2
-
-  def isExpire(): Boolean = {
-    validFrom.getOrElse(throw new IllegalStateException("The valid from should be set before call isExpire method")).isAfterNow ||
-      validTo.exists(vt => vt.isEqualNow || vt.isBeforeNow)
-  }
-
   def copyWithGeometry(newGeometry: Seq[Point]): LinearLocation = {
     this.copy(geometry = newGeometry)
+  }
+
+  def getFirstPoint: Point = {
+    if (sideCode == SideCode.TowardsDigitizing) geometry.head else geometry.last
+  }
+
+  def getLastPoint: Point = {
+    if (sideCode == SideCode.TowardsDigitizing) geometry.last else geometry.head
   }
 
 }
@@ -116,12 +151,14 @@ class LinearLocationDAO {
 
   val selectFromLinearLocation =
     """
-      select loc.id, loc.ROADWAY_NUMBER, loc.order_number, loc.link_id, loc.start_measure, loc.end_measure, loc.SIDE,
-      (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_addr_m,
-      (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_addr_m,
-      link.SOURCE, link.ADJUSTED_TIMESTAMP, ST_X(ST_StartPoint(loc.geometry)), ST_Y(ST_StartPoint(loc.geometry)), ST_X(ST_EndPoint(loc.geometry)), ST_Y(ST_EndPoint(loc.geometry)), loc.valid_from, loc.valid_to
-      from LINEAR_LOCATION loc
-      JOIN LINK ON (link.id = loc.link_id)
+       SELECT loc.ID, loc.ROADWAY_NUMBER, loc.ORDER_NUMBER, loc.LINK_ID, loc.START_MEASURE, loc.END_MEASURE, loc.SIDE,
+              (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_addr_m,
+              (SELECT CP."TYPE" FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_type,
+              (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_addr_m,
+              (SELECT CP."TYPE" FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_type,
+              link.SOURCE, link.ADJUSTED_TIMESTAMP, ST_X(ST_StartPoint(loc.geometry)), ST_Y(ST_StartPoint(loc.geometry)), ST_X(ST_EndPoint(loc.geometry)), ST_Y(ST_EndPoint(loc.geometry)), loc.valid_from, loc.valid_to
+        FROM LINEAR_LOCATION loc
+        JOIN LINK link ON (link.ID = loc.LINK_ID)
     """
 
   def getNextLinearLocationId: Long = {
@@ -143,7 +180,7 @@ class LinearLocationDAO {
 
     createLinearLocations.foreach {
       location =>
-        LinkDAO.createIfEmptyFetch(location.linkId)
+        LinkDAO.createIfEmptyFetch(location.linkId, location.adjustedTimestamp, location.linkGeomSource.value)
         val roadwayNumber = if (location.roadwayNumber == NewIdValue) {
           Sequences.nextRoadwayNumber
         } else {
@@ -170,7 +207,7 @@ class LinearLocationDAO {
   }
 
   implicit val getLinearLocation: GetResult[LinearLocation] = new GetResult[LinearLocation] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): LinearLocation = {
       val id = r.nextLong()
       val roadwayNumber = r.nextLong()
       val orderNumber = r.nextLong()
@@ -178,8 +215,10 @@ class LinearLocationDAO {
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
       val sideCode = r.nextInt()
-      val calStartM = r.nextLongOption()
-      val calEndM = r.nextLongOption()
+      val calStartAddrM = r.nextLongOption()
+      val calStartType = r.nextIntOption()
+      val calEndAddrM = r.nextLongOption()
+      val calEndType = r.nextIntOption()
       val linkSource = r.nextInt()
       val adjustedTimestamp = r.nextLong()
       val x1 = r.nextDouble()
@@ -189,8 +228,14 @@ class LinearLocationDAO {
       val validFrom = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
 
+      val calStartTypeOption: Option[CalibrationPointType] = if (calStartType.isDefined) Some(CalibrationPointType.apply(calStartType.get)) else None
+
+      val calEndTypeOption: Option[CalibrationPointType] = if (calEndType.isDefined) Some(CalibrationPointType.apply(calEndType.get)) else None
+
       LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
-        (calStartM, calEndM), Seq(Point(x1, y1), Point(x2, y2)), LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
+        (CalibrationPointReference(calStartAddrM, calStartTypeOption),
+          CalibrationPointReference(calEndAddrM, calEndTypeOption)),
+        Seq(Point(x1, y1), Point(x2, y2)), LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)
     }
   }
 
@@ -323,6 +368,7 @@ class LinearLocationDAO {
 
   /**
     * Fetch all the linear locations inside roadways with the given link ids
+    *
     * @param linkIds The given road link identifiers
     * @return Returns all the filtered linear locations
     */
@@ -338,7 +384,7 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where valid_to is null and loc.ROADWAY_NUMBER in (select ROADWAY_NUMBER from linear_location
+          where loc.valid_to is null and loc.ROADWAY_NUMBER in (select ROADWAY_NUMBER from linear_location
             where valid_to is null and link_id in ($linkIdsString))
         """
       queryList(query)
@@ -363,7 +409,8 @@ class LinearLocationDAO {
   }
 
   private def fetch(queryFilter: String => String): Seq[LinearLocation] = {
-    val query = s"""
+    val query =
+      s"""
         $selectFromLinearLocation
       """
     val filteredQuery = queryFilter(query)
@@ -388,7 +435,7 @@ class LinearLocationDAO {
   /**
     * Expire Linear Locations. Don't use more than 1000 linear locations at once.
     *
-    * @param ids
+    * @param ids LinearLocation ids
     * @return Number of updated rows
     */
   def expireByIds(ids: Set[Long]): Int = {
@@ -535,13 +582,13 @@ class LinearLocationDAO {
       val query =
         s"""
           $selectFromLinearLocation
-          where $boundingBoxFilter and valid_to is null
+          where $boundingBoxFilter and loc.valid_to is null
         """
       queryList(query)
     }
   }
 
-  def fetchRoadwayByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[LinearLocation] = {
+  def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[LinearLocation] = {
     time(logger, "Fetch all the linear locations of the matching roadways by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
@@ -562,7 +609,7 @@ class LinearLocationDAO {
       val query =
         s"""
         $selectFromLinearLocation
-        where valid_to is null and ROADWAY_NUMBER in ($boundingBoxQuery)
+        where loc.valid_to is null and loc.ROADWAY_NUMBER in ($boundingBoxQuery)
         """
       queryList(query)
     }
@@ -578,24 +625,24 @@ class LinearLocationDAO {
             s"""
               $selectFromLinearLocation
               join $idTableName i on i.id = loc.ROADWAY_NUMBER
-              where valid_to is null
+              where loc.valid_to is null
             """.stripMargin
         }
       } else {
         s"""
             $selectFromLinearLocation
-            where valid_to is null and ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
+            where loc.valid_to is null and loc.ROADWAY_NUMBER in (${roadwayNumbers.mkString(", ")})
           """
       }
       queryList(query)
     }
   }
 
-  def fetchCurrentLinearLocationsByEly(ely: Int):Seq[LinearLocation] = {
+  def fetchCurrentLinearLocationsByEly(ely: Int): Seq[LinearLocation] = {
     val query =
       s"""
           $selectFromLinearLocation
-          WHERE VALID_TO IS NULL AND ROADWAY_NUMBER IN ( SELECT ROADWAY_NUMBER FROM ROADWAY WHERE ELY = $ely AND VALID_TO IS NULL AND END_DATE IS NULL)
+          WHERE loc.VALID_TO IS NULL AND loc.ROADWAY_NUMBER IN (SELECT ROADWAY_NUMBER FROM ROADWAY WHERE ELY = $ely AND VALID_TO IS NULL AND END_DATE IS NULL)
        """
     queryList(query)
   }
@@ -604,17 +651,17 @@ class LinearLocationDAO {
     val query =
       s"""
           $selectFromLinearLocation
-          WHERE VALID_TO IS NULL
+          WHERE loc.VALID_TO IS NULL
        """
     queryList(query)
   }
 
-  def fetchCurrentLinearLocationsByMunicipality(municipality: Int):Seq[LinearLocation] = {
+  def fetchCurrentLinearLocationsByMunicipality(municipality: Int): Seq[LinearLocation] = {
     val query =
       s"""
           $selectFromLinearLocation
-          WHERE VALID_TO IS NULL AND ROADWAY_NUMBER IN ( SELECT ROADWAY_NUMBER FROM ROADWAY WHERE ELY =
-          (SELECT ELY_NRO FROM MUNICIPALITY WHERE ID = $municipality) AND VALID_TO IS NULL AND END_DATE IS NULL)
+          WHERE loc.VALID_TO IS NULL AND loc.ROADWAY_NUMBER IN ( SELECT ROADWAY_NUMBER FROM ROADWAY
+            WHERE ELY = (SELECT ELY_NRO FROM MUNICIPALITY WHERE ID = $municipality) AND VALID_TO IS NULL AND END_DATE IS NULL)
        """
     queryList(query)
   }
@@ -628,15 +675,16 @@ class LinearLocationDAO {
   private def withUpdatedSince(sinceDate: DateTime)(query: String): String = {
     val sinceString = sinceDate.toString("yyyy-MM-dd")
     s"""$query
-        where valid_from >= to_date('$sinceString', 'YYYY-MM-DD')
-          OR (valid_to IS NOT NULL AND valid_to >= to_date('$sinceString', 'YYYY-MM-DD'))"""
+        where loc.valid_from >= to_date('$sinceString', 'YYYY-MM-DD')
+          OR (loc.valid_to IS NOT NULL AND loc.valid_to >= to_date('$sinceString', 'YYYY-MM-DD'))"""
   }
 
   /**
     * Sets up the query filters of road numbers
-    * @param roadNumbers: Seq[(Int, Int) - list of lowest and highest road numbers
-    * @param alias: String - The alias of the roadway table on the query
-    * @param filter: String - already existing filters
+    *
+    * @param roadNumbers : Seq[(Int, Int) - list of lowest and highest road numbers
+    * @param alias       : String - The alias of the roadway table on the query
+    * @param filter      : String - already existing filters
     * @return
     */
   def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], alias: String, filter: String = ""): String = {
@@ -649,27 +697,6 @@ class LinearLocationDAO {
       withRoadNumbersFilter(roadNumbers.tail, alias, filterAdd)
     else
       withRoadNumbersFilter(roadNumbers.tail, alias,s"""$filter OR $filterAdd""")
-  }
-
-  def getLinearLocationCalibrationCodeNSide(linearLocationIds: Seq[Long]): Map[Long, (CalibrationCode, SideCode)] = {
-    if (linearLocationIds.isEmpty) {
-      Map()
-    } else {
-      val query =
-        s"""SELECT DISTINCT loc.ID,
-             (CASE
-             WHEN (SELECT count(*) FROM CALIBRATION_POINT WHERE LINK_ID = loc.LINK_ID AND cp.VALID_TO IS null) > 1 THEN 3
-             WHEN (SELECT count(*) FROM CALIBRATION_POINT WHERE LINK_ID = loc.LINK_ID AND START_END = 0 AND cp.VALID_TO IS null) = 1 THEN 1
-             WHEN (SELECT count(*) FROM CALIBRATION_POINT WHERE LINK_ID = loc.LINK_ID AND START_END = 1 AND cp.VALID_TO IS null) = 1 THEN 2
-             ELSE 0
-             END) AS calibrationCode,
-             loc.side
-             FROM LINEAR_LOCATION loc JOIN CALIBRATION_POINT cp ON (loc.LINK_ID = cp.LINK_ID AND cp.VALID_TO IS NULL)
-             WHERE loc.id in (${linearLocationIds.mkString(",")}) AND loc.VALID_TO IS NULL"""
-      Q.queryNA[(Long, Int, Int)](query).list.map {
-        case (id, code, side) => id -> (CalibrationCode(code), SideCode.apply(side))
-      }.toMap
-    }
   }
 
 }

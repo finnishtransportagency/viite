@@ -97,6 +97,12 @@ class ProjectDAO {
     Q.queryNA[Long](query).list
   }
 
+  def fetchByTRId(trProjectId: Long): Option[Project] = {
+    time(logger, "Fetch project by tr_id") {
+      fetch(query => s"""$query where tr_id = $trProjectId""").headOption
+    }
+  }
+
   def fetchById(projectId: Long, withNullElyFilter: Boolean = false): Option[Project] = {
     time(logger, "Fetch project by id") {
       if(withNullElyFilter)
@@ -148,6 +154,16 @@ class ProjectDAO {
     sqlu""" update project set state=${state.value} WHERE id=$projectID""".execute
   }
 
+  def fetchProjectTRIdsWithWaitingTRStatus: List[Long] = {
+    val query =
+      s"""
+         SELECT tr_id
+         FROM project
+         WHERE state=${ProjectState.Sent2TR.value} OR state=${ProjectState.TRProcessing.value}
+       """
+    Q.queryNA[Long](query).list
+  }
+
   def fetchProjectIdsWithWaitingTRStatus: List[Long] = {
     val query =
       s"""
@@ -188,20 +204,9 @@ class ProjectDAO {
 
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Double, Double, Int)](queryFilter(query)).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, coordX, coordY, zoom) =>
-
         val projectState = ProjectState.apply(state)
-        val reservedRoadParts = if (projectState == Saved2TR)
-          Seq()
-        else
-          projectReservedPartDAO.fetchReservedRoadParts(id).filterNot(p => p.addressLength.isEmpty && p.ely.isEmpty && p.discontinuity.isEmpty).distinct
-
-        val formedRoadParts = if (projectState == Saved2TR)
-          Seq()
-        else
-          projectReservedPartDAO.fetchFormedRoadParts(id).distinct
-
         Project(id, projectState, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
-          addInfo, reservedRoadParts, formedRoadParts, statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)))
+          addInfo, Seq(), Seq(), statusInfo, Some(ProjectCoordinates(coordX, coordY, zoom)))
     }
   }
 

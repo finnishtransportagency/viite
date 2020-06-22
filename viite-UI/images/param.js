@@ -10,16 +10,16 @@ function GetParams()
   var paramArray = [];
   if ( document.defaultView.frameElement )
   {
-     var params = document.defaultView.frameElement.getElementsByTagName("param");
+    var params = document.defaultView.frameElement.getElementsByTagName("param");
 
-     for ( var i = 0, iLen = params.length; iLen > i; i++ )
-     {
-        var eachParam = params[ i ];
-        var name = eachParam.getAttribute( "name" );
-        var value = eachParam.getAttribute( "value" );
-        
-        paramArray[ name ] = value;
-     }
+    for ( var i = 0, iLen = params.length; iLen > i; i++ )
+    {
+      var eachParam = params[ i ];
+      var name = eachParam.getAttribute( "name" );
+      var value = eachParam.getAttribute( "value" );
+
+      paramArray[ name ] = value;
+    }
   }
 
   var href = document.defaultView.location.href;
@@ -28,13 +28,13 @@ function GetParams()
     var paramList = href.split("?")[1].split(/&|;/);
     for ( var p = 0, pLen = paramList.length; pLen > p; p++ )
     {
-       var eachParam = paramList[ p ];
-       var valList = eachParam.split("=");
-       var name = unescape(valList[0]);
-       var value = unescape(valList[1]);
+      var eachParam = paramList[ p ];
+      var valList = eachParam.split("=");
+      var name = unescape(valList[0]);
+      var value = unescape(valList[1]);
 
-       paramArray[ name ] = value;
-     }
+      paramArray[ name ] = value;
+    }
   }
 
   SetElementValues( paramArray, uids );
@@ -43,7 +43,7 @@ function GetParams()
 
 function GetValue( attrStr, params )
 {
-  // parse attribute value for parameter reference and fallback value 
+  // parse attribute value for parameter reference and fallback value
   var paramSplit = attrStr.split(")");
   var paramName = paramSplit[0].replace("param(","");
   var defaultVal = null;
@@ -51,11 +51,11 @@ function GetValue( attrStr, params )
   {
     defaultVal = paramSplit[1].replace(/^\s\s*/, "").replace(/\s\s*$/, "");
   }
-  
+
   var newVal = params[ paramName ];
   if ( !newVal )
   {
-    newVal = defaultVal;  
+    newVal = defaultVal;
   }
 
   return newVal;
@@ -82,7 +82,7 @@ function SetElementValues( params, uids  )
       }
     }
   }
-    
+
   for ( var u = 0, uLen = useEls.length; uLen > u; u++ )
   {
     var useEl = useEls[ u ][0];
@@ -108,7 +108,7 @@ function SetParamValues( el, params, isShadow )
     if (attr)
     {
       var attrVal = attr.value;
-    
+
       if ( -1 != attrVal.indexOf( "param(" ) )
       {
         //alert("attr: " + attr.localName + "\nvalue: " + attrVal)
@@ -140,7 +140,7 @@ function SetParamValues( el, params, isShadow )
         else
         {
           var newVal = GetValue( attrVal, params );
-        
+
           if ( null != newVal && "" != newVal )
           {
             if ( "content-value" == attr.localName )
@@ -152,7 +152,7 @@ function SetParamValues( el, params, isShadow )
               el.setAttributeNS( attr.namespaceURI, attr.name, newVal);
               //alert("attr.name: " + attr.name + "\nattrVal: " + newVal)
 
-              // note replacement values in params metadata attribute 
+              // note replacement values in params metadata attribute
               var paramAttrVal = el.getAttribute( "params" );
               if ( paramAttrVal )
               {
@@ -189,7 +189,7 @@ function EmulateShadowTree( el, params, uids, idnum )
       var name = eachChild.getAttribute( "name" );
       var val = eachChild.getAttribute( "value" );
       shadowParams[ name ] = val;
-      hasParam = true; 
+      hasParam = true;
       // alert("name: " + name + "\nvalue: " + val)
     }
   }
@@ -206,7 +206,7 @@ function EmulateShadowTree( el, params, uids, idnum )
       var pairSplit = eachPair.split(":");
       shadowParams[ pairSplit[0] ] = pairSplit[1];
       hasParam = true;
-    }     
+    }
   }
 
   if ( hasParam )
@@ -226,8 +226,8 @@ function EmulateShadowTree( el, params, uids, idnum )
     for ( var ua = 0, uaLen = el.attributes.length; uaLen > ua; ua++ )
     {
       var attr = el.attributes[ ua ];
-      if ( "content-value" != attr.localName && "params" != attr.localName && "parameters" != attr.localName 
-            && "href" != attr.localName && "x" != attr.localName && "y" != attr.localName )
+      if ( "content-value" != attr.localName && "params" != attr.localName && "parameters" != attr.localName
+        && "href" != attr.localName && "x" != attr.localName && "y" != attr.localName )
       {
         //copy use element attributes to replacement image
         shadow.setAttribute( attr.name, attr.value);
@@ -275,9 +275,8 @@ function EmulateShadowTree( el, params, uids, idnum )
         }
       }
     }
-    
+
     return wrapper;
   }
   return null;
 }
-

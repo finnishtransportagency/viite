@@ -9,11 +9,10 @@ import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
-import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
@@ -29,7 +28,7 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
     dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, yCoordinates, LinkGeomSource.NormalLinkInterface)
 
   private def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): LinearLocation = {
-    LinearLocation(id, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (None, None),
+    LinearLocation(id, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (CalibrationPointReference.None, CalibrationPointReference.None),
       yCoordinates.map(y => Point(0.0, y)), linkGeomSource, roadwayNumber)
   }
 

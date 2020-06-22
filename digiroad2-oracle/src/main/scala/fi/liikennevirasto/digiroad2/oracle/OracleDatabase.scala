@@ -9,7 +9,8 @@ import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.Point
 import oracle.spatial.geometry.JGeometry
 import oracle.sql.STRUCT
 import org.postgis.PGgeometry
@@ -27,6 +28,22 @@ object OracleDatabase {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested transaction")
     else {
+      try {
+        transactionOpen.set(true)
+        Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+          setSessionLanguage()
+          f
+        }
+      } finally {
+        transactionOpen.set(false)
+      }
+    }
+  }
+
+  def withDynTransactionNewOrExisting[T](f: => T): T = {
+    if (transactionOpen.get()) {
+      f
+    } else {
       try {
         transactionOpen.set(true)
         Database.forDataSource(OracleDatabase.ds).withDynTransaction {

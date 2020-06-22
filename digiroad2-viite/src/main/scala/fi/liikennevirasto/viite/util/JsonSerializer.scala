@@ -148,10 +148,8 @@ case object TrackSerializer extends CustomSerializer[Track](format => ( {
 
 case object PointSerializer extends CustomSerializer[Point](format => ( {
   case o: JObject =>
-    val x = o.values.mapValues(_.asInstanceOf[Double]).get("x")
-    val y = o.values.mapValues(_.asInstanceOf[Double]).get("y")
-    val z = o.values.mapValues(_.asInstanceOf[Double]).get("z")
-    Point(x.get, y.get, z.getOrElse(0.0))
+    val coordinates = o.values.mapValues(_.toString.toDouble)
+    Point(coordinates("x"), coordinates("y"), coordinates.getOrElse("z", 0.0))
 }, {
   case p: Point => JObject(("x", JDouble(p.x)), ("y", JDouble(p.y)), ("z", JDouble(p.z)))
 }))

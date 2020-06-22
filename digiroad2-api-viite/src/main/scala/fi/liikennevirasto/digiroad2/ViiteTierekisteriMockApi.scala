@@ -1,14 +1,15 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.viite.ProjectService
+import fi.liikennevirasto.viite.dao.Project
 import org.apache.commons.logging.LogFactory
 import org.json4s.JsonAST.{JInt, JObject, JString}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra._
 
-class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
+class ViiteTierekisteriMockApi(val projectService: ProjectService) extends ScalatraServlet with JacksonJsonSupport {
 
-  var projectsReceived: Map[Long, Map[String, Any]] = Map()
   val SourceXIsNullMessage = "Source %s is null"
   val TargetXIsNullMessage = "Target %s is null"
   val SourceXNotNullMessage = "Source %s is not null"
@@ -50,7 +51,6 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
     if (id.isEmpty)
       BadRequest(Map("error_message" -> "Id puuttuu."))
     else {
-      projectsReceived = projectsReceived ++ Map(anythingToLong(id.get) -> extractedProject)
       Created(Map("message" -> "Project created"))
     }
   }
@@ -115,7 +115,8 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
     val changeInfoKeys = Seq("tie", "ajr", "aosa", "aet", "losa", "let")
     val projectId = project("id")
     val keys = project.keySet.toList
-    if (projectsReceived.contains(anythingToLong(projectId)))
+    val projectsPendingInTR = projectService.getProjectsPendingInTR
+    if (projectsPendingInTR.contains(anythingToLong(projectId)))
       halt(ExpectationFailed(ProjectIdAlreadyExists))
     val user = project.getOrElse("user", "").toString
     if (user.length == 0 || user.length > 10)
@@ -184,17 +185,19 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
     } else {
       logger.info("Passed the authorization verification")
       logger.info("Trying to get the project Id")
-      val projectId = anythingToLong(params("projectId"))
-      logger.debug("If this is correct, project Id should be: " + projectId)
-      if (projectsReceived.contains(projectId)) {
-        toProjectResponseObject(projectsReceived(projectId))
+      val trProjectId = anythingToLong(params("projectId"))
+      logger.debug("If this is correct, project Id should be: " + trProjectId)
+      val projectsPendingInTR = projectService.getProjectTRIdsPendingInTR
+      if (projectsPendingInTR.contains(trProjectId)) {
+        val project = projectService.fetchProjectInfoByTRId(trProjectId).getOrElse(throw new ViiteException(s"Project $trProjectId not found."))
+        toProjectResponseObject(project)
       }
       else {
-        logger.info("404: projectId was: " + projectId)
+        logger.info("404: projectId was: " + trProjectId)
         halt(NotFound(Map(
           "error" -> "404",
           "errorcode" -> "404",
-          "message" -> s"Projektia ${projectId} ei löydy.",
+          "message" -> s"Projektia ${trProjectId} ei löydy.",
           "path" -> "/trrest",
           "status" -> "404"
         )))
@@ -212,17 +215,17 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
     }
   }
 
-  private def toProjectResponseObject(project: Map[String, Any]) = {
-    val id = anythingToLong(project("id"))
+  private def toProjectResponseObject(project: Project) = {
+    val id = project.id
     // Use project name "error:%d" to get error from the list below. For example "error:-6801"
-    val (errorCode, error) = project("name").toString match {
+    val (errorCode, error) = project.name match {
       case s if s.startsWith("error:") =>
         val c = s.replaceFirst("error:", "").toLong
         (c, errorCodes(c))
       case _ =>
         (0, null)
     }
-    logger.info(s"Project id $id with name ${project("name")} has error code $errorCode, $error")
+    logger.info(s"Project id $id with name ${project.name} has error code $errorCode, $error")
     Map(
       "id_tr_projekti" -> (1000 + id),
       "projekti" -> id,
@@ -232,15 +235,15 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
         case 0 => "T"
         case _ => "V"
       }),
-      "name" -> project("name").toString,
-      "change_date" -> project("change_date").toString,
-      "muutospvm" -> project("change_date").toString,
-      "user" -> project("user").toString,
-      "published_date" -> project("change_date").toString,
+      "name" -> project.name,
+      "change_date" -> project.startDate.toString,
+      "muutospvm" -> project.startDate.toString,
+      "user" -> project.createdBy,
+      "published_date" -> project.startDate.toString,
       "job_number" -> (20 + id),
       "error_message" -> error,
-      "start_time" -> project("change_date").toString,
-      "end_time" -> project("change_date").toString,
+      "start_time" -> project.startDate.toString,
+      "end_time" -> project.startDate.toString,
       "error_code" -> errorCode)
   }
 

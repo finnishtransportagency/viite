@@ -41,7 +41,6 @@ trait DigiroadServer {
     appContext.addServlet(classOf[OAGProxyServlet], "/wmts/*")
     appContext.addServlet(classOf[ArcGisProxyServlet], "/arcgis/*")
     appContext.addServlet(classOf[OAGRasterServiceProxyServlet], "/rasteripalvelu/*")
-    appContext.addServlet(classOf[VKMProxyServlet], "/vkm/*")
     appContext.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     appContext.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     appContext.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
@@ -112,25 +111,5 @@ class ArcGisProxyServlet extends ProxyServlet {
       client.setIdleTimeout(60000)
     }
     client
-  }
-}
-
-class VKMProxyServlet extends ProxyServlet {
-
-  private val logger = LoggerFactory.getLogger(getClass)
-
-  override def rewriteURI(req: HttpServletRequest): java.net.URI = {
-    val vkmUrl: String = ViiteProperties.vkmUrl
-    val url = vkmUrl + req.getRequestURI
-    logger.info(url)
-    java.net.URI.create(url)
-  }
-
-  override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-    val parameters = clientRequest.getParameterMap
-    parameters.foreach { case (key, value) =>
-      proxyRequest.param(key, value.mkString(""))
-    }
-    super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }

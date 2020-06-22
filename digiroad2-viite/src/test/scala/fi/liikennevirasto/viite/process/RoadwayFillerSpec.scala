@@ -1,15 +1,15 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHComplementaryClient, VVHRoadLinkClient, VVHSuravageClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHComplementaryClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
-import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode._
+import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
@@ -30,10 +30,10 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val mockVVHSuravageClient: VVHSuravageClient = MockitoSugar.mock[VVHSuravageClient]
   val mockVVHComplementaryClient: VVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
   val projectValidator = new ProjectValidator
   val projectDAO = new ProjectDAO
@@ -42,15 +42,25 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
   val roadNetworkDAO = new RoadNetworkDAO
   val linearLocationDAO = new LinearLocationDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
+  val nodeDAO = new NodeDAO
+  val roadwayPointDAO = new RoadwayPointDAO
+  val nodePointDAO = new NodePointDAO
+  val junctionPointDAO = new JunctionPointDAO
+  val roadwayChangesDAO = new RoadwayChangesDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
-  val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO, new LinearLocationDAO, new RoadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO,
+    roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus, frozenVVH = false) {
+
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val projectService: ProjectService = new ProjectService(roadAddressService, mockRoadLinkService, mockEventBus) {
+  val projectService: ProjectService = new ProjectService(roadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
+    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
+    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
+    roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -122,9 +132,9 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.New, roadType = RoadType.apply(1)),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.New, roadType = RoadType.apply(5)),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 200L, 400L, Some(DateTime.now()), status = LinkStatus.New, roadType = RoadType.apply(1))
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.New, roadType = RoadType.apply(1), roadwayNumber = NewIdValue),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.New, roadType = RoadType.apply(5), roadwayNumber = NewIdValue),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 200L, 400L, Some(DateTime.now()), status = LinkStatus.New, roadType = RoadType.apply(1), roadwayNumber = NewIdValue)
       )
 
       val changes = Seq(
@@ -189,12 +199,12 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changeInfos = Seq(
         RoadwayChangeInfo(AddressChangeType.Termination,
           source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(None, None, None, None, None, None, Some(Discontinuity.Continuous), Some(8L)),
           Continuous, RoadType.apply(1), reversed = false, 1),
 
         RoadwayChangeInfo(AddressChangeType.Transfer,
           source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, RoadType.apply(1), reversed = false, 2)
       )
 
@@ -232,7 +242,7 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
         RoadwayChangeInfo(AddressChangeType.Termination,
           source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(None, None, None, None, None, None, Some(Discontinuity.Continuous), Some(8L)),
           Continuous, RoadType.apply(1), reversed = false, 2),
 
         RoadwayChangeInfo(AddressChangeType.New,
@@ -293,8 +303,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.Numbering, roadType = RoadType.apply(1)),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.Numbering, roadType = RoadType.apply(1))
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.Numbering, roadType = RoadType.apply(1), roadwayNumber = roadways.head._2.roadwayNumber),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.Numbering, roadType = RoadType.apply(1), roadwayNumber = roadways.head._2.roadwayNumber)
       )
 
       val changes = Seq(
@@ -394,6 +404,41 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       result(2)._1.size should be(2)
       result(2)._1.last.startAddrMValue should be (300)
       result(2)._1.last.endAddrMValue should be (1000)
+    }
+  }
+
+  test("Test RoadwayFiller.fillRoadways() When dealing with Unchanged + Transfer with same properties and same roadwayNumber then they should be merged into one"){
+    runWithRollback {
+      val roadwayNumber1 = 1
+
+      val roadways = Map(
+        (0L, dummyRoadway(roadwayNumber = 1L, roadNumber = 9999L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 300L, DateTime.now(), None))
+      )
+
+      val changeInfos = Seq(
+        RoadwayChangeInfo(AddressChangeType.Unchanged,
+          source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(2)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, RoadType.apply(1), reversed = false, 1),
+
+        RoadwayChangeInfo(AddressChangeType.Transfer,
+          source = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(100L), Some(300L), Some(RoadType.apply(1)), Some(Discontinuity.EndOfRoad), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(1L), Some(1L), Some(0L), Some(100L), Some(300L), Some(RoadType.apply(2)), Some(Discontinuity.EndOfRoad), Some(8L)),
+          Continuous, RoadType.apply(2), reversed = false, 2)
+      )
+
+      val projectLinks = Seq(
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, roadType = RoadType.apply(1)).copy(roadwayNumber = roadwayNumber1),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 300L, Some(DateTime.now()), status = LinkStatus.Transfer, roadType = RoadType.apply(1)).copy(roadwayNumber = roadwayNumber1)
+      )
+
+      val changes = Seq(
+        (ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos.head, DateTime.now(), Some(0)), Seq(projectLinks.head)),
+        (ProjectRoadwayChange(0L, Some("projectName"), 8, "Test", DateTime.now(), changeInfos(1), DateTime.now(), Some(0)), Seq(projectLinks.last))
+      )
+
+      val result = RoadwayFiller.fillRoadways(roadways, Map[Long, Roadway](), changes)
+      result.size should be(1)
     }
   }
 

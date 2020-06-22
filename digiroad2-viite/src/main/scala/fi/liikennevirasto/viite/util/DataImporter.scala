@@ -1,20 +1,22 @@
 package fi.liikennevirasto.viite.util
 
-import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import javax.sql.DataSource
 import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.SequenceResetterDAO
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{SqlScriptRunner, ViiteProperties}
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
-import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
+import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
@@ -120,24 +122,17 @@ class DataImporter {
   def importRoadAddresses(importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
-    val geometryAdjustedTimeStamp = ViiteProperties.importTimeStamp
-    if (geometryAdjustedTimeStamp == "" || geometryAdjustedTimeStamp.toLong == 0L) {
-      println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
-    } else {
-      println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
-      importTableName match {
-        case None => // shouldn't get here because args size test
-          throw new Exception("****** Import failed! conversiontable name required as second input ******")
-        case Some(tableName) =>
-          val importOptions = ImportOptions(
-            onlyComplementaryLinks = false,
-            useFrozenLinkService = geometryFrozen,
-            geometryAdjustedTimeStamp.toLong, tableName,
-            onlyCurrentRoads = ViiteProperties.importOnlyCurrent)
-          importRoadAddressData(Conversion.database(), vvhClient, importOptions)
-
-      }
-      println(s"Road address import complete at time: ${DateTime.now()}")
+    importTableName match {
+      case None => // shouldn't get here because args size test
+        throw new Exception("****** Import failed! Conversion table name required as a second input ******")
+      case Some(tableName) =>
+        val importOptions = ImportOptions(
+          onlyComplementaryLinks = false,
+          useFrozenLinkService = geometryFrozen,
+          tableName,
+          onlyCurrentRoads = ViiteProperties.importOnlyCurrent)
+        importRoadAddressData(Conversion.database(), vvhClient, importOptions)
+        println(s"Road address import complete at time: ${DateTime.now()}")
     }
   }
 
@@ -148,12 +143,11 @@ class DataImporter {
       disableRoadwayTriggers
       sqlu"""DELETE FROM PROJECT_LINK_NAME""".execute
       sqlu"""DELETE FROM ROADWAY_CHANGES_LINK""".execute
-      sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
       sqlu"""DELETE FROM PROJECT_LINK""".execute
       sqlu"""DELETE FROM PROJECT_LINK_HISTORY""".execute
-      sqlu"""DELETE FROM ROADWAY_CHANGES""".execute
       sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART""".execute
-      sqlu"""DELETE FROM PROJECT""".execute
+      sqlu"""DELETE FROM PROJECT WHERE STATE != 5""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE project_id NOT IN (SELECT id FROM PROJECT)""".execute
       sqlu"""DELETE FROM ROAD_NETWORK_ERROR""".execute
       sqlu"""DELETE FROM PUBLISHED_ROADWAY""".execute
       sqlu"""DELETE FROM PUBLISHED_ROAD_NETWORK""".execute
@@ -166,15 +160,13 @@ class DataImporter {
       sqlu"""DELETE FROM NODE""".execute
       sqlu"""DELETE FROM LINK""".execute
       sqlu"""DELETE FROM ROADWAY""".execute
+      resetRoadAddressSequences()
 
       println(s"${DateTime.now()} - Old address data removed")
 
       val roadAddressImporter = getRoadAddressImporter(conversionDatabase, vvhClient, importOptions)
       roadAddressImporter.importRoadAddress()
 
-      println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
-      sqlu"""UPDATE LINK
-        SET ADJUSTED_TIMESTAMP = ${importOptions.geometryAdjustedTimeStamp}""".execute
       println(s"${DateTime.now()} - Updating terminated roadways information")
       sqlu"""UPDATE ROADWAY SET TERMINATED = 2
             WHERE TERMINATED = 0 AND end_date IS NOT null AND EXISTS (SELECT 1 FROM ROADWAY rw
@@ -213,13 +205,65 @@ class DataImporter {
       sqlu"""DELETE FROM NODE_POINT""".execute
       sqlu"""DELETE FROM JUNCTION""".execute
       sqlu"""DELETE FROM NODE""".execute
+      resetNodesAndJunctionSequences()
 
       println(s"${DateTime.now()} - Old nodes and junctions data removed")
       val nodeImporter = getNodeImporter(conversionDatabase)
       nodeImporter.importNodes()
       val junctionImporter = getJunctionImporter(conversionDatabase)
       junctionImporter.importJunctions()
+      updateNodePointType()
     }
+  }
+
+  def resetRoadAddressSequences() = {
+    val sequenceResetter = new SequenceResetterDAO()
+    sequenceResetter.resetSequenceToNumber("PROJECT_LINK_NAME_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("ROADWAY_CHANGE_LINK", 1)
+    sequenceResetter.resetSequenceToNumber("ROAD_NETWORK_ERROR_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("PUBLISHED_ROAD_NETWORK_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("LINEAR_LOCATION_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("CALIBRATION_POINT_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("ROADWAY_POINT_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("ROADWAY_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("VIITE_GENERAL_SEQ", 1)
+  }
+
+  def resetNodesAndJunctionSequences(): Unit = {
+    val sequenceResetter = new SequenceResetterDAO()
+    sequenceResetter.resetSequenceToNumber("JUNCTION_POINT_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("NODE_POINT_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("JUNCTION_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("NODE_SEQ", 1)
+  }
+
+  private def updateNodePointType() = {
+    sqlu"""
+      UPDATE NODE_POINT NP SET "TYPE" = (SELECT CASE
+          -- [TYPE = 99] Includes expired node points points or points attached to expired nodes
+          WHEN (point.VALID_TO IS NOT NULL OR NOT EXISTS (SELECT 1 FROM NODE node
+            WHERE node.NODE_NUMBER = point.NODE_NUMBER AND (node.END_DATE IS NULL AND node.VALID_TO IS NULL))) THEN 99
+          -- [TYPE = 1] Includes templates, points where ADDR_M is equal to START_ADDR_M or END_ADDR_M of the road (road_number, road_part_number and track) and when ROAD_TYPE changes
+          WHEN point.NODE_NUMBER IS NULL THEN 1 -- node point template
+          WHEN (rp.ADDR_M = (SELECT MIN(roadAddr.START_ADDR_M) FROM ROADWAY roadAddr
+            WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
+            AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ADDR_M is equal to START_ADDR_M
+          WHEN (rp.ADDR_M = (SELECT MAX(roadAddr.END_ADDR_M) FROM ROADWAY roadAddr
+            WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
+            AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ADDR_M is equal to END_ADDR_M
+          WHEN ((SELECT DISTINCT(roadAddr.ROAD_TYPE) FROM ROADWAY roadAddr
+              WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.START_ADDR_M = rp.ADDR_M
+              AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL) !=
+            (SELECT DISTINCT(roadAddr.ROAD_TYPE) FROM ROADWAY roadAddr
+              WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.END_ADDR_M = rp.ADDR_M
+              AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 1 -- ROAD_TYPE changed on ADDR_M
+          -- [TYPE = 2]
+          ELSE 2
+        END AS NODE_POINT_TYPE
+        FROM NODE_POINT point
+        LEFT JOIN ROADWAY_POINT rp ON point.ROADWAY_POINT_ID = rp.ID
+        LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+          WHERE point.ID = NP.ID AND ROWNUM = 1)""".execute
   }
 
   def updateLinearLocationGeometry(): Unit = {
@@ -307,46 +351,46 @@ class DataImporter {
   }
 
   protected def fetchChunkLinkIds(): Seq[(Long, Long)] = {
-      val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[Long].list
-      generateChunks(linkIds, 25000l)
-    }
+    val linkIds = sql"""select distinct link_id from linear_location where link_id is not null order by link_id""".as[Long].list
+    generateChunks(linkIds, 25000l)
+  }
 
 
-  private def updateLinearLocationGeometry(vvhClient: VVHClient, customFilter: String = ""): Unit = {
+  private def updateLinearLocationGeometry(vvhClient: VVHClient, geometryFrozen: Boolean): Unit = {
     val eventBus = new DummyEventBus
     val linearLocationDAO = new LinearLocationDAO
-    val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
+    val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer, geometryFrozen)
     var changed = 0
     withLinkIdChunks {
       case (min, max) =>
         withDynTransaction {
-        val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
-        val roadLinksFromVVH = linkService.getCurrentAndComplementaryAndSuravageRoadLinksFromVVH(linkIds)
-        val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet)
-        val topologyLocation = unGroupedTopology.groupBy(_.linkId)
-        roadLinksFromVVH.foreach(roadLink => {
-          val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
-          segmentsOnViiteDatabase.foreach(segment => {
-            val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
-            if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
-              val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
-              val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
-              val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
-              val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
-              if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
-                (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
-                ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
-                  (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
-                updateGeometry(segment.id, newGeom)
-                println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
-                changed += 1
-              } else {
-                println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
+          val linkIds = linearLocationDAO.fetchLinkIdsInChunk(min, max).toSet
+          val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(linkIds)
+          val unGroupedTopology = linearLocationDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet)
+          val topologyLocation = unGroupedTopology.groupBy(_.linkId)
+          roadLinksFromVVH.foreach(roadLink => {
+            val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
+            segmentsOnViiteDatabase.foreach(segment => {
+              val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
+              if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
+                val distanceFromHeadToHead = segment.geometry.head.distance2DTo(newGeom.head)
+                val distanceFromHeadToLast = segment.geometry.head.distance2DTo(newGeom.last)
+                val distanceFromLastToHead = segment.geometry.last.distance2DTo(newGeom.head)
+                val distanceFromLastToLast = segment.geometry.last.distance2DTo(newGeom.last)
+                if (((distanceFromHeadToHead > MinDistanceForGeometryUpdate) &&
+                  (distanceFromHeadToLast > MinDistanceForGeometryUpdate)) ||
+                  ((distanceFromLastToHead > MinDistanceForGeometryUpdate) &&
+                    (distanceFromLastToLast > MinDistanceForGeometryUpdate))) {
+                  updateGeometry(segment.id, newGeom)
+                  println("Changed geometry on linear location id " + segment.id + " and linkId =" + segment.linkId)
+                  changed += 1
+                } else {
+                  println(s"Skipped geometry update on linear location ID : ${segment.id} and linkId: ${segment.linkId}")
+                }
               }
-            }
+            })
           })
-        })
-      }
+        }
     }
     println(s"Geometries changed count: $changed")
   }
@@ -368,6 +412,16 @@ class DataImporter {
     }
   }
 
+  def updateCalibrationPointTypesQuery() = {
+    withDynTransaction {
+      val source = io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("db/migration/V0_32__calibration_point_type_update.sql"))
+      var text = try source.mkString finally source.close()
+      // remove ; at end of SQL
+      text = text.substring(0,text.length - 1)
+      sqlu"""#$text""".execute
+    }
+  }
+
   private[this] def initDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
     val cfg = new BoneCPConfig(ViiteProperties.bonecpProperties)
@@ -376,6 +430,6 @@ class DataImporter {
 
 }
 
-case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, geometryAdjustedTimeStamp: Long, conversionTable: String, onlyCurrentRoads: Boolean)
+case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, conversionTable: String, onlyCurrentRoads: Boolean)
 case class RoadPart(roadNumber: Long, roadPart: Long, ely: Long)
 

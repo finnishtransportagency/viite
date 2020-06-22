@@ -1,22 +1,21 @@
 package fi.liikennevirasto.viite.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
-import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -111,7 +110,7 @@ object CalibrationCode {
   }
 
   def getFromAddress(roadAddress: BaseRoadAddress): CalibrationCode = {
-    fromBooleans(roadAddress.calibrationPoints._1.isDefined, roadAddress.calibrationPoints._2.isDefined)
+    fromBooleans(roadAddress.startCalibrationPoint.isDefined, roadAddress.calibrationPoints._2.isDefined)
   }
 
   def getFromAddressLinkLike(roadAddress: RoadAddressLinkLike): CalibrationCode = {
@@ -142,9 +141,23 @@ object CalibrationCode {
     }
   }
 
+  def existsAtBeginning(calibrationCode: Option[CalibrationCode]): Boolean = {
+    calibrationCode match {
+      case Some(code) if code.equals(AtBeginning) || code.equals(AtBoth) => true
+      case _ => false
+    }
+  }
+
+  def existsAtEnd(calibrationCode: Option[CalibrationCode]): Boolean = {
+    calibrationCode match {
+      case Some(code) if code.equals(AtEnd) || code.equals(AtBoth) => true
+      case _ => false
+    }
+  }
+
 }
 
-case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends BaseCalibrationPoint
+case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP) extends BaseCalibrationPoint
 
 sealed trait TerminationCode {
   def value: Int
@@ -219,21 +232,12 @@ trait BaseRoadAddress {
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
-  def getCalibrationCode: CalibrationCode = {
-    calibrationPoints match {
-      case (Some(_), Some(_)) => CalibrationCode.AtBoth
-      case (Some(_), _) => CalibrationCode.AtBeginning
-      case (_, Some(_)) => CalibrationCode.AtEnd
-      case _ => CalibrationCode.No
-    }
+  def hasCalibrationPointAtStart: Boolean = {
+    startCalibrationPoint.getOrElse(NoCP) != NoCP
   }
 
-  def hasCalibrationPointAt(calibrationCode: CalibrationCode): Boolean = {
-    val raCalibrationCode = getCalibrationCode
-    if (calibrationCode == CalibrationCode.No || calibrationCode == CalibrationCode.AtBoth)
-      raCalibrationCode == calibrationCode
-    else
-      raCalibrationCode == CalibrationCode.AtBoth || raCalibrationCode == calibrationCode
+  def hasCalibrationPointAtEnd: Boolean = {
+    endCalibrationPoint.getOrElse(NoCP) != NoCP
   }
 
   def liesInBetween(ra: BaseRoadAddress): Boolean = {
@@ -252,6 +256,15 @@ trait BaseRoadAddress {
     }
 
     GeometryUtils.areAdjacent(nextStartPoint, currEndPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
+  }
+
+  def connected(p: Point): Boolean = {
+    val currEndPoint = sideCode match {
+      case AgainstDigitizing => geometry.head
+      case _ => geometry.last
+    }
+
+    GeometryUtils.areAdjacent(p, currEndPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
   }
 
   lazy val startingPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
@@ -298,6 +311,9 @@ trait BaseRoadAddress {
       (startingPoint, endPoint)
     }
   }
+
+  lazy val startCalibrationPoint: Option[BaseCalibrationPoint] = calibrationPoints._1
+  lazy val endCalibrationPoint: Option[BaseCalibrationPoint] = calibrationPoints._2
 }
 
 //TODO the start date and the created by should not be optional on the road address case class
@@ -311,8 +327,19 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
                        terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
                        roadName: Option[String] = None) extends BaseRoadAddress {
 
-  val endCalibrationPoint = calibrationPoints._2
-  val startCalibrationPoint = calibrationPoints._1
+  override lazy val startCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._1
+  override lazy val endCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._2
+
+  def startCalibrationPointType: CalibrationPointType = startCalibrationPoint match {
+    case Some(cp) => cp.typeCode
+    case None => NoCP
+  }
+  def endCalibrationPointType: CalibrationPointType = endCalibrationPoint match {
+    case Some(cp) => cp.typeCode
+    case None => NoCP
+  }
+
+  def calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (startCalibrationPointType, endCalibrationPointType)
 
   def reversed: Boolean = false
 
@@ -357,14 +384,12 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
     this.copy(geometry = newGeometry)
   }
 
-  def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    val calibrationPointSource = if (id == noRoadwayId || id == NewIdValue) ProjectLinkSource else RoadAddressSource
-    calibrationPoints match {
-      case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)))
-      case (Some(cp1), None) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)), Option.empty[ProjectLinkCalibrationPoint])
-      case (Some(cp1), Some(cp2)) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)), Option(ProjectLinkCalibrationPoint(cp2.linkId, cp2.segmentMValue, cp2.addressMValue, calibrationPointSource)))
-    }
+  def getFirstPoint: Point = {
+    if (sideCode == SideCode.TowardsDigitizing) geometry.head else geometry.last
+  }
+
+  def getLastPoint: Point = {
+    if (sideCode == SideCode.TowardsDigitizing) geometry.last else geometry.head
   }
 }
 
@@ -468,7 +493,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   def fetchAllByRoadNumbers(roadNumbers: Set[Long]): Seq[Roadway] = {
-    time(logger, "Fetch road ways by road number") {
+    time(logger, "Fetch roadways by road number") {
       fetch(withRoadNumbersInValidDate(roadNumbers))
     }
   }
@@ -547,7 +572,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   def fetchAllByRoadwayId(roadwayIds: Seq[Long]): Seq[Roadway] = {
-    time(logger, "Fetch road ways by id") {
+    time(logger, "Fetch roadways by id") {
       if (roadwayIds.isEmpty) {
         Seq()
       } else {
@@ -746,7 +771,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumber(roadwayNumber: Long)(query: String): String = {
-    s"""$query where a.valid_to is null and end_date is null and a.ROADWAY_NUMBER = $roadwayNumber"""
+    s"""$query where a.valid_to is null and a.end_date is null and a.ROADWAY_NUMBER = $roadwayNumber"""
   }
 
   private def withRoadwayNumberEnded(roadwayNumber: Long)(query: String): String = {

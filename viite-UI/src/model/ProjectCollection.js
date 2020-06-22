@@ -9,17 +9,15 @@
     var projectInfo;
     var currentProject;
     var fetchedProjectLinks = [];
-    var fetchedSuravageProjectLinks = [];
     var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
     var self = this;
     var publishableProject = false;
     var LinkStatus = LinkValues.LinkStatus;
     var ProjectStatus = LinkValues.ProjectStatus;
-    var LinkGeomSource = LinkValues.LinkGeomSource;
+    var ConstructionType = LinkValues.ConstructionType;
     var Track = LinkValues.Track;
     var BAD_REQUEST_400 = 400;
-    var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
     var ALLOWED_ADDR_M_VALUE_PERCENTAGE = 0.2;
@@ -68,9 +66,9 @@
     this.getProjectLink = function (ids) {
       return _.filter(projectLinks(), function (projectLink) {
         if (projectLink.getData().id > 0) {
-          return _.contains(ids, projectLink.getData().id);
+          return _.includes(ids, projectLink.getData().id);
         } else {
-          return _.contains(ids, projectLink.getData().linkId);
+          return _.includes(ids, projectLink.getData().linkId);
         }
       });
     };
@@ -88,15 +86,7 @@
         });
         publishableProject = isPublishable;
 
-        var separated = _.partition(self.getAll(), function (projectRoad) {
-          return projectRoad.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
-        });
-        fetchedSuravageProjectLinks = separated[0];
-        var nonSuravageProjectRoads = separated[1];
-        eventbus.trigger('roadAddressProject:fetched', nonSuravageProjectRoads);
-        if (fetchedSuravageProjectLinks.length !== 0) {
-          eventbus.trigger('suravageroadAddressProject:fetched', fetchedSuravageProjectLinks);
-        }
+        eventbus.trigger('roadAddressProject:fetched');
         eventbus.trigger('roadAddressProject:writeProjectErrors');
       });
     };
@@ -317,7 +307,7 @@
           var roadPartLinks = self.getProjectLink(_.map(roadPartIds, function (road) {
             return road;
           }));
-          var startAddrFromChangedLinks = _.min(_.map(roadPartLinks, function (link) {
+          var startAddrFromChangedLinks = _.minBy(_.map(roadPartLinks, function (link) {
             return link.getData().startAddressM;
           }));
           var userDiffFromChangedLinks = userEndAddr - startAddrFromChangedLinks;
@@ -338,13 +328,13 @@
       var newLinks = newAndOtherLinks[0];
       var otherLinks = newAndOtherLinks[1];
 
-      var linkIds = _.unique(_.map(newLinks, function (t) {
+      var linkIds = _.uniq(_.map(newLinks, function (t) {
         if (!_.isUndefined(t.linkId)) {
           return t.linkId;
         } else return 0;
       }));
 
-      var ids = _.unique(_.map(otherLinks, function (t) {
+      var ids = _.uniq(_.map(otherLinks, function (t) {
         if (!_.isUndefined(t.id)) {
           return t.id;
         } else return 0;
@@ -369,7 +359,7 @@
         trackCode: Number(roadAddressProjectForm.find('#trackCodeDropdown')[0].value),
         discontinuity: Number(roadAddressProjectForm.find('#discontinuityDropdown')[0].value),
         roadEly: Number(roadAddressProjectForm.find('#ely')[0].value),
-        roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
+        roadLinkSource: Number(_.head(changedLinks).roadLinkSource),
         roadType: Number(roadAddressProjectForm.find('#roadTypeDropdown')[0].value),
         userDefinedEndAddressM: endDistance !== undefined ? (!isNaN(Number(endDistance.value)) ? Number(endDistance.value) : null) : null,
         coordinates: coordinates,
@@ -386,7 +376,7 @@
       }).last().value();
       var isNewRoad = changedLink.status === LinkStatus.New.value;
 
-      var validUserEndAddress = !validUserGivenAddrMValues(_.first(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM);
+      var validUserEndAddress = !validUserGivenAddrMValues(_.head(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM);
       if (isNewRoad && (editedEndDistance || editedBeginDistance) && validUserEndAddress) {
         new GenericConfirmPopup("Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
           successCallback: function () {
@@ -400,118 +390,6 @@
       } else {
         createOrUpdate(dataJson);
       }
-    };
-
-    this.preSplitProjectLinks = function (suravage, nearestPoint) {
-      applicationModel.addSpinner();
-      var linkId = suravage.linkId;
-      var projectId = projectInfo.id;
-      var coordinates = applicationModel.getUserGeoLocation();
-      var dataJson = {
-        splitPoint: {
-          x: nearestPoint.x,
-          y: nearestPoint.y
-        },
-        statusA: LinkStatus.Transfer.value,
-        statusB: LinkStatus.New.value,
-        roadNumber: suravage.roadNumber,
-        roadPartNumber: suravage.roadPartNumber,
-        trackCode: suravage.trackCode,
-        discontinuity: suravage.discontinuity,
-        ely: suravage.elyCode,
-        roadLinkSource: suravage.roadLinkSource,
-        roadType: suravage.roadTypeId,
-        projectId: projectId,
-        coordinates: coordinates
-      };
-      backend.getPreSplitedData(dataJson, linkId, function (successObject) {
-        if (!successObject.success) {
-          new ModalConfirm(successObject.errorMessage);
-          applicationModel.removeSpinner();
-        } else {
-          eventbus.trigger('projectLink:preSplitSuccess', successObject.response);
-        }
-      }, function (failureObject) {
-        eventbus.trigger('roadAddress:projectLinksUpdateFailed', INTERNAL_SERVER_ERROR_500);
-      });
-
-    };
-
-    this.getCutLine = function (linkId, splitPoint) {
-      applicationModel.addSpinner();
-      var dataJson = {
-        linkId: linkId,
-        splitedPoint: {
-          x: splitPoint.x,
-          y: splitPoint.y
-        }
-      };
-      backend.getCutLine(dataJson, function (successObject) {
-        if (!successObject.success) {
-          new ModalConfirm(successObject.errorMessage);
-          applicationModel.removeSpinner();
-        } else {
-          eventbus.trigger('split:splitCutLine', successObject.response);
-        }
-      }, function (failureObject) {
-        eventbus.trigger('roadAddress:projectLinksUpdateFailed', BAD_REQUEST_400);
-      });
-
-    };
-
-    this.saveCutProjectLinks = function (changedLinks, statusA, statusB) {
-      if (_.isUndefined(statusB)) {
-        statusB = LinkStatus.New.description;
-      }
-      if (_.isUndefined(statusA)) {
-        statusA = LinkStatus.Transfer.description;
-      }
-      var linkId = Math.abs(changedLinks[0].linkId);
-
-      var projectId = projectInfo.id;
-      var form = $('#roadAddressProjectFormCut');
-      var coordinates = applicationModel.getUserGeoLocation();
-      var objectA = _.find(LinkStatus, function (obj) {
-        return obj.description === statusA;
-      });
-      var objectB = _.find(LinkStatus, function (obj) {
-        return obj.description === statusB;
-      });
-      var dataJson = {
-        splitPoint: {
-          x: Number(form.find('#splitx')[0].value),
-          y: Number(form.find('#splity')[0].value)
-        },
-        statusA: objectA.value,
-        statusB: objectB.value,
-        roadNumber: Number(form.find('#tie')[0].value),
-        roadPartNumber: Number(form.find('#osa')[0].value),
-        trackCode: Number(form.find('#trackCodeDropdown')[0].value),
-        discontinuity: Number(form.find('#discontinuityDropdown')[0].value),
-        ely: Number(form.find('#ely')[0].value),
-        roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
-        roadType: Number(form.find('#roadTypeDropdown')[0].value),
-        projectId: projectId,
-        coordinates: coordinates
-      };
-
-      if (dataJson.trackCode === Track.Unknown.value) {
-        new ModalConfirm("Tarkista ajoratakoodi");
-      }
-
-      applicationModel.addSpinner();
-      backend.saveProjectLinkSplit(dataJson, linkId, function (successObject) {
-        if (successObject.success) {
-          me.setProjectErrors(successObject.projectErrors);
-          eventbus.trigger('projectLink:projectLinksSplitSuccess');
-          eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
-        } else {
-          new ModalConfirm(successObject.reason);
-        }
-      }, function (failureObject) {
-        new ModalConfirm(failureObject.reason);
-      });
-      applicationModel.removeSpinner();
     };
 
     this.createProject = function (data, resolution) {
@@ -697,7 +575,7 @@
     };
 
     this.getRoadAddressesFromFormedRoadPart = function (roadNumber, roadPartNumber) {
-      return _.pluck(_.filter(formedParts, function (part) {
+      return _.map(_.filter(formedParts, function (part) {
         return part.roadNumber.toString() === roadNumber && part.roadPartNumber.toString() === roadPartNumber;
       }), "roadAddresses");
     };
@@ -726,7 +604,7 @@
           error.linkIds = error.ids;
         }
         _.each(projectLinks(), function (pl) {
-          if (_.contains(errorIds, pl.getData().id)) {
+          if (_.includes(errorIds, pl.getData().id)) {
             error.linkIds.push(pl.getData().linkId);
           }
         });
@@ -756,7 +634,7 @@
 
     function arrayIntersection(a, b, areEqualFunction) {
       return _.filter(a, function (aElem) {
-        return _.any(b, function (bElem) {
+        return _.some(b, function (bElem) {
           return areEqualFunction(aElem, bElem);
         });
       });

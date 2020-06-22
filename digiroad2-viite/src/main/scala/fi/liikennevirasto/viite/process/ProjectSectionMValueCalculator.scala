@@ -48,12 +48,16 @@ object ProjectSectionMValueCalculator {
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
     val newAddressValues = seq.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
       val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
-      val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + pl.geometryLength * coEff
-      pl.status match {
-        case LinkStatus.New => addressValue
-        case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Terminated => m + pl.addrMLength
-        case LinkStatus.UnChanged | LinkStatus.Numbering => pl.endAddrMValue
-        case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
+      if(!pl.isSplit){
+        val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + pl.geometryLength * coEff
+        pl.status match {
+          case LinkStatus.New => addressValue
+          case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + pl.addrMLength
+          case LinkStatus.Terminated => pl.endAddrMValue
+          case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
+        }
+      } else {
+        pl.endAddrMValue
       }
     }
     seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) =>
