@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
+import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import org.flywaydb.core.Flyway
 
 object DatabaseMigration {
 
@@ -10,20 +10,19 @@ object DatabaseMigration {
   }
 
   def migrate: Unit = {
-    val configuration = Flyway.configure.
-      dataSource(ds).
-      locations("db.migration")
-    val flyway = new Flyway(configuration)
+    val flyway = new Flyway()
+    flyway.setDataSource(ds)
+    flyway.setLocations("db.migration")
     flyway.migrate()
   }
 
   def flywayInit {
-    new Flyway(Flyway.configure().
-      dataSource(ds).
-      baselineVersion("-1").
-      baselineOnMigrate(true).
-      locations("db.migration")).
-      baseline()
+    val flyway = new Flyway()
+    flyway.setDataSource(ds)
+    flyway.setInitVersion("-1")
+    flyway.setInitOnMigrate(true)
+    flyway.setLocations("db.migration")
+    flyway.init()
   }
 
 }

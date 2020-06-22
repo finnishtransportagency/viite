@@ -269,7 +269,7 @@ class DataImporter {
   def updateLinearLocationGeometry(): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
-    updateLinearLocationGeometry(vvhClient)
+    updateLinearLocationGeometry(vvhClient, geometryFrozen)
     println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
   }

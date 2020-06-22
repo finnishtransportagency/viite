@@ -85,7 +85,7 @@ object Digiroad2Build extends Build {
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.mockito" % "mockito-core" % MockitoCoreVersion % "test",
-        "com.googlecode.flyway" % "flyway-core" % "2.3.1" % "test",
+        "com.googlecode.flyway" % "flyway-core" % "2.3.1",
 
         // TODO Remove
         "com.oracle" % "ojdbc6" % "11.2.0.3.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.jar",
