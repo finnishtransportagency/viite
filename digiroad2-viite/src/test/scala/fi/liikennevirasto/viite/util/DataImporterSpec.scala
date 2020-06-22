@@ -34,7 +34,6 @@ class DataImporterSpec extends FunSuite with Matchers {
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
-  val mockVVHSuravageClient = MockitoSugar.mock[VVHSuravageClient]
   val mockVVHHistoryClient = MockitoSugar.mock[VVHHistoryClient]
   val mockVVHFrozenTimeRoadLinkClient = MockitoSugar.mock[VVHFrozenTimeRoadLinkClientServicePoint]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -76,16 +75,14 @@ class DataImporterSpec extends FunSuite with Matchers {
   )
   when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockVVHClient.suravageData).thenReturn(mockVVHSuravageClient)
   when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
   when(mockVVHClient.frozenTimeRoadLinkData)thenReturn mockVVHFrozenTimeRoadLinkClient
   when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
   when(mockVVHComplementaryClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
   when(mockVVHFrozenTimeRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
-  when(mockVVHSuravageClient.fetchSuravageByLinkIds(any[Set[Long]])).thenReturn(Seq())
   when(mockVVHHistoryClient.fetchVVHRoadLinkByLinkIds(any[Set[Long]])).thenReturn(Seq())
 
-  val importOptions = ImportOptions(onlyComplementaryLinks = false, useFrozenLinkService = false, 1510790400000L, "MOCK_CONVERSION", onlyCurrentRoads = false)
+  val importOptions = ImportOptions(onlyComplementaryLinks = false, useFrozenLinkService = false, "MOCK_CONVERSION", onlyCurrentRoads = false)
 
   val roadAddressImporter = new RoadAddressImporter(null, mockVVHClient, importOptions) {
     override def fetchChunkRoadwayNumbersFromConversionTable(): Seq[(Long, Long)] = {
@@ -101,13 +98,22 @@ class DataImporterSpec extends FunSuite with Matchers {
 
   val dataImporter = new DataImporter {
     override def withDynTransaction(f: => Unit): Unit = f
+
     override def withDynSession[T](f: => T): T = f
+
     override def getRoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient, importOptions: ImportOptions) = {
       roadAddressImporter
     }
+
     override def disableRoadwayTriggers: Unit = {}
+
     override def enableRoadwayTriggers: Unit = {}
+
     override def roadwayResetter(): Unit = {}
+
+    override def resetRoadAddressSequences(): Unit = {}
+
+    override def resetNodesAndJunctionSequences(): Unit = {}
   }
 
   test("Test importRoadAddressData When importing addresses Then they are saved in database") {
@@ -179,12 +185,12 @@ class DataImporterSpec extends FunSuite with Matchers {
       linearLocation1.endMValue should be(73.448 +- 0.001)
       linearLocation2.endMValue should be(64.138 +- 0.001)
       linearLocation3.endMValue should be(120.0 +- 0.001)
-      linearLocation1.startCalibrationPoint.get should be(756)
-      linearLocation1.endCalibrationPoint should be(None)
-      linearLocation2.startCalibrationPoint should be(None)
-      linearLocation2.endCalibrationPoint should be(None)
-      linearLocation3.startCalibrationPoint should be(None)
-      linearLocation3.endCalibrationPoint.get should be(810)
+      linearLocation1.startCalibrationPoint.addrM.get should be(756)
+      linearLocation1.endCalibrationPoint should be(CalibrationPointReference(None, None))
+      linearLocation2.startCalibrationPoint should be(CalibrationPointReference(None, None))
+      linearLocation2.endCalibrationPoint should be(CalibrationPointReference(None, None))
+      linearLocation3.startCalibrationPoint should be(CalibrationPointReference(None, None))
+      linearLocation3.endCalibrationPoint.addrM.get should be(810)
 
     }
     withDynSession {

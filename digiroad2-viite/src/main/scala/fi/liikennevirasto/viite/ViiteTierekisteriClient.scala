@@ -216,9 +216,12 @@ object ViiteTierekisteriClient {
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode >= 500) {
+      if (statusCode == 500){
+        val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
+        ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
+      } else if (statusCode > 500) {
         logger.info(scala.io.Source.fromInputStream(response.getEntity.getContent).getLines().mkString("\n"))
-        throw new RuntimeException("Unable to submit: Tierekisteri error 500")
+        throw new RuntimeException("Unable to submit: Tierekisteri error > 500")
       } else {
         val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
         ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
@@ -269,7 +272,7 @@ object ViiteTierekisteriClient {
 
     val response = client.execute(request)
     try {
-      val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRStatusResponse]
+      val receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRStatusResponse]
       Option(receivedData)
     } catch {
       case NonFatal(e) =>

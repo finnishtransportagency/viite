@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.joda.time.format.DateTimeFormat
@@ -230,7 +230,6 @@ class VVHClient(vvhRestApiEndPoint: String) {
   lazy val roadLinkChangeInfo: VVHChangeInfoClient = new VVHChangeInfoClient(vvhRestApiEndPoint)
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
-  lazy val suravageData: VVHSuravageClient = new VVHSuravageClient(vvhRestApiEndPoint)
 
   def fetchRoadLinkByLinkId(linkId: Long): Option[VVHRoadlink] = {
     roadLinkData.fetchByLinkId(linkId) match {
@@ -323,8 +322,8 @@ trait VVHClientOperations {
   }
 
   protected def queryParameters(fetchGeometry: Boolean = true): String = {
-    if (fetchGeometry && !disableGeometry) "returnGeometry=true&returnZ=true&returnM=true&geometryPrecision=3&f=pjson"
-    else "returnGeometry=false&f=pjson"
+    if (fetchGeometry && !disableGeometry) "returnGeometry=true&returnZ=true&returnM=true&geometryPrecision=3&f=json"
+    else "returnGeometry=false&f=json"
   }
 
   protected def serviceUrl: String = restApiEndPoint + serviceName + "/FeatureServer/query"
@@ -358,21 +357,23 @@ trait VVHClientOperations {
 
   protected def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
     time(logger, s"Fetch VVH features with url '$url'") {
+      val request = new HttpGet(url)
+      val client = HttpClientBuilder.create().build()
+      var response: CloseableHttpResponse = null
       try {
-        val request = new HttpGet(url)
-        val client = HttpClientBuilder.create().build()
-        val response = client.execute(request)
-        try {
-          mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
-        } finally {
+        response = client.execute(request)
+        mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+      } catch {
+        case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
+      } finally {
+        if (response != null) {
           response.close()
           if (response.getStatusLine.getStatusCode >= 300) {
-           return Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+            return Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
           }
+        } else {
+          return Right(VVHError(Map(("VVH FETCH failure", "VVH response was null.")), url))
         }
-      } catch {
-        case e: IOException => Right(VVHError(Map(("VVH FETCH failure", s"IO Exception during VVH fetch. Check connection to VVH. Error message: ${e.getMessage}")), url))
-        case e: Exception => Right(VVHError(Map(("VVH FETCH failure", s"Exception during VVH fetch. Error message: ${e.getMessage}")), url))
       }
     }
   }
@@ -492,6 +493,7 @@ trait VVHClientOperations {
 
 class VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
   protected override val serviceName = "Roadlink_temp"
+  protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.FrozenLinkInterface
   protected override val disableGeometry = false
 }
 
@@ -505,7 +507,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
   protected override val disableGeometry = false
 
   protected override def defaultOutFields(): String = {
-    "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE,GEOMETRYLENGTH"
+    "MTKID,LINKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,GEOMETRYLENGTH"
   }
 
   protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
@@ -646,33 +648,20 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
       Set(
         "MTKID",
         "MTKCLASS",
-        "HORIZONTALACCURACY",
-        "VERTICALACCURACY",
-        "VERTICALLEVEL",
         "CONSTRUCTIONTYPE", //TODO Remove this attribute from here when VVHHistoryRoadLink have a different way to get the ConstructionType like VVHRoadlink
         "ROADNAME_FI",
         "ROADNAME_SM",
         "ROADNAME_SE",
         "ROADNUMBER",
         "ROADPARTNUMBER",
-        "FROM_LEFT",
-        "TO_LEFT",
-        "FROM_RIGHT",
-        "TO_RIGHT",
         "MUNICIPALITYCODE",
-        "MTKHEREFLIP",
         "VALIDFROM",
         "GEOMETRY_EDITED_DATE",
-        "END_DATE",
-        "LINKID_NEW",
         "CREATED_DATE",
         "LAST_EDITED_DATE",
-        "SURFACETYPE",
         "SUBTYPE",
-        "END_DATE",
-        "OBJECTID",
-        "TRACK_CODE", //used only with suravage in viite
-        "CUST_OWNER").contains(x)
+        "TRACK_CODE" // Used only with suravage and complementary in Viite
+      ).contains(x)
     }.filter { case (_, value) =>
       value != null
     }
@@ -928,7 +917,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
   protected override val disableGeometry = false
 
   override def defaultOutFields(): String = {
-    "MTKID,LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,CUST_OWNER,GEOMETRYLENGTH"
+    "MTKID,LINKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SUBTYPE,CONSTRUCTIONTYPE,GEOMETRYLENGTH,TRACK_CODE"
   }
 
   private def createFormParams(complementaryFeatures: Map[String, Any]): util.ArrayList[NameValuePair] = {
@@ -940,7 +929,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
     nvps.add(new BasicNameValuePair("features", featuresValue))
     nvps.add(new BasicNameValuePair("gdbVersion", ""))
     nvps.add(new BasicNameValuePair("rollbackOnFailure", "true"))
-    nvps.add(new BasicNameValuePair("f", "pjson"))
+    nvps.add(new BasicNameValuePair("f", "json"))
 
     nvps
   }
@@ -1002,7 +991,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
   protected override val disableGeometry = false
 
   protected override def defaultOutFields(): String = {
-    "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,SURFACETYPE,END_DATE,LINKID_NEW,OBJECTID,CREATED_DATE,CONSTRUCTIONTYPE,GEOMETRYLENGTH"
+    "MTKID,LINKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,END_DATE,CREATED_DATE,CONSTRUCTIONTYPE,GEOMETRYLENGTH"
   }
 
   protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
@@ -1067,33 +1056,5 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
 
   def fetchVVHRoadLinkByLinkIdsF(linkIds: Set[Long] = Set()): Future[Seq[VVHHistoryRoadLink]] = {
     Future(fetchVVHRoadLinkByLinkIds(linkIds))
-  }
-}
-
-class VVHSuravageClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
-
-  protected override val restApiEndPoint: String = vvhRestApiEndPoint
-  protected override val serviceName = "Roadlink_suravage"
-  protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.SuravageLinkInterface
-  protected override val disableGeometry = false
-
-  override def defaultOutFields(): String = {
-    "LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,CUST_OWNER,GEOMETRYLENGTH,TRACK_CODE"
-  }
-
-  def fetchSuravageByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, municipalities, None))
-  }
-
-  def fetchSuravageByLinkIdsF(linkIds: Set[Long] = Set()): Future[Seq[VVHRoadlink]] = {
-    Future(fetchSuravageByLinkIds(linkIds))
-  }
-
-  def fetchSuravageByLinkIds(linkIds: Set[Long] = Set()): Seq[VVHRoadlink] = {
-    queryByLinkIds(linkIds, None, fetchGeometry = true, extractRoadLinkFeature, withLinkIdFilter)
-  }
-
-  def fetchSuravageByMunicipality(municipality: Int): Future[Seq[VVHRoadlink]] = {
-    Future(queryByMunicipality(municipality))
   }
 }

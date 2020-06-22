@@ -33,12 +33,19 @@ object LinkDAO {
 
   }
 
-  def createIfEmptyFetch(id: Long): Unit = {
+  def createIfEmptyFetch(id: Long, adjustedTimestamp: Long, source: Long): Unit = {
     if (fetch(id).isEmpty) {
       sqlu"""
-        INSERT INTO LINK (ID) values ($id)
+        INSERT INTO LINK (id, source, adjusted_timestamp) values ($id, $source, $adjustedTimestamp)
       """.execute
     }
+  }
+
+  def fetchMaxAdjustedTimestamp(): Long = {
+    sql"""
+      SELECT max(adjusted_timestamp) FROM link WHERE SOURCE IN (1, 4)
+    """.as[Long].first
+
   }
 
 

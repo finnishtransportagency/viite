@@ -21,22 +21,21 @@
       },
 
       routes: {
-        'linkProperty/:linkId': 'linkProperty',
-        'linkProperty/mml/:mmlId': 'linkPropertyByMml',
-        'roadAddressProject/:projectId': 'roadAddressProject',
-        'historyLayer/:date': 'historyLayer',
+        'linkProperty/:linkId'          : 'linkProperty',
+        'linkProperty/mml/:mmlId'       : 'linkPropertyByMml',
+        'linkProperty/mtkid/:mtkid'     : 'linkPropertyByMtk',
+        'roadAddressProject/:projectId' : 'roadAddressProject',
+        'historyLayer/:date'            : 'historyLayer',
         'work-list/floatingRoadAddress' : 'floatingAddressesList',
-        'work-list/roadAddressErrors' : 'roadAddressErrorsList'
+        'work-list/roadAddressErrors'   : 'roadAddressErrorsList',
+        'node/nodePointTemplate/:id'    : 'nodePointTemplate',
+        'node/junctionTemplate/:id'     : 'junctionTemplate'
       },
 
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
         backend.getRoadAddressByLinkId(linkId, function (response) {
           if (response.success) {
-            eventbus.once('roadLinks:afterDraw', function () {
-              models.selectedLinkProperty.open(response.linkId, response.id, true);
-              eventbus.trigger('linkProperties:reselect');
-            });
               map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
               map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
           } else {
@@ -56,9 +55,19 @@
         });
       },
 
+      linkPropertyByMtk: function (mtkid) {
+        applicationModel.selectLayer('linkProperty');
+        backend.getRoadLinkByMtkId(mtkid, function (response) {
+          eventbus.once('linkProperties:available', function () {
+            models.selectedLinkProperty.open(response.id);
+          });
+          map.getView().setCenter([response.x, response.y]);
+          map.getView().setZoom(12);
+      });
+    },
       roadAddressProject: function (projectId) {
         applicationModel.selectLayer('roadAddressProject');
-        eventbus.trigger('suravageProjectRoads:toggleVisibility', false);
+        eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
         var parsedProjectId = parseInt(projectId);
         eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
       },
@@ -66,11 +75,11 @@
       historyLayer: function (date) {
         applicationModel.selectLayer('linkProperty');
         var dateSeparated = date.split('-');
-        eventbus.trigger('suravageProjectRoads:toggleVisibility', false);
-        eventbus.trigger('suravageRoads:toggleVisibility', false);
-        $('.suravage-visible-wrapper').hide();
+        eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
+        eventbus.trigger('underConstructionRoads:toggleVisibility', false);
+        $('.underconstruction-visible-wrapper').hide();
         $('#toggleEditMode').hide();
-        $('#emptyFormDiv,#projectListButton').hide();
+        $('#emptyFormDiv,#formProjectButton').hide();
         eventbus.trigger('linkProperty:fetchHistoryLinks', dateSeparated);
       },
 
@@ -80,6 +89,14 @@
 
       roadAddressErrorsList: function () {
         eventbus.trigger('workList-errors:select', 'linkProperty', backend.getRoadAddressErrors());
+      },
+
+      nodePointTemplate: function (nodePointTemplateId) {
+        eventbus.trigger('nodeSearchTool:clickNodePointTemplate', nodePointTemplateId);
+      },
+
+      junctionTemplate: function (junctionTemplateId) {
+        eventbus.trigger('nodeSearchTool:clickJunctionTemplate', junctionTemplateId);
       }
     });
 
@@ -103,7 +120,7 @@
     eventbus.on('linkProperties:selected', function (linkProperty) {
       if (!_.isEmpty(models.selectedLinkProperty.get())) {
         if (_.isArray(linkProperty)) {
-          router.navigate('linkProperty/' + _.first(linkProperty).linkId);
+          router.navigate('linkProperty/' + _.head(linkProperty).linkId);
         } else {
           router.navigate('linkProperty/' + linkProperty.linkId);
         }
@@ -131,6 +148,10 @@
           applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), newCenter);
         }
       }
+    });
+
+    eventbus.on('nodePointTemplate:open', function (nodePointTemplateId) {
+      router.navigate('nodePointTemplate/' + nodePointTemplateId);
     });
 
     eventbus.on('layer:selected', function (layer) {

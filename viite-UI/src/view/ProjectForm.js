@@ -173,15 +173,15 @@
 
     var addSmallInputNumber = function (id, value, maxLength) {
       //Validate only number characters on "onkeypress" including TAB and backspace
-      var smallNumberImput = '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
+      var smallNumberInput = '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
         '" class="form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value ) + '"' +
         (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
-      return smallNumberImput;
+      return smallNumberInput;
     };
 
     var addDatePicker = function () {
       var $validFrom = $('#alkupvm');
-      dateutil.addSingleDependentDatePicker($validFrom);
+      dateutil.addSingleDatePicker($validFrom);
     };
 
     var formIsInvalid = function (rootElement) {
@@ -210,10 +210,24 @@
       };
 
       var removeRenumberedPart = function (roadNumber, roadPartNumber) {
+        /* All rows do not have roadAddresses record, so return value for this filter should handle that
+         situation, so always return boolean, otherwise projectCollection.getFormedParts() will be cleared
+
+         There is no way to stop or break a forEach() loop other than by throwing an exception. If you need such
+         behavior, the forEach() method is the wrong tool
+         developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
+         */
         projectCollection.setFormedParts(_.filter(projectCollection.getFormedParts(), function (part) {
-          return _.filter(part.roadAddresses, function (ra) {
-            return (ra.roadAddressNumber === roadNumber && ra.roadAddressPartNumber === roadPartNumber) && !ra.isNumbering;
-          }).length > 0;
+          var reNumberedPart = false;
+          for (var i = 0; i < part.roadAddresses.length; ++i) {
+            var ra = part.roadAddresses[i];
+            reNumberedPart = (ra.roadAddressNumber.toString() === roadNumber.toString() &&
+                ra.roadAddressPartNumber.toString() === roadPartNumber.toString()) && ra.isNumbering;
+            if (reNumberedPart) {
+              break;
+            }
+          }
+          return !reNumberedPart;
         }));
       };
 
@@ -422,7 +436,6 @@
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
         activeLayer = true;
-        eventbus.trigger('roadAddressProject:clearTool');
         disableFormInputs();
         applicationModel.removeSpinner();
       });
@@ -441,7 +454,7 @@
       });
 
       eventbus.on('layer:selected', function (layer) {
-        activeLayer = layer === 'linkPropertyLayer';
+        activeLayer = layer === 'linkProperty';
       });
 
       eventbus.on('roadAddress:projectFailed', function () {
@@ -458,7 +471,7 @@
       });
 
       rootElement.on('click', '#editProjectSpan', currentProject, function () {
-        applicationModel.setSelectedTool("Select");
+        applicationModel.setSelectedTool(LinkValues.Tool.Default.value);
         applicationModel.addSpinner();
         eventbus.trigger('projectChangeTable:hide');
         projectCollection.getProjectsWithLinksById(currentProject.id).then(function (result) {
@@ -498,7 +511,7 @@
 
       var isProjectEditable = function () {
         return _.isUndefined(projectCollection.getCurrentProject()) ||
-          _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
+          _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
       };
 
       rootElement.on('click', '#generalNext', function () {
@@ -516,7 +529,7 @@
           nextStage();
         }
         if (!isProjectEditable()) {
-          $('.btn-edit-project').prop('disabled', true);
+          $('.btn-pencil-edit').prop('disabled', true);
         }
       });
 

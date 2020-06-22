@@ -3,7 +3,6 @@
     var className = 'road-link';
     var title = 'Selite';
     var selectToolIcon = '<img src="images/select-tool.svg"/>';
-    var cutToolIcon = '<img src="images/cut-tool.svg"/>';
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
@@ -13,31 +12,26 @@
     var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
     var calibrationPointPicture = $('' +
       '<div class="legend-entry">' +
-      '<div class="label">Etäisyyslukema</div>' +
-      '</div>' +
-      '<div class="calibration-point-image"></div>');
+      '    <div class="label">Tieosan alku</div>' +
+      '    <div class="calibration-point-image"></div>' +
+      '</div>');
 
     var junctionPicture = $('' +
       '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
       '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px; margin-top: 5px">\n' +
-      '    <param name="number" value="99"/>\n' +
       '</object>' +
       '<div class="label">Liittymä</div>' +
       '</div>');
 
     var junctionTemplatePicture = $('' +
       '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-      '<object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 5px; margin-top: 5px">\n' +
-      '    <param name="number" value="99"/>\n' +
-      '</object>' +
+      '<object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 5px; margin-top: 5px"></object>' +
       '<div class="label">Liittymäaihio</div>' +
       '</div>');
 
     var nodeTemplatePicture = $('' +
       '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-      '<object type="image/svg+xml" data="images/node-template.svg" style="margin-right: 5px; margin-top: 5px">\n' +
-      '    <param name="number" value="99"/>\n' +
-      '</object>' +
+      '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin-right: 5px; margin-top: 5px"></object>' +
       '<div class="label">Solmukohta-aihio</div>' +
       '</div>');
 
@@ -55,6 +49,7 @@
       [98, 'Tietyyppi kunnan katuosuus tai yks.tie'],
       [99,'Tuntematon']
     ];
+
     var constructionTypes = [
       [0, 'Muu tieverkko, rakenteilla'],
       [1, 'Tuntematon, rakenteilla']
@@ -68,7 +63,6 @@
         [7, 'Maantien/kadun raja'],
         [8, 'ELY-raja'],
         [10, 'Moniajoratainen liittymä'],
-        [11,'Pisaraliittymä'],
         [12, 'Liityntätie'],
         [13,'Tien loppu'],
         [14,'Silta'],
@@ -135,10 +129,10 @@
         '<div class="legend-entry">' +
         '<div class="label">Käsittelemätön</div>' +
         '<div class="symbol linear operation-type-unhandeled" />' +
-        '<div class="label">Suravage-linkit</div>' +
-        '<div class="symbol linear operation-type-suravage" />' +
         '<div class="label">Muu tieverkko, rakenteilla</div>' +
         '<div class="symbol linear construction-type-0" />' +
+          '<div class="label">Tuntematon, rakenteilla</div>' +
+          '<div class="symbol linear construction-type-1" />' +
         '</div>';
     };
 
@@ -146,13 +140,14 @@
     roadClassLegend.append(constructionTypeLegendEntries);
     roadClassLegend.append(calibrationPointPicture);
 
-    var Tool = function(toolName, icon) {
+    var Tool = function(toolName, icon, description) {
       var className = toolName.toLowerCase();
       var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).on('click', function() {
         executeOrShowConfirmDialog(function() {
           applicationModel.setSelectedTool(toolName);
         });
       });
+
       var deactivate = function() {
         element.removeClass('active');
       };
@@ -172,7 +167,8 @@
         element: element,
         deactivate: deactivate,
         activate: activate,
-        name: toolName
+        name: toolName,
+        description: description
       };
     };
 
@@ -180,31 +176,31 @@
       var element = $('<div class="panel-section panel-actions" />');
       _.each(tools, function(tool) {
         element.append(tool.element);
+        element.append('<div>' + tool.description + '</div>');
       });
-      var hide = function() {
-        element.hide();
-      };
-      var show = function() {
-        element.show();
-      };
-      var deactivateAll = function() {
+
+      var hide = function() { element.hide(); };
+      var show = function() { element.show(); };
+
+      eventbus.on('tool:changed', function(name) {
+        _.each(tools, function(tool) {
+          if (applicationModel.isSelectedTool(tool.name)) {
+            tool.activate();
+          } else {
+            tool.deactivate();
+          }
+        });
+      });
+
+      eventbus.on('tool:clear', function () {
+        reset();
+      });
+
+      var reset = function() {
         _.each(tools, function(tool) {
           tool.deactivate();
         });
       };
-      var reset = function() {
-        deactivateAll();
-        tools[0].activate();
-      };
-      eventbus.on('tool:changed', function(name) {
-        _.each(tools, function(tool) {
-          if (tool.name != name) {
-            tool.deactivate();
-          } else {
-            tool.activate();
-          }
-        });
-      });
 
       hide();
 
@@ -216,14 +212,9 @@
       };
     };
 
-    var toolSelection = new ToolSelection([
-      new Tool('Select', selectToolIcon),
-      new Tool('Cut', cutToolIcon)
+    var nodeToolSelection = new ToolSelection([
+      new Tool(LinkValues.Tool.Select.value, selectToolIcon, LinkValues.Tool.Select.description)
     ]);
-
-    var editModeToggle = new EditModeToggleButton(
-      toolSelection
-    );
 
     var templateAttributes = {
       className: className,
@@ -236,26 +227,12 @@
 
     var bindExternalEventHandlers = function() {
       eventbus.on('userData:fetched', function (userData) {
-        if (_.contains(userData.roles, 'viite')) {
-          elements.expanded.append(editModeToggle.element);
-          $('#projectListButton').removeAttr('style');
+        if (_.includes(userData.roles, 'viite')) {
+          $('#formProjectButton').removeAttr('style');
+          elements.expanded.append(nodeToolSelection.element);
         }
       });
     };
-
-    eventbus.on('editMode:setReadOnly', function(mode) {
-      editModeToggle.toggleEditMode(mode);
-      elements.expanded.append(toolSelection.element);
-    });
-
-    eventbus.on('application:readOnly', function() {
-      if(applicationModel.getSelectedLayer() != "linkProperty")
-      elements.expanded.append(toolSelection.element);
-    });
-
-    eventbus.on('roadAddressProject:clearTool', function(){
-      toolSelection.hide();
-    });
 
     eventbus.on('layer:selected', toggleLegends);
 
@@ -273,7 +250,6 @@
     var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
 
     function show() {
-      editModeToggle.toggleEditMode(applicationModel.isReadOnly());
       element.show();
     }
 
@@ -287,6 +263,7 @@
         container.empty();
         container.append(roadProjectOperations());
         container.append(calibrationPointPicture);
+        nodeToolSelection.hide();
       }
       else if(applicationModel.getSelectedLayer() === "node"){
         container.empty();
@@ -294,12 +271,14 @@
         roadClassLegend.append(junctionPicture);
         roadClassLegend.append(junctionTemplatePicture);
         roadClassLegend.append(nodeTemplatePicture);
+        nodeToolSelection.reset();
+        nodeToolSelection.show();
       } else {
-        $('.panel-actions').hide();
         container.empty();
         roadClassLegend.append(roadClassLegendEntries);
         roadClassLegend.append(constructionTypeLegendEntries);
         roadClassLegend.append(calibrationPointPicture);
+        nodeToolSelection.hide();
       }
     }
 

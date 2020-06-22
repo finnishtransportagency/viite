@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
-import fi.liikennevirasto.viite.{ChangedRoadAddress, RoadAddressService}
+import fi.liikennevirasto.viite.{ChangedRoadAddress, NodesAndJunctionsService, RoadAddressService}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
@@ -12,7 +12,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import org.scalatra.swagger._
 
 
-class ChangeApi(roadAddressService: RoadAddressService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport  {
+class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService: NodesAndJunctionsService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport  {
   val logger: Logger = LoggerFactory.getLogger(getClass)
   val DateTimePropertyFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 
@@ -27,12 +27,11 @@ class ChangeApi(roadAddressService: RoadAddressService, implicit val swagger: Sw
   val roadNumberToGeoJson: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("roadNumberToGeoJson")
       .parameters(
-        queryParam[String]("since").description("Start date of the road addresses changes"),
-        queryParam[String]("until").description("End date of the road addresses changes")
+        queryParam[String]("since").description("Start date of the road addresses changes. Date in format ISO8601. For example 2020-04-29T13:59:59"),
+        queryParam[String]("until").description("End date of the road addresses changes. Date in format ISO8601")
       )
-      tags "ChangeAPI"
+      tags "ChangeAPI (TN-ITS)"
       summary "This will return all the changes found on the road addresses that are between the period defined by the \"since\" and  \"until\" parameters."
-      notes ""
   )
 
   get("/road_numbers", operation(roadNumberToGeoJson)) {

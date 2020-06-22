@@ -1,14 +1,17 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.asset.{ConstructionType, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.linearasset.GraphPartitioner
 
 object RoadAddressLinkPartitioner extends GraphPartitioner {
 
-  def partition[T <: RoadAddressLinkLike](links: Seq[T]): Seq[Seq[T]] = {
+  /*Homogeneous section: is the selectable sections user can made in the map road network.
+    When selecting one link on the map(through single click), we dont want to mix addressed with unaddressed roads, the same way we dont want to mix unaddressed underConstruction with unaddressed constructed roads.
+  */
+  def groupByHomogeneousSection[T <: RoadAddressLinkLike](links: Seq[T]): Seq[Seq[T]] = {
     val linkGroups = links.groupBy { link => (
-      link.anomaly.equals(Anomaly.NoAddressGiven), link.roadNumber, link.roadPartNumber, link.trackCode,
-      link.roadLinkSource.equals(LinkGeomSource.ComplementaryLinkInterface), link.roadLinkSource.equals(LinkGeomSource.SuravageLinkInterface)
+      link.anomaly.equals(Anomaly.NoAddressGiven), link.constructionType.equals(ConstructionType.UnderConstruction), link.roadNumber, link.roadPartNumber, link.trackCode,
+      link.roadLinkSource.equals(LinkGeomSource.ComplementaryLinkInterface)
       )
     }
 

@@ -20,7 +20,8 @@
     <text id="text"
           x="12"
           y="17"
-          style="font-size:14px;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;">
-        ?
+          style="font-size:14px;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;"
+          content-value="param(number)">
     </text>
+    <script type="text/ecmascript" href="param.js" />
 </svg>

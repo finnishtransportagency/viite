@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite._
 import org.slf4j.{Logger, LoggerFactory}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.jdbc.{StaticQuery => Q}
 
 //TODO naming SQL conventions
 
@@ -92,6 +92,17 @@ class ProjectReservedPartDAO {
         case (roadNumber, roadPartNumber, length, ely, discontinuityOpt, startingLinkId) =>
           val discontinuity = discontinuityOpt.map(Discontinuity.apply)
           ProjectReservedPart(noReservedPartId, roadNumber, roadPartNumber, length, discontinuity, ely, length, discontinuity, ely, startingLinkId)
+      }
+    }
+  }
+
+  def fetchProjectReservedRoadPartsByProjectId(projectId: Long): Seq[ProjectReservedPart] = {
+    time(logger, s"Fetch project reserved road parts for project: $projectId") {
+      val sql = s"""SELECT rp.id, rp.road_number, rp.road_part_number FROM PROJECT_RESERVED_ROAD_PART rp WHERE rp.project_id = $projectId"""
+      Q.queryNA[(Long, Long, Long)](sql).list.map {
+        case (id, road, part) =>
+          ProjectReservedPart(id, road, part, None, None, None, None,
+            None, None, None)
       }
     }
   }
@@ -185,7 +196,7 @@ class ProjectReservedPartDAO {
           PROJECT_LINK pl ON (pl.project_id = rp.project_id AND pl.road_number = rp.road_number AND
             pl.road_part_number = rp.road_part_number AND pl.status != ${LinkStatus.Terminated.value})
           LEFT JOIN Roadway ra ON (ra.Id = pl.Roadway_Id OR (ra.road_number = rp.road_number AND ra.road_part_number = rp.road_part_number AND RA.END_DATE IS NULL AND RA.VALID_TO IS NULL))
-          LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id)
+          LEFT JOIN Linear_Location lc ON (lc.Id = pl.Linear_location_id AND lc.valid_to IS NULL)
           WHERE $filter AND pl.status != ${LinkStatus.NotHandled.value}
           GROUP BY rp.id, rp.project_id, rp.ROAD_NUMBER, rp.ROAD_PART_NUMBER
           ) gr order by gr.road_number, gr.road_part_number"""
@@ -250,6 +261,7 @@ class ProjectReservedPartDAO {
             rw.roadway_number = lc.ROADWAY_NUMBER AND
             rw.road_Number = pl.road_number AND rw.road_part_number = pl.road_part_number AND rp.project_id = pl.project_id AND
             rp.road_number = pl.road_number AND rp.road_part_number = pl.road_part_number AND rw.END_DATE IS NULL AND rw.VALID_TO IS NULL AND
+            lc.valid_to IS NULL AND
             lc.id NOT IN (select pl2.linear_location_id from project_link pl2 WHERE pl2.road_number = rw.road_number AND pl2.road_part_number = rw.road_part_number)
             AND $filter AND pl.status = ${LinkStatus.NotHandled.value}
             GROUP BY rp.id, pl.project_id, rw.road_number, rw.road_part_number) gr ORDER BY gr.road_number, gr.road_part_number"""
@@ -383,21 +395,26 @@ class ProjectReservedPartDAO {
     time(logger, "Road part reserved by other project") {
       val filter = (withProjectId, projectId != 0) match {
         case (_, false) => ""
-        case (Some(inProject), true) => if(inProject) s" AND prj.ID = $projectId " else s" AND prj.ID != $projectId "
+        case (Some(inProject), true) => if (inProject) s" AND prj.ID = $projectId " else s" AND prj.ID != $projectId "
         case _ => ""
       }
 
       val query =
-        s"""SELECT prj.NAME FROM PROJECT prj
-            JOIN PROJECT_RESERVED_ROAD_PART res ON res.PROJECT_ID = prj.ID
-            WHERE res.road_number = $roadNumber AND res.road_part_number = $roadPart
-            AND prj.ID IN (
-            SELECT DISTINCT(link.PROJECT_ID) FROM PROJECT_LINK link
-            WHERE LINK_ID IN (
-            SELECT link.LINK_ID FROM LINEAR_LOCATION link
-            INNER JOIN ROADWAY road ON link.ROADWAY_NUMBER = road.ROADWAY_NUMBER
-            WHERE road.ROAD_NUMBER = $roadNumber
-            AND road.ROAD_PART_NUMBER = $roadPart)) $filter"""
+        s"""
+        SELECT prj.NAME FROM PROJECT prj
+        JOIN PROJECT_RESERVED_ROAD_PART res ON res.PROJECT_ID = prj.ID
+        WHERE res.road_number = $roadNumber AND res.road_part_number = $roadPart
+          AND prj.ID IN (
+            SELECT DISTINCT(pl.PROJECT_ID) FROM PROJECT_LINK pl
+            WHERE pl.LINK_ID IN (
+              SELECT ll.LINK_ID FROM LINEAR_LOCATION ll
+              INNER JOIN ROADWAY rw ON ll.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
+              WHERE rw.ROAD_NUMBER = $roadNumber
+              AND rw.ROAD_PART_NUMBER = $roadPart
+            )
+          )
+        $filter
+        """
       Q.queryNA[String](query).firstOption
     }
   }

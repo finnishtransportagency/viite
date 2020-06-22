@@ -9,17 +9,19 @@ object Queries {
 
   def nextViiteProjectId = sql"select nextval('viite_project_seq')"
 
+  def nextProjectLinkId = sql"select nextval('project_link_seq')"
+
   def nextViitePrimaryKeyId = sql"select nextval('viite_general_seq')"
 
   def nextRoadwayId = sql"select nextval('ROADWAY_SEQ')"
 
   def nextLinearLocationId = sql"select nextval('LINEAR_LOCATION_SEQ')"
 
+  def nextRoadNameId = sql"select nextval('ROAD_NAME_SEQ')"
+
   def nextRoadwayNumber = sql"select nextval('ROADWAY_NUMBER_SEQ')"
 
   def nextRoadNetworkErrorId = sql"select nextval('ROAD_NETWORK_ERROR_SEQ')"
-
-  def nextProjectId = sql"select nextval('viite_project_seq')"
 
   def nextRoadwayChangeLink = sql"select nextval('ROADWAY_CHANGE_LINK')"
 
@@ -33,20 +35,22 @@ object Queries {
 
   def nextNodeNumber = sql"select nextval('NODE_NUMBER_SEQ')"
 
-  def nextJunctionNumber = sql"select nextval('JUNCTION_NUMBER_SEQ')"
-
   def nextNodePointId = sql"select nextval('NODE_POINT_SEQ')"
 
   def nextJunctionId = sql"select nextval('JUNCTION_SEQ')"
 
   def nextJunctionPointId = sql"select nextval('JUNCTION_POINT_SEQ')"
 
-  def fetchViitePrimaryKeyId(len: Int) = {
-    sql"""select nextval('viite_general_seq') from generate_series(1, $len)""".as[Long].list
+  def fetchProjectLinkIds(len: Int) = {
+    sql"""select nextval('PROJECT_LINK_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
   def fetchRoadwayIds(len: Int) = {
     sql"""select nextval('ROADWAY_SEQ') from generate_series(1, $len)""".as[Long].list
+  }
+
+  def fetchCalibrationPointIds(len: Int) = {
+    sql"""select nextval('CALIBRATION_POINT_SEQ') generate_series(1, $len)""".as[Long].list
   }
 
   def fetchNodeIds(len: Int) = {
@@ -62,7 +66,7 @@ object Queries {
   }
 
   def fetchJunctionIds(len: Int) = {
-    sql"""select nextval('JUNCTION_SEQ') from from generate_series(1, $len)""".as[Long].list
+    sql"""select nextval('JUNCTION_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
   def fetchLinearLocationIds(len: Int) = {

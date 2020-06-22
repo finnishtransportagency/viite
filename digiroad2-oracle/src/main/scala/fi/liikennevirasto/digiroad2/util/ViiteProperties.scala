@@ -6,18 +6,21 @@ class ViiteProperties {
   lazy val userProvider: String = scala.util.Properties.envOrElse("userProvider", null)
   lazy val municipalityProvider: String = scala.util.Properties.envOrElse("municipalityProvider", null)
   lazy val eventBus: String = scala.util.Properties.envOrElse("eventBus", null)
+  lazy val useVVHGeometry: String = scala.util.Properties.envOrElse("useVVHGeometry", null)
   lazy val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", null)
   lazy val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
   lazy val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
   lazy val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   lazy val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
   lazy val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("tierekisteri.enabled", "false").toBoolean
+  lazy val cacheDirectory: String = scala.util.Properties.envOrElse("cache.directory", null)
   lazy val importTimeStamp: String = scala.util.Properties.envOrElse("viite.importTimeStamp", null)
   lazy val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
   lazy val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
   lazy val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", "")
   lazy val importOnlyCurrent: Boolean = scala.util.Properties.envOrElse("importOnlyCurrent", "false").toBoolean
   lazy val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "false").toBoolean
+  lazy val authenticationTestUser: String = scala.util.Properties.envOrElse("authenticationTestUser", null)
   lazy val bonecpJdbcUrl: String = scala.util.Properties.envOrElse("bonecp.jdbcUrl", null)
   lazy val bonecpUsername: String = scala.util.Properties.envOrElse("bonecp.username", null)
   lazy val bonecpPassword: String = scala.util.Properties.envOrElse("bonecp.password", null)
@@ -111,6 +114,11 @@ class ViitePropertiesFromFiles extends ViiteProperties {
     props.load(getClass.getResourceAsStream("/authentication.properties"))
     props
   }
+  private lazy val keysProperties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/keys.properties"))
+    props
+  }
   private lazy val revisionProperties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/revision.properties"))
@@ -120,18 +128,21 @@ class ViitePropertiesFromFiles extends ViiteProperties {
   override lazy val userProvider: String = dr2Properties.getProperty("digiroad2.userProvider")
   override lazy val municipalityProvider: String = dr2Properties.getProperty("digiroad2.municipalityProvider")
   override lazy val eventBus: String = dr2Properties.getProperty("digiroad2.eventBus")
+  override lazy val useVVHGeometry: String = dr2Properties.getProperty("digiroad2.useVVHGeometry")
   override lazy val vvhServiceHost: String = dr2Properties.getProperty("digiroad2.VVHServiceHost")
   override lazy val vvhRestApiEndPoint: String = dr2Properties.getProperty("digiroad2.VVHRestApiEndPoint")
   override lazy val vvhRoadlinkFrozen: Boolean = dr2Properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
   override lazy val vkmUrl: String = dr2Properties.getProperty("digiroad2.VKMUrl")
   override lazy val tierekisteriViiteRestApiEndPoint: String = dr2Properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
   override lazy val tierekisteriEnabled: Boolean = dr2Properties.getProperty("digiroad2.tierekisteri.enabled", "false").toBoolean
+  override lazy val cacheDirectory: String = dr2Properties.getProperty("digiroad2.cache.directory")
   override lazy val importTimeStamp: String = dr2Properties.getProperty("digiroad2.viite.importTimeStamp")
   override lazy val httpProxySet: Boolean = dr2Properties.getProperty("digiroad2.http.proxySet", "false").toBoolean
   override lazy val httpProxyHost: String = dr2Properties.getProperty("digiroad2.http.proxyHost")
   override lazy val httpNonProxyHosts: String = dr2Properties.getProperty("digiroad2.http.nonProxyHosts", "")
   override lazy val importOnlyCurrent: Boolean = dr2Properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean
   override lazy val authenticationTestMode: Boolean = dr2Properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
+  override lazy val authenticationTestUser: String = dr2Properties.getProperty("digiroad2.authenticationTestUser")
   override lazy val bonecpJdbcUrl: String = bonecpPropertiesFromFile.getProperty("bonecp.jdbcUrl")
   override lazy val bonecpUsername: String = bonecpPropertiesFromFile.getProperty("bonecp.username")
   override lazy val bonecpPassword: String = bonecpPropertiesFromFile.getProperty("bonecp.password")
@@ -147,8 +158,8 @@ class ViitePropertiesFromFiles extends ViiteProperties {
   override lazy val authenticationServiceRoadBasicPassword: String = authenticationProperties.getProperty("authentication.serviceRoad.basic.password")
   override lazy val authenticationMunicipalityBasicUsername: String = authenticationProperties.getProperty("authentication.municipality.basic.username")
   override lazy val authenticationMunicipalityBasicPassword: String = authenticationProperties.getProperty("authentication.municipality.basic.password")
-  override lazy val viitetierekisteriUsername: String = authenticationProperties.getProperty("viitetierekisteri.username")
-  override lazy val viitetierekisteriPassword: String = authenticationProperties.getProperty("viitetierekisteri.password")
+  override lazy val viitetierekisteriUsername: String = keysProperties.getProperty("viitetierekisteri.username")
+  override lazy val viitetierekisteriPassword: String = keysProperties.getProperty("viitetierekisteri.password")
   override lazy val revision: String = revisionProperties.getProperty("digiroad2.revision")
   override lazy val latestDeploy: String = revisionProperties.getProperty("digiroad2.latestDeploy")
   override lazy val env: String = System.getProperty("env")
