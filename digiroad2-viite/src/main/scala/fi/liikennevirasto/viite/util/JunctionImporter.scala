@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.util
 
-import java.sql.PreparedStatement
+import java.sql.{PreparedStatement, Timestamp}
 
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
@@ -28,20 +28,24 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
 
   private def insertJunctionStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO JUNCTION (ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)")
+      " (?, ?, ?, ?, ?, ?, ?)")
 
   private def insertJunctionPointStatement(): PreparedStatement =
     dynamicSession.prepareStatement(sql = "INSERT INTO JUNCTION_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, JUNCTION_ID, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), ?) ")
+      " (?, ?, ?, ?, ?, ?) ")
 
 
   def insertJunction(junctionStatement: PreparedStatement, conversionJunction: ConversionJunction, nodeNumber: Long): Unit ={
     junctionStatement.setLong(1, conversionJunction.id)
     junctionStatement.setLong(2, conversionJunction.junctionNumber)
     junctionStatement.setLong(3, nodeNumber)
-    junctionStatement.setString(4, datePrinter(conversionJunction.startDate))
-    junctionStatement.setString(5, datePrinter(conversionJunction.endDate))
-    junctionStatement.setString(6, datePrinter(conversionJunction.validFrom))
+    junctionStatement.setDate(4, new java.sql.Date(conversionJunction.startDate.get.getMillis))
+    if (conversionJunction.endDate.isDefined) {
+      junctionStatement.setDate(5, new java.sql.Date(conversionJunction.endDate.get.getMillis))
+    } else {
+      junctionStatement.setNull(5, java.sql.Types.DATE)
+    }
+    junctionStatement.setTimestamp(6, new java.sql.Timestamp(conversionJunction.validFrom.get.getMillis))
     junctionStatement.setString(7, conversionJunction.createdBy)
     junctionStatement.addBatch()
   }
@@ -51,7 +55,7 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
     junctionPointStatement.setLong(2, conversionJunctionPoint.beforeOrAfter)
     junctionPointStatement.setLong(3, roadwayPointId)
     junctionPointStatement.setLong(4, junctionId)
-    junctionPointStatement.setString(5, datePrinter(conversionJunctionPoint.validFrom))
+    junctionPointStatement.setTimestamp(5, new Timestamp(conversionJunctionPoint.validFrom.get.getMillis))
     junctionPointStatement.setString(6, conversionJunctionPoint.createdBy)
     junctionPointStatement.addBatch()
   }
@@ -64,7 +68,7 @@ class JunctionImporter(conversionDatabase: DatabaseDef) {
     val junctionPointPs = insertJunctionPointStatement()
 
     val junctionsWithPoints = conversionJunctions.map(
-      junction =>{
+      junction => {
         val junctionPointsForJunction = conversionJunctionPoints.filter(_.junctionTRId == junction.id)
         (junction.copy(id = Sequences.nextJunctionId), junctionPointsForJunction)
       }
