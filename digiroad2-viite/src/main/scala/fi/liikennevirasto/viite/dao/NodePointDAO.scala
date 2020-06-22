@@ -329,7 +329,7 @@ class NodePointDAO extends BaseDAO {
   def expireById(ids: Iterable[Long]): Int = {
     val query =
       s"""
-        Update NODE_POINT Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(", ")})
+        Update NODE_POINT Set valid_to = CURRENT_TIMESTAMP where valid_to IS NULL and id in (${ids.mkString(", ")})
       """
     if (ids.isEmpty)
       0
@@ -340,7 +340,7 @@ class NodePointDAO extends BaseDAO {
   def expireByNodeNumberAndType(nodeNumber: Long, nodePointType: NodePointType): Unit = {
     val query =
       s"""
-        Update NODE_POINT Set valid_to = sysdate where valid_to IS NULL AND node_number = $nodeNumber
+        Update NODE_POINT Set valid_to = CURRENT_TIMESTAMP where valid_to IS NULL AND node_number = $nodeNumber
         AND type = ${nodePointType.value}
       """
     Q.updateNA(query).execute

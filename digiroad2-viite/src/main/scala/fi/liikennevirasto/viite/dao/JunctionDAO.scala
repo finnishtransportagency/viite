@@ -245,7 +245,7 @@ class JunctionDAO extends BaseDAO {
 
     val ps = dynamicSession.prepareStatement(
       """insert into JUNCTION (ID, JUNCTION_NUMBER, NODE_NUMBER, START_DATE, END_DATE, CREATED_BY)
-      values (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)""".stripMargin)
+      values (?, ?, ?, ?, ?, ?)""".stripMargin)
 
     // Set ids for the junctions without one
     val (ready, idLess) = junctions.partition(_.id != NewIdValue)
@@ -267,11 +267,12 @@ class JunctionDAO extends BaseDAO {
         } else {
           ps.setNull(3, java.sql.Types.INTEGER)
         }
-        ps.setString(4, dateFormatter.print(junction.startDate))
-        ps.setString(5, junction.endDate match {
-          case Some(date) => dateFormatter.print(date)
-          case None => ""
-        })
+        ps.setDate(4, new java.sql.Date(junction.startDate.getMillis))
+        if (junction.endDate.isDefined) {
+          ps.setDate(5, new java.sql.Date(junction.startDate.getMillis))
+        } else {
+          ps.setNull(5, java.sql.Types.DATE)
+        }
         ps.setString(6, junction.createdBy)
         ps.addBatch()
     }
@@ -289,7 +290,7 @@ class JunctionDAO extends BaseDAO {
   def expireById(ids: Iterable[Long]): Int = {
     if (ids.isEmpty) 0
     else {
-      val query = s"""UPDATE JUNCTION SET VALID_TO = SYSDATE WHERE VALID_TO IS NULL AND ID IN (${ids.mkString(", ")})"""
+      val query = s"""UPDATE JUNCTION SET VALID_TO = CURRENT_TIMESTAMP WHERE VALID_TO IS NULL AND ID IN (${ids.mkString(", ")})"""
       Q.updateNA(query).first
     }
   }
