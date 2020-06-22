@@ -259,7 +259,7 @@ class NodeDAO extends BaseDAO {
 
   def publish(id: Long, editor: String = "-"): Unit = {
     sqlu"""
-        Update NODE Set PUBLISHED_TIME = SYSDATE, EDITOR = $editor Where ID = $id
+        Update NODE Set PUBLISHED_TIME = CURRENT_TIMESTAMP, EDITOR = $editor Where ID = $id
       """.execute
   }
 
@@ -335,7 +335,7 @@ class NodeDAO extends BaseDAO {
       0
     else {
       val query = s"""
-        UPDATE NODE SET valid_to = sysdate WHERE valid_to IS NULL AND id IN (${ids.mkString(", ")})
+        UPDATE NODE SET valid_to = CURRENT_TIMESTAMP WHERE valid_to IS NULL AND id IN (${ids.mkString(", ")})
       """
       Q.updateNA(query).first
     }
