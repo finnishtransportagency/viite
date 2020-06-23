@@ -5,7 +5,6 @@ import javax.sql.DataSource
 import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import _root_.oracle.sql.STRUCT
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -68,12 +67,6 @@ class DataImporter {
   def withLinkIdChunks(f: (Long, Long) => Unit): Unit = {
     val chunks = withDynSession{ fetchChunkLinkIds()}
     chunks.par.foreach { p => f(p._1, p._2) }
-  }
-
-  implicit object SetStruct extends SetParameter[STRUCT] {
-    def apply(v: STRUCT, pp: PositionedParameters) {
-      pp.setObject(v, java.sql.Types.STRUCT)
-    }
   }
 
   def time[A](f: => A) = {
