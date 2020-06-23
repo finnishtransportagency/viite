@@ -28,7 +28,6 @@
                 { "name": "vkmUrl", "value": "http://oag.liikennevirasto.fi" },
                 { "name": "tierekisteriViiteRestApiEndPoint", "value": "" },
                 { "name": "tierekisteri.enabled", "value": "false" },
-                { "name": "viite.importTimeStamp", "value": "1545091200000" },
                 { "name": "http.proxySet", "value": "false" },
                 { "name": "http.proxyHost", "value": "127.0.0.1" },
                 { "name": "http.nonProxyHosts", "value": "127.0.0.1" },
