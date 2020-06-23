@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
+import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.NodePointType.RoadNodePoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
@@ -396,19 +397,23 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                   roadsInLastPoint.filter(r => RoadAddressFilters.continuousTopology(projectLink)(r) || RoadAddressFilters.connectingBothTails(r)(projectLink))
                 (head, tail)
               case _ =>
-                val head = if (roadsInFirstPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)))
-                  roadsInFirstPoint.filter(r => RoadAddressFilters.continuousTopology(r)(projectLink) || RoadAddressFilters.connectingBothHeads(r)(projectLink))
+                val head = if (roadsInFirstPoint.exists(fl =>
+                  RoadAddressFilters.endingOfRoad(fl)(projectLink)
+                    || RoadAddressFilters.halfContinuousHalfDiscontinuous(fl)(projectLink)
+                    || RoadAddressFilters.discontinuousPartHeadIntersection(fl)(projectLink)))
+                  roadsInFirstPoint
                 else if (nonTerminatedLinks.exists(fl => RoadAddressFilters.continuousRoadPartTrack(fl)(projectLink) && RoadAddressFilters.discontinuousTopology(fl)(projectLink)))
                   roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink)) ++ nonTerminatedLinks.filter(fl => fl.id != projectLink.id && (RoadAddressFilters.halfContinuousHalfDiscontinuous(fl)(projectLink) || projectLink.startingPoint.connected(fl.startingPoint)))
                 else
                   roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
 
-                val tail = if (roadsInLastPoint.exists(fl => RoadAddressFilters.endingOfRoad(fl)(projectLink)
-                      || RoadAddressFilters.halfContinuousHalfDiscontinuous(projectLink)(fl))
-                      || roadsInLastPoint.exists(fl => RoadAddressFilters.discontinuousPartIntersection(projectLink)(fl)))
-                      roadsInLastPoint
-                    else
-                      roadsInLastPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
+                val tail = if (roadsInLastPoint.exists(fl =>
+                  RoadAddressFilters.endingOfRoad(projectLink)(fl)
+                    || RoadAddressFilters.halfContinuousHalfDiscontinuous(projectLink)(fl)
+                    || RoadAddressFilters.discontinuousPartTailIntersection(projectLink)(fl)))
+                  roadsInLastPoint
+                else
+                  roadsInLastPoint.filterNot(RoadAddressFilters.sameRoad(projectLink))
                 (head, tail)
             }
           }
@@ -655,7 +660,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       (nodePointsToTerminate, junctionPointsToTerminate)
     }
 
-    def getNodePointsAndJunctionPointsByModifiedRoadwayNumbers(roadwayNumbersSection: Seq[Long], terminatedJunctionPoints: Seq[JunctionPoint]): (Seq[NodePoint], Seq[JunctionPoint]) = {
+    def getObsoleteNodePointsAndJunctionPointsByModifiedRoadwayNumbers(roadwayNumbersSection: Seq[Long], terminatedJunctionPoints: Seq[JunctionPoint]): (Seq[NodePoint], Seq[JunctionPoint]) = {
       logger.info(s"Modified roadway number: ${roadwayNumbersSection.toList}")
       val roadwayPoints = roadwayPointDAO.fetchByRoadwayNumbers(roadwayNumbersSection)
       val sortedRoadways = roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbersSection.toSet).sortBy(_.startAddrMValue)
@@ -684,7 +689,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             if (junctionPointsToCheck.size <= 1) {
               // basic rule
               junctionPointsToCheck
-            } else if (ObsoleteJunctionPointFilters.rampsAndRoundaboutsDisContinuityInSameOwnRoadNumber(junctionPointsToCheck) ||
+            } else if (ObsoleteJunctionPointFilters.rampsAndRoundaboutsDiscontinuityInSameOwnRoadNumber(junctionPointsToCheck) ||
               junctionPoints.groupBy(jp => (jp.roadNumber, jp.roadPartNumber)).keys.size > 1)
               Seq.empty[JunctionPoint]
             else junctionPointsToCheck
@@ -698,7 +703,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             } else if (ObsoleteJunctionPointFilters.multipleRoadNumberIntersection(junctionPointsToCheck) ||
               ObsoleteJunctionPointFilters.multipleTrackIntersection(junctionPointsToCheck) ||
               ObsoleteJunctionPointFilters.sameRoadAddressIntersection(junctionPointsToCheck) ||
-              ObsoleteJunctionPointFilters.roadEndingInSameOwnRoadNumber(junctionPointsToCheck)
+              ObsoleteJunctionPointFilters.roadEndingInSameOwnRoadNumber(junctionPointsToCheck) ||
+              ObsoleteJunctionPointFilters.discontinuousPartIntersection(junctionPointsToCheck)
             )
               Seq.empty[JunctionPoint]
             else
@@ -787,7 +793,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     val obsoletePointsFromModifiedRoadways: Seq[(Seq[NodePoint], Seq[JunctionPoint])] = projectLinkSections.mapValues { section: Seq[ProjectLink] =>
       continuousSectionByRoadType(section.sortBy(_.startAddrMValue)).map { continuousSection =>
         val modifiedRoadwayNumbers = continuousSection.map(_.roadwayNumber).distinct
-        getNodePointsAndJunctionPointsByModifiedRoadwayNumbers(modifiedRoadwayNumbers, terminatedJunctionPoints)
+        getObsoleteNodePointsAndJunctionPointsByModifiedRoadwayNumbers(modifiedRoadwayNumbers, terminatedJunctionPoints)
       }
     }.values.flatten.toSeq
 
@@ -843,7 +849,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }
     }
 
-    def rampsAndRoundaboutsDisContinuityInSameOwnRoadNumber(junctionPointsToCheck: Seq[JunctionPoint]): Boolean = {
+    def discontinuousPartIntersection(junctionPointsToCheck: Seq[JunctionPoint]): Boolean = {
+      junctionPointsToCheck.groupBy(jp => (jp.roadNumber, jp.roadPartNumber, jp.addrM, jp.beforeAfter)).keys.size > 2 ||
+        junctionPointsToCheck.filter(_.beforeAfter == Before).exists(jp => List(Discontinuous, MinorDiscontinuity, ParallelLink).contains(jp.discontinuity))
+    }
+
+    def rampsAndRoundaboutsDiscontinuityInSameOwnRoadNumber(junctionPointsToCheck: Seq[JunctionPoint]): Boolean = {
       val validEndingDiscontinuityForRamps = List(Discontinuity.EndOfRoad, Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity)
 
       def isRoadEndingInItself(curr: JunctionPoint, rest: Seq[JunctionPoint]): Boolean = {
