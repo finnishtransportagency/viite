@@ -11,8 +11,6 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.Point
-import oracle.spatial.geometry.JGeometry
-import oracle.sql.STRUCT
 import org.postgis.PGgeometry
 import org.postgresql.util.PGobject
 
