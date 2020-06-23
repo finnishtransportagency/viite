@@ -106,8 +106,6 @@ CREATE TABLE PROJECT_RESERVED_ROAD_PART (
   CONSTRAINT PRRP_PROJECT_FK FOREIGN KEY (PROJECT_ID) REFERENCES PROJECT (ID)
 );
 
--- TODO Why we have Project_link_history and not just have here valid_from and valid_to -fields?
--- TODO Geometry column should be of type SDO_GEOMETRY! (Check VIITE-1591)
 CREATE TABLE PROJECT_LINK (
   ID BIGINT NOT NULL,
   PROJECT_ID BIGINT NOT NULL,

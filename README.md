@@ -32,12 +32,12 @@ Ympäristön pystytys
 digiroad2-oracle
 ----------------
 
+TODO Kirjoita Postgres -ohjeet
+
 digiroad2-oracle moduuli toteuttaa oracle-spesifisen tuen digiroad2:n `AssetProvider` ja `UserProvider` - rajapinnoista.
 Moduuli tuottaa kirjaston, joka lisätään ajonaikaisesti digiroad2-sovelluksen polkuun.
 
 Build edellyttää, että paikallinen tietokantaymäristö on alustettu ja konfiguroitu:
-
-Kopioi tiedostot ojdbc6.jar, sdoapi.jar ja sdoutl.jar hakemistoon `digiroad2-oracle/lib`. Tiedostot saa [digiroad2-oracle-projektista](https://github.com/finnishtransportagency/digiroad2-oracle/tree/master/lib).
 
 Luo digiroad2/digiroad2-oracle/conf/dev/bonecp.properties ja lisää sinne tietokantayhteyden tiedot:
 
