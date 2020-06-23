@@ -1,4 +1,4 @@
-UPDATE NODE_POINT NP SET "TYPE" = (SELECT CASE
+UPDATE NODE_POINT AS NP SET "TYPE" = (SELECT CASE
 -- [TYPE = 99] Includes expired node points points or points attached to expired nodes
 		WHEN (point.VALID_TO IS NOT NULL OR NOT EXISTS (SELECT 1 FROM NODE node
 		    WHERE node.NODE_NUMBER = point.NODE_NUMBER AND (node.END_DATE IS NULL AND node.VALID_TO IS NULL))) THEN 99
