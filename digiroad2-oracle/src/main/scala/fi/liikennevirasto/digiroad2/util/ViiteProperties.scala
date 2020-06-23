@@ -14,7 +14,6 @@ class ViiteProperties {
   lazy val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
   lazy val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("tierekisteri.enabled", "false").toBoolean
   lazy val cacheDirectory: String = scala.util.Properties.envOrElse("cache.directory", null)
-  lazy val importTimeStamp: String = scala.util.Properties.envOrElse("viite.importTimeStamp", null)
   lazy val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
   lazy val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
   lazy val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", "")
@@ -136,7 +135,6 @@ class ViitePropertiesFromFiles extends ViiteProperties {
   override lazy val tierekisteriViiteRestApiEndPoint: String = dr2Properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
   override lazy val tierekisteriEnabled: Boolean = dr2Properties.getProperty("digiroad2.tierekisteri.enabled", "false").toBoolean
   override lazy val cacheDirectory: String = dr2Properties.getProperty("digiroad2.cache.directory")
-  override lazy val importTimeStamp: String = dr2Properties.getProperty("digiroad2.viite.importTimeStamp")
   override lazy val httpProxySet: Boolean = dr2Properties.getProperty("digiroad2.http.proxySet", "false").toBoolean
   override lazy val httpProxyHost: String = dr2Properties.getProperty("digiroad2.http.proxyHost")
   override lazy val httpNonProxyHosts: String = dr2Properties.getProperty("digiroad2.http.nonProxyHosts", "")
