@@ -56,27 +56,30 @@ module.exports = function(grunt) {
       }
     },
     cachebreaker: {
-      css: {
+      dev: {
         options: {
-          match: ['viite.css'],
-          replacement: 'md5',
-          src: {
-            path: 'dist/css/viite.css'
-          }
+          match: [
+            {
+              // Pattern    // File to hash
+              'style.css': 'viite-UI/components/theme/default/style.css',
+              'pikaday.css': 'node_modules/pikaday/css/pikaday.css',
+              'viite.css': 'dist/css/viite.css',
+              'jquery.min.js': 'node_modules/jquery/dist/jquery.min.js',
+              'jquery-migrate.min.js': 'node_modules/jquery-migrate/dist/jquery-migrate.min.js',
+              'moment.min.js': 'node_modules/moment/min/moment.min.js',
+              'lodash.js': 'node_modules/lodash/lodash.js',
+              'backbone.js': 'node_modules/backbone/backbone.js',
+              'pikaday.js': 'node_modules/pikaday/pikaday.js',
+              'proj4.js': 'node_modules/proj4/dist/proj4.js',
+              'interact.min.js': 'node_modules/interactjs/dist/interact.min.js',
+              'ol.js': 'viite-UI/components/ol.js',
+              'viite.min.js': 'dist/js/viite.js'
+            }
+          ],
+          replacement: 'md5'
         },
         files: {
-          src: ['viite-UI/index.html']
-        }
-      },
-      js: {
-        options: {
-          match: ['viite.min.js'],
-          replacement: 'md5',
-          src: {
-            path: 'dist/js/viite.js'
-          }
-        },
-        files: {
+          // File where md5 hashes are stored
           src: ['viite-UI/index.html']
         }
       }
