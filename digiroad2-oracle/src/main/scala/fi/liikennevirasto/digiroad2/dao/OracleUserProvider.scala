@@ -53,9 +53,4 @@ class OracleUserProvider extends UserProvider {
     }
   }
 
-  def getUserArea(userAreaId: Int): Seq[Point] = {
-    OracleDatabase.withDynSession {
-      sql"""select x, y, z from table(sdo_util.getvertices((select geometry from authorized_area where kpalue = $userAreaId))) order by id""".as[Point].list
-    }
-  }
 }
