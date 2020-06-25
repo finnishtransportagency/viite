@@ -181,7 +181,7 @@ class NodeDAO extends BaseDAO {
 
   def fetchByNodeNumber(nodeNumber: Long): Option[Node] = {
     sql"""
-      SELECT ID, NODE_NUMBER, ST_X(COORDINATES), ST_Y(COORDINATES), "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME, REGISTRATION_DATE
+      SELECT ID, NODE_NUMBER, ST_X(COORDINATES), ST_Y(COORDINATES), NAME, TYPE, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME, REGISTRATION_DATE
       from NODE N
       where NODE_NUMBER = $nodeNumber and valid_to is null and end_date is null
       """.as[Node].firstOption
@@ -189,7 +189,7 @@ class NodeDAO extends BaseDAO {
 
   def fetchById(nodeId: Long): Option[Node] = {
     sql"""
-      SELECT ID, NODE_NUMBER, ST_X(COORDINATES), ST_Y(COORDINATES), "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME, REGISTRATION_DATE
+      SELECT ID, NODE_NUMBER, ST_X(COORDINATES), ST_Y(COORDINATES), NAME, TYPE, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME, REGISTRATION_DATE
       from NODE N
       where ID = $nodeId and valid_to is null and end_date is null
       """.as[Node].firstOption
@@ -223,7 +223,7 @@ class NodeDAO extends BaseDAO {
     // TODO PostGIS conversion for getting the coordinates
     val query =
       s"""
-        SELECT DISTINCT node.ID, node.NODE_NUMBER, ST_X(node.COORDINATES), ST_Y(node.COORDINATES), node.NAME, node."TYPE", node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
+        SELECT DISTINCT node.ID, node.NODE_NUMBER, ST_X(node.COORDINATES), ST_Y(node.COORDINATES), node.NAME, node.TYPE, node.START_DATE, node.END_DATE, node.VALID_FROM, node.VALID_TO,
                         node.CREATED_BY, node.CREATED_TIME, node.REGISTRATION_DATE, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER, rp.ADDR_M
         FROM NODE node
         JOIN NODE_POINT np ON node.NODE_NUMBER = np.NODE_NUMBER AND np.VALID_TO IS NULL
@@ -262,7 +262,7 @@ class NodeDAO extends BaseDAO {
   def create(nodes: Iterable[Node], createdBy: String = "-"): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
-      """insert into NODE (ID, NODE_NUMBER, COORDINATES, "NAME", "TYPE", START_DATE, END_DATE, CREATED_BY, REGISTRATION_DATE)
+      """insert into NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, END_DATE, CREATED_BY, REGISTRATION_DATE)
       values (?, ?, ST_GeomFromText(?, 3067), ?, ?, ?, ?, ?, ?)""".stripMargin)
 
     // Set ids for the nodes without one
@@ -310,7 +310,7 @@ class NodeDAO extends BaseDAO {
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(scalar = .15))
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingBoxRectangle, geometryColumn = "coordinates")
     val query = s"""
-      SELECT ID, NODE_NUMBER, ST_X(COORDINATES), ST_Y(COORDINATES), "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME, REGISTRATION_DATE
+      SELECT ID, NODE_NUMBER, ST_X(COORDINATES), ST_Y(COORDINATES), NAME, TYPE, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME, REGISTRATION_DATE
       FROM NODE N
         WHERE $boundingBoxFilter
         AND END_DATE IS NULL AND VALID_TO IS NULL
@@ -341,13 +341,13 @@ class NodeDAO extends BaseDAO {
     } else {
       // TODO - Might be needed to check node point type here - since calculate node points should not be considered to identify empty nodes
       val query = s"""
-        SELECT ID, NODE_NUMBER, ST_X(COORDINATES), ST_Y(COORDINATES), "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME, REGISTRATION_DATE
+        SELECT ID, NODE_NUMBER, ST_X(COORDINATES), ST_Y(COORDINATES), NAME, TYPE, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME, REGISTRATION_DATE
         FROM NODE N
           WHERE END_DATE IS NULL AND VALID_TO IS NULL AND NODE_NUMBER IN (${nodeNumbers.mkString(", ")})
           AND NOT EXISTS (
             SELECT NULL FROM JUNCTION J WHERE N.NODE_NUMBER = J.NODE_NUMBER AND J.VALID_TO IS NULL AND J.END_DATE IS NULL
           ) AND NOT EXISTS (
-            SELECT NULL FROM NODE_POINT NP WHERE N.NODE_NUMBER = NP.NODE_NUMBER AND NP.VALID_TO IS NULL AND NP."TYPE" IN (${NodePointType.UnknownNodePointType.value}, ${NodePointType.RoadNodePoint.value})
+            SELECT NULL FROM NODE_POINT NP WHERE N.NODE_NUMBER = NP.NODE_NUMBER AND NP.VALID_TO IS NULL AND NP.TYPE IN (${NodePointType.UnknownNodePointType.value}, ${NodePointType.RoadNodePoint.value})
           )
       """
       queryList(query)
@@ -359,7 +359,7 @@ class NodeDAO extends BaseDAO {
       val untilString = if (untilDate.nonEmpty) s"AND PUBLISHED_TIME <= to_timestamp('${new Timestamp(untilDate.get.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')" else s""
       val query =
         s"""
-         SELECT ID, NODE_NUMBER, ST_X(COORDINATES), ST_Y(COORDINATES), "NAME", "TYPE", START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME, REGISTRATION_DATE
+         SELECT ID, NODE_NUMBER, ST_X(COORDINATES), ST_Y(COORDINATES), NAME, TYPE, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME, REGISTRATION_DATE
          FROM NODE N
          WHERE NODE_NUMBER IN (SELECT NODE_NUMBER FROM NODE NC WHERE
          PUBLISHED_TIME IS NOT NULL AND PUBLISHED_TIME >= to_timestamp('${new Timestamp(sinceDate.getMillis)}', 'YYYY-MM-DD HH24:MI:SS.FF')

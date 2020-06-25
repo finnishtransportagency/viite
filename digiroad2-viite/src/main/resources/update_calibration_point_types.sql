@@ -1,4 +1,4 @@
-UPDATE CALIBRATION_POINT AS cpu SET "TYPE" = (SELECT CASE
+UPDATE CALIBRATION_POINT AS cpu SET TYPE = (SELECT CASE
 -- leave expired calibration points and user assigned points to original value
 -- [TYPE = 2] Includes templates, points where ADDR_M is equal to START_ADDR_M or END_ADDR_M of the road (road_number, road_part_number and track) and when ROAD_TYPE changes
 		WHEN (rp.ADDR_M IN (SELECT roadAddr.END_ADDR_M FROM ROADWAY roadAddr

@@ -91,7 +91,7 @@ class NodePointDAO extends BaseDAO {
 
   val dateFormatter: DateTimeFormatter = ISODateTimeFormat.basicDate()
 
-  val selectFromNodePoint = """SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", N.START_DATE, N.END_DATE,
+  val selectFromNodePoint = """SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP.TYPE, N.START_DATE, N.END_DATE,
                              NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M,
                              RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.ELY
                              FROM NODE_POINT NP
@@ -165,7 +165,7 @@ class NodePointDAO extends BaseDAO {
     } else {
       val query =
         s"""
-          SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", N.START_DATE, N.END_DATE,
+          SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP.TYPE, N.START_DATE, N.END_DATE,
             NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M,
             RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.ELY
           FROM NODE_POINT NP
@@ -203,7 +203,7 @@ class NodePointDAO extends BaseDAO {
         s"""
          $selectFromNodePoint
          where RP.roadway_number in (${roadwayNumbers.mkString(", ")}) and NP.valid_to is null
-         AND NP."TYPE" = ${NodePointType.RoadNodePoint.value}
+         AND NP.TYPE = ${NodePointType.RoadNodePoint.value}
        """
       queryList(query)
     }
@@ -212,7 +212,7 @@ class NodePointDAO extends BaseDAO {
   def fetchTemplatesByRoadwayNumber(roadwayNumber: Long): List[NodePoint] = {
     val query =
       s"""
-        SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", NULL, NULL,
+        SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP.TYPE, NULL, NULL,
         NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, NULL, NULL, NULL, NULL
         FROM NODE_POINT NP
         JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
@@ -227,7 +227,7 @@ class NodePointDAO extends BaseDAO {
       if (roadwayNumbers.isEmpty) {
         ""
       } else {
-        s"""SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", NULL, NULL,
+        s"""SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP.TYPE, NULL, NULL,
           NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, rw.ELY
           FROM NODE_POINT NP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
@@ -241,7 +241,7 @@ class NodePointDAO extends BaseDAO {
   def fetchTemplates() : Seq[NodePoint] = {
     val query =
       s"""
-         SELECT DISTINCT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NULL AS NODE_NUMBER, NP."TYPE", NULL, NULL,
+         SELECT DISTINCT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NULL AS NODE_NUMBER, NP.TYPE, NULL, NULL,
          NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, rw.ELY
          FROM NODE_POINT NP
          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
@@ -255,7 +255,7 @@ class NodePointDAO extends BaseDAO {
   def fetchNodePointTemplateById(id: Long): Option[NodePoint] = {
     val query =
       s"""
-         SELECT DISTINCT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", NULL, NULL,
+         SELECT DISTINCT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP.TYPE, NULL, NULL,
          NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, rw.ELY
          FROM NODE_POINT NP
          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
@@ -275,7 +275,7 @@ class NodePointDAO extends BaseDAO {
 
       val query =
         s"""
-          SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", NULL, NULL,
+          SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP.TYPE, NULL, NULL,
             NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.ELY
           FROM NODE_POINT NP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
@@ -290,7 +290,7 @@ class NodePointDAO extends BaseDAO {
   def create(nodePoints: Iterable[NodePoint]): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
-      """insert into NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_NUMBER, "TYPE", CREATED_BY)
+      """insert into NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_NUMBER, TYPE, CREATED_BY)
       values (?, ?, ?, ?, ?, ?)""".stripMargin)
 
     // Set ids for the node points without one
@@ -349,7 +349,7 @@ class NodePointDAO extends BaseDAO {
   def fetchCalculatedNodePointsForNodeNumber(nodeNumber: Long): Seq[NodePoint] = {
     val query =
       s"""
-         SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", NULL, NULL,
+         SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP.TYPE, NULL, NULL,
          NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, NULL as ROAD_NUMBER, NULL as ROAD_PART_NUMBER, NULL as TRACK, NULL as ELY
          FROM NODE_POINT NP
          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
