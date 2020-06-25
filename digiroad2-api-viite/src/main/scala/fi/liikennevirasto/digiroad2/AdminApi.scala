@@ -57,6 +57,21 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
     basicAuth
   }
 
+  get("/initial_import") {
+    val conversionTable = params.get("conversion_table")
+    time(logger, "GET request for /initial_import") {
+      try {
+        dataImporter.initialImport(conversionTable)
+        Ok("Initial import successful.\n")
+      } catch {
+        case e: Exception => {
+          logger.error("Initial import failed.", e)
+          InternalServerError(s"Initial import failed: ${e.getMessage}")
+        }
+      }
+    }
+  }
+
   get("/import_road_addresses") {
     val conversionTable = params.get("conversion_table")
     time(logger, "GET request for /import_road_addresses") {

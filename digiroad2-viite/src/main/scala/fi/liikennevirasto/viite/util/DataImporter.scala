@@ -112,6 +112,15 @@ class DataImporter {
 
   }
 
+  def initialImport(importTableName: Option[String]): Unit = {
+    println("\nImporting road addresses, updating geometry and importing nodes and junctions started at time: ")
+    println(DateTime.now())
+    importRoadAddresses(importTableName)
+    updateLinearLocationGeometry()
+    importNodesAndJunctions()
+    updateCalibrationPointTypes()
+  }
+
   def importRoadAddresses(importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
@@ -405,14 +414,14 @@ class DataImporter {
     }
   }
 
+  def updateCalibrationPointTypes(): Unit = {
+    println("\nUpdating Calibration point types started at time: ")
+    println(DateTime.now())
+    updateCalibrationPointTypesQuery()
+  }
+
   def updateCalibrationPointTypesQuery() = {
-    withDynTransaction {
-      val source = io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("db/migration/V0_32__calibration_point_type_update.sql"))
-      var text = try source.mkString finally source.close()
-      // remove ; at end of SQL
-      text = text.substring(0,text.length - 1)
-      sqlu"""#$text""".execute
-    }
+    SqlScriptRunner.runScriptInClasspath("/update_calibration_point_types.sql")
   }
 
   private[this] def initDataSource: DataSource = {
