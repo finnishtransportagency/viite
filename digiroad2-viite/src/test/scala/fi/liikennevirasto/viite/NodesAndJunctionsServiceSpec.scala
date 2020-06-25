@@ -1482,12 +1482,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
         linkId = 12351, plId = plId + 6, rw = (rwId + 2, Some(rw2_b)), llId = llId + 6, size = 5)
 
       // road part 3
-      val (pl3_1, ll3_1, rw3_1) = dummyVerticalRoad(projectId, 1, 999L, 3L, Sequences.nextRoadwayNumber, Track.RightSide,
+      val (pl3_1, ll3_1, rw3_1) = dummyVerticalRoad(projectId, 2, 999L, 3L, Sequences.nextRoadwayNumber, Track.RightSide,
         discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(31.0, 10.0),
         linkId = 12352, plId = plId + 7, rw = (rwId + 3, None), llId = llId + 7)
-      val (pl3_2, ll3_2, rw3_2) = dummyVerticalRoad(projectId, 1, 999L, 3L, Sequences.nextRoadwayNumber, Track.LeftSide,
+      val (pl3_2, ll3_2, rw3_2) = dummyVerticalRoad(projectId, 2, 999L, 3L, Sequences.nextRoadwayNumber, Track.LeftSide,
         discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(26.0, 10.0),
-        linkId = 12353, plId = plId + 8, rw = (rwId + 4, None), llId = llId + 8)
+        linkId = 12354, plId = plId + 9, rw = (rwId + 4, None), llId = llId + 9)
 
       val roadways = Seq(rw1_1, rw1_2, rw2, rw3_1, rw3_2)
       val projectLinks = pl1_1 ++ pl1_2 ++ pl2_1 ++ pl2_2 ++ pl2_3 ++ pl3_1 ++ pl3_2
@@ -1538,11 +1538,15 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(pl1_1.head.geometry.head, pl1_1.head.geometry.head), roadNumberLimits)).thenReturn(ll1_1)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(pl1_2.head.geometry.head, pl1_2.head.geometry.head), roadNumberLimits)).thenReturn(ll1_2)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(pl2_1.head.geometry.head, pl2_1.head.geometry.head), roadNumberLimits)).thenReturn(ll1_2 ++ ll2_1 ++ ll2_2 ++ ll2_3)
+
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(pl2_1.head.geometry.last, pl2_1.head.geometry.last), roadNumberLimits)).thenReturn(ll1_1 ++ ll2_1 ++ ll2_2 ++ ll2_3)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(pl2_3.head.geometry.head, pl2_3.head.geometry.head), roadNumberLimits)).thenReturn(ll2_1 ++ ll2_2 ++ ll2_3 ++ ll3_2)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(pl2_3.head.geometry.last, pl2_3.head.geometry.last), roadNumberLimits)).thenReturn(ll2_1 ++ ll2_2 ++ ll2_3 ++ ll3_1)
+
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(pl3_1.head.geometry.last, pl3_1.head.geometry.last), roadNumberLimits)).thenReturn(ll3_1)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(pl3_1.last.geometry.last, pl3_1.last.geometry.last), roadNumberLimits)).thenReturn(ll3_1)
       when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(pl3_2.head.geometry.last, pl3_2.head.geometry.last), roadNumberLimits)).thenReturn(ll3_2)
+      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(pl3_2.last.geometry.last, pl3_2.last.geometry.last), roadNumberLimits)).thenReturn(ll3_2)
 
       pl2_2.tail.foreach { pl =>
         when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(pl.geometry.head, pl.geometry.head), roadNumberLimits)).thenReturn(ll2_1 ++ ll2_2 ++ ll2_3)
