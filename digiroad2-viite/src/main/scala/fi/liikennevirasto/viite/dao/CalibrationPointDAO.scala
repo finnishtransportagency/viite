@@ -78,7 +78,7 @@ object CalibrationPointDAO {
 
   def create(calibrationPoints: Iterable[CalibrationPoint]): Seq[Long] = {
     val ps = dynamicSession.prepareStatement(
-      """INSERT INTO CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, "TYPE", CREATED_BY)
+      """INSERT INTO CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY)
       VALUES (?, ?, ?, ?, ?, ?)""".stripMargin)
 
     // set ids for the calibration points without one

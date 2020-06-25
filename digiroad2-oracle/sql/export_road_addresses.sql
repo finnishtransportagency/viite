@@ -143,7 +143,7 @@ BEGIN
 			--	LINK
 			FOR link IN links (ROAD, ROAD_PART) LOOP
 				INSERT INTO EXPORT_TABLE VALUES (COUNTER,
-				'INSERT INTO LINK (ID,"SOURCE",ADJUSTED_TIMESTAMP,CREATED_TIME) VALUES (' ||
+				'INSERT INTO LINK (ID,SOURCE,ADJUSTED_TIMESTAMP,CREATED_TIME) VALUES (' ||
 					link.ID || ',' || link."SOURCE" || ',' || link.ADJUSTED_TIMESTAMP || ',''' || link.CREATED_TIME || ''');');
 				COUNTER := COUNTER + 1;
 			END LOOP;
@@ -204,9 +204,9 @@ BEGIN
 			FOR cal_point IN cal_points (ROAD, ROAD_PART) LOOP
 				INSERT INTO EXPORT_TABLE VALUES (COUNTER,
 				'INSERT INTO CALIBRATION_POINT (ID,ROADWAY_POINT_ID,LINK_ID,START_END,' ||
-				'"TYPE",VALID_FROM,CREATED_BY,CREATED_TIME) VALUES (' ||
+				'TYPE,VALID_FROM,CREATED_BY,CREATED_TIME) VALUES (' ||
 					cal_point.ID || ',' || cal_point.ROADWAY_POINT_ID || ',' || cal_point.LINK_ID || ',' || cal_point.START_END || ',' ||
-					cal_point."TYPE" || ',''' || cal_point.VALID_FROM || ''',''' || cal_point.CREATED_BY || ''',''' || cal_point.CREATED_TIME || ''');');
+					cal_point.TYPE || ',''' || cal_point.VALID_FROM || ''',''' || cal_point.CREATED_BY || ''',''' || cal_point.CREATED_TIME || ''');');
 				COUNTER := COUNTER + 1;
 			END LOOP;
 
@@ -229,11 +229,11 @@ BEGIN
 		  		ordinate_array := SUBSTR(ordinate_array, 1, LENGTH(ordinate_array) - 1) || ')';
 
 				INSERT INTO EXPORT_TABLE VALUES (COUNTER,
-				'INSERT INTO NODE (ID, NODE_NUMBER, COORDINATES, NAME, "TYPE", START_DATE, CREATED_BY, CREATED_TIME, VALID_FROM) VALUES (' ||
+				'INSERT INTO NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, CREATED_BY, CREATED_TIME, VALID_FROM) VALUES (' ||
 					node.ID || ',' || node.NODE_NUMBER || ',' ||
 					'MDSYS.SDO_GEOMETRY(' || node.COORDINATES.SDO_GTYPE || ',' || node.COORDINATES.SDO_SRID || ',' || 'NULL' || ',' ||
 					elem_info_array || ',' || ordinate_array || '),''' ||
-					node.NAME || ''',' || node."TYPE" || ',''' || node.START_DATE || ''',''' || node.CREATED_BY || ''',''' ||
+					node.NAME || ''',' || node.TYPE || ',''' || node.START_DATE || ''',''' || node.CREATED_BY || ''',''' ||
 					node.CREATED_TIME || ''',''' || node.VALID_FROM || ''');');
 				COUNTER := COUNTER + 1;
 				elem_info_array := 'MDSYS.SDO_ELEM_INFO_ARRAY(';
@@ -244,9 +244,9 @@ BEGIN
 			FOR np IN node_points (ROAD, ROAD_PART) LOOP
 				INSERT INTO EXPORT_TABLE VALUES (COUNTER,
 				'INSERT INTO NODE_POINT (ID,BEFORE_AFTER,ROADWAY_POINT_ID,VALID_FROM,' ||
-				'CREATED_BY,CREATED_TIME,"TYPE") VALUES (' ||
+				'CREATED_BY,CREATED_TIME,TYPE) VALUES (' ||
 					np.ID || ',' || np.BEFORE_AFTER || ',' || np.ROADWAY_POINT_ID || ',''' || np.VALID_FROM || ''',''' ||
-					np.CREATED_BY || ''',''' || np.CREATED_TIME || ''',' || np."TYPE" || ');');
+					np.CREATED_BY || ''',''' || np.CREATED_TIME || ''',' || np.TYPE || ');');
 				COUNTER := COUNTER + 1;
 			END LOOP;
 
