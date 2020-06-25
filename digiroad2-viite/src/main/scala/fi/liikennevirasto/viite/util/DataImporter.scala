@@ -408,9 +408,13 @@ class DataImporter {
         GeometryUtils.scaleToThreeDigits(last.y)
       )
       val length = GeometryUtils.geometryLength(geometry)
-      sqlu"""UPDATE LINEAR_LOCATION
-          SET geometry = ST_GeomFromText('LINESTRING($x1 $y1 0.0 0.0, $x2 $y2 0.0 $length)', 3067)
-          WHERE id = $linearLocationId""".execute
+      val ps = dynamicSession.prepareStatement(
+        "UPDATE LINEAR_LOCATION SET geometry = ST_GeomFromText(?, 3067) WHERE id = ?")
+      val lineString = s"LINESTRING($x1 $y1 0.0 0.0, $x2 $y2 0.0 $length)"
+      ps.setString(1, lineString)
+      ps.setLong(2, linearLocationId)
+      ps.addBatch()
+      ps.executeBatch()
     }
   }
 
