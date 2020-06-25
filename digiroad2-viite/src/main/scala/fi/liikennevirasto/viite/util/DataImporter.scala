@@ -265,7 +265,8 @@ class DataImporter {
         FROM NODE_POINT point
         LEFT JOIN ROADWAY_POINT rp ON point.ROADWAY_POINT_ID = rp.ID
         LEFT JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
-          WHERE point.ID = NP.ID AND ROWNUM = 1)""".execute
+          WHERE point.ID = NP.ID
+          LIMIT 1)""".execute
   }
 
   def updateLinearLocationGeometry(): Unit = {
