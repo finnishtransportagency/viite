@@ -115,7 +115,7 @@ object OracleDatabase {
   }
 
   def createRoundedPointGeometry(point: Point): String = {
-    s"""POINT(${GeometryUtils.roundN(point.x)} ${GeometryUtils.roundN(point.y)})"""
+    s"""POINT(${GeometryUtils.scaleToThreeDigits(point.x)} ${GeometryUtils.scaleToThreeDigits(point.y)})"""
   }
 
   // TODO Maybe this should be optimized
