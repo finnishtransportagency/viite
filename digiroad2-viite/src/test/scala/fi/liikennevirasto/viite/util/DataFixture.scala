@@ -64,18 +64,11 @@ object DataFixture {
   }
 
   def updateCalibrationPointTypes(): Unit = {
-    println("\nUpdating Calibration point types started at time: ")
-    println(DateTime.now())
-    dataImporter.updateCalibrationPointTypesQuery()
+    dataImporter.updateCalibrationPointTypes()
   }
 
   def initialImport(importTableName: Option[String]): Unit = {
-    println("\nImporting road addresses, updating geometry and importing nodes and junctions started at time: ")
-    println(DateTime.now())
-    importRoadAddresses(importTableName)
-    updateLinearLocationGeometry()
-    importNodesAndJunctions()
-    updateCalibrationPointTypes()
+    dataImporter.initialImport(importTableName)
   }
 
   def updateLinearLocationGeometry(): Unit = {
