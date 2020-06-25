@@ -72,6 +72,48 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
     }
   }
 
+  get("/update_geometry") {
+    time(logger, "GET request for /update_geometry") {
+      try {
+        dataImporter.updateLinearLocationGeometry()
+        Ok("Geometry update successful.\n")
+      } catch {
+        case e: Exception => {
+          logger.error("Geometry update failed.", e)
+          InternalServerError(s"Geometry update failed: ${e.getMessage}")
+        }
+      }
+    }
+  }
+
+  get("/import_nodes_and_junctions") {
+    time(logger, "GET request for /import_nodes_and_junctions") {
+      try {
+        dataImporter.importNodesAndJunctions()
+        Ok("Importing nodes and junctions successful.\n")
+      } catch {
+        case e: Exception => {
+          logger.error("Importing nodes and junctions failed.", e)
+          InternalServerError(s"Importing nodes and junctions failed: ${e.getMessage}")
+        }
+      }
+    }
+  }
+
+  get("/update_calibration_point_types") {
+    time(logger, "GET request for /update_calibration_point_types") {
+      try {
+        dataImporter.updateCalibrationPointTypes()
+        Ok("Updating calibration point types successful.\n")
+      } catch {
+        case e: Exception => {
+          logger.error("Updating calibration point types failed.", e)
+          InternalServerError(s"Updating calibration point types failed: ${e.getMessage}")
+        }
+      }
+    }
+  }
+
   get("/import_road_addresses") {
     val conversionTable = params.get("conversion_table")
     time(logger, "GET request for /import_road_addresses") {
