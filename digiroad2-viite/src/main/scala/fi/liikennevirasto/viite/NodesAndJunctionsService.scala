@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
+import fi.liikennevirasto.viite.RoadAddressFilters.{continuousTopology, connectingBothHeads}
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity, ParallelLink}
@@ -400,7 +401,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                 val head = if (roadsInFirstPoint.exists(fl =>
                   RoadAddressFilters.endingOfRoad(fl)(projectLink)
                     || RoadAddressFilters.halfContinuousHalfDiscontinuous(fl)(projectLink)
-                    || RoadAddressFilters.discontinuousPartHeadIntersection(fl)(projectLink)))
+                    || RoadAddressFilters.discontinuousPartHeadIntersection(fl)(roadsInFirstPoint.filter(r => continuousTopology(r)(projectLink) || connectingBothHeads(r)(projectLink)))))
                   roadsInFirstPoint
                 else if (nonTerminatedLinks.exists(fl => RoadAddressFilters.continuousRoadPartTrack(fl)(projectLink) && RoadAddressFilters.discontinuousTopology(fl)(projectLink)))
                   roadsInFirstPoint.filterNot(RoadAddressFilters.sameRoad(projectLink)) ++ nonTerminatedLinks.filter(fl => fl.id != projectLink.id && (RoadAddressFilters.halfContinuousHalfDiscontinuous(fl)(projectLink) || projectLink.startingPoint.connected(fl.startingPoint)))

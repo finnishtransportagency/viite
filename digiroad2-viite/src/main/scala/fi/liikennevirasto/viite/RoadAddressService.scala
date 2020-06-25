@@ -1139,8 +1139,8 @@ object RoadAddressFilters {
     !samePart(curr)(next) && curr.discontinuity == Discontinuity.Discontinuous && (continuousTopology(curr)(next) || connectingBothTails(curr)(next))
   }
 
-  def discontinuousPartHeadIntersection(prev: BaseRoadAddress)(curr: BaseRoadAddress): Boolean = {
-    !samePart(prev)(curr) && (!continuousTopology(prev)(curr) || connectingBothHeads(prev)(curr))
+  def discontinuousPartHeadIntersection(prev: BaseRoadAddress)(curr: Seq[BaseRoadAddress]): Boolean = {
+    !curr.forall(ra => samePart(prev)(ra)) && curr.exists(ra => sameRoadPart(prev)(ra))
   }
 
   def afterDiscontinuousJump(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
