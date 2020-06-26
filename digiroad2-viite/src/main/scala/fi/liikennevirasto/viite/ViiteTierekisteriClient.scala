@@ -270,7 +270,7 @@ object ViiteTierekisteriClient {
     if (ViiteProperties.tierekisteriEnabled) {
       fetchTRProjectStatus(projectId).map(responseMapper)
     } else {
-      Some(TRProjectStatus(None, None, None, None, Some(ProjectState.Saved2TR.value.toString), None, None, None, None, None, None, None, None, None, None))
+      Some(TRProjectStatus(None, None, None, None, Some("T"), None, None, None, None, None, None, None, None, None, None))
     }
   }
 
