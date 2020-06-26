@@ -190,8 +190,8 @@ trait TrackCalculatorStrategy {
       setLastEndAddrMValue(adjustedLeft, endSectionAddress),
       setLastEndAddrMValue(adjustedRight, endSectionAddress),
       startSectionAddress, endSectionAddress,
-      restLeftProjectLinks ++ leftProjectLinks.drop(continuousLeftProjectLinks.size),
-      restRightProjectLinks ++ rightProjectLinks.drop(continuousRightProjectLinks.size))
+      leftProjectLinks.drop(continuousLeftProjectLinks.size) ++ restLeftProjectLinks,
+      rightProjectLinks.drop(continuousRightProjectLinks.size) ++ restRightProjectLinks)
   }
 
   /**
