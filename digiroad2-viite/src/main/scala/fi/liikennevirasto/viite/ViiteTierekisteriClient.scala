@@ -267,7 +267,11 @@ object ViiteTierekisteriClient {
   }
 
   def getProjectStatusObject(projectId:Long): Option[TRProjectStatus] = {
-    fetchTRProjectStatus(projectId).map(responseMapper)
+    if (ViiteProperties.tierekisteriEnabled) {
+      fetchTRProjectStatus(projectId).map(responseMapper)
+    } else {
+      Some(TRProjectStatus(None, None, None, None, Some(ProjectState.Saved2TR.value.toString), None, None, None, None, None, None, None, None, None, None))
+    }
   }
 
   private def fetchTRProjectStatus(projectId: Long): Option[TRStatusResponse] = {
