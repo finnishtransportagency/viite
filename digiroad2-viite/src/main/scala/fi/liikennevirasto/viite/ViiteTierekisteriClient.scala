@@ -7,11 +7,11 @@ import fi.liikennevirasto.viite.util.ViiteTierekisteriAuthPropertyReader
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
-import org.json4s.jackson.Serialization
-import org.json4s.{CustomSerializer, DefaultFormats, Extraction, StreamInput}
 import org.joda.time.format.DateTimeFormat
 import org.json4s.JsonAST._
 import org.json4s.jackson.JsonMethods.parse
+import org.json4s.jackson.Serialization
+import org.json4s.{CustomSerializer, DefaultFormats, Extraction, StreamInput}
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
@@ -163,9 +163,9 @@ object ViiteTierekisteriClient {
 
   private def getRestEndPoint: String = {
     val isTREnabled = ViiteProperties.tierekisteriEnabled
-    val loadedKeyString = if(isTREnabled){
+    val loadedKeyString = if (isTREnabled) {
       ViiteProperties.tierekisteriViiteRestApiEndPoint
-    }  else "http://localhost:8080/api/trrest/"
+    } else "http://localhost:8080/api/trrest/"
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")
     loadedKeyString
@@ -208,30 +208,35 @@ object ViiteTierekisteriClient {
     sendJsonMessage(projectChange)
   }
 
-  def sendJsonMessage(trProject:ChangeProject): ProjectChangeStatus ={
+  def sendJsonMessage(trProject: ChangeProject): ProjectChangeStatus = {
     implicit val formats = DefaultFormats
-    val request = new HttpPost(getRestEndPoint+"addresschange/")
-    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
-    request.setEntity(createJsonMessage(trProject))
-    val response = client.execute(request)
-    try {
-      val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode == 500){
-        val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
-        ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
-      } else if (statusCode > 500) {
-        logger.info(scala.io.Source.fromInputStream(response.getEntity.getContent).getLines().mkString("\n"))
-        throw new RuntimeException("Unable to submit: Tierekisteri error > 500")
-      } else {
-        val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
-        ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
+    if (ViiteProperties.tierekisteriEnabled) {
+      val request = new HttpPost(getRestEndPoint + "addresschange/")
+      request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
+      request.setEntity(createJsonMessage(trProject))
+      val response = client.execute(request)
+      try {
+        val statusCode = response.getStatusLine.getStatusCode
+        if (statusCode == 500) {
+          val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
+          ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
+        } else if (statusCode > 500) {
+          logger.info(scala.io.Source.fromInputStream(response.getEntity.getContent).getLines().mkString("\n"))
+          throw new RuntimeException("Unable to submit: Tierekisteri error > 500")
+        } else {
+          val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
+          ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
+        }
+      } catch {
+        case NonFatal(e) =>
+          logger.error(s"Submit to Tierekisteri failed: ${e.getMessage}", e)
+          ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, FailedToSendToTRMessage) // sending project to tierekisteri failed
+      } finally {
+        response.close()
       }
-    } catch {
-      case NonFatal(e) =>
-        logger.error(s"Submit to Tierekisteri failed: ${e.getMessage}", e)
-        ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, FailedToSendToTRMessage) // sending project to tierekisteri failed
-    } finally {
-      response.close()
+    } else {
+      logger.info(s"""Mock Tierekisteri in use. Project "${trProject.name}" changes were not really sent to Tierekisteri.""")
+      ProjectChangeStatus(trProject.id, 200, "")
     }
   }
 
