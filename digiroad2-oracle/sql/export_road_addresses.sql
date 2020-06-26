@@ -12,6 +12,7 @@
 --				* NODE_POINT
 --				* JUNCTION
 --				* JUNCTION_POINT
+--				* ROAD_NAME
 
 --	Notes:
 --		* Make sure no one else is using this script, if so, you can change the name of the output table:
@@ -117,13 +118,15 @@ DECLARE
 		AND jp.VALID_TO IS NULL AND jp.ROADWAY_POINT_ID IN (
 			SELECT rp.ID FROM ROADWAY_POINT rp WHERE rp.ROADWAY_NUMBER IN (
 				SELECT rw.ROADWAY_NUMBER FROM ROADWAY rw WHERE rw.VALID_TO IS NULL AND rw.END_DATE IS NULL AND rw.ROAD_NUMBER = ROAD AND rw.ROAD_PART_NUMBER = ROAD_PART));
+
+	CURSOR road_names (ROAD IN INTEGER) IS SELECT r_name.* FROM ROAD_NAME r_name
+		WHERE r_name.VALID_TO IS NULL AND r_name.END_DATE IS NULL
+		AND r_name.ROAD_NUMBER = ROAD;
 BEGIN
 	-- TODO	Add elements (key-value pairs) to associative array :
 	-- e.g.:
 	--	1. road_section(5)		:= (road_part_by_rn(205, 206));		-- This will export data from: road_number = 5 and road_part_number in (205, 206);
 	--	2. road_section(75)		:= (road_part_by_rn(1));			-- This will export data from: road_number = 75 and road_part_number = 1
-	road_section(5)		:= (road_part_by_rn(205, 206));
-	road_section(75)	:= (road_part_by_rn(1));
 
 	-- Export:
 	ROAD := road_section.FIRST;
@@ -240,11 +243,17 @@ BEGIN
 
 			--	NODE_POINT
 			FOR np IN node_points (ROAD, ROAD_PART) LOOP
+				IF np.NODE_NUMBER IS NOT NULL THEN
+					node_number := TO_CHAR(np.NODE_NUMBER);
+				ELSE
+					node_number := 'NULL';
+				END IF;
+
 				INSERT INTO EXPORT_TABLE VALUES (COUNTER,
 				'INSERT INTO NODE_POINT (ID,BEFORE_AFTER,ROADWAY_POINT_ID,VALID_FROM,' ||
-				'CREATED_BY,CREATED_TIME,"TYPE") VALUES (' ||
+				'CREATED_BY,CREATED_TIME,NODE_NUMBER,"TYPE") VALUES (' ||
 					np.ID || ',' || np.BEFORE_AFTER || ',' || np.ROADWAY_POINT_ID || ',''' || np.VALID_FROM || ''',''' ||
-					np.CREATED_BY || ''',''' || np.CREATED_TIME || ''',' || np."TYPE" || ');');
+					np.CREATED_BY || ''',''' || np.CREATED_TIME || ''',' || node_number || ',' || np."TYPE" || ');');
 				COUNTER := COUNTER + 1;
 			END LOOP;
 
@@ -281,8 +290,21 @@ BEGIN
 			RP_INDEX := road_section(ROAD).NEXT(RP_INDEX);
 			COMMIT;
 		END LOOP;
+
+		-- ROAD_NAME
+		FOR name IN road_names (ROAD) LOOP
+			INSERT INTO EXPORT_TABLE VALUES (COUNTER,
+			'INSERT INTO ROAD_NAME (ID,ROAD_NUMBER,ROAD_NAME,START_DATE,VALID_FROM,CREATED_BY,CREATED_TIME) VALUES (' ||
+				name.ID || ',' || name.ROAD_NUMBER || ',''' || name.ROAD_NAME || ''',''' || name.START_DATE || ''',''' || name.VALID_FROM || ''',''' ||
+				name.CREATED_BY || ''',''' ||
+				name.CREATED_TIME || ''');');
+			COUNTER := COUNTER + 1;
+			COMMIT;
+		END LOOP;
+
 		ROAD := road_section.NEXT(ROAD);
 	END LOOP;
+
 	INSERT INTO EXPORT_TABLE VALUES (COUNTER, 'END;');
 	COMMIT;
 END;
