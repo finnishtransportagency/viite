@@ -69,7 +69,7 @@ object ProjectSectionCalculator {
       }.toSeq
 
     } finally {
-      logger.info(s"Finished MValue assignment for ${terminated.size} links")
+      logger.info(s"Finished MValue assignment for ${terminated.size} terminated links")
     }
   }
 
@@ -103,8 +103,11 @@ object ProjectSectionCalculator {
       if (rightLinks.isEmpty && leftLinks.isEmpty) {
         (Seq(), Seq())
       } else {
-        val (firstRight, restRight) = getContinuousTrack(rightLinks)
-        val (firstLeft, restLeft) = getContinuousTrack(leftLinks)
+        val (right, othersRight) = getContinuousTrack(rightLinks)
+        val (left, othersLeft) = getContinuousTrack(leftLinks)
+
+        val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
+          TrackSectionOrder.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
 
         if (firstRight.isEmpty || firstLeft.isEmpty)
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
@@ -112,7 +115,7 @@ object ProjectSectionCalculator {
         val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
         val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, Map())
 
-        val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
+        val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(restLeft ++ trackCalcResult.restLeft, restRight ++ trackCalcResult.restRight, Some(trackCalcResult.endAddrMValue))
 
         (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
       }

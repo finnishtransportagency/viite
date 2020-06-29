@@ -1,8 +1,9 @@
 package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.LinkStatus.New
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
 
 
@@ -21,11 +22,20 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
   }
 
   override def assignTrackMValues(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult = {
-    val (left, restLeft) = leftProjectLinks.span(_.status == leftProjectLinks.head.status)
-    val (right, restRight) = rightProjectLinks.span(_.status == rightProjectLinks.head.status)
+    val (firstLeft, othersLeft) = leftProjectLinks.span(_.status == leftProjectLinks.head.status)
+    val (firstRight, othersRight) = rightProjectLinks.span(_.status == rightProjectLinks.head.status)
+
+    val leftRoadwayNumber = firstLeft.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
+    val left = firstLeft.takeWhile(_.roadwayNumber == leftRoadwayNumber)
+    val restLeft = firstLeft.drop(left.size) ++ othersLeft
+
+    val rightRoadwayNumber = firstRight.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
+    val right = firstRight.takeWhile(_.roadwayNumber == rightRoadwayNumber)
+    val restRight = firstRight.drop(right.size) ++ othersRight
 
     val (lastLeft, lastRight) = (left.last, right.last)
 
+    // TODO improve
     if (lastRight.endAddrMValue <= lastLeft.endAddrMValue) {
       val distance = lastRight.toMeters(lastLeft.endAddrMValue - lastRight.endAddrMValue)
       if (distance < AdjustmentToleranceMeters) {
