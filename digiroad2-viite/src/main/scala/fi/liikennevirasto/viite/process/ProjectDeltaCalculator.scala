@@ -291,7 +291,7 @@ object ProjectDeltaCalculator {
         case (_, t) => t.roadNumber == target.roadNumber && t.roadPartNumberStart == target.roadPartNumberStart && t.endMAddr == target.endMAddr && t.track == Track.switch(target.track)
       }
       if (possibleExistingSameEndAddrMValue.nonEmpty) {
-        val warningMessage = if (Math.abs(target.endMAddr - possibleExistingSameEndAddrMValue.head._2.endMAddr) > viite.MaxDistanceBetweenTracks)
+        val warningMessage = if (Math.abs(src.endMAddr - possibleExistingSameEndAddrMValue.head._1.endMAddr) > viite.MaxDistanceBetweenTracks)
           Some(viite.MaxDistanceBetweenTracksWarningMessage)
         else
           None
