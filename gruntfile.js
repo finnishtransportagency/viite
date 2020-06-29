@@ -56,7 +56,7 @@ module.exports = function(grunt) {
       }
     },
     cachebreaker: {
-      dev: {
+      indexfile: {
         options: {
           match: [
             {
