@@ -401,6 +401,7 @@ class NodePointDAO extends BaseDAO {
           AND N.END_DATE IS NULL
           AND N.VALID_TO IS NULL
           AND N.NODE_NUMBER = $nodeNumber
+          GROUP BY R.ROAD_PART_NUMBER
           ORDER BY R.ROAD_PART_NUMBER
        """
     Q.queryNA[(Long)](query).firstOption
