@@ -1399,27 +1399,28 @@ Left     ^  ^   Right
   test("Test defaultSectionCalculatorStrategy.assignMValues() and the attribution of roadway_numbers for new Left Right sections with diff number of links Then " +
     "if there are for e.g. 2 (two) consecutive links with diff roadway number (and all Transfer status), the opposite track (New), should split their link(s) if the amount of links is lower than two, to have the same amount of roadway numbers") {
     runWithRollback {
+      /*  Geoms
 
-      /*geoms
-         ^  ^
-         |  |
-Left     |  ^   Right
-         |  |
-         |  |
-          ^
-          | Combined
-          ^
-          |
-      */
+              ^   ^
+              |   |
+         Left |   ^  Right
+              |   |
+              |   |
+               \ /
+                ^
+                |
+                ^
+                |
+        */
 
-      //Combined
+      //  Combined
       val geomTransferCombined1 = Seq(Point(10.0, 0.0), Point(10.0, 5.0))
       val geomTransferCombined2 = Seq(Point(10.0, 5.0), Point(10.0, 10.0))
 
-      //Left
+      //  Left
       val geomNewLeft1 = Seq(Point(10.0, 10.0), Point(5.0, 20.0))
 
-      //Right
+      //  Right
       val geomTransferRight1 = Seq(Point(10.0, 10.0), Point(15.0, 23.0))
       val geomTransferRight2 = Seq(Point(15.0, 23.0), Point(15.0, 30.0))
 
@@ -1435,12 +1436,11 @@ Left     |  ^   Right
       val linearLocationId2 = Sequences.nextLinearLocationId
       val linearLocationId3 = Sequences.nextLinearLocationId
       val linearLocationId4 = Sequences.nextLinearLocationId
+
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
-      //projectlinks
-
-      //Combined Transfer
+      //  Combined Transfer
       val projectLinkCombined1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
         None, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferCombined1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined1), roadwayId1, linearLocationId1, 8L, reversed = false,
@@ -1451,14 +1451,13 @@ Left     |  ^   Right
         geomTransferCombined2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined2), roadwayId2, linearLocationId2, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
 
-
-      //Left New
+      //  Left New
       val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
         None, 12348L, 0.0, 11.18, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft1, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft1), -1000, -1000, 8L, reversed = false,
         None, 86400L)
 
-      //Right Transfer
+      //  Right Transfer
       val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 10L, 23L, 10L, 23L, None, None,
         None, 12346L, 5.0, 18.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight1), roadwayId2, linearLocationId3, 8L, reversed = false,
@@ -1468,7 +1467,7 @@ Left     |  ^   Right
         geomTransferRight2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight2), roadwayId3, linearLocationId4, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber3)
 
-      //create before transfer data
+      //  Create before transfer data
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 5, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,

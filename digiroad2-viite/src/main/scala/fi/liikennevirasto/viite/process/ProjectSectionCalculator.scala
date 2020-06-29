@@ -115,7 +115,7 @@ object ProjectSectionCalculator {
         val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
         val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, Map())
 
-        val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(restLeft ++ trackCalcResult.restLeft, restRight ++ trackCalcResult.restRight, Some(trackCalcResult.endAddrMValue))
+        val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
 
         (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
       }
