@@ -137,7 +137,7 @@ trait TrackCalculatorStrategy {
     * @param userCalibrationPoint
     * @return
     */
-  protected def getFixedAddress(leftLink: ProjectLink, rightLink: ProjectLink,
+  def getFixedAddress(leftLink: ProjectLink, rightLink: ProjectLink,
                                 userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): (Long, Long) = {
 
     val reversed = rightLink.reversed || leftLink.reversed
