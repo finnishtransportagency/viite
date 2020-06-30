@@ -95,8 +95,8 @@ object ProjectSectionCalculator {
 
     def getContinuousTrack(seq: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       val track = seq.headOption.map(_.roadAddressTrack.getOrElse(Track.Unknown)).getOrElse(Track.Unknown)
-      val continuousProjectLinks = seq.takeWhile(pl => pl.roadAddressTrack.getOrElse(Track.Unknown) == track)
-      (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+      val status = seq.headOption.map(_.status).getOrElse(LinkStatus.Unknown)
+      seq.span(pl => pl.roadAddressTrack.getOrElse(Track.Unknown) == track && (if(status.equals(LinkStatus.Terminated)) pl.status == status else !pl.status.equals(LinkStatus.Terminated)))
     }
 
     def adjustTracksToMatch(leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
