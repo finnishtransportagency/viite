@@ -789,7 +789,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       roadNetworkDAO.createPublishedRoadNetwork()
       val roadNetworkId = roadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
       dao.create(List(testRoadway1))
-      dao.fetchAllByRoadwayNumbers(Set[Long](), roadNetworkId).size should be(0)
+      dao.fetchAllByRoadwayNumbers(Set[Long](), roadNetworkId, None).size should be(0)
     }
   }
 
@@ -799,7 +799,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       roadNetworkDAO.createPublishedRoadNetwork()
       val roadNetworkId = roadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
       dao.create(List(testRoadway1, testRoadway2))
-      dao.fetchAllByRoadwayNumbers(Set(nonExistingRoadwayNumber), roadNetworkId).size should be(0)
+      dao.fetchAllByRoadwayNumbers(Set(nonExistingRoadwayNumber), roadNetworkId, None).size should be(0)
     }
   }
 
@@ -807,8 +807,31 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val nonExistingRoadNetworkId = -9999l
       dao.create(List(testRoadway1, testRoadway2, testRoadway2.copy(endDate = Some(DateTime.parse("2001-12-31"))), testRoadway3))
-      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), nonExistingRoadNetworkId)
+      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), nonExistingRoadNetworkId, None)
       roadways.size should be(0)
+    }
+  }
+
+  test("Fetching Roadways by number and situation date ignores roadways outside the given date") {
+    runWithRollback {
+      dao.create(List(testRoadway1.copy(endDate = Some(DateTime.now.plusDays(-1))), testRoadway2.copy(endDate = Some(DateTime.now.plusDays(1)))))
+      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), DateTime.now())
+      roadways.size should be(1)
+    }
+  }
+
+  test("Fetching Roadways by number, road network id and situation date ignores roadways outside the given date") {
+    runWithRollback {
+      val roadNetworkDAO = new RoadNetworkDAO
+      roadNetworkDAO.createPublishedRoadNetwork()
+      val roadNetworkVersionId = roadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
+      val roadwayId1 = dao.getNextRoadwayId
+      val roadwayId2 = dao.getNextRoadwayId
+      dao.create(List(testRoadway1.copy(endDate = Some(DateTime.now.plusDays(-1)), id = roadwayId1), testRoadway2.copy(endDate = Some(DateTime.now.plusDays(1)), id = roadwayId2)))
+      roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId1)
+      roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId2)
+      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), roadNetworkVersionId, Some(DateTime.now()))
+      roadways.size should be(1)
     }
   }
 
@@ -824,7 +847,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId1)
       roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId2)
       roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId3)
-      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), roadNetworkVersionId)
+      val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), roadNetworkVersionId, None)
       roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.filter(r => r.roadwayNumber == roadwayNumber2).head.endDate should be(None)

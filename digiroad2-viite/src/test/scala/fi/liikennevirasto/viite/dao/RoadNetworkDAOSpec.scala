@@ -78,7 +78,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
       roadwayDAO.create(List(testRoadway1.copy(id = roadwayId1), testRoadway2.copy(id = roadwayId2), testRoadway3.copy(id = roadwayId3)))
       dao.createPublishedRoadway(networkId, roadwayId1)
       dao.createPublishedRoadway(networkId, roadwayId2)
-      val roadways = roadwayDAO.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), networkId)
+      val roadways = roadwayDAO.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), networkId, None)
       roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
