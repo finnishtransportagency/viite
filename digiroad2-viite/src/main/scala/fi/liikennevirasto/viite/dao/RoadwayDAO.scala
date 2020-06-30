@@ -532,12 +532,12 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long], roadNetworkId: Long): Seq[Roadway] = {
+  def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long], roadNetworkId: Long, searchDate: Option[DateTime]) : Seq[Roadway] = {
     time(logger, "Fetch all current road addresses by roadway ids and road network id") {
       if (roadwayNumbers.isEmpty)
         Seq()
       else
-        fetch(withRoadwayNumbersAndRoadNetwork(roadwayNumbers, roadNetworkId))
+        fetch(withRoadwayNumbersAndRoadNetwork(roadwayNumbers, roadNetworkId, searchDate))
     }
   }
 
@@ -710,7 +710,9 @@ class RoadwayDAO extends BaseDAO {
     query + s" WHERE a.road_number = $road " + s"$roadPartFilter $trackFilter $mValueFilter and a.end_date is null and a.valid_to is null "
   }
 
-  private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
+  private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long, searchDate: Option[DateTime])(query: String): String = {
+    val queryDate = if(searchDate.isDefined) s"to_date('${searchDate.get.toString("yyyy-MM-dd")}', 'YYYY-MM-DD') " else "CURRENT_DATE"
+
     if (roadwayNumbers.size > 1000) {
       val groupsOf1000 = roadwayNumbers.grouped(1000).toSeq
       val groupedRoadwayNumbers = groupsOf1000.map(group => {
@@ -720,13 +722,13 @@ class RoadwayDAO extends BaseDAO {
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
          where net.network_id = $roadNetworkId and a.valid_to is null and (a.roadway_number $groupedRoadwayNumbers)
-            and a.start_date <= CURRENT_DATE and (a.end_date is null or a.end_date >= CURRENT_DATE)"""
+            and a.start_date <= $queryDate and (a.end_date is null or a.end_date >= $queryDate)"""
     }
     else
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
          where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})
-            and a.start_date <= CURRENT_DATE and (a.end_date is null or a.end_date >= CURRENT_DATE)"""
+            and a.start_date <= $queryDate and (a.end_date is null or a.end_date >= $queryDate)"""
 
   }
 
