@@ -4,7 +4,6 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.TrackCalculatorContext
 import fi.liikennevirasto.viite.{MaxThresholdDistance, NewIdValue, RoadType}
@@ -163,8 +162,6 @@ object TrackSectionRoadway {
           processingOppositeTrack.map(l => l.endMValue - l.startMValue).sum
       }
 
-      val strategy = TrackCalculatorContext.getStrategy(remainingReference.flatMap(_._2).toSeq, remainingOppositeTrack)
-
       val currentNewLinksGroupCoeff: Double = processingLength / totalOppositeTrackMLength
       if (minAllowedTransferGroupCoeff <= currentNewLinksGroupCoeff && currentNewLinksGroupCoeff <= maxAllowedTransferGroupCoeff) {
         val (unassignedRwnLinks, assignedRwnLinks) = (processedOppositeTrack :+ remainingOppositeTrack.head).partition(_.roadwayNumber == NewIdValue)
@@ -210,12 +207,7 @@ object TrackSectionRoadway {
           processedOppositeTrack = processedOpposite,
           totalOppositeTrackMLength, totalOppositeTrackMLength, missingRoadwayNumbers - 1)
       } else if (minAllowedTransferGroupCoeff > currentNewLinksGroupCoeff) {
-        splitLinksIfNeed(
-          remainingReference = remainingReference,
-          processedReference = processedReference,
-          remainingOppositeTrack = remainingOppositeTrack.tail,
-          processedOppositeTrack = processedOppositeTrack :+ remainingOppositeTrack.head,
-          totalReferenceMLength, totalOppositeTrackMLength, missingRoadwayNumbers)
+        splitLinksIfNeed(remainingReference = remainingReference, processedReference = processedReference, remainingOppositeTrack = remainingOppositeTrack.tail, processedOppositeTrack = processedOppositeTrack :+ remainingOppositeTrack.head, totalReferenceMLength, totalOppositeTrackMLength, missingRoadwayNumbers)
       } else {
         /*  Calculate missing geometry left to fulfill the exactly groupTransfer coefficient
             * Note: and by that we want to pick previous processedLinks
@@ -247,16 +239,20 @@ object TrackSectionRoadway {
         //  processedLinks without and with roadwayNumber
         val (unassignedRwnLinks, assignedRwnLinks) = processedOppositeTrack.partition(_.roadwayNumber == NewIdValue)
         val nextRoadwayNumber = Sequences.nextRoadwayNumber
+
+        val remainingOpposite =
+          linkToBeSplit.copy(id = NewIdValue, startMValue = secondSplitStartMeasure, endMValue = secondSplitEndMeasure, geometry = secondSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(secondSplitedLinkGeom), startAddrMValue = firstSplitEndAddr) +:
+            remainingOppositeTrack.tail
+
         val processedOppositeTrackWithSplitLink = assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+ linkToBeSplit.copy(startMValue = firstSplitStartMeasure, endMValue = firstSplitEndMeasure,
           geometry = firstSplitLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitLinkGeom), endAddrMValue = firstSplitEndAddr,
           roadwayNumber = nextRoadwayNumber, connectedLinkId = Some(linkToBeSplit.linkId))
 
+
         splitLinksIfNeed(
           remainingReference = remainingReference.tail,
           processedReference = processedReference ++ remainingReference.head._2,
-          remainingOppositeTrack =
-            linkToBeSplit.copy(id = NewIdValue, startMValue = secondSplitStartMeasure, endMValue = secondSplitEndMeasure, geometry = secondSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(secondSplitedLinkGeom), startAddrMValue = firstSplitEndAddr) +:
-              remainingOppositeTrack.tail,
+          remainingOppositeTrack = remainingOpposite,
           processedOppositeTrack = processedOppositeTrackWithSplitLink, totalReferenceMLength, totalOppositeTrackMLength, missingRoadwayNumbers - 1)
       }
     }
