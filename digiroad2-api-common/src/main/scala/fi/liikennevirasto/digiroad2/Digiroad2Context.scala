@@ -2,10 +2,10 @@ package fi.liikennevirasto.digiroad2
 
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
-import fi.liikennevirasto.digiroad2.service._
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.util.{DataImporter, JsonSerializer}
@@ -13,13 +13,15 @@ import fi.liikennevirasto.viite.dao.{LinearLocationDAO, _}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
-import org.slf4j.LoggerFactory
+import fi.liikennevirasto.viite.util.JsonSerializer
+import fi.liikennevirasto.viite.{NodesAndJunctionsService, ProjectService, RoadAddressService, RoadCheckOptions, RoadNameService, RoadNetworkService}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NonFatal
 
 class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
-  def receive = {
+  def receive: PartialFunction[Any, Unit] = {
     case w: ChangeSet => roadAddressService.updateChangeSet(w)
     case _                    => println("roadAddressUpdater: Received unknown message")
   }
@@ -48,7 +50,7 @@ class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
 
 
 class RoadNetworkChecker(roadNetworkService: RoadNetworkService) extends Actor {
-  def receive = {
+  def receive: PartialFunction[Any, Unit] = {
     case w: RoadCheckOptions =>  roadNetworkService.checkRoadAddressNetwork(w)
     case _ => println("roadAddressChecker: Received unknown message")
   }
@@ -59,7 +61,7 @@ object Digiroad2Context {
 
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger: Logger = LoggerFactory.getLogger(getClass)
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per minute
     try {
       projectService.updateProjectsWaitingResponseFromTR()
@@ -90,18 +92,20 @@ object Digiroad2Context {
 //  val roadAddressFloater = system.actorOf(Props(classOf[RoadAddressFloater], roadAddressService), name = "roadAddressFloater")
 //  eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
 
-  val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
+  val roadAddressUpdater: ActorRef = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
   eventbus.subscribe(roadAddressUpdater, "roadAddress:persistChangeSet")
 
-  val roadNetworkChecker = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
+  val roadNetworkChecker: ActorRef = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")
 
-  lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, roadwayAddressMapper, eventbus, ViiteProperties.vvhRoadlinkFrozen)
-  }
+  lazy val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO,
+    roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus, ViiteProperties.vvhRoadlinkFrozen)
 
   lazy val projectService: ProjectService = {
-    new ProjectService(roadAddressService, roadLinkService, eventbus, ViiteProperties.vvhRoadlinkFrozen)
+    new ProjectService(roadAddressService, roadLinkService, nodesAndJunctionsService, roadwayDAO,
+      roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
+      nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
+      roadwayAddressMapper, eventbus, ViiteProperties.vvhRoadlinkFrozen)
   }
 
   lazy val roadNetworkService: RoadNetworkService = {
@@ -113,11 +117,15 @@ object Digiroad2Context {
   }
 
   lazy val nodesAndJunctionsService : NodesAndJunctionsService = {
-    new NodesAndJunctionsService
+    new NodesAndJunctionsService(roadwayDAO, roadwayPointDAO, linearLocationDAO, nodeDAO, nodePointDAO, junctionDAO, junctionPointDAO, roadwayChangesDAO)
   }
 
   lazy val authenticationTestModeEnabled: Boolean = {
     ViiteProperties.authenticationTestMode
+  }
+
+  lazy val authenticationTestModeUser: String = {
+    ViiteProperties.authenticationTestUser
   }
 
   lazy val userProvider: UserProvider = {
@@ -137,7 +145,7 @@ object Digiroad2Context {
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
+    new RoadLinkService(vvhClient, eventbus, new JsonSerializer, useFrozenLinkInterface)
   }
 
   lazy val roadwayDAO: RoadwayDAO = {
@@ -146,6 +154,46 @@ object Digiroad2Context {
 
   lazy val linearLocationDAO: LinearLocationDAO = {
     new LinearLocationDAO
+  }
+
+  lazy val roadwayPointDAO: RoadwayPointDAO = {
+    new RoadwayPointDAO
+  }
+
+  lazy val nodeDAO: NodeDAO = {
+    new NodeDAO
+  }
+
+  lazy val junctionDAO: JunctionDAO = {
+    new JunctionDAO
+  }
+
+  lazy val nodePointDAO: NodePointDAO = {
+    new NodePointDAO
+  }
+
+  lazy val junctionPointDAO: JunctionPointDAO = {
+    new JunctionPointDAO
+  }
+
+  lazy val roadNetworkDAO: RoadNetworkDAO = {
+    new RoadNetworkDAO
+  }
+
+  lazy val roadwayChangesDAO: RoadwayChangesDAO = {
+    new RoadwayChangesDAO
+  }
+
+  lazy val projectDAO: ProjectDAO = {
+    new ProjectDAO
+  }
+
+  lazy val projectLinkDAO: ProjectLinkDAO = {
+    new ProjectLinkDAO
+  }
+
+  lazy val projectReservedPartDAO : ProjectReservedPartDAO = {
+    new ProjectReservedPartDAO
   }
 
   lazy val roadwayAddressMapper: RoadwayAddressMapper = {
@@ -157,8 +205,13 @@ object Digiroad2Context {
   lazy val revision: String = {
     ViiteProperties.revision
   }
+
   lazy val deploy_date: String = {
     ViiteProperties.latestDeploy
+  }
+
+  lazy val useFrozenLinkInterface: Boolean = {
+    ViiteProperties.vvhRoadlinkFrozen
   }
 
   val env = ViiteProperties.env

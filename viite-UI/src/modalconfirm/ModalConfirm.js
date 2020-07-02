@@ -1,7 +1,7 @@
 window.ModalConfirm = function(insertedText) {
 
     // In case an exception is not properly handled, a generic message will be added.
-    var detailInformation = insertedText.match("^ORA-") ?
+    var detailInformation = !insertedText ? "" : insertedText.match("^ORA-") ?
         '<div class="content"> Tekninen virhe, Ota yhteyttä pääkäyttäjään.' +
         '</div>' : "";
 

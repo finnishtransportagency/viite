@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
@@ -19,10 +20,10 @@ import org.scalatra.test.scalatest.ScalatraSuite
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
   when(mockRoadAddressService.getAllByMunicipality(235)).thenReturn(Seq())
 
-  val mockRoadNameService = MockitoSugar.mock[RoadNameService]
+  val mockRoadNameService: RoadNameService = MockitoSugar.mock[RoadNameService]
 
   private val integrationApi = new IntegrationApi(mockRoadAddressService, mockRoadNameService, new ViiteSwagger)
   addServlet(integrationApi, "/*")
@@ -53,12 +54,12 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("Test integrationApi.roadAddressLinksToApi() When supliying a simple Road Address Link Then return a Sequence of a String to Value mappings that represent the Road Address Link.") {
-    val geometry = Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
+    val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
     // This roadAddressLink has linearLocationId equal to zero, just to compile.
     val roadAdressLink = RoadAddressLink(63298, 0, 5171208, geometry, GeometryUtils.geometryLength(geometry), Municipality,
       UnknownLinkType, InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad, Some("Vt5"),
       None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 6, "2015-01-01",
-      "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(CalibrationPoint(120, 1, 2)), None, Anomaly.None, 0)
+      "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(CalibrationPoint(120, 1, 2)), None, Anomaly.None)
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)) should be(Seq(Map(
       "muokattu_viimeksi" -> "",
       "geometryWKT" -> "LINESTRING ZM (0.000 0.000 0.000 0.000, 1.000 0.000 0.500 1.000, 4.000 4.000 1.500 6.000)",
@@ -82,7 +83,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   test("Test integrationApi.geometryWKT() When using a 3D sequence of points and a start and end measures that fit in the geometry Then return a proper geometry in LineString format.") {
     val (header, returnTxt) =
-      integrationApi.geometryWKT(Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5)), 0L, 6L)
+      integrationApi.geometryWKT(Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5)), 0L, 6L)
     header should be ("geometryWKT")
     returnTxt should be ("LINESTRING ZM (0.000 0.000 0.000 0.000, 1.000 0.000 0.500 1.000, 4.000 4.000 1.500 6.000)")
   }

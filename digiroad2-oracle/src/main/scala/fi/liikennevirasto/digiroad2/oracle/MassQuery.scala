@@ -5,7 +5,12 @@ import slick.jdbc.StaticQuery.interpolation
 
 object MassQuery {
   def withIds[T](ids: Iterable[Long])(f: String => T): T = {
-    sqlu"""DELETE FROM temp_id""".execute
+    sqlu"""
+      CREATE GLOBAL TEMPORARY TABLE IF NOT EXISTS TEMP_ID (
+        ID BIGINT NOT NULL,
+	      CONSTRAINT TEMP_ID_PK PRIMARY KEY (ID)
+      ) ON COMMIT DELETE ROWS
+    """.execute
     val insertLinkIdPS = dynamicSession.prepareStatement("insert into temp_id (id) values (?)")
     try {
       ids.foreach { id =>

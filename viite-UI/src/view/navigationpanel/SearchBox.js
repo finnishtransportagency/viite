@@ -33,10 +33,17 @@
         resultsSection.show();
         clearSection.show();
       };
+
       var moveToLocation = function() {
         var showDialog = function(message) {
-          instructionsPopup.show(message, 3000);
+          resultsSection.hide();
+          clearSection.hide();
+          instructionsPopup.show(_.isString(message) ? message : 'Yhteys Viitekehysmuuntimeen epäonnistui', 3000);
         };
+
+        searchResults.html('Haku käynnissä…');
+        resultsSection.show();
+
         locationSearch.search(coordinatesText.val()).then(function(results) {
           populateSearchResults(results);
           if (results.length === 1) {
@@ -51,9 +58,11 @@
           moveToLocation();
         }
       });
+
       moveButton.on('click', function() {
         moveToLocation();
       });
+
       clearButton.on('click', function() {
         resultsSection.hide();
         clearSection.hide();

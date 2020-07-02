@@ -8,6 +8,8 @@ import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
 
 class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
+  val name = "Link Status Change Track Section"
+
   val AdjustmentToleranceMeters = 3L
 
   override def getStrategyAddress(projectLink: ProjectLink): Long = projectLink.startAddrMValue

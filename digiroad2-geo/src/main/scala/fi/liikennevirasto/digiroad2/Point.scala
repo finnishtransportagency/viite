@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.GeometryUtils
+
 case class Matrix(m: Seq[Seq[Double]]) {
   def *(that: Vector3d): Vector3d = {
 
@@ -118,7 +120,15 @@ case class Point(x: Double, y: Double, z: Double = 0.0) {
     Point(x + that.x, y + that.y, z + that.z)
   }
 
+  def +=(that: Vector3d): Point = {
+    Point(GeometryUtils.scaleToThreeDigits(x + that.x), GeometryUtils.scaleToThreeDigits(y + that.y), z + that.z)
+  }
+
   lazy val toVector: Vector3d = {
     this - Point(0.0, 0.0)
+  }
+
+  def connected(point: Point): Boolean = {
+    GeometryUtils.areAdjacent(Point(x, y, z), point, GeometryUtils.MaxDistanceForConnectedLinks)
   }
 }

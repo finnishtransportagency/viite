@@ -45,11 +45,10 @@
       return temp;
     };
 
-    return _.chain(features)
-      .map(fromFeatureVectorToLine)
-      .min('distance')
-      .omit('distance')
-      .value();
+    var mappedFeaturesVectorToLine = _.map(features, function(o){
+      return fromFeatureVectorToLine(o);
+    });
+    return _.omit(_.minBy(mappedFeaturesVectorToLine, 'distance'), "distance");
   };
 
   geometrycalculator.getSquaredDistanceBetweenPoints = function(pointA, pointB) {
@@ -88,7 +87,7 @@
   };
 
   geometrycalculator.getCentroid = function(points) {
-    var sums = _.foldl(points, function(sum, point) {
+    var sums = _.reduce(points, function(sum, point) {
       return { lat: point.lat + sum.lat, lon: point.lon + sum.lon };
     }, { lat: 0, lon: 0 });
 

@@ -4,11 +4,10 @@
   };
   var navigationPanel = $('<div class="navigation-panel"></div>');
 
-  function initialize(container, searchBox, openProjectsBox, assetControlGroups) {
+  function initialize(container, searchBox, assetControlGroups) {
 
     navigationPanel = $('<div class="navigation-panel"></div>');
     navigationPanel.append(searchBox.element);
-    navigationPanel.append(openProjectsBox.element);
 
     var assetControls = _.flatten(assetControlGroups);
 
@@ -22,10 +21,9 @@
       .map(function(asset) {
         return [asset.layerName, asset];
       })
-      .zipObject()
+      .fromPairs()
       .value();
 
-    bindEvents();
 
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
         var previousControl = assetControlMap[previouslySelectedLayer];
@@ -36,11 +34,6 @@
 
     container.append(navigationPanel);
 
-    function bindEvents() {
-      openProjectsBox.button.on('click', function(){
-        openProjectsBox.toggle();
-      });
-    }
 
     eventbus.on('layer:enableButtons', enableButtons);
     function enableButtons(value) {

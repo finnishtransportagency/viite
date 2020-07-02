@@ -32,6 +32,8 @@ package object viite {
 
   val MinDistanceForGeometryUpdate = 0.5
 
+  val MaxThresholdDistance = 2
+
   val MaxAdjustmentRange = 10L
 
   val noRoadwayId: Long = 0L
@@ -45,17 +47,11 @@ package object viite {
   val MaxJumpForSection = 50.0
   /* Maximum distance to consider the tracks to go side by side */
   val MaxDistanceBetweenTracks = 50
-  /* Maximum distance of regular road link geometry to suravage geometry difference where splitting is allowed */
-  val MaxSuravageToleranceToGeometry = 0.5
   val MaxRoadNumberDemandingRoadName = 70000
 
   val MaxAllowedNodes = 50
 
-  //TODO: remove after Suravage change following messages (4):
-  val ErrorNoMatchingProjectLinkForSplit = "Suravage-linkkiä vastaavaa käsittelemätöntä tieosoitelinkkiä ei löytynyt projektista."
-  val ErrorSuravageLinkNotFound = "Suravage-linkkiä ei löytynyt."
   val ErrorRoadLinkNotFound = "Tielinkkiä ei löytynyt."
-  val ErrorSplitSuravageNotUpdatable = "Valitut linkit sisältävät jaetun Suravage-linkin eikä sitä voi päivittää."
   val ErrorRoadAlreadyExistsOrInUse = "Antamasi tienumero ja tieosanumero ovat jo käytössä. Tarkista syöttämäsi tiedot."
   val ErrorFollowingRoadPartsNotFoundInDB = "Projektiin yritettiin varata tieosia joita ei ole olemassa, tarkista tieosoitteet:"
   val ErrorRoadLinkNotFoundInProject = "Tielinkkiä ei löytynyt projektista. Tekninen virhe, ota yhteys pääkäyttäjään."
@@ -90,6 +86,8 @@ package object viite {
   val RampDiscontinuityFoundMessage = "Rampin tieosan sisällä on epäjatkuvuuksia. Tarkista Jatkuu-koodit."
   val DiscontinuityInsideRoadPartMessage = "Epäjatkuvuus (2) voi olla vain tieosan lopussa."
   val DistinctRoadTypesBetweenTracksMessage = "Rinnakkaisilla ajoradoilla eri tietyyppi."
+  val DiscontinuityOnParallelLinksMessage = "Rinnakkaiselta ajoradalta puuttuu jatkuu-koodi 5 Jatkuva (Rinnakkainen linkki)."
+  val WrongParallelLinksMessage = "Väärä paikka rinnakkaiselle linkille."
   val RoadNotEndingInElyBorderMessage = "Tien lopussa pitää olla jatkuu-koodi 1. Korjaa jatkuu-koodi."
   val RoadContinuesInAnotherElyMessage = "Jatkuu-koodi %s on virheellinen, koska tie jatkuu toisessa ELY:ssa. "
   val MinorDiscontinuousWhenRoadConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
@@ -97,7 +95,6 @@ package object viite {
   val DoubleEndOfRoadMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."
   val EndOfRoadMiddleOfPartMessage = s"Tieosan keskellä olevalla linkillä on jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value})."
   val RoadNotAvailableMessage = s"Tieosaa ei ole varattu projektiin tai se on varattuna toisessa projektissa."
-  val RoadPartNotReservedInProjectMessage = s"Tieosaa ei ole varattu projektiin."
   val RoadReservedOtherProjectMessage = s"Tie %d osa %d on jo varattuna projektissa %s, tarkista tiedot."
   val ProjectNotFoundMessage = "Projektia ei löytynyt, ota yhteys pääkäyttäjään."
   val FailedToSendToTRMessage = s"Lähetys tierekisteriin epäonnistui, ota yhteys pääkäyttäjään."
@@ -106,6 +103,7 @@ package object viite {
   val GenericViiteErrorMessage = s"Muutosilmoituksen lähetys epäonnistui Viiteen sisäisen virheen vuoksi. Ota yhteyttä ylläpitoon. "
   val ProjectNotWritable = s"Projekti ei ole enää muokattavissa."
   val ErrorMaxRoadNumberDemandingRoadNameMessage = s"Tien nimi on pakollinen tieto lukuunottamatta kevyen liikenteen väyliä."
+  val MaxDistanceBetweenTracksWarningMessage = "Tarkista, että toimenpide vaihtuu samassa kohdassa."
 
   //ELY-code error messages
   val MultipleElysInPartMessage = s"Samalla tieosalla eri elynumeroita. Tieosan tulee vaihtua ELY-rajalla. Korjaa tieosa- tai elynumeroa."
@@ -128,6 +126,8 @@ package object viite {
 
   // Nodes and Junctions error messages
   val ReturnedTooManyNodesErrorMessage = "Hakusi palauttaa yli 50 kohdetta, rajaa hakua pienemmäksi."
+  val NodeNotFoundErrorMessage = "Päivitettävää solmua ei löytynyt."
+  val NodeStartDateUpdateErrorMessage = "Solmun uusi alkupäivämäärä ei saa olla ennen nykyistä alkupäivämäärää."
 
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
@@ -265,20 +265,6 @@ package object viite {
     "|       coordinates      | ProjectCoordinates |  This represents the middle point of all the project links involved in the project  |       |\n" +
     "|        roadName        |   Option[String]   |                Possible road name for all the project links sent here               |       |\n" +
     "|        reversed        |   Option[Boolean]  |                   Defines whether or not these roads are reversed                   |       |"
-
-  val cutLineExtractorStructure = "" +
-    "|  Field Name  | Field Type |         Description        |                   Notes                   |\n" +
-    "|:------------:|:----------:|:--------------------------:|:-----------------------------------------:|\n" +
-    "|    linkId    |    Long    |  LinkId of a project link. | It should be a linkId of a Suravage link. |\n" +
-    "| splitedPoint |    Point   | Point of the actual split. |        Simple 3 dimensional point.        |"
-
-
-  val revertSplitExtractor ="" +
-    "|  Field Name |     Field Type     |        Description        | Notes |\n" +
-    "|:-----------:|:------------------:|:-------------------------:|:-----:|\n" +
-    "|  projectId  |    Option[Long]    |    Possible Project Id    |       |\n" +
-    "|    linkId   |    Option[Long]    |      Possible Link Id     |       |\n" +
-    "| coordinates | ProjectCoordinates | Simple (x, y, zoom) entry |       |"
 
   val defaultProjectEly = -1L
 
