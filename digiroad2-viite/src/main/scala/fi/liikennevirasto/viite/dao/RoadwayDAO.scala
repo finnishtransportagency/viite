@@ -711,7 +711,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long, searchDate: Option[DateTime])(query: String): String = {
-    val queryDate = if(searchDate.isDefined) s"to_date('${searchDate.get.toString("yyyy-MM-dd")}', 'YYYY-MM-DD') " else "CURRENT_DATE"
+    val queryDate = if (searchDate.isDefined) s"to_date('${searchDate.get.toString("yyyy-MM-dd")}', 'YYYY-MM-DD') " else "CURRENT_DATE"
 
     if (roadwayNumbers.size > 1000) {
       val groupsOf1000 = roadwayNumbers.grouped(1000).toSeq
