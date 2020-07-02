@@ -5,6 +5,8 @@ import fi.liikennevirasto.viite.dao.ProjectLink
 
 class DefaultTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
+  override val name: String = "Normal Track Section"
+
   override def assignTrackMValues(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult = {
     adjustTwoTracks(startAddress, leftProjectLinks, rightProjectLinks, userDefinedCalibrationPoint)
   }

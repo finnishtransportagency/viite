@@ -8,7 +8,7 @@
 -- Regexp: values [(]'[0-9]+'
 -- To: values (nextval('LINEAR_LOCATION_SEQ')
 --
--- PostGIS -conersions
+-- PostGIS -conversions
 --
 -- Id:
 -- Find:    LINEAR_LOCATION_SEQ.nextval

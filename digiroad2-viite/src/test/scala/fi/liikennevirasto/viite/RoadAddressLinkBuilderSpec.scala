@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.{asset, _}
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, SuravageLinkInterface}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -39,18 +40,38 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockNodesAndJunctionsService = MockitoSugar.mock[NodesAndJunctionsService]
   val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
   val mockLinearLocationDAO = MockitoSugar.mock[LinearLocationDAO]
   val mockRoadwayDAO = MockitoSugar.mock[RoadwayDAO]
   val mockRoadNetworkDAO = MockitoSugar.mock[RoadNetworkDAO]
   val mockProjectLinkDAO = MockitoSugar.mock[ProjectLinkDAO]
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO, mockRoadNetworkDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val mockRoadwayPointDAO = MockitoSugar.mock[RoadwayPointDAO]
+  val mockNodePointDAO = MockitoSugar.mock[NodePointDAO]
+  val mockJunctionPointDAO = MockitoSugar.mock[JunctionPointDAO]
+  val projectDAO = new ProjectDAO
+  val projectLinkDAO = new ProjectLinkDAO
+  val projectReservedPartDAO = new ProjectReservedPartDAO
+  val roadwayDAO = new RoadwayDAO
+  val linearLocationDAO = new LinearLocationDAO
+  val roadwayPointDAO = new RoadwayPointDAO
+  val nodeDAO = new NodeDAO
+  val nodePointDAO = new NodePointDAO
+  val junctionPointDAO = new JunctionPointDAO
+  val roadwayChangesDAO = new RoadwayChangesDAO
+  val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO,
+    mockRoadNetworkDAO, mockRoadwayPointDAO, mockNodePointDAO, mockJunctionPointDAO, mockRoadwayAddressMapper, mockEventBus, frozenVVH = false) {
+
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val projectService = new ProjectService(roadAddressService,  mockRoadLinkService, mockEventBus) {
+  val projectService = new ProjectService(roadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
+    roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
+    nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
+    roadwayAddressMapper, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -58,66 +79,6 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
   val mockRoadAddressLinkBuilder = new RoadAddressLinkBuilder(mockRoadwayDAO, mockLinearLocationDAO, mockProjectLinkDAO)
   val roadAddressLinkBuilder = new RoadAddressLinkBuilder(new RoadwayDAO, new LinearLocationDAO, new ProjectLinkDAO)
-
-  test("Saved Suravage Link gets roadaddress from DB if exists") {
-    runWithRollback {
-      val roadway = Dummies.dummyRoadway(1, 62555, 2, 0, 68, DateTime.parse("2018-04-23"), Some(DateTime.parse("2018-04-23")))
-      val linearLocation = Dummies.dummyLinearLocationWithGeometry(id = 1, roadwayNumber = 1, orderNumber = 1, linkId = 7096025, startMValue = 0, endMValue = 67.768, geometry = Seq(Point(642581.506, 6947078.918), Point(642544.7200222166, 6947042.201990652)))
-      when(mockLinearLocationDAO.fetchByLinkId(any[Set[Long]], any[Set[Long]])).thenReturn(List(linearLocation))
-      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
-      when(mockRoadwayDAO.fetchByRoadwayNumber(any[Long], any[Boolean])).thenReturn(Some(roadway))
-
-      val suravageAddress =
-        mockRoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(7096025, 167,
-          List(Point(642581.506, 6947078.918),
-            Point(642582.157, 6947074.293), Point(642582.541, 6947069.504), Point(642582.348, 6947064.703), Point(642581.58, 6947059.961),
-            Point(642580.249, 6947055.344), Point(642578.375, 6947050.92), Point(642576.423, 6947047.7), Point(642573.963, 6947044.85),
-            Point(642571.061, 6947042.451), Point(642567.8, 6947040.569), Point(642564.27, 6947039.257), Point(642560.572, 6947038.553),
-            Point(642556.807, 6947038.475), Point(642553.082, 6947039.026), Point(642549.502, 6947040.19), Point(642544.72, 6947042.202)),
-          Municipality, BothDirections, FeatureClass.CycleOrPedestrianPath, None,
-          Map("LAST_EDITED_DATE" -> BigInt(1516719259000L), "CONSTRUCTIONTYPE" -> 1, "MTKCLASS" -> 12314, "Points" -> List(Map("x" -> 642581.506, "y" -> 6947078.918, "z" -> 0, "m" -> 0),
-            Map("x" -> 642582.157, "y" -> 6947074.293, "z" -> 0, "m" -> 4.669999999998254), Map("x" -> 642582.541, "y" -> 6947069.504, "z" -> 0, "m" -> 9.474600000001374),
-            Map("x" -> 642582.348, "y" -> 6947064.703, "z" -> 0, "m" -> 14.279200000004494), Map("x" -> 642581.58, "y" -> 6947059.961, "z" -> 0, "m" -> 19.08379999999306),
-            Map("x" -> 642580.249, "y" -> 6947055.344, "z" -> 0, "m" -> 23.88839999999618), Map("x" -> 642578.375, "y" -> 6947050.92, "z" -> 0, "m" -> 28.6929999999993),
-            Map("x" -> 642576.423, "y" -> 6947047.7, "z" -> 0, "m" -> 32.45819999999367), Map("x" -> 642573.963, "y" -> 6947044.85, "z" -> 0, "m" -> 36.22349999999278),
-            Map("x" -> 642571.061, "y" -> 6947042.451, "z" -> 0, "m" -> 39.9887000000017), Map("x" -> 642567.8, "y" -> 6947040.569, "z" -> 0, "m" -> 43.754000000000815),
-            Map("x" -> 642564.27, "y" -> 6947039.257, "z" -> 0, "m" -> 47.51910000000498), Map("x" -> 642560.572, "y" -> 6947038.553, "z" -> 0, "m" -> 51.284499999994296),
-            Map("x" -> 642556.807, "y" -> 6947038.475, "z" -> 0, "m" -> 55.04970000000321), Map("x" -> 642553.082, "y" -> 6947039.026, "z" -> 0, "m" -> 58.81489999999758),
-            Map("x" -> 642549.502, "y" -> 6947040.19, "z" -> 0, "m" -> 62.580100000006496), Map("x" -> 642544.72, "y" -> 6947042.202, "z" -> 0, "m" -> 67.76810000000114)),
-            "OBJECTID" -> 14132, "SUBTYPE" -> 2, "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 167, "CREATED_DATE" -> BigInt(1490794018000L)), ConstructionType.UnderConstruction,
-          SuravageLinkInterface, 67.768), None
-        )
-      suravageAddress.trackCode should be(Track.Combined.value)
-      suravageAddress.startAddressM should be(0)
-      suravageAddress.endAddressM should be(68)
-    }
-  }
-
-  test("Suravage link builder when link is not in DB") {
-    val newLinkId1 = 5000
-    val municipalityCode = 564
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.TowardsDigitizing
-    val attributes1 = Map("ROADNUMBER" -> BigInt(99), "ROADPARTNUMBER" -> BigInt(24))
-    val suravageAddress = OracleDatabase.withDynSession {
-      roadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(newLinkId1, municipalityCode,
-        List(Point(1.0, 0.0), Point(20.0, 1.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None,
-        attributes1, ConstructionType.UnderConstruction, LinkGeomSource.SuravageLinkInterface, 30), None)
-    }
-
-    suravageAddress.linkId should be(newLinkId1)
-    suravageAddress.administrativeClass should be(administrativeClass)
-    suravageAddress.constructionType should be(ConstructionType.UnderConstruction)
-    suravageAddress.sideCode should be(SideCode.Unknown)
-    suravageAddress.roadNumber should be(99)
-    suravageAddress.roadPartNumber should be(24)
-    suravageAddress.startMValue should be(0)
-    suravageAddress.endMValue should be(19.026)
-    suravageAddress.roadLinkSource should be(LinkGeomSource.SuravageLinkInterface)
-    suravageAddress.elyCode should be(12)
-    suravageAddress.municipalityCode should be(municipalityCode)
-    suravageAddress.geometry.size should be(2)
-  }
 
   test("Test RoadAddressLinkBuilder.build for roadAddress input") {
     runWithRollback {
@@ -153,14 +114,14 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
 
   test("Test ProjectAddressLinkBuilder.build() When building project address links from regular project links and road links Then return the build ProjectAddressLinks.") {
     val unknownProjectLink = ProjectLink(0, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0,
-      SideCode.Unknown, (None, None), List(), 0, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false,
+      SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 0, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false,
       None, 85088L)
     val projectLinks =
       Map(
         1717380l -> ProjectLink(1270, 0, 0, Track.apply(99), Continuous, 1021, 1028, 1021, 1028, None, None, None, 1717380, 0.0, 6.0,
-          AgainstDigitizing, (None, None), List(), 1227, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
+          AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
         1717374l -> ProjectLink(1259, 1130, 0, Combined, Continuous, 959, 1021, 959, 1021, None, None, None, 1717374, 0.0, 61.0,
-          AgainstDigitizing, (None, None), List(), 1227, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
+          AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
       )
 
     val roadLinks = Seq(

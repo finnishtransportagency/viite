@@ -2,7 +2,7 @@ require.config({
   paths: {
     'underscore': '../../node_modules/underscore/underscore',
     'jquery': '../../node_modules/jquery/dist/jquery.min',
-    'lodash': '../../node_modules/lodash/index',
+    'lodash': '../../node_modules/lodash/lodash',
     'moment': '../../node_modules/moment/moment',
     'backbone': '../../node_modules/backbone/backbone',
     'chai': '../../node_modules/chai/chai',
@@ -16,8 +16,7 @@ require.config({
     'LocationInputParser': '../src/utils/LocationInputParser',
     'RoadAddressTestData': '../test_data/RoadAddressTestData',
     'RoadLinkTestData': '../test_data/RoadLinkTestData',
-    'UserRolesTestData': '../test_data/UserRolesTestData',
-    'SplittingTestData': '../test_data/SplittingTestData'
+    'UserRolesTestData': '../test_data/UserRolesTestData'
   },
   shim: {
     'jquery': {exports: '$'},
@@ -39,8 +38,7 @@ require.config({
     'RoadAddressTestData': { exports: 'RoadAddressTestData' },
     'RoadLinkTestData': { exports: 'RoadLinkTestData' },
     'UserRolesTestData': { exports: 'UserRolesTestData' },
-    'validitydirections': { exports: 'validitydirections' },
-    'SplittingTestData': { exports: 'SplittingTestData' }
+    'validitydirections': { exports: 'validitydirections' }
   },
   waitSeconds: 10
 });

@@ -1,16 +1,13 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{SideCode, State}
+import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHHistoryRoadLink}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.{LinearLocation, RoadAddress, UnaddressedRoadLink}
-import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
+import fi.liikennevirasto.viite.dao.{CalibrationPointReference, LinearLocation}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
-import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
+import fi.liikennevirasto.viite._
 import org.slf4j.LoggerFactory
 
 object ApplyChangeInfoProcess {
@@ -144,14 +141,14 @@ object ApplyChangeInfoProcess {
 
     val (startCalibrationPoint, endCalibrationPoint) = linearLocation.calibrationPoints
 
-    val newStartCalibrationPoint = startCalibrationPoint match {
+    val newStartCalibrationPoint = startCalibrationPoint.addrM match {
       case Some(_) if projection.oldStartMeasureMatch(linearLocation.startMValue) => startCalibrationPoint
-      case _ => None
+      case _ => CalibrationPointReference.None
     }
 
-    val newEndCalibrationPoint = endCalibrationPoint match {
+    val newEndCalibrationPoint = endCalibrationPoint.addrM match {
       case Some(_) if projection.oldEndMeasureMatch(linearLocation.endMValue) => endCalibrationPoint
-      case _ => None
+      case _ => CalibrationPointReference.None
     }
 
     //TODO check if it's a good idea to generate here the database identifier

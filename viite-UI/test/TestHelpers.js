@@ -1,10 +1,9 @@
-define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAddressProjectTestData', 'SplittingTestData'],
+define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAddressProjectTestData'],
 
   function(RoadAddressTestData,
            RoadLinkTestData,
            UserRolesTestData,
-           RoadAddressProjectTestData,
-           SplittingTestData) {
+           RoadAddressProjectTestData) {
 
     var getRoadLayerName = function() {
       return 'roadLayer';
@@ -103,7 +102,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
         .withGetRoadAddressByLinkId(data.roadLinkById)
         .withGetProjectLinkByLinkId(data.roadLinkById)
         .withCreateRoadAddressProject(data.createRoadAddressProject)
-        .withPreSplitData(data.splitData)
         .withRoadAddressCreation();
     };
 
@@ -135,8 +133,8 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       $('.link-properties button.save:enabled').click();
     };
 
-    var clickProjectListButton = function(){
-      $('[id=projectListButton]').click();
+    var clickFormProjectButton = function(){
+      $('[id=formProjectButton]').click();
     };
 
     var clickNextButton = function(){
@@ -200,8 +198,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
             projectsWithLinks: RoadAddressProjectTestData.generateProjectLinksByProjectId(),
             projects: RoadAddressProjectTestData.generateProject(),
             roadLinkById: RoadAddressProjectTestData.generateRoadLinkByLinkId(),
-            createRoadAddressProject: RoadAddressProjectTestData.generateCreateRoadAddressProject(),
-            splitData: {}
+            createRoadAddressProject: RoadAddressProjectTestData.generateCreateRoadAddressProject()
           };
 
         case 'projectThree': //Suravage project
@@ -210,13 +207,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
             targetAdjacent: {},
             transferResult: {},
             projectData: {},
-            roadLinkById: {},
-            projectsWithLinks: SplittingTestData.generateProjectData(),
-            partReserved: SplittingTestData.generateReservedPart(),
-            projectLinks: SplittingTestData.generateProjectRoadLinks(),
-            projects: SplittingTestData.generateProjectData(),
-            createRoadAddressProject: SplittingTestData.generateProject(),
-            splitData: SplittingTestData.generatePreSplitData()
+            roadLinkById: {}
           };
       }
     };
@@ -243,8 +234,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
           return RoadAddressProjectTestData.generateProjectLinkData();
         case 'terminatedProjectLinks':
           return RoadAddressProjectTestData.generateTerminatedProjectLinkData();
-        case 'suravageProjectLinks':
-          return SplittingTestData.generateProjectRoadLinks();
       }
     };
 
@@ -303,10 +292,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       }
     };
 
-    var selectTool = function(tool) {
-      applicationModel.setSelectedTool(tool);
-    };
-
     return {
       getRoadLayerName: getRoadLayerName,
       getFloatingMarkerLayerName: getFloatingMarkerLayerName,
@@ -328,7 +313,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       clickValintaButton:clickValintaButton,
       clickEnabledSiirraButton: clickEnabledSiirraButton,
       clickVisibleEditModeButton: clickVisibleEditModeButton,
-      clickProjectListButton: clickProjectListButton,
+      clickFormProjectButton: clickFormProjectButton,
       clickNextButton: clickNextButton,
       clickReserveButton: clickReserveButton,
       clickOpenProjectButton: clickOpenProjectButton,
@@ -347,7 +332,6 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       getFeatureByLinkId: getFeatureByLinkId,
       getLinkDataByLinkId: getLinkDataByLinkId,
       selectSingleFeatureByInteraction: selectSingleFeatureByInteraction,
-      selectTool: selectTool,
       clickCancelButton: clickCancelButton
     };
   });

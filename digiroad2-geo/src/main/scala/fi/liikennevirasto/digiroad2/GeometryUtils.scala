@@ -1,11 +1,13 @@
-package fi.liikennevirasto.digiroad2
+package fi.liikennevirasto
 
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
+import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 
 object GeometryUtils {
 
   // Default value of minimum distance where locations are considered to be same
   final private val DefaultEpsilon = 0.01
+  val MaxDistanceForConnectedLinks = 0.1
 
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     val firstPoint: Point = geometry.head
@@ -35,7 +37,7 @@ object GeometryUtils {
     def newPointOnSegment(measureOnSegment: Double, segment: (Point, Point)): Point = {
       val (firstPoint, secondPoint) = segment
       val directionVector = (secondPoint - firstPoint).normalize2D().scale(measureOnSegment)
-      firstPoint + directionVector
+      firstPoint += directionVector
     }
 
     if (startMeasure > endMeasure) throw new IllegalArgumentException
@@ -467,15 +469,6 @@ object GeometryUtils {
     } else {
       false
     }
-  }
-
-  /**
-    * Rounds the double up to a 3 decimal percision.
-    * @param n Double value to the rounded
-    * @return
-    */
-  def roundN(n:Double): Double = {
-    BigDecimal(n).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 
 }

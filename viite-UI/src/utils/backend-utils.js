@@ -23,7 +23,7 @@
         };
     });
 
-    this.getNodes = createCallbackRequestor(function(params) {
+    this.getNodesAndJunctions = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
       return {
@@ -98,6 +98,12 @@
 
     this.getRoadLinkByMmlId = _.throttle(function (mmlId, callback) {
       return $.getJSON('api/viite/roadlinks/mml/' + mmlId, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
+    this.getRoadLinkByMtkId = _.throttle(function (mtkId, callback) {
+      return $.getJSON('api/viite/roadlinks/mtkid/' + mtkId, function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -307,7 +313,13 @@
       });
     };
 
-    this.getStartupParametersWithCallback = function (callback) {
+      this.getRoadLinkDate = _.throttle(function(callback){
+          return $.get('api/viite/getRoadLinkDate', function (data) {
+              return _.isFunction(callback) && callback(data);
+          });
+      }, 1000);
+
+      this.getStartupParametersWithCallback = function (callback) {
       var url = 'api/viite/startupParameters';
       $.getJSON(url, callback);
     };
@@ -318,9 +330,9 @@
       });
     };
 
-    this.getGeocode = function (address) {
-      return $.post("vkm/geocode", {address: address}).then(function (x) {
-        return JSON.parse(x);
+    this.getSearchResults = function(searchString) {
+      return $.get("api/viite/roadlinks/search", {search: searchString}).then(function (x) {
+        return x;
       });
     };
 
@@ -390,19 +402,21 @@
 
     function latestResponseRequestor(getParameters) {
       var deferred;
-      var requests = new Bacon.Bus();
-      var responses = requests.debounceImmediate(500).flatMapLatest(function (params) {
-        gettingRoadLinks = Bacon.$.ajax(params, true);
-        return gettingRoadLinks;
-      });
+      var request;
 
+      function doRequest() {
+        if (request)
+          request.abort();
+
+        request = $.ajax(getParameters.apply(undefined, arguments)).done(function(result) {
+          deferred.resolve(result);
+        });
+        return deferred;
+      }
       return function () {
-        if (deferred) {
-          deferred.reject();
-        }
-        deferred = responses.toDeferred();
-        requests.push(getParameters.apply(undefined, arguments));
-        return deferred.promise();
+        deferred = $.Deferred();
+        _.debounce(doRequest, 200).apply(undefined, arguments);
+        return deferred;
       };
     }
 
@@ -446,7 +460,7 @@
       };
 
       var isCarTrafficRoad = function () {
-        return !_.isUndefined(data.linkType) && !_.contains([8, 9, 21, 99], data.linkType);
+        return !_.isUndefined(data.linkType) && !_.includes([8, 9, 21, 99], data.linkType);
       };
 
       var cancel = function () {
@@ -631,6 +645,54 @@
     this.getNodesByRoadAttributes = _.throttle(function (roadAttributes, callback) {
       return $.get('api/viite/nodes', roadAttributes, function (data) {
         return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
+    this.getTemplates = _.throttle(function(callback){
+      return $.get('api/viite/templates', function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
+    this.getJunctionPointsByJunctionId = _.throttle(function (junctionId, callback) {
+      return $.get('api/viite/junctions/' + junctionId + '/junction-points', function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
+    this.getNodePointTemplateById = _.throttle(function (nodePointTemplateId, callback) {
+      return $.getJSON('api/viite/node-point-templates/' + nodePointTemplateId, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
+    this.getJunctionTemplateById = _.throttle(function (junctionTemplateId, callback) {
+      return $.getJSON('api/viite/junction-templates/' + junctionTemplateId, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
+    this.createNodeInfo = _.throttle(function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/viite/nodes",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
+    this.updateNodeInfo = _.throttle(function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/nodes/" + data.id,
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
       });
     }, 1000);
 
