@@ -1016,6 +1016,84 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test assignTerminatedMValues When Terminating links on Left/Right tracks and different addrMValues Then both Unchanged links should be adjusted in order to have the same end address" +
+    " and Terminated should have same adjusted start addr") {
+    runWithRollback {
+      val roadwayDAO = new RoadwayDAO
+      val linearLocationDAO = new LinearLocationDAO
+
+      val roadNumber1 = 990
+      val roadPartNumber1 = 1
+
+      val roadwayNumber1 = 1000000000L
+      val roadwayNumber2 = 2000000000L
+      val roadwayNumber3 = 3000000000L
+      val roadwayNumber4 = 4000000000L
+
+      val roadwayId1 = Sequences.nextRoadwayId
+      val roadwayId2 = roadwayId1 + 1
+      val roadwayId3 = roadwayId2 + 1
+      val roadwayId4 = roadwayId3 + 1
+      val linearLocationId1 = Sequences.nextLinearLocationId
+      val linearLocationId2 = linearLocationId1 + 1
+      val linearLocationId3 = linearLocationId2 + 1
+      val linearLocationId4 = linearLocationId3 + 1
+
+      val testRoadway1 = Roadway(roadwayId1, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.RightSide, Discontinuity.Continuous,
+        0, 50, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+
+      val testRoadway2 = Roadway(roadwayId2, roadwayNumber2, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.LeftSide, Discontinuity.Continuous,
+        0, 52, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
+
+      val testRoadway3 = Roadway(roadwayId3, roadwayNumber3, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+        50, 105, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 3"), 1, TerminationCode.NoTermination)
+
+      val testRoadway4 = Roadway(roadwayId4, roadwayNumber4, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.LeftSide, Discontinuity.EndOfRoad,
+        52, 109, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 4"), 1, TerminationCode.NoTermination)
+
+
+      val linearLocation1 = LinearLocation(linearLocationId1, 1, 12345, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000L,
+        (CalibrationPointReference(Some(0L)), CalibrationPointReference.None),
+        Seq(Point(0.0, 0.0), Point(50.0, 10.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber1)
+
+      val linearLocation2 = LinearLocation(linearLocationId2, 1, 12346, 0.0, 52.0, SideCode.TowardsDigitizing, 10000000000L,
+        (CalibrationPointReference(Some(0L)), CalibrationPointReference.None),
+        Seq(Point(0.0, 0.0), Point(52.0, 0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber2)
+
+      val linearLocation3 = LinearLocation(linearLocationId3, 1, 12347, 0.0, 55.0, SideCode.TowardsDigitizing, 10000000000L,
+        (CalibrationPointReference.None, CalibrationPointReference(Some(105))),
+        Seq(Point(0.0, 0.0), Point(55.0, 10.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber3)
+
+      val linearLocation4 = LinearLocation(linearLocationId4, 1, 12348, 0.0, 57.0, SideCode.TowardsDigitizing, 10000000000L,
+        (CalibrationPointReference.None, CalibrationPointReference(Some(109))),
+        Seq(Point(0.0, 0.0), Point(57.0, 0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber4)
+
+      roadwayDAO.create(List(testRoadway1, testRoadway2, testRoadway3, testRoadway4))
+
+      linearLocationDAO.create(List(linearLocation1, linearLocation2, linearLocation3, linearLocation4))
+
+      val idRoad4 = 3L // T
+      val idRoad3 = 3L // T
+      val idRoad2 = 2L // U
+      val idRoad1 = 1L // U
+
+      val projectLink1 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(idRoad1, linearLocationId1, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.Combined, Continuous, 0L, 50L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 50.0, SideCode.TowardsDigitizing, 0, (None, None),
+        Seq(Point(0.0, 10.0), Point(50.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(roadAddressStartAddrM = Some(0L), roadAddressEndAddrM = Some(50L), roadAddressTrack = Some(Track.RightSide))
+      val projectLink2 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(idRoad2, linearLocationId2, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.Combined, Continuous, 0L, 52L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 52.0, SideCode.TowardsDigitizing, 0, (None, None),
+        Seq(Point(0.0, 0.0), Point(52.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(roadAddressStartAddrM = Some(0L), roadAddressEndAddrM = Some(52L), roadAddressTrack = Some(Track.LeftSide))
+
+      val projectLink3 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(idRoad3, linearLocationId3, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.RightSide, EndOfRoad, 50L, 105L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 55.0, SideCode.TowardsDigitizing, 0, (None, None),
+        Seq(Point(50.0, 5.0), Point(100.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(roadAddressStartAddrM = Some(50L), roadAddressEndAddrM = Some(105L), roadAddressTrack = Some(Track.RightSide))
+      val projectLink4 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(idRoad4, linearLocationId4, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.LeftSide, EndOfRoad, 52L, 109L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12348L, 0.0, 57.0, SideCode.TowardsDigitizing, 0, (None, None),
+        Seq(Point(52.0, 5.0), Point(102.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(roadAddressStartAddrM = Some(50L), roadAddressEndAddrM = Some(109L), roadAddressTrack = Some(Track.LeftSide))
+
+      val projectLinks = ProjectSectionCalculator.assignTerminatedMValues(Seq(projectLink3, projectLink4), Seq(projectLink1, projectLink2))
+      projectLinks.filter(_.track == Track.LeftSide).head.endAddrMValue should be (projectLinks.filter(_.track == Track.RightSide).head.endAddrMValue)
+      projectLinks.filter(_.track == Track.LeftSide).head.startAddrMValue should be ((projectLink1.endAddrMValue+projectLink2.endAddrMValue)/2)
+      projectLinks.filter(_.track == Track.LeftSide).head.endAddrMValue should be ((projectLink3.endAddrMValue+projectLink4.endAddrMValue)/2)
+    }
+  }
+
   /*
            #2
     #0 /\  __
