@@ -21,7 +21,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
-  when(mockRoadAddressService.getAllByMunicipality(235)).thenReturn(Seq())
+  when(mockRoadAddressService.getAllByMunicipality(235, None)).thenReturn(Seq())
 
   val mockRoadNameService: RoadNameService = MockitoSugar.mock[RoadNameService]
 
