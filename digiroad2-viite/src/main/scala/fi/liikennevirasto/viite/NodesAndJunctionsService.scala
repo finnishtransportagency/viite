@@ -920,7 +920,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
          If the road part doesn't have any "road node points", calculate node point by taking the average of the
          addresses of all junction points on both tracks and add this "calculated node point" on track 0 or 1
        */
-      if (countNodePointsForRoadAndRoadPart.get == 0 && (nodePointCount < 2)) {
+      if (countNodePointsForRoadAndRoadPart.getOrElse(0) == 0 && (nodePointCount < 2)) {
         if (logger.isDebugEnabled) {
           // generate query debug for what are the input values for average calculation
           nodePointDAO.fetchAddrMForAverage(roadPartInfo.roadNumber, roadPartInfo.roadPartNumber)
