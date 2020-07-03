@@ -312,6 +312,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
+  def getRoadAddressLinks(road: Long, roadPart: Long, addressM: Long, trackOption: Option[Track]): Seq[RoadAddressLink] = {
+    val roadAddresses = getRoadAddress(road, roadPart, addressM, trackOption)
+    val result = BoundingBoxResult(
+      roadLinkService.getChangeInfoFromVVHF(linearLocationsLinkIds),
+      Future((linearLocations, roadLinkService.getRoadLinksHistoryFromVVH(linearLocationsLinkIds))),
+      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(linearLocationsLinkIds)),
+      Future(Seq())
+    )
+
+    getRoadAddressLinks(boundingBoxResult)
+
+
+    roadAddresses.map(roadAddressLinkBuilder.build)
+  }
+
   /**
     * Gets all the road addresses in the same road number and track codes.
     * If the track sequence is empty will filter only by road number
@@ -988,6 +1003,8 @@ case class LinearLocationResult(current: Seq[LinearLocation])
 
 case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]], roadAddressResultF: Future[(Seq[LinearLocation], Seq[VVHHistoryRoadLink])],
                              roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]])
+
+case class RoadAddressResult(roadAddressResultF: Future[Seq[LinearLocation]], roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]])
 
 case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
   val currentSegments: Seq[RoadAddress] = v._1
