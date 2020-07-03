@@ -221,9 +221,9 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     roadways.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }
 
-  def getCurrentRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation]): Seq[RoadAddress] = {
+  def getCurrentRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation], situationDate: Option[DateTime] = None): Seq[RoadAddress] = {
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
-    val roadwayAddresses = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet, new DateTime())
+    val roadwayAddresses = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet, situationDate.getOrElse(new DateTime()))
 
     roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }
@@ -244,9 +244,9 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     * @param roadNetworkId   : Long - the id of the road network version
     * @return
     */
-  def getNetworkVersionRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation], roadNetworkId: Long): Seq[RoadAddress] = {
+  def getNetworkVersionRoadAddressesByLinearLocation(linearLocations: Seq[LinearLocation], roadNetworkId: Long, searchDate: Option[DateTime]): Seq[RoadAddress] = {
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
-    val roadwayAddresses = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet, roadNetworkId)
+    val roadwayAddresses = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet, roadNetworkId, searchDate)
 
     roadwayAddresses.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
   }

@@ -221,7 +221,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
 
-    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Int])).thenReturn(roadways)
+    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Int], Some(any[DateTime]))).thenReturn(roadways)
     when(mockRoadNetworkDAO.getLatestRoadNetworkVersionId).thenReturn(Some(1L))
 
 
@@ -230,7 +230,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     val roads = roadAddressService.getAllByMunicipality(municipality = 100)
 
-    verify(mockRoadwayDAO, times(1)).fetchAllByRoadwayNumbers(Set(1L), 1)
+    verify(mockRoadwayDAO, times(1)).fetchAllByRoadwayNumbers(Set(1L), 1, None)
   }
 
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
