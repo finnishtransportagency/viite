@@ -156,25 +156,6 @@ trait TrackCalculatorStrategy {
     }
   }
 
-  def getFixedAddressBasedOnOriginalAddresses(leftLink: ProjectLink, rightLink: ProjectLink,
-                      userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): (Long, Long) = {
-
-    val reversed = rightLink.reversed || leftLink.reversed
-
-    (leftLink.status, rightLink.status) match {
-      case (LinkStatus.Transfer, LinkStatus.Transfer) | (LinkStatus.UnChanged, LinkStatus.UnChanged) =>
-        (averageOfAddressMValues(rightLink.originalStartAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.originalEndAddrMValue, leftLink.originalEndAddrMValue, reversed))
-      case (LinkStatus.UnChanged, _) | (LinkStatus.Transfer, _) =>
-        (leftLink.originalStartAddrMValue, leftLink.originalEndAddrMValue)
-      case (_, LinkStatus.UnChanged) | (_, LinkStatus.Transfer) =>
-        (rightLink.originalStartAddrMValue, rightLink.originalEndAddrMValue)
-      case _ =>
-        userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
-          (averageOfAddressMValues(rightLink.originalStartAddrMValue, leftLink.originalStartAddrMValue, reversed), averageOfAddressMValues(rightLink.originalEndAddrMValue, leftLink.originalEndAddrMValue, reversed))
-        )
-    }
-  }
-
   protected def setLastEndAddrMValue(projectLinks: Seq[ProjectLink], endAddressMValue: Long): Seq[ProjectLink] = {
     if (projectLinks.last.status != LinkStatus.NotHandled)
       projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddressMValue)
