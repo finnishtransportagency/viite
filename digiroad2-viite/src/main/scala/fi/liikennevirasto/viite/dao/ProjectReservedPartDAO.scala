@@ -424,7 +424,7 @@ class ProjectReservedPartDAO {
   }
 
   def reserveRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, user: String): Unit = {
-    time(logger, s"User $user is reserving road part $roadNumber / $roadPartNumber for project $projectId") {
+    time(logger, s"User $user reserves road part $roadNumber / $roadPartNumber for project $projectId") {
       sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
       SELECT nextval('viite_general_seq'), $roadNumber, $roadPartNumber, $projectId, $user""".execute
     }
