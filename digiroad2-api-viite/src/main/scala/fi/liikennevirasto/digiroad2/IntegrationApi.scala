@@ -74,7 +74,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     (apiOperation[List[Map[String, Any]]]("getRoadAddressesByMunicipality")
       tags "Integration (kalpa, oth, tierekisteri, viitekehysmuunnin, ...)"
       summary "Shows all the road address non floating for a given municipalities."
-      parameter queryParam[Int]("municipality").description("The municipality identifier"))
+      parameter queryParam[Int]("municipality").description("The municipality identifier")
+      parameter queryParam[String]("situationDate").description("Date in format ISO8601. For example 2020-04-29T13:59:59").optional)
 
   get("/road_address", operation(getRoadAddressesByMunicipality)) {
     time(logger, "GET request for /road_address") {
@@ -82,8 +83,9 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
       params.get("municipality").map { municipality =>
         try {
           val municipalityCode = municipality.toInt
+          val searchDate = parseIsoDate(params.get("situationDate"))
           try {
-            val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode)
+            val knownAddressLinks = roadAddressService.getAllByMunicipality(municipalityCode, searchDate)
               .filter(ral => ral.roadNumber > 0)
             roadAddressLinksToApi(knownAddressLinks)
           } catch {
@@ -93,7 +95,15 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
               BadRequest(message)
           }
         } catch {
-          case _: Exception =>
+          case nfe: NumberFormatException =>
+            val message = s"Incorrectly formatted municipality code: " + nfe.getMessage
+            logger.error(message)
+            BadRequest(message)
+          case iae: IllegalArgumentException =>
+            val message = s"Incorrectly formatted date: " + iae.getMessage
+            logger.error(message)
+            BadRequest(message)
+          case e: Exception =>
             val message = s"Invalid municipality code: $municipality"
             logger.error(message)
             BadRequest(message)
