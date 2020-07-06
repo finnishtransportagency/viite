@@ -60,7 +60,7 @@ object Digiroad2Context {
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
   val logger: Logger = LoggerFactory.getLogger(getClass)
-  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per minute
+  system.scheduler.schedule(FiniteDuration(0, TimeUnit.MINUTES), FiniteDuration(10, TimeUnit.MINUTES)) { // first query after 2 minutes, then once per minute
     try {
       projectService.updateProjectsWaitingResponseFromTR()
     } catch {
@@ -90,8 +90,8 @@ object Digiroad2Context {
 //  val roadAddressFloater = system.actorOf(Props(classOf[RoadAddressFloater], roadAddressService), name = "roadAddressFloater")
 //  eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
 
-  val roadAddressUpdater: ActorRef = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
-  eventbus.subscribe(roadAddressUpdater, "roadAddress:persistChangeSet")
+//  val roadAddressUpdater: ActorRef = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
+//  eventbus.subscribe(roadAddressUpdater, "roadAddress:persistChangeSet")
 
   val roadNetworkChecker: ActorRef = system.actorOf(Props(classOf[RoadNetworkChecker], roadNetworkService), name = "roadNetworkChecker")
   eventbus.subscribe(roadNetworkChecker, "roadAddress:RoadNetworkChecker")

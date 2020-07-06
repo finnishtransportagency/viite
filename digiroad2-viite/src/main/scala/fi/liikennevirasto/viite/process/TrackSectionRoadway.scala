@@ -177,32 +177,33 @@ object TrackSectionRoadway {
           remainingReference.head._2.last.track match {
             case r if r.value == Track.RightSide.value =>
               val strategy = TrackCalculatorContext.getStrategy(unassignedRwnLinks, remainingReference.head._2)
-              strategy.getFixedAddress(unassignedRwnLinks.last, remainingReference.head._2.last)._2
+              strategy.getFixedAddressBasedOnOriginalAddresses(unassignedRwnLinks.last, remainingReference.head._2.last)._2
             case _ =>
               val strategy = TrackCalculatorContext.getStrategy(remainingReference.head._2, unassignedRwnLinks)
-              strategy.getFixedAddress(remainingReference.head._2.last, unassignedRwnLinks.last)._2
+              strategy.getFixedAddressBasedOnOriginalAddresses(remainingReference.head._2.last, unassignedRwnLinks.last)._2
           }
         }
 
-        val estimatedStart = if (processedOppositeTrack.nonEmpty) {
-          estimatedEnd
-        } else {
-          remainingReference.head._2.last.track match {
-            case r if r.value == Track.RightSide.value =>
-              val strategy = TrackCalculatorContext.getStrategy(unassignedRwnLinks, remainingReference.head._2)
-              strategy.getFixedAddress(unassignedRwnLinks.head, remainingReference.head._2.head)._1
-            case _ =>
-              val strategy = TrackCalculatorContext.getStrategy(remainingReference.head._2, unassignedRwnLinks)
-              strategy.getFixedAddress(remainingReference.head._2.head, unassignedRwnLinks.head)._1
-          }
-        }
+//        val estimatedStart = if (processedOppositeTrack.nonEmpty) {
+//          estimatedEnd
+//        } else {
+//          remainingReference.head._2.last.track match {
+//            case r if r.value == Track.RightSide.value =>
+//              val strategy = TrackCalculatorContext.getStrategy(unassignedRwnLinks, remainingReference.head._2)
+//              strategy.getFixedAddress(unassignedRwnLinks.head, remainingReference.head._2.head)._1
+//            case _ =>
+//              val strategy = TrackCalculatorContext.getStrategy(remainingReference.head._2, unassignedRwnLinks)
+//              strategy.getFixedAddress(remainingReference.head._2.head, unassignedRwnLinks.head)._1
+//          }
+//        }
 
         val processedOpposite = assignedRwnLinks ++ unassignedRwnLinks.init.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
-          unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber, startAddrMValue = estimatedStart, endAddrMValue = estimatedEnd, connectedLinkId = Some(unassignedRwnLinks.last.linkId))
+          unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber,
+            endAddrMValue = estimatedEnd, connectedLinkId = Some(unassignedRwnLinks.last.linkId))
 
         splitLinksIfNeed(
           remainingReference = remainingReference.tail,
-          processedReference = processedReference ++ remainingReference.head._2.init :+ remainingReference.head._2.last.copy(startAddrMValue = estimatedStart, endAddrMValue = estimatedEnd),
+          processedReference = processedReference ++ remainingReference.head._2.init :+ remainingReference.head._2.last.copy(endAddrMValue = estimatedEnd),
           remainingOppositeTrack = remainingOpposite,
           processedOppositeTrack = processedOpposite,
           totalOppositeTrackMLength, totalOppositeTrackMLength, missingRoadwayNumbers - 1)
@@ -247,7 +248,6 @@ object TrackSectionRoadway {
         val processedOppositeTrackWithSplitLink = assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+ linkToBeSplit.copy(startMValue = firstSplitStartMeasure, endMValue = firstSplitEndMeasure,
           geometry = firstSplitLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitLinkGeom), endAddrMValue = firstSplitEndAddr,
           roadwayNumber = nextRoadwayNumber, connectedLinkId = Some(linkToBeSplit.linkId))
-
 
         splitLinksIfNeed(
           remainingReference = remainingReference.tail,

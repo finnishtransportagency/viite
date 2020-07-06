@@ -136,21 +136,24 @@ module.exports = function(grunt) {
           },
           {
             context: '/rasteripalvelu',
-            host: 'oag.vayla.fi',
-            port: '80',
+            host: 'localhost',
+            port: '9180',
             https: false,
-            changeOrigin: true,
-            xforward: false
+            secure: false,
+            xforward: false,
+            rewrite: {
+              '^/rasteripalvelu': '/viite/rasteripalvelu'
+            }
           },
           {
             context: '/wmts',
-            host: 'oag.liikennevirasto.fi',
-            port: '80',
+            host: 'localhost',
+            port: '9180',
             https: false,
-            changeOrigin: true,
+            secure: false,
             xforward: false,
             rewrite: {
-              '^/wmts': '/rasteripalvelu-mml/wmts'
+              '^/wmts': '/viite/wmts'
             }
           },
           {
