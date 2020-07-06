@@ -31,7 +31,7 @@ class ProjectReservedPartDAO {
     * @param roadPartNumber   Road part number to remove
     */
   def removeReservedRoadPartAndChanges(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
-    time(logger, "Remove reserved road part") {
+    time(logger, s"Remove reserved road part $roadNumber / $roadPartNumber from project $projectId") {
       sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
       sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
       sqlu"""
@@ -46,7 +46,7 @@ class ProjectReservedPartDAO {
   }
 
   def removeFormedRoadPartAndChanges(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
-    time(logger, "Remove formed road part") {
+    time(logger, s"Remove formed road part $roadNumber / $roadPartNumber from project $projectId") {
       sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
       sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
       sqlu"""
@@ -61,19 +61,23 @@ class ProjectReservedPartDAO {
   }
 
   def removeReservedRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
-    sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
-    sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
-    sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber""".execute
+    time(logger, s"Remove ") {
+      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
+      sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber""".execute
+    }
   }
 
   def removeReservedRoadPartsByProject(projectId: Long): Unit = {
-    sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
-    sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
-    sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId""".execute
+    time(logger, s"Remove reserved road parts by project $projectId") {
+      sqlu"""DELETE FROM ROADWAY_CHANGES_LINK WHERE PROJECT_ID = $projectId""".execute
+      sqlu"""DELETE FROM ROADWAY_CHANGES WHERE PROJECT_ID = $projectId""".execute
+      sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId""".execute
+    }
   }
 
   def fetchHistoryRoadParts(projectId: Long): Seq[ProjectReservedPart] = {
-    time(logger, s"Fetch reserved road parts for project: $projectId") {
+    time(logger, s"Fetch reserved road parts for project $projectId") {
       val sql =
         s"""SELECT ROAD_NUMBER, ROAD_PART_NUMBER, LENGTH, ELY,
            (SELECT IPLH.DISCONTINUITY_TYPE FROM PROJECT_LINK_HISTORY IPLH
@@ -97,7 +101,7 @@ class ProjectReservedPartDAO {
   }
 
   def fetchProjectReservedRoadPartsByProjectId(projectId: Long): Seq[ProjectReservedPart] = {
-    time(logger, s"Fetch project reserved road parts for project: $projectId") {
+    time(logger, s"Fetch project reserved road parts for project $projectId") {
       val sql = s"""SELECT rp.id, rp.road_number, rp.road_part_number FROM PROJECT_RESERVED_ROAD_PART rp WHERE rp.project_id = $projectId"""
       Q.queryNA[(Long, Long, Long)](sql).list.map {
         case (id, road, part) =>
@@ -108,7 +112,7 @@ class ProjectReservedPartDAO {
   }
 
   def fetchReservedRoadParts(projectId: Long): Seq[ProjectReservedPart] = {
-    time(logger, s"Fetch reserved road parts for project: $projectId") {
+    time(logger, s"Fetch reserved road parts for project $projectId") {
       val sql =
         s"""SELECT id, road_number, road_part_number, length, ely,
           (SELECT DISCONTINUITY FROM ROADWAY ra WHERE ra.road_number = gr.road_number AND
@@ -420,8 +424,10 @@ class ProjectReservedPartDAO {
   }
 
   def reserveRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, user: String): Unit = {
-    sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
+    time(logger, s"User $user is reserving road part $roadNumber / $roadPartNumber for project $projectId") {
+      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
       SELECT nextval('viite_general_seq'), $roadNumber, $roadPartNumber, $projectId, $user""".execute
+    }
   }
 
   def isNotAvailableForProject(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {

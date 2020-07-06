@@ -7,12 +7,18 @@ object LogUtils {
 
   def time[R](logger: Logger, operationName: String)(f: => R): R = {
     val begin = System.currentTimeMillis()
-    val result = f
-    val duration = System.currentTimeMillis() - begin
-    if (duration >= timeLoggingThresholdInMs) {
-      logger.info(s"$operationName completed in $duration ms")
+    try {
+      val result = f
+      val duration = System.currentTimeMillis() - begin
+      if (duration >= timeLoggingThresholdInMs) {
+        logger.info(s"$operationName completed in $duration ms")
+      }
+      result
+    } catch {
+      case e: Exception =>
+        logger.error(s"$operationName failed.", e)
+        throw e
     }
-    result
   }
 
 }
