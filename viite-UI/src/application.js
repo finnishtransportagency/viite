@@ -54,8 +54,7 @@
     var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel) {
     setupProjections();
       var url = 'rasteripalvelu/wmts/maasto?';
-      fetch('components/WMTSCapabilities.xml', {credentials: "include"}).then(function(response){
-      // fetch(url + 'service=wmts&request=GetCapabilities').then(function(response) {
+      fetch(url + 'service=wmts&request=GetCapabilities').then(function(response) {
       return response.text();
     }).then(function(arcConfig) {
       var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection, projectListModel);
