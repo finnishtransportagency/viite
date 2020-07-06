@@ -109,6 +109,9 @@ object ProjectSectionCalculator {
         if (firstRight.isEmpty || firstLeft.isEmpty)
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
 
+        if (firstRight.map(_.roadwayNumber).distinct.size != firstLeft.map(_.roadwayNumber).distinct.size)
+          throw new RoadAddressException(s"Roadway numbers doesn't match on both tracks, R ${firstRight.map(_.roadwayNumber).distinct.size}, L ${firstLeft.map(_.roadwayNumber).distinct.size}");
+
         val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
         val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, Map())
 
