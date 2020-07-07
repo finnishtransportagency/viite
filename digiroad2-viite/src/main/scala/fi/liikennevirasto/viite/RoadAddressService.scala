@@ -45,6 +45,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     */
   val Epsilon = 1
 
+  val defaultStreetNumber = 1
+
   private def fetchLinearLocationsByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
     val linearLocations = withDynSession {
       time(logger, "Fetch addresses") {
@@ -259,24 +261,35 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         resultSeq = collectResult("road", searchResult, resultSeq)
       }
     } else if (searchType == "street") {
-      searchResult = Seq(viiteVkmClient.postFormUrlEncoded("/vkm/geocode", Map(("address",searchString.getOrElse("")))))
-      resultSeq = collectResult("street", searchResult, resultSeq)
+      withDynSession {
+        val address = searchString.getOrElse("").split(", ")
+        val municipalityId = if (address.size > 1) {
+          MunicipalityDAO.getMunicipalityIdByName(address.last).headOption.map(_._1).getOrElse("").toString
+        } else {
+          ""
+        }
+        val (streetName, streetNumber) = address.head.split(" ").partition(_.matches(("\\D+")))
+        searchResult = Seq(viiteVkmClient.get("/viitekehysmuunnin/muunna", Map(("kuntakoodi", municipalityId), ("katunimi", streetName.mkString("%20")), ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))))
+        resultSeq = collectResult("street", searchResult, resultSeq)
+      }
     }
-    return resultSeq
+    resultSeq
   }
 
   def locationInputParser(searchStringOption: Option[String]): Map[String, Seq[Long]] = {
     val searchString = searchStringOption.getOrElse("")
     val numRegex = """(\d+)""".r
     val nums = numRegex.findAllIn(searchString).map(_.toLong).toSeq
+    val letterRegex = """([A-Za-zÀ-ÿ])""".r
+    val letters = letterRegex.findFirstIn(searchString)
+
     val searchType =
-      if (nums.size == 0) {
-        "street"
-      } else {
+      if (letters.isEmpty) {
         "road"
+      } else {
+        "street"
       }
-    val ret = Map((searchType, nums))
-    ret
+    Map((searchType, nums))
   }
 
   /**
