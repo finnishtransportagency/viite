@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite
 
-import org.apache.http.NameValuePair
+import org.apache.http.{HttpStatus, NameValuePair}
 import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.json4s.{DefaultFormats, StreamInput}
@@ -17,6 +17,8 @@ import scala.util.control.NonFatal
 
 class ViiteVkmClient {
 
+  case class VKMError(content: Map[String, Any], url: String)
+
   val logger = LoggerFactory.getLogger(getClass)
 
   private def getRestEndPoint: String = {
@@ -27,6 +29,35 @@ class ViiteVkmClient {
   }
 
   private val client = HttpClientBuilder.create().build
+
+  def get(path: String, params: Map[String, String]): Any = {
+
+    def withQueryString() = {
+      if(params.nonEmpty)
+        getRestEndPoint + path + "?"+params.map(p => if (p._2.nonEmpty) p._1 + "="+ p._2).mkString("&")
+      else
+        getRestEndPoint + path
+    }
+    val request = new HttpGet(withQueryString())
+    val url = new URL(getRestEndPoint)
+    if (url.getHost == "localhost") {
+      // allow ssh port forward for developing
+      request.setHeader("Host", "testioag.vayla.fi")
+    }
+
+    var response: CloseableHttpResponse = null
+
+    try {
+      response = client.execute(request)
+      parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Any]
+    } catch {
+      case NonFatal(e) =>
+        logger.error(s"VkmClient failed: ${e.getMessage} ${withQueryString()}", e)
+        Map(("results","Failed"))
+    } finally {
+      response.close()
+    }
+  }
 
   def postFormUrlEncoded(urlPart: String, parameters: Map[String, String]): Any = {
     implicit val formats = DefaultFormats
@@ -42,7 +73,7 @@ class ViiteVkmClient {
     val url = new URL(getRestEndPoint)
     if (url.getHost == "localhost") {
       // allow ssh port forward for developing
-      post.setHeader("Host", "oag.liikennevirasto.fi")
+      post.setHeader("Host", "testijulkinen.vayla.fi")
     }
     var response: CloseableHttpResponse = null
     try {
