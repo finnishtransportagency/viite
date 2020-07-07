@@ -138,7 +138,7 @@ trait TrackCalculatorStrategy {
     * @return
     */
   def getFixedAddress(leftLink: ProjectLink, rightLink: ProjectLink,
-                                userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): (Long, Long) = {
+                      userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): (Long, Long) = {
 
     val reversed = rightLink.reversed || leftLink.reversed
 
@@ -165,6 +165,12 @@ trait TrackCalculatorStrategy {
 
   protected def adjustTwoTracks(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint],
                                 restLeftProjectLinks: Seq[ProjectLink] = Seq(), restRightProjectLinks: Seq[ProjectLink] = Seq()): TrackCalculatorResult = {
+
+    def adjustedTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Long, endM: Long): Boolean = {
+      right.headOption.map(_.startAddrMValue).contains(startM) && left.headOption.map(_.startAddrMValue).contains(startM) &&
+        right.lastOption.map(_.endAddrMValue).contains(endM) && right.lastOption.map(_.endAddrMValue).contains(endM)
+    }
+
     if (leftProjectLinks.isEmpty || rightProjectLinks.isEmpty)
       throw new MissingTrackException(s"Missing track, R: ${rightProjectLinks.size}, L: ${leftProjectLinks.size}")
 
@@ -182,7 +188,12 @@ trait TrackCalculatorStrategy {
     val startSectionAddress = startAddress.getOrElse(getFixedAddress(continuousLeftProjectLinks.head, continuousRightProjectLinks.head)._1)
     val estimatedEnd = getFixedAddress(continuousLeftProjectLinks.last, continuousRightProjectLinks.last, availableCalibrationPoint)._2
 
-    val (adjustedLeft, adjustedRight) = adjustTwoTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
+    //    val (adjustedLeft, adjustedRight) = adjustTwoTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
+
+    val (adjustedLeft, adjustedRight) =
+      if (adjustedTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd)) {
+        (continuousLeftProjectLinks, continuousRightProjectLinks)
+      } else adjustTwoTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
 
     //  The getFixedAddress method have to be called twice because when we do it the first time we are getting the estimated end measure, that will be used for the calculation of
     //  NEW sections. For example if in one of the sides we have a TRANSFER section it will use the value after recalculate all the existing sections with the original length.
