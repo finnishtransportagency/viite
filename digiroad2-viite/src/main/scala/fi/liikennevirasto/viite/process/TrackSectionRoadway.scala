@@ -256,13 +256,12 @@ object TrackSectionRoadway {
         val nextRoadwayNumber = Sequences.nextRoadwayNumber
 
         val remainingOpposite =
-          linkToBeSplit.copy(id = NewIdValue, startMValue = secondSplitStartMeasure, endMValue = secondSplitEndMeasure, geometry = secondSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(secondSplitedLinkGeom),
-            startAddrMValue = firstSplitEndAddr, originalStartAddrMValue = firstSplitEndAddr) +:
+          linkToBeSplit.copy(id = NewIdValue, startMValue = secondSplitStartMeasure, endMValue = secondSplitEndMeasure, geometry = secondSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(secondSplitedLinkGeom), startAddrMValue = firstSplitEndAddr) +:
             remainingOppositeTrack.tail
 
         val processedOppositeTrackWithSplitLink = assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+ linkToBeSplit.copy(startMValue = firstSplitStartMeasure, endMValue = firstSplitEndMeasure,
           geometry = firstSplitLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitLinkGeom), endAddrMValue = firstSplitEndAddr,
-          roadwayNumber = nextRoadwayNumber, connectedLinkId = Some(linkToBeSplit.linkId), discontinuity = Discontinuity.Continuous, originalEndAddrMValue = firstSplitEndAddr)
+          roadwayNumber = nextRoadwayNumber, connectedLinkId = Some(linkToBeSplit.linkId), discontinuity = Discontinuity.Continuous)
 
         splitLinksIfNeed(
           remainingReference = remainingReference.tail,
