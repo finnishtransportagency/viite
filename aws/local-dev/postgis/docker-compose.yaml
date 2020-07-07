@@ -1,0 +1,10 @@
+version: "3.3"
+services:
+  postgres:
+    image: postgis/postgis:latest
+    environment:
+      POSTGRES_USER: viite
+      POSTGRES_PASSWORD: viite
+      POSTGRES_DB: viite
+    ports:
+      - 5432:5432
