@@ -1273,7 +1273,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val newSavedLinkIds = projectLinks.map(_.linkId)
             addNewLinksToProject(sortRamps(newProjectLinks, newSavedLinkIds), projectId, userName, newSavedLinkIds.head, newTransaction = false, Discontinuity.apply(discontinuity))
           }
-        } else if (!project.isReserved(newRoadNumber, newRoadPart)) {
+        } else if (!project.isReserved(newRoadNumber, newRoadPart) && !project.isFormed(newRoadNumber, newRoadPart)) {
           projectReservedPartDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPart, project.modifiedBy)
         }
         (toReplace, Some(road), Some(part))
