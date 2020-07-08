@@ -167,8 +167,8 @@ trait TrackCalculatorStrategy {
                                 restLeftProjectLinks: Seq[ProjectLink] = Seq(), restRightProjectLinks: Seq[ProjectLink] = Seq()): TrackCalculatorResult = {
 
     def adjustedTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Long, endM: Long): Boolean = {
-      right.headOption.map(_.startAddrMValue).contains(startM) && left.headOption.map(_.startAddrMValue).contains(startM) &&
-        right.lastOption.map(_.endAddrMValue).contains(endM) && right.lastOption.map(_.endAddrMValue).contains(endM)
+      right.headOption.map(_.startAddrMValue).contains(startM) && right.lastOption.map(_.endAddrMValue).contains(endM) &&
+        left.headOption.map(_.startAddrMValue).contains(startM) && left.lastOption.map(_.endAddrMValue).contains(endM)
     }
 
     if (leftProjectLinks.isEmpty || rightProjectLinks.isEmpty)

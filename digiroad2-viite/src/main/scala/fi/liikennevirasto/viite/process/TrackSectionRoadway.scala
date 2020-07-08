@@ -190,25 +190,11 @@ object TrackSectionRoadway {
             strategy.getFixedAddress(remainingReference.head._2.last, unassignedRwnLinks.last)._2
         }
 
-        logger.info(s"New generated link will be adjusted to endAddrMValue = $estimatedEnd" +
-          s", for (roadNumber: ${remainingReference.head._2.last.roadNumber}, roadPartNumber: ${remainingReference.head._2.last.roadPartNumber})")
-
-//        val estimatedStart = if (processedOppositeTrack.nonEmpty) {
-//          estimatedEnd
-//        } else {
-//          remainingReference.head._2.last.track match {
-//            case r if r.value == Track.RightSide.value =>
-//              val strategy = TrackCalculatorContext.getStrategy(unassignedRwnLinks, remainingReference.head._2)
-//              strategy.getFixedAddress(unassignedRwnLinks.head, remainingReference.head._2.head)._1
-//            case _ =>
-//              val strategy = TrackCalculatorContext.getStrategy(remainingReference.head._2, unassignedRwnLinks)
-//              strategy.getFixedAddress(remainingReference.head._2.head, unassignedRwnLinks.head)._1
-//          }
-//        }
-
         val processedOpposite = assignedRwnLinks ++ unassignedRwnLinks.init.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
-          unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber,
-            endAddrMValue = estimatedEnd)
+          unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber, endAddrMValue = estimatedEnd)
+
+        logger.info(s"Created new Project Link for (${unassignedRwnLinks.last.roadNumber}, ${unassignedRwnLinks.last.roadPartNumber}, ${unassignedRwnLinks.last.track})" +
+          s"from ${unassignedRwnLinks.last.startAddrMValue} to $estimatedEnd")
 
         splitLinksIfNeed(
           remainingReference = remainingReference.tail,
@@ -258,6 +244,9 @@ object TrackSectionRoadway {
         val remainingOpposite =
           linkToBeSplit.copy(id = NewIdValue, startMValue = secondSplitStartMeasure, endMValue = secondSplitEndMeasure, geometry = secondSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(secondSplitedLinkGeom), startAddrMValue = firstSplitEndAddr) +:
             remainingOppositeTrack.tail
+
+        logger.info(s"Project Link for (${linkToBeSplit.roadNumber}, ${linkToBeSplit.roadPartNumber}, ${linkToBeSplit.track})" +
+          s"from ${linkToBeSplit.startAddrMValue} to ${linkToBeSplit.endAddrMValue}, will end at endAddrMValue = $firstSplitEndAddr")
 
         val processedOppositeTrackWithSplitLink = assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+ linkToBeSplit.copy(startMValue = firstSplitStartMeasure, endMValue = firstSplitEndMeasure,
           geometry = firstSplitLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitLinkGeom), endAddrMValue = firstSplitEndAddr,
