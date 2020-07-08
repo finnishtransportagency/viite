@@ -38,6 +38,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   private def roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, new ProjectLinkDAO)
 
   val viiteVkmClient = new ViiteVkmClient
+  class VkmException(response: String) extends RuntimeException(response)
 
   /**
     * Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
@@ -261,17 +262,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         resultSeq = collectResult("road", searchResult, resultSeq)
       }
     } else if (searchType == "street") {
-      withDynSession {
+
         val address = searchString.getOrElse("").split(", ")
-        val municipalityId = if (address.size > 1) {
-          MunicipalityDAO.getMunicipalityIdByName(address.last).headOption.map(_._1).getOrElse("").toString
-        } else {
-          ""
+        val municipalityId = withDynSession {
+          if (address.size > 1) {
+            MunicipalityDAO.getMunicipalityIdByName(address.last.trim).headOption.map(_._1)
+          } else {
+            None
+          }
         }
         val (streetName, streetNumber) = address.head.split(" ").partition(_.matches(("\\D+")))
-        searchResult = Seq(viiteVkmClient.get("/viitekehysmuunnin/muunna", Map(("kuntakoodi", municipalityId), ("katunimi", streetName.mkString("%20")), ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))))
+        searchResult = viiteVkmClient.get("/viitekehysmuunnin/muunna", Map(("kuntakoodi", municipalityId.getOrElse("").toString), ("katunimi", streetName.mkString("%20")), ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {
+          case Left(result) => Seq(result)
+          case Right(error) => throw new VkmException(error.toString)
+        }
         resultSeq = collectResult("street", searchResult, resultSeq)
-      }
     }
     resultSeq
   }
