@@ -464,10 +464,7 @@ class ProjectLinkDAO {
           projectLinkPS.setDouble(21, projectLink.endMValue)
           projectLinkPS.setLong(22, projectLink.ely)
           projectLinkPS.setLong(23, roadwayNumber)
-          if (projectLink.connectedLinkId.isDefined)
-            projectLinkPS.setLong(24, projectLink.connectedLinkId.get)
-          else
-            projectLinkPS.setString(24, null)
+          projectLinkPS.setObject(24, projectLink.connectedLinkId.orNull)
           projectLinkPS.setLong(25, projectLink.id)
           projectLinkPS.addBatch()
         }
