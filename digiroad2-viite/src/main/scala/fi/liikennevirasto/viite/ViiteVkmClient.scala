@@ -30,30 +30,28 @@ class ViiteVkmClient {
 
   private val client = HttpClientBuilder.create().build
 
-  def get(path: String, params: Map[String, String]): Any = {
+  def get(path: String, params: Map[String, String]): Either[Any, VKMError] = {
 
-    def withQueryString() = {
+    val url =
       if(params.nonEmpty)
         getRestEndPoint + path + "?"+params.map(p => if (p._2.nonEmpty) p._1 + "="+ p._2).mkString("&")
       else
         getRestEndPoint + path
-    }
-    val request = new HttpGet(withQueryString())
-    val url = new URL(getRestEndPoint)
-    if (url.getHost == "localhost") {
+    val request = new HttpGet(url)
+    val host = new URL(getRestEndPoint).getHost
+    if (host == "localhost") {
       // allow ssh port forward for developing
       request.setHeader("Host", "testioag.vayla.fi")
     }
 
-    var response: CloseableHttpResponse = null
-
+    val response = client.execute(request)
     try {
-      response = client.execute(request)
-      parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Any]
+      if (response.getStatusLine.getStatusCode >= 400)
+        return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
+      val content: Any = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Any]
+      Left(content)
     } catch {
-      case NonFatal(e) =>
-        logger.error(s"VkmClient failed: ${e.getMessage} ${withQueryString()}", e)
-        Map(("results","Failed"))
+      case e: Exception => Right(VKMError(Map("error" -> e.getMessage), url))
     } finally {
       response.close()
     }
