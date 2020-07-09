@@ -1465,8 +1465,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       val (generatedLinks, adjustedLinks) = (recalculated ++ assignedTerminatedRoadwayNumbers).partition(_.id == NewIdValue)
 
-//      projectLinkDAO.updateProjectLinks(recalculated ++ assignedTerminatedRoadwayNumbers, userName, originalAddresses)
-//      projectLinkDAO.create(recalculated.filterNot(r => others.exists(_.id == r.id)).map(_.copy(createdBy = Some(userName))))
       projectLinkDAO.updateProjectLinks(adjustedLinks, userName, originalAddresses)
       projectLinkDAO.create(generatedLinks.map(_.copy(createdBy = Some(userName))))
     }

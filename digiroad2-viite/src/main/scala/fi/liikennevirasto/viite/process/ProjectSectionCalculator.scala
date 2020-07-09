@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
-import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.{RoadAddressSectionCalculatorContext, TrackCalculatorContext}
@@ -102,7 +102,7 @@ object ProjectSectionCalculator {
       seq.span(pl => pl.roadAddressTrack.getOrElse(Track.Unknown) == track && (if(status.equals(LinkStatus.Terminated)) pl.status == status else !pl.status.equals(LinkStatus.Terminated)))
     }
 
-    def adjustTracksToMatch(leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+    def adjustTerminatedTracksToMatch(leftLinks: Seq[ProjectLink], rightLinks: Seq[ProjectLink], previousStart: Option[Long]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       if (rightLinks.isEmpty && leftLinks.isEmpty) {
         (Seq(), Seq())
       } else {
@@ -110,23 +110,26 @@ object ProjectSectionCalculator {
         val (left, othersLeft) = getContinuousTrack(leftLinks)
 
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
-          TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
+          if (!right.exists(_.status != LinkStatus.Terminated) && !left.exists(_.status != LinkStatus.Terminated)) {
+            TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
+          } else ((right, othersRight), (left, othersLeft))
 
-        if (firstRight.isEmpty || firstLeft.isEmpty) {
-          throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
-        }
+          if (firstRight.isEmpty || firstLeft.isEmpty) {
+            throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
+          }
 
-        if (firstRight.map(_.roadwayNumber).distinct.size != firstLeft.map(_.roadwayNumber).distinct.size) {
-          throw new MissingRoadwayNumberException(s"Roadway numbers doesn't match on both tracks, R ${firstRight.map(_.roadwayNumber).distinct.size}, L ${firstLeft.map(_.roadwayNumber).distinct.size}")
-        }
+          if (firstRight.count(_.roadwayNumber == NewIdValue) + firstRight.filter(_.roadwayNumber != NewIdValue).map(_.roadwayNumber).distinct.size != firstLeft.count(_.roadwayNumber == NewIdValue) + firstLeft.filter(_.roadwayNumber != NewIdValue).map(_.roadwayNumber).distinct.size) {
+            throw new MissingRoadwayNumberException(s"Roadway numbers doesn't match on both tracks, R ${firstRight.map(_.roadwayNumber).distinct.size}, L ${firstLeft.map(_.roadwayNumber).distinct.size}")
+          }
 
-        val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
-        logger.info(s"${strategy.name} strategy")
-        val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, Map())
+          val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
+          logger.info(s"${strategy.name} strategy")
+          val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, Map())
 
-        val (adjustedRestRight, adjustedRestLeft) = adjustTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
+          val (adjustedRestRight, adjustedRestLeft) = adjustTerminatedTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
 
-        (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
+          (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
+
       }
     }
 
@@ -137,7 +140,7 @@ object ProjectSectionCalculator {
     } else {
       val leftLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignTerminatedLinkValues(left, addrSt = 0)
       val rightLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignTerminatedLinkValues(right, addrSt = 0)
-      val (leftAdjusted, rightAdjusted) = adjustTracksToMatch(leftLinks, rightLinks, None)
+      val (leftAdjusted, rightAdjusted) = adjustTerminatedTracksToMatch(leftLinks, rightLinks, None)
       val (completedAdjustedLeft, completedAdjustedRight) = TrackSectionOrder.setCalibrationPoints(leftAdjusted, rightAdjusted, Map())
       val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(completedAdjustedRight), groupIntoSections(completedAdjustedLeft))
       calculatedSections.flatMap { sec =>
