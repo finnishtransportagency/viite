@@ -21,21 +21,11 @@ import org.joda.time.{DateTime, _}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc._
 
 object DataImporter {
 
   sealed trait ImportDataSet {
     def database(): DatabaseDef
-  }
-
-  case object TemporaryTables extends ImportDataSet {
-    lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(ViiteProperties.importBonecpProperties)
-      new BoneCPDataSource(cfg)
-    }
-
-    def database() = Database.forDataSource(dataSource)
   }
 
   case object Conversion extends ImportDataSet {

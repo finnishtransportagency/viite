@@ -89,9 +89,7 @@ object Digiroad2Build extends Build {
         "org.postgresql" % "postgresql" % "42.2.5",
         "net.postgis" % "postgis-jdbc" % "2.3.0"
       ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
+      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn geoJar
 
@@ -124,10 +122,7 @@ object Digiroad2Build extends Build {
         "org.apache.httpcomponents" % "httpclient" % HttpClientVersion,
         "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion,
         "com.github.nscala-time" %% "nscala-time" % "2.22.0"
-      ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
+      )
     )
   ) dependsOn(geoJar, oracleJar % "compile->compile;test->test")
 
@@ -161,10 +156,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "compile",
         "org.eclipse.jetty" % "jetty-jmx" % JettyVersion % "compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts Artifact("javax.servlet", "jar", "jar")
-      ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
+      )
     )
   ) dependsOn(geoJar, oracleJar, viiteJar)
 
@@ -198,10 +190,7 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % NewRelicApiVersion,
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion
-      ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
+      )
     )
   ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar % "compile->compile;test->test")
 
@@ -240,9 +229,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-servlets" % JettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-proxy" % JettyVersion % "container;compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
-      ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
+      )
     )
   ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar) aggregate
     (geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar)
