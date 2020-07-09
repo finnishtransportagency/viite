@@ -117,9 +117,9 @@ object TrackSectionRoadway {
         splitLinksIfNeed(
           remainingReference = groupedReferenceLinks,
           processedReference = Seq(),
-          remainingOppositeTrack = otherLinks.map(_.copy(roadwayNumber = NewIdValue)),
+          remainingOppositeTrack = otherLinks,
           processedOppositeTrack = Seq(),
-          referenceLength, otherLength, groupedReferenceLinks.size)
+          referenceLength, otherLength, groupedReferenceLinks.size - otherLinks.map(_.roadwayNumber).distinct.size)
 
     val referenceTrack = referenceLinks.headOption.map(_.track)
     val oppositeTrack = otherLinks.headOption.map(_.track)
@@ -146,7 +146,9 @@ object TrackSectionRoadway {
     * @return matched new links by roadway numbers according to their same size proportion
     */
   @tailrec
-  private def splitLinksIfNeed(remainingReference: ListMap[Long, Seq[ProjectLink]], processedReference: Seq[ProjectLink], remainingOppositeTrack: Seq[ProjectLink], processedOppositeTrack: Seq[ProjectLink], totalReferenceMLength: Double, totalOppositeTrackMLength: Double, missingRoadwayNumbers: Int): Seq[ProjectLink] = {
+  private def splitLinksIfNeed(remainingReference: ListMap[Long, Seq[ProjectLink]], processedReference: Seq[ProjectLink],
+                               remainingOppositeTrack: Seq[ProjectLink], processedOppositeTrack: Seq[ProjectLink],
+                               totalReferenceMLength: Double, totalOppositeTrackMLength: Double, missingRoadwayNumbers: Int): Seq[ProjectLink] = {
     if (missingRoadwayNumbers == 0 || (remainingOppositeTrack.nonEmpty && remainingReference.isEmpty)) {
       val remainingRoadwayNumber = Sequences.nextRoadwayNumber
       val unassignedRoadwayNumber = Sequences.nextRoadwayNumber
@@ -154,7 +156,7 @@ object TrackSectionRoadway {
       assignedRwnLinks ++
         unassignedRwnLinks.map(_.copy(roadwayNumber = unassignedRoadwayNumber)) ++
         remainingOppositeTrack.map(_.copy(roadwayNumber = remainingRoadwayNumber)) ++
-        processedReference
+        processedReference ++ remainingReference.flatMap(_._2)
     } else if (remainingOppositeTrack.isEmpty && remainingReference.isEmpty) {
       processedOppositeTrack ++ processedReference
     } else {
@@ -164,7 +166,8 @@ object TrackSectionRoadway {
       val maxAllowedTransferGroupCoeff = (groupTransferMLength + MaxThresholdDistance) / totalReferenceMLength
 
       //  Opposite M length coeff
-      val processingOppositeTrack = processedOppositeTrack.filter(_.roadwayNumber == NewIdValue)
+      val oppositeToProcess = processedOppositeTrack
+      val processingOppositeTrack = oppositeToProcess.filter(_.roadwayNumber == NewIdValue)
       val processingLength: Double = if (processingOppositeTrack.isEmpty) {
         remainingOppositeTrack.head.endMValue - remainingOppositeTrack.head.startMValue
       } else {
@@ -174,34 +177,44 @@ object TrackSectionRoadway {
 
       val currentNewLinksGroupCoeff: Double = processingLength / totalOppositeTrackMLength
       if (minAllowedTransferGroupCoeff <= currentNewLinksGroupCoeff && currentNewLinksGroupCoeff <= maxAllowedTransferGroupCoeff) {
-        val (unassignedRwnLinks, assignedRwnLinks) = (processedOppositeTrack :+ remainingOppositeTrack.head).partition(_.roadwayNumber == NewIdValue)
+        val (unassignedRwnLinks, assignedRwnLinks) = (oppositeToProcess :+ remainingOppositeTrack.head).partition(_.roadwayNumber == NewIdValue)
         val nextRoadwayNumber = Sequences.nextRoadwayNumber
 
-        val remainingOpposite = if (remainingOppositeTrack.tail.nonEmpty) {
-          remainingOppositeTrack.tail.head.copy(startAddrMValue = remainingReference.head._2.last.endAddrMValue) +: remainingOppositeTrack.tail.tail
-        } else { remainingOppositeTrack.tail }
-
-        val estimatedEnd = remainingReference.head._2.last.track match {
-          case r if r.value == Track.RightSide.value =>
-            val strategy = TrackCalculatorContext.getStrategy(unassignedRwnLinks, remainingReference.head._2)
-            strategy.getFixedAddress(unassignedRwnLinks.last, remainingReference.head._2.last)._2
-          case _ =>
-            val strategy = TrackCalculatorContext.getStrategy(remainingReference.head._2, unassignedRwnLinks)
-            strategy.getFixedAddress(remainingReference.head._2.last, unassignedRwnLinks.last)._2
+        val fixedEndAddrMValue = if (remainingOppositeTrack.tail.nonEmpty) {
+          None
+        } else {
+          Some(remainingReference.head._2.last.track match {
+            case r if r.value == Track.RightSide.value =>
+              val strategy = TrackCalculatorContext.getStrategy(unassignedRwnLinks, remainingReference.head._2)
+              strategy.getFixedAddress(unassignedRwnLinks.last, remainingReference.head._2.last)._2
+            case _ =>
+              val strategy = TrackCalculatorContext.getStrategy(remainingReference.head._2, unassignedRwnLinks)
+              strategy.getFixedAddress(remainingReference.head._2.last, unassignedRwnLinks.last)._2
+          })
         }
 
-        val processedOpposite = assignedRwnLinks ++ unassignedRwnLinks.init.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
-          unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber, endAddrMValue = estimatedEnd)
+        logger.info(s"Adjusted Project Link (2nd half): (${unassignedRwnLinks.last.roadNumber}, ${unassignedRwnLinks.last.roadPartNumber}, ${unassignedRwnLinks.last.track}) " +
+          s"from: (${unassignedRwnLinks.head.originalStartAddrMValue} - ${unassignedRwnLinks.last.originalEndAddrMValue}) " +
+          s"to: (${unassignedRwnLinks.head.startAddrMValue} - ${fixedEndAddrMValue.getOrElse(unassignedRwnLinks.head.endAddrMValue)})")
 
-        logger.info(s"Created new Project Link for (${unassignedRwnLinks.last.roadNumber}, ${unassignedRwnLinks.last.roadPartNumber}, ${unassignedRwnLinks.last.track})" +
-          s"from ${unassignedRwnLinks.last.startAddrMValue} to $estimatedEnd")
+        logger.info(s"Adjusted Last Project link for reference section: (${remainingReference.head._2.head.roadNumber}, ${remainingReference.head._2.head.roadPartNumber}, ${remainingReference.head._2.head.track})")
+        logger.info(s"  - from: (${remainingReference.head._2.head.originalStartAddrMValue} - ${remainingReference.head._2.head.originalEndAddrMValue})")
+        logger.info(s"  - to:  (${unassignedRwnLinks.head.startAddrMValue} - ${fixedEndAddrMValue.getOrElse(remainingReference.head._2.head.endAddrMValue)})")
+
+        val processedReferenceWithAdjustedAddr = remainingReference.head._2.init :+ remainingReference.head._2.last
+          .copy(startAddrMValue = unassignedRwnLinks.head.startAddrMValue, endAddrMValue = fixedEndAddrMValue.getOrElse(unassignedRwnLinks.head.endAddrMValue))
+
+        val remainingOpposite = remainingOppositeTrack.tail
+
+        val processedOpposite = assignedRwnLinks ++ unassignedRwnLinks.init.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
+          unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber, endAddrMValue = fixedEndAddrMValue.getOrElse(unassignedRwnLinks.head.endAddrMValue))
 
         splitLinksIfNeed(
           remainingReference = remainingReference.tail,
-          processedReference = processedReference ++ remainingReference.head._2.init :+ remainingReference.head._2.last.copy(endAddrMValue = estimatedEnd),
+          processedReference = processedReference ++ processedReferenceWithAdjustedAddr,
           remainingOppositeTrack = remainingOpposite,
           processedOppositeTrack = processedOpposite,
-          totalOppositeTrackMLength, totalOppositeTrackMLength, missingRoadwayNumbers - 1)
+          totalReferenceMLength, totalOppositeTrackMLength, missingRoadwayNumbers - 1)
       } else if (minAllowedTransferGroupCoeff > currentNewLinksGroupCoeff) {
         splitLinksIfNeed(
           remainingReference = remainingReference,
@@ -214,10 +227,11 @@ object TrackSectionRoadway {
             * Note: and by that we want to pick previous processedLinks
           */
 
-        val processedToBeAssigned = processedOppositeTrack.filter(_.roadwayNumber == NewIdValue)
-        val previousProcessed = if (processedToBeAssigned.isEmpty) Seq() else processedToBeAssigned
+        val oppositeToProcess = processedOppositeTrack
+        val processedToBeAssigned = oppositeToProcess.filter(_.roadwayNumber == NewIdValue)
+//        val previousProcessed = if (processedToBeAssigned.isEmpty) Seq() else processedToBeAssigned
         val linkToBeSplit = remainingOppositeTrack.head
-        val previousProcessedLength: Double = previousProcessed.map(l => l.endMValue - l.startMValue).sum
+        val previousProcessedLength: Double = processedToBeAssigned.map(l => l.endMValue - l.startMValue).sum
 
         val perfectTransferGroupCoeff = groupTransferMLength / totalReferenceMLength
 
@@ -227,34 +241,84 @@ object TrackSectionRoadway {
          *  <=> m = (perfectTransferGroupCoeff*totalNewMLength) - previousProcessedLength
          */
         val splitMValue = (perfectTransferGroupCoeff * totalOppositeTrackMLength) - previousProcessedLength
-        val firstSplitEndAddr = remainingReference.head._2.last.endAddrMValue
         val firstSplitLinkGeom = if (linkToBeSplit.sideCode == TowardsDigitizing) GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, 0.0, splitMValue)
         else GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, linkToBeSplit.endMValue - splitMValue, linkToBeSplit.endMValue)
         val (firstSplitStartMeasure, firstSplitEndMeasure) = if (linkToBeSplit.sideCode == TowardsDigitizing) (linkToBeSplit.startMValue, linkToBeSplit.startMValue + splitMValue) else
           (linkToBeSplit.endMValue - splitMValue, linkToBeSplit.endMValue)
         val (secondSplitStartMeasure, secondSplitEndMeasure) = if (linkToBeSplit.sideCode == TowardsDigitizing) (linkToBeSplit.startMValue + splitMValue, linkToBeSplit.endMValue) else
           (linkToBeSplit.startMValue, linkToBeSplit.endMValue - splitMValue)
-        val secondSplitedLinkGeom = if (linkToBeSplit.sideCode == TowardsDigitizing) GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, splitMValue, linkToBeSplit.endMValue)
+        val secondLinkGeom = if (linkToBeSplit.sideCode == TowardsDigitizing) GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, splitMValue, linkToBeSplit.endMValue)
         else GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, 0.0, linkToBeSplit.endMValue - splitMValue)
 
         //  processedLinks without and with roadwayNumber
-        val (unassignedRwnLinks, assignedRwnLinks) = processedOppositeTrack.partition(_.roadwayNumber == NewIdValue)
+        val (unassignedRwnLinks, assignedRwnLinks) = oppositeToProcess.partition(_.roadwayNumber == NewIdValue)
         val nextRoadwayNumber = Sequences.nextRoadwayNumber
 
+        val (fixedStartAddrMValue, splitEndAddrMValue) = if (oppositeToProcess.isEmpty || remainingReference.head._2.head.roadwayNumber == processedReference.last.roadwayNumber) {
+          (None, None)
+        } else {
+          val (st, end) = remainingReference.head._2.head.track match {
+            case r if r.value == Track.RightSide.value =>
+              val strategy = TrackCalculatorContext.getStrategy(Seq(linkToBeSplit), remainingReference.head._2)
+              (strategy.getFixedAddress(linkToBeSplit, remainingReference.head._2.head)._1, strategy.getFixedAddress(linkToBeSplit, remainingReference.head._2.head)._1)
+            case _ =>
+              val strategy = TrackCalculatorContext.getStrategy(remainingReference.head._2, Seq(linkToBeSplit))
+              (strategy.getFixedAddress(remainingReference.head._2.head, linkToBeSplit)._1, strategy.getFixedAddress(remainingReference.head._2.head, linkToBeSplit)._1)
+          }
+          (Some(st), Some(end + groupTransferMLength.toLong))
+        }
+
+        val oppAdjustedStartAddrM = fixedStartAddrMValue.getOrElse(linkToBeSplit.startAddrMValue)
+        val refAdjustedStartAddrM = fixedStartAddrMValue.getOrElse(remainingReference.head._2.last.startAddrMValue)
+        val adjustedSplitEndAddrM = splitEndAddrMValue.getOrElse(linkToBeSplit.startAddrMValue + groupTransferMLength.toLong)
+
+        val adjustedEndAddr = if (remainingReference.tail.head._2.isEmpty || remainingReference.tail.head._2.size > 1) {
+          None
+        } else {
+          Some(remainingReference.tail.head._2.head.track match {
+            case r if r.value == Track.RightSide.value =>
+              val strategy = TrackCalculatorContext.getStrategy(Seq(linkToBeSplit), remainingReference.tail.head._2)
+              strategy.getFixedAddress(linkToBeSplit, remainingReference.tail.head._2.head)._2
+            case _ =>
+              val strategy = TrackCalculatorContext.getStrategy(remainingReference.tail.head._2, Seq(linkToBeSplit))
+              strategy.getFixedAddress(remainingReference.tail.head._2.head, linkToBeSplit)._2
+          })
+        }
+
+        logger.info(s"Project link to be split (1st half): (${linkToBeSplit.roadNumber}, ${linkToBeSplit.roadPartNumber}, ${linkToBeSplit.track})" +
+          s"\n\tfrom: (${linkToBeSplit.originalStartAddrMValue} - ${linkToBeSplit.originalEndAddrMValue})" +
+          s"\n\tto:  ($oppAdjustedStartAddrM - $adjustedSplitEndAddrM)")
+
+        logger.info(s"Project link for reference section (matching split): (${remainingReference.head._2.last.roadNumber}, ${remainingReference.head._2.last.roadPartNumber}, ${remainingReference.head._2.last.track})" +
+          s"\n\tfrom: (${remainingReference.head._2.last.originalStartAddrMValue} - ${remainingReference.head._2.last.originalEndAddrMValue})" +
+          s"\n\tto:  ($refAdjustedStartAddrM - $adjustedSplitEndAddrM)")
+
+        logger.info(s"Project link to be split (2nd half): (${linkToBeSplit.roadNumber}, ${linkToBeSplit.roadPartNumber}, ${linkToBeSplit.track})" +
+          s"\n\tfrom: (${linkToBeSplit.originalStartAddrMValue} - ${linkToBeSplit.originalEndAddrMValue}) " +
+          s"\n\tto:  ($adjustedSplitEndAddrM - ${adjustedEndAddr.getOrElse(linkToBeSplit.endAddrMValue)})")
+
+        logger.info(s"Next Project link for reference section: (${remainingReference.tail.head._2.head.roadNumber}, ${remainingReference.tail.head._2.head.roadPartNumber}, ${remainingReference.tail.head._2.head.track})" +
+          s"\n\tfrom: (${remainingReference.tail.head._2.head.originalStartAddrMValue} - ${remainingReference.tail.head._2.head.originalEndAddrMValue})" +
+          s"\n\tto:  ($adjustedSplitEndAddrM - ${adjustedEndAddr.getOrElse(remainingReference.tail.head._2.head.endAddrMValue)})")
+
+        val remainingAdjustedLinks = remainingReference.tail.head._2.head.copy(startAddrMValue = adjustedSplitEndAddrM, endAddrMValue = adjustedEndAddr.getOrElse(remainingReference.tail.head._2.head.endAddrMValue)) +: remainingReference.tail.head._2.tail
+        val remainingAdjusted = ListMap(remainingAdjustedLinks.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
+
+        val processedReferenceWithAdjustedSplitAddr = remainingReference.head._2.dropRight(1) :+ remainingReference.head._2.last
+          .copy(startAddrMValue = refAdjustedStartAddrM, endAddrMValue = adjustedSplitEndAddrM)
+
         val remainingOpposite =
-          linkToBeSplit.copy(id = NewIdValue, startMValue = secondSplitStartMeasure, endMValue = secondSplitEndMeasure, geometry = secondSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(secondSplitedLinkGeom), startAddrMValue = firstSplitEndAddr) +:
+          linkToBeSplit.copy(id = NewIdValue, startMValue = secondSplitStartMeasure, endMValue = secondSplitEndMeasure, geometry = secondLinkGeom, geometryLength = GeometryUtils.geometryLength(secondLinkGeom),
+            startAddrMValue = adjustedSplitEndAddrM, endAddrMValue = adjustedEndAddr.getOrElse(linkToBeSplit.endAddrMValue)) +:
             remainingOppositeTrack.tail
 
-        logger.info(s"Project Link for (${linkToBeSplit.roadNumber}, ${linkToBeSplit.roadPartNumber}, ${linkToBeSplit.track})" +
-          s"from ${linkToBeSplit.startAddrMValue} to ${linkToBeSplit.endAddrMValue}, will end at endAddrMValue = $firstSplitEndAddr")
-
-        val processedOppositeTrackWithSplitLink = assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+ linkToBeSplit.copy(startMValue = firstSplitStartMeasure, endMValue = firstSplitEndMeasure,
-          geometry = firstSplitLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitLinkGeom), endAddrMValue = firstSplitEndAddr,
-          roadwayNumber = nextRoadwayNumber, connectedLinkId = Some(linkToBeSplit.linkId), discontinuity = Discontinuity.Continuous)
+        val processedOppositeTrackWithSplitLink = assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
+          linkToBeSplit.copy(startMValue = firstSplitStartMeasure, endMValue = firstSplitEndMeasure, geometry = firstSplitLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitLinkGeom),
+            startAddrMValue = oppAdjustedStartAddrM, endAddrMValue = adjustedSplitEndAddrM, roadwayNumber = nextRoadwayNumber, connectedLinkId = Some(linkToBeSplit.linkId), discontinuity = Discontinuity.Continuous)
 
         splitLinksIfNeed(
-          remainingReference = remainingReference.tail,
-          processedReference = processedReference ++ remainingReference.head._2,
+          remainingReference = remainingAdjusted,
+          processedReference = processedReference ++ processedReferenceWithAdjustedSplitAddr,
           remainingOppositeTrack = remainingOpposite,
           processedOppositeTrack = processedOppositeTrackWithSplitLink,
           totalReferenceMLength, totalOppositeTrackMLength, missingRoadwayNumbers - 1)
