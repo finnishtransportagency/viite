@@ -1,112 +1,112 @@
 VIITE
 =====
 
-Ympäristön pystytys
-===================
+Setting up the local dev environment
+====================================
 
-1. Kloonaa viite-repo omalle koneellesi
-
-  ```
-  git clone https://github.com/finnishtransportagency/viite.git
-  ```
-
-1. [Asenna node.js](http://howtonode.org/how-to-install-nodejs) (samalla asentuu [npm](https://npmjs.org/))
-1. Asenna [yarn](https://yarnpkg.com/lang/en/)
-
-  ```
-  npm install -g yarn
-  ```
-
-1. Hae ja asenna projektin tarvitsemat riippuvuudet hakemistoon, johon projekti on kloonattu
-
-  ```
-  npm install && yarn install
-  ```
-
-1. Asenna [grunt](http://gruntjs.com/getting-started)
-
-  ```
-  npm install -g grunt-cli
-  ```
-
-digiroad2-oracle
-----------------
-
-TODO Kirjoita Postgres -ohjeet
-
-digiroad2-oracle moduuli toteuttaa oracle-spesifisen tuen digiroad2:n `AssetProvider` ja `UserProvider` - rajapinnoista.
-Moduuli tuottaa kirjaston, joka lisätään ajonaikaisesti digiroad2-sovelluksen polkuun.
-
-Build edellyttää, että paikallinen tietokantaymäristö on alustettu ja konfiguroitu:
-
-Luo digiroad2/digiroad2-oracle/conf/dev/bonecp.properties ja lisää sinne tietokantayhteyden tiedot:
+Source Code
+-----------
+Clone "viite"-repository from Github
 
 ```
-bonecp.jdbcUrl=jdbc:oracle:thin:@<tietokannan_osoite>:<portti>/<skeeman_nimi>
-bonecp.username=<käyttäjätunnus>
-bonecp.password=<salasana>
+git clone https://github.com/finnishtransportagency/viite.git
 ```
 
-Tietokantayhteyden voi määrittää myös ulkoisessa properties tiedostossa joka noudattaa yllä olevaa muotoa.
-
-Tällöin viite/digiroad2-oracle/conf/dev/bonecp.properties tiedosto viittaa ulkoiseen tiedostoon:
-
+Frontend
+---------
+Install [yarn](https://yarnpkg.com/lang/en/)
+[Install node.js](http://howtonode.org/how-to-install-nodejs) (you will get also [npm](https://npmjs.org/))
 ```
-digiroad2-oracle.externalBoneCPPropertiesFile=/etc/digiroad2/bonecp.properties
+npm install -g yarn
 ```
-
-Tietokanta ja skeema voidaan alustaa käyttäen `viite-fixture-reset.sh` skriptiä.
-
-Ajaminen
-========
-
-Buildin rakentaminen:
+Fetch and install the dependencies needed by the UI
 ```
-grunt
+npm install && yarn install
+```
+Install [grunt](http://gruntjs.com/getting-started)
+```
+npm install -g grunt-cli
 ```
 
-Testien ajaminen:
+Database
+--------
+Install PostGIS by [downloading and installing it](https://postgis.net/install/) or
+by using Docker Compose:
 ```
-grunt test
+cd aws/local-dev/postgis
+docker-compose up
 ```
+Docker Compose installs and starts the PostGIS database server with the needed database and user.
+- Username: viite
+- Password: viite
+- Database: viite
 
-Kehitysserverin pystytys:
-```
-grunt server
-```
-Kehitysserveri ajaa automaattisesti testit, kääntää lessit ja toimii watch -tilassa.
+Required Integrations
+---------------------
+Viite needs to get the links, the background maps and the coordinates for addresses
+from external systems. For these connections to work, open Väylä VPN and
+open SSH-tunnel with the needed port forwardings to a Väylä server.
+- 9180: Viite running in dev/devtest environment
+- 8997: OAG
 
-Kehityspalvelin ohjaa API-kutsut API-palvelimelle. Jotta järjestelmä toimii tulee myös API-palvelimen olla käynnissä.
+Idea Run Configurations
+-----------------------
+If you are developing with the IntelliJ Idea, you can import the run configurations
+from the `aws/local-dev/idea-run-configurations` folder.
 
-API-palvelin
-============
+Building and Running the Backend
+---------------------------------
+Backend reads environment specific variables from the environment variables.
+These variables for development are listed in
+`aws/local-dev/environment-variables.properties` 
 
-API-palvelimen buildia käsitellään sbt:llä, käyttäen projektin juuressa olevaa launcher-skriptiä sbt. Esim.
+If you are using Idea, these variables are already set in the "Server" and "Test" run configurations.
 
+Running the unit tests from Idea:
+- Run the "Test" sbt Task
+
+Running the unit tests from the command line:
 ```
 ./sbt test
 ```
 
-API-palvelimen saa käyntiin kehitysmoodiin seuraavalla sbt komennolla:
+Running the backend from Idea:
+- Run the "Server" sbt Task
+
+Running the backend from the command line in the development mode:
+(Environment variables need to be set first)
 ```
 ./sbt '~;container:start; container:reload /'
 ```
 
-Esim CI-ympäristössä Oracle-tietokanta ei ole käytettävissä, jolloin buildille pitää välittää system property "digiroad2.nodatabase" arvolla "true".
-Vastaavasti buildille voi välittää kohteena oleva ympäristö propertyllä "digiroad2.env" (arvot "dev", "test", "prod" tai "ci"). Esim.
-
+Building and Running the Frontend
+==================================
+Building the frontend:
 ```
-./sbt -Ddigiroad2.nodatabase=true -Ddigiroad2.env=dev test
-```
-
-"digiroad2.env":n arvo määrittää sen, minkä ympäristön konfiguraatiotiedostot otetaan käyttöön (hakemistosta conf/(env)/)
-
-Windowsissa toimii komento:
-```
-run fi.liikennevirasto.digiroad2.ProductionServer
+grunt
 ```
 
-Avaa käyttöliittymä osoitteessa <http://localhost:9003/login.html>.
+Running the tests:
+```
+grunt test
+```
+(Or run the "Grunt Test" from Idea)
+
+Running the frontend server:
+```
+grunt server
+```
+(Or run the "Grunt Server" from Idea)
+
+Running the frontend runs the tests, builds less and runs in the watch-mode. 
+
+Frontend server sends the requests to the backend server that needs to be running for the application to work.
+
+UI will be available in this address: <http://localhost:9003/>.
+
+Initializing the database
+=========================
+
 
 Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
 ======================================================

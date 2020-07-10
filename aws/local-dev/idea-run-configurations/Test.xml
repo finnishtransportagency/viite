@@ -1,0 +1,43 @@
+<component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="Test" type="SbtRunConfiguration" factoryName="sbt Task">
+        <setting name="tasks" value="test" />
+        <setting name="vmparams" value="-Xms512M -Xmx1024M -Xss1M -XX:+CMSClassUnloadingEnabled" />
+        <setting name="workingDir" value="$PROJECT_DIR$" />
+        <envs>
+            <env name="authentication.municipality.basic.password" value="municipality" />
+            <env name="userProvider" value="fi.liikennevirasto.digiroad2.dao.PostGISUserProvider" />
+            <env name="conversion.bonecp.password" value="viite" />
+            <env name="http.proxyHost" value="127.0.0.1" />
+            <env name="vkmUrl" value="http://localhost:8997" />
+            <env name="tierekisteriViiteRestApiEndPoint" value="" />
+            <env name="vvhServiceHost" value="172.17.204.39:6080" />
+            <env name="import.bonecp.username" value="drkonv" />
+            <env name="bonecp.password" value="viite" />
+            <env name="viiteTierekisteri.password" value="trrestviite" />
+            <env name="importOnlyCurrent" value="false" />
+            <env name="eventBus" value="fi.liikennevirasto.digiroad2.DigiroadEventBus" />
+            <env name="bonecp.jdbcUrl" value="jdbc:postgresql://localhost:5432/viite" />
+            <env name="municipalityProvider" value="fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider" />
+            <env name="conversion.bonecp.username" value="drkonv" />
+            <env name="authentication.basic.password" value="kalpa" />
+            <env name="authenticationTestMode" value="true" />
+            <env name="authentication.admin.basic.password" value="admin" />
+            <env name="authentication.serviceRoad.basic.username" value="livi" />
+            <env name="vvhRestApiEndPoint" value="http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/" />
+            <env name="http.nonProxyHosts" value="127.0.0.1" />
+            <env name="authentication.basic.username" value="kalpa" />
+            <env name="authentication.municipality.basic.username" value="municipality" />
+            <env name="bonecp.username" value="viite" />
+            <env name="authentication.admin.basic.username" value="admin" />
+            <env name="tierekisteri.enabled" value="false" />
+            <env name="env" value="Local" />
+            <env name="authenticationTestUser" value="silari" />
+            <env name="authentication.serviceRoad.basic.password" value="livi" />
+            <env name="http.proxySet" value="false" />
+            <env name="conversion.bonecp.jdbcUrl" value="jdbc:postgresql://localhost:5432/drkonv" />
+            <env name="viiteTierekisteri.username" value="trrestviite" />
+            <env name="vvhRoadlink.frozen" value="true" />
+        </envs>
+        <method />
+    </configuration>
+</component>
