@@ -603,7 +603,7 @@ Viite myös päivittää nykyisten solmujen solmukohtia ja nykyisten liittymien 
 9.1.2 Solmut ja liittymät 
 --------------------------
  
-Käyttäjä liittää solmukohta- ja liittymäaihiot solmuun. Tarvittaessa käyttäjä luo liittämisen yhetydessä uuden solmun. Jos jollakin solmun tieosalla ei ole solmukohtaa, järjestelmä laskee solmuun liitettyjen liittymien perusteella näille solmun tieosille solmukohdat.
+Käyttäjä liittää solmukohta- ja liittymäaihiot solmuun. Tarvittaessa käyttäjä luo liittämisen yhteydessä uuden solmun. Jos jollakin solmun tieosalla ei ole solmukohtaa, järjestelmä laskee solmuun liitettyjen liittymien perusteella näille solmun tieosille solmukohdat.
 
 Käyttäjä voi liittää samaan solmuun useita saman tieosan solmukohtia. Käyttäjä voi myös irrottaa solmukohdan tai liittymän solmusta. Liittymien perusteella laskettuja solmukohtia käyttäjä ei voi irrottaa solmusta, ainoastaan tien tai tieosan alku-tai loppupisteen sekä tietyypin vaihtumiskohdan solmukohdat voi irrottaa solmusta. Irrotetettu solmukohta tai liittymä muuttuu takaisin aihioksi, jonka käyttäjä voi liittää toiseen solmuun.
 
@@ -747,7 +747,7 @@ Uusi solmu luodaan aihioiden käsittelyn yhteydessä. Käyttäjä valitsee liitt
 
 _Kuva 9.10: Aihion liittäminen uuteen solmuun_ 
 
-Tämän jälkeen formille avautuu solmun tiedot. Käyttäjä antaa solmulle nimen, solmutyypin sekä alkupäivämäärän (4). Liittymäaihiolle käyttäjä antaa liittymänumeron (5). Tallenna-painike (6) aktivoituu, kun kaikki pakolliset tiedot on annettu. Tallennuksen jälkeen Viite luo uuden solmun ja formi palautuu Solmut ja liittymät -näytön alkutilaan.
+Tämän jälkeen formille avautuu solmun tiedot. Käyttäjä antaa solmulle nimen, solmutyypin sekä alkupäivämäärän (4). Solmukohta-aihion symboli poistuu karttanäkymästä heti, kun solmun tietoja päivitetään. Liittymäaihiolle käyttäjä antaa liittymänumeron (5), jolloin liittymäaihiosymboli muuttuu liittymäsymboliksi karttanäkymässä. Karttanäkymä päivittyy automaattisesti vastaamaan formin tilannetta aina kun formin tietoja muutetaan, mutta tiedot tallentuvat vasta tallennuksen yhteydessä. Tallenna-painike (6) aktivoituu, kun kaikki pakolliset tiedot on annettu. Tallennuksen jälkeen Viite luo uuden solmun ja formi palautuu Solmut ja liittymät -näytön alkutilaan.
 
 #### Aihioiden liittäminen nykyiseen solmuun
 
@@ -760,9 +760,9 @@ _Kuva 9.11: Aihion liittäminen nykyiseen solmuun_
 
 Painikkeen painamisen jälkeen käyttäjä valitsee kartalta solmun (9) ja klikkaa sitä hiirellä. Solmun tiedot avautuvat formille. Aihioiden tieosoitteet näytetään formilla keltaisina riveinä.
 
-Käyttäjä antaa liittymäaihiolle liittymänumeron (10). Tarvittaessa käyttäjä voi muokata solmun nimeä ja solmutyyppiä (11). Jos aihion liittämisen jälkeen käyttäjä muuttaa solmutyyppiä, tulee käyttäjän asettaa solmulle uusi alkupäivämäärä.
+Käyttäjä antaa liittymäaihiolle liittymänumeron (10), jolloin liittymäaihiosymboli muuttuu liittymäsymboliksi karttanäkymässä. Tarvittaessa käyttäjä voi muokata solmun nimeä ja solmutyyppiä (11). Jos aihion liittämisen jälkeen käyttäjä muuttaa solmutyyppiä, tulee käyttäjän asettaa solmulle uusi alkupäivämäärä.
 
-Tallenna-painike aktivoituu, kun kaikki pakolliset tiedot on annettu. Tallennuksen jälkeen formi palautuu Solmut ja liittymät -näytön alkutilaan. 
+Tallenna-painike aktivoituu, kun kaikki pakolliset tiedot on annettu. Tallennuksen jälkeen solmukohta-aihio poistuu ja formi palautuu Solmut ja liittymät -näytön alkutilaan. 
 
 9.7 Solmun sijainnin muokkaaminen
 --------------------------
