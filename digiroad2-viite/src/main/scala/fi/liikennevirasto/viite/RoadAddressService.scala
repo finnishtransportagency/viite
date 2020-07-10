@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
@@ -29,9 +29,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
                          junctionPointDAO: JunctionPointDAO, roadwayAddressMapper: RoadwayAddressMapper,
                          eventbus: DigiroadEventBus, frozenVVH: Boolean) {
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -406,7 +406,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @return Returns road addresses filtered given section
     */
   def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long): Seq[RoadAddress] = {
-    if (OracleDatabase.isWithinSession) {
+    if (PostGISDatabase.isWithinSession) {
       val roadwayAddresses = roadwayDAO.fetchAllBySection(roadNumber, roadPartNumber)
       roadwayAddressMapper.getRoadAddressesByRoadway(roadwayAddresses)
     } else {

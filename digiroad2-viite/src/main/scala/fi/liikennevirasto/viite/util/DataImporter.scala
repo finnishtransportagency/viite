@@ -9,7 +9,7 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.SequenceResetterDAO
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
@@ -46,14 +46,13 @@ object DataImporter {
 
 class DataImporter {
   val logger = LoggerFactory.getLogger(getClass)
-  lazy val ds: DataSource = initDataSource
 
   private lazy val geometryFrozen: Boolean = ViiteProperties.vvhRoadlinkFrozen
 
   val Modifier = "dr1conversion"
 
-  def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def withLinkIdChunks(f: (Long, Long) => Unit): Unit = {
     val chunks = withDynSession{ fetchChunkLinkIds()}
     chunks.par.foreach { p => f(p._1, p._2) }
@@ -417,12 +416,6 @@ class DataImporter {
 
   def updateCalibrationPointTypesQuery() = {
     SqlScriptRunner.runScriptInClasspath("/update_calibration_point_types.sql")
-  }
-
-  private[this] def initDataSource: DataSource = {
-    Class.forName("oracle.jdbc.driver.OracleDriver")
-    val cfg = new BoneCPConfig(ViiteProperties.bonecpProperties)
-    new BoneCPDataSource(cfg)
   }
 
 }

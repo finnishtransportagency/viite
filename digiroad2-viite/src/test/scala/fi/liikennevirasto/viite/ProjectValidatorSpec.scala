@@ -4,7 +4,7 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
@@ -28,10 +28,10 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 class ProjectValidatorSpec extends FunSuite with Matchers {
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       val t = f
       dynamicSession.rollback()
       t
@@ -2331,7 +2331,7 @@ Left|      |Right
       //Should return MAJOR DISCONTINUITY to both Project Links, part number = 1
       val discontinuousGeom = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
       val geometry = Seq(Point(40.0, 50.0), Point(60.0, 70.0))
-      val lineString: String = OracleDatabase.createJGeometry(geometry)
+      val lineString: String = PostGISDatabase.createJGeometry(geometry)
       val geometryQuery = s"ST_GeomFromText('${lineString}', 3067)"
       sqlu"""UPDATE PROJECT_LINK Set GEOMETRY = #$geometryQuery Where PROJECT_ID = ${project.id} AND ROAD_PART_NUMBER = 2""".execute
       val errorsAtEnd = projectValidator.checkRoadContinuityCodes(projectWithReservations, projectLinks.map(pl => {

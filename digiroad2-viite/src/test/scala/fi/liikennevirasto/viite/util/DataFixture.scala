@@ -4,8 +4,8 @@ import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.ds
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
@@ -80,7 +80,7 @@ object DataFixture {
     val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
     val username = ViiteProperties.bonecpUsername
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen)
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val checker = new RoadNetworkChecker(roadLinkService)
       checker.checkRoadNetwork(username)
     }
@@ -90,8 +90,8 @@ object DataFixture {
 
   def importComplementaryRoadAddress(): Unit = {
     println(s"\nCommencing complementary road address import at time: ${DateTime.now()}")
-    OracleDatabase.withDynTransaction {
-      OracleDatabase.setSessionLanguage()
+    PostGISDatabase.withDynTransaction {
+      PostGISDatabase.setSessionLanguage()
     }
     SqlScriptRunner.runViiteScripts(List(
       "insert_complementary_geometry_data.sql"
@@ -106,8 +106,8 @@ object DataFixture {
 
   def importRoadAddressChangeTestData(): Unit = {
     println(s"\nCommencing road address change test data import at time: ${DateTime.now()}")
-    OracleDatabase.withDynTransaction {
-      OracleDatabase.setSessionLanguage()
+    PostGISDatabase.withDynTransaction {
+      PostGISDatabase.setSessionLanguage()
     }
     SqlScriptRunner.runViiteScripts(List(
       "insert_road_address_change_test_data.sql"
@@ -118,7 +118,7 @@ object DataFixture {
 
   private def testIntegrationAPIWithAllMunicipalities(): Unit = {
     println(s"\nStarting fetch for integration API for all municipalities")
-    val municipalities = OracleDatabase.withDynTransaction {
+    val municipalities = PostGISDatabase.withDynTransaction {
       Queries.getMunicipalities
     }
     val failedMunicipalities = municipalities.map(
@@ -155,14 +155,14 @@ object DataFixture {
     val linearLocationDAO = new LinearLocationDAO
 
     val linearLocations =
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         linearLocationDAO.fetchCurrentLinearLocations
       }
 
     println("Total linearLocations " + linearLocations.size)
 
     //get All municipalities and group them for ely
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       MunicipalityDAO.getMunicipalityMapping
     }.groupBy(_._2).foreach {
       case (ely, municipalityEly) =>

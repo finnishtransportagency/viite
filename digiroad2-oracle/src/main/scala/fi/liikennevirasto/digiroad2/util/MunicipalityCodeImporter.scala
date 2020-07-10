@@ -1,9 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import javax.sql.DataSource
-
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -11,10 +8,9 @@ import slick.jdbc.StaticQuery.interpolation
 import scala.io.Source
 
 class MunicipalityCodeImporter {
-  val ds: DataSource = initDataSource
 
   def importMunicipalityCodes() = {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       try {
         val src = Source.fromInputStream(getClass.getResourceAsStream("/kunnat_ja_elyt_2014.csv"))
         src.getLines().toList.drop(1).map(row => {
@@ -36,17 +32,11 @@ class MunicipalityCodeImporter {
         """.execute
         })
       } catch {
-        case  npe: NullPointerException => {
+        case npe: NullPointerException => {
           println("//kunnat_ja_elyt_2014.csv was not found, skipping.")
         }
       }
     }
-  }
-
-  private[this] def initDataSource: DataSource = {
-    Class.forName("oracle.jdbc.driver.OracleDriver")
-    val cfg = new BoneCPConfig(ViiteProperties.bonecpProperties)
-    new BoneCPDataSource(cfg)
   }
 
 }

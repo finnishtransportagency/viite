@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, Tr
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
@@ -77,9 +77,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                      roadwayAddressMapper: RoadwayAddressMapper,
                      eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   private val logger = LoggerFactory.getLogger(getClass)
   val projectValidator = new ProjectValidator

@@ -55,13 +55,13 @@ object Digiroad2Build extends Build {
   )
   )
 
-  val Digiroad2OracleName = "digiroad2-oracle"
-  lazy val oracleJar = Project (
-    Digiroad2OracleName,
-    file(Digiroad2OracleName),
+  val Digiroad2PostGISName = "digiroad2-oracle"
+  lazy val postgisJar = Project (
+    Digiroad2PostGISName,
+    file(Digiroad2PostGISName),
     settings = Defaults.defaultSettings ++ Seq(
       organization := Organization,
-      name := Digiroad2OracleName,
+      name := Digiroad2PostGISName,
       version := Version,
       scalaVersion := ScalaVersion,
       //      resolvers ++= Seq(Classpaths.typesafeReleases,
@@ -124,7 +124,7 @@ object Digiroad2Build extends Build {
         "com.github.nscala-time" %% "nscala-time" % "2.22.0"
       )
     )
-  ) dependsOn(geoJar, oracleJar % "compile->compile;test->test")
+  ) dependsOn(geoJar, postgisJar % "compile->compile;test->test")
 
   val Digiroad2ApiName = "digiroad2-api-common"
   lazy val commonApiJar = Project (
@@ -158,7 +158,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts Artifact("javax.servlet", "jar", "jar")
       )
     )
-  ) dependsOn(geoJar, oracleJar, viiteJar)
+  ) dependsOn(geoJar, postgisJar, viiteJar)
 
   val Digiroad2ViiteApiName = "digiroad2-api-viite"
   lazy val viiteApiJar = Project (
@@ -192,7 +192,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-swagger"  % ScalatraVersion
       )
     )
-  ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar % "compile->compile;test->test")
+  ) dependsOn(geoJar, postgisJar, viiteJar, commonApiJar % "compile->compile;test->test")
 
   lazy val warProject = Project (
     Digiroad2Name,
@@ -231,8 +231,8 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       )
     )
-  ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar) aggregate
-    (geoJar, oracleJar, viiteJar, commonApiJar, viiteApiJar)
+  ) dependsOn(geoJar, postgisJar, viiteJar, commonApiJar, viiteApiJar) aggregate
+    (geoJar, postgisJar, viiteJar, commonApiJar, viiteApiJar)
 
   lazy val gatling = project.in(file("digiroad2-gatling"))
     .enablePlugins(GatlingPlugin)
