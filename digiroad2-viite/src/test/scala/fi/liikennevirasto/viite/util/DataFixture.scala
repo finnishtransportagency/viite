@@ -1,11 +1,14 @@
 package fi.liikennevirasto.viite.util
 
+import java.util.Properties
+
 import com.googlecode.flyway.core.Flyway
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.ds
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.{ds, setSessionLanguage, transactionOpen}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
@@ -13,13 +16,13 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.DateTime
+import slick.driver.JdbcDriver.backend.Database
 
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.immutable.ParSet
 import scala.language.postfixOps
 
 object DataFixture {
-  val TestAssetId = 300000
 
   val dataImporter = new DataImporter
   lazy val vvhClient: VVHClient = {
@@ -216,11 +219,13 @@ object DataFixture {
   }
 
   def tearDown() {
-    SqlScriptRunner.executeStatement("DROP extension IF EXISTS postgis CASCADE;")
+    //SqlScriptRunner.executeStatement("DROP extension IF EXISTS postgis CASCADE;")
     flyway.clean()
   }
 
   def setUpTest() {
+    CreateViiteUserForDevelopment
+
     migrateAll()
     SqlScriptRunner.runScripts(List(
       "insert_users.sql",
@@ -233,6 +238,30 @@ object DataFixture {
       "insert_project_link_data.sql",
       "insert_road_names.sql"
     ))
+  }
+
+  lazy val postgresDs: BoneCPDataSource = {
+    Class.forName("org.postgresql.Driver")
+    val props = new Properties()
+    props.setProperty("bonecp.jdbcUrl", "jdbc:postgresql://localhost:5432/postgres")
+    props.setProperty("bonecp.username", "postgres")
+    props.setProperty("bonecp.password", "postgres")
+
+    val cfg = new BoneCPConfig(props)
+    val postgresDs = new BoneCPDataSource(cfg)
+    postgresDs
+  }
+
+  private def CreateViiteUserForDevelopment = {
+    Database.forDataSource(postgresDs).withDynTransaction {
+      setSessionLanguage()
+      SqlScriptRunner.executeStatement(s"""
+      DROP ROLE IF EXISTS viite;
+      CREATE ROLE ${ViiteProperties.bonecpUsername} WITH LOGIN PASSWORD '${ViiteProperties.bonecpPassword}';
+      GRANT viite TO postgres;
+      CREATE SCHEMA IF NOT EXISTS AUTHORIZATION ${ViiteProperties.bonecpJdbcUrl.split('/').last};
+      """)
+    }
   }
 
   def flywayInit() {
@@ -252,7 +281,7 @@ object DataFixture {
     import scala.util.control.Breaks._
     val operation = args.headOption
     val username = ViiteProperties.bonecpUsername
-    if ((!username.startsWith("dr2dev") && !username.equals("postgres")) && !operation.getOrElse("").equals("test_integration_api_all_municipalities")) {
+    if (!"Local".equalsIgnoreCase(ViiteProperties.env) && !operation.getOrElse("").equals("test_integration_api_all_municipalities")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
       println("*************************************************************************************")

@@ -35,8 +35,6 @@
                 { "name": "authenticationTestMode", "value": "false" },
                 { "name": "bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1g916wf1lodch.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/viite_dev" },
                 { "name": "bonecp.username", "value": "viite_dev" },
-                { "name": "import.bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1g916wf1lodch.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv" },
-                { "name": "import.bonecp.username", "value": "drkonv" },
                 { "name": "conversion.bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1g916wf1lodch.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv" },
                 { "name": "conversion.bonecp.username", "value": "drkonv" },
                 { "name": "authentication.basic.username", "value": "kalpa" },
@@ -51,10 +49,6 @@
                 {
                     "name": "bonecp.password",
                     "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/bonecp.password"
-                },
-                {
-                    "name": "import.bonecp.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/import.bonecp.password"
                 },
                 {
                     "name": "conversion.bonecp.password",

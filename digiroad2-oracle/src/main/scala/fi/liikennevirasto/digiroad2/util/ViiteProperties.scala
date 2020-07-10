@@ -41,8 +41,8 @@ class ViiteProperties {
   lazy val authenticationMunicipalityBasicPassword: String = scala.util.Properties.envOrElse("authentication.municipality.basic.password", null)
   lazy val viitetierekisteriUsername: String = scala.util.Properties.envOrElse("viiteTierekisteri.username", null)
   lazy val viitetierekisteriPassword: String = scala.util.Properties.envOrElse("viiteTierekisteri.password", null)
-  lazy val latestDeploy: String = revisionProperties.getProperty("digiroad2.latestDeploy")
-  lazy val env: String = System.getProperty("env")
+  lazy val latestDeploy: String = revisionProperties.getProperty("latestDeploy")
+  lazy val env: String = scala.util.Properties.envOrElse("env", "Unknown")
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
