@@ -1,8 +1,9 @@
 package fi.liikennevirasto.viite
 
-import org.apache.http.{HttpStatus, NameValuePair}
+import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
+import org.apache.http.client.utils.URIBuilder
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.json4s.{DefaultFormats, StreamInput}
@@ -32,14 +33,16 @@ class ViiteVkmClient {
 
   def get(path: String, params: Map[String, String]): Either[Any, VKMError] = {
 
-    val url =
-      if(params.nonEmpty)
-        getRestEndPoint + path + "?"+params.map(p => if (p._2.nonEmpty) p._1 + "="+ p._2).mkString("&")
-      else
-        getRestEndPoint + path
+    val builder = new URIBuilder(getRestEndPoint + path)
+
+    params.foreach {
+      case (key, value) => if (value.nonEmpty) builder.addParameter(key, value)
+    }
+
+    val url = builder.build.toString
     val request = new HttpGet(url)
-    val host = new URL(getRestEndPoint).getHost
-    if (host == "localhost") {
+
+    if (builder.getHost == "localhost") {
       // allow ssh port forward for developing
       request.setHeader("Host", "testioag.vayla.fi")
     }
@@ -71,7 +74,7 @@ class ViiteVkmClient {
     val url = new URL(getRestEndPoint)
     if (url.getHost == "localhost") {
       // allow ssh port forward for developing
-      post.setHeader("Host", "testijulkinen.vayla.fi")
+      post.setHeader("Host", "oag.liikennevirasto.fi")
     }
     var response: CloseableHttpResponse = null
     try {
