@@ -36,7 +36,7 @@ class ViiteVkmClient {
     val builder = new URIBuilder(getRestEndPoint + path)
 
     params.foreach {
-      case (key, value) => if (value.nonEmpty) builder.addParameter(key, value)
+      case (param, value) => if (value.nonEmpty) builder.addParameter(param, value)
     }
 
     val url = builder.build.toString
