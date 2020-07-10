@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
@@ -107,10 +107,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     reset(mockRoadLinkService)
   }
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       val t = f
       dynamicSession.rollback()
       t

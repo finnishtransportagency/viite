@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.oracle
+package fi.liikennevirasto.digiroad2.postgis
 
 import java.sql.Date
 
@@ -14,8 +14,7 @@ import fi.liikennevirasto.digiroad2.Point
 import org.postgis.PGgeometry
 import org.postgresql.util.PGobject
 
-// TODO Rename to PostGisDatabase
-object OracleDatabase {
+object PostGISDatabase {
   lazy val ds: DataSource = initDataSource
 
   private val transactionOpen = new ThreadLocal[Boolean] {
@@ -28,7 +27,7 @@ object OracleDatabase {
     else {
       try {
         transactionOpen.set(true)
-        Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+        Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
           setSessionLanguage()
           f
         }
@@ -44,7 +43,7 @@ object OracleDatabase {
     } else {
       try {
         transactionOpen.set(true)
-        Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+        Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
           setSessionLanguage()
           f
         }
@@ -60,7 +59,7 @@ object OracleDatabase {
     else {
       try {
         transactionOpen.set(true)
-        Database.forDataSource(OracleDatabase.ds).withDynSession {
+        Database.forDataSource(PostGISDatabase.ds).withDynSession {
           setSessionLanguage()
           f
         }

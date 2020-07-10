@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.dao.PingDAO
 import org.scalatra.{InternalServerError, Ok, ScalatraServlet}
 import org.slf4j.LoggerFactory
@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 class PingApi extends ScalatraServlet {
   val logger = LoggerFactory.getLogger(getClass)
 
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   get("/") {
     withDynSession {

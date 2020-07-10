@@ -11,7 +11,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -20,12 +20,12 @@ import slick.jdbc.StaticQuery.{interpolation, _}
 
 class DataImporterSpec extends FunSuite with Matchers {
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       f
       dynamicSession.rollback()
     }

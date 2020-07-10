@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -20,10 +20,10 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     * @return The linear location with recalculated calibration points
     */
   private def recalculateHistoryCalibrationPoints(historyRoadwayAddress: Roadway, linearLocations: Seq[LinearLocation]): Seq[LinearLocation] = {
-    val currentRoadwayAddress = (if (OracleDatabase.isWithinSession) {
+    val currentRoadwayAddress = (if (PostGISDatabase.isWithinSession) {
       roadwayDAO.fetchByRoadwayNumber(historyRoadwayAddress.roadwayNumber)
     } else {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         roadwayDAO.fetchByRoadwayNumber(historyRoadwayAddress.roadwayNumber)
       }
     }).getOrElse(throw new NoSuchElementException(s"Could not find any current road address for roadway ${historyRoadwayAddress.roadwayNumber}"))

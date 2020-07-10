@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, Point}
 import org.mockito.Mockito._
@@ -45,7 +45,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val service = new TestService(mockVVHClient)
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByMunicipality(municipalityId)).thenReturn(Seq(roadLink))
 
@@ -68,7 +68,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
     val service = new TestService(mockVVHClient)
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHComplementaryClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(roadLink)))
 
@@ -97,7 +97,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
     val service = new TestService(mockVVHClient)
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHComplementaryClient.fetchByMunicipalityAndRoadNumbersF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinksComp))
@@ -120,7 +120,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHHistoryClient = MockitoSugar.mock[VVHHistoryClient]
     val service = new TestService(mockVVHClient)
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
       when(mockVVHHistoryClient.fetchVVHRoadLinkByLinkIdsF(any[Set[Long]])).thenReturn(Future(Seq(firstRoadLink, secondRoadLink)))
       val serviceResult = service.getRoadLinksHistoryFromVVH(Set[Long](linkId))
@@ -149,7 +149,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val vvhRoadLink3 = VVHRoadlink(7, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned)
     val vvhRoadLink4 = VVHRoadlink(8, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
@@ -174,7 +174,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockVVHClient)
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Seq(changeInfo)).future)

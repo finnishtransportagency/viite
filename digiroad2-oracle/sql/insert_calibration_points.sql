@@ -1,7 +1,7 @@
 -- PostGIS conversions:
 --
 -- Id:
--- Search:  nextval('CALIBRATION_POINT_SEQ')
+-- Search:  CALIBRATION_POINT_SEQ.nextval
 -- Replace: nextval('CALIBRATION_POINT_SEQ')
 --
 Insert Into CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY) values (nextval('CALIBRATION_POINT_SEQ'), 1, 4388117, 0, 2, 'import');

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.{DateTime, DateTimeZone}
@@ -17,24 +17,24 @@ trait AddressLinkBuilder {
   val ComplementarySubType = 3
   val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
-  lazy val municipalityMapping: Map[Long, Long] = if (OracleDatabase.isWithinSession)
+  lazy val municipalityMapping: Map[Long, Long] = if (PostGISDatabase.isWithinSession)
     MunicipalityDAO.getMunicipalityMapping
   else
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       MunicipalityDAO.getMunicipalityMapping
     }
 
-  lazy val municipalityRoadMaintainerMapping: Map[Long, Long] = if (OracleDatabase.isWithinSession)
+  lazy val municipalityRoadMaintainerMapping: Map[Long, Long] = if (PostGISDatabase.isWithinSession)
     MunicipalityDAO.getMunicipalityRoadMaintainers
   else
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       MunicipalityDAO.getMunicipalityRoadMaintainers
     }
 
-  lazy val municipalityNamesMapping: Map[Long, String] = if (OracleDatabase.isWithinSession)
+  lazy val municipalityNamesMapping: Map[Long, String] = if (PostGISDatabase.isWithinSession)
     MunicipalityDAO.getMunicipalityNames
   else
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       MunicipalityDAO.getMunicipalityNames
     }
 

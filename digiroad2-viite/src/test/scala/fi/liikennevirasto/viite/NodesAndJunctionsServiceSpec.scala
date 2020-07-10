@@ -4,7 +4,7 @@ import java.sql.Date
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
@@ -78,13 +78,13 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
 
   def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       f
       dynamicSession.rollback()
     }
   }
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
     0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)

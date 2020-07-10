@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import java.net.ConnectException
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
@@ -68,9 +68,9 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
   after {
     reset(mockRoadLinkService)
   }
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       val t = f
       dynamicSession.rollback()
       t

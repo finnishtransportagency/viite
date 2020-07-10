@@ -4,7 +4,7 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, asset}
@@ -56,7 +56,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   }
 
   def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       val t = f
       dynamicSession.rollback()
       t

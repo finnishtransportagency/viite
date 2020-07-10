@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.ComplementaryFilterDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.{VVHSerializer, ViiteProperties}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
@@ -38,9 +38,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   val complementaryFilterDAO = new ComplementaryFilterDAO
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   implicit val getDateTime = new GetResult[DateTime] {
     def apply(r: PositionedResult): DateTime = {

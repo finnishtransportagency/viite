@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.dao.RoadNetworkDAO
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -17,7 +17,7 @@ class RoadNetworkServiceSpec extends FunSuite with Matchers{
   }
   val roadNetworkDAO = new RoadNetworkDAO
   def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       val t = f
       dynamicSession.rollback()
       t

@@ -7,7 +7,7 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.NewIdValue
 import org.joda.time.DateTime
@@ -283,7 +283,7 @@ class NodeDAO extends BaseDAO {
         nodeNumbers += nodeNumber
         ps.setLong(1, node.id)
         ps.setLong(2, nodeNumber)
-        ps.setString(3, OracleDatabase.createRoundedPointGeometry(node.coordinates))
+        ps.setString(3, PostGISDatabase.createRoundedPointGeometry(node.coordinates))
         if (node.name.isDefined) {
           ps.setString(4, node.name.get)
         } else {
@@ -308,7 +308,7 @@ class NodeDAO extends BaseDAO {
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[Node] = {
     val extendedBoundingBoxRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(scalar = .15),
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(scalar = .15))
-    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingBoxRectangle, geometryColumn = "coordinates")
+    val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(extendedBoundingBoxRectangle, geometryColumn = "coordinates")
     val query = s"""
       SELECT ID, NODE_NUMBER, ST_X(COORDINATES), ST_Y(COORDINATES), NAME, TYPE, START_DATE, END_DATE, VALID_FROM, VALID_TO, CREATED_BY, CREATED_TIME, EDITOR, PUBLISHED_TIME, REGISTRATION_DATE
       FROM NODE N

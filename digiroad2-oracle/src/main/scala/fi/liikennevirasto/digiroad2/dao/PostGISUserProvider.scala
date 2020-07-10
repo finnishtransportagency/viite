@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Point
@@ -11,7 +11,7 @@ import org.json4s.jackson.Serialization.{read, write}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-class OracleUserProvider extends UserProvider {
+class PostGISUserProvider extends UserProvider {
   implicit val formats = Serialization.formats(NoTypeHints)
   implicit val getUser = new GetResult[User] {
     def apply(r: PositionedResult) = {
@@ -25,7 +25,7 @@ class OracleUserProvider extends UserProvider {
   }
 
   def createUser(username: String, config: Configuration) = {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       sqlu"""
         insert into service_user (id, username, configuration)
         values (nextval('service_user_seq'), ${username.toLowerCase}, ${write(config)})
@@ -35,20 +35,20 @@ class OracleUserProvider extends UserProvider {
 
   def getUser(username: String): Option[User] = {
     if (username == null) return None
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       sql"""select id, username, configuration from service_user where lower(username) = ${username.toLowerCase}""".as[User].firstOption
     }
   }
 
   def saveUser(user: User): User = {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       sqlu"""update service_user set configuration = ${write(user.configuration)} where lower(username) = ${user.username.toLowerCase}""".execute
       user
     }
   }
 
   def deleteUser(username: String) = {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       sqlu"""delete from service_user where lower(username) = ${username.toLowerCase}""".execute
     }
   }

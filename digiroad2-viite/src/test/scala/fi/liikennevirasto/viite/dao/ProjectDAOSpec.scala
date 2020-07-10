@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite._
@@ -34,7 +34,7 @@ class ProjectDAOSpec extends FunSuite with Matchers {
   def runWithRollback(f: => Unit): Unit = {
     // Prevent deadlocks in DB because we create and delete links in tests and don't handle the project ids properly
     // TODO: create projects with unique ids so we don't get into transaction deadlocks in tests
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       f
       dynamicSession.rollback()
     }

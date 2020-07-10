@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.HistoryLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, FeatureClass, VVHHistoryRoadLink}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous

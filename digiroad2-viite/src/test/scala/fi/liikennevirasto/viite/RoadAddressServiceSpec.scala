@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
@@ -70,7 +70,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     override def withDynTransaction[T](f: => T): T = f
   }
   def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       val t = f
       dynamicSession.rollback()
       t
@@ -556,7 +556,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //    val mockRoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
 //    val localRoadAddressService = new RoadAddressService(localMockRoadLinkService, new RoadAddressDAO, mockRoadwayAddressMapper,localMockEventBus)
 //    val boundingRectangle = BoundingRectangle(Point(533341.472,6988382.846), Point(533333.28,6988419.385))
-//    val filter = OracleDatabase.boundingBoxFilter(boundingRectangle, "geometry")
+//    val filter = PostGISDatabase.boundingBoxFilter(boundingRectangle, "geometry")
 //    runWithRollback {
 //      val modificationDate = "1455274504000l"
 //      val modificationUser = "testUser"

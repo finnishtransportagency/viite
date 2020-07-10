@@ -19,8 +19,8 @@
             ],
             "cpu": 0,
             "environment": [
-                { "name": "userProvider", "value": "fi.liikennevirasto.digiroad2.dao.OracleUserProvider" },
-                { "name": "municipalityProvider", "value": "fi.liikennevirasto.digiroad2.dao.OracleMunicipalityProvider" },
+                { "name": "userProvider", "value": "fi.liikennevirasto.digiroad2.dao.PostGISUserProvider" },
+                { "name": "municipalityProvider", "value": "fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider" },
                 { "name": "eventBus", "value": "fi.liikennevirasto.digiroad2.DigiroadEventBus" },
                 { "name": "vvhServiceHost", "value": "haproxy.vayla.fi" },
                 { "name": "vvhRestApiEndPoint", "value": "https://haproxy.vayla.fi:2027/vvhdata/" },

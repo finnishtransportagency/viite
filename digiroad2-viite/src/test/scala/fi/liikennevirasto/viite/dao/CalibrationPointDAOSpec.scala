@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -9,7 +9,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 class CalibrationPointDAOSpec extends FunSuite with Matchers {
 
   def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       f
       dynamicSession.rollback()
     }

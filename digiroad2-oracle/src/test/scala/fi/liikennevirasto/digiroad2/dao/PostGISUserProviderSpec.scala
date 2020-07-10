@@ -4,13 +4,13 @@ import fi.liikennevirasto.digiroad2.user.Configuration
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner._
 import org.scalatest.{FunSuite, Matchers}
 
-class OracleUserProviderSpec extends FunSuite with Matchers {
-  val TestUserName = "Oracleuserprovidertest"
+class PostGISUserProviderSpec extends FunSuite with Matchers {
+  val TestUserName = "userprovidertest"
   val north = 1000
 
-  val provider = new OracleUserProvider
+  val provider = new PostGISUserProvider
 
-  test("Test OracleUserProvider.getUser() and OracleUserProvider.createUser() Whe trying to find a specific user name and creating a user for that user name Then getUser() should return None before creating and the user after creating it.") {
+  test("Test PostGISUserProvider.getUser() and PostGISUserProvider.createUser() Whe trying to find a specific user name and creating a user for that user name Then getUser() should return None before creating and the user after creating it.") {
     executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'");
     provider.getUser(TestUserName) shouldBe (None)
     provider.createUser(TestUserName, Configuration(north = Some(1000)))
