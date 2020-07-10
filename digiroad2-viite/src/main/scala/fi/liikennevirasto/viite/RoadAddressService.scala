@@ -265,11 +265,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
         val address = searchString.getOrElse("").split(", ")
         val municipalityId = withDynSession {
-          if (address.size > 1) {
-            MunicipalityDAO.getMunicipalityIdByName(address.last.trim).headOption.map(_._1)
-          } else {
-            None
-          }
+          if (address.size > 1) MunicipalityDAO.getMunicipalityIdByName(address.last.trim).headOption.map(_._1) else None
         }
         val (streetName, streetNumber) = address.head.split(" ").partition(_.matches(("\\D+")))
         searchResult = viiteVkmClient.get("/viitekehysmuunnin/muunna", Map(("kuntakoodi", municipalityId.getOrElse("").toString), ("katunimi", streetName.mkString("%20")), ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {
@@ -288,12 +284,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val letterRegex = """([A-Za-zÀ-ÿ])""".r
     val letters = letterRegex.findFirstIn(searchString)
 
-    val searchType =
-      if (letters.isEmpty) {
-        "road"
-      } else {
-        "street"
-      }
+    val searchType = if (letters.isEmpty) "road" else "street"
     Map((searchType, nums))
   }
 
