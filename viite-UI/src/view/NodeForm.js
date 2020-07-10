@@ -409,8 +409,14 @@
     };
 
     var closeNode = function (cancel) {
+      // eventbus.off('junction:setCustomValidity');
+      // eventbus.off('junction:validate');
+      //eventbus.off('change:node');
+      //eventbus.off('change:nodeName');
+      eventbus.off('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:validate junction:setCustomValidity');
+
       selectedNodesAndJunctions.closeNode(cancel);
-      eventbus.off('change:nodeName, change:nodeTypeDropdown, change:nodeStartDate');
+      // eventbus.off('change:nodeName, change:nodeTypeDropdown, change:nodeStartDate');
     };
 
     var bindEvents = function () {
@@ -418,6 +424,10 @@
 
       rootElement.on('change', '#nodeName, #nodeTypeDropdown, #nodeStartDate', function (event) {
         eventbus.trigger(event.type + ':' + event.target.id, $(this).val());
+      });
+
+      rootElement.on('change', '[id^=junction-number-textbox-]', function () {
+        selectedNodesAndJunctions.setJunctionNumber(parseInt($(this).attr('junctionId')), parseInt(this.value));
       });
 
       var buildMessage = function (junction, nodePoints) {
@@ -658,9 +668,6 @@
           });
 
           $('[id^=junction-number-textbox-]').on('input', function () { $(this).change(); });
-          rootElement.on('change', '[id^=junction-number-textbox-]', function () {
-            selectedNodesAndJunctions.setJunctionNumber(parseInt($(this).attr('junctionId')), parseInt(this.value));
-          });
 
           eventbus.on('junction:validate', function () {
             selectedNodesAndJunctions.validateJunctionNumbers();

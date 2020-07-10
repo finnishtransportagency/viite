@@ -569,7 +569,6 @@
       } else if (layer === 'node') {
         setGeneralOpacity(1);
         addInteractions();
-        showLayer();
         eventbus.trigger('nodeLayer:fetch');
       }
     });
@@ -613,6 +612,7 @@
     };
 
     this.layerStarted = function (eventListener) {
+      console.log("layer started");
       eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
         if(applicationModel.getSelectedLayer() === 'node') {
           redraw();
