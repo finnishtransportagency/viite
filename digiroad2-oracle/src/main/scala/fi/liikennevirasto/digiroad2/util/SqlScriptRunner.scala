@@ -57,4 +57,10 @@ object SqlScriptRunner {
   }
 
   def executeStatement(statement: String) = executeStatements(List(statement))
+
+  def executeStatements(sqls: String): Unit = {
+    val statements = sqls.split(";")
+    executeStatements(statements)
+  }
+
 }

@@ -6,7 +6,7 @@ Setting up the local dev environment
 
 Source Code
 -----------
-Clone "viite"-repository from Github
+Clone `viite`-repository from Github
 
 ```
 git clone https://github.com/finnishtransportagency/viite.git
@@ -30,13 +30,15 @@ npm install -g grunt-cli
 
 Database
 --------
-Install PostGIS by [downloading and installing it](https://postgis.net/install/) or
+Install PostGIS by [downloading and installing it from here](https://postgis.net/install/), or
 by using Docker Compose:
 ```
 cd aws/local-dev/postgis
 docker-compose up
 ```
-Docker Compose installs and starts the PostGIS database server with the needed database and user.
+
+Docker Compose installs and starts the PostGIS database server with the `viite` database and the `postgres` admin user.
+
 - Username: viite
 - Password: viite
 - Database: viite
@@ -46,7 +48,7 @@ Required Integrations
 Viite needs to get the links, the background maps and the coordinates for addresses
 from external systems. For these connections to work, open Väylä VPN and
 open SSH-tunnel with the needed port forwardings to a Väylä server.
-- 9180: Viite running in dev/devtest environment
+- 9180: Viite running in dev environment
 - 8997: OAG
 
 Idea Run Configurations
@@ -106,24 +108,7 @@ UI will be available in this address: <http://localhost:9003/>.
 
 Initializing the database
 =========================
-
-
-Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
-======================================================
-
-Palvelun käyttäjien tietoja voi päivittää ja uusia käyttäjiä voi lisätä CSV - tiedostosta, jossa on määritelty uusien ja päivitettävien käyttäjien käyttäjänimet sekä kuntatunnukset joihin näillä käyttäjillä tulisi olla oikeudet.
-
-Alla esimerkki CSV-tiedostosta:
-```
-kuntakäyttäjä; ;105, 258, 248, 245;
-olemassaolevatunnus; ;410, 411, 412, 413;
-elykäyttäjä;0,1,2,3,4,5,6,7,8,9;
-```
-
-Käyttäjiä voi päivittää ja lisätä käyttäen `import-users-from-csv.sh` skriptiä:
-```
-./import-users-from-csv.sh <digiroad2-palvelin:portti> <ylläpitäjän-tunnus> <polku-csv-tiedostoon>
-```
+TODO
 
 [Käyttöönotto ja version päivitys](Deployment.md)
 =================================================

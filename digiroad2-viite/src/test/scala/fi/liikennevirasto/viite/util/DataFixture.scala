@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.{ds, setSessionLanguage, transactionOpen}
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.{ds, setSessionLanguage}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
@@ -17,6 +17,8 @@ import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.immutable.ParSet
@@ -140,7 +142,7 @@ object DataFixture {
         catch {
           case e: Exception =>
             val message = s"\n*** ERROR Failed to get road addresses for municipality $municipalityCode! ***"
-            println(s"\n" + message + s"\n"+ e.printStackTrace())
+            println(s"\n" + message + s"\n" + e.printStackTrace())
             municipalityCode
         }
     ).filterNot(_ == None)
@@ -179,9 +181,9 @@ object DataFixture {
         municipalities.foreach { municipality =>
           println("Start processing municipality %d".format(municipality))
 
-        //Obtain all RoadLink by municipality and change info from VVH
-        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
-        val allRoadLinks = roadLinks
+          //Obtain all RoadLink by municipality and change info from VVH
+          val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
+          val allRoadLinks = roadLinks
 
           println("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)
           println("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
@@ -207,10 +209,11 @@ object DataFixture {
     println("Road link geometry freeze is active; exiting without changes")
   }*/
 
-  def flyway: Flyway = {
+  val flyway: Flyway = {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
     flyway.setLocations("db.migration")
+    flyway.setInitVersion("-1")
     flyway
   }
 
@@ -219,13 +222,19 @@ object DataFixture {
   }
 
   def tearDown() {
-    //SqlScriptRunner.executeStatement("DROP extension IF EXISTS postgis CASCADE;")
-    flyway.clean()
+
+    // flyway.clean()
+    // This old version of Flyway tries to drop the postgis extension too, so we clean the database manually instead
+    SqlScriptRunner.runScriptInClasspath("/clear-db.sql")
+    try {
+      SqlScriptRunner.executeStatement("delete from schema_version where version_rank > 1")
+    } catch {
+      case e: Exception => println(s"Failed to reset schema_version table: ${e.getMessage}")
+    }
+
   }
 
   def setUpTest() {
-    CreateViiteUserForDevelopment
-
     migrateAll()
     SqlScriptRunner.runScripts(List(
       "insert_users.sql",
@@ -243,25 +252,12 @@ object DataFixture {
   lazy val postgresDs: BoneCPDataSource = {
     Class.forName("org.postgresql.Driver")
     val props = new Properties()
-    props.setProperty("bonecp.jdbcUrl", "jdbc:postgresql://localhost:5432/postgres")
+    props.setProperty("bonecp.jdbcUrl", ViiteProperties.bonecpJdbcUrl)
     props.setProperty("bonecp.username", "postgres")
     props.setProperty("bonecp.password", "postgres")
 
     val cfg = new BoneCPConfig(props)
-    val postgresDs = new BoneCPDataSource(cfg)
-    postgresDs
-  }
-
-  private def CreateViiteUserForDevelopment = {
-    Database.forDataSource(postgresDs).withDynTransaction {
-      setSessionLanguage()
-      SqlScriptRunner.executeStatement(s"""
-      DROP ROLE IF EXISTS viite;
-      CREATE ROLE ${ViiteProperties.bonecpUsername} WITH LOGIN PASSWORD '${ViiteProperties.bonecpPassword}';
-      GRANT viite TO postgres;
-      CREATE SCHEMA IF NOT EXISTS AUTHORIZATION ${ViiteProperties.bonecpJdbcUrl.split('/').last};
-      """)
-    }
+    new BoneCPDataSource(cfg)
   }
 
   def flywayInit() {
