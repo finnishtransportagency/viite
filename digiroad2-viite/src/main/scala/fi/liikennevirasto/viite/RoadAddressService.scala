@@ -252,19 +252,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         val roadPart = nums(1)
         val addressM = nums(2)
         val ralOption = getRoadAddressLink(roadNumberOrId, roadPart, addressM)
-        if (ralOption.isDefined) {
-          val ral = ralOption.get
+        ralOption.map { ral =>
           val points = ral.geometry
           val geometryMeasure = ((addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)) * (ral.endMValue - ral.startMValue)
           val mValue: Double = ral.sideCode match {
             case AgainstDigitizing => (ral.endMValue - geometryMeasure)
             case _ => geometryMeasure
           }
-          val point = GeometryUtils.calculatePointFromLinearReference(points,mValue)
+          val point = GeometryUtils.calculatePointFromLinearReference(points, mValue)
           resultSeq = collectResult("roadM", Seq(point), resultSeq)
-        } else {
-          logger.info(s"""Search found nothing with: $searchString""")
-        }
+        }.getOrElse(logger.info(s"""Search found nothing with: $searchString"""))
       } else if (nums.size == 2) {
         val roadPart = nums(1)
         searchResult = getRoadAddressWithRoadNumberParts(roadNumberOrId, Set(roadPart), Set(Track.Combined, Track.LeftSide, Track.RightSide)).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
@@ -280,16 +277,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       }
     } else if (searchType == "street") {
 
-        val address = searchString.getOrElse("").split(", ")
-        val municipalityId = withDynSession {
-          if (address.size > 1) MunicipalityDAO.getMunicipalityIdByName(address.last.trim).headOption.map(_._1) else None
-        }
-        val (streetName, streetNumber) = address.head.split(" ").partition(_.matches(("\\D+")))
-        searchResult = viiteVkmClient.get("/viitekehysmuunnin/muunna", Map(("kuntakoodi", municipalityId.getOrElse("").toString), ("katunimi", streetName.mkString("%20")), ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {
-          case Left(result) => Seq(result)
-          case Right(error) => throw new VkmException(error.toString)
-        }
-        resultSeq = collectResult("street", searchResult, resultSeq)
+      val address = searchString.getOrElse("").split(", ")
+      val municipalityId = withDynSession {
+        if (address.size > 1) MunicipalityDAO.getMunicipalityIdByName(address.last.trim).headOption.map(_._1) else None
+      }
+      val (streetName, streetNumber) = address.head.split(" ").partition(_.matches(("\\D+")))
+      searchResult = viiteVkmClient.get("/viitekehysmuunnin/muunna", Map(("kuntakoodi", municipalityId.getOrElse("").toString), ("katunimi", streetName.mkString("%20")), ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {
+        case Left(result) => Seq(result)
+        case Right(error) => throw new VkmException(error.toString)
+      }
+      resultSeq = collectResult("street", searchResult, resultSeq)
     }
     resultSeq
   }
