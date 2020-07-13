@@ -409,7 +409,7 @@
     };
 
     var closeNode = function (cancel) {
-      eventbus.off('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:validate junction:setCustomValidity');
+      eventbus.off('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:validate junction:setCustomValidity junction:detach nodePoint:detach junction:attach nodePoint:attach');
       selectedNodesAndJunctions.closeNode(cancel);
     };
 
