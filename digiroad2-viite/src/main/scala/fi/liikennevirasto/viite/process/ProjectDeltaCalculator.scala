@@ -2,10 +2,10 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
+import fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.liikennevirasto.{GeometryUtils, viite}
 import org.joda.time.DateTime
 
 /**
@@ -33,19 +33,17 @@ object ProjectDeltaCalculator {
     Delta(project.startDate, newCreations, terminations, unChanged, transferred, numbering)
   }
 
-  private def adjustIfSplit(pl: ProjectLink, ra: Option[RoadAddress], connectedLink: Option[ProjectLink] = None, referenceAddress: Option[RoadAddress] = None): Option[RoadAddress] = {
+  private def adjustIfSplit(pl: ProjectLink, ra: Option[RoadAddress], connectedLink: Option[ProjectLink] = None, referenceStartAddress: Option[RoadAddress] = None, referenceEndAddress: Option[RoadAddress] = None): Option[RoadAddress] = {
     // Test if this link was a split case: if not, return original address, otherwise return a copy that is adjusted
     if (!pl.isSplit) {
-      if(referenceAddress.nonEmpty) Some(ra.get.copy(startAddrMValue = referenceAddress.get.endAddrMValue))
+      if (referenceStartAddress.nonEmpty) Some(ra.get.copy(startAddrMValue = referenceStartAddress.get.endAddrMValue))
       else ra
     } else {
       ra.map(address => {
         pl.status match {
-          case Transfer | UnChanged | Terminated  =>
-            val geom = GeometryUtils.truncateGeometry2D(address.geometry, pl.startMValue, pl.endMValue)
-            val startAddress = if(referenceAddress.nonEmpty) referenceAddress.get.endAddrMValue else pl.startAddrMValue
-            address.copy(startAddrMValue = startAddress, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue,
-              endMValue = pl.endMValue, geometry = geom)
+          case Transfer | UnChanged | Terminated =>
+            address.copy(startAddrMValue = if (referenceStartAddress.nonEmpty) referenceStartAddress.get.endAddrMValue else address.startAddrMValue,
+              endAddrMValue = if (referenceEndAddress.nonEmpty) referenceEndAddress.get.endAddrMValue else address.endAddrMValue)
           case _ =>
             address
         }
@@ -54,12 +52,15 @@ object ProjectDeltaCalculator {
   }
 
   private def findChanges(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress], changedStatus: LinkStatus): Seq[(RoadAddress, ProjectLink)] = {
-    projectLinks.filter(_.status == changedStatus).toList.map{pl =>
-      val splitedLink = projectLinks.find(l => l.roadNumber == pl.roadNumber && l.roadPartNumber == pl.roadPartNumber && l.endAddrMValue == pl.startAddrMValue && l.isSplit)
-      val referenceOppositeAddress = if(splitedLink.nonEmpty) {
-        projectLinks.find(op => op.roadNumber == splitedLink.get.roadNumber && op.roadPartNumber == splitedLink.get.roadPartNumber && op.endAddrMValue == splitedLink.get.endAddrMValue && op.track == Track.switch(splitedLink.get.track))
-      } else None
-        adjustIfSplit(pl, currentAddresses.get(pl.linearLocationId), referenceAddress = if(referenceOppositeAddress.nonEmpty) currentAddresses.get(referenceOppositeAddress.get.linearLocationId) else None).get -> pl}
+    projectLinks.filter(_.status == changedStatus).toList.map { pl =>
+      val splittedLinkBefore = projectLinks.find(l => l.roadNumber == pl.roadNumber && l.roadPartNumber == pl.roadPartNumber && l.endAddrMValue == pl.startAddrMValue && l.isSplit)
+      val referenceOppositeStartAddress = if (splittedLinkBefore.nonEmpty)
+        projectLinks.find(op => op.roadNumber == splittedLinkBefore.get.roadNumber && op.roadPartNumber == splittedLinkBefore.get.roadPartNumber && op.endAddrMValue == splittedLinkBefore.get.endAddrMValue && op.track == Track.switch(splittedLinkBefore.get.track)) else None
+      val referenceOppositeEndAddress = if (pl.isSplit) projectLinks.find(op => op.roadNumber == pl.roadNumber && op.roadPartNumber == pl.roadPartNumber && op.endAddrMValue == pl.endAddrMValue && op.track == Track.switch(pl.track)) else None
+      adjustIfSplit(pl, currentAddresses.get(pl.linearLocationId),
+        referenceStartAddress = if (referenceOppositeStartAddress.nonEmpty) currentAddresses.get(referenceOppositeStartAddress.get.linearLocationId) else None,
+        referenceEndAddress = if (referenceOppositeEndAddress.nonEmpty) currentAddresses.get(referenceOppositeEndAddress.get.linearLocationId) else None).get -> pl
+    }
   }
 
   private def findNumbering(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]): Seq[(RoadAddress, ProjectLink)] = {
