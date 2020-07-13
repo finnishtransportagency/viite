@@ -2,9 +2,12 @@ version: "3.3"
 services:
   postgres:
     image: postgis/postgis:latest
+    container_name: 'postgis-viite'
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_USER: viite
+      POSTGRES_PASSWORD: viite
+      POSTGRES_DB: viite
+    volumes:
+      - ./data/:/var/lib/postgresql/data
     ports:
       - 5432:5432
