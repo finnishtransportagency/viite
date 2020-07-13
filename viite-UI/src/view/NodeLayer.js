@@ -612,7 +612,6 @@
     };
 
     this.layerStarted = function (eventListener) {
-      console.log("layer started");
       eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
         if(applicationModel.getSelectedLayer() === 'node') {
           redraw();
