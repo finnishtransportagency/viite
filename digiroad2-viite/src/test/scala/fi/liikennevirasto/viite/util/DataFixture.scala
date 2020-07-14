@@ -320,6 +320,8 @@ object DataFixture {
         importMunicipalityCodes()
       case Some("flyway_init") =>
         flywayInit()
+      case Some("flyway_migrate") =>
+        migrateAll()
       case Some("test_integration_api_all_municipalities") =>
         testIntegrationAPIWithAllMunicipalities()
       case Some("import_nodes_and_junctions") =>
@@ -335,7 +337,7 @@ object DataFixture {
         "| import_complementary_road_address " +
         "| update_road_addresses_geometry | import_road_address_change_test_data " +
         "| apply_change_information_to_road_address_links | import_road_names | check_road_network" +
-        "| test | flyway_init | import_nodes_and_junctions | initial_import | update_calibration_point_types")
+        "| test | flyway_init | flyway_migrate | import_nodes_and_junctions | initial_import | update_calibration_point_types")
     }
   }
 

@@ -1,3 +1,11 @@
+Viite PostGIS with Docker Compose
+=================================
+Docker Compose installs and starts the PostGIS database server for local Viite development:
+
+- Database: viite
+- Username: viite
+- Password: viite
+
 **Start the postgis server:**
 
 `docker-compose up`
