@@ -36,33 +36,50 @@ by using Docker Compose:
 cd aws/local-dev/postgis
 docker-compose up
 ```
+or by running the `aws/local-dev/postgis/start.sh` script.
 
-Docker Compose installs and starts the PostGIS database server with the `viite` database and the `postgres` admin user.
+PostGIS server can be stopped with the `aws/local-dev/postgis/stop.sh` script.
 
-- Username: viite
-- Password: viite
-- Database: viite
+Docker Compose installs and starts the PostGIS database server.
+
+[Read more about Viite PostGIS here](aws/local-dev/postgis/README.md)
 
 Required Integrations
 ---------------------
 Viite needs to get the links, the background maps and the coordinates for addresses
 from external systems. For these connections to work, open Väylä VPN and
 open SSH-tunnel with the needed port forwardings to a Väylä server.
-- 9180: Viite running in dev environment
+- 9180: Viite running in devtest environment (TODO: When we are fully in AWS, this needs to be changed.)
 - 8997: OAG
 
 Idea Run Configurations
 -----------------------
 If you are developing with the IntelliJ Idea, you can import the run configurations
-from the `aws/local-dev/idea-run-configurations` folder.
+by copying the xml-files from the `aws/local-dev/idea-run-configurations` folder to the
+`.idea/runConfigurations` folder (under the project folder).
+
+- Flyway_init.xml
+  - Initialize the database for Flyway by creating the `schema_version` table
+- Fixture_reset_test.xml
+  - Empty the database, run the Flyway migrations, populate the database with the test data (required by the unit tests) 
+- Flyway_migrate.xml
+  - Run the Flyway migration scripts
+- Grunt_Server.xml
+  - Start the frontend server
+- Grunt_Test.xml
+  - Run the frontend tests
+- Server.xml
+  - Run the backend server
+- Test.xml
+  - Run the backend unit tests (needs the fixture reset test data)
 
 Building and Running the Backend
 ---------------------------------
-Backend reads environment specific variables from the environment variables.
-These variables for development are listed in
+Backend reads the environment specific variables from the environment variables.
+These variables for the development are listed in
 `aws/local-dev/environment-variables.properties` 
 
-If you are using Idea, these variables are already set in the "Server" and "Test" run configurations.
+If you are using Idea, these variables are already set in the run configurations.
 
 Running the unit tests from Idea:
 - Run the "Test" sbt Task
@@ -88,27 +105,39 @@ Building the frontend:
 grunt
 ```
 
-Running the tests:
+Running the tests from Idea:
+- run the "Grunt Test" task
+
+Running the tests from the command line:
 ```
 grunt test
 ```
-(Or run the "Grunt Test" from Idea)
 
-Running the frontend server:
+Running the frontend server from Idea:
+- run the "Grunt Server" task
+
+Running the frontend server from the command line:
 ```
 grunt server
 ```
-(Or run the "Grunt Server" from Idea)
 
-Running the frontend runs the tests, builds less and runs in the watch-mode. 
+Running the "Grunt Server" task does the build, runs the tests and runs the frontend in the watch-mode. 
 
-Frontend server sends the requests to the backend server that needs to be running for the application to work.
+Frontend server sends the requests to the backend server which needs to be running for the application to work.
 
 UI will be available in this address: <http://localhost:9003/>.
 
 Initializing the database
 =========================
-TODO
+Empty database must be initialized for the Flyway by running the task "Flyway init"
+or by calling the Viite AdminAPI: <http://localhost:8080/api/admin/flyway_init>.
+
+All the tables can be created and populated with the test data by running the task "Fixture reset test".
+TODO: nodes and junctions test data must be created too.
+
+Flyway migrations can be run by running the task "Flyway migrate"
+or by calling the Viite AdminAPI: <http://localhost:8080/api/admin/flyway_migrate>.
+("Fixture reset test" does this already.)
 
 [Käyttöönotto ja version päivitys](Deployment.md)
 =================================================
