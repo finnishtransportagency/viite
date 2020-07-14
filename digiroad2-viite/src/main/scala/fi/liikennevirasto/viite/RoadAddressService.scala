@@ -336,10 +336,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
    */
   def getRoadAddressForSearch(road: Long, roadPart: Long, addressM: Long): Seq[RoadAddress] = {
     withDynSession {
-      val roadways =  addressM match {
-        case 0 => roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, Some(addressM), Some(addressM))
-        case _ => roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, None, Some(addressM))
-      }
+      val roadways = roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, Some(addressM), Some(addressM))
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
       roadAddresses.filter(ra => ra.startAddrMValue <= addressM && ra.endAddrMValue >= addressM)
     }
