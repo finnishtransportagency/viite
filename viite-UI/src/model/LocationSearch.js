@@ -81,6 +81,11 @@
               });
               var parsed = _.map(_.words(input.search), _.parseInt);
               searchResult = searchResult.concat(roadLocationAPIResultParser(sortedRoad[0], parsed[2]));
+            } else if (item && item.roadM && item.roadM[0]) {
+              item.roadM[0].lon = item.roadM[0].x;
+              item.roadM[0].lat = item.roadM[0].y;
+              item.roadM[0].title = 'Tieosoite, ' + input.search;
+              searchResult.push(item.roadM[0]);
             }
           });
         } else return [];
