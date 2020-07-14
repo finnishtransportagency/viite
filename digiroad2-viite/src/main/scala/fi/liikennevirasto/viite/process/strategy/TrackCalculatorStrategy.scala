@@ -142,6 +142,7 @@ trait TrackCalculatorStrategy {
     if (leftProjectLinks.isEmpty || rightProjectLinks.isEmpty)
       throw new MissingTrackException(s"Missing track, R: ${rightProjectLinks.size}, L: ${leftProjectLinks.size}")
 
+    // lets see how it works without this..
     val leftRoadwayNumber = leftProjectLinks.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val continuousLeftProjectLinks = leftProjectLinks.takeWhile(pl => pl.roadwayNumber == leftRoadwayNumber)
     val restLeft = leftProjectLinks.drop(continuousLeftProjectLinks.size) ++ restLeftProjectLinks
@@ -149,6 +150,7 @@ trait TrackCalculatorStrategy {
     val rightRoadwayNumber = rightProjectLinks.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val continuousRightProjectLinks = rightProjectLinks.takeWhile(pl => pl.roadwayNumber == rightRoadwayNumber)
     val restRight = rightProjectLinks.drop(continuousRightProjectLinks.size) ++ restRightProjectLinks
+    //
 
     //  Find a calibration point annexed to the projectLink Id
     val availableCalibrationPoint = calibrationPoints.get(continuousRightProjectLinks.last.id).orElse(calibrationPoints.get(continuousLeftProjectLinks.last.id))
@@ -224,6 +226,8 @@ trait TrackCalculatorStrategy {
         (leftLink.startAddrMValue, leftLink.endAddrMValue)
       case (_, LinkStatus.UnChanged) | (_, LinkStatus.Transfer) =>
         (rightLink.startAddrMValue, rightLink.endAddrMValue)
+//      case (LinkStatus.Terminated, LinkStatus.Terminated) =>
+//        (averageOfAddressMValues(rightLink.originalStartAddrMValue, leftLink.originalStartAddrMValue, reversed), averageOfAddressMValues(rightLink.originalEndAddrMValue, leftLink.originalEndAddrMValue, reversed))
       case _ =>
         userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
           (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))

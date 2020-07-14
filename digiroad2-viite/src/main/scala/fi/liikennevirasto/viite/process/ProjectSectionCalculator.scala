@@ -111,24 +111,30 @@ object ProjectSectionCalculator {
 
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
           if (!right.exists(_.status != LinkStatus.Terminated) && !left.exists(_.status != LinkStatus.Terminated)) {
-            TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
+
+            val strategy = TrackCalculatorContext.getStrategy(left, right)
+            val addrSt = strategy.getFixedAddress(left.head, right.head)._1
+
+            val (recalculatedLeft, recalculatedRestLeft) = getContinuousTrack(ProjectSectionMValueCalculator.assignTerminatedLinkValues(left ++ othersLeft, addrSt = addrSt))
+            val (recalculatedRight, recalculatedRestRight) = getContinuousTrack(ProjectSectionMValueCalculator.assignTerminatedLinkValues(right ++ othersRight, addrSt = addrSt))
+            TrackSectionRoadway.handleRoadwayNumbers(rightLinks, recalculatedRight, recalculatedRestRight, leftLinks, recalculatedLeft, recalculatedRestLeft)
           } else ((right, othersRight), (left, othersLeft))
 
-          if (firstRight.isEmpty || firstLeft.isEmpty) {
-            throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
-          }
+        if (firstRight.isEmpty || firstLeft.isEmpty) {
+          throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
+        }
 
-          if (firstRight.count(_.roadwayNumber == NewIdValue) + firstRight.filter(_.roadwayNumber != NewIdValue).map(_.roadwayNumber).distinct.size != firstLeft.count(_.roadwayNumber == NewIdValue) + firstLeft.filter(_.roadwayNumber != NewIdValue).map(_.roadwayNumber).distinct.size) {
-            throw new MissingRoadwayNumberException(s"Roadway numbers doesn't match on both tracks, R ${firstRight.map(_.roadwayNumber).distinct.size}, L ${firstLeft.map(_.roadwayNumber).distinct.size}")
-          }
+        if (firstRight.count(_.roadwayNumber == NewIdValue) + firstRight.filter(_.roadwayNumber != NewIdValue).map(_.roadwayNumber).distinct.size != firstLeft.count(_.roadwayNumber == NewIdValue) + firstLeft.filter(_.roadwayNumber != NewIdValue).map(_.roadwayNumber).distinct.size) {
+          throw new MissingRoadwayNumberException(s"Roadway numbers doesn't match on both tracks, R ${firstRight.map(_.roadwayNumber).distinct.size}, L ${firstLeft.map(_.roadwayNumber).distinct.size}")
+        }
 
-          val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
-          logger.info(s"${strategy.name} strategy")
-          val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, Map())
+        val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
+        logger.info(s"${strategy.name} strategy")
+        val trackCalcResult = strategy.assignTrackMValues(previousStart, firstLeft, firstRight, Map())
 
-          val (adjustedRestRight, adjustedRestLeft) = adjustTerminatedTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
+        val (adjustedRestRight, adjustedRestLeft) = adjustTerminatedTracksToMatch(trackCalcResult.restLeft ++ restLeft, trackCalcResult.restRight ++ restRight, Some(trackCalcResult.endAddrMValue))
 
-          (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
+        (trackCalcResult.leftProjectLinks ++ adjustedRestRight, trackCalcResult.rightProjectLinks ++ adjustedRestLeft)
 
       }
     }
