@@ -321,7 +321,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val roadAddresses = getRoadAddressForSearch(road, roadPart, addressM)
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linearLocationsLinkIds)
     val rals = RoadAddressFiller.fillTopology(roadLinks, roadAddresses)
-    val filteredRals = rals.filter(al => al.startAddressM <= addressM && al.endAddressM >= addressM)
+    val filteredRals = rals.filter(al => al.startAddressM <= addressM && al.endAddressM >= addressM && (al.startAddressM != 0 || al.endAddressM != 0))
     val ral = filteredRals.filter(al => al.trackCode != 2)
     ral.headOption
   }
@@ -336,8 +336,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
    */
   def getRoadAddressForSearch(road: Long, roadPart: Long, addressM: Long): Seq[RoadAddress] = {
     withDynSession {
-      val roadways =  roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, None, Some(addressM))
-
+      val roadways = roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, Some(addressM), Some(addressM))
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
       roadAddresses.filter(ra => ra.startAddrMValue <= addressM && ra.endAddrMValue >= addressM)
     }
