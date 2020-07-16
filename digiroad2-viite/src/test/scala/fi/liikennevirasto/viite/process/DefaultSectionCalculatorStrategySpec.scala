@@ -1925,11 +1925,6 @@ Left1 ---<----  ^ Right1
       val geomTransferOldFirstLinkPart2 = Seq(Point(10.0, 0.0), Point(15.0, 0.0))
       val plId = Sequences.nextProjectLinkId
 
-
-      val projectLinkNotHandledPart1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12344L, 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
-        geomNotHandledPart1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledPart1), 0L, 0L, 0L, reversed = false,
-        None, 86400L)
       val projectLinkTransferNewFirstLinkPart2 = ProjectLink(plId + 1, 9999L, 2L, Track.Combined, Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
         None, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferNewFirstLinkPart2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferNewFirstLinkPart2), 0L, 0, 0, reversed = false,
