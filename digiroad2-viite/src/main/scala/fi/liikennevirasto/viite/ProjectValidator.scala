@@ -135,7 +135,7 @@ class ProjectValidator {
       IncompatibleDiscontinuityCodes, EndOfRoadNotOnLastPart, ElyCodeChangeDetected, DiscontinuityOnRamp, DiscontinuityInsideRoadPart,
       ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
       MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
-      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DiscontinuityInsideRoadPart, DistinctRoadTypesBetweenTracks)
+      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DistinctRoadTypesBetweenTracks)
 
     // Viite-942
     case object MissingEndOfRoad extends ValidationError {
@@ -1063,7 +1063,7 @@ class ProjectValidator {
       *
       * @return
       */
-    def checkDiscontinuityOnLastPart: Seq[ValidationErrorDetails] = {
+    def checkDiscontinuityOnLastLinkPart() = {
       val discontinuityErrors = roadProjectLinks.groupBy(_.roadNumber).flatMap { g =>
         val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toInt, project.startDate)
         val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
@@ -1100,8 +1100,13 @@ class ProjectValidator {
                 val normalDiscontinuity = discontinuity match {
                   case Continuous =>
                     if (!isConnected) error(project.id, ValidationErrorList.MajorDiscontinuityFound)(Seq(last)) else None
-                  case MinorDiscontinuity | Discontinuous =>
+                  case Discontinuous =>
                     if (isConnected) error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(Seq(last)) else None
+                  case MinorDiscontinuity =>
+                    if (isConnected)
+                      error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(Seq(last))
+                    else
+                      error(project.id, ValidationErrorList.MajorDiscontinuityFound)(Seq(last))
                   case _ => None // no error, continue
                 }
                 rampDiscontinuity.orElse(normalDiscontinuity)
@@ -1195,7 +1200,7 @@ class ProjectValidator {
       checkDiscontinuityBetweenLinksOnRamps,
       checkDiscontinuityInsideRoadPart,
       checkEndOfRoadOnLastPart,
-      checkDiscontinuityOnLastPart,
+      checkDiscontinuityOnLastLinkPart,
       checkEndOfRoadOutsideOfProject,
       checkEndOfRoadBetweenLinksOnPart,
       checkDiscontinuityOnParallelLinks
