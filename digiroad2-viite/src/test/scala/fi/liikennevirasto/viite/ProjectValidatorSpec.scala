@@ -13,7 +13,7 @@ import fi.liikennevirasto.viite.RoadType.FerryRoad
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, EndOfRoad, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.dao.{LinearLocationDAO, _}
+import fi.liikennevirasto.viite.dao.{LinearLocationDAO, ProjectReservedPart, _}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -1406,7 +1406,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test checkRoadContinuityCodes When Ramps are continuous then should not exist any error") {
+  test("Test checkRoadContinuityCodes When Ramp last lisk is discontinuous and there is disconnected road part after then should not exist any error") {
     runWithRollback {
       val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
@@ -1465,7 +1465,7 @@ class ProjectValidatorSpec extends FunSuite with Matchers {
       mockEmptyRoadAddressServiceCalls()
 
       projectValidator.checkRoadContinuityCodes(updProject,
-        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity)), isRampValidation = true).distinct should have size 0
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.Discontinuous)), isRampValidation = true).distinct should have size 0
     }
   }
 
@@ -1979,7 +1979,7 @@ Left|      |Right
     }
   }
 
-  test("Test checkRoadContinuityCodes When there is Minor discontinuous ending in ramp road between parts (of any kind) Then should not give any error") {
+  test("Test checkRoadContinuityCodes When there is Major discontinuous ending in ramp road between parts (of any kind) Then should not give any error") {
     runWithRollback {
       val project = util.setUpProjectWithRampLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val projectLinks = projectLinkDAO.fetchProjectLinks(project.id)
@@ -2026,11 +2026,11 @@ Left|      |Right
       val updProject = projectService.fetchProjectById(project.id).get
       mockEmptyRoadAddressServiceCalls()
       projectValidator.checkRoadContinuityCodes(updProject,
-        starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity)), isRampValidation = true).distinct should have size 0
+        starting ++ last.map(_.copy(discontinuity = Discontinuity.Discontinuous)), isRampValidation = true).distinct should have size 0
     }
   }
 
-  test("Test checkRoadContinuityCodes When next part exists in road address / project link table and is not connected Then Project Links could be both Minor discontinuity or Discontinuous") {
+  test("Test checkRoadContinuityCodes When next part exists in road address / project link table and is not connected Then Project Links could be both only Major Discontinuous") {
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L))
       val raId = Sequences.nextRoadwayId
@@ -2070,7 +2070,7 @@ Left|      |Right
 
       val errorsUpd2 = projectValidator.checkRoadContinuityCodes(project,
         starting ++ last.map(_.copy(discontinuity = Discontinuity.MinorDiscontinuity))).distinct
-      errorsUpd2 should have size 0
+      errorsUpd2 should have size 1
     }
   }
 
@@ -2424,6 +2424,55 @@ Left|      |Right
       val errors = projectValidator.checkRoadContinuityCodes(project, projectLinks)
       errors should have size 1
       errors.head.validationError.value should be(projectValidator.ValidationErrorList.WrongParallelLinks.value)
+    }
+  }
+
+  test("Test checkRoadContinuityCodes for continuous, MinorDiscontinuity and MajorDiscontinuity") {
+    runWithRollback {
+
+      val linearLocationId = Sequences.nextLinearLocationId
+
+      // Create roadAddresses that have gap in geometry between second and third
+      val ra = Seq(
+        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Continuous, 0L, 5L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 5, TowardsDigitizing, DateTime.now().getMillis, (None, None),
+          Seq(Point(0.0, 0.0), Point(0.0, 5.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, MinorDiscontinuity, 5L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 5, TowardsDigitizing, DateTime.now().getMillis, (None, None),
+          Seq(Point(0.0, 5.0), Point(0.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12347, linearLocationId + 2, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Continuous, 10L, 15L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 5, TowardsDigitizing, DateTime.now().getMillis, (None, None),
+          Seq(Point(0.0, 15.0), Point(0.0, 20.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber3, Some(DateTime.parse("1901-01-01")), None, None),
+        RoadAddress(12348, linearLocationId + 3, 19999L, 1L, RoadType.PublicRoad, Track.Combined, EndOfRoad, 15L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 5, TowardsDigitizing, DateTime.now().getMillis, (None, None),
+          Seq(Point(0.0, 20.0), Point(0.0, 25.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber4, Some(DateTime.parse("1901-01-01")), None, None)
+      )
+
+      val (project, _) = util.setUpProjectWithLinks(LinkStatus.New, Seq(10L, 20L), roads = Seq((19999L, 1L, "Test road"), (19999L, 2L, "Test road")), discontinuity = Discontinuity.Continuous, changeTrack = true)
+      val projectLinks = ra.map {
+        toProjectLink(project)(_)
+      }
+
+      mockEmptyRoadAddressServiceCalls()
+
+      // MinorDiscontinuity is ok because we are in same roadpart
+      val errors = projectValidator.checkRoadContinuityCodes(project, projectLinks)
+      errors should have size 0
+
+      // MinorDiscontinuity is not anymore ok because we have now two roadparts
+      val (first2Links, restOfLinks) = projectLinks.partition(_.endAddrMValue <= 10)
+      val changedFirstRestOfLinksToPart2 = restOfLinks.head.copy(roadPartNumber = 2, startAddrMValue = 0, endAddrMValue = 5)
+      val changedLastRestOfLinksToPart2 = restOfLinks.last.copy(roadPartNumber = 2, startAddrMValue = 5, endAddrMValue = 10)
+      val formedParts = List(
+        ProjectReservedPart(project.id, 19999L, 1L, Some(0L), Some(Continuous), None, Option(1L), None, None, None),
+        ProjectReservedPart(project.id, 19999L, 2L, Some(0L), Some(Continuous), None, Option(1L), None, None, None)
+      )
+      val errors2 = projectValidator.checkRoadContinuityCodes(project.copy(formedParts = formedParts), first2Links ++ Seq(changedFirstRestOfLinksToPart2, changedLastRestOfLinksToPart2))
+      errors2 should have size 1
+      errors2.head.validationError.value should be(projectValidator.ValidationErrorList.MajorDiscontinuityFound.value)
+
+      // Discontinuous (MajorDiscontinuity) is ok because we have two roadparts
+      val changedFirstFirst2Links = first2Links.head.copy()
+      val changedLastFirst2Links = first2Links.last.copy(discontinuity = Discontinuity.Discontinuous)
+      val errors3 = projectValidator.checkRoadContinuityCodes(project.copy(formedParts = formedParts), Seq(changedFirstFirst2Links, changedLastFirst2Links) ++ Seq(changedFirstRestOfLinksToPart2, changedLastRestOfLinksToPart2))
+      errors3 should have size 0
+
     }
   }
 
