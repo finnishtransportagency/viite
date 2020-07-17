@@ -128,11 +128,10 @@ object TrackSectionRoadway {
     val processedReferenceProjectLinks = continuousRoadwaySection(processedProjectLinks.filter(pl => referenceTrack.contains(pl.track)), Sequences.nextRoadwayNumber)._1
     val processedOthersProjectLinks = processedProjectLinks.filter(pl => oppositeTrack.contains(pl.track))
     val reAssignedOppositeRoadwayNumbers = if(processedOthersProjectLinks.exists(l => l.status == LinkStatus.New && l.isSplit)) processedOthersProjectLinks else continuousRoadwaySection(processedOthersProjectLinks, Sequences.nextRoadwayNumber)._1
-
     if (referenceTrack.contains(Track.RightSide)) {
-      (processedReferenceProjectLinks, processedOthersProjectLinks)
+      (processedReferenceProjectLinks, reAssignedOppositeRoadwayNumbers)
     } else {
-      (processedOthersProjectLinks, processedReferenceProjectLinks)
+      (reAssignedOppositeRoadwayNumbers, processedReferenceProjectLinks)
     }
   }
 
