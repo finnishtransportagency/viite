@@ -92,6 +92,7 @@ module.exports = {
         "geometrycalculator": "writable",
         "validitydirections": "writable",
         "interact": "writable",
+        "events": "writable",
 // todo following should not be globals
         "done": "writable",
         "error": "writable",
