@@ -699,12 +699,11 @@
       });
 
       eventbus.on('node:saveSuccess', function () {
-        applicationModel.removeSpinner();
         closeNode(false);
       });
 
-      eventbus.on('node:saveFailed', function (errorMessage) {
-        applicationModel.removeSpinner();
+      eventbus.on('node:saveFailed', function (errorMessage, spinnerEvent) {
+        applicationModel.removeSpinner(spinnerEvent);
         new ModalConfirm(errorMessage);
       });
     };
