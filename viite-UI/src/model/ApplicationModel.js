@@ -136,12 +136,24 @@
       currentAction = null;
     };
 
-    var addSpinner = function () {
-      jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+    function spinnerClassName(spinnerEvent) {
+      return spinnerEvent ? spinnerEvent : 'default-spinner';
+    }
+
+    var addSpinner = function (spinnerEvent) {
+      jQuery('.container').append(
+          $('<div/>')
+              .addClass("spinner-overlay")
+              .addClass(spinnerClassName(spinnerEvent))
+              .addClass("modal-overlay").append(
+              $('<div/>')
+                  .addClass("spinner")
+          )
+      );
     };
 
-    var removeSpinner = function () {
-      jQuery('.spinner-overlay').remove();
+    var removeSpinner = function (spinnerEvent) {
+      jQuery('.spinner-overlay.' + spinnerClassName(spinnerEvent)).remove();
     };
 
     eventbus.on("userData:fetched", function (userData) {
