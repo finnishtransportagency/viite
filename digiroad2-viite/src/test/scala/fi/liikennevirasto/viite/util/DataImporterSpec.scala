@@ -118,7 +118,7 @@ class DataImporterSpec extends FunSuite with Matchers {
 
   test("Test importRoadAddressData When importing addresses Then they are saved in database") {
     withDynSession {
-      sqlu"""ALTER TABLE ROADWAY DISABLE ALL TRIGGERS""".execute
+      sqlu"""ALTER TABLE ROADWAY DISABLE TRIGGER ALL""".execute
     }
     runWithRollback {
 
@@ -194,7 +194,7 @@ class DataImporterSpec extends FunSuite with Matchers {
 
     }
     withDynSession {
-      sqlu"""ALTER TABLE ROADWAY ENABLE ALL TRIGGERS""".execute
+      sqlu"""ALTER TABLE ROADWAY ENABLE TRIGGER ALL""".execute
     }
   }
 

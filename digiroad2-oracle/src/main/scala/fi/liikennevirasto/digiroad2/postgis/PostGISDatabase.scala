@@ -102,11 +102,19 @@ object PostGISDatabase {
   }
 
   def createJGeometry(points: Seq[Point]): String = {
-    s"""LINESTRING(${points.map(p => s"""${p.x} ${p.y} ${p.z}""").mkString(", ")})"""
+    if (points.nonEmpty) {
+      s"""LINESTRING(${points.map(p => s"""${p.x} ${p.y} ${p.z}""").mkString(", ")})"""
+    } else {
+      "LINESTRING EMPTY"
+    }
   }
 
   def createXYZMGeometry(points: Seq[(Point, Double)]): String = {
-    s"""LINESTRING(${points.map(p => s"""${p._1.x} ${p._1.y} ${p._1.z} ${p._2}""").mkString(", ")})"""
+    if (points.nonEmpty) {
+      s"""LINESTRING(${points.map(p => s"""${p._1.x} ${p._1.y} ${p._1.z} ${p._2}""").mkString(", ")})"""
+    } else {
+      "LINESTRING EMPTY"
+    }
   }
 
   def createPointGeometry(point: Point): String = {

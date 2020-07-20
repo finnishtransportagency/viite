@@ -36,9 +36,9 @@ by using Docker Compose:
 cd aws/local-dev/postgis
 docker-compose up
 ```
-or by running the `aws/local-dev/postgis/start.sh` script.
+or by running the `aws/local-dev/postgis/start-postgis.sh` script.
 
-PostGIS server can be stopped with the `aws/local-dev/postgis/stop.sh` script.
+PostGIS server can be stopped with the `aws/local-dev/postgis/stop-postgis.sh` script.
 
 Docker Compose installs and starts the PostGIS database server.
 
@@ -72,6 +72,10 @@ by copying the xml-files from the `aws/local-dev/idea-run-configurations` folder
   - Run the backend server
 - Test.xml
   - Run the backend unit tests (needs the fixture reset test data)
+  
+For running the unit tests directly from Idea, set the environment variables
+to the default Scala Test run configuration from the
+`aws/local-dev/environment-variables.properties` file.
 
 Building and Running the Backend
 ---------------------------------
