@@ -12,7 +12,7 @@ Docker Compose installs and starts the PostGIS database server for local Viite d
 
 or
 
-`./start.sh`
+`./start-postgis.sh`
 
 **Start the postgis server on the background:**
 
@@ -24,7 +24,7 @@ or
 
 or
 
-`./stop.sh`
+`./stop-postgis.sh`
 
 **Clean the data:**
 

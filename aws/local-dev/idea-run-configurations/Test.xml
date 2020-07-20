@@ -9,7 +9,7 @@
             <env name="conversion.bonecp.password" value="viite" />
             <env name="http.proxyHost" value="127.0.0.1" />
             <env name="vkmUrl" value="http://localhost:8997" />
-            <env name="tierekisteriViiteRestApiEndPoint" value="" />
+            <env name="tierekisteriViiteRestApiEndPoint" value="http://localhost:8080/api/tierekisteri/" />
             <env name="vvhServiceHost" value="172.17.204.39:6080" />
             <env name="import.bonecp.username" value="drkonv" />
             <env name="bonecp.password" value="viite" />
