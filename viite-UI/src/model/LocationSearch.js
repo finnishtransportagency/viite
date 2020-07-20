@@ -32,7 +32,7 @@
       var sideCodes = LinkValues.SideCode;
       var constructTitle = function(address) {
         var titleParts = [_.get(address, 'roadNumber'), _.get(address, 'roadPartNumber')];
-        return _.some(titleParts, _.isUndefined) ? '' : titleParts.join(' ');
+        return _.some(titleParts, _.isUndefined) ? '' : 'Tieosa, ' + titleParts.join(' ');
       };
       var lon, lat = 0;
       addressMValue = _.isUndefined(addressMValue) ? 0 : addressMValue;
