@@ -50,7 +50,7 @@ object Queries {
   }
 
   def fetchCalibrationPointIds(len: Int) = {
-    sql"""select nextval('CALIBRATION_POINT_SEQ') generate_series(1, $len)""".as[Long].list
+    sql"""select nextval('CALIBRATION_POINT_SEQ') from generate_series(1, $len)""".as[Long].list
   }
 
   def fetchNodeIds(len: Int) = {

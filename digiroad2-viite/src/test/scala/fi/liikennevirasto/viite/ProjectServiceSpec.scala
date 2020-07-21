@@ -320,6 +320,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test saveProject When two projects with same road part Then return on key error") {
     runWithRollback {
+      var project2: Project = null
       val error = intercept[BatchUpdateException] {
         val rap1 = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
           "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info",
@@ -331,11 +332,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         val project1 = projectService.createRoadLinkProject(rap1)
         mockForProject(project1.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(5, 207)).map(toProjectLink(project1)))
         projectService.saveProject(project1.copy(reservedParts = addr1))
-        val project2 = projectService.createRoadLinkProject(rap2)
+        project2 = projectService.createRoadLinkProject(rap2)
         mockForProject(project2.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(5, 207)).map(toProjectLink(project2)))
         projectService.saveProject(project2.copy(reservedParts = addr1))
       }
-      error.getErrorCode should be(2291)
+      error.getMessage should include(s"""Key (project_id, road_number, road_part_number)=(${project2.id}, 5, 207) is not present in table "project_reserved_road_part"""")
     }
   }
 
