@@ -307,7 +307,7 @@ class ProjectLinkDAO {
         originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue,
         sideCode, calibrationPoints, originalCalibrationPointTypes, OracleDatabase.loadJGeometryToGeometry(geom),
         projectId, status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId,
-        geometryTimeStamp, if (projectRoadwayNumber != 0) projectRoadwayNumber else roadwayNumber, Some(roadName),
+        geometryTimeStamp, if (projectRoadwayNumber == 0 || projectRoadwayNumber == NewIdValue) roadwayNumber else projectRoadwayNumber , Some(roadName),
         roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
         roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack, roadAddressRoadNumber, roadAddressRoadPart)
     }
