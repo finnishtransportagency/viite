@@ -158,7 +158,7 @@ trait TrackCalculatorStrategy {
     val startSectionAddress = startAddress.getOrElse(getFixedAddress(continuousLeftProjectLinks.head, continuousRightProjectLinks.head)._1)
     val estimatedEnd = getFixedAddress(continuousLeftProjectLinks.last, continuousRightProjectLinks.last, availableCalibrationPoint)._2
 
-        val (adjustedLeft, adjustedRight) = adjustTwoTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
+    val (adjustedLeft, adjustedRight) = adjustTwoTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
 
 //    val (adjustedLeft, adjustedRight) =
 //      if (adjustedTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd)) {
