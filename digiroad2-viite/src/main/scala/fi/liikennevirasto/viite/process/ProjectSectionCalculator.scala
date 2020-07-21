@@ -117,7 +117,9 @@ object ProjectSectionCalculator {
 
             val (recalculatedLeft, recalculatedRestLeft) = getContinuousTrack(ProjectSectionMValueCalculator.assignTerminatedLinkValues(left ++ othersLeft, addrSt = addrSt))
             val (recalculatedRight, recalculatedRestRight) = getContinuousTrack(ProjectSectionMValueCalculator.assignTerminatedLinkValues(right ++ othersRight, addrSt = addrSt))
-            TrackSectionRoadway.handleRoadwayNumbers(rightLinks, recalculatedRight, recalculatedRestRight, leftLinks, recalculatedLeft, recalculatedRestLeft)
+            TrackSectionRoadway.handleRoadwayNumbers(
+              recalculatedLeft ++ recalculatedRestLeft, recalculatedRight, recalculatedRestRight,
+              recalculatedRight ++ recalculatedRestRight, recalculatedLeft, recalculatedRestLeft)
           } else ((right, othersRight), (left, othersLeft))
 
         if (firstRight.isEmpty || firstLeft.isEmpty) {
