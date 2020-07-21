@@ -436,11 +436,6 @@ class ProjectLinkDAO {
           WHERE id = ?""")
 
         for (projectLink <- links) {
-          val roadwayNumber = if (projectLink.roadwayNumber == NewIdValue) {
-            Sequences.nextRoadwayNumber
-          } else {
-            projectLink.roadwayNumber
-          }
           projectLinkPS.setLong(1, projectLink.roadNumber)
           projectLinkPS.setLong(2, projectLink.roadPartNumber)
           projectLinkPS.setInt(3, projectLink.track.value)
@@ -463,7 +458,7 @@ class ProjectLinkDAO {
           projectLinkPS.setDouble(20, projectLink.startMValue)
           projectLinkPS.setDouble(21, projectLink.endMValue)
           projectLinkPS.setLong(22, projectLink.ely)
-          projectLinkPS.setLong(23, roadwayNumber)
+          projectLinkPS.setLong(23, projectLink.roadwayNumber)
           projectLinkPS.setObject(24, projectLink.connectedLinkId.orNull)
           projectLinkPS.setLong(25, projectLink.id)
           projectLinkPS.addBatch()
