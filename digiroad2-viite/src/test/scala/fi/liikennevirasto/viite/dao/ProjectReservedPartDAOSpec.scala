@@ -16,6 +16,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoC
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import org.joda.time.DateTime
+import org.postgresql.util.PSQLException
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -420,9 +421,9 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test reserveRoadPart When trying to reserve same road in two diferent projects Then should throw a SQLIntegrityConstraintViolationException exception") {
+  test("Test reserveRoadPart When trying to reserve same road in two different projects Then should throw a SQLIntegrityConstraintViolationException exception") {
     runWithRollback {
-      val error = intercept[SQLIntegrityConstraintViolationException] {
+      val error = intercept[PSQLException] {
         val projectId = 123
         val projectId2 = 124
         val roadNumber = 99999
@@ -432,7 +433,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
         sqlu"""INSERT INTO PROJECT VALUES ($projectId2, 1, 'Test Project', 'Test', to_date('01.01.2018','DD.MM.YYYY'),'-',to_date('01.01.2018','DD.MM.YYYY'), null, to_date('01.01.2018','DD.MM.YYYY'), null, null, 0, 0, 0)""".execute
         sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART VALUES (11111, $roadNumber, $roadPartNumber, $projectId2, 'Test')""".execute
       }
-      error.getMessage.contains("PROJECT_RESERVED_ROAD_PART_PK") should be (true)
+      error.getMessage should include("project_reserved_road_part_pk")
     }
   }
 

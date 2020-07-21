@@ -44,7 +44,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       VALUES (1, 1, 0, 5, 1, 1,
         0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 12:26:36.000000', 2,
         1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
-        5170979, 1500079296000, 1, '', 0, 86, NULL,
+        5170979, 1500079296000, 1, ST_GeomFromText('LINESTRING EMPTY', 3067), 0, 86, NULL,
         3, 3, 3, 3
       )""".execute
 
