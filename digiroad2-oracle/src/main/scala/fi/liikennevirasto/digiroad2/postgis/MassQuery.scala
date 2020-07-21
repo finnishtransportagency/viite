@@ -19,6 +19,7 @@ object MassQuery {
       }
       insertLinkIdPS.executeBatch()
       val ret = f("temp_id")
+      sqlu"TRUNCATE TABLE TEMP_ID".execute
       ret
     } finally {
       insertLinkIdPS.close()

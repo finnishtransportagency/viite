@@ -557,7 +557,7 @@ class LinearLocationDAO {
       case None => ""
     }
     val endFilter = endM match {
-      case Some(_) => s" AND loc.end_measure >= $endM"
+      case Some(e) => s" AND loc.end_measure >= $e"
       case None => ""
     }
 
