@@ -6,7 +6,7 @@ import slick.jdbc.StaticQuery.interpolation
 object MassQuery {
   def withIds[T](ids: Iterable[Long])(f: String => T): T = {
     sqlu"""
-      CREATE GLOBAL TEMPORARY TABLE IF NOT EXISTS TEMP_ID (
+      CREATE TEMPORARY TABLE IF NOT EXISTS TEMP_ID (
         ID BIGINT NOT NULL,
 	      CONSTRAINT TEMP_ID_PK PRIMARY KEY (ID)
       ) ON COMMIT DELETE ROWS
