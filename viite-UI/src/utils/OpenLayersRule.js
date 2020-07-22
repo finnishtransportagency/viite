@@ -44,15 +44,15 @@
     return function(attributeName, context) {
       return {
         is: function(attributeValue) {
-          var filter = context ? contextFilter(attributeName, attributeValue, context) :
-            featureAttributeFilter(attributeName, attributeValue);
+          var filter = context ? contextFilter(attributeName, attributeValue, context)
+            : featureAttributeFilter(attributeName, attributeValue);
           return newIsObject({
             filters: state.filters.concat([filter])
           });
         },
         isIn: function(attributeValues) {
-          var filter = context ? isInContextFilter(attributeName, attributeValues, context) :
-            isInFeatureAttributeFilter(attributeName, attributeValues);
+          var filter = context ? isInContextFilter(attributeName, attributeValues, context)
+            : isInFeatureAttributeFilter(attributeName, attributeValues);
           return newIsObject({
             filters: state.filters.concat([filter])
           });
@@ -74,4 +74,4 @@
       where: createWhereFunction(state)
     };
   };
-})(this);
+}(this));

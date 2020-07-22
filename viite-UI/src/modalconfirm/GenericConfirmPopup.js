@@ -10,7 +10,7 @@ window.GenericConfirmPopup = function(message, options) {
         closeCallback: function(){}
     };
 
-    options = _.merge(defaultOptions, options);
+    const optionsMerged = _.merge(defaultOptions, options);
 
     var confirmDiv =
         '<div class="modal-overlay confirm-modal" id="genericConfirmationDialog">' +
@@ -19,8 +19,8 @@ window.GenericConfirmPopup = function(message, options) {
                   message +
                 '</div>' +
                 '<div class="actions">' +
-                    '<button class = "btn btn-primary yes">' + options.yesButtonLbl + '</button>' +
-                    '<button class = "btn btn-secondary no">' + options.noButtonLbl + '</button>' +
+                    '<button class = "btn btn-primary yes">' + optionsMerged.yesButtonLbl + '</button>' +
+                    '<button class = "btn btn-secondary no">' + optionsMerged.noButtonLbl + '</button>' +
                 '</div>' +
             '</div>' +
         '</div>';
@@ -32,32 +32,31 @@ window.GenericConfirmPopup = function(message, options) {
                     message +
                 '</div>' +
                 '<div class="actions">' +
-                    '<button class = "btn btn-secondary ok">' + options.okButtonLbl + '</button>' +
+                    '<button class = "btn btn-secondary ok">' + optionsMerged.okButtonLbl + '</button>' +
                 '</div>' +
             '</div>' +
         '</div>';
 
     var renderConfirmDialog = function() {
         var template = confirmDiv;
-        if(options.type === 'alert')
+        if(optionsMerged.type === 'alert')
             template = alertDiv;
 
         jQuery('.container').append(template);
-        var modal = $('.modal-dialog');
     };
 
     var bindEvents = function() {
         jQuery('.confirm-modal .no').on('click', function() {
             purge();
-            options.closeCallback();
+            optionsMerged.closeCallback();
         });
         jQuery('.confirm-modal .yes').on('click', function() {
             purge();
-            options.successCallback();
+            optionsMerged.successCallback();
         });
         jQuery('.confirm-modal .ok').on('click', function() {
             purge();
-            options.okCallback();
+            optionsMerged.okCallback();
         });
     };
 

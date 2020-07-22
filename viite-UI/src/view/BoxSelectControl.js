@@ -18,4 +18,4 @@
       deactivate: deactivate
     };
   };
-})(this);
+}(this));

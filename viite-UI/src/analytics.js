@@ -23,7 +23,7 @@
     ga('create', environmentProperty(), environmentConfiguration());
     ga('send', 'pageview');
     if(window.eventbus) {
-      eventbus.on('all', function(eventName, eventParams) {
+      eventbus.on('all', function(eventName, _eventParams) {
         var excludedEvents = [
           'map:mouseMoved',
           'map:refresh',

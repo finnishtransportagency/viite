@@ -80,4 +80,4 @@
 
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
   };
-})(this);
+}(this));

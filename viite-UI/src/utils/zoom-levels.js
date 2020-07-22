@@ -17,4 +17,4 @@
     minZoomForJunctions: 12,
     maxZoomLevel: 15
   };
-})();
+}());

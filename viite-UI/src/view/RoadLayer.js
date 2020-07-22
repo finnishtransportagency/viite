@@ -6,8 +6,7 @@
     var roadLinkStyler = new RoadLinkStyler();
 
     var roadVector = new ol.source.Vector({
-      loader: function (extent, resolution, projection) {
-        var zoom = Math.log(1024 / resolution) / Math.log(2);
+      loader: function (_extent, _resolution, _projection) {
         eventbus.once('roadLinks:fetched', function () {
           var features = _.map(roadCollection.getAll(), function (roadLink) {
             var points = _.map(roadLink.points, function (point) {
@@ -96,6 +95,8 @@
         case roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.value:
           roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.description;
           break;
+        default:
+          break;
       }
       return roadType;
     };
@@ -115,9 +116,8 @@
           }
           infoContent.innerHTML =
             nodeName +
-            'Solmutyyppi: ' + displayNodeType(featureAtPixel.getProperties().type) + '<br>'
-          ;
-        }
+            'Solmutyyppi: ' + displayNodeType(featureAtPixel.getProperties().type) + '<br>';
+}
         overlay.setPosition(coordinate);
       }
 
@@ -166,13 +166,12 @@
 
         if (infoContent !== null) {
           infoContent.innerHTML =
-            'Solmun&nbsp;nimi:&nbsp;' + (!_.isUndefined(node) ? node.name.replace(' ', '&nbsp;') : '') + '<br>' +
+            'Solmun&nbsp;nimi:&nbsp;' + ((node) ? node.name.replace(' ', '&nbsp;') : '') + '<br>' +
             'Tieosoite:<br>' +
             _.map(roadAddressContent, function (junctionPoint) {
               return '&thinsp;' + junctionPoint.road + '&nbsp;/&nbsp;' + junctionPoint.track + '&nbsp;/&nbsp;' + junctionPoint.part + '&nbsp;/&nbsp;' + junctionPoint.addr + '<br>';
-            }).join('')
-          ;
-        }
+            }).join('');
+}
         overlay.setPosition(coordinate);
       }
     };
@@ -207,6 +206,9 @@
             break;
           case 'node':
             eventbus.trigger('nodeLayer:fetch');
+            break;
+          default:
+            break;
         }
         handleRoadsVisibility();
       }
@@ -223,4 +225,4 @@
       clear: clear
     };
   };
-})(this);
+}(this));

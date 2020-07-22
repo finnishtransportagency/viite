@@ -33,4 +33,4 @@
       eventbus.trigger('coordinates:marked', centerLonLat);
     });
   };
-})(this);
+}(this));

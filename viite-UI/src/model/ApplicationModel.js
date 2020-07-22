@@ -38,6 +38,8 @@
     var selectionTypeIs = function (type) {
       if (!_.isUndefined(selectionType.value) || !_.isUndefined(type.value))
         return selectionType.value === type.value;
+      else
+        return false;
     };
 
     var setReadOnly = function (newState) {
@@ -107,11 +109,11 @@
     }
 
     function setSelectedTool(tool) {
-      if (!isSelectedTool(tool)) {
-        selectedTool = tool;
-      } else {
+      if (isSelectedTool(tool)) {
         selectedTool = LinkValues.Tool.Unknown.value;
         eventbus.trigger('tool:clear');
+      } else {
+        selectedTool = tool;
       }
       eventbus.trigger('tool:changed', selectedTool);
     }
@@ -142,12 +144,12 @@
 
     var addSpinner = function (spinnerEvent) {
       jQuery('.container').append(
-          $('<div/>')
-              .addClass("spinner-overlay")
-              .addClass(spinnerClassName(spinnerEvent))
-              .addClass("modal-overlay").append(
-              $('<div/>')
-                  .addClass("spinner")
+          $('<div/>').
+              addClass("spinner-overlay").
+              addClass(spinnerClassName(spinnerEvent)).
+              addClass("modal-overlay").append(
+              $('<div/>').
+                  addClass("spinner")
           )
       );
     };
@@ -167,9 +169,9 @@
       resetCurrentAction: resetCurrentAction,
       actionCalculating: actionCalculating,
       actionCalculated: actionCalculated,
-      refreshMap: function (zoom, bbox, center) {
-        var hasZoomLevelChanged = zoom.level !== zoom;
-        setZoomLevel(zoom);
+      refreshMap: function (zoomLevel, bbox, center) {
+        var hasZoomLevelChanged = zoomLevel.level !== zoomLevel;
+        setZoomLevel(zoomLevel);
         centerLonLat = center;
         eventbus.trigger('map:refresh', {
           selectedLayer: selectedLayer,
@@ -195,7 +197,7 @@
         minDirtyZoomLevel = level;
       },
       selectLayer: function (layer, toggleStart, noSave) {
-        var tool = layer !== 'node' ? LinkValues.Tool.Default.value : LinkValues.Tool.Unknown.value;
+        var tool = layer === 'node' ? LinkValues.Tool.Unknown.value : LinkValues.Tool.Default.value;
         setSelectedTool(tool);
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
@@ -292,5 +294,5 @@
       specialSelectionTypes: specialSelectionTypes
     };
   };
-})(this);
+}(this));
 

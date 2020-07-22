@@ -5,15 +5,14 @@
     var me = this;
     var featuresToKeep = [];
     var dirty = false;
-    var nearest = null;
 
     var open = function (id, multiSelect) {
-      if (!multiSelect) {
-        current = projectLinkCollection.getProjectLink([id]);
-        me.ids = [id];
-      } else {
+      if (multiSelect) {
         me.ids = projectLinkCollection.getMultiProjectLinks(id);
         current = projectLinkCollection.getProjectLink(me.ids);
+      } else {
+        current = projectLinkCollection.getProjectLink([id]);
+        me.ids = [id];
       }
       eventbus.trigger('projectLink:clicked', get(id));
     };
@@ -112,10 +111,6 @@
       eventbus.trigger('layer:enableButtons', true);
     };
 
-    var setNearestPoint = function(point) {
-      nearest = point;
-    };
-
     var isSplit = function () {
       return get().length > 1 && !_.isUndefined(get()[0].connectedLinkId);
     };
@@ -141,8 +136,7 @@
       isSplit: isSplit,
       isMultiLink: isMultiLink,
       isDirty: isDirty,
-      setDirty: setDirty,
-      setNearestPoint: setNearestPoint
+      setDirty: setDirty
     };
   };
-})(this);
+}(this));

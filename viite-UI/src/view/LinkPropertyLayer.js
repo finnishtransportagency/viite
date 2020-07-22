@@ -223,7 +223,7 @@
     selectDoubleClick.set('name','selectDoubleClickInteractionLPL');
 
 
-    var zoomDoubleClickListener = function(event) {
+    var zoomDoubleClickListener = function(_event) {
       if (isActiveLayer)
         _.defer(function(){
           if (selectedLinkProperty.get().length === 0 && zoomlevels.getViewZoom(map) <= 13) {
@@ -284,7 +284,7 @@
         return !_.isUndefined(selectionTarget.linkData);
       });
 
-      if (!_.isUndefined(selectedF)) {
+      if (selectedF) {
         var selection = selectedF.linkData;
         if (roadLayer.layer.getOpacity() === 1) {
           setGeneralOpacity(0.2);
@@ -440,7 +440,7 @@
       var roadLinks = _.reject(allRoadLinks, function (rl) {
         return _.includes(_.map(underConstructionLinks, function(sl){ return sl.linkId;}), rl.linkId);
       });
-      var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
+      var linkIdsToRemove = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? selectedLinkProperty.linkIdsToExclude() : [];
       me.clearLayers([floatingMarkerLayer, anomalousMarkerLayer, geometryChangedLayer, underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, underConstructionMarkerLayer, calibrationPointLayer]);
 
       if(zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
@@ -548,9 +548,8 @@
       return selectedLinkProperty.isDirty();
     };
 
-    var reselectRoadLink = function(targetFeature, adjacents) {
+    var reselectRoadLink = function(targetFeature, _adjacents) {
       var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true);
-      var indicators = adjacents;
       indicatorLayer.getSource().clear();
 
       if (applicationModel.selectionTypeIs(SelectionType.Unknown) && targetFeature.linkData.floating !== SelectionType.Floating.value && targetFeature.linkData.anomaly === Anomaly.NoAddressGiven.value) {
@@ -559,7 +558,7 @@
           var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (ft) {
             return ft.anomaly === Anomaly.NoAddressGiven.value;
           }));
-          anomalousFeatures.forEach(function (fmf) {
+          anomalousFeatures.forEach(function () {
             editFeatureDataForGreen(targetFeature.linkData);
           });
         } else {
@@ -592,7 +591,10 @@
       eventListener.listenTo(eventbus, 'linkProperties:closed', refreshViewAfterClosingFloating);
 
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function (link) {
-        var selectedLink = (_.isUndefined(link) ? link : (_.isArray(link) ? link : [link]));
+        let selectedLink = link;
+        if (link) {
+          selectedLink = (_.isArray(link)) ? link : [link];
+        }
         var isUnknown = _.every(selectedLink, function(sl) {
           return sl.anomaly !== Anomaly.None.value && sl.floating !== SelectionType.Floating.value;
         });
@@ -603,11 +605,13 @@
             _.each(roads, function (feature) {
               if (_.includes(featureLink.selectedLinks, feature.linkData.linearLocationId))
                 return features.push(feature);
+              return features;
             });
           } else if (featureLink.linkId !== 0) {
             _.each(roads, function (feature) {
               if (_.includes(featureLink.selectedLinks, feature.linkData.linkId))
                 return features.push(feature);
+              return features;
             });
           }
         });
@@ -633,13 +637,13 @@
               }).uniq().value();
               var visibleFeatures = getVisibleFeatures(true,false,true);
               var featuresToReSelect = function() {
-                if (floatingsIds.length !== 0) {
+                if (floatingsIds.length === 0) {
                   return _.filter(visibleFeatures, function (feature) {
-                    return _.includes(floatingsIds, feature.linkData.id);
+                    return _.includes(floatingsLinkIds, feature.linkData.linkId);
                   });
                 } else {
                   return _.filter(visibleFeatures, function (feature) {
-                    return _.includes(floatingsLinkIds, feature.linkData.linkId);
+                    return _.includes(floatingsIds, feature.linkData.id);
                   });
                 }
               };
@@ -743,7 +747,7 @@
         applicationModel.addSpinner();
         redrawNextSelectedTarget(targets, adjacents);
       });
-      eventListener.listenTo(eventbus, 'adjacents:added', function(sources, targets) {
+      eventListener.listenTo(eventbus, 'adjacents:added', function(_sources, _targets) {
         clearIndicators();
         _.map(_.filter(selectedLinkProperty.getFeaturesToKeep(), function(link) {
           return link.roadNumber === 0;
@@ -752,11 +756,11 @@
         });
       });
 
-      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(sources, targets) {
+      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(_sources, _targets) {
         clearIndicators();
       });
 
-      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(floatings) {
+      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(_floatings) {
         var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true,true);
         selectedLinkProperty.processOLFeatures(visibleFeatures);
       });
@@ -860,10 +864,10 @@
                 var points = _.map(roadLink.newGeometry, function (point) {
                   return [point.x, point.y];
                 });
-                feature = new ol.Feature({geometry: new ol.geom.LineString(points)});
-                feature.linkData = roadLink;
+                const newFeature = new ol.Feature({geometry: new ol.geom.LineString(points)});
+                newFeature.linkData = roadLink;
                 pickAnomalousMarker = _.filter(geometryChangedLayer.getSource().getFeatures(), function(marker){
-                  return marker.linkData.linkId === feature.linkData.linkId;
+                  return marker.linkData.linkId === newFeature.linkData.linkId;
                 });
                 _.each(pickAnomalousMarker, function(pickRoads){
                   geometryChangedLayer.getSource().removeFeature(pickRoads);
@@ -1261,4 +1265,4 @@
       minZoomForContent: me.minZoomForContent
     };
   };
-})(this);
+}(this));

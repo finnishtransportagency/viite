@@ -103,10 +103,12 @@
     };
 
     var formFields = function (sources, targets) {
+      let sourcesFixed;
+      let targetsFixed;
       if(!_.isUndefined(sources))
-        sources = [].concat( sources );
+      sourcesFixed = [].concat( sources );
       if(!_.isUndefined(targets))
-        targets = [].concat( targets.filter(function (link){
+      targetsFixed = [].concat( targets.filter(function (link){
           return link.id === 0;
         }));
       $('.control-label-floating-list').remove();
@@ -115,43 +117,43 @@
       var field = "";
       var linkCounter = 0;
       field = floatingListField('VALITUT LINKIT (IRTI GEOMETRIASTA OLEVAT):');
-      _.each(sources, function(src) {
+      _.each(sourcesFixed, function(src) {
         var slp = src.getData();
         var divId = "VALITUTLINKIT" + linkCounter;
         var linkId = slp.linkId;
         var id = _.isUndefined(slp.id) ? -1: slp.id;
         if ((_.isUndefined(_.find(linkIds, function(link){return link === linkId;})) || _.isUndefined(_.find(ids, function(link){return link === id;}))) && !_.isUndefined(linkId) ) {
           field = field + '<div class="form-group" id=' +divId +'>' +
-            '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+            '<label class="control-label-floating">LINK ID:</label>' +
             '<p class="form-control-static-floating">' + linkId + '</p>' +
             '</div>' ;
           linkIds.push(linkId);
           ids.push(id);
-          linkCounter = linkCounter + 1;
+          linkCounter += 1;
         }
       });
-      field = field + floatingListField('VALITUT LINKIT (TUNTEMATTOMAT):');
+      field += floatingListField('VALITUT LINKIT (TUNTEMATTOMAT):');
       linkIds = [];
       ids = [];
-      _.each(targets, function(target) {
+      _.each(targetsFixed, function(target) {
           var divId = "VALITUTLINKIT" + linkCounter;
           var linkId = target.linkId;
           var id = _.isUndefined(target.id) ? -1: target.id;
           if (_.isUndefined(_.find(linkIds, function(link){return link === linkId;})) || _.isUndefined(_.find(ids, function(link){return link === id;}))) {
               field = field + '<div class="form-group" id=' +divId +'>' +
-                  '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+                  '<label class="control-label-floating">LINK ID:</label>' +
                   '<p class="form-control-static-floating">' + linkId + '</p>' +
                   '</div>' ;
               linkIds.push(linkId);
               ids.push(id);
-              linkCounter = linkCounter + 1;
+              linkCounter += 1;
           }
       });
       return field;
     };
 
     var additionalSource = function(linkId, marker, id) {
-      return (!_.isUndefined(marker)) ? '' +
+      return (marker) ? '' +
       '<div class = "form-group" id = "additionalSource">' +
       '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
       '<label class="control-label-floating"> LINK ID:</label>' +
@@ -201,9 +203,9 @@
 
     var decodeAttributes = function(attr, value) {
       var attrObj = _.find(decodedAttributes, function (obj) { return obj.id === attr; });
-      if (!_.isUndefined(attrObj)) {
+      if (attrObj) {
         var attrValue = _.find(attrObj.attributes, function (obj) { return obj.value === value; });
-        if (!_.isUndefined(attrValue)) {
+        if (attrValue) {
           return attrValue.description;
         } else {
           return "Ei määritetty";
@@ -306,7 +308,7 @@
           '</div>' +
           revertToFloatingButton()+
         '</div>' +
-        '<footer>' + '</footer>');
+        '<footer></footer>');
     };
 
     var templateFloating = function(firstSelectedLinkProperty, linkProperties) {
@@ -344,7 +346,7 @@
             notificationFloatingTransfer(true) +
           '</div>' +
         '</div>' +
-        '<footer>' + '</footer>');
+        '<footer></footer>');
     };
 
     var templateFloatingEditMode = function(firstSelectedLinkProperty, linkProperties) {
@@ -386,8 +388,8 @@
         '<footer>' + editButtons + '</footer> </div>');
     };
 
-    var showLinkId = function(selectedLinkProperty, linkProperties) {
-        if (selectedLinkProperty.count () === 1) {
+    var showLinkId = function(selectedLinkPropertyToShow, linkProperties) {
+        if (selectedLinkPropertyToShow.count () === 1) {
             return '' +
                 '<div class="form-group-metadata">' +
                     '<p class="form-control-static asset-log-info-metadata">Linkin ID: ' + linkProperties.linkId + '</p>' +
@@ -507,22 +509,20 @@
               } else {
                 rootElement.html(template(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
               }
-            } else {
-              if (lastFeatureToKeep.floating === LinkValues.SelectionType.Floating.value) {
+            } else if (lastFeatureToKeep.floating === LinkValues.SelectionType.Floating.value) {
                 rootElement.html(templateFloatingEditMode(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
                 if (applicationModel.selectionTypeIs(selectionType.Floating) && firstSelectedLinkProperty.floating === LinkValues.SelectionType.Floating.value) {
                   selectedLinkProperty.getLinkFloatingAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 }
                 $('#floatingEditModeForm').show();
-              } else { //check if the before selected was a floating link and if the next one is unknown
-                if (uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === LinkValues.Anomaly.NoAddressGiven.value) {
-                  rootElement.html(templateFloatingEditMode(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
-                  $('#floatingEditModeForm').show();
-                } else {
-                  rootElement.html(template(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
-                }
+            } else  //check if the before selected was a floating link and if the next one is unknown
+              if (uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === LinkValues.Anomaly.NoAddressGiven.value) {
+                rootElement.html(templateFloatingEditMode(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
+                $('#floatingEditModeForm').show();
+              } else {
+                rootElement.html(template(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
               }
-            }
+              
           } else if (!_.isEmpty(selectedLinkProperty.get())) {
             if (readOnly) {
               if (firstSelectedLinkProperty.floating === LinkValues.SelectionType.Floating.value) {
@@ -530,8 +530,7 @@
               } else {
                 rootElement.html(template(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
               }
-            } else {
-              if (_.last(selectedLinkProperty.get()).floating === LinkValues.SelectionType.Floating.value) {
+            } else if (_.last(selectedLinkProperty.get()).floating === LinkValues.SelectionType.Floating.value) {
                 applicationModel.setSelectionType(selectionType.Floating);
                 rootElement.html(templateFloatingEditMode(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
                 selectedLinkProperty.getLinkFloatingAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
@@ -539,7 +538,6 @@
               } else {
                 rootElement.html(template(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
               }
-            }
           }
           rootElement.find('.form-controls').toggle(!readOnly);
           rootElement.find('.btn-move').prop("disabled", true);
@@ -627,6 +625,7 @@
             processAdditionalFloatings(sources, event.currentTarget.value, event.currentTarget.dataset.id);
           });
         }
+        return '';
       };
 
       var processAdjacents = function (sources, targets) {
@@ -730,7 +729,7 @@
           $('#control-label-floating').remove();
           $('#adjacentsData').empty();
           eventbus.trigger('linkProperties:clearIndicators');
-          eventbus.once('linkProperties:unknownsTreated', function (unknowns) {
+          eventbus.once('linkProperties:unknownsTreated', function () {
             //The addition of the defer seems to fix the problem of the unknowns being drawn behind the floatings
             _.defer(function(){
               rootElement.find('.link-properties button.continue').attr('disabled', true);
@@ -761,7 +760,7 @@
         rootElement.find('.link-properties button.continue').attr('disabled', true);
         $('[id^=VALITUTLINKIT]').remove();
 
-        var fields = formFields(result, targets) + '' + afterCalculationTemplate();
+        var fields = String(formFields(result, targets)) + afterCalculationTemplate();
 
         $('.form-group:last').after(fields);
 
@@ -769,7 +768,6 @@
       });
 
       eventbus.on('adjacents:startedFloatingTransfer', function() {
-        action = applicationModel.actionCalculating;
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
         applicationModel.setActiveButtons(true);
         eventbus.trigger('layer:enableButtons', false);
@@ -778,7 +776,7 @@
       eventbus.on('adjacents:floatingAdded', function(floatingRoads) {
         var floatingPart = '<br><label id="control-label-floating" class="control-label-floating">VIERESSÄ KELLUVIA TIEOSOITTEITA:</label>';
         _.each(floatingRoads, function(fr) {
-          floatingPart = floatingPart + additionalSource(fr.linkId, fr.marker, fr.id);
+          floatingPart += additionalSource(fr.linkId, fr.marker, fr.id);
         });
         if (floatingRoads.length === 0) {
           applicationModel.setContinueButton(true);
@@ -815,4 +813,4 @@
     };
     bindEvents();
   };
-})(this);
+}(this));

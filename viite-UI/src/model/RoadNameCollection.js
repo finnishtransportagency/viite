@@ -7,11 +7,10 @@
         var currentRoadNameData = [];
         var changedIds = [];
         var newRoadName = {id: newId};
-        var yearLimit = 5;
 
         var findCurrentRoadName = function (id) {
             var roadName = _.find(currentRoadNameData, function (roadData) {
-                return roadData.id == id;
+                return roadData.id === parseInt(id);
             });
             roadName = roadName ? roadName : newRoadName;
             changedIds.push(roadName.id);
@@ -24,7 +23,7 @@
             backend.getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
                 currentRoadNumber = roadNumber;
                 var sortedRoadData = _.chain(roadData.roadNameInfo).filter(function (rd) {
-                    return rd.roadNumber == roadNumber;
+                    return rd.roadNumber === parseInt(roadNumber);
                 }).map(function (road) {
                     var roadCopy = road;
                     if (road.endDate)
@@ -34,7 +33,6 @@
                     return roadCopy;
                 }).sortBy('startDate').value();
                 currentRoadNameData = sortedRoadData;
-                var lastRoadName = _.last(sortedRoadData);
                 eventbus.trigger("roadNameTool:roadsFetched", sortedRoadData);
             });
         };
@@ -66,6 +64,7 @@
         this.undoNewRoadName = function () {
             newRoadName = {id: newId};
             changedIds = _.filter(changedIds, function (id) {
+                // eslint-disable-next-line eqeqeq
                 return id != newId;
             });
         };
@@ -88,4 +87,4 @@
         };
 
     };
-})(this);
+}(this));

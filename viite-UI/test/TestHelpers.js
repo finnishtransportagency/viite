@@ -88,21 +88,21 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
 
     var fakeBackend = function(zoomLevel, generatedData, latitude, longitude, projectDefinition) {
       var data = getSimulatedData(projectDefinition);
-        return new Backend().withLinkData(generatedData, selectTestData('roadAddressAfterSave'))
-        .withUserRolesData(UserRolesTestData.userData())
-        .withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10, deploy_date: "" })
-        .withFloatingAdjacents(data.floatingAdjacents)
-        .withGetTargetAdjacent(data.targetAdjacent)
-        .withGetTransferResult(data.transferResult)
-        .withRoadAddressProjectData(data.projectData)
-        .withRoadPartReserved(data.partReserved)
-        .withProjectLinks(data.projectLinks)
-        .withGetProjectsWithLinksById(data.projectsWithLinks)
-        .withRoadAddressProjects(data.projects)
-        .withGetRoadAddressByLinkId(data.roadLinkById)
-        .withGetProjectLinkByLinkId(data.roadLinkById)
-        .withCreateRoadAddressProject(data.createRoadAddressProject)
-        .withRoadAddressCreation();
+        return new Backend().withLinkData(generatedData, selectTestData('roadAddressAfterSave')).
+        withUserRolesData(UserRolesTestData.userData()).
+        withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10, deploy_date: "" }).
+        withFloatingAdjacents(data.floatingAdjacents).
+        withGetTargetAdjacent(data.targetAdjacent).
+        withGetTransferResult(data.transferResult).
+        withRoadAddressProjectData(data.projectData).
+        withRoadPartReserved(data.partReserved).
+        withProjectLinks(data.projectLinks).
+        withGetProjectsWithLinksById(data.projectsWithLinks).
+        withRoadAddressProjects(data.projects).
+        withGetRoadAddressByLinkId(data.roadLinkById).
+        withGetProjectLinkByLinkId(data.roadLinkById).
+        withCreateRoadAddressProject(data.createRoadAddressProject).
+        withRoadAddressCreation();
     };
 
     var clickVisibleEditModeButton = function() {
@@ -209,6 +209,8 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
             projectData: {},
             roadLinkById: {}
           };
+        default:
+          return {};
       }
     };
 
@@ -234,6 +236,8 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
           return RoadAddressProjectTestData.generateProjectLinkData();
         case 'terminatedProjectLinks':
           return RoadAddressProjectTestData.generateTerminatedProjectLinkData();
+        default:
+          return {};
       }
     };
 
@@ -271,8 +275,8 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
     };
 
     var selectSingleFeatureByInteraction = function(map, feature, interactionName){
-      var interaction = _.find(map.getInteractions().getArray(), function(interaction) {
-        return interaction.get('name') === interactionName;
+      var interaction = _.find(map.getInteractions().getArray(), function(interactionHere) {
+        return interactionHere.get('name') === interactionName;
       });
 
       if (interaction) {

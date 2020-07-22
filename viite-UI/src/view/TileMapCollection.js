@@ -110,4 +110,4 @@
       layers: _.map(tileMapLayers, function(layer) { return layer; })
     };
   };
-})(this);
+}(this));

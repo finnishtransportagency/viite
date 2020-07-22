@@ -17,12 +17,12 @@
     });
     navigationPanel.append(assetElementDiv);
 
-    var assetControlMap = _.chain(assetControls)
-      .map(function(asset) {
+    var assetControlMap = _.chain(assetControls).
+      map(function(asset) {
         return [asset.layerName, asset];
-      })
-      .fromPairs()
-      .value();
+      }).
+      fromPairs().
+      value();
 
 
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
@@ -41,4 +41,4 @@
     }
 
   }
-})(this);
+}(this));

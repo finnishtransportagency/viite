@@ -96,8 +96,8 @@
       junctionTemplateSelectedLayer.setOpacity(opacity);
     };
 
-    var setProperty = function (layers, propertyName, propertyValue) {
-      _.each(layers, function (layer) {
+    var setProperty = function (propertyLayers, propertyName, propertyValue) {
+      _.each(propertyLayers, function (layer) {
         layer.set(propertyName, propertyValue);
       });
     };
@@ -160,7 +160,9 @@
             attachNode(selectedNode.node, selectedNodesAndJunctions.getCurrentTemplates());
           }
           break;
-      }
+        default:
+          break;
+          }
     });
 
     /**
@@ -391,7 +393,9 @@
           me.eventListener.listenToOnce(eventbus, 'map:clicked', createNewNodeMarker);
           setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
           break;
-      }
+        default:
+          break;
+          }
     });
 
     var createNewNodeMarker = function (coords) {
@@ -434,8 +438,8 @@
       });
 
       _.each(junctionMarkerSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
-        var junction = _.find(node.junctions, function (junction) {
-          return junction.id === junctionFeature.junction.id;
+        var junction = _.find(node.junctions, function (junctionFound) {
+          return junctionFound.id === junctionFeature.junction.id;
         });
         if (!_.isUndefined(junction)) {
           junctionFeature.setProperties({junctionNumber: junction.junctionNumber});
@@ -453,7 +457,7 @@
     var addJunctionTemplateToMap = function (junction, layer) {
       if (_.has(junction, 'junctionPoints') && !_.isEmpty(junction.junctionPoints)) {
         addFeature(layer, new JunctionTemplateMarker().createJunctionTemplateMarker(junction), function (feature) {
-          if (!_.isUndefined(feature.junctionTemplate)) {
+          if (feature.junctionTemplate) {
             return feature.junctionTemplate.id === junction.id;
           } else {
             return feature.junction.id === junction.id;
@@ -497,18 +501,18 @@
     };
 
     me.eventListener.listenTo(eventbus, 'junction:mapNumberUpdate', function (junction) {
-      var updateJunctionTemplateNumberOnMap = function (junction) {
+      var updateJunctionTemplateNumberOnMap = function (junctionToUpdate) {
         _.each(junctionTemplateSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
-          if (_.isEqual(junctionFeature.junctionTemplate.id, junction.id)) {
-            junctionFeature.setProperties({junctionNumber: junction.junctionNumber});
+          if (_.isEqual(junctionFeature.junctionTemplate.id, junctionToUpdate.id)) {
+            junctionFeature.setProperties({junctionNumber: junctionToUpdate.junctionNumber});
           }
         });
       };
 
-      var updateJunctionNumberOnMap = function (junction) {
+      var updateJunctionNumberOnMap = function (junctionToMap) {
         _.each(junctionMarkerSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
-          if (_.isEqual(junctionFeature.junction.id, junction.id)) {
-            junctionFeature.setProperties({junctionNumber: junction.junctionNumber});
+          if (_.isEqual(junctionFeature.junction.id, junctionToMap.id)) {
+            junctionFeature.setProperties({junctionNumber: junctionToMap.junctionNumber});
           }
         });
       };
@@ -623,7 +627,7 @@
         var currentNode = selectedNodesAndJunctions.getCurrentNode();
         var currentTemplates = selectedNodesAndJunctions.getCurrentTemplates();
 
-        if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
+        if (parseInt(zoom) >= zoomlevels.minZoomForNodes) {
           var filteredNodePointTemplates = templates.nodePoints;
 
           if (currentNode) {
@@ -665,7 +669,7 @@
           });
         }
 
-        if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions) {
+        if (parseInt(zoom) >= zoomlevels.minZoomForJunctions) {
 
           var filteredJunctions = _.flatten(_.map(filteredNodes, "junctions"));
           var filteredJunctionTemplates = templates.junctions;
@@ -735,4 +739,4 @@
     };
   };
 
-})(this);
+}(this));

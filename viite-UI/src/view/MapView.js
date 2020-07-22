@@ -49,8 +49,8 @@
     });
     vectorLayer.set('name','mapViewVectorLayer');
 
-    var addCenterMarkerLayerToMap = function(map) {
-      map.addLayer(vectorLayer);
+    var addCenterMarkerLayerToMap = function(mapMarker) {
+      mapMarker.addLayer(vectorLayer);
     };
 
     eventbus.on('application:initialized layer:fetched', function() {
@@ -133,13 +133,13 @@
 
     //when the map is moving (the user is dragging the map)
     //only work's when the developer options in the browser aren't open
-    map.on('pointerdrag', function(evt) {
+    map.on('pointerdrag', function(_evt) {
       map.getViewport().style.cursor = "move";
     });
 
     //when the map dragging stops the cursor value returns to the initial one
-    map.on('pointerup', function(evt) {
-      if(applicationModel.getSelectedTool() == 'Select')
+    map.on('pointerup', function(_evt) {
+      if(applicationModel.getSelectedTool() === 'Select')
       map.getViewport().style.cursor = "initial";
     });
 
@@ -155,4 +155,4 @@
 
     setCursor(applicationModel.getSelectedTool());
   };
-})(this);
+}(this));

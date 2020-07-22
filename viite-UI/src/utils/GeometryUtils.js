@@ -49,10 +49,10 @@
       var convertedVertex = {x: vertex[0], y: vertex[1]};
       if (acc.firstSplit) {
         if (acc.previousVertex) {
-          acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(acc.previousVertex, convertedVertex));
+          acc.splitMeasure += vectorLength(subtractVector(acc.previousVertex, convertedVertex));
         }
         if (index === splitSegment.index) {
-          acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(convertedVertex, splitSegment.splitPoint));
+          acc.splitMeasure += vectorLength(subtractVector(convertedVertex, splitSegment.splitPoint));
           acc.firstSplit = false;
         }
         acc.previousVertex = convertedVertex;
@@ -95,8 +95,8 @@
       x = x2;
       y = y2;
     } else {
-      x = x1 + along * dx;
-      y = y1 + along * dy;
+      x = x1 + (along * dx);
+      y = y1 + (along * dy);
     }
     return {
       distance: Math.sqrt(Math.pow(x - x0, 2) + Math.pow(y - y0, 2)),
@@ -109,7 +109,8 @@
     var result, best = {};
     var min = Number.POSITIVE_INFINITY;
     var i = 0;
-    geometry.forEachSegment(function (segPoint1, segPoint2) {
+/* eslint-disable consistent-return */
+geometry.forEachSegment(function (segPoint1, segPoint2) {
       result = distanceToSegment(point, [segPoint1, segPoint2]);
       if (result.distance < min) {
         min = result.distance;
@@ -158,7 +159,7 @@
 
     var directionVector = scaleVector(sumVectors(subtractVector(point, previousPoint), subtractVector(nextPoint, point)), 0.5);
     var normal = normalVector(directionVector);
-    var sideCodeScalar = (2 * sideCode - 5) * baseOffset;
+    var sideCodeScalar = ((2 * sideCode) - 5) * baseOffset;
     var offset = scaleVector(unitVector(normal), sideCodeScalar);
     return sumVectors(point, offset);
   };
@@ -200,13 +201,13 @@
       if (accumulatedDistance < length / 2) {
         return {previousVertex: vertex, distanceTraversed: accumulatedDistance};
       } else {
-        vertex = {x: vertex[0], y: vertex[1]};
+        const vertexCoord = {x: vertex[0], y: vertex[1]};
         acc.previousVertex = {x: acc.previousVertex[0], y: acc.previousVertex[1]};
         return {
           midpoint: {
-            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distance) * (length / 2 - acc.distanceTraversed)),
-            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distance) * (length / 2 - acc.distanceTraversed)),
-            angleFromNorth: calculateAngleFromNorth(subtractVector(vertex, acc.previousVertex))
+            x: acc.previousVertex.x + (((vertexCoord.x - acc.previousVertex.x) / distance) * ((length / 2) - acc.distanceTraversed)),
+            y: acc.previousVertex.y + (((vertexCoord.y - acc.previousVertex.y) / distance) * ((length / 2) - acc.distanceTraversed)),
+            angleFromNorth: calculateAngleFromNorth(subtractVector(vertexCoord, acc.previousVertex))
           }
         };
       }
@@ -246,5 +247,5 @@
       }, 0.0);
   };
 
-})(window.GeometryUtils = window.GeometryUtils || {});
+}(window.GeometryUtils = window.GeometryUtils || {}));
 

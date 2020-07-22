@@ -29,4 +29,4 @@
       return roadLayerStyleMap;
     }
   };
-})(this);
+}(this));

@@ -31,9 +31,9 @@
       openTemplates(templates(_.first(junctionTemplate.junctionPoints).coordinates));
     };
 
-    var openTemplates = function (templates) {
+    var openTemplates = function (templatesToOpen) {
       clean();
-      setCurrentTemplates(templates.nodePoints, templates.junctions);
+      setCurrentTemplates(templatesToOpen.nodePoints, templatesToOpen.junctions);
       eventbus.trigger('templates:selected', current.templates);
     };
 
@@ -109,8 +109,8 @@
     };
 
     var setJunctionNumber = function (id, junctionNumber) {
-      var junction = _.find(current.node.junctions, function (junction) {
-        return junction.id === id;
+      var junction = _.find(current.node.junctions, function (junctionToSet) {
+        return junctionToSet.id === id;
       });
 
       if (!_.isUndefined(junction)) {
@@ -215,10 +215,10 @@
       }));
     };
 
-    var isEqualWithout = function (original, current, toIgnore) {
+    var isEqualWithout = function (original, currentObject, toIgnore) {
       return _.isEqual(
         _.omit(original, toIgnore),
-        _.omit(current, toIgnore)
+        _.omit(currentObject, toIgnore)
       );
     };
 
@@ -254,8 +254,8 @@
       eventbus.trigger('change:node', current.node, junction);
     };
 
-    eventbus.on('selectedNodesAndJunctions:openTemplates', function (templates) {
-      openTemplates(templates);
+    eventbus.on('selectedNodesAndJunctions:openTemplates', function (templatesToOpen) {
+      openTemplates(templatesToOpen);
     });
 
     return {
@@ -289,4 +289,4 @@
       updateNodesAndJunctionsMarker: updateNodesAndJunctionsMarker
     };
   };
-})(this);
+}(this));

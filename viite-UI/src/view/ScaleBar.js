@@ -7,4 +7,4 @@
       className: 'olScaleLine'
     }));
   };
-})(this);
+}(this));

@@ -39,14 +39,14 @@
 
     var addNodeTypeDropdown = function (labelText, id, nodeType) {
       var addNodeTypeOptions = function (selected) {
-        var nodeTypes = _.filter(LinkValues.NodeType, function (nodeType) {
-          return nodeType !== LinkValues.NodeType.UnknownNodeType;
+        var nodeTypes = _.filter(LinkValues.NodeType, function (nodeTypeFiltered) {
+          return nodeTypeFiltered !== LinkValues.NodeType.UnknownNodeType;
         });
 
-        return _.map(nodeTypes, function (nodeType) {
-          var option = _.isEqual(nodeType, selected) ? 'selected' : '';
-          return '<option value="' + nodeType.value + '"' + option + '>' +
-            nodeType.value + ' ' + nodeType.description + '</option>';
+        return _.map(nodeTypes, function (nodeTypeMapped) {
+          var option = _.isEqual(nodeTypeMapped, selected) ? 'selected' : '';
+          return '<option value="' + nodeTypeMapped.value + '"' + option + '>' +
+            nodeTypeMapped.value + ' ' + nodeTypeMapped.description + '</option>';
         });
       };
 
@@ -310,8 +310,8 @@
       };
 
       var detachNodePointBox = function(nodePoint) {
-        var nodePointType = _.find(LinkValues.NodePointType, function (nodePointType) {
-          return nodePointType.value === nodePoint.type;
+        var nodePointType = _.find(LinkValues.NodePointType, function (nodePointTypeFound) {
+          return nodePointTypeFound.value === nodePoint.type;
         });
         var isDetachable = 'title="' + nodePointType.description + '"'; // added for testing purposes, needs to be confirm if this title is a good idea for production env.
         if (_.isEqual(nodePointType, LinkValues.NodePointType.CalculatedNodePoint)) {
@@ -443,8 +443,8 @@
       };
 
       var junctionAndNodePointsByJunctionPointsCoordinates = function (junctionId) {
-        var junction = _.find(selectedNodesAndJunctions.getJunctions(), function (junction) {
-          return junction.id === junctionId;
+        var junction = _.find(selectedNodesAndJunctions.getJunctions(), function (junctionFound) {
+          return junctionFound.id === junctionId;
         });
 
         var nodePoints = _.filter(selectedNodesAndJunctions.getNodePoints(), function (nodePoint) {
@@ -469,13 +469,13 @@
           return nodePoint.id === nodePointId;
         });
 
-        var junction = _.find(selectedNodesAndJunctions.getJunctions(), function (junction) {
-          var junctionPointsCoordinates = _.map(junction.junctionPoints, 'coordinates');
+        var junction = _.find(selectedNodesAndJunctions.getJunctions(), function (junctionFound) {
+          var junctionPointsCoordinates = _.map(junctionFound.junctionPoints, 'coordinates');
 
           return !_.isEmpty(_.intersectionWith(junctionPointsCoordinates, [targetNodePoint.coordinates], _.isEqual));
         });
 
-        if (!_.isUndefined(junction)) {
+        if (junction) {
           return junctionAndNodePointsByJunctionPointsCoordinates(junction.id);
         } else {
           return {
@@ -507,12 +507,12 @@
       };
 
       rootElement.on('change', '[id^="detach-node-point-"]', function () {
-        var checkbox = this;
-        var nodePointId = parseInt(checkbox.value);
+        var me = this;
+        var nodePointId = parseInt(me.value);
         var match = junctionAndNodePointsByNodePointCoordinates(nodePointId);
         var junction = match.junction;
         var nodePoints = match.nodePoints;
-        if (checkbox.checked) {
+        if (me.checked) {
           if (!_.isEmpty(junction) || nodePoints.length > 1) {
             new GenericConfirmPopup(buildMessage(junction, match.nodePoints), {
               successCallback: function () {
@@ -520,7 +520,7 @@
                 markJunctionAndNodePoints(junction, nodePoints, true);
               },
               closeCallback: function () {
-                $(checkbox).prop('checked', false);
+                $(me).prop('checked', false);
               }
             });
           } else {
@@ -534,19 +534,20 @@
               markJunctionAndNodePoints(junction, nodePoints, false);
             },
             closeCallback: function () {
-              $(checkbox).prop('checked', true);
+              $(me).prop('checked', true);
             }
           });
         }
       });
 
       rootElement.on('change', '[id^="detach-junction-"]', function () {
-        var checkbox = this;
-        var junctionId = parseInt(checkbox.value);
+        var me = this;
+        var junctionId = parseInt(me.value);
         var match = junctionAndNodePointsByJunctionPointsCoordinates(junctionId);
         var junction = match.junction;
         var nodePoints = match.nodePoints;
-        if (checkbox.checked) {
+        if (me.checked) {
+          // eslint-disable-next-line no-negated-condition
           if (!_.isEmpty(nodePoints)) {
             new GenericConfirmPopup(buildMessage(junction, match.nodePoints), {
               successCallback: function () {
@@ -554,7 +555,7 @@
                 markJunctionAndNodePoints(junction, nodePoints, true);
               },
               closeCallback: function () {
-                $(checkbox).prop('checked', false);
+                $(me).prop('checked', false);
               }
             });
           } else {
@@ -568,7 +569,7 @@
               markJunctionAndNodePoints(junction, nodePoints, false);
             },
             closeCallback: function () {
-              $(checkbox).prop('checked', true);
+              $(me).prop('checked', true);
             }
           });
         }
@@ -710,4 +711,4 @@
 
     bindEvents();
   };
-})(this);
+}(this));

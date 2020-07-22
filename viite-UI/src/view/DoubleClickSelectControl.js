@@ -39,4 +39,4 @@
       deactivate: deactivate
     };
   };
-})(this);
+}(this));

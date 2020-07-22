@@ -191,7 +191,7 @@ module.exports = function(grunt) {
       }
     },
     eslint: {
-      src: ['Gruntfile.js', 'viite-UI/test/**/*.js', 'viite-UI/src/**/*.js', 'viite-UI/test_data/*.js', 'viite-UI/src/' ]
+      src: ['gruntfile.js', 'viite-UI/test/**/*.js', 'viite-UI/src/map/*.js', 'viite-UI/src/modalconfirm/*.js', 'viite-UI/src/model/*.js', 'viite-UI/src/utils/*.js', 'viite-UI/src/view/*.js', 'viite-UI/test_data/*.js', 'viite-UI/src/' ]
     },
     mocha: {
       viite_unit: {
