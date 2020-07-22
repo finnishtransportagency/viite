@@ -93,13 +93,11 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  // TODO Make linear_location_uk constraint work
-  ignore("Test create When creating linear locations Then duplicate linear locations should not be created") {
+  test("Test create When creating linear locations Then duplicate linear locations should not be created") {
     runWithRollback {
-      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1)))
+      linearLocationDAO.create(Seq(testLinearLocation))
       intercept[BatchUpdateException] {
-        linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2)))
+        linearLocationDAO.create(Seq(testLinearLocation))
       }
     }
   }
