@@ -59,11 +59,11 @@
     var extractDataForDisplay = function (selectedData) {
 
       var extractUniqueValues = function (dataToExtract, property) {
-        return _.chain(dataToExtract)
-          .map(property)
-          .uniq()
-          .value()
-          .join(', ');
+        return _.chain(dataToExtract).
+          map(property).
+          uniq().
+          value().
+          join(', ');
       };
 
       var isMultiSelect = selectedData.length > 1;
@@ -83,14 +83,10 @@
         }).uniq().join(", ").value()
       };
       if (isMultiSelect) {
-        var endRoadOnSelection = _.chain(selectedData)
-            .sortBy(function (sd) {
+        var endRoadOnSelection = _.chain(selectedData).
+            sortBy(function (sd) {
                 return sd.endAddressM;
             }).last().value();
-        var startRoadOnSelection = _.chain(selectedData)
-            .sortBy(function (sd) {
-                return sd.endAddressM;
-            }).first().value();
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
           'endDate', 'discontinuity', 'startAddressM', 'endAddressM'];
@@ -168,32 +164,16 @@
             eventbus.trigger('linkProperties:deactivateInteractions');
     };
 
-    var findUnknown = function(linkId, id) {
-      var permanent = !_.isUndefined(linkId) ? _.uniq(roadCollection.getByLinkId([linkId]), _.isEqual) : (!_.isUndefined(id) ? _.uniq(roadCollection.get([id]), _.isEqual) : [] );
-      var temporary = !_.isUndefined(linkId) ? _.uniq(roadCollection.getTmpByLinkId([linkId]), _.isEqual) : (!_.isUndefined(id) ? _.uniq(roadCollection.getTmpById([id]), _.isEqual) : [] );
-      var permUnknown = _.reject(permanent, function(road) {
-        return road.getData().roadLinkType !== RoadLinkType.UnknownRoadLinkType.value && road.getData().anomaly !== Anomaly.None.value;
-      });
-      var tmpUnknown = _.reject(temporary, function(road) {
-        return road.getData().roadLinkType !== RoadLinkType.UnknownRoadLinkType.value && road.getData().anomaly !== Anomaly.None.value;
-      });
-      return _.flatten(permUnknown.concat(tmpUnknown));
-    };
-
-    var openUnknown = function(linkId, id, visibleFeatures) {
-      var canIOpen = !_.isUndefined(linkId) ? true : !isSelectedById(id);
+    var openUnknown = function(linkId,visibleFeatures) {
+      var canIOpen = linkId;
       if (canIOpen) {
         if(featuresToKeep.length === 0){
           close();
-        } else {
-          if (!_.isEmpty(current) && !isDirty()) {
+        } else if (!_.isEmpty(current) && !isDirty()) {
             _.forEach(current, function(selected) { selected.unselect(); });
           }
-        }
-        if(!_.isUndefined(linkId)){
+        if(linkId){
           setCurrent(_.uniq(roadCollection.getByLinkId([linkId]), _.isEqual));
-        } else {
-          setCurrent(_.uniq(roadCollection.getById([id]), _.isEqual));
         }
         if(current[0].getData().anomaly === Anomaly.GeometryChanged.value) {
           setCurrent(_.filter(roadCollection.getTmpRoadLinkGroups(), function(linkGroup){
@@ -221,11 +201,11 @@
         if(!applicationModel.isReadOnly() && get()[0].anomaly === Anomaly.NoAddressGiven.value){
           addToFeaturesToKeep(data4Display);
         }
-        if(!_.isEmpty(getFeaturesToKeep()) && !isLinkIdInFeaturesToKeep(data.linkId)){
+        if(!_.isEmpty(getFeaturesToKeep()) && !isLinkIdInFeaturesToKeep(data4Display.linkId)){
           addToFeaturesToKeep(data4Display);
         }
         var contains = _.find(getFeaturesToKeep(), function(fk){
-          return fk.linkId === data.linkId;
+          return fk.linkId === data4Display.linkId;
         });
 
         if(!_.isEmpty(getFeaturesToKeep()) && _.isUndefined(contains)){
@@ -295,17 +275,18 @@
               }));
           }
           applicationModel.setContinueButton(true);
+          return current;
       };
 
     var getLinkAdjacents = function(link) {
       var linkIds = {};
       var chainLinks = [];
-      _.each(current, function (link) {
-        if (!_.isUndefined(link))
-          chainLinks.push(link.getData().linkId);
+      _.each(current, function (linkEach) {
+        if (!_.isUndefined(linkEach))
+          chainLinks.push(linkEach.getData().linkId);
       });
-      _.each(targets, function (link) {
-        chainLinks.push(link.linkId);
+      _.each(targets, function (linkEach) {
+        chainLinks.push(linkEach.linkId);
       });
       var data = {
         "selectedLinks": _.uniq(chainLinks), "linkId": parseInt(link.linkId), "roadNumber": parseInt(link.roadNumber),
@@ -452,16 +433,16 @@
       });
     };
 
-    var processReturnedRoadLinkData = function(additionalSourceIdentifier, floatingsToAdd, sources, response) {
+    var processReturnedRoadLinkData = function(additionalSourceIdentifier, floatingsToAdd, sourcesAdditional, response) {
       var fetchedFeature = roadCollection.toRoadLinkModel([response])[0];
 
       if (!_.isUndefined(fetchedFeature)) {
-        sources.push(fetchedFeature);
+        sourcesAdditional.push(fetchedFeature);
         addToFeaturesToKeep(fetchedFeature.getData());
       }
       var chainLinks = [];
       var chainIds = [];
-      _.each(sources, function(link) {
+      _.each(sourcesAdditional, function(link) {
         if (!_.isUndefined(link)){
           chainLinks.push(link.getData().linkId);
           chainIds.push(link.getData().id);
@@ -473,7 +454,7 @@
           chainIds.push(link.getData().id);
         }
       });
-      var sourceData = _.map(sources, function(s){
+      var sourceData = _.map(sourcesAdditional, function(s){
         return s.getData();
       });
 
@@ -494,15 +475,15 @@
       getFromMultipleAdjacents(data, newSources);
     };
 
-    var fetchRoadLinkDataByLinkId = function(existingSources, additionalSourceLinkId, sources) {
+    var fetchRoadLinkDataByLinkId = function(existingSources, additionalSourceLinkId, sourcesFetch) {
       backend.getRoadAddressByLinkId(parseInt(additionalSourceLinkId), function (response) {
-        processReturnedRoadLinkData(additionalSourceLinkId, existingSources, sources, response);
+        processReturnedRoadLinkData(additionalSourceLinkId, existingSources, sourcesFetch, response);
       });
     };
 
-    var fetchRoadLinkDataById = function(floatingsToAdd, additionalSourceId, sources) {
+    var fetchRoadLinkDataById = function(floatingsToAdd, additionalSourceId, sourcesFetch) {
      backend.getRoadAddressById(parseInt(additionalSourceId), function(response) {
-       processReturnedRoadLinkData(additionalSourceId, floatingsToAdd, sources, response);
+       processReturnedRoadLinkData(additionalSourceId, floatingsToAdd, sourcesFetch, response);
      });
     };
 
@@ -550,6 +531,7 @@
         if(feature.floating !== SelectionType.Floating.value && feature.anomaly === Anomaly.NoAddressGiven.value){
           return feature.linkId.toString();
         }
+        return null;
       }), function (target){
         return !_.isUndefined(target);
       }));
@@ -564,7 +546,6 @@
         backend.getTransferResult(data, function(result) {
           if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
             eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds), targetDataIds);
-            roadCollection.setNewTmpRoadAddresses(result);
             eventbus.trigger('linkProperties:cleanFloatingsAfterDefloat');
           }
         });
@@ -585,6 +566,7 @@
         if(feature.roadLinkType !== RoadLinkType.FloatingRoadLinkType.value && feature.anomaly === Anomaly.NoAddressGiven.value){
           return feature.linkId;
         }
+        return null;
       }), function (target){
         return !_.isUndefined(target);
       }));
@@ -652,8 +634,8 @@
       return anomalousMarkers;
     };
 
-    var setAnomalousMarkers = function(markers){
-      anomalousMarkers = markers;
+    var setAnomalousMarkers = function(markersToSet){
+      anomalousMarkers = markersToSet;
     };
 
     var getSources = function() {
@@ -702,7 +684,6 @@
 
     var clearAndReset = function(afterDefloat){
       roadCollection.resetTmp();
-      roadCollection.resetChangedIds();
       applicationModel.resetCurrentAction();
       applicationModel.setContinueButton(false);
       applicationModel.setActiveButtons(false);
@@ -710,7 +691,6 @@
       clearFeaturesToKeep();
       eventbus.trigger('roadLinks:clearIndicators');
       if(!afterDefloat) {
-        roadCollection.resetNewTmpRoadAddresses();
         resetSources();
         resetTargets();
         previousAdjacents = [];
@@ -764,12 +744,6 @@
       });
     };
 
-    var getCurrentFloatings = function(){
-      return _.filter(current, function(curr){
-        return curr.getData().floating === SelectionType.Floating.value;
-      });
-    };
-
     var getFeaturesToKeepFloatings = function() {
       return _.filter(getFeaturesToKeep(), function (fk) {
         return fk.floating === SelectionType.Floating.value;
@@ -817,13 +791,13 @@
 
     var filterFeaturesAfterSimulation = function(features){
       var linkIdsToRemove = linkIdsToExclude();
-        if(linkIdsToRemove.length !== 0){
-          return _.reject(features, function(feature){
-              return _.includes(linkIdsToRemove, feature.linkData.linkId);
-          });
-        } else {
+        if(linkIdsToRemove.length === 0){
           return features;
-        }
+        } else {
+          return _.reject(features, function(feature){
+            return _.includes(linkIdsToRemove, feature.linkData.linkId);
+        });
+      }
     };
 
     var linkIdsToExclude = function(){
@@ -874,4 +848,4 @@
       canOpenByLinearLocationId: canOpenByLinearLocationId
     };
   };
-})(this);
+}(this));

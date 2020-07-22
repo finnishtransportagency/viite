@@ -2,7 +2,6 @@
     root.RoadNamingToolWindow = function (roadNameCollection) {
 
         var newId = -1000;
-        var yearLimit = 5;
         var FINNISH_HINT_TEXT = 'pp.kk.vvvv';
         var defaultDateFormat = 'DD.MM.YYYY';
         var nameToolSearchWindow = $('<div id="name-search-window" class="form-horizontal naming-list"></div>').hide();
@@ -69,7 +68,7 @@
         var addSaveEvent = function () {
             var saveButton = '<button id="saveChangedRoads" class="btn btn-primary save btn-save-road-data" disabled>Tallenna</button>';
             $('#road-list').append(saveButton);
-            $('#saveChangedRoads').on('click', function (clickEvent) {
+            $('#saveChangedRoads').on('click', function (_clickEvent) {
                 var saveMessage = ($('#newRoadName').length > 0 ? "Tiellä on jo nimi. Haluatko varmasti antaa sille uuden nimen?" : "Tiellä on jo nimi. Haluatko varmasti muokata sitä?");
 
                 new GenericConfirmPopup(saveMessage, {
@@ -108,7 +107,6 @@
         var fieldDateString = fieldValue.trim();
 
         var fieldDate = moment(fieldDateString, defaultDateFormat);
-        var originalDate = moment(originalStartDate.trim(), defaultDateFormat);
         var lowerStart = moment(originalStartDate.trim(), defaultDateFormat).add(1, 'days');
         var upperLimitStart = moment(originalStartDate.trim(), defaultDateFormat).add(5, 'years');
         var currentUpperLimit = moment().add(5, 'years');
@@ -120,9 +118,9 @@
             var dates = getDateObjects(dateString, originalStartDate);
             var splitDateString = dateString.split(".");
 
-            var day = parseInt(splitDateString[0], 10);
-            var month = parseInt(splitDateString[1], 10);
-            var year = parseInt(splitDateString[2], 10);
+            var day = parseInt(splitDateString[0]);
+            var month = parseInt(splitDateString[1]);
+            var year = parseInt(splitDateString[2]);
 
             var monthLength = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
             //Check for leap year
@@ -161,7 +159,7 @@
                     roadNameCollection.setRoadName(roadId, fieldValue);
                     break;
                 case "startDate":
-                    if (roadId == newId) {
+                    if (parseInt(roadId) === newId) {
                         $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]').val(fieldValue);
                         roadNameCollection.setEndDate(originalRoadId, fieldValue);
                     }
@@ -171,6 +169,8 @@
                     else
                         target.css('color', 'red');
                     roadNameCollection.setStartDate(roadId, fieldValue);
+                    break;
+                default:
                     break;
             }
             toggleSaveButton();
@@ -198,6 +198,7 @@
             eventbus.on("roadNameTool:roadsFetched", function (roadData) {
                 applicationModel.removeSpinner();
                 var html = '<table id="roadList-table" style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
+                // eslint-disable-next-line no-negated-condition
                 if (!_.isEmpty(roadData)) {
                     _.each(roadData, function (road) {
                         var writable = !road.endDate;
@@ -207,12 +208,12 @@
                             '<td style="width: 250px;">' + staticFieldRoadList(road.name, writable, road.id, "roadName", 50) + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList(startDate, false, road.id, "startDate") + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList(road.endDate ? road.endDate.format('DD.MM.YYYY') : '', writable, road.id, "endDate") + '</td>';
-                        if (!road.endDate) {
-                            html += '<td>' + '<div id="plus_minus_buttons" data-roadId="' + road.id + '" data-roadNumber="' + road.roadNumber + '"><button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 10px" id="new-road-name" data-roadId="' + road.id + '" data-roadNumber="' + road.roadNumber + '" data-originalStartDate="' + startDate +'">+</button></div>' + '</td>' +
-                                '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
+                        if (road.endDate) {
+                            html += '<td><button class="project-open btn btn-new" style="visibility:hidden; alignment: right; margin-bottom:6px; margin-left: 70px" id="spaceFillerButton">+</button></td>' +
+                                '</tr><tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
                         } else {
-                            html += '<td>' + '<button class="project-open btn btn-new" style="visibility:hidden; alignment: right; margin-bottom:6px; margin-left: 70px" id="spaceFillerButton">+</button>' + '</td>' +
-                                '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
+                            html += '<td><div id="plus_minus_buttons" data-roadId="' + road.id + '" data-roadNumber="' + road.roadNumber + '"><button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 10px" id="new-road-name" data-roadId="' + road.id + '" data-roadNumber="' + road.roadNumber + '" data-originalStartDate="' + startDate +'">+</button></div></td>' +
+                                '</tr><tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
                         }
                     });
                     html += '</table>';
@@ -236,10 +237,10 @@
                         prevRoadNameInput.removeClass("form-control");
                         prevRoadNameInput.prop("readonly", true);
                         var originalRoadId = target.attr("data-roadId");
-                        var prevEndDateInput = $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]');
-                        if(prevEndDateInput[0].value === "")
-                        prevEndDateInput.val(FINNISH_HINT_TEXT);
-                        prevEndDateInput.prop("readonly", true);
+                        var prevEndDateInputControl = $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]');
+                        if(prevEndDateInputControl[0].value === "")
+                        prevEndDateInputControl.val(FINNISH_HINT_TEXT);
+                        prevEndDateInputControl.prop("readonly", true);
 
                         var roadNumber = target.attr("data-roadNumber");
                         var originalStartDate = target.attr("data-originalStartDate");
@@ -248,8 +249,8 @@
                             '<td style="width: 250px;">' + staticFieldRoadList("", true, newId, "roadName", 50) + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList("", true, newId, "startDate") + '</td>' +
                             '<td style="width: 110px;">' + staticFieldRoadList("", true, newId, "endDate") + '</td>' +
-                            '<td>' + '<div id="plus_minus_buttons" data-roadId="' + newId + '" data-roadNumber="' + roadNumber + '"><button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 10px" id="undo-new-road-name" data-roadId="' + originalRoadId + '" data-roadNumber="' + roadNumber + '">-</button></div>' + '</td>' +
-                            '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>');
+                            '<td><div id="plus_minus_buttons" data-roadId="' + newId + '" data-roadNumber="' + roadNumber + '"><button class="project-open btn btn-new" style="alignment: middle; margin-bottom:6px; margin-left: 10px" id="undo-new-road-name" data-roadId="' + originalRoadId + '" data-roadNumber="' + roadNumber + '">-</button></div></td>' +
+                            '</tr><tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>');
                         var newEndDateInput = $('.form-control[data-roadId=' + newId + '][data-fieldName=endDate]');
                         newEndDateInput.val(FINNISH_HINT_TEXT);
                         newEndDateInput.prop("readonly", true);
@@ -258,20 +259,20 @@
                         $('.form-control').on("input", editEvent);
                         $('.date-picker-input').on("change", editEvent);
 
-                        $('#undo-new-road-name').on("click", function (eventObject) {
-                            var target = $(eventObject.target);
-                            var roadId = target.attr("data-roadId");
+                        $('#undo-new-road-name').on("click", function (eventObjectRoadName) {
+                            var roadNameTarget = $(eventObjectRoadName.target);
+                            var roadId = roadNameTarget.attr("data-roadId");
                             roadNameCollection.undoNewRoadName();
-                            var roadNumber = target.attr("data-roadNumber");
-                            $('#new-road-name[data-roadid|=' + roadId + '][data-roadnumber|=' + roadNumber + ']').css("visibility", "visible");
-                            $('#newRoadName[data-originalRoadId|=' + roadId + '][data-roadnumber|=' + roadNumber + ']').remove();
+                            var roadnameRoadNumber = roadNameTarget.attr("data-roadNumber");
+                            $('#new-road-name[data-roadid|=' + roadId + '][data-roadnumber|=' + roadnameRoadNumber + ']').css("visibility", "visible");
+                            $('#newRoadName[data-originalRoadId|=' + roadId + '][data-roadnumber|=' + roadnameRoadNumber + ']').remove();
 
-                            var prevRoadNameInput = $('#road-list tr.roadList-item input[data-fieldname="roadName"]').last();
-                            prevRoadNameInput.addClass("form-control");
-                            prevRoadNameInput.removeClass("input-road-details-readonly");
-                            prevRoadNameInput.prop("readonly", false);
-                            var prevEndDateInput = $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]');
-                            prevEndDateInput.val(FINNISH_HINT_TEXT);
+                            var prevRoadNameInputControl = $('#road-list tr.roadList-item input[data-fieldname="roadName"]').last();
+                            prevRoadNameInputControl.addClass("form-control");
+                            prevRoadNameInputControl.removeClass("input-road-details-readonly");
+                            prevRoadNameInputControl.prop("readonly", false);
+                            var prevEndDateInputField = $('.form-control[data-roadId=' + originalRoadId + '][data-fieldName=endDate]');
+                            prevEndDateInputField.val(FINNISH_HINT_TEXT);
                         });
                     });
 
@@ -302,4 +303,4 @@
         };
 
     };
-})(this);
+}(this));

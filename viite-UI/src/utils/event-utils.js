@@ -5,5 +5,5 @@
       fetched: 'node-fetched'
     }
   };
-})();
+}());
 

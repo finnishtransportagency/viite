@@ -1,9 +1,10 @@
 window.ModalConfirm = function(insertedText) {
 
     // In case an exception is not properly handled, a generic message will be added.
-    var detailInformation = !insertedText ? "" : insertedText.match("^ORA-") ?
-        '<div class="content"> Tekninen virhe, Ota yhteyttä pääkäyttäjään.' +
-        '</div>' : "";
+    var detailInformation = '';
+    if (insertedText &&  insertedText.match("^ORA-")) 
+    detailInformation = '<div class="content"> Tekninen virhe, Ota yhteyttä pääkäyttäjään. </div>';
+
 
     var confirmDiv =
       '<div class="modal-overlay confirm-modal">' +
@@ -19,7 +20,6 @@ window.ModalConfirm = function(insertedText) {
 
     var renderConfirmDialog = function() {
         jQuery('.container').append(confirmDiv);
-        var modal = $('.modal-dialog');
     };
 
     var bindEvents = function() {

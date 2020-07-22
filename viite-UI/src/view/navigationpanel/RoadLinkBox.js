@@ -77,7 +77,7 @@
         segments = segments +
             '<div class="middle symbol linear rainbow-asset-' + i + '" />';
       }
-      return segments + '<div class="middle symbol linear rainbow-asset-2" />' + '<div class="middle symbol linear rainbow-asset-1 " /> <div class="edge-right symbol linear linear-asset-1" /></div>';
+      return segments + '<div class="middle symbol linear rainbow-asset-2" /><div class="middle symbol linear rainbow-asset-1 " /> <div class="edge-right symbol linear linear-asset-1" /></div>';
     };
 
     var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
@@ -90,11 +90,11 @@
     var roadClassLegendEntries = _.map(roadClasses, function(roadClass) {
       var defaultLegendEntry =
         '<div class="legend-entry">' +
-          '<div class="label">' + roadClass[1] + '</div>';
-        if (roadClass[0] !== 98)
-          defaultLegendEntry += '<div class="symbol linear linear-asset-' + roadClass[0] + '" />';
-        else
-          defaultLegendEntry += buildMultiColoredSegments();
+        '<div class="label">' + roadClass[1] + '</div>';
+      if (roadClass[0] === 98)
+        defaultLegendEntry += buildMultiColoredSegments();
+      else
+        defaultLegendEntry += '<div class="symbol linear linear-asset-' + roadClass[0] + '" />';
       return defaultLegendEntry + '</div>';
     }).join('');
 
@@ -141,8 +141,8 @@
     roadClassLegend.append(calibrationPointPicture);
 
     var Tool = function(toolName, icon, description) {
-      var className = toolName.toLowerCase();
-      var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).on('click', function() {
+      var classNameForTool = toolName.toLowerCase();
+      var element = $('<div class="action"/>').addClass(classNameForTool).attr('action', toolName).append(icon).on('click', function() {
         executeOrShowConfirmDialog(function() {
           applicationModel.setSelectedTool(toolName);
         });
@@ -179,10 +179,10 @@
         element.append('<div>' + tool.description + '</div>');
       });
 
-      var hide = function() { element.hide(); };
-      var show = function() { element.show(); };
+      var doHide = function() { element.hide(); };
+      var doShow = function() { element.show(); };
 
-      eventbus.on('tool:changed', function(name) {
+      eventbus.on('tool:changed', function(_name) {
         _.each(tools, function(tool) {
           if (applicationModel.isSelectedTool(tool.name)) {
             tool.activate();
@@ -202,13 +202,13 @@
         });
       };
 
-      hide();
+      doHide();
 
       return {
         element: element,
         reset: reset,
-        show: show,
-        hide: hide
+        show: doShow,
+        hide: doHide
       };
     };
 
@@ -290,4 +290,4 @@
       hide: hide
     };
   };
-})(this);
+}(this));

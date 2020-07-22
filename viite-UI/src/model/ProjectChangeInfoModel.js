@@ -39,4 +39,4 @@
       sortChanges: sortChanges
     };
   };
-})(this);
+}(this));

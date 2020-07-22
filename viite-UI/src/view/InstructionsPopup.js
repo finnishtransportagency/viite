@@ -18,4 +18,4 @@
       show: show
     };
   };
-})(this);
+}(this));

@@ -103,7 +103,7 @@
 
         var underConstructionRules = [
             new StyleRule().where('constructionType').isNot(LinkValues.ConstructionType.UnderConstruction.value).or('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color:'#fff', lineCap: 'round'}}),
-            new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.None.value). and('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: 'rgba(238, 238, 235, 0.75)', lineCap: 'round'}}),
+            new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.None.value).and('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color: 'rgba(238, 238, 235, 0.75)', lineCap: 'round'}}),
             new StyleRule().where('roadClass').is(LinkValues.RoadClass.NoClass.value).and('anomaly').is(LinkValues.Anomaly.NoAddressGiven.value).and('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use({stroke: {color:'#ff9900', lineCap: 'round'}})
         ];
 
@@ -191,4 +191,4 @@
             getProjectBorderStyler: getProjectBorderStyler
         };
     };
-})(this);
+}(this));

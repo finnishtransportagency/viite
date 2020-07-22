@@ -1,3 +1,4 @@
+/* eslint-disable prefer-named-capture-group */
 (function (root) {
   root.URLRouter = function (map, backend, models) {
     var Router = Backbone.Router.extend({
@@ -8,10 +9,10 @@
         });
 
         this.route(/^([A-Za-z]+)\/?$/, function (layer) {
-          if (layer !== 'linkProperty') {
-            applicationModel.selectLayer(layer);
-          } else {
+          if (layer === 'linkProperty') {
             applicationModel.selectLayer('linkProperty');
+          } else {
+            applicationModel.selectLayer(layer);
           }
         });
 
@@ -113,7 +114,7 @@
       router.navigate('linkProperty');
     });
 
-    eventbus.on('roadAddressProject:selected', function (id, layerName, selectedLayer) {
+    eventbus.on('roadAddressProject:selected', function (id, _layerName, _selectedLayer) {
       router.navigate('roadAddressProject/' + id);
     });
 
@@ -130,7 +131,7 @@
     eventbus.on('linkProperties:selectedProject', function (linkId, project) {
       if (typeof project.id !== 'undefined') {
         var baseUrl = 'roadAddressProject/' + project.id;
-        var linkIdUrl = typeof linkId !== 'undefined' ? '/' + linkId : '';
+        var linkIdUrl = linkId ? '/' + linkId : '';
         router.navigate(baseUrl + linkIdUrl);
         var initialCenter = map.getView().getCenter();
         if (!_.isUndefined(project.coordX) && project.coordX !== 0 && !_.isUndefined(project.coordY) && project.coordY !== 0 && !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0) {
@@ -155,10 +156,11 @@
     });
 
     eventbus.on('layer:selected', function (layer) {
+      let layerAdjusted = layer;
       if (layer.indexOf('/') === -1) {
-        layer = layer.concat('/');
+        layerAdjusted = layer.concat('/');
       }
-      router.navigate(layer);
+      router.navigate(layerAdjusted);
     });
   };
-})(this);
+}(this));

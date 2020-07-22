@@ -25,7 +25,7 @@
         mod = '';
       else
         mod = 'disabled hidden';
-      if (currentStatus == targetStatus.value)
+      if (currentStatus === targetStatus.value)
         return mod + ' selected';
       else
         return mod;
@@ -37,9 +37,10 @@
       var targetLinkStatus = _.find(LinkStatus, function (ls) {
         return ls.description === option || (option === '' && ls.value === 99);
       });
-      if (isSplitMode)
+      if (isSplitMode) {
         console.log("NOT A SPLIT FORM!");
-      else
+        return false;
+      } else
         return transitionModifiers(targetLinkStatus, linkStatus);
     };
 
@@ -89,8 +90,7 @@
 
     var showLinkId = function(selected){
       if (selected.length === 1){
-        return '' +
-          formCommon.staticField('Linkin ID', selected[0].linkId);
+        return String(formCommon.staticField('Linkin ID', selected[0].linkId));
       } else {
         return '';}
     };
@@ -101,7 +101,7 @@
         '<label>Toimenpiteet,' + selection  + '</label>' +
         '<div class="input-unit-combination">' +
         '<select class="action-select" id="dropDown_0" size="1">'+
-        '<option id="drop_0_' + '" '+ defineOptionModifiers(defaultOption, selected) +'>Valitse</option>'+
+        '<option id="drop_0_" '+ defineOptionModifiers(defaultOption, selected) +'>Valitse</option>'+
         '<option id="drop_0_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>'+
         '<option id="drop_0_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>'+
         '<option id="drop_0_' + LinkStatus.New.description + '" value='+ LinkStatus.New.description + ' ' + defineOptionModifiers(LinkStatus.New.description, selected) +'>Uusi</option>'+
@@ -194,7 +194,9 @@
         case LinkStatus.Numbering.value:
           $("#dropDown_0 option[value=" + LinkStatus.Numbering.description + "]").attr('selected', 'selected').change();
           break;
-      }
+        default:
+          break;
+          }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
     };
 
@@ -380,7 +382,7 @@
       var saveChanges = function() {
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
         var isValidEly = _.find(ValidElys, function(ely){
-          return ely.value == $('#ely')[0].value;
+          return ely.value === parseInt($('#ely')[0].value);
         });
         if(!isValidEly){
           return new ModalConfirm("Tarkista antamasi ELY-koodi. Annettu arvo on virheellinen.");
@@ -398,11 +400,12 @@
 
         if (objectDropdown_0.value === LinkStatus.Revert.value) {
           projectCollection.revertChangesRoadlink(selectedProjectLink);
-        } else if (!_.isUndefined(objectDropdown_1)) {
+        } else if (objectDropdown_1) {
           projectCollection.saveCutProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value, objectDropdown_1.value);
         } else {
           projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), objectDropdown_0.value);
         }
+        return true;
       };
 
       var cancelChanges = function() {
@@ -445,7 +448,7 @@
         $('#trackCodeDropdown').prop('disabled',false);
         $('#discontinuityDropdown').prop('disabled',false);
         $('#roadTypeDropdown').prop('disabled',false);
-        if(this.value == LinkStatus.Terminated.description) {
+        if(this.value === LinkStatus.Terminated.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
@@ -461,7 +464,7 @@
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
-        else if (this.value == LinkStatus.New.description) {
+        else if (this.value === LinkStatus.New.description) {
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -480,7 +483,7 @@
             rootElement.find('#distanceValue').prop("hidden", false);
           }
         }
-        else if (this.value == LinkStatus.Unchanged.description) {
+        else if (this.value === LinkStatus.Unchanged.description) {
           rootElement.find('.new-road-address').prop("hidden", false);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           $('#tie').prop('disabled',true);
@@ -500,7 +503,7 @@
           }));
           projectCollection.setTmpDirty(projectCollection.getDirty());
         }
-        else if (this.value == LinkStatus.Transfer.description) {
+        else if (this.value === LinkStatus.Transfer.description) {
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -515,7 +518,7 @@
           rootElement.find('.new-road-address').prop("hidden", false);
           canChangeDirection();
         }
-        else if (this.value == LinkStatus.Numbering.description) {
+        else if (this.value === LinkStatus.Numbering.description) {
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
           $('#trackCodeDropdown').prop('disabled',true);
           $('#discontinuityDropdown').prop('disabled',false);
@@ -535,7 +538,7 @@
           rootElement.find('.project-form button.update').prop("disabled", false);
           canChangeDirection();
         }
-        else if (this.value == LinkStatus.Revert.description) {
+        else if (this.value === LinkStatus.Revert.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           rootElement.find('.project-form button.update').prop("disabled", false);
@@ -606,7 +609,7 @@
         setFormDirty();
         if (event.target.id === "tie" && (dropdown_0.val() === 'New' || dropdown_0.val() === 'Transfer' || dropdown_0.val() === 'Numbering')) {
           backend.getRoadName($(this).val(), projectCollection.getCurrentProject().project.id, function (data) {
-            if (!_.isUndefined(data.roadName)) {
+            if (data.roadName) {
               editedNameByUser = false;
               roadNameField.val(data.roadName).change();
               if (data.isCurrent) {
@@ -639,8 +642,8 @@
           LinkValues.ProjectError.RoadNotReserved.value
         ];
         if (_.includes(roadPartErrors, error.errorCode)) {
-          var rootElement = $('#feature-attributes');
-          rootElement.find('#editProjectSpan').click();
+          var attributeElement = $('#feature-attributes');
+          attributeElement.find('#editProjectSpan').click();
         } else {
           eventbus.trigger('projectCollection:clickCoordinates', event, map);
           if (error.errorMessage !== "") {
@@ -662,4 +665,4 @@
     };
     bindEvents();
   };
-})(this);
+}(this));

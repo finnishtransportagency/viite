@@ -15,7 +15,6 @@ window.Confirm = function() {
 
     var renderConfirmDialog = function() {
         jQuery('.container').append(confirmDiv);
-        var modal = $('.modal-dialog');
     };
 
     var bindEvents = function() {

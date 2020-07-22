@@ -19,11 +19,11 @@
 
     var bindEvents = function() {
       var populateSearchResults = function(results) {
-        var resultItems = _.chain(results)
-          .sortBy('distance')
-          .sortBy('title')
-          .sortBy(function (item) { return item.title.split(', ')[1]; })
-          .map(function(result) {
+        var resultItems = _.chain(results).
+          sortBy('distance').
+          sortBy('title').
+          sortBy(function (item) { return item.title.split(', ')[1]; }).
+          map(function(result) {
             return $('<li></li>').text(result.title).on('click', function() {
               eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
             });
@@ -54,7 +54,7 @@
       };
 
       coordinatesText.keypress(function(event) {
-        if (event.keyCode == 13) {
+        if (event.keyCode === 13) {
           moveToLocation();
         }
       });
@@ -77,7 +77,7 @@
         if($('#searchBox').has('#dateBox').length === 0) {
           $('#searchBox').append(dateBox);
 
-          $('#dayBox, #monthBox, #yearBox').on('change', function(eventData) {
+          $('#dayBox, #monthBox, #yearBox').on('change', function(_eventData) {
             var day = $('#dayBox').val();
             var month = $('#monthBox').val();
             var year = $('#yearBox').val();
@@ -92,4 +92,4 @@
     bindEvents();
     this.element = groupDiv.append(coordinatesDiv.append(panelHeader).append(resultsSection).append(clearSection));
   };
-})(this);
+}(this));

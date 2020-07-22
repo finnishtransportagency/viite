@@ -16,7 +16,7 @@
     };
 
     var setLinkProperty = function(name, value) {
-      if (value != data[name]) {
+      if (value !== data[name]) {
         data[name] = value;
       }
     };
@@ -64,13 +64,10 @@
     var unaddressedUnderConstructionRoadLinkGroups = [];
     var unaddressedRoadLinkGroups = [];
     var tmpRoadLinkGroups = [];
-    var tmpRoadAddresses = [];
-    var tmpNewRoadAddresses = [];
     var preMovedRoadAddresses = [];
     var date = [];
     var historicRoadLinks = [];
     var floatingRoadLinks = [];
-    var changedIds = [];
     var LinkStatus = LinkValues.LinkStatus;
     var LinkSource = LinkValues.LinkGeomSource;
     var SelectionType = LinkValues.SelectionType;
@@ -144,7 +141,7 @@
           unaddressedUnknownRoadLinkGroups = unaddressedRoadLinkGroups[1];
 
           var includeUnknowns = _.isUndefined(drawUnknowns) && !drawUnknowns;
-          if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
+          if (parseInt(zoom) <= zoomlevels.minZoomForEditMode && (includeUnknowns && !applicationModel.selectionTypeIs(LinkValues.SelectionType.Unknown))) {
             setRoadLinkGroups(fetched[1]);
           } else {
             setRoadLinkGroups(fetchedRoadLinkModels);
@@ -193,7 +190,7 @@
     var groupDataSourceFilter = function(group, dataSource){
       if(_.isArray(group)) {
         return _.some(group, function(roadLink) {
-          if(roadLink !== null)
+          if(roadLink)
             return roadLink.getData().roadLinkSource === dataSource.value;
           else return false;
         });
@@ -205,7 +202,7 @@
     var groupDataConstructionTypeFilter = function(group, dataConstructionType){
       if(_.isArray(group)) {
         return _.some(group, function(roadLink) {
-          if(roadLink !== null)
+          if(roadLink)
             return roadLink.getData().constructionType === dataConstructionType.value;
           else return false;
         });
@@ -217,7 +214,7 @@
     var groupLinkTypeFilter = function(group, dataSource) {
       if (_.isArray(group)) {
         return _.some(group, function(roadLink) {
-          if (roadLink !== null)
+          if (roadLink)
             return roadLink.getData().roadLinkType === dataSource.value;
           else return false;
         });
@@ -254,7 +251,7 @@
 
     this.getTmpByLinkId = function(ids) {
       var segments = _.filter(tmpRoadLinkGroups, function (road){
-        return road.getData().linkId == ids;
+        return road.getData().linkId === ids;
       });
       return segments;
     };
@@ -273,14 +270,14 @@
 
     this.getByLinkId = function(ids) {
       var segments = _.filter(roadLinks(), function (road){
-        return road.getData().linkId == ids;
+        return road.getData().linkId === ids;
       });
       return segments;
     };
 
     this.getByLinearLocationId = function(id) {
       var segments = _.filter(roadLinks(), function (road){
-        return road.getData().linearLocationId == id;
+        return road.getData().linearLocationId === id;
       });
       return segments;
     };
@@ -301,18 +298,10 @@
       });
     };
 
-    this.setTmpRoadAddresses = function (tmp){
-      tmpRoadAddresses = tmp;
-    };
-
     this.addTmpRoadLinkGroups = function (tmp) {
       if(tmpRoadLinkGroups.filter(function (roadTmp) { return roadTmp.getData().linkId === tmp.linkId;}).length === 0) {
         tmpRoadLinkGroups.push(new RoadLinkModel(tmp));
       }
-    };
-
-    this.setChangedIds = function (ids){
-      changedIds = ids;
     };
 
     var setRoadLinkGroups = function(groups) {
@@ -321,20 +310,6 @@
 
     this.reset = function(){
       roadLinkGroups = [];
-    };
-    this.resetTmp = function(){
-      tmpRoadAddresses = [];
-    };
-    this.resetChangedIds = function(){
-      changedIds = [];
-    };
-
-    this.setNewTmpRoadAddresses = function (tmp){
-      tmpNewRoadAddresses = tmp;
-    };
-
-    this.resetNewTmpRoadAddresses = function(){
-      tmpNewRoadAddresses = [];
     };
 
     this.addPreMovedRoadAddresses = function(ra){
@@ -371,4 +346,4 @@
       });
     };
   };
-})(this);
+}(this));

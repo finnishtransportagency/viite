@@ -9,7 +9,6 @@
     var RoadZIndex = LinkValues.RoadZIndex;
     var LinkStatus = LinkValues.LinkStatus;
     var RoadClass = LinkValues.RoadClass;
-    var SelectionType = LinkValues.SelectionType;
     var RoadLinkType = LinkValues.RoadLinkType;
     var ConstructionType = LinkValues.ConstructionType;
     var isNotEditingData = true;
@@ -101,24 +100,25 @@
       layer: [projectLinkLayer, underConstructionRoadProjectLayer, unAddressedRoadsProjectLayer],
       condition: ol.events.condition.singleClick,
       style: function (feature) {
-        if (!_.isUndefined(feature.linkData))
+        if (feature.linkData)
           if (projectLinkStatusIn(feature.linkData, possibleStatusForSelection) || feature.linkData.roadClass === RoadClass.NoClass.value ||
             feature.linkData.constructionType === ConstructionType.UnderConstruction.value) {
             return projectLinkStyler.getSelectionLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
           }
+          return null;
       }
     });
 
     selectSingleClick.set('name', 'selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select', function (event) {
-      var ctrlPressed = !_.isUndefined(event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
+      var ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
       removeCutterMarkers();
-      var rawSelection = !_.isUndefined(event.mapBrowserEvent) ? map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function(feature) {
+      var rawSelection = (event.mapBrowserEvent) ? map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function(feature) {
         return feature;
       }) : event.selected;
       var selection = _.find(ctrlPressed ? [rawSelection] : [rawSelection].concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
-        if (!_.isUndefined(selectionTarget))
+        if (selectionTarget)
           return !_.isUndefined(selectionTarget.linkData) && (
             projectLinkStatusIn(selectionTarget.linkData, possibleStatusForSelection) || selectionTarget.linkData.roadClass === RoadClass.NoClass.value);
         else return false;
@@ -171,6 +171,7 @@
           feature.linkData.constructionType === ConstructionType.UnderConstruction.value) {
           return projectLinkStyler.getSelectionLinkStyle().getStyle(feature.linkData, {zoomLevel:zoomlevels.getViewZoom(map)});
         }
+        return null;
       }
     });
 
@@ -239,8 +240,8 @@
       clearHighlights();
       var featuresToHighlight = [];
       _.each(projectLinkVector.getFeatures().concat(underConstructionRoadProjectLayer.getSource().getFeatures()).concat(unAddressedRoadsProjectLayer.getSource().getFeatures()), function (feature) {
-        var canIHighlight = (!_.isUndefined(feature.linkData.linkId) || feature.linkData.status === LinkStatus.Terminated.value ?
-          selectedProjectLinkProperty.isSelected(getSelectedId(feature.linkData)) : false);
+        var canIHighlight = (!_.isUndefined(feature.linkData.linkId) || feature.linkData.status === LinkStatus.Terminated.value
+          ? selectedProjectLinkProperty.isSelected(getSelectedId(feature.linkData)) : false);
         if (canIHighlight) {
           featuresToHighlight.push(feature);
         }
@@ -344,11 +345,6 @@
       }
       eventbus.trigger('overlay:update', event, pixel);
     });
-
-    var loadFeatures = function (features) {
-      projectLinkVector.clear(true);
-      projectLinkVector.addFeatures(features);
-    };
 
     var showLayer = function() {
       me.start();
@@ -642,4 +638,4 @@
     };
   };
 
-})(this);
+}(this));

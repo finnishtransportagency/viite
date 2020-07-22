@@ -265,13 +265,13 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.ely + '</td>';
     }
 
-    function dragListener (event) {
+    function dragListener(event) {
       var target = event.target,
         x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
         y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-      target.style.webkitTransform =
-        target.style.transform =
-          'translate(' + x + 'px, ' + y + 'px)';
+      target.style.transform =
+        'translate(' + x + 'px, ' + y + 'px)';
+      target.style.webkitTransform = target.style.transform;
       target.setAttribute('data-x', x);
       target.setAttribute('data-y', y);
     }
@@ -283,16 +283,16 @@
         return currentDiscontinuity;
     }
     function enableTableInteractions() {
-      interact('.change-table-frame')
-        .draggable({
+      interact('.change-table-frame').
+        draggable({
           allowFrom: '.change-table-header',
           onmove: dragListener,
           restrict: {
             restriction: '.container',
             elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
           }
-        })
-        .resizable({
+        }).
+        resizable({
           edges: { left: true, right: true, bottom: true, top: true },
           restrictEdges: {
             outer: '.container',
@@ -302,8 +302,8 @@
             min: { width: 650, height: 300 }
           },
           inertia: true
-        })
-        .on('resizemove', function (event) {
+        }).
+        on('resizemove', function (event) {
           var target = event.target,
             x = (parseFloat(target.getAttribute('data-x')) || 0),
             y = (parseFloat(target.getAttribute('data-y')) || 0);
@@ -311,12 +311,13 @@
           target.style.height = event.rect.height + 'px';
           x += event.deltaRect.left;
           y += event.deltaRect.top;
-          target.style.webkitTransform = target.style.transform =
+          target.style.transform =
             'translate(' + x + 'px,' + y + 'px)';
+          target.style.webkitTransform = target.style.transform;
           target.setAttribute('data-x', x);
           target.setAttribute('data-y', y);
           var fontResizeElements = $('.font-resize');
-          var newFontSize =18*parseInt(target.style.width) / 950 + 'px';
+          var newFontSize = (18*parseInt(target.style.width) / 950) + 'px';
           fontResizeElements.css('font-size', newFontSize);
           $('[id=change-table-borders-target]').height(parseFloat(target.style.height) - 50 + 'px');
           $('[id=change-table-borders-source]').height(parseFloat(target.style.height) - 50 + 'px');
@@ -341,4 +342,4 @@
       bindEvents: bindEvents
     };
   };
-})(this);
+}(this));

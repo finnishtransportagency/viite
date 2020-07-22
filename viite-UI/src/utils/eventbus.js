@@ -1,3 +1,4 @@
+/* eslint-disable new-cap */
 (function(BackboneEvents) {
   window.eventbus = BackboneEvents;
   eventbus.on('all', function(eventName, entity) {
@@ -12,4 +13,4 @@
     });
     return eventReceived;
   };
-})(Backbone.Events);
+}(Backbone.Events));

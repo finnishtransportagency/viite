@@ -7,8 +7,8 @@
         '</header>';
     };
 
-    var label = function(label) {
-      return '<label class="control-label-small">' + label + '</label>';
+    var label = function(labelFormatted) {
+      return '<label class="control-label-small">' + labelFormatted + '</label>';
     };
 
     var searchButton = function () {
@@ -16,8 +16,7 @@
     };
 
     var searchNodesTemplate = function () {
-      return _.template('' +
-        header() +
+      return _.template(String(header()) +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark" style="margin-left: auto;">' +
         '<div class="edit-control-group">' +
@@ -41,8 +40,8 @@
       );
     };
 
-    var addNodeAttributeLabel = function (label) {
-      return '<label class="control-label-small" style="text-transform:none;color:#f4b183">'+label+'</label>';
+    var addNodeAttributeLabel = function (labelFormatted) {
+      return '<label class="control-label-small" style="text-transform:none;color:#f4b183">'+labelFormatted+'</label>';
     };
 
     var roadAddressLink = function (index, nodeWithAttributes) {
@@ -88,12 +87,12 @@
       if(!_.isEmpty(groups)){
         text = '<label class="control-label-small" style="color:#c09853;">Käsittelemättömät liittymäaihiot</label>';
         _.each(groups, function(templatesByEly){
-          var sortedTemplates = _.chain(templatesByEly)
-            .sortBy('addrM')
-            .sortBy('track')
-            .sortBy('roadPartNumber')
-            .sortBy('roadNumber')
-            .value();
+          var sortedTemplates = _.chain(templatesByEly).
+            sortBy('addrM').
+            sortBy('track').
+            sortBy('roadPartNumber').
+            sortBy('roadNumber').
+            value();
           text += elyNameLabel(sortedTemplates[0].elyCode);
           text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / AJR / OSA / AET)</label></br>';
           _.each(sortedTemplates, function(junctionTemplate) {
@@ -115,12 +114,12 @@
       if(!_.isEmpty(groups)){
         text = '</br></br><label class="control-label-small" style="color:#c09853;">Käsittelemättömät solmukohta-aihiot</label>';
         _.each(groups, function(templatesByEly){
-          var sortedTemplates = _.chain(templatesByEly)
-            .sortBy('addrM')
-            .sortBy('track')
-            .sortBy('roadPartNumber')
-            .sortBy('roadNumber')
-            .value();
+          var sortedTemplates = _.chain(templatesByEly).
+            sortBy('addrM').
+            sortBy('track').
+            sortBy('roadPartNumber').
+            sortBy('roadNumber').
+            value();
           text += elyNameLabel(sortedTemplates[0].elyCode);
           text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / OSA / AET)</label></br>';
           _.each(sortedTemplates, function(nodePointTemplate) {
@@ -219,4 +218,4 @@
     };
     bindEvents();
   };
-})(this);
+}(this));

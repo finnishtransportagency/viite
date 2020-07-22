@@ -1,3 +1,4 @@
+/* eslint-disable prefer-named-capture-group */
 (function(root) {
   var parse = function(input) {
     var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
@@ -23,4 +24,4 @@
   root.LocationInputParser = {
     parse: parse
   };
-})(window);
+}(window));

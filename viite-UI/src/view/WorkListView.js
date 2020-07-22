@@ -13,23 +13,23 @@
   ];
   var decodeEly = function(ely){
     var elyObject = _.find(elyDecoded, function (obj) { return obj.value === Number(ely); });
-    return (!_.isUndefined(elyObject) ? elyObject.description : "Unknown");
+    return ((elyObject) ? elyObject.description : "Unknown");
   };
   var floatingLinksTable = function(layerName, floatingLinks, elyCode) {
     counter += floatingLinks.length;
-    var elyHeader = function(elyCode) {
-      return $('<h2/>').html("ELY " + elyCode + " " + decodeEly(elyCode));
+    var elyHeader = function(elyCodeHeader) {
+      return $('<h2/>').html("ELY " + elyCodeHeader + " " + decodeEly(elyCodeHeader));
     };
 
     var tableContentRows = function(links) {
       return _.map(links, function(link) {
-        return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>')
-          .append(floatingDescription('TIE', link.roadNumber))
-          .append(floatingDescription('OSA', link.roadPartNumber))
-          .append(floatingDescription('AJR', link.trackCode))
-          .append(floatingDescription('AET', link.startAddressM))
-          .append(floatingDescription('LET', link.endAddressM)))
-          .append($('<td align=right />').append(floatingLink(link)));
+        return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>').
+          append(floatingDescription('TIE', link.roadNumber)).
+          append(floatingDescription('OSA', link.roadPartNumber)).
+          append(floatingDescription('AJR', link.trackCode)).
+          append(floatingDescription('AET', link.startAddressM)).
+          append(floatingDescription('LET', link.endAddressM))).
+          append($('<td align=right />').append(floatingLink(link)));
       });
     };
     var floatingLink = function(floating) {
@@ -41,29 +41,29 @@
       return $('<td align=left style="width: 100px;"> <b>' + desc + '</b>: ' + value + '</td>');
     };
 
-    var tableToDisplayFloatings = function(floatingLinks) {
-      if (!floatingLinks || floatingLinks.length === 0) return '';
-      return $('<table/>').addClass('table')
-        .append(tableContentRows(floatingLinks));
+    var tableToDisplayFloatings = function(tableFloatingLinks) {
+      if (!tableFloatingLinks || tableFloatingLinks.length === 0) return '';
+      return $('<table/>').addClass('table').
+        append(tableContentRows(tableFloatingLinks));
     };
-    return $('<div/>').append(elyHeader(elyCode, floatingLinks.length))
-      .append(tableToDisplayFloatings(floatingLinks));
+    return $('<div/>').append(elyHeader(elyCode, floatingLinks.length)).
+      append(tableToDisplayFloatings(floatingLinks));
   };
 
   var roadAddressErrorsTable = function(layerName, addressErrors, elyCode) {
     counter += addressErrors.length;
-    var elyHeader = function(elyCode) {
-      return $('<h2/>').html("ELY " + elyCode + " " + decodeEly(elyCode));
+    var elyHeader = function(elyCodeHeader) {
+      return $('<h2/>').html("ELY " + elyCodeHeader + " " + decodeEly(elyCodeHeader));
     };
 
     var tableContentRows = function(addresses) {
       return _.map(addresses, function(address) {
-        return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>')
-          .append(errorsDescription('ID', address.id))
-          .append(errorsDescription('TIE', address.roadNumber))
-          .append(errorsDescription('OSA', address.roadPartNumber))
-          .append(errorsDescription('ERROR', address.errorCode)))
-          .append($('<td align=right />').append(roadAddressError(address)));
+        return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>').
+          append(errorsDescription('ID', address.id)).
+          append(errorsDescription('TIE', address.roadNumber)).
+          append(errorsDescription('OSA', address.roadPartNumber)).
+          append(errorsDescription('ERROR', address.errorCode))).
+          append($('<td align=right />').append(roadAddressError(address)));
       });
     };
 
@@ -76,13 +76,13 @@
       return $('<td align=left style="width: 100px;"> <b>' + desc + '</b>: ' + value + '</td>');
     };
 
-    var tableToDisplayErrors = function(addressErrors) {
-      if (!addressErrors || addressErrors.length === 0) return '';
-      return $('<table/>').addClass('table')
-        .append(tableContentRows(addressErrors));
+    var tableToDisplayErrors = function(addressErrorsTable) {
+      if (!addressErrorsTable || addressErrorsTable.length === 0) return '';
+      return $('<table/>').addClass('table').
+        append(tableContentRows(addressErrorsTable));
     };
-    return $('<div/>').append(elyHeader(elyCode, addressErrors.length))
-      .append(tableToDisplayErrors(addressErrors));
+    return $('<div/>').append(elyHeader(elyCode, addressErrors.length)).
+      append(tableToDisplayErrors(addressErrors));
   };
 
   var generateWorkListFloatings = function(layerName, listP) {
@@ -190,4 +190,4 @@
     }
   };
 
-})(this);
+}(this));

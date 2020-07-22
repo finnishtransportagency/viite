@@ -6,9 +6,8 @@
     var RoadType = LinkValues.RoadType;
 
     var title = function (titleName) {
-          if (!titleName)
-              titleName = "Uusi tieosoiteprojekti";
-          return '<span class ="edit-mode-title">' + titleName + '</span>';
+      const fixedTitle = titleName || "Uusi tieosoiteprojekti";
+          return '<span class ="edit-mode-title">' + fixedTitle + '</span>';
     };
 
       var titleWithEditingTool = function (project) {
@@ -17,8 +16,8 @@
               '<span id="closeProjectSpan" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>';
     };
 
-    var captionTitle = function (title) {
-      return '<span class="caption-title">' + title + '</span>';
+    var captionTitle = function (titleName) {
+      return '<span class="caption-title">' + titleName + '</span>';
     };
 
     var addRoadNameField = function (name, isBlocked, maxLength) {
@@ -40,20 +39,25 @@
       var link = _.head(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
-      var roadType = !_.isUndefined(link.roadTypeId) ? link.roadTypeId : RoadType.Empty.value;
+      var roadType = (link.roadTypeId) ? link.roadTypeId : RoadType.Empty.value;
       var projectEditable = project.statusCode === editableStatus;
+      let trackCodeDropdown;
+      if (track === Track.Unknown.value) {
+        trackCodeDropdown = (roadNumber >= 20001 && roadNumber <= 39999) ? '0' : '';
+      } else {
+        trackCodeDropdown = track;
+      }
       return '<div class="'+prefix+'form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  +
         addSmallLabel('JATKUU') +
         '</div>' +
         '<div class="'+prefix+'form-group new-road-address" id="new-address-input1" hidden>'+
-        addSmallInputNumber('tie', (roadNumber !== 0 ? roadNumber : ''), !projectEditable, 5) +
-        addSmallInputNumber('osa', (part !== 0 ? part : ''), !projectEditable, 3) +
-        addTrackCodeDropdown((track !== Track.Unknown.value ? track :
-          (roadNumber >= 20001 && roadNumber <= 39999 ? '0' : ''))) +
+        addSmallInputNumber('tie', (roadNumber === 0 ? '' : roadNumber), !projectEditable, 5) +
+        addSmallInputNumber('osa', (part === 0 ? '' : part), !projectEditable, 3) +
+        addTrackCodeDropdown(trackCodeDropdown) +
         addSmallInputNumber('ely', link.elyCode, !projectEditable, 2) +
-        addDiscontinuityDropdown(link) +
+        addDiscontinuityDropdown() +
         addSmallLabel('TIETYYPPI') +
           roadTypeDropdown(roadType) + '<br>' +
           addSmallLabel('NIMI') +
@@ -131,7 +135,7 @@
           (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '" ') + '/>';
     };
 
-    var addDiscontinuityDropdown = function(link){
+    var addDiscontinuityDropdown = function(){
       return '<select class="form-select-control" id="discontinuityDropdown" size="1">' +
         '<option value = "5" selected disabled hidden>5 Jatkuva</option>' +
         '<option value="1" >1 Tien loppu</option>' +
@@ -145,15 +149,16 @@
 
     var addTrackCodeDropdown = function (trackDefaultValue, properties){
       var trackDefaultValueToShow = '';
-        if (trackDefaultValue === '') {
-        trackDefaultValue = Track.Unknown.value;
+      let trackDefaultValueOption = '';
+      if (trackDefaultValue === '') {
+        trackDefaultValueOption = Track.Unknown.value;
         trackDefaultValueToShow = '--';
         } else {
-        trackDefaultValueToShow = trackDefaultValue;
+        trackDefaultValueToShow = trackDefaultValueOption;
       }
 
       return '<select class="form-select-small-control" id="trackCodeDropdown" size="1" '+properties+'>' +
-        '<option value = "'+trackDefaultValue+'" selected hidden>'+trackDefaultValueToShow+'</option>' +
+        '<option value = "'+trackDefaultValueOption+'" selected hidden>'+trackDefaultValueToShow+'</option>' +
         '<option value="0" >0</option>' +
         '<option value="1" >1</option>' +
         '<option value="2" >2</option>' +
@@ -193,10 +198,10 @@
         var endM = Math.max.apply(Math, _.map(selected, function(l) { return l.endAddressM; }));
         var div = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
           '<div class="project-edit">' +
-          ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
-          ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
-          ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
-          ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
+          ' TIE <span class="project-edit">' + link.roadNumber + '</span>' +
+          ' OSA <span class="project-edit">' + link.roadPartNumber + '</span>' +
+          ' AJR <span class="project-edit">' + link.trackCode + '</span>' +
+          ' M:  <span class="project-edit">' + startM + ' - ' + endM + '</span>' +
           (selected.length > 1 ? ' (' + selected.length + ' linkkiä)' : '')+
           '</div>' +
           '</div>';
@@ -215,7 +220,7 @@
     var actionSelectedField = function() {
       var field;
       field = '<div class="'+prefix+'form-group action-selected-field" hidden = "true">' +
-        '<div class="asset-log-info">' + 'Tarkista tekemäsi muutokset.' + '<br>' + 'Jos muutokset ok, tallenna.' + '</div>' +
+        '<div class="asset-log-info">Tarkista tekemäsi muutokset.<br>Jos muutokset ok, tallenna.</div>' +
         '</div>';
       return field;
     };
@@ -223,11 +228,6 @@
     var toggleAdditionalControls = function(){
         $('#editProjectSpan').css('visibility', 'visible');
       $('#closeProjectSpan').css('visibility', 'visible');
-    };
-
-    var hideEditAndCloseControls = function(){
-        $('#editProjectSpan').css('visibility', 'hidden');
-      $('#closeProjectSpan').css('visibility', 'hidden');
     };
 
     var checkInputs = function (localPrefix) {
@@ -253,15 +253,15 @@
     var setInformationContent = function() {
       $('#information-content').html('' +
         '<div class="form form-horizontal">' +
-        '<p>' + 'Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen' + '<br>' +
-        'tai jatkaa muokkauksia.' + '</p>' +
+        '<p>Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen<br>' +
+        'tai jatkaa muokkauksia.</p>' +
         '</div>');
     };
 
     var sendRoadAddressChangeButton = function (localPrefix) {
       return '<div class="' + localPrefix + 'form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button id ="send-button" class="send btn btn-block btn-send"' + '>Lähetä muutosilmoitus Tierekisteriin</button></div>';
+        '<button id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
     var distanceValue = function() {
@@ -301,7 +301,7 @@
         return error.coordinates;
       }
       var linkCoords = _.find(links, function (link) {
-        return link.linkId == error.linkIds[0];
+        return link.linkId === error.linkIds[0];
       });
       if (!_.isUndefined(linkCoords)){
         return linkCoords.points[0];
@@ -328,7 +328,7 @@
           addSmallLabelTopped('LINKIDS: ') + ' ' + addSmallLabelWrapped(error.linkIds) + '</br>' +
           addSmallLabel('VIRHE: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage: 'N/A')) + '</br>' +
           addSmallLabel('INFO: ') + ' ' + addSmallLabelLowercase((error.info ? error.info: 'N/A')) + '</br>' +
-          (button.html ? button.html : '') + '</br>' + ' ' + '<hr class="horizontal-line"/>' +
+          (button.html ? button.html : '') + '</br> <hr class="horizontal-line"/>' +
           '</div>';
       });
       return errorLines;
@@ -360,4 +360,4 @@
       getProjectErrors:getProjectErrors
     };
   };
-})(this);
+}(this));
