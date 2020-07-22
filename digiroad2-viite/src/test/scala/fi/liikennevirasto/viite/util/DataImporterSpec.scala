@@ -130,16 +130,16 @@ class DataImporterSpec extends FunSuite with Matchers {
       // Terminated roadways
       val road_30_1_history = roadwayDAO.fetchAllByRoadAndPart(30, 1, withHistory = true)
       road_30_1_history.size should be(2)
-      val roadway_30_1 = road_30_1_history.filter(r => r.terminated == TerminationCode.Termination)
+      val roadway_30_1 = road_30_1_history.filter(r => r.terminated == TerminationCode.Termination).sortBy(_.startAddrMValue)
       val roadway_30_1_history = road_30_1_history.filter(r => r.terminated == TerminationCode.Subsequent)
       roadway_30_1_history.size should be(0)
       roadway_30_1.size should be(2)
       roadway_30_1.head.endDate should not be None
-      roadway_30_1.head.startAddrMValue should be(100)
-      roadway_30_1.head.endAddrMValue should be(200)
+      roadway_30_1.head.startAddrMValue should be(0)
+      roadway_30_1.head.endAddrMValue should be(100)
       roadway_30_1.last.endDate should not be None
-      roadway_30_1.last.startAddrMValue should be(0)
-      roadway_30_1.last.endAddrMValue should be(100)
+      roadway_30_1.last.startAddrMValue should be(100)
+      roadway_30_1.last.endAddrMValue should be(200)
 
       val road_30_2_history = roadwayDAO.fetchAllByRoadAndPart(30, 2, withHistory = true)
       road_30_2_history.size should be(1)
