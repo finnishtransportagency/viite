@@ -109,7 +109,7 @@ object TrackSectionRoadway {
         (firstRight.sortBy(_.startAddrMValue), firstLeft.sortBy(_.startAddrMValue))
       } else {
         (firstLeft.sortBy(_.startAddrMValue), firstRight.sortBy(_.startAddrMValue))
-  }
+      }
 
     val groupedReferenceLinks: ListMap[Long, Seq[ProjectLink]] = ListMap(referenceLinks.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
     val referenceLength: Double = groupedReferenceLinks.values.flatten.map(l => l.endMValue - l.startMValue).sum
@@ -345,7 +345,7 @@ object TrackSectionRoadway {
         logger.info(s"\tto:  ($splitEndAddrM - ${endAddrMValue.getOrElse(remainingReference.tail.head._2.head.endAddrMValue + refAdjust)})")
 
         val remainingAdjustedLinks: Seq[ProjectLink] = remainingReference.tail.head._2.head.copy(startAddrMValue = splitEndAddrM, endAddrMValue = endAddrMValue.getOrElse(remainingReference.tail.head._2.head.endAddrMValue + refAdjust)) +:
-            (remainingReference.tail.head._2.tail ++ remainingReference.tail.tail.flatMap(_._2).toSeq)
+          (remainingReference.tail.head._2.tail ++ remainingReference.tail.tail.flatMap(_._2).toSeq)
         val remainingAdjusted = ListMap(remainingAdjustedLinks.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
 
         splitLinksIfNeed(
