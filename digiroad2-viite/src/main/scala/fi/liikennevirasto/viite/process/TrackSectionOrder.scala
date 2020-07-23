@@ -337,7 +337,6 @@ object TrackSectionOrder {
   def createCombinedSectionss(rightSections: Seq[TrackSection], leftSections: Seq[TrackSection]): Seq[CombinedSection] = {
 
     def combineSections(rightSection: Seq[TrackSection], leftSection: Seq[TrackSection]): Seq[CombinedSection] = {
-//      rightSection.map { r =>
       rightSection.map { r =>
         r.track match {
           case Track.Combined =>
@@ -349,6 +348,14 @@ object TrackSectionOrder {
             CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, l, r)
           case Track.RightSide => if (leftSection.exists(_.track == Track.LeftSide)) {
             val l = leftSection.filter(_.track == Track.LeftSide).minBy(l =>
+              Math.min(
+                Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
+                Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
+            CombinedSection(r.startGeometry, r.endGeometry,.5 * (r.geometryLength + l.geometryLength), l, r)
+          } else
+            throw new MissingTrackException("Missing left track starting project links")
+          case Track.LeftSide => if (leftSection.exists(_.track == Track.RightSide)) {
+            val l = leftSection.filter(_.track == Track.RightSide).minBy(l =>
               Math.min(
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
                 Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
