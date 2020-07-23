@@ -1680,7 +1680,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  // TODO Mock TR client has changed and it might affect this test
+  // TODO Mock TR client has changed and it affects this test
   ignore("Test publishProject When sending changes to TR and provoking a IOException exception when publishing a project Then check if the project state is changed to 9") {
     var count = 0
     val roadNumber = 5L
