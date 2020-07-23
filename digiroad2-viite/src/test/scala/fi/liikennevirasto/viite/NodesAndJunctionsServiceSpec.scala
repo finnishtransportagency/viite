@@ -835,7 +835,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   }
 
   // TODO Mock RoadwayDAO.fetchAllByRoadwayNumbers should return something when fetching with four roadway numbers
-  ignore("Test nodesAndJunctionsService.handleJunctionTemplates When creating one road that connects itself with the tail point of one link being discontinuous Then junction template and junctions points should be handled/created properly." +
+  test("Test nodesAndJunctionsService.handleJunctionTemplates When creating one road that connects itself with the tail point of one link being discontinuous Then junction template and junctions points should be handled/created properly." +
     "Test nodesAndJunctionsService.expireObsoleteNodesAndJunctions When terminating one link that had junction point Then only the terminated junction point should be expired, not all of them, neither his Junction.") {
     runWithRollback {
       /*  |--L-->|
