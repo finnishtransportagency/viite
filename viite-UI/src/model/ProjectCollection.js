@@ -23,7 +23,7 @@
     var editedEndDistance = false;
     var editedBeginDistance = false;
 
-    var resetEditedDistance = function() {
+    var resetEditedDistance = function () {
       editedEndDistance = false;
       editedBeginDistance = false;
     };
@@ -76,7 +76,9 @@
       var id = projectId;
       if (typeof id === 'undefined' && typeof projectInfo !== 'undefined')
         id = projectInfo.id;
-      if (id) { backend.abortGettingRoadLinks(); }
+      if (id) {
+        backend.abortGettingRoadLinks();
+      }
       backend.getProjectLinks({boundingBox: boundingBox, zoom: zoom, projectId: id}, function (fetchedLinks) {
         fetchedProjectLinks = _.map(fetchedLinks, function (projectLinkGroup) {
           return _.map(projectLinkGroup, function (projectLink) {
@@ -192,8 +194,7 @@
           me.setReservedParts(result.reservedInfo);
           me.setFormedParts(result.formedInfo);
           eventbus.trigger('roadAddress:projectSaved', result);
-        }
-        else {
+        } else {
           eventbus.trigger('roadAddress:projectValidationFailed', result.errorMessage);
         }
       }, function () {
@@ -245,13 +246,11 @@
           if (response.success) {
             dirtyProjectLinkIds = [];
             eventbus.trigger('projectLink:revertedChanges');
-          }
-          else if (response === INTERNAL_SERVER_ERROR_500 || response === BAD_REQUEST_400) {
+          } else if (response === INTERNAL_SERVER_ERROR_500 || response === BAD_REQUEST_400) {
             eventbus.trigger('roadAddress:projectLinksUpdateFailed', response.status);
             new ModalConfirm(response.message);
             applicationModel.removeSpinner();
-          }
-          else {
+          } else {
             new ModalConfirm(response.message);
             applicationModel.removeSpinner();
           }
@@ -345,13 +344,13 @@
       var coordinates = applicationModel.getUserGeoLocation();
       var roadAddressProjectForm = $('#roadAddressProjectForm');
       var endDistance = $('#endDistance')[0];
-      var reversed = _.chain(changedLinks).map(function(c) {
+      var reversed = _.chain(changedLinks).map(function (c) {
         return c.reversed;
-      }).reduceRight(function(a, b) {
+      }).reduceRight(function (a, b) {
         return a || b;
       }).value();
       let userDefinedEndAddressM = null;
-      if (endDistance) userDefinedEndAddressM = (isNaN(Number(endDistance.value)) ? null: Number(endDistance.value));
+      if (endDistance) userDefinedEndAddressM = (isNaN(Number(endDistance.value)) ? null : Number(endDistance.value));
       var dataJson = {
         ids: ids,
         linkIds: linkIds,
@@ -424,8 +423,7 @@
             publishable: false
           };
           eventbus.trigger('roadAddress:projectSaved', result);
-        }
-        else {
+        } else {
           eventbus.trigger('roadAddress:projectValidationFailed', result.errorMessage);
         }
       }, function () {
@@ -437,8 +435,7 @@
       backend.deleteRoadAddressProject(projectId, function (result) {
         if (result.success) {
           currentProject = undefined;
-        }
-        else {
+        } else {
           eventbus.trigger('roadAddress:projectDeleteFailed', result.errorMessage);
         }
       }, function () {
@@ -499,8 +496,7 @@
       backend.sendProjectToTR(projectInfo.id, function (result) {
         if (result.sendSuccess) {
           eventbus.trigger('roadAddress:projectSentSuccess');
-        }
-        else {
+        } else {
           eventbus.trigger('roadAddress:projectSentFailed', result.errorMessage);
         }
       }, function (result) {
@@ -677,10 +673,10 @@
       }
     });
 
-    eventbus.on('projectLink:editedBeginDistance', function() {
+    eventbus.on('projectLink:editedBeginDistance', function () {
       editedBeginDistance = true;
     });
-    eventbus.on('projectLink:editedEndDistance', function() {
+    eventbus.on('projectLink:editedEndDistance', function () {
       editedEndDistance = true;
     });
 

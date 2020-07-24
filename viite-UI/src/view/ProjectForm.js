@@ -80,7 +80,7 @@
         '<div id ="reservedRoads">' +
         '</div></div>' +
         '</div></div>' +
-        '<footer>' + actionButtons(false) + '</footer>');
+        '<footer>' + actionButtons() + '</footer>');
     };
 
     var openProjectTemplate = function (project, publishedNetworkDate, reservedRoads, newReservedRoads) {
@@ -722,7 +722,7 @@
       });
 
       rootElement.on('click', '#deleteProjectSpan', function(){
-        displayDeleteConfirmMessage("Haluatko varmasti poistaa tämän projektin?", true);
+        displayDeleteConfirmMessage("Haluatko varmasti poistaa tämän projektin?");
       });
 
       rootElement.on('change', '.input-required', function () {

@@ -1,18 +1,24 @@
 /* eslint-disable new-cap */
-(function(root) {
-  root.LocationSearch = function(backend, applicationModel) {
+(function (root) {
+  root.LocationSearch = function (backend, applicationModel) {
     /**
      * Search by street address
      *
      * @param street
      * @returns {*}
      */
-    var geocode = function(street) {
+    var geocode = function (street) {
       return backend.getSearchResults(street.search).then(function (coordinateData) {
         var result = coordinateData[0].street[0].features;
-        var withErrors = _.some(result, function(r) {return !_.isUndefined(r.properties.virheet);});
-        var vkmResultToCoordinates = function(r) {
-          return { title: r.properties.katunimi + " " + r.properties.katunumero + ", " + r.properties.kuntanimi , lon: r.properties.x, lat: r.properties.y};
+        var withErrors = _.some(result, function (r) {
+          return !_.isUndefined(r.properties.virheet);
+        });
+        var vkmResultToCoordinates = function (r) {
+          return {
+            title: r.properties.katunimi + " " + r.properties.katunumero + ", " + r.properties.kuntanimi,
+            lon: r.properties.x,
+            lat: r.properties.y
+          };
         };
         if (withErrors) {
           return $.Deferred().reject('Tuntematon katuosoite');
@@ -31,22 +37,22 @@
      */
     function roadLocationAPIResultParser(roadData, addressMValue) {
       var sideCodes = LinkValues.SideCode;
-      var constructTitle = function(address) {
+      var constructTitle = function (address) {
         var titleParts = [_.get(address, 'roadNumber'), _.get(address, 'roadPartNumber')];
         return _.some(titleParts, _.isUndefined) ? '' : 'Tieosa, ' + titleParts.join(' ');
       };
       var lon, lat = 0;
       const addressMValueFixed = _.isUndefined(addressMValue) ? 0 : addressMValue;
-      if ((roadData.startAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value) ) {
+      if ((roadData.startAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value)) {
         lon = roadData.geometry[0].x;
         lat = roadData.geometry[0].y;
       } else {
         lon = roadData.geometry[roadData.geometry.length - 1].x;
-        lat =  roadData.geometry[roadData.geometry.length - 1].y;
+        lat = roadData.geometry[roadData.geometry.length - 1].y;
       }
       var title = constructTitle(roadData);
       if (lon && lat) {
-        return  [{title: title, lon: lon, lat: lat, resultType:"road"}];
+        return [{title: title, lon: lon, lat: lat, resultType: "road"}];
       } else {
         return [];
       }
@@ -103,7 +109,7 @@
       return $.Deferred().resolve([result]);
     };
 
-    this.search = function(searchString) {
+    this.search = function (searchString) {
       function addDistance(item) {
         var currentLocation = applicationModel.getCurrentLocation();
 
@@ -120,11 +126,13 @@
         coordinate: resultFromCoordinates,
         street: geocode,
         road: getCoordinatesFromSearchInput,
-        invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
+        invalid: function () {
+          return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta');
+        }
       };
 
       var results = resultByInputType[input.type](input);
-      return results.then(function(result) {
+      return results.then(function (result) {
         return _.map(result, addDistance);
       });
     };

@@ -117,7 +117,7 @@
           infoContent.innerHTML =
             nodeName +
             'Solmutyyppi: ' + displayNodeType(featureAtPixel.getProperties().type) + '<br>';
-}
+        }
         overlay.setPosition(coordinate);
       }
 
@@ -141,8 +141,14 @@
         var node = nodeCollection.getNodeByNodeNumber(junctionData.nodeNumber);
         coordinate = map.getEventCoordinate(event.originalEvent);
         var roadAddressInfo = [];
-        _.map(junctionPointData, function(point){
-          roadAddressInfo.push({road: point.roadNumber, part: point.roadPartNumber, track: point.track, addr: point.addrM, beforeAfter: point.beforeAfter});
+        _.map(junctionPointData, function (point) {
+          roadAddressInfo.push({
+            road: point.roadNumber,
+            part: point.roadPartNumber,
+            track: point.track,
+            addr: point.addrM,
+            beforeAfter: point.beforeAfter
+          });
         });
 
         var groupedRoadAddresses = _.groupBy(roadAddressInfo, function (row) {
@@ -158,8 +164,13 @@
           return {road: first.road, track: first.track, part: first.part, addr: first.addr};
         });
 
-        var singleRows = _.map(roadAddresses[1], function(junctionPoint) {
-          return {road: junctionPoint[0].road, track: junctionPoint[0].track, part: junctionPoint[0].part, addr: junctionPoint[0].addr};
+        var singleRows = _.map(roadAddresses[1], function (junctionPoint) {
+          return {
+            road: junctionPoint[0].road,
+            track: junctionPoint[0].track,
+            part: junctionPoint[0].part,
+            addr: junctionPoint[0].addr
+          };
         });
 
         var roadAddressContent = _.sortBy(doubleRows.concat(singleRows), ['road', 'part', 'track', 'addr']);
@@ -171,7 +182,7 @@
             _.map(roadAddressContent, function (junctionPoint) {
               return '&thinsp;' + junctionPoint.road + '&nbsp;/&nbsp;' + junctionPoint.track + '&nbsp;/&nbsp;' + junctionPoint.part + '&nbsp;/&nbsp;' + junctionPoint.addr + '<br>';
             }).join('');
-}
+        }
         overlay.setPosition(coordinate);
       }
     };

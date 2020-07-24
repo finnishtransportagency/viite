@@ -1,57 +1,57 @@
 define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAddressProjectTestData'],
 
-  function(RoadAddressTestData,
-           RoadLinkTestData,
-           UserRolesTestData,
-           RoadAddressProjectTestData) {
+  function (RoadAddressTestData,
+            RoadLinkTestData,
+            UserRolesTestData,
+            RoadAddressProjectTestData) {
 
-    var getRoadLayerName = function() {
+    var getRoadLayerName = function () {
       return 'roadLayer';
     };
-    var getFloatingMarkerLayerName = function() {
+    var getFloatingMarkerLayerName = function () {
       return 'floatingMarkerLayer';
     };
-    var getAnomalousMarkerLayerName = function() {
+    var getAnomalousMarkerLayerName = function () {
       return 'anomalousMarkerLayer';
     };
-    var getCalibrationPointLayerName = function() {
+    var getCalibrationPointLayerName = function () {
       return 'calibrationPointLayer';
     };
-    var getGreenRoadLayerName = function() {
+    var getGreenRoadLayerName = function () {
       return 'greenRoadLayer';
     };
-    var getPickRoadsLayerName = function(){
+    var getPickRoadsLayerName = function () {
       return 'pickRoadsLayer';
     };
-    var getSimulatedRoadsLayerName = function() {
+    var getSimulatedRoadsLayerName = function () {
       return 'simulatedRoadsLayer';
     };
-    var getRoadAddressProjectLayerName = function() {
+    var getRoadAddressProjectLayerName = function () {
       return 'roadAddressProject';
     };
-    var getSingleClickNameLinkPropertyLayer = function() {
+    var getSingleClickNameLinkPropertyLayer = function () {
       return 'selectSingleClickInteractionLPL';
     };
-    var getDoubleClickNameLinkPropertyLayer = function() {
+    var getDoubleClickNameLinkPropertyLayer = function () {
       return 'selectDoubleClickInteractionLPL';
     };
-    var getSingleClickNameProjectLinkLayer = function() {
+    var getSingleClickNameProjectLinkLayer = function () {
       return 'selectSingleClickInteractionPLL';
     };
-    var getDoubleClickNameProjectLinkLayer = function() {
+    var getDoubleClickNameProjectLinkLayer = function () {
       return 'selectDoubleClickInteractionPLL';
     };
 
-    var getDoubleClickName = function() {
+    var getDoubleClickName = function () {
       return 'selectDoubleClickInteraction';
     };
 
-    var unbindEvents = function() {
+    var unbindEvents = function () {
       eventbus.off();
       $(window).off();
     };
 
-    var clearDom = function() {
+    var clearDom = function () {
       $('.container').html(
         '<div id="contentMap">' +
         '<div id="mapdiv"></div>' +
@@ -63,15 +63,15 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       );
     };
 
-    var clearAddressBar = function() {
+    var clearAddressBar = function () {
       window.location.hash = '';
     };
 
-    var restartApplication = function(callback, backend) {
+    var restartApplication = function (callback, backend) {
       unbindEvents();
       clearDom();
       clearAddressBar();
-      eventbus.on('map:initialized', function(map) {
+      eventbus.on('map:initialized', function (map) {
         applicationModel.assetDragDelay = 0;
         callback(map);
       });
@@ -82,74 +82,65 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
     //The restartApplication command is not properly applying the selected backend to the context of the tests done in this FloatingRoadAddressSpec.
     //It was "quick-fixed" by changing the default backend function (bellow) in the this file to retrive the data I need (thus locking the backend in one mode).
     //I require some assistance with this issue.
-    var defaultBackend = function() {
-      return fakeBackend(13, selectTestData('roadAddress'),354810.0, 6676460.0, 'Project Two');
+    var defaultBackend = function () {
+      return fakeBackend(13, selectTestData('roadAddress'), 354810.0, 6676460.0, 'Project Two');
     };
 
-    var fakeBackend = function(zoomLevel, generatedData, latitude, longitude, projectDefinition) {
+    var fakeBackend = function (zoomLevel, generatedData, latitude, longitude, projectDefinition) {
       var data = getSimulatedData(projectDefinition);
-        return new Backend().withLinkData(generatedData, selectTestData('roadAddressAfterSave')).
-        withUserRolesData(UserRolesTestData.userData()).
-        withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10, deploy_date: "" }).
-        withFloatingAdjacents(data.floatingAdjacents).
-        withGetTargetAdjacent(data.targetAdjacent).
-        withGetTransferResult(data.transferResult).
-        withRoadAddressProjectData(data.projectData).
-        withRoadPartReserved(data.partReserved).
-        withProjectLinks(data.projectLinks).
-        withGetProjectsWithLinksById(data.projectsWithLinks).
-        withRoadAddressProjects(data.projects).
-        withGetRoadAddressByLinkId(data.roadLinkById).
-        withGetProjectLinkByLinkId(data.roadLinkById).
-        withCreateRoadAddressProject(data.createRoadAddressProject).
-        withRoadAddressCreation();
+      return new Backend().withLinkData(generatedData, selectTestData('roadAddressAfterSave')).withUserRolesData(UserRolesTestData.userData()).withStartupParameters({
+        lon: longitude,
+        lat: latitude,
+        zoom: zoomLevel || 10,
+        deploy_date: ""
+      }).withFloatingAdjacents(data.floatingAdjacents).withGetTargetAdjacent(data.targetAdjacent).withGetTransferResult(data.transferResult).withRoadAddressProjectData(data.projectData).withRoadPartReserved(data.partReserved).withProjectLinks(data.projectLinks).withGetProjectsWithLinksById(data.projectsWithLinks).withRoadAddressProjects(data.projects).withGetRoadAddressByLinkId(data.roadLinkById).withGetProjectLinkByLinkId(data.roadLinkById).withCreateRoadAddressProject(data.createRoadAddressProject).withRoadAddressCreation();
     };
 
-    var clickVisibleEditModeButton = function() {
+    var clickVisibleEditModeButton = function () {
       $('.edit-mode-btn:visible').click();
     };
 
-    var clickVisbleYesConfirmPopup = function(){
+    var clickVisbleYesConfirmPopup = function () {
       $('.btn.yes:visible').click();
     };
 
-    var clickValintaButton = function(){
+    var clickValintaButton = function () {
       $('.link-properties button.continue').click();
     };
 
-    var clickVisibleCloseConfirmPopup = function(){
+    var clickVisibleCloseConfirmPopup = function () {
       $('.btn.close:visible').click();
     };
 
-    var clickMap = function(map, longitude, latitude) {
-      map.dispatchEvent({ type: 'singleclick', coordinate: [longitude, latitude] });
+    var clickMap = function (map, longitude, latitude) {
+      map.dispatchEvent({type: 'singleclick', coordinate: [longitude, latitude]});
     };
 
-    var clickEnabledSiirraButton = function(){
+    var clickEnabledSiirraButton = function () {
       $('.link-properties button.calculate:enabled').click();
     };
 
-    var clickEnabledSaveButton = function(){
+    var clickEnabledSaveButton = function () {
       $('.link-properties button.save:enabled').click();
     };
 
-    var clickFormProjectButton = function(){
+    var clickFormProjectButton = function () {
       $('[id=formProjectButton]').click();
     };
 
-    var clickNextButton = function(){
+    var clickNextButton = function () {
       $('#generalNext').click();
     };
 
-    var clickReserveButton = function(){
+    var clickReserveButton = function () {
       $('.btn-reserve').click();
     };
 
-    var clickOpenProjectButton = function(){
+    var clickOpenProjectButton = function () {
       $('[id*="open-project"]').click();
     };
 
-    var clickNewProjectButton = function(){
+    var clickNewProjectButton = function () {
       $('button.new').click();
     };
 
@@ -157,29 +148,31 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       $('.split-form button.cancelLink').click();
     };
 
-    var getLayerByName = function(map, name){
+    var getLayerByName = function (map, name) {
       var layers = map.getLayers().getArray();
-      return _.find(layers, function(layer){
+      return _.find(layers, function (layer) {
         return layer.get('name') === name;
       });
     };
 
-    var getLineStringFeatures = function(layer) {
-      return _.filter(layer.getSource().getFeatures(), function(feature) {
+    var getLineStringFeatures = function (layer) {
+      return _.filter(layer.getSource().getFeatures(), function (feature) {
         return feature.getGeometry() instanceof ol.geom.LineString;
       });
     };
 
-    var selectLayer = function(layerName) {
+    var selectLayer = function (layerName) {
       applicationModel.selectLayer(layerName);
     };
 
-    var getPixelFromCoordinateAsync = function(map, coordinate, callback) {
+    var getPixelFromCoordinateAsync = function (map, coordinate, callback) {
       var pixel = map.getPixelFromCoordinate(coordinate);
       if (pixel) {
-        window.setTimeout(function() { callback(pixel); }, 0);
+        window.setTimeout(function () {
+          callback(pixel);
+        }, 0);
       } else {
-        map.once('postrender', function() {
+        map.once('postrender', function () {
           getPixelFromCoordinateAsync(map, coordinate, callback);
         });
       }
@@ -214,8 +207,8 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       }
     };
 
-    var selectTestData = function(selection){
-      switch (selection){
+    var selectTestData = function (selection) {
+      switch (selection) {
         case 'user':
           return UserRolesTestData.roles();
         case 'roadAddress':
@@ -241,58 +234,58 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       }
     };
 
-    var getFeatures = function(map, layerName){
+    var getFeatures = function (map, layerName) {
       var layer = getLayerByName(map, layerName);
       return layer.getSource().getFeatures();
     };
 
-  var getLayer = function(map, layerName){
+    var getLayer = function (map, layerName) {
       var layer = getLayerByName(map, layerName);
       return layer;
-  };
+    };
 
-      var getFeaturesLinkData = function (map, layerName) {
-      var features =  getFeatures(map, layerName);
-      return _.chain(features).map(function(feature){
-          return feature.linkData;
-      }).filter(function(rlData) {
+    var getFeaturesLinkData = function (map, layerName) {
+      var features = getFeatures(map, layerName);
+      return _.chain(features).map(function (feature) {
+        return feature.linkData;
+      }).filter(function (rlData) {
         return !_.isUndefined(rlData);
       }).value();
     };
 
-    var getFeatureByLinkId = function(map, layerName, linkId){
+    var getFeatureByLinkId = function (map, layerName, linkId) {
       var features = getFeatures(map, layerName);
-      return _.find(features, function(feature){
-          return (feature.linkData.linkId === linkId);
+      return _.find(features, function (feature) {
+        return (feature.linkData.linkId === linkId);
       });
     };
 
-      var getLinkDataByLinkId = function (map, layerName, linkId) {
-          var linkDatas = getFeaturesLinkData(map, layerName);
-          return _.find(linkDatas, function (linkData) {
-              return linkData.linkId === linkId;
+    var getLinkDataByLinkId = function (map, layerName, linkId) {
+      var linkDatas = getFeaturesLinkData(map, layerName);
+      return _.find(linkDatas, function (linkData) {
+        return linkData.linkId === linkId;
       });
     };
 
-    var selectSingleFeatureByInteraction = function(map, feature, interactionName){
-      var interaction = _.find(map.getInteractions().getArray(), function(interactionHere) {
+    var selectSingleFeatureByInteraction = function (map, feature, interactionName) {
+      var interaction = _.find(map.getInteractions().getArray(), function (interactionHere) {
         return interactionHere.get('name') === interactionName;
       });
 
       if (interaction) {
-          if (interaction.getFeatures()) {
-              interaction.getFeatures().clear();
-          } else {
-              console.log('getFeatures not found!');
-          }
-          interaction.getFeatures().push(feature);
-          interaction.dispatchEvent({
-              type: 'select',
-              selected: [feature],
-              deselected: []
-          });
+        if (interaction.getFeatures()) {
+          interaction.getFeatures().clear();
+        } else {
+          console.log('getFeatures not found!');
+        }
+        interaction.getFeatures().push(feature);
+        interaction.dispatchEvent({
+          type: 'select',
+          selected: [feature],
+          deselected: []
+        });
       } else {
-          console.log('Interaction not found');
+        console.log('Interaction not found');
       }
     };
 
@@ -314,7 +307,7 @@ define(['RoadAddressTestData', 'RoadLinkTestData', 'UserRolesTestData', 'RoadAdd
       getPixelFromCoordinateAsync: getPixelFromCoordinateAsync,
       defaultBackend: defaultBackend,
       fakeBackend: fakeBackend,
-      clickValintaButton:clickValintaButton,
+      clickValintaButton: clickValintaButton,
       clickEnabledSiirraButton: clickEnabledSiirraButton,
       clickVisibleEditModeButton: clickVisibleEditModeButton,
       clickFormProjectButton: clickFormProjectButton,

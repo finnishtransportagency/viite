@@ -1,13 +1,13 @@
 (function (root) {
-  root.MapOverlay = function(container) {
+  root.MapOverlay = function (container) {
     var element = '<div id="map-overlay" style="display: none"></div>';
     container.append(element);
 
-    var show = function() {
+    var show = function () {
       container.find('#map-overlay').show();
     };
 
-    var hide = function() {
+    var hide = function () {
       container.find('#map-overlay').hide();
     };
 

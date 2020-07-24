@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-(function(exports) {
+(function (exports) {
   //Private Property
   var isPrivate = true;
 
@@ -7,15 +7,16 @@
   exports.publicProperty = "Bacon Strips";
 
   //Public Method
-  exports.publicMethod = function() {
+  exports.publicMethod = function () {
     return 1;
   };
 
   //Private Method
-  function privateMethod( item ) {
-    if ( item !== undefined ) {
-      console.log( "Adding " + $.trim(item) );
+  function privateMethod(item) {
+    if (item !== undefined) {
+      console.log("Adding " + $.trim(item));
     }
   }
+
 // }(window.skillet = window.skillet || {}));
 }(typeof exports === "undefined" ? (this.skillet = {}) : exports));

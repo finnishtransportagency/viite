@@ -1,12 +1,12 @@
-(function(root) {
-  root.LinkPropertiesModel = function() {
+(function (root) {
+  root.LinkPropertiesModel = function () {
     var currentDataset = 'functional-class';
 
-    var getDataset = function() {
+    var getDataset = function () {
       return currentDataset;
     };
 
-    var setDataset = function(dataset) {
+    var setDataset = function (dataset) {
       if (currentDataset !== dataset) {
         currentDataset = dataset;
         eventbus.trigger('linkProperties:dataset:changed');

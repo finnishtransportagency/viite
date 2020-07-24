@@ -93,7 +93,7 @@
       zoom.level = Math.round(level);
     };
 
-    var getZoomLevel = function() {
+    var getZoomLevel = function () {
       return zoom.level;
     };
 
@@ -144,13 +144,9 @@
 
     var addSpinner = function (spinnerEvent) {
       jQuery('.container').append(
-          $('<div/>').
-              addClass("spinner-overlay").
-              addClass(spinnerClassName(spinnerEvent)).
-              addClass("modal-overlay").append(
-              $('<div/>').
-                  addClass("spinner")
-          )
+        $('<div/>').addClass("spinner-overlay").addClass(spinnerClassName(spinnerEvent)).addClass("modal-overlay").append(
+          $('<div/>').addClass("spinner")
+        )
       );
     };
 
@@ -208,27 +204,17 @@
         }
         var underConstructionVisibleCheckbox = $('#underConstructionVisibleCheckbox')[0];
         if (layer !== selectedLayer || toggleStart) {
-            if (underConstructionVisibleCheckbox) {
-                if (layer === 'roadAddressProject') {
-                    $('#underConstructionVisibleCheckbox')[0].checked = true;
-                    $('#underConstructionVisibleCheckbox')[0].disabled = false;
-                } else {
-                    $('#underConstructionVisibleCheckbox')[0].checked = true;
-                    $('#underConstructionVisibleCheckbox')[0].disabled = false;
-                }
-            }
-            eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
+          if (underConstructionVisibleCheckbox) {
+            $('#underConstructionVisibleCheckbox')[0].checked = true;
+            $('#underConstructionVisibleCheckbox')[0].disabled = false;
+          }
+          eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
         }
         var unAddressedRoadsVisibleCheckbox = $('#unAddressedRoadsVisibleCheckbox')[0];
         if (layer !== selectedLayer || toggleStart) {
           if (unAddressedRoadsVisibleCheckbox) {
-            if (layer === 'roadAddressProject') {
-              $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
-              $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
-            } else {
-              $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
-              $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
-            }
+            $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
+            $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
           }
           eventbus.trigger('unAddressedRoadsProjectRoads:toggleVisibility', true);
         }

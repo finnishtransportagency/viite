@@ -1,5 +1,5 @@
-(function(root) {
-  root.TileMapCollection = function(OAGGreyConfig) {
+(function (root) {
+  root.TileMapCollection = function (OAGGreyConfig) {
     var layerConfig = {
       // minResolution: ?,
       // maxResolution: ?,
@@ -16,7 +16,7 @@
     var sourceConfig = {
       cacheSize: 4096,
       projection: 'EPSG:3067',
-      tileSize: [256,256]
+      tileSize: [256, 256]
     };
 
     var tileGridConfig = {
@@ -50,64 +50,66 @@
         tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, aerialMapConfig))
     }, layerConfig));
-    aerialMapLayer.set('name','aerialMapLayer');
+    aerialMapLayer.set('name', 'aerialMapLayer');
 
     var backgroundMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
         tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, backgroundMapConfig))
     }, layerConfig));
-      backgroundMapLayer.set('name','backgroundMapLayer');
+    backgroundMapLayer.set('name', 'backgroundMapLayer');
 
     var propertyBorderLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
         tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, propertyBorderMapConfig))
     }, propertyLayerConfig));
-    propertyBorderLayer.set('name','propertyBorderLayer');
+    propertyBorderLayer.set('name', 'propertyBorderLayer');
 
     var terrainMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
         tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, terrainMapConfig))
     }, layerConfig));
-    terrainMapLayer.set('name','terrainMapLayer');
+    terrainMapLayer.set('name', 'terrainMapLayer');
 
-      var tileMapLayers = {
-          background: backgroundMapLayer,
-          aerial: aerialMapLayer,
-          terrain: terrainMapLayer,
-          propertyBorder : propertyBorderLayer
-      };
+    var tileMapLayers = {
+      background: backgroundMapLayer,
+      aerial: aerialMapLayer,
+      terrain: terrainMapLayer,
+      propertyBorder: propertyBorderLayer
+    };
 
-    if(OAGGreyConfig) {
+    if (OAGGreyConfig) {
       var parser = new ol.format.WMTSCapabilities();
       var result = parser.read(OAGGreyConfig);
-      var config = {layer: 'liikennevirasto:PTP_Taustakartta_Harmaa', matrixSet:'EPSG:3067_PTP_JHS180'};
+      var config = {layer: 'liikennevirasto:PTP_Taustakartta_Harmaa', matrixSet: 'EPSG:3067_PTP_JHS180'};
       var options = ol.source.WMTS.optionsFromCapabilities(result, config);
-      options.urls= ['rasteripalvelu/wmts?'];
+      options.urls = ['rasteripalvelu/wmts?'];
       var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
       greyscaleLayer.set('name', 'greyScaleLayer');
       tileMapLayers.greyscale = greyscaleLayer;
     }
 
-    var selectMap = function(tileMap) {
-      _.forEach(tileMapLayers, function(layer, key) {
+    var selectMap = function (tileMap) {
+      _.forEach(tileMapLayers, function (layer, key) {
         layer.setVisible(key === tileMap);
       });
     };
 
-    var togglePropertyBorderVisibility = function(showPropertyBorder) {
-    propertyBorderLayer.setVisible(showPropertyBorder);
+    var togglePropertyBorderVisibility = function (showPropertyBorder) {
+      propertyBorderLayer.setVisible(showPropertyBorder);
     };
 
 
-    selectMap('background',true);
+    selectMap('background');
     eventbus.on('tileMap:selected', selectMap);
     eventbus.on('tileMap:togglepropertyBorder', togglePropertyBorderVisibility);
 
     return {
-      layers: _.map(tileMapLayers, function(layer) { return layer; })
+      layers: _.map(tileMapLayers, function (layer) {
+        return layer;
+      })
     };
   };
 }(this));

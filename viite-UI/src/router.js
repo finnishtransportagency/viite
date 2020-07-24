@@ -22,23 +22,23 @@
       },
 
       routes: {
-        'linkProperty/:linkId'          : 'linkProperty',
-        'linkProperty/mml/:mmlId'       : 'linkPropertyByMml',
-        'linkProperty/mtkid/:mtkid'     : 'linkPropertyByMtk',
-        'roadAddressProject/:projectId' : 'roadAddressProject',
-        'historyLayer/:date'            : 'historyLayer',
-        'work-list/floatingRoadAddress' : 'floatingAddressesList',
-        'work-list/roadAddressErrors'   : 'roadAddressErrorsList',
-        'node/nodePointTemplate/:id'    : 'nodePointTemplate',
-        'node/junctionTemplate/:id'     : 'junctionTemplate'
+        'linkProperty/:linkId': 'linkProperty',
+        'linkProperty/mml/:mmlId': 'linkPropertyByMml',
+        'linkProperty/mtkid/:mtkid': 'linkPropertyByMtk',
+        'roadAddressProject/:projectId': 'roadAddressProject',
+        'historyLayer/:date': 'historyLayer',
+        'work-list/floatingRoadAddress': 'floatingAddressesList',
+        'work-list/roadAddressErrors': 'roadAddressErrorsList',
+        'node/nodePointTemplate/:id': 'nodePointTemplate',
+        'node/junctionTemplate/:id': 'junctionTemplate'
       },
 
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
         backend.getRoadAddressByLinkId(linkId, function (response) {
           if (response.success) {
-              map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-              map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
+            map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+            map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
           } else {
             console.log(response.reason);
           }
@@ -64,8 +64,8 @@
           });
           map.getView().setCenter([response.x, response.y]);
           map.getView().setZoom(12);
-      });
-    },
+        });
+      },
       roadAddressProject: function (projectId) {
         applicationModel.selectLayer('roadAddressProject');
         eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
@@ -100,7 +100,6 @@
         eventbus.trigger('nodeSearchTool:clickJunctionTemplate', junctionTemplateId);
       }
     });
-
 
 
     var router = new Router();

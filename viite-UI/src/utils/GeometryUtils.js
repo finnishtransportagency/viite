@@ -86,7 +86,7 @@
     var dx = x2 - x1;
     var dy = y2 - y1;
     var along = (dx === 0 && dy === 0) ? 0 : ((dx * (x0 - x1)) + (dy * (y0 - y1))) /
-    (Math.pow(dx, 2) + Math.pow(dy, 2));
+      (Math.pow(dx, 2) + Math.pow(dy, 2));
     var x, y;
     if (along <= 0) {
       x = x1;
@@ -109,8 +109,8 @@
     var result, best = {};
     var min = Number.POSITIVE_INFINITY;
     var i = 0;
-/* eslint-disable consistent-return */
-geometry.forEachSegment(function (segPoint1, segPoint2) {
+    /* eslint-disable consistent-return */
+    geometry.forEachSegment(function (segPoint1, segPoint2) {
       result = distanceToSegment(point, [segPoint1, segPoint2]);
       if (result.distance < min) {
         min = result.distance;
@@ -240,11 +240,11 @@ geometry.forEachSegment(function (segPoint1, segPoint2) {
   };
 
   root.geometryLength = function (geometry) {
-      return _.reduce(geometry , function (length, point, index, array) {
-        if (index < array.length - 1)
-          return length + distanceBetweenPoints(point, array[index+1]);
-        return length;
-      }, 0.0);
+    return _.reduce(geometry, function (length, point, index, array) {
+      if (index < array.length - 1)
+        return length + distanceBetweenPoints(point, array[index + 1]);
+      return length;
+    }, 0.0);
   };
 
 }(window.GeometryUtils = window.GeometryUtils || {}));
