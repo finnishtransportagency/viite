@@ -3,18 +3,7 @@
         <setting name="tasks" value="&quot;project digiroad2-viite&quot; &quot;test:run-main fi.liikennevirasto.viite.util.DataFixture test&quot;" />
         <setting name="vmparams" value="-Xms512M -Xmx1024M -Xss1M -XX:+CMSClassUnloadingEnabled" />
         <setting name="workingDir" value="$PROJECT_DIR$" />
-        <envs>
-            <env name="vvhRestApiEndPoint" value="http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/" />
-            <env name="http.nonProxyHosts" value="127.0.0.1" />
-            <env name="http.proxyHost" value="127.0.0.1" />
-            <env name="http.proxySet" value="false" />
-            <env name="bonecp.jdbcUrl" value="jdbc:postgresql://localhost:5432/viite" />
-            <env name="bonecp.username" value="viite" />
-            <env name="vvhServiceHost" value="172.17.204.39:6080" />
-            <env name="bonecp.password" value="viite" />
-            <env name="env" value="Local" />
-            <env name="vvhRoadlink.frozen" value="true" />
-        </envs>
+        <envs />
         <method />
     </configuration>
 </component>

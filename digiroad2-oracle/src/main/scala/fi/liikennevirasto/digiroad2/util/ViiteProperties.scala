@@ -15,7 +15,6 @@ trait ViiteProperties {
   val vkmUrl: String
   val tierekisteriViiteRestApiEndPoint: String
   val tierekisteriEnabled: Boolean
-  val cacheDirectory: String
   val httpProxySet: Boolean
   val httpProxyHost: String
   val httpNonProxyHosts: String
@@ -64,7 +63,6 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
   val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("tierekisteri.enabled", "false").toBoolean
-  val cacheDirectory: String = scala.util.Properties.envOrElse("cache.directory", null)
   val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
   val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
   val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", "")
@@ -136,29 +134,28 @@ class ViitePropertiesFromFile extends ViiteProperties {
     props
   }
 
-  override val userProvider: String = envProps.getProperty("digiroad2.userProvider")
-  override val municipalityProvider: String = envProps.getProperty("digiroad2.municipalityProvider")
-  override val eventBus: String = envProps.getProperty("digiroad2.eventBus")
-  override val useVVHGeometry: String = envProps.getProperty("digiroad2.useVVHGeometry")
-  override val vvhServiceHost: String = envProps.getProperty("digiroad2.VVHServiceHost")
-  override val vvhRestApiEndPoint: String = envProps.getProperty("digiroad2.VVHRestApiEndPoint")
-  override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
-  override val vkmUrl: String = envProps.getProperty("digiroad2.VKMUrl")
-  override val tierekisteriViiteRestApiEndPoint: String = envProps.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
-  override val tierekisteriEnabled: Boolean = envProps.getProperty("digiroad2.tierekisteri.enabled", "false").toBoolean
-  override val cacheDirectory: String = envProps.getProperty("digiroad2.cache.directory")
-  override val httpProxySet: Boolean = envProps.getProperty("digiroad2.http.proxySet", "false").toBoolean
-  override val httpProxyHost: String = envProps.getProperty("digiroad2.http.proxyHost")
-  override val httpNonProxyHosts: String = envProps.getProperty("digiroad2.http.nonProxyHosts", "")
-  override val importOnlyCurrent: Boolean = envProps.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean
-  override val authenticationTestMode: Boolean = envProps.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
-  override val authenticationTestUser: String = envProps.getProperty("digiroad2.authenticationTestUser")
+  override val userProvider: String = envProps.getProperty("userProvider")
+  override val municipalityProvider: String = envProps.getProperty("municipalityProvider")
+  override val eventBus: String = envProps.getProperty("eventBus")
+  override val useVVHGeometry: String = envProps.getProperty("useVVHGeometry")
+  override val vvhServiceHost: String = envProps.getProperty("vvhServiceHost")
+  override val vvhRestApiEndPoint: String = envProps.getProperty("vvhRestApiEndPoint")
+  override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
+  override val vkmUrl: String = envProps.getProperty("vkmUrl")
+  override val tierekisteriViiteRestApiEndPoint: String = envProps.getProperty("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
+  override val tierekisteriEnabled: Boolean = envProps.getProperty("tierekisteri.enabled", "false").toBoolean
+  override val httpProxySet: Boolean = envProps.getProperty("http.proxySet", "false").toBoolean
+  override val httpProxyHost: String = envProps.getProperty("http.proxyHost")
+  override val httpNonProxyHosts: String = envProps.getProperty("http.nonProxyHosts", "")
+  override val importOnlyCurrent: Boolean = envProps.getProperty("importOnlyCurrent", "false").toBoolean
+  override val authenticationTestMode: Boolean = envProps.getProperty("authenticationTestMode", "false").toBoolean
+  override val authenticationTestUser: String = envProps.getProperty("authenticationTestUser")
   override val bonecpJdbcUrl: String = envProps.getProperty("bonecp.jdbcUrl")
   override val bonecpUsername: String = envProps.getProperty("bonecp.username")
   override val bonecpPassword: String = envProps.getProperty("bonecp.password")
-  override val conversionBonecpJdbcUrl: String = envProps.getProperty("bonecp.jdbcUrl")
-  override val conversionBonecpUsername: String = envProps.getProperty("bonecp.username")
-  override val conversionBonecpPassword: String = envProps.getProperty("bonecp.password")
+  override val conversionBonecpJdbcUrl: String = envProps.getProperty("conversion.bonecp.jdbcUrl")
+  override val conversionBonecpUsername: String = envProps.getProperty("conversion.bonecp.username")
+  override val conversionBonecpPassword: String = envProps.getProperty("conversion.bonecp.password")
   override val authenticationBasicUsername: String = envProps.getProperty("authentication.basic.username")
   override val authenticationBasicPassword: String = envProps.getProperty("authentication.basic.password")
   override val authenticationServiceRoadBasicUsername: String = envProps.getProperty("authentication.serviceRoad.basic.username")
@@ -205,7 +202,7 @@ class ViitePropertiesFromFile extends ViiteProperties {
 
 /**
   * ViiteProperties will get the properties from the environment variables by default.
-  * If bonecp.properties is found in classpath, then all the properties are read from the property files.
+  * If env.properties is found in classpath, then the properties are read from that property file.
   */
 object ViiteProperties {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -228,7 +225,6 @@ object ViiteProperties {
   lazy val vkmUrl: String = properties.vkmUrl
   lazy val tierekisteriViiteRestApiEndPoint: String = properties.tierekisteriViiteRestApiEndPoint
   lazy val tierekisteriEnabled: Boolean = properties.tierekisteriEnabled
-  lazy val cacheDirectory: String = properties.cacheDirectory
   lazy val httpProxySet: Boolean = properties.httpProxySet
   lazy val httpProxyHost: String = properties.httpProxyHost
   lazy val httpNonProxyHosts: String = properties.httpNonProxyHosts

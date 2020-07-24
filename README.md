@@ -73,18 +73,8 @@ by copying the xml-files from the `aws/local-dev/idea-run-configurations` folder
 - Test.xml
   - Run the backend unit tests (needs the fixture reset test data)
   
-For running the unit tests directly from Idea, set the environment variables
-to the default Scala Test run configuration from the
-`aws/local-dev/environment-variables.properties` file.
-
 Building and Running the Backend
 ---------------------------------
-Backend reads the environment specific variables from the environment variables.
-These variables for the development are listed in
-`aws/local-dev/environment-variables.properties` 
-
-If you are using Idea, these variables are already set in the run configurations.
-
 Running the unit tests from Idea:
 - Run the "Test" sbt Task
 
@@ -97,10 +87,12 @@ Running the backend from Idea:
 - Run the "Server" sbt Task
 
 Running the backend from the command line in the development mode:
-(Environment variables need to be set first)
 ```
 ./sbt '~;container:start; container:reload /'
 ```
+
+When developing locally, backend reads the properties from the
+`conf/env.properties` file. 
 
 Building and Running the Frontend
 ==================================
