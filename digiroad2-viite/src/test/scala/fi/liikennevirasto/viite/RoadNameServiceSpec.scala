@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.viite.dao.{RoadName, RoadNameDAO}
 import org.joda.time.DateTime
@@ -16,7 +16,7 @@ class RoadNameServiceSpec extends FunSuite with Matchers {
   val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       val t = f
       dynamicSession.rollback()
       t

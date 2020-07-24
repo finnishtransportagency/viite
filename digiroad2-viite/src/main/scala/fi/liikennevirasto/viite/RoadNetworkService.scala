@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide}
@@ -15,9 +15,9 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class RoadNetworkService {
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   val logger = LoggerFactory.getLogger(getClass)
   val roadNetworkDAO = new RoadNetworkDAO

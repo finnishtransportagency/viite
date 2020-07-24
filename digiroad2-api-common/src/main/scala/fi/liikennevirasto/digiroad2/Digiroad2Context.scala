@@ -202,10 +202,6 @@ object Digiroad2Context {
 
   lazy val dataImporter: DataImporter = new DataImporter
 
-  lazy val revision: String = {
-    ViiteProperties.revision
-  }
-
   lazy val deploy_date: String = {
     ViiteProperties.latestDeploy
   }

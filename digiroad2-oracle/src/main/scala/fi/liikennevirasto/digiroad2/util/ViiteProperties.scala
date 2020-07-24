@@ -2,44 +2,89 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
 
-class ViiteProperties {
-  lazy val userProvider: String = scala.util.Properties.envOrElse("userProvider", null)
-  lazy val municipalityProvider: String = scala.util.Properties.envOrElse("municipalityProvider", null)
-  lazy val eventBus: String = scala.util.Properties.envOrElse("eventBus", null)
-  lazy val useVVHGeometry: String = scala.util.Properties.envOrElse("useVVHGeometry", null)
-  lazy val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", null)
-  lazy val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
-  lazy val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
-  lazy val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
-  lazy val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
-  lazy val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("tierekisteri.enabled", "false").toBoolean
-  lazy val cacheDirectory: String = scala.util.Properties.envOrElse("cache.directory", null)
-  lazy val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
-  lazy val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
-  lazy val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", "")
-  lazy val importOnlyCurrent: Boolean = scala.util.Properties.envOrElse("importOnlyCurrent", "false").toBoolean
-  lazy val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "false").toBoolean
-  lazy val authenticationTestUser: String = scala.util.Properties.envOrElse("authenticationTestUser", null)
-  lazy val bonecpJdbcUrl: String = scala.util.Properties.envOrElse("bonecp.jdbcUrl", null)
-  lazy val bonecpUsername: String = scala.util.Properties.envOrElse("bonecp.username", null)
-  lazy val bonecpPassword: String = scala.util.Properties.envOrElse("bonecp.password", null)
-  lazy val importBonecpJdbcUrl: String = scala.util.Properties.envOrElse("import.bonecp.jdbcUrl", null)
-  lazy val importBonecpUsername: String = scala.util.Properties.envOrElse("import.bonecp.username", null)
-  lazy val importBonecpPassword: String = scala.util.Properties.envOrElse("import.bonecp.password", null)
-  lazy val conversionBonecpJdbcUrl: String = scala.util.Properties.envOrElse("conversion.bonecp.jdbcUrl", null)
-  lazy val conversionBonecpUsername: String = scala.util.Properties.envOrElse("conversion.bonecp.username", null)
-  lazy val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversion.bonecp.password", null)
-  lazy val authenticationBasicUsername: String = scala.util.Properties.envOrElse("authentication.basic.username", null)
-  lazy val authenticationBasicPassword: String = scala.util.Properties.envOrElse("authentication.basic.password", null)
-  lazy val authenticationServiceRoadBasicUsername: String = scala.util.Properties.envOrElse("authentication.serviceRoad.basic.username", null)
-  lazy val authenticationServiceRoadBasicPassword: String = scala.util.Properties.envOrElse("authentication.serviceRoad.basic.password", null)
-  lazy val authenticationMunicipalityBasicUsername: String = scala.util.Properties.envOrElse("authentication.municipality.basic.username", null)
-  lazy val authenticationMunicipalityBasicPassword: String = scala.util.Properties.envOrElse("authentication.municipality.basic.password", null)
-  lazy val viitetierekisteriUsername: String = scala.util.Properties.envOrElse("viiteTierekisteri.username", null)
-  lazy val viitetierekisteriPassword: String = scala.util.Properties.envOrElse("viiteTierekisteri.password", null)
-  lazy val revision: String = scala.util.Properties.envOrElse("revision", null)
-  lazy val latestDeploy: String = scala.util.Properties.envOrElse("latestDeploy", null)
-  lazy val env: String = System.getProperty("env")
+import org.slf4j.LoggerFactory
+
+trait ViiteProperties {
+  val userProvider: String
+  val municipalityProvider: String
+  val eventBus: String
+  val useVVHGeometry: String
+  val vvhServiceHost: String
+  val vvhRestApiEndPoint: String
+  val vvhRoadlinkFrozen: Boolean
+  val vkmUrl: String
+  val tierekisteriViiteRestApiEndPoint: String
+  val tierekisteriEnabled: Boolean
+  val httpProxySet: Boolean
+  val httpProxyHost: String
+  val httpNonProxyHosts: String
+  val importOnlyCurrent: Boolean
+  val authenticationTestMode: Boolean
+  val authenticationTestUser: String
+  val bonecpJdbcUrl: String
+  val bonecpUsername: String
+  val bonecpPassword: String
+  val conversionBonecpJdbcUrl: String
+  val conversionBonecpUsername: String
+  val conversionBonecpPassword: String
+  val authenticationBasicUsername: String
+  val authenticationBasicPassword: String
+  val authenticationServiceRoadBasicUsername: String
+  val authenticationServiceRoadBasicPassword: String
+  val authenticationMunicipalityBasicUsername: String
+  val authenticationMunicipalityBasicPassword: String
+  val viitetierekisteriUsername: String
+  val viitetierekisteriPassword: String
+  val latestDeploy: String
+  val env: String
+
+  val bonecpProperties: Properties
+  val conversionBonecpProperties: Properties
+
+  def getAuthenticationBasicUsername(baseAuth: String = ""): String
+  def getAuthenticationBasicPassword(baseAuth: String = ""): String
+}
+
+class ViitePropertiesFromEnv extends ViiteProperties {
+
+  private lazy val revisionProperties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/revision.properties"))
+    props
+  }
+
+  val userProvider: String = scala.util.Properties.envOrElse("userProvider", null)
+  val municipalityProvider: String = scala.util.Properties.envOrElse("municipalityProvider", null)
+  val eventBus: String = scala.util.Properties.envOrElse("eventBus", null)
+  val useVVHGeometry: String = scala.util.Properties.envOrElse("useVVHGeometry", null)
+  val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", null)
+  val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
+  val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
+  val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
+  val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
+  val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("tierekisteri.enabled", "false").toBoolean
+  val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
+  val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
+  val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", "")
+  val importOnlyCurrent: Boolean = scala.util.Properties.envOrElse("importOnlyCurrent", "false").toBoolean
+  val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "false").toBoolean
+  val authenticationTestUser: String = scala.util.Properties.envOrElse("authenticationTestUser", null)
+  val bonecpJdbcUrl: String = scala.util.Properties.envOrElse("bonecp.jdbcUrl", null)
+  val bonecpUsername: String = scala.util.Properties.envOrElse("bonecp.username", null)
+  val bonecpPassword: String = scala.util.Properties.envOrElse("bonecp.password", null)
+  val conversionBonecpJdbcUrl: String = scala.util.Properties.envOrElse("conversion.bonecp.jdbcUrl", null)
+  val conversionBonecpUsername: String = scala.util.Properties.envOrElse("conversion.bonecp.username", null)
+  val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversion.bonecp.password", null)
+  val authenticationBasicUsername: String = scala.util.Properties.envOrElse("authentication.basic.username", null)
+  val authenticationBasicPassword: String = scala.util.Properties.envOrElse("authentication.basic.password", null)
+  val authenticationServiceRoadBasicUsername: String = scala.util.Properties.envOrElse("authentication.serviceRoad.basic.username", null)
+  val authenticationServiceRoadBasicPassword: String = scala.util.Properties.envOrElse("authentication.serviceRoad.basic.password", null)
+  val authenticationMunicipalityBasicUsername: String = scala.util.Properties.envOrElse("authentication.municipality.basic.username", null)
+  val authenticationMunicipalityBasicPassword: String = scala.util.Properties.envOrElse("authentication.municipality.basic.password", null)
+  val viitetierekisteriUsername: String = scala.util.Properties.envOrElse("viiteTierekisteri.username", null)
+  val viitetierekisteriPassword: String = scala.util.Properties.envOrElse("viiteTierekisteri.password", null)
+  val latestDeploy: String = revisionProperties.getProperty("latestDeploy")
+  val env: String = scala.util.Properties.envOrElse("env", "Unknown")
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -48,19 +93,7 @@ class ViiteProperties {
       props.setProperty("bonecp.username", bonecpUsername)
       props.setProperty("bonecp.password", bonecpPassword)
     } catch {
-      case e: Exception => throw new RuntimeException("Can't load bonecp properties for env: " + System.getProperty("env"), e)
-    }
-    props
-  }
-
-  lazy val importBonecpProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.setProperty("bonecp.jdbcUrl", importBonecpJdbcUrl)
-      props.setProperty("bonecp.username", importBonecpUsername)
-      props.setProperty("bonecp.password", importBonecpPassword)
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load import bonecp properties for env: " + System.getProperty("env"), e)
+      case e: Exception => throw new RuntimeException("Can't load bonecp properties for env: " + env, e)
     }
     props
   }
@@ -72,7 +105,7 @@ class ViiteProperties {
       props.setProperty("bonecp.username", conversionBonecpUsername)
       props.setProperty("bonecp.password", conversionBonecpPassword)
     } catch {
-      case e: Exception => throw new RuntimeException("Can't load conversion bonecp properties for env: " + System.getProperty("env"), e)
+      case e: Exception => throw new RuntimeException("Can't load conversion bonecp properties for env: " + env, e)
     }
     props
   }
@@ -87,80 +120,52 @@ class ViiteProperties {
 
 }
 
-class ViitePropertiesFromFiles extends ViiteProperties {
-  private lazy val bonecpPropertiesFromFile: Properties = {
+class ViitePropertiesFromFile extends ViiteProperties {
+
+  private lazy val envProps: Properties = {
     val props = new Properties()
-    props.load(getClass.getResourceAsStream("/bonecp.properties"))
+    props.load(getClass.getResourceAsStream("/env.properties"))
     props
   }
-  private lazy val importBonecpPropertiesFromFile: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/import.bonecp.properties"))
-    props
-  }
-  private lazy val conversionBonecpPropertiesFromFile: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/conversion.bonecp.properties"))
-    props
-  }
-  private lazy val dr2Properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-  private lazy val authenticationProperties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/authentication.properties"))
-    props
-  }
-  private lazy val keysProperties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/keys.properties"))
-    props
-  }
+
   private lazy val revisionProperties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/revision.properties"))
     props
   }
 
-  override lazy val userProvider: String = dr2Properties.getProperty("digiroad2.userProvider")
-  override lazy val municipalityProvider: String = dr2Properties.getProperty("digiroad2.municipalityProvider")
-  override lazy val eventBus: String = dr2Properties.getProperty("digiroad2.eventBus")
-  override lazy val useVVHGeometry: String = dr2Properties.getProperty("digiroad2.useVVHGeometry")
-  override lazy val vvhServiceHost: String = dr2Properties.getProperty("digiroad2.VVHServiceHost")
-  override lazy val vvhRestApiEndPoint: String = dr2Properties.getProperty("digiroad2.VVHRestApiEndPoint")
-  override lazy val vvhRoadlinkFrozen: Boolean = dr2Properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
-  override lazy val vkmUrl: String = dr2Properties.getProperty("digiroad2.VKMUrl")
-  override lazy val tierekisteriViiteRestApiEndPoint: String = dr2Properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
-  override lazy val tierekisteriEnabled: Boolean = dr2Properties.getProperty("digiroad2.tierekisteri.enabled", "false").toBoolean
-  override lazy val cacheDirectory: String = dr2Properties.getProperty("digiroad2.cache.directory")
-  override lazy val httpProxySet: Boolean = dr2Properties.getProperty("digiroad2.http.proxySet", "false").toBoolean
-  override lazy val httpProxyHost: String = dr2Properties.getProperty("digiroad2.http.proxyHost")
-  override lazy val httpNonProxyHosts: String = dr2Properties.getProperty("digiroad2.http.nonProxyHosts", "")
-  override lazy val importOnlyCurrent: Boolean = dr2Properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean
-  override lazy val authenticationTestMode: Boolean = dr2Properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
-  override lazy val authenticationTestUser: String = dr2Properties.getProperty("digiroad2.authenticationTestUser")
-  override lazy val bonecpJdbcUrl: String = bonecpPropertiesFromFile.getProperty("bonecp.jdbcUrl")
-  override lazy val bonecpUsername: String = bonecpPropertiesFromFile.getProperty("bonecp.username")
-  override lazy val bonecpPassword: String = bonecpPropertiesFromFile.getProperty("bonecp.password")
-  override lazy val importBonecpJdbcUrl: String = importBonecpPropertiesFromFile.getProperty("bonecp.jdbcUrl")
-  override lazy val importBonecpUsername: String = importBonecpPropertiesFromFile.getProperty("bonecp.username")
-  override lazy val importBonecpPassword: String = importBonecpPropertiesFromFile.getProperty("bonecp.password")
-  override lazy val conversionBonecpJdbcUrl: String = conversionBonecpPropertiesFromFile.getProperty("bonecp.jdbcUrl")
-  override lazy val conversionBonecpUsername: String = conversionBonecpPropertiesFromFile.getProperty("bonecp.username")
-  override lazy val conversionBonecpPassword: String = conversionBonecpPropertiesFromFile.getProperty("bonecp.password")
-  override lazy val authenticationBasicUsername: String = authenticationProperties.getProperty("authentication.basic.username")
-  override lazy val authenticationBasicPassword: String = authenticationProperties.getProperty("authentication.basic.password")
-  override lazy val authenticationServiceRoadBasicUsername: String = authenticationProperties.getProperty("authentication.serviceRoad.basic.username")
-  override lazy val authenticationServiceRoadBasicPassword: String = authenticationProperties.getProperty("authentication.serviceRoad.basic.password")
-  override lazy val authenticationMunicipalityBasicUsername: String = authenticationProperties.getProperty("authentication.municipality.basic.username")
-  override lazy val authenticationMunicipalityBasicPassword: String = authenticationProperties.getProperty("authentication.municipality.basic.password")
-  override lazy val viitetierekisteriUsername: String = keysProperties.getProperty("viitetierekisteri.username")
-  override lazy val viitetierekisteriPassword: String = keysProperties.getProperty("viitetierekisteri.password")
-  override lazy val revision: String = revisionProperties.getProperty("digiroad2.revision")
-  override lazy val latestDeploy: String = revisionProperties.getProperty("digiroad2.latestDeploy")
-  override lazy val env: String = System.getProperty("env")
+  override val userProvider: String = envProps.getProperty("userProvider")
+  override val municipalityProvider: String = envProps.getProperty("municipalityProvider")
+  override val eventBus: String = envProps.getProperty("eventBus")
+  override val useVVHGeometry: String = envProps.getProperty("useVVHGeometry")
+  override val vvhServiceHost: String = envProps.getProperty("vvhServiceHost")
+  override val vvhRestApiEndPoint: String = envProps.getProperty("vvhRestApiEndPoint")
+  override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
+  override val vkmUrl: String = envProps.getProperty("vkmUrl")
+  override val tierekisteriViiteRestApiEndPoint: String = envProps.getProperty("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
+  override val tierekisteriEnabled: Boolean = envProps.getProperty("tierekisteri.enabled", "false").toBoolean
+  override val httpProxySet: Boolean = envProps.getProperty("http.proxySet", "false").toBoolean
+  override val httpProxyHost: String = envProps.getProperty("http.proxyHost")
+  override val httpNonProxyHosts: String = envProps.getProperty("http.nonProxyHosts", "")
+  override val importOnlyCurrent: Boolean = envProps.getProperty("importOnlyCurrent", "false").toBoolean
+  override val authenticationTestMode: Boolean = envProps.getProperty("authenticationTestMode", "false").toBoolean
+  override val authenticationTestUser: String = envProps.getProperty("authenticationTestUser")
+  override val bonecpJdbcUrl: String = envProps.getProperty("bonecp.jdbcUrl")
+  override val bonecpUsername: String = envProps.getProperty("bonecp.username")
+  override val bonecpPassword: String = envProps.getProperty("bonecp.password")
+  override val conversionBonecpJdbcUrl: String = envProps.getProperty("conversion.bonecp.jdbcUrl")
+  override val conversionBonecpUsername: String = envProps.getProperty("conversion.bonecp.username")
+  override val conversionBonecpPassword: String = envProps.getProperty("conversion.bonecp.password")
+  override val authenticationBasicUsername: String = envProps.getProperty("authentication.basic.username")
+  override val authenticationBasicPassword: String = envProps.getProperty("authentication.basic.password")
+  override val authenticationServiceRoadBasicUsername: String = envProps.getProperty("authentication.serviceRoad.basic.username")
+  override val authenticationServiceRoadBasicPassword: String = envProps.getProperty("authentication.serviceRoad.basic.password")
+  override val authenticationMunicipalityBasicUsername: String = envProps.getProperty("authentication.municipality.basic.username")
+  override val authenticationMunicipalityBasicPassword: String = envProps.getProperty("authentication.municipality.basic.password")
+  override val viitetierekisteriUsername: String = envProps.getProperty("viiteTierekisteri.username")
+  override val viitetierekisteriPassword: String = envProps.getProperty("viiteTierekisteri.password")
+  override val latestDeploy: String = revisionProperties.getProperty("latestDeploy")
+  override val env: String = envProps.getProperty("env")
 
   override lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -169,19 +174,7 @@ class ViitePropertiesFromFiles extends ViiteProperties {
       props.setProperty("bonecp.username", bonecpUsername)
       props.setProperty("bonecp.password", bonecpPassword)
     } catch {
-      case e: Exception => throw new RuntimeException("Can't load bonecp properties for env: " + System.getProperty("env"), e)
-    }
-    props
-  }
-
-  override lazy val importBonecpProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.setProperty("bonecp.jdbcUrl", importBonecpJdbcUrl)
-      props.setProperty("bonecp.username", importBonecpUsername)
-      props.setProperty("bonecp.password", importBonecpPassword)
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load import bonecp properties for env: " + System.getProperty("env"), e)
+      case e: Exception => throw new RuntimeException("Can't load bonecp properties for env: " + env, e)
     }
     props
   }
@@ -193,28 +186,71 @@ class ViitePropertiesFromFiles extends ViiteProperties {
       props.setProperty("bonecp.username", conversionBonecpUsername)
       props.setProperty("bonecp.password", conversionBonecpPassword)
     } catch {
-      case e: Exception => throw new RuntimeException("Can't load conversion bonecp properties for env: " + System.getProperty("env"), e)
+      case e: Exception => throw new RuntimeException("Can't load conversion bonecp properties for env: " + env, e)
     }
     props
   }
 
   override def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
-    authenticationProperties.getProperty("authentication." + baseAuth + "basic.username")
+    envProps.getProperty("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username")
   }
 
   override def getAuthenticationBasicPassword(baseAuth: String = ""): String = {
-    authenticationProperties.getProperty("authentication." + baseAuth + "basic.password")
+    envProps.getProperty("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.password")
   }
 }
 
 /**
   * ViiteProperties will get the properties from the environment variables by default.
-  * If bonecp.properties is found in classpath, then all the properties are read from the property files.
+  * If env.properties is found in classpath, then the properties are read from that property file.
   */
-object ViiteProperties extends ViiteProperties {
-  if (getClass.getResource("/bonecp.properties").getFile.isEmpty) {
-    new ViiteProperties
-  } else {
-    new ViitePropertiesFromFiles
+object ViiteProperties {
+  private val logger = LoggerFactory.getLogger(getClass)
+  lazy val properties: ViiteProperties = {
+    if (getClass.getResource("/env.properties") == null) {
+      new ViitePropertiesFromEnv
+    } else {
+      logger.info("Reading properties from file 'env.properties'.")
+      new ViitePropertiesFromFile
+    }
   }
+
+  lazy val userProvider: String = properties.userProvider
+  lazy val municipalityProvider: String = properties.municipalityProvider
+  lazy val eventBus: String = properties.eventBus
+  lazy val useVVHGeometry: String = properties.useVVHGeometry
+  lazy val vvhServiceHost: String = properties.vvhServiceHost
+  lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
+  lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
+  lazy val vkmUrl: String = properties.vkmUrl
+  lazy val tierekisteriViiteRestApiEndPoint: String = properties.tierekisteriViiteRestApiEndPoint
+  lazy val tierekisteriEnabled: Boolean = properties.tierekisteriEnabled
+  lazy val httpProxySet: Boolean = properties.httpProxySet
+  lazy val httpProxyHost: String = properties.httpProxyHost
+  lazy val httpNonProxyHosts: String = properties.httpNonProxyHosts
+  lazy val importOnlyCurrent: Boolean = properties.importOnlyCurrent
+  lazy val authenticationTestMode: Boolean = properties.authenticationTestMode
+  lazy val authenticationTestUser: String = properties.authenticationTestUser
+  lazy val bonecpJdbcUrl: String = properties.bonecpJdbcUrl
+  lazy val bonecpUsername: String = properties.bonecpUsername
+  lazy val bonecpPassword: String = properties.bonecpPassword
+  lazy val conversionBonecpJdbcUrl: String = properties.conversionBonecpJdbcUrl
+  lazy val conversionBonecpUsername: String = properties.conversionBonecpUsername
+  lazy val conversionBonecpPassword: String = properties.conversionBonecpPassword
+  lazy val authenticationBasicUsername: String = properties.authenticationBasicUsername
+  lazy val authenticationBasicPassword: String = properties.authenticationBasicPassword
+  lazy val authenticationServiceRoadBasicUsername: String = properties.authenticationServiceRoadBasicUsername
+  lazy val authenticationServiceRoadBasicPassword: String = properties.authenticationServiceRoadBasicPassword
+  lazy val authenticationMunicipalityBasicUsername: String = properties.authenticationMunicipalityBasicUsername
+  lazy val authenticationMunicipalityBasicPassword: String = properties.authenticationMunicipalityBasicPassword
+  lazy val viitetierekisteriUsername: String = properties.viitetierekisteriUsername
+  lazy val viitetierekisteriPassword: String = properties.viitetierekisteriPassword
+  lazy val latestDeploy: String = properties.latestDeploy
+  lazy val env: String = properties.env
+
+  lazy val bonecpProperties: Properties = properties.bonecpProperties
+  lazy val conversionBonecpProperties: Properties = properties.conversionBonecpProperties
+
+  def getAuthenticationBasicUsername(baseAuth: String = ""): String = properties.getAuthenticationBasicUsername(baseAuth)
+  def getAuthenticationBasicPassword(baseAuth: String = ""): String = properties.getAuthenticationBasicPassword(baseAuth)
 }

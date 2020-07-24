@@ -7,7 +7,7 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
@@ -306,7 +306,7 @@ class ProjectLinkDAO {
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM,
         originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue,
-        sideCode, calibrationPoints, originalCalibrationPointTypes, OracleDatabase.loadJGeometryToGeometry(geom),
+        sideCode, calibrationPoints, originalCalibrationPointTypes, PostGISDatabase.loadJGeometryToGeometry(geom),
         projectId, status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId,
         geometryTimeStamp, if (roadwayNumber != 0) roadwayNumber else projectRoadwayNumber, Some(roadName),
         roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
@@ -396,7 +396,7 @@ class ProjectLinkDAO {
         addressPS.setLong(22, pl.ely)
         addressPS.setLong(23, pl.roadwayNumber)
         addressPS.setInt(24, if (pl.reversed) 1 else 0)
-        addressPS.setString(25, OracleDatabase.createJGeometry(pl.geometry))
+        addressPS.setString(25, PostGISDatabase.createJGeometry(pl.geometry))
         addressPS.setLong(26, pl.linkId)
         addressPS.setLong(27, pl.sideCode.value)
         addressPS.setDouble(28, pl.startMValue)
@@ -459,7 +459,7 @@ class ProjectLinkDAO {
           projectLinkPS.setInt(15, projectLink.status.value)
           projectLinkPS.setInt(16, projectLink.roadType.value)
           projectLinkPS.setInt(17, if (projectLink.reversed) 1 else 0)
-          projectLinkPS.setString(18, OracleDatabase.createJGeometry(projectLink.geometry))
+          projectLinkPS.setString(18, PostGISDatabase.createJGeometry(projectLink.geometry))
           projectLinkPS.setInt(19, projectLink.sideCode.value)
           projectLinkPS.setDouble(20, projectLink.startMValue)
           projectLinkPS.setDouble(21, projectLink.endMValue)
@@ -483,7 +483,7 @@ class ProjectLinkDAO {
       val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET  GEOMETRY = ST_GeomFromText(?, 3067), MODIFIED_BY= ?, ADJUSTED_TIMESTAMP = ? WHERE id = ?")
 
       for (projectLink <- projectLinks) {
-        projectLinkPS.setString(1, OracleDatabase.createJGeometry(projectLink.geometry))
+        projectLinkPS.setString(1, PostGISDatabase.createJGeometry(projectLink.geometry))
         projectLinkPS.setString(2, modifier)
         projectLinkPS.setLong(3, projectLink.linkGeometryTimeStamp)
         projectLinkPS.setLong(4, projectLink.id)
@@ -721,7 +721,7 @@ class ProjectLinkDAO {
   def updateProjectLinkValues(projectId: Long, roadAddress: RoadAddress, updateGeom : Boolean = true): Unit = {
 
     time(logger, "Update project link values") {
-      val lineString: String = OracleDatabase.createJGeometry(roadAddress.geometry)
+      val lineString: String = PostGISDatabase.createJGeometry(roadAddress.geometry)
       val geometryQuery = s"ST_GeomFromText('${lineString}', 3067)"
       val updateGeometry = if (updateGeom) s", GEOMETRY = $geometryQuery" else s""
 

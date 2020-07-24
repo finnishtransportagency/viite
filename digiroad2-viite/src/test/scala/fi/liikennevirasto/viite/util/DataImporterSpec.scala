@@ -11,7 +11,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -20,12 +20,12 @@ import slick.jdbc.StaticQuery.{interpolation, _}
 
 class DataImporterSpec extends FunSuite with Matchers {
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       f
       dynamicSession.rollback()
     }
@@ -118,7 +118,7 @@ class DataImporterSpec extends FunSuite with Matchers {
 
   test("Test importRoadAddressData When importing addresses Then they are saved in database") {
     withDynSession {
-      sqlu"""ALTER TABLE ROADWAY DISABLE ALL TRIGGERS""".execute
+      sqlu"""ALTER TABLE ROADWAY DISABLE TRIGGER ALL""".execute
     }
     runWithRollback {
 
@@ -130,16 +130,16 @@ class DataImporterSpec extends FunSuite with Matchers {
       // Terminated roadways
       val road_30_1_history = roadwayDAO.fetchAllByRoadAndPart(30, 1, withHistory = true)
       road_30_1_history.size should be(2)
-      val roadway_30_1 = road_30_1_history.filter(r => r.terminated == TerminationCode.Termination)
+      val roadway_30_1 = road_30_1_history.filter(r => r.terminated == TerminationCode.Termination).sortBy(_.startAddrMValue)
       val roadway_30_1_history = road_30_1_history.filter(r => r.terminated == TerminationCode.Subsequent)
       roadway_30_1_history.size should be(0)
       roadway_30_1.size should be(2)
       roadway_30_1.head.endDate should not be None
-      roadway_30_1.head.startAddrMValue should be(100)
-      roadway_30_1.head.endAddrMValue should be(200)
+      roadway_30_1.head.startAddrMValue should be(0)
+      roadway_30_1.head.endAddrMValue should be(100)
       roadway_30_1.last.endDate should not be None
-      roadway_30_1.last.startAddrMValue should be(0)
-      roadway_30_1.last.endAddrMValue should be(100)
+      roadway_30_1.last.startAddrMValue should be(100)
+      roadway_30_1.last.endAddrMValue should be(200)
 
       val road_30_2_history = roadwayDAO.fetchAllByRoadAndPart(30, 2, withHistory = true)
       road_30_2_history.size should be(1)
@@ -194,7 +194,7 @@ class DataImporterSpec extends FunSuite with Matchers {
 
     }
     withDynSession {
-      sqlu"""ALTER TABLE ROADWAY ENABLE ALL TRIGGERS""".execute
+      sqlu"""ALTER TABLE ROADWAY ENABLE TRIGGER ALL""".execute
     }
   }
 
