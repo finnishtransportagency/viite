@@ -251,9 +251,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         val ralOption = getRoadAddressLink(roadNumberOrId, roadPart, addressM)
         ralOption.map { ral =>
           val points = ral.geometry
-          val geometryMeasure = ((addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)) * (ral.endMValue - ral.startMValue)
+          val roadAddressLinkmValueLengthPercentageFactor = (addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)
+          val geometryLength = ral.endMValue - ral.startMValue
+          val geometryMeasure = roadAddressLinkmValueLengthPercentageFactor * geometryLength
           val mValue: Double = ral.sideCode match {
-            case AgainstDigitizing => (ral.endMValue - geometryMeasure)
+            case AgainstDigitizing => (geometryLength - geometryMeasure)
             case _ => geometryMeasure
           }
           val point = GeometryUtils.calculatePointFromLinearReference(points, mValue)
