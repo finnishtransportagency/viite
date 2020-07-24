@@ -6,6 +6,8 @@
     var mapTemplates = [];
     var userNodePointTemplates = [];
     var userJunctionTemplates = [];
+    var saving = events.spinners.saving;
+    var fetching = events.spinners.fetched;
 
     this.setMapTemplates = function(templates) {
       mapTemplates = templates;
@@ -101,6 +103,7 @@
     };
 
     eventbus.on('node:fetched', function(fetchResult, zoom) {
+      applicationModel.removeSpinner(fetching);
       var nodes = fetchResult.nodes;
       var templates = {
         nodePoints: fetchResult.nodePointTemplates,
@@ -115,14 +118,16 @@
 
     eventbus.on('node:save', function (node) {
       var fail = function (message) {
-        eventbus.trigger('node:saveFailed', message.errorMessage || 'Solmun tallennus epäonnistui.');
+        eventbus.trigger('node:saveFailed', message.errorMessage || 'Solmun tallennus epäonnistui.', saving);
       };
 
-      applicationModel.addSpinner();
       if (!_.isUndefined(node)) {
+        applicationModel.addSpinner(saving);
         if (!_.isUndefined(node.id)) {
           backend.updateNodeInfo(node, function (result) {
             if (result.success) {
+              applicationModel.removeSpinner(saving);
+              applicationModel.addSpinner(fetching);
               eventbus.trigger('node:saveSuccess');
             } else {
               fail(result);
@@ -131,6 +136,8 @@
         } else {
           backend.createNodeInfo(node, function (result) {
             if (result.success) {
+              applicationModel.removeSpinner(saving);
+              applicationModel.addSpinner(fetching);
               eventbus.trigger('node:saveSuccess');
             } else {
              fail(result);

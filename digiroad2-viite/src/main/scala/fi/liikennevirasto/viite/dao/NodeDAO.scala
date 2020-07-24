@@ -69,7 +69,7 @@ object NodeType {
   case object RoadBoundary extends NodeType {
     def value = 7
 
-    def displayValue = "Maantien/kadun raja"
+    def displayValue = "Hoitoraja"
   }
 
   case object ELYBorder extends NodeType {
@@ -105,7 +105,7 @@ object NodeType {
   case object EndOfRoad extends NodeType {
     def value = 13
 
-    def displayValue = "Tien loppu"
+    def displayValue = "Tien alku/loppu"
   }
 
   case object Bridge extends NodeType {

@@ -409,8 +409,8 @@
     };
 
     var closeNode = function (cancel) {
+      eventbus.off('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:validate junction:setCustomValidity junction:detach nodePoint:detach junction:attach nodePoint:attach');
       selectedNodesAndJunctions.closeNode(cancel);
-      eventbus.off('change:nodeName, change:nodeTypeDropdown, change:nodeStartDate');
     };
 
     var bindEvents = function () {
@@ -418,6 +418,10 @@
 
       rootElement.on('change', '#nodeName, #nodeTypeDropdown, #nodeStartDate', function (event) {
         eventbus.trigger(event.type + ':' + event.target.id, $(this).val());
+      });
+
+      rootElement.on('change', '[id^=junction-number-textbox-]', function () {
+        selectedNodesAndJunctions.setJunctionNumber(parseInt($(this).attr('junctionId')), parseInt(this.value));
       });
 
       var buildMessage = function (junction, nodePoints) {
@@ -597,6 +601,14 @@
         selectedNodesAndJunctions.closeTemplates();
       });
 
+      rootElement.on('input', '[id^=junction-number-textbox-]', function() {
+        $(this).change();
+      });
+
+      rootElement.on('input', '[id=nodeName]', function() {
+        $(this).change();
+      });
+
       eventbus.on('templates:selected', function (templates) {
         rootElement.empty();
         if (!_.isEmpty(templates.nodePoints) || !_.isEmpty(templates.junctions)) {
@@ -641,7 +653,6 @@
             $("#node-coordinates").text(coordinates.y + ', ' + coordinates.x);
           });
 
-          $('[id=nodeName]').on('input', function () { $(this).change(); });
           eventbus.on('change:nodeName', function (nodeName) {
             selectedNodesAndJunctions.setNodeName(nodeName);
           });
@@ -655,11 +666,6 @@
               $("#nodeStartDate").val(selectedNodesAndJunctions.getInitialStartDate());
             }
             disabledDatePicker(!typeHasChanged);
-          });
-
-          $('[id^=junction-number-textbox-]').on('input', function () { $(this).change(); });
-          rootElement.on('change', '[id^=junction-number-textbox-]', function () {
-            selectedNodesAndJunctions.setJunctionNumber(parseInt($(this).attr('junctionId')), parseInt(this.value));
           });
 
           eventbus.on('junction:validate', function () {
@@ -693,12 +699,11 @@
       });
 
       eventbus.on('node:saveSuccess', function () {
-        applicationModel.removeSpinner();
         closeNode(false);
       });
 
-      eventbus.on('node:saveFailed', function (errorMessage) {
-        applicationModel.removeSpinner();
+      eventbus.on('node:saveFailed', function (errorMessage, spinnerEvent) {
+        applicationModel.removeSpinner(spinnerEvent);
         new ModalConfirm(errorMessage);
       });
     };
