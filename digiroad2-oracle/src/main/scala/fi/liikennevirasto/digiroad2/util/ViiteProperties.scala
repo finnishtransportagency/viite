@@ -165,8 +165,8 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val authenticationServiceRoadBasicPassword: String = envProps.getProperty("authentication.serviceRoad.basic.password")
   override val authenticationMunicipalityBasicUsername: String = envProps.getProperty("authentication.municipality.basic.username")
   override val authenticationMunicipalityBasicPassword: String = envProps.getProperty("authentication.municipality.basic.password")
-  override val viitetierekisteriUsername: String = envProps.getProperty("viitetierekisteri.username")
-  override val viitetierekisteriPassword: String = envProps.getProperty("viitetierekisteri.password")
+  override val viitetierekisteriUsername: String = envProps.getProperty("viiteTierekisteri.username")
+  override val viitetierekisteriPassword: String = envProps.getProperty("viiteTierekisteri.password")
   override val latestDeploy: String = revisionProperties.getProperty("latestDeploy")
   override val env: String = envProps.getProperty("env")
 
