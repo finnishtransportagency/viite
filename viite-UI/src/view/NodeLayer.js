@@ -569,7 +569,6 @@
       } else if (layer === 'node') {
         setGeneralOpacity(1);
         addInteractions();
-        showLayer();
         eventbus.trigger('nodeLayer:fetch');
       }
     });

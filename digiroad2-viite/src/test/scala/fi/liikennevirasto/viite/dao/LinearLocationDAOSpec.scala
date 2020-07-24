@@ -612,6 +612,24 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Test fetchByRoadAddress When fetching linear locations Then should return locations in that road address") {
+    runWithRollback {
+      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val roadwayNumber1 = 11111l
+      val linkId1 = 111111111l
+      val linkId2 = 222222222l
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1, linkId = linkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber1, linkId = linkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
+
+      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, -9999, 1, RoadType.PublicRoad, Combined,
+        Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test",
+        Some("ROAD 1"), 1, TerminationCode.NoTermination)))
+
+      val locations = linearLocationDAO.fetchByRoadAddress(-9999,1, 1)
+      locations.size should be(2)
+    }
+  }
+
   test("Test fetchRoadwayByBoundingBox When fetching roadways with bounding box query Then should return roadways in bounding box") {
     runWithRollback {
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
