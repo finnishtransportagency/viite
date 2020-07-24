@@ -12,8 +12,8 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite.Dummies._
 import fi.liikennevirasto.viite.RoadType.PublicRoad
@@ -23,7 +23,7 @@ import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectRoadwayChange, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadwayAddressMapper}
+import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -2165,10 +2165,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0, 100, 150, 300), changeTrack = true, roadNumber, roadPartNumber)
       val projectLinksBefore = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
 
-      val linksToRevert = projectLinksBefore.map( pl => LinkToRevert(pl.id, pl.id, LinkStatus.Transfer.value, pl.geometry))
-      projectService.changeDirection(project.id, roadNumber, roadPartNumber, linksToRevert, ProjectCoordinates(0,0, 5), "testUser")
+      val linksToRevert = projectLinksBefore.map(pl => LinkToRevert(pl.id, pl.id, LinkStatus.Transfer.value, pl.geometry))
+      projectService.changeDirection(project.id, roadNumber, roadPartNumber, linksToRevert, ProjectCoordinates(0, 0, 5), "testUser")
 
-      val projectLinksAfter = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
+      val projectLinksAfter = projectLinkDAO.fetchProjectLinks(project.id).sortBy(pl => (pl.startAddrMValue, -pl.track.value))
       projectLinksAfter.size should be(projectLinksBefore.size)
       projectLinksAfter.head.startAddrMValue should be(projectLinksBefore.head.startAddrMValue)
       projectLinksAfter.last.endAddrMValue should be(projectLinksBefore.last.endAddrMValue)
