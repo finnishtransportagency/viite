@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.dao
 import java.sql.BatchUpdateException
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{Point, asset}
 import fi.liikennevirasto.viite._
@@ -25,7 +25,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
 
   def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       f
       dynamicSession.rollback()
     }
@@ -95,10 +95,9 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test create When creating linear locations Then duplicate linear locations should not be created") {
     runWithRollback {
-      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1)))
+      linearLocationDAO.create(Seq(testLinearLocation))
       intercept[BatchUpdateException] {
-        linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2)))
+        linearLocationDAO.create(Seq(testLinearLocation))
       }
     }
   }

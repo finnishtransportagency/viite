@@ -1,11 +1,14 @@
 package fi.liikennevirasto.viite.util
 
+import java.util.Properties
+
 import com.googlecode.flyway.core.Flyway
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.{ds, setSessionLanguage}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
@@ -13,13 +16,15 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.DateTime
+import slick.driver.JdbcDriver.backend.Database
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.immutable.ParSet
 import scala.language.postfixOps
 
 object DataFixture {
-  val TestAssetId = 300000
 
   val dataImporter = new DataImporter
   lazy val vvhClient: VVHClient = {
@@ -80,7 +85,7 @@ object DataFixture {
     val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
     val username = ViiteProperties.bonecpUsername
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen)
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val checker = new RoadNetworkChecker(roadLinkService)
       checker.checkRoadNetwork(username)
     }
@@ -90,8 +95,8 @@ object DataFixture {
 
   def importComplementaryRoadAddress(): Unit = {
     println(s"\nCommencing complementary road address import at time: ${DateTime.now()}")
-    OracleDatabase.withDynTransaction {
-      OracleDatabase.setSessionLanguage()
+    PostGISDatabase.withDynTransaction {
+      PostGISDatabase.setSessionLanguage()
     }
     SqlScriptRunner.runViiteScripts(List(
       "insert_complementary_geometry_data.sql"
@@ -106,8 +111,8 @@ object DataFixture {
 
   def importRoadAddressChangeTestData(): Unit = {
     println(s"\nCommencing road address change test data import at time: ${DateTime.now()}")
-    OracleDatabase.withDynTransaction {
-      OracleDatabase.setSessionLanguage()
+    PostGISDatabase.withDynTransaction {
+      PostGISDatabase.setSessionLanguage()
     }
     SqlScriptRunner.runViiteScripts(List(
       "insert_road_address_change_test_data.sql"
@@ -118,7 +123,7 @@ object DataFixture {
 
   private def testIntegrationAPIWithAllMunicipalities(): Unit = {
     println(s"\nStarting fetch for integration API for all municipalities")
-    val municipalities = OracleDatabase.withDynTransaction {
+    val municipalities = PostGISDatabase.withDynTransaction {
       Queries.getMunicipalities
     }
     val failedMunicipalities = municipalities.map(
@@ -137,7 +142,7 @@ object DataFixture {
         catch {
           case e: Exception =>
             val message = s"\n*** ERROR Failed to get road addresses for municipality $municipalityCode! ***"
-            println(s"\n" + message + s"\n"+ e.printStackTrace())
+            println(s"\n" + message + s"\n" + e.printStackTrace())
             municipalityCode
         }
     ).filterNot(_ == None)
@@ -155,14 +160,14 @@ object DataFixture {
     val linearLocationDAO = new LinearLocationDAO
 
     val linearLocations =
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         linearLocationDAO.fetchCurrentLinearLocations
       }
 
     println("Total linearLocations " + linearLocations.size)
 
     //get All municipalities and group them for ely
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       MunicipalityDAO.getMunicipalityMapping
     }.groupBy(_._2).foreach {
       case (ely, municipalityEly) =>
@@ -176,9 +181,9 @@ object DataFixture {
         municipalities.foreach { municipality =>
           println("Start processing municipality %d".format(municipality))
 
-        //Obtain all RoadLink by municipality and change info from VVH
-        val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
-        val allRoadLinks = roadLinks
+          //Obtain all RoadLink by municipality and change info from VVH
+          val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
+          val allRoadLinks = roadLinks
 
           println("Total roadlinks for municipality " + municipality + " -> " + allRoadLinks.size)
           println("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
@@ -204,10 +209,11 @@ object DataFixture {
     println("Road link geometry freeze is active; exiting without changes")
   }*/
 
-  def flyway: Flyway = {
+  val flyway: Flyway = {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
     flyway.setLocations("db.migration")
+    flyway.setInitVersion("-1")
     flyway
   }
 
@@ -216,8 +222,16 @@ object DataFixture {
   }
 
   def tearDown() {
-    SqlScriptRunner.executeStatement("DROP extension IF EXISTS postgis CASCADE;")
-    flyway.clean()
+
+    // flyway.clean()
+    // This old version of Flyway tries to drop the postgis extension too, so we clean the database manually instead
+    SqlScriptRunner.runScriptInClasspath("/clear-db.sql")
+    try {
+      SqlScriptRunner.executeStatement("delete from schema_version where version_rank > 1")
+    } catch {
+      case e: Exception => println(s"Failed to reset schema_version table: ${e.getMessage}")
+    }
+
   }
 
   def setUpTest() {
@@ -233,6 +247,17 @@ object DataFixture {
       "insert_project_link_data.sql",
       "insert_road_names.sql"
     ))
+  }
+
+  lazy val postgresDs: BoneCPDataSource = {
+    Class.forName("org.postgresql.Driver")
+    val props = new Properties()
+    props.setProperty("bonecp.jdbcUrl", ViiteProperties.bonecpJdbcUrl)
+    props.setProperty("bonecp.username", "postgres")
+    props.setProperty("bonecp.password", "postgres")
+
+    val cfg = new BoneCPConfig(props)
+    new BoneCPDataSource(cfg)
   }
 
   def flywayInit() {
@@ -252,7 +277,7 @@ object DataFixture {
     import scala.util.control.Breaks._
     val operation = args.headOption
     val username = ViiteProperties.bonecpUsername
-    if ((!username.startsWith("dr2dev") && !username.equals("postgres")) && !operation.getOrElse("").equals("test_integration_api_all_municipalities")) {
+    if (!"Local".equalsIgnoreCase(ViiteProperties.env) && !operation.getOrElse("").equals("test_integration_api_all_municipalities")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
       println("*************************************************************************************")
@@ -295,6 +320,8 @@ object DataFixture {
         importMunicipalityCodes()
       case Some("flyway_init") =>
         flywayInit()
+      case Some("flyway_migrate") =>
+        migrateAll()
       case Some("test_integration_api_all_municipalities") =>
         testIntegrationAPIWithAllMunicipalities()
       case Some("import_nodes_and_junctions") =>
@@ -310,7 +337,7 @@ object DataFixture {
         "| import_complementary_road_address " +
         "| update_road_addresses_geometry | import_road_address_change_test_data " +
         "| apply_change_information_to_road_address_links | import_road_names | check_road_network" +
-        "| test | flyway_init | import_nodes_and_junctions | initial_import | update_calibration_point_types")
+        "| test | flyway_init | flyway_migrate | import_nodes_and_junctions | initial_import | update_calibration_point_types")
     }
   }
 

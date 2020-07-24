@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -15,7 +15,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 class NodePointDAOSpec extends FunSuite with Matchers {
 
   def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       f
       dynamicSession.rollback()
     }

@@ -4,9 +4,6 @@ module.exports = function(grunt) {
   var path = require('path');
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    properties: {
-      app: 'conf/dev/keys.properties'
-    },
     env: {
       options: {},
       development: {
@@ -212,7 +209,7 @@ module.exports = function(grunt) {
     watch: {
       viite: {
         files: ['<%= eslint.src %>', 'viite-UI/src/**/*.less', 'viite-UI/**/*.html'],
-        tasks: ['properties', 'eslint', 'env:development', 'preprocess:development', 'less:viitedev', 'mocha:viite_unit', 'configureProxies:viite'],
+        tasks: ['eslint', 'env:development', 'preprocess:development', 'less:viitedev', 'mocha:viite_unit', 'configureProxies:viite'],
         options: {
           livereload: true
         }
@@ -236,27 +233,26 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-env');
   grunt.loadNpmTasks('grunt-preprocess');
   grunt.loadNpmTasks('grunt-exec');
-  grunt.loadNpmTasks('grunt-properties-reader');
 
   var target = grunt.option('target') || 'production';
 
-  grunt.registerTask('server', ['properties', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
+  grunt.registerTask('server', ['env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
 
-  grunt.registerTask('test', ['properties', 'eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
+  grunt.registerTask('test', ['eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
 
-  grunt.registerTask('default', ['properties', 'eslint', 'env:production', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'clean', 'less:viiteprod', 'concat', 'terser', 'cachebreaker']);
+  grunt.registerTask('default', ['eslint', 'env:production', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'clean', 'less:viiteprod', 'concat', 'terser', 'cachebreaker']);
 
   grunt.registerTask('deploy', ['clean', 'env:'+target, 'preprocess:production', 'less:viiteprod', 'concat', 'terser', 'cachebreaker', 'save_deploy_info']);
 
-  grunt.registerTask('unit-test', ['properties', 'eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
+  grunt.registerTask('unit-test', ['eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
 
   grunt.registerTask('save_deploy_info',
     function() {
       var options = this.options({
-        file: 'revision.properties'
+        file: 'conf/revision.properties'
       });
 
-      var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
+      var data = ('latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
       grunt.file.write(options.file, data);
 
 

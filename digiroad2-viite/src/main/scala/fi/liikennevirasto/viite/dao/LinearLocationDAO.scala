@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
@@ -193,7 +193,7 @@ class LinearLocationDAO {
         ps.setDouble(5, location.startMValue)
         ps.setDouble(6, location.endMValue)
         ps.setInt(7, location.sideCode.value)
-        ps.setString(8, OracleDatabase.createXYZMGeometry(Seq((location.geometry.head, location.startMValue), (location.geometry.last, location.endMValue))))
+        ps.setString(8, PostGISDatabase.createXYZMGeometry(Seq((location.geometry.head, location.startMValue), (location.geometry.last, location.endMValue))))
         ps.setString(9, if (createdBy == null) "-" else createdBy)
         ps.addBatch()
     }
@@ -557,7 +557,7 @@ class LinearLocationDAO {
       case None => ""
     }
     val endFilter = endM match {
-      case Some(_) => s" AND loc.end_measure >= $endM"
+      case Some(e) => s" AND loc.end_measure >= $e"
       case None => ""
     }
 
@@ -577,7 +577,7 @@ class LinearLocationDAO {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
 
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
+      val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
 
       val query =
         s"""
@@ -593,7 +593,7 @@ class LinearLocationDAO {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
 
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "iloc.geometry")
+      val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(extendedBoundingRectangle, "iloc.geometry")
 
       val boundingBoxQuery = if (roadNumberLimits.isEmpty) {
         s"""select ROADWAY_NUMBER from linear_location iloc

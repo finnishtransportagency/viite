@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
@@ -17,7 +17,7 @@ import slick.jdbc.StaticQuery.interpolation
 class RoadwayChangesDAOSpec extends FunSuite with Matchers {
 
   def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       f
       dynamicSession.rollback()
     }
@@ -44,7 +44,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       VALUES (1, 1, 0, 5, 1, 1,
         0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 12:26:36.000000', 2,
         1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
-        5170979, 1500079296000, 1, '', 0, 86, NULL,
+        5170979, 1500079296000, 1, ST_GeomFromText('LINESTRING EMPTY', 3067), 0, 86, NULL,
         3, 3, 3, 3
       )""".execute
 

@@ -5,7 +5,7 @@ import java.sql.SQLException
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
 import fi.liikennevirasto.viite.{RoadType, _}
@@ -18,7 +18,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 class RoadwayDAOSpec extends FunSuite with Matchers {
 
   def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       f
       dynamicSession.rollback()
     }
@@ -633,7 +633,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val error = intercept[SQLException] {
         dao.create(Seq(testRoadway1, testRoadway1))
       }
-      error.getErrorCode should be(1)
+      error.getMessage should include("""duplicate key value violates unique constraint "roadway_history_i"""")
     }
   }
 
@@ -642,7 +642,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val error = intercept[SQLException] {
         dao.create(Seq(testRoadway1, testRoadway1.copy(roadwayNumber = roadwayNumber2)))
       }
-      error.getErrorCode should be(1)
+      error.getMessage should include("""duplicate key value violates unique constraint "roadway_history_i"""")
     }
   }
 
@@ -651,7 +651,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val error = intercept[SQLException] {
         dao.create(Seq(testRoadway1.copy(terminated = TerminationCode.Termination)))
       }
-      error.getErrorCode should be(2290)
+      error.getMessage should include("""new row for relation "roadway" violates check constraint "termination_end_date_chk"""")
     }
   }
 
@@ -660,7 +660,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val error = intercept[SQLException] {
         dao.create(Seq(testRoadway1.copy(terminated = TerminationCode.Subsequent)))
       }
-      error.getErrorCode should be(2290)
+      error.getMessage should include("""new row for relation "roadway" violates check constraint "termination_end_date_chk"""")
     }
   }
 

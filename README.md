@@ -1,129 +1,139 @@
 VIITE
 =====
 
-Ympäristön pystytys
-===================
+Setting up the local dev environment
+====================================
 
-1. Kloonaa viite-repo omalle koneellesi
-
-  ```
-  git clone https://github.com/finnishtransportagency/viite.git
-  ```
-
-1. [Asenna node.js](http://howtonode.org/how-to-install-nodejs) (samalla asentuu [npm](https://npmjs.org/))
-1. Asenna [yarn](https://yarnpkg.com/lang/en/)
-
-  ```
-  npm install -g yarn
-  ```
-
-1. Hae ja asenna projektin tarvitsemat riippuvuudet hakemistoon, johon projekti on kloonattu
-
-  ```
-  npm install && yarn install
-  ```
-
-1. Asenna [grunt](http://gruntjs.com/getting-started)
-
-  ```
-  npm install -g grunt-cli
-  ```
-
-digiroad2-oracle
-----------------
-
-TODO Kirjoita Postgres -ohjeet
-
-digiroad2-oracle moduuli toteuttaa oracle-spesifisen tuen digiroad2:n `AssetProvider` ja `UserProvider` - rajapinnoista.
-Moduuli tuottaa kirjaston, joka lisätään ajonaikaisesti digiroad2-sovelluksen polkuun.
-
-Build edellyttää, että paikallinen tietokantaymäristö on alustettu ja konfiguroitu:
-
-Luo digiroad2/digiroad2-oracle/conf/dev/bonecp.properties ja lisää sinne tietokantayhteyden tiedot:
+Source Code
+-----------
+Clone `viite`-repository from Github
 
 ```
-bonecp.jdbcUrl=jdbc:oracle:thin:@<tietokannan_osoite>:<portti>/<skeeman_nimi>
-bonecp.username=<käyttäjätunnus>
-bonecp.password=<salasana>
+git clone https://github.com/finnishtransportagency/viite.git
 ```
 
-Tietokantayhteyden voi määrittää myös ulkoisessa properties tiedostossa joka noudattaa yllä olevaa muotoa.
-
-Tällöin viite/digiroad2-oracle/conf/dev/bonecp.properties tiedosto viittaa ulkoiseen tiedostoon:
-
+Frontend
+---------
+Install [yarn](https://yarnpkg.com/lang/en/)
+[Install node.js](http://howtonode.org/how-to-install-nodejs) (you will get also [npm](https://npmjs.org/))
 ```
-digiroad2-oracle.externalBoneCPPropertiesFile=/etc/digiroad2/bonecp.properties
+npm install -g yarn
 ```
-
-Tietokanta ja skeema voidaan alustaa käyttäen `viite-fixture-reset.sh` skriptiä.
-
-Ajaminen
-========
-
-Buildin rakentaminen:
+Fetch and install the dependencies needed by the UI
 ```
-grunt
+npm install && yarn install
+```
+Install [grunt](http://gruntjs.com/getting-started)
+```
+npm install -g grunt-cli
 ```
 
-Testien ajaminen:
+Database
+--------
+Install PostGIS by [downloading and installing it from here](https://postgis.net/install/), or
+by using Docker Compose:
 ```
-grunt test
+cd aws/local-dev/postgis
+docker-compose up
 ```
+or by running the `aws/local-dev/postgis/start-postgis.sh` script.
 
-Kehitysserverin pystytys:
-```
-grunt server
-```
-Kehitysserveri ajaa automaattisesti testit, kääntää lessit ja toimii watch -tilassa.
+PostGIS server can be stopped with the `aws/local-dev/postgis/stop-postgis.sh` script.
 
-Kehityspalvelin ohjaa API-kutsut API-palvelimelle. Jotta järjestelmä toimii tulee myös API-palvelimen olla käynnissä.
+Docker Compose installs and starts the PostGIS database server.
 
-API-palvelin
-============
+[Read more about Viite PostGIS here](aws/local-dev/postgis/README.md)
 
-API-palvelimen buildia käsitellään sbt:llä, käyttäen projektin juuressa olevaa launcher-skriptiä sbt. Esim.
+Required Integrations
+---------------------
+Viite needs to get the links, the background maps and the coordinates for addresses
+from external systems. For these connections to work, open Väylä VPN and
+open SSH-tunnel with the needed port forwardings to a Väylä server.
+- 9180: Viite running in devtest environment (TODO: When we are fully in AWS, this needs to be changed.)
+- 8997: OAG
 
+Idea Run Configurations
+-----------------------
+If you are developing with the IntelliJ Idea, you can import the run configurations
+by copying the xml-files from the `aws/local-dev/idea-run-configurations` folder to the
+`.idea/runConfigurations` folder (under the project folder).
+
+- Flyway_init.xml
+  - Initialize the database for Flyway by creating the `schema_version` table
+- Fixture_reset_test.xml
+  - Empty the database, run the Flyway migrations, populate the database with the test data (required by the unit tests) 
+- Flyway_migrate.xml
+  - Run the Flyway migration scripts
+- Grunt_Server.xml
+  - Start the frontend server
+- Grunt_Test.xml
+  - Run the frontend tests
+- Server.xml
+  - Run the backend server
+- Test.xml
+  - Run the backend unit tests (needs the fixture reset test data)
+  
+Building and Running the Backend
+---------------------------------
+Running the unit tests from Idea:
+- Run the "Test" sbt Task
+
+Running the unit tests from the command line:
 ```
 ./sbt test
 ```
 
-API-palvelimen saa käyntiin kehitysmoodiin seuraavalla sbt komennolla:
+Running the backend from Idea:
+- Run the "Server" sbt Task
+
+Running the backend from the command line in the development mode:
 ```
 ./sbt '~;container:start; container:reload /'
 ```
 
-Esim CI-ympäristössä Oracle-tietokanta ei ole käytettävissä, jolloin buildille pitää välittää system property "digiroad2.nodatabase" arvolla "true".
-Vastaavasti buildille voi välittää kohteena oleva ympäristö propertyllä "digiroad2.env" (arvot "dev", "test", "prod" tai "ci"). Esim.
+When developing locally, backend reads the properties from the
+`conf/env.properties` file. 
 
+Building and Running the Frontend
+==================================
+Building the frontend:
 ```
-./sbt -Ddigiroad2.nodatabase=true -Ddigiroad2.env=dev test
-```
-
-"digiroad2.env":n arvo määrittää sen, minkä ympäristön konfiguraatiotiedostot otetaan käyttöön (hakemistosta conf/(env)/)
-
-Windowsissa toimii komento:
-```
-run fi.liikennevirasto.digiroad2.ProductionServer
+grunt
 ```
 
-Avaa käyttöliittymä osoitteessa <http://localhost:9003/login.html>.
+Running the tests from Idea:
+- run the "Grunt Test" task
 
-Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
-======================================================
-
-Palvelun käyttäjien tietoja voi päivittää ja uusia käyttäjiä voi lisätä CSV - tiedostosta, jossa on määritelty uusien ja päivitettävien käyttäjien käyttäjänimet sekä kuntatunnukset joihin näillä käyttäjillä tulisi olla oikeudet.
-
-Alla esimerkki CSV-tiedostosta:
+Running the tests from the command line:
 ```
-kuntakäyttäjä; ;105, 258, 248, 245;
-olemassaolevatunnus; ;410, 411, 412, 413;
-elykäyttäjä;0,1,2,3,4,5,6,7,8,9;
+grunt test
 ```
 
-Käyttäjiä voi päivittää ja lisätä käyttäen `import-users-from-csv.sh` skriptiä:
+Running the frontend server from Idea:
+- run the "Grunt Server" task
+
+Running the frontend server from the command line:
 ```
-./import-users-from-csv.sh <digiroad2-palvelin:portti> <ylläpitäjän-tunnus> <polku-csv-tiedostoon>
+grunt server
 ```
+
+Running the "Grunt Server" task does the build, runs the tests and runs the frontend in the watch-mode. 
+
+Frontend server sends the requests to the backend server which needs to be running for the application to work.
+
+UI will be available in this address: <http://localhost:9003/>.
+
+Initializing the database
+=========================
+Empty database must be initialized for the Flyway by running the task "Flyway init"
+or by calling the Viite AdminAPI: <http://localhost:8080/api/admin/flyway_init>.
+
+All the tables can be created and populated with the test data by running the task "Fixture reset test".
+TODO: nodes and junctions test data must be created too.
+
+Flyway migrations can be run by running the task "Flyway migrate"
+or by calling the Viite AdminAPI: <http://localhost:8080/api/admin/flyway_migrate>.
+("Fixture reset test" does this already.)
 
 [Käyttöönotto ja version päivitys](Deployment.md)
 =================================================

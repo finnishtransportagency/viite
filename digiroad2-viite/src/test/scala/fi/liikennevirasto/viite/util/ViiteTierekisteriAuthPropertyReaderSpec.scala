@@ -10,7 +10,7 @@ package fi.liikennevirasto.viite.util
 
     test("Test reader.getAuthInBase64 When asking for the Basic64 authentication string for the TR client Then return said string.") {
       val authenticate = reader.getAuthInBase64
-      authenticate should be ("aW5zZXJ0VFJ1c2VybmFtZTppbnNlcnRUUnBhc3N3b3Jk")
+      authenticate should be ("dHJyZXN0dmlpdGU6dHJyZXN0dmlpdGU=")
     }
   }
 

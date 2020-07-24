@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import slick.jdbc.{StaticQuery => Q}
@@ -36,7 +36,7 @@ object SqlScriptRunner {
   def executeStatements(stmts: Seq[String]) {
     println("Running " + stmts.length + " statements...")
     var i = 0
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       stmts.foreach { stmt =>
         try {
           (Q.u + stmt).execute
@@ -57,4 +57,10 @@ object SqlScriptRunner {
   }
 
   def executeStatement(statement: String) = executeStatements(List(statement))
+
+  def executeStatements(sqls: String): Unit = {
+    val statements = sqls.split(";")
+    executeStatements(statements)
+  }
+
 }
