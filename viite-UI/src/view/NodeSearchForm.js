@@ -1,13 +1,13 @@
 (function (root) {
   root.NodeSearchForm = function (instructionsPopup, map, nodeCollection, backend) {
     var formCommon = new FormCommon('node-search-');
-    var header = function() {
+    var header = function () {
       return '<header>' +
         '<span id="close-node-search" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>' +
         '</header>';
     };
 
-    var label = function(labelFormatted) {
+    var label = function (labelFormatted) {
       return '<label class="control-label-small">' + labelFormatted + '</label>';
     };
 
@@ -26,7 +26,7 @@
         label('Tie') + label('Aosa') + label('Losa') +
         '</div>' +
         '<div id= "road-attributes" class="form-group">' +
-          formCommon.nodeInputNumber('tie', 5) + formCommon.nodeInputNumber('aosa', 3) + formCommon.nodeInputNumber('losa', 3) +
+        formCommon.nodeInputNumber('tie', 5) + formCommon.nodeInputNumber('aosa', 3) + formCommon.nodeInputNumber('losa', 3) +
         searchButton() +
         '</div>' +
         '<button id="clear-node-search" type="button" class="btn btn-clean-node-search btn-block" disabled>Tyhjenn&auml; tulokset</button>' +
@@ -41,7 +41,7 @@
     };
 
     var addNodeAttributeLabel = function (labelFormatted) {
-      return '<label class="control-label-small" style="text-transform:none;color:#f4b183">'+labelFormatted+'</label>';
+      return '<label class="control-label-small" style="text-transform:none;color:#f4b183">' + labelFormatted + '</label>';
     };
 
     var roadAddressLink = function (index, nodeWithAttributes) {
@@ -51,14 +51,14 @@
         nodeWithAttributes.addrMValue + '</a>';
     };
 
-    var nodePointTemplateLink = function(nodePointTemplate){
+    var nodePointTemplateLink = function (nodePointTemplate) {
       return '<a id=' + nodePointTemplate.id + ' class="node-point-template-link" href="#node/nodePointTemplate/' + nodePointTemplate.id + '" style="font-weight:bold;cursor:pointer;color: darkorange;">' +
         nodePointTemplate.roadNumber + ' / ' +
         nodePointTemplate.roadPartNumber + ' / ' +
         nodePointTemplate.addrM + '</a>';
     };
 
-    var junctionTemplateLink = function(junctionTemplate){
+    var junctionTemplateLink = function (junctionTemplate) {
       return '<a id=' + junctionTemplate.id + ' class="junction-template-link" href="#node/junctionTemplate/' + junctionTemplate.id + '" style="font-weight:bold;cursor:pointer;">' +
         junctionTemplate.roadNumber + ' / ' +
         junctionTemplate.track + ' / ' +
@@ -84,18 +84,13 @@
         return template.elyCode;
       });
       var text = "";
-      if(!_.isEmpty(groups)){
+      if (!_.isEmpty(groups)) {
         text = '<label class="control-label-small" style="color:#c09853;">Käsittelemättömät liittymäaihiot</label>';
-        _.each(groups, function(templatesByEly){
-          var sortedTemplates = _.chain(templatesByEly).
-            sortBy('addrM').
-            sortBy('track').
-            sortBy('roadPartNumber').
-            sortBy('roadNumber').
-            value();
+        _.each(groups, function (templatesByEly) {
+          var sortedTemplates = _.chain(templatesByEly).sortBy('addrM').sortBy('track').sortBy('roadPartNumber').sortBy('roadNumber').value();
           text += elyNameLabel(sortedTemplates[0].elyCode);
           text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / AJR / OSA / AET)</label></br>';
-          _.each(sortedTemplates, function(junctionTemplate) {
+          _.each(sortedTemplates, function (junctionTemplate) {
             text += junctionTemplateLink(junctionTemplate) + '</br>';
           });
         });
@@ -111,18 +106,13 @@
         return template.elyCode;
       });
       var text = "";
-      if(!_.isEmpty(groups)){
+      if (!_.isEmpty(groups)) {
         text = '</br></br><label class="control-label-small" style="color:#c09853;">Käsittelemättömät solmukohta-aihiot</label>';
-        _.each(groups, function(templatesByEly){
-          var sortedTemplates = _.chain(templatesByEly).
-            sortBy('addrM').
-            sortBy('track').
-            sortBy('roadPartNumber').
-            sortBy('roadNumber').
-            value();
+        _.each(groups, function (templatesByEly) {
+          var sortedTemplates = _.chain(templatesByEly).sortBy('addrM').sortBy('track').sortBy('roadPartNumber').sortBy('roadNumber').value();
           text += elyNameLabel(sortedTemplates[0].elyCode);
           text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / OSA / AET)</label></br>';
-          _.each(sortedTemplates, function(nodePointTemplate) {
+          _.each(sortedTemplates, function (nodePointTemplate) {
             text += nodePointTemplateLink(nodePointTemplate) + '</br>';
           });
         });
@@ -130,11 +120,11 @@
       return text;
     };
 
-    var elyNameLabel = function(elyCode){
+    var elyNameLabel = function (elyCode) {
       var elyInfo = _.find(LinkValues.ElyCodes, function (obj) {
         return obj.value === elyCode;
       });
-      return'</br><label class="control-label" style="color:#c09853;">' + elyInfo.name + ' ELY (' + elyInfo.value + ')</label></br>';
+      return '</br><label class="control-label" style="color:#c09853;">' + elyInfo.name + ' ELY (' + elyInfo.value + ')</label></br>';
     };
 
     var checkInputs = function (selector, disabled) {
@@ -145,8 +135,8 @@
     var bindEvents = function () {
       var rootElement = $('#feature-attributes');
 
-      var getTemplates = function() {
-        backend.getTemplates(function(data){
+      var getTemplates = function () {
+        backend.getTemplates(function (data) {
           var nodePointTemplates = data.nodePointTemplates;
           var junctionTemplates = data.junctionTemplates;
           eventbus.trigger('templates:fetched', nodePointTemplates, junctionTemplates);
@@ -155,7 +145,7 @@
         });
       };
 
-      eventbus.on('nodeSearchTool:fetched', function(hasResults) {
+      eventbus.on('nodeSearchTool:fetched', function (hasResults) {
         applicationModel.removeSpinner();
         $('#clear-node-search').prop('disabled', false);
         if (hasResults) {
@@ -198,8 +188,12 @@
           };
           var minPart = $("#aosa").val();
           var maxPart = $("#losa").val();
-          if (minPart) { data.minRoadPartNumber = minPart; }
-          if (maxPart) { data.maxRoadPartNumber = maxPart; }
+          if (minPart) {
+            data.minRoadPartNumber = minPart;
+          }
+          if (maxPart) {
+            data.maxRoadPartNumber = maxPart;
+          }
           nodeCollection.getNodesByRoadAttributes(data);
         });
 

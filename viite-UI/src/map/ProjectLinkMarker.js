@@ -35,8 +35,7 @@
       var directionMarkerColor = function (roadLinka) {
         if (roadLinka.status === LinkValues.LinkStatus.New.value) {
           return '#ff55dd';
-        }
-        else if (roadLinka.roadClass in colorMap) {
+        } else if (roadLinka.roadClass in colorMap) {
           return colorMap[roadLinka.roadClass];
         } else
           return '#888888';

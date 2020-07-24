@@ -1,14 +1,14 @@
 /* eslint-disable new-cap */
-(function(BackboneEvents) {
+(function (BackboneEvents) {
   window.eventbus = BackboneEvents;
-  eventbus.on('all', function(eventName, entity) {
+  eventbus.on('all', function (eventName, entity) {
     if (window.DR2_LOGGING && eventName !== 'map:mouseMoved') {
       console.log(eventName, entity);
     }
   });
-  eventbus.oncePromise = function(eventName) {
+  eventbus.oncePromise = function (eventName) {
     var eventReceived = $.Deferred();
-    eventbus.once(eventName, function() {
+    eventbus.once(eventName, function () {
       eventReceived.resolve();
     });
     return eventReceived;

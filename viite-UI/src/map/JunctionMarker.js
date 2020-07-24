@@ -7,7 +7,7 @@
         junctionNumber: junction.junctionNumber
       });
 
-      var junctionMarkerStyleProvider = function(junctionNumber) {
+      var junctionMarkerStyleProvider = function (junctionNumber) {
         return new ol.style.Style({
           image: new ol.style.Icon({
             src: 'images/junction.svg',
