@@ -3,12 +3,7 @@
         <setting name="tasks" value="&quot;project digiroad2-viite&quot; &quot;test:run-main fi.liikennevirasto.viite.util.DataFixture flyway_init&quot;" />
         <setting name="vmparams" value="-Xms512M -Xmx1024M -Xss1M -XX:+CMSClassUnloadingEnabled" />
         <setting name="workingDir" value="$PROJECT_DIR$" />
-        <envs>
-            <env name="bonecp.jdbcUrl" value="jdbc:postgresql://localhost:5432/viite" />
-            <env name="bonecp.username" value="viite" />
-            <env name="bonecp.password" value="viite" />
-            <env name="env" value="Local" />
-        </envs>
+        <envs />
         <method />
     </configuration>
 </component>
