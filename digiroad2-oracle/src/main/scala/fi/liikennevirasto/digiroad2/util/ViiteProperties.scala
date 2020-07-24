@@ -207,7 +207,7 @@ class ViitePropertiesFromFile extends ViiteProperties {
 object ViiteProperties {
   private val logger = LoggerFactory.getLogger(getClass)
   lazy val properties: ViiteProperties = {
-    if (getClass.getResource("/env.properties").getFile.isEmpty) {
+    if (getClass.getResource("/env.properties") == null) {
       new ViitePropertiesFromEnv
     } else {
       logger.info("Reading properties from file 'env.properties'.")
