@@ -133,12 +133,6 @@ trait TrackCalculatorStrategy {
 
   protected def adjustTwoTracks(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint],
                                 restLeftProjectLinks: Seq[ProjectLink] = Seq(), restRightProjectLinks: Seq[ProjectLink] = Seq()): TrackCalculatorResult = {
-
-    def adjustedTracks(right: Seq[ProjectLink], left: Seq[ProjectLink], startM: Long, endM: Long): Boolean = {
-      right.headOption.map(_.startAddrMValue).contains(startM) && right.lastOption.map(_.endAddrMValue).contains(endM) &&
-        left.headOption.map(_.startAddrMValue).contains(startM) && left.lastOption.map(_.endAddrMValue).contains(endM)
-    }
-
     if (leftProjectLinks.isEmpty || rightProjectLinks.isEmpty)
       throw new MissingTrackException(s"Missing track, R: ${rightProjectLinks.size}, L: ${leftProjectLinks.size}")
 
@@ -150,31 +144,35 @@ trait TrackCalculatorStrategy {
     val rightRoadwayNumber = rightProjectLinks.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val continuousRightProjectLinks = rightProjectLinks.takeWhile(pl => pl.roadwayNumber == rightRoadwayNumber)
     val restRight = rightProjectLinks.drop(continuousRightProjectLinks.size) ++ restRightProjectLinks
-    //
+
+    val (adjustedLeft, restAdjustedLeft) = if (continuousLeftProjectLinks.last.isSplit) {
+      val splitAddrM = continuousRightProjectLinks.last.endAddrMValue
+      (continuousLeftProjectLinks.init :+ continuousLeftProjectLinks.last.copy(endAddrMValue = splitAddrM), restLeft.head.copy(startAddrMValue = splitAddrM) +: restLeft.tail)
+    } else (continuousLeftProjectLinks, restLeft)
+
+    val (adjustedRight, restAdjustedRight) = if (continuousRightProjectLinks.last.isSplit) {
+      val splitAddrM = continuousLeftProjectLinks.last.endAddrMValue
+      (continuousRightProjectLinks.init :+ continuousRightProjectLinks.last.copy(endAddrMValue = splitAddrM), restRight.head.copy(startAddrMValue = splitAddrM) +: restRight.tail)
+    } else (continuousRightProjectLinks, restRight)
 
     //  Find a calibration point annexed to the projectLink Id
-    val availableCalibrationPoint = calibrationPoints.get(continuousRightProjectLinks.last.id).orElse(calibrationPoints.get(continuousLeftProjectLinks.last.id))
+    val availableCalibrationPoint = calibrationPoints.get(adjustedRight.last.id).orElse(calibrationPoints.get(adjustedLeft.last.id))
 
-    val startSectionAddress = startAddress.getOrElse(getFixedAddress(continuousLeftProjectLinks.head, continuousRightProjectLinks.head)._1)
-    val estimatedEnd = getFixedAddress(continuousLeftProjectLinks.last, continuousRightProjectLinks.last, availableCalibrationPoint)._2
+    val startSectionAddress = startAddress.getOrElse(getFixedAddress(adjustedLeft.head, adjustedRight.head)._1)
+    val estimatedEnd = getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint)._2
 
-    val (adjustedLeft, adjustedRight) = adjustTwoTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
-
-//    val (adjustedLeft, adjustedRight) =
-//      if (adjustedTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd)) {
-//        (continuousLeftProjectLinks, continuousRightProjectLinks)
-//      } else adjustTwoTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
+    val (completedAdjustedLeft, completedAdjustedRight) = adjustTwoTracks(adjustedRight, adjustedLeft, startSectionAddress, estimatedEnd, calibrationPoints)
 
     //  The getFixedAddress method have to be called twice because when we do it the first time we are getting the estimated end measure, that will be used for the calculation of
     //  NEW sections. For example if in one of the sides we have a TRANSFER section it will use the value after recalculate all the existing sections with the original length.
     val endSectionAddress = getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint)._2
 
     TrackCalculatorResult(
-      setLastEndAddrMValue(adjustedLeft, endSectionAddress),
-      setLastEndAddrMValue(adjustedRight, endSectionAddress),
+      setLastEndAddrMValue(completedAdjustedLeft, endSectionAddress),
+      setLastEndAddrMValue(completedAdjustedRight, endSectionAddress),
       startSectionAddress, endSectionAddress,
-      restLeft,
-      restRight
+      restAdjustedLeft,
+      restAdjustedRight
     )
   }
 
@@ -226,8 +224,6 @@ trait TrackCalculatorStrategy {
         (leftLink.startAddrMValue, leftLink.endAddrMValue)
       case (_, LinkStatus.UnChanged) | (_, LinkStatus.Transfer) =>
         (rightLink.startAddrMValue, rightLink.endAddrMValue)
-//      case (LinkStatus.Terminated, LinkStatus.Terminated) =>
-//        (averageOfAddressMValues(rightLink.originalStartAddrMValue, leftLink.originalStartAddrMValue, reversed), averageOfAddressMValues(rightLink.originalEndAddrMValue, leftLink.originalEndAddrMValue, reversed))
       case _ =>
         userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
           (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))

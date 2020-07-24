@@ -380,9 +380,7 @@ object TrackSectionOrder {
     * @return
     */
   def setCalibrationPoints(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-
-    (setOnSideCalibrationPoints(leftProjectLinks, userDefinedCalibrationPoint),
-      setOnSideCalibrationPoints(rightProjectLinks, userDefinedCalibrationPoint))
+    (setOnSideCalibrationPoints(leftProjectLinks, userDefinedCalibrationPoint), setOnSideCalibrationPoints(rightProjectLinks, userDefinedCalibrationPoint))
   }
 
   protected def setOnSideCalibrationPoints(initialProjectLinks: Seq[ProjectLink], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
