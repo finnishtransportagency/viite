@@ -38,6 +38,8 @@
     var selectionTypeIs = function (type) {
       if (!_.isUndefined(selectionType.value) || !_.isUndefined(type.value))
         return selectionType.value === type.value;
+      else
+        return false;
     };
 
     var setReadOnly = function (newState) {
@@ -91,7 +93,7 @@
       zoom.level = Math.round(level);
     };
 
-    var getZoomLevel = function() {
+    var getZoomLevel = function () {
       return zoom.level;
     };
 
@@ -107,11 +109,11 @@
     }
 
     function setSelectedTool(tool) {
-      if (!isSelectedTool(tool)) {
-        selectedTool = tool;
-      } else {
+      if (isSelectedTool(tool)) {
         selectedTool = LinkValues.Tool.Unknown.value;
         eventbus.trigger('tool:clear');
+      } else {
+        selectedTool = tool;
       }
       eventbus.trigger('tool:changed', selectedTool);
     }
@@ -142,13 +144,9 @@
 
     var addSpinner = function (spinnerEvent) {
       jQuery('.container').append(
-          $('<div/>')
-              .addClass("spinner-overlay")
-              .addClass(spinnerClassName(spinnerEvent))
-              .addClass("modal-overlay").append(
-              $('<div/>')
-                  .addClass("spinner")
-          )
+        $('<div/>').addClass("spinner-overlay").addClass(spinnerClassName(spinnerEvent)).addClass("modal-overlay").append(
+          $('<div/>').addClass("spinner")
+        )
       );
     };
 
@@ -167,9 +165,9 @@
       resetCurrentAction: resetCurrentAction,
       actionCalculating: actionCalculating,
       actionCalculated: actionCalculated,
-      refreshMap: function (zoom, bbox, center) {
-        var hasZoomLevelChanged = zoom.level !== zoom;
-        setZoomLevel(zoom);
+      refreshMap: function (zoomLevel, bbox, center) {
+        var hasZoomLevelChanged = zoomLevel.level !== zoomLevel;
+        setZoomLevel(zoomLevel);
         centerLonLat = center;
         eventbus.trigger('map:refresh', {
           selectedLayer: selectedLayer,
@@ -195,7 +193,7 @@
         minDirtyZoomLevel = level;
       },
       selectLayer: function (layer, toggleStart, noSave) {
-        var tool = layer !== 'node' ? LinkValues.Tool.Default.value : LinkValues.Tool.Unknown.value;
+        var tool = layer === 'node' ? LinkValues.Tool.Unknown.value : LinkValues.Tool.Default.value;
         setSelectedTool(tool);
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
@@ -206,27 +204,17 @@
         }
         var underConstructionVisibleCheckbox = $('#underConstructionVisibleCheckbox')[0];
         if (layer !== selectedLayer || toggleStart) {
-            if (underConstructionVisibleCheckbox) {
-                if (layer === 'roadAddressProject') {
-                    $('#underConstructionVisibleCheckbox')[0].checked = true;
-                    $('#underConstructionVisibleCheckbox')[0].disabled = false;
-                } else {
-                    $('#underConstructionVisibleCheckbox')[0].checked = true;
-                    $('#underConstructionVisibleCheckbox')[0].disabled = false;
-                }
-            }
-            eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
+          if (underConstructionVisibleCheckbox) {
+            $('#underConstructionVisibleCheckbox')[0].checked = true;
+            $('#underConstructionVisibleCheckbox')[0].disabled = false;
+          }
+          eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
         }
         var unAddressedRoadsVisibleCheckbox = $('#unAddressedRoadsVisibleCheckbox')[0];
         if (layer !== selectedLayer || toggleStart) {
           if (unAddressedRoadsVisibleCheckbox) {
-            if (layer === 'roadAddressProject') {
-              $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
-              $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
-            } else {
-              $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
-              $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
-            }
+            $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
+            $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
           }
           eventbus.trigger('unAddressedRoadsProjectRoads:toggleVisibility', true);
         }
@@ -292,5 +280,5 @@
       specialSelectionTypes: specialSelectionTypes
     };
   };
-})(this);
+}(this));
 

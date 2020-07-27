@@ -1,18 +1,14 @@
-(function(root) {
-  root.CalibrationPoint = function(data) {
+(function (root) {
+  root.CalibrationPoint = function (data) {
     var cachedMarker = null;
     var cachedDirectionArrow = null;
-    var defaultMarkerGraphics = {
-      externalGraphic: "images/calibration-point.svg"
-    };
-    var firstCustomCalibrationPointValue=4;
+    var firstCustomCalibrationPointValue = 4;
     var createCalibrationPointMarker = function () {
+      const marker = new ol.Feature({
+        geometry: new ol.geom.Point([data.points.x, data.points.y])
+      });
       if (!_.isUndefined(data.points)) {
-        var marker = new ol.Feature({
-            geometry: new ol.geom.Point([data.points.x, data.points.y])
-          }
-        );
-        
+
         var calibrationPointMarkerStyle = new ol.style.Style({
           image: new ol.style.Icon({
             src: "images/calibration-point.svg",
@@ -30,42 +26,48 @@
           marker.setStyle(calibrationPointMarkerStyle);
         else
           marker.setStyle(calibrationPointMarkerStyleCustom);
-        return marker;
       }
+      return marker;
     };
 
-    var getMarker = function(shouldCreate) {
+    var getMarker = function (shouldCreate) {
       if (shouldCreate || !cachedMarker) {
         cachedMarker = createCalibrationPointMarker();
       }
       return cachedMarker;
     };
 
-    var getCalibrationPointMarker = function() {
+    var getCalibrationPointMarker = function () {
       return cachedMarker;
     };
 
-    var getDirectionArrow = function(shouldCreate) {
+    var getDirectionArrow = function (shouldCreate) {
       if (shouldCreate || !cachedDirectionArrow) {
         cachedDirectionArrow = createCalibrationPointMarker();
       }
       return cachedDirectionArrow;
     };
 
-    var moveTo = function(lonlat) {
+    var moveTo = function (lonlat) {
       getDirectionArrow().move(lonlat);
       getCalibrationPointMarker().moveTo(lonlat);
     };
 
-    var select = function() { getCalibrationPointMarker().select(); };
+    var select = function () {
+      getCalibrationPointMarker().select();
+    };
 
-    var deselect = function() { getCalibrationPointMarker().deselect(); };
+    var deselect = function () {
+      getCalibrationPointMarker().deselect();
+    };
 
-    var finalizeMove = function() {
+    var finalizeMove = function () {
       getCalibrationPointMarker().finalizeMove();
     };
 
-    var rePlaceInGroup = function() { getCalibrationPointMarker().rePlaceInGroup(); };
+    var rePlaceInGroup = function () {
+      getCalibrationPointMarker().rePlaceInGroup();
+    };
 
     return {
       getMarker: getMarker,

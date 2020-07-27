@@ -1,5 +1,5 @@
-(function(root) {
-  root.ProjectChangeTable = function(projectChangeInfoModel, projectCollection) {
+(function (root) {
+  root.ProjectChangeTable = function (projectChangeInfoModel, projectCollection) {
 
     var changeTypes = [
       'Käsittelemättä',
@@ -34,7 +34,7 @@
     changeTableHeader.append('<div class="change-header">' +
       '<label class="project-change-table-dimension-header">TIE</label>' +
       '<label class="project-change-table-dimension-header">AJR</label>' +
-        '<label class="project-change-table-dimension-header">OSA</label>' +
+      '<label class="project-change-table-dimension-header">OSA</label>' +
       '<label class="project-change-table-dimension-header">AET</label>' +
       '<label class="project-change-table-dimension-header">LET</label>' +
       '<label class="project-change-table-dimension-header">PIT</label>' +
@@ -85,7 +85,7 @@
       }
     }
 
-    function getChangeType(type){
+    function getChangeType(type) {
       return changeTypes[type];
     }
 
@@ -108,7 +108,7 @@
       $('.change-table-dimension-headers').height(changeTableHeight - headerHeight - 30);// scroll size = total - header - border
     }
 
-    function showChangeTable(projectChangeData){
+    function showChangeTable(projectChangeData) {
       var htmlTable = "";
       var warningM = projectChangeData.warningMessage;
       if (!_.isUndefined(warningM))
@@ -137,7 +137,7 @@
       }
       $('.row-changes').remove();
       $('.change-table-dimensions').append($(htmlTable));
-      if (projectChangeData.validationErrors.length === 0) {
+      if (projectChangeData && projectChangeData.validationErrors && projectChangeData.validationErrors.length === 0) {
         $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div>'));
         var currentProject = projectCollection.getCurrentProject();
         if ($('.change-table-frame').css('display') === "block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value || currentProject.project.statusCode === ProjectStatus.ErrorInTR.value)) {
@@ -150,14 +150,14 @@
 
     function bindEvents() {
       $('.row-changes').remove();
-      eventbus.on('projectChanges:fetched', function(projectChangeData) {
+      eventbus.on('projectChanges:fetched', function (projectChangeData) {
         showChangeTable(projectChangeData);
       });
 
-      changeTable.on('click', 'button.max', function (){
+      changeTable.on('click', 'button.max', function () {
         resetInteractions();
         $('.font-resize').css('font-size', '18px');
-        if(windowMaximized) {
+        if (windowMaximized) {
           $('.change-table-frame').height('260px');
           $('.change-table-frame').width('1135px');
           $('.change-table-frame').css('top', '620px');
@@ -167,7 +167,7 @@
           $('[id=change-table-borders-changetype]').height('210px');
           $('[id=buttonText]').text("Suurenna ");
           $('[id=sizeSymbol]').text("□");
-          windowMaximized=false;
+          windowMaximized = false;
         } else {
           $('.change-table-frame').height('800px');
           $('.change-table-frame').width('1135px');
@@ -178,12 +178,12 @@
           $('[id=change-table-borders-changetype]').height('750px');
           $('[id=buttonText]').text("Pienennä ");
           $('[id=sizeSymbol]').text("_");
-          windowMaximized=true;
+          windowMaximized = true;
         }
         setTableHeight();
       });
 
-      changeTable.on('click', 'button.close', function (){
+      changeTable.on('click', 'button.close', function () {
         hide();
       });
 
@@ -212,8 +212,8 @@
       eventbus.trigger('projectChanges:fetched', projectChanges);
     }
 
-    function getReversed(changeInfoSeq){
-      return ((changeInfoSeq.reversed) ? '<td class="project-change-table-dimension">&#10004;</td>': '<td class="project-change-table-dimension"></td>');
+    function getReversed(changeInfoSeq) {
+      return ((changeInfoSeq.reversed) ? '<td class="project-change-table-dimension">&#10004;</td>' : '<td class="project-change-table-dimension"></td>');
     }
 
     function getEmptySource(changeInfoSeq) {
@@ -228,6 +228,7 @@
         '<td class="project-change-table-dimension"></td>' +
         '<td class="project-change-table-dimension"></td>';
     }
+
     function getEmptyTarget() {
       return '<td class="project-change-table-dimension"></td>' +
         '<td class="project-change-table-dimension"></td>' +
@@ -240,19 +241,19 @@
         '<td class="project-change-table-dimension"></td>';
     }
 
-    function getTargetInfo(changeInfoSeq){
-      return '<td class="project-change-table-dimension">' + changeInfoSeq.target.roadNumber + '</td>'+
+    function getTargetInfo(changeInfoSeq) {
+      return '<td class="project-change-table-dimension">' + changeInfoSeq.target.roadNumber + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.trackCode + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.startAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.endAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + (changeInfoSeq.target.endAddressM - changeInfoSeq.target.startAddressM) + '</td>' +
         '<td class="project-change-table-dimension">' + replaceParallelLink(changeInfoSeq.target.discontinuity) + '</td>' +
-        '<td class="project-change-table-dimension">'+ changeInfoSeq.target.roadType + '</td>' +
+        '<td class="project-change-table-dimension">' + changeInfoSeq.target.roadType + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.ely + '</td>';
     }
 
-    function getSourceInfo(changeInfoSeq){
+    function getSourceInfo(changeInfoSeq) {
       return '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.roadNumber + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.trackCode + '</td>' +
@@ -265,80 +266,79 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.ely + '</td>';
     }
 
-    function dragListener (event) {
+    function dragListener(event) {
       var target = event.target,
         x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
         y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-      target.style.webkitTransform =
-        target.style.transform =
-          'translate(' + x + 'px, ' + y + 'px)';
+      target.style.transform =
+        'translate(' + x + 'px, ' + y + 'px)';
+      target.style.webkitTransform = target.style.transform;
       target.setAttribute('data-x', x);
       target.setAttribute('data-y', y);
     }
 
-    function replaceParallelLink(currentDiscontinuity){
+    function replaceParallelLink(currentDiscontinuity) {
       if (currentDiscontinuity === LinkValues.Discontinuity.ParallelLink.value)
-         return LinkValues.Discontinuity.Continuous.value;
+        return LinkValues.Discontinuity.Continuous.value;
       else
         return currentDiscontinuity;
     }
+
     function enableTableInteractions() {
-      interact('.change-table-frame')
-        .draggable({
-          allowFrom: '.change-table-header',
-          onmove: dragListener,
-          restrict: {
-            restriction: '.container',
-            elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
-          }
-        })
-        .resizable({
-          edges: { left: true, right: true, bottom: true, top: true },
-          restrictEdges: {
-            outer: '.container',
-            endOnly: true
-          },
-          restrictSize: {
-            min: { width: 650, height: 300 }
-          },
-          inertia: true
-        })
-        .on('resizemove', function (event) {
-          var target = event.target,
-            x = (parseFloat(target.getAttribute('data-x')) || 0),
-            y = (parseFloat(target.getAttribute('data-y')) || 0);
-          target.style.width  = event.rect.width + 'px';
-          target.style.height = event.rect.height + 'px';
-          x += event.deltaRect.left;
-          y += event.deltaRect.top;
-          target.style.webkitTransform = target.style.transform =
-            'translate(' + x + 'px,' + y + 'px)';
-          target.setAttribute('data-x', x);
-          target.setAttribute('data-y', y);
-          var fontResizeElements = $('.font-resize');
-          var newFontSize =18*parseInt(target.style.width) / 950 + 'px';
-          fontResizeElements.css('font-size', newFontSize);
-          $('[id=change-table-borders-target]').height(parseFloat(target.style.height) - 50 + 'px');
-          $('[id=change-table-borders-source]').height(parseFloat(target.style.height) - 50 + 'px');
-          $('[id=change-table-borders-reversed]').height(parseFloat(target.style.height) - 50 + 'px');
-          $('[id=change-table-borders-changetype]').height(parseFloat(target.style.height) - 50 + 'px');
-          setTableHeight();
-        });
+      interact('.change-table-frame').draggable({
+        allowFrom: '.change-table-header',
+        onmove: dragListener,
+        restrict: {
+          restriction: '.container',
+          elementRect: {top: 0, left: 0, bottom: 1, right: 1}
+        }
+      }).resizable({
+        edges: {left: true, right: true, bottom: true, top: true},
+        restrictEdges: {
+          outer: '.container',
+          endOnly: true
+        },
+        restrictSize: {
+          min: {width: 650, height: 300}
+        },
+        inertia: true
+      }).on('resizemove', function (event) {
+        var target = event.target,
+          x = (parseFloat(target.getAttribute('data-x')) || 0),
+          y = (parseFloat(target.getAttribute('data-y')) || 0);
+        target.style.width = event.rect.width + 'px';
+        target.style.height = event.rect.height + 'px';
+        x += event.deltaRect.left;
+        y += event.deltaRect.top;
+        target.style.transform =
+          'translate(' + x + 'px,' + y + 'px)';
+        target.style.webkitTransform = target.style.transform;
+        target.setAttribute('data-x', x);
+        target.setAttribute('data-y', y);
+        var fontResizeElements = $('.font-resize');
+        var newFontSize = (18 * parseInt(target.style.width) / 950) + 'px';
+        fontResizeElements.css('font-size', newFontSize);
+        $('[id=change-table-borders-target]').height(parseFloat(target.style.height) - 50 + 'px');
+        $('[id=change-table-borders-source]').height(parseFloat(target.style.height) - 50 + 'px');
+        $('[id=change-table-borders-reversed]').height(parseFloat(target.style.height) - 50 + 'px');
+        $('[id=change-table-borders-changetype]').height(parseFloat(target.style.height) - 50 + 'px');
+        setTableHeight();
+      });
     }
 
-    eventbus.on('projectChangeTable:refresh', function() {
+    eventbus.on('projectChangeTable:refresh', function () {
       getChanges();
       enableTableInteractions();
     });
 
-    eventbus.on('projectChangeTable:hide', function() {
+    eventbus.on('projectChangeTable:hide', function () {
       hide();
     });
 
-    return{
+    return {
       show: show,
       hide: hide,
       bindEvents: bindEvents
     };
   };
-})(this);
+}(this));
