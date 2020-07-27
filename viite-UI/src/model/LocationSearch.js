@@ -11,7 +11,7 @@
         var result = coordinateData[0].street[0].features;
         var withErrors = _.some(result, function(r) {return !_.isUndefined(r.properties.virheet);});
         var vkmResultToCoordinates = function(r) {
-          return { title: r.properties.katunimi + " " + r.properties.katunumero + ", " + r.properties.kuntanimi , lon: r.properties.x, lat: r.properties.y};
+          return { title: r.properties.katunimi + " " + r.properties.katunumero + ", " + r.properties.kuntanimi, lon: r.properties.x, lat: r.properties.y};
         };
         if (withErrors) {
           return $.Deferred().reject('Tuntematon katuosoite');
