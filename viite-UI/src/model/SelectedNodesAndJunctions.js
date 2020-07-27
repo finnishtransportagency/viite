@@ -2,10 +2,10 @@
   root.SelectedNodesAndJunctions = function (nodeCollection) {
     var current = {};
 
-    var openNode = function (node, templates) {
+    var openNode = function (node, openNodetemplates) {
       clean();
       setCurrentNode(node);
-      eventbus.trigger('node:selected', current.node, templates);
+      eventbus.trigger('node:selected', current.node, openNodetemplates);
     };
 
     var getCurrentNode = function () {
@@ -31,9 +31,9 @@
       openTemplates(templates(_.first(junctionTemplate.junctionPoints).coordinates));
     };
 
-    var openTemplates = function (templates) {
+    var openTemplates = function (templatesToOpen) {
       clean();
-      setCurrentTemplates(templates.nodePoints, templates.junctions);
+      setCurrentTemplates(templatesToOpen.nodePoints, templatesToOpen.junctions);
       eventbus.trigger('templates:selected', current.templates);
     };
 
@@ -60,7 +60,7 @@
       _.each(nodePoints, function (nodePoint) {
         current.node.nodePoints.push(nodePoint);
       });
-      eventbus.trigger('nodePointTemplates:selected', { nodePoints: nodePoints });
+      eventbus.trigger('nodePointTemplates:selected', {nodePoints: nodePoints});
     };
 
     var addJunctionTemplates = function (junctions) {
@@ -68,7 +68,7 @@
         current.node.junctions.push(junction);
       });
       eventbus.trigger('junction:validate');
-      eventbus.trigger('junctionTemplates:selected', { junctions: junctions });
+      eventbus.trigger('junctionTemplates:selected', {junctions: junctions});
     };
 
     var getStartingCoordinates = function () {
@@ -109,8 +109,8 @@
     };
 
     var setJunctionNumber = function (id, junctionNumber) {
-      var junction = _.find(current.node.junctions, function (junction) {
-        return junction.id === id;
+      var junction = _.find(current.node.junctions, function (junctionToSet) {
+        return junctionToSet.id === id;
       });
 
       if (!_.isUndefined(junction)) {
@@ -137,13 +137,17 @@
 
     var attachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
-        if (_.filter(current.node.junctions, function (jp) { return jp.id === junction.id; }).length === 0) {
+        if (_.filter(current.node.junctions, function (jp) {
+          return jp.id === junction.id;
+        }).length === 0) {
           current.node.junctions.push(junction);
           eventbus.trigger('junction:attach', junction);
         }
       }
       _.each(nodePoints, function (nodePoint) {
-        if (_.filter(current.node.nodePoints, function (np) { return np.id === nodePoint.id; }).length === 0) {
+        if (_.filter(current.node.nodePoints, function (np) {
+          return np.id === nodePoint.id;
+        }).length === 0) {
           current.node.nodePoints.push(nodePoint);
           eventbus.trigger('nodePoint:attach', nodePoint);
         }
@@ -157,7 +161,9 @@
 
         if (junctions.length !== 1) {
           message = 'Liittymänumero on jo käytössä'; // junction number is already in use
-        } else if (_.isNaN(_.first(junctions).junctionNumber) || !_.isEmpty(_.find(junctions, function (j) { return j.junctionNumber <= 0; }))) {
+        } else if (_.isNaN(_.first(junctions).junctionNumber) || !_.isEmpty(_.find(junctions, function (j) {
+          return j.junctionNumber <= 0;
+        }))) {
           message = 'Liittymänumero on pakollinen tieto'; // junction number is compulsory information
         }
 
@@ -176,7 +182,9 @@
 
     var isDirty = function () {
       var original = false;
-      if (current.node.nodeNumber) { original = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber); }
+      if (current.node.nodeNumber) {
+        original = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber);
+      }
       var nodePointsEquality = false;
       var junctionsEquality = false;
       var junctionPointsEquality = false;
@@ -184,7 +192,7 @@
       var nodesEquality = isEqualWithout(original, current.node, ['junctions', 'nodePoints']);
       //  comparing the nodePoints of both nodes
       if (original && original.nodePoints && original.nodePoints.length !== 0 && original.nodePoints.length === current.node.nodePoints.length) {
-        nodePointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.nodePoints, 'id'), _.sortBy(current.node.nodePoints, 'id')), _.spread(function(originalNodePoint, currentNodePoint) {
+        nodePointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.nodePoints, 'id'), _.sortBy(current.node.nodePoints, 'id')), _.spread(function (originalNodePoint, currentNodePoint) {
           return {equality: isEqualWithout(originalNodePoint, currentNodePoint, 'coordinates')};
         })), ['equality', false]);
       }
@@ -196,7 +204,7 @@
         })), ['equality', false]);
 
         //  comparing the junctionPoints of all junctions in both nodes
-        junctionPointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.junctions, 'id'), _.sortBy(current.node.junctions, 'id')), _.spread(function(originalJunction, currentJunction) {
+        junctionPointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.junctions, 'id'), _.sortBy(current.node.junctions, 'id')), _.spread(function (originalJunction, currentJunction) {
           if (originalJunction.junctionPoints.length === currentJunction.junctionPoints.length && originalJunction.junctionPoints.length !== 0) {
             return _.flatMap(_.zip(originalJunction.junctionPoints, currentJunction.junctionPoints), _.spread(function (originalJunctionPoint, currentJunctionPoint) {
               // return isEqualWithout(originalJunctionPoint, currentJunctionPoint, 'coordinates');
@@ -209,16 +217,16 @@
       return !(nodesEquality && nodePointsEquality && junctionsEquality && junctionPointsEquality);
     };
 
-    var isObsoleteNode = function() {
-      return _.isEmpty(current.node.junctions) && _.isEmpty(_.filter(current.node.nodePoints, function(np) {
+    var isObsoleteNode = function () {
+      return _.isEmpty(current.node.junctions) && _.isEmpty(_.filter(current.node.nodePoints, function (np) {
         return np.type !== LinkValues.NodePointType.CalculatedNodePoint.value;
       }));
     };
 
-    var isEqualWithout = function (original, current, toIgnore) {
+    var isEqualWithout = function (original, currentObject, toIgnore) {
       return _.isEqual(
         _.omit(original, toIgnore),
-        _.omit(current, toIgnore)
+        _.omit(currentObject, toIgnore)
       );
     };
 
@@ -254,8 +262,8 @@
       eventbus.trigger('change:node', current.node, junction);
     };
 
-    eventbus.on('selectedNodesAndJunctions:openTemplates', function (templates) {
-      openTemplates(templates);
+    eventbus.on('selectedNodesAndJunctions:openTemplates', function (templatesToOpen) {
+      openTemplates(templatesToOpen);
     });
 
     return {
@@ -289,4 +297,4 @@
       updateNodesAndJunctionsMarker: updateNodesAndJunctionsMarker
     };
   };
-})(this);
+}(this));
