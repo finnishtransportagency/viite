@@ -1648,14 +1648,14 @@ Left     |      |
                         ^ ^ (20)
                 Left3 /   |  Right4
                   ---     |
-           (xx) ^         ^ (16)
+           (13) ^         ^ (16)
                 |         |
                 |         |  Right3
           Left2 |         |
                 |         ^ (13)
                 |         |
                 |         |  Right2
-           (xx) ^         |
+           (09) ^         |
                  \        ^ (10)
                    ----   |  Right1
                 Left1   \ |
@@ -1781,11 +1781,16 @@ Left     |      |
       val assignedValues = defaultSectionCalculatorStrategy.assignMValues(Seq(projectLinkLeft1, projectLinkLeft2, projectLinkLeft3), Seq(projectLinkCombined1, projectLinkRight1, projectLinkRight2, projectLinkRight3, projectLinkRight4, projectLinkCombined2), Seq.empty[UserDefinedCalibrationPoint])
 
       val (left, right) = assignedValues.filterNot(_.track == Track.Combined).partition(_.track == Track.LeftSide)
-      val groupedLeft: Map[Long, Seq[ProjectLink]] = left.sortBy(_.startAddrMValue).groupBy(_.roadwayNumber)
-      val groupedRight: Map[Long, Seq[ProjectLink]] = right.sortBy(_.startAddrMValue).groupBy(_.roadwayNumber)
-      groupedLeft.size should be (groupedRight.size)
-      groupedLeft.zip(groupedRight).forall { zipped =>
-        zipped._1._2.head.startAddrMValue == zipped._2._2.head.startAddrMValue && zipped._1._2.last.endAddrMValue == zipped._2._2.last.endAddrMValue
+
+      val groupedLeftByRoadwayNumbers: Map[Long, Seq[ProjectLink]] = left.groupBy(_.roadwayNumber)
+      val groupedLeftStartToEnd = groupedLeftByRoadwayNumbers.keys.map { key => (groupedLeftByRoadwayNumbers(key).minBy(_.startAddrMValue).startAddrMValue, groupedLeftByRoadwayNumbers(key).maxBy(_.endAddrMValue).endAddrMValue) }.toList.sortBy(_._1)
+
+      val groupedRightByRoadwayNumbers: Map[Long, Seq[ProjectLink]] = right.groupBy(_.roadwayNumber)
+      val groupedRightStartToEnd = groupedRightByRoadwayNumbers.keys.map { key => (groupedRightByRoadwayNumbers(key).minBy(_.startAddrMValue).startAddrMValue, groupedRightByRoadwayNumbers(key).maxBy(_.endAddrMValue).endAddrMValue) }.toList.sortBy(_._1)
+
+      groupedLeftByRoadwayNumbers.size should be (groupedRightByRoadwayNumbers.size)
+      groupedLeftStartToEnd.zip(groupedRightStartToEnd).forall { zipped =>
+        zipped._1._1 == zipped._2._1 && zipped._1._2 == zipped._2._2
       } should be (true)
     }
   }
