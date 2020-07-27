@@ -9,18 +9,14 @@
      */
     var geocode = function (street) {
       return backend.getSearchResults(street.search).then(function (coordinateData) {
-        var result = coordinateData[0].street[0].features;
-        var withErrors = _.some(result, function (r) {
-          return !_.isUndefined(r.properties.virheet);
-        });
-        var vkmResultToCoordinates = function (r) {
-          return {
-            title: r.properties.katunimi + " " + r.properties.katunumero + ", " + r.properties.kuntanimi,
-            lon: r.properties.x,
-            lat: r.properties.y
-          };
+        var result = coordinateData[0].street[0];
+        var resultLength = _.get(result, 'results.length');
+        var vkmResultToCoordinates = function(r) {
+          return { title: r.address, lon: r.x, lat: r.y};
         };
-        if (withErrors) {
+        if (resultLength > 0) {
+          return _.map(result.results, vkmResultToCoordinates);
+        } else {
           return $.Deferred().reject('Tuntematon katuosoite');
         } else {
           return _.map(result, vkmResultToCoordinates);

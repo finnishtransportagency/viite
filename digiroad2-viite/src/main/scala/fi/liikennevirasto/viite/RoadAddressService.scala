@@ -39,15 +39,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   private def roadAddressLinkBuilder = new RoadAddressLinkBuilder(roadwayDAO, linearLocationDAO, new ProjectLinkDAO)
 
   val viiteVkmClient = new ViiteVkmClient
-  class VkmException(response: String) extends RuntimeException(response)
 
   /**
    * Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
    * See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
    */
   val Epsilon = 1
-
-  val defaultStreetNumber = 1
 
   private def fetchLinearLocationsByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
     val linearLocations = withDynSession {
@@ -254,9 +251,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         val ralOption = getRoadAddressLink(roadNumberOrId, roadPart, addressM)
         ralOption.map { ral =>
           val points = ral.geometry
-          val geometryMeasure = ((addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)) * (ral.endMValue - ral.startMValue)
+          val roadAddressLinkmValueLengthPercentageFactor = (addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)
+          val geometryLength = ral.endMValue - ral.startMValue
+          val geometryMeasure = roadAddressLinkmValueLengthPercentageFactor * geometryLength
           val mValue: Double = ral.sideCode match {
-            case AgainstDigitizing => (ral.endMValue - geometryMeasure)
+            case AgainstDigitizing => (geometryLength - geometryMeasure)
             case _ => geometryMeasure
           }
           val point = GeometryUtils.calculatePointFromLinearReference(points, mValue)
@@ -276,16 +275,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         resultSeq = collectResult("road", searchResult, resultSeq)
       }
     } else if (searchType == "street") {
-
-      val address = searchString.getOrElse("").split(", ")
-      val municipalityId = withDynSession {
-        if (address.size > 1) MunicipalityDAO.getMunicipalityIdByName(address.last.trim).headOption.map(_._1) else None
-      }
-      val (streetName, streetNumber) = address.head.split(" ").partition(_.matches(("\\D+")))
-      searchResult = viiteVkmClient.get("/viitekehysmuunnin/muunna", Map(("kuntakoodi", municipalityId.getOrElse("").toString), ("katunimi", streetName.mkString("%20")), ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {
-        case Left(result) => Seq(result)
-        case Right(error) => throw new VkmException(error.toString)
-      }
+      searchResult = Seq(viiteVkmClient.postFormUrlEncoded("/vkm/geocode", Map(("address",searchString.getOrElse("")))))
       resultSeq = collectResult("street", searchResult, resultSeq)
     }
     resultSeq
@@ -295,11 +285,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val searchString = searchStringOption.getOrElse("")
     val numRegex = """(\d+)""".r
     val nums = numRegex.findAllIn(searchString).map(_.toLong).toSeq
-    val letterRegex = """([A-Za-zÀ-ÿ])""".r
-    val letters = letterRegex.findFirstIn(searchString)
-
-    val searchType = if (letters.isEmpty) "road" else "street"
-    Map((searchType, nums))
+    val searchType =
+      if (nums.size == 0) {
+        "street"
+      } else {
+        "road"
+      }
+    val ret = Map((searchType, nums))
+    ret
   }
 
   /**
