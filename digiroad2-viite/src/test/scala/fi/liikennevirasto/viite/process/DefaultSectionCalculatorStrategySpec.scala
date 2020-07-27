@@ -1640,38 +1640,46 @@ Left     |      |
   test("Test defaultSectionCalculatorStrategy.assignMValues() and the attribution of roadway_numbers for new Left Right sections with diff number of links Then " +
     "if there are some consecutive links with diff roadway_number (and all Transfer status), the opposite track, should split their link(s) if the amount of links is lower than the Transfer track side with same end addresses as the other side and different roadway numbers") {
     runWithRollback {
+      /*  Geometries
 
-      /*geoms
+                    (25) ^
+                         |  Combined2
+                         |
+                        ^ ^ (20)
+                Left3 /   |  Right4
+                  ---     |
+           (xx) ^         ^ (16)
+                |         |
+                |         |  Right3
+          Left2 |         |
+                |         ^ (13)
+                |         |
+                |         |  Right2
+           (xx) ^         |
+                 \        ^ (10)
+                   ----   |  Right1
+                Left1   \ |
+                         ^ (5)
+                         |
+                         | Combined1
+                         |
 
-                 ^ Combined2
-                 |
-Left3 ----------^^  Right4
-      |          |
-      |          ^   Right3
-Left2 ^          |
-      |          ^  Right2
-      |         |
-Left1 ---<----  ^ Right1
-             |  |
-              ^
-              | Combined1
-      */
+        */
 
-      //Combined
+      //  Combined
       val geomTransferCombined1 = Seq(Point(10.0, 0.0), Point(10.0, 5.0))
       val geomTransferCombined2 = Seq(Point(12.0, 20.0), Point(12.0, 25.0))
 
-      //Left
+      //  Left
       val geomNewLeft1 = Seq(Point(10.0, 5.0), Point(8.0, 10.0), Point(5.0, 10.0))
       val geomNewLeft2 = Seq(Point(5.0, 10.0), Point(0.0, 10.0), Point(0.0, 15.0))
       val geomNewLeft3 = Seq(Point(0.0, 15.0), Point(0.0, 20.0), Point(12.0, 20.0))
 
-      //Right
+      //  Right
       val geomTransferRight1 = Seq(Point(10.0, 5.0), Point(12.0, 10.0))
       val geomTransferRight2 = Seq(Point(12.0, 10.0), Point(12.0, 13.0))
       val geomTransferRight3 = Seq(Point(12.0, 13.0), Point(12.0, 16.0))
       val geomTransferRight4 = Seq(Point(12.0, 16.0), Point(12.0, 20.0))
-
 
       val projectId = Sequences.nextViiteProjectId
       val roadwayId1 = Sequences.nextRoadwayId
@@ -1687,9 +1695,9 @@ Left1 ---<----  ^ Right1
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
-      //projectlinks
+      //  Project Links
 
-      //Combined Transfer
+      //  Combined Transfer
       val projectLinkCombined1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
         None, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferCombined1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined1), roadwayId1, linearLocationId1, 8L, reversed = false,
@@ -1700,7 +1708,7 @@ Left1 ---<----  ^ Right1
         geomTransferCombined2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined2), roadwayId2, linearLocationId6, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
 
-      //Left New
+      //  Left New
       val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
         None, 12350L, 0.0, 20.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft1, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft1), -1000, -1000, 8L, reversed = false,
@@ -1714,7 +1722,7 @@ Left1 ---<----  ^ Right1
         geomNewLeft3, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft3), -1000, -1000, 8L, reversed = false,
         None, 86400L)
 
-      //Right Transfer
+      //  Right Transfer
       val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
         None, 12346L, 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight1), roadwayId1, linearLocationId2, 8L, reversed = false,
@@ -1732,7 +1740,7 @@ Left1 ---<----  ^ Right1
         geomTransferRight4, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight4), roadwayId2, linearLocationId5, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
 
-      //create before transfer data
+      //  Create before transfer data
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 13, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
@@ -1769,16 +1777,16 @@ Left1 ---<----  ^ Right1
         geomTransferCombined2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
 
-
       buildTestDataForProject(Some(project), Some(Seq(roadwayCombined1, roadwayCombined2)), Some(Seq(linearCombined1, linearCombined2, linearCombined3, linearCombined4, linearCombined5, linearCombined6)), None)
       val assignedValues = defaultSectionCalculatorStrategy.assignMValues(Seq(projectLinkLeft1, projectLinkLeft2, projectLinkLeft3), Seq(projectLinkCombined1, projectLinkRight1, projectLinkRight2, projectLinkRight3, projectLinkRight4, projectLinkCombined2), Seq.empty[UserDefinedCalibrationPoint])
 
       val (left, right) = assignedValues.filterNot(_.track == Track.Combined).partition(_.track == Track.LeftSide)
-      val groupedLeft: ListMap[Long, Seq[ProjectLink]] = ListMap(left.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
-      val groupedRight: ListMap[Long, Seq[ProjectLink]] = ListMap(right.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
+      val groupedLeft: Map[Long, Seq[ProjectLink]] = left.sortBy(_.startAddrMValue).groupBy(_.roadwayNumber)
+      val groupedRight: Map[Long, Seq[ProjectLink]] = right.sortBy(_.startAddrMValue).groupBy(_.roadwayNumber)
       groupedLeft.size should be (groupedRight.size)
-      groupedLeft.size should be (2)
-      groupedLeft.zip(groupedRight).forall(zipped => zipped._1._2.maxBy(_.endAddrMValue).endAddrMValue == zipped._2._2.maxBy(_.endAddrMValue).endAddrMValue) should be (true)
+      groupedLeft.zip(groupedRight).forall { zipped =>
+        zipped._1._2.head.startAddrMValue == zipped._2._2.head.startAddrMValue && zipped._1._2.last.endAddrMValue == zipped._2._2.last.endAddrMValue
+      } should be (true)
     }
   }
 
