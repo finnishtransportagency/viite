@@ -13,10 +13,10 @@
         var vkmResultToCoordinates = function(r) {
           return { title: r.properties.katunimi + " " + r.properties.katunumero + ", " + r.properties.kuntanimi , lon: r.properties.x, lat: r.properties.y};
         };
-        if (!withErrors) {
-          return _.map(result, vkmResultToCoordinates);
-        } else {
+        if (withErrors) {
           return $.Deferred().reject('Tuntematon katuosoite');
+        } else {
+          return _.map(result, vkmResultToCoordinates);
         }
       });
     };
@@ -35,8 +35,8 @@
         return _.some(titleParts, _.isUndefined) ? '' : 'Tieosa, ' + titleParts.join(' ');
       };
       var lon, lat = 0;
-      addressMValue = _.isUndefined(addressMValue) ? 0 : addressMValue;
-      if ((roadData.startAddrMValue === addressMValue && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValue && roadData.sideCode === sideCodes.AgainstDigitizing.value) ) {
+      const addressMValueFixed = _.isUndefined(addressMValue) ? 0 : addressMValue;
+      if ((roadData.startAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value) ) {
         lon = roadData.geometry[0].x;
         lat = roadData.geometry[0].y;
       } else {
@@ -61,7 +61,7 @@
     var getCoordinatesFromSearchInput = function (input) {
       return backend.getSearchResults(input.search).then(function (coordinateData) {
         var searchResult = [];
-        if (!_.isUndefined(coordinateData)) {
+        if (coordinateData) {
           coordinateData.forEach(function (item) {
             if (item && item.linkId && item.linkId[0]) {
               item.linkId[0].lon = item.linkId[0].x;
@@ -128,4 +128,4 @@
       });
     };
   };
-})(this);
+}(this));

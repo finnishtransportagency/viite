@@ -23,4 +23,4 @@
   root.LocationInputParser = {
     parse: parse
   };
-})(window);
+}(window));
