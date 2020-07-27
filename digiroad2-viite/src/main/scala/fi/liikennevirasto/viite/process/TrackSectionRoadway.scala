@@ -200,44 +200,15 @@ object TrackSectionRoadway {
       }
 
       val currentNewLinksGroupCoeff: Double = processingLength / totalOppositeTrackMLength
-      if (minAllowedTransferGroupCoeff <= currentNewLinksGroupCoeff && currentNewLinksGroupCoeff <= maxAllowedTransferGroupCoeff) {
-        val (unassignedRwnLinks, assignedRwnLinks) = (oppositeToProcess :+ remainingOppositeTrack.head).partition(_.roadwayNumber == NewIdValue)
+      if (currentNewLinksGroupCoeff >= minAllowedTransferGroupCoeff && currentNewLinksGroupCoeff <= maxAllowedTransferGroupCoeff) {
+        val (unassignedRwnLinks, assignedRwnLinks) = (processedOppositeTrack :+ remainingOppositeTrack.head).partition(_.roadwayNumber == NewIdValue)
         val nextRoadwayNumber = Sequences.nextRoadwayNumber
-
-        val fixedEndAddrMValue = if (remainingOppositeTrack.tail.nonEmpty) {
-          None
-        } else {
-          Some(remainingReference.head._2.last.track match {
-            case r if r.value == Track.RightSide.value =>
-              val strategy = TrackCalculatorContext.getStrategy(unassignedRwnLinks, remainingReference.head._2)
-              strategy.getFixedAddress(unassignedRwnLinks.last, remainingReference.head._2.last)._2
-            case _ =>
-              val strategy = TrackCalculatorContext.getStrategy(remainingReference.head._2, unassignedRwnLinks)
-              strategy.getFixedAddress(remainingReference.head._2.last, unassignedRwnLinks.last)._2
-          })
-        }
-
-        logger.info(s"Adjusted Project Link (2nd half): (${unassignedRwnLinks.last.roadNumber}, ${unassignedRwnLinks.last.roadPartNumber}, ${unassignedRwnLinks.last.track}) " +
-          s"from: (${unassignedRwnLinks.head.originalStartAddrMValue} - ${unassignedRwnLinks.last.originalEndAddrMValue}) " +
-          s"to: (${unassignedRwnLinks.head.startAddrMValue} - ${fixedEndAddrMValue.getOrElse(unassignedRwnLinks.head.endAddrMValue)})")
-
-        logger.info(s"Adjusted Last Project link for reference section: (${remainingReference.head._2.head.roadNumber}, ${remainingReference.head._2.head.roadPartNumber}, ${remainingReference.head._2.head.track})")
-        logger.info(s"  - from: (${remainingReference.head._2.head.originalStartAddrMValue} - ${remainingReference.head._2.head.originalEndAddrMValue})")
-        logger.info(s"  - to:  (${unassignedRwnLinks.head.startAddrMValue} - ${fixedEndAddrMValue.getOrElse(remainingReference.head._2.head.endAddrMValue)})")
-
-        val processedReferenceWithAdjustedAddr = remainingReference.head._2.init :+ remainingReference.head._2.last
-          .copy(startAddrMValue = unassignedRwnLinks.head.startAddrMValue, endAddrMValue = fixedEndAddrMValue.getOrElse(unassignedRwnLinks.head.endAddrMValue))
-
-        val remainingOpposite = remainingOppositeTrack.tail
-
-        val processedOpposite = assignedRwnLinks ++ unassignedRwnLinks.init.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
-          unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber, endAddrMValue = fixedEndAddrMValue.getOrElse(unassignedRwnLinks.head.endAddrMValue))
-
         splitLinksIfNeed(
-          remainingReference = remainingReference.tail,
-          processedReference = processedReference ++ processedReferenceWithAdjustedAddr,
-          remainingOppositeTrack = remainingOpposite,
-          processedOppositeTrack = processedOpposite,
+          remainingReference.tail,
+          processedReference ++ remainingReference.head._2,
+          if (remainingOppositeTrack.tail.nonEmpty) remainingOppositeTrack.tail.head.copy(startAddrMValue = remainingReference.head._2.last.endAddrMValue) +: remainingOppositeTrack.tail.tail else remainingOppositeTrack.tail,
+          assignedRwnLinks ++ unassignedRwnLinks.init.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
+            unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber, endAddrMValue = remainingReference.head._2.last.endAddrMValue, connectedLinkId = Some(unassignedRwnLinks.last.linkId)),
           totalReferenceMLength, totalOppositeTrackMLength, missingRoadwayNumbers - 1)
       } else if (minAllowedTransferGroupCoeff > currentNewLinksGroupCoeff) {
         splitLinksIfNeed(
