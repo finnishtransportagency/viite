@@ -1512,30 +1512,35 @@ Left     ^  ^   Right
   test("Test defaultSectionCalculatorStrategy.assignMValues() and the attribution of roadway_numbers for new Left Right sections with diff number of links Then " +
         "if there are for e.g. 3 (three) consecutive links with diff roadway number (and all Transfer status), the opposite track (New), should split their link(s) if the amount of links is lower than three, to have the same amount of roadway numbers, and not split the first one if the first transfer link found is too long when comparing to the opposite first New link") {
     runWithRollback {
+      /*  Geometries
 
-      /*geoms
-         ^  ^----
-         |      |
-Left     |      |
-         |      ^  Right
-         |      |
-         ^  ---->
-         |  |
-          ^
-          | Combined
-          ^
-          |
-      */
+                 ^
+                 |  Combined
+                ^ ^ (30)
+                |   \
+                |     ----
+                |         ^ (24)
+          Left  |         | Right
+           (xx) ^         |
+                |         ^ (23)
+                |        /
+                |   ----
+                | /
+                 ^ (10)
+                 |  Combined
+                 |
 
-      //Combined
+        */
+
+      //  Combined
       val geomTransferCombined1 = Seq(Point(10.0, 0.0), Point(10.0, 5.0))
       val geomTransferCombined2 = Seq(Point(10.0, 5.0), Point(10.0, 10.0))
 
-      //Left
+      //  Left
       val geomNewLeft1 = Seq(Point(10.0, 10.0), Point(9.0, 11.0))
       val geomNewLeft2 = Seq(Point(9.0, 11.0), Point(5.0, 20.0))
 
-      //Right
+      //  Right
       val geomTransferRight1 = Seq(Point(10.0, 10.0), Point(15.0, 23.0))
       val geomTransferRight2 = Seq(Point(15.0, 23.0), Point(15.0, 24.0))
       val geomTransferRight3 = Seq(Point(15.0, 24.0), Point(15.0, 30.0))
@@ -1557,7 +1562,7 @@ Left     |      |
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
-      //  projectlinks
+      //  Project Links
 
       //  Combined Transfer
       val projectLinkCombined1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
@@ -1595,7 +1600,7 @@ Left     |      |
         geomTransferRight3, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight3), roadwayId3, linearLocationId5, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber4)
 
-      //  create before transfer data
+      //  Create before transfer data
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 5, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
       val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
@@ -1647,7 +1652,7 @@ Left     |      |
                          |
                         ^ ^ (20)
                 Left3 /   |  Right4
-                  ---     |
+                 ----     |
            (13) ^         ^ (16)
                 |         |
                 |         |  Right3
