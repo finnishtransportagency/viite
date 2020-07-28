@@ -147,12 +147,20 @@ trait TrackCalculatorStrategy {
 
     val (adjustedLeft, restAdjustedLeft) = if (continuousLeftProjectLinks.last.isSplit) {
       val splitAddrM = continuousRightProjectLinks.last.endAddrMValue
-      (continuousLeftProjectLinks.init :+ continuousLeftProjectLinks.last.copy(endAddrMValue = splitAddrM), restLeft.head.copy(startAddrMValue = splitAddrM) +: restLeft.tail)
+      (continuousLeftProjectLinks.init :+ continuousLeftProjectLinks.last.copy(endAddrMValue = splitAddrM),
+        restLeft.headOption match {
+          case None => Seq.empty
+          case Some(pl) => pl.copy(startAddrMValue = splitAddrM) +: restLeft.tail
+        })
     } else (continuousLeftProjectLinks, restLeft)
 
     val (adjustedRight, restAdjustedRight) = if (continuousRightProjectLinks.last.isSplit) {
       val splitAddrM = continuousLeftProjectLinks.last.endAddrMValue
-      (continuousRightProjectLinks.init :+ continuousRightProjectLinks.last.copy(endAddrMValue = splitAddrM), restRight.head.copy(startAddrMValue = splitAddrM) +: restRight.tail)
+      (continuousRightProjectLinks.init :+ continuousRightProjectLinks.last.copy(endAddrMValue = splitAddrM),
+        restRight.headOption match {
+          case None => Seq.empty
+          case Some(pl) => pl.copy(startAddrMValue = splitAddrM) +: restRight.tail
+        })
     } else (continuousRightProjectLinks, restRight)
 
     //  Find a calibration point annexed to the projectLink Id
