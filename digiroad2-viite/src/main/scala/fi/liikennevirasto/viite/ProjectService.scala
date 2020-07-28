@@ -233,6 +233,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case Some(name) => return Left(s"Tie $roadNumber osa $part ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna projektissa: $name.")
         case _ =>
       })
+    val myval = projectReservedPartDAO.fetchProjectReservedJunctions(roadNumber, startPart, endPart)
     val reserved: Seq[ProjectReservedPart] = (startPart to endPart).flatMap(part => getReservedAddressPartInfo(roadNumber, part))
     val formed: Seq[ProjectReservedPart] = (startPart to endPart).flatMap(part => getFormedAddressPartInfo(roadNumber, part))
     Right(
