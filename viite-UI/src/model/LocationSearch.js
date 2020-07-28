@@ -18,8 +18,6 @@
           return _.map(result.results, vkmResultToCoordinates);
         } else {
           return $.Deferred().reject('Tuntematon katuosoite');
-        } else {
-          return _.map(result, vkmResultToCoordinates);
         }
       });
     };
