@@ -57,11 +57,10 @@ object TrackSectionRoadway {
       val existSplitOnOppositeTrack = opposite.exists(_.isSplit) &&
         (splitAddrMValue.isDefined && startAddrMValue.isDefined && splitAddrMValue.get > startAddrMValue.get)
       val continuousSection = seq.takeWhile { pl =>
-        pl.track == track && pl.roadType.value == roadType && pl.status.value == status && !pl.isSplit &&
-          (!existSplitOnOppositeTrack || splitAddrMValue.contains(pl.endAddrMValue))
+        pl.track == track && pl.roadType.value == roadType && pl.status.value == status && !pl.isSplit && !(existSplitOnOppositeTrack && splitAddrMValue.contains(pl.endAddrMValue))
       }.sortBy(_.startAddrMValue)
 
-      if (seq.exists(_.isSplit) && seq.drop(continuousSection.size).nonEmpty)
+      if ((seq.exists(_.isSplit) || existSplitOnOppositeTrack) && seq.drop(continuousSection.size).nonEmpty)
         (continuousSection :+ seq.drop(continuousSection.size).head, seq.drop(continuousSection.size + 1))
       else
         (continuousSection, seq.drop(continuousSection.size))
