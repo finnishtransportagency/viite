@@ -37,20 +37,30 @@ object TrackSectionRoadway {
     } else if (firstRight.map(_.roadwayNumber).distinct.size == firstLeft.map(_.roadwayNumber).distinct.size) {
       val newRoadwayNumber1 = Sequences.nextRoadwayNumber
       val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
-      (continuousRoadwaySection(rightLinks, newRoadwayNumber1), continuousRoadwaySection(leftLinks, newRoadwayNumber2))
+      val handledRight = continuousRoadwaySection(firstRight, newRoadwayNumber1, firstLeft)
+      val handledLeft = continuousRoadwaySection(firstLeft, newRoadwayNumber2, firstRight)
+      ((handledRight._1, handledRight._2 ++ restRight), (handledLeft._1, handledLeft._2 ++ restLeft))
     } else {
       val (adjustedRight, adjustedLeft) = adjustTwoTrackRoadwayNumbers(firstRight, firstLeft)
       ((adjustedRight, restRight), (adjustedLeft, restLeft))
     }
   }
 
-  private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long, opposite: Seq[ProjectLink] = Seq.empty[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
     val roadType = seq.headOption.map(_.roadType.value).getOrElse(RoadType.Empty.value)
     val status = seq.headOption.map(_.status.value).getOrElse(LinkStatus.NotHandled.value)
 
     val (continuousProjectLinks, restProjectLinks) = {
-      val continuousSection = seq.takeWhile(pl => pl.track == track && pl.roadType.value == roadType && pl.status.value == status && !pl.isSplit).sortBy(_.startAddrMValue)
+      val splitAddrMValue = opposite.find(_.isSplit).map(_.endAddrMValue)
+      val startAddrMValue = seq.headOption.map(_.startAddrMValue)
+      val existSplitOnOppositeTrack = opposite.exists(_.isSplit) &&
+        (splitAddrMValue.isDefined && startAddrMValue.isDefined && splitAddrMValue.get > startAddrMValue.get)
+      val continuousSection = seq.takeWhile { pl =>
+        pl.track == track && pl.roadType.value == roadType && pl.status.value == status && !pl.isSplit &&
+          (!existSplitOnOppositeTrack || splitAddrMValue.contains(pl.endAddrMValue))
+      }.sortBy(_.startAddrMValue)
+
       if (seq.exists(_.isSplit) && seq.drop(continuousSection.size).nonEmpty)
         (continuousSection :+ seq.drop(continuousSection.size).head, seq.drop(continuousSection.size + 1))
       else
@@ -104,6 +114,15 @@ object TrackSectionRoadway {
 
   private def adjustTwoTrackRoadwayNumbers(firstRight: Seq[ProjectLink], firstLeft: Seq[ProjectLink])
   : (Seq[ProjectLink], Seq[ProjectLink]) = {
+
+    def  reAssignedRoadwayNumbers (seq: Seq[ProjectLink], givenRoadwayNumber: Long, opposite: Seq[ProjectLink] = Seq.empty[ProjectLink]): Seq[ProjectLink] = {
+      if (seq.isEmpty) { Seq() }
+      else {
+        val (a, b) = continuousRoadwaySection(seq, Sequences.nextRoadwayNumber, opposite)
+        a ++ reAssignedRoadwayNumbers(b, Sequences.nextRoadwayNumber, opposite)
+      }
+    }
+
     val (referenceLinks, otherLinks) =
       if (firstRight.map(_.roadwayNumber).distinct.size > firstLeft.map(_.roadwayNumber).distinct.size) {
         (firstRight.sortBy(_.startAddrMValue), firstLeft.sortBy(_.startAddrMValue))
@@ -130,16 +149,8 @@ object TrackSectionRoadway {
     val referenceTrack = referenceLinks.headOption.map(_.track)
     val oppositeTrack = otherLinks.headOption.map(_.track)
 
-    val processedReferenceProjectLinks = continuousRoadwaySection(processedProjectLinks.filter(pl => referenceTrack.contains(pl.track)), Sequences.nextRoadwayNumber)._1
     val processedOthersProjectLinks: Seq[ProjectLink] = processedProjectLinks.filter(pl => oppositeTrack.contains(pl.track))
-
-    def  reAssignedRoadwayNumbers (seq: Seq[ProjectLink], givenRoadwayNumber: Long): Seq[ProjectLink] = {
-      if (seq.isEmpty) { Seq() }
-      else {
-        val (a, b) = continuousRoadwaySection(seq, Sequences.nextRoadwayNumber)
-        a ++ reAssignedRoadwayNumbers(b, Sequences.nextRoadwayNumber)
-      }
-    }
+    val processedReferenceProjectLinks = reAssignedRoadwayNumbers(processedProjectLinks.filter(pl => referenceTrack.contains(pl.track)), Sequences.nextRoadwayNumber, processedOthersProjectLinks)
 
     val reAssignedOppositeRoadwayNumbers: Seq[ProjectLink] =
       if (processedOthersProjectLinks.exists(l => l.status == LinkStatus.New && l.isSplit))

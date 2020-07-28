@@ -35,7 +35,6 @@ class LinkStatusChangeTrackCalculatorStrategy extends TrackCalculatorStrategy {
 
     val (lastLeft, lastRight) = (left.last, right.last)
 
-    // TODO improve
     if (lastRight.endAddrMValue <= lastLeft.endAddrMValue) {
       val distance = lastRight.toMeters(lastLeft.endAddrMValue - lastRight.endAddrMValue)
       if (distance < AdjustmentToleranceMeters) {
