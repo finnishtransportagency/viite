@@ -1786,17 +1786,11 @@ Left     ^  ^   Right
       val assignedValues = defaultSectionCalculatorStrategy.assignMValues(Seq(projectLinkLeft1, projectLinkLeft2, projectLinkLeft3), Seq(projectLinkCombined1, projectLinkRight1, projectLinkRight2, projectLinkRight3, projectLinkRight4, projectLinkCombined2), Seq.empty[UserDefinedCalibrationPoint])
 
       val (left, right) = assignedValues.filterNot(_.track == Track.Combined).partition(_.track == Track.LeftSide)
-
-      val groupedLeftByRoadwayNumbers: Map[Long, Seq[ProjectLink]] = left.groupBy(_.roadwayNumber)
-      val groupedLeftStartToEnd = groupedLeftByRoadwayNumbers.keys.map { key => (groupedLeftByRoadwayNumbers(key).minBy(_.startAddrMValue).startAddrMValue, groupedLeftByRoadwayNumbers(key).maxBy(_.endAddrMValue).endAddrMValue) }.toList.sortBy(_._1)
-
-      val groupedRightByRoadwayNumbers: Map[Long, Seq[ProjectLink]] = right.groupBy(_.roadwayNumber)
-      val groupedRightStartToEnd = groupedRightByRoadwayNumbers.keys.map { key => (groupedRightByRoadwayNumbers(key).minBy(_.startAddrMValue).startAddrMValue, groupedRightByRoadwayNumbers(key).maxBy(_.endAddrMValue).endAddrMValue) }.toList.sortBy(_._1)
-
-      groupedLeftByRoadwayNumbers.size should be (groupedRightByRoadwayNumbers.size)
-      groupedLeftStartToEnd.zip(groupedRightStartToEnd).forall { zipped =>
-        zipped._1._1 == zipped._2._1 && zipped._1._2 == zipped._2._2
-      } should be (true)
+      val groupedLeft: ListMap[Long, Seq[ProjectLink]] = ListMap(left.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
+      val groupedRight: ListMap[Long, Seq[ProjectLink]] = ListMap(right.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
+      groupedLeft.size should be (groupedRight.size)
+      groupedLeft.size should be (2)
+      groupedLeft.zip(groupedRight).forall(zipped => zipped._1._2.maxBy(_.endAddrMValue).endAddrMValue == zipped._2._2.maxBy(_.endAddrMValue).endAddrMValue) should be (true)
     }
   }
 
