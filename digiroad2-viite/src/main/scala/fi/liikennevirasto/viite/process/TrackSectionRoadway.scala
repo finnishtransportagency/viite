@@ -213,12 +213,19 @@ object TrackSectionRoadway {
       if (currentNewLinksGroupCoeff >= minAllowedTransferGroupCoeff && currentNewLinksGroupCoeff <= maxAllowedTransferGroupCoeff) {
         val (unassignedRwnLinks, assignedRwnLinks) = (processedOppositeTrack :+ remainingOppositeTrack.head).partition(_.roadwayNumber == NewIdValue)
         val nextRoadwayNumber = Sequences.nextRoadwayNumber
+
+        val remainingOpposite = if (remainingOppositeTrack.tail.nonEmpty) {
+          remainingOppositeTrack.tail.head.copy(startAddrMValue = remainingReference.head._2.last.endAddrMValue) +: remainingOppositeTrack.tail.tail
+        } else remainingOppositeTrack.tail
+
+        val unassignedLinks = if (unassignedRwnLinks.nonEmpty) {
+          unassignedRwnLinks.init.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+ unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber, endAddrMValue = remainingReference.head._2.last.endAddrMValue, connectedLinkId = Some(unassignedRwnLinks.last.linkId))
+        } else unassignedRwnLinks
         splitLinksIfNeed(
           remainingReference.tail,
           processedReference ++ remainingReference.head._2,
-          if (remainingOppositeTrack.tail.nonEmpty) remainingOppositeTrack.tail.head.copy(startAddrMValue = remainingReference.head._2.last.endAddrMValue) +: remainingOppositeTrack.tail.tail else remainingOppositeTrack.tail,
-          assignedRwnLinks ++ unassignedRwnLinks.init.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
-            unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber, endAddrMValue = remainingReference.head._2.last.endAddrMValue, connectedLinkId = Some(unassignedRwnLinks.last.linkId)),
+          remainingOpposite,
+          assignedRwnLinks ++ unassignedLinks,
           totalReferenceMLength, totalOppositeTrackMLength, missingRoadwayNumbers - 1)
       } else if (minAllowedTransferGroupCoeff > currentNewLinksGroupCoeff) {
         splitLinksIfNeed(
