@@ -53,6 +53,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
   private val roadNumber1 = 5
   private val roadNumber2 = 6
+  private val roadNumber3 = 7
+  private val roadNumber4 = 8
 
   private val roadPartNumber1 = 1
   private val roadPartNumber2 = 2
@@ -64,6 +66,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   private val linkId1 = 1000l
   private val linkId2 = 2000l
   private val linkId3 = 3000l
+  private val linkId4 = 4000l
 
   private val linearLocationId = 0
 
@@ -523,59 +526,62 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
 
-      val myval = projectReservedPartDAO.fetchProjectReservedJunctions(roadwayNumbers.last.roadNumber, roadwayNumbers.last.roadPartNumber, roadwayNumbers.last.roadPartNumber)
+      val myval = projectReservedPartDAO.fetchProjectReservedJunctions(roadwayNumbers.last.roadNumber, roadwayNumbers.last.roadPartNumber)
       val debug = 1;
     }
   }
 
-  test("myeststtt") {
+  test("Roadways with junction points that share junctions belonging to reserved roadways can not be reserved.") {
     runWithRollback {
 
-      val testRoadway1 = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-        0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
-      val testRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber2 , roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-        0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
-      val testRoadway3 = Roadway(NewIdValue, NewIdValue, roadNumber2 + 1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-        0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 3"), 1, TerminationCode.NoTermination)
+      val junctionStartDate = DateTime.parse("2019-01-01")
+      val roadwayStartDate = DateTime.parse("2000-01-01")
+
+      val intersectingRoadway = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 1"), 1, TerminationCode.NoTermination)
+      val reservedRoadway1 = Roadway(NewIdValue, NewIdValue, roadNumber2 , roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 2"), 1, TerminationCode.NoTermination)
+      val reservedRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber2 + 1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 3"), 1, TerminationCode.NoTermination)
 
       val outsideRoadway1 = Roadway(NewIdValue, NewIdValue, roadNumber2, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-        0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 3"), 1, TerminationCode.NoTermination)
+        0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road, no junctions"), 1, TerminationCode.NoTermination)
       val outsideRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-        0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 3"), 1, TerminationCode.NoTermination)
+        0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road, no junctions"), 1, TerminationCode.NoTermination)
 
 
-      val connectedRoadways: Seq[Roadway] = Seq(testRoadway1, testRoadway2, testRoadway3)
-      val outsideRoadways: Seq[Roadway] = Seq(outsideRoadway1, outsideRoadway2)
+      val connectedRoadways: Seq[Roadway] = Seq(intersectingRoadway, reservedRoadway1, reservedRoadway2)
+      val notConnectedroadways: Seq[Roadway] = Seq(outsideRoadway1, outsideRoadway2)
+
       roadwayDAO.create(connectedRoadways)
-      roadwayDAO.create(outsideRoadways)
+      roadwayDAO.create(notConnectedroadways)
 
       val roadways = connectedRoadways.flatMap(roadway =>
         roadwayDAO.fetchAllBySection(roadway.roadNumber, roadway.roadPartNumber)
       )
-      val roadways = outsideRoadways.flatMap(roadway =>
+      val outsideRoadways = notConnectedroadways.flatMap(roadway =>
         roadwayDAO.fetchAllBySection(roadway.roadNumber, roadway.roadPartNumber)
       )
 
-      val linearLocations = roadways.zipWithIndex.map {
-        case (roadway, i) => LinearLocation(NewIdValue, 1, 1000l + i, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, roadway.roadwayNumber)
+      val linearLocations = (roadways ++ outsideRoadways).zipWithIndex.map {
+        case (roadway, i) => LinearLocation(NewIdValue, 1, linkId1 + i, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, roadway.roadwayNumber)
       }
 
       linearLocationDAO.create(linearLocations)
 
-      val roadwayPoints = roadways.map( roadway =>
+      val connectedRoadwayPoints = roadways.map( roadway =>
         RoadwayPoint(NewIdValue, roadway.roadwayNumber, 0, "Test", None, None, None)
       )
 
-      val roadwayPointIds = roadwayPoints.map(roadway =>
+      val connectedRoadwayPointIds = connectedRoadwayPoints.map(roadway =>
         roadwayPointDAO.create(roadway)
       )
 
-      val junction = Junction(NewIdValue, None, None, DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, "Test", None)
+      val junction = Junction(NewIdValue, None, None, junctionStartDate, None, junctionStartDate, None, "Test", None)
       val junctionId = junctionDAO.create(Seq(junction)).head
-      val junctionPoint = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, Some(junction.startDate), junction.endDate,
-        DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
+      val junctionPoint = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, Some(junction.startDate), junction.endDate, junctionStartDate, None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
 
-      val junctionPointIds = (roadwayPointIds, roadways).zipped.flatMap((roadwayPointId, roadway) =>
+      val junctionPointIds = (connectedRoadwayPointIds, roadways).zipped.flatMap((roadwayPointId, roadway) =>
         junctionPointDAO.create(Seq(junctionPoint.copy(junctionId = junctionId, roadwayPointId = roadwayPointId, roadwayNumber = roadway.roadwayNumber)))
       )
 
@@ -585,14 +591,131 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
+
       val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadways.head.id, roadways.head.roadwayNumber, roadNumber1,
         roadPartNumber1,  0, 100, 0.0, 100.0, None,
         (NoCP, NoCP), Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
       )
       projectLinkDAO.create(projectLinks)
 
-      val myval = projectReservedPartDAO.fetchProjectReservedJunctions(roadways.last.roadNumber, roadways.last.roadPartNumber, roadways.last.roadPartNumber)
-      val debug = 1
+      connectedRoadways.flatMap(roadway => projectReservedPartDAO.fetchProjectReservedJunctions(roadway.roadNumber, roadway.roadPartNumber)).size should be (connectedRoadways.size)
+      notConnectedroadways.flatMap(roadway => projectReservedPartDAO.fetchProjectReservedJunctions(roadway.roadNumber, roadway.roadPartNumber)).size should be (0)
+    }
+  }
+
+
+  test("Check for reserved junctions take road part numbers into consideration") {
+    runWithRollback {
+
+      val junctionStartDate = DateTime.parse("2019-01-01")
+      val roadwayStartDate = DateTime.parse("2000-01-01")
+
+      val newIntersectingRoadway = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 1"), 1, TerminationCode.NoTermination)
+      val newIntersectingRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 1"), 1, TerminationCode.NoTermination)
+      val newReservedRoadway = Roadway(NewIdValue, NewIdValue, roadNumber2 , roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 2"), 1, TerminationCode.NoTermination)
+      val newNotReservedRoadway = Roadway(NewIdValue, NewIdValue, roadNumber3, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 3"), 1, TerminationCode.NoTermination)
+      val newReservedRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber4, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+        0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 4"), 1, TerminationCode.NoTermination)
+
+
+      val connectedRoadways: Seq[Roadway] = Seq(newIntersectingRoadway, newIntersectingRoadway2, newReservedRoadway, newNotReservedRoadway, newReservedRoadway2)
+
+      roadwayDAO.create(connectedRoadways)
+
+      val intersectingRoadway = roadwayDAO.fetchAllBySection(newIntersectingRoadway.roadNumber, newIntersectingRoadway.roadPartNumber).head
+      val intersectingRoadway2 = roadwayDAO.fetchAllBySection(newIntersectingRoadway2.roadNumber, newIntersectingRoadway2.roadPartNumber).head
+      val reservedRoadway = roadwayDAO.fetchAllBySection(newReservedRoadway.roadNumber, newReservedRoadway.roadPartNumber).head
+      val notReservedRoadway = roadwayDAO.fetchAllBySection(newNotReservedRoadway.roadNumber, newNotReservedRoadway.roadPartNumber).head
+      val reservedRoadway2 = roadwayDAO.fetchAllBySection(newReservedRoadway2.roadNumber, newReservedRoadway2.roadPartNumber).head
+//
+//      val roadways = connectedRoadways.flatMap(roadway =>
+//        roadwayDAO.fetchAllBySection(roadway.roadNumber, roadway.roadPartNumber)
+//      )
+
+      val intersectingRoadwayLocation = LinearLocation(NewIdValue, 1, linkId1 , 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, intersectingRoadway.roadwayNumber)
+      val intersectingRoadwayLocation2 = LinearLocation(NewIdValue, 1, linkId1 , 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, intersectingRoadway2.roadwayNumber)
+      val reservedRoadwayLocation = LinearLocation(NewIdValue, 1, linkId2, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, reservedRoadway.roadwayNumber)
+      val notReservedRoadwayLocation = LinearLocation(NewIdValue, 1, linkId3, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, notReservedRoadway.roadwayNumber)
+      val reservedRoadway2Location = LinearLocation(NewIdValue, 1, linkId4, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, reservedRoadway2.roadwayNumber)
+
+      linearLocationDAO.create(Seq(intersectingRoadwayLocation, intersectingRoadwayLocation2, reservedRoadwayLocation, notReservedRoadwayLocation, reservedRoadway2Location))
+
+      //intersection with roadwayPoint1, roadwayPoint1 - roadways intersectingRoadway and reservedRoadway
+      val roadwayPoint1 = roadwayPointDAO.fetch(roadwayPointDAO.create(RoadwayPoint(NewIdValue, intersectingRoadway.roadwayNumber, 0, "Test", None, None, None))) //in the same intersection as roadwayPoint2
+      val roadwayPoint2 = roadwayPointDAO.fetch(roadwayPointDAO.create(RoadwayPoint(NewIdValue, reservedRoadway.roadwayNumber, 0, "Test", None, None, None))) //in the same intersection as roadwayPoint1
+
+      //intersection with roadwayPoint3, roadwayPoint4 - roadways intersectingRoadway and notReservedRoadwayLocation
+      val roadwayPoint3 = roadwayPointDAO.fetch(roadwayPointDAO.create(RoadwayPoint(NewIdValue, intersectingRoadway.roadwayNumber, 0, "Test", None, None, None))) //in the same intersection as roadwayPoint4
+      val roadwayPoint4 = roadwayPointDAO.fetch(roadwayPointDAO.create(RoadwayPoint(NewIdValue, notReservedRoadwayLocation.roadwayNumber, 0, "Test", None, None, None))) //in the same intersection as roadwayPoint3
+
+      //intersection with roadwayPoint5, roadwayPoint6 - roadways intersectingRoadway2 and reservedRoadway2
+      val roadwayPoint5 = roadwayPointDAO.fetch(roadwayPointDAO.create(RoadwayPoint(NewIdValue, intersectingRoadway2.roadwayNumber, 0, "Test", None, None, None))) //in the same intersection as roadwayPoint6
+      val roadwayPoint6 = roadwayPointDAO.fetch( roadwayPointDAO.create(RoadwayPoint(NewIdValue, reservedRoadway2.roadwayNumber, 0, "Test", None, None, None))) //in the same intersection as roadwayPoint5
+
+      val junction1 = Junction(NewIdValue, None, None, junctionStartDate, None, junctionStartDate, None, "Test", None)
+      val junction2 = Junction(NewIdValue, None, None, junctionStartDate, None, junctionStartDate, None, "Test", None)
+      val junction3 = Junction(NewIdValue, None, None, junctionStartDate, None, junctionStartDate, None, "Test", None)
+      val junctionId1 = junctionDAO.create(Seq(junction1)).head
+      val junctionId2 = junctionDAO.create(Seq(junction2)).head
+      val junctionId3 = junctionDAO.create(Seq(junction3)).head
+
+      //both junction points (for roadwayPoint1, roadwayPoint2) share the same junction
+      val junctionPoint1 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, Some(junction1.startDate), junction1.endDate,
+        DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
+      val junctionPoint2 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, Some(junction1.startDate), junction1.endDate,
+        DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
+      junctionPointDAO.create(Seq(junctionPoint1.copy(junctionId = junctionId1, roadwayPointId = roadwayPoint1.id, roadwayNumber = roadwayPoint1.roadwayNumber)))
+      junctionPointDAO.create(Seq(junctionPoint2.copy(junctionId = junctionId1, roadwayPointId = roadwayPoint2.id, roadwayNumber = roadwayPoint2.roadwayNumber)))
+
+      //both junction points (for roadwayPoint3, roadwayPoint4) share the same junction
+      val junctionPoint3 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, Some(junction2.startDate), junction2.endDate,
+        DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
+      val junctionPoint4 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, Some(junction2.startDate), junction2.endDate,
+        DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
+      junctionPointDAO.create(Seq(junctionPoint3.copy(junctionId = junctionId2, roadwayPointId = roadwayPoint3.id, roadwayNumber = roadwayPoint3.roadwayNumber)))
+      junctionPointDAO.create(Seq(junctionPoint4.copy(junctionId = junctionId2, roadwayPointId = roadwayPoint4.id, roadwayNumber = roadwayPoint4.roadwayNumber)))
+
+      //both junction points (for roadwayPoint5, roadwayPoint6) share the same junction
+      val junctionPoint5 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, Some(junction3.startDate), junction3.endDate,
+        DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
+      val junctionPoint6 = JunctionPoint(NewIdValue, BeforeAfter.Before, -1, -1, Some(junction3.startDate), junction3.endDate,
+        DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, 0, 0, Track.Combined, Discontinuity.Continuous)
+      junctionPointDAO.create(Seq(junctionPoint5.copy(junctionId = junctionId3, roadwayPointId = roadwayPoint5.id, roadwayNumber = roadwayPoint5.roadwayNumber)))
+      junctionPointDAO.create(Seq(junctionPoint6.copy(junctionId = junctionId3, roadwayPointId = roadwayPoint6.id, roadwayNumber = roadwayPoint6.roadwayNumber)))
+
+
+      val id1 = Sequences.nextViiteProjectId
+      val projectLinkId1 = Sequences.nextProjectLinkId
+      val projectName1 = "Test Project 1"
+
+      val id2 = Sequences.nextViiteProjectId
+      val projectLinkId2 = Sequences.nextProjectLinkId
+      val projectName2 = "Test Project 2"
+
+      val rap1 = Project(id1, ProjectState.apply(1), projectName1, "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
+      val rap2 = Project(id2, ProjectState.apply(1), projectName2, "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
+
+      projectDAO.create(rap1)
+      projectDAO.create(rap2)
+
+      projectReservedPartDAO.reserveRoadPart(id1, reservedRoadway.roadNumber, reservedRoadway.roadPartNumber, rap1.createdBy)
+      projectReservedPartDAO.reserveRoadPart(id2, reservedRoadway2.roadNumber, reservedRoadway2.roadPartNumber, rap2.createdBy)
+
+      val projectLinks1 = Seq(dummyProjectLink(projectLinkId1, id1, reservedRoadwayLocation.linkId, reservedRoadway.id, reservedRoadway.roadwayNumber, reservedRoadway.roadNumber,
+        reservedRoadway.roadPartNumber,  0, 100, 0.0, 100.0, None,
+        (NoCP, NoCP), Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false))
+      val projectLinks2 = Seq(dummyProjectLink(projectLinkId2, id2, reservedRoadway2Location.linkId, reservedRoadway2.id, reservedRoadway2.roadwayNumber, reservedRoadway2.roadNumber,
+        reservedRoadway2.roadPartNumber,  0, 100, 0.0, 100.0, None,
+        (NoCP, NoCP), Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false))
+
+      projectLinkDAO.create(projectLinks1 ++ projectLinks2)
+
+      projectReservedPartDAO.fetchProjectReservedJunctions(intersectingRoadway.roadNumber, intersectingRoadway.roadPartNumber).head should be (projectName1)
+      projectReservedPartDAO.fetchProjectReservedJunctions(intersectingRoadway2.roadNumber, intersectingRoadway2.roadPartNumber).head should be (projectName2)
     }
   }
 }
