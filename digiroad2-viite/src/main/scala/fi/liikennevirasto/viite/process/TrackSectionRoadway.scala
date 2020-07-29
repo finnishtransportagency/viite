@@ -129,10 +129,21 @@ object TrackSectionRoadway {
         (firstLeft.sortBy(_.startAddrMValue), firstRight.sortBy(_.startAddrMValue))
       }
 
-    val groupedReferenceLinks: ListMap[Long, Seq[ProjectLink]] = ListMap(referenceLinks.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
+    val groupedReferenceLinks: ListMap[Long, Seq[ProjectLink]] = ListMap(
+      referenceLinks.map { pl =>
+        pl.status match {
+          case LinkStatus.New => pl.copy(roadwayNumber = NewIdValue)
+          case _ => pl
+        }
+      }.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
     val referenceLength: Double = groupedReferenceLinks.values.flatten.map(l => l.endMValue - l.startMValue).sum
     val otherLength: Double = otherLinks.map(l => l.endMValue - l.startMValue).sum
-    val resetLinksIfNeed = if (otherLinks.exists(_.connectedLinkId.nonEmpty)) otherLinks else otherLinks.map(_.copy(roadwayNumber = NewIdValue))
+    val resetLinksIfNeed = otherLinks.map { pl =>
+      pl.status match {
+        case LinkStatus.New => pl.copy(roadwayNumber = NewIdValue)
+        case _ => pl
+      }
+    }
 
     val processedProjectLinks =
       if (groupedReferenceLinks.size == resetLinksIfNeed.filterNot(_.roadwayNumber == NewIdValue).map(_.roadwayNumber).distinct.size)
@@ -141,9 +152,9 @@ object TrackSectionRoadway {
         splitLinksIfNeed(
           remainingReference = groupedReferenceLinks,
           processedReference = Seq(),
-          remainingOppositeTrack = otherLinks,
+          remainingOppositeTrack = resetLinksIfNeed,
           processedOppositeTrack = Seq(),
-          referenceLength, otherLength, groupedReferenceLinks.size - otherLinks.map(_.roadwayNumber).distinct.size)
+          referenceLength, otherLength, groupedReferenceLinks.size - resetLinksIfNeed.map(_.roadwayNumber).distinct.size)
 
     val referenceTrack = referenceLinks.headOption.map(_.track)
     val oppositeTrack = otherLinks.headOption.map(_.track)
