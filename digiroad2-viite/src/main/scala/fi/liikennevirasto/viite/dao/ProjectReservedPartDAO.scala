@@ -354,9 +354,9 @@ class ProjectReservedPartDAO {
     }
   }
 
-  def fetchProjectReservedJunctions(roadNumber: Long, startNumber: Long, endNumber: Long): Set[String] = {
+  def fetchProjectReservedJunctions(roadNumber: Long, roadPart: Long): Seq[String] = {
     sql"""
-     SELECT prj.NAME FROM PROJECT prj
+     SELECT distinct prj.NAME FROM PROJECT prj
          JOIN PROJECT_RESERVED_ROAD_PART res ON res.PROJECT_ID = prj.ID
          WHERE prj.ID IN (
             SELECT DISTINCT(pl.PROJECT_ID) FROM PROJECT_LINK pl
@@ -371,8 +371,8 @@ class ProjectReservedPartDAO {
                   JOIN JUNCTION_POINT jp ON j.id = jp.JUNCTION_ID
                   JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.id
                   JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
-                  WHERE rw.ROAD_NUMBER = $roadNumber AND rw.ROAD_PART_NUMBER >= $startNumber AND rw.ROAD_PART_NUMBER <= $endNumber AND j.VALID_TO IS null AND jp.VALID_TO IS NULL AND rw.VALID_TO IS NULL))))
-       """.as[String].list.toSet
+                  WHERE rw.ROAD_NUMBER = $roadNumber AND rw.ROAD_PART_NUMBER = $roadPart AND j.VALID_TO IS null AND jp.VALID_TO IS NULL AND rw.VALID_TO IS NULL))))
+       """.as[String].list
   }
 
   def reserveRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, user: String): Unit = {
