@@ -6,8 +6,7 @@
     var roadLinkStyler = new RoadLinkStyler();
 
     var roadVector = new ol.source.Vector({
-      loader: function (extent, resolution, projection) {
-        var zoom = Math.log(1024 / resolution) / Math.log(2);
+      loader: function (_extent, _resolution, _projection) {
         eventbus.once('roadLinks:fetched', function () {
           var features = _.map(roadCollection.getAll(), function (roadLink) {
             var points = _.map(roadLink.points, function (point) {
@@ -96,6 +95,8 @@
         case roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.value:
           roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.description;
           break;
+        default:
+          break;
       }
       return roadType;
     };
@@ -115,8 +116,7 @@
           }
           infoContent.innerHTML =
             nodeName +
-            'Solmutyyppi: ' + displayNodeType(featureAtPixel.getProperties().type) + '<br>'
-          ;
+            'Solmutyyppi: ' + displayNodeType(featureAtPixel.getProperties().type) + '<br>';
         }
         overlay.setPosition(coordinate);
       }
@@ -141,8 +141,14 @@
         var node = nodeCollection.getNodeByNodeNumber(junctionData.nodeNumber);
         coordinate = map.getEventCoordinate(event.originalEvent);
         var roadAddressInfo = [];
-        _.map(junctionPointData, function(point){
-          roadAddressInfo.push({road: point.roadNumber, part: point.roadPartNumber, track: point.track, addr: point.addrM, beforeAfter: point.beforeAfter});
+        _.map(junctionPointData, function (point) {
+          roadAddressInfo.push({
+            road: point.roadNumber,
+            part: point.roadPartNumber,
+            track: point.track,
+            addr: point.addrM,
+            beforeAfter: point.beforeAfter
+          });
         });
 
         var groupedRoadAddresses = _.groupBy(roadAddressInfo, function (row) {
@@ -158,20 +164,24 @@
           return {road: first.road, track: first.track, part: first.part, addr: first.addr};
         });
 
-        var singleRows = _.map(roadAddresses[1], function(junctionPoint) {
-          return {road: junctionPoint[0].road, track: junctionPoint[0].track, part: junctionPoint[0].part, addr: junctionPoint[0].addr};
+        var singleRows = _.map(roadAddresses[1], function (junctionPoint) {
+          return {
+            road: junctionPoint[0].road,
+            track: junctionPoint[0].track,
+            part: junctionPoint[0].part,
+            addr: junctionPoint[0].addr
+          };
         });
 
         var roadAddressContent = _.sortBy(doubleRows.concat(singleRows), ['road', 'part', 'track', 'addr']);
 
         if (infoContent !== null) {
           infoContent.innerHTML =
-            'Solmun&nbsp;nimi:&nbsp;' + (!_.isUndefined(node) ? node.name.replace(' ', '&nbsp;') : '') + '<br>' +
+            'Solmun&nbsp;nimi:&nbsp;' + ((node) ? node.name.replace(' ', '&nbsp;') : '') + '<br>' +
             'Tieosoite:<br>' +
             _.map(roadAddressContent, function (junctionPoint) {
               return '&thinsp;' + junctionPoint.road + '&nbsp;/&nbsp;' + junctionPoint.track + '&nbsp;/&nbsp;' + junctionPoint.part + '&nbsp;/&nbsp;' + junctionPoint.addr + '<br>';
-            }).join('')
-          ;
+            }).join('');
         }
         overlay.setPosition(coordinate);
       }
@@ -207,6 +217,9 @@
             break;
           case 'node':
             eventbus.trigger('nodeLayer:fetch');
+            break;
+          default:
+            break;
         }
         handleRoadsVisibility();
       }
@@ -223,4 +236,4 @@
       clear: clear
     };
   };
-})(this);
+}(this));

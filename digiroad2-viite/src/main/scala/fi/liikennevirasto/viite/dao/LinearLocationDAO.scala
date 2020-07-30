@@ -586,6 +586,22 @@ class LinearLocationDAO {
     }
   }
 
+  def fetchByRoadAddress(roadNumber: Long, roadPart:Long, addressM: Long): Seq[LinearLocation] = {
+    time(logger, "Fetch linear locations by Road Address") {
+
+      val query =
+        s"""
+          $selectFromLinearLocation
+          JOIN ROADWAY rw ON loc.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
+          WHERE rw.VALID_TO IS NULL AND rw.END_DATE IS NULL AND loc.VALID_TO IS NULL AND
+          rw.ROAD_NUMBER = $roadNumber AND rw.ROAD_PART_NUMBER = $roadPart
+          AND rw.START_ADDR_M <= $addressM AND rw.END_ADDR_M >= $addressM
+          ORDER BY loc.ORDER_NUMBER
+        """
+      queryList(query)
+    }
+  }
+
   def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[LinearLocation] = {
     time(logger, "Fetch all the linear locations of the matching roadways by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),

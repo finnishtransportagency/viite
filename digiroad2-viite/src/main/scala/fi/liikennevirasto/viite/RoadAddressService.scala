@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -40,9 +41,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   val viiteVkmClient = new ViiteVkmClient
 
   /**
-    * Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
-    * See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
-    */
+   * Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
+   * See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
+   */
   val Epsilon = 1
 
   private def fetchLinearLocationsByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
@@ -58,12 +59,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Fetches linear locations based on a bounding box and, if defined, within the road number limits supplied.
-    *
-    * @param boundingRectangle : BoundingRectangle - The search box
-    * @param roadNumberLimits  : Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
-    * @return
-    */
+   * Fetches linear locations based on a bounding box and, if defined, within the road number limits supplied.
+   *
+   * @param boundingRectangle : BoundingRectangle - The search box
+   * @param roadNumberLimits  : Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
+   * @return
+   */
   def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
     withDynSession {
       time(logger, "Fetch addresses") {
@@ -73,11 +74,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Returns the roadways that match the supplied linear locations.
-    *
-    * @param linearLocations : Seq[LinearLocation] - The linear locations to search
-    * @return
-    */
+   * Returns the roadways that match the supplied linear locations.
+   *
+   * @param linearLocations : Seq[LinearLocation] - The linear locations to search
+   * @return
+   */
   def getCurrentRoadAddresses(linearLocations: Seq[LinearLocation]) = {
     roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(linearLocations)
   }
@@ -116,12 +117,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Returns all road address links (combination between our roadway, linear location and vvh information) based on the limits imposed by the boundingRectangle and the roadNumberLimits.
-    *
-    * @param boundingRectangle : BoundingRectangle - The search box
-    * @param roadNumberLimits  : Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
-    * @return
-    */
+   * Returns all road address links (combination between our roadway, linear location and vvh information) based on the limits imposed by the boundingRectangle and the roadNumberLimits.
+   *
+   * @param boundingRectangle : BoundingRectangle - The search box
+   * @param roadNumberLimits  : Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
+   * @return
+   */
   def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
     val linearLocations = withDynSession {
@@ -142,12 +143,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Returns all of our road addresses (combination of roadway + linear location information) based on the limits imposed by the boundingRectangle and the roadNumberLimits.
-    *
-    * @param boundingRectangle : BoundingRectangle - The search box
-    * @param roadNumberLimits  : Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
-    * @return
-    */
+   * Returns all of our road addresses (combination of roadway + linear location information) based on the limits imposed by the boundingRectangle and the roadNumberLimits.
+   *
+   * @param boundingRectangle : BoundingRectangle - The search box
+   * @param roadNumberLimits  : Seq[(Int, Int) - A sequence of upper and lower limits of road numbers
+   * @return
+   */
   def getRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddress] = {
     val linearLocations =
       time(logger, "Fetch linear locations by bounding box") {
@@ -157,13 +158,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road addresses in the given bounding box, without VVH geometry. Also floating road addresses are filtered out.
-    * Indicated to high zoom levels. If the road number limits are given it will also filter all road addresses by those limits.
-    *
-    * @param boundingRectangle The bounding box
-    * @param roadNumberLimits  The road number limits
-    * @return Returns all the filtered road addresses
-    */
+   * Gets all the road addresses in the given bounding box, without VVH geometry. Also floating road addresses are filtered out.
+   * Indicated to high zoom levels. If the road number limits are given it will also filter all road addresses by those limits.
+   *
+   * @param boundingRectangle The bounding box
+   * @param roadNumberLimits  The road number limits
+   * @return Returns all the filtered road addresses
+   */
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
     val roadAddresses = withDynTransaction {
       val linearLocations = linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
@@ -174,22 +175,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Returns all of our road addresses (combination of roadway + linear location information) that share the same linkIds as those supplied.
-    *
-    * @param linkIds : Seq[Long] - The linkId's to fetch information
-    * @return
-    */
+   * Returns all of our road addresses (combination of roadway + linear location information) that share the same linkIds as those supplied.
+   *
+   * @param linkIds : Seq[Long] - The linkId's to fetch information
+   * @return
+   */
   def getRoadAddressesByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
     val linearLocations = linearLocationDAO.fetchByLinkId(linkIds.toSet)
     roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
   }
 
   /**
-    * Gets all the road addresses in the given municipality code.
-    *
-    * @param municipality The municipality code
-    * @return Returns all the filtered road addresses
-    */
+   * Gets all the road addresses in the given municipality code.
+   *
+   * @param municipality The municipality code
+   * @return Returns all the filtered road addresses
+   */
   def getAllByMunicipality(municipality: Int, searchDate: Option[DateTime] = None): Seq[RoadAddressLink] = {
     val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
 
@@ -219,10 +220,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the existing road numbers at the current road network.
-    *
-    * @return Returns all the road numbers
-    */
+   * Gets all the existing road numbers at the current road network.
+   *
+   * @return Returns all the road numbers
+   */
   def getRoadNumbers: Seq[Long] = {
     withDynSession {
       roadwayDAO.fetchAllCurrentRoadNumbers()
@@ -243,26 +244,41 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     var resultSeq: Seq[Map[String, Seq[Any]]] = Seq.empty[Map[String, Seq[Any]]]
     if (searchType == "road") {
       val nums = parsedInput.head._2
+      val roadNumberOrId = nums(0)
       if (nums.size == 3) {
-        searchResult = getRoadAddress(nums(0), nums(1), nums(2), None).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
-        resultSeq = collectResult("road", searchResult, resultSeq)
+        val roadPart = nums(1)
+        val addressM = nums(2)
+        val ralOption = getRoadAddressLink(roadNumberOrId, roadPart, addressM)
+        ralOption.map { ral =>
+          val points = ral.geometry
+          val roadAddressLinkmValueLengthPercentageFactor = (addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)
+          val geometryLength = ral.endMValue - ral.startMValue
+          val geometryMeasure = roadAddressLinkmValueLengthPercentageFactor * geometryLength
+          val mValue: Double = ral.sideCode match {
+            case AgainstDigitizing => (geometryLength - geometryMeasure)
+            case _ => geometryMeasure
+          }
+          val point = GeometryUtils.calculatePointFromLinearReference(points, mValue)
+          resultSeq = collectResult("roadM", Seq(point), resultSeq)
+        }.getOrElse(logger.info(s"""Search found nothing with: $searchString"""))
       } else if (nums.size == 2) {
-        searchResult = getRoadAddressWithRoadNumberParts(nums(0), Set(nums(1)), Set(Track.Combined, Track.LeftSide, Track.RightSide)).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
+        val roadPart = nums(1)
+        searchResult = getRoadAddressWithRoadNumberParts(roadNumberOrId, Set(roadPart), Set(Track.Combined, Track.LeftSide, Track.RightSide)).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
         resultSeq = collectResult("road", searchResult, resultSeq)
       } else if (nums.size == 1) {
-        // The number can be LINKID, MTKID or roadNumber
-        var searchResultPoint = roadLinkService.getMidPointByLinkId(nums(0))
+        // The number can be LINKID, MTKID or roadNumberOrId
+        var searchResultPoint = roadLinkService.getMidPointByLinkId(roadNumberOrId)
         resultSeq = collectResult("linkId", Seq(searchResultPoint), resultSeq)
-        searchResultPoint = roadLinkService.getRoadLinkMiddlePointByMtkId(nums(0))
+        searchResultPoint = roadLinkService.getRoadLinkMiddlePointByMtkId(roadNumberOrId)
         resultSeq = collectResult("mtkId", Seq(searchResultPoint), resultSeq)
-        searchResult = getRoadAddressWithRoadNumberAddress(nums(0)).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
+        searchResult = getRoadAddressWithRoadNumberAddress(roadNumberOrId).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
         resultSeq = collectResult("road", searchResult, resultSeq)
       }
     } else if (searchType == "street") {
       searchResult = Seq(viiteVkmClient.postFormUrlEncoded("/vkm/geocode", Map(("address",searchString.getOrElse("")))))
       resultSeq = collectResult("street", searchResult, resultSeq)
     }
-    return resultSeq
+    resultSeq
   }
 
   def locationInputParser(searchStringOption: Option[String]): Map[String, Seq[Long]] = {
@@ -280,15 +296,55 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road addresses in the same road number, road part number with start address less that
-    * the given address measure. If trackOption parameter is given it will also filter by track code.
-    *
-    * @param road        The road number
-    * @param roadPart    The road part number
-    * @param addressM    The road address at road number and road part
-    * @param trackOption Optional track code
-    * @return Returns all the filtered road addresses
-    */
+   * Gets road address link in the same road number, roadPart and addressM.
+   *
+   * @param road   The road number
+   * @param roadPart The roadPart
+   * @param addressM The addressM that is in between the returned RoadAddress
+   * @return Returns RoadAddressLink in track 0 or 1 which contains dynamically calculated startAddressM and endAddressM
+   *         and includes detailed geometry in that link fetched dynamically from VVH
+   */
+  def getRoadAddressLink(road: Long, roadPart: Long, addressM: Long): Option[RoadAddressLink] = {
+    val linearLocations = withDynSession {
+      time(logger, "Fetch addresses") {
+        linearLocationDAO.fetchByRoadAddress(road, roadPart, addressM)
+      }
+    }
+    val linearLocationsLinkIds = linearLocations.map(_.linkId).toSet
+    val roadAddresses = getRoadAddressForSearch(road, roadPart, addressM)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linearLocationsLinkIds)
+    val rals = RoadAddressFiller.fillTopology(roadLinks, roadAddresses)
+    val filteredRals = rals.filter(al => al.startAddressM <= addressM && al.endAddressM >= addressM && (al.startAddressM != 0 || al.endAddressM != 0))
+    val ral = filteredRals.filter(al => al.trackCode != 2)
+    ral.headOption
+  }
+
+  /**
+   * Gets road address in the same road number, roadPart and addressM.
+   *
+   * @param road   The road number
+   * @param roadPart The roadPart
+   * @param addressM The addressM that is in between the returned RoadAddress start and end addresses
+   * @return Returns all the filtered road addresses. Note. RoadAddress has normally shorter length than roadway
+   */
+  def getRoadAddressForSearch(road: Long, roadPart: Long, addressM: Long): Seq[RoadAddress] = {
+    withDynSession {
+      val roadways = roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, Some(addressM), Some(addressM))
+      val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
+      roadAddresses.filter(ra => ra.startAddrMValue <= addressM && ra.endAddrMValue >= addressM)
+    }
+  }
+
+  /**
+   * Gets all the road addresses in the same road number, road part number with start address less that
+   * the given address measure. If trackOption parameter is given it will also filter by track code.
+   *
+   * @param road        The road number
+   * @param roadPart    The road part number
+   * @param addressM    The road address at road number and road part
+   * @param trackOption Optional track code
+   * @return Returns all the filtered road addresses
+   */
   def getRoadAddress(road: Long, roadPart: Long, addressM: Long, trackOption: Option[Track]): Seq[RoadAddress] = {
     withDynSession {
       val roadways = trackOption match {
@@ -313,13 +369,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road addresses in the same road number and track codes.
-    * If the track sequence is empty will filter only by road number
-    *
-    * @param road   The road number
-    * @param tracks The set of track codes
-    * @return Returns all the filtered road addresses
-    */
+   * Gets all the road addresses in the same road number and track codes.
+   * If the track sequence is empty will filter only by road number
+   *
+   * @param road   The road number
+   * @param tracks The set of track codes
+   * @return Returns all the filtered road addresses
+   */
   def getRoadAddressWithRoadNumber(road: Long, tracks: Set[Track]): Seq[RoadAddress] = {
     withDynSession {
       val roadways = if (tracks.isEmpty)
@@ -332,14 +388,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road addresses in the same road number, road parts and track codes.
-    * If the road part number sequence or track codes sequence is empty
-    *
-    * @param road      The road number
-    * @param roadParts The set of road part numbers
-    * @param tracks    The set of track codes
-    * @return Returns all the filtered road addresses
-    */
+   * Gets all the road addresses in the same road number, road parts and track codes.
+   * If the road part number sequence or track codes sequence is empty
+   *
+   * @param road      The road number
+   * @param roadParts The set of road part numbers
+   * @param tracks    The set of track codes
+   * @return Returns all the filtered road addresses
+   */
   def getRoadAddressWithRoadNumberParts(road: Long, roadParts: Set[Long], tracks: Set[Track]): Seq[RoadAddress] = {
     withDynSession {
       val roadways = roadwayDAO.fetchAllBySectionsAndTracks(road, roadParts, tracks)
@@ -348,15 +404,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road addresses in the same road number, road parts and track codes.
-    * If the road part number sequence or track codes sequence is empty
-    *
-    * @param road         The road number
-    * @param part         The road part
-    * @param withHistory  The optional parameter that allows the search to also look for historic links
-    * @param fetchOnlyEnd The optional parameter that allows the search for the link with bigger endAddrM value
-    * @return Returns all the filtered road addresses
-    */
+   * Gets all the road addresses in the same road number, road parts and track codes.
+   * If the road part number sequence or track codes sequence is empty
+   *
+   * @param road         The road number
+   * @param part         The road part
+   * @param withHistory  The optional parameter that allows the search to also look for historic links
+   * @param fetchOnlyEnd The optional parameter that allows the search for the link with bigger endAddrM value
+   * @return Returns all the filtered road addresses
+   */
   def getRoadAddressWithRoadAndPart(road: Long, part: Long, withHistory: Boolean = false, fetchOnlyEnd: Boolean = false, newTransaction: Boolean = true): Seq[RoadAddress] = {
     if (newTransaction)
       withDynSession {
@@ -370,16 +426,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road addresses in between the given linear location.
-    * - If only given the start measure, will return all the road addresses with the start and end measure in between ${startMOption} or start measure equal or greater than ${startMOption}
-    * - If only given the end measure, will return all the road addresses with the start and end measure in between ${endMOption} or end measure equal or less than ${endMOption}
-    * - If any of the measures are given, will return all the road addresses on the given road link id
-    *
-    * @param linkId       The link identifier of the linear location
-    * @param startMOption The start measure of the linear location
-    * @param endMOption   The end measure of the linear location
-    * @return Returns all the filtered road addresses
-    */
+   * Gets all the road addresses in between the given linear location.
+   * - If only given the start measure, will return all the road addresses with the start and end measure in between ${startMOption} or start measure equal or greater than ${startMOption}
+   * - If only given the end measure, will return all the road addresses with the start and end measure in between ${endMOption} or end measure equal or less than ${endMOption}
+   * - If any of the measures are given, will return all the road addresses on the given road link id
+   *
+   * @param linkId       The link identifier of the linear location
+   * @param startMOption The start measure of the linear location
+   * @param endMOption   The end measure of the linear location
+   * @return Returns all the filtered road addresses
+   */
   def getRoadAddressWithLinkIdAndMeasure(linkId: Long, startMOption: Option[Double], endMOption: Option[Double]): Seq[RoadAddress] = {
     withDynSession {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
@@ -399,12 +455,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road address in the given road number and road part
-    *
-    * @param roadNumber     The road number
-    * @param roadPartNumber The road part number
-    * @return Returns road addresses filtered given section
-    */
+   * Gets all the road address in the given road number and road part
+   *
+   * @param roadNumber     The road number
+   * @param roadPartNumber The road part number
+   * @return Returns road addresses filtered given section
+   */
   def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long): Seq[RoadAddress] = {
     if (OracleDatabase.isWithinSession) {
       val roadwayAddresses = roadwayDAO.fetchAllBySection(roadNumber, roadPartNumber)
@@ -418,12 +474,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the valid road address in the given road number and project start date
-    *
-    * @param roadNumber The road number
-    * @param startDate  The project start date
-    * @return Returns road addresses filtered given section
-    */
+   * Gets all the valid road address in the given road number and project start date
+   *
+   * @param roadNumber The road number
+   * @param startDate  The project start date
+   * @return Returns road addresses filtered given section
+   */
   def getValidRoadAddressParts(roadNumber: Long, startDate: DateTime): Seq[Long] = {
     withDynSession {
       roadwayDAO.getValidRoadParts(roadNumber, startDate)
@@ -431,12 +487,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the previous road address part in the given road number and road part number
-    *
-    * @param roadNumber The road number
-    * @param roadPart   The road part number
-    * @return Returns previous parts in road number, if they exist
-    */
+   * Gets all the previous road address part in the given road number and road part number
+   *
+   * @param roadNumber The road number
+   * @param roadPart   The road part number
+   * @return Returns previous parts in road number, if they exist
+   */
   def getPreviousRoadAddressPart(roadNumber: Long, roadPart: Long): Option[Long] = {
     withDynSession {
       roadwayDAO.fetchPreviousRoadPartNumber(roadNumber, roadPart)
@@ -444,15 +500,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road addresses in given road number, road part number and between given address measures.
-    * The road address measures should be in [startAddrM, endAddrM]
-    *
-    * @param roadNumber     The road number
-    * @param roadPartNumber The road part number
-    * @param startAddrM     The start address measure
-    * @param endAddrM       The end address measure
-    * @return Returns road addresses filtered by road section and address measures
-    */
+   * Gets all the road addresses in given road number, road part number and between given address measures.
+   * The road address measures should be in [startAddrM, endAddrM]
+   *
+   * @param roadNumber     The road number
+   * @param roadPartNumber The road part number
+   * @param startAddrM     The start address measure
+   * @param endAddrM       The end address measure
+   * @return Returns road addresses filtered by road section and address measures
+   */
   def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long): Seq[RoadAddress] = {
     withDynSession {
       val roadwayAddresses = roadwayDAO.fetchAllBySectionAndAddresses(roadNumber, roadPartNumber, Some(startAddrM), Some(endAddrM))
@@ -462,11 +518,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road addresses on top of given road links.
-    *
-    * @param linkIds The set of road link identifiers
-    * @return Returns all filtered the road addresses
-    */
+   * Gets all the road addresses on top of given road links.
+   *
+   * @param linkIds The set of road link identifiers
+   * @return Returns all filtered the road addresses
+   */
   def getRoadAddressByLinkIds(linkIds: Set[Long]): Seq[RoadAddress] = {
     withDynTransaction {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(linkIds)
@@ -476,11 +532,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Returns all of our road addresses (combination of roadway + linear location information) that share the same roadwayId as those supplied.
-    *
-    * @param roadwayIds : Seq[Long] - The roadway Id's to fetch
-    * @return
-    */
+   * Returns all of our road addresses (combination of roadway + linear location information) that share the same roadwayId as those supplied.
+   *
+   * @param roadwayIds : Seq[Long] - The roadway Id's to fetch
+   * @return
+   */
   def getRoadAddressesByRoadwayIds(roadwayIds: Seq[Long]): Seq[RoadAddress] = {
     val roadways = roadwayDAO.fetchAllByRoadwayId(roadwayIds)
     roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
@@ -533,11 +589,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Gets all the road addresses errors (excluding history)
-    *
-    * @param includesHistory - default value = false to exclude history values
-    * @return Returns all filtered road address errors
-    */
+   * Gets all the road addresses errors (excluding history)
+   *
+   * @param includesHistory - default value = false to exclude history values
+   * @return Returns all filtered road address errors
+   */
   def getRoadAddressErrors(includesHistory: Boolean = false): List[AddressConsistencyValidator.AddressErrorDetails] = {
     withDynSession {
       roadwayDAO.fetchAllRoadAddressErrors(includesHistory)
@@ -545,11 +601,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * returns road addresses with link-id currently does not include terminated links which it cannot build roadaddress with out geometry
-    *
-    * @param linkId link-id
-    * @return roadaddress[]
-    */
+   * returns road addresses with link-id currently does not include terminated links which it cannot build roadaddress with out geometry
+   *
+   * @param linkId link-id
+   * @return roadaddress[]
+   */
   def getRoadAddressLink(linkId: Long): Seq[RoadAddressLink] = {
 
     val roadlinks = roadLinkService.getAllVisibleRoadLinksFromVVH(Set(linkId))
@@ -709,9 +765,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   }
 
   /**
-    * Should only expire junction calibration points
-    * @param junctionPoints
-    */
+   * Should only expire junction calibration points
+   *
+   * @param junctionPoints
+   */
   def expireObsoleteCalibrationPointsInJunctions(junctionPoints: Seq[JunctionPoint]): Unit = {
     val obsoleteCalibrationPointsIds = CalibrationPointDAO.fetchByRoadwayPointIds(junctionPoints.map(_.roadwayPointId)).filter(_.typeCode == CalibrationPointType.JunctionPointCP).map(_.id)
     if (obsoleteCalibrationPointsIds.nonEmpty) {
@@ -988,6 +1045,8 @@ case class LinearLocationResult(current: Seq[LinearLocation])
 
 case class BoundingBoxResult(changeInfoF: Future[Seq[ChangeInfo]], roadAddressResultF: Future[(Seq[LinearLocation], Seq[VVHHistoryRoadLink])],
                              roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]])
+
+case class RoadAddressResult(roadAddressResultF: Future[Seq[LinearLocation]], roadLinkF: Future[Seq[RoadLink]], complementaryF: Future[Seq[RoadLink]])
 
 case class LinkRoadAddressHistory(v: (Seq[RoadAddress], Seq[RoadAddress])) {
   val currentSegments: Seq[RoadAddress] = v._1

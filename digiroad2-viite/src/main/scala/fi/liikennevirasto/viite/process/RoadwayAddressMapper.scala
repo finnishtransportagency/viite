@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
@@ -177,7 +178,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
       getOrElse(roadway.roadwayNumber, throw new IllegalArgumentException("Any linear locations found that belongs to the given roadway address"))
 
     //If is a roadway address history should recalculate all the calibration points
-    val roadAddresses = recursiveMapRoadAddresses(roadway, if (roadway.endDate.nonEmpty) recalculateHistoryCalibrationPoints(roadway, linearLocations) else roadwayLinearLocations)
+    val roadAddresses = recursiveMapRoadAddresses(roadway, if (roadway.endDate.nonEmpty && roadway.terminated == NoTermination) recalculateHistoryCalibrationPoints(roadway, linearLocations) else roadwayLinearLocations)
 
     //Set the discontinuity to the last road address
     roadAddresses.init :+ roadAddresses.last.copy(discontinuity = roadway.discontinuity)
