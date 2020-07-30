@@ -81,10 +81,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
 
   def addrMLength(): Long = {
-//    if (isSplit)
-      endAddrMValue - startAddrMValue
-//    else
-//      roadAddressLength.getOrElse(endAddrMValue - startAddrMValue)
+    endAddrMValue - startAddrMValue
   }
 
   def getFirstPoint: Point = {
