@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.LinkStatus._
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
 
 object ProjectSectionMValueCalculator {
@@ -81,11 +81,9 @@ object ProjectSectionMValueCalculator {
     val newAddressValues = seq.scanLeft(addrSt) { case (m, pl) =>
       pl.status match {
         case LinkStatus.Terminated =>
-//          if (pl.isSplit) m + pl.endAddrMValue - pl.startAddrMValue else
-            m + pl.addrMLength
+          m + pl.addrMLength
         case LinkStatus.UnChanged | LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering =>
-//          if (pl.isSplit) pl.endAddrMValue else
-            pl.roadAddressEndAddrM.getOrElse(pl.endAddrMValue)
+          pl.roadAddressEndAddrM.getOrElse(pl.endAddrMValue)
         case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
       }
     }
