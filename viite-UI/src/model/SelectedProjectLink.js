@@ -1,19 +1,18 @@
-(function(root) {
-  root.SelectedProjectLink = function(projectLinkCollection) {
+(function (root) {
+  root.SelectedProjectLink = function (projectLinkCollection) {
 
     var current = [];
     var me = this;
     var featuresToKeep = [];
     var dirty = false;
-    var nearest = null;
 
     var open = function (id, multiSelect) {
-      if (!multiSelect) {
-        current = projectLinkCollection.getProjectLink([id]);
-        me.ids = [id];
-      } else {
+      if (multiSelect) {
         me.ids = projectLinkCollection.getMultiProjectLinks(id);
         current = projectLinkCollection.getProjectLink(me.ids);
+      } else {
+        current = projectLinkCollection.getProjectLink([id]);
+        me.ids = [id];
       }
       eventbus.trigger('projectLink:clicked', get(id));
     };
@@ -24,22 +23,22 @@
       eventbus.trigger('projectLink:errorClicked', get(ids[0]), errorMessage);
     };
 
-    var isDirty = function() {
+    var isDirty = function () {
       return dirty;
     };
 
-    var setDirty = function(value) {
+    var setDirty = function (value) {
       dirty = value;
     };
 
-    var openCtrl = function(linkIds) {
+    var openCtrl = function (linkIds) {
       if (linkIds.length === 0) {
         cleanIds();
         close();
       } else {
         var added = _.difference(linkIds, me.ids);
         me.ids = linkIds;
-        current = _.filter(current, function(link) {
+        current = _.filter(current, function (link) {
             return _.includes(linkIds, link.getData().id || link.getData().linkId);
           }
         );
@@ -48,7 +47,7 @@
       }
     };
 
-    var get = function(id) {
+    var get = function (id) {
       var clicked = _.filter(current, function (c) {
         if (c.getData().id > 0) {
           return c.getData().id === id;
@@ -56,7 +55,9 @@
           return c.getData().linkId === id;
         }
       });
-      var others = _.filter(_.map(current, function(projectLink) { return projectLink.getData(); }), function (link) {
+      var others = _.filter(_.map(current, function (projectLink) {
+        return projectLink.getData();
+      }), function (link) {
         if (link.id > 0) {
           return link.id !== id;
         } else {
@@ -69,51 +70,47 @@
       return others;
     };
 
-    var setCurrent = function(newSelection) {
+    var setCurrent = function (newSelection) {
       current = newSelection;
     };
 
     var getCurrent = function () {
-      return _.map(current, function(curr) {
+      return _.map(current, function (curr) {
         return curr.getData();
       });
     };
 
-    var getFeaturesToKeep = function(){
+    var getFeaturesToKeep = function () {
       return featuresToKeep;
     };
 
-    var addToFeaturesToKeep = function(data4Display){
-      if(_.isArray(data4Display)){
+    var addToFeaturesToKeep = function (data4Display) {
+      if (_.isArray(data4Display)) {
         featuresToKeep = featuresToKeep.concat(data4Display);
       } else {
         featuresToKeep.push(data4Display);
       }
     };
 
-    var clearFeaturesToKeep = function() {
+    var clearFeaturesToKeep = function () {
       featuresToKeep = [];
     };
 
-    var isSelected = function(linkId) {
+    var isSelected = function (linkId) {
       return _.includes(me.ids, linkId);
     };
 
-    var clean = function() {
+    var clean = function () {
       current = [];
     };
 
-    var cleanIds = function() {
+    var cleanIds = function () {
       me.ids = [];
     };
 
-    var close = function() {
+    var close = function () {
       current = [];
       eventbus.trigger('layer:enableButtons', true);
-    };
-
-    var setNearestPoint = function(point) {
-      nearest = point;
     };
 
     var isSplit = function () {
@@ -141,8 +138,7 @@
       isSplit: isSplit,
       isMultiLink: isMultiLink,
       isDirty: isDirty,
-      setDirty: setDirty,
-      setNearestPoint: setNearestPoint
+      setDirty: setDirty
     };
   };
-})(this);
+}(this));

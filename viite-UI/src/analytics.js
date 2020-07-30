@@ -1,5 +1,5 @@
-(function(root) {
-  var environmentProperty = function() {
+(function (root) {
+  var environmentProperty = function () {
     var properties = {
       integration: 'UA-57190819-5',
       production: 'UA-57190819-4',
@@ -9,7 +9,7 @@
     return properties[Environment.name()];
   };
 
-  var environmentConfiguration = function() {
+  var environmentConfiguration = function () {
     var configurations = {
       integration: 'auto',
       production: 'auto',
@@ -19,11 +19,11 @@
     return configurations[Environment.name()];
   };
 
-  var start = function() {
+  var start = function () {
     ga('create', environmentProperty(), environmentConfiguration());
     ga('send', 'pageview');
-    if(window.eventbus) {
-      eventbus.on('all', function(eventName, eventParams) {
+    if (window.eventbus) {
+      eventbus.on('all', function (eventName, _eventParams) {
         var excludedEvents = [
           'map:mouseMoved',
           'map:refresh',
