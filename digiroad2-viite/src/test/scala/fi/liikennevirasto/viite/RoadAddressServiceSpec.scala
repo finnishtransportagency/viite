@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
@@ -454,27 +455,31 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   }
 
   test("Test SearchService") {
-    val modificationDate = "1455274504000l"
-    val modificationUser = "testUser"
-    val roadLink = RoadLink(5171115L, Seq(Point(533592.073, 6994129.781, 103.46099999999569), Point(533590.444, 6994234.539, 106.85599999999977)), 1L + .5, Municipality, 1, TrafficDirection.TowardsDigitizing, Freeway, Some(modificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
     val point = Point(1D, 1D, 1D)
+    val linkId = 123L
 
     val linearLocations = List(
-      dummyLinearLocationWithGeometry(-1000L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, Seq(Point(0.0, 0.0), Point(1L + .5, 0.0)))
+      dummyLinearLocationWithGeometry(-1000L, roadwayNumber = 1L, orderNumber = 1L, linkId = linkId, startMValue = 0.0, endMValue = 10.0, SideCode.TowardsDigitizing , Seq(Point(0.0, 0.0), Point(1L + .5, 0.0)))
+    )
+
+    val linearLocations2 = List(
+      dummyLinearLocationWithGeometry(-1000L, roadwayNumber = 1L, orderNumber = 1L, linkId = linkId, startMValue = 0.0, endMValue = 10.0, SideCode.AgainstDigitizing , Seq(Point(0.0, 0.0), Point(1L + .5, 0.0)))
     )
 
     val roadways = Seq(
-      dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
+      dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 10L, DateTime.now(), None)
     )
     val searchResults: Any = """Map(("results" -> List(Map(("urakka_alue" -> 1247, "x" -> 380833.379, "kuntakoodi" -> 977, "maakunta_nimi" -> "Pohjois-Pohjanmaa", "y" -> 7107501.999, "kunta_nimi" -> "Ylivieska, maakunta" -> 17, "ely" -> 12, "urakka_alue_nimi -> Raahe/Ylivieska 16-21", "address" -> "Nuolitie, Ylivieska", "ely_nimi" -> "Pohjois-Pohjanmaa ja Kainuu")))))"""
-    when(mockRoadLinkService.getAllVisibleRoadLinksFromVVH(any[Set[Long]])).thenReturn(Seq(roadLink))
-    when(mockLinearLocationDAO.fetchRoadwayByLinkId(any[Set[Long]])).thenReturn(linearLocations)
-    when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
     when(mockRoadwayDAO.fetchAllByRoad(any[Long])).thenReturn(roadways)
     when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(linearLocations)
     when(mockRoadwayDAO.fetchAllBySectionsAndTracks(any[Long], any[Set[Long]], any[Set[Track]])).thenReturn(roadways)
     when(mockRoadwayDAO.fetchAllBySectionAndAddresses(any[Long], any[Long], any[Option[Long]], any[Option[Long]])).thenReturn(roadways)
     when(mockViiteVkmClient.postFormUrlEncoded(any[String], any[Map[String, String]])).thenReturn(searchResults, Seq.empty: _*)
+    when(mockLinearLocationDAO.fetchByRoadAddress(any[Long],any[Long],any[Long])).thenReturn(linearLocations)
+
+    val roadLinks = Seq(
+      RoadLink(linkId, Seq(Point(0.0, 10.0), Point(0.0, 15.0)), 10.0, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)), UnknownConstructionType, NormalLinkInterface)
+    )
 
 
     // Test search by street name
@@ -507,12 +512,20 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result.size should be(1)
     result(0).get("road").get(0).asInstanceOf[RoadAddress].roadNumber should be(1)
 
-    // Test search by road number, road part number and M number
-    result = roadAddressService.getSearchResults(Option("1 1 0"))
+    // Test search by road number, road part number and M number TowardsDigitizing
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(roadLinks)
+    result = roadAddressService.getSearchResults(Option("1 1 1"))
     result.size should be(1)
-    result(0).get("road").get(0).asInstanceOf[RoadAddress].roadNumber should be(1)
+    result(0).contains("roadM") should be(true)
+    result(0).get("roadM").get(0).asInstanceOf[Some[Point]].x should be(Point(0.0, 11, 0.0))
 
-    val aa = 1
+    // Test search by road number, road part number and M number AgainstDigitizing
+    when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(linearLocations2)
+    result = roadAddressService.getSearchResults(Option("1 1 9"))
+    result.size should be(1)
+    result(0).contains("roadM") should be(true)
+    result(0).get("roadM").get(0).asInstanceOf[Some[Point]].x should be(Point(0.0, 11, 0.0))
+
   }
 
   test("Test sortRoadWayWithNewRoads When changeSet has new links Then update the order of all the roadway") {

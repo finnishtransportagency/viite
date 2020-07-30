@@ -1,4 +1,4 @@
-(function (dateUtils, undefined) {
+(function (dateUtils) {
   var FINNISH_DATE_FORMAT = 'D.M.YYYY';
   dateUtils.FINNISH_DATE_FORMAT = FINNISH_DATE_FORMAT;
   var ISO_8601_DATE_FORMAT = 'YYYY-MM-DD';
