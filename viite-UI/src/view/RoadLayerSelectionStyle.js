@@ -1,20 +1,20 @@
-(function(root) {
+(function (root) {
   var linkSizeLookup = {
-    6: { strokeWidth: 1 },
-    7: { strokeWidth: 2 },
-    8: { strokeWidth: 3 },
-    9: { strokeWidth: 3 },
-    10: { strokeWidth: 5 },
-    11: { strokeWidth: 8 },
-    12: { strokeWidth: 10 },
-    13: { strokeWidth: 10 },
-    14: { strokeWidth: 14 },
-    15: { strokeWidth: 14 }
+    6: {strokeWidth: 1},
+    7: {strokeWidth: 2},
+    8: {strokeWidth: 3},
+    9: {strokeWidth: 3},
+    10: {strokeWidth: 5},
+    11: {strokeWidth: 8},
+    12: {strokeWidth: 10},
+    13: {strokeWidth: 10},
+    14: {strokeWidth: 14},
+    15: {strokeWidth: 14}
   };
 
   root.RoadLayerSelectionStyle = {
     linkSizeLookup: linkSizeLookup,
-    create: function(roadLayer, defaultOpacity) {
+    create: function (roadLayer, defaultOpacity) {
       var roadLayerStyleMap = new OpenLayers.StyleMap({
         "select": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
           strokeOpacity: 0.85,
@@ -29,4 +29,4 @@
       return roadLayerStyleMap;
     }
   };
-})(this);
+}(this));

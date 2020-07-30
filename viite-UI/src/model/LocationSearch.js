@@ -1,12 +1,13 @@
-(function(root) {
-  root.LocationSearch = function(backend, applicationModel) {
+/* eslint-disable new-cap */
+(function (root) {
+  root.LocationSearch = function (backend, applicationModel) {
     /**
      * Search by street address
      *
      * @param street
      * @returns {*}
      */
-    var geocode = function(street) {
+    var geocode = function (street) {
       return backend.getSearchResults(street.search).then(function (coordinateData) {
         var result = coordinateData[0].street[0];
         var resultLength = _.get(result, 'results.length');
@@ -30,22 +31,22 @@
      */
     function roadLocationAPIResultParser(roadData, addressMValue) {
       var sideCodes = LinkValues.SideCode;
-      var constructTitle = function(address) {
+      var constructTitle = function (address) {
         var titleParts = [_.get(address, 'roadNumber'), _.get(address, 'roadPartNumber')];
-        return _.some(titleParts, _.isUndefined) ? '' : titleParts.join(' ');
+        return _.some(titleParts, _.isUndefined) ? '' : 'Tieosa, ' + titleParts.join(' ');
       };
       var lon, lat = 0;
-      addressMValue = _.isUndefined(addressMValue) ? 0 : addressMValue;
-      if ((roadData.startAddrMValue === addressMValue && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValue && roadData.sideCode === sideCodes.AgainstDigitizing.value) ) {
+      const addressMValueFixed = _.isUndefined(addressMValue) ? 0 : addressMValue;
+      if ((roadData.startAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value)) {
         lon = roadData.geometry[0].x;
         lat = roadData.geometry[0].y;
       } else {
         lon = roadData.geometry[roadData.geometry.length - 1].x;
-        lat =  roadData.geometry[roadData.geometry.length - 1].y;
+        lat = roadData.geometry[roadData.geometry.length - 1].y;
       }
       var title = constructTitle(roadData);
       if (lon && lat) {
-        return  [{title: title, lon: lon, lat: lat, resultType:"road"}];
+        return [{title: title, lon: lon, lat: lat, resultType: "road"}];
       } else {
         return [];
       }
@@ -61,7 +62,7 @@
     var getCoordinatesFromSearchInput = function (input) {
       return backend.getSearchResults(input.search).then(function (coordinateData) {
         var searchResult = [];
-        if (!_.isUndefined(coordinateData)) {
+        if (coordinateData) {
           coordinateData.forEach(function (item) {
             if (item && item.linkId && item.linkId[0]) {
               item.linkId[0].lon = item.linkId[0].x;
@@ -81,6 +82,11 @@
               });
               var parsed = _.map(_.words(input.search), _.parseInt);
               searchResult = searchResult.concat(roadLocationAPIResultParser(sortedRoad[0], parsed[2]));
+            } else if (item && item.roadM && item.roadM[0]) {
+              item.roadM[0].lon = item.roadM[0].x;
+              item.roadM[0].lat = item.roadM[0].y;
+              item.roadM[0].title = 'Tieosoite, ' + input.search;
+              searchResult.push(item.roadM[0]);
             }
           });
         } else return [];
@@ -97,7 +103,7 @@
       return $.Deferred().resolve([result]);
     };
 
-    this.search = function(searchString) {
+    this.search = function (searchString) {
       function addDistance(item) {
         var currentLocation = applicationModel.getCurrentLocation();
 
@@ -114,13 +120,15 @@
         coordinate: resultFromCoordinates,
         street: geocode,
         road: getCoordinatesFromSearchInput,
-        invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
+        invalid: function () {
+          return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta');
+        }
       };
 
       var results = resultByInputType[input.type](input);
-      return results.then(function(result) {
+      return results.then(function (result) {
         return _.map(result, addDistance);
       });
     };
   };
-})(this);
+}(this));
