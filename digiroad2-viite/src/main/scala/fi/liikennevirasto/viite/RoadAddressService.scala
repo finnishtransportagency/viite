@@ -259,6 +259,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             case _ => geometryMeasure
           }
           val point = GeometryUtils.calculatePointFromLinearReference(points, mValue)
+//          val point = if ((ral.startAddressM.toDouble == addressM && ral.sideCode == TowardsDigitizing) || (ral.endAddressM == addressM && ral.sideCode == AgainstDigitizing)) {
+//            points.headOption
+//          } else {
+//            points.lastOption
+//          }
           resultSeq = collectResult("roadM", Seq(point), resultSeq)
         }.getOrElse(logger.info(s"""Search found nothing with: $searchString"""))
       } else if (nums.size == 2) {
