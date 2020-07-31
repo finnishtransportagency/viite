@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
+import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -251,19 +252,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         val ralOption = getRoadAddressLink(roadNumberOrId, roadPart, addressM)
         ralOption.map { ral =>
           val points = ral.geometry
-          val roadAddressLinkmValueLengthPercentageFactor = (addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)
-          val geometryLength = ral.endMValue - ral.startMValue
-          val geometryMeasure = roadAddressLinkmValueLengthPercentageFactor * geometryLength
-          val mValue: Double = ral.sideCode match {
-            case AgainstDigitizing => (geometryLength - geometryMeasure)
-            case _ => geometryMeasure
-          }
-          val point = GeometryUtils.calculatePointFromLinearReference(points, mValue)
-//          val point = if ((ral.startAddressM.toDouble == addressM && ral.sideCode == TowardsDigitizing) || (ral.endAddressM == addressM && ral.sideCode == AgainstDigitizing)) {
-//            points.headOption
-//          } else {
-//            points.lastOption
+//          val roadAddressLinkmValueLengthPercentageFactor = (addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)
+//          val geometryLength = ral.endMValue - ral.startMValue
+//          val geometryMeasure = roadAddressLinkmValueLengthPercentageFactor * geometryLength
+//          val mValue: Double = ral.sideCode match {
+//            case AgainstDigitizing => (geometryLength - geometryMeasure)
+//            case _ => geometryMeasure
 //          }
+//          val point = GeometryUtils.calculatePointFromLinearReference(points, mValue)
+          val point = if ((ral.startAddressM.toDouble == addressM && ral.sideCode == TowardsDigitizing) || (ral.endAddressM == addressM && ral.sideCode == AgainstDigitizing)) {
+            points.headOption
+          } else {
+            points.lastOption
+          }
           resultSeq = collectResult("roadM", Seq(point), resultSeq)
         }.getOrElse(logger.info(s"""Search found nothing with: $searchString"""))
       } else if (nums.size == 2) {
