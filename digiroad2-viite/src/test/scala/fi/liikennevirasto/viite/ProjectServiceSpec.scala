@@ -1996,7 +1996,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val addresses = List(ProjectReservedPart(5: Long, 5: Long, 207: Long, Some(5L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None, newEly = None))
       val project = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1970-01-01"), DateTime.now(), "Some additional info", Seq(), Seq(), None)
       val savedProject = projectService.createRoadLinkProject(project)
-      mockForProject(savedProject.id, (roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 207).map(_.roadwayNumber).toSet)) ++ roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 207).map(_.roadwayNumber).toSet))).map(toProjectLink(savedProject)))
+      mockForProject(savedProject.id, (roadwayAddressMapper.getRoadAddressesByLinearLocation(
+        linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 207).map(_.roadwayNumber).toSet)
+      ) ++ roadwayAddressMapper.getRoadAddressesByLinearLocation(
+        linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(5, 207).map(_.roadwayNumber).toSet)
+      )).map(toProjectLink(savedProject)))
 
       projectService.saveProject(savedProject.copy(reservedParts = addresses))
       val countAfterInsertProjects = projectService.getAllProjects
@@ -2013,7 +2017,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         toMockAnswer(projectLinks, roadLink)
       )
       projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.toSeq, LinkStatus.Transfer, "-", 5, 207, 0, Option.empty[Int]) should be(None)
-      projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168510), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int]) should be(None)
+      val linkId1 = 5168510
+      val linkId2 = 5168540
+      projectService.updateProjectLinks(savedProject.id, Set(), Seq(linkId1), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int]) should be(None)
       projectService.allLinksHandled(savedProject.id) should be(true)
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(savedProject.id)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Transfer } should be(true)
@@ -2028,17 +2034,18 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sortedProjectLinks.last.calibrationPoints._1.isEmpty should be (true)
       sortedProjectLinks.last.calibrationPoints._2.nonEmpty should be (true)
       sortedProjectLinks.last.calibrationPoints._2.get.segmentMValue should be (442.89)
-      sortedProjectLinks.last.calibrationPoints._2.get.addressMValue should be (highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue)
+      sortedProjectLinks.last.calibrationPoints._2.get.addressMValue should be (highestDistanceEnd - projectLinks.filter(pl => pl.linkId == linkId1).head.endAddrMValue)
       sortedProjectLinks.last.endCalibrationPointType should be (RoadAddressCP)
 
-      projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168540), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int]) should be(None)
+      projectService.updateProjectLinks(savedProject.id, Set(), Seq(linkId2), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int]) should be(None)
       val updatedProjectLinks2 = projectLinkDAO.fetchProjectLinks(savedProject.id)
       val sortedProjectLinks2 = updatedProjectLinks2.sortBy(_.startAddrMValue)
 
       sortedProjectLinks2.last.calibrationPoints._1.isEmpty should be (true)
       sortedProjectLinks2.last.calibrationPoints._2.nonEmpty should be (true)
       sortedProjectLinks2.last.calibrationPoints._2.get.segmentMValue should be (442.89)
-      sortedProjectLinks2.last.calibrationPoints._2.get.addressMValue should be (highestDistanceEnd - projectLinks.filter(pl => pl.linkId == 5168510).head.endAddrMValue - updatedProjectLinks.filter(pl => pl.linkId == 5168540).head.endAddrMValue)
+      sortedProjectLinks2.last.calibrationPoints._2.get.addressMValue should be (
+        highestDistanceEnd - projectLinks.filter(pl => pl.linkId == linkId1).head.endAddrMValue - updatedProjectLinks.filter(pl => pl.linkId == linkId2).head.endAddrMValue)
       sortedProjectLinks2.last.endCalibrationPointType should be (RoadAddressCP)
     }
 
