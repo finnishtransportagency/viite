@@ -7,7 +7,7 @@
         junctionNumber: junctionTemplate.junctionNumber
       });
 
-      var junctionTemplateStyleProvider = function(junctionNumber) {
+      var junctionTemplateStyleProvider = function (junctionNumber) {
         return new ol.style.Style({
           image: new ol.style.Icon({
             src: 'images/junction-template.svg',

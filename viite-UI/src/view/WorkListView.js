@@ -11,97 +11,84 @@
     {value: 12, description: "Pohjois-Pohjanmaa"},
     {value: 14, description: "Lappi"}
   ];
-  var decodeEly = function(ely){
-    var elyObject = _.find(elyDecoded, function (obj) { return obj.value === Number(ely); });
-    return (!_.isUndefined(elyObject) ? elyObject.description : "Unknown");
+  var decodeEly = function (ely) {
+    var elyObject = _.find(elyDecoded, function (obj) {
+      return obj.value === Number(ely);
+    });
+    return ((elyObject) ? elyObject.description : "Unknown");
   };
-  var floatingLinksTable = function(layerName, floatingLinks, elyCode) {
+  var floatingLinksTable = function (layerName, floatingLinks, elyCode) {
     counter += floatingLinks.length;
-    var elyHeader = function(elyCode) {
-      return $('<h2/>').html("ELY " + elyCode + " " + decodeEly(elyCode));
+    var elyHeader = function (elyCodeHeader) {
+      return $('<h2/>').html("ELY " + elyCodeHeader + " " + decodeEly(elyCodeHeader));
     };
 
-    var tableContentRows = function(links) {
-      return _.map(links, function(link) {
-        return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>')
-          .append(floatingDescription('TIE', link.roadNumber))
-          .append(floatingDescription('OSA', link.roadPartNumber))
-          .append(floatingDescription('AJR', link.trackCode))
-          .append(floatingDescription('AET', link.startAddressM))
-          .append(floatingDescription('LET', link.endAddressM)))
-          .append($('<td align=right />').append(floatingLink(link)));
+    var tableContentRows = function (links) {
+      return _.map(links, function (link) {
+        return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>').append(floatingDescription('TIE', link.roadNumber)).append(floatingDescription('OSA', link.roadPartNumber)).append(floatingDescription('AJR', link.trackCode)).append(floatingDescription('AET', link.startAddressM)).append(floatingDescription('LET', link.endAddressM))).append($('<td align=right />').append(floatingLink(link)));
       });
     };
-    var floatingLink = function(floating) {
+    var floatingLink = function (floating) {
       var link = '#' + layerName + '/' + floating.linkId;
       return $('<a style="font-size: smaller; class="work-list-item"/>').attr('href', link).html(link);
     };
 
-    var floatingDescription = function(desc, value) {
+    var floatingDescription = function (desc, value) {
       return $('<td align=left style="width: 100px;"> <b>' + desc + '</b>: ' + value + '</td>');
     };
 
-    var tableToDisplayFloatings = function(floatingLinks) {
-      if (!floatingLinks || floatingLinks.length === 0) return '';
-      return $('<table/>').addClass('table')
-        .append(tableContentRows(floatingLinks));
+    var tableToDisplayFloatings = function (tableFloatingLinks) {
+      if (!tableFloatingLinks || tableFloatingLinks.length === 0) return '';
+      return $('<table/>').addClass('table').append(tableContentRows(tableFloatingLinks));
     };
-    return $('<div/>').append(elyHeader(elyCode, floatingLinks.length))
-      .append(tableToDisplayFloatings(floatingLinks));
+    return $('<div/>').append(elyHeader(elyCode)).append(tableToDisplayFloatings(floatingLinks));
   };
 
-  var roadAddressErrorsTable = function(layerName, addressErrors, elyCode) {
+  var roadAddressErrorsTable = function (layerName, addressErrors, elyCode) {
     counter += addressErrors.length;
-    var elyHeader = function(elyCode) {
-      return $('<h2/>').html("ELY " + elyCode + " " + decodeEly(elyCode));
+    var elyHeader = function (elyCodeHeader) {
+      return $('<h2/>').html("ELY " + elyCodeHeader + " " + decodeEly(elyCodeHeader));
     };
 
-    var tableContentRows = function(addresses) {
-      return _.map(addresses, function(address) {
-        return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>')
-          .append(errorsDescription('ID', address.id))
-          .append(errorsDescription('TIE', address.roadNumber))
-          .append(errorsDescription('OSA', address.roadPartNumber))
-          .append(errorsDescription('ERROR', address.errorCode)))
-          .append($('<td align=right />').append(roadAddressError(address)));
+    var tableContentRows = function (addresses) {
+      return _.map(addresses, function (address) {
+        return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>').append(errorsDescription('ID', address.id)).append(errorsDescription('TIE', address.roadNumber)).append(errorsDescription('OSA', address.roadPartNumber)).append(errorsDescription('ERROR', address.errorCode))).append($('<td align=right />').append(roadAddressError(address)));
       });
     };
 
-    var roadAddressError = function(roadAddress) {
+    var roadAddressError = function (roadAddress) {
       var link = '#' + layerName + '/' + roadAddress.linkId;
       return $('<a style="font-size: smaller; class="work-list-item"/>').attr('href', link).html(link);
     };
 
-    var errorsDescription = function(desc, value) {
+    var errorsDescription = function (desc, value) {
       return $('<td align=left style="width: 100px;"> <b>' + desc + '</b>: ' + value + '</td>');
     };
 
-    var tableToDisplayErrors = function(addressErrors) {
-      if (!addressErrors || addressErrors.length === 0) return '';
-      return $('<table/>').addClass('table')
-        .append(tableContentRows(addressErrors));
+    var tableToDisplayErrors = function (addressErrorsTable) {
+      if (!addressErrorsTable || addressErrorsTable.length === 0) return '';
+      return $('<table/>').addClass('table').append(tableContentRows(addressErrorsTable));
     };
-    return $('<div/>').append(elyHeader(elyCode, addressErrors.length))
-      .append(tableToDisplayErrors(addressErrors));
+    return $('<div/>').append(elyHeader(elyCode)).append(tableToDisplayErrors(addressErrors));
   };
 
-  var generateWorkListFloatings = function(layerName, listP) {
+  var generateWorkListFloatings = function (layerName, listP) {
     var title = {
       linkProperty: 'Korjattavien linkkien lista'
     };
     $('#work-list').append('' +
       '<div style="overflow: auto;">' +
-        '<div class="page">' +
-          '<div class="content-box">' +
-            '<header>' + title[layerName] +
-              '<a class="header-link" href="#' + layerName + '">Sulje lista</a>' +
-            '</header>' +
-            '<div class="work-list">' +
-          '</div>' +
-        '</div>' +
+      '<div class="page">' +
+      '<div class="content-box">' +
+      '<header>' + title[layerName] +
+      '<a class="header-link" href="#' + layerName + '">Sulje lista</a>' +
+      '</header>' +
+      '<div class="work-list">' +
+      '</div>' +
+      '</div>' +
       '</div>'
     );
-    var showApp = function() {
+    var showApp = function () {
       $('.container').show();
       $('#work-list').hide();
       $('body').removeClass('scrollable').scrollTop(0);
@@ -109,7 +96,7 @@
     };
     $(window).on('hashchange', showApp);
 
-    listP.then(function(floatings) {
+    listP.then(function (floatings) {
       counter = 0;
       var floatingLinks = _.map(floatings, _.partial(floatingLinksTable, layerName));
       if (counter === 0) {
@@ -121,23 +108,23 @@
     });
   };
 
-  var generateWorkListErrors = function(layerName, listP) {
+  var generateWorkListErrors = function (layerName, listP) {
     var title = {
-        linkProperty: 'Tieosoiteverkon virheet'
+      linkProperty: 'Tieosoiteverkon virheet'
     };
     $('#work-list').append('' +
       '<div style="overflow: auto;">' +
-        '<div class="page">' +
-          '<div class="content-box">' +
-            '<header>' + title[layerName] +
-              '<a class="header-link" href="#' + layerName + '">Sulje lista</a>' +
-            '</header>' +
-            '<div class="work-list">' +
-          '</div>' +
-        '</div>' +
+      '<div class="page">' +
+      '<div class="content-box">' +
+      '<header>' + title[layerName] +
+      '<a class="header-link" href="#' + layerName + '">Sulje lista</a>' +
+      '</header>' +
+      '<div class="work-list">' +
+      '</div>' +
+      '</div>' +
       '</div>'
     );
-    var showApp = function() {
+    var showApp = function () {
       $('.container').show();
       $('#work-list').hide();
       $('body').removeClass('scrollable').scrollTop(0);
@@ -145,13 +132,12 @@
     };
     $(window).on('hashchange', showApp);
 
-    listP.then(function(errors) {
+    listP.then(function (errors) {
       counter = 0;
       var roadAddressErrors = _.map(errors, _.partial(roadAddressErrorsTable, layerName));
       if (counter === 0) {
         $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html("Kaikki irti geometriasta olevat tieosoitteet käsitelty"));
-      }
-      else {
+      } else {
         $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html(" " + counter + " addresses have errors")).append(roadAddressErrors);
       }
       removeSpinner();
@@ -162,12 +148,12 @@
     $('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
-  var removeSpinner = function(){
+  var removeSpinner = function () {
     jQuery('.spinner-overlay').remove();
   };
 
-  var bindEvents = function() {
-    eventbus.on('workList-floatings:select', function(layerName, listP) {
+  var bindEvents = function () {
+    eventbus.on('workList-floatings:select', function (layerName, listP) {
       $('#work-list').html("").show();
       addSpinner();
       $('.container').hide();
@@ -175,7 +161,7 @@
       generateWorkListFloatings(layerName, listP);
     });
 
-    eventbus.on('workList-errors:select', function(layerName, listP) {
+    eventbus.on('workList-errors:select', function (layerName, listP) {
       $('#work-list').html("").show();
       addSpinner();
       $('.container').hide();
@@ -185,9 +171,9 @@
   };
 
   root.WorkListView = {
-    initialize: function() {
+    initialize: function () {
       bindEvents();
     }
   };
 
-})(this);
+}(this));
