@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -250,15 +250,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         val addressM = nums(2)
         val ralOption = getRoadAddressLink(roadNumberOrId, roadPart, addressM)
         ralOption.map { ral =>
-          val points = ral.geometry
           val roadAddressLinkmValueLengthPercentageFactor = (addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)
           val geometryLength = ral.endMValue - ral.startMValue
           val geometryMeasure = roadAddressLinkmValueLengthPercentageFactor * geometryLength
-          val mValue: Double = ral.sideCode match {
-            case AgainstDigitizing => (geometryLength - geometryMeasure)
-            case _ => geometryMeasure
+          val point = ral match {
+            case r if (r.startAddressM.toDouble == addressM && r.sideCode == TowardsDigitizing) || (r.endAddressM == addressM && r.sideCode == AgainstDigitizing) =>
+              r.geometry.headOption
+            case r if (r.startAddressM.toDouble == addressM && r.sideCode == AgainstDigitizing) || (r.endAddressM == addressM && r.sideCode == TowardsDigitizing) =>
+              r.geometry.lastOption
+            case r =>
+              val mValue: Double = r.sideCode match {
+                case AgainstDigitizing => geometryLength - geometryMeasure
+                case _ => geometryMeasure
+              }
+              GeometryUtils.calculatePointFromLinearReference(r.geometry, mValue)
+            case _ => None
           }
-          val point = GeometryUtils.calculatePointFromLinearReference(points, mValue)
           resultSeq = collectResult("roadM", Seq(point), resultSeq)
         }.getOrElse(logger.info(s"""Search found nothing with: $searchString"""))
       } else if (nums.size == 2) {
