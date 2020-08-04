@@ -213,8 +213,12 @@ object TrackSectionRoadway {
       //  Opposite M length coeff
       val oppositeToProcess = processedOppositeTrack
       val processingOppositeTrack = oppositeToProcess.filter(_.roadwayNumber == NewIdValue)
-      val processingLength: Double = if (processingOppositeTrack.isEmpty) {
+      val processingLength: Double = if (processingOppositeTrack.isEmpty && remainingOppositeTrack.nonEmpty) {
         remainingOppositeTrack.head.endMValue - remainingOppositeTrack.head.startMValue
+      } else if (processingOppositeTrack.isEmpty && remainingOppositeTrack.isEmpty) {
+        // TODO What should be done in this situation?
+        logger.error(s"Unexpected situation: processing opposite track and remaining opposite track are both empty lists.")
+        throw new Exception("Kaksiajorataisen tien ajoratojen kohdistus ja mahdollinen pilkkominen epäonnistui.")
       } else {
         (remainingOppositeTrack.head.endMValue - remainingOppositeTrack.head.startMValue) +
           processingOppositeTrack.map(l => l.endMValue - l.startMValue).sum
