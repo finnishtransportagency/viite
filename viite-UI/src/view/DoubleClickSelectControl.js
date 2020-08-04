@@ -1,9 +1,9 @@
-(function(root) {
-  root.DoubleClickSelectControl = function(selectControl, map) {
+(function (root) {
+  root.DoubleClickSelectControl = function (selectControl, map) {
     var selectClickHandler = new OpenLayers.Handler.Click(
       selectControl,
       {
-        click: function(event) {
+        click: function (event) {
           var feature = selectControl.layer.getFeatureFromEvent(event);
           if (feature) {
             selectControl.select(_.assign({singleLinkSelect: false}, feature));
@@ -11,7 +11,7 @@
             selectControl.unselectAll();
           }
         },
-        dblclick: function(event) {
+        dblclick: function (event) {
           var feature = selectControl.layer.getFeatureFromEvent(event);
           if (feature) {
             selectControl.select(_.assign({singleLinkSelect: true}, feature));
@@ -27,10 +27,10 @@
         stopSingle: true
       }
     );
-    var activate = function() {
+    var activate = function () {
       selectClickHandler.activate();
     };
-    var deactivate = function() {
+    var deactivate = function () {
       selectClickHandler.deactivate();
     };
 
@@ -39,4 +39,4 @@
       deactivate: deactivate
     };
   };
-})(this);
+}(this));

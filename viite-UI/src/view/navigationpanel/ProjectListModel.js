@@ -175,7 +175,7 @@
 
         var sortedProjects = unfinishedProjects.sort(function (a, b) {
           var cmp = headers[orderBy.id].sortFunc(a, b);
-          return (cmp !== 0) ? cmp : a.name.localeCompare(b.name, 'fi');
+          return (cmp === 0) ? a.name.localeCompare(b.name, 'fi') : cmp;
         });
         if (orderBy.reversed)
           sortedProjects.reverse();
@@ -184,7 +184,7 @@
           $('#TRProjectsVisibleCheckbox').prop('checked', false);
           if (button.length > 0 && button[0].className === "project-open btn btn-new-error") {
             projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
-            eventbus.once("roadAddressProject:reOpenedProject", function (successData) {
+            eventbus.once("roadAddressProject:reOpenedProject", function (_successData) {
               openProjectSteps(event);
             });
           } else {
@@ -193,10 +193,11 @@
         };
 
         var html = '<table style="align-content: left; align-items: left; table-layout: fixed; width: 100%;">';
+        // eslint-disable-next-line no-negated-condition
         if (!_.isEmpty(sortedProjects)) {
           var uniqueId = 0;
           _.each(sortedProjects, function (proj) {
-            var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
+            var info = (proj.statusInfo) ? proj.statusInfo : 'Ei lisätietoja';
             html += '<tr id="' + uniqueId + '" class="project-item">' +
               '<td class="innerName" style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
               '<td style="width: 60px; word-break: break-word" title="' + info + '">' + staticFieldProjectList(proj.elys) + '</td>' +
@@ -205,18 +206,18 @@
               '<td style="width: 100px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
             switch (proj.statusCode) {
               case projectStatus.ErrorInViite.value:
-                html += '<td>' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px; visibility: hidden" data-projectStatus="' + proj.statusCode + '">Avaa uudelleen</button>' + '</td>' +
+                html += '<td><button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px; visibility: hidden" data-projectStatus="' + proj.statusCode + '">Avaa uudelleen</button></td>' +
                   '</tr>';
                 break;
               case projectStatus.ErrorInTR.value:
-                  html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px" id="reopen-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="'+ proj.statusCode + '">Avaa uudelleen</button>' + '</td>' +
+                  html += '<td id="innerOpenProjectButton"><button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px" id="reopen-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="'+ proj.statusCode + '">Avaa uudelleen</button></td>' +
                     '</tr>';
                 break;
               default:
-                html += '<td id="innerOpenProjectButton">' + '<button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 50px" id="open-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="' + proj.statusCode + '">Avaa</button>' + '</td>' +
+                html += '<td id="innerOpenProjectButton"><button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 50px" id="open-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="' + proj.statusCode + '">Avaa</button></td>' +
                   '</tr>';
             }
-            uniqueId = uniqueId + 1;
+            uniqueId += 1;
           });
           html += '</table>';
           $('#project-list').html(html);
@@ -316,4 +317,4 @@
       bindEvents: bindEvents
     };
   };
-})(this);
+}(this));
