@@ -922,9 +922,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   private val getCoordinatesForSearch: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getRoadAddressesByRoadNumberPartNumberAndAddrMValue")
-      .parameters(
-        queryParam[String]("search").description("Road name OR Road address (Road Number, [road part] and [distance]) OR linkId OR mtkId")
-      )
+      .parameters {
+        queryParam[String]("search").description("" +
+          "1. Road name,\r\n" +
+          "2. Road address:\r\n" +
+          "a) Road Number and Road Part Number;\r\n" +
+          "b) Road Number, Road Part Number and Distance value;\r\n" +
+          "c) Road Number, Road Part Number, Distance value and Track;\r\n" +
+          "3. linkId or mtkId")
+      }
       tags "ViiteAPI - General"
       summary "Returns coordinates to support single box search."
       description ""
@@ -932,7 +938,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/search", operation(getCoordinatesForSearch)) {
     val searchString = params.get("search")
-    roadAddressService.getSearchResults(searchString)
+    val resp = roadAddressService.getSearchResults(searchString)
+    resp
   }
 
   private val getRoadLinkDate: SwaggerSupportSyntax.OperationBuilder = (

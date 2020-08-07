@@ -66,9 +66,9 @@
     this.moveToLocation = function (template) {
       if (!_.isUndefined(template)) {
         applicationModel.addSpinner();
-        locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM).then(function (results) {
+        locationSearch.search(`${template.roadNumber} ${template.roadPartNumber} ${template.addrM} ${template.track}`).then(function (results) {
           if (results.length >= 1) {
-            var result = results[0];
+            const result = results[0];
             eventbus.trigger('coordinates:selected', {
               lon: result.lon,
               lat: result.lat,
@@ -78,8 +78,8 @@
             eventbus.trigger('nodeLayer:fetch', function (fetchedNodesAndJunctions) {
               applicationModel.removeSpinner();
               if (_.has(fetchedNodesAndJunctions, 'nodePointTemplates') || _.has(fetchedNodesAndJunctions, 'junctionTemplates')) {
-                var referencePoint = {x: parseFloat(result.lon.toFixed(3)), y: parseFloat(result.lat.toFixed(3))};
-                var templates = {
+                const referencePoint = {x: parseFloat(result.lon.toFixed(3)), y: parseFloat(result.lat.toFixed(3))};
+                const templates = {
                   nodePoints: fetchedNodesAndJunctions.nodePointTemplates,
                   junctions: fetchedNodesAndJunctions.junctionTemplates
                 };
@@ -174,7 +174,7 @@
     });
 
     eventbus.on('nodeSearchTool:clickJunctionTemplate', function (id) {
-      var junctionTemplate = _.find(userJunctionTemplates, function (template) {
+      const junctionTemplate = _.find(userJunctionTemplates, function (template) {
         return template.id === parseInt(id);
       });
       if (_.isUndefined(junctionTemplate)) {
