@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -240,7 +240,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     val searchType = parsedInput.head._1
     val params = parsedInput.head._2
     var searchResult: Seq[Any] = null
-    val resp = searchType match {
+    searchType match {
       case "road" => params.size match {
         case 1 =>
           // The number can be LINKID, MTKID or roadNumberOrId
@@ -268,13 +268,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
             val point = GeometryUtils.calculatePointFromLinearReference(points, mValue)
             collectResult("roadM", Seq(point), partialResultSeq)
           })
-          respx
         case _ => Seq.empty[Map[String, Seq[Any]]]
       }
       case "street" => collectResult("street", Seq(viiteVkmClient.postFormUrlEncoded("/vkm/geocode", Map(("address",searchString.getOrElse(""))))))
       case _ => Seq.empty[Map[String, Seq[Any]]]
     }
-    resp
   }
 
   def locationInputParser(searchStringOption: Option[String]): Map[String, Seq[Long]] = {
