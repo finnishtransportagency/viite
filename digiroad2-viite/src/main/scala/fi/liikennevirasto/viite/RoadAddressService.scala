@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -230,92 +230,85 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
   }
 
-  def collectResult(dataType: String, inputData: Seq[Any], oldSeq: Seq[Map[String, Seq[Any]]]): Seq[Map[String, Seq[Any]]] = {
-    val result: Seq[Map[String, Seq[Any]]] = Seq(Map((dataType, inputData)))
-    val newSeq: Seq[Map[String, Seq[Any]]] = oldSeq ++ result
-    return newSeq
+  def collectResult(dataType: String, inputData: Seq[Any], oldSeq: Seq[Map[String, Seq[Any]]] = Seq.empty[Map[String, Seq[Any]]]): Seq[Map[String, Seq[Any]]] = {
+    oldSeq ++ Seq(Map((dataType, inputData)))
   }
 
   def getSearchResults(searchString: Option[String]): Seq[Map[String, Seq[Any]]] = {
     logger.debug("getSearchResults")
     val parsedInput = locationInputParser(searchString)
     val searchType = parsedInput.head._1
+    val params = parsedInput.head._2
     var searchResult: Seq[Any] = null
-    var resultSeq: Seq[Map[String, Seq[Any]]] = Seq.empty[Map[String, Seq[Any]]]
-    if (searchType == "road") {
-      val nums = parsedInput.head._2
-      val roadNumberOrId = nums(0)
-      if (nums.size == 3) {
-        val roadPart = nums(1)
-        val addressM = nums(2)
-        val ralOption = getRoadAddressLink(roadNumberOrId, roadPart, addressM)
-        ralOption.map { ral =>
-          val points = ral.geometry
-          val roadAddressLinkmValueLengthPercentageFactor = (addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)
-          val geometryLength = ral.endMValue - ral.startMValue
-          val geometryMeasure = roadAddressLinkmValueLengthPercentageFactor * geometryLength
-          val mValue: Double = ral.sideCode match {
-            case AgainstDigitizing => (geometryLength - geometryMeasure)
-            case _ => geometryMeasure
-          }
-          val point = GeometryUtils.calculatePointFromLinearReference(points, mValue)
-          resultSeq = collectResult("roadM", Seq(point), resultSeq)
-        }.getOrElse(logger.info(s"""Search found nothing with: $searchString"""))
-      } else if (nums.size == 2) {
-        val roadPart = nums(1)
-        searchResult = getRoadAddressWithRoadNumberParts(roadNumberOrId, Set(roadPart), Set(Track.Combined, Track.LeftSide, Track.RightSide)).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
-        resultSeq = collectResult("road", searchResult, resultSeq)
-      } else if (nums.size == 1) {
-        // The number can be LINKID, MTKID or roadNumberOrId
-        var searchResultPoint = roadLinkService.getMidPointByLinkId(roadNumberOrId)
-        resultSeq = collectResult("linkId", Seq(searchResultPoint), resultSeq)
-        searchResultPoint = roadLinkService.getRoadLinkMiddlePointByMtkId(roadNumberOrId)
-        resultSeq = collectResult("mtkId", Seq(searchResultPoint), resultSeq)
-        searchResult = getRoadAddressWithRoadNumberAddress(roadNumberOrId).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
-        resultSeq = collectResult("road", searchResult, resultSeq)
+    val resp = searchType match {
+      case "road" => params.size match {
+        case 1 =>
+          // The number can be LINKID, MTKID or roadNumberOrId
+          var searchResultPoint = roadLinkService.getMidPointByLinkId(params.head)
+          var partialResultSeq = collectResult("linkId", Seq(searchResultPoint))
+          searchResultPoint = roadLinkService.getRoadLinkMiddlePointByMtkId(params.head)
+          partialResultSeq = collectResult("mtkId", Seq(searchResultPoint), partialResultSeq)
+          searchResult = getRoadAddressWithRoadNumberAddress(params.head).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
+          collectResult("road", searchResult, partialResultSeq)
+        case 2 => collectResult("road", getRoadAddressWithRoadNumberParts(params.head, Set(params(1)), Set(Track.Combined, Track.LeftSide, Track.RightSide)).sortBy(address => (address.roadPartNumber, address.startAddrMValue)))
+        case 3 | 4 =>
+          val roadPart = params(1)
+          val addressM = params(2)
+          val track = if (params.size == 4) Some(params(3)) else None
+          val ralOption = getRoadAddressLink(params.head, roadPart, addressM, track)
+          val respx = ralOption.foldLeft(Seq.empty[Map[String, Seq[Any]]])((partialResultSeq, ral) => {
+            val points = ral.geometry
+            val roadAddressLinkMValueLengthPercentageFactor = (addressM - ral.startAddressM.toDouble) / (ral.endAddressM.toDouble - ral.startAddressM)
+            val geometryLength = ral.endMValue - ral.startMValue
+            val geometryMeasure = roadAddressLinkMValueLengthPercentageFactor * geometryLength
+            val mValue: Double = ral.sideCode match {
+              case AgainstDigitizing => geometryLength - geometryMeasure
+              case _ => geometryMeasure
+            }
+            val point = GeometryUtils.calculatePointFromLinearReference(points, mValue)
+            collectResult("roadM", Seq(point), partialResultSeq)
+          })
+          respx
+        case _ => Seq.empty[Map[String, Seq[Any]]]
       }
-    } else if (searchType == "street") {
-      searchResult = Seq(viiteVkmClient.postFormUrlEncoded("/vkm/geocode", Map(("address",searchString.getOrElse("")))))
-      resultSeq = collectResult("street", searchResult, resultSeq)
+      case "street" => collectResult("street", Seq(viiteVkmClient.postFormUrlEncoded("/vkm/geocode", Map(("address",searchString.getOrElse(""))))))
+      case _ => Seq.empty[Map[String, Seq[Any]]]
     }
-    resultSeq
+    resp
   }
 
   def locationInputParser(searchStringOption: Option[String]): Map[String, Seq[Long]] = {
     val searchString = searchStringOption.getOrElse("")
     val numRegex = """(\d+)""".r
-    val nums = numRegex.findAllIn(searchString).map(_.toLong).toSeq
-    val searchType =
-      if (nums.size == 0) {
-        "street"
-      } else {
-        "road"
-      }
-    val ret = Map((searchType, nums))
-    ret
+    val params = numRegex.findAllIn(searchString).map(_.toLong).toSeq
+    val searchType = params.size match {
+      case 0 => "street"
+      case _ => "road"
+    }
+    Map((searchType, params))
   }
 
   /**
    * Gets road address link in the same road number, roadPart and addressM.
    *
-   * @param road   The road number
-   * @param roadPart The roadPart
-   * @param addressM The addressM that is in between the returned RoadAddress
+   * @param road      The road number
+   * @param roadPart  The roadPart
+   * @param addressM  The addressM that is in between the returned RoadAddress
    * @return Returns RoadAddressLink in track 0 or 1 which contains dynamically calculated startAddressM and endAddressM
    *         and includes detailed geometry in that link fetched dynamically from VVH
    */
-  def getRoadAddressLink(road: Long, roadPart: Long, addressM: Long): Option[RoadAddressLink] = {
+  def getRoadAddressLink(road: Long, roadPart: Long, addressM: Long, track: Option[Long] = None): Option[RoadAddressLink] = {
     val linearLocations = withDynSession {
       time(logger, "Fetch addresses") {
-        linearLocationDAO.fetchByRoadAddress(road, roadPart, addressM)
+        linearLocationDAO.fetchByRoadAddress(road, roadPart, addressM, track)
       }
     }
     val linearLocationsLinkIds = linearLocations.map(_.linkId).toSet
-    val roadAddresses = getRoadAddressForSearch(road, roadPart, addressM)
+    val roadAddresses = getRoadAddressForSearch(road, roadPart, addressM, track)
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linearLocationsLinkIds)
     val rals = RoadAddressFiller.fillTopology(roadLinks, roadAddresses)
     val filteredRals = rals.filter(al => al.startAddressM <= addressM && al.endAddressM >= addressM && (al.startAddressM != 0 || al.endAddressM != 0))
-    val ral = filteredRals.filter(al => al.trackCode != 2)
+    val ral = filteredRals.filter(al => (track.nonEmpty && track.contains(al.trackCode)) || al.trackCode != Track.LeftSide.value)
     ral.headOption
   }
 
@@ -327,11 +320,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
    * @param addressM The addressM that is in between the returned RoadAddress start and end addresses
    * @return Returns all the filtered road addresses. Note. RoadAddress has normally shorter length than roadway
    */
-  def getRoadAddressForSearch(road: Long, roadPart: Long, addressM: Long): Seq[RoadAddress] = {
+  def getRoadAddressForSearch(road: Long, roadPart: Long, addressM: Long, track: Option[Long] = None): Seq[RoadAddress] = {
     withDynSession {
-      val roadways = roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, Some(addressM), Some(addressM))
+      val roadways = roadwayDAO.fetchAllBySectionAndAddresses(road, roadPart, Some(addressM), Some(addressM), track)
       val roadAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways).sortBy(_.startAddrMValue)
-      roadAddresses.filter(ra => ra.startAddrMValue <= addressM && ra.endAddrMValue >= addressM)
+      roadAddresses.filter(ra => (track.isEmpty || track.contains(ra.track.value)) && ra.startAddrMValue <= addressM && ra.endAddrMValue >= addressM)
     }
   }
 
