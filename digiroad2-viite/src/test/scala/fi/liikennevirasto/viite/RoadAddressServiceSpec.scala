@@ -305,7 +305,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       dummyRoadway(roadwayNumber = 1L, roadNumber = 1L, roadPartNumber = 1L, startAddrM = 0L, endAddrM = 400L, DateTime.now(), None)
     )
 
-    when(mockRoadwayDAO.fetchAllBySectionAndAddresses(any[Long], any[Long], any[Option[Long]], any[Option[Long]])).thenReturn(roadways)
+    when(mockRoadwayDAO.fetchAllBySectionAndAddresses(any[Long], any[Long], any[Option[Long]], any[Option[Long]], any[Option[Long]])).thenReturn(roadways)
     when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(linearLocations)
 
     val result = roadAddressService.getRoadAddress(road = 1, roadPart = 1, addressM = 200, None)
@@ -473,9 +473,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadwayDAO.fetchAllByRoad(any[Long])).thenReturn(roadways)
     when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(towardsDigitizingLinearLocation)
     when(mockRoadwayDAO.fetchAllBySectionsAndTracks(any[Long], any[Set[Long]], any[Set[Track]])).thenReturn(roadways)
-    when(mockRoadwayDAO.fetchAllBySectionAndAddresses(any[Long], any[Long], any[Option[Long]], any[Option[Long]])).thenReturn(roadways)
+    when(mockRoadwayDAO.fetchAllBySectionAndAddresses(any[Long], any[Long], any[Option[Long]], any[Option[Long]], any[Option[Long]])).thenReturn(roadways)
     when(mockViiteVkmClient.postFormUrlEncoded(any[String], any[Map[String, String]])).thenReturn(searchResults, Seq.empty: _*)
-    when(mockLinearLocationDAO.fetchByRoadAddress(any[Long],any[Long],any[Long])).thenReturn(towardsDigitizingLinearLocation)
+    when(mockLinearLocationDAO.fetchByRoadAddress(any[Long],any[Long],any[Long], any[Option[Long]])).thenReturn(towardsDigitizingLinearLocation)
 
     val towardsDigitizingRoadLink = Seq(
       RoadLink(linkId, Seq(Point(0.0, 10.0), Point(0.0, 15.0)), 10.0, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)), UnknownConstructionType, NormalLinkInterface)
