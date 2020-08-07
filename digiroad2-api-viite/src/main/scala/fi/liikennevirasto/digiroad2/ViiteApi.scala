@@ -938,8 +938,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/search", operation(getCoordinatesForSearch)) {
     val searchString = params.get("search")
-    val resp = roadAddressService.getSearchResults(searchString)
-    resp
+    roadAddressService.getSearchResults(searchString)
   }
 
   private val getRoadLinkDate: SwaggerSupportSyntax.OperationBuilder = (
