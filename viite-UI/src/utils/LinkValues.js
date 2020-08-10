@@ -196,7 +196,7 @@
     EndOfRoad: {value: 13, description: "Tien alku/loppu"},
     Bridge: {value: 14, description: "Silta"},
     MaintenanceOpening: {value: 15, description: "Huoltoaukko"},
-    PrivateRoad: {value: 16, description: "Yksityistie-tai katuliittymä"},
+    PrivateRoad: {value: 16, description: "Yksityistie- tai katuliittymä"},
     StaggeredIntersection: {value: 17, description: "Porrastettu liittymä"},
     UnknownNodeType: {value: 99, description: "Ei määritelty"}
   };
