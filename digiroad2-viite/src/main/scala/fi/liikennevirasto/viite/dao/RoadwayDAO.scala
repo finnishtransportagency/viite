@@ -553,9 +553,9 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllBySectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrM: Option[Long], endAddrM: Option[Long]): Seq[Roadway] = {
+  def fetchAllBySectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrM: Option[Long], endAddrM: Option[Long], track: Option[Long] = None): Seq[Roadway] = {
     time(logger, "Fetch road address by road number, road part number, start address measure and end address measure") {
-      fetch(withSectionAndAddresses(roadNumber, roadPartNumber, startAddrM, endAddrM))
+      fetch(withSectionAndAddresses(roadNumber, roadPartNumber, startAddrM, endAddrM, track))
     }
   }
 
@@ -752,11 +752,12 @@ class RoadwayDAO extends BaseDAO {
       s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
   }
 
-  private def withSectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
+  private def withSectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrMOption: Option[Long], endAddrMOption: Option[Long], track: Option[Long] = None)(query: String) = {
+    val trackFilter = track.map(t => s"""and a.track = $t""").getOrElse(s"""""")
     val addressFilter = (startAddrMOption, endAddrMOption) match {
-      case (Some(startAddrM), Some(endAddrM)) => s"""and ((a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM))"""
-      case (Some(startAddrM), _) => s"""and a.end_addr_m > $startAddrM"""
-      case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM"""
+      case (Some(startAddrM), Some(endAddrM)) => s"""and ((a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM)) $trackFilter"""
+      case (Some(startAddrM), _) => s"""and a.end_addr_m > $startAddrM $trackFilter"""
+      case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM $trackFilter"""
       case _ => s""""""
     }
     s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and road_part_number = $roadPartNumber $addressFilter"""
