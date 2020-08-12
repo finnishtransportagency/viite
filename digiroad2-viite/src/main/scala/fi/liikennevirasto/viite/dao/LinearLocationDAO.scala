@@ -586,9 +586,9 @@ class LinearLocationDAO {
     }
   }
 
-  def fetchByRoadAddress(roadNumber: Long, roadPart:Long, addressM: Long): Seq[LinearLocation] = {
+  def fetchByRoadAddress(roadNumber: Long, roadPart:Long, addressM: Long, track: Option[Long] = None): Seq[LinearLocation] = {
     time(logger, "Fetch linear locations by Road Address") {
-
+      val trackFilter = track.map(t => s"""AND rw.TRACK = $t""").getOrElse(s"""""")
       val query =
         s"""
           $selectFromLinearLocation
@@ -596,6 +596,7 @@ class LinearLocationDAO {
           WHERE rw.VALID_TO IS NULL AND rw.END_DATE IS NULL AND loc.VALID_TO IS NULL AND
           rw.ROAD_NUMBER = $roadNumber AND rw.ROAD_PART_NUMBER = $roadPart
           AND rw.START_ADDR_M <= $addressM AND rw.END_ADDR_M >= $addressM
+          $trackFilter
           ORDER BY loc.ORDER_NUMBER
         """
       queryList(query)
