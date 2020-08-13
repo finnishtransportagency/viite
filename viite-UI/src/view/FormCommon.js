@@ -1,46 +1,46 @@
 (function (root) {
   root.FormCommon = function (prefix) {
-    var Track = LinkValues.Track;
-    var RoadNameSource = LinkValues.RoadNameSource;
-    var editableStatus = LinkValues.ProjectStatus.Incomplete.value;
-    var RoadType = LinkValues.RoadType;
+    const Track = LinkValues.Track;
+    const RoadNameSource = LinkValues.RoadNameSource;
+    const editableStatus = LinkValues.ProjectStatus.Incomplete.value;
+    const RoadType = LinkValues.RoadType;
 
-    var title = function (titleName) {
+    const title = function (titleName) {
       const fixedTitle = titleName || "Uusi tieosoiteprojekti";
-      return '<span class ="edit-mode-title">' + fixedTitle + '</span>';
+      return `<span class ="edit-mode-title"> ${fixedTitle} </span>`;
     };
 
-    var titleWithEditingTool = function (project) {
+    const titleWithEditingTool = function (project) {
       return '<span class ="edit-mode-title">' + project.name + ' <i id="editProjectSpan" class=' +
         '"btn-pencil-edit fas fa-pencil-alt" value="' + project.id + '"></i></span>' +
         '<span id="closeProjectSpan" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>';
     };
 
-    var captionTitle = function (titleName) {
-      return '<span class="caption-title">' + titleName + '</span>';
+    const captionTitle = function (titleName) {
+      return `<span class="caption-title"> ${titleName} </span>`;
     };
 
-    var addRoadNameField = function (name, isBlocked, maxLength) {
-      var nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
-      var disabled = nameToDisplay !== "" && isBlocked;
+    const addRoadNameField = function (name, isBlocked, maxLength) {
+      const nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
+      const disabled = nameToDisplay !== "" && isBlocked;
       return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + '/>';
     };
 
-    var projectButtons = function () {
+    const projectButtons = function () {
       return '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
         '<button disabled id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button>';
     };
 
-    var newRoadAddressInfo = function (project, selected, links, road) {
-      var roadNumber = road.roadNumber;
-      var part = road.roadPartNumber;
-      var track = road.trackCode;
-      var roadName = selected[0].roadName;
-      var link = _.head(_.filter(links, function (l) {
+    const newRoadAddressInfo = function (project, selected, links, road) {
+      const roadNumber = road.roadNumber;
+      const part = road.roadPartNumber;
+      const track = road.trackCode;
+      const roadName = selected[0].roadName;
+      const link = _.head(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
-      var roadType = (link.roadTypeId) ? link.roadTypeId : RoadType.Empty.value;
-      var projectEditable = project.statusCode === editableStatus;
+      const roadType = (link.roadTypeId) ? link.roadTypeId : RoadType.Empty.value;
+      const projectEditable = project.statusCode === editableStatus;
       let trackCodeDropdown;
       if (track === Track.Unknown.value) {
         trackCodeDropdown = (roadNumber >= 20001 && roadNumber <= 39999) ? '0' : '';
@@ -66,8 +66,8 @@
         '</div>';
     };
 
-    var replaceAddressInfo = function (backend, selectedProjectLink, currentProjectId) {
-      var roadNameField = $('#roadName');
+    const replaceAddressInfo = function (backend, selectedProjectLink, currentProjectId) {
+      const roadNameField = $('#roadName');
       if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99) {
         backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, currentProjectId, function (response) {
           if (response.success) {
@@ -85,13 +85,13 @@
       }
     };
 
-    var roadTypeLabel = function (roadType) {
-      var roadTypeInfo = _.find(LinkValues.RoadType, function (obj) {
+    const roadTypeLabel = function (roadType) {
+      const roadTypeInfo = _.find(LinkValues.RoadType, function (obj) {
         return obj.value === roadType;
       });
       return roadTypeInfo.displayText;
     };
-    var roadTypeDropdown = function (roadTypeDefaultValue) {
+    const roadTypeDropdown = function (roadTypeDefaultValue) {
       return '<select class="' + prefix + 'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
         '<option value = "' + roadTypeDefaultValue + '" selected hidden >' + roadTypeLabel(roadTypeDefaultValue) + '</option>' +
         '<option value = "1">1 Maantie</option>' +
@@ -104,38 +104,38 @@
         '</select>';
     };
 
-    var addSmallLabel = function (label) {
+    const addSmallLabel = function (label) {
       return '<label class="control-label-small">' + label + '</label>';
     };
 
-    var addSmallLabelLowercase = function (label) {
+    const addSmallLabelLowercase = function (label) {
       return '<label class="control-label-small" style="text-transform: none">' + label + '</label>';
     };
 
 
-    var addSmallLabelTopped = function (label) {
+    const addSmallLabelTopped = function (label) {
       return '<label class="control-label-small" style="vertical-align: top;">' + label + '</label>';
     };
 
-    var addSmallLabelWrapped = function (label) {
+    const addSmallLabelWrapped = function (label) {
       return '<label class="control-label-small" style="word-wrap: break-word;max-width: 250px">' + label + '</label>';
     };
 
-    var addSmallInputNumber = function (id, value, isDisabled, maxLength) {
+    const addSmallInputNumber = function (id, value, isDisabled, maxLength) {
       //Validate only number characters on "onkeypress" including TAB and backspace
-      var disabled = isDisabled ? ' readonly="readonly" ' : '';
+      const disabled = isDisabled ? ' readonly="readonly" ' : '';
       return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
         '" class="' + prefix + 'form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '" ' +
         disabled + (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
     };
 
-    var nodeInputNumber = function (id, maxLength) {
+    const nodeInputNumber = function (id, maxLength) {
       return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)' +
         '" class="form-control node-input" id = "' + id + '"' +
         (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '" ') + '/>';
     };
 
-    var addDiscontinuityDropdown = function () {
+    const addDiscontinuityDropdown = function () {
       return '<select class="form-select-control" id="discontinuityDropdown" size="1">' +
         '<option value = "5" selected disabled hidden>5 Jatkuva</option>' +
         '<option value="1" >1 Tien loppu</option>' +
@@ -147,26 +147,26 @@
         '</select>';
     };
 
-    var addTrackCodeDropdown = function (trackDefaultValue, properties) {
-      var trackDefaultValueToShow = '';
-      let trackDefaultValueOption = '';
+    const addTrackCodeDropdown = function (trackDefaultValue, properties) {
+      const trackCodeDropdown = {
+        value:  trackDefaultValue,
+        toShow: trackDefaultValue
+      };
+
       if (trackDefaultValue === '') {
-        trackDefaultValueOption = Track.Unknown.value;
-        trackDefaultValueToShow = '--';
-      } else {
-        trackDefaultValueToShow = trackDefaultValueOption;
+        trackCodeDropdown.value = Track.Unknown.value;
+        trackCodeDropdown.toShow = '--';
       }
 
-      return '<select class="form-select-small-control" id="trackCodeDropdown" size="1" ' + properties + '>' +
-        '<option value = "' + trackDefaultValueOption + '" selected hidden>' + trackDefaultValueToShow + '</option>' +
-        '<option value="0" >0</option>' +
-        '<option value="1" >1</option>' +
-        '<option value="2" >2</option>' +
-        '</select>';
-
+      return `<select class="form-select-small-control" id="trackCodeDropdown" size="1" ${properties}>` +
+        `<option value="${trackCodeDropdown.value}" selected hidden> ${trackCodeDropdown.toShow} </option>` +
+        `<option value="0" >0</option>` +
+        `<option value="1" >1</option>` +
+        `<option value="2" >2</option>` +
+        `</select>`;
     };
 
-    var directionChangedInfo = function (selected, isPartialReversed) {
+    const directionChangedInfo = function (selected, isPartialReversed) {
       if (selected[0].status === LinkValues.LinkStatus.New.value) return '';
       if (isPartialReversed) {
         return '<label class="split-form-group">Osittain käännetty</label>';
@@ -177,30 +177,30 @@
       }
     };
 
-    var changeDirection = function (selected, project) {
-      var projectEditable = project.statusCode === editableStatus;
+    const changeDirection = function (selected, project) {
+      const projectEditable = project.statusCode === editableStatus;
       if (!projectEditable) {
         return ''; // Don't show the button if project status is not incomplete
       }
-      var reversedInGroup = _.uniq(_.map(selected, 'reversed'));
-      var isPartialReversed = reversedInGroup.length > 1;
+      const reversedInGroup = _.uniq(_.map(selected, 'reversed'));
+      const isPartialReversed = reversedInGroup.length > 1;
       return '<div hidden class="' + prefix + 'form-group changeDirectionDiv" style="margin-top:15px">' +
         '<button class="' + prefix + 'form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>' +
         directionChangedInfo(selected, isPartialReversed) +
         '</div>';
     };
 
-    var selectedData = function (selected) {
-      var span = [];
+    const selectedData = function (selected) {
+      const span = [];
       if (selected[0]) {
-        var link = selected[0];
-        var startM = Math.min.apply(Math, _.map(selected, function (l) {
+        const link = selected[0];
+        const startM = Math.min.apply(Math, _.map(selected, function (l) {
           return l.startAddressM;
         }));
-        var endM = Math.max.apply(Math, _.map(selected, function (l) {
+        const endM = Math.max.apply(Math, _.map(selected, function (l) {
           return l.endAddressM;
         }));
-        var div = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
+        const div = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
           '<div class="project-edit">' +
           ' TIE <span class="project-edit">' + link.roadNumber + '</span>' +
           ' OSA <span class="project-edit">' + link.roadPartNumber + '</span>' +
@@ -214,31 +214,29 @@
       return span;
     };
 
-    var actionButtons = function (btnPrefix, notDisabled) {
+    const actionButtons = function (btnPrefix, notDisabled) {
       return '<div class="' + btnPrefix + 'form form-controls" id="actionButtons">' +
         '<button class="update btn btn-save" ' + (notDisabled ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
     };
 
-    var actionSelectedField = function () {
-      var field;
-      field = '<div class="' + prefix + 'form-group action-selected-field" hidden = "true">' +
+    const actionSelectedField = function () {
+      return '<div class="' + prefix + 'form-group action-selected-field" hidden = "true">' +
         '<div class="asset-log-info">Tarkista tekemäsi muutokset.<br>Jos muutokset ok, tallenna.</div>' +
         '</div>';
-      return field;
     };
 
-    var toggleAdditionalControls = function () {
+    const toggleAdditionalControls = function () {
       $('#editProjectSpan').css('visibility', 'visible');
       $('#closeProjectSpan').css('visibility', 'visible');
     };
 
-    var checkInputs = function (localPrefix) {
-      var rootElement = $('#feature-attributes');
-      var inputs = rootElement.find('input');
-      var filled = true;
-      for (var i = 0; i < inputs.length; i++) {
+    const checkInputs = function (localPrefix) {
+      const rootElement = $('#feature-attributes');
+      const inputs = rootElement.find('input');
+      let filled = true;
+      for (let i = 0; i < inputs.length; i++) {
         if (inputs[i].type === 'text' && !inputs[i].value) {
           filled = false;
         }
@@ -250,11 +248,11 @@
       }
     };
 
-    var clearInformationContent = function () {
+    const clearInformationContent = function () {
       $('#information-content').empty();
     };
 
-    var setInformationContent = function () {
+    const setInformationContent = function () {
       $('#information-content').html('' +
         '<div class="form form-horizontal">' +
         '<p>Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen<br>' +
@@ -262,13 +260,13 @@
         '</div>');
     };
 
-    var sendRoadAddressChangeButton = function (localPrefix) {
+    const sendRoadAddressChangeButton = function (localPrefix) {
       return '<div class="' + localPrefix + 'form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
         '<button id ="send-button" class="send btn btn-block btn-send">Lähetä muutosilmoitus Tierekisteriin</button></div>';
     };
 
-    var distanceValue = function () {
+    const distanceValue = function () {
       return '<div id="distanceValue" hidden>' +
         '<div class="' + prefix + 'form-group" style="margin-top: 15px">' +
         '<img src="images/calibration-point.svg" style="margin-right: 5px" class="calibration-point"/>' +
@@ -283,28 +281,26 @@
         '</div></div>';
     };
 
-    var staticField = function (labelText, dataField) {
-      var field;
-      field = '<div class="' + prefix + 'form-group">' +
+    const staticField = function (labelText, dataField) {
+      return '<div class="' + prefix + 'form-group">' +
         '<p class="form-control-static asset-log-info">' + labelText + ' : ' + dataField + '</p>' +
         '</div>';
-      return field;
     };
 
-    var getCoordButton = function (index, coordinates) {
+    const getCoordButton = function (index, coordinates) {
       return coordButton(index, coordinates);
     };
 
-    var coordButton = function (index, coordinates) {
-      var html = '<button id=' + index + ' class="btn btn-primary projectErrorButton">Korjaa</button>';
+    const coordButton = function (index, coordinates) {
+      const html = '<button id=' + index + ' class="btn btn-primary projectErrorButton">Korjaa</button>';
       return {index: index, html: html, coordinates: coordinates};
     };
 
-    var getErrorCoordinates = function (error, links) {
+    const getErrorCoordinates = function (error, links) {
       if (error.coordinates.length > 0) {
         return error.coordinates;
       }
-      var linkCoords = _.find(links, function (link) {
+      const linkCoords = _.find(links, function (link) {
         return link.linkId === error.linkIds[0];
       });
       if (!_.isUndefined(linkCoords)) {
@@ -313,16 +309,16 @@
       return false;
     };
 
-    var getProjectErrors = function (projectErrors, links, projectCollection) {
-      var buttonIndex = 0;
-      var errorLines = '';
+    const getProjectErrors = function (projectErrors, links, projectCollection) {
+      let buttonIndex = 0;
+      let errorLines = '';
       projectCollection.clearCoordinates();
       projectErrors.sort(function (a, b) {
         return a.priority - b.priority; // Sort by priority ascending
       });
       _.each(projectErrors, function (error) {
-        var button = '';
-        var coordinates = getErrorCoordinates(error, links);
+        let button = '';
+        const coordinates = getErrorCoordinates(error, links);
         if (coordinates) {
           button = getCoordButton(buttonIndex, error.coordinates);
           projectCollection.pushCoordinates(button);
