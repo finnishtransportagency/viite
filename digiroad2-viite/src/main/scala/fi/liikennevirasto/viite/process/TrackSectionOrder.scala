@@ -7,11 +7,13 @@ import fi.liikennevirasto.digiroad2.util.{MissingTrackException, RoadAddressExce
 import fi.liikennevirasto.digiroad2.{Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
+
+import scala.annotation.tailrec
 
 
 object TrackSectionOrder {
@@ -26,7 +28,8 @@ object TrackSectionOrder {
   def findChainEndpoints(projectLinks: Seq[ProjectLink]): Map[Point, ProjectLink] = {
     case class ProjectLinkNonConnectedDistance(projectLink: ProjectLink, point: Point, distance: Double)
     case class ProjectLinkChain(sortedProjectLinks: Seq[ProjectLink], startPoint: Point, endPoint: Point)
-    @scala.annotation.tailrec
+
+    @tailrec
     def recursiveFindNearestProjectLinks(projectLinkChain: ProjectLinkChain, unprocessed: Seq[ProjectLink]): ProjectLinkChain = {
       def mapDistances(p: Point)(pl: ProjectLink): ProjectLinkNonConnectedDistance = {
         val (sP, eP) = pl.getEndPoints
@@ -348,8 +351,15 @@ object TrackSectionOrder {
               Math.min(
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
                 Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
-            CombinedSection(r.startGeometry, r.endGeometry,.5 * (r.geometryLength + l.geometryLength),
-              l, r)
+            CombinedSection(r.startGeometry, r.endGeometry,.5 * (r.geometryLength + l.geometryLength), l, r)
+          } else
+            throw new MissingTrackException("Missing left track starting project links")
+          case Track.LeftSide => if (leftSection.exists(_.track == Track.RightSide)) {
+            val l = leftSection.filter(_.track == Track.RightSide).minBy(l =>
+              Math.min(
+                Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
+                Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
+            CombinedSection(r.startGeometry, r.endGeometry,.5 * (r.geometryLength + l.geometryLength), l, r)
           } else
             throw new MissingTrackException("Missing left track starting project links")
           case _ =>
@@ -370,9 +380,7 @@ object TrackSectionOrder {
     * @return
     */
   def setCalibrationPoints(leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-
-    (setOnSideCalibrationPoints(leftProjectLinks, userDefinedCalibrationPoint),
-      setOnSideCalibrationPoints(rightProjectLinks, userDefinedCalibrationPoint))
+    (setOnSideCalibrationPoints(leftProjectLinks, userDefinedCalibrationPoint), setOnSideCalibrationPoints(rightProjectLinks, userDefinedCalibrationPoint))
   }
 
   protected def setOnSideCalibrationPoints(initialProjectLinks: Seq[ProjectLink], userCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
