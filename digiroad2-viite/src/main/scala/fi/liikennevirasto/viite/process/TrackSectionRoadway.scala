@@ -233,7 +233,6 @@ object TrackSectionRoadway {
         val processingRoadwayNumber = processedOppositeTrack.last.roadwayNumber
         val processingOppositeTrackBySameRoadwayNumber = processedOppositeTrack.filter(_.roadwayNumber == processingRoadwayNumber)
         processingOppositeTrackBySameRoadwayNumber.map(l => l.endMValue - l.startMValue).sum
-//        processedOppositeTrack.last.endMValue - processedOppositeTrack.last.startMValue
       } else {
         (remainingOppositeTrack.head.endMValue - remainingOppositeTrack.head.startMValue) +
           processingOppositeTrack.map(l => l.endMValue - l.startMValue).sum
