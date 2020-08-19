@@ -354,6 +354,27 @@ class ProjectReservedPartDAO {
     }
   }
 
+  def fetchProjectReservedJunctions(roadNumber: Long, roadPart: Long): Seq[String] = {
+    sql"""
+     SELECT distinct prj.NAME FROM PROJECT prj
+         JOIN PROJECT_RESERVED_ROAD_PART res ON res.PROJECT_ID = prj.ID
+         WHERE prj.ID IN (
+            SELECT DISTINCT(pl.PROJECT_ID) FROM PROJECT_LINK pl
+            WHERE pl.LINK_ID IN (
+              SELECT ll.LINK_ID FROM LINEAR_LOCATION ll
+              INNER JOIN ROADWAY rw ON ll.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
+              WHERE rw.ROADWAY_NUMBER in (SELECT DISTINCT r.ROADWAY_NUMBER FROM ROADWAY r
+                JOIN ROADWAY_POINT rwp ON r.ROADWAY_NUMBER = rwp.ROADWAY_NUMBER
+                JOIN JUNCTION_POINT jp ON jp.ROADWAY_POINT_ID = rwp.ID
+                JOIN JUNCTION j ON jp.JUNCTION_ID = j.ID
+                WHERE j.id in (SELECT DISTINCT j.id FROM junction j
+                  JOIN JUNCTION_POINT jp ON j.id = jp.JUNCTION_ID
+                  JOIN ROADWAY_POINT rp ON jp.ROADWAY_POINT_ID = rp.id
+                  JOIN ROADWAY rw ON rp.ROADWAY_NUMBER = rw.ROADWAY_NUMBER
+                  WHERE rw.ROAD_NUMBER = $roadNumber AND rw.ROAD_PART_NUMBER = $roadPart AND j.VALID_TO IS null AND jp.VALID_TO IS NULL AND rw.VALID_TO IS NULL))))
+       """.as[String].list
+  }
+
   def reserveRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, user: String): Unit = {
     sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
       SELECT viite_general_seq.nextval, $roadNumber, $roadPartNumber, $projectId, $user FROM DUAL""".execute
