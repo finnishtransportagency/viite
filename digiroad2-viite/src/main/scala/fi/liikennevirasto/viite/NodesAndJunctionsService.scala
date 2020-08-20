@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.viite.RoadAddressFilters.{continuousTopology, connectingBothHeads}
+import fi.liikennevirasto.viite.RoadAddressFilters.{connectingBothHeads, continuousTopology}
 import fi.liikennevirasto.viite.dao.BeforeAfter.{After, Before}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Discontinuous, MinorDiscontinuity, ParallelLink}
@@ -47,7 +47,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       nodePointDAO.create(nodePoints.map(_.copy(id = NewIdValue, nodeNumber = newNodeNumber, createdBy = username)))
     }
 
-      def updateJunctionsAndJunctionPoints(junctions: Seq[Junction], values: Map[String, Any]): Unit = {
+    def updateJunctionsAndJunctionPoints(junctions: Seq[Junction], values: Map[String, Any]): Unit = {
       //  This map `values` was added so other fields could be modified in the process
       val newNodeNumber = values.getOrElse("nodeNumber", None).asInstanceOf[Option[Long]]
       val junctionNumber = values.getOrElse("junctionNumber", None).asInstanceOf[Option[Long]]
@@ -55,7 +55,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       junctions.foreach { junction =>
         val newJunctionNumber = if (updateJunctionNumber) {
           junctionNumber
-        } else { junction.junctionNumber }
+        } else {
+          junction.junctionNumber
+        }
         val junctionPoints = junctionPointDAO.fetchByJunctionIds(Seq(junction.id))
         junctionDAO.expireById(Seq(junction.id))
         junctionPointDAO.expireById(junctionPoints.map(_.id))
