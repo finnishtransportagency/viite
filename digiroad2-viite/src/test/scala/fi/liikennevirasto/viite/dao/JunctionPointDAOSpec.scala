@@ -104,27 +104,4 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  // TODO Maybe can be removed
-  test("Test fetchByNodeNumber When node has one junction with two junction points Then return two junction points") {
-    runWithRollback {
-      val newRoadwayNumber = Sequences.nextRoadwayNumber
-      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined,
-        Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L,
-        TerminationCode.NoTermination, DateTime.now, None)
-      roadwayDAO.create(Seq(roadway))
-      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
-      val nodeNumber = nodeDAO.create(Seq(Node(NewIdValue, NewIdValue, Point(0.0, 0.0, 0.0), Some("Name"),
-        NodeType.NormalIntersection, DateTime.now().plusYears(1), None, DateTime.now, None, "Test",
-        Some(DateTime.now()), registrationDate = DateTime.now()))).head
-      val junctionId = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Some(nodeNumber)))).head
-      val ids = dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
-        testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
-
-      val junctionPoints = dao.fetchByNodeNumber(nodeNumber)
-      junctionPoints.size should be(2)
-      junctionPoints.head.addrM should be(10)
-      junctionPoints.last.addrM should be(10)
-    }
-  }
-
 }
