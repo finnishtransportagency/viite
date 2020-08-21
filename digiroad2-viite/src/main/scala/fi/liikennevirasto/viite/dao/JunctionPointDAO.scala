@@ -138,18 +138,6 @@ class JunctionPointDAO extends BaseDAO {
     }
   }
 
-  // TODO Maybe can be removed
-  def fetchByNodeNumber(nodeNumber: Long): Seq[JunctionPoint] = {
-    val query =
-      s"""
-        $junctionPointQuery
-        JOIN NODE N ON (J.NODE_NUMBER = N.NODE_NUMBER AND N.VALID_TO IS NULL AND N.END_DATE IS NULL)
-        WHERE JP.VALID_TO IS NULL
-        AND N.NODE_NUMBER = $nodeNumber
-      """
-    queryList(query)
-  }
-
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle): Seq[JunctionPoint] = {
     time(logger, "Fetch JunctionPoints by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
