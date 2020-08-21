@@ -67,6 +67,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           val oldJunctionPoint = junctionPointDAO.fetchByIds(Seq(jp.id)).headOption
           if (updateJunctionPointAddresses && oldJunctionPoint.isDefined && oldJunctionPoint.get.addrM != jp.addrM) {
 
+            // TODO Check that the address change is within acceptable boundaries:
+            // - Less than 10 meters from the address calculated at this point if there were no calibration point here
+            // - Within the address range of the neighbouring links
+
             // Update JunctionPoint and CalibrationPoint addresses by pointing them to another RoadwayPoint
             val roadwayPointId = getRoadwayPointId(jp.roadwayNumber, jp.addrM, username)
             CalibrationPointsUtils.updateCalibrationPointAddress(oldJunctionPoint.get.roadwayPointId, roadwayPointId, username)
