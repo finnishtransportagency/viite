@@ -47,7 +47,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       nodePointDAO.create(nodePoints.map(_.copy(id = NewIdValue, nodeNumber = newNodeNumber, createdBy = username)))
     }
 
-    def updateJunctionsAndJunctionPoints(junctions: Seq[Junction], values: Map[String, Any]): Unit = {
+    def updateJunctionsAndJunctionPoints(junctions: Seq[Junction], values: Map[String, Any],
+                                         updateJunctionPointAddresses: Boolean = false): Unit = {
       //  This map `values` was added so other fields could be modified in the process
       val newNodeNumber = values.getOrElse("nodeNumber", None).asInstanceOf[Option[Long]]
       val junctionNumber = values.getOrElse("junctionNumber", None).asInstanceOf[Option[Long]]
@@ -62,7 +63,20 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         junctionDAO.expireById(Seq(junction.id))
         junctionPointDAO.expireById(junctionPoints.map(_.id))
         val junctionId = junctionDAO.create(Seq(junction.copy(id = NewIdValue, nodeNumber = newNodeNumber, junctionNumber = newJunctionNumber, createdBy = username))).head
-        junctionPointDAO.create(junctionPoints.map(_.copy(id = NewIdValue, junctionId = junctionId, createdBy = username)))
+        val updatedJunctionPoints = junctionPoints.map { jp =>
+          val oldJunctionPoint = junctionPointDAO.fetchByIds(Seq(jp.id)).headOption
+          if (updateJunctionPointAddresses && oldJunctionPoint.isDefined && oldJunctionPoint.get.addrM != jp.addrM) {
+
+            // Update JunctionPoint and CalibrationPoint addresses by pointing them to another RoadwayPoint
+            val roadwayPointId = getRoadwayPointId(jp.roadwayNumber, jp.addrM, username)
+            CalibrationPointsUtils.updateCalibrationPointAddress(oldJunctionPoint.get.roadwayPointId, roadwayPointId, username)
+
+            jp.copy(id = NewIdValue, junctionId = junctionId, roadwayPointId = roadwayPointId, createdBy = username)
+          } else {
+            jp.copy(id = NewIdValue, junctionId = junctionId, createdBy = username)
+          }
+        }
+        junctionPointDAO.create(updatedJunctionPoints)
       }
     }
 
@@ -80,10 +94,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       val currentJunctions = junctionDAO.fetchJunctionByNodeNumber(nodeNumber)
       val (filteredJunctions, junctionsToDetach: Seq[Junction]) = currentJunctions.partition(junction => junctions.map(_.id).contains(junction.id))
-      updateJunctionsAndJunctionPoints(junctionsToDetach, Map("nodeNumber" -> None, "junctionNumber" -> None))
+      updateJunctionsAndJunctionPoints(junctionsToDetach, Map("nodeNumber" -> None, "junctionNumber" -> None), true)
 
       val junctionsToAttach = junctions.filter(junction => !currentJunctions.map(_.id).contains(junction.id))
-      updateJunctionsAndJunctionPoints(junctionsToAttach, Map("nodeNumber" -> Some(nodeNumber)))
+      updateJunctionsAndJunctionPoints(junctionsToAttach, Map("nodeNumber" -> Some(nodeNumber)), true)
 
       val updatedJunctions = junctions.filterNot(junction => {
         filteredJunctions.exists { current =>
@@ -92,6 +106,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }).filter(j => !junctionsToAttach.map(_.id).contains(j.id))
 
       updateJunctionsAndJunctionPoints(updatedJunctions, Map("nodeNumber" -> Some(nodeNumber)))
+
       if (isObsoleteNode(junctions, nodePoints)) {
         val old = nodeDAO.fetchById(node.id)
         nodeDAO.expireById(Seq(old.get.id))
@@ -299,16 +314,17 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
 
-  def handleJunctionAndJunctionPoints(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
-    def getRoadwayPointId(roadwayNumber: Long, address: Long, username: String): Long = {
-      val existingRoadwayPoint = roadwayPointDAO.fetch(roadwayNumber, address)
-      val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-        existingRoadwayPoint.get.id
-      } else {
-        roadwayPointDAO.create(roadwayNumber, address, username)
-      }
-      rwPoint
+  def getRoadwayPointId(roadwayNumber: Long, address: Long, username: String): Long = {
+    val existingRoadwayPoint = roadwayPointDAO.fetch(roadwayNumber, address)
+    val rwPoint = if (existingRoadwayPoint.nonEmpty) {
+      existingRoadwayPoint.get.id
+    } else {
+      roadwayPointDAO.create(roadwayNumber, address, username)
     }
+    rwPoint
+  }
+
+  def handleJunctionAndJunctionPoints(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
 
     /**
       * @return the junction id only if the road address r is connected to the road address projectLink

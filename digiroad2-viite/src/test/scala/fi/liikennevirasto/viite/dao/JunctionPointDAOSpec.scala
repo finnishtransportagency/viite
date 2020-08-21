@@ -104,6 +104,7 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  // TODO Maybe can be removed
   test("Test fetchByNodeNumber When node has one junction with two junction points Then return two junction points") {
     runWithRollback {
       val newRoadwayNumber = Sequences.nextRoadwayNumber

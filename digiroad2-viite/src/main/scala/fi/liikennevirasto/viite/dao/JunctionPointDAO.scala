@@ -138,6 +138,7 @@ class JunctionPointDAO extends BaseDAO {
     }
   }
 
+  // TODO Maybe can be removed
   def fetchByNodeNumber(nodeNumber: Long): Seq[JunctionPoint] = {
     val query =
       s"""
