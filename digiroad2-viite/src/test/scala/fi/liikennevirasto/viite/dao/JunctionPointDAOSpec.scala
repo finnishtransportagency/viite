@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
@@ -22,6 +23,7 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
   val junctionDAO = new JunctionDAO
   val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
+  val nodeDAO = new NodeDAO
 
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
 
@@ -101,4 +103,27 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
       fetched.head.id should be(ids.last)
     }
   }
+
+  test("Test fetchByNodeNumber When node has one junction with two junction points Then return two junction points") {
+    runWithRollback {
+      val newRoadwayNumber = Sequences.nextRoadwayNumber
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined,
+        Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L,
+        TerminationCode.NoTermination, DateTime.now, None)
+      roadwayDAO.create(Seq(roadway))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
+      val nodeNumber = nodeDAO.create(Seq(Node(NewIdValue, NewIdValue, Point(0.0, 0.0, 0.0), Some("Name"),
+        NodeType.NormalIntersection, DateTime.now().plusYears(1), None, DateTime.now, None, "Test",
+        Some(DateTime.now()), registrationDate = DateTime.now()))).head
+      val junctionId = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Some(nodeNumber)))).head
+      val ids = dao.create(Seq(testJunctionPoint1.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId),
+        testJunctionPoint2.copy(roadwayPointId = roadwayPointId1, junctionId = junctionId)))
+
+      val junctionPoints = dao.fetchByNodeNumber(nodeNumber)
+      junctionPoints.size should be(2)
+      junctionPoints.head.addrM should be(10)
+      junctionPoints.last.addrM should be(10)
+    }
+  }
+
 }
