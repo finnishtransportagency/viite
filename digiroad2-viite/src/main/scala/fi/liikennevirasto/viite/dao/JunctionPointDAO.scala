@@ -120,6 +120,16 @@ class JunctionPointDAO extends BaseDAO {
     queryList(query).headOption
   }
 
+  def fetchByRoadwayAddress(roadwayNumber: Long, addrM: Long): Option[JunctionPoint] = {
+    val query =
+      s"""
+        $junctionPointQuery
+        WHERE JP.VALID_TO IS NULL
+        AND RP.ROADWAY_NUMBER = $roadwayNumber AND RP.ADDR_M = $addrM
+      """
+    queryList(query).headOption
+  }
+
   def fetchByRoadwayPointId(roadwayPointId: Long): Seq[JunctionPoint] = {
     fetchByRoadwayPointIds(Seq(roadwayPointId))
   }

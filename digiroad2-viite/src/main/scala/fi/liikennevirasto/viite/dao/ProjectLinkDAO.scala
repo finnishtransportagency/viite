@@ -562,6 +562,15 @@ class ProjectLinkDAO {
     }
   }
 
+  def getOtherProjectLinks(projectId: Long): Seq[ProjectLink] = {
+    time(logger, "Get project links all") {
+      val query =
+        s"""$projectLinkQueryBase
+                where PROJECT_LINK.project_id <> $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+      listQuery(query)
+    }
+  }
+
   def getProjectLinksByIds(projectId: Long, ids: Set[Long]): Seq[ProjectLink] = {
     time(logger, "Get project links by ids") {
       val filter = if (ids.nonEmpty) s"""AND PROJECT_LINK.LINEAR_LOCATION_ID in (${ids.mkString(",")})""" else ""
