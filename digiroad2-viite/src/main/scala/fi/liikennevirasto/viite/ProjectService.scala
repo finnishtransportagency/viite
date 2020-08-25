@@ -407,19 +407,48 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val projectLinks: Seq[ProjectLink] = linkIds.toSet.map { id: Long =>
             newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, roadType, roadEly, roadName, reversed)
           }.toSeq
-          if (coordinates.isDefined) {
-            saveProjectCoordinates(project.id, coordinates.get)
-          }
-          else {
-            saveProjectCoordinates(project.id, calculateProjectCoordinates(project.id))
-          }
-          addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId, newTransaction = false, discontinuity) match {
-            case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
-            case None => Map("success" -> true, "projectErrors" -> validateProjectById(projectId, newSession = false))
+
+          if (isConnectedtoOtherProjects(projectId, projectLinks)) {
+            Map("success" -> false, "errorMessage" -> ErrorWithNewAction)
+          } else {
+            if (coordinates.isDefined) {
+              saveProjectCoordinates(project.id, coordinates.get)
+            }
+            else {
+              saveProjectCoordinates(project.id, calculateProjectCoordinates(project.id))
+            }
+            addNewLinksToProject(sortRamps(projectLinks, linkIds), projectId, user, linkId, newTransaction = false, discontinuity) match {
+              case Some(errorMessage) => {
+                Map("success" -> false, "errorMessage" -> errorMessage)
+              }
+              case None => {
+                Map("success" -> true, "projectErrors" -> validateProjectById(projectId, newSession = false))
+              }
+            }
           }
         case Some(error) => Map("success" -> false, "errorMessage" -> error)
       }
     }
+  }
+
+  def isConnectedtoOtherProjects(projectId: Long, projectLinks: Seq[ProjectLink]): Boolean = {
+    val otherProjectLinks = projectLinkDAO.getOtherProjectLinks(projectId)
+    var isConnectedLinks = false
+    var junctionId = Option(0L)
+    otherProjectLinks.foreach(pl => {
+      val aPointFirst = pl.geometry.head
+      val aPointLast = pl.geometry.last
+      projectLinks.foreach(pln => {
+        val bPointFirst = pln.geometry.head
+        val bPointLast = pln.geometry.last
+        if (aPointFirst.connected(bPointFirst) || aPointFirst.connected(bPointLast)
+          || aPointLast.connected(bPointFirst) || aPointLast.connected(bPointLast)) {
+          isConnectedLinks = true
+          junctionId = junctionPointDAO.fetchByRoadwayAddress(pl.roadwayNumber, pl.startAddrMValue).map(_.junctionId)
+        }
+      })
+    })
+    isConnectedLinks && junctionId == None
   }
 
   def addNewLinksToProject(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: Long, newTransaction: Boolean = true, discontinuity: Discontinuity): Option[String] = {
