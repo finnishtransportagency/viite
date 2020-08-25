@@ -202,8 +202,11 @@
             return '<tr><td class="' + tableRowClass + '">' + roadPartNumber + '</td></tr>';
           });
 
-          var addresses = _.map(_.map(junctionPointsInfo, 'addr'), function (addr) {
-            return '<tr><td class="' + tableRowClass + '"><span class="junction-point-address-label">' + addr + '</span>' + junctionPointInputAddr(addr) + '</td></tr>';
+          var addresses = _.map(junctionPointsInfo, function (jp) {
+            var addr = jp.addr;
+            var beforeAfter = jp.beforeAfter;
+            return '<tr><td class="' + tableRowClass + '"><span class="junction-point-address-label">' + addr + '</span>' +
+              (beforeAfter === "EJ" ? junctionPointInputAddr(addr) : "") + '</td></tr>';
           });
 
           var beforeOrAfter = _.map(_.map(junctionPointsInfo, 'beforeAfter'), function (beforeAfter) {
