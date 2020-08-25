@@ -2820,7 +2820,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         None, 86400L)
       val linkBeforeRoundaboutContinuous = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
         None, 12347L, 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
-        Seq(Point(0.0, 0.0), Point(5.0, 0.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(5.0, 0.0))), 0L, 0, 0, reversed = false,
+        Seq(Point(0.0, 1.0), Point(5.0, 0.0)), 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(Seq(Point(0.0, 1.0), Point(5.0, 0.0))), 0L, 0, 0, reversed = false,
         None, 86400L)
 
 
