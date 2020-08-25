@@ -466,6 +466,7 @@
         $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||
         !selectedNodesAndJunctions.validateJunctionNumbers() ||
+        !selectedNodesAndJunctions.validateJunctionPointAddresses() ||
         !selectedNodesAndJunctions.isDirty();
     };
 

@@ -208,6 +208,8 @@
 
       var verified = true;
 
+      // TODO Fix this
+      // SelectedNodesAndJunctions.js:211 Uncaught TypeError: Cannot read property 'addr' of undefined
       _.each(_.groupBy(current.node.junctions.junctionPoints.addr, 'addr'), function (addr) {
         eventbus.trigger('junction:setCustomValidity', addr, errorMessage(addr));
       });
