@@ -441,20 +441,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       projectLinks.foreach(pln => {
         val bPointFirst = pln.geometry.head
         val bPointLast = pln.geometry.last
-        if (aPointFirst.connected(bPointFirst) || aPointFirst.connected(bPointLast) || aPointLast.connected(bPointFirst) || aPointLast.connected(bPointLast)) {
+        if (aPointFirst.connected(bPointFirst) || aPointFirst.connected(bPointLast)
+          || aPointLast.connected(bPointFirst) || aPointLast.connected(bPointLast)) {
           isConnectedLinks = true
           junctionId = junctionPointDAO.fetchByRoadwayAddress(pl.roadwayNumber, pl.startAddrMValue).map(_.junctionId)
         }
       })
     })
-    if (isConnectedLinks && junctionId == None) {
-      true
-    } else {
-      false
-    }
+    isConnectedLinks && junctionId == None
   }
 
-    def addNewLinksToProject(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: Long, newTransaction: Boolean = true, discontinuity: Discontinuity): Option[String] = {
+  def addNewLinksToProject(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: Long, newTransaction: Boolean = true, discontinuity: Discontinuity): Option[String] = {
     if (newTransaction)
       withDynTransaction {
         addNewLinksToProjectInTX(newLinks, projectId, user, firstLinkId, discontinuity)
