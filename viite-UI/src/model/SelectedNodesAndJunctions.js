@@ -120,6 +120,17 @@
       }
     };
 
+    var setJunctionPointAddress = function (id, addr) {
+      var jp = _.find(current.node.junctions.junctionPoints, function (junctionPointToSet) {
+        return junctionPointToSet.id === id;
+      });
+
+      if (!_.isUndefined(jp)) {
+        jp.addr = addr;
+        eventbus.trigger('junctionPoint:validate');
+      }
+    };
+
     var detachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
         _.remove(current.node.junctions, function (j) {
@@ -175,6 +186,30 @@
 
       _.each(_.groupBy(current.node.junctions, 'junctionNumber'), function (junctions) {
         eventbus.trigger('junction:setCustomValidity', junctions, errorMessage(junctions));
+      });
+
+      return verified;
+    };
+
+    var validateJunctionPointAddresses = function () {
+
+      var errorMessage = function (addr) {
+        var message = '';
+
+        if (addr < 1) {
+          message = 'Tieosan keskellä olevan liittymäkohdan osoitteen on oltava vähintään yksi'; // User is not allowed to set the address smaller than one
+        } else if (_.isNaN(addr) || _.isEmpty(addr)) {
+          message = 'Liittymäkohdan osoite on pakollinen tieto'; // junction point address is a compulsory information
+        }
+
+        verified = verified && _.isEmpty(message);
+        return message;
+      };
+
+      var verified = true;
+
+      _.each(_.groupBy(current.node.junctions.junctionPoints.addr, 'addr'), function (addr) {
+        eventbus.trigger('junction:setCustomValidity', addr, errorMessage(addr));
       });
 
       return verified;
@@ -285,9 +320,11 @@
       getInitialStartDate: getInitialStartDate,
       setStartDate: setStartDate,
       setJunctionNumber: setJunctionNumber,
+      setJunctionPointAddress: setJunctionPointAddress,
       detachJunctionAndNodePoints: detachJunctionAndNodePoints,
       attachJunctionAndNodePoints: attachJunctionAndNodePoints,
       validateJunctionNumbers: validateJunctionNumbers,
+      validateJunctionPointAddresses: validateJunctionPointAddresses,
       isDirty: isDirty,
       isObsoleteNode: isObsoleteNode,
       closeNode: closeNode,

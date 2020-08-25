@@ -168,8 +168,9 @@
           '" class="form-control junction-number-input" id = "junction-number-textbox-' + junction.id + '" junctionId="' + junction.id + '" maxlength="2" value="' + (junction.junctionNumber || '') + '"/></td>';
       };
 
-      var junctionPointInputAddr = function (addr) {
-        return '<input type="text" class="form-control junction-point-address-input" maxlength="5" value="' + addr + '" /></td>';
+      var junctionPointInputAddr = function (jp) {
+        return '<input type="text" class="form-control junction-point-address-input" id = "junction-point-address-input-' +
+          jp.id + '" junctionPointId="' + jp.id + '" maxlength="5" value="' + jp.addr + '" /></td>';
       };
 
       var toMessage = function (junctionsInfo) {
@@ -206,7 +207,7 @@
             var addr = jp.addr;
             var beforeAfter = jp.beforeAfter;
             return '<tr><td class="' + tableRowClass + '"><span class="junction-point-address-label">' + addr + '</span>' +
-              (beforeAfter === "EJ" ? junctionPointInputAddr(addr) : "") + '</td></tr>';
+              (beforeAfter === "EJ" ? junctionPointInputAddr(jp) : "") + '</td></tr>';
           });
 
           var beforeOrAfter = _.map(_.map(junctionPointsInfo, 'beforeAfter'), function (beforeAfter) {
@@ -250,6 +251,7 @@
         var info = [];
         _.map(junction.junctionPoints, function (point) {
           var row = {
+            id: point.id,
             roadNumber: point.roadNumber,
             roadPartNumber: point.roadPartNumber,
             track: point.track,
@@ -273,6 +275,7 @@
         var doubleRows = _.map(doubleHomogeneousRows, function (point) {
           var first = _.head(point);
           return {
+            id: first.id,
             roadNumber: first.roadNumber,
             track: first.track,
             roadPartNumber: first.roadPartNumber,
@@ -284,6 +287,7 @@
         var singleRows = _.map(singleHomogeneousRows, function (point) {
           var first = _.head(point);
           return {
+            id: first.id,
             roadNumber: first.roadNumber,
             track: first.track,
             roadPartNumber: first.roadPartNumber,
@@ -432,12 +436,6 @@
       $('.junction-point-address-input').show();
     };
 
-    var hideAddressInputs = function () {
-      $('#edit-junction-point-addresses').show();
-      $('.junction-point-address-label').show();
-      $('.junction-point-address-input').hide();
-    };
-
     var addDatePicker = function (fromElement, minDate) {
       picker = dateutil.addSingleDatePickerWithMinDate(fromElement, minDate);
       fromElement.on('input', function () {
@@ -485,6 +483,10 @@
 
       rootElement.on('change', '[id^=junction-number-textbox-]', function () {
         selectedNodesAndJunctions.setJunctionNumber(parseInt($(this).attr('junctionId')), parseInt(this.value));
+      });
+
+      rootElement.on('change', '[id^=junction-point-address-input-]', function () {
+        selectedNodesAndJunctions.setJunctionPointAddress(parseInt($(this).attr('junctionPointId')), parseInt(this.value));
       });
 
       var buildMessage = function (junction, nodePoints) {
@@ -738,6 +740,10 @@
 
           eventbus.on('junction:validate', function () {
             selectedNodesAndJunctions.validateJunctionNumbers();
+          });
+
+          eventbus.on('junctionPoint:validate', function () {
+            selectedNodesAndJunctions.validateJunctionPointAddresses();
           });
 
           eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate ' +
