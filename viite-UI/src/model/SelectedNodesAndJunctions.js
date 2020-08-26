@@ -238,7 +238,6 @@
       //  comparing the junctions of both nodes
       if (original && original.junctions && original.junctions.length !== 0 && original.junctions.length === current.node.junctions.length) {
         junctionsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.junctions, 'id'), _.sortBy(current.node.junctions, 'id')), _.spread(function (originalJunction, currentJunction) {
-          // return isEqualWithout(originalJunction, currentJunction, 'junctionPoints');
           return {equality: isEqualWithout(originalJunction, currentJunction, 'junctionPoints')};
         })), ['equality', false]);
 
@@ -246,7 +245,6 @@
         junctionPointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.junctions, 'id'), _.sortBy(current.node.junctions, 'id')), _.spread(function (originalJunction, currentJunction) {
           if (originalJunction.junctionPoints.length === currentJunction.junctionPoints.length && originalJunction.junctionPoints.length !== 0) {
             return _.flatMap(_.zip(originalJunction.junctionPoints, currentJunction.junctionPoints), _.spread(function (originalJunctionPoint, currentJunctionPoint) {
-              // return isEqualWithout(originalJunctionPoint, currentJunctionPoint, 'coordinates');
               return {equality: isEqualWithout(originalJunctionPoint, currentJunctionPoint, 'coordinates')};
             }));
           } else return false;
