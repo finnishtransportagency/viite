@@ -164,13 +164,14 @@
       };
 
       var junctionInputNumber = function (junction) {
-        return '<td><input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)' +
-          '" class="form-control junction-number-input" id = "junction-number-textbox-' + junction.id + '" junctionId="' + junction.id + '" maxlength="2" value="' + (junction.junctionNumber || '') + '"/></td>';
+        return '<td><input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)"' +
+          ' class="form-control junction-number-input" id="junction-number-textbox-' + junction.id + '" junctionId="' + junction.id + '" maxlength="2" value="' + (junction.junctionNumber || '') + '"/></td>';
       };
 
       var junctionPointInputAddr = function (jp) {
-        return '<input type="text" class="form-control junction-point-address-input" id = "junction-point-address-input-' +
-          jp.id + '" junctionPointId="' + jp.id + '" maxlength="5" value="' + jp.addr + '" /></td>';
+        return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)"' +
+          ' class="form-control junction-point-address-input" id="junction-point-address-input-' +
+          jp.id + '" junctionPointId="' + jp.id + '" maxlength="5" value="' + jp.addr + '" />';
       };
 
       var toMessage = function (junctionsInfo) {
@@ -274,8 +275,9 @@
 
         var doubleRows = _.map(doubleHomogeneousRows, function (point) {
           var first = _.head(point);
+          var last = _.last(point);
           return {
-            id: first.id,
+            id: Math.min(first.id, last.id) + '-' + Math.max(first.id, last.id),
             roadNumber: first.roadNumber,
             track: first.track,
             roadPartNumber: first.roadPartNumber,
@@ -487,7 +489,15 @@
       });
 
       rootElement.on('change', '[id^=junction-point-address-input-]', function () {
-        selectedNodesAndJunctions.setJunctionPointAddress(parseInt($(this).attr('junctionPointId')), parseInt(this.value));
+        var idString = $(this).attr('junctionPointId');
+        var ids = idString.split("-");
+        var addr = parseInt(this.value);
+        if (ids.length > 0) {
+          selectedNodesAndJunctions.setJunctionPointAddress(parseInt(ids[0]), addr);
+        }
+        if (ids.length > 1) {
+          selectedNodesAndJunctions.setJunctionPointAddress(parseInt(ids[1]), addr);
+        }
       });
 
       var buildMessage = function (junction, nodePoints) {
@@ -756,6 +766,10 @@
             _.each(junctions, function (junction) {
               document.getElementById('junction-number-textbox-' + junction.id).setCustomValidity(errorMessage);
             });
+          });
+
+          eventbus.on('junctionPoint:setCustomValidity', function (junctionPoint, errorMessage) {
+            document.getElementById('junction-point-address-input-' + junctionPoint.id).setCustomValidity(errorMessage);
           });
 
           selectedNodesAndJunctions.addJunctionTemplates(junctionTemplates);
