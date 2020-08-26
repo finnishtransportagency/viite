@@ -508,8 +508,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       )
       projectLinkDAO.create(projectLinks)
 
-      connectedRoadways.flatMap(roadway => projectReservedPartDAO.fetchProjectReservedJunctions(roadway.roadNumber, roadway.roadPartNumber)).size should be (connectedRoadways.size)
-      notConnectedroadways.flatMap(roadway => projectReservedPartDAO.fetchProjectReservedJunctions(roadway.roadNumber, roadway.roadPartNumber)).size should be (0)
+      connectedRoadways.flatMap(roadway => projectReservedPartDAO.fetchProjectReservedJunctions(roadway.roadNumber, roadway.roadPartNumber, 0L)).size should be (connectedRoadways.size)
+      notConnectedroadways.flatMap(roadway => projectReservedPartDAO.fetchProjectReservedJunctions(roadway.roadNumber, roadway.roadPartNumber, 0L)).size should be (0)
     }
   }
 
@@ -619,8 +619,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
       projectLinkDAO.create(projectLinks1 ++ projectLinks2)
 
-      projectReservedPartDAO.fetchProjectReservedJunctions(intersectingRoadway.roadNumber, intersectingRoadway.roadPartNumber).head should be (projectName1)
-      projectReservedPartDAO.fetchProjectReservedJunctions(intersectingRoadway2.roadNumber, intersectingRoadway2.roadPartNumber).head should be (projectName2)
+      projectReservedPartDAO.fetchProjectReservedJunctions(intersectingRoadway.roadNumber, intersectingRoadway.roadPartNumber, 0L).head should be (projectName1)
+      projectReservedPartDAO.fetchProjectReservedJunctions(intersectingRoadway2.roadNumber, intersectingRoadway2.roadPartNumber, 0L).head should be (projectName2)
     }
   }
 }
