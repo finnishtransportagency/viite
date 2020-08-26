@@ -121,13 +121,18 @@
     };
 
     var setJunctionPointAddress = function (id, addr) {
-      var jp = _.find(current.node.junctions.junctionPoints, function (junctionPointToSet) {
-        return junctionPointToSet.id === id;
+      var junctionPoints = _.flatMap(current.node.junctions, function (junction) {
+        return junction.junctionPoints
+      });
+      var jp = _.find(junctionPoints, function (jp) {
+        return jp.id === id;
       });
 
       if (!_.isUndefined(jp)) {
         jp.addr = addr;
         eventbus.trigger('junctionPoint:validate');
+      } else {
+        console.log("Failed to find junction point " + jp.id + " and set it's address to " + addr + ".");
       }
     };
 
@@ -208,10 +213,12 @@
 
       var verified = true;
 
-      // TODO Fix this
-      // SelectedNodesAndJunctions.js:211 Uncaught TypeError: Cannot read property 'addr' of undefined
-      _.each(_.groupBy(current.node.junctions.junctionPoints.addr, 'addr'), function (addr) {
-        eventbus.trigger('junction:setCustomValidity', addr, errorMessage(addr));
+      _.each(current.node.junctions, function (junction) {
+        _.each(junction.junctionPoints, function (junctionPoint) {
+          // TODO Handle two junction points here
+
+          eventbus.trigger('junctionPoint:setCustomValidity', junctionPoint, errorMessage(junctionPoint));
+        })
       });
 
       return verified;
