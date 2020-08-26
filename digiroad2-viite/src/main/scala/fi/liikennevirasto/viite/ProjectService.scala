@@ -444,7 +444,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if (aPointFirst.connected(bPointFirst) || aPointFirst.connected(bPointLast)
           || aPointLast.connected(bPointFirst) || aPointLast.connected(bPointLast)) {
           isConnectedLinks = true
-          junctionId = junctionPointDAO.fetchByRoadwayAddress(pl.roadwayNumber, pl.startAddrMValue).map(_.junctionId)
+          junctionId = junctionPointDAO.fetchByMultipleRoadwayPoints(pl.roadwayNumber, pl.startAddrMValue, pl.endAddrMValue).map(_.junctionId)
         }
       })
     })
