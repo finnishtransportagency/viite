@@ -137,7 +137,7 @@
           if (_.isUndefined(jp)) {
             console.log("Failed to find junction point " + id + " and set it's address to " + addr + ".");
           } else {
-            jp.addr = addr;
+            jp.addrM = addr;
           }
         });
         eventbus.trigger('junctionPoint:validate', idString, addr);
