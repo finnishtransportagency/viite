@@ -47,12 +47,13 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       nodePointDAO.create(nodePoints.map(_.copy(id = NewIdValue, nodeNumber = newNodeNumber, createdBy = username)))
     }
 
-    def updateJunctionsAndJunctionPoints(junctions: Seq[Junction], values: Map[String, Any],
-                                         updateJunctionPointAddresses: Boolean = false): Unit = {
+    def updateJunctionsAndJunctionPoints(junctions: Seq[Junction], values: Map[String, Any]): Unit = {
       //  This map `values` was added so other fields could be modified in the process
       val newNodeNumber = values.getOrElse("nodeNumber", None).asInstanceOf[Option[Long]]
       val junctionNumber = values.getOrElse("junctionNumber", None).asInstanceOf[Option[Long]]
       val updateJunctionNumber = values.contains("junctionNumber")
+
+      // TODO If only junction points are changed, junctions here will be empty
       junctions.foreach { junction =>
         val newJunctionNumber = if (updateJunctionNumber) {
           junctionNumber
@@ -65,7 +66,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val junctionId = junctionDAO.create(Seq(junction.copy(id = NewIdValue, nodeNumber = newNodeNumber, junctionNumber = newJunctionNumber, createdBy = username))).head
         val updatedJunctionPoints = junctionPoints.map { jp =>
           val oldJunctionPoint = junctionPointDAO.fetchByIds(Seq(jp.id)).headOption
-          if (updateJunctionPointAddresses && oldJunctionPoint.isDefined && oldJunctionPoint.get.addrM != jp.addrM) {
+          if (oldJunctionPoint.isDefined && oldJunctionPoint.get.addrM != jp.addrM) {
 
             // TODO Check that the address change is within acceptable boundaries:
             // - Less than 10 meters from the address calculated at this point if there were no calibration point here
@@ -98,10 +99,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       val currentJunctions = junctionDAO.fetchJunctionByNodeNumber(nodeNumber)
       val (filteredJunctions, junctionsToDetach: Seq[Junction]) = currentJunctions.partition(junction => junctions.map(_.id).contains(junction.id))
-      updateJunctionsAndJunctionPoints(junctionsToDetach, Map("nodeNumber" -> None, "junctionNumber" -> None), true)
+      updateJunctionsAndJunctionPoints(junctionsToDetach, Map("nodeNumber" -> None, "junctionNumber" -> None))
 
       val junctionsToAttach = junctions.filter(junction => !currentJunctions.map(_.id).contains(junction.id))
-      updateJunctionsAndJunctionPoints(junctionsToAttach, Map("nodeNumber" -> Some(nodeNumber)), true)
+      updateJunctionsAndJunctionPoints(junctionsToAttach, Map("nodeNumber" -> Some(nodeNumber)))
 
       val updatedJunctions = junctions.filterNot(junction => {
         filteredJunctions.exists { current =>
@@ -110,6 +111,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }).filter(j => !junctionsToAttach.map(_.id).contains(j.id))
 
       updateJunctionsAndJunctionPoints(updatedJunctions, Map("nodeNumber" -> Some(nodeNumber)))
+
+      // TODO Check for updated junction points, junctions might be unchanged, but junction point addresses changed
 
       if (isObsoleteNode(junctions, nodePoints)) {
         val old = nodeDAO.fetchById(node.id)
