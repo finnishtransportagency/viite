@@ -468,12 +468,11 @@
         $('#nodeTypeDropdown').val() === LinkValues.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||
         !selectedNodesAndJunctions.validateJunctionNumbers() ||
-        !selectedNodesAndJunctions.validateJunctionPointAddresses() ||
         !selectedNodesAndJunctions.isDirty();
     };
 
     var closeNode = function (cancel) {
-      eventbus.off('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:validate junction:setCustomValidity junction:detach nodePoint:detach junction:attach nodePoint:attach');
+      eventbus.off('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:validate junctionPoint:validate junction:setCustomValidity junction:detach nodePoint:detach junction:attach nodePoint:attach');
       selectedNodesAndJunctions.closeNode(cancel);
     };
 
@@ -490,14 +489,8 @@
 
       rootElement.on('change', '[id^=junction-point-address-input-]', function () {
         var idString = $(this).attr('junctionPointId');
-        var ids = idString.split("-");
         var addr = parseInt(this.value);
-        if (ids.length > 0) {
-          selectedNodesAndJunctions.setJunctionPointAddress(parseInt(ids[0]), addr);
-        }
-        if (ids.length > 1) {
-          selectedNodesAndJunctions.setJunctionPointAddress(parseInt(ids[1]), addr);
-        }
+        selectedNodesAndJunctions.setJunctionPointAddress(idString, addr);
       });
 
       var buildMessage = function (junction, nodePoints) {
@@ -753,8 +746,8 @@
             selectedNodesAndJunctions.validateJunctionNumbers();
           });
 
-          eventbus.on('junctionPoint:validate', function () {
-            selectedNodesAndJunctions.validateJunctionPointAddresses();
+          eventbus.on('junctionPoint:validate', function (idString, addr) {
+            selectedNodesAndJunctions.validateJunctionPointAddress(idString, addr);
           });
 
           eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate ' +
@@ -768,8 +761,11 @@
             });
           });
 
-          eventbus.on('junctionPoint:setCustomValidity', function (junctionPoint, errorMessage) {
-            document.getElementById('junction-point-address-input-' + junctionPoint.id).setCustomValidity(errorMessage);
+          eventbus.on('junctionPoint:setCustomValidity', function (idString, errorMessage) {
+            var input = document.getElementById('junction-point-address-input-' + idString);
+            if (input) {
+              input.setCustomValidity(errorMessage);
+            }
           });
 
           selectedNodesAndJunctions.addJunctionTemplates(junctionTemplates);

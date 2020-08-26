@@ -120,19 +120,29 @@
       }
     };
 
-    var setJunctionPointAddress = function (id, addr) {
+    var getJunctionPoint = function (id) {
       var junctionPoints = _.flatMap(current.node.junctions, function (junction) {
-        return junction.junctionPoints
+        return junction.junctionPoints;
       });
-      var jp = _.find(junctionPoints, function (jp) {
+      return _.find(junctionPoints, function (jp) {
         return jp.id === id;
       });
+    };
 
-      if (!_.isUndefined(jp)) {
-        jp.addr = addr;
-        eventbus.trigger('junctionPoint:validate');
+    var setJunctionPointAddress = function (idString, addr) {
+      var ids = idString.split("-");
+      if (ids.length === 2) {
+        _.each(ids, function (id) {
+          var jp = getJunctionPoint(parseInt(id));
+          if (_.isUndefined(jp)) {
+            console.log("Failed to find junction point " + id + " and set it's address to " + addr + ".");
+          } else {
+            jp.addr = addr;
+          }
+        });
+        eventbus.trigger('junctionPoint:validate', idString, addr);
       } else {
-        console.log("Failed to find junction point " + jp.id + " and set it's address to " + addr + ".");
+        console.log("Failed to update junction point address. (ids: " + idString + ", address: " + addr + ")");
       }
     };
 
@@ -153,8 +163,8 @@
 
     var attachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
-        if (_.filter(current.node.junctions, function (jp) {
-          return jp.id === junction.id;
+        if (_.filter(current.node.junctions, function (j) {
+          return j.id === junction.id;
         }).length === 0) {
           current.node.junctions.push(junction);
           eventbus.trigger('junction:attach', junction);
@@ -196,32 +206,17 @@
       return verified;
     };
 
-    var validateJunctionPointAddresses = function () {
+    var validateJunctionPointAddress = function (idString, addr) {
+      var message = '';
 
-      var errorMessage = function (addr) {
-        var message = '';
+      if (addr < 1) {
+        message = 'Tieosan keskellä olevan liittymäkohdan osoitteen on oltava vähintään yksi'; // User is not allowed to set the address smaller than one
+      } else if (_.isNaN(addr)) {
+        message = 'Liittymäkohdan osoite on pakollinen tieto'; // junction point address is a compulsory information
+      }
 
-        if (addr < 1) {
-          message = 'Tieosan keskellä olevan liittymäkohdan osoitteen on oltava vähintään yksi'; // User is not allowed to set the address smaller than one
-        } else if (_.isNaN(addr) || _.isEmpty(addr)) {
-          message = 'Liittymäkohdan osoite on pakollinen tieto'; // junction point address is a compulsory information
-        }
-
-        verified = verified && _.isEmpty(message);
-        return message;
-      };
-
-      var verified = true;
-
-      _.each(current.node.junctions, function (junction) {
-        _.each(junction.junctionPoints, function (junctionPoint) {
-          // TODO Handle two junction points here
-
-          eventbus.trigger('junctionPoint:setCustomValidity', junctionPoint, errorMessage(junctionPoint));
-        })
-      });
-
-      return verified;
+      eventbus.trigger('junctionPoint:setCustomValidity', idString, message);
+      return _.isEmpty(message);
     };
 
     var isDirty = function () {
@@ -333,7 +328,7 @@
       detachJunctionAndNodePoints: detachJunctionAndNodePoints,
       attachJunctionAndNodePoints: attachJunctionAndNodePoints,
       validateJunctionNumbers: validateJunctionNumbers,
-      validateJunctionPointAddresses: validateJunctionPointAddresses,
+      validateJunctionPointAddress: validateJunctionPointAddress,
       isDirty: isDirty,
       isObsoleteNode: isObsoleteNode,
       closeNode: closeNode,
