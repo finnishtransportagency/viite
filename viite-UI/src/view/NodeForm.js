@@ -751,7 +751,7 @@
           });
 
           eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate ' +
-            'junction:validate junction:detach nodePoint:detach junction:attach nodePoint:attach', function () {
+            'junction:validate junctionPoint:validate junction:detach nodePoint:detach junction:attach nodePoint:attach', function () {
             $('.btn-edit-node-save').prop('disabled', formIsInvalid());
           });
 
