@@ -572,6 +572,11 @@
         } else {
           data = $('#reservedRoads').get(0);
         }
+        if (currentProject && currentProject.id) {
+          data.projectId = currentProject.id;
+        } else {
+          data.projectId = 0;
+        }
         projectCollection.checkIfReserved(data);
         return false;
       });

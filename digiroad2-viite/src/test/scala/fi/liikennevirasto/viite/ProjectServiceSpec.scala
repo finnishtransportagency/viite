@@ -437,7 +437,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       InUse, NormalLinkInterface)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(Seq(roadLink))
     runWithRollback {
-      val reservation = projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart)
+      val reservation = projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart, 0L)
       reservation.right.get._1.size should be(0)
     }
   }
@@ -463,7 +463,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val rb = Seq(Roadway(id2, roadwayNumber, roadNumber, roadEndPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 1000L,
         reversed = false, DateTime.parse("1901-01-01"), None, "tester", Some("Test road 2"), 8L))
       roadwayDAO.create(rb)
-      val reservationAfterB = projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart)
+      val reservationAfterB = projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart, 0L)
       reservationAfterB.right.get._1.size should be(2)
       reservationAfterB.right.get._1.map(_.roadNumber).distinct.size should be(1)
       reservationAfterB.right.get._1.map(_.roadNumber).distinct.head should be(roadNumber)
