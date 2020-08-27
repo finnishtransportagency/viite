@@ -600,7 +600,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         queryParam[Long]("roadNumber").description("Road number of a project Link"),
         queryParam[Long]("startPart").description("Start road part number of a project Link"),
         queryParam[Long]("endPart").description("End road part number of a project Link"),
-        queryParam[String]("projDate").description("String representing a project start date")
+        queryParam[String]("projDate").description("String representing a project start date"),
+        queryParam[Long]("projectId").description("Project id")
       )
       tags "ViiteAPI - Project"
       summary "This will retrieve all the information of a specific project, identifiable by it's id."
@@ -612,8 +613,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val startPart = params("startPart").toLong
       val endPart = params("endPart").toLong
       val projDate = DateTime.parse(params("projDate"))
-      time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/ (roadNumber: $roadNumber, startPart: $startPart, endPart: $endPart, projDate: $projDate)") {
-        projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate) match {
+      val projectId = params("projectId").toLong
+      time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/ (roadNumber: $roadNumber, startPart: $startPart, endPart: $endPart, projDate: $projDate, projectId: $projectId)") {
+        projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate, projectId) match {
           case Left(err) => Map("success" -> err)
           case Right((reservedparts, formedparts)) => Map("success" -> "ok", "reservedInfo" -> reservedparts.map(projectReservedPartToApi),
             "formedInfo" -> formedparts.map(projectFormedPartToApi()))

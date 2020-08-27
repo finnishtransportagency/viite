@@ -227,13 +227,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def checkRoadPartsReservable(roadNumber: Long, startPart: Long, endPart: Long): Either[String, (Seq[ProjectReservedPart], Seq[ProjectReservedPart])] = {
+  def checkRoadPartsReservable(roadNumber: Long, startPart: Long, endPart: Long, projectId: Long): Either[String, (Seq[ProjectReservedPart], Seq[ProjectReservedPart])] = {
     (startPart to endPart).foreach { part =>
       projectReservedPartDAO.fetchProjectReservedPart(roadNumber, part) match {
         case Some(name) => return Left(s"Tie $roadNumber osa $part ei ole vapaana projektin alkupäivämääränä. Tieosoite on jo varattuna projektissa: $name.")
         case _ =>
       }
-      val projectsWithCommonJunctions = projectReservedPartDAO.fetchProjectReservedJunctions(roadNumber, part)
+      val projectsWithCommonJunctions = projectReservedPartDAO.fetchProjectReservedJunctions(roadNumber, part, projectId)
       projectsWithCommonJunctions.headOption.map { _ =>
         return Left(s"Tie $roadNumber osa $part ei ole varattavissa, koska tämän tieosan liittymää/liittymiä käsitellään ${if(projectsWithCommonJunctions.size > 1) "projekteissa " else "projektissa "} ${projectsWithCommonJunctions.mkString(", ")}")
       }
@@ -258,10 +258,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectDate : DateTime
     * @return Either the error message or the reserved road parts.
     */
-  def checkRoadPartExistsAndReservable(roadNumber: Long, startPart: Long, endPart: Long, projectDate: DateTime): Either[String, (Seq[ProjectReservedPart], Seq[ProjectReservedPart])] = {
+  def checkRoadPartExistsAndReservable(roadNumber: Long, startPart: Long, endPart: Long, projectDate: DateTime, projectId: Long): Either[String, (Seq[ProjectReservedPart], Seq[ProjectReservedPart])] = {
     withDynTransaction {
       checkRoadPartsExist(roadNumber, startPart, endPart) match {
-        case None => checkRoadPartsReservable(roadNumber, startPart, endPart) match {
+        case None => checkRoadPartsReservable(roadNumber, startPart, endPart, projectId) match {
           case Left(err) => Left(err)
           case Right((reserved, formed)) =>
             if (reserved.isEmpty && formed.isEmpty) {

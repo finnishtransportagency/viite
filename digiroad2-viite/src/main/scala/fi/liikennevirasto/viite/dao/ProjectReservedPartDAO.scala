@@ -354,10 +354,10 @@ class ProjectReservedPartDAO {
     }
   }
 
-  def fetchProjectReservedJunctions(roadNumber: Long, roadPart: Long): Seq[String] = {
+  def fetchProjectReservedJunctions(roadNumber: Long, roadPart: Long, projectId: Long): Seq[String] = {
     sql"""
      SELECT distinct prj.NAME FROM PROJECT prj
-         JOIN PROJECT_RESERVED_ROAD_PART res ON res.PROJECT_ID = prj.ID
+         JOIN PROJECT_RESERVED_ROAD_PART res ON (res.PROJECT_ID = prj.ID AND prj.ID <> $projectId)
          WHERE prj.ID IN (
             SELECT DISTINCT(pl.PROJECT_ID) FROM PROJECT_LINK pl
             WHERE pl.LINK_ID IN (
