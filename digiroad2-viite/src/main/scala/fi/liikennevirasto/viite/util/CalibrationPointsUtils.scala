@@ -116,10 +116,6 @@ object CalibrationPointsUtils {
     // User is allowed to update only user defined and junction point calibration points.
     // If the CalibrationPoint is RoadAddress calibration point, throw exception
     val oldCPs = CalibrationPointDAO.fetchByRoadwayPointId(oldRwPoint)
-    if (oldCPs.length >= 1 && oldCPs.length <= 2) {
-      logger.error(s"Expected to get one or two calibration points when fetching with the roadwayPointId = $oldRwPoint, but got ${oldCPs.length}!")
-      throw new Exception("Kalibrointipisteen osoitteen päivitys epäonnistui. Vain tieosan keskellä olevia kalibrointipisteitä voi päivittää.")
-    }
     if (oldCPs.exists(_.typeCode == CalibrationPointType.RoadAddressCP)) {
       logger.error(s"Updating the address of the road address calibration point is prohibited." + oldCPs.map( oldCP =>
         s" (roadwayNumber: ${oldCP.roadwayNumber}, address: ${oldCP.addrM}, linkId: ${oldCP.linkId}, startEnd: ${oldCP.startOrEnd.value})"

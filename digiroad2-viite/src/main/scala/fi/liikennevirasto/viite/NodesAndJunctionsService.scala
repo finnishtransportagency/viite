@@ -60,27 +60,35 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else {
           junction.junctionNumber
         }
-        val junctionPoints = junctionPointDAO.fetchByJunctionIds(Seq(junction.id))
+        val oldJunctionPoints = junctionPointDAO.fetchByJunctionIds(Seq(junction.id))
         junctionDAO.expireById(Seq(junction.id))
-        junctionPointDAO.expireById(junctionPoints.map(_.id))
+        junctionPointDAO.expireById(oldJunctionPoints.map(_.id))
         val junctionId = junctionDAO.create(Seq(junction.copy(id = NewIdValue, nodeNumber = newNodeNumber, junctionNumber = newJunctionNumber, createdBy = username))).head
-        val updatedJunctionPoints = junctionPoints.map { jp =>
-          val oldJunctionPoint = junctionPointDAO.fetchByIds(Seq(jp.id)).headOption
-          if (oldJunctionPoint.isDefined && oldJunctionPoint.get.addrM != jp.addrM) {
+        val updatedJunctionPoints =
+          if (junction.junctionPoints.isDefined) {
+            junction.junctionPoints.get.map { jp =>
+              val oldJunctionPoint = oldJunctionPoints.find(oldJunctionPoint => oldJunctionPoint.id == jp.id)
+              if (oldJunctionPoint.isDefined && oldJunctionPoint.get.addrM != jp.addrM) {
 
-            // TODO Check that the address change is within acceptable boundaries:
-            // - Less than 10 meters from the address calculated at this point if there were no calibration point here
-            // - Within the address range of the neighbouring links
+                // TODO Check that the address change is within acceptable boundaries:
+                // - Less than 10 meters from the address calculated at this point if there were no calibration point here
+                // - Within the address range of the neighbouring links
 
-            // Update JunctionPoint and CalibrationPoint addresses by pointing them to another RoadwayPoint
-            val roadwayPointId = getRoadwayPointId(jp.roadwayNumber, jp.addrM, username)
-            CalibrationPointsUtils.updateCalibrationPointAddress(oldJunctionPoint.get.roadwayPointId, roadwayPointId, username)
+                // Update JunctionPoint and CalibrationPoint addresses by pointing them to another RoadwayPoint
+                val roadwayPointId = getRoadwayPointId(jp.roadwayNumber, jp.addrM, username)
+                CalibrationPointsUtils.updateCalibrationPointAddress(oldJunctionPoint.get.roadwayPointId, roadwayPointId, username)
 
-            jp.copy(id = NewIdValue, junctionId = junctionId, roadwayPointId = roadwayPointId, createdBy = username)
+                jp.copy(id = NewIdValue, junctionId = junctionId, roadwayPointId = roadwayPointId, createdBy = username)
+              } else if (jp.roadwayPointId < 0) {
+                logger.error(s"Roadway point of ${jp.toStringWithFields} was not set.")
+                throw new Exception(s"Liittymäkohdan ${jp.roadNumber} ${jp.roadPartNumber} ${jp.addrM} ${jp.track} ${jp.beforeAfter.acronym} tallennus epäonnistui.")
+              } else {
+                jp.copy(id = NewIdValue, junctionId = junctionId, createdBy = username)
+              }
+            }
           } else {
-            jp.copy(id = NewIdValue, junctionId = junctionId, createdBy = username)
+            oldJunctionPoints.map(ojp => ojp.copy(id = NewIdValue, junctionId = junctionId, createdBy = username))
           }
-        }
         junctionPointDAO.create(updatedJunctionPoints)
       }
     }
