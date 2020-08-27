@@ -79,9 +79,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                 CalibrationPointsUtils.updateCalibrationPointAddress(oldJunctionPoint.get.roadwayPointId, roadwayPointId, username)
 
                 jp.copy(id = NewIdValue, junctionId = junctionId, roadwayPointId = roadwayPointId, createdBy = username)
-              } else if (jp.roadwayPointId < 0) {
-                logger.error(s"Roadway point of ${jp.toStringWithFields} was not set.")
-                throw new Exception(s"Liittymäkohdan ${jp.roadNumber} ${jp.roadPartNumber} ${jp.addrM} ${jp.track} ${jp.beforeAfter.acronym} tallennus epäonnistui.")
               } else {
                 jp.copy(id = NewIdValue, junctionId = junctionId, createdBy = username)
               }

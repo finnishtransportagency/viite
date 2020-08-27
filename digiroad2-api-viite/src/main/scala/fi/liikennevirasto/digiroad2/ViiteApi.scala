@@ -63,7 +63,7 @@ case class JunctionExtractor(id: Long, junctionNumber: Option[Long], nodeNumber:
 
 case class JunctionPointExtractor(id: Long, beforeAfter: Long, junctionId: Long, nodeNumber: Option[Long], validFrom: Option[String],
                                   validTo: Option[String], createdBy: Option[String], createdTime: Option[String],
-                                  roadwayNumber: Long, addrM: Long, roadNumber: Long, roadPartNumber: Long, track: Track)
+                                  roadwayNumber: Long, roadwayPointId: Long, addrM: Long, roadNumber: Long, roadPartNumber: Long, track: Track)
 
 case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, coordinates: Point, name: Option[String], `type`: Int, startDate: String, endDate: Option[String], validFrom: Option[String], validTo: Option[String],
                          createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None, registrationDate: Option[String] = None,
@@ -1407,6 +1407,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("id" -> junctionPoint.id,
       "junctionId" -> junctionPoint.junctionId,
       "roadwayNumber" -> junctionPoint.roadwayNumber,
+      "roadwayPointId" -> junctionPoint.roadwayPointId,
       "roadNumber" -> junctionPoint.roadNumber,
       "roadPartNumber" -> junctionPoint.roadPartNumber,
       "track" -> junctionPoint.track.value,
@@ -1732,8 +1733,7 @@ object NodesAndJunctionsConverter {
       val validTo = if (jp.validTo.isDefined) Option(formatter.parseDateTime(jp.validTo.get)) else None
       val createdTime = if (jp.createdTime.isDefined) Option(formatter.parseDateTime(jp.createdTime.get)) else None
 
-      // TODO roadwayPointId is now always -1, discontinuity is now always continuous
-      JunctionPoint(jp.id, beforeAfter, -1, jp.junctionId, Some(startDate), endDate, validFrom, validTo,
+      JunctionPoint(jp.id, beforeAfter, jp.roadwayPointId, jp.junctionId, Some(startDate), endDate, validFrom, validTo,
         jp.createdBy.getOrElse("-"), createdTime, jp.roadwayNumber, jp.addrM, jp.roadNumber, jp.roadPartNumber,
         jp.track, Discontinuity.Continuous)
     }
