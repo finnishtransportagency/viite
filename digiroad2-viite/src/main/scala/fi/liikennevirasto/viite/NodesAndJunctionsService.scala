@@ -53,7 +53,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val junctionNumber = values.getOrElse("junctionNumber", None).asInstanceOf[Option[Long]]
       val updateJunctionNumber = values.contains("junctionNumber")
 
-      // TODO If only junction points are changed, junctions here will be empty
       junctions.foreach { junction =>
         val newJunctionNumber = if (updateJunctionNumber) {
           junctionNumber
@@ -69,16 +68,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             junction.junctionPoints.get.map { jp =>
               val oldJunctionPoint = oldJunctionPoints.find(oldJunctionPoint => oldJunctionPoint.id == jp.id)
               if (oldJunctionPoint.isDefined && oldJunctionPoint.get.addrM != jp.addrM) {
-
-                // TODO Check that the address change is within acceptable boundaries:
-                // - Less than 10 meters from the address calculated at this point if there were no calibration point here
-                // - Within the address range of the neighbouring links
-
-                // Update JunctionPoint and CalibrationPoint addresses by pointing them to another RoadwayPoint
-                val roadwayPointId = getRoadwayPointId(jp.roadwayNumber, jp.addrM, username)
-                CalibrationPointsUtils.updateCalibrationPointAddress(oldJunctionPoint.get.roadwayPointId, roadwayPointId, username)
-
-                jp.copy(id = NewIdValue, junctionId = junctionId, roadwayPointId = roadwayPointId, createdBy = username)
+                getUpdatedJunctionPoint(junctionId, oldJunctionPoint.get, jp, username)
               } else {
                 jp.copy(id = NewIdValue, junctionId = junctionId, createdBy = username)
               }
@@ -88,6 +78,25 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           }
         junctionPointDAO.create(updatedJunctionPoints)
       }
+    }
+
+    def updateJunctionPoints(junctionPoints: Iterable[JunctionPoint]): Unit = {
+      val junctionPointsByJunction = junctionPoints.groupBy(_.junctionId)
+      junctionPointsByJunction.keys.map(junctionId => {
+        val junctionPoints = junctionPointsByJunction(junctionId)
+        val oldJunctionPoints = junctionPointDAO.fetchByJunctionIds(Seq(junctionId))
+        junctionPoints.map(jp => {
+          val oldJunctionPoint = oldJunctionPoints.find(ojp => ojp.id == jp.id).getOrElse({
+            logger.error(s"Failed to update junction point ${jp.toStringWithFields}. Old junction point not found.")
+            throw new Exception("Liittymäkohdan osoitteen päivitys epäonnistui. Päivitettävää liittymäkohtaa ei löytynyt.")
+          })
+          if (oldJunctionPoint.addrM != jp.addrM) {
+            junctionPointDAO.expireById(Seq(oldJunctionPoint.id))
+            val updated = getUpdatedJunctionPoint(junctionId, oldJunctionPoint, jp, username)
+            junctionPointDAO.create(Seq(updated))
+          }
+        })
+      })
     }
 
     withDynTransaction {
@@ -117,7 +126,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       updateJunctionsAndJunctionPoints(updatedJunctions, Map("nodeNumber" -> Some(nodeNumber)))
 
-      // TODO Check for updated junction points, junctions might be unchanged, but junction point addresses changed
+      val unchangedJunctions = junctions.filterNot(junction => (junctionsToDetach ++ junctionsToAttach ++ updatedJunctions).map(_.id).contains(junction.id))
+      val unchangedJunctionsJunctionPoints = unchangedJunctions.flatMap(junction => junction.junctionPoints.get)
+      updateJunctionPoints(unchangedJunctionsJunctionPoints)
 
       if (isObsoleteNode(junctions, nodePoints)) {
         val old = nodeDAO.fetchById(node.id)
@@ -128,6 +139,18 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       }
       publishNodes(Seq(nodeNumber), username)
     }
+  }
+
+  private def getUpdatedJunctionPoint(junctionId: Long, oldJunctionPoint: JunctionPoint, newJunctionPoint: JunctionPoint, username: String): JunctionPoint = {
+    // TODO Check that the address change is within acceptable boundaries:
+    // - Less than 10 meters from the address calculated at this point if there were no calibration point here
+    // - Within the address range of the neighbouring links
+
+    // Update JunctionPoint and CalibrationPoint addresses by pointing them to another RoadwayPoint
+    val roadwayPointId = getRoadwayPointId(newJunctionPoint.roadwayNumber, newJunctionPoint.addrM, username)
+    CalibrationPointsUtils.updateCalibrationPointAddress(oldJunctionPoint.roadwayPointId, roadwayPointId, username)
+
+    newJunctionPoint.copy(id = NewIdValue, junctionId = junctionId, roadwayPointId = roadwayPointId, createdBy = username)
   }
 
   def addOrUpdateNode(node: Node, isObsoleteNode: Boolean = false, username: String = "-"): Long = {
