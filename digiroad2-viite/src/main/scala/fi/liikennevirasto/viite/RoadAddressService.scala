@@ -234,6 +234,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     oldSeq ++ Seq(Map((dataType, inputData)))
   }
 
+  def getFirstOrEmpty(seq: Seq[Any]): Seq[Any] = {
+    if (seq.isEmpty) {
+      seq
+    } else {
+      Seq(seq.head)
+    }
+  }
+
   def getSearchResults(searchString: Option[String]): Seq[Map[String, Seq[Any]]] = {
     logger.debug("getSearchResults")
     val parsedInput = locationInputParser(searchString)
@@ -243,14 +251,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     searchType match {
       case "road" => params.size match {
         case 1 =>
-          // The number can be LINKID, MTKID or roadNumberOrId
+          // The params with type long can be LINKID, MTKID or roadNumber
           var searchResultPoint = roadLinkService.getMidPointByLinkId(params.head)
           var partialResultSeq = collectResult("linkId", Seq(searchResultPoint))
           searchResultPoint = roadLinkService.getRoadLinkMiddlePointByMtkId(params.head)
           partialResultSeq = collectResult("mtkId", Seq(searchResultPoint), partialResultSeq)
-          searchResult = getRoadAddressWithRoadNumberAddress(params.head).sortBy(address => (address.roadPartNumber, address.startAddrMValue))
+          searchResult = getFirstOrEmpty(getRoadAddressWithRoadNumberAddress(params.head).sortBy(address => (address.roadPartNumber, address.startAddrMValue)))
           collectResult("road", searchResult, partialResultSeq)
-        case 2 => collectResult("road", getRoadAddressWithRoadNumberParts(params.head, Set(params(1)), Set(Track.Combined, Track.LeftSide, Track.RightSide)).sortBy(address => (address.roadPartNumber, address.startAddrMValue)))
+        case 2 => collectResult("road", getFirstOrEmpty(getRoadAddressWithRoadNumberParts(params.head, Set(params(1)), Set(Track.Combined, Track.LeftSide, Track.RightSide)).sortBy(address => (address.roadPartNumber, address.startAddrMValue))))
         case 3 | 4 =>
           val roadPart = params(1)
           val addressM = params(2)
