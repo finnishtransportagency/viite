@@ -127,12 +127,12 @@ object CalibrationPointsUtils {
     oldCPs.foreach(oldCP => {
       val newCP = oldCP.copy(id = NewIdValue, roadwayPointId = newRwPoint, createdBy = username)
       val existingCPInPoint = CalibrationPointDAO.fetchByRoadwayPointId(newRwPoint)
-      if (existingCPInPoint.nonEmpty) {
-        logger.error(s"Cannot update calibration point ${oldCP.id} to a new address. There is already another calibration point at roadway point $newRwPoint.")
-        throw new Exception(s"Kalibrointipisteen osoitteen muokkaus epäonnistui. Uudessa osoitteessa on jo ennestään toinen kalibrointipiste.")
+      if (existingCPInPoint.nonEmpty && existingCPInPoint.length > 1) {
+        logger.error(s"Cannot update calibration point ${oldCP.id} to a new address. There is already more than one calibration points at roadway point $newRwPoint.")
+        throw new Exception(s"Kalibrointipisteen osoitteen muokkaus epäonnistui.")
       }
-      CalibrationPointDAO.create(Seq(newCP))
-      logger.debug(s"Updated calibration point from roadway point $oldRwPoint to $newRwPoint")
+      CalibrationPointDAO.create(newCP.roadwayPointId, newCP.linkId, newCP.startOrEnd, newCP.typeCode, newCP.createdBy)
+      logger.debug(s"Updated calibration point from roadway point $oldRwPoint to $newRwPoint.")
     })
   }
 

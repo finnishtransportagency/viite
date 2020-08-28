@@ -68,7 +68,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             junction.junctionPoints.get.map { jp =>
               val oldJunctionPoint = oldJunctionPoints.find(oldJunctionPoint => oldJunctionPoint.id == jp.id)
               if (oldJunctionPoint.isDefined && oldJunctionPoint.get.addrM != jp.addrM) {
-                getUpdatedJunctionPoint(junctionId, oldJunctionPoint.get, jp, username)
+                handleJunctionPointUpdate(junctionId, oldJunctionPoint.get, jp, username)
               } else {
                 jp.copy(id = NewIdValue, junctionId = junctionId, createdBy = username)
               }
@@ -92,7 +92,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           })
           if (oldJunctionPoint.addrM != jp.addrM) {
             junctionPointDAO.expireById(Seq(oldJunctionPoint.id))
-            val updated = getUpdatedJunctionPoint(junctionId, oldJunctionPoint, jp, username)
+            val updated = handleJunctionPointUpdate(junctionId, oldJunctionPoint, jp, username)
             junctionPointDAO.create(Seq(updated))
           }
         })
@@ -141,7 +141,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  private def getUpdatedJunctionPoint(junctionId: Long, oldJunctionPoint: JunctionPoint, newJunctionPoint: JunctionPoint, username: String): JunctionPoint = {
+  private def handleJunctionPointUpdate(junctionId: Long, oldJunctionPoint: JunctionPoint, newJunctionPoint: JunctionPoint, username: String): JunctionPoint = {
     // TODO Check that the address change is within acceptable boundaries:
     // - Less than 10 meters from the address calculated at this point if there were no calibration point here
     // - Within the address range of the neighbouring links
