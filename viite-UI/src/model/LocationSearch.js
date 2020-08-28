@@ -83,9 +83,13 @@
             partialResult.title = 'Tieosoite, ' + input.search;
           }
 
-          partialResult.lon = partialResult.x;
-          partialResult.lat = partialResult.y;
-          searchResult.push(partialResult);
+          if (partialResult) {
+            if (partialResult.x) {
+              partialResult.lon = partialResult.x;
+              partialResult.lat = partialResult.y;
+            }
+            searchResult.push(partialResult);
+          }
         });
         if (searchResult.length === 0) {
           return $.Deferred().reject('Tuntematon tieosoite');
