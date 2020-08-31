@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite.process.strategy
 
-import fi.liikennevirasto.viite.MaxDistanceForSearchDiscontinuityOnOppositeTrack
-import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.viite.{MaxDistanceForSearchDiscontinuityOnOppositeTrack, NewIdValue}
 import fi.liikennevirasto.viite.dao.Discontinuity.{MinorDiscontinuity, ParallelLink}
+import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectLink}
 
 class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) extends TrackCalculatorStrategy {
@@ -23,8 +23,16 @@ class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) 
   }
 
   override def assignTrackMValues(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): TrackCalculatorResult = {
-    val (left, restLeft) = getUntilDiscontinuity(leftProjectLinks)
-    val (right, restRight) = getUntilDiscontinuity(rightProjectLinks)
+    val (firstLeft, othersLeft) = getUntilDiscontinuity(leftProjectLinks)
+    val (firstRight, othersRight) = getUntilDiscontinuity(rightProjectLinks)
+
+    val leftRoadwayNumber = firstLeft.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
+    val left = firstLeft.takeWhile(_.roadwayNumber == leftRoadwayNumber)
+    val restLeft = firstLeft.drop(left.size) ++ othersLeft
+
+    val rightRoadwayNumber = firstRight.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
+    val right = firstRight.takeWhile(_.roadwayNumber == rightRoadwayNumber)
+    val restRight = firstRight.drop(right.size) ++ othersRight
 
     (left.last.discontinuity, right.last.discontinuity) match {
       case (MinorDiscontinuity | ParallelLink, MinorDiscontinuity | ParallelLink) => // If both sides have a minor discontinuity

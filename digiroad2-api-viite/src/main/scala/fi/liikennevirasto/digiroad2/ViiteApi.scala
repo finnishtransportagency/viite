@@ -600,7 +600,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         queryParam[Long]("roadNumber").description("Road number of a project Link"),
         queryParam[Long]("startPart").description("Start road part number of a project Link"),
         queryParam[Long]("endPart").description("End road part number of a project Link"),
-        queryParam[String]("projDate").description("String representing a project start date")
+        queryParam[String]("projDate").description("String representing a project start date"),
+        queryParam[Long]("projectId").description("Project id")
       )
       tags "ViiteAPI - Project"
       summary "This will retrieve all the information of a specific project, identifiable by it's id."
@@ -612,8 +613,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val startPart = params("startPart").toLong
       val endPart = params("endPart").toLong
       val projDate = DateTime.parse(params("projDate"))
-      time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/ (roadNumber: $roadNumber, startPart: $startPart, endPart: $endPart, projDate: $projDate)") {
-        projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate) match {
+      val projectId = params("projectId").toLong
+      time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/ (roadNumber: $roadNumber, startPart: $startPart, endPart: $endPart, projDate: $projDate, projectId: $projectId)") {
+        projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate, projectId) match {
           case Left(err) => Map("success" -> err)
           case Right((reservedparts, formedparts)) => Map("success" -> "ok", "reservedInfo" -> reservedparts.map(projectReservedPartToApi),
             "formedInfo" -> formedparts.map(projectFormedPartToApi()))
@@ -922,9 +924,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   private val getCoordinatesForSearch: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getRoadAddressesByRoadNumberPartNumberAndAddrMValue")
-      .parameters(
-        queryParam[String]("search").description("Road name OR Road address (Road Number, [road part] and [distance]) OR linkId OR mtkId")
-      )
+      .parameters {
+        queryParam[String]("search").description("" +
+          "1. Road name,\r\n" +
+          "2. Road address:\r\n" +
+          "a) Road Number and Road Part Number;\r\n" +
+          "b) Road Number, Road Part Number and Distance value;\r\n" +
+          "c) Road Number, Road Part Number, Distance value and Track;\r\n" +
+          "3. linkId or mtkId")
+      }
       tags "ViiteAPI - General"
       summary "Returns coordinates to support single box search."
       description ""

@@ -82,10 +82,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   }
 
   def addrMLength(): Long = {
-    if (isSplit)
-      endAddrMValue - startAddrMValue
-    else
-      roadAddressLength.getOrElse(endAddrMValue - startAddrMValue)
+    endAddrMValue - startAddrMValue
   }
 
   def getFirstPoint: Point = {
@@ -308,7 +305,7 @@ class ProjectLinkDAO {
         originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue,
         sideCode, calibrationPoints, originalCalibrationPointTypes, PostGISDatabase.loadJGeometryToGeometry(geom),
         projectId, status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId,
-        geometryTimeStamp, if (roadwayNumber != 0) roadwayNumber else projectRoadwayNumber, Some(roadName),
+        geometryTimeStamp, if (projectRoadwayNumber == 0 || projectRoadwayNumber == NewIdValue) roadwayNumber else projectRoadwayNumber , Some(roadName),
         roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)),
         roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack, roadAddressRoadNumber, roadAddressRoadPart)
     }
@@ -437,11 +434,6 @@ class ProjectLinkDAO {
           WHERE id = ?""")
 
         for (projectLink <- links) {
-          val roadwayNumber = if (projectLink.roadwayNumber == NewIdValue) {
-            Sequences.nextRoadwayNumber
-          } else {
-            projectLink.roadwayNumber
-          }
           projectLinkPS.setLong(1, projectLink.roadNumber)
           projectLinkPS.setLong(2, projectLink.roadPartNumber)
           projectLinkPS.setInt(3, projectLink.track.value)
@@ -464,7 +456,7 @@ class ProjectLinkDAO {
           projectLinkPS.setDouble(20, projectLink.startMValue)
           projectLinkPS.setDouble(21, projectLink.endMValue)
           projectLinkPS.setLong(22, projectLink.ely)
-          projectLinkPS.setLong(23, roadwayNumber)
+          projectLinkPS.setLong(23, projectLink.roadwayNumber)
           if (projectLink.connectedLinkId.isDefined)
             projectLinkPS.setLong(24, projectLink.connectedLinkId.get)
           else
@@ -570,6 +562,15 @@ class ProjectLinkDAO {
       val query =
         s"""$projectLinkQueryBase
                 where PROJECT_LINK.link_id = $projectLinkId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+      listQuery(query)
+    }
+  }
+
+  def getOtherProjectLinks(projectId: Long): Seq[ProjectLink] = {
+    time(logger, "Get project links all") {
+      val query =
+        s"""$projectLinkQueryBase
+                where PROJECT_LINK.project_id <> $projectId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
     }
   }
