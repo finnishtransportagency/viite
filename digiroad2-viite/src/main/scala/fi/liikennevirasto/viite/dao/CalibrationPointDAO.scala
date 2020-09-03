@@ -75,7 +75,7 @@ object CalibrationPointDAO {
     }
   }
 
-
+  // TODO Check this method! It failed silently in updating junction point address, but the other create method works.
   def create(calibrationPoints: Iterable[CalibrationPoint]): Seq[Long] = {
     val ps = dynamicSession.prepareStatement(
       """INSERT INTO CALIBRATION_POINT (ID, ROADWAY_POINT_ID, LINK_ID, START_END, TYPE, CREATED_BY)
@@ -132,7 +132,8 @@ object CalibrationPointDAO {
 
   def fetchByRoadwayPointId(roadwayPointId: Long): Seq[CalibrationPoint] = {
     val query = s"""
-        SELECT CP.ID, ROADWAY_POINT_ID, LINK_ID, ROADWAY_NUMBER, RP.ADDR_M, START_END, CP.TYPE, VALID_FROM, VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
+        SELECT CP.ID, CP.ROADWAY_POINT_ID, CP.LINK_ID, RP.ROADWAY_NUMBER, RP.ADDR_M, CP.START_END, CP.TYPE,
+          CP.VALID_FROM, CP.VALID_TO, CP.CREATED_BY, CP.CREATED_TIME
         FROM CALIBRATION_POINT CP
         JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID
           WHERE cp.roadway_point_id = $roadwayPointId AND cp.valid_to is null
