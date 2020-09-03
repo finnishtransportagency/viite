@@ -120,6 +120,32 @@
       }
     };
 
+    var getJunctionPoint = function (id) {
+      var junctionPoints = _.flatMap(current.node.junctions, function (junction) {
+        return junction.junctionPoints;
+      });
+      return _.find(junctionPoints, function (jp) {
+        return jp.id === id;
+      });
+    };
+
+    var setJunctionPointAddress = function (idString, addr) {
+      var ids = idString.split("-");
+      if (ids.length === 2) {
+        _.each(ids, function (id) {
+          var jp = getJunctionPoint(parseInt(id));
+          if (_.isUndefined(jp)) {
+            console.log("Failed to find junction point " + id + " and set it's address to " + addr + ".");
+          } else {
+            jp.addrM = addr;
+          }
+        });
+        eventbus.trigger('junctionPoint:validate', idString, addr);
+      } else {
+        console.log("Failed to update junction point address. (ids: " + idString + ", address: " + addr + ")");
+      }
+    };
+
     var detachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
         _.remove(current.node.junctions, function (j) {
@@ -137,8 +163,8 @@
 
     var attachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
-        if (_.filter(current.node.junctions, function (jp) {
-          return jp.id === junction.id;
+        if (_.filter(current.node.junctions, function (j) {
+          return j.id === junction.id;
         }).length === 0) {
           current.node.junctions.push(junction);
           eventbus.trigger('junction:attach', junction);
@@ -180,6 +206,19 @@
       return verified;
     };
 
+    var validateJunctionPointAddress = function (idString, addr) {
+      var message = '';
+
+      if (addr < 1) {
+        message = 'Tieosan keskellä olevan liittymäkohdan osoitteen on oltava vähintään yksi'; // User is not allowed to set the address smaller than one
+      } else if (_.isNaN(addr)) {
+        message = 'Liittymäkohdan osoite on pakollinen tieto'; // junction point address is a compulsory information
+      }
+
+      eventbus.trigger('junctionPoint:setCustomValidity', idString, message);
+      return _.isEmpty(message);
+    };
+
     var isDirty = function () {
       var original = false;
       if (current.node.nodeNumber) {
@@ -199,7 +238,6 @@
       //  comparing the junctions of both nodes
       if (original && original.junctions && original.junctions.length !== 0 && original.junctions.length === current.node.junctions.length) {
         junctionsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.junctions, 'id'), _.sortBy(current.node.junctions, 'id')), _.spread(function (originalJunction, currentJunction) {
-          // return isEqualWithout(originalJunction, currentJunction, 'junctionPoints');
           return {equality: isEqualWithout(originalJunction, currentJunction, 'junctionPoints')};
         })), ['equality', false]);
 
@@ -207,7 +245,6 @@
         junctionPointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.junctions, 'id'), _.sortBy(current.node.junctions, 'id')), _.spread(function (originalJunction, currentJunction) {
           if (originalJunction.junctionPoints.length === currentJunction.junctionPoints.length && originalJunction.junctionPoints.length !== 0) {
             return _.flatMap(_.zip(originalJunction.junctionPoints, currentJunction.junctionPoints), _.spread(function (originalJunctionPoint, currentJunctionPoint) {
-              // return isEqualWithout(originalJunctionPoint, currentJunctionPoint, 'coordinates');
               return {equality: isEqualWithout(originalJunctionPoint, currentJunctionPoint, 'coordinates')};
             }));
           } else return false;
@@ -285,9 +322,11 @@
       getInitialStartDate: getInitialStartDate,
       setStartDate: setStartDate,
       setJunctionNumber: setJunctionNumber,
+      setJunctionPointAddress: setJunctionPointAddress,
       detachJunctionAndNodePoints: detachJunctionAndNodePoints,
       attachJunctionAndNodePoints: attachJunctionAndNodePoints,
       validateJunctionNumbers: validateJunctionNumbers,
+      validateJunctionPointAddress: validateJunctionPointAddress,
       isDirty: isDirty,
       isObsoleteNode: isObsoleteNode,
       closeNode: closeNode,
