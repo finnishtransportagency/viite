@@ -13,7 +13,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class Junction(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: DateTime, endDate: Option[DateTime],
-                    validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
+                    validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime],
+                    junctionPoints: Option[List[JunctionPoint]] = None)
 
 case class JunctionInfo(id: Long, junctionNumber: Option[Long], startDate: DateTime, nodeNumber: Long, nodeName: String)
 

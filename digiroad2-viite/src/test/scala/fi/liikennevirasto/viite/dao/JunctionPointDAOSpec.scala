@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
@@ -22,6 +23,7 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
   val junctionDAO = new JunctionDAO
   val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
+  val nodeDAO = new NodeDAO
 
   val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
 
@@ -101,4 +103,5 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
       fetched.head.id should be(ids.last)
     }
   }
+
 }

@@ -57,8 +57,13 @@ case class NodePointExtractor(id: Long, beforeAfter: Int, roadwayPointId: Long, 
                               createdBy: String, createdTime: Option[String], roadwayNumber: Long, addrM : Long,
                               roadNumber: Long, roadPartNumber: Long, track: Int, elyCode: Long)
 
-case class JunctionExtractor(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long], startDate: String, endDate: Option[String],
-                          validFrom: Option[String], validTo: Option[String], createdBy: Option[String], createdTime: Option[String])
+case class JunctionExtractor(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long],
+                             junctionPoints: List[JunctionPointExtractor], startDate: String, endDate: Option[String],
+                             validFrom: Option[String], validTo: Option[String], createdBy: Option[String], createdTime: Option[String])
+
+case class JunctionPointExtractor(id: Long, beforeAfter: Long, junctionId: Long, nodeNumber: Option[Long], validFrom: Option[String],
+                                  validTo: Option[String], createdBy: Option[String], createdTime: Option[String],
+                                  roadwayNumber: Long, roadwayPointId: Long, addrM: Long, roadNumber: Long, roadPartNumber: Long, track: Track)
 
 case class NodeExtractor(id: Long = NewIdValue, nodeNumber: Long = NewIdValue, coordinates: Point, name: Option[String], `type`: Int, startDate: String, endDate: Option[String], validFrom: Option[String], validTo: Option[String],
                          createdTime: Option[String], editor: Option[String] = None, publishedTime: Option[DateTime] = None, registrationDate: Option[String] = None,
@@ -1404,6 +1409,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("id" -> junctionPoint.id,
       "junctionId" -> junctionPoint.junctionId,
       "roadwayNumber" -> junctionPoint.roadwayNumber,
+      "roadwayPointId" -> junctionPoint.roadwayPointId,
       "roadNumber" -> junctionPoint.roadNumber,
       "roadPartNumber" -> junctionPoint.roadPartNumber,
       "track" -> junctionPoint.track.value,
@@ -1694,8 +1700,9 @@ object ProjectConverter {
 
 object NodesAndJunctionsConverter {
 
+  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+
   def toNode(node: NodeExtractor, username: String) : Node = {
-    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val endDate = if (node.endDate.isDefined) Option(formatter.parseDateTime(node.endDate.get)) else None
     val validFrom = if (node.validFrom.isDefined) formatter.parseDateTime(node.validFrom.get) else new DateTime()
     val validTo = if (node.validTo.isDefined) Option(formatter.parseDateTime(node.validTo.get)) else None
@@ -1707,21 +1714,34 @@ object NodesAndJunctionsConverter {
   }
 
   def toJunctions(junctions: Seq[JunctionExtractor]): Seq[Junction] = {
-    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-
     junctions.map { junction =>
       val validFrom = if (junction.validFrom.isDefined) formatter.parseDateTime(junction.validFrom.get) else new DateTime()
-      val endDate = if (junction.endDate.isDefined) Option(formatter.parseDateTime(junction.endDate.get)) else None
       val validTo = if (junction.validTo.isDefined) Option(formatter.parseDateTime(junction.validTo.get)) else None
+      val startDate = formatter.parseDateTime(junction.startDate)
+      val endDate = if (junction.endDate.isDefined) Option(formatter.parseDateTime(junction.endDate.get)) else None
       val createdTime = if (junction.createdTime.isDefined) Option(formatter.parseDateTime(junction.createdTime.get)) else None
 
-      Junction(junction.id, junction.junctionNumber, junction.nodeNumber, formatter.parseDateTime(junction.startDate), endDate,
-        validFrom, validTo, junction.createdBy.getOrElse("-"), createdTime)
+      val junctionPoints = toJunctionPoints(junction, startDate, endDate)
+
+      Junction(junction.id, junction.junctionNumber, junction.nodeNumber, startDate, endDate,
+        validFrom, validTo, junction.createdBy.getOrElse("-"), createdTime, Some(junctionPoints))
+    }
+  }
+
+  private def toJunctionPoints(junction: JunctionExtractor, startDate: DateTime, endDate: Option[DateTime]): List[JunctionPoint] = {
+    junction.junctionPoints.map { jp =>
+      val beforeAfter = BeforeAfter.apply(jp.beforeAfter)
+      val validFrom = if (jp.validFrom.isDefined) formatter.parseDateTime(jp.validFrom.get) else new DateTime()
+      val validTo = if (jp.validTo.isDefined) Option(formatter.parseDateTime(jp.validTo.get)) else None
+      val createdTime = if (jp.createdTime.isDefined) Option(formatter.parseDateTime(jp.createdTime.get)) else None
+
+      JunctionPoint(jp.id, beforeAfter, jp.roadwayPointId, jp.junctionId, Some(startDate), endDate, validFrom, validTo,
+        jp.createdBy.getOrElse("-"), createdTime, jp.roadwayNumber, jp.addrM, jp.roadNumber, jp.roadPartNumber,
+        jp.track, Discontinuity.Continuous)
     }
   }
 
   def toNodePoints(nodePoints: Seq[NodePointExtractor]): Seq[NodePoint] = {
-    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     nodePoints.map { nodePoint =>
       val validTo = if (nodePoint.validTo.isDefined) Option(formatter.parseDateTime(nodePoint.validTo.get)) else None
       val startDate = if (nodePoint.startDate.isDefined) Option(formatter.parseDateTime(nodePoint.startDate.get)) else None

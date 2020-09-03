@@ -153,7 +153,7 @@
           ' <th class="node-junctions-table-header">TIE</th>' +
           ' <th class="node-junctions-table-header">AJR</th>' +
           ' <th class="node-junctions-table-header">OSA</th>' +
-          ' <th class="node-junctions-table-header">ET</th>' +
+          ' <th class="node-junctions-table-header">ET <i id="edit-junction-point-addresses" class="btn-pencil-edit fas fa-pencil-alt"></i></th>' +
           ' <th class="node-junctions-table-header">EJ</th>' +
           '</tr>';
       };
@@ -164,8 +164,14 @@
       };
 
       var junctionInputNumber = function (junction) {
-        return '<td><input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)' +
-          '" class="form-control junction-number-input" id = "junction-number-textbox-' + junction.id + '" junctionId="' + junction.id + '" maxlength="2" value="' + (junction.junctionNumber || '') + '"/></td>';
+        return '<td><input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)"' +
+          ' class="form-control junction-number-input" id="junction-number-textbox-' + junction.id + '" junctionId="' + junction.id + '" maxlength="2" value="' + (junction.junctionNumber || '') + '"/></td>';
+      };
+
+      var junctionPointInputAddr = function (jp) {
+        return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)"' +
+          ' class="form-control junction-point-address-input" id="junction-point-address-input-' +
+          jp.id + '" junctionPointId="' + jp.id + '" maxlength="5" value="' + jp.addr + '" />';
       };
 
       var toMessage = function (junctionsInfo) {
@@ -198,8 +204,11 @@
             return '<tr><td class="' + tableRowClass + '">' + roadPartNumber + '</td></tr>';
           });
 
-          var addresses = _.map(_.map(junctionPointsInfo, 'addr'), function (addr) {
-            return '<tr><td class="' + tableRowClass + '">' + addr + '</td></tr>';
+          var addresses = _.map(junctionPointsInfo, function (jp) {
+            var addr = jp.addr;
+            var beforeAfter = jp.beforeAfter;
+            return '<tr><td class="' + tableRowClass + '"><span class="junction-point-address-label">' + addr + '</span>' +
+              (beforeAfter === "EJ" ? junctionPointInputAddr(jp) : "") + '</td></tr>';
           });
 
           var beforeOrAfter = _.map(_.map(junctionPointsInfo, 'beforeAfter'), function (beforeAfter) {
@@ -243,6 +252,7 @@
         var info = [];
         _.map(junction.junctionPoints, function (point) {
           var row = {
+            id: point.id,
             roadNumber: point.roadNumber,
             roadPartNumber: point.roadPartNumber,
             track: point.track,
@@ -265,7 +275,9 @@
 
         var doubleRows = _.map(doubleHomogeneousRows, function (point) {
           var first = _.head(point);
+          var last = _.last(point);
           return {
+            id: Math.min(first.id, last.id) + '-' + Math.max(first.id, last.id),
             roadNumber: first.roadNumber,
             track: first.track,
             roadPartNumber: first.roadPartNumber,
@@ -277,6 +289,7 @@
         var singleRows = _.map(singleHomogeneousRows, function (point) {
           var first = _.head(point);
           return {
+            id: first.id,
             roadNumber: first.roadNumber,
             track: first.track,
             roadPartNumber: first.roadPartNumber,
@@ -419,6 +432,12 @@
     var junctionsTable = new Junctions();
     var nodePointsTable = new NodePoints();
 
+    var showAddressInputs = function () {
+      $('#edit-junction-point-addresses').hide();
+      $('.junction-point-address-label').hide();
+      $('.junction-point-address-input').show();
+    };
+
     var addDatePicker = function (fromElement, minDate) {
       picker = dateutil.addSingleDatePickerWithMinDate(fromElement, minDate);
       fromElement.on('input', function () {
@@ -453,7 +472,7 @@
     };
 
     var closeNode = function (cancel) {
-      eventbus.off('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:validate junction:setCustomValidity junction:detach nodePoint:detach junction:attach nodePoint:attach');
+      eventbus.off('change:nodeName change:nodeTypeDropdown change:nodeStartDate junction:validate junctionPoint:validate junction:setCustomValidity junction:detach nodePoint:detach junction:attach nodePoint:attach');
       selectedNodesAndJunctions.closeNode(cancel);
     };
 
@@ -466,6 +485,12 @@
 
       rootElement.on('change', '[id^=junction-number-textbox-]', function () {
         selectedNodesAndJunctions.setJunctionNumber(parseInt($(this).attr('junctionId')), parseInt(this.value));
+      });
+
+      rootElement.on('change', '[id^=junction-point-address-input-]', function () {
+        var idString = $(this).attr('junctionPointId');
+        var addr = parseInt(this.value);
+        selectedNodesAndJunctions.setJunctionPointAddress(idString, addr);
       });
 
       var buildMessage = function (junction, nodePoints) {
@@ -646,6 +671,10 @@
         selectedNodesAndJunctions.closeTemplates();
       });
 
+      rootElement.on('click', '#edit-junction-point-addresses', function () {
+        showAddressInputs();
+      });
+
       rootElement.on('input', '[id^=junction-number-textbox-]', function () {
         $(this).change();
       });
@@ -717,8 +746,12 @@
             selectedNodesAndJunctions.validateJunctionNumbers();
           });
 
+          eventbus.on('junctionPoint:validate', function (idString, addr) {
+            selectedNodesAndJunctions.validateJunctionPointAddress(idString, addr);
+          });
+
           eventbus.on('change:node-coordinates change:nodeName change:nodeTypeDropdown change:nodeStartDate ' +
-            'junction:validate junction:detach nodePoint:detach junction:attach nodePoint:attach', function () {
+            'junction:validate junctionPoint:validate junction:detach nodePoint:detach junction:attach nodePoint:attach', function () {
             $('.btn-edit-node-save').prop('disabled', formIsInvalid());
           });
 
@@ -726,6 +759,13 @@
             _.each(junctions, function (junction) {
               document.getElementById('junction-number-textbox-' + junction.id).setCustomValidity(errorMessage);
             });
+          });
+
+          eventbus.on('junctionPoint:setCustomValidity', function (idString, errorMessage) {
+            var input = document.getElementById('junction-point-address-input-' + idString);
+            if (input) {
+              input.setCustomValidity(errorMessage);
+            }
           });
 
           selectedNodesAndJunctions.addJunctionTemplates(junctionTemplates);
