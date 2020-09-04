@@ -49,7 +49,10 @@ class ViitePropertiesFromEnv extends ViiteProperties {
 
   private lazy val revisionProperties: Properties = {
     val props = new Properties()
-    props.load(getClass.getResourceAsStream("/revision.properties"))
+    val stream = getClass.getResourceAsStream("/revision.properties")
+    if (stream != null) {
+      props.load(stream)
+    }
     props
   }
 
@@ -83,7 +86,7 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val authenticationMunicipalityBasicPassword: String = scala.util.Properties.envOrElse("authentication.municipality.basic.password", null)
   val viitetierekisteriUsername: String = scala.util.Properties.envOrElse("viiteTierekisteri.username", null)
   val viitetierekisteriPassword: String = scala.util.Properties.envOrElse("viiteTierekisteri.password", null)
-  val latestDeploy: String = revisionProperties.getProperty("latestDeploy")
+  val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
 
   lazy val bonecpProperties: Properties = {
