@@ -133,7 +133,10 @@ class ViitePropertiesFromFile extends ViiteProperties {
 
   private lazy val revisionProperties: Properties = {
     val props = new Properties()
-    props.load(getClass.getResourceAsStream("/revision.properties"))
+    val stream = getClass.getResourceAsStream("/revision.properties")
+    if (stream != null) {
+      props.load(stream)
+    }
     props
   }
 
@@ -167,7 +170,7 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val authenticationMunicipalityBasicPassword: String = envProps.getProperty("authentication.municipality.basic.password")
   override val viitetierekisteriUsername: String = envProps.getProperty("viiteTierekisteri.username")
   override val viitetierekisteriPassword: String = envProps.getProperty("viiteTierekisteri.password")
-  override val latestDeploy: String = revisionProperties.getProperty("latestDeploy")
+  override val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
   override val env: String = envProps.getProperty("env")
 
   override lazy val bonecpProperties: Properties = {
