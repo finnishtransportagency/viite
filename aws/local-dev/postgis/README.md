@@ -28,4 +28,4 @@ or
 
 **Clean the data:**
 
-- Delete the `data` directory
+`docker volume rm postgis_data` 
