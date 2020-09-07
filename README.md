@@ -56,7 +56,7 @@ Idea Run Configurations
 -----------------------
 If you are developing with the IntelliJ Idea, you can import the run configurations
 by copying the xml-files from the `aws/local-dev/idea-run-configurations` folder to the
-`.idea/runConfigurations` folder (under the project folder).
+`.idea/runConfigurations` folder (under the project folder). Restart Idea to see the new run configurations.
 
 - Flyway_init.xml
   - Initialize the database for Flyway by creating the `schema_version` table
