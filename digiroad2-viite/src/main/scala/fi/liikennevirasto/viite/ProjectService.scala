@@ -1459,7 +1459,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
 
-    val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+    val (originalProjectLinks: Seq[ProjectLink], splitLinks: Seq[ProjectLink]) = projectLinkDAO.fetchProjectLinks(projectId).partition(_.connectedLinkId.isEmpty)
+
+    val projectLinks = originalProjectLinks.map { pl: ProjectLink =>
+      if (splitLinks.map(_.linkId).contains(pl.linkId)) {
+        logger.info(s"Removing previously split project links for project $projectId")
+        linearLocationDAO.fetchById(pl.linearLocationId).map { ll =>
+          pl.copy(startAddrMValue = pl.originalStartAddrMValue, endAddrMValue = pl.originalEndAddrMValue,
+            startMValue = ll.startMValue, endMValue = ll.endMValue, geometry = ll.geometry, geometryLength = GeometryUtils.geometryLength(ll.geometry), roadwayNumber = ll.roadwayNumber)
+        }.get
+      } else pl
+    }
+
     logger.info(s"Recalculating project $projectId, parts ${roadParts.map(p => s"${p._1}/${p._2}").mkString(", ")}")
 
     time(logger, "Recalculate links") {
@@ -1483,10 +1494,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             } else {
               val (filtered, rest) = calculatedLinks.partition(_.track == newTrack.get)
               rest ++ (if (filtered.nonEmpty) {
-                  filtered.init :+ filtered.last.copy(discontinuity = newDiscontinuity.get)
-                } else {
-                  Seq()
-                })
+                filtered.init :+ filtered.last.copy(discontinuity = newDiscontinuity.get)
+              } else {
+                Seq()
+              })
             }
           }
           else
@@ -1499,6 +1510,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       val (generatedLinks, adjustedLinks) = (recalculated ++ assignedTerminatedRoadwayNumbers).partition(_.id == NewIdValue)
 
+      roadwayChangesDAO.clearRoadChangeTable(projectId)
+      projectLinkDAO.removeProjectLinksById(splitLinks.map(_.id).toSet)
       projectLinkDAO.updateProjectLinks(adjustedLinks, userName, originalAddresses)
       projectLinkDAO.create(generatedLinks.map(_.copy(createdBy = Some(userName))))
     }
