@@ -295,7 +295,7 @@ object TrackSectionRoadway {
         else GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, 0.0, linkToBeSplit.endMValue - splitMValue)
 
         //  processedLinks without and with roadwayNumber
-        val (unassignedRwnLinks, assignedRwnLinks) = oppositeToProcess.filterNot(_.id == linkToBeSplit.id).partition(_.roadwayNumber == NewIdValue)
+        val (unassignedRwnLinks, assignedRwnLinks) = oppositeToProcess.filterNot(_.eq(linkToBeSplit)).partition(_.roadwayNumber == NewIdValue)
         val nextRoadwayNumber = Sequences.nextRoadwayNumber
 
         // calculate startAddrMValue, when the link is not the 1st link of the roadway, address does not need to be adjusted
@@ -305,10 +305,10 @@ object TrackSectionRoadway {
           Some(remainingReference.head._2.head.track match {
             case r if r.value == Track.RightSide.value =>
               val strategy = TrackCalculatorContext.getStrategy(Seq(linkToBeSplit), remainingReference.head._2)
-              strategy.getFixedAddress(linkToBeSplit, remainingReference.head._2.head, averageValues = true)._1
+              strategy.getFixedAddress(linkToBeSplit, remainingReference.head._2.head)._1
             case _ =>
               val strategy = TrackCalculatorContext.getStrategy(remainingReference.head._2, Seq(linkToBeSplit))
-              strategy.getFixedAddress(remainingReference.head._2.head, linkToBeSplit, averageValues = true)._1
+              strategy.getFixedAddress(remainingReference.head._2.head, linkToBeSplit)._1
           })
         }
 
@@ -328,10 +328,10 @@ object TrackSectionRoadway {
           Some(remainingReference.tail.head._2.last.track match {
             case r if r.value == Track.RightSide.value =>
               val strategy = TrackCalculatorContext.getStrategy(Seq(linkToBeSplit), remainingReference.tail.head._2)
-              strategy.getFixedAddress(linkToBeSplit, remainingReference.tail.head._2.head, averageValues = true)._2
+              strategy.getFixedAddress(linkToBeSplit, remainingReference.tail.head._2.head)._2
             case _ =>
               val strategy = TrackCalculatorContext.getStrategy(remainingReference.tail.head._2, Seq(linkToBeSplit))
-              strategy.getFixedAddress(remainingReference.tail.head._2.head, linkToBeSplit, averageValues = true)._2
+              strategy.getFixedAddress(remainingReference.tail.head._2.head, linkToBeSplit)._2
           })
         }
 
