@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
-import java.util.Properties
 
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.ViiteTierekisteriAuthPropertyReader
@@ -159,17 +159,12 @@ case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadwayChange
 
 object ViiteTierekisteriClient {
 
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
   val logger = LoggerFactory.getLogger(getClass)
 
   private def getRestEndPoint: String = {
-    val isTREnabled = properties.getProperty("digiroad2.tierekisteri.enabled") == "true"
+    val isTREnabled = ViiteProperties.tierekisteriEnabled
     val loadedKeyString = if(isTREnabled){
-      properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
+      ViiteProperties.tierekisteriViiteRestApiEndPoint
     }  else "http://localhost:8080/api/trrest/"
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")

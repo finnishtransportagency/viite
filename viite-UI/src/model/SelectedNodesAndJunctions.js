@@ -2,10 +2,10 @@
   root.SelectedNodesAndJunctions = function (nodeCollection) {
     var current = {};
 
-    var openNode = function (node, templates) {
+    var openNode = function (node, openNodetemplates) {
       clean();
       setCurrentNode(node);
-      eventbus.trigger('node:selected', current.node, templates);
+      eventbus.trigger('node:selected', current.node, openNodetemplates);
     };
 
     var getCurrentNode = function () {
@@ -31,9 +31,9 @@
       openTemplates(templates(_.first(junctionTemplate.junctionPoints).coordinates));
     };
 
-    var openTemplates = function (templates) {
+    var openTemplates = function (templatesToOpen) {
       clean();
-      setCurrentTemplates(templates.nodePoints, templates.junctions);
+      setCurrentTemplates(templatesToOpen.nodePoints, templatesToOpen.junctions);
       eventbus.trigger('templates:selected', current.templates);
     };
 
@@ -60,14 +60,15 @@
       _.each(nodePoints, function (nodePoint) {
         current.node.nodePoints.push(nodePoint);
       });
-      eventbus.trigger('nodePointTemplates:selected', { nodePoints: nodePoints });
+      eventbus.trigger('nodePointTemplates:selected', {nodePoints: nodePoints});
     };
 
     var addJunctionTemplates = function (junctions) {
       _.each(junctions, function (junction) {
         current.node.junctions.push(junction);
       });
-      eventbus.trigger('junctionTemplates:selected', { junctions: junctions });
+      eventbus.trigger('junction:validate');
+      eventbus.trigger('junctionTemplates:selected', {junctions: junctions});
     };
 
     var getStartingCoordinates = function () {
@@ -85,12 +86,12 @@
 
     var setNodeName = function (name) {
       current.node.name = name;
-      eventbus.trigger('change:node', current.node);
+      updateNodesAndJunctionsMarker();
     };
 
     var setNodeType = function (type) {
       current.node.type = type;
-      eventbus.trigger('change:node', current.node);
+      updateNodesAndJunctionsMarker();
     };
 
     var setStartDate = function (startDate) {
@@ -105,6 +106,44 @@
 
     var getInitialStartDate = function () {
       return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).startDate;
+    };
+
+    var setJunctionNumber = function (id, junctionNumber) {
+      var junction = _.find(current.node.junctions, function (junctionToSet) {
+        return junctionToSet.id === id;
+      });
+
+      if (!_.isUndefined(junction)) {
+        junction.junctionNumber = junctionNumber;
+        eventbus.trigger('junction:validate');
+        updateNodesAndJunctionsMarker();
+      }
+    };
+
+    var getJunctionPoint = function (id) {
+      var junctionPoints = _.flatMap(current.node.junctions, function (junction) {
+        return junction.junctionPoints;
+      });
+      return _.find(junctionPoints, function (jp) {
+        return jp.id === id;
+      });
+    };
+
+    var setJunctionPointAddress = function (idString, addr) {
+      var ids = idString.split("-");
+      if (ids.length === 2) {
+        _.each(ids, function (id) {
+          var jp = getJunctionPoint(parseInt(id));
+          if (_.isUndefined(jp)) {
+            console.log("Failed to find junction point " + id + " and set it's address to " + addr + ".");
+          } else {
+            jp.addrM = addr;
+          }
+        });
+        eventbus.trigger('junctionPoint:validate', idString, addr);
+      } else {
+        console.log("Failed to update junction point address. (ids: " + idString + ", address: " + addr + ")");
+      }
     };
 
     var detachJunctionAndNodePoints = function (junction, nodePoints) {
@@ -124,22 +163,67 @@
 
     var attachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
-        if (_.filter(current.node.junctions, function (jp) { return jp.id === junction.id; }).length === 0) {
+        if (_.filter(current.node.junctions, function (j) {
+          return j.id === junction.id;
+        }).length === 0) {
           current.node.junctions.push(junction);
           eventbus.trigger('junction:attach', junction);
         }
       }
       _.each(nodePoints, function (nodePoint) {
-        if (_.filter(current.node.nodePoints, function (np) { return np.id === nodePoint.id; }).length === 0) {
+        if (_.filter(current.node.nodePoints, function (np) {
+          return np.id === nodePoint.id;
+        }).length === 0) {
           current.node.nodePoints.push(nodePoint);
           eventbus.trigger('nodePoint:attach', nodePoint);
         }
       });
     };
 
+    var validateJunctionNumbers = function () {
+
+      var errorMessage = function (junctions) {
+        var message = '';
+
+        if (junctions.length !== 1) {
+          message = 'Liittymänumero on jo käytössä'; // junction number is already in use
+        } else if (_.isNaN(_.first(junctions).junctionNumber) || !_.isEmpty(_.find(junctions, function (j) {
+          return j.junctionNumber <= 0;
+        }))) {
+          message = 'Liittymänumero on pakollinen tieto'; // junction number is compulsory information
+        }
+
+        verified = verified && _.isEmpty(message);
+        return message;
+      };
+
+      var verified = true;
+
+      _.each(_.groupBy(current.node.junctions, 'junctionNumber'), function (junctions) {
+        eventbus.trigger('junction:setCustomValidity', junctions, errorMessage(junctions));
+      });
+
+      return verified;
+    };
+
+    var validateJunctionPointAddress = function (idString, addr) {
+      var message = '';
+
+      if (addr < 1) {
+        message = 'Tieosan keskellä olevan liittymäkohdan osoitteen on oltava vähintään yksi'; // User is not allowed to set the address smaller than one
+      } else if (_.isNaN(addr)) {
+        message = 'Liittymäkohdan osoite on pakollinen tieto'; // junction point address is a compulsory information
+      }
+
+      eventbus.trigger('junctionPoint:setCustomValidity', idString, message);
+      return _.isEmpty(message);
+    };
+
     var isDirty = function () {
       var original = false;
-      if (current.node.nodeNumber) { original = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber); }
+      if (current.node.nodeNumber) {
+        original = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber);
+      }
       var nodePointsEquality = false;
       var junctionsEquality = false;
       var junctionPointsEquality = false;
@@ -147,22 +231,20 @@
       var nodesEquality = isEqualWithout(original, current.node, ['junctions', 'nodePoints']);
       //  comparing the nodePoints of both nodes
       if (original && original.nodePoints && original.nodePoints.length !== 0 && original.nodePoints.length === current.node.nodePoints.length) {
-        nodePointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.nodePoints, 'id'), _.sortBy(current.node.nodePoints, 'id')), _.spread(function(originalNodePoint, currentNodePoint) {
+        nodePointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.nodePoints, 'id'), _.sortBy(current.node.nodePoints, 'id')), _.spread(function (originalNodePoint, currentNodePoint) {
           return {equality: isEqualWithout(originalNodePoint, currentNodePoint, 'coordinates')};
         })), ['equality', false]);
       }
       //  comparing the junctions of both nodes
       if (original && original.junctions && original.junctions.length !== 0 && original.junctions.length === current.node.junctions.length) {
         junctionsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.junctions, 'id'), _.sortBy(current.node.junctions, 'id')), _.spread(function (originalJunction, currentJunction) {
-          // return isEqualWithout(originalJunction, currentJunction, 'junctionPoints');
           return {equality: isEqualWithout(originalJunction, currentJunction, 'junctionPoints')};
         })), ['equality', false]);
 
         //  comparing the junctionPoints of all junctions in both nodes
-        junctionPointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.junctions, 'id'), _.sortBy(current.node.junctions, 'id')), _.spread(function(originalJunction, currentJunction) {
+        junctionPointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.junctions, 'id'), _.sortBy(current.node.junctions, 'id')), _.spread(function (originalJunction, currentJunction) {
           if (originalJunction.junctionPoints.length === currentJunction.junctionPoints.length && originalJunction.junctionPoints.length !== 0) {
             return _.flatMap(_.zip(originalJunction.junctionPoints, currentJunction.junctionPoints), _.spread(function (originalJunctionPoint, currentJunctionPoint) {
-              // return isEqualWithout(originalJunctionPoint, currentJunctionPoint, 'coordinates');
               return {equality: isEqualWithout(originalJunctionPoint, currentJunctionPoint, 'coordinates')};
             }));
           } else return false;
@@ -172,10 +254,16 @@
       return !(nodesEquality && nodePointsEquality && junctionsEquality && junctionPointsEquality);
     };
 
-    var isEqualWithout = function (original, current, toIgnore) {
+    var isObsoleteNode = function () {
+      return _.isEmpty(current.node.junctions) && _.isEmpty(_.filter(current.node.nodePoints, function (np) {
+        return np.type !== LinkValues.NodePointType.CalculatedNodePoint.value;
+      }));
+    };
+
+    var isEqualWithout = function (original, currentObject, toIgnore) {
       return _.isEqual(
-          _.omit(original, toIgnore),
-          _.omit(current, toIgnore)
+        _.omit(original, toIgnore),
+        _.omit(currentObject, toIgnore)
       );
     };
 
@@ -183,8 +271,8 @@
       current = {};
     };
 
-    var close = function (options, params) {
-      eventbus.trigger(options, params);
+    var close = function (options, params, cancel) {
+      eventbus.trigger(options, params, cancel);
       eventbus.trigger('nodesAndJunctions:open');
     };
 
@@ -192,8 +280,8 @@
       eventbus.trigger('nodeLayer:closeForm', current); // all nodes and junctions forms should listen to this trigger
     };
 
-    var closeNode = function () {
-      close('node:unselected', current.node);
+    var closeNode = function (cancel) {
+      close('node:unselected', current.node, cancel);
       clean();
       eventbus.trigger('nodeLayer:refreshView');
     };
@@ -207,8 +295,12 @@
       eventbus.trigger('node:save', current.node);
     };
 
-    eventbus.on('selectedNodesAndJunctions:openTemplates', function (templates) {
-      openTemplates(templates);
+    var updateNodesAndJunctionsMarker = function (junction) {
+      eventbus.trigger('change:node', current.node, junction);
+    };
+
+    eventbus.on('selectedNodesAndJunctions:openTemplates', function (templatesToOpen) {
+      openTemplates(templatesToOpen);
     });
 
     return {
@@ -229,13 +321,19 @@
       typeHasChanged: typeHasChanged,
       getInitialStartDate: getInitialStartDate,
       setStartDate: setStartDate,
+      setJunctionNumber: setJunctionNumber,
+      setJunctionPointAddress: setJunctionPointAddress,
       detachJunctionAndNodePoints: detachJunctionAndNodePoints,
       attachJunctionAndNodePoints: attachJunctionAndNodePoints,
+      validateJunctionNumbers: validateJunctionNumbers,
+      validateJunctionPointAddress: validateJunctionPointAddress,
       isDirty: isDirty,
+      isObsoleteNode: isObsoleteNode,
       closeNode: closeNode,
       closeTemplates: closeTemplates,
       closeForm: closeForm,
-      saveNode: saveNode
+      saveNode: saveNode,
+      updateNodesAndJunctionsMarker: updateNodesAndJunctionsMarker
     };
   };
-})(this);
+}(this));

@@ -34,4 +34,4 @@
     generateTransferFloatingData: generateTransferFloatingData,
     generateRoadAddressDataAfterSave: generateRoadAddressDataAfterSave
   };
-})(this);
+}(this));

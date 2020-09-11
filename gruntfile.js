@@ -1,4 +1,7 @@
-module.exports = function(grunt) {
+module.exports = function (grunt) {
+  var serveStatic = require('serve-static');
+  var serveIndex = require('serve-index');
+  var path = require('path');
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     properties: {
@@ -44,38 +47,42 @@ module.exports = function(grunt) {
         }
       }
     },
-    uglify: {
+    terser: {
       options: {
-        banner: '/*! <%= pkg.name %> <%= grunt.template.today("dd-mm-yyyy") %> */\n'
+        // Task-specific options go here.
       },
-      dist: {
+      main: {
         files: {
           'dist/js/<%= pkg.name %>.min.js': ['dist/js/<%= pkg.name %>.js']
+          // Target-specific file lists and/or options go here.
         }
       }
     },
     cachebreaker: {
-      css: {
+      indexfile: {
         options: {
-          match: ['viite.css'],
-          replacement: 'md5',
-          src: {
-            path: 'dist/css/viite.css'
-          }
+          match: [
+            {
+              // Pattern    // File to hash
+              'style.css': 'viite-UI/components/theme/default/style.css',
+              'pikaday.css': 'node_modules/pikaday/css/pikaday.css',
+              'viite.css': 'dist/css/viite.css',
+              'jquery.min.js': 'node_modules/jquery/dist/jquery.min.js',
+              'jquery-migrate.min.js': 'node_modules/jquery-migrate/dist/jquery-migrate.min.js',
+              'moment.min.js': 'node_modules/moment/min/moment.min.js',
+              'lodash.js': 'node_modules/lodash/lodash.js',
+              'backbone.js': 'node_modules/backbone/backbone.js',
+              'pikaday.js': 'node_modules/pikaday/pikaday.js',
+              'proj4.js': 'node_modules/proj4/dist/proj4.js',
+              'interact.min.js': 'node_modules/interactjs/dist/interact.min.js',
+              'ol.js': 'viite-UI/components/ol.js',
+              'viite.min.js': 'dist/js/viite.js'
+            }
+          ],
+          replacement: 'md5'
         },
         files: {
-          src: ['viite-UI/index.html']
-        }
-      },
-      js: {
-        options: {
-          match: ['viite.min.js'],
-          replacement: 'md5',
-          src: {
-            path: 'dist/js/viite.js'
-          }
-        },
-        files: {
+          // File where md5 hashes are stored
           src: ['viite-UI/index.html']
         }
       }
@@ -86,14 +93,15 @@ module.exports = function(grunt) {
         options: {
           port: 9003,
           base: ['dist', '.', 'viite-UI'],
-          middleware: function(connect, opts) {
+          middleware: function (connect, opts) {
+            var _staticPath = path.resolve(opts.base[2]);
             var config = [
               // Serve static files.
-              connect.static(opts.base[0]),
-              connect.static(opts.base[1]),
-              connect.static(opts.base[2]),
+              serveStatic(opts.base[0]),
+              serveStatic(opts.base[1]),
+              serveStatic(opts.base[2]),
               // Make empty directories browsable.
-              connect.directory(opts.base[2])
+              serveIndex(_staticPath)
             ];
             var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
             config.unshift(proxy);
@@ -110,15 +118,15 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-              context: '/viite/api-docs',
-              host: '127.0.0.1',
-              port: '8080',
-              https: false,
-              changeOrigin: true,
-              xforward: false,
-              rewrite: {
-                  '^/viite/api-docs': '/api-docs'
-              }
+            context: '/viite/api-docs',
+            host: '127.0.0.1',
+            port: '8080',
+            https: false,
+            changeOrigin: true,
+            xforward: false,
+            rewrite: {
+              '^/viite/api-docs': '/api-docs'
+            }
           },
           {
             context: '/arcgis',
@@ -131,21 +139,25 @@ module.exports = function(grunt) {
           },
           {
             context: '/rasteripalvelu',
-            host: 'oag.vayla.fi',
-            port: '80',
+            host: 'localhost',
+            port: '9180',
             https: false,
-            changeOrigin: true,
-            xforward: false
-          },
-          {
-            context: '/wmts',
-            host: 'oag.liikennevirasto.fi',
-            port: '80',
-            https: false,
+            secure: false,
             changeOrigin: true,
             xforward: false,
             rewrite: {
-              '^/wmts': '/rasteripalvelu-mml/wmts'
+              '^/rasteripalvelu': '/viite/rasteripalvelu'
+            }
+          },
+          {
+            context: '/wmts',
+            host: 'localhost',
+            port: '9180',
+            https: false,
+            secure: false,
+            xforward: false,
+            rewrite: {
+              '^/wmts': '/viite/wmts'
             }
           },
           {
@@ -155,14 +167,6 @@ module.exports = function(grunt) {
             changeOrigin: true,
             xforward: false,
             headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
-          },
-          {
-            context: '/vkm',
-            host: 'oag.liikennevirasto.fi',
-            port: '80',
-            https: true,
-            changeOrigin: true,
-            xforward: false
           },
           {
             context: '/test/components',
@@ -193,18 +197,8 @@ module.exports = function(grunt) {
         }
       }
     },
-    jshint: {
-      files: ['Gruntfile.js', 'viite-UI/test/**/*.js', 'viite-UI/src/**/*.js', 'viite-UI/test_data/*.js', 'viite-UI/src/' ],
-      options: {
-        reporterOutput: "",
-        // options here to override JSHint defaults
-        globals: {
-          jQuery: true,
-          console: true,
-          module: true,
-          document: true
-        }
-      }
+    eslint: {
+      src: ['gruntfile.js', 'viite-UI/test/**/*.js', 'viite-UI/src/map/*.js', 'viite-UI/src/modalconfirm/*.js', 'viite-UI/src/model/*.js', 'viite-UI/src/utils/*.js', 'viite-UI/src/view/*.js', 'viite-UI/test_data/*.js', 'viite-UI/src/']
     },
     mocha: {
       viite_unit: {
@@ -225,36 +219,24 @@ module.exports = function(grunt) {
           reporter: 'Spec'
         }
       },
-      viite_integration: {
-        options: {
-          mocha: { ignoreLeaks: true },
-          urls: ['http://127.0.0.1:9003/test/integration-tests.html'],
-          run: false,
-          log: true,
-          logErrors: true,
-          timeout: 100000,
-          reporter: 'Spec'
-        }
-      },
       options: {
         growlOnSuccess: false
       }
     },
     watch: {
       viite: {
-        files: ['<%= jshint.files %>', 'viite-UI/src/**/*.less', 'viite-UI/**/*.html'],
-        tasks: ['properties', 'jshint', 'env:development', 'preprocess:development', 'less:viitedev', 'mocha:viite_unit', 'mocha:viite_integration', 'configureProxies:viite'],
+        files: ['<%= eslint.src %>', 'viite-UI/src/**/*.less', 'viite-UI/**/*.html'],
+        tasks: ['properties', 'eslint', 'env:development', 'preprocess:development', 'less:viitedev', 'mocha:viite_unit', 'configureProxies:viite'],
         options: {
           livereload: true
         }
       }
     },
-    exec: {
-    }
+    exec: {}
   });
 
-  grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks("grunt-terser");
+  grunt.loadNpmTasks("gruntify-eslint");
   grunt.loadNpmTasks('grunt-mocha');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-concat');
@@ -273,18 +255,16 @@ module.exports = function(grunt) {
 
   grunt.registerTask('server', ['properties', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
 
-  grunt.registerTask('test', ['properties', 'jshint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit', 'mocha:viite_integration']);
+  grunt.registerTask('test', ['properties', 'eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
 
-  grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'mocha:viite_integration', 'clean', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['properties', 'eslint', 'env:production', 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'clean', 'less:viiteprod', 'concat', 'terser', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:'+target, 'preprocess:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:viiteprod', 'concat', 'terser', 'cachebreaker', 'save_deploy_info']);
 
-  grunt.registerTask('unit-test', ['properties', 'jshint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
-
-  grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_integration']);
+  grunt.registerTask('unit-test', ['properties', 'eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
 
   grunt.registerTask('save_deploy_info',
-    function() {
+    function () {
       var options = this.options({
         file: 'revision.properties'
       });

@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite.util
 
-import java.util.Properties
-
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
@@ -19,7 +17,6 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.LinkStatus.{New, NotHandled}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.ProjectLinkSource
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.mockito.Mockito.reset
 import org.scalatest.mockito.MockitoSugar
@@ -49,7 +46,9 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers with BeforeAndAfter
   val junctionPointDAO = new JunctionPointDAO
   val roadwayChangesDAO = new RoadwayChangesDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
-  val roadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO,
+    roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus, frozenVVH = false) {
+
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f

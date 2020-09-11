@@ -1,11 +1,11 @@
 package fi.liikennevirasto.viite
 
 import java.net.ConnectException
-import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import org.apache.http.client.config.RequestConfig
@@ -21,11 +21,6 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
-  val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
   val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService: RoadAddressService = MockitoSugar.mock[RoadAddressService]
@@ -45,7 +40,9 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val roadNetworkDAO = new RoadNetworkDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
-  val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus) {
+  val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO,
+    roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus, frozenVVH = false) {
+
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
@@ -80,14 +77,8 @@ class ProjectServiceTRSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
   private def testConnection: Boolean = {
-    val url = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
+    val url = ViiteProperties.tierekisteriViiteRestApiEndPoint
     val request = new HttpGet(url)
     request.setConfig(RequestConfig.custom().setConnectTimeout(2500).build())
     val client = HttpClientBuilder.create().build()

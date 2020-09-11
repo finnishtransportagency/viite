@@ -386,6 +386,27 @@ form.roadAddressProject p {
 
 .node-junctions-table-border-bottom {
   border-bottom: 1px solid @gray-light;
+
+  input[type="checkbox"] {
+    margin: 10px 10px !important;
+  }
+
+  .junction-number-input {
+    text-align: center;
+    width: 20px !important;
+    margin: 10px 10px !important;
+
+    &:invalid, &:invalid:focus {
+      border-color: @error;
+    }
+  }
+
+  .junction-point-address-input {
+    width: 40px !important;
+    margin-top: 1px !important;
+    margin-bottom: 1px !important;
+    display: none;
+  }
 }
 
 .node-points-table, .node-junctions-table {
@@ -402,6 +423,10 @@ form.roadAddressProject p {
   &.template {
     color: @warning !important;
   }
+}
+
+.node-junctions-table-header .btn-pencil-edit {
+  margin-left: 0;
 }
 
 #projectErrors .warning label {
@@ -471,11 +496,6 @@ form.node .control-label-small {
   margin-bottom: -10px;
   width: 55px !important;
   text-align:center
-}
-
-form.node .form-control.node-input {
-  width: 55px !important;
-  margin-right: 11px;
 }
 
 // Help text

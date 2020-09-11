@@ -2,6 +2,8 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -42,7 +44,7 @@ class RoadwayPointDAO extends BaseDAO {
     } else {
       roadwayPoint.id
     }
-    logger.info(s"Insert roadway_point ($id, ${roadwayPoint.roadwayNumber}, ${roadwayPoint.addrMValue})")
+    logger.info(s"Insert roadway_point $id (roadwayNumber: ${roadwayPoint.roadwayNumber}, addrM: ${roadwayPoint.addrMValue})")
     sqlu"""
       Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) Values
       ($id, ${roadwayPoint.roadwayNumber}, ${roadwayPoint.addrMValue}, ${roadwayPoint.createdBy}, ${roadwayPoint.createdBy})
@@ -52,7 +54,7 @@ class RoadwayPointDAO extends BaseDAO {
 
   def create(roadwayNumber: Long, addrMValue: Long, createdBy: String): Long = {
     val id = Sequences.nextRoadwayPointId
-    logger.info(s"Insert roadway_point ($id, $roadwayNumber, $addrMValue)")
+    logger.info(s"Insert roadway_point $id (roadwayNumber: $roadwayNumber, addrM: $addrMValue)")
     sqlu"""
       Insert Into ROADWAY_POINT (ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, MODIFIED_BY) Values
       ($id, $roadwayNumber, $addrMValue, $createdBy, $createdBy)
@@ -112,12 +114,7 @@ class RoadwayPointDAO extends BaseDAO {
   }
 
   def fetchByRoadwayNumber(roadwayNumber: Long): Seq[RoadwayPoint] = {
-    val query =
-      s"""
-      SELECT ID, ROADWAY_NUMBER, ADDR_M, CREATED_BY, CREATED_TIME, MODIFIED_BY, MODIFIED_TIME
-      from ROADWAY_POINT where ROADWAY_NUMBER= $roadwayNumber
-       """
-    queryList(query)
+    fetchByRoadwayNumbers(Seq(roadwayNumber))
   }
 
   def fetchByRoadwayNumberAndAddresses(roadwayNumber: Long, startAddrM: Long, endAddrM: Long): Seq[RoadwayPoint] = {
@@ -142,19 +139,12 @@ class RoadwayPointDAO extends BaseDAO {
   }
 
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
-    def calibrationPoint(cp: Option[ProjectLinkCalibrationPoint]): Option[Long] = {
-      cp match {
-        case Some(x) =>
-          Some(x.addressMValue)
-        case _ => Option.empty[Long]
-      }
-    }
-
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
     (LinearLocation(-1000, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
-      (calibrationPoint(p.calibrationPoints._1), calibrationPoint(p.calibrationPoints._2)), p.geometry, p.linkGeomSource,
-      p.roadwayNumber, Some(startDate), p.endDate),
+      (CalibrationPointsUtils.toCalibrationPointReference(p.startCalibrationPoint),
+        CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
+      p.geometry, p.linkGeomSource, p.roadwayNumber, Some(startDate), p.endDate),
       Roadway(-1000, p.roadwayNumber, p.roadNumber, p.roadPartNumber, p.roadType, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
         p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
   }

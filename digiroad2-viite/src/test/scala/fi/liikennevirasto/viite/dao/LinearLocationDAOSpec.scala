@@ -7,12 +7,13 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{Point, asset}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 class LinearLocationDAOSpec extends FunSuite with Matchers {
 
@@ -21,7 +22,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
   val roadwayPointDAO = new RoadwayPointDAO
 
   val testLinearLocation = LinearLocation(NewIdValue, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
-    (Some(0l), None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
+    (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
 
   def runWithRollback(f: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
@@ -32,7 +33,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test create When creating linear location with new roadway id and no calibration points Then return new linear location") {
     runWithRollback {
-      linearLocationDAO.create(Seq(testLinearLocation.copy(roadwayNumber = NewIdValue, calibrationPoints = (None, None))))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(roadwayNumber = NewIdValue, calibrationPoints = (CalibrationPointReference.None, CalibrationPointReference.None))))
     }
   }
 
@@ -59,15 +60,15 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val endMValue = 100.0
       val sideCode = SideCode.TowardsDigitizing
       val adjustedTimestamp = 10000000000l
-      val calibrationPoints = (Some(0l), None)
+      val calibrationPoints = (CalibrationPointReference(Some(0l), Some(CalibrationPointType.RoadAddressCP)), CalibrationPointReference.None)
       val geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0))
       val linkSource = LinkGeomSource.NormalLinkInterface
       val roadwayNumber = 200l
       val linearLocation = LinearLocation(id, orderNumber, linkId, startMValue, endMValue, sideCode, adjustedTimestamp,
         calibrationPoints, geometry, linkSource, roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation))
-      val roadwayPointId = roadwayPointDAO.create(linearLocation.roadwayNumber, linearLocation.startCalibrationPoint.get, "test")
-      CalibrationPointDAO.create(roadwayPointId, linearLocation.linkId, startOrEnd = 0, calType = CalibrationPointType.Mandatory, createdBy = "test")
+      val roadwayPointId = roadwayPointDAO.create(linearLocation.roadwayNumber, linearLocation.startCalibrationPoint.addrM.get, "test")
+      CalibrationPointDAO.create(roadwayPointId, linearLocation.linkId, startOrEnd = CalibrationPointLocation.StartOfLink, calType = CalibrationPointType.RoadAddressCP, createdBy = "test")
       val loc = linearLocationDAO.fetchById(id).getOrElse(fail())
 
       // Check that the values were saved correctly in database
@@ -609,6 +610,24 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val locations = linearLocationDAO.fetchByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)))
       locations.size should be(1)
       locations.count(l => l.id == id2) should be(1)
+    }
+  }
+
+  test("Test fetchByRoadAddress When fetching linear locations Then should return locations in that road address") {
+    runWithRollback {
+      val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
+      val roadwayNumber1 = 11111l
+      val linkId1 = 111111111l
+      val linkId2 = 222222222l
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1, linkId = linkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber1, linkId = linkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
+
+      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, -9999, 1, RoadType.PublicRoad, Combined,
+        Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test",
+        Some("ROAD 1"), 1, TerminationCode.NoTermination)))
+
+      val locations = linearLocationDAO.fetchByRoadAddress(-9999,1, 1)
+      locations.size should be(2)
     }
   }
 

@@ -28,25 +28,25 @@ require.config({
     'EventBus': {
       deps: ['backbone']
     },
-    'Layer': { exports: 'Layer' },
-    'RoadCollection': { exports: 'RoadCollection' },
-    'geometrycalculator': { exports: 'geometrycalculator' },
-    'moment': { exports: 'moment'},
-    'dateutil': { exports: 'dateutil' },
-    'LocationInputParser': { exports: 'LocationInputParser' },
-    'GeometryUtils': { exports: 'GeometryUtils' },
-    'RoadAddressTestData': { exports: 'RoadAddressTestData' },
-    'RoadLinkTestData': { exports: 'RoadLinkTestData' },
-    'UserRolesTestData': { exports: 'UserRolesTestData' },
-    'validitydirections': { exports: 'validitydirections' }
+    'Layer': {exports: 'Layer'},
+    'RoadCollection': {exports: 'RoadCollection'},
+    'geometrycalculator': {exports: 'geometrycalculator'},
+    'moment': {exports: 'moment'},
+    'dateutil': {exports: 'dateutil'},
+    'LocationInputParser': {exports: 'LocationInputParser'},
+    'GeometryUtils': {exports: 'GeometryUtils'},
+    'RoadAddressTestData': {exports: 'RoadAddressTestData'},
+    'RoadLinkTestData': {exports: 'RoadLinkTestData'},
+    'UserRolesTestData': {exports: 'UserRolesTestData'},
+    'validitydirections': {exports: 'validitydirections'}
   },
   waitSeconds: 10
 });
 require(['lodash', 'moment', 'GeometryUtils',
-  'unit-tests/geometry-calculations-spec',
-  'unit-tests/GeometryUtilsSpec',
-  'unit-tests/date-utils-spec',
-  'unit-tests/LocationInputParserSpec'],
+    'unit-tests/geometry-calculations-spec',
+    'unit-tests/GeometryUtilsSpec',
+    'unit-tests/date-utils-spec',
+    'unit-tests/LocationInputParserSpec'],
   function (lodash, moment) {
     window._ = lodash;
     window.moment = moment;

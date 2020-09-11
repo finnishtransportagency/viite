@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.client.kmtk.{ChangeInfo, ChangeType, KMTKHis
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao._
@@ -23,21 +24,21 @@ object Dummies {
     RoadwayChangeSection(roadNumber, track, roadPartNumber, roadPartNumber, startAddressM, endAddressM, roadType, discontinuity, ely)
   }
 
-  def dummyLinearLocationWithGeometry(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, geometry: Seq[Point] = Seq()): LinearLocation =
-    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface, 0, geometry)
+  def dummyLinearLocationWithGeometry(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode = SideCode.TowardsDigitizing, geometry: Seq[Point] = Seq()): LinearLocation =
+    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, sideCode, LinkGeomSource.NormalLinkInterface, 0, geometry)
 
   def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, timestamp: Long): LinearLocation =
-    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface, timestamp)
+    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, LinkGeomSource.NormalLinkInterface, timestamp)
 
   def dummyLinearLocation(roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double): LinearLocation =
     dummyLinearLocation(roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface)
 
   def dummyLinearLocation(roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, linkGeomSource: LinkGeomSource): LinearLocation = {
-    dummyLinearLocation(roadwayNumber + Math.round(orderNumber), roadwayNumber, orderNumber, linkId, startMValue, endMValue, LinkGeomSource.NormalLinkInterface, timestamp = 0L)
+    dummyLinearLocation(roadwayNumber + Math.round(orderNumber), roadwayNumber, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, LinkGeomSource.NormalLinkInterface, timestamp = 0L)
   }
 
-  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, linkGeomSource: LinkGeomSource, timestamp: Long = 0L, geometry: Seq[Point] = Seq()): LinearLocation = {
-    LinearLocation(id, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, timestamp, (None, None),
+  def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode = SideCode.TowardsDigitizing, linkGeomSource: LinkGeomSource, timestamp: Long = 0L, geometry: Seq[Point] = Seq()): LinearLocation = {
+    LinearLocation(id, orderNumber, linkId, startMValue, endMValue, sideCode, timestamp, (CalibrationPointReference.None, CalibrationPointReference.None),
       if (geometry.isEmpty) Seq(Point(0.0, startMValue), Point(0.0, endMValue)) else geometry, linkGeomSource, roadwayNumber)
   }
 
@@ -54,7 +55,7 @@ object Dummies {
   def dummyProjectLink(roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuityType: Discontinuity, startAddrM: Long, endAddrM: Long, startDate: Option[DateTime], endDate: Option[DateTime] = None, linkId: Long = 0, startMValue: Double = 0,
                        endMValue: Double = 0, sideCode: SideCode = SideCode.Unknown, status: LinkStatus, projectId: Long = 0, roadType: RoadType = RoadType.PublicRoad, geometry: Seq[Point] = Seq(), roadwayNumber: Long = 0L) = {
     ProjectLink(0L, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startAddrM, endAddrM, startDate, endDate,
-      Some("user"), linkId, startMValue, endMValue, sideCode, (None, None), geometry, projectId,
+      Some("user"), linkId, startMValue, endMValue, sideCode, (NoCP, NoCP), (NoCP, NoCP), geometry, projectId,
       status, roadType, geometryLength = 0, roadwayId = 0, linearLocationId = 0, ely = 8, reversed = false, linkGeometryTimeStamp = 0, roadwayNumber = roadwayNumber)
   }
 

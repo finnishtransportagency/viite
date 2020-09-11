@@ -11,13 +11,11 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.{AddressError, AddressErrorDetails}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.BaseCalibrationPoint
-import fi.liikennevirasto.viite.dao.CalibrationPointSource.{ProjectLinkSource, RoadAddressSource}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
-import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -112,7 +110,7 @@ object CalibrationCode {
   }
 
   def getFromAddress(roadAddress: BaseRoadAddress): CalibrationCode = {
-    fromBooleans(roadAddress.calibrationPoints._1.isDefined, roadAddress.calibrationPoints._2.isDefined)
+    fromBooleans(roadAddress.startCalibrationPoint.isDefined, roadAddress.calibrationPoints._2.isDefined)
   }
 
   def getFromAddressLinkLike(roadAddress: RoadAddressLinkLike): CalibrationCode = {
@@ -143,9 +141,23 @@ object CalibrationCode {
     }
   }
 
+  def existsAtBeginning(calibrationCode: Option[CalibrationCode]): Boolean = {
+    calibrationCode match {
+      case Some(code) if code.equals(AtBeginning) || code.equals(AtBoth) => true
+      case _ => false
+    }
+  }
+
+  def existsAtEnd(calibrationCode: Option[CalibrationCode]): Boolean = {
+    calibrationCode match {
+      case Some(code) if code.equals(AtEnd) || code.equals(AtBoth) => true
+      case _ => false
+    }
+  }
+
 }
 
-case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends BaseCalibrationPoint
+case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long, typeCode: CalibrationPointType = CalibrationPointType.UnknownCP) extends BaseCalibrationPoint
 
 sealed trait TerminationCode {
   def value: Int
@@ -220,21 +232,12 @@ trait BaseRoadAddress {
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
-  def getCalibrationCode: CalibrationCode = {
-    calibrationPoints match {
-      case (Some(_), Some(_)) => CalibrationCode.AtBoth
-      case (Some(_), _) => CalibrationCode.AtBeginning
-      case (_, Some(_)) => CalibrationCode.AtEnd
-      case _ => CalibrationCode.No
-    }
+  def hasCalibrationPointAtStart: Boolean = {
+    startCalibrationPoint.getOrElse(NoCP) != NoCP
   }
 
-  def hasCalibrationPointAt(calibrationCode: CalibrationCode): Boolean = {
-    val raCalibrationCode = getCalibrationCode
-    if (calibrationCode == CalibrationCode.No || calibrationCode == CalibrationCode.AtBoth)
-      raCalibrationCode == calibrationCode
-    else
-      raCalibrationCode == CalibrationCode.AtBoth || raCalibrationCode == calibrationCode
+  def hasCalibrationPointAtEnd: Boolean = {
+    endCalibrationPoint.getOrElse(NoCP) != NoCP
   }
 
   def liesInBetween(ra: BaseRoadAddress): Boolean = {
@@ -308,6 +311,9 @@ trait BaseRoadAddress {
       (startingPoint, endPoint)
     }
   }
+
+  lazy val startCalibrationPoint: Option[BaseCalibrationPoint] = calibrationPoints._1
+  lazy val endCalibrationPoint: Option[BaseCalibrationPoint] = calibrationPoints._2
 }
 
 //TODO the start date and the created by should not be optional on the road address case class
@@ -321,8 +327,19 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
                        terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
                        roadName: Option[String] = None) extends BaseRoadAddress {
 
-  val endCalibrationPoint = calibrationPoints._2
-  val startCalibrationPoint = calibrationPoints._1
+  override lazy val startCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._1
+  override lazy val endCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._2
+
+  def startCalibrationPointType: CalibrationPointType = startCalibrationPoint match {
+    case Some(cp) => cp.typeCode
+    case None => NoCP
+  }
+  def endCalibrationPointType: CalibrationPointType = endCalibrationPoint match {
+    case Some(cp) => cp.typeCode
+    case None => NoCP
+  }
+
+  def calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (startCalibrationPointType, endCalibrationPointType)
 
   def reversed: Boolean = false
 
@@ -365,16 +382,6 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
 
   def copyWithGeometry(newGeometry: Seq[Point]) = {
     this.copy(geometry = newGeometry)
-  }
-
-  def toProjectLinkCalibrationPoints(): (Option[ProjectLinkCalibrationPoint], Option[ProjectLinkCalibrationPoint]) = {
-    val calibrationPointSource = if (id == noRoadwayId || id == NewIdValue) ProjectLinkSource else RoadAddressSource
-    calibrationPoints match {
-      case (None, None) => (Option.empty[ProjectLinkCalibrationPoint], Option.empty[ProjectLinkCalibrationPoint])
-      case (None, Some(cp1)) => (Option.empty[ProjectLinkCalibrationPoint], Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)))
-      case (Some(cp1), None) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)), Option.empty[ProjectLinkCalibrationPoint])
-      case (Some(cp1), Some(cp2)) => (Option(ProjectLinkCalibrationPoint(cp1.linkId, cp1.segmentMValue, cp1.addressMValue, calibrationPointSource)), Option(ProjectLinkCalibrationPoint(cp2.linkId, cp2.segmentMValue, cp2.addressMValue, calibrationPointSource)))
-    }
   }
 
   def getFirstPoint: Point = {
@@ -525,12 +532,12 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long], roadNetworkId: Long): Seq[Roadway] = {
+  def fetchAllByRoadwayNumbers(roadwayNumbers: Set[Long], roadNetworkId: Long, searchDate: Option[DateTime]) : Seq[Roadway] = {
     time(logger, "Fetch all current road addresses by roadway ids and road network id") {
       if (roadwayNumbers.isEmpty)
         Seq()
       else
-        fetch(withRoadwayNumbersAndRoadNetwork(roadwayNumbers, roadNetworkId))
+        fetch(withRoadwayNumbersAndRoadNetwork(roadwayNumbers, roadNetworkId, searchDate))
     }
   }
 
@@ -546,9 +553,9 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  def fetchAllBySectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrM: Option[Long], endAddrM: Option[Long]): Seq[Roadway] = {
+  def fetchAllBySectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrM: Option[Long], endAddrM: Option[Long], track: Option[Long] = None): Seq[Roadway] = {
     time(logger, "Fetch road address by road number, road part number, start address measure and end address measure") {
-      fetch(withSectionAndAddresses(roadNumber, roadPartNumber, startAddrM, endAddrM))
+      fetch(withSectionAndAddresses(roadNumber, roadPartNumber, startAddrM, endAddrM, track))
     }
   }
 
@@ -703,7 +710,9 @@ class RoadwayDAO extends BaseDAO {
     query + s" WHERE a.road_number = $road " + s"$roadPartFilter $trackFilter $mValueFilter and a.end_date is null and a.valid_to is null "
   }
 
-  private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long)(query: String): String = {
+  private def withRoadwayNumbersAndRoadNetwork(roadwayNumbers: Set[Long], roadNetworkId: Long, searchDate: Option[DateTime])(query: String): String = {
+    val queryDate = if (searchDate.isDefined) s"to_date('${searchDate.get.toString("yyyy-MM-dd")}', 'YYYY-MM-DD') " else "CURRENT_DATE"
+
     if (roadwayNumbers.size > 1000) {
       val groupsOf1000 = roadwayNumbers.grouped(1000).toSeq
       val groupedRoadwayNumbers = groupsOf1000.map(group => {
@@ -713,13 +722,13 @@ class RoadwayDAO extends BaseDAO {
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
          where net.network_id = $roadNetworkId and a.valid_to is null and (a.roadway_number $groupedRoadwayNumbers)
-            and a.start_date <= CURRENT_DATE and (a.end_date is null or a.end_date >= CURRENT_DATE)"""
+            and a.start_date <= $queryDate and (a.end_date is null or a.end_date >= $queryDate)"""
     }
     else
       s"""$query
          join published_roadway net on net.ROADWAY_ID = a.id
          where net.network_id = $roadNetworkId and a.valid_to is null and a.roadway_number in (${roadwayNumbers.mkString(",")})
-            and a.start_date <= CURRENT_DATE and (a.end_date is null or a.end_date >= CURRENT_DATE)"""
+            and a.start_date <= $queryDate and (a.end_date is null or a.end_date >= $queryDate)"""
 
   }
 
@@ -743,11 +752,12 @@ class RoadwayDAO extends BaseDAO {
       s"""$query where a.valid_to is null and ${dateFilter(table = "a")} and a.roadway_number in (${roadwayNumbers.mkString(",")})"""
   }
 
-  private def withSectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrMOption: Option[Long], endAddrMOption: Option[Long])(query: String) = {
+  private def withSectionAndAddresses(roadNumber: Long, roadPartNumber: Long, startAddrMOption: Option[Long], endAddrMOption: Option[Long], track: Option[Long] = None)(query: String) = {
+    val trackFilter = track.map(t => s"""and a.track = $t""").getOrElse(s"""""")
     val addressFilter = (startAddrMOption, endAddrMOption) match {
-      case (Some(startAddrM), Some(endAddrM)) => s"""and ((a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM))"""
-      case (Some(startAddrM), _) => s"""and a.end_addr_m > $startAddrM"""
-      case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM"""
+      case (Some(startAddrM), Some(endAddrM)) => s"""and ((a.start_addr_m >= $startAddrM and a.end_addr_m <= $endAddrM) or (a.start_addr_m <= $startAddrM and a.end_addr_m > $startAddrM) or (a.start_addr_m < $endAddrM and a.end_addr_m >= $endAddrM)) $trackFilter"""
+      case (Some(startAddrM), _) => s"""and a.end_addr_m > $startAddrM $trackFilter"""
+      case (_, Some(endAddrM)) => s"""and a.start_addr_m < $endAddrM $trackFilter"""
       case _ => s""""""
     }
     s"""$query where valid_to is null and end_date is null and road_number = $roadNumber and road_part_number = $roadPartNumber $addressFilter"""

@@ -158,10 +158,13 @@ trait VVHClientOperations {
       } catch {
         case _: IOException => Right(VVHError(Map(("VVH FETCH failure", "IO Exception during VVH fetch. Check connection to VVH")), url))
       } finally {
-        if (response != null)
+        if (response != null) {
           response.close()
-        if (response.getStatusLine.getStatusCode >= 300) {
-          return Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+          if (response.getStatusLine.getStatusCode >= 300) {
+            return Right(VVHError(Map(("VVH FETCH failure", "VVH response code was <300 (unsuccessful)")), url))
+          }
+        } else {
+          return Right(VVHError(Map(("VVH FETCH failure", "VVH response was null.")), url))
         }
       }
     }
@@ -294,6 +297,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     * In Use - 0
     * Under Construction - 1
     * Planned - 3
+    * Temporarily Not In Use - 4
+    * Expiring Soon - 5
     */
   protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]

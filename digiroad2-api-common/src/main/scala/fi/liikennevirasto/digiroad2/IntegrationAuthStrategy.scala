@@ -1,8 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
-import java.util.Properties
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
-
 import org.scalatra.ScalatraBase
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
@@ -12,24 +11,11 @@ case class BasicAuthUser(username: String)
 class IntegrationAuthStrategy(protected override val app: ScalatraBase, realm: String, baseAuth: String = "")
   extends BasicAuthStrategy[BasicAuthUser](app, realm) {
 
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/authentication.properties"))
-    props
-  }
-
-  private def getProperty(name: String): String = {
-    val property = properties.getProperty(name)
-    if (property != null) {
-      property
-    } else {
-      throw new RuntimeException(s"cannot find property $name")
-    }
-  }
-
   def validate(username: String, password: String)(implicit request: HttpServletRequest, response: HttpServletResponse): Option[BasicAuthUser] = {
-      if (username == getProperty("authentication."+baseAuth+"basic.username") && password == getProperty("authentication."+baseAuth+"basic.password")) Some(BasicAuthUser(username))
-    else None
+    if (username == ViiteProperties.getAuthenticationBasicUsername(baseAuth) && password == ViiteProperties.getAuthenticationBasicPassword(baseAuth))
+      Some(BasicAuthUser(username))
+    else
+      None
   }
 
   def getUserId(user: BasicAuthUser)(implicit request: HttpServletRequest, response: HttpServletResponse): String = user.username

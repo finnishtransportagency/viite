@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite
 
 import java.net.ConnectException
-import java.util.Properties
 
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.Dummies.dummyRoadwayChangeSection
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
@@ -23,18 +23,13 @@ import org.scalatest.{FunSuite, Matchers}
   */
 class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
 
-  val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
   val defaultChangeInfo = RoadwayChangeInfo(AddressChangeType.apply(2),
     RoadwayChangeSection(None, None, None, None, None, None, None, None, None),
     RoadwayChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
       Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1), reversed = false, 1)
 
   def getRestEndPoint: String = {
-    val loadedKeyString = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
+    val loadedKeyString = ViiteProperties.tierekisteriViiteRestApiEndPoint
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")
     loadedKeyString
@@ -42,7 +37,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
 
   private def testConnection: Boolean = {
     // If you get NPE here, you have not included main module (digiroad2) as a test dependency to digiroad2-viite
-    val url = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
+    val url = ViiteProperties.tierekisteriViiteRestApiEndPoint
     val request = new HttpGet(url)
     request.setConfig(RequestConfig.custom().setConnectTimeout(2500).build())
     val client = HttpClientBuilder.create().build()

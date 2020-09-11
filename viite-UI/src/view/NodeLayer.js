@@ -1,10 +1,12 @@
-(function(root) {
+(function (root) {
   root.NodeLayer = function (map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, linkPropertiesModel, applicationModel) {
     Layer.call(this, map);
     var me = this;
     var indicatorVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
-    var dblVector = function () { return { selected: new ol.source.Vector({}), unselected: new ol.source.Vector({}) }; };
+    var dblVector = function () {
+      return {selected: new ol.source.Vector({}), unselected: new ol.source.Vector({})};
+    };
     var nodeMarkerVector = dblVector();
     var junctionMarkerVector = dblVector();
     var nodePointTemplateVector = dblVector();
@@ -96,8 +98,8 @@
       junctionTemplateSelectedLayer.setOpacity(opacity);
     };
 
-    var setProperty = function (layers, propertyName, propertyValue) {
-      _.each(layers, function (layer) {
+    var setProperty = function (propertyLayers, propertyName, propertyValue) {
+      _.each(propertyLayers, function (layer) {
         layer.set(propertyName, propertyValue);
       });
     };
@@ -160,6 +162,8 @@
             attachNode(selectedNode.node, selectedNodesAndJunctions.getCurrentTemplates());
           }
           break;
+        default:
+          break;
       }
     });
 
@@ -193,7 +197,7 @@
         y: parseInt(evt.coordinate[1])
       };
       if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < LinkValues.MaxAllowedDistanceForNodesToBeMoved) {
-        eventbus.trigger('node:setCoordinates', {
+        eventbus.trigger('node:displayCoordinates', {
           x: parseInt(evt.coordinate[0]),
           y: parseInt(evt.coordinate[1])
         });
@@ -209,7 +213,7 @@
         selectedNodesAndJunctions.setCoordinates(coordinates);
       } else {
         var startingCoordinates = selectedNodesAndJunctions.getStartingCoordinates();
-        eventbus.trigger('node:setCoordinates', startingCoordinates);
+        eventbus.trigger('node:displayCoordinates', startingCoordinates);
         eventbus.trigger('node:repositionNode', selectedNodesAndJunctions.getCurrentNode(), startingCoordinates);
       }
     });
@@ -259,7 +263,7 @@
       vector.unselected.addFeatures(otherFeatures);
     };
 
-    var selectNode = function(node) {
+    var selectNode = function (node) {
       clearHighlights();
       selectedNodesAndJunctions.closeForm();
       selectedNodesAndJunctions.openNode(node);
@@ -273,7 +277,7 @@
       applicationModel.setSelectedTool(LinkValues.Tool.Select.value);
     };
 
-    var selectNodePointTemplate = function(nodePointTemplate) {
+    var selectNodePointTemplate = function (nodePointTemplate) {
       clearHighlights();
       selectedNodesAndJunctions.closeForm();
       selectedNodesAndJunctions.openNodePointTemplate(nodePointTemplate);
@@ -285,7 +289,7 @@
       selectedNodesAndJunctions.openJunctionTemplate(junctionTemplate);
     };
 
-    var addFeature = function(layer, feature, predicate) {
+    var addFeature = function (layer, feature, predicate) {
       if (_.isUndefined(_.find(layer.getSource().getFeatures(), predicate))) {
         layer.getSource().addFeature(feature);
       }
@@ -311,7 +315,7 @@
     };
 
     var highlightNode = function (node) {
-      var highlightJunctions = function() {
+      var highlightJunctions = function () {
         var junctions = _.partition(junctionMarkerLayer.getSource().getFeatures(), function (junctionFeature) {
           return node.nodeNumber && junctionFeature.junction.nodeNumber === node.nodeNumber;
         });
@@ -354,12 +358,14 @@
       nodeLayerSelectInteraction.getFeatures().clear();
     };
 
-    me.eventListener.listenTo(eventbus, 'node:unselected', function (current) {
-      var original = nodeCollection.getNodeByNodeNumber(current.nodeNumber);
-      if (original && original.nodeNumber) {
-        updateCurrentNodeMarker(original, current.junctions);
-      } else {
-        removeCurrentNodeMarker(current);
+    me.eventListener.listenTo(eventbus, 'node:unselected', function (current, cancel) {
+      if (cancel) {
+        var original = nodeCollection.getNodeByNodeNumber(current.nodeNumber);
+        if (original && original.nodeNumber) {
+          updateCurrentNodeMarker(original);
+        } else {
+          removeCurrentNodeMarker(current);
+        }
       }
     });
 
@@ -372,6 +378,7 @@
     });
 
     me.eventListener.listenTo(eventbus, 'tool:changed', function (tool) {
+      toggleSelectInteractions(!applicationModel.isSelectedTool(LinkValues.Tool.Add.value));
       switch (tool) {
         case LinkValues.Tool.Unknown.value:
           me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
@@ -385,24 +392,25 @@
           setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
           break;
         case LinkValues.Tool.Add.value:
-          toggleSelectInteractions(false);
           me.eventListener.listenToOnce(eventbus, 'map:clicked', createNewNodeMarker);
           setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
+          break;
+        default:
           break;
       }
     });
 
     var createNewNodeMarker = function (coords) {
       var node = {
-        coordinates:  { x: parseInt(coords.x), y: parseInt(coords.y) },
-        type:         LinkValues.NodeType.UnknownNodeType.value,
+        coordinates: {x: parseInt(coords.x), y: parseInt(coords.y)},
+        type: LinkValues.NodeType.UnknownNodeType.value,
         nodePoints: [],
         junctions: []
       };
       addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(node),
         function (feature) {
-        return feature.node.id === node.id;
-      });
+          return feature.node.id === node.id;
+        });
       attachNode(node, selectedNodesAndJunctions.getCurrentTemplates());
     };
 
@@ -414,48 +422,46 @@
       });
     };
 
-    var updateCurrentNodeMarker = function (node, junctions) {
-      if (!_.isUndefined(node)) {
-        _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
-          if (nodeFeature.node.id === node.id) {
-            nodeFeature.setProperties({type: node.type});
-            nodeFeature.setProperties({name: node.name});
-            nodeFeature.setGeometry(new ol.geom.Point([node.coordinates.x, node.coordinates.y]));
-          }
-        });
-        _.each(junctionMarkerSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
-          var junction = _.find(node.junctions, function (junction) {
-            return junctionFeature.junction.id === junction.id;
-          });
-          if (!_.isUndefined(junction)) {
-            junctionFeature.setProperties({junctionNumber: junction.junctionNumber});
-          }
-        });
-
-        if (!_.isUndefined(junctions)) {
-          _.each(junctionTemplateSelectedLayer.getSource().getFeatures(), function (junctionTemplateFeature) {
-            var junctionTemplate = _.find(junctions, function (junctionTemplate) {
-              return junctionTemplateFeature.junctionTemplate.id === junctionTemplate.id;
-            });
-            if (!_.isUndefined(junctionTemplate)) {
-              junctionTemplateFeature.setProperties({junctionNumber: undefined});
-            }
-          });
+    var updateCurrentNodeMarker = function (node) {
+      _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
+        if (nodeFeature.node.id === node.id) {
+          nodeFeature.setProperties({type: node.type});
+          nodeFeature.setProperties({name: node.name});
+          nodeFeature.setGeometry(new ol.geom.Point([node.coordinates.x, node.coordinates.y]));
         }
-      }
+      });
+
+      _.each(node.nodePoints, function (nodePoint) {
+        toggleNodePointToTemplate(nodePoint);
+      });
+
+      _.each(node.junctions, function (junction) {
+        toggleJunctionToTemplate(junction);
+      });
+
+      _.each(junctionMarkerSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
+        var junction = _.find(node.junctions, function (junctionFound) {
+          return junctionFound.id === junctionFeature.junction.id;
+        });
+        if (!_.isUndefined(junction)) {
+          junctionFeature.setProperties({junctionNumber: junction.junctionNumber});
+        }
+      });
     };
 
     var addJunctionToMap = function (junction, layer) {
       if (_.has(junction, 'junctionPoints') && !_.isEmpty(junction.junctionPoints)) {
         addFeature(layer, new JunctionMarker().createJunctionMarker(junction),
-          function (feature) { return feature.junction.id === junction.id; });
+          function (feature) {
+            return feature.junction.id === junction.id;
+          });
       }
     };
 
     var addJunctionTemplateToMap = function (junction, layer) {
       if (_.has(junction, 'junctionPoints') && !_.isEmpty(junction.junctionPoints)) {
         addFeature(layer, new JunctionTemplateMarker().createJunctionTemplateMarker(junction), function (feature) {
-          if (!_.isUndefined(feature.junctionTemplate)) {
+          if (feature.junctionTemplate) {
             return feature.junctionTemplate.id === junction.id;
           } else {
             return feature.junction.id === junction.id;
@@ -463,7 +469,6 @@
         });
       }
     };
-
 
 
     var toggleJunctionToTemplate = function (junction, toTemplate) {
@@ -487,34 +492,42 @@
     var toggleNodePointToTemplate = function (nodePoint, toTemplate) {
       if (toTemplate) {
         addFeature(nodePointTemplateSelectedLayer, new NodePointTemplateMarker().createNodePointTemplateMarker(nodePoint),
-          function (feature) { return feature.nodePointTemplate.id === nodePoint.id; });
+          function (feature) {
+            return feature.nodePointTemplate.id === nodePoint.id;
+          });
       } else {
-        nodePointTemplateSelectedLayer.getSource().removeFeature(_.find(nodePointTemplateSelectedLayer.getSource().getFeatures(), function (feature) {
+        var nodePointTemplateFeature = _.find(nodePointTemplateSelectedLayer.getSource().getFeatures(), function (feature) {
           return feature.nodePointTemplate.id === nodePoint.id;
-        }));
+        });
+        if (!_.isUndefined(nodePointTemplateFeature)) {
+          nodePointTemplateSelectedLayer.getSource().removeFeature(nodePointTemplateFeature);
+        }
       }
     };
 
     me.eventListener.listenTo(eventbus, 'junction:mapNumberUpdate', function (junction) {
-      var updateJunctionTemplateNumberOnMap = function (junction) {
+      var updateJunctionTemplateNumberOnMap = function (junctionToUpdate) {
         _.each(junctionTemplateSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
-          if (_.isEqual(junctionFeature.junctionTemplate.id, junction.id)) {
-            junctionFeature.setProperties({junctionNumber: junction.junctionNumber});
+          if (_.isEqual(junctionFeature.junctionTemplate.id, junctionToUpdate.id)) {
+            junctionFeature.setProperties({junctionNumber: junctionToUpdate.junctionNumber});
           }
         });
       };
 
-      var updateJunctionNumberOnMap = function (junction) {
+      var updateJunctionNumberOnMap = function (junctionToMap) {
         _.each(junctionMarkerSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
-          if (_.isEqual(junctionFeature.junction.id, junction.id)) {
-            junctionFeature.setProperties({junctionNumber: junction.junctionNumber});
+          if (_.isEqual(junctionFeature.junction.id, junctionToMap.id)) {
+            junctionFeature.setProperties({junctionNumber: junctionToMap.junctionNumber});
           }
         });
       };
 
-      if(!_.isUndefined(junction)) {
-        if (_.isUndefined(junction.nodeNumber)) { updateJunctionTemplateNumberOnMap(junction); }
-        else { updateJunctionNumberOnMap(junction); }
+      if (!_.isUndefined(junction)) {
+        if (_.isUndefined(junction.nodeNumber)) {
+          updateJunctionTemplateNumberOnMap(junction);
+        } else {
+          updateJunctionNumberOnMap(junction);
+        }
       }
     });
 
@@ -523,7 +536,7 @@
         toggleJunctionToTemplate(junction, true);
       }
     });
-    
+
     me.eventListener.listenTo(eventbus, 'junction:attach', function (junction) {
       if (!_.isUndefined(junction)) {
         toggleJunctionToTemplate(junction);
@@ -548,7 +561,6 @@
     });
 
     me.eventListener.listenTo(eventbus, 'nodeLayer:refreshView', function () {
-      toggleSelectInteractions(!applicationModel.isSelectedTool(LinkValues.Tool.Add.value));
       applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
     });
 
@@ -569,7 +581,6 @@
       } else if (layer === 'node') {
         setGeneralOpacity(1);
         addInteractions();
-        showLayer();
         eventbus.trigger('nodeLayer:fetch');
       }
     });
@@ -585,7 +596,7 @@
           }), rl.linkId);
         });
         me.clearLayers(layers);
-        
+
         if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadNetwork) {
 
           var directionRoadMarker = _.filter(roadLinks, function (roadLink) {
@@ -614,17 +625,17 @@
 
     this.layerStarted = function (eventListener) {
       eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
-        if(applicationModel.getSelectedLayer() === 'node') {
+        if (applicationModel.getSelectedLayer() === 'node') {
           redraw();
         }
       });
 
-      eventListener.listenTo(eventbus, 'node:addNodesToMap', function(nodes, templates, zoom) {
+      eventListener.listenTo(eventbus, 'node:addNodesToMap', function (nodes, templates, zoom) {
         var filteredNodes = nodes;
         var currentNode = selectedNodesAndJunctions.getCurrentNode();
         var currentTemplates = selectedNodesAndJunctions.getCurrentTemplates();
 
-        if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
+        if (parseInt(zoom) >= zoomlevels.minZoomForNodes) {
           var filteredNodePointTemplates = templates.nodePoints;
 
           if (currentNode) {
@@ -638,35 +649,45 @@
             });
 
             addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(currentNode),
-              function (feature) { return feature.node.id === currentNode.id; });
+              function (feature) {
+                return feature.node.id === currentNode.id;
+              });
 
             _.each(_.filter(currentNode.nodePoints, function (nodePoint) {
               return _.isUndefined(nodePoint.nodeNumber);
             }), function (nodePointTemplate) {
               addFeature(nodePointTemplateSelectedLayer, new NodePointTemplateMarker().createNodePointTemplateMarker(nodePointTemplate),
-                function (feature) { return feature.nodePointTemplate.id === nodePointTemplate.id; });
+                function (feature) {
+                  return feature.nodePointTemplate.id === nodePointTemplate.id;
+                });
             });
           }
 
           if (_.has(currentTemplates, 'nodePoints')) {
             _.each(currentTemplates.nodePoints, function (nodePointTemplate) {
               addFeature(nodePointTemplateSelectedLayer, new NodePointTemplateMarker().createNodePointTemplateMarker(nodePointTemplate),
-                function (feature) { return feature.nodePointTemplate.id === nodePointTemplate.id; });
+                function (feature) {
+                  return feature.nodePointTemplate.id === nodePointTemplate.id;
+                });
             });
           }
 
           _.each(filteredNodes, function (node) {
             addFeature(nodeMarkerLayer, new NodeMarker().createNodeMarker(node),
-              function (feature) { return feature.node.id === node.id; });
+              function (feature) {
+                return feature.node.id === node.id;
+              });
           });
 
           _.each(filteredNodePointTemplates, function (nodePointTemplate) {
             addFeature(nodePointTemplateLayer, new NodePointTemplateMarker().createNodePointTemplateMarker(nodePointTemplate),
-              function (feature) { return feature.nodePointTemplate.id === nodePointTemplate.id; });
+              function (feature) {
+                return feature.nodePointTemplate.id === nodePointTemplate.id;
+              });
           });
         }
 
-        if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions) {
+        if (parseInt(zoom) >= zoomlevels.minZoomForJunctions) {
 
           var filteredJunctions = _.flatten(_.map(filteredNodes, "junctions"));
           var filteredJunctionTemplates = templates.junctions;
@@ -711,7 +732,7 @@
 
       eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers);
 
-      eventListener.listenTo(eventbus, 'change:node', function (node) {
+      eventListener.listenTo(eventbus, 'change:node', function (node, _junction) {
         updateCurrentNodeMarker(node);
       });
     };
@@ -736,4 +757,4 @@
     };
   };
 
-})(this);
+}(this));

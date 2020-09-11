@@ -14,16 +14,20 @@ object Sequences {
     Queries.nextViiteProjectId.as[Long].first
   }
 
+  def nextProjectLinkId: Long = {
+    Queries.nextProjectLinkId.as[Long].first
+  }
+
+  def fetchProjectLinkIds(len: Int): List[Long] = {
+    Queries.fetchProjectLinkIds(len)
+  }
+
   def nextRoadwayId: Long = {
     Queries.nextRoadwayId.as[Long].first
   }
 
   def nextLinearLocationId: Long = {
     Queries.nextLinearLocationId.as[Long].first
-  }
-
-  def fetchViitePrimaryKeySeqValues(len: Int): List[Long] = {
-    fetchViitePrimaryKeyId(len)
   }
 
   def fetchRoadwayIds(len: Int): List[Long] = {
@@ -34,16 +38,16 @@ object Sequences {
     Queries.fetchLinearLocationIds(len)
   }
 
+  def nextRoadNameId: Long = {
+    Queries.nextRoadNameId.as[Long].first
+  }
+
   def nextRoadwayNumber: Long = {
     Queries.nextRoadwayNumber.as[Long].first
   }
 
   def nextRoadNetworkErrorId: Long = {
     Queries.nextRoadNetworkErrorId.as[Long].first
-  }
-
-  def nextProjectId: Long = {
-    Queries.nextProjectId.as[Long].first
   }
 
   def nextRoadwayChangeLink: Long = {
@@ -60,6 +64,10 @@ object Sequences {
 
   def nextCalibrationPointId: Long = {
     Queries.nextCalibrationPointId.as[Long].first
+  }
+
+  def fetchCalibrationPointIds(len: Int): List[Long] = {
+    Queries.fetchCalibrationPointIds(len)
   }
 
   def nextNodeId: Long = {
@@ -106,7 +114,4 @@ object Sequences {
     Queries.fetchLinkIds(len)
   }
 
-  def nextJunctionNumber: Long = {
-    Queries.nextJunctionNumber.as[Long].first
-  }
 }

@@ -97,7 +97,7 @@ class NodePointDAO extends BaseDAO {
                              FROM NODE_POINT NP
                              JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
                              LEFT OUTER JOIN NODE N ON (N.NODE_NUMBER = np.NODE_NUMBER AND N.VALID_TO IS NULL AND N.END_DATE IS NULL)
-                             JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER) """
+                             JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND RW.END_DATE IS NULL AND RW.VALID_TO IS NULL) """
 
   implicit val getNodePoint: GetResult[NodePoint] = new GetResult[NodePoint] {
     def apply(r: PositionedResult): NodePoint = {
@@ -154,7 +154,6 @@ class NodePointDAO extends BaseDAO {
         s"""
          $selectFromNodePoint
          where N.node_number in (${nodeNumbers.mkString(", ")}) and NP.valid_to is null
-         and rw.end_date is null
        """
       queryList(query)
     }
@@ -166,9 +165,15 @@ class NodePointDAO extends BaseDAO {
     } else {
       val query =
         s"""
-       $selectFromNodePoint
-       where NP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")}) and NP.valid_to is null
-     """
+          SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", N.START_DATE, N.END_DATE,
+            NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M,
+            RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.ELY
+          FROM NODE_POINT NP
+          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+          LEFT OUTER JOIN NODE N ON (N.NODE_NUMBER = np.NODE_NUMBER AND N.VALID_TO IS NULL AND N.END_DATE IS NULL)
+          JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
+          where NP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")}) and NP.valid_to is null
+        """
       queryList(query)
     }
   }
@@ -182,13 +187,26 @@ class NodePointDAO extends BaseDAO {
     queryList(query)
   }
 
-  def fetchNodePoint(roadwayNumber: Long): Option[NodePoint] = {
+  def fetchByRoadwayNumber(roadwayNumber: Long): Seq[NodePoint] = {
     val query =
       s"""
          $selectFromNodePoint
          where RP.roadway_number = $roadwayNumber and NP.valid_to is null
        """
-    queryList(query).headOption
+    queryList(query)
+  }
+
+  def fetchRoadAddressNodePoints(roadwayNumbers: Seq[Long]): Seq[NodePoint] = {
+    if (roadwayNumbers.isEmpty) Seq()
+    else {
+      val query =
+        s"""
+         $selectFromNodePoint
+         where RP.roadway_number in (${roadwayNumbers.mkString(", ")}) and NP.valid_to is null
+         AND NP."TYPE" = ${NodePointType.RoadNodePoint.value}
+       """
+      queryList(query)
+    }
   }
 
   def fetchTemplatesByRoadwayNumber(roadwayNumber: Long): List[NodePoint] = {
@@ -198,13 +216,13 @@ class NodePointDAO extends BaseDAO {
         NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, NULL, NULL, NULL, NULL
         FROM NODE_POINT NP
         JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-        JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
-        where RP.roadway_number = $roadwayNumber and NP.valid_to is null
+        JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.end_date is NULL AND RW.VALID_TO IS NULL)
+        where RP.roadway_number = $roadwayNumber and NP.valid_to is null and NP.node_number is null
       """
     queryList(query)
   }
 
-  def fetchNodePointsTemplates(roadwayNumbers: Set[Long]): List[NodePoint] = {
+  def fetchTemplatesByRoadwayNumbers(roadwayNumbers: Set[Long]): List[NodePoint] = {
     val query =
       if (roadwayNumbers.isEmpty) {
         ""
@@ -213,7 +231,7 @@ class NodePointDAO extends BaseDAO {
           NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, rw.ELY
           FROM NODE_POINT NP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
-          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
+          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.end_date is NULL AND RW.VALID_TO IS NULL)
           where RP.roadway_number in (${roadwayNumbers.mkString(", ")}) and NP.valid_to is null
        """
       }
@@ -228,8 +246,8 @@ class NodePointDAO extends BaseDAO {
          FROM NODE_POINT NP
          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
          JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-         LEFT JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
-         where NP.valid_to is null and NP.node_number is null and RW.end_date is NULL and RW.valid_to is null
+         JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.end_date is NULL AND RW.VALID_TO IS NULL)
+         where NP.valid_to is null and NP.node_number is null
        """
     queryList(query)
   }
@@ -242,8 +260,8 @@ class NodePointDAO extends BaseDAO {
          FROM NODE_POINT NP
          JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
          JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-         LEFT JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
-         where NP.id = $id AND NP.node_number is null and NP.valid_to is null and RW.end_date is null
+         JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.end_date is NULL AND RW.VALID_TO IS NULL)
+         where NP.id = $id AND NP.node_number is null and NP.valid_to is null
        """
     queryList(query).headOption
   }
@@ -262,14 +280,14 @@ class NodePointDAO extends BaseDAO {
           FROM NODE_POINT NP
           JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
           JOIN LINEAR_LOCATION LL ON (LL.ROADWAY_NUMBER = RP.ROADWAY_NUMBER AND LL.VALID_TO IS NULL)
-          LEFT JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER)
-          where $boundingBoxFilter AND NP.node_number is null and NP.valid_to is null and RW.end_date is null
+          JOIN ROADWAY RW ON (RP.ROADWAY_NUMBER = RW.ROADWAY_NUMBER AND RW.VALID_TO IS NULL AND RW.END_DATE IS NULL)
+          where $boundingBoxFilter AND NP.node_number is null and NP.valid_to is null
         """
       queryList(query)
     }
   }
 
-  def create(nodePoints: Iterable[NodePoint], createdBy: String = "-"): Seq[Long] = {
+  def create(nodePoints: Iterable[NodePoint]): Seq[Long] = {
 
     val ps = dynamicSession.prepareStatement(
       """insert into NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_NUMBER, "TYPE", CREATED_BY)
@@ -284,6 +302,7 @@ class NodePointDAO extends BaseDAO {
 
     createNodePoints.foreach {
       nodePoint =>
+        logger.info(s"Creating NodePoint with roadwayNumber : ${nodePoint.roadwayNumber} addrM: ${nodePoint.addrM} beforeAfter: ${nodePoint.beforeAfter.value}")
         ps.setLong(1, nodePoint.id)
         ps.setLong(2, nodePoint.beforeAfter.value)
         ps.setLong(3, nodePoint.roadwayPointId)
@@ -293,39 +312,12 @@ class NodePointDAO extends BaseDAO {
           ps.setNull(4, java.sql.Types.INTEGER)
         }
         ps.setInt(5, nodePoint.nodePointType.value)
-        ps.setString(6, if (createdBy == null) "-" else createdBy)
+        ps.setString(6, nodePoint.createdBy)
         ps.addBatch()
     }
     ps.executeBatch()
     ps.close()
     createNodePoints.map(_.id).toSeq
-  }
-
-  // TODO expire current row and create new row
-  def update(nodePoints: Iterable[NodePoint], updatedBy: String = "-"): Seq[Long] = {
-
-    val ps = dynamicSession.prepareStatement(
-      "update NODE_POINT SET BEFORE_AFTER = ?, ROADWAY_POINT_ID = ?, NODE_NUMBER = ?, VALID_TO = TO_DATE(?, 'YYYY-MM-DD') WHERE ID = ?")
-
-    nodePoints.foreach {
-      nodePoint =>
-        ps.setLong(1, nodePoint.beforeAfter.value)
-        ps.setLong(2, nodePoint.roadwayPointId)
-        if (nodePoint.nodeNumber.isDefined) {
-          ps.setLong(3, nodePoint.nodeNumber.get)
-        } else {
-          ps.setNull(3, java.sql.Types.INTEGER)
-        }
-        ps.setString(4, nodePoint.validTo match {
-          case Some(date) => dateFormatter.print(date)
-          case None => ""
-        })
-        ps.setLong(5, nodePoint.id)
-        ps.addBatch()
-    }
-    ps.executeBatch()
-    ps.close()
-    nodePoints.map(_.id).toSeq
   }
 
   /**
@@ -360,7 +352,7 @@ class NodePointDAO extends BaseDAO {
          SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP."TYPE", NULL, NULL,
          NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME, RP.ROADWAY_NUMBER, RP.ADDR_M, NULL as ROAD_NUMBER, NULL as ROAD_PART_NUMBER, NULL as TRACK, NULL as ELY
          FROM NODE_POINT NP
-         LEFT JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+         JOIN ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
          where NP.valid_to is null and NP.node_number = $nodeNumber
          AND NP.type = 2
          ORDER BY NP.ID
@@ -465,10 +457,10 @@ class NodePointDAO extends BaseDAO {
         queryList(query)
   }
 
-  def insertCalculatedNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Long): Unit = {
+  def insertCalculatedNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Long, username: String): Unit = {
     create(Seq(NodePoint(NewIdValue, beforeAfter, roadwayPointId, Some(nodeNumber), CalculatedNodePoint,
       None, None, DateTime.now(), None,
-      "-", Some(DateTime.now()), 0L, 11,
+      username, Some(DateTime.now()), 0L, 11,
       0, 0, null, 8)))
   }
 

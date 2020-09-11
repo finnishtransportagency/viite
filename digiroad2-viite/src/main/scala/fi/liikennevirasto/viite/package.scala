@@ -32,6 +32,8 @@ package object viite {
 
   val MinDistanceForGeometryUpdate = 0.5
 
+  val MaxThresholdDistance = 2
+
   val MaxAdjustmentRange = 10L
 
   val noRoadwayId: Long = 0L
@@ -67,10 +69,10 @@ package object viite {
   val MissingEndOfRoadMessage = s"Tieosalle ei ole määritelty jatkuvuuskoodia" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), tieosan viimeiselle linkille."
   val EndOfRoadNotOnLastPartMessage = s"Tieosalle on määritelty jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}), vaikka tieosan jälkeen on olemassa tieosa."
   val MinorDiscontinuityFoundMessage = "Tieosalla on lievä epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
-  val MajorDiscontinuityFoundMessage = "Tieosalla on epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
+  val DiscontinuousFoundMessage = "Tieosalla on epäjatkuvuus. Määrittele jatkuvuuskoodi oikein kyseiselle linkille."
   val InsufficientTrackCoverageMessage = "Tieosalta puuttuu toinen ajorata. Numeroi molemmat ajoradat."
   val DiscontinuousAddressSchemeMessage = "Tieosoitteiden laskenta ei onnistunut. Ota yhteys pääkäyttäjään."
-
+  val ErrorWithNewAction = "Uusi-toimenpidettä ei voi tallentaa, koska se koskettaa toisen projektin käytössä olevaa tielinkkiä."
   //VIITE-453 Not implemented yet (2)
   val SharedLinkIdsExistMessage = "Linkillä on voimassa oleva tieosoite tämän projektin alkupäivämäärällä."
   val UnsuccessfulRecalculationMessage = "Etäisyysarvojen laskenta epäonnistui."
@@ -85,6 +87,7 @@ package object viite {
   val DiscontinuityInsideRoadPartMessage = "Epäjatkuvuus (2) voi olla vain tieosan lopussa."
   val DistinctRoadTypesBetweenTracksMessage = "Rinnakkaisilla ajoradoilla eri tietyyppi."
   val DiscontinuityOnParallelLinksMessage = "Rinnakkaiselta ajoradalta puuttuu jatkuu-koodi 5 Jatkuva (Rinnakkainen linkki)."
+  val WrongParallelLinksMessage = "Väärä paikka rinnakkaiselle linkille."
   val RoadNotEndingInElyBorderMessage = "Tien lopussa pitää olla jatkuu-koodi 1. Korjaa jatkuu-koodi."
   val RoadContinuesInAnotherElyMessage = "Jatkuu-koodi %s on virheellinen, koska tie jatkuu toisessa ELY:ssa. "
   val MinorDiscontinuousWhenRoadConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."

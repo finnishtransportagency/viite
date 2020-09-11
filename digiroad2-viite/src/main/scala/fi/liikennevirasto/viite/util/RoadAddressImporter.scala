@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.util
 
-import java.sql.{PreparedStatement, Types}
+import java.sql.PreparedStatement
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import org.joda.time.format.ISODateTimeFormat
@@ -13,15 +13,11 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{Link, LinkDAO, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
-import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
-import fi.liikennevirasto.viite.dao.{CalibrationCode, TerminationCode}
-import fi.liikennevirasto.viite.dao.RoadwayPoint
-import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Termination}
-import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPoint, CalibrationPointType}
+import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPoint, CalibrationPointLocation, CalibrationPointType}
+import fi.liikennevirasto.viite.dao.TerminationCode.{NoTermination, Subsequent, Termination}
+import fi.liikennevirasto.viite.dao.{CalibrationCode, RoadwayPoint, TerminationCode, _}
 import org.joda.time._
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
@@ -132,7 +128,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
   private def insertCalibrationPoint(calibrationPointStatement: PreparedStatement, calibrationPoint: CalibrationPoint): Unit = {
     calibrationPointStatement.setLong(1, calibrationPoint.roadwayPointId)
     calibrationPointStatement.setLong(2, calibrationPoint.linkId)
-    calibrationPointStatement.setLong(3, calibrationPoint.startOrEnd)
+    calibrationPointStatement.setLong(3, calibrationPoint.startOrEnd.value)
     calibrationPointStatement.setLong(4, calibrationPoint.typeCode.value)
     calibrationPointStatement.setString(5, calibrationPoint.createdBy)
     calibrationPointStatement.addBatch()
@@ -391,19 +387,21 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
 
   private def getStartCalibrationPoint(convertedAddress: ConversionAddress, linkId: Long): Option[(RoadwayPoint, CalibrationPoint)] = {
     convertedAddress.calibrationCode match {
-      case AtBeginning | AtBoth => {
+      case AtBeginning | AtBoth =>
         val existingRoadwayPoint = roadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.startAddressM)
         existingRoadwayPoint match {
           case Some(x) =>
-            val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPoint(x.id)
+            val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPointId(x.id).find(_.startOrEnd == CalibrationPointLocation.StartOfLink)
             if (existingCalibrationPoint.isDefined)
               Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
             else
-              Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, linkId, x.roadwayNumber, x.addrMValue, 0, CalibrationPointType.Mandatory, createdBy = "import")))
+              Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, linkId, x.roadwayNumber,
+                x.addrMValue, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import")))
           case _ =>
-            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.startAddressM, "import"), CalibrationPoint(NewIdValue, NewIdValue, linkId, convertedAddress.roadwayNumber, convertedAddress.startAddressM, 0, CalibrationPointType.Mandatory, createdBy = "import"))
+            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.startAddressM, "import"),
+              CalibrationPoint(NewIdValue, NewIdValue, linkId, convertedAddress.roadwayNumber,
+                convertedAddress.startAddressM, CalibrationPointLocation.StartOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import"))
         }
-      }
       case _ => None
     }
   }
@@ -415,13 +413,13 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, kmtkClient: KMTKClien
         val existingRoadwayPoint = roadwayPointDAO.fetch(convertedAddress.roadwayNumber, convertedAddress.endAddressM)
         existingRoadwayPoint match {
           case Some(x) =>
-            val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPoint(x.id)
+            val existingCalibrationPoint = CalibrationPointDAO.fetchByRoadwayPointId(x.id).find(_.startOrEnd == CalibrationPointLocation.EndOfLink)
             if (existingCalibrationPoint.isDefined)
               Some((existingRoadwayPoint.get, existingCalibrationPoint.get))
             else
-              Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, linkId, x.roadwayNumber, x.addrMValue, 1, CalibrationPointType.Mandatory, createdBy = "import")))
+              Some((existingRoadwayPoint.get, CalibrationPoint(NewIdValue, x.id, linkId, x.roadwayNumber, x.addrMValue, CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import")))
           case _ =>
-            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.endAddressM, "import"), CalibrationPoint(NewIdValue, NewIdValue, linkId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, 1, CalibrationPointType.Mandatory, createdBy = "import"))
+            Some(RoadwayPoint(NewIdValue, convertedAddress.roadwayNumber, convertedAddress.endAddressM, "import"), CalibrationPoint(NewIdValue, NewIdValue, linkId, convertedAddress.roadwayNumber, convertedAddress.endAddressM, CalibrationPointLocation.EndOfLink, CalibrationPointType.RoadAddressCP, createdBy = "import"))
         }
       case _ => None
     }

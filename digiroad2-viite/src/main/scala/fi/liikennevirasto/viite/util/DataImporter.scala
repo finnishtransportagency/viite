@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite.util
 
 import javax.sql.DataSource
-import java.util.Properties
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
@@ -13,6 +12,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.SequenceResetterDAO
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
@@ -28,7 +28,7 @@ object DataImporter {
 
   case object Conversion extends ImportDataSet {
     lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
+      val cfg = new BoneCPConfig(ViiteProperties.conversionBonecpProperties)
       new BoneCPDataSource(cfg)
     }
 
@@ -96,6 +96,7 @@ class DataImporter {
       sqlu"""DELETE FROM NODE""".execute
       sqlu"""DELETE FROM LINK""".execute
       sqlu"""DELETE FROM ROADWAY""".execute
+      resetRoadAddressSequences()
 
       println(s"${DateTime.now()} - Old address data removed")
 
@@ -117,6 +118,27 @@ class DataImporter {
       enableRoadwayTriggers
       roadwayResetter()
     }
+  }
+
+  def resetRoadAddressSequences() = {
+    val sequenceResetter = new SequenceResetterDAO()
+    sequenceResetter.resetSequenceToNumber("PROJECT_LINK_NAME_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("ROADWAY_CHANGE_LINK", 1)
+    sequenceResetter.resetSequenceToNumber("ROAD_NETWORK_ERROR_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("PUBLISHED_ROAD_NETWORK_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("LINEAR_LOCATION_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("CALIBRATION_POINT_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("ROADWAY_POINT_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("ROADWAY_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("VIITE_GENERAL_SEQ", 1)
+  }
+
+  def resetNodesAndJunctionSequences(): Unit = {
+    val sequenceResetter = new SequenceResetterDAO()
+    sequenceResetter.resetSequenceToNumber("JUNCTION_POINT_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("NODE_POINT_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("JUNCTION_SEQ", 1)
+    sequenceResetter.resetSequenceToNumber("NODE_SEQ", 1)
   }
 
   private def updateNodePointType() = {
@@ -154,6 +176,7 @@ class DataImporter {
       sqlu"""DELETE FROM NODE_POINT""".execute
       sqlu"""DELETE FROM JUNCTION""".execute
       sqlu"""DELETE FROM NODE""".execute
+      resetNodesAndJunctionSequences()
 
       println(s"${DateTime.now()} - Old nodes and junctions data removed")
       val nodeImporter = getNodeImporter(conversionDatabase)
@@ -274,7 +297,24 @@ class DataImporter {
     }
   }
 
+  def updateCalibrationPointTypesQuery() = {
+    withDynTransaction {
+      val source = io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("db/migration/V0_38__calibration_point_type_update.sql"))
+      var text = try source.mkString finally source.close()
+      // remove ; at end of SQL
+      text = text.substring(0,text.length - 1)
+      sqlu"""#$text""".execute
+    }
+  }
+
+  private[this] def initDataSource: DataSource = {
+    Class.forName("oracle.jdbc.driver.OracleDriver")
+    val cfg = new BoneCPConfig(ViiteProperties.bonecpProperties)
+    new BoneCPDataSource(cfg)
+  }
+
 }
 
 case class ImportOptions(onlyComplementaryLinks: Boolean, conversionTable: String, onlyCurrentRoads: Boolean)
+case class RoadPart(roadNumber: Long, roadPart: Long, ely: Long)
 

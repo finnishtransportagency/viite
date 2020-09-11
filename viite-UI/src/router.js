@@ -1,3 +1,4 @@
+/* eslint-disable prefer-named-capture-group */
 (function (root) {
   root.URLRouter = function (map, backend, models) {
     var Router = Backbone.Router.extend({
@@ -8,10 +9,10 @@
         });
 
         this.route(/^([A-Za-z]+)\/?$/, function (layer) {
-          if (layer !== 'linkProperty') {
-            applicationModel.selectLayer(layer);
-          } else {
+          if (layer === 'linkProperty') {
             applicationModel.selectLayer('linkProperty');
+          } else {
+            applicationModel.selectLayer(layer);
           }
         });
 
@@ -21,23 +22,23 @@
       },
 
       routes: {
-        'linkProperty/:linkId'          : 'linkProperty',
-        'linkProperty/mml/:mmlId'       : 'linkPropertyByMml',
-        'linkProperty/mtkid/:mtkid'     : 'linkPropertyByMtk',
-        'roadAddressProject/:projectId' : 'roadAddressProject',
-        'historyLayer/:date'            : 'historyLayer',
-        'work-list/floatingRoadAddress' : 'floatingAddressesList',
-        'work-list/roadAddressErrors'   : 'roadAddressErrorsList',
-        'node/nodePointTemplate/:id'    : 'nodePointTemplate',
-        'node/junctionTemplate/:id'     : 'junctionTemplate'
+        'linkProperty/:linkId': 'linkProperty',
+        'linkProperty/mml/:mmlId': 'linkPropertyByMml',
+        'linkProperty/mtkid/:mtkid': 'linkPropertyByMtk',
+        'roadAddressProject/:projectId': 'roadAddressProject',
+        'historyLayer/:date': 'historyLayer',
+        'work-list/floatingRoadAddress': 'floatingAddressesList',
+        'work-list/roadAddressErrors': 'roadAddressErrorsList',
+        'node/nodePointTemplate/:id': 'nodePointTemplate',
+        'node/junctionTemplate/:id': 'junctionTemplate'
       },
 
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
         backend.getRoadAddressByLinkId(linkId, function (response) {
           if (response.success) {
-              map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-              map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
+            map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+            map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
           } else {
             console.log(response.reason);
           }
@@ -63,8 +64,8 @@
           });
           map.getView().setCenter([response.x, response.y]);
           map.getView().setZoom(12);
-      });
-    },
+        });
+      },
       roadAddressProject: function (projectId) {
         applicationModel.selectLayer('roadAddressProject');
         eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
@@ -101,7 +102,6 @@
     });
 
 
-
     var router = new Router();
 
     // We need to restart the router history so that tests can reset
@@ -113,7 +113,7 @@
       router.navigate('linkProperty');
     });
 
-    eventbus.on('roadAddressProject:selected', function (id, layerName, selectedLayer) {
+    eventbus.on('roadAddressProject:selected', function (id, _layerName, _selectedLayer) {
       router.navigate('roadAddressProject/' + id);
     });
 
@@ -130,7 +130,7 @@
     eventbus.on('linkProperties:selectedProject', function (linkId, project) {
       if (typeof project.id !== 'undefined') {
         var baseUrl = 'roadAddressProject/' + project.id;
-        var linkIdUrl = typeof linkId !== 'undefined' ? '/' + linkId : '';
+        var linkIdUrl = linkId ? '/' + linkId : '';
         router.navigate(baseUrl + linkIdUrl);
         var initialCenter = map.getView().getCenter();
         if (!_.isUndefined(project.coordX) && project.coordX !== 0 && !_.isUndefined(project.coordY) && project.coordY !== 0 && !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0) {
@@ -155,10 +155,11 @@
     });
 
     eventbus.on('layer:selected', function (layer) {
+      let layerAdjusted = layer;
       if (layer.indexOf('/') === -1) {
-        layer = layer.concat('/');
+        layerAdjusted = layer.concat('/');
       }
-      router.navigate(layer);
+      router.navigate(layerAdjusted);
     });
   };
-})(this);
+}(this));

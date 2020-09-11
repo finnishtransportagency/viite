@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite.util
 
-import java.util.Properties
-
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.kmtk.KMTKClient
@@ -10,7 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner}
+import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
@@ -23,17 +21,6 @@ import scala.language.postfixOps
 
 object DataFixture {
   val TestAssetId = 300000
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    props
-  }
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
 
   val dataImporter = new DataImporter
 
@@ -42,10 +29,10 @@ object DataFixture {
   }
 
   lazy val vvhClient: VVHClient = {
-    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(ViiteProperties.vvhRestApiEndPoint)
   }
 
-  private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
+  private lazy val geometryFrozen: Boolean = ViiteProperties.vvhRoadlinkFrozen
 
   val eventBus = new DummyEventBus
   val linkService = new RoadLinkService(vvhClient, kmtkClient, eventBus, new DummySerializer, geometryFrozen)
@@ -68,22 +55,22 @@ object DataFixture {
         case _ => value.asInstanceOf[String].toInt
       }
     } catch {
-      case e: Exception => numberThreads
+      case _: Exception => numberThreads
     }
   }
 
   def importRoadAddresses(importTableName: Option[String]): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
-    val kmtkClient = new KMTKClient(dr2properties.getProperty("digiroad2.KMTKRestApiEndPoint"))
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val kmtkClient = new KMTKClient(ViiteProperties.kmtkRestApiEndPoint)
+    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
     importTableName match {
       case None => // shouldn't get here because args size test
-        throw new Exception("****** Import failed! conversiontable name required as second input ******")
+        throw new Exception("****** Import failed! Conversion table name required as a second input ******")
       case Some(tableName) =>
         val importOptions = ImportOptions(
           onlyComplementaryLinks = false,
           tableName,
-          onlyCurrentRoads = dr2properties.getProperty("digiroad2.importOnlyCurrent", "false").toBoolean)
+          onlyCurrentRoads = ViiteProperties.importOnlyCurrent)
         dataImporter.importRoadAddressData(Conversion.database(), kmtkClient, vvhClient, importOptions)
         println(s"Road address import complete at time: ${DateTime.now()}")
     }
@@ -95,18 +82,25 @@ object DataFixture {
     dataImporter.importNodesAndJunctions(Conversion.database())
   }
 
+  def updateCalibrationPointTypes(): Unit = {
+    println("\nUpdating Calibration point types started at time: ")
+    println(DateTime.now())
+    dataImporter.updateCalibrationPointTypesQuery()
+  }
+
   def initialImport(importTableName: Option[String]): Unit = {
     println("\nImporting road addresses, updating geometry and importing nodes and junctions started at time: ")
     println(DateTime.now())
     importRoadAddresses(importTableName)
     updateLinearLocationGeometry()
     importNodesAndJunctions()
+    updateCalibrationPointTypes()
   }
 
   def updateLinearLocationGeometry(): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val kmtkClient = new KMTKClient(dr2properties.getProperty("digiroad2.KMTKRestApiEndPoint"))
+    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+    val kmtkClient = new KMTKClient(ViiteProperties.kmtkRestApiEndPoint)
     dataImporter.updateLinearLocationGeometry(vvhClient, kmtkClient)
     println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
@@ -114,8 +108,8 @@ object DataFixture {
 
   def checkRoadNetwork(): Unit = {
     println(s"\nstart checking road network at time: ${DateTime.now()}")
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val username = properties.getProperty("bonecp.username")
+    val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+    val username = ViiteProperties.bonecpUsername
     val roadLinkService = new RoadLinkService(vvhClient, kmtkClient, new DummyEventBus, new DummySerializer, geometryFrozen)
     OracleDatabase.withDynTransaction {
       val checker = new RoadNetworkChecker(roadLinkService)
@@ -289,7 +283,7 @@ object DataFixture {
   def main(args: Array[String]): Unit = {
     import scala.util.control.Breaks._
     val operation = args.headOption
-    val username = properties.getProperty("bonecp.username")
+    val username = ViiteProperties.bonecpUsername
     if (!username.startsWith("dr2dev") && !operation.getOrElse("").equals("test_integration_api_all_municipalities")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
@@ -338,11 +332,13 @@ object DataFixture {
           initialImport(Some(args(1)))
         else
           throw new Exception("****** Import failed! conversiontable name required as second input ******")
+      case Some("update_calibration_point_types") =>
+        updateCalibrationPointTypes()
       case _ => println("Usage: DataFixture import_road_addresses <conversion table name> | update_missing " +
         "| import_complementary_road_address " +
         "| update_road_addresses_geometry | import_road_address_change_test_data " +
         "| apply_change_information_to_road_address_links | import_road_names | check_road_network" +
-        "| test | flyway_init | import_nodes_and_junctions | initial_import")
+        "| test | flyway_init | import_nodes_and_junctions | initial_import | update_calibration_point_types")
     }
   }
 

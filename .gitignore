@@ -19,3 +19,6 @@ keys.properties
 .project
 .settings/
 WebContent/
+/aws/local-dev/postgis/data/
+revision.properties
+bonecp.properties

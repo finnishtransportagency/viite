@@ -6,13 +6,12 @@ import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.dao.{SequenceResetterDAO, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.dao.{Node, NodeDAO, RoadwayPointDAO}
+import fi.liikennevirasto.viite.dao.RoadwayPointDAO
 import org.joda.time._
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
-
 
 
 class NodeImporter(conversionDatabase: DatabaseDef) {
@@ -21,18 +20,18 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
   val roadwayPointDAO = new RoadwayPointDAO
 
   case class ConversionNode(id: Long, nodeNumber: Long, coordinates: Point, name: Option[String], nodeType: Long, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime],
-                            validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
+                            validTo: Option[DateTime], createdBy: String, registrationDate: Option[DateTime])
 
   case class ConversionNodePoint(id: Long, beforeOrAfter: Long, nodeId: Long, nodeNumber: Long, roadwayNumberTR: Long, addressMValueTR: Long,
                                  validFrom: Option[DateTime], validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime])
 
   private def insertNodeStatement(): PreparedStatement =
-    dynamicSession.prepareStatement(sql = "INSERT INTO NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, END_DATE, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?)")
+    dynamicSession.prepareStatement(sql = "INSERT INTO NODE (ID, NODE_NUMBER, COORDINATES, NAME, TYPE, START_DATE, END_DATE, VALID_FROM, CREATED_BY, REGISTRATION_DATE) VALUES " +
+      " (?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?)")
 
   private def insertNodePointStatement(): PreparedStatement =
-    dynamicSession.prepareStatement(sql = "INSERT INTO NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_NUMBER, VALID_FROM, CREATED_BY) VALUES " +
-      " (?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), ?) ")
+    dynamicSession.prepareStatement(sql = "INSERT INTO NODE_POINT (ID, BEFORE_AFTER, ROADWAY_POINT_ID, NODE_NUMBER, VALID_FROM, VALID_TO, CREATED_BY) VALUES " +
+      " (?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?) ")
 
 
   def insertNode(nodeStatement: PreparedStatement, conversionNode: ConversionNode): Unit = {
@@ -45,16 +44,22 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodeStatement.setString(7, datePrinter(conversionNode.endDate))
     nodeStatement.setString(8, datePrinter(conversionNode.validFrom))
     nodeStatement.setString(9, conversionNode.createdBy)
+    if (conversionNode.registrationDate.nonEmpty) {
+      nodeStatement.setTimestamp(10, new java.sql.Timestamp(conversionNode.registrationDate.get.getMillis))
+    } else {
+      throw new RuntimeException(s"Registration date must be set for node number: ${conversionNode.nodeNumber}")
+    }
     nodeStatement.addBatch()
   }
 
-  def insertNodePoint(nodePointStatement: PreparedStatement, nodePoint: ConversionNodePoint, nodeNumber: Long, roadwayPointId: Long): Unit = {
+  def insertNodePoint(nodePointStatement: PreparedStatement, nodePoint: ConversionNodePoint, nodeNumber: Long, nodeEndDate: Option[DateTime], roadwayPointId: Long): Unit = {
     nodePointStatement.setLong(1, Sequences.nextNodePointId)
     nodePointStatement.setLong(2, nodePoint.beforeOrAfter)
     nodePointStatement.setLong(3, roadwayPointId)
     nodePointStatement.setLong(4, nodeNumber)
     nodePointStatement.setString(5, datePrinter(nodePoint.validFrom))
-    nodePointStatement.setString(6, nodePoint.createdBy)
+    nodePointStatement.setString(6, datePrinter(nodeEndDate))
+    nodePointStatement.setString(7, nodePoint.createdBy)
     nodePointStatement.addBatch()
   }
 
@@ -68,21 +73,19 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
       conversionNode => (conversionNode, conversionNodePoints.filter(_.nodeId == conversionNode.id))
     )
 
-    nodesWithPoints.foreach{
+    nodesWithPoints.foreach {
       conversionNode =>
         println(s"Inserting node with TR id = ${conversionNode._1.id} and node_number = ${conversionNode._1.nodeNumber}")
         val newNodeId = Sequences.nextNodeId
         insertNode(nodePs, conversionNode._1.copy(id = newNodeId))
-        conversionNode._2.foreach{
-          conversionNodePoint =>{
+        conversionNode._2.foreach {
+          conversionNodePoint => {
             val existingRoadwayPoint = roadwayPointDAO.fetch(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR)
             println(s"Inserting node point with TR id = ${conversionNodePoint.id} and node_id = ${conversionNodePoint.nodeId} for node_number = ${conversionNode._1.nodeNumber}")
-            if(existingRoadwayPoint.isEmpty){
+            if (existingRoadwayPoint.isEmpty) {
               val newRoadwayPoint = roadwayPointDAO.create(conversionNodePoint.roadwayNumberTR, conversionNodePoint.addressMValueTR, createdBy = "node_import")
-              insertNodePoint(nodePointPs, conversionNodePoint, conversionNode._1.nodeNumber, newRoadwayPoint)
-            }
-            else
-              insertNodePoint(nodePointPs, conversionNodePoint, conversionNode._1.nodeNumber, existingRoadwayPoint.get.id)
+              insertNodePoint(nodePointPs, conversionNodePoint, conversionNode._1.nodeNumber, conversionNode._1.endDate, newRoadwayPoint)
+            } else insertNodePoint(nodePointPs, conversionNodePoint, conversionNode._1.nodeNumber, conversionNode._1.endDate, existingRoadwayPoint.get.id)
           }
         }
     }
@@ -90,6 +93,16 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
     nodePointPs.executeBatch()
     nodePs.close()
     nodePointPs.close()
+    resetNodeNumberSequence()
+  }
+
+  def resetNodeNumberSequence(): Unit = {
+    val sequenceResetter = new SequenceResetterDAO()
+    sql"""select MAX(NODE_NUMBER) FROM NODE""".as[Long].firstOption match {
+      case Some(nodeNumber) =>
+        sequenceResetter.resetSequenceToNumber("NODE_NUMBER_SEQ", nodeNumber + 1)
+      case _ => sequenceResetter.resetSequenceToNumber("NODE_NUMBER_SEQ", 1)
+    }
   }
 
   protected def fetchNodesFromConversionTable(): Seq[ConversionNode] = {
@@ -126,8 +139,8 @@ class NodeImporter(conversionDatabase: DatabaseDef) {
       val endDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val validFrom = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextString()
-      val createdTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      ConversionNode(id, nodeNumber, Point(xValue, yValue), name, nodeType, startDate, endDate, validFrom, None, createdBy, createdTime)
+      val registrationDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      ConversionNode(id, nodeNumber, Point(xValue, yValue), name, nodeType, startDate, endDate, validFrom, None, createdBy, registrationDate)
     }
   }
 

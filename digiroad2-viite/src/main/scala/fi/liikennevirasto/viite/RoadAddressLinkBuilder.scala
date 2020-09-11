@@ -1,7 +1,5 @@
 package fi.liikennevirasto.viite
 
-import java.util.Properties
-
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
@@ -10,20 +8,15 @@ import fi.liikennevirasto.digiroad2.client.kmtk.KMTKClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 
 class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, projectLinkDAO: ProjectLinkDAO) extends AddressLinkBuilder {
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
 
-  val vvhClient = new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-  val kmtkClient = new KMTKClient(properties.getProperty("digiroad2.KMTKRestApiEndPoint"))
+  val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
+  val kmtkClient = new KMTKClient(ViiteProperties.kmtkRestApiEndPoint)
   val eventBus = new DummyEventBus
   val linkService = new RoadLinkService(vvhClient, kmtkClient, eventBus, new DummySerializer)
   val roadAddressService = new RoadAddressService(linkService, roadwayDAO, linearLocationDAO, new RoadNetworkDAO, new RoadwayPointDAO, new NodePointDAO, new JunctionPointDAO, new RoadwayAddressMapper(roadwayDAO, linearLocationDAO), eventBus) {
@@ -49,7 +42,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
-      roadAddress.calibrationPoints._1,
+      roadAddress.startCalibrationPoint,
       roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.roadwayNumber)
   }
 
@@ -63,7 +56,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       Map(), roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, 0, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
-      roadAddress.calibrationPoints._1,
+      roadAddress.startCalibrationPoint,
       roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.roadwayNumber)
   }
 

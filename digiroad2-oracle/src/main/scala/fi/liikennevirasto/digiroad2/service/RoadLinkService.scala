@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.service
 
 import java.io.{File, FilenameFilter, IOException}
-import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 import fi.liikennevirasto.GeometryUtils
@@ -13,7 +12,7 @@ import fi.liikennevirasto.digiroad2.dao.ComplementaryFilterDAO
 import fi.liikennevirasto.digiroad2.dao.LinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.RoadLinkSerializer
+import fi.liikennevirasto.digiroad2.util.{RoadLinkSerializer, ViiteProperties}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
@@ -318,11 +317,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     }
   }
 
-  private val cacheDirectory = {
-    val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    properties.getProperty("digiroad2.cache.directory", "/tmp/viite.cache")
-  }
+  private val cacheDirectory = ViiteProperties.cacheDirectory
 
   private def getCacheDirectory: Option[File] = {
     val file = new File(cacheDirectory)

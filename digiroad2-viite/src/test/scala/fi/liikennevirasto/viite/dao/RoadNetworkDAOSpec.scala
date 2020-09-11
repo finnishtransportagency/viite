@@ -78,7 +78,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
       roadwayDAO.create(List(testRoadway1.copy(id = roadwayId1), testRoadway2.copy(id = roadwayId2), testRoadway3.copy(id = roadwayId3)))
       dao.createPublishedRoadway(networkId, roadwayId1)
       dao.createPublishedRoadway(networkId, roadwayId2)
-      val roadways = roadwayDAO.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), networkId)
+      val roadways = roadwayDAO.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), networkId, None)
       roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadways.count(r => r.roadwayNumber == roadwayNumber2) should be(1)
       roadways.size should be(2)
@@ -91,7 +91,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
     val linearLocationDAO = new LinearLocationDAO
     val roadnetworkDAO = new RoadNetworkDAO
     val linearLocation = LinearLocation(linearLocationId, 1, linkId, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
-      (Some(0l), None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
+      (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
       roadwayId)
     linearLocationDAO.create(List(linearLocation))
     dao.addRoadNetworkError(roadwayId, linearLocationId, addressError, roadnetworkDAO.getLatestRoadNetworkVersionId)
