@@ -252,7 +252,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     kmtkClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
   }
 
-  def getChangeInfoFromKMTKF(kmtkIds: Iterable[KMTKID]): Future[Seq[ChangeInfo]] = {
+  def getChangeInfoFromKMTKF(kmtkIds: Set[KMTKID]): Future[Seq[ChangeInfo]] = {
     kmtkClient.roadLinkChangeInfo.fetchByIdsF(kmtkIds)
   }
 

@@ -587,7 +587,7 @@ class KMTKChangeInfoClient(kmtkRestApiEndPoint: String) extends KMTKClientOperat
   }
 
   // TODO
-  def fetchByIdsF(ids: Iterable[KMTKID]): Future[Seq[ChangeInfo]] = {
+  def fetchByIdsF(ids: Set[KMTKID]): Future[Seq[ChangeInfo]] = {
     throw new NotImplementedError()
     // Future(fetchByIds(ids))
   }

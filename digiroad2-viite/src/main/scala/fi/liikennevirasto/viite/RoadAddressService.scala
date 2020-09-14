@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.kmtk.ChangeInfo
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
@@ -130,7 +130,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       }
     }
     val linkIds = linearLocations.map(_.linkId).toSet
-    val kmtkIds = linkDAO.fetch(linkIds).map(_.kmtkId)
+    val kmtkIds = linkDAO.fetch(linkIds).map(_.kmtkId).toSet
 
     val boundingBoxResult = BoundingBoxResult(
       roadLinkService.getChangeInfoFromKMTKF(kmtkIds),
@@ -250,7 +250,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       case "road" => params.size match {
         case 1 =>
           // The params with type long can be LINKID, MTKID or roadNumber
-          var searchResultPoint = roadLinkService.getMidPointByLinkId(params.head)
+          // TODO Enable searching by KMTKID instead of LINKID
+          var searchResultPoint = roadLinkService.getMidPointByLinkId(KMTKID(params.head.toString, 0))
           var partialResultSeq = collectResult("linkId", Seq(searchResultPoint))
           searchResultPoint = roadLinkService.getRoadLinkMiddlePointByMtkId(params.head)
           partialResultSeq = collectResult("mtkId", Seq(searchResultPoint), partialResultSeq)
@@ -315,7 +316,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     }
     val linearLocationsLinkIds = linearLocations.map(_.linkId).toSet
     val roadAddresses = getRoadAddressForSearch(road, roadPart, addressM, track)
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linearLocationsLinkIds)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIds(linearLocationsLinkIds)
     val rals = RoadAddressFiller.fillTopology(roadLinks, roadAddresses)
     val filteredRals = rals.filter(al => al.startAddressM <= addressM && al.endAddressM >= addressM && (al.startAddressM != 0 || al.endAddressM != 0))
     val ral = filteredRals.filter(al => (track.nonEmpty && track.contains(al.trackCode)) || al.trackCode != Track.LeftSide.value)
@@ -683,10 +684,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
                           everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
 
     val boundingBoxResult = BoundingBoxResult(
-      roadLinkService.getChangeInfoFromVVHF(boundingRectangle, Set()),
+      roadLinkService.getChangeInfoF(boundingRectangle, Set()),
       //Should fetch all the road types
       Future(fetchLinearLocationsByBoundingBox(boundingRectangle)),
-      Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads)),
+      Future(roadLinkService.getRoadLinks(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads)),
       Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, Set()))
     )
     getRoadAddressLinks(boundingBoxResult)
