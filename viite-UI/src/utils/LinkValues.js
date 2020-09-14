@@ -29,7 +29,7 @@
     InUse: {value: 0, description: "InUse"},
     UnderConstruction: {value: 1, description: "UnderConstruction"},
     Planned: {value: 3, description: "Planned"},
-    UnknownConstructionType: {value: 99, description: "UnknownLifecycleStatus"}
+    UnknownLifecycleStatus: {value: 99, description: "UnknownLifecycleStatus"}
   };
 
   root.SelectionType = {
