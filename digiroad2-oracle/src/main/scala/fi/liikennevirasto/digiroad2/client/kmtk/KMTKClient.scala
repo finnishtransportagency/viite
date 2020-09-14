@@ -501,6 +501,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
   /**
     * Returns KMTK road links. Uses Scala Future for concurrent operations.
     */
+  // TODO Rename method to have singular municipality or change parameter municipality to be a list
   def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipality: Option[Int], roadNumbers: Seq[(Int, Int)],
                                                  includeAllPublicRoads: Boolean = false): Future[Seq[KMTKRoadLink]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, roadNumbers, municipality, includeAllPublicRoads).map(feature => kmtkFeatureToKMTKRoadLink(feature)))

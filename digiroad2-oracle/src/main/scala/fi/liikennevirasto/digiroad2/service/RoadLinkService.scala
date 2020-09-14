@@ -61,7 +61,10 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
 
   // TODO Return Future? fetchByBoundsAndMunicipalitiesF
   def getRoadLinksByBounds(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
-    enrichRoadLinksFromKMTK(kmtkClient.roadLinkData.fetchByBoundsAndMunicipalities(bounds, municipalities))
+
+    // TODO Forced now municipalities to be singular with municipalities.headOption
+    enrichRoadLinksFromKMTK(kmtkClient.roadLinkData.fetchByBoundsAndMunicipalities(bounds, municipalities.headOption))
+
   }
 
   // TODO Return Future? fetchWalkwaysByBoundsAndMunicipalitiesF
@@ -154,9 +157,15 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
                                             publicRoads: Boolean): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val (changes, links) = Await.result(kmtkClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
       .zip(if (everything) {
-        kmtkClient.roadLinkData.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
+
+        // TODO Forced now municipalities to be singular with municipalities.headOption
+        kmtkClient.roadLinkData.fetchByBoundsAndMunicipalitiesF(bounds, municipalities.headOption)
+
       } else {
-        kmtkClient.roadLinkData.fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities, roadNumbers, publicRoads)
+
+        // TODO Forced now municipalities to be singular with municipalities.headOption
+        kmtkClient.roadLinkData.fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities.headOption, roadNumbers, publicRoads)
+
       }), atMost = Duration.Inf)
 
     (enrichRoadLinksFromKMTK(links), changes)
@@ -213,7 +222,10 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
                                   municipalities: Set[Int] = Set(),
                                   publicRoads: Boolean): Seq[RoadLink] = {
     val links = Await.result(
-      kmtkClient.roadLinkData.fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities, roadNumbers, publicRoads),
+
+      // TODO Forced now municipalities to be singular with municipalities.headOption
+      kmtkClient.roadLinkData.fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities.headOption, roadNumbers, publicRoads),
+
       atMost = Duration.Inf)
 
     enrichRoadLinksFromKMTK(links)
