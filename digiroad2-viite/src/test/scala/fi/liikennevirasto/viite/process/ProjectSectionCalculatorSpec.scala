@@ -3,7 +3,8 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.dao.{Link, LinkDAO, Sequences}
+import fi.liikennevirasto.digiroad2.linearasset.KMTKID
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
@@ -38,6 +39,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   val roadwayChangesDAO = new RoadwayChangesDAO
   val roadwayDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
+  val linkDAO = new LinkDAO
   val roadNetworkDAO = new RoadNetworkDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO,
@@ -1873,8 +1875,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(Seq(roadway1))
 
       val linkId1 = 12345L
-      val link1 = Link(linkId1, LinkGeomSource.NormalLinkInterface.value, 0, None)
-      LinkDAO.create(link1.id, link1.adjustedTimestamp, link1.source)
+      val link1 = Link(linkId1, "123", 0, LinkGeomSource.NormalLinkInterface.value, 0, None)
+      linkDAO.create(link1.id, KMTKID("123", 0), link1.adjustedTimestamp, link1.source)
 
       val linearLocationId1 = Sequences.nextLinearLocationId
       val linearLocation1 = LinearLocation(linearLocationId1, 1, linkId1, 0.0, 10.0, SideCode.TowardsDigitizing, 0L,
@@ -2037,8 +2039,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       roadwayDAO.create(Seq(roadway1))
 
       val linkId1 = 12345L
-      val link1 = Link(linkId1, LinkGeomSource.NormalLinkInterface.value, 0, None)
-      LinkDAO.create(link1.id, link1.adjustedTimestamp, link1.source)
+      val link1 = Link(linkId1, "123", 0, LinkGeomSource.NormalLinkInterface.value, 0, None)
+      linkDAO.create(link1.id, KMTKID("123", 0), link1.adjustedTimestamp, link1.source)
 
       val linearLocationId1 = Sequences.nextLinearLocationId
       val linearLocation1 = LinearLocation(linearLocationId1, 1, linkId1, 0.0, 10.0, SideCode.TowardsDigitizing, 0L,

@@ -734,11 +734,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectDAO.create(rap2)
       projectService.saveProject(rap2)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(projectLinks1.map(toRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementaryByLinkIds(any[Set[Long]])).thenReturn(projectLinks1.map(toRoadLink))
       val response1 = projectService.createProjectLinks(Seq(1000L, 1001L), rap1.id, 56, 207, Track.Combined, Discontinuity.EndOfRoad, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       response1("success").asInstanceOf[Boolean] should be(true)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(projectLinks2.map(toRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementaryByLinkIds(any[Set[Long]])).thenReturn(projectLinks2.map(toRoadLink))
       val response2 = projectService.createProjectLinks(Seq(1002L,1003L), rap2.id, 55, 206, Track.Combined, Discontinuity.EndOfRoad, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       response2("success").asInstanceOf[Boolean] should be(false)
       response2("errorMessage").asInstanceOf[String] should be(ErrorWithNewAction)
@@ -2062,7 +2062,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
       projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.toSeq, LinkStatus.Transfer, "-", 5, 207, 0, Option.empty[Int]) should be(None)
       val linkId1 = 5168510
-      val linkId2 = 5168540projectService.updateProjectLinks(savedProject.id, Set(), Seq(linkId1), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int]) should be(None)
+      val linkId2 = 5168540
+      projectService.updateProjectLinks(savedProject.id, Set(), Seq(linkId1), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int]) should be(None)
       projectService.allLinksHandled(savedProject.id) should be(true)
       val  updatedProjectLinks = projectLinkDAO.fetchProjectLinks(savedProject.id)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Transfer } should be(true)
