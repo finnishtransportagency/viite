@@ -5,10 +5,10 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.util.{MissingRoadwayNumberException, MissingTrackException, RoadAddressException, Track}
-import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.{RoadAddressSectionCalculatorContext, TrackCalculatorContext}
+import fi.liikennevirasto.viite.{NewIdValue, RoadType}
 import org.slf4j.LoggerFactory
 
 object ProjectSectionCalculator {
@@ -123,11 +123,11 @@ object ProjectSectionCalculator {
           } else ((right, othersRight), (left, othersLeft))
 
         if (firstRight.isEmpty || firstLeft.isEmpty) {
-          throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
+          throw new RoadAddressException(s"Mismatching tracks for terminated links, R ${firstRight.size}, L ${firstLeft.size}")
         }
 
         if (firstRight.count(_.roadwayNumber == NewIdValue) + firstRight.filter(_.roadwayNumber != NewIdValue).map(_.roadwayNumber).distinct.size != firstLeft.count(_.roadwayNumber == NewIdValue) + firstLeft.filter(_.roadwayNumber != NewIdValue).map(_.roadwayNumber).distinct.size) {
-          throw new MissingRoadwayNumberException(s"Roadway numbers doesn't match on both tracks, R ${firstRight.map(_.roadwayNumber).distinct.size}, L ${firstLeft.map(_.roadwayNumber).distinct.size}")
+          throw new MissingRoadwayNumberException(s"Roadway numbers doesn't match on both terminated tracks, R ${firstRight.map(_.roadwayNumber).distinct.size}, L ${firstLeft.map(_.roadwayNumber).distinct.size}")
         }
 
         val strategy = TrackCalculatorContext.getStrategy(firstLeft, firstRight)
