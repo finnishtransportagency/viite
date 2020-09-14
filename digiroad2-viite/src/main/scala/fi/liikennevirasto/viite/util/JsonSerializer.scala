@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory
 class JsonSerializer extends RoadLinkSerializer {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
-    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +
+    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + LifecycleStatusSerializer +
     DiscontinuitySerializer + TrackSerializer + PointSerializer + ChangeTypeSerializer
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {
@@ -78,7 +78,7 @@ class JsonSerializer extends RoadLinkSerializer {
 }
 object DigiroadSerializers {
   val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
-    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +
+    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + LifecycleStatusSerializer +
     DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + RoadTypeSerializer + ChangeTypeSerializer
 }
 
@@ -126,11 +126,11 @@ case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](fo
     JInt(BigInt(geomSource.value))
 }))
 
-case object ConstructionTypeSerializer extends CustomSerializer[LifecycleStatus](format => ( {
+case object LifecycleStatusSerializer extends CustomSerializer[LifecycleStatus](format => ( {
   case JInt(typeInt) => LifecycleStatus(typeInt.toInt)
 }, {
-  case constructionType: LifecycleStatus =>
-    JInt(BigInt(constructionType.value))
+  case lifecycleStatus: LifecycleStatus =>
+    JInt(BigInt(lifecycleStatus.value))
 }))
 
 case object DiscontinuitySerializer extends CustomSerializer[Discontinuity](format => ( {

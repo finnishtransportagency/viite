@@ -25,17 +25,15 @@ object DataFixture {
   val dataImporter = new DataImporter
 
   lazy val kmtkClient: KMTKClient = {
-    new KMTKClient(dr2properties.getProperty("digiroad2.KMTKRestApiEndPoint"))
+    new KMTKClient(ViiteProperties.kmtkRestApiEndPoint)
   }
 
   lazy val vvhClient: VVHClient = {
     new VVHClient(ViiteProperties.vvhRestApiEndPoint)
   }
 
-  private lazy val geometryFrozen: Boolean = ViiteProperties.vvhRoadlinkFrozen
-
   val eventBus = new DummyEventBus
-  val linkService = new RoadLinkService(vvhClient, kmtkClient, eventBus, new DummySerializer, geometryFrozen)
+  val linkService = new RoadLinkService(vvhClient, kmtkClient, eventBus, new DummySerializer)
   val roadAddressDAO = new RoadwayDAO
   val linearLocationDAO = new LinearLocationDAO
   val roadNetworkDAO: RoadNetworkDAO = new RoadNetworkDAO
@@ -110,7 +108,7 @@ object DataFixture {
     println(s"\nstart checking road network at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
     val username = ViiteProperties.bonecpUsername
-    val roadLinkService = new RoadLinkService(vvhClient, kmtkClient, new DummyEventBus, new DummySerializer, geometryFrozen)
+    val roadLinkService = new RoadLinkService(vvhClient, kmtkClient, new DummyEventBus, new DummySerializer)
     OracleDatabase.withDynTransaction {
       val checker = new RoadNetworkChecker(roadLinkService)
       checker.checkRoadNetwork(username)
@@ -184,7 +182,7 @@ object DataFixture {
 
   private def applyChangeInformationToRoadAddressLinks(numThreads: Int): Unit = {
 
-    val roadLinkService = new RoadLinkService(vvhClient, kmtkClient, new DummyEventBus, new JsonSerializer, geometryFrozen)
+    val roadLinkService = new RoadLinkService(vvhClient, kmtkClient, new DummyEventBus, new JsonSerializer)
     val linearLocationDAO = new LinearLocationDAO
 
     println("Clearing cache...")

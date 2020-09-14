@@ -27,7 +27,7 @@ class JsonSerializerTest extends FunSuite with Matchers {
     val f = File.createTempFile("test", ".cache")
     val roadLink = RoadLink(1L, KMTKID("UUID", 1), Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
       Map("TO_RIGHT"->104,"LAST_EDITED_DATE"->1476468913000L,"FROM_LEFT"->103,"MTKHEREFLIP"->1,"MTKID"->362888804,
-        "ROADNAME_FI"->"Evitskogintie","VERTICALACCURACY"->201,"VALIDFROM"->1379548800000L,"CONSTRUCTIONTYPE"->0,
+        "ROADNAME_FI"->"Evitskogintie","VERTICALACCURACY"->201,"VALIDFROM"->1379548800000L,"LIFECYCLESTATUS"->0,
         "SURFACETYPE"->2,"MTKCLASS"->12122,"ROADPARTNUMBER"->4,"TO_LEFT"->103,
         "geometryWKT"->("LINESTRING ZM (358594.785 6678940.735 57.788000000000466 0, 358599.713 6678945.133 57.78100000000268 6.605100000000675" +
           "358594.785 6678940.735 57.788000000000466 0, 358599.713 6678945.133 57.78100000000268 6.605100000000675" +

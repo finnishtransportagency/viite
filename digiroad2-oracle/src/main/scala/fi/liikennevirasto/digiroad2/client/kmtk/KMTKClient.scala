@@ -114,7 +114,7 @@ case class KMTKFeatureCollection(/*`type`: String, */ features: Seq[KMTKFeature]
 case class KMTKRoadLink(linkId: Long, kmtkId: KMTKID = KMTKID("", 0), municipalityCode: Int, geometry: Seq[Point],
                         administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                         featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
-                        constructionType: LifecycleStatus = LifecycleStatus.InUse,
+                        lifecycleStatus: LifecycleStatus = LifecycleStatus.InUse,
                         linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
 
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
@@ -124,7 +124,7 @@ case class KMTKRoadLink(linkId: Long, kmtkId: KMTKID = KMTKID("", 0), municipali
 
 case class KMTKHistoryRoadLink(linkId: Long, kmtkId: KMTKID, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
                                trafficDirection: TrafficDirection, featureClass: FeatureClass, createdDate: BigInt, endDate: BigInt, attributes: Map[String, Any] = Map(),
-                               constructionType: LifecycleStatus = LifecycleStatus.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
+                               lifecycleStatus: LifecycleStatus = LifecycleStatus.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
 
   val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
@@ -327,8 +327,8 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     */
   // TODO Is this needed?
 //  protected def roadLinkStatusFilter(properties: KMTKProperties): Boolean = {
-//    val linkStatus = properties.constructionStatus
-//    linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
+//    val linkStatus = properties.lifecycleStatus
+//    linkStatus == LifecycleStatus.InUse.value || linkStatus == LifecycleStatus.Planned.value || linkStatus == LifecycleStatus.UnderConstruction.value
 //  }
 
   /**
@@ -385,12 +385,12 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     val administrativeClass = AdministrativeClass.apply(feature.properties.adminClass.getOrElse(0))
     val trafficDirection = TrafficDirection.apply(feature.properties.directionType)
     val modifiedAt = feature.properties.modifiedAtAsDateTime.orElse(feature.properties.sourceStartDateAsDateTime)
-    val constructionType = LifecycleStatus.apply(feature.properties.lifecycleStatus)
+    val lifecycleStatus = LifecycleStatus.apply(feature.properties.lifecycleStatus)
 
     val featureClass = KMTKClient.featureClassCodeToFeatureClass.getOrElse(roadClass, FeatureClass.AllOthers)
 
     KMTKRoadLink(0, KMTKID(kmtkId, version), municipalityCode, linkGeometry, administrativeClass, trafficDirection, featureClass, modifiedAt,
-      extractAttributes(feature.properties) ++ linkGeometryForApi ++ linkGeometryWKTForApi, constructionType, linkGeomSource, horizontalLength)
+      extractAttributes(feature.properties) ++ linkGeometryForApi ++ linkGeometryWKTForApi, lifecycleStatus, linkGeomSource, horizontalLength)
 
   }
 
@@ -409,7 +409,7 @@ class KMTKRoadLinkClient(kmtkRestApiEndPoint: String) extends KMTKClientOperatio
     }
     Map[String, Any]("MTKID" -> properties.sourceId,
       "MTKCLASS" -> properties.roadClass,
-      "CONSTRUCTIONTYPE" -> properties.lifecycleStatus,
+      "LIFECYCLESTATUS" -> properties.lifecycleStatus,
       "ROADNAME_FI" -> roadNameFin.orNull,
       "ROADNAME_SM" -> roadNameSm.orNull,
       "ROADNAME_SE" -> roadNameSwe.orNull,
@@ -532,7 +532,7 @@ class KMTKChangeInfoClient(kmtkRestApiEndPoint: String) extends KMTKClientOperat
 
     // TODO
     protected override def defaultOutFields(): String = {
-      "OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE"
+      "OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,LIFECYCLE"
     }
 
     // TODO

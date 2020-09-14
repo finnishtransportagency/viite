@@ -50,7 +50,7 @@
       [99, 'Tuntematon']
     ];
 
-    var constructionTypes = [
+    var lifecycleStatuses = [
       [0, 'Muu tieverkko, rakenteilla'],
       [1, 'Tuntematon, rakenteilla']
     ];
@@ -80,10 +80,10 @@
       return segments + '<div class="middle symbol linear rainbow-asset-2" /><div class="middle symbol linear rainbow-asset-1 " /> <div class="edge-right symbol linear linear-asset-1" /></div>';
     };
 
-    var constructionTypeLegendEntries = _.map(constructionTypes, function (constructionType) {
+    var lifecycleStatusLegendEntries = _.map(lifecycleStatuses, function (lifecycleStatus) {
       return '<div class="legend-entry">' +
-        '<div class="label">' + constructionType[1] + '</div>' +
-        '<div class="symbol linear construction-type-' + constructionType[0] + '" />' +
+        '<div class="label">' + lifecycleStatus[1] + '</div>' +
+        '<div class="symbol linear construction-type-' + lifecycleStatus[0] + '" />' +
         '</div>';
     }).join('');
 
@@ -137,7 +137,7 @@
     };
 
     roadClassLegend.append(roadClassLegendEntries);
-    roadClassLegend.append(constructionTypeLegendEntries);
+    roadClassLegend.append(lifecycleStatusLegendEntries);
     roadClassLegend.append(calibrationPointPicture);
 
     var Tool = function (toolName, icon, description) {
@@ -279,7 +279,7 @@
       } else {
         container.empty();
         roadClassLegend.append(roadClassLegendEntries);
-        roadClassLegend.append(constructionTypeLegendEntries);
+        roadClassLegend.append(lifecycleStatusLegendEntries);
         roadClassLegend.append(calibrationPointPicture);
         nodeToolSelection.hide();
       }

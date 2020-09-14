@@ -21,16 +21,15 @@
     NormalLinkInterface: {value: 1, descriptionFI: "MML", description: "NormalLinkInterface"},
     ComplementaryLinkInterface: {value: 2, descriptionFI: "Täydentävä", description: "ComplementaryLinkInterface"},
     SuravageLinkInterface: {value: 3, descriptionFI: "Suravage", description: "SuravageLinkInterface"},
-    FrozenLinkInterface: {value: 4, descriptionFI: "MML jäädytetty", description: "FrozenLinkInterface"},
     HistoryLinkInterface: {value: 5, descriptionFI: "MML historia", description: "HistoryLinkInterface"},
     Unknown: {value: 99, descriptionFI: "Tuntematon", description: "Unknown"}
   };
 
-  root.ConstructionType = {
+  root.LifecycleStatus = {
     InUse: {value: 0, description: "InUse"},
     UnderConstruction: {value: 1, description: "UnderConstruction"},
     Planned: {value: 3, description: "Planned"},
-    UnknownConstructionType: {value: 99, description: "UnknownConstructionType"}
+    UnknownConstructionType: {value: 99, description: "UnknownLifecycleStatus"}
   };
 
   root.SelectionType = {

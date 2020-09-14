@@ -297,7 +297,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
         link.trafficDirection,
         UnknownLinkType,
         link.modifiedAt.map(DateTimePropertyFormat.print),
-        None, link.attributes, link.constructionType, link.linkSource)
+        None, link.attributes, link.lifecycleStatus, link.linkSource)
     }
   }
 
@@ -313,7 +313,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
         link.trafficDirection,
         UnknownLinkType,
         link.modifiedAt.map(DateTimePropertyFormat.print),
-        None, link.attributes, link.constructionType, link.linkSource)
+        None, link.attributes, link.lifecycleStatus, link.linkSource)
     }
   }
 

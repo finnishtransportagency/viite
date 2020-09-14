@@ -53,7 +53,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, new RoadwayDAO,
     new LinearLocationDAO, new RoadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO,
-    mockRoadwayAddressMapper, mockEventBus, frozenVVH = false) {
+    mockRoadwayAddressMapper, mockEventBus) {
 
     override def withDynSession[T](f: => T): T = f
 

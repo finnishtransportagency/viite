@@ -71,7 +71,7 @@
     var LinkStatus = LinkValues.LinkStatus;
     var LinkSource = LinkValues.LinkGeomSource;
     var SelectionType = LinkValues.SelectionType;
-    var ConstructionType = LinkValues.ConstructionType;
+    var LifecycleStatus = LinkValues.LifecycleStatus;
     var Anomaly = LinkValues.Anomaly;
 
     var roadLinks = function () {
@@ -136,7 +136,7 @@
       });
 
       unaddressedRoadLinkGroups = _.partition(fetched[0], function (group) {
-        return groupDataConstructionTypeFilter(group, ConstructionType.UnderConstruction);
+        return groupDataLifecycleStatusFilter(group, LifecycleStatus.UnderConstruction);
       });
 
       unaddressedUnderConstructionRoadLinkGroups = unaddressedRoadLinkGroups[0];
@@ -201,15 +201,15 @@
       }
     };
 
-    var groupDataConstructionTypeFilter = function (group, dataConstructionType) {
+    var groupDataLifecycleStatusFilter = function (group, dataLifecycleStatus) {
       if (_.isArray(group)) {
         return _.some(group, function (roadLink) {
           if (roadLink)
-            return roadLink.getData().constructionType === dataConstructionType.value;
+            return roadLink.getData().lifecycleStatus === dataLifecycleStatus.value;
           else return false;
         });
       } else {
-        return group.getData().constructionType === dataConstructionType.value;
+        return group.getData().lifecycleStatus === dataLifecycleStatus.value;
       }
     };
 

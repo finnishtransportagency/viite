@@ -26,9 +26,9 @@ sealed trait LifecycleStatus {
 
 // TODO Check values
 object LifecycleStatus {
-  val values = Set[LifecycleStatus](InUse, UnderConstruction, Planned, UnknownLifecycleStatus$)
+  val values = Set[LifecycleStatus](InUse, UnderConstruction, Planned, UnknownLifecycleStatus)
 
-  val filteredLinkStatus = Set[ConstructionType](InUse, UnderConstruction, Planned, TemporarilyNotInUse, ExpiringSoon)
+  val filteredLinkStatus = Set[LifecycleStatus](InUse, UnderConstruction, Planned, TemporarilyNotInUse, ExpiringSoon)
 
   def apply(intValue: Int): LifecycleStatus = {
     values.find(_.value == intValue).getOrElse(InUse)

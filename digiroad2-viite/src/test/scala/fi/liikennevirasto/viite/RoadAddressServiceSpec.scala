@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
+import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.UnknownLifecycleStatus
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
@@ -55,7 +55,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
   val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
   val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, mockRoadwayDAO, mockLinearLocationDAO,
-    mockRoadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMappper, mockEventBus, frozenVVH = false) {
+    mockRoadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMappper, mockEventBus) {
 
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
@@ -404,7 +404,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockLinearLocationDAO.fetchByRoadAddress(any[Long],any[Long],any[Long], any[Option[Long]])).thenReturn(towardsDigitizingLinearLocation)
 
     val towardsDigitizingRoadLink = Seq(
-      RoadLink(linkId, Seq(Point(0.0, 10.0), Point(0.0, 15.0)), 10.0, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)), UnknownConstructionType, NormalLinkInterface)
+      RoadLink(linkId, KMTKID("123", 0), Seq(Point(0.0, 10.0), Point(0.0, 15.0)), 10.0, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)), UnknownLifecycleStatus, NormalLinkInterface)
     )
 
 
@@ -419,7 +419,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result(2).get("road").get(0).asInstanceOf[RoadAddress].roadNumber should be(1)
 
     // Test search by linkId
-    when(mockRoadLinkService.getMidPointByLinkId(any[Long])).thenReturn(Option(point))
+    when(mockRoadLinkService.getMidPointByLinkId(any[KMTKID])).thenReturn(Option(point))
     result = roadAddressService.getSearchResults(Option("1"))
     result.size should be(3)
     result(0).get("linkId").get(0).asInstanceOf[Some[Point]].x should be(point)
@@ -439,7 +439,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result(0).get("road").get(0).asInstanceOf[RoadAddress].roadNumber should be(1)
 
     // Test search by road number, road part number and M number TowardsDigitizing
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(towardsDigitizingRoadLink)
+    when(mockRoadLinkService.getRoadLinksAndComplementaryByLinkIds(any[Set[Long]])).thenReturn(towardsDigitizingRoadLink)
     result = roadAddressService.getSearchResults(Option("1 1 1"))
     result.size should be(1)
     result(0).contains("roadM") should be(true)
@@ -803,7 +803,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       when(mockRoadwayDAO.fetchAllByRoadwayId(any[Seq[Long]])).thenReturn(Seq(rw1WithId, rw2WithId))
       when(mockLinearLocationDAO.fetchByRoadways(any[Set[Long]])).thenReturn(Seq(lc1WithId, lc2WithId))
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(pls.map(toRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementaryByLinkIds(any[Set[Long]])).thenReturn(pls.map(toRoadLink))
 
       projectDAO.create(rap)
 
@@ -1559,7 +1559,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //                                    endCalibrationPoint: Boolean = false, roadwayNumber: Long = 0) = {
 //    val length = GeometryUtils.geometryLength(geom)
 //    RoadAddressLink(roadwayId, linearLocationId, linkId, geom, length, State, LinkType.apply(1),
-//      ConstructionType.InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0), None, None, Map(), roadNumber, roadPartNumber,
+//      LifecycleStatus.InUse, NormalLinkInterface, RoadType.PublicRoad, Some("Vt5"), None, BigInt(0), None, None, Map(), roadNumber, roadPartNumber,
 //      trackCode, 1, 5, startAddressM, endAddressM, "2016-01-01", "", 0.0, GeometryUtils.geometryLength(geom), sideCode,
 //      if (startCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.TowardsDigitizing) 0.0 else length, startAddressM))} else None,
 //      if (endCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.AgainstDigitizing) 0.0 else length, endAddressM))} else None,

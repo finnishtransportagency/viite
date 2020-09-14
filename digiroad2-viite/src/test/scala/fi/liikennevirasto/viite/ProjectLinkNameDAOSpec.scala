@@ -45,7 +45,7 @@ class ProjectLinkNameDAOSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   val roadAddressServiceRealRoadwayAddressMapper = new RoadAddressService(mockRoadLinkService, roadwayDAO,
     linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper,
-    mockEventBus, frozenVVH = false) {
+    mockEventBus) {
 
     override def withDynSession[T](f: => T): T = f
 

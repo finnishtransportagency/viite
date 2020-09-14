@@ -74,7 +74,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockRoadwayAddressMapper: RoadwayAddressMapper = MockitoSugar.mock[RoadwayAddressMapper]
 
   val roadAddressService: RoadAddressService = new RoadAddressService(mockRoadLinkService, roadwayDAO, linearLocationDAO,
-    roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus, frozenVVH = false) {
+    roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, mockRoadwayAddressMapper, mockEventBus) {
 
     override def withDynSession[T](f: => T): T = f
 
@@ -82,7 +82,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
   val roadAddressServiceRealRoadwayAddressMapper: RoadAddressService = new RoadAddressService(mockRoadLinkService,
     roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper,
-    mockEventBus, frozenVVH = false) {
+    mockEventBus) {
 
     override def withDynSession[T](f: => T): T = f
 
@@ -143,7 +143,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val newRoadLink1 = RoadLink(1, KMTKID(uuid, 1), Seq(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, AdministrativeClass.apply(1),
     0, TrafficDirection.BothDirections, UnknownLinkType, None, None, Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100)),
-    LifecycleStatus.UnknownLifecycleStatus$, LinkGeomSource.NormalLinkInterface)
+    LifecycleStatus.UnknownLifecycleStatus, LinkGeomSource.NormalLinkInterface)
 
   private def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Int,
                                  discontinuity: Int, roadType: Int, roadLinkSource: Int,
@@ -164,7 +164,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
     ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType,
-      ral.constructionType, ral.roadLinkSource, ral.roadType, ral.kmtkRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy,
+      ral.lifecycleStatus, ral.roadLinkSource, ral.roadType, ral.kmtkRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy,
       ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
       ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
       ral.anomaly, LinkStatus.Unknown, ral.id, ral.linearLocationId)
@@ -194,7 +194,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       extractTrafficDirection(ral.sideCode, Track.apply(ral.trackCode.toInt)), ral.linkType, ral.modifiedAt, ral.modifiedBy, Map(
         "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
         "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
-      ral.constructionType, ral.roadLinkSource)
+      ral.lifecycleStatus, ral.roadLinkSource)
   }
 
   private def toMockAnswer(projectLinks: Seq[ProjectLink], roadLink: RoadLink, seq: Seq[RoadLink] = Seq()) = {
