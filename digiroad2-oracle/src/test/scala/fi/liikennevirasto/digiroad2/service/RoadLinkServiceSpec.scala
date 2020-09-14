@@ -145,7 +145,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHComplementaryClient.fetchWalkwaysByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(complRoadLink1, complRoadLink2, complRoadLink3, complRoadLink4))
       when(mockKMTKChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
-      when(mockKMTKRoadLinkClient.fetchByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockKMTKRoadLinkClient.fetchByBoundsAndMunicipalities(any[BoundingRectangle], any[Option[Int]])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
 
       val roadlinks = service.getRoadLinksAndComplementaryByBounds(boundingBox, Set(91))
 
