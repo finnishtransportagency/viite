@@ -186,7 +186,7 @@ class LinearLocationDAO {
 
         // TODO KMTKID, adjusted timestamp
         // When do we need this? Should this be done completely differently?
-        linkDAO.createIfEmptyFetch(location.linkId, KMTKID("", 0), 0, location.linkGeomSource.value)
+        linkDAO.createIfEmptyFetch(location.linkId, KMTKID("TODO", 0), 0, location.linkGeomSource.value)
 
         val roadwayNumber = if (location.roadwayNumber == NewIdValue) {
           Sequences.nextRoadwayNumber

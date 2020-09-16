@@ -62,12 +62,9 @@ class LinkDAO {
 
   }
 
-  // TODO KMTKID
   def createIfEmptyFetch(id: Long, kmtkId: KMTKID, adjustedTimestamp: Long, source: Long): Unit = {
     if (fetch(id).isEmpty) {
-      sqlu"""
-        INSERT INTO LINK (id, source, adjusted_timestamp) values ($id, $source, $adjustedTimestamp)
-      """.execute
+      create(id, kmtkId, adjustedTimestamp, source)
     }
   }
 
