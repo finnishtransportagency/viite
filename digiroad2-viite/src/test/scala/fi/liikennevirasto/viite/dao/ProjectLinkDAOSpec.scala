@@ -281,6 +281,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  // TODO Remove this in master branch VIITE-2237
   test("Test updateProjectLinksGeometry When giving one link with updated geometry Then it should be updated") {
     runWithRollback {
       val projectLinks = projectLinkDAO.fetchProjectLinks(7081807)

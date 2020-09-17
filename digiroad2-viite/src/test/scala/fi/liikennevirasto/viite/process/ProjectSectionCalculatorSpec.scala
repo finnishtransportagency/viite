@@ -1874,9 +1874,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         0L, 10L, reversed = false, DateTime.parse("2000-01-01"), None, "Test", None, 0, NoTermination)
       roadwayDAO.create(Seq(roadway1))
 
-      val linkId1 = 12345L
-      val link1 = Link(linkId1, "123", 0, LinkGeomSource.NormalLinkInterface.value, 0, None)
-      linkDAO.create(link1.id, KMTKID("123", 0), link1.adjustedTimestamp, link1.source)
+      val link1 = Link(NewIdValue, "123", 0, LinkGeomSource.NormalLinkInterface.value, 0, None)
+      val linkId1 = linkDAO.create(KMTKID("123", 0), link1.adjustedTimestamp, link1.source)
 
       val linearLocationId1 = Sequences.nextLinearLocationId
       val linearLocation1 = LinearLocation(linearLocationId1, 1, linkId1, 0.0, 10.0, SideCode.TowardsDigitizing, 0L,
@@ -2038,9 +2037,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         0L, 10L, reversed = false, DateTime.parse("1901-01-01"), None, "tester", None, 8, NoTermination)
       roadwayDAO.create(Seq(roadway1))
 
-      val linkId1 = 12345L
-      val link1 = Link(linkId1, "123", 0, LinkGeomSource.NormalLinkInterface.value, 0, None)
-      linkDAO.create(link1.id, KMTKID("123", 0), link1.adjustedTimestamp, link1.source)
+      val link1 = Link(NewIdValue, "123", 0, LinkGeomSource.NormalLinkInterface.value, 0, None)
+      val linkId1 = linkDAO.create(KMTKID("123", 0), link1.adjustedTimestamp, link1.source)
 
       val linearLocationId1 = Sequences.nextLinearLocationId
       val linearLocation1 = LinearLocation(linearLocationId1, 1, linkId1, 0.0, 10.0, SideCode.TowardsDigitizing, 0L,

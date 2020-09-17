@@ -2,7 +2,6 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -138,10 +137,11 @@ class RoadwayPointDAO extends BaseDAO {
     }
   }
 
+  // TODO If not in use, delete this
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
-    (LinearLocation(-1000, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
+    (LinearLocation(-1000, 1, p.linkId, p.kmtkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
       (CalibrationPointsUtils.toCalibrationPointReference(p.startCalibrationPoint),
         CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
       p.geometry, p.linkGeomSource, p.roadwayNumber, Some(startDate), p.endDate),

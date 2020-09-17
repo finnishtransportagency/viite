@@ -5,7 +5,7 @@ import java.util.Date
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.linearasset.PolyLine
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, PolyLine}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
@@ -45,7 +45,7 @@ object LinkStatus {
 
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, originalStartAddrMValue: Long, originalEndAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                       endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, kmtkId: KMTKID, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (NoCP, NoCP),
                        originalCalibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (NoCP, NoCP),
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
@@ -180,11 +180,11 @@ class ProjectLinkDAO {
   PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
   PROJECT_LINK.ORIGINAL_START_ADDR_M, PROJECT_LINK.ORIGINAL_END_ADDR_M,
   PROJECT_LINK.START_MEASURE, PROJECT_LINK.END_MEASURE, PROJECT_LINK.SIDE,
-  PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, PROJECT_LINK.LINK_ID, PROJECT_LINK.GEOMETRY,
+  PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, PROJECT_LINK.LINK_ID, LINK.UUID, LINK.VERSION, PROJECT_LINK.GEOMETRY,
   (PROJECT_LINK.END_MEASURE - PROJECT_LINK.START_MEASURE) as length,
   PROJECT_LINK.START_CALIBRATION_POINT, PROJECT_LINK.END_CALIBRATION_POINT,
   PROJECT_LINK.ORIG_START_CALIBRATION_POINT, PROJECT_LINK.ORIG_END_CALIBRATION_POINT,
-  PROJECT_LINK.STATUS, PROJECT_LINK.ROAD_TYPE, PROJECT_LINK.LINK_SOURCE as source, PROJECT_LINK.ROADWAY_ID,
+  PROJECT_LINK.STATUS, PROJECT_LINK.ROAD_TYPE, LINK.SOURCE, PROJECT_LINK.ROADWAY_ID,
   PROJECT_LINK.LINEAR_LOCATION_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID,
   CASE
     WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
@@ -204,6 +204,7 @@ class ProjectLinkDAO {
   ROADWAY.ROADWAY_NUMBER,
   PROJECT_LINK.ROADWAY_NUMBER
   from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID)
+    JOIN LINK ON (PROJECT_LINK.LINK_ID = LINK.ID)
     LEFT JOIN ROADWAY ON (ROADWAY.ID = PROJECT_LINK.ROADWAY_ID)
     LEFT JOIN Linear_Location ON (Linear_Location.ID = PROJECT_LINK.Linear_Location_Id)
     LEFT JOIN ROAD_NAME rn ON (rn.road_number = project_link.road_number AND rn.END_DATE IS NULL AND rn.VALID_TO IS null)
@@ -215,7 +216,7 @@ class ProjectLinkDAO {
           plh.ROAD_NUMBER, plh.ROAD_PART_NUMBER, plh.START_ADDR_M, plh.END_ADDR_M,
           plh.ORIGINAL_START_ADDR_M, plh.ORIGINAL_END_ADDR_M,
           plh.START_MEASURE, plh.END_MEASURE, plh.SIDE,
-          plh.CREATED_BY, plh.MODIFIED_BY, plh.LINK_ID, plh.GEOMETRY,
+          plh.CREATED_BY, plh.MODIFIED_BY, plh.LINK_ID, LINK.UUID, LINK.VERSION, plh.GEOMETRY,
           (plh.END_MEASURE - plh.START_MEASURE) as length,
           plh.START_CALIBRATION_POINT, plh.END_CALIBRATION_POINT,
           plh.ORIG_START_CALIBRATION_POINT, plh.ORIG_END_CALIBRATION_POINT,
@@ -239,6 +240,7 @@ class ProjectLinkDAO {
           ROADWAY.ROADWAY_NUMBER,
           plh.ROADWAY_NUMBER
           from PROJECT prj JOIN PROJECT_LINK_HISTORY plh ON (prj.id = plh.PROJECT_ID)
+            JOIN LINK ON (plh.link_id = LINK.ID)
             LEFT JOIN ROADWAY ON (ROADWAY.ID = plh.ROADWAY_ID)
             LEFT JOIN Linear_Location ON (Linear_Location.ID = plh.Linear_Location_Id)
             LEFT JOIN ROAD_NAME rn ON (rn.road_number = plh.road_number AND rn.END_DATE IS NULL AND rn.VALID_TO IS null)
@@ -276,6 +278,9 @@ class ProjectLinkDAO {
       val createdBy = r.nextStringOption()
       val modifiedBy = r.nextStringOption()
       val linkId = r.nextLong()
+      val uuid = r.nextString()
+      val version = r.nextLong()
+      val kmtkId = KMTKID(uuid, version)
       val geom = r.nextObjectOption()
       val length = r.nextDouble()
       val calibrationPoints = (CalibrationPointType.apply(r.nextInt), CalibrationPointType.apply(r.nextInt))
@@ -301,7 +306,7 @@ class ProjectLinkDAO {
       val projectRoadwayNumber = r.nextLong()
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM,
-        originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue,
+        originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, kmtkId, startMValue, endMValue,
         sideCode, calibrationPoints, originalCalibrationPointTypes, OracleDatabase.loadJGeometryToGeometry(geom),
         projectId, status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId,
         geometryTimeStamp, if (projectRoadwayNumber == 0 || projectRoadwayNumber == NewIdValue) roadwayNumber else projectRoadwayNumber , Some(roadName),
@@ -465,6 +470,7 @@ class ProjectLinkDAO {
       }
   }
 
+  // TODO Remove this in master branch VIITE-2237
   def updateProjectLinksGeometry(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
     time(logger,
       "Update project links geometry") {
