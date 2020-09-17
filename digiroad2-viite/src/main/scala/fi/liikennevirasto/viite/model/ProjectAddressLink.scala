@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.KMTKID
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
@@ -10,6 +11,7 @@ import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus}
 trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def id: Long
   def linkId: Long
+  def kmtkId: KMTKID
   def length: Double
   def administrativeClass: AdministrativeClass
   def linkType: LinkType
@@ -45,7 +47,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def roadwayNumber: Long
 }
 
-case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
+case class ProjectAddressLink(id: Long, linkId: Long, kmtkId: KMTKID, geometry: Seq[Point],
                               length: Double, administrativeClass: AdministrativeClass,
                               linkType: LinkType, lifecycleStatus: LifecycleStatus,
                               roadLinkSource: LinkGeomSource, roadType: RoadType, kmtkRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String],

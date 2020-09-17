@@ -5,6 +5,7 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.linearasset.KMTKID
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
@@ -321,7 +322,7 @@ trait BaseRoadAddress {
 case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long,
                        startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None,
-                       linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                       linkId: Long, kmtkId: KMTKID, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                        geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
                        terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,

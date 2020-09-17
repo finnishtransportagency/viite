@@ -4,13 +4,13 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService
 import fi.liikennevirasto.digiroad2.asset.{Modification, TimeStamps}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.RoadAddress
+import fi.liikennevirasto.viite.util.DigiroadSerializers
 import org.json4s.Formats
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, _}
-import org.scalatra.{BadRequest, HttpMethod, Post, ScalatraServlet}
+import org.scalatra.{BadRequest, ScalatraServlet}
 import org.slf4j.{Logger, LoggerFactory}
 
 
@@ -195,6 +195,9 @@ class SearchApi(roadAddressService: RoadAddressService,
       "startAddrM" -> roadAddress.startAddrMValue,
       "endAddrM" -> roadAddress.endAddrMValue,
       "linkId" -> roadAddress.linkId,
+      "kmtkId" -> Map(
+        "uuid" -> roadAddress.kmtkId.uuid,
+        "version" -> roadAddress.kmtkId.version),
       "startMValue" -> roadAddress.startMValue,
       "endMValue" -> roadAddress.endMValue,
       "sideCode" -> roadAddress.sideCode.value

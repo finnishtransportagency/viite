@@ -465,6 +465,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * Used when adding road address that do not have a previous address
     */
+  // TODO Create link to the link table if it's missing
   private def addNewLinksToProjectInTX(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: Long, discontinuity: Discontinuity): Option[String] = {
     val newRoadNumber = newLinks.head.roadNumber
     val newRoadPartNumber = newLinks.head.roadPartNumber
@@ -655,9 +656,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             if (complementary.nonEmpty) {
               logger.debug(s"Adding ${complementary.size} complementary links in project.")
             }
-            val regularMapping = roadLinkService.getRoadLinksAndComplementaryByLinkIds(regular.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
-            val complementaryMapping = roadLinkService.getRoadLinksAndComplementaryByLinkIds(complementary.map(_.linkId).toSet).map(rm => rm.linkId -> rm).toMap
-            val fullMapping = regularMapping ++ complementaryMapping
+            val regularAndComplementaryRoadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIds(
+              regular.map(_.linkId).toSet ++ complementary.map(_.linkId).toSet).map(roadLink => roadLink.linkId -> roadLink).toMap
             val addresses = roadways.flatMap(r =>
               roadwayAddressMapper.mapRoadAddresses(r, (regular ++ complementary).groupBy(_.roadwayNumber).getOrElse(r.roadwayNumber, {
                 logger.error(s"Failed to add links to the project. No links found with roadway number ${r.roadwayNumber}. Reserved parts were: ${project.reservedParts.map(r => s"(road number: ${r.roadNumber}, road part number: ${r.roadPartNumber})").mkString(", ")}")
@@ -665,7 +665,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               })))
             checkAndReserve(project, reserved)
             logger.debug(s"Reserve done")
-            addresses.map(ra => newProjectTemplate(fullMapping(ra.linkId), ra, project))
+            addresses.map(ra => newProjectTemplate(regularAndComplementaryRoadLinks(ra.linkId), ra, project))
         }
       }
     }
@@ -1663,7 +1663,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
 
     ProjectLink(NewIdValue, ra.roadNumber, ra.roadPartNumber, ra.track, ra.discontinuity, ra.startAddrMValue,
-      ra.endAddrMValue, ra.startAddrMValue, ra.endAddrMValue, ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue,
+      ra.endAddrMValue, ra.startAddrMValue, ra.endAddrMValue, ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.kmtkId, ra.startMValue, ra.endMValue,
       ra.sideCode, ra.calibrationPointTypes, (ra.startCalibrationPointType, ra.endCalibrationPointType), geometry,
       project.id, LinkStatus.NotHandled, ra.roadType, ra.linkGeomSource, GeometryUtils.geometryLength(geometry),
       ra.id, ra.linearLocationId, newEly, ra.reversed, None, ra.adjustedTimestamp, roadAddressLength = Some(ra.endAddrMValue - ra.startAddrMValue))
@@ -1673,7 +1673,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                              roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, roadType: RoadType,
                              ely: Long, roadName: String = "", reversed: Boolean = false): ProjectLink = {
     ProjectLink(NewIdValue, roadNumber, roadPartNumber, trackCode, discontinuity,
-      0L, 0L, 0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length,
+      0L, 0L, 0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, rl.kmtkId, 0.0, rl.length,
       SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), rl.geometry,
       project.id, LinkStatus.New, roadType, rl.linkSource, rl.length,
       0L, 0L, ely, reversed, None, rl.timeStamp, roadName = Some(roadName))
@@ -1895,7 +1895,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             adjustedTimestamp = pl.linkGeometryTimeStamp, geometry = pl.geometry))
         case New =>
           Seq(RoadAddress(NewIdValue, pl.linearLocationId, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity,
-            pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy), pl.linkId,
+            pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy), pl.linkId, pl.kmtkId,
             pl.startMValue, pl.endMValue, pl.sideCode, pl.linkGeometryTimeStamp, pl.calibrationPoints,
             pl.geometry, pl.linkGeomSource, pl.ely, terminated = NoTermination, NewIdValue))
         case Transfer => // TODO if the whole roadway -segment is transferred, keep the original roadway_number, otherwise generate new ids for the different segments

@@ -419,7 +419,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result(2).get("road").get(0).asInstanceOf[RoadAddress].roadNumber should be(1)
 
     // Test search by linkId
-    when(mockRoadLinkService.getMidPointByLinkId(any[KMTKID])).thenReturn(Option(point))
+    when(mockRoadLinkService.getMidPointByKMTKID(any[KMTKID])).thenReturn(Option(point))
     result = roadAddressService.getSearchResults(Option("1"))
     result.size should be(3)
     result(0).get("linkId").get(0).asInstanceOf[Some[Point]].x should be(point)
