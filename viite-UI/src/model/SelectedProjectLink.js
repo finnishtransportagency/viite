@@ -31,15 +31,19 @@
       dirty = value;
     };
 
-    var openCtrl = function (linkIds) {
-      if (linkIds.length === 0) {
+    var openCtrl = function (ids) {
+      if (ids.length === 0) {
         cleanIds();
         close();
       } else {
-        var added = _.difference(linkIds, me.ids);
-        me.ids = linkIds;
+        var added = _.difference(ids, me.ids);
+        me.ids = ids;
         current = _.filter(current, function (link) {
-            return _.includes(linkIds, link.getData().id || link.getData().linkId);
+            if (link.id > 0) {
+              return _.includes(ids, link.getData().id);
+            } else {
+              return _.includes(ids, link.getData().kmtkId);
+            }
           }
         );
         current = current.concat(projectLinkCollection.getProjectLink(added));
