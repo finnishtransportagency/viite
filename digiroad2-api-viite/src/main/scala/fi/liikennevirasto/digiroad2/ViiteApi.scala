@@ -43,12 +43,12 @@ case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNum
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, reservedPartList: List[RoadPartExtractor], formedPartList: List[RoadPartExtractor], resolution: Int)
 
-case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long,
+case class RoadAddressProjectLinksExtractor(ids: Set[Long], kmtkIds: Seq[KMTKID], linkStatus: Int, projectId: Long, roadNumber: Long,
                                             roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long,
                                             roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int],
                                             coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
 
-case class roadDataExtractor(chainLinkIds: Seq[Long] )
+case class roadDataExtractor(chainLinkIds: Seq[Long] ) // TODO Remove from master
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
@@ -693,8 +693,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           throw RoadAndPartNumberException("Virheellinen tienumero")
         if (links.roadPartNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
-        logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
-        val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
+        logger.debug(s"Creating new links: ${links.kmtkIds.mkString(",")}")
+        val response = projectService.createProjectLinks(links.kmtkIds, links.projectId, links.roadNumber, links.roadPartNumber,
           Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), RoadType.apply(links.roadType),
           LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))),
           Some(links.coordinates))
@@ -733,21 +733,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, "PUT request for /roadlinks/roadaddress/project/links") {
       val user = userProvider.getCurrentUser()
       try {
-        val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-        if (links.roadNumber == 0)
+        val operation = parsedBody.extract[RoadAddressProjectLinksExtractor]
+        if (operation.roadNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tienumero")
-        if (links.roadPartNumber == 0)
+        if (operation.roadPartNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
-        if (projectService.validateLinkTrack(links.trackCode)) {
-          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus),
-            user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
-            links.roadType, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName,
-            Some(links.coordinates)) match {
+        if (projectService.validateLinkTrack(operation.trackCode)) {
+          projectService.updateProjectLinks(operation.projectId, operation.ids, operation.kmtkIds, LinkStatus.apply(operation.linkStatus),
+            user.username, operation.roadNumber, operation.roadPartNumber, operation.trackCode, operation.userDefinedEndAddressM,
+            operation.roadType, operation.discontinuity, Some(operation.roadEly), operation.reversed.getOrElse(false), roadName = operation.roadName,
+            Some(operation.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
-              val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
-              val project = projectService.getSingleProjectById(links.projectId).get
-              Map("success" -> true, "id" -> links.projectId,
+              val projectErrors = projectService.validateProjectById(operation.projectId).map(errorPartsToApi)
+              val project = projectService.getSingleProjectById(operation.projectId).get
+              Map("success" -> true, "id" -> operation.projectId,
                 "publishable" -> projectErrors.isEmpty,
                 "projectErrors" -> projectErrors,
                 "formedInfo" -> project.formedParts.map(projectFormedPartToApi(Some(project.id))))
