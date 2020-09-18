@@ -115,7 +115,7 @@ N&auml;m&auml; ty&ouml;vaiheet tehd&auml;&auml;n vain kerran, mink&auml; j&auml;
 
 1. Valitse Add Folder..
 
-1. Kirjoita avautuvaan ikkunaan kohtaan Kansio: \\\172.17.204.38\VVH_10_3_1$
+1. Kirjoita avautuvaan ikkunaan kohtaan Kansio: \\\172.17.204.39\VVH$
 	-Huom! Jos Folder-kentt&auml;&auml;n kirjoitetun osoitteen per&auml;ss&auml; on v&auml;lily&ouml;nti, ei toimi oikein
 	
 1. Paina OK ja Close.
