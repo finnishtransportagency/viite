@@ -1082,7 +1082,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val testRoadway5 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.LeftSide, Discontinuity.EndOfRoad,
         150L, 200L, reversed = false, DateTime.parse("2000-01-01"), None, "tester", Some("TEST ROADWAY 5, TRACK 2"), 1, TerminationCode.NoTermination)
 
-      val linearLocation5 = LinearLocation(Sequences.nextLinearLocationId, 1, 12348, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000L,
+      val linearLocation5 = LinearLocation(Sequences.nextLinearLocationId, 1, 12348, KMTKID("12348",0), 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000L,
         (CalibrationPointReference.None, CalibrationPointReference.None),
         Seq(Point(150.0, 10.0), Point(200.0, 10.0)), LinkGeomSource.NormalLinkInterface, testRoadway5.roadwayNumber)
 
@@ -1152,19 +1152,19 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         52, 109, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 4"), 1, TerminationCode.NoTermination)
 
 
-      val linearLocation1 = LinearLocation(linearLocationId1, 1, 12345, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000L,
+      val linearLocation1 = LinearLocation(linearLocationId1, 1, 12345, KMTKID("12345",0), 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000L,
         (CalibrationPointReference(Some(0L)), CalibrationPointReference.None),
         Seq(Point(0.0, 0.0), Point(50.0, 10.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber1)
 
-      val linearLocation2 = LinearLocation(linearLocationId2, 1, 12346, 0.0, 52.0, SideCode.TowardsDigitizing, 10000000000L,
+      val linearLocation2 = LinearLocation(linearLocationId2, 1, 12346, KMTKID("12346",0), 0.0, 52.0, SideCode.TowardsDigitizing, 10000000000L,
         (CalibrationPointReference(Some(0L)), CalibrationPointReference.None),
         Seq(Point(0.0, 0.0), Point(52.0, 0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber2)
 
-      val linearLocation3 = LinearLocation(linearLocationId3, 1, 12347, 0.0, 55.0, SideCode.TowardsDigitizing, 10000000000L,
+      val linearLocation3 = LinearLocation(linearLocationId3, 1, 12347, KMTKID("12347",0), 0.0, 55.0, SideCode.TowardsDigitizing, 10000000000L,
         (CalibrationPointReference.None, CalibrationPointReference(Some(105))),
         Seq(Point(0.0, 0.0), Point(55.0, 10.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber3)
 
-      val linearLocation4 = LinearLocation(linearLocationId4, 1, 12348, 0.0, 57.0, SideCode.TowardsDigitizing, 10000000000L,
+      val linearLocation4 = LinearLocation(linearLocationId4, 1, 12348, KMTKID("12348",0), 0.0, 57.0, SideCode.TowardsDigitizing, 10000000000L,
         (CalibrationPointReference.None, CalibrationPointReference(Some(109))),
         Seq(Point(0.0, 0.0), Point(57.0, 0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber4)
 
@@ -1172,14 +1172,14 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
       linearLocationDAO.create(List(linearLocation1, linearLocation2, linearLocation3, linearLocation4))
 
-      val projectLink1 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(roadwayId1, linearLocationId1, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.Combined, Continuous, 0L, 50L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 50.0, SideCode.TowardsDigitizing, 0, (None, None),
+      val projectLink1 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(roadwayId1, linearLocationId1, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.Combined, Continuous, 0L, 50L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, KMTKID("12345",0), 0.0, 50.0, SideCode.TowardsDigitizing, 0, (None, None),
         Seq(Point(0.0, 10.0), Point(50.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(roadAddressStartAddrM = Some(0L), roadAddressEndAddrM = Some(50L), roadAddressTrack = Some(Track.RightSide))
-      val projectLink2 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(roadwayId2, linearLocationId2, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.Combined, Continuous, 0L, 52L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 52.0, SideCode.TowardsDigitizing, 0, (None, None),
+      val projectLink2 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(roadwayId2, linearLocationId2, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.Combined, Continuous, 0L, 52L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, KMTKID("12346",0), 0.0, 52.0, SideCode.TowardsDigitizing, 0, (None, None),
         Seq(Point(0.0, 0.0), Point(52.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(roadAddressStartAddrM = Some(0L), roadAddressEndAddrM = Some(52L), roadAddressTrack = Some(Track.LeftSide))
 
-      val projectLink3 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(roadwayId3, linearLocationId3, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.RightSide, EndOfRoad, 50L, 105L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 55.0, SideCode.TowardsDigitizing, 0, (None, None),
+      val projectLink3 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(roadwayId3, linearLocationId3, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.RightSide, EndOfRoad, 50L, 105L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, KMTKID("12347",0), 0.0, 55.0, SideCode.TowardsDigitizing, 0, (None, None),
         Seq(Point(50.0, 5.0), Point(100.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(roadAddressStartAddrM = Some(50L), roadAddressEndAddrM = Some(105L), roadAddressTrack = Some(Track.RightSide))
-      val projectLink4 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(roadwayId4, linearLocationId4, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.LeftSide, EndOfRoad, 52L, 109L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12348L, 0.0, 57.0, SideCode.TowardsDigitizing, 0, (None, None),
+      val projectLink4 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(roadwayId4, linearLocationId4, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.LeftSide, EndOfRoad, 52L, 109L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12348L, KMTKID("12348",0), 0.0, 57.0, SideCode.TowardsDigitizing, 0, (None, None),
         Seq(Point(52.0, 5.0), Point(102.0, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(roadAddressStartAddrM = Some(50L), roadAddressEndAddrM = Some(109L), roadAddressTrack = Some(Track.LeftSide))
 
       val projectLinks = ProjectSectionCalculator.assignTerminatedMValues(Seq(projectLink3, projectLink4), Seq(projectLink1, projectLink2))
@@ -1583,31 +1583,31 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val geom8 = Seq(Point(162.991, 293.056), Point(155.553, 303.429))
       val geom9 = Seq(Point(370.169, 63.814), Point(162.991, 293.056))
       val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 89.0, SideCode.AgainstDigitizing,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, KMTKID("12345",0), 0.0, 89.0, SideCode.AgainstDigitizing,
         0, (None, None), geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.LeftSide, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 89.7, SideCode.AgainstDigitizing,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, KMTKID("12346",0), 0.0, 89.7, SideCode.AgainstDigitizing,
         0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 31.6, SideCode.AgainstDigitizing,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, KMTKID("12347",0), 0.0, 31.6, SideCode.AgainstDigitizing,
         0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink4 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad4, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.LeftSide, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12348L, 0.0, 31.7, SideCode.AgainstDigitizing,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12348L, KMTKID("12348",0), 0.0, 31.7, SideCode.AgainstDigitizing,
         0, (None, None), geom4, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink5 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad5, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12349L, 0.0, 17.3, SideCode.AgainstDigitizing,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12349L, KMTKID("12349",0), 0.0, 17.3, SideCode.AgainstDigitizing,
         0, (None, None), geom5, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink6 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad6, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.LeftSide, MinorDiscontinuity,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12350L, 0.0, 17.3, SideCode.AgainstDigitizing,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12350L, KMTKID("12350",0), 0.0, 17.3, SideCode.AgainstDigitizing,
         0, (None, None), geom6, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink7 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad7, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12351L, 0.0, 8.7, SideCode.AgainstDigitizing,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12351L, KMTKID("12351",0), 0.0, 8.7, SideCode.AgainstDigitizing,
         0, (None, None), geom7, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink8 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad8, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12352L, 0.0, 12.8, SideCode.AgainstDigitizing,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12352L, KMTKID("12352",0), 0.0, 12.8, SideCode.AgainstDigitizing,
         0, (None, None), geom8, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink9 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad9, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, EndOfRoad,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12353L, 0.0, 308.9, SideCode.AgainstDigitizing,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12353L, KMTKID("12353",0), 0.0, 308.9, SideCode.AgainstDigitizing,
         0, (None, None), geom9, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
       val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7, projectLink8, projectLink9)
@@ -1665,46 +1665,46 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
       val raMap: Map[Long, RoadAddress] = Map(
         idRoad1 -> RoadAddress(idRoad1, linearLocationId + 1, 5, 1, RoadType.MunicipalityStreetRoad, Track.LeftSide, Continuous,
-          0L, 9L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.6, SideCode.TowardsDigitizing,
+          0L, 9L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, KMTKID("12345",0), 0.0, 10.6, SideCode.TowardsDigitizing,
           0, (None, None), geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 1),
         idRoad2 -> RoadAddress(idRoad2, linearLocationId + 2, 5, 1, RoadType.MunicipalityStreetRoad, Track.LeftSide, Continuous,
-          9L, 38L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 33.55, SideCode.TowardsDigitizing,
+          9L, 38L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, KMTKID("12346",0), 0.0, 33.55, SideCode.TowardsDigitizing,
           0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 2),
         idRoad3 -> RoadAddress(idRoad3, linearLocationId + 3, 5, 1, RoadType.MunicipalityStreetRoad, Track.LeftSide, MinorDiscontinuity,
-          38L, 52L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 16.22, SideCode.TowardsDigitizing,
+          38L, 52L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, KMTKID("12347",0), 0.0, 16.22, SideCode.TowardsDigitizing,
           0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 3),
         idRoad4 -> RoadAddress(idRoad4, linearLocationId + 4, 5, 1, RoadType.MunicipalityStreetRoad, Track.LeftSide, Continuous,
-          52L, 62L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12348L, 0.0, 12.1, SideCode.AgainstDigitizing,
+          52L, 62L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12348L, KMTKID("12348",0), 0.0, 12.1, SideCode.AgainstDigitizing,
           0, (None, None), geom4, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 4),
         idRoad5 -> RoadAddress(idRoad5, linearLocationId + 5, 5, 1, RoadType.MunicipalityStreetRoad, Track.LeftSide, Continuous,
-          62L, 148L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12349L, 0.0, 99.51, SideCode.AgainstDigitizing,
+          62L, 148L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12349L, KMTKID("12349",0), 0.0, 99.51, SideCode.AgainstDigitizing,
           0, (None, None), geom5, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 5),
         idRoad6 -> RoadAddress(idRoad6, linearLocationId + 6, 5, 1, RoadType.MunicipalityStreetRoad, Track.LeftSide, Continuous,
-          148L, 165L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12350L, 0.0, 19.35, SideCode.AgainstDigitizing,
+          148L, 165L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12350L, KMTKID("12350",0), 0.0, 19.35, SideCode.AgainstDigitizing,
           0, (None, None), geom6, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 6),
         idRoad7 -> RoadAddress(idRoad7, linearLocationId + 7, 5, 1, RoadType.MunicipalityStreetRoad, Track.LeftSide, MinorDiscontinuity,
-          165L, 224L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12351L, 0.0, 68.66, SideCode.AgainstDigitizing,
+          165L, 224L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12351L, KMTKID("12351",0), 0.0, 68.66, SideCode.AgainstDigitizing,
           0, (None, None), geom7, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 7),
         idRoad8 -> RoadAddress(idRoad8, linearLocationId + 8, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
-          0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12352L, 0.0, 10.6, SideCode.TowardsDigitizing,
+          0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12352L, KMTKID("12352",0), 0.0, 10.6, SideCode.TowardsDigitizing,
           0, (None, None), geom8, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 8),
         idRoad9 -> RoadAddress(idRoad9, linearLocationId + 9, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
-          10L, 41L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12353L, 0.0, 34.77, SideCode.TowardsDigitizing,
+          10L, 41L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12353L, KMTKID("12353",0), 0.0, 34.77, SideCode.TowardsDigitizing,
           0, (None, None), geom9, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 9),
         idRoad10 -> RoadAddress(idRoad10, linearLocationId + 10, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, ParallelLink,
-          41L, 52L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12354L, 0.0, 11.74, SideCode.TowardsDigitizing,
+          41L, 52L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12354L, KMTKID("12354",0), 0.0, 11.74, SideCode.TowardsDigitizing,
           0, (None, None), geom10, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 10),
         idRoad11 -> RoadAddress(idRoad11, linearLocationId + 11, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
-          52L, 56L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12355L, 0.0, 4.27, SideCode.TowardsDigitizing,
+          52L, 56L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12355L, KMTKID("12355",0), 0.0, 4.27, SideCode.TowardsDigitizing,
           0, (None, None), geom11, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 11),
         idRoad12 -> RoadAddress(idRoad12, linearLocationId + 12, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
-          56L, 155L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12356L, 0.0, 108.7, SideCode.AgainstDigitizing,
+          56L, 155L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12356L, KMTKID("12356",0), 0.0, 108.7, SideCode.AgainstDigitizing,
           0, (None, None), geom12, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 12),
         idRoad13 -> RoadAddress(idRoad13, linearLocationId + 13, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, Continuous,
-          155L, 173L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12357L, 0.0, 19.2, SideCode.AgainstDigitizing,
+          155L, 173L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12357L, KMTKID("12357",0), 0.0, 19.2, SideCode.AgainstDigitizing,
           0, (None, None), geom13, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 13),
         idRoad14 -> RoadAddress(idRoad14, linearLocationId + 14, 5, 1, RoadType.MunicipalityStreetRoad, Track.RightSide, ParallelLink,
-          173L, 224L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12358L, 0.0, 55.94, SideCode.AgainstDigitizing,
+          173L, 224L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12358L, KMTKID("12358",0), 0.0, 55.94, SideCode.AgainstDigitizing,
           0, (None, None), geom14, LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber + 14)
       )
 
@@ -1776,13 +1776,13 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val geom3 = Seq(Point(20.0, 5.0), Point(10.0, 10.0))
 
       val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.6, SideCode.TowardsDigitizing,
+        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, KMTKID("12345",0), 0.0, 10.6, SideCode.TowardsDigitizing,
         0, (None, None), geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, MinorDiscontinuity,
-        0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 11.2, SideCode.TowardsDigitizing,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, KMTKID("12346",0), 0.0, 11.2, SideCode.TowardsDigitizing,
         0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 12.3, SideCode.Unknown,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, KMTKID("12347",0), 0.0, 12.3, SideCode.Unknown,
         0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
       val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
@@ -1823,13 +1823,13 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val geom3 = Seq(Point(20.0, 5.0), Point(11.0, 10.0))
 
       val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.6, SideCode.TowardsDigitizing,
+        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, KMTKID("12345",0), 0.0, 10.6, SideCode.TowardsDigitizing,
         0, (Some(CalibrationPoint(12345L, 0, 10L)), Some(CalibrationPoint(12345L, 10.6, 20L))), geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, MinorDiscontinuity,
-        0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 11.2, SideCode.TowardsDigitizing,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, KMTKID("12346",0), 0.0, 11.2, SideCode.TowardsDigitizing,
         0, (Some(CalibrationPoint(12346L, 0, 0L)), Some(CalibrationPoint(12346L, 11.2, 10L))), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 12.3, SideCode.Unknown,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, KMTKID("12347",0), 0.0, 12.3, SideCode.Unknown,
         0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
       val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
@@ -1891,11 +1891,11 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         linearLocation1.geometry, 0L, LinkStatus.Transfer, roadway1.roadType, LinkGeomSource.apply(link1.source.intValue()),
         GeometryUtils.geometryLength(linearLocation1.geometry), roadway1.id, linearLocation1.id, 0, roadway1.reversed, None, 86400L)
       val projectLink2 = ProjectLink(plId + 2, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
-        None, 12346L, 0.0, 11.2, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346",0), 0.0, 11.2, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geom2, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLink3 = ProjectLink(plId + 3, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 10L, 20L, 0L, 0L, None, None,
-        None, 12347L, 0.0, 12.3, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347",0), 0.0, 12.3, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geom3, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -1935,13 +1935,13 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val geom3 = Seq(Point(20.0, 5.0), Point(10.0, 10.0))
 
       val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, MinorDiscontinuity,
-        0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 10.6, SideCode.AgainstDigitizing,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, KMTKID("12345",0), 0.0, 10.6, SideCode.AgainstDigitizing,
         0, (None, None), geom1, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 11.2, SideCode.AgainstDigitizing,
+        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, KMTKID("12346",0), 0.0, 11.2, SideCode.AgainstDigitizing,
         0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 12.3, SideCode.Unknown,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, KMTKID("12347",0), 0.0, 12.3, SideCode.Unknown,
         0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
       val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
@@ -1982,15 +1982,15 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val track = Track.Combined
       val plId = Sequences.nextProjectLinkId
       val projectLink1 = ProjectLink(plId + 1, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
-        None, 12345L, 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345",0), 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geom1, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLink2 = ProjectLink(plId + 2, roadNumber, roadPartNumber, track, Discontinuity.MinorDiscontinuity, 0L, 10L, 0L, 0L, None, None,
-        None, 12346L, 0.0, 11.2, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346",0), 0.0, 11.2, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geom2, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLink3 = ProjectLink(plId + 3, roadNumber, roadPartNumber, track, Discontinuity.Continuous, 10L, 20L, 0L, 0L, None, None,
-        None, 12347L, 0.0, 12.3, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347",0), 0.0, 12.3, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geom3, 0L, LinkStatus.New, roadType, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -2055,10 +2055,10 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         GeometryUtils.geometryLength(linearLocation1.geometry), roadway1.id, linearLocation1.id, 0, roadway1.reversed, None, 86400L)
 
       val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 11.2, SideCode.TowardsDigitizing,
+        10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, KMTKID("12346",0), 0.0, 11.2, SideCode.TowardsDigitizing,
         0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink3 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad3, 0, 5, 1, RoadType.MunicipalityStreetRoad, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, 12.3, SideCode.Unknown,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, KMTKID("12347",0), 0.0, 12.3, SideCode.Unknown,
         0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
       val projectLinkSeq = Seq(projectLink1, projectLink2, projectLink3)
