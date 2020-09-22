@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.RoadType
@@ -25,13 +26,13 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
 
     val roadwayAddress = Roadway(2L, roadwayNumber, 1551, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 140, 300, reversed = false, startDate, None, "test_user", None, 0, NoTermination, startDate)
     val linearLocations = Seq(
-      LinearLocation(2L, 1, 125, 45.0, 105.0, SideCode.TowardsDigitizing, 0,
+      LinearLocation(2L, 1, 125, KMTKID("125",0), 45.0, 105.0, SideCode.TowardsDigitizing, 0,
         (CalibrationPointReference.None, CalibrationPointReference.None),
         Seq(Point(45.0,0.0), Point(105.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
-      LinearLocation(3L, 2, 123, 0.0, 49.0, SideCode.TowardsDigitizing, 0,
+      LinearLocation(3L, 2, 123, KMTKID("123",0), 0.0, 49.0, SideCode.TowardsDigitizing, 0,
         (CalibrationPointReference.None, CalibrationPointReference(Some(250), Some(RoadAddressCP))),
         Seq(Point(105.0,0.0), Point(154.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
-      LinearLocation(4L, 3, 124, 0.0, 51.0, SideCode.TowardsDigitizing, 0,
+      LinearLocation(4L, 3, 124, KMTKID("124",0), 0.0, 51.0, SideCode.TowardsDigitizing, 0,
         (CalibrationPointReference(Some(250), Some(RoadAddressCP)), CalibrationPointReference(Some(300), Some(RoadAddressCP))),
         Seq(Point(154.0,0.0), Point(205.0,0.0)),LinkGeomSource.NormalLinkInterface, roadwayNumber)
     )
@@ -69,13 +70,13 @@ class RoadwayMapperSpec extends FunSuite with Matchers{
     val currentRoadwayAddress = Roadway(2L, roadwayNumber, 1551, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 140, 300, reversed = false, currentStartDate, None, "test_user", None, 0, NoTermination, currentStartDate)
     val historyRoadwayAddress = Roadway(3L, roadwayNumber, 1551, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Discontinuous, 240, 400, reversed = false, historyStartDate, Some(historyEndDate), "test_user", None, 0, NoTermination, historyStartDate)
     val linearLocations = Seq(
-      LinearLocation(2L, 1, 125, 45.0, 105.0, SideCode.TowardsDigitizing, 0,
+      LinearLocation(2L, 1, 125, KMTKID("125",0), 45.0, 105.0, SideCode.TowardsDigitizing, 0,
         (CalibrationPointReference.None, CalibrationPointReference.None)
         , Seq(Point(45.0,0.0), Point(105.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
-      LinearLocation(3L, 2, 123, 0.0, 49.0, SideCode.TowardsDigitizing, 0,
+      LinearLocation(3L, 2, 123, KMTKID("123",0), 0.0, 49.0, SideCode.TowardsDigitizing, 0,
         (CalibrationPointReference.None, CalibrationPointReference(Some(250), Some(RoadAddressCP)))
         , Seq(Point(105.0,0.0), Point(154.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber),
-      LinearLocation(4L, 3, 124, 0.0, 51.0, SideCode.TowardsDigitizing, 0,
+      LinearLocation(4L, 3, 124, KMTKID("124",0), 0.0, 51.0, SideCode.TowardsDigitizing, 0,
         (CalibrationPointReference(Some(250), Some(RoadAddressCP)), CalibrationPointReference(Some(300), Some(RoadAddressCP)))
         , Seq(Point(154.0,0.0), Point(205.0,0.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber)
     )

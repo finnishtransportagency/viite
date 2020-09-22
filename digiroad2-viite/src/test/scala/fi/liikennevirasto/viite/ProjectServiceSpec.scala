@@ -121,10 +121,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   val linearLocations = Seq(
-    dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-    dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0),
-    dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
-    dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0)
+    dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123",0), startMValue = 0.0, endMValue = 10.0),
+    dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, KMTKID("123",0), startMValue = 10.0, endMValue = 20.0),
+    dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, KMTKID("123",0), startMValue = 0.0, endMValue = 10.0),
+    dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, KMTKID("123",0), startMValue = 0.0, endMValue = 10.0)
   )
 
   val roadways = Seq(

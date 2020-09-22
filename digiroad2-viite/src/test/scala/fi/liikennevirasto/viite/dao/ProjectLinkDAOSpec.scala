@@ -373,7 +373,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val roadway = Roadway(raId, roadwayNumber1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, reversed = false, DateTime.parse("1901-01-01"), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
-      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, KMTKID("1000,",0), 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
         (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))), Seq(Point(0.0, 10.0), Point(10.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
@@ -401,7 +401,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber, roadPartNumber, rap.createdBy)
 
       val roadAddress = RoadAddress(raId, linearLocationId, roadNumber, roadPartNumber, roadType, track,
-        discontinuity, startAddrMValue, endAddrMValue, Some(DateTime.now), None, None, 12345, startMValue, endMValue, side, 1542205983000L, (None, None),
+        discontinuity, startAddrMValue, endAddrMValue, Some(DateTime.now), None, None, 12345, KMTKID("12345",0), startMValue, endMValue, side, 1542205983000L, (None, None),
         geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 1, Some(DateTime.now), None, None)
 
       projectLinkDAO.updateProjectLinkValues(projectId, roadAddress)
@@ -452,7 +452,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val roadway = Roadway(raId, roadwayNumber1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, reversed = false, DateTime.parse("1901-01-01"), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
-      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, KMTKID("1000",0), 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
         (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))), Seq(Point(0.0, 10.0), Point(10.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
@@ -482,7 +482,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val roadway = Roadway(raId, roadwayNumber1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, reversed = false, DateTime.parse("1901-01-01"), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
-      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, KMTKID("1000",0), 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
         (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))), Seq(Point(0.0, 10.0), Point(10.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
@@ -513,7 +513,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val roadway = Roadway(raId, roadwayNumber1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, reversed = false, DateTime.parse("1901-01-01"), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
-      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, KMTKID("1000",0), 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
         (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))), Seq(Point(0.0, 10.0), Point(10.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
@@ -545,7 +545,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val roadway = Roadway(raId, roadwayNumber1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, reversed = false, DateTime.parse("1901-01-01"), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
-      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, KMTKID("1000",0), 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
         (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))), Seq(Point(0.0, 10.0), Point(10.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
@@ -606,7 +606,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val roadway = Roadway(raId, roadwayNumber1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, reversed = false, DateTime.parse("1901-01-01"), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
-      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, KMTKID("1000",0), 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
         (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))), Seq(Point(0.0, 10.0), Point(10.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 
@@ -641,7 +641,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       val roadway = Roadway(raId, roadwayNumber1, 19999L, 2L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad,
         0L, 10L, reversed = false, DateTime.parse("1901-01-01"), None, "test_user", None, 8, NoTermination, DateTime.parse("1901-01-01"), None)
 
-      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
+      val linearLocation = LinearLocation(linearLocationId, 1, 1000l, KMTKID("1000",0), 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000l,
         (CalibrationPointReference(Some(0l)), CalibrationPointReference(Some(10l))), Seq(Point(0.0, 10.0), Point(10.0, 20.0)), LinkGeomSource.ComplementaryLinkInterface,
         roadwayNumber1, Some(DateTime.parse("1901-01-01")), None)
 

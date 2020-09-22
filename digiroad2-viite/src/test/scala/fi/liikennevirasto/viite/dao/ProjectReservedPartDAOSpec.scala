@@ -4,6 +4,7 @@ import java.sql.SQLIntegrityConstraintViolationException
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID}
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -67,6 +68,11 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   private val linkId2 = 2000l
   private val linkId3 = 3000l
   private val linkId4 = 4000l
+
+  private val kmtkId1 = KMTKID("1000",0)
+  private val kmtkId2 = KMTKID("2000",0)
+  private val kmtkId3 = KMTKID("3000",0)
+  private val kmtkId4 = KMTKID("4000",0)
 
   private val linearLocationId = 0
 
@@ -274,7 +280,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, reservedParts, None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, "TestUser")
-      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1,
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, kmtkId1, roadwayIds.head, roadwayNumber1, roadNumber1,
         roadPartNumber1,  0, 100, 0.0, 100.0, None,
         (NoCP, NoCP), Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
       )
@@ -296,7 +302,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val rap = Project(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
-      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1,
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, kmtkId1, roadwayIds.head, roadwayNumber1, roadNumber1,
         roadPartNumber1,  0, 100, 0.0, 100.0, None,
         (NoCP, NoCP), Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
       )
@@ -336,7 +342,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
         val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
         projectDAO.create(rap)
         projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
-        val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1,
+        val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, kmtkId1, roadwayIds.head, roadwayNumber1, roadNumber1,
           roadPartNumber1,  0, 100, 0.0, 100.0, None,
           (NoCP, NoCP), Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
         )
@@ -355,7 +361,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
-      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1,
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, kmtkId1, roadwayIds.head, roadwayNumber1,
         roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0,
         None, (NoCP, NoCP), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
       )
@@ -414,7 +420,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val rap = Project(id, ProjectState.apply(1), "'Test Project", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, Seq(), None)
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
-      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1,
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, kmtkId1, roadwayIds.head, roadwayNumber1, roadNumber1,
         roadPartNumber1,  0, 100, 0.0, 100.0, None,
         (NoCP, NoCP), Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
       )
@@ -502,7 +508,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       projectDAO.create(rap)
       projectReservedPartDAO.reserveRoadPart(id, roadNumber1, roadPartNumber1, rap.createdBy)
 
-      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadways.head.id, roadways.head.roadwayNumber, roadNumber1,
+      val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, kmtkId1, roadways.head.id, roadways.head.roadwayNumber, roadNumber1,
         roadPartNumber1,  0, 100, 0.0, 100.0, None,
         (NoCP, NoCP), Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
       )
@@ -545,7 +551,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val intersectingRoadwayLocation2 = LinearLocation(NewIdValue, 1, linkId1 , 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, intersectingRoadway2.roadwayNumber)
       val reservedRoadwayLocation = LinearLocation(NewIdValue, 1, linkId2, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, reservedRoadway.roadwayNumber)
       val notReservedRoadwayLocation = LinearLocation(NewIdValue, 1, linkId3, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, notReservedRoadway.roadwayNumber)
-      val reservedRoadway2Location = LinearLocation(NewIdValue, 1, linkId4, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, reservedRoadway2.roadwayNumber)
+      val reservedRoadway2Location   = LinearLocation(NewIdValue, 1, linkId4, kmtkId4, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, reservedRoadway2.roadwayNumber)
 
       linearLocationDAO.create(Seq(intersectingRoadwayLocation, intersectingRoadwayLocation2, reservedRoadwayLocation, notReservedRoadwayLocation, reservedRoadway2Location))
 

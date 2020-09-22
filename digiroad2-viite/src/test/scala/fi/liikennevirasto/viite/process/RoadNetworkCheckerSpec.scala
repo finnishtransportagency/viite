@@ -51,9 +51,9 @@ class RoadNetworkCheckerSpec extends FunSuite with Matchers {
     val geometry = Seq(Point(0.0, 0.0), Point(60.0, 0.0), Point(60.0, 9.844))
     //TODO road address now have the linear location check this value here
     val roadAddressSeq = Seq(
-      RoadAddress(1L, 1L, 12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 5L, 60L, None, None, None, 123, 0.0, 54.948,
+      RoadAddress(1L, 1L, 12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 5L, 60L, None, None, None, 123, KMTKID("123",0), 0.0, 54.948,
         SideCode.TowardsDigitizing, 0L, (None, None), GeometryUtils.truncateGeometry2D(geometry, 0.0, 54.948), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0),
-      RoadAddress(2L, 1L,  12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 60L, 75L, None, None, None, 123, 54.948, 69.844,
+      RoadAddress(2L, 1L,  12L, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 60L, 75L, None, None, None, 123, KMTKID("123",0), 54.948, 69.844,
         SideCode.TowardsDigitizing, 0L, (None, None), GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
     )
     val link = RoadLink(12L, KMTKID("UUID", 1), geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
