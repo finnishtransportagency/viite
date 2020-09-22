@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.LifecycleStatus.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{ComplementaryLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 // Used in debugging when needed.
@@ -41,7 +42,7 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
   )
 
   private def makeRoadAddressLink(id: Long, anomaly: Int, roadNumber: Long, roadPartNumber: Long, deltaX: Double = 0.0, deltaY: Double = 0.0) = {
-    RoadAddressLink(id, id, id, Seq(Point(id * 10.0 + deltaX, anomaly * 10.0 + deltaY), Point((id + 1) * 10.0 + deltaX, anomaly * 10.0 + deltaY)), 10.0, State, SingleCarriageway,  InUse, NormalLinkInterface, PublicRoad, Some("Vt5"), None, BigInt(0), "", None, None, Map(), roadNumber, roadPartNumber, 1, 1, 1, id * 10, (id + 1) * 10, "", "", 0.0, 10.0, SideCode.TowardsDigitizing, None, None, Anomaly.apply(anomaly))
+    RoadAddressLink(id, id, id, KMTKID(s"$id", 0), Seq(Point(id * 10.0 + deltaX, anomaly * 10.0 + deltaY), Point((id + 1) * 10.0 + deltaX, anomaly * 10.0 + deltaY)), 10.0, State, SingleCarriageway,  InUse, NormalLinkInterface, PublicRoad, Some("Vt5"), None, BigInt(0), "", None, None, Map(), roadNumber, roadPartNumber, 1, 1, 1, id * 10, (id + 1) * 10, "", "", 0.0, 10.0, SideCode.TowardsDigitizing, None, None, Anomaly.apply(anomaly))
   }
 
   test("Test partition should have specific fields (still to be defined) not empty") {

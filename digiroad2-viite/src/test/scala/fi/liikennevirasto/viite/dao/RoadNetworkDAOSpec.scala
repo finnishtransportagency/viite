@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
@@ -90,7 +91,7 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
   private def addLinearLocationAndRoadNetworkError(roadwayId: Long, linearLocationId: Long, linkId: Long, addressError: AddressError) = {
     val linearLocationDAO = new LinearLocationDAO
     val roadnetworkDAO = new RoadNetworkDAO
-    val linearLocation = LinearLocation(linearLocationId, 1, linkId, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
+    val linearLocation = LinearLocation(linearLocationId, 1, linkId, KMTKID(s"$linkId",0), 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
       (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface,
       roadwayId)
     linearLocationDAO.create(List(linearLocation))

@@ -98,8 +98,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     )
   }
   private def dummyLinearLocations = Seq(
-    dummyLinearLocation(roadwayNumber = roadwayNumber1, orderNumber = 1L, linkId = linkId1, startMValue = 0.0, endMValue = 10.0),
-    dummyLinearLocation(roadwayNumber = roadwayNumber2, orderNumber = 1L, linkId = linkId2, startMValue = 0.0, endMValue = 10.0))
+    dummyLinearLocation(roadwayNumber = roadwayNumber1, orderNumber = 1L, linkId = linkId1, kmtkId = KMTKID(s"$linkId1",0), startMValue = 0.0, endMValue = 10.0),
+    dummyLinearLocation(roadwayNumber = roadwayNumber2, orderNumber = 1L, linkId = linkId2, kmtkId = KMTKID(s"$linkId2",0), startMValue = 0.0, endMValue = 10.0))
 
 
 
