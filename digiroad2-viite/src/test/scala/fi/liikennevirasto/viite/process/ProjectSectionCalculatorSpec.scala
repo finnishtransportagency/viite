@@ -74,7 +74,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
-    (LinearLocation(p.linearLocationId, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
+    (LinearLocation(p.linearLocationId, 1, p.linkId, p.kmtkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
       (CalibrationPointsUtils.toCalibrationPointReference(p.startCalibrationPoint),
         CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
       p.geometry, p.linkGeomSource,
@@ -87,7 +87,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     pls.foldLeft((Seq.empty[LinearLocation], Seq.empty[Roadway])) { (list, p) =>
       val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
-      (list._1 :+ LinearLocation(p.linearLocationId, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
+      (list._1 :+ LinearLocation(p.linearLocationId, 1, p.linkId, p.kmtkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
         (CalibrationPointsUtils.toCalibrationPointReference(p.startCalibrationPoint),
           CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
         p.geometry, p.linkGeomSource,
@@ -1020,7 +1020,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink1 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(
         testRoadway1.id, linearLocation1.id, roadNumber, roadPartNumber, testRoadway1.roadType, testRoadway1.track, Discontinuity.Discontinuous,
         testRoadway1.startAddrMValue, testRoadway1.endAddrMValue, Some(testRoadway1.startDate), None, Some(testRoadway1.createdBy),
-        linearLocation1.linkId, linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode, 0, (None, None),
+        linearLocation1.linkId, linearLocation1.kmtkId, linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode, 0, (None, None),
         linearLocation1.geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway1.roadwayNumber))
         .copy(roadAddressStartAddrM = Some(testRoadway1.startAddrMValue), roadAddressEndAddrM = Some(testRoadway1.endAddrMValue), roadAddressTrack = Some(testRoadway1.track))
 
@@ -1035,7 +1035,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink2 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(
         testRoadway2.id, linearLocation2.id, roadNumber, roadPartNumber, testRoadway2.roadType, testRoadway2.track, testRoadway2.discontinuity,
         testRoadway2.startAddrMValue, testRoadway2.endAddrMValue, Some(testRoadway2.startDate), None, Some(testRoadway2.createdBy),
-        linearLocation2.linkId, linearLocation2.startMValue, linearLocation2.endMValue, linearLocation2.sideCode, 0, (None, None),
+        linearLocation2.linkId, linearLocation2.kmtkId, linearLocation2.startMValue, linearLocation2.endMValue, linearLocation2.sideCode, 0, (None, None),
         linearLocation2.geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway2.roadwayNumber))
         .copy(roadAddressStartAddrM = Some(testRoadway2.startAddrMValue), roadAddressEndAddrM = Some(testRoadway2.endAddrMValue), roadAddressTrack = Some(testRoadway2.track))
 
@@ -1049,7 +1049,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink3_1 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(
         testRoadway3.id, linearLocation3_1.id, roadNumber, roadPartNumber, testRoadway3.roadType, testRoadway3.track, Discontinuity.Continuous,
         testRoadway3.startAddrMValue, 160, Some(testRoadway3.startDate), None, Some(testRoadway3.createdBy),
-        linearLocation3_1.linkId, linearLocation3_1.startMValue, linearLocation3_1.endMValue, linearLocation3_1.sideCode, 0, (None, None),
+        linearLocation3_1.linkId, linearLocation3_1.kmtkId, linearLocation3_1.startMValue, linearLocation3_1.endMValue, linearLocation3_1.sideCode, 0, (None, None),
         linearLocation3_1.geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway3.roadwayNumber))
         .copy(roadAddressStartAddrM = Some(testRoadway3.startAddrMValue), roadAddressEndAddrM = Some(160), roadAddressTrack = Some(testRoadway3.track))
 
@@ -1060,7 +1060,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink3_2 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(
         testRoadway3.id, linearLocation3_2.id, roadNumber, roadPartNumber, testRoadway3.roadType, testRoadway3.track, testRoadway3.discontinuity,
         160, testRoadway3.endAddrMValue, Some(testRoadway3.startDate), None, Some(testRoadway3.createdBy),
-        linearLocation3_2.linkId, linearLocation3_2.startMValue, linearLocation3_2.endMValue, linearLocation3_2.sideCode, 0, (None, None),
+        linearLocation3_2.linkId, linearLocation3_2.kmtkId, linearLocation3_2.startMValue, linearLocation3_2.endMValue, linearLocation3_2.sideCode, 0, (None, None),
         linearLocation3_2.geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway3.roadwayNumber))
         .copy(roadAddressStartAddrM = Some(160), roadAddressEndAddrM = Some(testRoadway3.endAddrMValue), roadAddressTrack = Some(testRoadway3.track))
 
@@ -1075,7 +1075,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink4 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(
         testRoadway4.id, linearLocation4.id, roadNumber, roadPartNumber, testRoadway4.roadType, testRoadway4.track, testRoadway4.discontinuity,
         testRoadway4.startAddrMValue, testRoadway4.endAddrMValue, Some(testRoadway4.startDate), None, Some(testRoadway4.createdBy),
-        linearLocation4.linkId, linearLocation4.startMValue, linearLocation4.endMValue, linearLocation4.sideCode, 0, (None, None),
+        linearLocation4.linkId, linearLocation4.kmtkId, linearLocation4.startMValue, linearLocation4.endMValue, linearLocation4.sideCode, 0, (None, None),
         linearLocation4.geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway4.roadwayNumber))
         .copy(roadAddressStartAddrM = Some(testRoadway4.startAddrMValue), roadAddressEndAddrM = Some(testRoadway4.endAddrMValue), roadAddressTrack = Some(testRoadway4.track))
 
@@ -1089,7 +1089,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val projectLink5 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(
         testRoadway5.id, linearLocation5.id, roadNumber, roadPartNumber, testRoadway5.roadType, testRoadway5.track, testRoadway5.discontinuity,
         testRoadway5.startAddrMValue, testRoadway5.endAddrMValue, Some(testRoadway5.startDate), None, Some(testRoadway5.createdBy),
-        linearLocation5.linkId, linearLocation5.startMValue, linearLocation5.endMValue, linearLocation5.sideCode, 0, (None, None),
+        linearLocation5.linkId, linearLocation5.kmtkId, linearLocation5.startMValue, linearLocation5.endMValue, linearLocation5.sideCode, 0, (None, None),
         linearLocation5.geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway5.roadwayNumber))
         .copy(roadAddressStartAddrM = Some(testRoadway5.startAddrMValue), roadAddressEndAddrM = Some(testRoadway5.endAddrMValue), roadAddressTrack = Some(testRoadway5.track))
 

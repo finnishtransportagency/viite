@@ -24,11 +24,11 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  private def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, yCoordinates: Seq[Double]): LinearLocation =
-    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, startMValue, endMValue, yCoordinates, LinkGeomSource.NormalLinkInterface)
+  private def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, kmtkId: KMTKID, startMValue: Double, endMValue: Double, yCoordinates: Seq[Double]): LinearLocation =
+    dummyLinearLocation(id, roadwayNumber, orderNumber, linkId, kmtkId, startMValue, endMValue, yCoordinates, LinkGeomSource.NormalLinkInterface)
 
-  private def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, startMValue: Double, endMValue: Double, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): LinearLocation = {
-    LinearLocation(id, orderNumber, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (CalibrationPointReference.None, CalibrationPointReference.None),
+  private def dummyLinearLocation(id: Long, roadwayNumber: Long, orderNumber: Long, linkId: Long, kmtkId: KMTKID, startMValue: Double, endMValue: Double, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): LinearLocation = {
+    LinearLocation(id, orderNumber, linkId, kmtkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (CalibrationPointReference.None, CalibrationPointReference.None),
       yCoordinates.map(y => Point(0.0, y)), linkGeomSource, roadwayNumber)
   }
 

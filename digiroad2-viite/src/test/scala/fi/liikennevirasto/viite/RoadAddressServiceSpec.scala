@@ -163,7 +163,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
-    (LinearLocation(-1000, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
+    (LinearLocation(-1000, 1, p.linkId, p.kmtkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
       (CalibrationPointsUtils.toCalibrationPointReference(p.startCalibrationPoint),
         CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
       p.geometry, p.linkGeomSource,
@@ -591,8 +591,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       projectDAO.create(rap)
 
-      val ra1 = RoadAddress(0, lc1.id, 99, 2, rw1.roadType,rw1.track, rw1.discontinuity, rw1.startAddrMValue, rw1.endAddrMValue, Some(rw1.startDate), rw1.endDate, Some(rw1.createdBy), lc1.linkId, lc1.startMValue, lc1.endMValue, lc1.sideCode, 1000000, (None, None),lc1.geometry, lc1.linkGeomSource, rw1.ely, NoTermination, rw1.roadwayNumber,None, None, None)
-      val ra2 = RoadAddress(0, lc2.id, 99, 2, rw2.roadType,rw2.track, rw2.discontinuity, rw2.startAddrMValue, rw2.endAddrMValue, Some(rw2.startDate), rw2.endDate, Some(rw2.createdBy), lc2.linkId, lc2.startMValue, lc2.endMValue, lc2.sideCode, 1000000, (None, None),lc2.geometry, lc2.linkGeomSource, rw2.ely, NoTermination, rw2.roadwayNumber,None, None, None)
+      val ra1 = RoadAddress(0, lc1.id, 99, 2, rw1.roadType,rw1.track, rw1.discontinuity, rw1.startAddrMValue, rw1.endAddrMValue, Some(rw1.startDate), rw1.endDate, Some(rw1.createdBy), lc1.linkId, lc1.kmtkId, lc1.startMValue, lc1.endMValue, lc1.sideCode, 1000000, (None, None),lc1.geometry, lc1.linkGeomSource, rw1.ely, NoTermination, rw1.roadwayNumber,None, None, None)
+      val ra2 = RoadAddress(0, lc2.id, 99, 2, rw2.roadType,rw2.track, rw2.discontinuity, rw2.startAddrMValue, rw2.endAddrMValue, Some(rw2.startDate), rw2.endDate, Some(rw2.createdBy), lc2.linkId, lc2.kmtkId, lc2.startMValue, lc2.endMValue, lc2.sideCode, 1000000, (None, None),lc2.geometry, lc2.linkGeomSource, rw2.ely, NoTermination, rw2.roadwayNumber,None, None, None)
 
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra1, ra2))
       when(mockLinearLocationDAO.fetchByRoadways(Set(rw1.roadwayNumber))).thenReturn(Seq(lc1))
@@ -700,8 +700,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       projectDAO.create(rap)
 
-      val ra1 = RoadAddress(0, lc1.id, 99, 2, rw1.roadType,rw1.track, rw1.discontinuity, rw1.startAddrMValue, rw1.endAddrMValue, Some(rw1.startDate), rw1.endDate, Some(rw1.createdBy), lc1.linkId, lc1.startMValue, lc1.endMValue, lc1.sideCode, 1000000, (None, None),lc1.geometry, lc1.linkGeomSource, rw1.ely, NoTermination, rw1.roadwayNumber,None, None, None)
-      val ra2 = RoadAddress(0, lc2.id, 99, 2, rw2.roadType,rw2.track, rw2.discontinuity, rw2.startAddrMValue, rw2.endAddrMValue, Some(rw2.startDate), rw2.endDate, Some(rw2.createdBy), lc2.linkId, lc2.startMValue, lc2.endMValue, lc2.sideCode, 1000000, (None, None),lc2.geometry, lc2.linkGeomSource, rw2.ely, NoTermination, rw2.roadwayNumber,None, None, None)
+      val ra1 = RoadAddress(0, lc1.id, 99, 2, rw1.roadType,rw1.track, rw1.discontinuity, rw1.startAddrMValue, rw1.endAddrMValue, Some(rw1.startDate), rw1.endDate, Some(rw1.createdBy), lc1.linkId, lc1.kmtkId, lc1.startMValue, lc1.endMValue, lc1.sideCode, 1000000, (None, None),lc1.geometry, lc1.linkGeomSource, rw1.ely, NoTermination, rw1.roadwayNumber,None, None, None)
+      val ra2 = RoadAddress(0, lc2.id, 99, 2, rw2.roadType,rw2.track, rw2.discontinuity, rw2.startAddrMValue, rw2.endAddrMValue, Some(rw2.startDate), rw2.endDate, Some(rw2.createdBy), lc2.linkId, lc2.kmtkId, lc2.startMValue, lc2.endMValue, lc2.sideCode, 1000000, (None, None),lc2.geometry, lc2.linkGeomSource, rw2.ely, NoTermination, rw2.roadwayNumber,None, None, None)
 
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra1, ra2))
       when(mockLinearLocationDAO.fetchByRoadways(Set(rw1.roadwayNumber))).thenReturn(Seq(lc1))
@@ -809,12 +809,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       val ra1 = RoadAddress(0, lc1WithId.id, rw1WithId.roadNumber, rw1WithId.roadPartNumber, rw1WithId.roadType, rw1WithId.track, rw1WithId.discontinuity,
         rw1WithId.startAddrMValue, rw1WithId.endAddrMValue, Some(rw1WithId.startDate), rw1WithId.endDate, Some(rw1WithId.createdBy),
-        lc1WithId.linkId, lc1WithId.startMValue, lc1WithId.endMValue, lc1WithId.sideCode, 1000000, (None, None),
+        lc1WithId.linkId, lc1WithId.kmtkId, lc1WithId.startMValue, lc1WithId.endMValue, lc1WithId.sideCode, 1000000, (None, None),
         lc1WithId.geometry, lc1WithId.linkGeomSource, rw1WithId.ely, NoTermination, rw1WithId.roadwayNumber, None, None, None)
 
       val ra2 = RoadAddress(0, lc2WithId.id, rw2WithId.roadNumber, rw2WithId.roadPartNumber, rw2WithId.roadType, rw2WithId.track, rw2WithId.discontinuity,
         rw2WithId.startAddrMValue, rw2WithId.endAddrMValue, Some(rw2WithId.startDate), rw2.endDate, Some(rw2.createdBy),
-        lc2WithId.linkId, lc2WithId.startMValue, lc2WithId.endMValue, lc2WithId.sideCode, 1000000, (None, None),
+        lc2WithId.linkId, lc2WithId.kmtkId, lc2WithId.startMValue, lc2WithId.endMValue, lc2WithId.sideCode, 1000000, (None, None),
         lc2WithId.geometry, lc2WithId.linkGeomSource, rw2WithId.ely, NoTermination, rw2WithId.roadwayNumber, None, None, None)
 
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra1, ra2))
