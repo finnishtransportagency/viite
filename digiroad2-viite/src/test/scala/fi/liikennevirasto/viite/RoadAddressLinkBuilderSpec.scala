@@ -83,7 +83,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   test("Test RoadAddressLinkBuilder.build for roadAddress input") {
     runWithRollback {
       val roadAddress = RoadAddress(1, 1234, 5, 999, RoadType.Unknown, Track.Combined, Discontinuous,
-        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, KMTKID("12345",0), 0.0, 9.8,
+        0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L, KMTKID("12345", 0), 0.0, 9.8,
         SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(2.0, 9.8), Point(2.0, 9.8), Point(10.0, 19.8)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)
 
       val roadAddressLink = roadAddressLinkBuilder.build(roadAddress)

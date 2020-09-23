@@ -57,35 +57,35 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     val geom8 = Seq(Point(10.0, 10.0), Point(0.0, 20.0))
 
     val projectLink1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 1L, KMTKID("1.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 1L, KMTKID("1.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 2L, KMTKID("2.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 2L, KMTKID("2.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 3L, KMTKID("3.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 3L, KMTKID("3.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 4L, KMTKID("4.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 4L, KMTKID("4.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom4, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom4), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink5 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 5L, KMTKID("5.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 5L, KMTKID("5.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom5, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom5), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink6 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 6L, KMTKID("6.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 6L, KMTKID("6.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom6, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom6), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink7 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 7L, KMTKID("7.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 7L, KMTKID("7.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom7, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom7), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink8 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 8L, KMTKID("8.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 8L, KMTKID("8.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom8, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom8), 0L, 0, 0, reversed = false,
       None, 86400L)
     Seq(projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7, projectLink8).sortBy(_.linkId)
@@ -128,11 +128,11 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomLeft2 = Seq(Point(20.0, 10.0), Point(30.0, 10.0))
 
       val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomLeft2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -140,12 +140,12 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomRight2 = Seq(Point(20.0, 20.0), Point(30.0, 20.0))
 
       val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomRight1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12348L, KMTKID("12348.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12348L, KMTKID("12348.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomRight2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -162,12 +162,12 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val additionalGeomRight1 = Seq(Point(40.0, 20.0), Point(30.0, 20.0))
 
       val additionalProjectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12349L, KMTKID("12349.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12349L, KMTKID("12349.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         additionalGeomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomLeft1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val additionalProjectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12350L, KMTKID("12350.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12350L, KMTKID("12350.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         additionalGeomRight1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomRight1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -187,12 +187,12 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val additionalGeomRightBefore = Seq(Point(10.0, 20.0), Point(0.0, 20.0))
 
       val additionalProjectLinkLeftBefore = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12351L, KMTKID("12351.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12351L, KMTKID("12351.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         additionalGeomLeftBefore, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomLeftBefore), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val additionalProjectLinkRightBefore = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12352L, KMTKID("12352.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12352L, KMTKID("12352.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         additionalGeomRightBefore, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(additionalGeomRightBefore), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -219,11 +219,11 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
         "", Seq(), Seq(), None, None)
 
       val projectLinkLeft1 = ProjectLink(projectLinkId, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        Some("user"), 12345L, KMTKID("12345.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
+        Some("user"), 12345L, KMTKID("12345.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
         geomLeft1, projId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 0, reversed = false,
         None, 86400L, roadwayNumber = 12345L)
       val projectLinkLeft2 = ProjectLink(projectLinkId + 1, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
-        Some("user"), 12346L, KMTKID("12346.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
+        Some("user"), 12346L, KMTKID("12346.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
         geomLeft2, projId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 0, reversed = false,
         None, 86400L, roadwayNumber = 12345L)
 
@@ -231,12 +231,12 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomRight2 = Seq(Point(5.0, 5.0), Point(5.0, 62.0))
 
       val projectLinkRight1 = ProjectLink(projectLinkId + 2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        Some("user"), 12347L, KMTKID("12347.0",0), 0.0, 5.0, SideCode.Unknown, (RoadAddressCP, NoCP), (NoCP, NoCP),
+        Some("user"), 12347L, KMTKID("12347.0", 0), 0.0, 5.0, SideCode.Unknown, (RoadAddressCP, NoCP), (NoCP, NoCP),
         geomRight1, projId, LinkStatus.Transfer, RoadType.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId, linearLocationId, 0, reversed = false,
         None, 86400L, roadwayNumber = 12346L)
 
       val projectLinkRight2 = ProjectLink(projectLinkId + 3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None,
-        Some("user"), 12348L, KMTKID("12348.0",0), 0.0, 57.0, SideCode.Unknown, (NoCP, RoadAddressCP), (NoCP, NoCP),
+        Some("user"), 12348L, KMTKID("12348.0", 0), 0.0, 57.0, SideCode.Unknown, (NoCP, RoadAddressCP), (NoCP, NoCP),
         geomRight2, projId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId + 1, linearLocationId + 1, 0, reversed = false,
         None, 86400L, roadwayNumber = 12347L)
 
@@ -264,25 +264,25 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
         "", Seq(), Seq(), None, None)
 
       val projectLinkLeft1 = ProjectLink(projectLinkId, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        Some("user"), 12345L, KMTKID("12345.0",0), 0.0, 30.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
+        Some("user"), 12345L, KMTKID("12345.0", 0), 0.0, 30.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
         geomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 0, reversed = false,
         None, 86400L, roadwayNumber = 12345L)
-      val projectLinkLeft2 = ProjectLink(projectLinkId+1, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
-        Some("user"), 12346L, KMTKID("12346.0",0), 0.0, 30.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
+      val projectLinkLeft2 = ProjectLink(projectLinkId + 1, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
+        Some("user"), 12346L, KMTKID("12346.0", 0), 0.0, 30.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
         geomLeft2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 0, reversed = false,
         None, 86400L, roadwayNumber = 12345L)
 
       val geomRight1 = Seq(Point(5.0, 0.0), Point(5.0, 5.0))
       val geomRight2 = Seq(Point(5.0, 5.0), Point(5.0, 62.0))
 
-      val projectLinkRight1 = ProjectLink(projectLinkId+2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        Some("user"), 12347L, KMTKID("12347.0",0), 0.0, 5.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
+      val projectLinkRight1 = ProjectLink(projectLinkId + 2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
+        Some("user"), 12347L, KMTKID("12347.0", 0), 0.0, 5.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
         geomRight1, 0L, LinkStatus.Transfer, RoadType.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId, linearLocationId, 0, reversed = false,
         None, 86400L, roadwayNumber = 12346L)
 
-      val projectLinkRight2 = ProjectLink(projectLinkId+3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None,
-        Some("user"), 12348L, KMTKID("12348.0",0), 0.0, 57.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
-        geomRight2, 0L, LinkStatus.Transfer, RoadType.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId, linearLocationId+1, 0, reversed = false,
+      val projectLinkRight2 = ProjectLink(projectLinkId + 3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None,
+        Some("user"), 12348L, KMTKID("12348.0", 0), 0.0, 57.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
+        geomRight2, 0L, LinkStatus.Transfer, RoadType.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId, linearLocationId + 1, 0, reversed = false,
         None, 86400L, roadwayNumber = 12347L)
 
       val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2)
@@ -310,21 +310,21 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
         "", Seq(), Seq(), None, None)
 
       val projectLinkLeft1 = ProjectLink(projectLinkId, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
-        Some("user"), 12345L, KMTKID("12345.0",0), 0.0, 60.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
+        Some("user"), 12345L, KMTKID("12345.0", 0), 0.0, 60.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
         geomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 0, reversed = false,
         None, 86400L, roadwayNumber = 12345L)
 
       val geomRight1 = Seq(Point(5.0, 0.0), Point(5.0, 5.0))
       val geomRight2 = Seq(Point(5.0, 5.0), Point(5.0, 62.0))
 
-      val projectLinkRight1 = ProjectLink(projectLinkId+2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        Some("user"), 12347L, KMTKID("12347.0",0), 0.0, 5.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
+      val projectLinkRight1 = ProjectLink(projectLinkId + 2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
+        Some("user"), 12347L, KMTKID("12347.0", 0), 0.0, 5.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
         geomRight1, 0L, LinkStatus.Transfer, RoadType.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId, linearLocationId, 0, reversed = false,
         None, 86400L, roadwayNumber = 12346L)
 
-      val projectLinkRight2 = ProjectLink(projectLinkId+3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None,
-        Some("user"), 12348L, KMTKID("12348.0",0), 0.0, 57.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
-        geomRight2, 0L, LinkStatus.Transfer, RoadType.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId, linearLocationId+1, 0, reversed = false,
+      val projectLinkRight2 = ProjectLink(projectLinkId + 3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None,
+        Some("user"), 12348L, KMTKID("12348.0", 0), 0.0, 57.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
+        geomRight2, 0L, LinkStatus.Transfer, RoadType.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId, linearLocationId + 1, 0, reversed = false,
         None, 86400L, roadwayNumber = 12347L)
 
       val leftSideProjectLinks = Seq(projectLinkLeft1)
@@ -350,23 +350,23 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val plId = Sequences.nextProjectLinkId
 
       val Road1TransferLeftLink = ProjectLink(plId + 1, 9999L, 1L, Track.LeftSide, Discontinuity.Continuous, 0L, 10L, 890L, 900L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomRoad1TransferLeft, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRoad1TransferLeft), 0L, 0, 0, reversed = false,
         None, 86400L)
       val Road1TransferRightLink = ProjectLink(plId + 2, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 890L, 900L, 890L, 900L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomRoad1TransferRight, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRoad1TransferRight), 0L, 0, 0, reversed = false,
         None, 86400L)
       val Road2NotHandledLeftLink = ProjectLink(plId + 3, 9999L, 1L, Track.LeftSide, Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomRoad2NotHandledLeft, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRoad2NotHandledLeft), 0L, 0, 0, reversed = false,
         None, 86400L)
       val Road2NotHandledRightLink = ProjectLink(plId + 4, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomRoad2NotHandledRight, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRoad2NotHandledRight), 0L, 0, 0, reversed = false,
         None, 86400L)
       val Road2NotHandledCombinedLink = ProjectLink(plId + 4, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 10L, 20L, 10L, 20L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomRoad2NotHandledCombined, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRoad2NotHandledCombined), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -392,18 +392,18 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 15L, 30L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransfer1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransfer1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLink2 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 30L, 30L, 45L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransfer2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransfer2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val geomNew3 = Seq(Point(40.0, 10.0), Point(30.0, 20.0))
 
       val projectLinkNew3 = ProjectLink(plId + 3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew3), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -428,18 +428,18 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 15L, 30L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransfer1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransfer1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLink2 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 30L, 30L, 45L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransfer2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransfer2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val geomNew3 = Seq(Point(30.0, 20.0), Point(40.0, 10.0))
 
       val projectLinkNew3 = ProjectLink(plId + 3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew3), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -462,7 +462,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 0L, 15L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 15.0, sideCode, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 15.0, sideCode, (NoCP, NoCP), (NoCP, NoCP),
         geom1, 0L, linkStatus, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -470,7 +470,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
       // Notice that discontinuity value should not affect calculations, which are based on geometry. That's why we have here this value "Continuous".
       val projectLinkNew2 = ProjectLink(plId + 3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -559,7 +559,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 0L, 15L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 15.0, sideCode, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 15.0, sideCode, (NoCP, NoCP), (NoCP, NoCP),
         geom1, 0L, linkStatus, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -568,11 +568,11 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
       // Notice that discontinuity value should not affect calculations, which are based on geometry. That's why we have here this value "Continuous".
       val projectLinkNew2 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkNew3 = ProjectLink(plId + 3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew3), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -677,18 +677,18 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val startAddr1 = if (sideCode == SideCode.TowardsDigitizing) 15L else 0
       val endAddr1 = if (sideCode == SideCode.TowardsDigitizing) 30L else 15L
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, startAddr1, endAddr1, startAddr1, endAddr1, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 15.0, sideCode, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 15.0, sideCode, (NoCP, NoCP), (NoCP, NoCP),
         geom1, 0L, linkStatus, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val startAddr34 = if (sideCode == SideCode.TowardsDigitizing) 0L else 15L
       val endAddr34 = if (sideCode == SideCode.TowardsDigitizing) 15L else 30L
       val projectLinkNew3 = ProjectLink(plId + 3, 9999L, 1L, if (sideCode == SideCode.TowardsDigitizing) Track.LeftSide else Track.RightSide, Discontinuity.Continuous, startAddr34, endAddr34, startAddr34, endAddr34, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, sideCode, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, sideCode, (NoCP, NoCP), (NoCP, NoCP),
         geom3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkNew4 = ProjectLink(plId + 4, 9999L, 1L, if (sideCode == SideCode.TowardsDigitizing) Track.RightSide else Track.LeftSide, Discontinuity.Continuous, startAddr34, endAddr34, startAddr34, endAddr34, None, None,
-        None, 12348L, KMTKID("12348.0",0), 0.0, 0.0, sideCode, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12348L, KMTKID("12348.0", 0), 0.0, 0.0, sideCode, (NoCP, NoCP), (NoCP, NoCP),
         geom4, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom4), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -696,7 +696,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
       // Notice that discontinuity value should not affect calculations, which are based on geometry. That's why we have here this value "Continuous".
       val projectLinkNew2 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -796,7 +796,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 15L, 0L, 15L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransfer1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransfer1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -804,11 +804,11 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomNew3 = Seq(Point(25.0, 0.0), Point(15.0, 10.0))
 
       val projectLinkNew2 = ProjectLink(plId + 2, 9999L, 1L, Track.RightSide, Discontinuity.MinorDiscontinuity, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkNew3 = ProjectLink(plId + 3, 9999L, 1L, Track.LeftSide, Discontinuity.MinorDiscontinuity, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew3), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -827,7 +827,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val plId = Sequences.nextProjectLinkId
 
       val projectLink1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 10L, 25L, 10L, 25L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNotHandled1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandled1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -835,11 +835,11 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomTransferRight = Seq(Point(0.0, 0.0), Point(10.0, 5.0))
 
       val projectLinkTransfer = ProjectLink(plId + 2, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkNew = ProjectLink(plId + 3, 9999L, 1L, Track.LeftSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 10.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 10.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -858,11 +858,11 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val plId = Sequences.nextProjectLinkId
 
       val projectLinkComb1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 15L, 30L, 15L, 30L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferComb1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkComb2 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 30L, 45L, 30L, 45L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferComb2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -870,12 +870,12 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomNewCombAfter = Seq(Point(10.0, 60.0), Point(20.0, 60.0))
 
       val projectLinkCombNewBefore = ProjectLink(plId + 3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNewCombBefore, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewCombBefore), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val projectLinkCombNewAfter = ProjectLink(plId + 4, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNewCombAfter, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewCombAfter), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -947,20 +947,20 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
       //Left Transfer
       val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferLeft1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferLeft1), roadwayId, linearLocationId, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber)
       val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.ParallelLink, 5L, 10L, 5L, 10L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferLeft2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferLeft2), roadwayId + 1, linearLocationId + 1, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber)
       //Right New
       val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewRight1, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewRight1), 0, 0, 8L, reversed = false,
         None, 86400L)
       val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.MinorDiscontinuity, 0L, 0L, 0L, 0L, None, None,
-        None, 12348L, KMTKID("12348.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12348L, KMTKID("12348.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewRight2, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewRight2), 0, 0, 8L, reversed = false,
         None, 86400L)
 
@@ -968,29 +968,29 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
       //Left New
       val projectLinkLeft3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12349L, KMTKID("12349.0",0), 0.0, 5.1, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12349L, KMTKID("12349.0", 0), 0.0, 5.1, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferLeft3, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferLeft3), 0, 0, 8L, reversed = false,
         None, 86400L)
       val projectLinkLeft4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12350L, KMTKID("12350.0",0), 0.0, 5.3, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12350L, KMTKID("12350.0", 0), 0.0, 5.3, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferLeft4, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferLeft4), 0, 0, 8L, reversed = false,
         None, 86400L)
       val projectLinkLeft5 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12351L, KMTKID("12351.0",0), 0.0, 10.1, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12351L, KMTKID("12351.0", 0), 0.0, 10.1, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferLeft5, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferLeft5), 0, 0, 8L, reversed = false,
         None, 86400L)
       //Right Transfer
       val projectLinkRight3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12352L, KMTKID("12352.0",0), 0.0, 5.1, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12352L, KMTKID("12352.0", 0), 0.0, 5.1, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight3, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight3), roadwayId + 2, linearLocationId + 2, 8L, reversed = false,
         None, 86400L, roadwayNumber = Sequences.nextRoadwayNumber)
       val nextRwNumber = Sequences.nextRoadwayNumber
       val projectLinkRight4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
-        None, 12352L, KMTKID("12352.0",0), 0.0, 5.1, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12352L, KMTKID("12352.0", 0), 0.0, 5.1, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight4, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight4), roadwayId + 3, linearLocationId + 3, 8L, reversed = false,
         None, 86400L, roadwayNumber = nextRwNumber)
       val projectLinkRight5 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 15L, 10L, 15L, None, None,
-        None, 12353L, KMTKID("12353.0",0), 0.0, 15.2, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12353L, KMTKID("12353.0", 0), 0.0, 15.2, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight5, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight5), roadwayId + 4, linearLocationId + 4, 8L, reversed = false,
         None, 86400L, roadwayNumber = nextRwNumber)
 
@@ -1088,11 +1088,11 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
       //  Left: Before roundabout (Transfer)
       val projectLinkLeft1 = ProjectLink(Sequences.nextProjectLinkId, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferLeft1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferLeft1), roadwayId, linearLocationId, 8L, reversed = false,
         None, 86400L, roadwayNumber = Sequences.nextRoadwayNumber)
       val projectLinkLeft2 = ProjectLink(Sequences.nextProjectLinkId, 9999L, 1L, Track.apply(2), Discontinuity.ParallelLink, 5L, 10L, 5L, 10L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferLeft2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferLeft2), roadwayId + 1, linearLocationId + 1, 8L, reversed = false,
         None, 86400L, roadwayNumber = Sequences.nextRoadwayNumber)
 
@@ -1106,22 +1106,22 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 
       //  Right: Before Roundabout (New)
       val projectLinkRight1 = ProjectLink(Sequences.nextProjectLinkId, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewRight1, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewRight1), 0, 0, 8L, reversed = false,
         None, 86400L)
       val projectLinkRight2 = ProjectLink(Sequences.nextProjectLinkId, 9999L, 1L, Track.apply(1), Discontinuity.MinorDiscontinuity, 5L, 10L, 0L, 0L, None, None,
-        None, 12348L, KMTKID("12348.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12348L, KMTKID("12348.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewRight2, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewRight2), 0, 0, 8L, reversed = false,
         None, 86400L)
 
       //  Left: After Roundabout (New)
       val projectLinkLeft3 = ProjectLink(Sequences.nextProjectLinkId, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 10L, 15L, 0L, 0L, None, None,
-        None, 12349L, KMTKID("12349.0",0), 0.0, 5.1, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12349L, KMTKID("12349.0", 0), 0.0, 5.1, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft3, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft3), 0, 0, 8L, reversed = false,
         None, 86400L)
       //  Right: After roundabout (Transfer)
       val projectLinkRight3 = ProjectLink(Sequences.nextProjectLinkId, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 10L, 15L, 0L, 5L, None, None,
-        None, 12352L, KMTKID("12352.0",0), 0.0, 5.1, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12352L, KMTKID("12352.0", 0), 0.0, 5.1, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight3, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight3), roadwayId + 2, linearLocationId + 2, 8L, reversed = false,
         None, 86400L, roadwayNumber = Sequences.nextRoadwayNumber)
 
@@ -1192,40 +1192,40 @@ Left     |  ^   Right
 
       //Combined Transfer
       val projectLinkCombined1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferCombined1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined1), roadwayId1, linearLocationId1, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber1)
 
       val projectLinkCombined2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferCombined2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined2), roadwayId2, linearLocationId2, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
 
 
       //Left New
       val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12348L, KMTKID("12348.0",0), 0.0, 3.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12348L, KMTKID("12348.0", 0), 0.0, 3.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft1, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft1), -1000, -1000, 8L, reversed = false,
         None, 86400L)
       val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12349L, KMTKID("12349.0",0), 0.0, 6.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12349L, KMTKID("12349.0", 0), 0.0, 6.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft2, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft2), -1000, -1000, 8L, reversed = false,
         None, 86400L)
 
       //Right Transfer
       val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 10L, 23L, 10L, 23L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 5.0, 18.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 5.0, 18.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight1), roadwayId2, linearLocationId3, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
       val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 23L, 30, 23L, 30L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 7.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 7.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight2), roadwayId3, linearLocationId4, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber3)
 
       //create before transfer data
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 5, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(Some(CalibrationPoint(12345L, 0.0, 0))),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferCombined1, LinkGeomSource.NormalLinkInterface,
@@ -1233,12 +1233,12 @@ Left     |  ^   Right
 
       val roadwayCombined2 = Roadway(roadwayId2, roadwayNumber2, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 5, 18, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined2 = LinearLocation(linearLocationId2, 1, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined2 = LinearLocation(linearLocationId2, 1, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferCombined2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
-      val linearCombined3 = LinearLocation(linearLocationId3, 2, 12346L, KMTKID("12346.0",0), 5.0, 18.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined3 = LinearLocation(linearLocationId3, 2, 12346L, KMTKID("12346.0", 0), 5.0, 18.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferRight1, LinkGeomSource.NormalLinkInterface,
@@ -1246,7 +1246,7 @@ Left     |  ^   Right
 
       val roadwayCombined3 = Roadway(roadwayId3, roadwayNumber3, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Discontinuous, 0, 7, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, KMTKID("12347.0",0), 0.0, 7.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, KMTKID("12347.0", 0), 0.0, 7.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(Some(CalibrationPoint(12347L, 7.0, 30)))),
         geomTransferRight2, LinkGeomSource.NormalLinkInterface,
@@ -1313,44 +1313,44 @@ Left     ^  ^   Right
 
       //Combined Transfer
       val projectLinkCombined1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferCombined1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined1), roadwayId1, linearLocationId1, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber1)
 
       val projectLinkCombined2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferCombined2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined2), roadwayId2, linearLocationId2, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
 
 
       //Left New
       val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12348L, KMTKID("12348.0",0), 0.0, 3.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12348L, KMTKID("12348.0", 0), 0.0, 3.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft1, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft1), -1000, -1000, 8L, reversed = false,
         None, 86400L)
       val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12349L, KMTKID("12349.0",0), 0.0, 6.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12349L, KMTKID("12349.0", 0), 0.0, 6.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft2, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft2), -1000, -1000, 8L, reversed = false,
         None, 86400L)
       val projectLinkLeft3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12350L, KMTKID("12350.0",0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12350L, KMTKID("12350.0", 0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft3, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft3), -1000, -1000, 8L, reversed = false,
         None, 86400L)
 
       //Right Transfer
       val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 10L, 23L, 10L, 23L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 5.0, 18.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 5.0, 18.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight1), roadwayId2, linearLocationId3, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
       val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 23L, 30, 23L, 30L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 7.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 7.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight2), roadwayId3, linearLocationId4, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber3)
 
       //create before transfer data
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 5, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(Some(CalibrationPoint(12345L, 0.0, 0))),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferCombined1, LinkGeomSource.NormalLinkInterface,
@@ -1358,12 +1358,12 @@ Left     ^  ^   Right
 
       val roadwayCombined2 = Roadway(roadwayId2, roadwayNumber2, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 5, 18, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined2 = LinearLocation(linearLocationId2, 1, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined2 = LinearLocation(linearLocationId2, 1, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferCombined2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
-      val linearCombined3 = LinearLocation(linearLocationId3, 2, 12346L, KMTKID("12346.0",0), 5.0, 18.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined3 = LinearLocation(linearLocationId3, 2, 12346L, KMTKID("12346.0", 0), 5.0, 18.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferRight1, LinkGeomSource.NormalLinkInterface,
@@ -1371,7 +1371,7 @@ Left     ^  ^   Right
 
       val roadwayCombined3 = Roadway(roadwayId3, roadwayNumber3, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Discontinuous, 0, 7, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, KMTKID("12347.0",0), 0.0, 7.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, KMTKID("12347.0", 0), 0.0, 7.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(Some(CalibrationPoint(12347L, 7.0, 30)))),
         geomTransferRight2, LinkGeomSource.NormalLinkInterface,
@@ -1435,35 +1435,35 @@ Left     ^  ^   Right
 
       //  Combined Transfer
       val projectLinkCombined1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferCombined1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined1), roadwayId1, linearLocationId1, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber1)
 
       val projectLinkCombined2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferCombined2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined2), roadwayId2, linearLocationId2, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
 
       //  Left New
       val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Discontinuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12348L, KMTKID("12348.0",0), 0.0, 11.18, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12348L, KMTKID("12348.0", 0), 0.0, 11.18, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft1, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft1), -1000, -1000, 8L, reversed = false,
         None, 86400L)
 
       //  Right Transfer
       val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 10L, 23L, 10L, 23L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 5.0, 18.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 5.0, 18.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight1), roadwayId2, linearLocationId3, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
       val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 23L, 30, 23L, 30L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight2), roadwayId3, linearLocationId4, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber3)
 
       //  Create before transfer data
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 5, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(Some(CalibrationPoint(12345L, 0.0, 0))),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferCombined1, LinkGeomSource.NormalLinkInterface,
@@ -1471,12 +1471,12 @@ Left     ^  ^   Right
 
       val roadwayCombined2 = Roadway(roadwayId2, roadwayNumber2, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 5, 18, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined2 = LinearLocation(linearLocationId2, 1, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined2 = LinearLocation(linearLocationId2, 1, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferCombined2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
-      val linearCombined3 = LinearLocation(linearLocationId3, 2, 12346L, KMTKID("12346.0",0), 5.0, 18.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined3 = LinearLocation(linearLocationId3, 2, 12346L, KMTKID("12346.0", 0), 5.0, 18.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferRight1, LinkGeomSource.NormalLinkInterface,
@@ -1484,7 +1484,7 @@ Left     ^  ^   Right
 
       val roadwayCombined3 = Roadway(roadwayId3, roadwayNumber3, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Discontinuous, 0, 7, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, KMTKID("12347.0",0), 0.0, 7.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, KMTKID("12347.0", 0), 0.0, 7.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(Some(CalibrationPoint(12347L, 7.0, 30)))),
         geomTransferRight2, LinkGeomSource.NormalLinkInterface,
@@ -1559,44 +1559,44 @@ Left     ^  ^   Right
 
       //  Combined Transfer
       val projectLinkCombined1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferCombined1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined1), roadwayId1, linearLocationId1, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber1)
 
       val projectLinkCombined2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferCombined2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined2), roadwayId2, linearLocationId2, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
 
 
       //  Left New
       val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12350L, KMTKID("12350.0",0), 0.0, 1.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12350L, KMTKID("12350.0", 0), 0.0, 1.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft1, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft1), -1000, -1000, 8L, reversed = false,
         None, 86400L)
       val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12348L, KMTKID("12348.0",0), 0.0, 10.18, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12348L, KMTKID("12348.0", 0), 0.0, 10.18, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft2, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft2), -1000, -1000, 8L, reversed = false,
         None, 86400L)
 
       //  Right Transfer
       val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 10L, 23L, 10L, 23L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 5.0, 18.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 5.0, 18.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight1), roadwayId2, linearLocationId3, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
       val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 23L, 24L, 23L, 24L, None, None,
-        None, 12349L, KMTKID("12349.0",0), 0.0, 1.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12349L, KMTKID("12349.0", 0), 0.0, 1.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight2), roadwayId3, linearLocationId4, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber3)
       val projectLinkRight3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 24L, 30, 23L, 30L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight3, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight3), roadwayId3, linearLocationId5, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber4)
 
       //  Create before transfer data
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 5, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(Some(CalibrationPoint(12345L, 0.0, 0))),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferCombined1, LinkGeomSource.NormalLinkInterface,
@@ -1604,12 +1604,12 @@ Left     ^  ^   Right
 
       val roadwayCombined2 = Roadway(roadwayId2, roadwayNumber2, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 5, 18, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined2 = LinearLocation(linearLocationId2, 1, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined2 = LinearLocation(linearLocationId2, 1, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferCombined2, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
-      val linearCombined3 = LinearLocation(linearLocationId3, 2, 12346L, KMTKID("12346.0",0), 5.0, 18.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined3 = LinearLocation(linearLocationId3, 2, 12346L, KMTKID("12346.0", 0), 5.0, 18.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferRight1, LinkGeomSource.NormalLinkInterface,
@@ -1617,7 +1617,7 @@ Left     ^  ^   Right
 
       val roadwayCombined3 = Roadway(roadwayId3, roadwayNumber3, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Discontinuous, 0, 7, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, KMTKID("12347.0",0), 0.0, 7.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, KMTKID("12347.0", 0), 0.0, 7.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(Some(CalibrationPoint(12347L, 7.0, 30)))),
         geomTransferRight2, LinkGeomSource.NormalLinkInterface,
@@ -1697,61 +1697,61 @@ Left     ^  ^   Right
 
       //  Combined Transfer
       val projectLinkCombined1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferCombined1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined1), roadwayId1, linearLocationId1, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber1)
 
       val projectLinkCombined2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.EndOfRoad, 20L, 25L, 20L, 25L, None, None,
-        None, 12349L, KMTKID("12349.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12349L, KMTKID("12349.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferCombined2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferCombined2), roadwayId2, linearLocationId6, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
 
       //  Left New
       val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12350L, KMTKID("12350.0",0), 0.0, 20.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12350L, KMTKID("12350.0", 0), 0.0, 20.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft1, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft1), -1000, -1000, 8L, reversed = false,
         None, 86400L)
       val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12351L, KMTKID("12351.0",0), 0.0, 20.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12351L, KMTKID("12351.0", 0), 0.0, 20.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft2, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft2), -1000, -1000, 8L, reversed = false,
         None, 86400L)
       val projectLinkLeft3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12352L, KMTKID("12352.0",0), 0.0, 20.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12352L, KMTKID("12352.0", 0), 0.0, 20.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewLeft3, projectId, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewLeft3), -1000, -1000, 8L, reversed = false,
         None, 86400L)
 
       //  Right Transfer
       val projectLinkRight1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight1, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight1), roadwayId1, linearLocationId2, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber1)
       val projectLinkRight2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 10L, 13, 10L, 13L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 3.0, 6.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 3.0, 6.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight2, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight2), roadwayId1, linearLocationId3, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber1)
       val projectLinkRight3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 13L, 16L, 13L, 16L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 3.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 3.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight3, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight3), roadwayId2, linearLocationId4, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
       val projectLinkRight4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 16L, 20L, 16L, 20L, None, None,
-        None, 12348L, KMTKID("12348.0",0), 0.0, 4.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12348L, KMTKID("12348.0", 0), 0.0, 4.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferRight4, projectId, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferRight4), roadwayId2, linearLocationId5, 8L, reversed = false,
         None, 86400L, roadwayNumber = roadwayNumber2)
 
       //  Create before transfer data
       val roadwayCombined1 =  Roadway(roadwayId1, roadwayNumber1, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.Continuous, 0, 13, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined1 = LinearLocation(linearLocationId1, 1, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(Some(CalibrationPoint(12345L, 0.0, 0))),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferCombined1, LinkGeomSource.NormalLinkInterface,
         roadwayNumber1, Some(DateTime.now().minusDays(1)), None)
-      val linearCombined2 = LinearLocation(linearLocationId2, 2, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined2 = LinearLocation(linearLocationId2, 2, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferRight1, LinkGeomSource.NormalLinkInterface,
         roadwayNumber1, Some(DateTime.now().minusDays(1)), None)
-      val linearCombined3 = LinearLocation(linearLocationId3, 3, 12347L, KMTKID("12347.0",0), 3.0, 6.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined3 = LinearLocation(linearLocationId3, 3, 12347L, KMTKID("12347.0", 0), 3.0, 6.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferRight2, LinkGeomSource.NormalLinkInterface,
@@ -1759,17 +1759,17 @@ Left     ^  ^   Right
 
       val roadwayCombined2 = Roadway(roadwayId2, roadwayNumber2, 9999L,1, RoadType.PublicRoad, Track.apply(0), Discontinuity.EndOfRoad, 13, 25, reversed = false, DateTime.now(), None,
         "tester", Some("rd 9999"), 8L, TerminationCode.NoTermination, DateTime.now(), None)
-      val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, KMTKID("12347.0",0), 0.0, 3.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined4 = LinearLocation(linearLocationId4, 1, 12347L, KMTKID("12347.0", 0), 0.0, 3.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferRight3, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
-      val linearCombined5 = LinearLocation(linearLocationId5, 2, 12348L, KMTKID("12348.0",0), 0.0, 4.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined5 = LinearLocation(linearLocationId5, 2, 12348L, KMTKID("12348.0", 0), 0.0, 4.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(None)),
         geomTransferRight4, LinkGeomSource.NormalLinkInterface,
         roadwayNumber2, Some(DateTime.now().minusDays(1)), None)
-      val linearCombined6 = LinearLocation(linearLocationId6, 3, 12349L, KMTKID("12349.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
+      val linearCombined6 = LinearLocation(linearLocationId6, 3, 12349L, KMTKID("12349.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, 86400L,
         (CalibrationPointsUtils.toCalibrationPointReference(None),
           CalibrationPointsUtils.toCalibrationPointReference(Some(CalibrationPoint(12349L, 5.0, 20)))),
         geomTransferCombined2, LinkGeomSource.NormalLinkInterface,
@@ -1799,27 +1799,27 @@ Left     ^  ^   Right
 
 
       val projectLinkOtherPartComb1 = ProjectLink(plId + 1, 9999L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12344L, KMTKID("12344.0",0), 0.0, 5.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12344L, KMTKID("12344.0", 0), 0.0, 5.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         otherPartGeomTransferComb1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(otherPartGeomTransferComb1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkComb1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferComb1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkComb2 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.MinorDiscontinuity, 10L, 15L, 10L, 15L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferComb2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb2), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkCombNewBefore = ProjectLink(plId + 3, 9999L, 1L, Track.Combined, Discontinuity.MinorDiscontinuity, 0L, 5L, 0L, 5L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 5.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 5.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewComb1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewComb1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkNewLeft = ProjectLink(plId + 4, 9999L, 1L, Track.LeftSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12348L, KMTKID("12348.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12348L, KMTKID("12348.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomLeft1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkNewRight = ProjectLink(plId + 5, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12349L, KMTKID("12349.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12349L, KMTKID("12349.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomRight1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -1842,15 +1842,15 @@ Left     ^  ^   Right
 
 
       val projectLinkNewComb1Before = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0, 0, 0, None, None,
-        None, 12344L, KMTKID("12344.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12344L, KMTKID("12344.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNewComb1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNewComb1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkComb1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferComb1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkComb2 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.EndOfRoad, 5L, 10L, 5L, 10L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferComb2, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -1872,15 +1872,15 @@ Left     ^  ^   Right
 
 
       val projectLinkNotHandledComb1Part1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12344L, KMTKID("12344.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12344L, KMTKID("12344.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNotHandledComb1Part1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledComb1Part1), 0L, 0L, 0L, reversed = false,
         None, 86400L)
       val projectLinkNotHandledComb2Part1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNotHandledComb2Part1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledComb2Part1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkTransferComb1Part2ToPart1 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.EndOfRoad, 0L, 6L, 0L, 6L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 6.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 6.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferComb1Part2ToPart1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1Part2ToPart1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -1902,15 +1902,15 @@ Left     ^  ^   Right
 
 
       val projectLinkNotHandledComb1Part1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None,
-        None, 12344L, KMTKID("12344.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12344L, KMTKID("12344.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNotHandledComb1Part1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledComb1Part1), 0L, 0L, 0L, reversed = false,
         None, 86400L)
       val projectLinkNotHandledComb2Part1 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNotHandledComb2Part1, 0L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNotHandledComb2Part1), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkTransferComb1Part2ToPart1 = ProjectLink(plId + 2, 9999L, 1L, Track.Combined, Discontinuity.EndOfRoad, 0L, 6L, 0L, 6L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 6.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 6.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferComb1Part2ToPart1, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferComb1Part2ToPart1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -1931,11 +1931,11 @@ Left     ^  ^   Right
       val plId = Sequences.nextProjectLinkId
 
       val projectLinkTransferNewFirstLinkPart2 = ProjectLink(plId + 1, 9999L, 2L, Track.Combined, Discontinuity.Continuous, 5L, 10L, 5L, 10L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferNewFirstLinkPart2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferNewFirstLinkPart2), 0L, 0, 0, reversed = false,
         None, 86400L)
       val projectLinkTransferOldFirstLinkPart2 = ProjectLink(plId + 2, 9999L, 2L, Track.Combined, Discontinuity.EndOfRoad, 0L, 5L, 0L, 6L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 5.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomTransferOldFirstLinkPart2, 0L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransferOldFirstLinkPart2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -1959,14 +1959,14 @@ Left     ^  ^   Right
       val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
-        None, 12344L, KMTKID("12344.0",0), 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12344L, KMTKID("12344.0", 0), 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNew1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val geomNew2 = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
 
       val projectLinkNew2 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -1989,14 +1989,14 @@ Left     ^  ^   Right
       val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
-        None, 12344L, KMTKID("12344.0",0), 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12344L, KMTKID("12344.0", 0), 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNew1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val geomNew2 = Seq(Point(0.0, 0.0), Point(0.0, 10.0))
 
       val projectLinkNew2 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12347L, KMTKID("12347.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12347L, KMTKID("12347.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -2026,7 +2026,7 @@ Left     ^  ^   Right
       val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12344L, KMTKID("12344.0",0), 0.0, 9.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12344L, KMTKID("12344.0", 0), 0.0, 9.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -2035,7 +2035,7 @@ Left     ^  ^   Right
         Point(792.515,54.912,95.8469999999943))
 
       val projectLinkNew2 = ProjectLink(plId + 1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 10.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 10.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -2060,21 +2060,21 @@ Left     ^  ^   Right
       val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
-        None, 12344L, KMTKID("12344.0",0), 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12344L, KMTKID("12344.0", 0), 0.0, 10.0, SideCode.AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNew1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val geomNew2 = Seq(Point(0.0, 0.0), Point(5.0, 10.0))
 
       val projectLinkNew2 = ProjectLink(plId + 1, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val geomNew3 = Seq(Point(10.0, 0.0), Point(5.0, 10.0))
 
       val projectLinkNew3 = ProjectLink(plId + 2, 9999L, 1L, Track.LeftSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew3), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -2099,21 +2099,21 @@ Left     ^  ^   Right
       val plId = Sequences.nextProjectLinkId
 
       val projectLinkNew1 = ProjectLink(plId, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
-        None, 12344L, KMTKID("12344.0",0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12344L, KMTKID("12344.0", 0), 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geomNew1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val geomNew2 = Seq(Point(0.0, 0.0), Point(5.0, 10.0))
 
       val projectLinkNew2 = ProjectLink(plId + 1, 9999L, 1L, Track.LeftSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val geomNew3 = Seq(Point(10.0, 0.0), Point(5.0, 10.0))
 
       val projectLinkNew3 = ProjectLink(plId + 2, 9999L, 1L, Track.RightSide, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew3), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -2135,7 +2135,7 @@ Left     ^  ^   Right
       val geom1 = Seq(Point(0.0, 10.0), Point(0.0, 20.0))
 
       val projectLink1 = ProjectLink(1, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
-        None, 12344L, KMTKID("12344.0",0), 0.0, 10.0, sideCode, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12344L, KMTKID("12344.0", 0), 0.0, 10.0, sideCode, (NoCP, NoCP), (NoCP, NoCP),
         geom1, 0L, statusOfExisting, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -2143,12 +2143,12 @@ Left     ^  ^   Right
       val geomNew3 = Seq(Point(0.0, 0.0), Point(0.0, 10.0))
 
       val projectLinkNew2 = ProjectLink(2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val projectLinkNew3 = ProjectLink(3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew3), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -2203,12 +2203,12 @@ Left     ^  ^   Right
       val geom1 = Seq(Point(10.0, 10.0), Point(15.0, 15.0), Point(10.0, 20.0))
 
       val projectLink0 = ProjectLink(0, 9999L, 1L, if (sideCode == TowardsDigitizing) Track.LeftSide else Track.RightSide, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
-        None, 12344L, KMTKID("12344.0",0), 0.0, GeometryUtils.geometryLength(geom0), sideCode, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12344L, KMTKID("12344.0", 0), 0.0, GeometryUtils.geometryLength(geom0), sideCode, (NoCP, NoCP), (NoCP, NoCP),
         geom0, 0L, statusOfExisting, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom0), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val projectLink1 = ProjectLink(1, 9999L, 1L, if (sideCode == TowardsDigitizing) Track.RightSide else Track.LeftSide, Discontinuity.Continuous, 0L, 10L, 0L, 0L, None, None,
-        None, 12344L, KMTKID("12344.0",0), 0.0, GeometryUtils.geometryLength(geom1), sideCode, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12344L, KMTKID("12344.0", 0), 0.0, GeometryUtils.geometryLength(geom1), sideCode, (NoCP, NoCP), (NoCP, NoCP),
         geom1, 0L, statusOfExisting, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
         None, 86400L)
 
@@ -2216,12 +2216,12 @@ Left     ^  ^   Right
       val geomNew3 = Seq(Point(10.0, 0.0), Point(10.0, 10.0))
 
       val projectLinkNew2 = ProjectLink(2, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12345L, KMTKID("12345.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12345L, KMTKID("12345.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, 0, reversed = false,
         None, 86400L)
 
       val projectLinkNew3 = ProjectLink(3, 9999L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12346L, KMTKID("12346.0",0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+        None, 12346L, KMTKID("12346.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
         geomNew3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew3), 0L, 0, 0, reversed = false,
         None, 86400L)
 

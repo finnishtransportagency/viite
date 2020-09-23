@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
@@ -32,10 +33,10 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
   }
 
   test("Test orderProjectLinksTopologyByGeometry When is not dependent on the links order Then the links should be ordered") {
-    val projectLink0 = dummyProjectLink(5, 1, Track.Combined, Continuous,0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12345, 0.0, 0.0, SideCode.TowardsDigitizing, LinkStatus.New, geometry = Seq(Point(20.0, 10.0), Point(28, 15)))
-    val projectLink1 = dummyProjectLink(5, 1, Track.Combined, Continuous,0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12346, 0.0, 0.0, SideCode.AgainstDigitizing, LinkStatus.New, geometry = Seq(Point(42, 14),Point(28, 15)))
-    val projectLink2 = dummyProjectLink(5, 1, Track.Combined, Continuous,0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12347, 0.0, 0.0, SideCode.TowardsDigitizing, LinkStatus.New, geometry = Seq(Point(42, 14), Point(75, 19.2)))
-    val projectLink3 = dummyProjectLink(5, 1, Track.Combined, Continuous, 0L,0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12348, 0.0, 0.0, SideCode.AgainstDigitizing, LinkStatus.New, geometry = Seq(Point(103.0, 15.0),Point(75, 19.2)))
+    val projectLink0 = dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12345, 0.0, KMTKID("0", 0), 0.0, SideCode.TowardsDigitizing, LinkStatus.New, geometry = Seq(Point(20.0, 10.0), Point(28, 15)))
+    val projectLink1 = dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12346, 0.0, KMTKID("0", 0), 0.0, SideCode.AgainstDigitizing, LinkStatus.New, geometry = Seq(Point(42, 14), Point(28, 15)))
+    val projectLink2 = dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12347, 0.0, KMTKID("0", 0), 0.0, SideCode.TowardsDigitizing, LinkStatus.New, geometry = Seq(Point(42, 14), Point(75, 19.2)))
+    val projectLink3 = dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12348, 0.0, KMTKID("0", 0), 0.0, SideCode.AgainstDigitizing, LinkStatus.New, geometry = Seq(Point(103.0, 15.0), Point(75, 19.2)))
     val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
     val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(20.0, 10.0), Point(20.0, 10.0)), list)
     // Test that the result is not dependent on the order of the links
