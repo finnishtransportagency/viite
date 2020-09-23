@@ -46,7 +46,7 @@ pip install requests bs4 boto3 pytz
 
 Peruskäyttötapa, kun haluataan kredentiaalit jollekin Väyläviraston AWS-tilille, on seuraava:
 ```
-python vaylaAssumeRoleAWSCLI.py --username LX181335 --account 500995478191 --role AppAdmin
+python vaylaAssumeRoleAWSCLI.py --username <Your Väylä username> --account 783354560127 --role ViiteAdmin --region eu-west-1
 ```
 Eli ```--username``` -parametrina annetaan Väyläviraston käyttäjätunnus. ```--account``` -parametrina annetaan AWS-tilin numero, jolle ollaan menossa. ```--role``` -parametrina annetaan AWS-tilin roolin nimi, jolle ollaan menossa.
 
@@ -66,8 +66,8 @@ python vaylaAssumeRoleAWSCLI.py --refresh true
 ### Parametrit
 * ```--help``` tulostaa parametrit ja ohjeet.
 * ```--username``` asettaa Väyläviraston käyttäjätunnuksen. Esim. ```LX181335```. Mikäli tätä ei anneta parametrina, se kysytään ajettaessa.
-* ```--account``` asettaa AWS-tilin numeron, jolle halutaan kredentiaalit. Esim. ```500995478191```.
-* ```--role``` asettaa AWS-tilin roolin nimen, jolle ollaan menossa. Esim. ```AppAdmin```.
+* ```--account``` asettaa AWS-tilin numeron, jolle halutaan kredentiaalit. Esim. ```783354560127```.
+* ```--role``` asettaa AWS-tilin roolin nimen, jolle ollaan menossa. Esim. ```ViiteAdmin```.
 * ```--output``` asettaa AWS CLI:n output formaatin. Vaihtoehdot ovat ```json,yaml,text,table```. Oletus on ```json```.
 * ```--region``` asettaa AWS CLI:n regioonan ko. profiilille. Oletus on ```eu-west-1``` eli Irlanti.
 * ```--duration``` asettaa IAM-tilin kredentiaalien keston. Oletus on ```43200``` eli 12h. Tämä on samalla maksimi, jonka AWS hyväksyy.
@@ -83,7 +83,7 @@ python vaylaAssumeRoleAWSCLI.py --refresh true
     ```
 2) Jos haluat nimetä credentials -tiedostoon tulevan sovellustilin profiilin joksikin muuksi kuin tuo oletus ```vaylaapp``` käytä ```--profile``` -parametria:
     ```
-    python vaylaAssumeRoleAWSCLI.py --username LX181335 --account 500995478191 --role AppAdmin --profile appadmin
+    python vaylaAssumeRoleAWSCLI.py --username LX181335 --account 783354560127 --role ViiteAdmin --profile appadmin
     ```
     ja sitten voit tunnin jälkeen refreshata ko. kredentiaalin komennolla:
     ```
