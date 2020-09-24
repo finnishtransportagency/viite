@@ -101,8 +101,8 @@ class ProjectDAOSpec extends FunSuite with Matchers {
       val projectLinkId1 = Sequences.nextProjectLinkId
       val projectLinkId2 = Sequences.nextProjectLinkId
       val projectLinks = Seq(
-        dummyProjectLink(projectLinkId1, projId1, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP),  Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true),
-        dummyProjectLink(projectLinkId2, projId2, linkId2, roadwayIds.last, roadwayNumber1, roadNumber2, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP),  Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true)
+        dummyProjectLink(projectLinkId1, projId1, linkId1, KMTKID(s"$linkId1", 0), roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP),  Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true),
+        dummyProjectLink(projectLinkId2, projId2, linkId2, KMTKID(s"$linkId2", 0), roadwayIds.last, roadwayNumber1, roadNumber2, roadPartNumber1, 0, 100, 0.0, 100.0, None, (NoCP, NoCP),  Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = true)
       )
       projectLinkDAO.create(projectLinks)
       val waitingCountNow1 = projectDAO.fetchAllIdsByLinkId(linkId1).length

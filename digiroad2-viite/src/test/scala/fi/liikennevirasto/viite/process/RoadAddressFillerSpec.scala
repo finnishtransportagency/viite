@@ -38,10 +38,10 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test adjustToTopology When there is any exists a linear location to be adjusted Then should not have any change set") {
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId=KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, Seq(0.0, 10.0)),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId=KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, Seq(10.0, 20.0)),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId=KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, Seq(20.0, 30.0)),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId=KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, Seq(30.0, 40.0))
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, Seq(0.0, 10.0)),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, Seq(10.0, 20.0)),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, Seq(20.0, 30.0)),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, Seq(30.0, 40.0))
     )
 
     val roadLinks = Seq(
@@ -59,11 +59,11 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test adjustToTopology When exists a linear location outside road link geometry Then linear location should be dropped") {
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId=KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, Seq(0.0, 10.0)),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId=KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, Seq(10.0, 20.0)),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId=KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, Seq(20.0, 30.0)),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId=KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, Seq(30.0, 40.0)),
-      dummyLinearLocation(id = 5L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId=KMTKID("125", 0), startMValue = 10.0, endMValue = 20.0, Seq(30.0, 40.0))
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, Seq(0.0, 10.0)),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, Seq(10.0, 20.0)),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, Seq(20.0, 30.0)),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, Seq(30.0, 40.0)),
+      dummyLinearLocation(id = 5L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 10.0, endMValue = 20.0, Seq(30.0, 40.0))
     )
 
     val roadLinks = Seq(
@@ -84,10 +84,10 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test adjustToTopology When exists a linear location with 1 meter longer than road link geometry Then linear location should be cap to road link geometry") {
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId=KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, Seq(0.0, 10.0)),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId=KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, Seq(10.0, 20.0)),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId=KMTKID("124", 0), startMValue = 0.0, endMValue = 11.001, Seq(20.0, 30.0)),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId=KMTKID("125", 0), startMValue = 0.0, endMValue = 11.0, Seq(30.0, 41.0))
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, Seq(0.0, 10.0)),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, Seq(10.0, 20.0)),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 11.001, Seq(20.0, 30.0)),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 11.0, Seq(30.0, 41.0))
     )
 
     val roadLinks = Seq(
@@ -119,10 +119,10 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test adjustToTopology When exists a linear location with 1 meter shorter than road link geometry Then linear location should be extended to road link geometry") {
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId=KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, Seq(0.0, 10.0)),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId=KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, Seq(10.0, 20.0)),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId=KMTKID("124", 0), startMValue = 0.0, endMValue = 8.99, Seq(20.0, 29.99)),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId=KMTKID("125", 0), startMValue = 0.0, endMValue = 9.0, Seq(30.0, 39.0))
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, Seq(0.0, 10.0)),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, Seq(10.0, 20.0)),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 8.99, Seq(20.0, 29.99)),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 9.0, Seq(30.0, 39.0))
     )
 
     val roadLinks = Seq(
@@ -154,10 +154,10 @@ class RoadAddressFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Test adjustToTopology When exists a linear location with adjustments and one linear location floating in same road link Then any adjustment should be applied") {
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId=KMTKID("123", 0), startMValue =  0.0, endMValue = 10.0, Seq(0.0, 10.0)),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId=KMTKID("123", 0), startMValue = 10.0, endMValue = 21.0, Seq(10.0, 21.0)),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId=KMTKID("124", 0), startMValue =  0.0, endMValue = 10.0, Seq(20.0, 30.0)),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId=KMTKID("125", 0), startMValue =  0.0, endMValue = 10.0, Seq(30.0, 40.0))
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue =  0.0, endMValue = 10.0, Seq(0.0, 10.0)),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 21.0, Seq(10.0, 21.0)),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue =  0.0, endMValue = 10.0, Seq(20.0, 30.0)),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue =  0.0, endMValue = 10.0, Seq(30.0, 40.0))
     )
 
     val roadLinks = Seq(

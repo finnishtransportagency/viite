@@ -65,7 +65,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0))
       val linkSource = LinkGeomSource.NormalLinkInterface
       val roadwayNumber = 200l
-      val linearLocation = LinearLocation(id, orderNumber, linkId, startMValue, endMValue, sideCode, adjustedTimestamp,
+      val linearLocation = LinearLocation(id, orderNumber, linkId, KMTKID(s"$linkId", 0), startMValue, endMValue, sideCode, adjustedTimestamp,
         calibrationPoints, geometry, linkSource, roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation))
       val roadwayPointId = roadwayPointDAO.create(linearLocation.roadwayNumber, linearLocation.startCalibrationPoint.addrM.get, "test")
