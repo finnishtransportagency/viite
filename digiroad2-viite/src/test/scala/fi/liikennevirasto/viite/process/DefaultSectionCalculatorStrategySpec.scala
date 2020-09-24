@@ -57,35 +57,35 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
     val geom8 = Seq(Point(10.0, 10.0), Point(0.0, 20.0))
 
     val projectLink1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 1L, KMTKID("1.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 1L, KMTKID("1", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom1, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom1), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 2L, KMTKID("2.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 2L, KMTKID("2", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom2, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom2), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 3L, KMTKID("3.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 3L, KMTKID("3", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom3, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom3), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink4 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 4L, KMTKID("4.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 4L, KMTKID("4", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom4, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom4), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink5 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 5L, KMTKID("5.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 5L, KMTKID("5", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom5, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom5), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink6 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 6L, KMTKID("6.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 6L, KMTKID("6", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom6, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom6), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink7 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 7L, KMTKID("7.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 7L, KMTKID("7", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom7, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom7), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLink8 = ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-      None, 8L, KMTKID("8.0", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+      None, 8L, KMTKID("8", 0), 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
       geom8, 0L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geom8), 0L, 0, 0, reversed = false,
       None, 86400L)
     Seq(projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7, projectLink8).sortBy(_.linkId)
