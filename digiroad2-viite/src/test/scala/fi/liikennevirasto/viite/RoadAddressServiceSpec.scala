@@ -844,14 +844,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val terminated = Termination(Seq())
       val unchanged = Unchanged(Seq(
         (
-          dummyRoadAddress(roadwayNumber1, 99, 1, 0, 5, Some(DateTime.now()),None, 12345, KMTKID("12345",0), 0 , 5, LinkGeomSource.NormalLinkInterface, geom1),
+          dummyRoadAddress(roadwayNumber1, 99, 1, 0, 5, Some(DateTime.now()), None, 12345, KMTKID("12345", 0), 0, 5, LinkGeomSource.NormalLinkInterface, geom1),
           beforeDualPoint
         )
       )
       )
       val transferred = Transferred(Seq(
         (
-          dummyRoadAddress(roadwayNumber1, 99, 1, 5, 20, Some(DateTime.now()),None, 12346, KMTKID("12346",0), 0 , 15, LinkGeomSource.NormalLinkInterface, geom2),
+          dummyRoadAddress(roadwayNumber1, 99, 1, 5, 20, Some(DateTime.now()), None, 12346, KMTKID("12346", 0), 0, 15, LinkGeomSource.NormalLinkInterface, geom2),
           afterDualPoint
         )
       )
