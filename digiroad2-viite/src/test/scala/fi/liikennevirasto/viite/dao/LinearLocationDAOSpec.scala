@@ -22,7 +22,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
   val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
 
-  val testLinearLocation = LinearLocation(NewIdValue, 1, 1000l, KMTKID("1000",0), 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
+  val testLinearLocation = LinearLocation(NewIdValue, 1, 1000l, KMTKID("1000", 0), 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
     (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
 
   def runWithRollback(f: => Unit): Unit = {
