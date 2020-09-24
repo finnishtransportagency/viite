@@ -699,14 +699,14 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val linearLocationId = Sequences.nextLinearLocationId
 
       val projectLink0 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(idRoad0, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 9L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad0, KMTKID(s"$idRoad0",0), 0.0, 0.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad0, 0.0, 0L)), None),
+        0L, 9L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad0, KMTKID(s"$idRoad0", 0), 0.0, 0.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad0, 0.0, 0L)), None),
         Seq(Point(20.0, 10.0), Point(28, 10)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id, roadwayNumber = roadwayNumber, roadwayId = roadwayId, linearLocationId = linearLocationId)
       val projectLink1 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(idRoad1, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        9L, 19L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad1, KMTKID(s"$idRoad1",0), 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None),
-        Seq(Point(28, 10), Point(28, 19)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id, roadwayNumber = roadwayNumber+1, roadwayId = roadwayId+1, linearLocationId = linearLocationId+1)
+        9L, 19L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad1, KMTKID(s"$idRoad1", 0), 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None),
+        Seq(Point(28, 10), Point(28, 19)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id, roadwayNumber = roadwayNumber + 1, roadwayId = roadwayId + 1, linearLocationId = linearLocationId + 1)
       val projectLink2 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(idRoad2, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        19L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad2, KMTKID(s"$idRoad2",0), 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(idRoad2, 11.0, 30L))),
-        Seq(Point(28, 19), Point(28, 30)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id, roadwayNumber = roadwayNumber+2, roadwayId = roadwayId+2, linearLocationId = linearLocationId+2)
+        19L, 30L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), idRoad2, KMTKID(s"$idRoad2", 0), 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(idRoad2, 11.0, 30L))),
+        Seq(Point(28, 19), Point(28, 30)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0)).copy(projectId = rap.id, roadwayNumber = roadwayNumber + 2, roadwayId = roadwayId + 2, linearLocationId = linearLocationId + 2)
 
       val (linearCombined1, rwComb1): (LinearLocation, Roadway) = Seq(projectLink0).map(toRoadwayAndLinearLocation).head
       val (linearCombined2, rwComb2): (LinearLocation, Roadway) = Seq(projectLink1).map(toRoadwayAndLinearLocation).head
