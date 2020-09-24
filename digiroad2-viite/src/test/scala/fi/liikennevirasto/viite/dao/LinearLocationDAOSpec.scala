@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, Si
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{Point, asset}
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
@@ -21,7 +22,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
   val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
 
-  val testLinearLocation = LinearLocation(NewIdValue, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
+  val testLinearLocation = LinearLocation(NewIdValue, 1, 1000l, KMTKID("1000", 0), 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
     (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
 
   def runWithRollback(f: => Unit): Unit = {
@@ -64,7 +65,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0))
       val linkSource = LinkGeomSource.NormalLinkInterface
       val roadwayNumber = 200l
-      val linearLocation = LinearLocation(id, orderNumber, linkId, startMValue, endMValue, sideCode, adjustedTimestamp,
+      val linearLocation = LinearLocation(id, orderNumber, linkId, KMTKID(s"$linkId", 0), startMValue, endMValue, sideCode, adjustedTimestamp,
         calibrationPoints, geometry, linkSource, roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation))
       val roadwayPointId = roadwayPointDAO.create(linearLocation.roadwayNumber, linearLocation.startCalibrationPoint.addrM.get, "test")

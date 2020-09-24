@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
@@ -27,15 +28,15 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
   private def generateProjectLink(id: Long, geometry: Seq[Point], track: Track = Track.Combined) = {
     //TODO the road address now have the linear location id and as been setted to 1L
     toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 1L, 5, 1, RoadType.Unknown, track, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None),
+      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), id, KMTKID(s"$id", 0), 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None),
       geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
   }
 
   test("Test orderProjectLinksTopologyByGeometry When is not dependent on the links order Then the links should be ordered") {
-    val projectLink0 = dummyProjectLink(5, 1, Track.Combined, Continuous,0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12345, 0.0, 0.0, SideCode.TowardsDigitizing, LinkStatus.New, geometry = Seq(Point(20.0, 10.0), Point(28, 15)))
-    val projectLink1 = dummyProjectLink(5, 1, Track.Combined, Continuous,0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12346, 0.0, 0.0, SideCode.AgainstDigitizing, LinkStatus.New, geometry = Seq(Point(42, 14),Point(28, 15)))
-    val projectLink2 = dummyProjectLink(5, 1, Track.Combined, Continuous,0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12347, 0.0, 0.0, SideCode.TowardsDigitizing, LinkStatus.New, geometry = Seq(Point(42, 14), Point(75, 19.2)))
-    val projectLink3 = dummyProjectLink(5, 1, Track.Combined, Continuous, 0L,0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12348, 0.0, 0.0, SideCode.AgainstDigitizing, LinkStatus.New, geometry = Seq(Point(103.0, 15.0),Point(75, 19.2)))
+    val projectLink0 = dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12345, KMTKID("12345", 0), 0.0, 0.0, SideCode.TowardsDigitizing, LinkStatus.New, geometry = Seq(Point(20.0, 10.0), Point(28, 15)))
+    val projectLink1 = dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12346, KMTKID("12346", 0), 0.0, 0.0, SideCode.AgainstDigitizing, LinkStatus.New, geometry = Seq(Point(42, 14), Point(28, 15)))
+    val projectLink2 = dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12347, KMTKID("12347", 0), 0.0, 0.0, SideCode.TowardsDigitizing, LinkStatus.New, geometry = Seq(Point(42, 14), Point(75, 19.2)))
+    val projectLink3 = dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), 12348, KMTKID("12348", 0), 0.0, 0.0, SideCode.AgainstDigitizing, LinkStatus.New, geometry = Seq(Point(103.0, 15.0), Point(75, 19.2)))
     val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
     val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(20.0, 10.0), Point(20.0, 10.0)), list)
     // Test that the result is not dependent on the order of the links
@@ -54,8 +55,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
-    val list = geom.zip(0 to 3).map{ case (g, id) =>
-      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
+    val list = geom.zip(0 to 3).map { case (g, id) =>
+      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, KMTKID(s"$id", 0), 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
     }
     val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(100,110), Point(100,110)), list)
     ordered.map(_.linkId) should be (Seq(0L, 1L, 2L, 3L))
@@ -75,8 +76,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
-    val list = geom.zip(0 to 7).map{ case (g, id) =>
-      dummyProjectLink(5, 1,Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
+    val list = geom.zip(0 to 7).map { case (g, id) =>
+      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, KMTKID(s"$id", 0), 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
     }
     TrackSectionOrder.isRoundabout(list) should be (true)
     TrackSectionOrder.isRoundabout(list.init) should be (false)
@@ -102,8 +103,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
-    val list = geom.zip(0 to 7).map{ case (g, id) =>
-      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
+    val list = geom.zip(0 to 7).map { case (g, id) =>
+      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, KMTKID(s"$id", 0), 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
     }
     TrackSectionOrder.isRoundabout(list) should be (true)
     intercept[InvalidGeometryException] {
@@ -126,8 +127,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
-    val list = geom.zip(0 to 7).map{ case (g, id) =>
-      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
+    val list = geom.zip(0 to 7).map { case (g, id) =>
+      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, KMTKID(s"$id", 0), 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
     }
     TrackSectionOrder.isRoundabout(list) should be (true)
     TrackSectionOrder.isRoundabout(list.init) should be (false)
@@ -150,8 +151,8 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
         g.reverse
       else g
     )
-    val list = geom.zip(0 to 7).map{ case (g, id) =>
-      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
+    val list = geom.zip(0 to 7).map { case (g, id) =>
+      dummyProjectLink(5, 1, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), id, KMTKID(s"$id", 0), 0.0, 0.0, SideCode.Unknown, LinkStatus.New, geometry = g)
     }
     list.permutations.forall(l => !TrackSectionOrder.isRoundabout(l)) should be (true)
   }
