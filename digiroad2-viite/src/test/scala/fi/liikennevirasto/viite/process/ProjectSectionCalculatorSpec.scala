@@ -372,11 +372,11 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     runWithRollback {
       val geometry = Seq(Point(20.0, 10.0), Point(28, 15))
       val projectLink0T = toProjectLink(rap, LinkStatus.New)(RoadAddress(0L, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0L,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0L, KMTKID("0", 0),
         0.0, GeometryUtils.geometryLength(geometry), SideCode.TowardsDigitizing, 0, (None, None),
         geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink0A = toProjectLink(rap, LinkStatus.New)(RoadAddress(0L, 0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0L,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0L, KMTKID("0", 0),
         0.0, GeometryUtils.geometryLength(geometry), SideCode.AgainstDigitizing, 0, (None, None),
         geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
@@ -394,10 +394,10 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   test("Test assignMValues When giving links without opposite track Then exception is thrown and links are returned as-is") {
     runWithRollback {
       val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(0L, 0, 5, 1, RoadType.Unknown, Track.RightSide, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None),
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0L, KMTKID("0", 0), 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None),
         Seq(Point(20.0, 10.0), Point(28, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
       val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(1L, 0, 5, 1, RoadType.Unknown, Track.RightSide, Continuous,
-        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 1L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None),
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 1L, KMTKID("1", 0), 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None),
         Seq(Point(28.0, 15.0), Point(38, 15)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
 
       ProjectSectionCalculator.assignMValues(Seq(projectLink0, projectLink1))

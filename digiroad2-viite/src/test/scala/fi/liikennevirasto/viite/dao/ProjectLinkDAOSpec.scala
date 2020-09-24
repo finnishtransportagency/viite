@@ -72,8 +72,8 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
   }
 
   private def dummyLinearLocations = Seq(
-    dummyLinearLocation(roadwayNumber = roadwayNumber1, orderNumber = 1L, linkId = linkId1, startMValue = 0.0, endMValue = 10.0),
-    dummyLinearLocation(roadwayNumber = roadwayNumber2, orderNumber = 1L, linkId = linkId2, startMValue = 0.0, endMValue = 10.0))
+    dummyLinearLocation(roadwayNumber = roadwayNumber1, orderNumber = 1L, linkId = linkId1, KMTKID(s"$linkId1", 0), startMValue = 0.0, endMValue = 10.0),
+    dummyLinearLocation(roadwayNumber = roadwayNumber2, orderNumber = 1L, linkId = linkId2, KMTKID(s"$linkId2", 0), startMValue = 0.0, endMValue = 10.0))
 
   private def splittedDummyRoadways: Seq[Roadway] = {
     Seq(Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
@@ -792,7 +792,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  val dummyProjectLink2 = dummyProjectLink(0, 0, 0, 0, 0, 0, 0, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
+  val dummyProjectLink2 = dummyProjectLink(0, 0, 0, KMTKID("0", 0),0, 0, 0, 0, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
 
   test("Test ProjectLink.lastSegmentDirection When / towards digitizing and not reversed Then correct vector") {
     val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)))
