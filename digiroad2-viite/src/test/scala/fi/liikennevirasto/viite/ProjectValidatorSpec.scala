@@ -1885,7 +1885,7 @@ Left|      |Right
       val linkId = 1817196L
 
       val ra = Seq(
-        RoadAddress(12345, 1, 27L, 20L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 6109L, 6559L, Some(DateTime.parse("1901-01-01")), None, Some("User"), linkId, 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None),
+        RoadAddress(12345, 1, 27L, 20L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 6109L, 6559L, Some(DateTime.parse("1901-01-01")), None, Some("User"), linkId, KMTKID(s"$linkId", 0), 0, 10, AgainstDigitizing, DateTime.now().getMillis, (None, None),
           Seq(Point(0.0, 40.0), Point(0.0, 50.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None)
       )
 

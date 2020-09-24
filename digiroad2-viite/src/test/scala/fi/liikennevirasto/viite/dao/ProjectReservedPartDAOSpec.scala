@@ -480,7 +480,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       )
 
       val linearLocations = (roadways ++ outsideRoadways).zipWithIndex.map {
-        case (roadway, i) => LinearLocation(NewIdValue, 1, linkId1 + i, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, roadway.roadwayNumber)
+        case (roadway, i) => LinearLocation(NewIdValue, 1, linkId1 + i, KMTKID(s"$linkId1" + i, 0), 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, roadway.roadwayNumber)
       }
 
       linearLocationDAO.create(linearLocations)
