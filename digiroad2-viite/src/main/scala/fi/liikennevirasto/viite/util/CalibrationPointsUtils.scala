@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.util
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
+import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.{BaseCalibrationPoint, UserDefinedCalibrationPoint}
 import fi.liikennevirasto.viite.dao._
@@ -108,6 +109,31 @@ object CalibrationPointsUtils {
           Some(x.typeCode))
       case _ => CalibrationPointReference.None
     }
+  }
+
+  def updateCalibrationPointAddress(oldRwPoint: Long, newRwPoint: Long, username: String): Unit = {
+
+    // User is allowed to update only user defined and junction point calibration points.
+    // If the CalibrationPoint is RoadAddress calibration point, throw exception
+    val oldCPs = CalibrationPointDAO.fetchByRoadwayPointId(oldRwPoint)
+    if (oldCPs.exists(_.typeCode == CalibrationPointType.RoadAddressCP)) {
+      logger.error(s"Updating the address of the road address calibration point is prohibited." + oldCPs.map( oldCP =>
+        s" (roadwayNumber: ${oldCP.roadwayNumber}, address: ${oldCP.addrM}, linkId: ${oldCP.linkId}, startEnd: ${oldCP.startOrEnd.value})"
+      ))
+      throw new Exception(s"Tieosoitteen kalibrointipisteen osoitteen muokkaus ei ole sallittu.")
+    }
+
+    CalibrationPointDAO.expireById(oldCPs.map(_.id))
+    oldCPs.foreach(oldCP => {
+      val newCP = oldCP.copy(id = NewIdValue, roadwayPointId = newRwPoint, createdBy = username)
+      val existingCPInPoint = CalibrationPointDAO.fetchByRoadwayPointId(newRwPoint)
+      if (existingCPInPoint.nonEmpty && existingCPInPoint.length > 1) {
+        logger.error(s"Cannot update calibration point ${oldCP.id} to a new address. There is already more than one calibration points at roadway point $newRwPoint.")
+        throw new Exception(s"Kalibrointipisteen osoitteen muokkaus epäonnistui.")
+      }
+      CalibrationPointDAO.create(newCP.roadwayPointId, newCP.linkId, newCP.startOrEnd, newCP.typeCode, newCP.createdBy)
+      logger.debug(s"Updated calibration point from roadway point $oldRwPoint to $newRwPoint.")
+    })
   }
 
 }

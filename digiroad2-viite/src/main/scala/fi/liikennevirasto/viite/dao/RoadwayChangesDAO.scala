@@ -392,7 +392,7 @@ class RoadwayChangesDAO {
           val news = ProjectDeltaCalculator.partition(delta.newRoads)
           news.foreach(roadwaySection => addToBatch(roadwaySection, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
 
-          val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping)
+          val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping, terminated.originalSections.values.toSeq ++ news)
 
           val transferred = ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated.originalSections.values.toSeq ++ news)
 

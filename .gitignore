@@ -18,3 +18,6 @@ digiroad2.boot.log
 .project
 .settings/
 WebContent/
+/aws/local-dev/postgis/data/
+revision.properties
+bonecp.properties

@@ -124,38 +124,6 @@ trait TrackCalculatorStrategy {
       assignValues(right, startM, endM, ProjectSectionMValueCalculator.calculateAddressingFactors(right), userDefinedCalibrationPoint))
   }
 
-  /**
-    * Return the calculated values of the start and end addresses of both left and right links depending of the link status:
-    *
-    * L: Transfer, R: Transfer OR L: Unchanged, R: Unchanged =>  return the Average between two address measures.
-    * L: Unchanged, R: WTV OR L: Transfer, R: WTV => Start and end of the left links
-    * L: WTV, R: Unchanged OR L: WTV, R: Transfer => Start and end of the right links
-    * None of the above => if it exists return the address measure of the user defined calibration point, if not then return the Average between two address measures.
-    *
-    * @param leftLink
-    * @param rightLink
-    * @param userCalibrationPoint
-    * @return
-    */
-  protected def getFixedAddress(leftLink: ProjectLink, rightLink: ProjectLink,
-                                userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): (Long, Long) = {
-
-    val reversed = rightLink.reversed || leftLink.reversed
-
-    (leftLink.status, rightLink.status) match {
-      case (LinkStatus.Transfer, LinkStatus.Transfer) | (LinkStatus.UnChanged, LinkStatus.UnChanged) =>
-        (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
-      case (LinkStatus.UnChanged, _) | (LinkStatus.Transfer, _) =>
-        (leftLink.startAddrMValue, leftLink.endAddrMValue)
-      case (_, LinkStatus.UnChanged) | (_, LinkStatus.Transfer) =>
-        (rightLink.startAddrMValue, rightLink.endAddrMValue)
-      case _ =>
-        userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
-          (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
-        )
-    }
-  }
-
   protected def setLastEndAddrMValue(projectLinks: Seq[ProjectLink], endAddressMValue: Long): Seq[ProjectLink] = {
     if (projectLinks.last.status != LinkStatus.NotHandled)
       projectLinks.init :+ projectLinks.last.copy(endAddrMValue = endAddressMValue)
@@ -168,30 +136,52 @@ trait TrackCalculatorStrategy {
     if (leftProjectLinks.isEmpty || rightProjectLinks.isEmpty)
       throw new MissingTrackException(s"Missing track, R: ${rightProjectLinks.size}, L: ${leftProjectLinks.size}")
 
+    // lets see how it works without this..
     val leftRoadwayNumber = leftProjectLinks.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val continuousLeftProjectLinks = leftProjectLinks.takeWhile(pl => pl.roadwayNumber == leftRoadwayNumber)
+    val restLeft = leftProjectLinks.drop(continuousLeftProjectLinks.size) ++ restLeftProjectLinks
 
     val rightRoadwayNumber = rightProjectLinks.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
     val continuousRightProjectLinks = rightProjectLinks.takeWhile(pl => pl.roadwayNumber == rightRoadwayNumber)
+    val restRight = rightProjectLinks.drop(continuousRightProjectLinks.size) ++ restRightProjectLinks
 
-    // Find a calibration point annexed to the projectLink Id
-    val availableCalibrationPoint = calibrationPoints.get(continuousRightProjectLinks.last.id).orElse(calibrationPoints.get(continuousLeftProjectLinks.last.id))
+    val (adjustedLeft, restAdjustedLeft) = if (continuousLeftProjectLinks.last.isSplit) {
+      val splitAddrM = continuousRightProjectLinks.last.endAddrMValue
+      (continuousLeftProjectLinks.init :+ continuousLeftProjectLinks.last.copy(endAddrMValue = splitAddrM),
+        restLeft.headOption match {
+          case None => Seq.empty
+          case Some(pl) => pl.copy(startAddrMValue = splitAddrM) +: restLeft.tail
+        })
+    } else (continuousLeftProjectLinks, restLeft)
 
-    val startSectionAddress = startAddress.getOrElse(getFixedAddress(continuousLeftProjectLinks.head, continuousRightProjectLinks.head)._1)
-    val estimatedEnd = getFixedAddress(continuousLeftProjectLinks.last, continuousRightProjectLinks.last, availableCalibrationPoint)._2
+    val (adjustedRight, restAdjustedRight) = if (continuousRightProjectLinks.last.isSplit) {
+      val splitAddrM = continuousLeftProjectLinks.last.endAddrMValue
+      (continuousRightProjectLinks.init :+ continuousRightProjectLinks.last.copy(endAddrMValue = splitAddrM),
+        restRight.headOption match {
+          case None => Seq.empty
+          case Some(pl) => pl.copy(startAddrMValue = splitAddrM) +: restRight.tail
+        })
+    } else (continuousRightProjectLinks, restRight)
 
-    val (adjustedLeft, adjustedRight) = adjustTwoTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
+    //  Find a calibration point annexed to the projectLink Id
+    val availableCalibrationPoint = calibrationPoints.get(adjustedRight.last.id).orElse(calibrationPoints.get(adjustedLeft.last.id))
 
-    //The getFixedAddress method have to be called twice because when we do it the first time we are getting the estimated end measure, that will be used for the calculation of
-    // NEW sections. For example if in one of the sides we have a TRANSFER section it will use the value after recalculate all the existing sections with the original length.
+    val startSectionAddress = startAddress.getOrElse(getFixedAddress(adjustedLeft.head, adjustedRight.head)._1)
+    val estimatedEnd = getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint)._2
+
+    val (completedAdjustedLeft, completedAdjustedRight) = adjustTwoTracks(adjustedRight, adjustedLeft, startSectionAddress, estimatedEnd, calibrationPoints)
+
+    //  The getFixedAddress method have to be called twice because when we do it the first time we are getting the estimated end measure, that will be used for the calculation of
+    //  NEW sections. For example if in one of the sides we have a TRANSFER section it will use the value after recalculate all the existing sections with the original length.
     val endSectionAddress = getFixedAddress(adjustedLeft.last, adjustedRight.last, availableCalibrationPoint)._2
 
     TrackCalculatorResult(
-      setLastEndAddrMValue(adjustedLeft, endSectionAddress),
-      setLastEndAddrMValue(adjustedRight, endSectionAddress),
+      setLastEndAddrMValue(completedAdjustedLeft, endSectionAddress),
+      setLastEndAddrMValue(completedAdjustedRight, endSectionAddress),
       startSectionAddress, endSectionAddress,
-      leftProjectLinks.drop(continuousLeftProjectLinks.size) ++ restLeftProjectLinks,
-      rightProjectLinks.drop(continuousRightProjectLinks.size) ++ restRightProjectLinks)
+      restAdjustedLeft,
+      restAdjustedRight
+    )
   }
 
   /**
@@ -214,6 +204,38 @@ trait TrackCalculatorStrategy {
     } else {
       val continuousProjectLinks = seq.takeWhile(pl => pl.status == endProjectLink.status)
       (continuousProjectLinks, seq.drop(continuousProjectLinks.size))
+    }
+  }
+
+  /**
+    * Return the calculated values of the start and end addresses of both left and right links depending of the link status:
+    *
+    * L: Transfer, R: Transfer OR L: Unchanged, R: Unchanged =>  return the Average between two address measures.
+    * L: Unchanged, R: WTV OR L: Transfer, R: WTV => Start and end of the left links
+    * L: WTV, R: Unchanged OR L: WTV, R: Transfer => Start and end of the right links
+    * None of the above => if it exists return the address measure of the user defined calibration point, if not then return the Average between two address measures.
+    *
+    * @param leftLink
+    * @param rightLink
+    * @param userCalibrationPoint
+    * @return
+    */
+  def getFixedAddress(leftLink: ProjectLink, rightLink: ProjectLink,
+                      userCalibrationPoint: Option[UserDefinedCalibrationPoint] = None): (Long, Long) = {
+
+    val reversed = rightLink.reversed || leftLink.reversed
+
+    (leftLink.status, rightLink.status) match {
+      case (LinkStatus.Transfer, LinkStatus.Transfer) | (LinkStatus.UnChanged, LinkStatus.UnChanged) =>
+        (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
+      case (LinkStatus.UnChanged, _) | (LinkStatus.Transfer, _) =>
+        (leftLink.startAddrMValue, leftLink.endAddrMValue)
+      case (_, LinkStatus.UnChanged) | (_, LinkStatus.Transfer) =>
+        (rightLink.startAddrMValue, rightLink.endAddrMValue)
+      case _ =>
+        userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
+          (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
+        )
     }
   }
 
