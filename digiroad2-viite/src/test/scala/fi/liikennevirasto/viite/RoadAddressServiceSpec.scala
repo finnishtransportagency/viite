@@ -386,11 +386,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val linkId = 123L
 
     val towardsDigitizingLinearLocation = List(
-      dummyLinearLocationWithGeometry(-1000L, roadwayNumber = 1L, orderNumber = 1L, linkId = linkId, startMValue = 0.0, endMValue = 10.0, SideCode.TowardsDigitizing , Seq(Point(0.0, 0.0), Point(1L + .5, 0.0)))
+      dummyLinearLocationWithGeometry(-1000L, roadwayNumber = 1L, orderNumber = 1L, linkId = linkId, kmtkId = KMTKID(s"$linkId", 0), startMValue = 0.0, endMValue = 10.0, SideCode.TowardsDigitizing, Seq(Point(0.0, 0.0), Point(1L + .5, 0.0)))
     )
 
     val againstDigitizingLinearLocation = List(
-      dummyLinearLocationWithGeometry(-1000L, roadwayNumber = 1L, orderNumber = 1L, linkId = linkId, startMValue = 0.0, endMValue = 10.0, SideCode.AgainstDigitizing , Seq(Point(0.0, 0.0), Point(1L + .5, 0.0)))
+      dummyLinearLocationWithGeometry(-1000L, roadwayNumber = 1L, orderNumber = 1L, linkId = linkId, kmtkId = KMTKID(s"$linkId", 0), startMValue = 0.0, endMValue = 10.0, SideCode.AgainstDigitizing, Seq(Point(0.0, 0.0), Point(1L + .5, 0.0)))
     )
 
     val roadways = Seq(
