@@ -1,4 +1,4 @@
-module.exports = function(grunt) {
+module.exports = function (grunt) {
   var serveStatic = require('serve-static');
   var serveIndex = require('serve-index');
   var path = require('path');
@@ -90,7 +90,7 @@ module.exports = function(grunt) {
         options: {
           port: 9003,
           base: ['dist', '.', 'viite-UI'],
-          middleware: function(connect, opts) {
+          middleware: function (connect, opts) {
             var _staticPath = path.resolve(opts.base[2]);
             var config = [
               // Serve static files.
@@ -115,15 +115,15 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-              context: '/viite/api-docs',
-              host: '127.0.0.1',
-              port: '8080',
-              https: false,
-              changeOrigin: true,
-              xforward: false,
-              rewrite: {
-                  '^/viite/api-docs': '/api-docs'
-              }
+            context: '/viite/api-docs',
+            host: '127.0.0.1',
+            port: '8080',
+            https: false,
+            changeOrigin: true,
+            xforward: false,
+            rewrite: {
+              '^/viite/api-docs': '/api-docs'
+            }
           },
           {
             context: '/arcgis',
@@ -136,21 +136,25 @@ module.exports = function(grunt) {
           },
           {
             context: '/rasteripalvelu',
-            host: 'oag.vayla.fi',
-            port: '80',
+            host: 'localhost',
+            port: '9180',
             https: false,
-            changeOrigin: true,
-            xforward: false
-          },
-          {
-            context: '/wmts',
-            host: 'oag.liikennevirasto.fi',
-            port: '80',
-            https: false,
+            secure: false,
             changeOrigin: true,
             xforward: false,
             rewrite: {
-              '^/wmts': '/rasteripalvelu-mml/wmts'
+              '^/rasteripalvelu': '/viite/rasteripalvelu'
+            }
+          },
+          {
+            context: '/wmts',
+            host: 'localhost',
+            port: '9180',
+            https: false,
+            secure: false,
+            xforward: false,
+            rewrite: {
+              '^/wmts': '/viite/wmts'
             }
           },
           {
@@ -191,7 +195,7 @@ module.exports = function(grunt) {
       }
     },
     eslint: {
-      src: ['Gruntfile.js', 'viite-UI/test/**/*.js', 'viite-UI/src/**/*.js', 'viite-UI/test_data/*.js', 'viite-UI/src/' ]
+      src: ['gruntfile.js', 'viite-UI/test/**/*.js', 'viite-UI/src/map/*.js', 'viite-UI/src/modalconfirm/*.js', 'viite-UI/src/model/*.js', 'viite-UI/src/utils/*.js', 'viite-UI/src/view/*.js', 'viite-UI/test_data/*.js', 'viite-UI/src/']
     },
     mocha: {
       viite_unit: {
@@ -225,8 +229,7 @@ module.exports = function(grunt) {
         }
       }
     },
-    exec: {
-    }
+    exec: {}
   });
 
   grunt.loadNpmTasks("grunt-terser");
@@ -253,12 +256,12 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', ['properties', 'eslint', 'env:production', 'exec:prepare_openlayers', 'exec:viite_build_openlayers', 'configureProxies:viite', 'preprocess:production', 'connect:viite', 'mocha:viite_unit', 'clean', 'less:viiteprod', 'concat', 'terser', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:'+target, 'preprocess:production', 'less:viiteprod', 'concat', 'terser', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:viiteprod', 'concat', 'terser', 'cachebreaker', 'save_deploy_info']);
 
   grunt.registerTask('unit-test', ['properties', 'eslint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:viite_unit']);
 
   grunt.registerTask('save_deploy_info',
-    function() {
+    function () {
       var options = this.options({
         file: 'revision.properties'
       });

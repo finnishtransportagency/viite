@@ -1,5 +1,5 @@
-(function(application) {
-  application.start = function(customBackend, withTileMaps) {
+(function (application) {
+  application.start = function (customBackend, withTileMaps) {
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
@@ -21,7 +21,7 @@
       projectCollection: projectCollection,
       selectedLinkProperty: selectedLinkProperty,
       linkPropertiesModel: linkPropertiesModel,
-      selectedProjectLinkProperty : selectedProjectLinkProperty,
+      selectedProjectLinkProperty: selectedProjectLinkProperty,
       nodeCollection: nodeCollection,
       selectedNodesAndJunctions: selectedNodesAndJunctions
     };
@@ -47,23 +47,23 @@
 
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
-        startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection,projectListModel);
+      startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel);
     });
   };
 
-    var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel) {
+  var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel) {
     setupProjections();
       var url = 'rasteripalvelu/wmts/maasto?';
       fetch(url + 'service=wmts&request=GetCapabilities').then(function(response) {
       return response.text();
-    }).then(function(arcConfig) {
+    }).then(function (arcConfig) {
       var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable, roadNameCollection, projectListModel);
       new URLRouter(map, backend, models);
       eventbus.trigger('application:initialized');
     });
   };
 
-  var indicatorOverlay = function() {
+  var indicatorOverlay = function () {
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
@@ -74,7 +74,7 @@
     }
   });
 
-  var createOpenLayersMap = function(startupParameters, layers) {
+  var createOpenLayersMap = function (startupParameters, layers) {
     var map = new ol.Map({
       keyboardEventTarget: document,
       target: 'mapdiv',
@@ -87,9 +87,9 @@
       })
     });
 
-      var shiftDragZoom = new ol.interaction.DragZoom({
+    var shiftDragZoom = new ol.interaction.DragZoom({
       duration: 1500,
-      condition: function(mapBrowserEvent) {
+      condition: function (mapBrowserEvent) {
         var originalEvent = mapBrowserEvent.originalEvent;
         return (
           originalEvent.shiftKey &&
@@ -97,15 +97,15 @@
           !originalEvent.ctrlKey);
       }
     });
-    map.getInteractions().forEach(function(interaction) {
+    map.getInteractions().forEach(function (interaction) {
       if (interaction instanceof ol.interaction.DragZoom) {
         map.removeInteraction(interaction);
       }
     }, this);
 
-      shiftDragZoom.setActive(true);
-      map.addInteraction(shiftDragZoom);
-    map.setProperties({extent : [-548576, 6291456, 1548576, 8388608]});
+    shiftDragZoom.setActive(true);
+    map.addInteraction(shiftDragZoom);
+    map.setProperties({extent: [-548576, 6291456, 1548576, 8388608]});
     return map;
   };
 
@@ -147,7 +147,7 @@
     pictureTooltip.empty();
     pictureTooltip.append(toolTip);
 
-    backend.getRoadLinkDate (function (versionData) {
+    backend.getRoadLinkDate(function (versionData) {
       getRoadLinkDateInfo(versionData);
     });
 
@@ -156,7 +156,7 @@
       // Show environment name next to Viite logo
       var notification = jQuery('#notification');
       notification.append(Environment.localizedName());
-      notification.append(' Tielinkkiaineisto: ' +  versionData.result);
+      notification.append(' Tielinkkiaineisto: ' + versionData.result);
     };
 
     // Show information modal in integration environment (remove when not needed any more)
@@ -171,7 +171,7 @@
     return map;
   };
 
-  var setupProjections = function() {
+  var setupProjections = function () {
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
   };
 
@@ -187,26 +187,28 @@
   // Shows modal with message and close button
   function showInformationModal(message) {
     jQuery('.container').append('<div class="modal-overlay confirm-modal" style="z-index: 2000"><div class="modal-dialog"><div class="content">' + message + '</div><div class="actions"><button class="btn btn-secondary close">Sulje</button></div></div></div></div>');
-    jQuery('.confirm-modal .close').on('click', function() {
+    jQuery('.confirm-modal .close').on('click', function () {
       jQuery('.confirm-modal').remove();
     });
   }
 
-  application.restart = function(backend, withTileMaps) {
+  application.restart = function (backend, withTileMaps) {
     this.start(backend, withTileMaps);
   };
 
-  var bindEvents = function() {
+  var bindEvents = function () {
 
-    eventbus.on('linkProperties:saving', function() {
+    eventbus.on('linkProperties:saving', function () {
       indicatorOverlay();
     });
 
-    eventbus.on('linkProperties:available', function() {
+    eventbus.on('linkProperties:available', function () {
       jQuery('.spinner-overlay').remove();
     });
 
-    eventbus.on('confirm:show', function() { new Confirm(); });
+    eventbus.on('confirm:show', function () {
+      new Confirm();
+    });
   };
 
 }(window.Application = window.Application || {}));

@@ -1,10 +1,30 @@
-(function(root) {
-  root.ProjectChangeInfoModel = function(backend) {
+(function (root) {
+  root.ProjectChangeInfoModel = function (backend) {
 
-    var roadInfoList=[{endAddressM:1,endRoadPartNumber:0,roadNumber:0,startAddressM:0,startRoadPartNumber:0,trackCode:0}];
-    var changesInfo=[{changetype:0,discontinuity:"jatkuva",roadType:9,source:roadInfoList,target:roadInfoList,reversed: false}];
-    var changeTable={id:0,name:"templateproject", user:"templateuser",changeDate:"1980-01-28",changeInfoSeq:changesInfo};
-    var projectChanges={changeTable:changeTable, validationErrors:[]};
+    var roadInfoList = [{
+      endAddressM: 1,
+      endRoadPartNumber: 0,
+      roadNumber: 0,
+      startAddressM: 0,
+      startRoadPartNumber: 0,
+      trackCode: 0
+    }];
+    var changesInfo = [{
+      changetype: 0,
+      discontinuity: "jatkuva",
+      roadType: 9,
+      source: roadInfoList,
+      target: roadInfoList,
+      reversed: false
+    }];
+    var changeTable = {
+      id: 0,
+      name: "templateproject",
+      user: "templateuser",
+      changeDate: "1980-01-28",
+      changeInfoSeq: changesInfo
+    };
+    var projectChanges = {changeTable: changeTable, validationErrors: []};
 
     function loadChanges() {
       var warningM = projectChanges.warningMessage;
@@ -15,8 +35,8 @@
       }
     }
 
-    function getChanges(projectID, sortFn){
-      backend.getChangeTable(projectID, function(changeData) {
+    function getChanges(projectID, sortFn) {
+      backend.getChangeTable(projectID, function (changeData) {
         roadChangeAPIResultParser(changeData);
         sortFn();
         loadChanges();
@@ -34,9 +54,9 @@
       projectChanges = changeData;
     }
 
-    return{
+    return {
       getChanges: getChanges,
       sortChanges: sortChanges
     };
   };
-})(this);
+}(this));

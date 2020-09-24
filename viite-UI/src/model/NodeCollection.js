@@ -9,34 +9,34 @@
     var saving = events.spinners.saving;
     var fetching = events.spinners.fetched;
 
-    this.setMapTemplates = function(templates) {
+    this.setMapTemplates = function (templates) {
       mapTemplates = templates;
     };
 
-    this.setUserTemplates = function(nodePointTemplates, junctionTemplates) {
+    this.setUserTemplates = function (nodePointTemplates, junctionTemplates) {
       userNodePointTemplates = nodePointTemplates;
       userJunctionTemplates = junctionTemplates;
     };
 
-    this.setNodes = function(list) {
+    this.setNodes = function (list) {
       nodes = list;
     };
 
-    this.getNodeByNodeNumber = function(nodeNumber) {
+    this.getNodeByNodeNumber = function (nodeNumber) {
       return _.find(nodes, function (node) {
         return node.nodeNumber === nodeNumber;
       });
     };
 
-    this.getNodesWithAttributes = function() {
+    this.getNodesWithAttributes = function () {
       return nodesWithAttributes;
     };
 
-    this.setNodesWithAttributes = function(list) {
+    this.setNodesWithAttributes = function (list) {
       nodesWithAttributes = list;
     };
 
-    this.getNodesByRoadAttributes = function(roadAttributes) {
+    this.getNodesByRoadAttributes = function (roadAttributes) {
       return backend.getNodesByRoadAttributes(roadAttributes, function (result) {
         if (result.success) {
           var searchResult = result.nodes;
@@ -66,22 +66,22 @@
     this.moveToLocation = function (template) {
       if (!_.isUndefined(template)) {
         applicationModel.addSpinner();
-        locationSearch.search(template.roadNumber + ' ' + template.roadPartNumber + ' ' + template.addrM).then(function (results) {
+        locationSearch.search(`${template.roadNumber} ${template.roadPartNumber} ${template.addrM} ${template.track}`).then(function (results) {
           if (results.length >= 1) {
-            var result = results[0];
+            const result = results[0];
             eventbus.trigger('coordinates:selected', {
               lon: result.lon,
               lat: result.lat,
               zoom: zoomlevels.minZoomForJunctions
             });
 
-            eventbus.trigger('nodeLayer:fetch', function(fetchedNodesAndJunctions) {
+            eventbus.trigger('nodeLayer:fetch', function (fetchedNodesAndJunctions) {
               applicationModel.removeSpinner();
               if (_.has(fetchedNodesAndJunctions, 'nodePointTemplates') || _.has(fetchedNodesAndJunctions, 'junctionTemplates')) {
-                var referencePoint = { x: parseFloat(result.lon.toFixed(3)), y: parseFloat(result.lat.toFixed(3)) };
-                var templates = {
+                const referencePoint = {x: parseFloat(result.lon.toFixed(3)), y: parseFloat(result.lat.toFixed(3))};
+                const templates = {
                   nodePoints: fetchedNodesAndJunctions.nodePointTemplates,
-                  junctions:  fetchedNodesAndJunctions.junctionTemplates
+                  junctions: fetchedNodesAndJunctions.junctionTemplates
                 };
                 eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
                   nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
@@ -102,18 +102,18 @@
       }
     };
 
-    eventbus.on('node:fetched', function(fetchResult, zoom) {
+    eventbus.on('node:fetched', function (fetchResult, zoom) {
       applicationModel.removeSpinner(fetching);
-      var nodes = fetchResult.nodes;
+      var resultNodes = fetchResult.nodes;
       var templates = {
         nodePoints: fetchResult.nodePointTemplates,
         junctions: fetchResult.junctionTemplates
       };
 
-      me.setNodes(nodes);
+      me.setNodes(resultNodes);
       me.setMapTemplates(templates);
 
-      eventbus.trigger('node:addNodesToMap', nodes, templates, zoom);
+      eventbus.trigger('node:addNodesToMap', resultNodes, templates, zoom);
     });
 
     eventbus.on('node:save', function (node) {
@@ -123,7 +123,7 @@
 
       if (!_.isUndefined(node)) {
         applicationModel.addSpinner(saving);
-        if (!_.isUndefined(node.id)) {
+        if (node.id) {
           backend.updateNodeInfo(node, function (result) {
             if (result.success) {
               applicationModel.removeSpinner(saving);
@@ -140,14 +140,14 @@
               applicationModel.addSpinner(fetching);
               eventbus.trigger('node:saveSuccess');
             } else {
-             fail(result);
+              fail(result);
             }
           }, fail);
         }
       }
     });
 
-    eventbus.on('templates:fetched', function(nodePointTemplates, junctionTemplates) {
+    eventbus.on('templates:fetched', function (nodePointTemplates, junctionTemplates) {
       me.setUserTemplates(nodePointTemplates, junctionTemplates);
     });
 
@@ -160,26 +160,26 @@
       });
     });
 
-    eventbus.on('nodeSearchTool:clickNodePointTemplate', function(id) {
+    eventbus.on('nodeSearchTool:clickNodePointTemplate', function (id) {
       var nodePointTemplate = _.find(userNodePointTemplates, function (template) {
         return template.id === parseInt(id);
       });
       if (_.isUndefined(nodePointTemplate)) {
-        backend.getNodePointTemplateById(id, function (nodePointTemplate) {
-          me.moveToLocation(nodePointTemplate);
+        backend.getNodePointTemplateById(id, function (nodePointTemplateFetched) {
+          me.moveToLocation(nodePointTemplateFetched);
         });
       } else {
         me.moveToLocation(nodePointTemplate);
       }
     });
 
-    eventbus.on('nodeSearchTool:clickJunctionTemplate', function(id) {
-      var junctionTemplate = _.find(userJunctionTemplates, function (template) {
+    eventbus.on('nodeSearchTool:clickJunctionTemplate', function (id) {
+      const junctionTemplate = _.find(userJunctionTemplates, function (template) {
         return template.id === parseInt(id);
       });
       if (_.isUndefined(junctionTemplate)) {
-        backend.getJunctionTemplateById(id, function (junctionTemplate) {
-          me.moveToLocation(junctionTemplate);
+        backend.getJunctionTemplateById(id, function (junctionTemplateFetched) {
+          me.moveToLocation(junctionTemplateFetched);
         });
       } else {
         me.moveToLocation(junctionTemplate);
@@ -188,10 +188,10 @@
 
     eventbus.on('nodeSearchTool:refreshView', function (map) {
       var coords = [];
-      _.each(nodesWithAttributes, function(node) {
+      _.each(nodesWithAttributes, function (node) {
         coords.push([node.coordinates.x, node.coordinates.y]);
       });
       map.getView().fit(new ol.geom.Polygon([coords]), map.getSize());
     });
   };
-})(this);
+}(this));

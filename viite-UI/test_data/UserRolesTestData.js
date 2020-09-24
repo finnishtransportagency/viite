@@ -1,12 +1,14 @@
-(function(root) {
+(function (root) {
 
-  var roles = function() { return ['operator', 'viite']; };
+  var roles = function () {
+    return ['operator', 'viite'];
+  };
 
   root.UserRolesTestData = {
-    userData: function(){
+    userData: function () {
       return {
-          userName: 'ktest',
-          roles: roles()
+        userName: 'ktest',
+        roles: roles()
       };
     }
   };

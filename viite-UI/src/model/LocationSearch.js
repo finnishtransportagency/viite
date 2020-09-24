@@ -1,16 +1,17 @@
-(function(root) {
-  root.LocationSearch = function(backend, applicationModel) {
+/* eslint-disable new-cap */
+(function (root) {
+  root.LocationSearch = function (backend, applicationModel) {
     /**
      * Search by street address
      *
      * @param street
      * @returns {*}
      */
-    var geocode = function(street) {
+    const geocode = function (street) {
       return backend.getSearchResults(street.search).then(function (coordinateData) {
-        var result = coordinateData[0].street[0].features;
-        var withErrors = _.some(result, function(r) {return !_.isUndefined(r.properties.virheet);});
-        var vkmResultToCoordinates = function(r) {
+        const result = coordinateData[0].street[0].features;
+        const withErrors = _.some(result, function(r) {return !_.isUndefined(r.properties.virheet);});
+        const vkmResultToCoordinates = function(r) {
           return { title: r.properties.katunimi + " " + r.properties.katunumero + ", " + r.properties.kuntanimi, lon: r.properties.x, lat: r.properties.y};
         };
         if (withErrors) {
@@ -29,23 +30,23 @@
      * @returns {*}
      */
     function roadLocationAPIResultParser(roadData, addressMValue) {
-      var sideCodes = LinkValues.SideCode;
-      var constructTitle = function(address) {
-        var titleParts = [_.get(address, 'roadNumber'), _.get(address, 'roadPartNumber')];
+      const sideCodes = LinkValues.SideCode;
+      const constructTitle = function (address) {
+        const titleParts = [_.get(address, 'roadNumber'), _.get(address, 'roadPartNumber')];
         return _.some(titleParts, _.isUndefined) ? '' : 'Tieosa, ' + titleParts.join(' ');
       };
-      var lon, lat = 0;
+      let lon, lat;
       const addressMValueFixed = _.isUndefined(addressMValue) ? 0 : addressMValue;
-      if ((roadData.startAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value) ) {
+      if ((roadData.startAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value) || (roadData.endAddrMValue === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value)) {
         lon = roadData.geometry[0].x;
         lat = roadData.geometry[0].y;
       } else {
         lon = roadData.geometry[roadData.geometry.length - 1].x;
-        lat =  roadData.geometry[roadData.geometry.length - 1].y;
+        lat = roadData.geometry[roadData.geometry.length - 1].y;
       }
-      var title = constructTitle(roadData);
+      const title = constructTitle(roadData);
       if (lon && lat) {
-        return  [{title: title, lon: lon, lat: lat, resultType:"road"}];
+        return [{title: title, x: lon, y: lat, resultType: "road"}];
       } else {
         return [];
       }
@@ -58,37 +59,38 @@
      * @param input
      * @returns {*}
      */
-    var getCoordinatesFromSearchInput = function (input) {
+    const getCoordinatesFromSearchInput = function (input) {
       return backend.getSearchResults(input.search).then(function (coordinateData) {
-        var searchResult = [];
-        if (coordinateData) {
-          coordinateData.forEach(function (item) {
-            if (item && item.linkId && item.linkId[0]) {
-              item.linkId[0].lon = item.linkId[0].x;
-              item.linkId[0].lat = item.linkId[0].y;
-              item.linkId[0].title = 'linkId, ' + input.search;
-              searchResult.push(item.linkId[0]);
-            } else if (item && item.mtkId && item.mtkId[0]) {
-              item.mtkId[0].lon = item.mtkId[0].x;
-              item.mtkId[0].lat = item.mtkId[0].y;
-              item.mtkId[0].title = 'mtkId, ' + input.search;
-              searchResult.push(item.mtkId[0]);
-            } else if (item && item.road && item.road[0]) {
-              var sortedRoad = _.sortBy(_.sortBy(item.road, function (addr) {
-                return addr.startAddrMValue;
-              }), function (road) {
-                return road.roadPartNumber;
-              });
-              var parsed = _.map(_.words(input.search), _.parseInt);
-              searchResult = searchResult.concat(roadLocationAPIResultParser(sortedRoad[0], parsed[2]));
-            } else if (item && item.roadM && item.roadM[0]) {
-              item.roadM[0].lon = item.roadM[0].x;
-              item.roadM[0].lat = item.roadM[0].y;
-              item.roadM[0].title = 'Tieosoite, ' + input.search;
-              searchResult.push(item.roadM[0]);
+        const searchResult = [];
+        coordinateData.forEach(function (item) {
+          let partialResult;
+          if (item && item.linkId && item.linkId[0]) {
+            partialResult = _.first(item.linkId);
+            partialResult.title = `linkId, ${input.search}`;
+          } else if (item && item.mtkId && item.mtkId[0]) {
+            partialResult = _.first(item.mtkId);
+            partialResult.title = `mtkId, ${input.search}`;
+          } else if (item && item.road && item.road[0]) {
+            const sortedRoad = _.sortBy(_.sortBy(item.road, function (addr) {
+              return addr.startAddrMValue;
+            }), function (road) {
+              return road.roadPartNumber;
+            });
+            const parsed = _.map(_.words(input.search), _.parseInt);
+            partialResult = _.first(roadLocationAPIResultParser(sortedRoad[0], parsed[2]));
+          } else if (item && item.roadM && item.roadM[0]) {
+            partialResult = _.first(item.roadM);
+            partialResult.title = 'Tieosoite, ' + input.search;
+          }
+
+          if (partialResult) {
+            if (partialResult.x) {
+              partialResult.lon = partialResult.x;
+              partialResult.lat = partialResult.y;
             }
-          });
-        } else return [];
+            searchResult.push(partialResult);
+          }
+        });
         if (searchResult.length === 0) {
           return $.Deferred().reject('Tuntematon tieosoite');
         } else {
@@ -97,16 +99,15 @@
       });
     };
 
-    var resultFromCoordinates = function (coordinates) {
-      var result = _.assign({}, coordinates, {title: coordinates.lat + ',' + coordinates.lon});
+    const resultFromCoordinates = function (coordinates) {
+      const result = _.assign({}, coordinates, {title: coordinates.lat + ',' + coordinates.lon});
       return $.Deferred().resolve([result]);
     };
 
-    this.search = function(searchString) {
+    this.search = function (searchString) {
       function addDistance(item) {
-        var currentLocation = applicationModel.getCurrentLocation();
-
-        var distance = GeometryUtils.distanceOfPoints(
+        const currentLocation = applicationModel.getCurrentLocation();
+        const distance = GeometryUtils.distanceOfPoints(
           [currentLocation[0], currentLocation[1]],
           [item.lon, item.lat]);
         return _.assign(item, {
@@ -114,16 +115,18 @@
         });
       }
 
-      var input = LocationInputParser.parse(searchString);
-      var resultByInputType = {
+      const input = LocationInputParser.parse(searchString);
+      const resultByInputType = {
         coordinate: resultFromCoordinates,
         street: geocode,
         road: getCoordinatesFromSearchInput,
-        invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
+        invalid: function () {
+          return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta');
+        }
       };
 
-      var results = resultByInputType[input.type](input);
-      return results.then(function(result) {
+      const results = resultByInputType[input.type](input);
+      return results.then(function (result) {
         return _.map(result, addDistance);
       });
     };
