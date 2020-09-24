@@ -297,7 +297,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           case Left(result) => Seq(result)
           case Right(error) => throw new VkmException(error.toString)
         }
-        collectResult("street", searchResult, resultSeq)
+        collectResult("street", searchResult)
       case _ => Seq.empty[Map[String, Seq[Any]]]
     }
   }
