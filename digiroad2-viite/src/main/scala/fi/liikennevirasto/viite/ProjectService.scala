@@ -471,7 +471,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val linkStatus = newProjectLinks.head.status
 
     // Create link to the link table if it's missing
-    val newLinks = newProjectLinks.map(l => l.copy(linkId = if (l.linkId == null || l.linkId <= 0) {
+    val newLinks = newProjectLinks.map(l => l.copy(linkId = if (l.linkId <= 0) {
       val link = linkDAO.fetch(l.kmtkId)
       if (link.isDefined) {
         link.get.id
