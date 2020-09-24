@@ -792,7 +792,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  val dummyProjectLink2 = dummyProjectLink(0, 0, 0, KMTKID("0", 0),0, 0, 0, 0, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
+  val dummyProjectLink2 = dummyProjectLink(0, 0, 0, KMTKID("0", 0), 0, 0, 0, 0, 0, 100, 0.0, 100.0, None, (None, None), Seq(), LinkStatus.Transfer, RoadType.PublicRoad, reversed = false, 0)
 
   test("Test ProjectLink.lastSegmentDirection When / towards digitizing and not reversed Then correct vector") {
     val projectLink = dummyProjectLink2.copy(geometry = Seq(Point(50, 50), Point(150, 150), Point(200, 200)))
