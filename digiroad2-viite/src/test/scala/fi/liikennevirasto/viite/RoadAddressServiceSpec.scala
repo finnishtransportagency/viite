@@ -604,8 +604,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       projectLinkDAO.create(pls.map(_.copy(id = NewIdValue)))
       val projectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
 
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.linkId), LinkStatus.Terminated, "-", 99, 2, 0, Option.empty[Int])
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.kmtkId), LinkStatus.Terminated, "-", 99, 2, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.kmtkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
 
       roadwayPointDAO.create(link1.roadwayNumber, link1.startAddrMValue, link1.createdBy.getOrElse("test"))
       roadwayPointDAO.create(link1.roadwayNumber, link1.endAddrMValue, link2.createdBy.getOrElse("test"))
@@ -713,8 +713,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       projectLinkDAO.create(pls.map(_.copy(id = NewIdValue)))
       val projectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
 
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.linkId), LinkStatus.Terminated, "-", 99, 2, 0, Option.empty[Int])
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.kmtkId), LinkStatus.Terminated, "-", 99, 2, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.kmtkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
 
       projectService.changeDirection(projectId, 99L, 2L, Seq(LinkToRevert(link2.id, link2.linkId, LinkStatus.Transfer.value, Seq())), ProjectCoordinates(link2.geometry.head.x, link2.geometry.head.y), "testuser")
 
@@ -828,8 +828,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       projectLinkDAO.create(pls.map(_.copy(id = NewIdValue)))
       val projectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
 
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.linkId), LinkStatus.UnChanged, "-", 99, 1, 0, Option.empty[Int])
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.kmtkId), LinkStatus.UnChanged, "-", 99, 1, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.kmtkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
 
       roadwayPointDAO.create(roadwayNumber1, 0, link1.createdBy.getOrElse("test"))
       roadwayPointDAO.create(roadwayNumber1, 5, link2.createdBy.getOrElse("test"))
