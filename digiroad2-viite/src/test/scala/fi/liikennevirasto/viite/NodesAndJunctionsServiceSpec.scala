@@ -4451,7 +4451,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val endPoint = startPoint + size
       val geom = Seq(Point(startPoint, firstPointAt.y), Point(endPoint, firstPointAt.y))
       val projectLink = dummyProjectLink(roadNumber, roadPartNumber, track, if (i == numberOfLinearLocations-1) discontinuity else Discontinuity.Continuous,
-        startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, KMTKID(s"$linkId" + i, 0), 0, size,
+        startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, KMTKID(s"${linkId + i}", 0), 0, size,
         SideCode.TowardsDigitizing, LinkStatus.New, projectId, roadType, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
       projectLink
     }

@@ -35,7 +35,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
   private def createRoadAddress(start: Long, distance: Long, roadwayNumber: Long = 0L) = {
     //TODO the road address now have the linear location id and has been set to 1L
     RoadAddress(id = start, linearLocationId = 1L, roadNumber = 5, roadPartNumber = 205, roadType = PublicRoad, track = Track.Combined,
-      discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start + distance, linkId = start,
+      discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start + distance, linkId = start, kmtkId = KMTKID(s"$start", 0),
       startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L,
       geometry = Seq(Point(0.0, start), Point(0.0, start + distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, roadwayNumber = roadwayNumber)
   }
