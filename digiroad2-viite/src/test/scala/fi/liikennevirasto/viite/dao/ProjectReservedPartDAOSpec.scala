@@ -69,10 +69,10 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
   private val linkId3 = 3000l
   private val linkId4 = 4000l
 
-  private val kmtkId1 = KMTKID("1000",0)
-  private val kmtkId2 = KMTKID("2000",0)
-  private val kmtkId3 = KMTKID("3000",0)
-  private val kmtkId4 = KMTKID("4000",0)
+  private val kmtkId1 = KMTKID("1000", 0)
+  private val kmtkId2 = KMTKID("2000", 0)
+  private val kmtkId3 = KMTKID("3000", 0)
+  private val kmtkId4 = KMTKID("4000", 0)
 
   private val linearLocationId = 0
 
@@ -98,8 +98,8 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
     )
   }
   private def dummyLinearLocations = Seq(
-    dummyLinearLocation(roadwayNumber = roadwayNumber1, orderNumber = 1L, linkId = linkId1, kmtkId = KMTKID(s"$linkId1",0), startMValue = 0.0, endMValue = 10.0),
-    dummyLinearLocation(roadwayNumber = roadwayNumber2, orderNumber = 1L, linkId = linkId2, kmtkId = KMTKID(s"$linkId2",0), startMValue = 0.0, endMValue = 10.0))
+    dummyLinearLocation(roadwayNumber = roadwayNumber1, orderNumber = 1L, linkId = linkId1, kmtkId = KMTKID(s"$linkId1", 0), startMValue = 0.0, endMValue = 10.0),
+    dummyLinearLocation(roadwayNumber = roadwayNumber2, orderNumber = 1L, linkId = linkId2, kmtkId = KMTKID(s"$linkId2", 0), startMValue = 0.0, endMValue = 10.0))
 
 
 
