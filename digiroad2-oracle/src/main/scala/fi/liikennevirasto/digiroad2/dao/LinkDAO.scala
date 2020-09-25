@@ -58,7 +58,7 @@ class LinkDAO {
   def create(kmtkId: KMTKID, adjustedTimestamp: Long, source: Long): Long = {
     val id = Sequences.nextLinkId
     sqlu"""
-      insert into LINK (linkId, uuid, version, source, adjusted_timestamp) values ($id, ${kmtkId.uuid}, ${kmtkId.version}, $source, $adjustedTimestamp)
+      insert into LINK (id, uuid, version, source, adjusted_timestamp) values ($id, ${kmtkId.uuid}, ${kmtkId.version}, $source, $adjustedTimestamp)
       """.execute
     id
   }
