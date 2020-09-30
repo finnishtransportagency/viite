@@ -1,9 +1,7 @@
 import java.net.URI
 
 def get_server(trgt) {
-    if (trgt.equals("staging")) {return "web@gateway"}
-    if (trgt.equals("testing")) {return "web@testing1"}
-    if (trgt.equals("production")) {return "web@production1"}
+    if (trgt.equals("kmtkdevtest")) {return "web@kmtkdevtest"}
     return ""
 }
 
@@ -12,9 +10,7 @@ pipeline {
     parameters {
 
         choice(name: 'TARGET', choices: ['-',
-                                     'staging',
-                                     'testing',
-                                     'production',
+                                     'kmtkdevtest'
                                      ])
 
         choice(name: 'TASK', choices: [
