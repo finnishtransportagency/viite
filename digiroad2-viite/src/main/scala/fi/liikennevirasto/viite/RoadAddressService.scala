@@ -251,7 +251,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         case 1 =>
           // The params with type long can be LINKID, MTKID or roadNumber
           // TODO Enable searching by KMTKID instead of LINKID
-          var searchResultPoint = roadLinkService.getMidPointByLinkId(KMTKID(params.head.toString, 0))
+          var searchResultPoint = roadLinkService.getMidPointByKMTKID(KMTKID(params.head.toString, 0))
           var partialResultSeq = collectResult("linkId", Seq(searchResultPoint))
           searchResultPoint = roadLinkService.getRoadLinkMiddlePointByMtkId(params.head)
           partialResultSeq = collectResult("mtkId", Seq(searchResultPoint), partialResultSeq)

@@ -48,7 +48,7 @@ pipeline {
                                        ])
 
         choice(name: 'IMPORT_TABLE', choices: [
-                                       'KMTK_TIEOSOITE_JOULUKUU_2018',
+                                       'KMTK_TIEOSOITE_KESAKUU_2020',
                                        'KMTK_ROAD_ADDRESS_TEST'
                                        ])
     }

@@ -37,7 +37,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       case RoadType.Unknown => getRoadType(roadLink.administrativeClass, UnknownLinkType)
       case _ => roadAddress.roadType
     }
-    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadLink.linkId, geom,
+    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadLink.linkId, roadLink.kmtkId, geom,
       length, roadLink.administrativeClass, UnknownLinkType, roadLink.lifecycleStatus, roadLink.linkSource, roadType, kmtkRoadName, roadName, municipalityCode, municipalityName, extractModifiedAtKMTK(roadLink.attributes), Some("kmtk_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
@@ -51,7 +51,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
     val length = GeometryUtils.geometryLength(geom)
     val municipalityCode = 0
     val roadType = roadAddress.roadType
-    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadAddress.linkId, geom,
+    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadAddress.linkId, roadAddress.kmtkId, geom,
       length, AdministrativeClass.apply(1), LinkType.apply(99), LifecycleStatus.apply(0), LinkGeomSource.apply(1), roadType, Some(""), roadAddress.roadName, municipalityCode, "", Some(""), Some("kmtk_modified"),
       Map(), roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, 0, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
@@ -80,7 +80,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       case RoadType.Unknown => getRoadType(roadLink.administrativeClass, roadLink.linkType)
       case _ => unaddressedRoadLink.roadType
     }
-    RoadAddressLink(0, 0, roadLink.linkId, geom,
+    RoadAddressLink(0, 0, roadLink.linkId, roadLink.kmtkId, geom,
       length, roadLink.administrativeClass, roadLink.linkType, roadLink.lifecycleStatus, roadLink.linkSource, roadType,
       kmtkRoadName, Some(""), municipalityCode, municipalityName, extractModifiedAtKMTK(roadLink.attributes), Some("kmtk_modified"),
       roadLink.attributes, unaddressedRoadLink.roadNumber.getOrElse(roadLinkRoadNumber),
@@ -100,7 +100,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       case RoadType.Unknown => getRoadType(roadLink.administrativeClass, UnknownLinkType)
       case _ => unaddressedRoadLink.roadType
     }
-    RoadAddressLink(0, 0, roadLink.linkId, geom,
+    RoadAddressLink(0, 0, roadLink.linkId, roadLink.kmtkId, geom,
       length, roadLink.administrativeClass, UnknownLinkType, roadLink.lifecycleStatus, roadLink.linkSource, roadType,
       kmtkRoadName, Some(""), municipalityCode, municipalityName, extractModifiedAtKMTK(roadLink.attributes), Some("kmtk_modified"),
       roadLink.attributes, unaddressedRoadLink.roadNumber.getOrElse(roadLinkRoadNumber),

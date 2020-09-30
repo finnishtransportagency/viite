@@ -117,7 +117,7 @@ object CalibrationPointReference {
 // Notes:
 //  - Geometry on linear location is not directed: it isn't guaranteed to have a direction of digitization or road addressing
 //  - Order number is a Double in LinearLocation case class and Long on the database because when there is for example divided change type we need to add more linear locations
-case class LinearLocation(id: Long, orderNumber: Double, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+case class LinearLocation(id: Long, orderNumber: Double, linkId: Long, kmtkId: KMTKID, startMValue: Double, endMValue: Double, sideCode: SideCode,
                           adjustedTimestamp: Long, calibrationPoints: (CalibrationPointReference, CalibrationPointReference) = (CalibrationPointReference.None, CalibrationPointReference.None),
                           geometry: Seq[Point], linkGeomSource: LinkGeomSource,
                           roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None) extends BaseLinearLocation {
@@ -154,7 +154,7 @@ class LinearLocationDAO {
 
   val selectFromLinearLocation =
     """
-       SELECT loc.ID, loc.ROADWAY_NUMBER, loc.ORDER_NUMBER, loc.LINK_ID, loc.START_MEASURE, loc.END_MEASURE, loc.SIDE,
+       SELECT loc.ID, loc.ROADWAY_NUMBER, loc.ORDER_NUMBER, loc.LINK_ID, link.UUID, link.version, loc.START_MEASURE, loc.END_MEASURE, loc.SIDE,
               (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_addr_m,
               (SELECT CP."TYPE" FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 0 AND cp.VALID_TO IS NULL) AS cal_start_type,
               (SELECT RP.ADDR_M FROM CALIBRATION_POINT CP JOIN ROADWAY_POINT RP ON RP.ID = CP.ROADWAY_POINT_ID WHERE cp.LINK_ID = loc.LINK_ID AND loc.ROADWAY_NUMBER = rp.ROADWAY_NUMBER AND cp.START_END = 1 AND cp.VALID_TO IS NULL) AS cal_end_addr_m,
@@ -183,11 +183,7 @@ class LinearLocationDAO {
 
     createLinearLocations.foreach {
       location =>
-
-        // TODO KMTKID, adjusted timestamp
-        // When do we need this? Should this be done completely differently?
-        linkDAO.createIfEmptyFetch(location.linkId, KMTKID("TODO", 0), 0, location.linkGeomSource.value)
-
+        val linkId = if (location.linkId == NewIdValue) throw new Exception("Linear location was missing a link.") else location.linkId
         val roadwayNumber = if (location.roadwayNumber == NewIdValue) {
           Sequences.nextRoadwayNumber
         } else {
@@ -197,7 +193,7 @@ class LinearLocationDAO {
         ps.setLong(1, location.id)
         ps.setLong(2, roadwayNumber)
         ps.setLong(3, location.orderNumber.toLong)
-        ps.setLong(4, location.linkId)
+        ps.setLong(4, linkId)
         ps.setDouble(5, location.startMValue)
         ps.setDouble(6, location.endMValue)
         ps.setInt(7, location.sideCode.value)
@@ -220,6 +216,8 @@ class LinearLocationDAO {
       val roadwayNumber = r.nextLong()
       val orderNumber = r.nextLong()
       val linkId = r.nextLong()
+      val uuid = r.nextString()
+      val version = r.nextLong()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
       val sideCode = r.nextInt()
@@ -237,7 +235,7 @@ class LinearLocationDAO {
 
       val calEndTypeOption: Option[CalibrationPointType] = if (calEndType.isDefined) Some(CalibrationPointType.apply(calEndType.get)) else None
 
-      LinearLocation(id, orderNumber, linkId, startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
+      LinearLocation(id, orderNumber, linkId, KMTKID(uuid, version), startMeasure, endMeasure, SideCode.apply(sideCode), adjustedTimestamp,
         (CalibrationPointReference(calStartAddrM, calStartTypeOption),
           CalibrationPointReference(calEndAddrM, calEndTypeOption)),
         geom, LinkGeomSource.apply(linkSource), roadwayNumber, validFrom, validTo)

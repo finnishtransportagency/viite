@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.client.kmtk.ChangeType
@@ -18,10 +19,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is lengthened at the start Then linear locations measure should be adjusted") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -56,10 +57,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is lengthened at the end Then linear locations measure should be adjusted") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -94,10 +95,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is divided in second linear location Then linear locations measure should be adjusted and also divided") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -148,10 +149,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is divided in first linear location Then linear locations measure should be adjusted and also divided") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -202,10 +203,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is combined Then linear locations measure should be adjusted and also combined") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -248,10 +249,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is shortened at the start Then linear locations measure should be adjusted") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -288,9 +289,9 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is shortened more than 10 meters Then linear locations should not be adjusted") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 30.0, timestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 30.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -313,10 +314,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link is shortened at the end Then linear locations measure should be adjusted") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, timestamp = 0L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 0L)
     )
 
     val roadLinks = Seq(
@@ -352,10 +353,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When the road link change is older Then any change should be applied") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 1L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 1L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 1L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 1L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 1L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId = KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, timestamp = 1L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId = KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 1L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId = KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 1L)
     )
 
     val roadLinks = Seq(
@@ -378,10 +379,10 @@ class ApplyChangeInfoProcessSpec extends FunSuite with Matchers {
   test("Test applyChange When there at least one new road link change not supported Then any change should be applied for that road link") {
 
     val linearLocations = Seq(
-      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0, timestamp = 1L),
-      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0, timestamp = 1L),
-      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0, timestamp = 1L),
-      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0, timestamp = 1L)
+      dummyLinearLocation(id = 1L, roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, kmtkId= KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 1L),
+      dummyLinearLocation(id = 2L, roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, kmtkId= KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0, timestamp = 1L),
+      dummyLinearLocation(id = 3L, roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, kmtkId= KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 1L),
+      dummyLinearLocation(id = 4L, roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, kmtkId= KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0, timestamp = 1L)
     )
 
     val roadLinks = Seq(

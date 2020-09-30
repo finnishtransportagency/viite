@@ -82,7 +82,7 @@ class RoadLinkService(val vvhClient: VVHClient, val kmtkClient: KMTKClient, val 
     else Seq.empty[VVHRoadlink]
   }
 
-  def getMidPointByLinkId(id: KMTKID): Option[Point] = {
+  def getMidPointByKMTKID(id: KMTKID): Option[Point] = {
     val roadLinkOption = if (id.isKMTK)
       kmtkClient.roadLinkData.fetchById(id)
     else

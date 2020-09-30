@@ -34,7 +34,7 @@ import scala.util.{Left, Right}
 
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
-case class RevertSplitExtractor(projectId: Option[Long], linkId: Option[Long], coordinates: ProjectCoordinates)
+case class RevertSplitExtractor(projectId: Option[Long], linkId: Option[Long], coordinates: ProjectCoordinates) // TODO Remove from master
 
 case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert], coordinates: ProjectCoordinates)
 
@@ -43,16 +43,16 @@ case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNum
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, reservedPartList: List[RoadPartExtractor], formedPartList: List[RoadPartExtractor], resolution: Int)
 
-case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long,
+case class RoadAddressProjectLinksExtractor(ids: Set[Long], kmtkIds: Seq[KMTKID], linkStatus: Int, projectId: Long, roadNumber: Long,
                                             roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long,
                                             roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int],
                                             coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
 
-case class roadDataExtractor(chainLinkIds: Seq[Long] )
+case class roadDataExtractor(chainLinkIds: Seq[Long] ) // TODO Remove from master
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
-case class CutLineExtractor(linkId: Long, splitedPoint: Point)
+case class CutLineExtractor(linkId: Long, splitedPoint: Point) // TODO Remove from master
 
 case class NodePointExtractor(id: Long, beforeAfter: Int, roadwayPointId: Long, nodeNumber: Option[Long], `type`: Int = NodePointType.UnknownNodePointType.value,
                               startDate: Option[String], endDate: Option[String], validFrom: String, validTo: Option[String],
@@ -262,20 +262,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  private val getMidPointByLinkId: SwaggerSupportSyntax.OperationBuilder = (
-    apiOperation[Map[String, Any]]("getMidPointByLinkId")
+  private val getMidPointByKMTKID: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("getMidPointByKMTKID")
       .parameters(
-        pathParam[Long]("linkId").description("LinkId of a road address")
+        pathParam[Long]("uuid").description("KMTK UUID of a road address"),
+        pathParam[Long]("version").description("KMTK version of a road address")
       )
       tags "ViiteAPI - RoadAddresses"
-      summary "getMidPointByLinkId"
+      summary "getMidPointByKMTKID"
     )
 
-  get("/roadlinks/midpoint/:uuid/:version", operation(getMidPointByLinkId)) {
+  get("/roadlinks/midpoint/:uuid/:version", operation(getMidPointByKMTKID)) {
     val uuid = params("uuid") // TODO Change linkId in ui
     val version = params("version").toLong // TODO Change linkId in ui
     time(logger, s"GET request for /roadlinks/midpoint/$uuid/$version") {
-      roadLinkService.getMidPointByLinkId(KMTKID(uuid, version))
+      roadLinkService.getMidPointByKMTKID(KMTKID(uuid, version))
     }
   }
 
@@ -692,8 +693,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           throw RoadAndPartNumberException("Virheellinen tienumero")
         if (links.roadPartNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
-        logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
-        val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
+        logger.debug(s"Creating new links: ${links.kmtkIds.mkString(",")}")
+        val response = projectService.createProjectLinks(links.kmtkIds, links.projectId, links.roadNumber, links.roadPartNumber,
           Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), RoadType.apply(links.roadType),
           LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))),
           Some(links.coordinates))
@@ -732,21 +733,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     time(logger, "PUT request for /roadlinks/roadaddress/project/links") {
       val user = userProvider.getCurrentUser()
       try {
-        val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-        if (links.roadNumber == 0)
+        val operation = parsedBody.extract[RoadAddressProjectLinksExtractor]
+        if (operation.roadNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tienumero")
-        if (links.roadPartNumber == 0)
+        if (operation.roadPartNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
-        if (projectService.validateLinkTrack(links.trackCode)) {
-          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus),
-            user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
-            links.roadType, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName,
-            Some(links.coordinates)) match {
+        if (projectService.validateLinkTrack(operation.trackCode)) {
+          projectService.updateProjectLinks(operation.projectId, operation.ids, operation.kmtkIds, LinkStatus.apply(operation.linkStatus),
+            user.username, operation.roadNumber, operation.roadPartNumber, operation.trackCode, operation.userDefinedEndAddressM,
+            operation.roadType, operation.discontinuity, Some(operation.roadEly), operation.reversed.getOrElse(false), roadName = operation.roadName,
+            Some(operation.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
-              val projectErrors = projectService.validateProjectById(links.projectId).map(errorPartsToApi)
-              val project = projectService.getSingleProjectById(links.projectId).get
-              Map("success" -> true, "id" -> links.projectId,
+              val projectErrors = projectService.validateProjectById(operation.projectId).map(errorPartsToApi)
+              val project = projectService.getSingleProjectById(operation.projectId).get
+              Map("success" -> true, "id" -> operation.projectId,
                 "publishable" -> projectErrors.isEmpty,
                 "projectErrors" -> projectErrors,
                 "formedInfo" -> project.formedParts.map(projectFormedPartToApi(Some(project.id))))
@@ -873,94 +874,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  // TODO This might be needed in the future
-//  private val getSuravageSplitCutLine: SwaggerSupportSyntax.OperationBuilder = (
-//    apiOperation[Map[String, Any]]("getSuravageSplitCutLine")
-//      .parameters(
-//        bodyParam[CutLineExtractor]("CutLine").description("This defines the specific point where a project link should be split in two. \r\n" +
-//          "Object Structure: \r\n" + cutLineExtractorStructure)
-//      )
-//      tags "ViiteAPI - Project - SuravageSplit"
-//      summary "This indicates the system what link (identified by the linkId) to split and where the split point occurs."
-//      notes ""
-//    )
-//  post("/project/getCutLine") {
-//    time(logger, "POST request for /project/getCutLine") {
-//      try {
-//        val splitLine = parsedBody.extract[CutLineExtractor]
-//        if (splitLine.linkId == 0)
-//          BadRequest("Missing mandatory 'linkId' parameter")
-//        roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(Math.abs(splitLine.linkId))).headOption match {
-//          case Some(suravage) =>
-//            val splitGeom = GeometryUtils.calculatePointAndHeadingOnGeometry(suravage.geometry, splitLine.splitedPoint)
-//            splitGeom match {
-//              case Some(x) => val (p, v) = x
-//                val cutGeom = Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
-//                Map("success" -> true, "response" -> Map("geometry" -> cutGeom))
-//              case _ => Map("success" -> false, "errorMessage" -> "Error during splitting calculation")
-//            }
-//          case _ => Map("success" -> false, "errorMessage" -> ErrorSuravageLinkNotFound)
-//        }
-//      } catch {
-//        case e: SplittingException => Map("success" -> false, "errorMessage" -> e.getMessage)
-//      }
-//    }
-//  }
 
-  // TODO This might be needed in the future
-//  private val getSuravagePreSplitInfoByLinkId: SwaggerSupportSyntax.OperationBuilder = (
-//    apiOperation[Map[String, Any]]("getSuravagePreSplitInfoByLinkId")
-//      .parameters(
-//        pathParam[Long]("linkID").description("LinkId of a projectLink")
-//      )
-//      tags "ViiteAPI - Project - SuravageSplit"
-//      summary "This should return all the information pertaining to a split of the suravage links, but, without saving any data."
-//      notes ""
-//    )
-//  put("/project/presplit/:linkID", operation(getSuravagePreSplitInfoByLinkId)) {
-//    val linkID = params.get("linkID")
-//    time(logger, s"PUT request for /project/presplit/$linkID") {
-//      val user = userProvider.getCurrentUser()
-//      linkID.map(_.toLong) match {
-//        case Some(link) =>
-//          try {
-//            val options = parsedBody.extract[SplitOptions]
-//            val (splitLinks, allTerminatedLinks, errorMessage, splitLine) = projectService.preSplitSuravageLink(link, user.username, options)
-//            val cutGeom = splitLine match {
-//              case Some(x) => val (p, v) = x
-//                Seq(p + v.rotateLeft().scale(3.0), p + v.rotateRight().scale(3.0))
-//              case _ => Seq()
-//            }
-//            if (errorMessage.nonEmpty) {
-//              Map("success" -> false, "errorMessage" -> errorMessage.get)
-//            } else if (splitLinks.isEmpty) {
-//              Map("success" -> false, "errorMessage" -> "Linkin jako ei onnistunut tuntemattomasta syystä")
-//            } else {
-//              val roadWithInfo = splitLinks.get.filter(_.status == LinkStatus.Terminated).head
-//              val split: Map[String, Any] = Map(
-//                "roadNumber" -> roadWithInfo.roadNumber,
-//                "roadPartNumber" -> roadWithInfo.roadPartNumber,
-//                "trackCode" -> roadWithInfo.track,
-//                "terminatedLinks" -> allTerminatedLinks.map(projectLinkToApi),
-//                "roadLinkSource" -> roadWithInfo.linkGeomSource.value,
-//                "split" -> Map(
-//                  "geometry" -> cutGeom
-//                )
-//              ) ++ splitLinks.get.flatMap(splitToApi)
-//              Map("success" -> splitLinks.nonEmpty, "response" -> split)
-//            }
-//          } catch {
-//            case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
-//            case e: SplittingException => Map("success" -> false, "errorMessage" -> e.getMessage)
-//            case _: NumberFormatException => BadRequest("Missing mandatory data")
-//          }
-//        case _ => BadRequest("Missing Linkid from url")
-//      }
-//    }
-//  }
-
-  // TODO This might be needed in the future
-//  private val splitSuravageLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
+  //  private val splitSuravageLinkByLinkId: SwaggerSupportSyntax.OperationBuilder = (
   //    apiOperation[Map[String, Any]]("splitSuravageLinkByLinkId")
   //      .parameters(
   //        pathParam[Long]("linkID").description("LinkId of a projectLink")
@@ -1025,7 +940,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "a) Road Number and Road Part Number;\r\n" +
           "b) Road Number, Road Part Number and Distance value;\r\n" +
           "c) Road Number, Road Part Number, Distance value and Track;\r\n" +
-          "3. linkId or mtkId")
+          "3. linkId or mtkId"
+          // TODO kmtkId
+        )
       }
       tags "ViiteAPI - General"
       summary "Returns coordinates to support single box search."
@@ -1322,6 +1239,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadwayNumber" -> roadAddressLink.roadwayNumber,
       "linearLocationId" -> roadAddressLink.linearLocationId,
       "linkId" -> roadAddressLink.linkId,
+      "kmtkId" -> roadAddressLink.kmtkId,
       "mmlId" -> roadAddressLink.attributes.get("MTKID"),
       "points" -> roadAddressLink.geometry,
       "calibrationCode" -> CalibrationCode.getFromAddressLinkLike(roadAddressLink).value,
@@ -1359,6 +1277,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map(
       "id" -> addressError.linearLocationId,
       "linkId" -> addressError.linkId,
+      // TODO Maybe we should return also the kmtkId here?
       "roadNumber" -> addressError.roadNumber,
       "roadPartNumber" -> addressError.roadPartNumber,
       "errorCode" -> addressError.addressError.value,
@@ -1548,6 +1467,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def projectLinkToApi(projectLink: ProjectLink): Map[String, Any] = {
     Map("id" -> projectLink.id,
       "linkId" -> projectLink.linkId,
+      "kmtkId" -> projectLink.kmtkId,
       "geometry" -> projectLink.geometry,
       "middlePoint" -> GeometryUtils.midPointGeometry(projectLink.geometry),
       "startAddressM" -> projectLink.startAddrMValue,

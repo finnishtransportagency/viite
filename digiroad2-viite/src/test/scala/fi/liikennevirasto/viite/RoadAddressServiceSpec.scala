@@ -106,10 +106,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test getRoadAddressesWithLinearGeometry When municipality has road addresses on top of suravage and complementary road links Then should not return floatings") {
     val linearLocations = Seq(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0)
     )
 
     val roadways = Seq(
@@ -130,11 +130,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("Test getAllByMunicipality When exists road network version Then returns road addresses of that version") {
 
     val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 5L, linkId = 126L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 5L, linkId = 126L, KMTKID("126", 0), startMValue = 0.0, endMValue = 10.0)
     )
 
     val roadways = Seq(
@@ -163,7 +163,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   def toRoadwayAndLinearLocation(p: ProjectLink):(LinearLocation, Roadway) = {
     val startDate = p.startDate.getOrElse(DateTime.now()).minusDays(1)
 
-    (LinearLocation(-1000, 1, p.linkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
+    (LinearLocation(-1000, 1, p.linkId, p.kmtkId, p.startMValue, p.endMValue, p.sideCode, p.linkGeometryTimeStamp,
       (CalibrationPointsUtils.toCalibrationPointReference(p.startCalibrationPoint),
         CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
       p.geometry, p.linkGeomSource,
@@ -174,12 +174,13 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test getAllByMunicipality When does not exists road network version Then returns current road addresses") {
     implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
+
     val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 5L, linkId = 126L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 5L, linkId = 126L, KMTKID("126", 0), startMValue = 0.0, endMValue = 10.0)
     )
 
     val roadways = Seq(
@@ -221,10 +222,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test getRoadAddress When the biggest address in section is greater than the parameter $addressM Then should filter out all the road addresses with start address less than $addressM") {
     val linearLocations = Seq(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0)
     )
 
     val roadways = Seq(
@@ -242,10 +243,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test getRoadAddressWithLinkIdAndMeasure When link id, start measure and end measure is given Then returns all the road address in the given link id and in between given measures") {
     val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0)
     )
 
     val roadways = Seq(
@@ -265,10 +266,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test getRoadAddressWithLinkIdAndMeasure When only link id is given Then return all the road addresses in the link id") {
     val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0)
     )
 
     val roadways = Seq(
@@ -288,10 +289,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test getRoadAddressWithLinkIdAndMeasure When only link id and start measure is given Then return all road addresses in link id and with start measure greater or equal than $startM") {
     val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0)
     )
 
     val roadways = Seq(
@@ -311,10 +312,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test getRoadAddressWithLinkIdAndMeasure When only link id and end measure is given Then return all road addresses in link id and with end measure less or equal than $endM") {
     val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0)
     )
 
     val roadways = Seq(
@@ -334,10 +335,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test getRoadAddressesFiltered When roadway have less and greater addresses than given measures Then returns only road addresses in between given address measures") {
     val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0)
     )
 
     val roadways = Seq(
@@ -356,10 +357,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test getRoadAddressByLinkIds When exists floating road addresses Then floatings should be filtered out") {
     val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 10.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, KMTKID("123", 0), startMValue = 10.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0)
     )
 
     val roadways = Seq(
@@ -385,11 +386,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val linkId = 123L
 
     val towardsDigitizingLinearLocation = List(
-      dummyLinearLocationWithGeometry(-1000L, roadwayNumber = 1L, orderNumber = 1L, linkId = linkId, startMValue = 0.0, endMValue = 10.0, SideCode.TowardsDigitizing , Seq(Point(0.0, 0.0), Point(1L + .5, 0.0)))
+      dummyLinearLocationWithGeometry(-1000L, roadwayNumber = 1L, orderNumber = 1L, linkId = linkId, kmtkId = KMTKID(s"$linkId", 0), startMValue = 0.0, endMValue = 10.0, SideCode.TowardsDigitizing, Seq(Point(0.0, 0.0), Point(1L + .5, 0.0)))
     )
 
     val againstDigitizingLinearLocation = List(
-      dummyLinearLocationWithGeometry(-1000L, roadwayNumber = 1L, orderNumber = 1L, linkId = linkId, startMValue = 0.0, endMValue = 10.0, SideCode.AgainstDigitizing , Seq(Point(0.0, 0.0), Point(1L + .5, 0.0)))
+      dummyLinearLocationWithGeometry(-1000L, roadwayNumber = 1L, orderNumber = 1L, linkId = linkId, kmtkId = KMTKID(s"$linkId", 0), startMValue = 0.0, endMValue = 10.0, SideCode.AgainstDigitizing, Seq(Point(0.0, 0.0), Point(1L + .5, 0.0)))
     )
 
     val roadways = Seq(
@@ -419,7 +420,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result(2).get("road").get(0).asInstanceOf[RoadAddress].roadNumber should be(1)
 
     // Test search by linkId
-    when(mockRoadLinkService.getMidPointByLinkId(any[KMTKID])).thenReturn(Option(point))
+    when(mockRoadLinkService.getMidPointByKMTKID(any[KMTKID])).thenReturn(Option(point))
     result = roadAddressService.getSearchResults(Option("1"))
     result.size should be(3)
     result(0).get("linkId").get(0).asInstanceOf[Some[Point]].x should be(point)
@@ -456,14 +457,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test sortRoadWayWithNewRoads When changeSet has new links Then update the order of all the roadway") {
     val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 124L, startMValue = 0.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 125L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 126L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 126L, KMTKID("126", 0), startMValue = 0.0, endMValue = 10.0)
     )
     val newLinearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2.1, linkId = 1267L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3.1, linkId = 1268L, startMValue = 0.0, endMValue = 20.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2.1, linkId = 1267L, KMTKID("1267", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3.1, linkId = 1268L, KMTKID("1268", 0), startMValue = 0.0, endMValue = 20.0)
     )
 
     val adjustedLinearLocations = roadAddressService.sortRoadWayWithNewRoads(linearLocations.groupBy(_.roadwayNumber), newLinearLocations)
@@ -478,10 +479,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("Test sortRoadWayWithNewRoads When there are no linear locations to create Then should return empty list") {
     val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 124L, startMValue = 0.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 125L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 126L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 126L, KMTKID("126", 0), startMValue = 0.0, endMValue = 10.0)
     )
     val newLinearLocations = List()
     val adjustedLinearLocations = roadAddressService.sortRoadWayWithNewRoads(linearLocations.groupBy(_.roadwayNumber), newLinearLocations)
@@ -532,10 +533,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val newGeom3040 = Seq(Point(30.0, 30.0), Point(40.0, 40.0))
     val newGeom4050 = Seq(Point(40.0, 40.0), Point(50.0, 50.0))
     val linearLocations = List(
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, startMValue = 0.0, endMValue = 20.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, startMValue = 0.0, endMValue = 10.0),
-      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, startMValue = 0.0, endMValue = 10.0)
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 1L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 2L, linkId = 123L, KMTKID("123", 0), startMValue = 0.0, endMValue = 20.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 3L, linkId = 124L, KMTKID("124", 0), startMValue = 0.0, endMValue = 10.0),
+      dummyLinearLocation(roadwayNumber = 1L, orderNumber = 4L, linkId = 125L, KMTKID("125", 0), startMValue = 0.0, endMValue = 10.0)
     )
 
     val roadLinks = (Seq(
@@ -570,8 +571,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val id1 = Sequences.nextRoadwayId
       val id2 = id1+1
       val linearLocationId = Sequences.nextLinearLocationId
-      val link1 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.Continuous, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId, RoadType.PublicRoad, geom1, roadwayNumber1)
-      val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 5 , 20, Some(DateTime.now()), None, 12346, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.FerryRoad, geom2, roadwayNumber2)
+      val link1 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.Continuous, 0, 5, Some(DateTime.now()), None, 12345, KMTKID("12345", 0), 0, 5, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId, RoadType.PublicRoad, geom1, roadwayNumber1)
+      val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 5, 20, Some(DateTime.now()), None, 12346, KMTKID("12346", 0), 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.FerryRoad, geom2, roadwayNumber2)
 
       //Roadways and linear location generated AFTER changes
       val (lc1, rw1): (LinearLocation, Roadway) = Seq(link1).map(toRoadwayAndLinearLocation).head
@@ -591,8 +592,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       projectDAO.create(rap)
 
-      val ra1 = RoadAddress(0, lc1.id, 99, 2, rw1.roadType,rw1.track, rw1.discontinuity, rw1.startAddrMValue, rw1.endAddrMValue, Some(rw1.startDate), rw1.endDate, Some(rw1.createdBy), lc1.linkId, lc1.startMValue, lc1.endMValue, lc1.sideCode, 1000000, (None, None),lc1.geometry, lc1.linkGeomSource, rw1.ely, NoTermination, rw1.roadwayNumber,None, None, None)
-      val ra2 = RoadAddress(0, lc2.id, 99, 2, rw2.roadType,rw2.track, rw2.discontinuity, rw2.startAddrMValue, rw2.endAddrMValue, Some(rw2.startDate), rw2.endDate, Some(rw2.createdBy), lc2.linkId, lc2.startMValue, lc2.endMValue, lc2.sideCode, 1000000, (None, None),lc2.geometry, lc2.linkGeomSource, rw2.ely, NoTermination, rw2.roadwayNumber,None, None, None)
+      val ra1 = RoadAddress(0, lc1.id, 99, 2, rw1.roadType,rw1.track, rw1.discontinuity, rw1.startAddrMValue, rw1.endAddrMValue, Some(rw1.startDate), rw1.endDate, Some(rw1.createdBy), lc1.linkId, lc1.kmtkId, lc1.startMValue, lc1.endMValue, lc1.sideCode, 1000000, (None, None),lc1.geometry, lc1.linkGeomSource, rw1.ely, NoTermination, rw1.roadwayNumber,None, None, None)
+      val ra2 = RoadAddress(0, lc2.id, 99, 2, rw2.roadType,rw2.track, rw2.discontinuity, rw2.startAddrMValue, rw2.endAddrMValue, Some(rw2.startDate), rw2.endDate, Some(rw2.createdBy), lc2.linkId, lc2.kmtkId, lc2.startMValue, lc2.endMValue, lc2.sideCode, 1000000, (None, None),lc2.geometry, lc2.linkGeomSource, rw2.ely, NoTermination, rw2.roadwayNumber,None, None, None)
 
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra1, ra2))
       when(mockLinearLocationDAO.fetchByRoadways(Set(rw1.roadwayNumber))).thenReturn(Seq(lc1))
@@ -603,8 +604,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       projectLinkDAO.create(pls.map(_.copy(id = NewIdValue)))
       val projectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
 
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.linkId), LinkStatus.Terminated, "-", 99, 2, 0, Option.empty[Int])
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.kmtkId), LinkStatus.Terminated, "-", 99, 2, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.kmtkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
 
       roadwayPointDAO.create(link1.roadwayNumber, link1.startAddrMValue, link1.createdBy.getOrElse("test"))
       roadwayPointDAO.create(link1.roadwayNumber, link1.endAddrMValue, link2.createdBy.getOrElse("test"))
@@ -620,7 +621,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val newRoads = Seq()
       val terminated = Termination(Seq(
         (
-          dummyRoadAddress(roadwayNumber1, 99, 2, 0, 5, Some(DateTime.now()),None, 12345, 0 , 5, LinkGeomSource.NormalLinkInterface, geom1),
+          dummyRoadAddress(roadwayNumber1, 99, 2, 0, 5, Some(DateTime.now()), None, 12345, KMTKID("12345", 0), 0, 5, LinkGeomSource.NormalLinkInterface, geom1),
           afterUpdateProjectLinks.head
         )
       )
@@ -628,7 +629,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val unchanged = Unchanged(Seq())
       val transferred = Transferred(Seq(
         (
-          dummyRoadAddress(roadwayNumber1, 99, 2, 5, 20, Some(DateTime.now()),None, 12346, 0 , 15, LinkGeomSource.NormalLinkInterface, geom2),
+          dummyRoadAddress(roadwayNumber1, 99, 2, 5, 20, Some(DateTime.now()), None, 12346, KMTKID("12346", 0), 0, 15, LinkGeomSource.NormalLinkInterface, geom2),
           beforeChangesTransfer
         )
       )
@@ -679,8 +680,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val id1 = Sequences.nextRoadwayId
       val id2 = id1+1
       val linearLocationId = Sequences.nextLinearLocationId
-      val link1 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.Continuous, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId, RoadType.PublicRoad, geom1, roadwayNumber1)
-      val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 5 , 20, Some(DateTime.now()), None, 12346, 0, 15, SideCode.AgainstDigitizing, LinkStatus.Transfer, projectId, RoadType.FerryRoad, geom2, roadwayNumber2)
+      val link1 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.Continuous, 0, 5, Some(DateTime.now()), None, 12345, KMTKID("12345", 0), 0, 5, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId, RoadType.PublicRoad, geom1, roadwayNumber1)
+      val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 5, 20, Some(DateTime.now()), None, 12346, KMTKID("12346", 0), 0, 15, SideCode.AgainstDigitizing, LinkStatus.Transfer, projectId, RoadType.FerryRoad, geom2, roadwayNumber2)
 
       //Roadways and linear location generated AFTER changes
       val (lc1, rw1): (LinearLocation, Roadway) = Seq(link1).map(toRoadwayAndLinearLocation).head
@@ -700,8 +701,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       projectDAO.create(rap)
 
-      val ra1 = RoadAddress(0, lc1.id, 99, 2, rw1.roadType,rw1.track, rw1.discontinuity, rw1.startAddrMValue, rw1.endAddrMValue, Some(rw1.startDate), rw1.endDate, Some(rw1.createdBy), lc1.linkId, lc1.startMValue, lc1.endMValue, lc1.sideCode, 1000000, (None, None),lc1.geometry, lc1.linkGeomSource, rw1.ely, NoTermination, rw1.roadwayNumber,None, None, None)
-      val ra2 = RoadAddress(0, lc2.id, 99, 2, rw2.roadType,rw2.track, rw2.discontinuity, rw2.startAddrMValue, rw2.endAddrMValue, Some(rw2.startDate), rw2.endDate, Some(rw2.createdBy), lc2.linkId, lc2.startMValue, lc2.endMValue, lc2.sideCode, 1000000, (None, None),lc2.geometry, lc2.linkGeomSource, rw2.ely, NoTermination, rw2.roadwayNumber,None, None, None)
+      val ra1 = RoadAddress(0, lc1.id, 99, 2, rw1.roadType,rw1.track, rw1.discontinuity, rw1.startAddrMValue, rw1.endAddrMValue, Some(rw1.startDate), rw1.endDate, Some(rw1.createdBy), lc1.linkId, lc1.kmtkId, lc1.startMValue, lc1.endMValue, lc1.sideCode, 1000000, (None, None),lc1.geometry, lc1.linkGeomSource, rw1.ely, NoTermination, rw1.roadwayNumber,None, None, None)
+      val ra2 = RoadAddress(0, lc2.id, 99, 2, rw2.roadType,rw2.track, rw2.discontinuity, rw2.startAddrMValue, rw2.endAddrMValue, Some(rw2.startDate), rw2.endDate, Some(rw2.createdBy), lc2.linkId, lc2.kmtkId, lc2.startMValue, lc2.endMValue, lc2.sideCode, 1000000, (None, None),lc2.geometry, lc2.linkGeomSource, rw2.ely, NoTermination, rw2.roadwayNumber,None, None, None)
 
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra1, ra2))
       when(mockLinearLocationDAO.fetchByRoadways(Set(rw1.roadwayNumber))).thenReturn(Seq(lc1))
@@ -712,8 +713,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       projectLinkDAO.create(pls.map(_.copy(id = NewIdValue)))
       val projectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
 
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.linkId), LinkStatus.Terminated, "-", 99, 2, 0, Option.empty[Int])
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.kmtkId), LinkStatus.Terminated, "-", 99, 2, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.kmtkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
 
       projectService.changeDirection(projectId, 99L, 2L, Seq(LinkToRevert(link2.id, link2.linkId, LinkStatus.Transfer.value, Seq())), ProjectCoordinates(link2.geometry.head.x, link2.geometry.head.y), "testuser")
 
@@ -730,7 +731,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val newRoads = Seq()
       val terminated = Termination(Seq(
         (
-          dummyRoadAddress(roadwayNumber1, 99, 2, 0, 5, Some(DateTime.now()),None, 12345, 0 , 5, LinkGeomSource.NormalLinkInterface, geom1),
+          dummyRoadAddress(roadwayNumber1, 99, 2, 0, 5, Some(DateTime.now()), None, 12345, KMTKID("12345", 0), 0, 5, LinkGeomSource.NormalLinkInterface, geom1),
           afterUpdateProjectLinks.head
         )
       )
@@ -738,7 +739,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val unchanged = Unchanged(Seq())
       val transferred = Transferred(Seq(
         (
-          dummyRoadAddress(roadwayNumber1, 99, 2, 5, 20, Some(DateTime.now()),None, 12346, 0 , 15, LinkGeomSource.NormalLinkInterface, geom2),
+          dummyRoadAddress(roadwayNumber1, 99, 2, 5, 20, Some(DateTime.now()), None, 12346, KMTKID("12346", 0), 0, 15, LinkGeomSource.NormalLinkInterface, geom2),
           beforeChangesTransfer
         )
       )
@@ -784,9 +785,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadwayNumber3 = Sequences.nextRoadwayNumber
 
       val projectId = Sequences.nextViiteProjectId
-      val rap =  dummyProject(projectId, ProjectState.Incomplete, Seq(), None).copy(startDate = DateTime.parse("2019-10-10"))
-      val link1 = dummyProjectLink(99, 1, Track.Combined, Discontinuity.EndOfRoad, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.UnChanged, projectId, RoadType.PublicRoad, geom1, roadwayNumber2)
-      val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 0 , 15, Some(DateTime.now()), None, 12346, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.FerryRoad, geom2, roadwayNumber3)
+      val rap = dummyProject(projectId, ProjectState.Incomplete, Seq(), None).copy(startDate = DateTime.parse("2019-10-10"))
+      val link1 = dummyProjectLink(99, 1, Track.Combined, Discontinuity.EndOfRoad, 0, 5, Some(DateTime.now()), None, 12345, KMTKID("12345", 0), 0, 5, SideCode.TowardsDigitizing, LinkStatus.UnChanged, projectId, RoadType.PublicRoad, geom1, roadwayNumber2)
+      val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, Some(DateTime.now()), None, 12346, KMTKID("12346", 0), 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, RoadType.FerryRoad, geom2, roadwayNumber3)
 
       //Roadways and linear location generated AFTER changes
       val (lc1, rw1): (LinearLocation, Roadway) = Seq(link1).map(toRoadwayAndLinearLocation).head
@@ -809,12 +810,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       val ra1 = RoadAddress(0, lc1WithId.id, rw1WithId.roadNumber, rw1WithId.roadPartNumber, rw1WithId.roadType, rw1WithId.track, rw1WithId.discontinuity,
         rw1WithId.startAddrMValue, rw1WithId.endAddrMValue, Some(rw1WithId.startDate), rw1WithId.endDate, Some(rw1WithId.createdBy),
-        lc1WithId.linkId, lc1WithId.startMValue, lc1WithId.endMValue, lc1WithId.sideCode, 1000000, (None, None),
+        lc1WithId.linkId, lc1WithId.kmtkId, lc1WithId.startMValue, lc1WithId.endMValue, lc1WithId.sideCode, 1000000, (None, None),
         lc1WithId.geometry, lc1WithId.linkGeomSource, rw1WithId.ely, NoTermination, rw1WithId.roadwayNumber, None, None, None)
 
       val ra2 = RoadAddress(0, lc2WithId.id, rw2WithId.roadNumber, rw2WithId.roadPartNumber, rw2WithId.roadType, rw2WithId.track, rw2WithId.discontinuity,
         rw2WithId.startAddrMValue, rw2WithId.endAddrMValue, Some(rw2WithId.startDate), rw2.endDate, Some(rw2.createdBy),
-        lc2WithId.linkId, lc2WithId.startMValue, lc2WithId.endMValue, lc2WithId.sideCode, 1000000, (None, None),
+        lc2WithId.linkId, lc2WithId.kmtkId, lc2WithId.startMValue, lc2WithId.endMValue, lc2WithId.sideCode, 1000000, (None, None),
         lc2WithId.geometry, lc2WithId.linkGeomSource, rw2WithId.ely, NoTermination, rw2WithId.roadwayNumber, None, None, None)
 
       when(mockRoadAddressService.getRoadAddressWithRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra1, ra2))
@@ -827,8 +828,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       projectLinkDAO.create(pls.map(_.copy(id = NewIdValue)))
       val projectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
 
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.linkId), LinkStatus.UnChanged, "-", 99, 1, 0, Option.empty[Int])
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.kmtkId), LinkStatus.UnChanged, "-", 99, 1, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.kmtkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
 
       roadwayPointDAO.create(roadwayNumber1, 0, link1.createdBy.getOrElse("test"))
       roadwayPointDAO.create(roadwayNumber1, 5, link2.createdBy.getOrElse("test"))
@@ -843,14 +844,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val terminated = Termination(Seq())
       val unchanged = Unchanged(Seq(
         (
-          dummyRoadAddress(roadwayNumber1, 99, 1, 0, 5, Some(DateTime.now()),None, 12345, 0 , 5, LinkGeomSource.NormalLinkInterface, geom1),
+          dummyRoadAddress(roadwayNumber1, 99, 1, 0, 5, Some(DateTime.now()), None, 12345, KMTKID("12345", 0), 0, 5, LinkGeomSource.NormalLinkInterface, geom1),
           beforeDualPoint
         )
       )
       )
       val transferred = Transferred(Seq(
         (
-          dummyRoadAddress(roadwayNumber1, 99, 1, 5, 20, Some(DateTime.now()),None, 12346, 0 , 15, LinkGeomSource.NormalLinkInterface, geom2),
+          dummyRoadAddress(roadwayNumber1, 99, 1, 5, 20, Some(DateTime.now()), None, 12346, KMTKID("12346", 0), 0, 15, LinkGeomSource.NormalLinkInterface, geom2),
           afterDualPoint
         )
       )

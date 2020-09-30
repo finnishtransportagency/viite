@@ -55,17 +55,12 @@ class LinkDAO {
     Q.queryNA[Link](sql).firstOption
   }
 
-  def create(id: Long, kmtkId: KMTKID, adjustedTimestamp: Long, source: Long) = {
+  def create(kmtkId: KMTKID, adjustedTimestamp: Long, source: Long): Long = {
+    val id = Sequences.nextLinkId
     sqlu"""
       insert into LINK (id, uuid, version, source, adjusted_timestamp) values ($id, ${kmtkId.uuid}, ${kmtkId.version}, $source, $adjustedTimestamp)
       """.execute
-
-  }
-
-  def createIfEmptyFetch(id: Long, kmtkId: KMTKID, adjustedTimestamp: Long, source: Long): Unit = {
-    if (fetch(id).isEmpty) {
-      create(id, kmtkId, adjustedTimestamp, source)
-    }
+    id
   }
 
   def fetchMaxAdjustedTimestamp(): Long = {

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.PolyLine
+import fi.liikennevirasto.digiroad2.linearasset.{KMTKID, PolyLine}
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.CalibrationPoint
@@ -10,6 +10,7 @@ trait RoadAddressLinkLike extends PolyLine {
   def id: Long
   def linearLocationId: Long
   def linkId: Long
+  def kmtkId: KMTKID
   def length: Double
   def administrativeClass: AdministrativeClass
   def linkType: LinkType
@@ -41,7 +42,7 @@ trait RoadAddressLinkLike extends PolyLine {
   def roadwayNumber: Long
 }
 
-case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: Long, geometry: Seq[Point],
+case class RoadAddressLink(id: Long, linearLocationId: Long, linkId: Long, kmtkId: KMTKID, geometry: Seq[Point],
                            length: Double, administrativeClass: AdministrativeClass,
                            linkType: LinkType, lifecycleStatus: LifecycleStatus, roadLinkSource: LinkGeomSource, roadType: RoadType, kmtkRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String],
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,

@@ -3,9 +3,11 @@ package fi.liikennevirasto.viite.dao
 import java.sql.BatchUpdateException
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.dao.LinkDAO
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{Point, asset}
+import fi.liikennevirasto.digiroad2.linearasset.KMTKID
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.{CalibrationPointLocation, CalibrationPointType}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
@@ -20,8 +22,9 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
   val linearLocationDAO = new LinearLocationDAO
   val roadwayDAO = new RoadwayDAO
   val roadwayPointDAO = new RoadwayPointDAO
+  val linkDAO = new LinkDAO
 
-  val testLinearLocation = LinearLocation(NewIdValue, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
+  val testLinearLocation = LinearLocation(NewIdValue, 1, NewIdValue, KMTKID("1000", 0), 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
     (CalibrationPointReference(Some(0l)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, 200l)
 
   def runWithRollback(f: => Unit): Unit = {
@@ -33,14 +36,16 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test create When creating linear location with new roadway id and no calibration points Then return new linear location") {
     runWithRollback {
-      linearLocationDAO.create(Seq(testLinearLocation.copy(roadwayNumber = NewIdValue, calibrationPoints = (CalibrationPointReference.None, CalibrationPointReference.None))))
+      val linkId = linkDAO.create(testLinearLocation.kmtkId, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(linkId = linkId, roadwayNumber = NewIdValue, calibrationPoints = (CalibrationPointReference.None, CalibrationPointReference.None))))
     }
   }
 
   test("Test lockLinearLocationWriting When creating new linear locations in same transaction Then successfully create linear locations") {
     runWithRollback {
+      val linkId = linkDAO.create(testLinearLocation.kmtkId, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
       linearLocationDAO.lockLinearLocationWriting
-      linearLocationDAO.create(Seq(testLinearLocation))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(linkId = linkId)))
       /* This would result in wait
       runWithRollback {
         intercept[BatchUpdateException] {
@@ -55,7 +60,6 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id = linearLocationDAO.getNextLinearLocationId
       val orderNumber = 1
-      val linkId = 10l
       val startMValue = 0.0
       val endMValue = 100.0
       val sideCode = SideCode.TowardsDigitizing
@@ -64,7 +68,9 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0))
       val linkSource = LinkGeomSource.NormalLinkInterface
       val roadwayNumber = 200l
-      val linearLocation = LinearLocation(id, orderNumber, linkId, startMValue, endMValue, sideCode, adjustedTimestamp,
+      val kmtkId = KMTKID(s"a", 1)
+      val linkId = linkDAO.create(kmtkId, adjustedTimestamp, linkSource.value)
+      val linearLocation = LinearLocation(id, orderNumber, linkId, kmtkId, startMValue, endMValue, sideCode, adjustedTimestamp,
         calibrationPoints, geometry, linkSource, roadwayNumber)
       linearLocationDAO.create(Seq(linearLocation))
       val roadwayPointId = roadwayPointDAO.create(linearLocation.roadwayNumber, linearLocation.startCalibrationPoint.addrM.get, "test")
@@ -95,19 +101,24 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test create When creating linear locations Then duplicate linear locations should not be created") {
     runWithRollback {
+      val linkId = linkDAO.create(testLinearLocation.kmtkId, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
       val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId)))
       intercept[BatchUpdateException] {
-        linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2)))
+        linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId)))
       }
     }
   }
 
   test("Test expire When expiring linear location Then linear location validTo should not be empty") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
       val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = 9999l)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, kmtkId = kmtkId2)))
 
       // Before expiration valid_to date should be null for both
       val loc1 = linearLocationDAO.fetchById(id1).getOrElse(fail())
@@ -127,9 +138,13 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test expire When expiring linear location by id Then linear location validTo should not be empty") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
       val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = 9999l)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, kmtkId = kmtkId2)))
 
       // Before expiration valid_to date should be null for both
       val loc1 = linearLocationDAO.fetchById(id1).getOrElse(fail())
@@ -151,17 +166,21 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test expireByLinkId When expiring linear location with no linkid given Then should return none") {
     runWithRollback {
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = linearLocationDAO.getNextLinearLocationId)))
+      val linkId = linkDAO.create(testLinearLocation.kmtkId, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = linearLocationDAO.getNextLinearLocationId, linkId = linkId)))
       linearLocationDAO.expireByLinkId(Set()) should be(0)
     }
   }
 
   test("Test expireByLinkId When expiring linear location by linkid Then linear location validTo should not be empty") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
       val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      val linkId = 1000l
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = 9999l)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, kmtkId = kmtkId2)))
 
       // Before expiration valid_to date should be null for both
       val loc1 = linearLocationDAO.fetchById(id1).getOrElse(fail())
@@ -170,7 +189,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       loc2.validTo.isEmpty should be(true)
 
       // After expiration valid_to date should be set for the first
-      val updated = linearLocationDAO.expireByLinkId(Set(linkId))
+      val updated = linearLocationDAO.expireByLinkId(Set(linkId1))
       updated should be(1)
       val expired = linearLocationDAO.fetchById(id1).getOrElse(fail())
       expired.validTo.nonEmpty should be(true)
@@ -182,10 +201,16 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchById When fetching linear location by id Then should return linear location with corresponding id") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val kmtkId3 = KMTKID("c", 1)
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId3 = linkDAO.create(kmtkId3, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = 111111111l)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = 222222222l)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = 333333333l)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, kmtkId = kmtkId2)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId3, kmtkId = kmtkId3)))
 
       val locations = linearLocationDAO.fetchById(id1)
       locations.size should be(1)
@@ -200,7 +225,8 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test fetch by link id When fetching linear location with no id given Then should return none") {
     runWithRollback {
-      linearLocationDAO.create(Seq(testLinearLocation))
+      val linkId = linkDAO.create(testLinearLocation.kmtkId, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(linkId = linkId)))
       val noLocations = linearLocationDAO.fetchByLinkId(Set())
       noLocations.size should be(0)
     }
@@ -208,18 +234,21 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchById When fetching linear location by id Then should return linear location with corresponding id v2") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId3 = KMTKID("b", 1)
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      val (linkId1, linkId2) = (111111111l, 222222222l)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId1, startMValue = 200.0, endMValue = 300.0)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId2)))
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId3 = linkDAO.create(kmtkId3, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId1, kmtkId = kmtkId1, startMValue = 200.0, endMValue = 300.0)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId3, kmtkId = kmtkId3)))
 
       val locations = linearLocationDAO.fetchByLinkId(Set(linkId1))
       locations.size should be(2)
       locations.count(l => l.id == id1) should be(1)
       locations.count(l => l.id == id2) should be(1)
 
-      val massQueryLocations = linearLocationDAO.fetchByLinkIdMassQuery(Set(linkId1, -101l, -102l, -103l, linkId2))
+      val massQueryLocations = linearLocationDAO.fetchByLinkIdMassQuery(Set(linkId1, -101l, -102l, -103l, linkId3))
       massQueryLocations.size should be(3)
       massQueryLocations.count(l => l.id == id1) should be(1)
       massQueryLocations.count(l => l.id == id2) should be(1)
@@ -229,28 +258,31 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchById When fetching linear location by id including floating Then should return linear locations with corresponding id") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId3 = KMTKID("c", 1)
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      val (linkId1, linkId2) = (111111111l, 222222222l)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId1, startMValue = 200.0, endMValue = 300.0)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId2)))
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId3 = linkDAO.create(kmtkId3, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId1, kmtkId = kmtkId1, startMValue = 200.0, endMValue = 300.0)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId3, kmtkId = kmtkId3)))
 
-      val locations0 = linearLocationDAO.fetchByLinkId(Set(linkId1, linkId2), filterIds = Set(id1, id2, id3))
+      val locations0 = linearLocationDAO.fetchByLinkId(Set(linkId1, linkId3), filterIds = Set(id1, id2, id3))
       locations0.size should be(0)
 
-      val locations1 = linearLocationDAO.fetchByLinkId(Set(linkId1, linkId2), filterIds = Set(id2, id3))
+      val locations1 = linearLocationDAO.fetchByLinkId(Set(linkId1, linkId3), filterIds = Set(id2, id3))
       locations1.size should be(1)
       locations1.count(l => l.id == id1) should be(1)
       locations1.count(l => l.id == id2) should be(0)
       locations1.count(l => l.id == id3) should be(0)
 
-      val locations2 = linearLocationDAO.fetchByLinkId(Set(linkId1, linkId2), filterIds = Set(id2))
+      val locations2 = linearLocationDAO.fetchByLinkId(Set(linkId1, linkId3), filterIds = Set(id2))
       locations2.size should be(2)
       locations2.count(l => l.id == id1) should be(1)
       locations2.count(l => l.id == id2) should be(0)
       locations2.count(l => l.id == id3) should be(1)
 
-      val massQueryLocations = linearLocationDAO.fetchByLinkIdMassQuery(Set(linkId1, -101l, -102l, -103l, linkId2))
+      val massQueryLocations = linearLocationDAO.fetchByLinkIdMassQuery(Set(linkId1, -101l, -102l, -103l, linkId3))
       massQueryLocations.size should be(3)
       massQueryLocations.count(l => l.id == id1) should be(1)
       massQueryLocations.count(l => l.id == id2) should be(1)
@@ -260,7 +292,8 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchRoadwayByLinkId When fetching with empty Then should return none") {
     runWithRollback {
-      linearLocationDAO.create(Seq(testLinearLocation))
+      val linkId = linkDAO.create(testLinearLocation.kmtkId, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(linkId = linkId)))
       val noLocations = linearLocationDAO.fetchRoadwayByLinkId(Set())
       noLocations.size should be(0)
     }
@@ -268,13 +301,16 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchRoadwayByLinkId When fetching roadways by linkid Then should return roadways with corresponding linkids") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
       val (id1, id2, id3, id4) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      val (linkId1, linkId2) = (111111111l, 222222222l)
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
       val roadwayNumber = 11111111l
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber, linkId = linkId1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber, linkId = linkId1, startMValue = 200.0, endMValue = 300.0)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber, linkId = linkId2, startMValue = 300.0, endMValue = 400.0)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id4, roadwayNumber = 222222l, linkId = linkId2)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber, linkId = linkId1, kmtkId = kmtkId1, startMValue = 200.0, endMValue = 300.0)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber, linkId = linkId2, kmtkId = kmtkId2, startMValue = 300.0, endMValue = 400.0)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id4, roadwayNumber = 222222l, linkId = linkId2, kmtkId = kmtkId2)))
 
       val locations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId1))
       locations.count(l => l.id == id1) should be(1)
@@ -292,13 +328,16 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchRoadwayByLinkId When fetching roadways by linkid including floatings Then should return roadways with corresponding linkids") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
       val (id1, id2, id3, id4) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      val (linkId1, linkId2) = (111111111l, 222222222l)
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
       val roadwayNumber = 111111l
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber, linkId = linkId1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber, linkId = linkId1, startMValue = 200.0, endMValue = 300.0)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber, linkId = linkId2)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id4, roadwayNumber = 222222l, linkId = linkId2)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber, linkId = linkId1, kmtkId = kmtkId1, startMValue = 200.0, endMValue = 300.0)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber, linkId = linkId2, kmtkId = kmtkId2)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id4, roadwayNumber = 222222l, linkId = linkId2, kmtkId = kmtkId2)))
 
       val locations1 = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId1))
       locations1.count(l => l.id == id1) should be(1)
@@ -324,10 +363,15 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test update When updating linear location values Then new values should be updated") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val kmtkId3 = KMTKID("c", 1)
       val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      val (linkId1, linkId2) = (111111111l, 222222222l)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId3 = linkDAO.create(kmtkId3, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, kmtkId = kmtkId2)))
 
       val startM = 1.1
       val endM = 2.2
@@ -362,7 +406,6 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       updated2.geometry.last.y should be(2.1)
 
       // Update linkId and endM
-      val linkId3 = 999999999l
       val endM3 = 9999.9
       linearLocationDAO.update(LinearLocationAdjustment(updated2.id, linkId3, None, Some(endM3),
         Seq(Point(0.0, 0.0), Point(0.0, 9999.9))), createdBy = "test")
@@ -381,10 +424,15 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test update When updating linear location without geometry Then new values should be updated") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val kmtkId3 = KMTKID("c", 1)
       val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      val (linkId1, linkId2) = (111111111l, 222222222l)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId3 = linkDAO.create(kmtkId3, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, kmtkId = kmtkId2)))
 
       val startM = 1.1
       val endM = 2.2
@@ -409,7 +457,6 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       updated2.endMValue should be(endM +- 0.001)
 
       // Update linkId and endM
-      val linkId3 = 999999999l
       val endM3 = 9999.9
       linearLocationDAO.update(LinearLocationAdjustment(updated2.id, linkId3, None, Some(endM3), Seq()), createdBy = "test")
       val expired2 = linearLocationDAO.fetchByLinkId(Set(updated2.linkId))
@@ -423,10 +470,13 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test updateGeometry When updating linear location geometry with no flipping of the side code Then geometry should be updated") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
       val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      val (linkId1, linkId2) = (111111111l, 222222222l)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0)))))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1, geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0)))))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, kmtkId = kmtkId2)))
 
       val before = linearLocationDAO.fetchById(id1).getOrElse(fail())
       before.sideCode should be(asset.SideCode.TowardsDigitizing)
@@ -457,10 +507,13 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test updateGeometry When updating linear location geometry with flipping of the side code Then geometry should be updated") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
       val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      val (linkId1, linkId2) = (111111111l, 222222222l)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0)))))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1, geometry = Seq(Point(0.0, 0.0), Point(0.0, 100.0)))))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, kmtkId = kmtkId2)))
 
       val before = linearLocationDAO.fetchById(id1).getOrElse(fail())
       before.sideCode should be(asset.SideCode.TowardsDigitizing)
@@ -491,10 +544,13 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test updateGeometry When updating linear location geometry with flipping of the side code in horizontal case Then geometry should be updated") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
       val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      val (linkId1, linkId2) = (111111111l, 222222222l)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, geometry = Seq(Point(0.0, 0.0), Point(100.0, 0.0)))))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2)))
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1, geometry = Seq(Point(0.0, 0.0), Point(100.0, 0.0)))))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, kmtkId = kmtkId2)))
 
       val before = linearLocationDAO.fetchById(id1).getOrElse(fail())
       before.sideCode should be(asset.SideCode.TowardsDigitizing)
@@ -525,7 +581,8 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test queryById When querying floating with empty Then should return none") {
     runWithRollback {
-      linearLocationDAO.create(Seq(testLinearLocation))
+      val linkId = linkDAO.create(testLinearLocation.kmtkId, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(linkId = linkId)))
       val noLocations = linearLocationDAO.queryById(Set())
       noLocations.size should be(0)
     }
@@ -533,8 +590,9 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test queryById When querying floating by id Then should return floating with corresponding id") {
     runWithRollback {
+      val linkId = linkDAO.create(testLinearLocation.kmtkId, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
       val id1 = linearLocationDAO.getNextLinearLocationId
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId)))
       linearLocationDAO.expireByIds(Set(id1))
 
       val noLocations = linearLocationDAO.queryById(Set(id1))
@@ -553,11 +611,17 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test getRoadwayNumbersFromLinearLocation When fetching roadwaynumbers from linear locations Then should return roadwaynumbers") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val kmtkId3 = KMTKID("c", 1)
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId3 = linkDAO.create(kmtkId3, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val (roadwayNumber1, roadwayNumber2, roadwayNumber3) = (100000001l, 100000002l, 100000003l)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber2)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber3)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber2, linkId = linkId2, kmtkId = kmtkId2)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber3, linkId = linkId3, kmtkId = kmtkId3)))
 
       val roadwayNumbers = linearLocationDAO.getRoadwayNumbersFromLinearLocation
       roadwayNumbers.size should be >= 3
@@ -566,16 +630,19 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test getLinearLocationsByFilter When fetching linear locations with filter withLinkIdAndMeasure Then should return correct linear locations") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId3 = KMTKID("c", 1)
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      val linkId = 111111111l
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId, startMValue = 0.0, endMValue = 100.0)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId, startMValue = 100.0, endMValue = 200.0)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = 333333333l)))
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId3 = linkDAO.create(kmtkId3, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1, startMValue = 0.0, endMValue = 100.0)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId1, kmtkId = kmtkId1, startMValue = 100.0, endMValue = 200.0)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId3, kmtkId = kmtkId3)))
 
-      val locations1 = linearLocationDAO.getLinearLocationsByFilter(linearLocationDAO.withLinkIdAndMeasure(linkId, Some(0.0), Some(100.0)))
+      val locations1 = linearLocationDAO.getLinearLocationsByFilter(linearLocationDAO.withLinkIdAndMeasure(linkId1, Some(0.0), Some(100.0)))
       locations1.size should be(1)
       locations1.count(l => l.id == id1) should be(1)
-      val locations2 = linearLocationDAO.getLinearLocationsByFilter(linearLocationDAO.withLinkIdAndMeasure(linkId, Some(100.0), Some(200.0)))
+      val locations2 = linearLocationDAO.getLinearLocationsByFilter(linearLocationDAO.withLinkIdAndMeasure(linkId1, Some(100.0), Some(200.0)))
       locations2.size should be(1)
       locations2.count(l => l.id == id2) should be(1)
     }
@@ -583,11 +650,17 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test getLinearLocationsByFilter When fetching linear locations by withRoadwayNumbers filter Then should return correct linear locations") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val kmtkId3 = KMTKID("c", 1)
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId3 = linkDAO.create(kmtkId3, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val (roadwayNumber1, roadwayNumber2, roadwayNumber3) = (100000001l, 100000002l, 100000003l)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber2)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber3)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber2, linkId = linkId2, kmtkId = kmtkId2)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber3, linkId = linkId3, kmtkId = kmtkId3)))
 
       val locations1 = linearLocationDAO.getLinearLocationsByFilter(linearLocationDAO.withRoadwayNumbers(roadwayNumber1, roadwayNumber1))
       locations1.size should be(1)
@@ -602,11 +675,16 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchByBoundingBox When fetching linear locations with bounding box query Then should return locations in bounding box") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val kmtkId3 = KMTKID("c", 1)
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId3 = linkDAO.create(kmtkId3, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = 111111111l)))
-      val linkId = 222222222l
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = 333333333l)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, linkId = linkId2, kmtkId = kmtkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, linkId = linkId3, kmtkId = kmtkId3)))
       val locations = linearLocationDAO.fetchByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)))
       locations.size should be(1)
       locations.count(l => l.id == id2) should be(1)
@@ -617,10 +695,12 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val (id1, id2) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val roadwayNumber1 = 11111l
-      val linkId1 = 111111111l
-      val linkId2 = 222222222l
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1, linkId = linkId1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber1, linkId = linkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber1, linkId = linkId2, kmtkId = kmtkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
 
       roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, -9999, 1, RoadType.PublicRoad, Combined,
         Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test",
@@ -633,12 +713,17 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchRoadwayByBoundingBox When fetching roadways with bounding box query Then should return roadways in bounding box") {
     runWithRollback {
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val kmtkId3 = KMTKID("c", 1)
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val roadwayNumber = 11111l
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber, linkId = 111111111l)))
-      val linkId = 222222222l
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber, linkId = linkId, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = 2222l, linkId = 333333333l)))
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId3 = linkDAO.create(kmtkId3, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber, linkId = linkId2, kmtkId = kmtkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = 2222l, linkId = linkId3, kmtkId = kmtkId3)))
       val locations = linearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), Seq())
       locations.size should be(2)
       locations.count(l => l.id == id1) should be(1)
@@ -651,12 +736,15 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       val (id1, id2, id3) = (linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId, linearLocationDAO.getNextLinearLocationId)
       val roadwayNumber1 = 11111l
       val roadwayNumber2 = 22222l
-      val linkId1 = 111111111l
-      val linkId2 = 222222222l
-      val linkId3 = 333333333l
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1, linkId = linkId1)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber1, linkId = linkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber2, linkId = linkId3)))
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val kmtkId3 = KMTKID("c", 1)
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId3 = linkDAO.create(kmtkId3, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1, linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber1, linkId = linkId2, kmtkId = kmtkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber2, linkId = linkId3, kmtkId = kmtkId3)))
 
       roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, 100, 1, RoadType.PublicRoad, Combined,
         Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test",
@@ -677,17 +765,24 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
   test("Test fetchByRoadways When fetching linear locations by roadways Then should return correct linear locations") {
     runWithRollback {
       val roadwayNumber = 11111111111l
-      val (linkId1, linkId2, linkId3) = (11111111111l, 22222222222l, 33333333333l)
-      linearLocationDAO.create(Seq(testLinearLocation))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(linkId = linkId1, roadwayNumber = roadwayNumber)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(linkId = linkId2, roadwayNumber = roadwayNumber)))
-      linearLocationDAO.create(Seq(testLinearLocation.copy(linkId = linkId3, roadwayNumber = roadwayNumber)))
+      val kmtkId1 = KMTKID("a", 1)
+      val kmtkId2 = KMTKID("b", 1)
+      val kmtkId3 = KMTKID("c", 1)
+      val kmtkId4 = KMTKID("d", 1)
+      val linkId1 = linkDAO.create(kmtkId1, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId2 = linkDAO.create(kmtkId2, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId3 = linkDAO.create(kmtkId3, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      val linkId4 = linkDAO.create(kmtkId4, testLinearLocation.adjustedTimestamp, testLinearLocation.linkGeomSource.value)
+      linearLocationDAO.create(Seq(testLinearLocation.copy(linkId = linkId1, kmtkId = kmtkId1)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(linkId = linkId2, kmtkId = kmtkId2, roadwayNumber = roadwayNumber)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(linkId = linkId3, kmtkId = kmtkId3, roadwayNumber = roadwayNumber)))
+      linearLocationDAO.create(Seq(testLinearLocation.copy(linkId = linkId4, kmtkId = kmtkId4, roadwayNumber = roadwayNumber)))
 
       val locations = linearLocationDAO.fetchByRoadways(Set(roadwayNumber))
       locations.size should be(3)
-      locations.count(l => l.linkId == linkId1) should be(1)
       locations.count(l => l.linkId == linkId2) should be(1)
       locations.count(l => l.linkId == linkId3) should be(1)
+      locations.count(l => l.linkId == linkId4) should be(1)
     }
   }
 

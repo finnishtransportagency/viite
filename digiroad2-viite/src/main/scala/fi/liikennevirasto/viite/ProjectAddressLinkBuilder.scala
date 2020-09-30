@@ -26,7 +26,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
     val calibrationPoints = pl.calibrationPoints
 
-    ProjectAddressLink(pl.id, pl.linkId, pl.geometry,
+    ProjectAddressLink(pl.id, pl.linkId, pl.kmtkId, pl.geometry,
       pl.geometryLength, fi.liikennevirasto.digiroad2.asset.Unknown, linkType, LifecycleStatus.UnknownLifecycleStatus,
       pl.linkGeomSource, pl.roadType, pl.roadName, pl.roadName, 0L, "", None, Some("kmtk_modified"),
       Map(), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value,
@@ -82,14 +82,15 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
   }
 
   def build(ral: RoadAddressLinkLike): ProjectAddressLink = {
-    ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType,
+    ProjectAddressLink(ral.id, ral.linkId, ral.kmtkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType,
       ral.lifecycleStatus, ral.roadLinkSource, ral.roadType, ral.kmtkRoadName, ral.roadName, ral.municipalityCode, ral.municipalityName, ral.modifiedAt, ral.modifiedBy,
       ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
       ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
       ral.anomaly, LinkStatus.Unknown, ral.id, ral.linearLocationId)
   }
 
-
+  // Used only from test
+  @Deprecated
   private def build(roadLink: RoadLinkLike, id: Long, geom: Seq[Point], length: Double, roadNumber: Long, roadPartNumber: Long,
                     trackCode: Int, roadName: Option[String], municipalityCode: Int, linkType: LinkType,
                     roadType: RoadType, discontinuity: Discontinuity,
@@ -105,7 +106,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
         roadLink.linkId
 
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
-    ProjectAddressLink(id, linkId, geom,
+    ProjectAddressLink(id, linkId, roadLink.kmtkId, geom,
       length, roadLink.administrativeClass, linkType, roadLink.lifecycleStatus, roadLink.linkSource,
       roadType, Some(roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString), roadName, municipalityCode, municipalityName, extractModifiedAtKMTK(roadLink.attributes), Some("kmtk_modified"),
       roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value,
