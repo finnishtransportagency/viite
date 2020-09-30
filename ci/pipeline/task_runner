@@ -12,9 +12,7 @@ pipeline {
     parameters {
 
         choice(name: 'TARGET', choices: ['-',
-                                     'staging',
-                                     'testing',
-                                     'production',
+                                     'kmtkdevtest'
                                      ])
 
         choice(name: 'TASK', choices: [
