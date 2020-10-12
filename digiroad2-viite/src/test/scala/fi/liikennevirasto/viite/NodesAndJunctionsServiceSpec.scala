@@ -5025,6 +5025,39 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
+  test("Test calculateNodePointsForNode When road has both two track and one track part Then calculate node point based on the actual address") {
+    runWithRollback {
+      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
+      val roadwayNumber1 = Sequences.nextRoadwayNumber
+      val roadwayNumber2 = Sequences.nextRoadwayNumber
+      val roadwayNumber3 = Sequences.nextRoadwayNumber
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber1, track = Track.LeftSide, startAddrMValue = 0, endAddrMValue = 50)))
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber2, track = Track.RightSide, startAddrMValue = 0, endAddrMValue = 50)))
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber3, track = Track.Combined, startAddrMValue = 50, endAddrMValue = 100)))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber1, addrMValue = 10))
+      val roadwayPointId2 = roadwayPointDAO.create(testRoadwayPoint2.copy(roadwayNumber = roadwayNumber2, addrMValue = 20))
+      val roadwayPointId3 = roadwayPointDAO.create(testRoadwayPoint2.copy(roadwayNumber = roadwayNumber3, addrMValue = 60))
+      val junctionId1 = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Option(nodeNumber)))).head
+      val junctionId2 = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Option(nodeNumber)))).head
+      val junctionId3 = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Option(nodeNumber)))).head
+      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId1, roadwayPointId = roadwayPointId1)))
+      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId2, roadwayPointId = roadwayPointId2)))
+      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId3, roadwayPointId = roadwayPointId3)))
+
+      val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
+      nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser")
+
+      val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
+
+      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      after.size should be(2)
+      after(0).addrM should be (30)
+      after(0).track should be (Track.RightSide)
+      after(1).addrM should be (30)
+      after(1).track should be (Track.RightSide)
+    }
+  }
+
   test("Test calculateNodePointsForNode When two track road part doesn't contain 'road node point'. Junction in Right Track. Then calculate node point") {
     runWithRollback {
       val nodeNumber = nodeDAO.create(Seq(testNode1)).head
