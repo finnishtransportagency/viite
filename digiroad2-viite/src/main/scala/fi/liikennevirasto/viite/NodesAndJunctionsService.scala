@@ -926,26 +926,28 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           nodePointDAO.fetchAddrMForAverage(roadPartInfo.roadNumber, roadPartInfo.roadPartNumber)
         }
         val addrMValueAVG = nodePointDAO.fetchAverageAddrM(roadPartInfo.roadNumber, roadPartInfo.roadPartNumber, nodeNumber)
-        val beforeAfterValue = if (roadPartInfo.endAddrM == addrMValueAVG) {
-          BeforeAfter.Before
-        } else if (roadPartInfo.startAddrM == addrMValueAVG) {
-          BeforeAfter.After
-        } else {
-          BeforeAfter.UnknownBeforeAfter
-        }
-        val existingRoadwayPoint = roadwayPointDAO.fetch(roadPartInfo.roadwayNumber, addrMValueAVG)
-        val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-          existingRoadwayPoint.get.id
-        } else {
-          roadwayPointDAO.create(roadPartInfo.roadwayNumber, addrMValueAVG, username)
-        }
-        if (beforeAfterValue == BeforeAfter.UnknownBeforeAfter) {
-          nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.Before, nodeNumber, username)
-          nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.After, nodeNumber, username)
-          nodePointCount = nodePointCount + 2
-        } else {
-          nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
-          nodePointCount = nodePointCount + 1
+        if (roadPartInfo.startAddrM <= addrMValueAVG && addrMValueAVG <= roadPartInfo.endAddrM) {
+          val beforeAfterValue = if (roadPartInfo.endAddrM == addrMValueAVG) {
+            BeforeAfter.Before
+          } else if (roadPartInfo.startAddrM == addrMValueAVG) {
+            BeforeAfter.After
+          } else {
+            BeforeAfter.UnknownBeforeAfter
+          }
+          val existingRoadwayPoint = roadwayPointDAO.fetch(roadPartInfo.roadwayNumber, addrMValueAVG)
+          val rwPoint = if (existingRoadwayPoint.nonEmpty) {
+            existingRoadwayPoint.get.id
+          } else {
+            roadwayPointDAO.create(roadPartInfo.roadwayNumber, addrMValueAVG, username)
+          }
+          if (beforeAfterValue == BeforeAfter.UnknownBeforeAfter) {
+            nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.Before, nodeNumber, username)
+            nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.After, nodeNumber, username)
+            nodePointCount = nodePointCount + 2
+          } else {
+            nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
+            nodePointCount = nodePointCount + 1
+          }
         }
       }
     }
