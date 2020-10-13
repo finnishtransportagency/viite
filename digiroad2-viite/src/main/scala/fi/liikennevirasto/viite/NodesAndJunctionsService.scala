@@ -979,29 +979,32 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           nodePointDAO.fetchAddrMForAverage(roadPartInfo.roadNumber, roadPartInfo.roadPartNumber)
         }
         val addrMValueAVG = nodePointDAO.fetchAverageAddrM(roadPartInfo.roadNumber, roadPartInfo.roadPartNumber, nodeNumber)
-        if (roadPartInfo.startAddrM <= addrMValueAVG && addrMValueAVG <= roadPartInfo.endAddrM) {
-          val beforeAfterValue = if (roadPartInfo.endAddrM == addrMValueAVG) {
-            BeforeAfter.Before
-          } else if (roadPartInfo.startAddrM == addrMValueAVG) {
-            BeforeAfter.After
-          } else {
-            BeforeAfter.UnknownBeforeAfter
-          }
-          val existingRoadwayPoint = roadwayPointDAO.fetch(roadPartInfo.roadwayNumber, addrMValueAVG)
-          val rwPoint = if (existingRoadwayPoint.nonEmpty) {
-            existingRoadwayPoint.get.id
-          } else {
-            roadwayPointDAO.create(roadPartInfo.roadwayNumber, addrMValueAVG, username)
-          }
-          if (beforeAfterValue == BeforeAfter.UnknownBeforeAfter) {
-            nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.Before, nodeNumber, username)
-            nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.After, nodeNumber, username)
-            nodePointCount = nodePointCount + 2
-          } else {
-            nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
-            nodePointCount = nodePointCount + 1
-          }
-        }
+        roadwayDAO
+          .fetchAllBySectionAndTracks(roadPartInfo.roadNumber, roadPartInfo.roadPartNumber, Set(Track.Combined, Track.RightSide))
+          .filter(r => r.startAddrMValue <= addrMValueAVG && addrMValueAVG <= r.endAddrMValue)
+          .foreach(avgRoadway => {
+            val beforeAfterValue = if (avgRoadway.endAddrMValue == addrMValueAVG) {
+              BeforeAfter.Before
+            } else if (avgRoadway.startAddrMValue == addrMValueAVG) {
+              BeforeAfter.After
+            } else {
+              BeforeAfter.UnknownBeforeAfter
+            }
+            val existingRoadwayPoint = roadwayPointDAO.fetch(avgRoadway.roadwayNumber, addrMValueAVG)
+            val rwPoint = if (existingRoadwayPoint.nonEmpty) {
+              existingRoadwayPoint.get.id
+            } else {
+              roadwayPointDAO.create(avgRoadway.roadwayNumber, addrMValueAVG, username)
+            }
+            if (beforeAfterValue == BeforeAfter.UnknownBeforeAfter) {
+              nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.Before, nodeNumber, username)
+              nodePointDAO.insertCalculatedNodePoint(rwPoint, BeforeAfter.After, nodeNumber, username)
+              nodePointCount = nodePointCount + 2
+            } else {
+              nodePointDAO.insertCalculatedNodePoint(rwPoint, beforeAfterValue, nodeNumber, username)
+              nodePointCount = nodePointCount + 1
+            }
+          })
       }
     }
     None
