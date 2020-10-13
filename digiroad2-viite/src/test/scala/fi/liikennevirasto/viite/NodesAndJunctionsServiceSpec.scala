@@ -15,8 +15,10 @@ import fi.liikennevirasto.viite.dao.{BeforeAfter, _}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
-import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{any, anyLong}
 import org.mockito.Mockito.when
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -141,6 +143,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       p.geometry, p.linkGeomSource, p.roadwayNumber, Some(startDate), p.endDate),
       Roadway(p.roadwayId, p.roadwayNumber, p.roadNumber, p.roadPartNumber, p.roadType, p.track, p.discontinuity, p.startAddrMValue, p.endAddrMValue, p.reversed, startDate, p.endDate,
         p.createdBy.getOrElse("-"), p.roadName, p.ely, TerminationCode.NoTermination, DateTime.now(), None))
+  }
+
+  before {
+    // Forward all calls to mock.fetchAllBySectionAndTracks to actual implementation
+    when(mockRoadwayDAO.fetchAllBySectionAndTracks(anyLong(), anyLong(), any()))
+      .thenAnswer(
+        new Answer[Seq[Roadway]] {
+          override def answer(i: InvocationOnMock): Seq[Roadway] = {
+            roadwayDAO.fetchAllBySectionAndTracks(i.getArgument(0), i.getArgument(1), i.getArgument(2))
+          }
+        })
   }
 
   test("Test nodesAndJunctionsService.getNodesByRoadAttributes When there are less than 50 nodes in the given road Then should return the list of those nodes") {
@@ -5055,6 +5068,42 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       after(0).track should be (Track.RightSide)
       after(1).addrM should be (30)
       after(1).track should be (Track.RightSide)
+    }
+  }
+
+  test("Test calculateNodePointsForNode When average calculates on a roadway without junction Then the roadway is selected correctly") {
+    runWithRollback {
+      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
+      val roadwayNumber1 = Sequences.nextRoadwayNumber
+      val roadwayNumber2 = Sequences.nextRoadwayNumber
+      val roadwayNumber3 = Sequences.nextRoadwayNumber
+      val roadwayNumber4 = Sequences.nextRoadwayNumber
+      val roadwayNumber5 = Sequences.nextRoadwayNumber
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber1, track = Track.LeftSide, startAddrMValue = 0, endAddrMValue = 50)))
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber2, track = Track.RightSide, startAddrMValue = 0, endAddrMValue = 50)))
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber3, track = Track.Combined, startAddrMValue = 50, endAddrMValue = 100)))
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber4, track = Track.LeftSide, startAddrMValue = 100, endAddrMValue = 150)))
+      roadwayDAO.create(Seq(testRoadway1.copy(roadwayNumber = roadwayNumber5, track = Track.RightSide, startAddrMValue = 100, endAddrMValue = 150)))
+      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber1, addrMValue = 10))
+      val roadwayPointId2 = roadwayPointDAO.create(testRoadwayPoint2.copy(roadwayNumber = roadwayNumber4, addrMValue = 110))
+      val junctionId1 = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Option(nodeNumber)))).head
+      val junctionId2 = junctionDAO.create(Seq(testJunction1.copy(nodeNumber = Option(nodeNumber)))).head
+      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId1, roadwayPointId = roadwayPointId1)))
+      junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId2, roadwayPointId = roadwayPointId2)))
+
+      val before = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
+      nodesAndJunctionsService.calculateNodePointsForNode(nodeNumber, "TestUser")
+
+      val after = nodePointDAO.fetchByNodeNumbers(Seq(nodeNumber))
+
+      before.map(_.id).toSet should not be (after.map(_.id).toSet)
+      after.size should be(2)
+      after(0).addrM should be (60)
+      after(0).track should be (Track.Combined)
+      after(0).roadwayNumber should be (roadwayNumber3)
+      after(1).addrM should be (60)
+      after(1).track should be (Track.Combined)
+      after(1).roadwayNumber should be (roadwayNumber3)
     }
   }
 
