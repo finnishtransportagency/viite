@@ -302,9 +302,19 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         } else if (chainEndPoints.forall(_._2.endAddrMValue != 0) && oldFirst.isDefined) {
           val otherEndPoint = chainEndPoints.filterNot(_._2.id == oldFirst.get.id)
           if (otherEndPoint.nonEmpty && otherEndPoint.head._2.endPoint.connected(oldFirst.get.startingPoint)) {
-            (otherEndPoint.head._1, otherEndPoint.head._2)
+            // Check reversed status to select starting point
+            if (otherEndPoint.head._2.reversed && oldFirst.get.reversed) {
+              (oldFirst.get.endPoint, oldFirst.get)
+            } else {
+              (otherEndPoint.head._1, otherEndPoint.head._2)
+            }
           } else {
-            (oldFirst.get.getEndPoints._1, oldFirst.get)
+            // Check reversed status to select starting point
+            if (oldFirst.get.reversed ) {
+              (oldFirst.get.getEndPoints._2, oldFirst.get)
+            } else {
+              (oldFirst.get.getEndPoints._1, oldFirst.get)
+            }
           }
         } else {
           if (remainLinks.forall(_.endAddrMValue == 0) && oppositeTrackLinks.nonEmpty && oppositeTrackLinks.exists(_.endAddrMValue != 0)) {
