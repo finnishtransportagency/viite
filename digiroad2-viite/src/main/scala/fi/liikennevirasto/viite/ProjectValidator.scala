@@ -1028,14 +1028,14 @@ class ProjectValidator {
             val nonTerminated = interval.filter(r => r.status != LinkStatus.Terminated)
             if (nonTerminated.nonEmpty) {
               val last = nonTerminated.maxBy(_.endAddrMValue)
-              val (road, part) = (last.roadNumber, last.roadPartNumber)
+              val (road, part, reversed) = (last.roadNumber, last.roadPartNumber, last.reversed)
               val discontinuity = last.discontinuity
               val projectNextRoadParts = (project.reservedParts++project.formedParts).filter(rp =>
-                rp.roadNumber == road && rp.roadPartNumber > part && rp.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == rp.roadPartNumber))
+                rp.roadNumber == road && (if (reversed) rp.roadPartNumber < part else rp.roadPartNumber > part) && rp.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == rp.roadPartNumber))
 
               val nextProjectPart = projectNextRoadParts.map(_.roadPartNumber).sorted.headOption
               val nextAddressPart = validRoadParts
-                .filter(p => p > part).sorted
+                .filter(p => (if (reversed) p < part else p > part)).sorted
                 .filterNot(
                   rp => allProjectLinks.exists(l => l.roadAddressRoadNumber.getOrElse(0) == roadNumber && l.roadAddressRoadPart.getOrElse(0) == rp)
                 )
@@ -1072,15 +1072,15 @@ class ProjectValidator {
             val nonTerminated = interval.filter(r => r.status != LinkStatus.Terminated)
             if (nonTerminated.nonEmpty) {
               val last = nonTerminated.maxBy(_.endAddrMValue)
-              val (road, part) = (last.roadNumber, last.roadPartNumber)
+              val (road, part, reversed) = (last.roadNumber, last.roadPartNumber, last.reversed)
               val discontinuity = last.discontinuity
               val projectNextRoadParts = (project.reservedParts++project.formedParts).filter(rp =>
-                rp.roadNumber == road && rp.roadPartNumber > part)
+                rp.roadNumber == road && (if (reversed) rp.roadPartNumber < part else rp.roadPartNumber > part))
 
               val nextProjectPart = projectNextRoadParts.filter(np => np.newLength.getOrElse(0L) > 0L && allProjectLinks.exists(l => l.roadPartNumber == np.roadPartNumber))
                 .map(_.roadPartNumber).sorted.headOption
               val nextAddressPart = validRoadParts
-                .filter(p => p > part).sorted
+                .filter(p => (if (reversed) p < part else p > part)).sorted
                 .find(p => roadAddressService.getRoadAddressesFiltered(road, p)
                   .forall(ra => !allProjectLinks.exists(al => al.linearLocationId == ra.linearLocationId && al.roadPartNumber != ra.roadPartNumber)))
               if (!(nextProjectPart.isEmpty && nextAddressPart.isEmpty)) {
