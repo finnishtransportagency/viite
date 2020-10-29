@@ -880,6 +880,7 @@ class RoadwayDAO extends BaseDAO {
     if (ids.isEmpty) {
       0
     } else {
+      logger.info("Lakkautetaan idt: {}",ids)
       expireById(ids)
     }
   }
@@ -897,8 +898,36 @@ class RoadwayDAO extends BaseDAO {
       """
     if (ids.isEmpty)
       0
-    else
+    else {
       Q.updateNA(query).first
+    }
+  }
+
+  /**
+   * Flip reversed tags to be the opposite value (0 -> 1, 1 -> 0) in each history row of the road thats reversed
+   * @param ids
+   * @return
+   */
+
+  def updateReversedTagsInHistoryRows(ids: Set[Long]): Int = {
+    logger.info("flip reversed tags in history rows ids: {}", ids)
+    val query =
+      s"""
+          UPDATE ROADWAY
+          SET reversed = CASE
+          WHEN reversed = 0 THEN 1
+          WHEN reversed = 1 THEN 0
+          END
+          WHERE valid_to IS NULL AND end_date IS NOT NULL AND id IN (${ids.mkString(",")})
+      """
+    if (ids.isEmpty)
+      0
+
+    else {
+      logger.info("RoadwayDAO flip funktion else konditio")
+      logger.info("RoadwayDAO flip funktion ids {}", ids.mkString(",") )
+      Q.updateNA(query).first
+    }
   }
 
   def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
@@ -933,6 +962,7 @@ class RoadwayDAO extends BaseDAO {
   }
 
   def create(roadways: Iterable[Roadway]): Seq[Long] = {
+    logger.info("create roadways: {}", roadways)
     val roadwayPS = dynamicSession.prepareStatement(
       """
         insert into ROADWAY (id, roadway_number, road_number, road_part_number,
@@ -958,7 +988,7 @@ class RoadwayDAO extends BaseDAO {
       roadwayPS.setInt(5, address.track.value)
       roadwayPS.setLong(6, address.startAddrMValue)
       roadwayPS.setLong(7, address.endAddrMValue)
-      roadwayPS.setInt(8, if (address.reversed) 1 else 0)
+      roadwayPS.setInt(8, if (address.reversed && !address.endDate.isEmpty) 1 else 0)
       roadwayPS.setInt(9, address.discontinuity.value)
       roadwayPS.setString(10, dateFormatter.print(address.startDate))
       roadwayPS.setString(11, address.endDate match {
@@ -969,6 +999,10 @@ class RoadwayDAO extends BaseDAO {
       roadwayPS.setInt(13, address.roadType.value)
       roadwayPS.setLong(14, address.ely)
       roadwayPS.setInt(15, address.terminated.value)
+      logger.info("---------TEST TEST ---id luonnin yhteydessä {}", address.id )
+      logger.info("---------TEST TEST ---roadwayN luonnin yhteydessä {}", address.roadwayNumber )
+      logger.info("---------TEST TEST ---reversed luonnin yhteydessä {}", address.reversed )
+      logger.info("---------TEST TEST ---addressEnddate luonnin yhteydessä {}", address.endDate.isDefined )
       roadwayPS.addBatch()
     }
     roadwayPS.executeBatch()
