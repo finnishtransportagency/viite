@@ -452,7 +452,7 @@ class RoadwayDAO extends BaseDAO {
     */
   def fetchAllBySectionAndTracks(roadNumber: Long, roadPartNumber: Long, tracks: Set[Track]): Seq[Roadway] = {
     time(logger, "Fetch roadway by road number, road part number and tracks") {
-      if (tracks.isEmpty) {
+      if (tracks == null || tracks.isEmpty) {
         Seq()
       } else {
         fetch(withSectionAndTracks(roadNumber, roadPartNumber, tracks))
