@@ -561,7 +561,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def changeDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Seq[LinkToRevert], coordinates: ProjectCoordinates, username: String): Option[String] = {
     roadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
-    logger.info("------------------------------------Change Direction()")
     try {
       withDynTransaction {
         projectWritableCheckInSession(projectId) match {
@@ -569,7 +568,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             if (projectLinkDAO.countLinksByStatus(projectId, roadNumber, roadPartNumber, Set(UnChanged.value, NotHandled.value)) > 0)
               return Some(ErrorReversingUnchangedLinks)
             val continuity = projectLinkDAO.getProjectLinksContinuityCodes(projectId, roadNumber, roadPartNumber)
-            logger.info("continuity: {}", continuity)
             val newContinuity: Map[Long, Discontinuity] = if (continuity.nonEmpty) {
               val discontinuityAtEnd = continuity.maxBy(_._1)
               continuity.filterKeys(_ < discontinuityAtEnd._1).map { case (addr, d) => (discontinuityAtEnd._1 - addr) -> d } ++
@@ -1951,32 +1949,31 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (currentRoadways ++ historyRoadways.filterNot(hist => historyRoadwaysToKeep.contains(hist._1))).map(roadway => expireHistoryRows(roadway._1))
       logger.debug(s"Inserting roadways (history + current)")
 
-      val roadwaysToInsertReversedRoadways = roadwaysToInsert.filter(roadway => roadway.reversed && roadway.endDate.isEmpty) // get current reversed roadways
-      val reversedRoadwayNumbers = roadwaysToInsertReversedRoadways.map(roadway => roadway.roadwayNumber).toSet // get reversed roadways roadwaynumbers toSet (might be more than one)
-      val notReversedRoadways = roadwaysToInsert.filter(roadway => !reversedRoadwayNumbers.contains(roadway.roadwayNumber)).toList // Save not reversed roadways to a variable
-      //val historyEndDates= roadwaysToInsert.filter(roadway => reversedRoadwayNumbers.contains(roadway.roadwayNumber) && !roadway.endDate.isEmpty).map(roadway => roadway.endDate).toList      // get the reversed roadways end dates
-      val roadwaysAndHistoryRows = roadwaysToInsert.filter(roadway => reversedRoadwayNumbers.contains(roadway.roadwayNumber)).toList //get reversed roadwayrows and their historyrows from roadwaysToInsert list
-      logger.info("------------TEST TEST----------roadwaysToInsertReversedRoadways {}", roadwaysToInsertReversedRoadways)
-      logger.info("------------TEST TEST----------roadwaysToInsert {}", roadwaysToInsert)
-      logger.info("------------TEST TEST----------reversedRoadwayNumbers {}", reversedRoadwayNumbers)
-      logger.info("------------TEST TEST---------- roadwaysAndHistoryRows {} ", roadwaysAndHistoryRows)
-
-
-      val roadwaysToInsertEdited = {
+      // If the project created completely new roadways we will modify roadwaysToInsert list and its roadways to have reversed values set correctly
+      // get reversed roadways from roadwaysToInsert
+      val reversedRoadwaysToInsert = roadwaysToInsert.filter(roadway => roadway.reversed && roadway.endDate.isEmpty)
+      // get roadwaynumbers from reversed roadways toSet (might be more than one)
+      val reversedRoadwayNumbers = reversedRoadwaysToInsert.map(roadway => roadway.roadwayNumber).toSet
+      // save not reversed roadways to a list (these roadways will remain the way they are)
+      val notReversedRoadwaysToInsert = roadwaysToInsert.filter(roadway => !reversedRoadwayNumbers.contains(roadway.roadwayNumber)).toList
+      // get reversed roadwayrows and their historyrows from roadwaysToInsert list with the roadwaynumbers
+      val reversedRoadwaysAndHistoryRows = roadwaysToInsert.filter(roadway => reversedRoadwayNumbers.contains(roadway.roadwayNumber)).toList
+      val roadwaysToCreate = {
+        // Use ListBuffer as a mutable list
         val returnRoadways = new ListBuffer[Roadway]()
-        logger.info("-----LOOP---- returnRoadways {}", returnRoadways)
-        for (rwn <- reversedRoadwayNumbers) {
-          val roadways = roadwaysAndHistoryRows.filter(roadway => roadway.roadwayNumber == rwn)
-          logger.info("-----LOOP---- roadways {}", roadways)
-          val currentAndNewestHistoryRow = roadways.sortBy(_.endDate).take(2) //save the current and newest roadways to a variable
-          logger.info("-----LOOP----- currentAndNewestHistoryRow {}", currentAndNewestHistoryRow)
-          val historyRowsWithoutCurrentAndNewestHistory = roadways.sortBy(_.endDate).drop(2) // get rid of newest history and current row because they are always reversed = 1 if a road is reversed
-          logger.info("-----LOOP----- historyRowsWithoutCurrentAndNewestHistory {}", historyRowsWithoutCurrentAndNewestHistory)
-          if (historyRowsWithoutCurrentAndNewestHistory.length < 1) {
+        for (rwn <- reversedRoadwayNumbers) { // loop through reversed roadwaynumbers
+          // get roadways that have the same roadwayNumber as the current loop variable
+          val roadways = reversedRoadwaysAndHistoryRows.filter(roadway => roadway.roadwayNumber == rwn)
+          // save the current and newest history to a variable for later use
+          val currentAndNewestHistoryRow = roadways.sortBy(_.endDate).take(2)
+          // get rid of the current and newest history row because they are always reversed = 1 if a road is reversed
+          val historyRowsWithoutCurrentAndNewestHistory = roadways.sortBy(_.endDate).drop(2)
+          if (historyRowsWithoutCurrentAndNewestHistory.length < 1) { // check if there are history rows that need to have reversed value flipped
+            // add the current and newest history rows back to the list buffer
             currentAndNewestHistoryRow.foreach(returnRoadways += _)
           }
-          else {
-            val editedRoadways = historyRowsWithoutCurrentAndNewestHistory.map(row =>
+          else { // if there is history rows that need reversed values to be flipped
+            val editedRoadways = historyRowsWithoutCurrentAndNewestHistory.map(row => // flip the reversed value in the history rows
               if (row.reversed) {
                 row.copy(reversed = false)
               }
@@ -1984,113 +1981,38 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 row.copy(reversed = true)
               }
             )
+            // add the current and newest history rows back to the list buffer
             currentAndNewestHistoryRow.foreach(returnRoadways += _)
+            // add the edited history rows back to the list buffer
             editedRoadways.foreach(returnRoadways += _)
           }
         }
+        // change the listbuffer to a immutable list
         val returnRoadwaysList = returnRoadways.toList
-        returnRoadwaysList ++ notReversedRoadways
+        // concatenate the untouched roadways and the modified roadways lists
+        returnRoadwaysList ++ notReversedRoadwaysToInsert
       }
-      logger.info("-----TEST TEST TEST----- ROADWAYSTOINSERTEDITED {}", roadwaysToInsertEdited)
-
-      /**
-       *
-       * //TOIMII SIIRTO + KÄÄNTÖ KUN ON VAIN YKSI ROADWAYNUMERO KÄÄNNETTYNÄ
-       * val currentAndNewestHistoryRow = roadwaysAndHistoryRows.sortBy(_.endDate).take(2)                                               //save the current and newest roadways to a variable
-       * val historyRowsWithoutCurrentAndNewestHistory = roadwaysAndHistoryRows.sortBy(_.endDate).drop(2)                                // get rid of newest history and current row because they are always reversed = 1 if a road is reversed
-       * val roadwaysToInsertEdited = {
-       * logger.info("------------TEST TEST----------roadwaysToInsertReversedRoadways {}", roadwaysToInsertReversedRoadways)
-       * logger.info("------------TEST TEST----------reversedRoadwayNumbers {}", reversedRoadwayNumbers)
-       * logger.info("------------TEST TEST----------historyRows {}", roadwaysAndHistoryRows)
-       * logger.info("------------TEST TEST----------currentAndNewestHistoryRow {}", currentAndNewestHistoryRow)
-       * logger.info("------------TEST TEST----------historyRowsWithoutCurrentAndNewestHistory {}", historyRowsWithoutCurrentAndNewestHistory)
-       * //logger.info("------------TEST TEST----------historyEndDates {}", historyEndDates)
-       * if (historyRowsWithoutCurrentAndNewestHistory.length < 1 ) {
-       * logger.info("-------TEST TEST -------  no rows to flip reversed tags ")
-       * historyRowsWithoutCurrentAndNewestHistory ++ currentAndNewestHistoryRow ++ notReversedRoadways
-       * }
-       * else {
-       * logger.info("-------TEST TEST -------  flipping reversed tags...")
-       *
-       * val editedRoadways = historyRowsWithoutCurrentAndNewestHistory.map(row =>
-       * if (row.reversed == true) {
-       * row.copy(reversed = false)
-       * }
-       * else {
-       * row.copy(reversed = true)
-       * }
-       * )
-       * //val editedRoadways = historyRowsWithoutCurrentAndNewestHistory.map(_.copy(reversed = if (true) false else true))
-       * logger.info("------TEST TEST --------- editedRoadways {}", editedRoadways)
-       * logger.info("-------TEST TEST ------- reversed tags flipped concatenating lists for create function to use..")
-       * editedRoadways ++ currentAndNewestHistoryRow ++ notReversedRoadways
-       * }
-       * }
-       * logger.info("-----------TEST TEST -------- roadwaysToInsert{}",roadwaysToInsert)
-       * logger.info("-----------TEST TEST -------- roadwaysToInsertEdited{}",roadwaysToInsertEdited )
-       *
-       * */
-
-      val roadwayIds = roadwayDAO.create(roadwaysToInsertEdited.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy)))
-      //val roadwayIds = roadwayDAO.create(roadwaysToInsert.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy)))
+      val roadwayIds = roadwayDAO.create(roadwaysToCreate.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy)))
       logger.debug(s"Inserting linear locations")
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
-
-
-
-
-
-      //TOIMII SIMPPELIIN KÄÄNTÖÖN
-
-      for(rwn <- reversedRoadwayNumbers) {
-        val roadways = roadwaysAndHistoryRows.filter(roadway => roadway.roadwayNumber == rwn)
-        logger.info("-----LOOP---- roadways {}", roadways)
-        val currentAndNewestHistoryRow = roadways.sortBy(_.endDate).take(2)                                               //save the current and newest roadways to a variable
-        logger.info("-----LOOP----- currentAndNewestHistoryRow {}", currentAndNewestHistoryRow)
+      // If the project didnt create new roadway numbers we will flip the existing history rows after Viite has created the new "current" roadway and newest history row of the previous "current" roadway
+      for(rwn <- reversedRoadwayNumbers) { // loop trough reversed roadway numbers
+        // get roadways that have the same roadwayNumber as the current loop variable
+        val roadways = reversedRoadwaysAndHistoryRows.filter(roadway => roadway.roadwayNumber == rwn)
+        // get rid of the current and newest history row because they already have reversed = 1 if a road is reversed
         val historyRowsWithoutCurrentAndNewestHistory = roadways.sortBy(_.endDate).drop(2)
-
+        // If the project didnt create new roadway numbers, we will flip the existing history rows
         if (historyRowsWithoutCurrentAndNewestHistory.length < 1) {
-        val roadwayRows = roadwayDAO.fetchAllByRoadwayNumbers(reversedRoadwayNumbers, true).toList // fetch all roadwayrows that are reversed + their history rows
-        val roadwayRowsWithoutCurrentAndNewestHistoryRow = roadwayRows.sortBy(_.endDate).drop(2) //get rid of current row and newest history row
-        val roadwayRowIds = roadwayRowsWithoutCurrentAndNewestHistoryRow.map(roadwayRow => roadwayRow.id).toSet // get ids of the roadway rows
-
-        logger.info("-------TEST TEST ------- roadwayRowsWithoutCurrentAndNewestHistoryRow {}", roadwayRowsWithoutCurrentAndNewestHistoryRow)
-        logger.info("-------TEST TEST ------- roadwayRows {}", roadwayRows)
-        logger.info("-------TEST TEST ------- roadwayRowIds {}", roadwayRowIds)
-        roadwayDAO.updateReversedTagsInHistoryRows(roadwayRowIds) //Flip the reversed tags (0->1 or 1->0) of the history roadways with given ids
+          // fetch all roadwayrows with the current loop variable that are reversed + their history rows
+          val roadwayRows = roadwayDAO.fetchAllByRoadwayNumbers(reversedRoadwayNumbers.filter(roadwayNumber => roadwayNumber == rwn), true).toList
+          //get rid of current row and newest history row as they are already reversed = 1
+          val roadwayRowsWithoutCurrentAndNewestHistoryRow = roadwayRows.sortBy(_.endDate).drop(2)
+          // get ids of the history rows that need to be flipped
+          val roadwayRowIds = roadwayRowsWithoutCurrentAndNewestHistoryRow.map(roadwayRow => roadwayRow.id).toSet
+          //Flip the reversed tags (0->1 or 1->0) of the history rows with given ids
+          roadwayDAO.updateReversedTagsInHistoryRows(roadwayRowIds)
+        }
       }
-    }
-
-      /*
-      logger.info("----------TEST TEST TEST ASD -------------- roadwaysToInsert: {}", roadwaysToInsert.take(20))
-      logger.info("----------TEST TEST TEST ASD-------------- historyRoadwaysTokeep {}", historyRoadwaysToKeep)
-      logger.info("----------TEST TEST TEST ASD-------------- historyRoadways {}", historyRoadways)
-      logger.info("---------- TEST TEST TEST ASD------------- currentRoadways {}", currentRoadways)
-      logger.info("---------- TEST TEST TEST ASD------------- project: {}", project)
-      */
-      //logger.info("------TEST TEST -------historyRwsToKeep: {}", historyRoadwaysToKeep)
-      //val historyRoadwaysToKeepSet = historyRoadwaysToKeep.toSet
-      //logger.info("------TEST TEST -------historyRoadwaysToKeepSet: {}", historyRoadwaysToKeepSet)
-      //val rws = roadwaysToInsert.filter(roadway => roadway.reversed)          //get roadways that have been reversed
-      //val rwNumbers = rws.map(roadway => roadway.roadwayNumber).toSet         //Map the roadwaynumbers to Set
-      //val roadwayRows =  roadwayDAO.fetchAllByRoadwayNumbers(rwNumbers, true)            //get all rows based on roadwayNumber (including history rows)
-      //val roadwayRowIds = roadwayRows.map(roadwayRow => roadwayRow.id).toSet  // get ids of the roadway rows
-      //roadwayDAO.updateReversedTagsInHistoryRows(roadwayRowIds)           //Flip the reversed tags (0->1 or 1->0) of the history roadways with given ids
-
-      /*
-      val rw = roadwaysToInsert.filter(roadway => roadway.endDate.isEmpty).head
-      val roadNumber = rw.roadNumber
-      val roadPartNumber = rw.roadPartNumber
-      val roadWays = roadwayDAO.fetchAllByRoadAndPart(roadNumber, roadPartNumber, true, false) //Get Stream of roadways with roadNumber and roadPartNumber
-      logger.info("-----------TEST TEST TEST TEST TEST ----------- tienumeron ja tieosan perusteella haetut historia rivit: {}", roadWays.take(20).filter(roadway => !roadway.endDate.isEmpty))
-      val historyRows = roadWays.take(20).filter(roadway => !roadway.endDate.isEmpty) // Get only the history rows
-      val historyIds = historyRows.map(historyRow => historyRow.id).toSet //map the history ids to set
-      logger.info("-----------TEST TEST TEST TEST TEST ----------- historyIds: {}", historyIds)
-      //roadwayDAO.updateReversedTagsInHistoryRows(historyIds) //Flip the reversed tags (0->1 or 1->0) of the history roadways with given ids
-      */
-
-      //val roadwayRows = reversedRoadwayNumbers.forEach(roadwayDAO.fetchAllByRoadwayNumbers(_, true)).toList //get all rows based on roadwayNumber (including history rows) to List (might return more than one roadway and all of its rows)
-
       roadwayIds
     }
 

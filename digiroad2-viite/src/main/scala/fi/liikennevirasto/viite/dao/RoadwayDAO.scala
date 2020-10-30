@@ -880,7 +880,6 @@ class RoadwayDAO extends BaseDAO {
     if (ids.isEmpty) {
       0
     } else {
-      logger.info("Lakkautetaan idt: {}",ids)
       expireById(ids)
     }
   }
@@ -962,7 +961,6 @@ class RoadwayDAO extends BaseDAO {
   }
 
   def create(roadways: Iterable[Roadway]): Seq[Long] = {
-    logger.info("create roadways: {}", roadways)
     val roadwayPS = dynamicSession.prepareStatement(
       """
         insert into ROADWAY (id, roadway_number, road_number, road_part_number,
@@ -999,10 +997,6 @@ class RoadwayDAO extends BaseDAO {
       roadwayPS.setInt(13, address.roadType.value)
       roadwayPS.setLong(14, address.ely)
       roadwayPS.setInt(15, address.terminated.value)
-      logger.info("---------TEST TEST ---id luonnin yhteydessä {}", address.id )
-      logger.info("---------TEST TEST ---roadwayN luonnin yhteydessä {}", address.roadwayNumber )
-      logger.info("---------TEST TEST ---reversed luonnin yhteydessä {}", address.reversed )
-      logger.info("---------TEST TEST ---addressEnddate luonnin yhteydessä {}", address.endDate.isDefined )
       roadwayPS.addBatch()
     }
     roadwayPS.executeBatch()
