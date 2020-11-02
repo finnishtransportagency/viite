@@ -574,17 +574,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 Map(discontinuityAtEnd._1 -> discontinuityAtEnd._2)
             } else
               Map()
-            logger.info("New continuity: {}", newContinuity)
             projectLinkDAO.reverseRoadPartDirection(projectId, roadNumber, roadPartNumber)
             val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter(pl => {
               pl.status != LinkStatus.Terminated && pl.roadNumber == roadNumber && pl.roadPartNumber == roadPartNumber
             })
-            logger.info("Projectlinks: {}", projectLinks.toList)
             val originalSideCodes = linearLocationDAO.fetchByRoadways(projectLinks.map(_.roadwayNumber).toSet)
               .map(l => l.id -> l.sideCode).toMap
-            logger.info("Original sidecodes {}", originalSideCodes)
             val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(projectLinks.map(_.roadwayId))
-            logger.info("OriginalAddresses {}", originalAddresses.toList)
             projectLinkDAO.updateProjectLinks(projectLinks.map(x =>
               x.copy(reversed = isReversed(originalSideCodes)(x),
                 discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous))), username, originalAddresses)
@@ -1937,7 +1933,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param roadwayId The roadwayId to expire
     */
   def expireHistoryRows(roadwayId: Long): Int = {
-    logger.info("Expire historyrows id: {}", roadwayId)
     roadwayDAO.expireHistory(Set(roadwayId))
   }
 
