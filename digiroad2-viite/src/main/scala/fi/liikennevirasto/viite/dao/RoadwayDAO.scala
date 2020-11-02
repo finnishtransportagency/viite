@@ -904,12 +904,11 @@ class RoadwayDAO extends BaseDAO {
 
   /**
    * Flip reversed tags to be the opposite value (0 -> 1, 1 -> 0) in each history row of the road thats reversed
-   * @param ids
+   * @param ids : Seq[Long] - The ids of the roadway rows of which reversed tags should be flipped
    * @return
    */
 
   def updateReversedTagsInHistoryRows(ids: Set[Long]): Int = {
-    logger.info("flip reversed tags in history rows ids: {}", ids)
     val query =
       s"""
           UPDATE ROADWAY
@@ -923,8 +922,6 @@ class RoadwayDAO extends BaseDAO {
       0
 
     else {
-      logger.info("RoadwayDAO flip funktion else konditio")
-      logger.info("RoadwayDAO flip funktion ids {}", ids.mkString(",") )
       Q.updateNA(query).first
     }
   }

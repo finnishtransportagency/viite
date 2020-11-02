@@ -1949,7 +1949,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (currentRoadways ++ historyRoadways.filterNot(hist => historyRoadwaysToKeep.contains(hist._1))).map(roadway => expireHistoryRows(roadway._1))
       logger.debug(s"Inserting roadways (history + current)")
 
-      // If the project created completely new roadways we will modify roadwaysToInsert list and its roadways to have reversed values set correctly
+      // If the project created completely new roadways due to splitting or some other reason we will modify roadwaysToInsert list and its roadways to have reversed values set correctly
       // get reversed roadways from roadwaysToInsert
       val reversedRoadwaysToInsert = roadwaysToInsert.filter(roadway => roadway.reversed && roadway.endDate.isEmpty)
       // get roadwaynumbers from reversed roadways toSet (might be more than one)
