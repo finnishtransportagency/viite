@@ -886,8 +886,33 @@ class RoadwayDAO extends BaseDAO {
       """
     if (ids.isEmpty)
       0
-    else
+    else {
       Q.updateNA(query).first
+    }
+  }
+
+  /**
+   * Flip reversed tags to be the opposite value (0 -> 1, 1 -> 0) in each history row of the road thats reversed
+   * @param ids : Seq[Long] - The ids of the roadway rows of which reversed tags should be flipped
+   * @return
+   */
+
+  def updateReversedTagsInHistoryRows(ids: Set[Long]): Int = {
+    val query =
+      s"""
+          UPDATE ROADWAY
+          SET reversed = CASE
+          WHEN reversed = 0 THEN 1
+          WHEN reversed = 1 THEN 0
+          END
+          WHERE valid_to IS NULL AND end_date IS NOT NULL AND id IN (${ids.mkString(",")})
+      """
+    if (ids.isEmpty)
+      0
+
+    else {
+      Q.updateNA(query).first
+    }
   }
 
   def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
@@ -947,7 +972,7 @@ class RoadwayDAO extends BaseDAO {
       roadwayPS.setInt(5, address.track.value)
       roadwayPS.setLong(6, address.startAddrMValue)
       roadwayPS.setLong(7, address.endAddrMValue)
-      roadwayPS.setInt(8, if (address.reversed) 1 else 0)
+      roadwayPS.setInt(8, if (address.reversed && !address.endDate.isEmpty) 1 else 0)
       roadwayPS.setInt(9, address.discontinuity.value)
       roadwayPS.setString(10, dateFormatter.print(address.startDate))
       roadwayPS.setString(11, address.endDate match {
