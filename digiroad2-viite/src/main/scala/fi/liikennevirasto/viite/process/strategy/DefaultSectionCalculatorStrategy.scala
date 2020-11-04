@@ -99,14 +99,14 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           throw new MissingTrackException(s"Missing track, R: ${rightLinks.size}, L: ${leftLinks.size}")
         }
 
-//        val (right, othersRight) = continuousSection(rightLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq())
-//        val (left, othersLeft) = continuousSection(leftLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq())
-        val (right, othersRight) = continuousSection(rightLinks.sortBy(pl => (pl.startAddrMValue)), Seq())
-        val (left, othersLeft) = continuousSection(leftLinks.sortBy(pl => (pl.startAddrMValue)), Seq())
+        val (right, othersRight) = continuousSection(rightLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq())
+        val (left, othersLeft) = continuousSection(leftLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq())
+//        val (right, othersRight) = continuousSection(rightLinks.sortBy(pl => (pl.startAddrMValue)), Seq())
+//        val (left, othersLeft) = continuousSection(leftLinks.sortBy(pl => (pl.startAddrMValue)), Seq())
 
-        val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
 
-        if (left.maxBy(_.endAddrMValue).discontinuity != right.maxBy(_.endAddrMValue).discontinuity) {
+
+
           val maxMValues = Seq(left.map(_.endAddrMValue).max, right.map(_.endAddrMValue).max)
           var (leftAligned, rightAligned, otherLeftAligned, otherRightAligned) = if (maxMValues.min == maxMValues.head) {
             val (rightAlignedWithLeft, other) = right.partition(_.endAddrMValue <= maxMValues.head)
@@ -115,14 +115,20 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val (leftAlignedWithRight, other) = left.partition(_.endAddrMValue <= maxMValues.last)
             (leftAlignedWithRight, right, othersLeft ++ other, othersRight)
           }
+
           leftAligned = if (leftAligned == null || leftAligned.size == 0) left else leftAligned
           rightAligned = if (rightAligned == null || rightAligned.size == 0) right else rightAligned
 
-          TrackSectionRoadway.handleRoadwayNumbers(rightLinks, rightAligned, otherRightAligned, leftLinks, leftAligned, otherLeftAligned)
+        val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
 
-        } else {
-          TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
-        }
+            if ( leftAligned.maxBy(_.endAddrMValue).discontinuity !=
+                 rightAligned.maxBy(_.endAddrMValue).discontinuity &&
+              left.map(_.roadwayNumber).distinct.size == right.map(_.roadwayNumber).distinct.size) {
+//                TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
+              TrackSectionRoadway.handleRoadwayNumbers(rightLinks, rightAligned, otherRightAligned, leftLinks, leftAligned, otherLeftAligned)
+            } else {
+              TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
+            }
 
 
         if (firstRight.isEmpty || firstLeft.isEmpty) {
