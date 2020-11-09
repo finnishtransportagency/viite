@@ -99,11 +99,31 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           throw new MissingTrackException(s"Missing track, R: ${rightLinks.size}, L: ${leftLinks.size}")
         }
 
-        val (right, othersRight) = continuousSection(rightLinks, Seq())
-        val (left, othersLeft) = continuousSection(leftLinks, Seq())
+        val (right, othersRight) = continuousSection(rightLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq())
+        val (left, othersLeft) = continuousSection(leftLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq())
+
+          val maxMValues = Seq(left.map(_.endAddrMValue).max, right.map(_.endAddrMValue).max)
+          var (leftAligned, rightAligned, otherLeftAligned, otherRightAligned) = if (maxMValues.min == maxMValues.head) {
+            val (rightAlignedWithLeft, other) = right.partition(_.endAddrMValue <= maxMValues.head)
+            (left, rightAlignedWithLeft, othersLeft, othersRight ++ other)
+          } else {
+            val (leftAlignedWithRight, other) = left.partition(_.endAddrMValue <= maxMValues.last)
+            (leftAlignedWithRight, right, othersLeft ++ other, othersRight)
+          }
+
+          leftAligned = if (leftAligned == null || leftAligned.size == 0) left else leftAligned
+          rightAligned = if (rightAligned == null || rightAligned.size == 0) right else rightAligned
 
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
-          TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
+
+            if ( leftAligned.maxBy(_.endAddrMValue).discontinuity !=
+                 rightAligned.maxBy(_.endAddrMValue).discontinuity &&
+              left.map(_.roadwayNumber).distinct.size == right.map(_.roadwayNumber).distinct.size) {
+              TrackSectionRoadway.handleRoadwayNumbers(rightLinks, rightAligned, otherRightAligned, leftLinks, leftAligned, otherLeftAligned)
+            } else {
+              TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
+            }
+
 
         if (firstRight.isEmpty || firstLeft.isEmpty) {
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
