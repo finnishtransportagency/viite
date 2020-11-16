@@ -83,7 +83,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       if (hasNew)
         List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
       else
-        List(Discontinuity.Discontinuous) //, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink
+        List(Discontinuity.Discontinuous)
       if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.roadType == roadType) && !discontinuousSections.contains(discontinuity)) {
         continuousSection(seq.tail, processed :+ seq.head, hasNew)
       } else {

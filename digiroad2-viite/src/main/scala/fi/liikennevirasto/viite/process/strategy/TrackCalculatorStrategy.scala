@@ -11,8 +11,8 @@ import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAd
 
 object TrackCalculatorContext {
 
-  private lazy val minorDiscontinuityStrategy: DiscontinuityTrackCalculatorStrategy = {
-    new DiscontinuityTrackCalculatorStrategy(Seq(MinorDiscontinuity, ParallelLink))
+  private lazy val minorDiscontinuityStrategy: DefaultTrackCalculatorStrategy = {
+    new DefaultTrackCalculatorStrategy
   }
 
   private lazy val discontinuousStrategy: DiscontinuityTrackCalculatorStrategy = {
