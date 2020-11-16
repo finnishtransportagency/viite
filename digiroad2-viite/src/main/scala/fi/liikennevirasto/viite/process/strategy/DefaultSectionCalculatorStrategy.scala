@@ -70,18 +70,22 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   }
 
   @tailrec
-  private def continuousSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  private def continuousSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink], hasNew: Boolean): (Seq[ProjectLink], Seq[ProjectLink]) = {
     if (seq.isEmpty)
       (processed, seq)
     else if (processed.isEmpty)
-      continuousSection(seq.tail, Seq(seq.head))
+      continuousSection(seq.tail, Seq(seq.head), hasNew)
     else {
       val track = processed.last.track
       val roadType = processed.last.roadType
       val discontinuity = processed.last.discontinuity
-      val discontinuousSections = List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
+      val discontinuousSections =
+      if (hasNew)
+        List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
+      else
+        List(Discontinuity.Discontinuous)
       if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.roadType == roadType) && !discontinuousSections.contains(discontinuity)) {
-        continuousSection(seq.tail, processed :+ seq.head)
+        continuousSection(seq.tail, processed :+ seq.head, hasNew)
       } else {
         (processed, seq)
       }
@@ -99,8 +103,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           throw new MissingTrackException(s"Missing track, R: ${rightLinks.size}, L: ${leftLinks.size}")
         }
 
-        val (right, othersRight) = continuousSection(rightLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq())
-        val (left, othersLeft) = continuousSection(leftLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq())
+        val hasNew = if ((rightLinks ++ leftLinks).exists(_.status == LinkStatus.New)) true else false
+
+        val (right, othersRight) = continuousSection(rightLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq(), hasNew)
+        val (left, othersLeft) = continuousSection(leftLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq(), hasNew)
 
           val maxMValues = Seq(left.map(_.endAddrMValue).max, right.map(_.endAddrMValue).max)
           var (leftAligned, rightAligned, otherLeftAligned, otherRightAligned) = if (maxMValues.min == maxMValues.head) {
