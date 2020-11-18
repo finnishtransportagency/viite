@@ -228,8 +228,10 @@ class RoadwayChangesDAO {
       changeRows.sortBy(_.targetStartAddressM).foldLeft(Seq[ChangeRow]()) {
         case (result, nextChangeRow) =>
           if (result.isEmpty) Seq(nextChangeRow)
-          else if(nextChangeRow.reversed) combineReversed(result, nextChangeRow)
-          else combine(result, nextChangeRow)
+          else resultList ++ Seq(nextChangeRow)
+//          if(nextChangeRow.reversed) combineReversed(result, nextChangeRow)
+//          else combine(result, nextChangeRow)
+
       }
     }.toList.sortBy(r => (r.targetRoadNumber, r.targetStartRoadPartNumber, r.targetStartAddressM, r.targetTrackCode,
       r.sourceRoadNumber, r.sourceStartRoadPartNumber, r.sourceStartAddressM, r.sourceTrackCode))
