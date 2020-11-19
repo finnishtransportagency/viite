@@ -294,7 +294,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           .sortWith(_._2.startAddrMValue < _._2.startAddrMValue): _*)
 
         val foundConnectedLinks = List(TrackSectionOrder.findOnceConnectedLinks(remainLinks).values, endPointsWithValues.values).flatten.distinct.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
-//        val foundConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks).values.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
 
         // In case there is some old starting link, we want to prioritize the one that didn't change or was not treated yet.
         // We could have more than two starting link since one of them can be Transferred from any part to this one.
