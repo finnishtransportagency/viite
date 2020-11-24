@@ -108,18 +108,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val (right, othersRight) = continuousSection(rightLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq(), hasNew)
         val (left, othersLeft) = continuousSection(leftLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq(), hasNew)
 
-          val maxMValues = Seq(left.map(_.endAddrMValue).max, right.map(_.endAddrMValue).max)
-          var (leftAligned, rightAligned, otherLeftAligned, otherRightAligned) = if (maxMValues.min == maxMValues.head) {
-            val (rightAlignedWithLeft, other) = right.partition(_.endAddrMValue <= maxMValues.head)
-            (left, rightAlignedWithLeft, othersLeft, othersRight ++ other)
-          } else {
-            val (leftAlignedWithRight, other) = left.partition(_.endAddrMValue <= maxMValues.last)
-            (leftAlignedWithRight, right, othersLeft ++ other, othersRight)
-          }
-
-          leftAligned = if (leftAligned == null || leftAligned.size == 0) left else leftAligned
-          rightAligned = if (rightAligned == null || rightAligned.size == 0) right else rightAligned
-
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
           TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
 
