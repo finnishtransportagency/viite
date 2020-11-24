@@ -121,15 +121,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           rightAligned = if (rightAligned == null || rightAligned.size == 0) right else rightAligned
 
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
-
-            if ( leftAligned.maxBy(_.endAddrMValue).discontinuity !=
-                 rightAligned.maxBy(_.endAddrMValue).discontinuity &&
-              left.map(_.roadwayNumber).distinct.size == right.map(_.roadwayNumber).distinct.size) {
-              TrackSectionRoadway.handleRoadwayNumbers(rightLinks, rightAligned, otherRightAligned, leftLinks, leftAligned, otherLeftAligned)
-            } else {
-              TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
-            }
-
+          TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
 
         if (firstRight.isEmpty || firstLeft.isEmpty) {
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")

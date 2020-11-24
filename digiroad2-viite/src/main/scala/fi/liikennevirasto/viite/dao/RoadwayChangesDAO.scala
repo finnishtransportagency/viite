@@ -177,7 +177,7 @@ class RoadwayChangesDAO {
   }
 
   private def queryResumeList(query: String) = {
-    mapper(mergeChangeRows(Q.queryNA[ChangeRow](query).list))
+    mapper(Q.queryNA[ChangeRow](query).list)
   }
 
   /**
