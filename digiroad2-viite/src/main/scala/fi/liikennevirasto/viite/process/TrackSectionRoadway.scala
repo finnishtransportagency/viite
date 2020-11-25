@@ -80,8 +80,12 @@ object TrackSectionRoadway {
         (continuousSection, seq.drop(continuousSection.size))
     }
 
-    val assignedContinuousSection = assignRoadwayNumbersInContinuousSection(continuousProjectLinks, givenRoadwayNumber)
-    (assignedContinuousSection, restProjectLinks)
+    if (restProjectLinks.isEmpty && !continuousProjectLinks.exists(_.status == LinkStatus.New))
+      (continuousProjectLinks, restProjectLinks)
+    else {
+      val assignedContinuousSection = assignRoadwayNumbersInContinuousSection(continuousProjectLinks, givenRoadwayNumber)
+      (assignedContinuousSection, restProjectLinks)
+    }
   }
 
   private def assignRoadwayNumbersInContinuousSection(links: Seq[ProjectLink], givenRoadwayNumber: Long): Seq[ProjectLink] = {
