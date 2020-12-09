@@ -144,11 +144,14 @@ object ProjectDeltaCalculator {
     val hasParallelLinkOnCalibrationPoint =
       if (!hasCalibrationPoint && r1.track != Track.Combined) {
         val projectLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(r1.roadNumber, r1.roadPartNumber, r1.projectId)
-        val parallelLastOnCalibrationPoint = projectLinks.filter(pl => pl.track != r1.track && pl.track != Track.Combined &&
-                  pl.endAddrMValue == r1.endAddrMValue &&
-        pl.hasCalibrationPointAtEnd)
+        val parallelLastOnCalibrationPoint = projectLinks.filter(pl =>
+          pl.status != LinkStatus.Terminated &&
+            pl.track != r1.track &&
+            pl.track != Track.Combined &&
+            pl.endAddrMValue == r1.endAddrMValue &&
+            pl.hasCalibrationPointAtEnd)
         !parallelLastOnCalibrationPoint.isEmpty
-    } else
+      } else
         false
 
     val openBasedOnSource = hasCalibrationPoint && r1.hasCalibrationPointCreatedInProject
