@@ -1170,7 +1170,13 @@ class ProjectValidator {
           minorDiscontinuityLinks.flatMap(minorLink =>
             // search for the parallel link in the opposite track sequence
             trackIntervals(Track.switch(minorLink.track).value - 1).filter(
-              parallelLink => (parallelLink.startAddrMValue to parallelLink.endAddrMValue contains minorLink.endAddrMValue) && parallelLink.startAddrMValue != minorLink.endAddrMValue && parallelLink.discontinuity != Discontinuity.MinorDiscontinuity && parallelLink.discontinuity != Discontinuity.ParallelLink
+              parallelLink =>
+                (parallelLink.startAddrMValue to parallelLink.endAddrMValue contains minorLink.endAddrMValue) &&
+                parallelLink.startAddrMValue != minorLink.endAddrMValue &&
+                parallelLink.discontinuity != Discontinuity.MinorDiscontinuity &&
+                parallelLink.discontinuity != Discontinuity.ParallelLink &&
+                parallelLink.discontinuity != Discontinuity.Continuous
+
             ))
         }.toSeq
       ).toSeq
