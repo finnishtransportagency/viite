@@ -1174,8 +1174,8 @@ class ProjectValidator {
                 (parallelLink.startAddrMValue to parallelLink.endAddrMValue contains minorLink.endAddrMValue) &&
                 parallelLink.startAddrMValue != minorLink.endAddrMValue &&
                 parallelLink.discontinuity != Discontinuity.MinorDiscontinuity &&
-                parallelLink.discontinuity != Discontinuity.ParallelLink &&
-                parallelLink.discontinuity != Discontinuity.Continuous
+                parallelLink.discontinuity != Discontinuity.ParallelLink //&&
+                //parallelLink.discontinuity != Discontinuity.Continuous
 
             ))
         }.toSeq

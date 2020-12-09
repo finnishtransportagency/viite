@@ -140,6 +140,17 @@ object ProjectDeltaCalculator {
 
   private def combineTwo(r1: ProjectLink, r2: ProjectLink): Seq[ProjectLink] = {
     val hasCalibrationPoint = r1.hasCalibrationPointAtEnd
+
+    val hasParallelLinkOnCalibrationPoint =
+      if (!hasCalibrationPoint && r1.track != Track.Combined) {
+        val projectLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(r1.roadNumber, r1.roadPartNumber, r1.projectId)
+        val parallelLastOnCalibrationPoint = projectLinks.filter(pl => pl.track != r1.track && pl.track != Track.Combined &&
+                  pl.endAddrMValue == r1.endAddrMValue &&
+        pl.hasCalibrationPointAtEnd)
+        !parallelLastOnCalibrationPoint.isEmpty
+    } else
+        false
+
     val openBasedOnSource = hasCalibrationPoint && r1.hasCalibrationPointCreatedInProject
     if (r1.endAddrMValue == r2.startAddrMValue)
       r1.status match {
@@ -151,7 +162,7 @@ object ProjectDeltaCalculator {
           else
             Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes))
         case LinkStatus.New =>
-          if ( r1.discontinuity.value != Discontinuity.ParallelLink.value && !r1.isSplit) {
+          if ( !hasParallelLinkOnCalibrationPoint && !hasCalibrationPoint && r1.discontinuity.value != Discontinuity.ParallelLink.value && !r1.isSplit) {
             Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPointTypes = r2.calibrationPointTypes, connectedLinkId = r2.connectedLinkId))
           } else if (!hasCalibrationPoint && r1.discontinuity.value == Discontinuity.ParallelLink.value) {
             Seq(r2, r1)
@@ -161,7 +172,6 @@ object ProjectDeltaCalculator {
         case _ => {
           Seq(r2, r1)
         }
-
       }
     else
       Seq(r2, r1)
