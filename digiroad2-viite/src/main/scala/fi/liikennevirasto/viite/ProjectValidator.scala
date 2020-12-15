@@ -455,41 +455,24 @@ class ProjectValidator {
 
   }
 
+  /** VIITE-2550 Returned to the state before 2018-07-02. */
   def validateProject(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+
     time(logger, "Validating project") {
-      actionsOrderingValidation(project, projectLinks) match {
-        case e if e.nonEmpty => e
-        case _ => projectLinksValidation(project, projectLinks)
+      val projectValidations: Seq[(Project, Seq[ProjectLink]) =>  Seq[ValidationErrorDetails]] = Seq(
+        checkProjectContinuity,        //
+        checkForNotHandledLinks,       // Käsittelemättömät linkit
+        checkForInvalidUnchangedLinks, // Virheelliset ennallaan-linkit
+        checkTrackCodePairing,         //
+        checkRemovedEndOfRoadParts,    // Puuttuvat tien loput poistojen jälkeen
+        checkProjectElyCodes           // ELY-koodit
+      )
+
+      val errors :Seq[ValidationErrorDetails] = projectValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
+        validation(project, projectLinks) ++ errors
       }
+      errors.distinct
     }
-  }
-
-  def actionsOrderingValidation(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-    val actionsOrdering: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
-      checkForInvalidUnchangedLinks
-    )
-
-    val errors: Seq[ValidationErrorDetails] = actionsOrdering.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
-      validation(project, projectLinks) ++ errors
-    }
-    errors.distinct
-  }
-
-  def projectLinksValidation(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
-
-    val projectValidations: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
-      checkProjectElyCodes,
-      checkProjectContinuity,
-      checkForNotHandledLinks,
-      checkTrackCodePairing,
-      checkRemovedEndOfRoadParts,
-      checkActionsInRoadsNotInProject
-    )
-
-    val errors: Seq[ValidationErrorDetails] = projectValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
-      validation(project, projectLinks) ++ errors
-    }
-    errors.distinct
   }
 
   def error(id: Long, validationError: ValidationError, info: String = "N/A")(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
