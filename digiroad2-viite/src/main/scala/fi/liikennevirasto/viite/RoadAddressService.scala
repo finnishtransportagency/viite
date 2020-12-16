@@ -1228,4 +1228,36 @@ object RoadAddressFilters {
     (RoadAddressFilters.continuousRoadPart(curr)(next) && RoadAddressFilters.discontinuousTopology(curr)(next)) ||
       (RoadAddressFilters.discontinuousRoadPart(curr)(next) && RoadAddressFilters.continuousTopology(curr)(next))
   }
+
+  // IN REVERSE CASES
+
+  def reversedContinuousTopology(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.newEndPoint.connected(next.newStartingPoint)
+  }
+
+  def reversedDiscontinuousTopology(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    !reversedContinuousTopology(curr)(next)
+  }
+
+  def reversedConnectingBothTails(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.newEndPoint.connected(next.newEndPoint)
+  }
+
+  def reversedConnectingBothHeads(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    curr.newStartingPoint.connected(next.newStartingPoint)
+  }
+
+  def reversedEndingOfRoad(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    (reversedContinuousTopology(curr)(next) || reversedConnectingBothTails(curr)(next)) && curr.discontinuity == Discontinuity.EndOfRoad
+  }
+
+  def reversedDiscontinuousPartTailIntersection(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    !samePart(curr)(next) && curr.discontinuity == Discontinuity.Discontinuous && (reversedContinuousTopology(curr)(next) || reversedConnectingBothTails(curr)(next))
+  }
+
+
+  def reversedHalfContinuousHalfDiscontinuous(curr: BaseRoadAddress)(next: BaseRoadAddress): Boolean = {
+    (RoadAddressFilters.continuousRoadPart(curr)(next) && RoadAddressFilters.reversedDiscontinuousTopology(curr)(next)) ||
+      (RoadAddressFilters.discontinuousRoadPart(curr)(next) && RoadAddressFilters.reversedContinuousTopology(curr)(next))
+  }
 }
