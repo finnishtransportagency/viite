@@ -459,35 +459,35 @@ class ProjectValidator {
    * Else the normal priority validation errors get returned (if any). */
   def validateProject(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
     time(logger, "Validating project") {
-      actionsOrderingValidation(project, projectLinks) match {
+      projectLinksHighPriorityValidation(project, projectLinks) match {
         case e if e.nonEmpty => e   // return high priority validation errors only, if any
-        case _ => projectLinksValidation(project, projectLinks)
+        case _ => projectLinksNormalPriorityValidation(project, projectLinks)   // otherwise, get other validations
       }
     }
   }
 
   /** Returns the high priority validation errors found within projectLinks (i.e. those that should be addressed
    *  first by the user, before any other possible errors). */
-  def actionsOrderingValidation(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+  def projectLinksHighPriorityValidation(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     // function to get any (high priority) validation errors for the project links
-    val actionsOrdering: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
+    val highPriorityValidations: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
       // sequence of validator functions, in INCREASING priority order (as these get turned around in the next step)
       checkForInvalidUnchangedLinks
     )
 
     // list all the (high priority) validation errors found within the project links, in reversed order
-    val errors: Seq[ValidationErrorDetails] = actionsOrdering.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
+    val errors: Seq[ValidationErrorDetails] = highPriorityValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
       validation(project, projectLinks) ++ errors
     }
     errors.distinct   // return distinct high priority validation errors
   }
 
   /** Returns the normal priority validation errors found within projectLinks that should be addressed by the user. */
-  def projectLinksValidation(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
+  def projectLinksNormalPriorityValidation(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     // function to get any (normal priority) validation errors for the project links
-    val projectValidations: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
+    val normalPriorityValidations: Seq[(Project, Seq[ProjectLink]) => Seq[ValidationErrorDetails]] = Seq(
       // sequence of validator functions, in INCREASING priority order (as these get turned around in the next step)
       checkProjectElyCodes,
       checkProjectContinuity,
@@ -497,7 +497,7 @@ class ProjectValidator {
       checkActionsInRoadsNotInProject
     )
 
-    val errors: Seq[ValidationErrorDetails] = projectValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
+    val errors: Seq[ValidationErrorDetails] = normalPriorityValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
       validation(project, projectLinks) ++ errors
     }
     errors.distinct
