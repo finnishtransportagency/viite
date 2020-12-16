@@ -70,18 +70,22 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
   }
 
   @tailrec
-  private def continuousSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  private def continuousSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink], hasNew: Boolean): (Seq[ProjectLink], Seq[ProjectLink]) = {
     if (seq.isEmpty)
       (processed, seq)
     else if (processed.isEmpty)
-      continuousSection(seq.tail, Seq(seq.head))
+      continuousSection(seq.tail, Seq(seq.head), hasNew)
     else {
       val track = processed.last.track
       val roadType = processed.last.roadType
       val discontinuity = processed.last.discontinuity
-      val discontinuousSections = List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
+      val discontinuousSections =
+      if (hasNew)
+        List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
+      else
+        List(Discontinuity.Discontinuous)
       if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.roadType == roadType) && !discontinuousSections.contains(discontinuity)) {
-        continuousSection(seq.tail, processed :+ seq.head)
+        continuousSection(seq.tail, processed :+ seq.head, hasNew)
       } else {
         (processed, seq)
       }
@@ -99,31 +103,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           throw new MissingTrackException(s"Missing track, R: ${rightLinks.size}, L: ${leftLinks.size}")
         }
 
-        val (right, othersRight) = continuousSection(rightLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq())
-        val (left, othersLeft) = continuousSection(leftLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq())
+        val hasNew = if ((rightLinks ++ leftLinks).exists(_.status == LinkStatus.New)) true else false
 
-          val maxMValues = Seq(left.map(_.endAddrMValue).max, right.map(_.endAddrMValue).max)
-          var (leftAligned, rightAligned, otherLeftAligned, otherRightAligned) = if (maxMValues.min == maxMValues.head) {
-            val (rightAlignedWithLeft, other) = right.partition(_.endAddrMValue <= maxMValues.head)
-            (left, rightAlignedWithLeft, othersLeft, othersRight ++ other)
-          } else {
-            val (leftAlignedWithRight, other) = left.partition(_.endAddrMValue <= maxMValues.last)
-            (leftAlignedWithRight, right, othersLeft ++ other, othersRight)
-          }
-
-          leftAligned = if (leftAligned == null || leftAligned.size == 0) left else leftAligned
-          rightAligned = if (rightAligned == null || rightAligned.size == 0) right else rightAligned
+        val (right, othersRight) = continuousSection(rightLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq(), hasNew)
+        val (left, othersLeft) = continuousSection(leftLinks.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber)), Seq(), hasNew)
 
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
-
-            if ( leftAligned.maxBy(_.endAddrMValue).discontinuity !=
-                 rightAligned.maxBy(_.endAddrMValue).discontinuity &&
-              left.map(_.roadwayNumber).distinct.size == right.map(_.roadwayNumber).distinct.size) {
-              TrackSectionRoadway.handleRoadwayNumbers(rightLinks, rightAligned, otherRightAligned, leftLinks, leftAligned, otherLeftAligned)
-            } else {
-              TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
-            }
-
+          TrackSectionRoadway.handleRoadwayNumbers(rightLinks, right, othersRight, leftLinks, left, othersLeft)
 
         if (firstRight.isEmpty || firstLeft.isEmpty) {
           throw new RoadAddressException(s"Mismatching tracks, R ${firstRight.size}, L ${firstLeft.size}")
@@ -287,7 +273,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val endPointsWithValues = ListMap(chainEndPoints.filter(link => link._2.startAddrMValue >= 0 && link._2.endAddrMValue != 0).toSeq
           .sortWith(_._2.startAddrMValue < _._2.startAddrMValue): _*)
 
-        val foundConnectedLinks = TrackSectionOrder.findOnceConnectedLinks(remainLinks).values.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
+        val foundConnectedLinks = List(TrackSectionOrder.findOnceConnectedLinks(remainLinks).values, endPointsWithValues.values).flatten.distinct.filter(link => link.startAddrMValue == 0 && link.endAddrMValue != 0)
 
         // In case there is some old starting link, we want to prioritize the one that didn't change or was not treated yet.
         // We could have more than two starting link since one of them can be Transferred from any part to this one.
