@@ -497,10 +497,11 @@ class ProjectValidator {
       checkActionsInRoadsNotInProject
     )
 
+    // lists all the (normal priority) validation errors found within the project links
     val errors: Seq[ValidationErrorDetails] = normalPriorityValidations.foldLeft(Seq.empty[ValidationErrorDetails]) { case (errors, validation) =>
       validation(project, projectLinks) ++ errors
     }
-    errors.distinct
+    errors.distinct   // return distinct normal priority validation errors
   }
 
   def error(id: Long, validationError: ValidationError, info: String = "N/A")(pl: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
