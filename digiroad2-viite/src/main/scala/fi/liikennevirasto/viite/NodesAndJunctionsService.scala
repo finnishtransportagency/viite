@@ -513,7 +513,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
         val roadsToHead = headRoads.filter(hr =>
           if(isReversed) {
-            RoadAddressFilters.reversedDiscontinuousTopology(hr)(projectLink) || RoadAddressFilters.afterDiscontinuousJump(hr)(projectLink)
+            RoadAddressFilters.reversedContinuousTopology(hr)(projectLink) || RoadAddressFilters.afterDiscontinuousJump(hr)(projectLink)
           } else {
           RoadAddressFilters.continuousTopology(hr)(projectLink) || RoadAddressFilters.afterDiscontinuousJump(hr)(projectLink)
           })
@@ -538,6 +538,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           }else {
             RoadAddressFilters.continuousTopology(projectLink)(tr)
           })
+
+        roadsToHead.foreach(toHead => logger.info(s"roadToHead(${projectLink.linkId}): ${toHead.linkId}"))
+        roadsFromHead.foreach(fromHead => logger.info(s"roadFromHead(${projectLink.linkId}): ${fromHead.linkId}"))
+
+        roadsToTail.foreach(toTail => logger.info(s"roadToTail(${projectLink.linkId}): ${toTail.linkId}"))
+        roadsFromTail.foreach(fromTail => logger.info(s"roadFromTail(${projectLink.linkId}): ${fromTail.linkId}"))
 
         /* handle creation of JUNCTION_POINT in reverse cases */
         val junctionReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && projectLink.startAddrMValue >= ch.changeInfo.target.startAddressM.get
