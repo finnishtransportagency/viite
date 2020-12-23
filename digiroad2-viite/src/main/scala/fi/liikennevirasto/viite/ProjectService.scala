@@ -29,7 +29,6 @@ import org.apache.http.client.ClientProtocolException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
-import fi.liikennevirasto.viite.dao.ProjectLinkDAO
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
