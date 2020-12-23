@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process.strategy
 
 import fi.liikennevirasto.GeometryUtils
-import fi.liikennevirasto.digiroad2.util.MissingTrackException
+import fi.liikennevirasto.digiroad2.util.{MissingTrackException, Track}
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous, MinorDiscontinuity, ParallelLink}
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -28,10 +28,10 @@ object TrackCalculatorContext {
   }
 
   private lazy val defaultTrackCalculatorStrategy: DefaultTrackCalculatorStrategy = {
-    new DefaultTrackCalculatorStrategy
+      new DefaultTrackCalculatorStrategy
   }
 
-  private val strategies = Seq(minorDiscontinuityStrategy, discontinuousStrategy, linkStatusChangeTrackCalculatorStrategy, terminatedLinkStatusChangeStrategy)
+  private val strategies = Seq(minorDiscontinuityStrategy, discontinuousStrategy, terminatedLinkStatusChangeStrategy) // linkStatusChangeTrackCalculatorStrategy,
 
   def getNextStrategy(projectLinks: Seq[ProjectLink]): Option[(Long, TrackCalculatorStrategy)] = {
     val head = projectLinks.head
@@ -162,17 +162,33 @@ trait TrackCalculatorStrategy {
     else
       projectLinks
   }
-
+  private def continuousSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+    if (seq.isEmpty)
+      (processed, seq)
+    else if (processed.isEmpty)
+      continuousSection(seq.tail, Seq(seq.head))
+    else {
+      val track = processed.last.track
+      val roadType = processed.last.roadType
+      val discontinuity = processed.last.discontinuity
+      val discontinuousSections = List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
+      if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.roadType == roadType) && !discontinuousSections.contains(discontinuity)) {
+        continuousSection(seq.tail, processed :+ seq.head)
+      } else {
+        (processed, seq)
+      }
+    }
+  }
   protected def adjustTwoTracks(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint],
                                 restLeftProjectLinks: Seq[ProjectLink] = Seq(), restRightProjectLinks: Seq[ProjectLink] = Seq()): TrackCalculatorResult = {
     if (leftProjectLinks.isEmpty || rightProjectLinks.isEmpty)
       throw new MissingTrackException(s"Missing track, R: ${rightProjectLinks.size}, L: ${leftProjectLinks.size}")
 
     val leftRoadwayNumber = leftProjectLinks.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
-    val continuousLeftProjectLinks = leftProjectLinks.takeWhile(pl => pl.roadwayNumber == leftRoadwayNumber)
+    val continuousLeftProjectLinks = leftProjectLinks // .takeWhile(pl => pl.roadwayNumber == leftRoadwayNumber)
 
     val rightRoadwayNumber = rightProjectLinks.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
-    val continuousRightProjectLinks = rightProjectLinks.takeWhile(pl => pl.roadwayNumber == rightRoadwayNumber)
+    val continuousRightProjectLinks = rightProjectLinks //.takeWhile(pl => pl.roadwayNumber == rightRoadwayNumber)
 
     // Find a calibration point annexed to the projectLink Id
     val availableCalibrationPoint = calibrationPoints.get(continuousRightProjectLinks.last.id).orElse(calibrationPoints.get(continuousLeftProjectLinks.last.id))

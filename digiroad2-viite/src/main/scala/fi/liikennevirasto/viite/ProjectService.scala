@@ -29,6 +29,8 @@ import org.apache.http.client.ClientProtocolException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
+import fi.liikennevirasto.viite.dao.ProjectLinkDAO
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -1289,8 +1291,111 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       filteredAddresses.foreach(ra => projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(ely = toReset.find(pl => pl.roadwayNumber == ra.roadwayNumber).get.ely), updateGeom = false))
     }
 
+
+
+    def createCalibrationPointsAtStatusChange(toUpdateLinks: Seq[ProjectLink]) = {
+      val last = toUpdateLinks.maxBy(_.endAddrMValue)
+      val roadPartCalibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, last.roadNumber, last.roadPartNumber)
+
+
+      def splitAt(pl: ProjectLink, address: Long): (ProjectLink, ProjectLink) = {
+        val coefficient = (pl.endMValue - pl.startMValue) / (pl.endAddrMValue - pl.startAddrMValue)
+        val splitMeasure = pl.startMValue + (math.abs(pl.startAddrMValue - address) * coefficient)
+        val newProjectLinks = (
+          pl.copy(endAddrMValue = address, startMValue = pl.startMValue, endMValue = splitMeasure, status = pl.status, geometry = GeometryUtils.truncateGeometry2D(pl.geometry, startMeasure = 0, endMeasure = splitMeasure), geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId)),
+          pl.copy(id = NewIdValue, originalEndAddrMValue = 0, originalStartAddrMValue = 0, status = pl.status, startAddrMValue = address, endAddrMValue = pl.endAddrMValue, startMValue = splitMeasure, endMValue = pl.endMValue, geometry = GeometryUtils.truncateGeometry2D(pl.geometry, startMeasure = splitMeasure, endMeasure = pl.geometryLength), geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId))
+        )
+
+        val id: Seq[Long] = projectLinkDAO.create(Seq(newProjectLinks._2))
+        (newProjectLinks._1, newProjectLinks._2.copy(id = id.head))
+      }
+
+      def createCalibrationPoints(startCP: CalibrationPointDAO.CalibrationPointType, endCP: CalibrationPointDAO.CalibrationPointType, otherSideLinkStartCP: CalibrationPointDAO.CalibrationPointType, otherSideLinkEndCP: CalibrationPointDAO.CalibrationPointType, otherSideLink: ProjectLink) = {
+        if (roadPartCalibrationPoints.filter(cp => cp.projectLinkId == last.id && cp.addressMValue == last.endAddrMValue).isEmpty) {
+          val leftCalibrationPoint =
+            UserDefinedCalibrationPoint(NewIdValue, last.id, last.projectId, last.endMValue - last.startMValue, last.endAddrMValue)
+          ProjectCalibrationPointDAO.createCalibrationPoint(leftCalibrationPoint)
+        }
+
+        if (roadPartCalibrationPoints.filter(cp => cp.projectLinkId == otherSideLink.id && cp.addressMValue == last.endAddrMValue).isEmpty) {
+          val rightCalibrationPoint =
+            UserDefinedCalibrationPoint(NewIdValue, otherSideLink.id, otherSideLink.projectId, last.endAddrMValue - otherSideLink.startMValue, last.endAddrMValue)
+          ProjectCalibrationPointDAO.createCalibrationPoint(rightCalibrationPoint)
+        }
+
+        val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(Seq(last.roadwayId, otherSideLink.roadwayId))
+
+        projectLinkDAO.updateProjectLinks(
+          Seq(last.copy(calibrationPointTypes = (startCP, endCP)),
+            otherSideLink.copy(calibrationPointTypes = (otherSideLinkStartCP, otherSideLinkEndCP))),
+          userName,
+          originalAddresses)
+      }
+
+      def splitAndSetCalibrationPointsAtEnd(last: ProjectLink, roadPartLinks: Seq[ProjectLink]) = {
+        if (last.track != Track.Combined && last.discontinuity == Discontinuity.Continuous) {
+
+          val hasOtherSideLink = roadPartLinks.filter(pl =>
+            pl.track != Track.Combined &&
+              pl.track != last.track &&
+              pl.status != LinkStatus.NotHandled &&
+              pl.status != LinkStatus.Terminated &&
+              pl.startAddrMValue < last.endAddrMValue &&
+              pl.endAddrMValue >= last.endAddrMValue)
+
+          // TODO: check section end is a status change point (--> remove calibration point if not).
+          /* val isStatusChange = roadPartLinks.filter(pl =>
+                  pl.track == last.track &&
+                  pl.startingPoint == last.endPoint
+                )
+                .head.status != last.status*/
+
+          if (hasOtherSideLink.nonEmpty) {
+            val startCP = last.startCalibrationPointType match {
+              case JunctionPointCP => JunctionPointCP
+              case UserDefinedCP => UserDefinedCP
+              case _ => NoCP
+            }
+            val endCP = last.endCalibrationPointType match {
+              case JunctionPointCP => JunctionPointCP
+              case _ => UserDefinedCP
+            }
+            val otherSideLinkStartCP = last.startCalibrationPointType match {
+              case JunctionPointCP => JunctionPointCP
+              case UserDefinedCP => UserDefinedCP
+              case _ => NoCP
+            }
+            val otherSideLinkEndCP = last.endCalibrationPointType match {
+              case JunctionPointCP => JunctionPointCP
+              case _ => UserDefinedCP
+            }
+
+            val otherSideLink = hasOtherSideLink.head
+
+            if (otherSideLink.endAddrMValue != last.endAddrMValue) {
+              val (plPart1, plPart2) = splitAt(otherSideLink, last.endAddrMValue)
+              createCalibrationPoints(startCP, endCP, otherSideLinkStartCP, otherSideLinkEndCP, plPart1)
+              Seq(plPart1, plPart2)
+            } else {
+              createCalibrationPoints(startCP, endCP, otherSideLinkStartCP, otherSideLinkEndCP, otherSideLink)
+              Seq()
+            }
+          } else Seq()
+        } else Seq()
+      }
+
+
+      val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, projectId)
+
+      // TODO: If other track is shorter, find its status changepoint if any and do split + calibration point.
+     // val otherSideLast = findOtherShorterTrackStatusChangePoint(...)
+      splitAndSetCalibrationPointsAtEnd(last, roadPartLinks)
+      //splitAndSetCalibrationPointsAtEnd(otherSideLast, roadPartLinks)
+    }
+
     try {
       withDynTransaction {
+        var splittedLinks = Seq.empty[ProjectLink]
         val toUpdateLinks = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(ids, linkIds.toSet, projectId)
         userDefinedEndAddressM.map(addressM => {
           val endSegment = toUpdateLinks.maxBy(_.endAddrMValue)
@@ -1348,6 +1453,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
           case LinkStatus.Transfer =>
             val (replaceable, road, part) = checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.Transfer, toUpdateLinks)
+
             val updated = toUpdateLinks.map(l => {
               val startCP = l.startCalibrationPointType match {
                 case JunctionPointCP => JunctionPointCP
@@ -1362,9 +1468,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode),
                 status = linkStatus, calibrationPointTypes = (startCP, endCP), ely = ely.getOrElse(l.ely), roadType = RoadType.apply(roadType.toInt))
             })
+
             val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(updated.map(_.roadwayId))
             projectLinkDAO.updateProjectLinks(updated, userName, originalAddresses)
             projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(updated.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
+
+//            splitLinks += createCalibrationPointsAtStatusChange(toUpdateLinks)
+            splittedLinks = createCalibrationPointsAtStatusChange(toUpdateLinks)
+
             //transfer cases should remove the part after the project link table update operation
             if (replaceable) {
               projectReservedPartDAO.removeReservedRoadPart(projectId, road.get, part.get)
@@ -1375,6 +1486,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
           case LinkStatus.UnChanged =>
             checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.UnChanged, toUpdateLinks)
+
+
+
             // Reset back to original values
             val updated = toUpdateLinks.map(l => {
               l.copy(ely = ely.getOrElse(l.ely))
@@ -1382,11 +1496,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             resetLinkValues(updated)
             updateRoadTypeDiscontinuity(updated.map(_.copy(roadType = RoadType.apply(roadType.toInt), status = linkStatus)))
 
+            // Bad workaround to have fresh data.
+            val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter( pl => updated.map(_.id).contains(pl.id))
+            splittedLinks = createCalibrationPointsAtStatusChange(projectLinks)
+
+
           case LinkStatus.New =>
             // Current logic allows only re adding new road addresses within same road/part group
             if (toUpdateLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).size <= 1) {
               checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.New, toUpdateLinks)
               updateRoadTypeDiscontinuity(toUpdateLinks.map(l => l.copy(roadType = RoadType.apply(roadType.toInt), roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), ely = ely.getOrElse(l.ely))))
+
+              // Bad workaround to have fresh data.
+              val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter( pl => toUpdateLinks.map(_.id).contains(pl.id))
+              splittedLinks = createCalibrationPointsAtStatusChange(projectLinks)
+
               val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
               if (nameError.nonEmpty)
                 return nameError
@@ -1396,8 +1520,32 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case _ =>
             throw new ProjectValidationException(s"Virheellinen operaatio $linkStatus")
         }
+////////////////////////////////////////////////////////////////////////////////////////
+//        val linksForStatusCps = projectLinkDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId)
+//
+//        def findStatusChangeLinksFor(trackSection: Seq[ProjectLink]): Seq[ProjectLink] = {
+//          trackSection.filterNot(_.track == Track.Combined)
+//            .foldLeft(Seq(trackSection.head)) {
+//              (hs, rs) =>
+//                if (hs.last.status == rs.status) hs ++ Seq(rs)
+//                else hs
+//            }.tail
+//        }
+//
+//        val rightStatusChangePoints = findStatusChangeLinksFor(linksForStatusCps.filter(_.track == Track.RightSide))
+//        val leftStatusChangePoints = findStatusChangeLinksFor(linksForStatusCps.filter(_.track == Track.LeftSide))
+//        linksForStatusCps.groupBy(_.)
+//        createCalibrationPointsAtStatusChange(linksForStatusCps)
+
+//        splittedLinks = createCalibrationPointsAtStatusChange(toUpdateLinks)
+
+////////////////////////////////////////////////////////////////////////////////////////
+
         recalculateProjectLinks(projectId, userName, Set((newRoadNumber, newRoadPartNumber)) ++
-          toUpdateLinks.map(pl => (pl.roadNumber, pl.roadPartNumber)).toSet)
+          ( splittedLinks.nonEmpty match {
+          case true => (toUpdateLinks.filterNot(_.endAddrMValue == splittedLinks.head.endAddrMValue) ++ splittedLinks).sortBy(_.startAddrMValue)
+          case _    => toUpdateLinks
+        }).map(pl => (pl.roadNumber, pl.roadPartNumber)).toSet)
         if (coordinates.isDefined) {
           saveProjectCoordinates(projectId, coordinates.get)
         }
