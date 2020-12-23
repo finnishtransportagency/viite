@@ -162,23 +162,7 @@ trait TrackCalculatorStrategy {
     else
       projectLinks
   }
-  private def continuousSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
-    if (seq.isEmpty)
-      (processed, seq)
-    else if (processed.isEmpty)
-      continuousSection(seq.tail, Seq(seq.head))
-    else {
-      val track = processed.last.track
-      val roadType = processed.last.roadType
-      val discontinuity = processed.last.discontinuity
-      val discontinuousSections = List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
-      if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.roadType == roadType) && !discontinuousSections.contains(discontinuity)) {
-        continuousSection(seq.tail, processed :+ seq.head)
-      } else {
-        (processed, seq)
-      }
-    }
-  }
+
   protected def adjustTwoTracks(startAddress: Option[Long], leftProjectLinks: Seq[ProjectLink], rightProjectLinks: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint],
                                 restLeftProjectLinks: Seq[ProjectLink] = Seq(), restRightProjectLinks: Seq[ProjectLink] = Seq()): TrackCalculatorResult = {
     if (leftProjectLinks.isEmpty || rightProjectLinks.isEmpty)
