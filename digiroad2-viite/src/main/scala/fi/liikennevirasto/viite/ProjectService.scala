@@ -1295,6 +1295,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     def createCalibrationPointsAtStatusChange(toUpdateLinks: Seq[ProjectLink]) = {
       val last = toUpdateLinks.maxBy(_.endAddrMValue)
       val roadPartCalibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, last.roadNumber, last.roadPartNumber)
+      val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, projectId)
 
 
       def splitAt(pl: ProjectLink, address: Long): (ProjectLink, ProjectLink) = {
@@ -1331,6 +1332,26 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           originalAddresses)
       }
 
+      def findOtherShorterTrackStatusChangePoint(lastPl: ProjectLink) = {
+        val ret = roadPartLinks.filter(pl =>
+          pl.track != lastPl.track &&
+          pl.track != Track.Combined &&
+          pl.endAddrMValue < lastPl.endAddrMValue &&
+          pl.status != LinkStatus.NotHandled)
+
+        val x = if (ret.nonEmpty) {
+          val nextLink = roadPartLinks.find(_.startAddrMValue == ret.maxBy(_.endAddrMValue))
+          if (nextLink.isDefined && nextLink.get.status != lastPl.status) {
+            Some(ret.maxBy(_.endAddrMValue))
+          } else {
+            None
+          }
+        } else {
+          None
+        }
+       x
+      }
+
       def splitAndSetCalibrationPointsAtEnd(last: ProjectLink, roadPartLinks: Seq[ProjectLink]) = {
         if (last.track != Track.Combined && last.discontinuity == Discontinuity.Continuous) {
 
@@ -1343,11 +1364,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               pl.endAddrMValue >= last.endAddrMValue)
 
           // TODO: check section end is a status change point (--> remove calibration point if not).
-          /* val isStatusChange = roadPartLinks.filter(pl =>
+          /* val isStatusChange = roadPartLinks.find(pl =>
                   pl.track == last.track &&
                   pl.startingPoint == last.endPoint
                 )
-                .head.status != last.status*/
+               if (isStatusChange.isDefined) isStatusChange.get.status != last.status*/
 
           if (hasOtherSideLink.nonEmpty) {
             val startCP = last.startCalibrationPointType match {
@@ -1384,12 +1405,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
 
 
-      val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, projectId)
-
       // TODO: If other track is shorter, find its status changepoint if any and do split + calibration point.
-     // val otherSideLast = findOtherShorterTrackStatusChangePoint(...)
-      splitAndSetCalibrationPointsAtEnd(last, roadPartLinks)
-      //splitAndSetCalibrationPointsAtEnd(otherSideLast, roadPartLinks)
+
+       /* roadPartLinks? **/
+
+      val otherSideLast = findOtherShorterTrackStatusChangePoint(last)
+      if (otherSideLast.isDefined)
+        splitAndSetCalibrationPointsAtEnd(last, roadPartLinks) ++ splitAndSetCalibrationPointsAtEnd(otherSideLast.get, roadPartLinks)
+      else
+        splitAndSetCalibrationPointsAtEnd(last, roadPartLinks)
     }
 
     try {

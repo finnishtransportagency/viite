@@ -114,24 +114,32 @@ object ProjectDeltaCalculator {
       }
 
     }
+  //  tr1 = {Tuple2@143934} "(RoadAddress(66680,425970,5,129,PublicRoad,2,5 - Jatkuva,169,2083,Some(2015-10-01T00:00:00.000+03:00),None,Some(import),7094943,98.521,205.168,TowardsDigitizing,1600729985000,(None,None),List(Point(514506.475,6838673.87,0.0), Point(514589.163,6838741.131,0.0)),FrozenLinkInterface,8,NoTermination,126018012,Some(2016-10-20T00:00:00.000+03:00),None,Some(HELSINKI-SODANKYLÄ)),ProjectLink(1075112,5,129,2,5 - Jatkuva,169,2083,169,274,Some(2015-10-01T00:00:00.000+03:00),None,Some(silari),7094943,98.521,205.168,TowardsDigitizing,(NoCP,NoCP),(NoCP,NoCP),List(Point(514506.475,6838673.87,85.4262719571869), Point(514507.64,6838674.714,85.3910000000033), Point(514509.258,6838675.889,85.3669999999984), Point(514510.872,6838677.068,85.3469999999943), Point(514512.485,6838678.25,85.5160000000033), Point(514514.094,6838679.436,85.6729999999952), Point(514515.701,6838680.625,85.3619999999937), Point(514517.306,6838681.817,84.474000000002), Point(514518.908,6838683.013,83.7010000000009), Point(514520.508,"
+  //  tr2 = {Tuple2@143930} "(RoadAddress(66680,425992,5,129,PublicRoad,2,5 - Jatkuva,2083,2146,Some(2015-10-01T00:00:00.000+03:00),None,Some(import),3226409,75.06,138.962,TowardsDigitizing,1600729985000,(Some(CalibrationPoint(3226409,0.0,2009,JunctionPointCP)),None),List(Point(516029.978,6839812.933,0.0), Point(516069.615,6839862.917,0.0)),FrozenLinkInterface,8,NoTermination,126018012,Some(2016-10-20T00:00:00.000+03:00),None,Some(HELSINKI-SODANKYLÄ)),ProjectLink(1075151,5,129,2,5 - Jatkuva,2083,2146,0,0,Some(2015-10-01T00:00:00.000+03:00),None,Some(silari),3226409,75.06,138.962,TowardsDigitizing,(JunctionPointCP,NoCP),(JunctionPointCP,NoCP),List(Point(516031.53,6839811.623,0.0), Point(516042.925,6839825.934,0.0), Point(516060.546,6839850.568,0.0), Point(516069.615,6839862.917,0.0)),1008319,UnChanged,PublicRoad,FrozenLinkInterface,63.902,66680,425992,8,false,Some(3226409),1600729985000,126018012,Some(HELSINKI-SODANKYLÄ),Some(0),Some(0),Some(0),Some(2),Some(5),Some(129)))"
+
+//ra1 track 2 has hasCalibrationPoint == false
 
     if (matchAddr && matchContinuity && !hasCalibrationPoint &&
       ra1.endAddrMValue == ra2.startAddrMValue &&
       ra1.roadType == ra2.roadType && pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
       Seq((
         ra1 match {
-          case x: RoadAddress => x.copy(discontinuity = ra2.discontinuity, endAddrMValue = ra2.endAddrMValue).asInstanceOf[R]
-          case x: ProjectLink if x.reversed => x.copy(startAddrMValue = ra2.startAddrMValue, discontinuity = ra1.discontinuity).asInstanceOf[R]
-          case x: ProjectLink => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
+          case x: RoadAddress => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
+//          case x: ProjectLink if x.reversed => x.copy(startAddrMValue = ra2.startAddrMValue, discontinuity = ra1.discontinuity).asInstanceOf[R]
+//          case x: ProjectLink => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
         },
         pl1 match {
-          case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(pl2.calibrationPoints)).asInstanceOf[P]
+//          case x: RoadAddress => x.copy(endAddrMValue = pl2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(pl2.calibrationPoints)).asInstanceOf[P]
           case x: ProjectLink if x.reversed =>
             x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity,
-              calibrationPointTypes = (x.startCalibrationPointType, x.endCalibrationPointType)).asInstanceOf[P]
+              calibrationPointTypes = (x.startCalibrationPointType, pl1.asInstanceOf[ProjectLink].endCalibrationPointType),
+              originalCalibrationPointTypes = (x.originalCalibrationPointTypes._1, pl1.asInstanceOf[ProjectLink].originalCalibrationPointTypes._2)
+            ).asInstanceOf[P]
           case x: ProjectLink =>
             x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
-              calibrationPointTypes = (x.startCalibrationPointType, x.endCalibrationPointType)).asInstanceOf[P]
+              calibrationPointTypes = (x.startCalibrationPointType, pl2.asInstanceOf[ProjectLink].endCalibrationPointType),
+              originalCalibrationPointTypes = (x.originalCalibrationPointTypes._1, pl2.asInstanceOf[ProjectLink].originalCalibrationPointTypes._2)
+            ).asInstanceOf[P]
         }))
     else {
       Seq(tr2, tr1)
@@ -164,8 +172,13 @@ object ProjectDeltaCalculator {
             Seq(r2, r1)
           else
             Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes))
+        case LinkStatus.UnChanged =>
+          if (!openBasedOnSource)
+            Seq(r2, r1)
+          else
+            Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes))
         case LinkStatus.New =>
-          if ( !hasParallelLinkOnCalibrationPoint && !hasCalibrationPoint && r1.discontinuity.value != Discontinuity.ParallelLink.value && !r1.isSplit) {
+          if ( !hasParallelLinkOnCalibrationPoint && !hasCalibrationPoint && r1.discontinuity.value != Discontinuity.ParallelLink.value ) { // && !r1.isSplit
             Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPointTypes = r2.calibrationPointTypes, connectedLinkId = r2.connectedLinkId))
           } else if (!hasCalibrationPoint && r1.discontinuity.value == Discontinuity.ParallelLink.value) {
             Seq(r2, r1)
