@@ -380,10 +380,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       */
     def createJunctionAndJunctionPointIfNeeded(target: BaseRoadAddress, existingJunctionId: Option[Long] = None, pos: BeforeAfter, addr: Long,
                                                roadsTo: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress], roadsFrom: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress]): Option[(Long, Long, CalibrationPointLocation)] = {
-      implicit def datetimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isAfter _)
       val roadwayPointId = getRoadwayPointId(target.roadwayNumber, addr, username)
       val existingJunctionPoint = junctionPointDAO.fetchByRoadwayPoint(target.roadwayNumber, addr, pos)
-      logger.info(s"-------EXISTING JUNCTION POINT------ (linkID=${target.linkId})(rwpointID=${roadwayPointId}): ${existingJunctionPoint.isEmpty}")
 
       if (existingJunctionPoint.isEmpty) {
         val junctionId = existingJunctionId match {
@@ -400,22 +398,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
         logger.info(s"Creating JunctionPoint with junctionId: $junctionId, beforeAfter: ${pos.value}, addrM: $addr for roadwayNumber: ${target.roadwayNumber}, (${target.roadNumber}, ${target.roadPartNumber}, ${target.track}, $addr)")
         junctionPointDAO.create(Seq(JunctionPoint(NewIdValue, pos, roadwayPointId, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now), target.roadwayNumber, addr, target.roadNumber, target.roadPartNumber, target.track, target.discontinuity)))
-
-        //Testi alku
-
-        val existingByRoadwayPointId = junctionPointDAO.fetchByRoadwayPointId(roadwayPointId)
-        val existing = existingByRoadwayPointId.filter(_.beforeAfter == pos)
-        existing.foreach(ex => logger.info(s"existing ${ex}"))
-        if (existing.size > 1) {
-          val existingWrong = existing.sortBy(_.startDate).drop(1)
-          existingWrong.foreach(ex => logger.info(s"existingWrong ${ex}"))
-          val existingWrongIds = existingWrong.map(jp => jp.id)
-          existingWrongIds.foreach(ex => logger.info(s"existingWrongIds ${ex}"))
-          logger.info(s"-----DELETING JUNCTIONPOINTS: ${existingWrongIds}--------")
-          junctionPointDAO.expireById(existingWrongIds)
-        }
-        //Testi loppu
-
         Some((roadwayPointId, target.linkId, CalibrationPointLocation.apply(pos)))
       } else {
         None
@@ -424,8 +406,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     time(logger, "Handling junction point templates") {
       val nonTerminatedLinks: Seq[BaseRoadAddress] = projectLinks.filter(pl => RoadClass.forJunctions.contains(pl.roadNumber.toInt) && pl.status != LinkStatus.Terminated)
-      //TESTI ALKU
-      val junctionCalibrationPointsTest = nonTerminatedLinks.map { projectLink =>
+      // Update junctionPoint Before/After if projectLink is reversed
+      nonTerminatedLinks.map { projectLink =>
 
         val junctionReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && projectLink.startAddrMValue >= ch.changeInfo.target.startAddressM.get
           && ch.changeInfo.target.endAddressM.nonEmpty && projectLink.endAddrMValue <= ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed)
@@ -437,8 +419,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             if (!junctionReversed)
               junctionPointDAO.fetchByRoadwayPoint(projectLink.roadwayNumber, projectLink.startAddrMValue, BeforeAfter.After)
             else {
-              logger.info(s"original link newStartAddr: ${originalLink.get.newStartAddr}")
-              logger.info(s"original link roadwayNumber: ${originalLink.get.originalRoadwayNumber}")
               junctionPointDAO.fetchByRoadwayPoint(originalLink.get.originalRoadwayNumber, originalLink.get.newStartAddr, BeforeAfter.Before)
             }
           } else None
@@ -449,8 +429,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             if (!junctionReversed)
               junctionPointDAO.fetchByRoadwayPoint(projectLink.roadwayNumber, projectLink.startAddrMValue, BeforeAfter.Before)
             else {
-              logger.info(s"original link newEndAddr: ${originalLink.get.newEndAddr}")
-              logger.info(s"original link roadwayNumber: ${originalLink.get.originalRoadwayNumber}")
               junctionPointDAO.fetchByRoadwayPoint(originalLink.get.originalRoadwayNumber, originalLink.get.newEndAddr, BeforeAfter.After)
             }
           } else None
@@ -469,12 +447,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             junctionPointDAO.update(Seq(existingLastJunctionPoint.head.copy(beforeAfter = BeforeAfter.switch(existingLastJunctionPoint.head.beforeAfter))))
           }
         }
-
       }
-      // TESTI LOPPU
-
       val junctionCalibrationPoints: Set[(Long, Long, CalibrationPointLocation)] = nonTerminatedLinks.flatMap { projectLink =>
-        logger.info(s"projectLinkID: ${projectLink.linkId}")
         val roadNumberLimits = Seq((RoadClass.forJunctions.start, RoadClass.forJunctions.end))
 
         // Reversed flag to determine if projectLink has been reversed in project
@@ -607,61 +581,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             RoadAddressFilters.continuousTopology(projectLink)(tr)
           })
 
-        roadsToHead.foreach(toHead => logger.info(s"roadToHead(${projectLink.linkId}): ${toHead.linkId}"))
-        roadsFromHead.foreach(fromHead => logger.info(s"roadFromHead(${projectLink.linkId}): ${fromHead.linkId}"))
-
-        roadsToTail.foreach(toTail => logger.info(s"roadToTail(${projectLink.linkId}): ${toTail.linkId}"))
-        roadsFromTail.foreach(fromTail => logger.info(s"roadFromTail(${projectLink.linkId}): ${fromTail.linkId}"))
-        /**
-        /* handle creation of JUNCTION_POINT in reverse cases */
-        val junctionReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && projectLink.startAddrMValue >= ch.changeInfo.target.startAddressM.get
-          && ch.changeInfo.target.endAddressM.nonEmpty && projectLink.endAddrMValue <= ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed)
-
-        val originalLink = mappedRoadwayNumbers.find(mpr => projectLink.startAddrMValue == mpr.newStartAddr && projectLink.endAddrMValue == mpr.newEndAddr && mpr.newRoadwayNumber == projectLink.roadwayNumber)
-
-        val existingHeadJunctionPoint = {
-          if (originalLink.nonEmpty) {
-            if (!junctionReversed)
-              junctionPointDAO.fetchByRoadwayPoint(projectLink.roadwayNumber, projectLink.startAddrMValue, BeforeAfter.After)
-            else {
-              logger.info(s"original link newStartAddr: ${originalLink.get.newStartAddr}")
-              logger.info(s"original link roadwayNumber: ${originalLink.get.originalRoadwayNumber}")
-              junctionPointDAO.fetchByRoadwayPoint(originalLink.get.originalRoadwayNumber, originalLink.get.newStartAddr, BeforeAfter.Before)
-            }
-          } else None
-        }
-
-        val existingLastJunctionPoint = {
-          if (originalLink.nonEmpty) {
-            if (!junctionReversed)
-              junctionPointDAO.fetchByRoadwayPoint(projectLink.roadwayNumber, projectLink.startAddrMValue, BeforeAfter.Before)
-            else {
-              logger.info(s"original link newEndAddr: ${originalLink.get.newEndAddr}")
-              logger.info(s"original link roadwayNumber: ${originalLink.get.originalRoadwayNumber}")
-              junctionPointDAO.fetchByRoadwayPoint(originalLink.get.originalRoadwayNumber, originalLink.get.newEndAddr, BeforeAfter.After)
-            }
-          } else None
-        }
-
-        if (existingHeadJunctionPoint.nonEmpty) {
-          if (junctionReversed) {
-            logger.info(s"updating junctionPoints before after (${projectLink.linkId}) ${existingHeadJunctionPoint.head.id} ${existingHeadJunctionPoint.head.beforeAfter} ${existingHeadJunctionPoint.head.roadwayPointId}")
-            junctionPointDAO.update(Seq(existingHeadJunctionPoint.head.copy(beforeAfter = BeforeAfter.switch(existingHeadJunctionPoint.head.beforeAfter))))
-          }
-        }
-
-        if (existingLastJunctionPoint.nonEmpty) {
-          if (junctionReversed) {
-            logger.info(s"updating junctionPoints before after (${projectLink.linkId}) ${existingLastJunctionPoint.head.id} ${existingLastJunctionPoint.head.beforeAfter} ${existingLastJunctionPoint.head.roadwayPointId}")
-            junctionPointDAO.update(Seq(existingLastJunctionPoint.head.copy(beforeAfter = BeforeAfter.switch(existingLastJunctionPoint.head.beforeAfter))))
-          }
-        }
-        **/
         // handle junction points for each project links
         val startCp: Option[(Long, Long, CalibrationPointLocation)] = if ((roadsToHead ++ roadsFromHead).nonEmpty) {
-          createJunctionAndJunctionPointIfNeeded(projectLink,
-            pos = BeforeAfter.After,
-            addr = projectLink.startAddrMValue,
+          createJunctionAndJunctionPointIfNeeded(projectLink, pos = BeforeAfter.After, addr = projectLink.startAddrMValue,
             roadsTo = {
               if(isReversed){
                 roadsToHead.filter(_.newEndPoint.connected(projectLink.newStartingPoint))
@@ -678,9 +600,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else { None }
 
         val endCp: Option[(Long, Long, CalibrationPointLocation)] = if ((roadsToTail ++ roadsFromTail).nonEmpty) {
-          createJunctionAndJunctionPointIfNeeded(projectLink,
-            pos = BeforeAfter.Before,
-            addr = projectLink.endAddrMValue,
+          createJunctionAndJunctionPointIfNeeded(projectLink, pos = BeforeAfter.Before, addr = projectLink.endAddrMValue,
             roadsTo = {
               if(isReversed) {
                 roadsToTail.filter(_.newEndPoint.connected(projectLink.newEndPoint))
@@ -720,9 +640,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
         startCp ++ endCp ++ toHeadCp ++ fromHeadCp ++ toTailCp ++ fromTailCp
       }.toSet
-      logger.info(s"---------------TESTIALKU-------------")
-      logger.info(s"junctionCalibrationPointsTest ${junctionCalibrationPointsTest}")
-      logger.info(s"---------------TESTILOPPU-------------")
       // handle junction calibration points
       junctionCalibrationPoints.foreach { case (rwPoint, linkId, calibrationPointLocation) =>
         CalibrationPointsUtils.createCalibrationPointIfNeeded(rwPoint, linkId, calibrationPointLocation, CalibrationPointType.JunctionPointCP, username)

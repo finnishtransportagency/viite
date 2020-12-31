@@ -284,7 +284,7 @@ trait BaseRoadAddress {
       geometry.head
   }
 
-  //purkkafix
+  // starting- & endPoints for projectLinks that have been reversed. These two are used in nodesAndJunctionsService only
   lazy val newStartingPoint: Point = (sideCode == SideCode.AgainstDigitizing) match {
     case false =>
       geometry.head
