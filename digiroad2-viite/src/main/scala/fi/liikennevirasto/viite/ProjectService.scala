@@ -1360,6 +1360,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               pl.track != last.track &&
               pl.status != LinkStatus.NotHandled &&
               pl.status != LinkStatus.Terminated &&
+              pl.status != last.status &&
               pl.startAddrMValue < last.endAddrMValue &&
               pl.endAddrMValue >= last.endAddrMValue)
 
@@ -1408,12 +1409,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       // TODO: If other track is shorter, find its status changepoint if any and do split + calibration point.
 
        /* roadPartLinks? **/
+      var ret_links = Array[Seq[ProjectLink]]()
 
       val otherSideLast = findOtherShorterTrackStatusChangePoint(last)
       if (otherSideLast.isDefined)
-        splitAndSetCalibrationPointsAtEnd(last, roadPartLinks) ++ splitAndSetCalibrationPointsAtEnd(otherSideLast.get, roadPartLinks)
+        ret_links :+= splitAndSetCalibrationPointsAtEnd(last, roadPartLinks) ++ splitAndSetCalibrationPointsAtEnd(otherSideLast.get, roadPartLinks)
       else
-        splitAndSetCalibrationPointsAtEnd(last, roadPartLinks)
+        ret_links :+= splitAndSetCalibrationPointsAtEnd(last, roadPartLinks)
+
+      val projectLinksAfterSplits = projectLinkDAO.fetchProjectLinks(projectId).filter( pl => toUpdateLinks.map(_.id).contains(pl.id))
+      val leftRwns = projectLinksAfterSplits.filter(pl => pl.status == LinkStatus.UnChanged && pl.track == Track.LeftSide).map(_.roadwayNumber).distinct
+      var lastRwnPls : ProjectLink = null
+      // = Array[ProjectLink]()
+      if(leftRwns.nonEmpty)
+        for (rwn <- leftRwns) {
+          lastRwnPls = projectLinksAfterSplits.filter(pl => pl.roadwayNumber == rwn).maxBy(_.endAddrMValue)
+          ret_links :+= splitAndSetCalibrationPointsAtEnd(lastRwnPls, roadPartLinks)
+        }
+      //lastRwnPls.foreach(pl => splitAndSetCalibrationPointsAtEnd(pl, roadPartLinks))
+      ret_links.flatten
     }
 
     try {
@@ -1496,8 +1510,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             projectLinkDAO.updateProjectLinks(updated, userName, originalAddresses)
             projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(updated.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
 
+            // Bad workaround to have fresh data.
+            val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter( pl => toUpdateLinks.map(_.id).contains(pl.id))
 //            splitLinks += createCalibrationPointsAtStatusChange(toUpdateLinks)
-            splittedLinks = createCalibrationPointsAtStatusChange(toUpdateLinks)
+            splittedLinks = createCalibrationPointsAtStatusChange(projectLinks)
 
             //transfer cases should remove the part after the project link table update operation
             if (replaceable) {
@@ -1510,8 +1526,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case LinkStatus.UnChanged =>
             checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.UnChanged, toUpdateLinks)
 
-
-
             // Reset back to original values
             val updated = toUpdateLinks.map(l => {
               l.copy(ely = ely.getOrElse(l.ely))
@@ -1522,7 +1536,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             // Bad workaround to have fresh data.
             val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter( pl => updated.map(_.id).contains(pl.id))
             splittedLinks = createCalibrationPointsAtStatusChange(projectLinks)
-
 
           case LinkStatus.New =>
             // Current logic allows only re adding new road addresses within same road/part group
@@ -1543,6 +1556,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case _ =>
             throw new ProjectValidationException(s"Virheellinen operaatio $linkStatus")
         }
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////
 //        val linksForStatusCps = projectLinkDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId)
 //
@@ -1645,6 +1662,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     1.2.If not, then we are splitting the section for e.g. RwNumber 123 : |--Other action-->|--Terminated-->|
       and if we split the section then we need to assign one new roadwaynumber to the terminated projectlinks
    */
+  // VIITE-2179
   private def assignTerminatedRoadwayNumbers(seq: Seq[ProjectLink]): Seq[ProjectLink] = {
     //getting sections by RoadwayNumber
     val sectionGroup = seq.groupBy(pl => (pl.track, pl.roadwayNumber))
