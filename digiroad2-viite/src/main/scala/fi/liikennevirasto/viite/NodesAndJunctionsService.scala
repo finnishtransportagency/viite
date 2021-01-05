@@ -834,7 +834,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           case junctionPoints if !junctionPoints.forall(jp => RoadClass.RampsAndRoundaboutsClass.roads.contains(jp.roadNumber)) =>
 
             val junctionPointsToCheck = junctionPoints.filterNot(jp => terminatedJunctionPoints.map(_.id).contains(jp.id))
-            junctionPointsToCheck.foreach(jp => logger.info(s"junctionPointsToCheck: ${jp.id}"))
             // check if the terminated junction Points are the unique ones in the Junction to avoid further complex validations
             if (junctionPointsToCheck.size <= 1) {
               // basic rule
@@ -844,21 +843,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
               ObsoleteJunctionPointFilters.sameRoadAddressIntersection(junctionPointsToCheck) ||
               ObsoleteJunctionPointFilters.roadEndingInSameOwnRoadNumber(junctionPointsToCheck) ||
               ObsoleteJunctionPointFilters.discontinuousPartIntersection(junctionPointsToCheck)
-            ) {
-              if (ObsoleteJunctionPointFilters.multipleRoadNumberIntersection(junctionPointsToCheck)) logger.info(s"multipleRoadNumberIntersection ${junctionPointsToCheck}")
-              else if (ObsoleteJunctionPointFilters.multipleTrackIntersection(junctionPointsToCheck)) logger.info(s"multipleTrackIntersection ${junctionPointsToCheck}")
-              else if (ObsoleteJunctionPointFilters.sameRoadAddressIntersection(junctionPointsToCheck)) logger.info(s"sameRoadAddressIntersection ${junctionPointsToCheck}")
-              else if (ObsoleteJunctionPointFilters.roadEndingInSameOwnRoadNumber(junctionPointsToCheck)) logger.info(s"roadEndingInSameOwnRoadNumber ${junctionPointsToCheck}")
-              else if (ObsoleteJunctionPointFilters.discontinuousPartIntersection(junctionPointsToCheck)) logger.info(s"discontinuousPartIntersection ${junctionPointsToCheck}")
+            )
               Seq.empty[JunctionPoint]
-            } else
+            else
               junctionPointsToCheck
           case _ => Seq.empty[JunctionPoint]
         }
-        affectedJunctionsPoints.foreach(jp => logger.info(s"affectedJunctionPoints: ${jp.id}"))
         affectedJunctionsPoints
       }
-
       logger.info(s"Obsolete node points : ${obsoleteNodePoints.map(_.id).toSet}")
       logger.info(s"Obsolete junction points : ${obsoleteJunctionPoints.map(_.id).toSet}")
       (obsoleteNodePoints, obsoleteJunctionPoints)
@@ -867,19 +859,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     def expireJunctionsAndJunctionPoints(junctionPoints: Seq[JunctionPoint]): Seq[Junction] = {
       // Expire current junction points rows
       val junctionPointsIds = junctionPoints.map(_.id)
-      logger.info(s"junctionPointsIds: ${junctionPointsIds}")
       logger.info(s"Expiring junction points : ${junctionPointsIds.toSet}")
       junctionPointDAO.expireById(junctionPointsIds)
       val junctionIdsToCheck = junctionPoints.map(_.junctionId).distinct
-
-      junctionIdsToCheck.foreach(id => logger.info(s"junctionIdsToCheck (${id})"))
-      logger.info(s"junctionIdsToCheck: ${junctionIdsToCheck}")
 
       // Remove junctions that no longer have valid junction Points
       val junctionsToExpireIds = junctionIdsToCheck.filter { id =>
         junctionDAO.fetchJunctionByIdWithValidPoints(id).isEmpty
       }
-      junctionsToExpireIds.foreach(j => logger.info(s"junctionsToExpireIds: ${j}"))
 
       logger.info(s"Expiring junctions : ${junctionsToExpireIds.toSet}")
       junctionDAO.expireById(junctionsToExpireIds)
@@ -939,7 +926,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     val terminatedRoadwayNumbers = terminated.map(_.roadwayNumber).distinct
     val (terminatedNodePoints, terminatedJunctionPoints): (Seq[NodePoint], Seq[JunctionPoint]) = getNodePointsAndJunctionPointsByTerminatedRoadwayNumbers(terminatedRoadwayNumbers)
-    terminatedJunctionPoints.foreach(jp => logger.info(s"terminatedJunctionPoints: ${jp.id}"))
 
     val projectLinkSections = filteredProjectLinks.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber))
     val obsoletePointsFromModifiedRoadways: Seq[(Seq[NodePoint], Seq[JunctionPoint])] = projectLinkSections.mapValues { section: Seq[ProjectLink] =>
@@ -948,12 +934,9 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         getObsoleteNodePointsAndJunctionPointsByModifiedRoadwayNumbers(modifiedRoadwayNumbers, terminatedJunctionPoints)
       }
     }.values.flatten.toSeq
-    obsoletePointsFromModifiedRoadways.foreach(p => logger.info(s"obsoletePointsFromModifiedRoadways: ${p}"))
-
 
     val obsoleteNodePoints = terminatedNodePoints ++ obsoletePointsFromModifiedRoadways.flatMap(_._1)
     val obsoleteJunctionPoints = terminatedJunctionPoints ++ obsoletePointsFromModifiedRoadways.flatMap(_._2)
-    obsoleteJunctionPoints.foreach(jp => logger.info(s"obsoleteJunctionPoints: ${jp.id}"))
     val expiredJunctions = expireJunctionsAndJunctionPoints(obsoleteJunctionPoints)
     expireNodesAndNodePoints(obsoleteNodePoints, expiredJunctions)
     obsoleteJunctionPoints.distinct
