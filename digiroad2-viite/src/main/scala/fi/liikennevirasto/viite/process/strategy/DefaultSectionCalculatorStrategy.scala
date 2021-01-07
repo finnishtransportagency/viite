@@ -13,6 +13,7 @@ import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.{MaxThresholdDistance, NewIdValue}
 import org.slf4j.LoggerFactory
 
+import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 
 class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrategy {
@@ -288,12 +289,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       }
     }
 
-    val rightSections = sections.flatMap(_.right.links).distinct
-    val leftSections = sections.flatMap(_.left.links).distinct
+    val rightSections = sections.flatMap(_.right.links).distinct //.sortBy(_.startAddrMValue)
+    val leftSections = sections.flatMap(_.left.links).distinct //.sortBy(_.startAddrMValue)
     val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(rightSections, userDefinedCalibrationPoint)
     val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
     //adjustedRight and adjustedLeft already ordered by geometry -> TrackSectionOrder.orderProjectLinksTopologyByGeometry
-    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(leftLinks, rightLinks, None)
+    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(leftLinks, rightLinks, None) // if ((leftLinks ++ rightLinks).exists(_.status == LinkStatus.NotHandled)) (leftLinks, rightLinks) else adjustTracksToMatch(leftLinks, rightLinks, None)
     val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint)
     TrackSectionOrder.createCombinedSections(right, left)
   }

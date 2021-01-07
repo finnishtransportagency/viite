@@ -14,7 +14,7 @@
     };
 
     var sourceConfig = {
-      cacheSize: 4096,
+      cacheSize: 4096*2,
       projection: 'EPSG:3067',
       tileSize: [256, 256]
     };

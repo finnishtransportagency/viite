@@ -68,6 +68,8 @@
               'AET:&nbsp;' + roadData.startAddressM + '<br>' +
               'LET:&nbsp;' + roadData.endAddressM + '<br>' +
               'Tietyyppi:&nbsp;' + displayRoadType(roadData.roadTypeId) + '<br>';
+                 // +
+                 // 'RoadwayId:&nbsp;' + roadData.roadwayId + '<br>';
           }
         }
       }

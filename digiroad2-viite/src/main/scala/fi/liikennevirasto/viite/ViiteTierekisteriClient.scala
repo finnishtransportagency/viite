@@ -197,6 +197,10 @@ object ViiteTierekisteriClient {
   def createJsonMessage(trProject:ChangeProject): StringEntity = {
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
     val json = Serialization.write(Extraction.decompose(trProject))
+    println("Start JSON------")
+    println(json)
+    println("End JSON------")
+
     logger.info(s"Message to TR: $json")
     new StringEntity(json, ContentType.APPLICATION_JSON)
   }
@@ -212,7 +216,13 @@ object ViiteTierekisteriClient {
     implicit val formats = DefaultFormats
     val request = new HttpPost(getRestEndPoint+"addresschange/")
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
-    request.setEntity(createJsonMessage(trProject))
+
+    val jsonmsg = createJsonMessage(trProject)
+    println("Start JSON------")
+    println(jsonmsg)
+    println("End JSON------")
+
+    request.setEntity(jsonmsg)
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode

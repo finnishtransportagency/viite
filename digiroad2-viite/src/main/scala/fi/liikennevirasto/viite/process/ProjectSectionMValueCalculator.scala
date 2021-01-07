@@ -46,7 +46,14 @@ object ProjectSectionMValueCalculator {
   }
 
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
+    val endPoints = TrackSectionOrder.findChainEndpoints(seq)
+    val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
+    val orderedPairs = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
+    val ordered = if (seq.exists(_.track == Track.RightSide)) orderedPairs._1 else orderedPairs._2 //.filterNot(_.status == LinkStatus.NotHandled)
+    // TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)._2.reverse
+
     val newAddressValues = seq.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
+//    val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
       val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
       if(!pl.isSplit){
         val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + pl.geometryLength * coEff
