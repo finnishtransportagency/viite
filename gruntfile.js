@@ -1,7 +1,7 @@
 module.exports = function (grunt) {
   var serveStatic = require('serve-static');
   var serveIndex = require('serve-index');
-  var path = require('path'); 
+  var path = require('path');
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     properties: {
