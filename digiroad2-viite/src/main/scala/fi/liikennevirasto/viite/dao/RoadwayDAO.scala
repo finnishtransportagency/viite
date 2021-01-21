@@ -284,6 +284,21 @@ trait BaseRoadAddress {
       geometry.head
   }
 
+  // starting- & endPoints for projectLinks that have been reversed. These two are used in nodesAndJunctionsService only
+  lazy val newStartingPoint: Point = (sideCode == SideCode.AgainstDigitizing) match {
+    case false =>
+      geometry.head
+    case true =>
+      geometry.last
+  }
+
+  lazy val newEndPoint: Point = (sideCode == SideCode.AgainstDigitizing) match {
+    case false =>
+      geometry.last
+    case true =>
+      geometry.head
+  }
+
   def getEndPoints: (Point, Point) = {
     if (sideCode == SideCode.Unknown) {
       val direction = if (geometry.head.y == geometry.last.y) Vector3d(1.0, 0.0, 0.0) else Vector3d(0.0, 1.0, 0.0)
