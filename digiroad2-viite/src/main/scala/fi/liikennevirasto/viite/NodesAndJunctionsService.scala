@@ -419,7 +419,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             if (!junctionReversed)
               junctionPointDAO.fetchByRoadwayPoint(projectLink.roadwayNumber, projectLink.startAddrMValue, BeforeAfter.After)
             else {
-              junctionPointDAO.fetchByRoadwayPoint(originalLink.get.originalRoadwayNumber, originalLink.get.newStartAddr, BeforeAfter.Before)
+              junctionPointDAO.fetchByRoadwayPoint(originalLink.get.newRoadwayNumber, originalLink.get.newStartAddr, BeforeAfter.Before)
             }
           } else None
         }
@@ -429,7 +429,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             if (!junctionReversed)
               junctionPointDAO.fetchByRoadwayPoint(projectLink.roadwayNumber, projectLink.startAddrMValue, BeforeAfter.Before)
             else {
-              junctionPointDAO.fetchByRoadwayPoint(originalLink.get.originalRoadwayNumber, originalLink.get.newEndAddr, BeforeAfter.After)
+              junctionPointDAO.fetchByRoadwayPoint(originalLink.get.newRoadwayNumber, originalLink.get.newEndAddr, BeforeAfter.After)
             }
           } else None
         }
