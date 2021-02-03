@@ -314,7 +314,7 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated', function (data) {
-        eventbus.trigger('projectChangeTable:refresh');
+        //eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
         selectedProjectLinkProperty.setCurrent([]);

@@ -42,18 +42,22 @@ object ProjectSectionMValueCalculator {
         }
       }))
       throw new InvalidAddressDataException(s"Invalid unchanged link found")
-    unchanged.map(resetEndAddrMValue) ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.endAddrMValue.toDouble).sorted.lastOption, None)
+    if (others.nonEmpty)
+      unchanged.map(resetEndAddrMValue) ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.endAddrMValue.toDouble).sorted.lastOption, None)
+    else
+      unchanged.map(resetEndAddrMValue)
   }
 
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
     val endPoints = TrackSectionOrder.findChainEndpoints(seq)
     val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
     val orderedPairs = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
-    val ordered = if (seq.exists(_.track == Track.RightSide)) orderedPairs._1 else orderedPairs._2 //.filterNot(_.status == LinkStatus.NotHandled)
+    var ordered = if (seq.exists(_.track == Track.RightSide)) orderedPairs._1 else orderedPairs._2.filterNot(_.track == Track.Combined).reverse ++ orderedPairs._2.filter(_.track == Track.Combined).reverse
+    //if (ordered.size == 0) ordered = orderedPairs._1
     // TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)._2.reverse
 
-    val newAddressValues = seq.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
-//    val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
+//    val newAddressValues = seq.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
+    val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
       val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
       if(!pl.isSplit){
         val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + pl.geometryLength * coEff

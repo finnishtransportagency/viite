@@ -920,6 +920,35 @@ class RoadwayDAO extends BaseDAO {
       """.as[Long].list
   }
 
+//  def getRoadAddreses(roadwayNumbers: Set[Long]): List[Long] = {
+//    val query = s"""
+//      SELECT rw.id, ll.id, rw.ROAD_NUMBER, rw.ROAD_PART_NUMBER
+//       rw.ROAD_TYPE, rw.TRACK, rw.DISCONTINUITY,
+//       rw.START_ADDR_M, rw.END_ADDR_M,
+//       rw.START_DATE, rw.END_DATE, rw.CREATED_BY,
+//       ll.LINK_ID, ll.START_MEASURE, ll.END_MEASURE, ll.SIDE,
+//        l.ADJUSTED_TIMESTAMP,
+//  adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
+//
+//        ll.GEOMETRY, ll.source,
+//        rw.ELY,
+//        rw.TERMINATED,
+//      rw.ROADWAY_NUMBER,
+//      ll.VALID_FROM, ll.VALID_TO
+//  FROM roadway rw
+//  LEFT OUTER JOIN linear_location ll ON ll.ROADWAY_NUMBER = rw.ROADWAY_NUMBER AND ll.VALID_TO IS null
+//  LEFT OUTER JOIN link l ON l.id = ll.LINK_ID
+//  LEFT JOIN calibration_point cp ON (cp.LINK_ID = ll.LINK_ID)
+//  WHERE rw.ROADWAY_NUMBER in (${roadwayNumbers.mkString(",")}) AND cp.VALID_TO IS NULL AND rw.VALID_TO IS NULL AND rw.END_DATE IS NULL
+//  ORDER BY START_ADDR_M;
+//      """
+//    Q.queryNA[RoadAddress](query).iterator.toSeq
+//  }
+
+
+
+
+
   def getValidBetweenRoadNumbers(roadNumbers: (Long, Long)): List[Long] = {
     sql"""
        select distinct road_number

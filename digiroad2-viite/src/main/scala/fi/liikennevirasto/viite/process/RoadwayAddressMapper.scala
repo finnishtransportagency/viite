@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.{ProjectLinkDAO, _}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -107,12 +107,12 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
       }
 
     }
+    val sortedLinearLocations = linearLocations.sortBy(_.orderNumber)
 
     val coefficient = (endAddress - startAddress) / linearLocations.map(l => l.endMValue - l.startMValue).sum
 
-    val sortedLinearLocations = linearLocations.sortBy(_.orderNumber)
-
-    val addresses = mappedAddressValues(sortedLinearLocations.init, Seq(), startAddress, endAddress, coefficient, Seq(startAddress), 0) :+ endAddress
+    val addresses =
+      mappedAddressValues(sortedLinearLocations.init, Seq(), startAddress, endAddress, coefficient, Seq(startAddress), 0) :+ endAddress
 
     sortedLinearLocations.zip(addresses.zip(addresses.tail)).map {
       case (linearLocation, (st, en)) =>
@@ -184,14 +184,32 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
     roadAddresses.init :+ roadAddresses.last.copy(discontinuity = roadway.discontinuity)
   }
 
-  def mapLinearLocations(roadway: Roadway, projectLinks: Seq[ProjectLink]): Seq[LinearLocation] = {
+  def mapLinearLocations(roadway: Roadway, projectLinks: Seq[ProjectLink], allProjectLinks: Seq[ProjectLink]): Seq[LinearLocation] = {
+//    val projectLinkDAO = new ProjectLinkDAO
+//    val allProjectLinks = projectLinkDAO.fetchProjectLinks(projectLinks.head.projectId)
+//
+//    val x = projectLinks.filter(_.startMValue > 0)
+//    val orders =  x.map( r => {
+//        val _links = allProjectLinks.filter(s => s.linkId == r.linkId).sortBy(_.startAddrMValue)
+//        (r.id, _links.indexWhere(_.id == r.id) + 1)
+//      } )
+    //MUUTA ROADWAY COUNTINKSI
+
     projectLinks.sortBy(_.startAddrMValue).zip(1 to projectLinks.size).
       map {
-        case (projectLink, key) =>
+        case (projectLink, key) => {
+//          val isOrdered = orders.find(_._1 == projectLink.id)
+//          val orderN = if (isOrdered.isDefined) {
+//            isOrdered.get._2
+//          } else 1
+//
+//  println("key: " + key + " orderN: " + orderN)
+
           LinearLocation(projectLink.linearLocationId, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
             (CalibrationPointsUtils.toCalibrationPointReference(projectLink.startCalibrationPoint),
               CalibrationPointsUtils.toCalibrationPointReference(projectLink.endCalibrationPoint)),
             projectLink.geometry, projectLink.linkGeomSource, roadway.roadwayNumber, Some(DateTime.now()))
+        }
       }
   }
 
@@ -267,10 +285,37 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
   }
 
   def getRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddress] = {
+
+
+//    def sumEven(it_ll: Iterator[LinearLocation], n: Double, col: Seq[LinearLocation], endAddress: Long, startAddress: Long): Seq[LinearLocation] = {
+//      if (it_ll.hasNext) {
+//        val x = it_ll.next()
+//        if (n < Math.abs(endAddress - startAddress)) sumEven(it_ll, n + Math.cevl(x.endMValue - x.startMValue), x +: col, endAddress, startAddress) else col
+//      }
+//      else col
+//    }
+
     val linearLocations = linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
+//    val linearLocationsWithinAddressRange = sumEven(linearLocations.iterator, 0.0, Seq.empty[LinearLocation])
+
     val groupedLinearLocations = linearLocations.groupBy(_.roadwayNumber)
+
     val roadways = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet)
+//    val merged_roadways = roadways.groupBy(_.roadwayNumber).map{r => {
+//      val min_addr = r._2.minBy(_.startAddrMValue).startAddrMValue
+//      val max_addr = r._2.maxBy(_.endAddrMValue).endAddrMValue
+//        r._2.head.copy(startAddrMValue = min_addr, endAddrMValue = max_addr )}
+//    }.toSeq
+//    val startAddrMValue = if (toProcess.head.startCalibrationPoint.isDefined) toProcess.head.startCalibrationPoint.addrM.get else roadway.startAddrMValue
+//    val endAddrMValue = if (toProcess.last.endCalibrationPoint.isDefined) toProcess.last.endCalibrationPoint.addrM.get else roadway.endAddrMValue
+
+    // Set roadway to to
+//    merged_roadways.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
+
+//        roadways.flatMap(r => mapRoadAddresses(r, sumEven(groupedLinearLocations(r.roadwayNumber).sortBy(_.orderNumber).iterator, 0.0, Seq.empty[LinearLocation], r.startAddrMValue, r.endAddrMValue)))
+   // roadwayDAO.getRoadAddreses(linearLocations.map(_.roadwayNumber).toSet)
     roadways.flatMap(r => mapRoadAddresses(r, groupedLinearLocations(r.roadwayNumber)))
+
   }
 
 }

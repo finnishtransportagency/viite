@@ -420,7 +420,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           }
         }
 
-        val roadsToHead = headRoads.filter(hr => RoadAddressFilters.continuousTopology(hr)(projectLink) || RoadAddressFilters.afterDiscontinuousJump(hr)(projectLink))
+        val roadsToHead = headRoads.filter(hr => RoadAddressFilters.continuousTopology(hr)(projectLink) || RoadAddressFilters.afterDiscontinuousJump(hr)(projectLink))//.filterNot(_.linkId == projectLink.linkId)
         val roadsFromHead = headRoads.filter(hr => RoadAddressFilters.connectingBothHeads(hr)(projectLink))
 
         val roadsToTail = tailRoads.filter(tr => RoadAddressFilters.connectingBothTails(tr)(projectLink))
@@ -430,7 +430,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val junctionReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && projectLink.startAddrMValue >= ch.changeInfo.target.startAddressM.get
           && ch.changeInfo.target.endAddressM.nonEmpty && projectLink.endAddrMValue <= ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed)
 
-        val originalLink = mappedRoadwayNumbers.find(mpr => projectLink.startAddrMValue == mpr.newStartAddr && projectLink.endAddrMValue == mpr.newEndAddr && mpr.newRoadwayNumber == projectLink.roadwayNumber)
+        val findOriginalLink = mappedRoadwayNumbers.takeWhile(mpr => projectLink.startAddrMValue == mpr.newStartAddr && projectLink.endAddrMValue == mpr.newEndAddr && mpr.newRoadwayNumber == projectLink.roadwayNumber)
+        val originalLink = if (findOriginalLink.nonEmpty) Some(findOriginalLink.head) else None
 
         val existingHeadJunctionPoint = {
           if (originalLink.nonEmpty) {
@@ -463,16 +464,19 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
             junctionPointDAO.update(Seq(existingLastJunctionPoint.head.copy(beforeAfter = BeforeAfter.switch(existingLastJunctionPoint.head.beforeAfter))))
           }
         }
+        val new_pls = mappedRoadwayNumbers.filter(mrn => mrn.id == projectLink.id)
+        val new_pl_info = new_pls.head
+        val updated_project_link = projectLink.asInstanceOf[ProjectLink].copy(roadwayNumber = new_pl_info.newRoadwayNumber, startAddrMValue = new_pl_info.newStartAddr, endAddrMValue = new_pl_info.newEndAddr)
 
         // handle junction points for each project links
         val startCp: Option[(Long, Long, CalibrationPointLocation)] = if ((roadsToHead ++ roadsFromHead).nonEmpty) {
-          createJunctionAndJunctionPointIfNeeded(projectLink, pos = BeforeAfter.After, addr = projectLink.startAddrMValue,
+          createJunctionAndJunctionPointIfNeeded(updated_project_link, pos = BeforeAfter.After, addr = projectLink.startAddrMValue,
             roadsTo = roadsToHead.filter(_.endPoint.connected(projectLink.startingPoint)),
             roadsFrom = roadsFromHead.filter(_.startingPoint.connected(projectLink.startingPoint)))
         } else { None }
 
         val endCp: Option[(Long, Long, CalibrationPointLocation)] = if ((roadsToTail ++ roadsFromTail).nonEmpty) {
-          createJunctionAndJunctionPointIfNeeded(projectLink, pos = BeforeAfter.Before, addr = projectLink.endAddrMValue,
+          createJunctionAndJunctionPointIfNeeded(updated_project_link, pos = BeforeAfter.Before, addr = projectLink.endAddrMValue,
             roadsTo = roadsToTail.filter(_.endPoint.connected(projectLink.endPoint)),
             roadsFrom = roadsFromTail.filter(_.startingPoint.connected(projectLink.endPoint)))
         } else { None }

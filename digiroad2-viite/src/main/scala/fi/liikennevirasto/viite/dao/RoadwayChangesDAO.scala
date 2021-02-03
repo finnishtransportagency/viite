@@ -69,7 +69,7 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
                      sourceRoadType: Option[Int], sourceDiscontinuity: Option[Int], sourceEly: Option[Long],
                      rotatingTRId: Option[Long], reversed: Boolean, orderInTable: Long)
 
-case class ChangeTableRows(adjustedSections: Map[(RoadwaySection, RoadwaySection), Option[String]], originalSections: Map[RoadwaySection, RoadwaySection])
+case class ChangeTableRows(adjustedSections: Iterable[((RoadwaySection, RoadwaySection), Option[String])], originalSections: Iterable[(RoadwaySection, RoadwaySection)])
 
 case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, validFrom: DateTime, change_type: Long, reversed: Long,
                               old_road_number: Long, old_road_part_number: Long, old_TRACK: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, old_road_type: Long, old_ely: Long,
@@ -339,7 +339,7 @@ class RoadwayChangesDAO {
 
           val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping)
 
-          val transferred = ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated.originalSections.values.toSeq ++ news)
+          val transferred = ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated.originalSections.map(_._2).toSeq ++ news) //values.toSeq ++ news)
 
           val numbering = ProjectDeltaCalculator.partition(delta.numbering.mapping)
 
@@ -347,7 +347,8 @@ class RoadwayChangesDAO {
           val adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(transferred.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections ++ terminated.originalSections)
           val adjustedNumbering = ProjectDeltaCalculator.adjustStartSourceAddressValues(numbering.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
 
-          adjustedUnchanged._1.foreach { case (roadwaySection1, roadwaySection2) =>
+          adjustedUnchanged._1.foreach { rs1_2 =>
+            val (roadwaySection1, roadwaySection2) = rs1_2
             addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
           }
           adjustedTransferred._1.foreach { case (roadwaySection1, roadwaySection2) =>

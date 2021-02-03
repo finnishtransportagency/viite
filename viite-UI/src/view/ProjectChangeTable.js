@@ -285,6 +285,7 @@
     }
 
     function enableTableInteractions() {
+
       interact('.change-table-frame').draggable({
         allowFrom: '.change-table-header',
         onmove: dragListener,

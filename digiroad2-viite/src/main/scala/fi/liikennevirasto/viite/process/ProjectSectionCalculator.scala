@@ -123,25 +123,95 @@ object ProjectSectionCalculator {
     if (left.isEmpty || right.isEmpty) {
       Seq[ProjectLink]()
     } else {
-      val leftLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(left, addrSt = 0)
-      val rightLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(right, addrSt = 0)
+//      val leftLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(left, addrSt = 0)
+//      val rightLinks: Seq[ProjectLink] = ProjectSectionMValueCalculator.assignLinkValues(right, addrSt = 0)
 
-      val leftTerminated = leftLinks.filter(_.status == LinkStatus.Terminated)
-      val rightTerminated = rightLinks.filter(_.status == LinkStatus.Terminated)
+      val leftTerminated = left.filter(_.status == LinkStatus.Terminated)
+      val rightTerminated = right.filter(_.status == LinkStatus.Terminated)
 
       //if (rightTerminated.exists(rpl => leftTerminated.exists(lpl => lpl.startAddrMValue == rpl.startAddrMValue))
 
-      //val (leftAdjusted, rightAdjusted) = adjustTracksToMatch(leftLinks, rightLinks, None)
-//      val (completedAdjustedLeft, completedAdjustedRight) = TrackSectionOrder.setCalibrationPoints(leftAdjusted, rightAdjusted, Map())
-      val (completedAdjustedLeft, completedAdjustedRight) = TrackSectionOrder.setCalibrationPoints(leftLinks, rightLinks, Map())
+      //leftTerminated.map(pl => pl.connected())
 
-      val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(completedAdjustedRight), groupIntoSections(completedAdjustedLeft))
-      calculatedSections.flatMap { sec =>
-        if (sec.right == sec.left)
-          sec.right.links
-        else
-          sec.right.links ++ sec.left.links
-      }.filter(_.status == LinkStatus.Terminated)
+      /* Dummy set terminated heads */
+      val leftReassignedStart: Seq[ProjectLink] = leftTerminated.map(leftTerminatedpl => {
+        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+          pl.id != leftTerminatedpl.id && (pl.startingPoint.connected(leftTerminatedpl.startingPoint))
+        )
+        if (startingPointLink.isDefined) leftTerminatedpl.copy(startAddrMValue = startingPointLink.get.startAddrMValue)
+        else {
+          val endingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+            pl.id != leftTerminatedpl.id && (pl.endPoint.connected(leftTerminatedpl.startingPoint))
+          )
+          if (endingPointLink.isDefined) leftTerminatedpl.copy(startAddrMValue = endingPointLink.get.endAddrMValue)
+          else leftTerminatedpl
+        }
+      }
+      )
+
+      val leftReassignedEnd: Seq[ProjectLink] = leftReassignedStart.map(leftTerminatedpl => {
+        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+          (pl.id != leftTerminatedpl.id && ( pl.startingPoint.connected(leftTerminatedpl.endPoint))
+        ))
+        if (startingPointLink.isDefined) leftTerminatedpl.copy(endAddrMValue = startingPointLink.get.startAddrMValue)
+        else {
+          val endPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+            pl.id != leftTerminatedpl.id && (pl.endPoint.connected(leftTerminatedpl.endPoint))
+          )
+          if (endPointLink.isDefined) leftTerminatedpl.copy(endAddrMValue = endPointLink.get.endAddrMValue)
+          else leftTerminatedpl
+        }
+      }
+      )
+
+      val rightReassignedStart: Seq[ProjectLink] = rightTerminated.map(rightTerminatedpl => {
+        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+          pl.id != rightTerminatedpl.id && (pl.startingPoint.connected(rightTerminatedpl.startingPoint))
+        )
+        if (startingPointLink.isDefined) rightTerminatedpl.copy(startAddrMValue = startingPointLink.get.startAddrMValue)
+        else {
+          val endingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+            pl.id != rightTerminatedpl.id && (pl.endPoint.connected(rightTerminatedpl.startingPoint))
+          )
+          if (endingPointLink.isDefined) rightTerminatedpl.copy(startAddrMValue = endingPointLink.get.endAddrMValue)
+          else rightTerminatedpl
+        }
+      }
+      )
+
+      val rightReassignedEnd: Seq[ProjectLink] = rightReassignedStart.map(rightTerminatedpl => {
+        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+          (pl.id != rightTerminatedpl.id && ( pl.startingPoint.connected(rightTerminatedpl.endPoint))
+            ))
+        if (startingPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = startingPointLink.get.startAddrMValue)
+        else {
+          val endPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+            pl.id != rightTerminatedpl.id && (pl.endPoint.connected(rightTerminatedpl.endPoint))
+          )
+          if (endPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = endPointLink.get.endAddrMValue)
+          else rightTerminatedpl
+        }
+      }
+      )
+// 11908903
+
+
+//      val (leftAdjusted, rightAdjusted) = adjustTracksToMatch(leftLinks, rightLinks, None)
+//      val (completedAdjustedLeft, completedAdjustedRight) = TrackSectionOrder.setCalibrationPoints(leftAdjusted, rightAdjusted, Map())
+//      val (completedAdjustedLeft, completedAdjustedRight) = TrackSectionOrder.setCalibrationPoints(leftLinks, rightLinks, Map())
+
+      if (rightReassignedEnd == leftReassignedEnd)
+        rightReassignedEnd
+      else
+        rightReassignedEnd ++ leftReassignedEnd.filterNot(_.track == Track.Combined)
+//      val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(rightReassignedEnd), groupIntoSections(leftReassignedEnd))
+//      val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(completedAdjustedRight), groupIntoSections(completedAdjustedLeft))
+//      calculatedSections.flatMap { sec =>
+//        if (sec.right == sec.left)
+//          sec.right.links
+//        else
+//          sec.right.links ++ sec.left.links
+//      }.filter(_.status == LinkStatus.Terminated)
     }
   }
 }

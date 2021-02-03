@@ -85,6 +85,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val track = processed.last.track
       val roadType = processed.last.roadType
       val discontinuity = processed.last.discontinuity
+      /* Check if status changes */
+      if (track != seq.head.track) {
+
+      }
       val discontinuousSections = List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
       if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.roadType == roadType) && !discontinuousSections.contains(discontinuity)) {
         continuousSection(seq.tail, processed :+ seq.head)
@@ -294,7 +298,11 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(rightSections, userDefinedCalibrationPoint)
     val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
     //adjustedRight and adjustedLeft already ordered by geometry -> TrackSectionOrder.orderProjectLinksTopologyByGeometry
-    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(leftLinks, rightLinks, None) // if ((leftLinks ++ rightLinks).exists(_.status == LinkStatus.NotHandled)) (leftLinks, rightLinks) else adjustTracksToMatch(leftLinks, rightLinks, None)
+
+//    val (adjustedLeft, adjustedRight) = (leftLinks, rightLinks) //if ((leftLinks ++ rightLinks).exists(_.status == LinkStatus.NotHandled)) (leftLinks, rightLinks) else adjustTracksToMatch(leftLinks, rightLinks, None)
+//    val (adjustedLeft, adjustedRight) = if ((leftLinks ++ rightLinks).exists(_.status == LinkStatus.NotHandled)) (leftLinks, rightLinks) else adjustTracksToMatch(leftLinks, rightLinks, None)
+    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(leftLinks, rightLinks, None)
+
     val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint)
     TrackSectionOrder.createCombinedSections(right, left)
   }

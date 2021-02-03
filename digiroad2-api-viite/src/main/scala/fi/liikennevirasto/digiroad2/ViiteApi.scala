@@ -6,10 +6,11 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.util.{RoadPartReservedException, Track}
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressErrorDetails
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
@@ -841,9 +842,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       tags "ViiteAPI - Project"
       summary "Given a valid projectId, this will run the validations to the project in question and it will also fetch all the changes made on said project."
     )
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   get("/project/getchangetable/:projectId", operation(validateProjectAndReturnChangeTableById)) {
     val projectId = params("projectId").toLong
+    try {
+      withDynTransaction {
+       val project = projectService.fetchProjectById(projectId).get
+        projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+      }
+    } catch {
+      case ex: RoadAddressException =>
+        logger.info("Road address Exception: " + ex.getMessage)
+        Some(s"Tieosoitevirhe: ${ex.getMessage}")
+      case ex: ProjectValidationException => Some(ex.getMessage)
+      case ex: Exception => Some(ex.getMessage)
+    }
+
     time(logger, s"GET request for /project/getchangetable/$projectId") {
       val validationErrors = projectService.validateProjectById(projectId).map(mapValidationIssues)
       //TODO change UI to not override project validator errors on change table call
