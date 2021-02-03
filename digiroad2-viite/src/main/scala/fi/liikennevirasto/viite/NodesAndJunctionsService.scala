@@ -691,7 +691,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
           roadTypeSections.foreach { section =>
 
             val headProjectLink = section.head
-            val headReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && headProjectLink.startAddrMValue == ch.changeInfo.target.startAddressM.get && ch.changeInfo.reversed)
+            val headReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && headProjectLink.startAddrMValue == ch.changeInfo.target.startAddressM.get
+              && ch.changeInfo.target.endAddressM.nonEmpty && headProjectLink.endAddrMValue == ch.changeInfo.target.endAddressM.get && ch.changeInfo.reversed)
 
             val headNodePoint: Option[NodePoint] = mappedRoadwayNumbers.find { rl =>
               headProjectLink.startAddrMValue == rl.newStartAddr && headProjectLink.endAddrMValue == rl.newEndAddr && headProjectLink.roadwayNumber == rl.newRoadwayNumber
