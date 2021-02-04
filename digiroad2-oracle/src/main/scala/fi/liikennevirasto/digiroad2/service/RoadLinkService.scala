@@ -75,8 +75,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getMidPointByLinkId(linkId: Long): Option[Point] = {
-    val roadLinkOption = vvhClient.roadLinkData.fetchByLinkId(linkId).orElse(vvhClient.complementaryData.fetchByLinkId(linkId))
-    roadLinkOption.map{
+    val client = if (useFrozenLinkInterface) vvhClient.frozenTimeRoadLinkData else vvhClient.roadLinkData
+    val roadLinkOption = client.fetchByLinkId(linkId).orElse(vvhClient.complementaryData.fetchByLinkId(linkId))
+    roadLinkOption.map {
       roadLink =>
         GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, roadLink.length / 2.0).getOrElse(Point(roadLink.geometry.head.x, roadLink.geometry.head.y))
     }
@@ -87,7 +88,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     *
     */
   def getRoadLinkMiddlePointByMtkId(mtkId: Long):  Option[Point] = {
-    vvhClient.roadLinkData.fetchByMmlId(mtkId).flatMap { vvhRoadLink =>
+    val client = if (useFrozenLinkInterface) vvhClient.frozenTimeRoadLinkData else vvhClient.roadLinkData
+    client.fetchByMmlId(mtkId).flatMap { vvhRoadLink =>
       Option(GeometryUtils.midPointGeometry(vvhRoadLink.geometry))
     }
   }
