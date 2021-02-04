@@ -295,7 +295,7 @@ object TrackSectionRoadway {
         else GeometryUtils.truncateGeometry2D(linkToBeSplit.geometry, 0.0, linkToBeSplit.endMValue - splitMValue)
 
         //  processedLinks without and with roadwayNumber
-        val (unassignedRwnLinks, assignedRwnLinks) = oppositeToProcess.partition(_.roadwayNumber == NewIdValue)
+        val (unassignedRwnLinks, assignedRwnLinks) = oppositeToProcess.filterNot(_.eq(linkToBeSplit)).partition(_.roadwayNumber == NewIdValue)
         val nextRoadwayNumber = Sequences.nextRoadwayNumber
 
         // calculate startAddrMValue, when the link is not the 1st link of the roadway, address does not need to be adjusted
@@ -347,8 +347,8 @@ object TrackSectionRoadway {
         logger.info(s"\tfrom: (${remainingReference.head._2.last.originalStartAddrMValue} - ${remainingReference.head._2.last.originalEndAddrMValue})")
         logger.info(s"\tto:  (${startAddrMValue.getOrElse(remainingReference.head._2.last.startAddrMValue)} - $splitEndAddrM)")
 
-        val processedReferenceWithAdjustedSplitAddr = remainingReference.head._2.dropRight(1) :+ remainingReference.head._2.last
-          .copy(startAddrMValue = startAddrMValue.getOrElse(remainingReference.head._2.last.startAddrMValue), endAddrMValue = splitEndAddrM)
+        val processedReferenceWithAdjustedSplitAddr = remainingReference.head._2.dropRight(1) :+
+          remainingReference.head._2.last.copy(startAddrMValue = startAddrMValue.getOrElse(remainingReference.head._2.last.startAddrMValue), endAddrMValue = splitEndAddrM)
 
         logger.info(s"Project link to be split (2nd half): (${linkToBeSplit.roadNumber}, ${linkToBeSplit.roadPartNumber}, ${linkToBeSplit.track})")
         logger.info(s"\tfrom: (${linkToBeSplit.originalStartAddrMValue} - ${linkToBeSplit.originalEndAddrMValue}) ")
