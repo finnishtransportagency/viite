@@ -4484,7 +4484,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       // New junction points should be created for terminated junction
       val terminatedJunctionPoints = junctionPointDAO.fetchAllByJunctionIds(terminatedJunctions.map(_.id))
       terminatedJunctionPoints.length should be(6)
-      terminatedJunctionPoints.count(_.validTo.isDefined) should be (3)
+      terminatedJunctionPoints.count(_.validTo.isDefined) should be (6)
       terminatedJunctionPoints.count(_.endDate.isDefined) should be (3)
 
       junctionPointDAO.fetchByJunctionIds(terminatedJunctions.map(_.id)).length should be(0)

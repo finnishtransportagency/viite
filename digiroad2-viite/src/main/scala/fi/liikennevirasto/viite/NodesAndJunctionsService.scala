@@ -872,13 +872,15 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       logger.info(s"Expiring junctions : ${junctionsToExpireIds.toSet}")
       junctionDAO.expireById(junctionsToExpireIds)
 
-      // Create junction rows with end date and junction point rows with new junction id
+      // Create junction rows with end date and junction point rows with new junction id and expire the newly created junction point rows
       val junctionsToExpire = junctionDAO.fetchAllByIds(junctionsToExpireIds)
       junctionsToExpire.foreach(j => {
         val newJunctionId = junctionDAO.create(Seq(j.copy(id = NewIdValue, endDate = endDate, createdBy = username))).head
-        junctionPointDAO.create(junctionPoints
+        val newJunctionPointRows = junctionPointDAO.create(junctionPoints
           .filter(_.junctionId == j.id)
           .map(_.copy(id = NewIdValue, junctionId = newJunctionId, createdBy = username)))
+        junctionPointDAO.expireById(newJunctionPointRows)
+        newJunctionPointRows
       })
 
       junctionsToExpire
