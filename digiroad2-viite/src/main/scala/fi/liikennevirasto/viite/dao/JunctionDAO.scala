@@ -270,7 +270,7 @@ class JunctionDAO extends BaseDAO {
         }
         ps.setDate(4, new java.sql.Date(junction.startDate.getMillis))
         if (junction.endDate.isDefined) {
-          ps.setDate(5, new java.sql.Date(junction.startDate.getMillis))
+           ps.setDate(5, new java.sql.Date(junction.endDate.get.getMillis))
         } else {
           ps.setNull(5, java.sql.Types.DATE)
         }
