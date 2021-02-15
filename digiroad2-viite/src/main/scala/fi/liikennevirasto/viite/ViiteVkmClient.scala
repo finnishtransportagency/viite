@@ -2,7 +2,8 @@ package fi.liikennevirasto.viite
 
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
+import org.apache.http.client.utils.URIBuilder
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.json4s.{DefaultFormats, StreamInput}
@@ -17,6 +18,8 @@ import scala.util.control.NonFatal
 
 class ViiteVkmClient {
 
+  case class VKMError(content: Map[String, Any], url: String)
+
   val logger = LoggerFactory.getLogger(getClass)
 
   private def getRestEndPoint: String = {
@@ -27,6 +30,35 @@ class ViiteVkmClient {
   }
 
   private val client = HttpClientBuilder.create().build
+
+  def get(path: String, params: Map[String, String]): Either[Any, VKMError] = {
+
+    val builder = new URIBuilder(getRestEndPoint + path)
+
+    params.foreach {
+      case (param, value) => if (value.nonEmpty) builder.addParameter(param, value)
+    }
+
+    val url = builder.build.toString
+    val request = new HttpGet(url)
+
+    if (builder.getHost == "localhost") {
+      // allow ssh port forward for developing
+      request.setHeader("Host", "testioag.vayla.fi")
+    }
+
+    val response = client.execute(request)
+    try {
+      if (response.getStatusLine.getStatusCode >= 400)
+        return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
+      val content: Any = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Any]
+      Left(content)
+    } catch {
+      case e: Exception => Right(VKMError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
 
   def postFormUrlEncoded(urlPart: String, parameters: Map[String, String]): Any = {
     implicit val formats = DefaultFormats
