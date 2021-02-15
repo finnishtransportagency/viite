@@ -843,11 +843,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       summary "Given a valid projectId, this will run the validations to the project in question and it will also fetch all the changes made on said project."
     )
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   get("/project/getchangetable/:projectId", operation(validateProjectAndReturnChangeTableById)) {
     val projectId = params("projectId").toLong
     try {
-      withDynTransaction {
+      withDynSession {
        val project = projectService.fetchProjectById(projectId).get
         projectService.recalculateProjectLinks(projectId, project.modifiedBy)
       }

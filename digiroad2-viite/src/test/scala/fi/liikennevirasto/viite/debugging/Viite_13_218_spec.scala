@@ -572,7 +572,6 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
 
 
       val transfer_2_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => List(11910590, 3227503, 3227468, 3227469, 3227544, 3227541).contains(x.linkId)).toList
-      println(transfer_2_links)
       val transfer_2 = List(
         Test_config(transfer_2_links, 2, LinkStatus.Transfer)
       )

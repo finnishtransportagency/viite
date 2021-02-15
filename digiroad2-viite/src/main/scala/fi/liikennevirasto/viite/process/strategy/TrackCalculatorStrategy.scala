@@ -142,7 +142,14 @@ trait TrackCalculatorStrategy {
 /** TODO: käytä kalibraatio pistettä? */
     val reversed = rightLink.reversed || leftLink.reversed
 
-    (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
+    (leftLink.calibrationPointTypes._2, rightLink.calibrationPointTypes._2) match {
+      case (CalibrationPointDAO.CalibrationPointType.UserDefinedCP, _ ) | (_, CalibrationPointDAO.CalibrationPointType.UserDefinedCP) =>
+        userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
+          (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
+        )
+      case _ =>
+        (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
+    }
 
 //    (leftLink.status, rightLink.status) match {
 //      case (LinkStatus.Transfer, LinkStatus.Transfer) | (LinkStatus.UnChanged, LinkStatus.UnChanged) =>

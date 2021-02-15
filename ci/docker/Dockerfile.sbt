@@ -11,7 +11,8 @@ RUN mkdir /home/jenkins/.m2 && \
     mkdir /home/jenkins/.ivy && \
     mkdir /home/jenkins/.sbt  && \
     mkdir /home/jenkins/package && \
-    mkdir /home/jenkins/package/UI
+    mkdir /home/jenkins/package/UI && \
+    mkdir /home/viite
 
 #Sbt repositories config
 COPY config/repositories /home/jenkins/.sbt/repositories
@@ -21,6 +22,8 @@ RUN apk update && apk upgrade && \
     apk add bash && \
     apk add curl && \
     apk add tzdata && \
+    apk add git && \
+    git clone --branch postgis --depth 1  https://github.com/finnishtransportagency/viite.git /home/viite && \
     cp /usr/share/zoneinfo/Europe/Helsinki /etc/localtime && \
     echo "Europe/Helsinki" > /etc/timezone
 
@@ -39,5 +42,6 @@ ENV PATH "/home/jenkins/sbt/bin:$PATH"
 ENV PATH "/home/jenkins/scala-$SCALA_VERSION/bin:$PATH"
 
 RUN chown -R jenkins /home/jenkins
+RUN chown -R jenkins /home/viite
 USER jenkins
 

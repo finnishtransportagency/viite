@@ -1555,8 +1555,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             projectLinkDAO.updateProjectLinkRoadTypeDiscontinuity(Set(updated.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
 
             // Bad workaround to have fresh data.
-            val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter( pl => toUpdateLinks.map(_.id).contains(pl.id))
-            splittedLinks = createCalibrationPointsAtStatusChange(projectLinks, projectId, userName)
+//            val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter( pl => toUpdateLinks.map(_.id).contains(pl.id))
+//            splittedLinks = createCalibrationPointsAtStatusChange(projectLinks, projectId, userName)
 
             //transfer cases should remove the part after the project link table update operation
             if (replaceable) {
@@ -1577,8 +1577,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             updateRoadTypeDiscontinuity(updated.map(_.copy(roadType = RoadType.apply(roadType.toInt), status = linkStatus)))
 
             // Bad workaround to have fresh data.
-            val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter( pl => updated.map(_.id).contains(pl.id))
-            splittedLinks = createCalibrationPointsAtStatusChange(projectLinks, projectId, userName)
+//            val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter( pl => updated.map(_.id).contains(pl.id))
+//            splittedLinks = createCalibrationPointsAtStatusChange(projectLinks, projectId, userName)
 
           case LinkStatus.New =>
             // Current logic allows only re adding new road addresses within same road/part group
@@ -1587,8 +1587,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               updateRoadTypeDiscontinuity(toUpdateLinks.map(l => l.copy(roadType = RoadType.apply(roadType.toInt), roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), ely = ely.getOrElse(l.ely))))
 
               // Bad workaround to have fresh data.
-              val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter( pl => toUpdateLinks.map(_.id).contains(pl.id))
-              splittedLinks = createCalibrationPointsAtStatusChange(projectLinks, projectId, userName)
+//              val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter( pl => toUpdateLinks.map(_.id).contains(pl.id))
+//              splittedLinks = createCalibrationPointsAtStatusChange(projectLinks, projectId, userName)
 
               val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
               if (nameError.nonEmpty)
@@ -1668,15 +1668,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
     }
 
-
-    val left = projectLinks.filter(pl => pl.track == Track.LeftSide && pl.status != LinkStatus.Terminated)
-    left.tail.foldLeft(left.head.status) { (status, pl) =>
-      if (pl.status != status)
-        this.createCalibrationPointsAtStatusChange(Seq(pl), projectId, userName)
-      pl.status
-    }
-
-    projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
 
     logger.info(s"Recalculating project $projectId, parts ${roadParts.map(p => s"${p._1}/${p._2}").mkString(", ")}")
 
