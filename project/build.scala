@@ -87,7 +87,8 @@ object Digiroad2Build extends Build {
         "org.postgresql" % "postgresql" % "42.2.5",
         "net.postgis" % "postgis-jdbc" % "2.3.0"
       ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
+      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf",
+      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "lib" / "geotools"
     )
   ) dependsOn geoJar
 
@@ -252,4 +253,4 @@ object Digiroad2Build extends Build {
       case x => old(x)
     } }
   )
-}
+}e
