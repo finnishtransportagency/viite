@@ -34,6 +34,9 @@ object Digiroad2Build extends Build {
       version := Version,
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
+      resolvers += (
+        "Local Maven Repository" at s"file:////codebuild/output/src321189951/src/github.com/finnishtransportagency/viite/lib"
+        ),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       libraryDependencies ++= Seq(
         "org.joda" % "joda-convert" % JodaConvertVersion,
