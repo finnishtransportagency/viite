@@ -42,7 +42,7 @@ object Digiroad2Build extends Build {
         "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
         "org.geotools" % "gt-graph" % "19.0" from "file:///gt-graph-19.0.jar",
         "org.geotools" % "gt-main" % "19.0" from "file:///gt-main-19.0.jar",
-        "org.geotools" % "gt-api" % "19.0" from "file:///gt-api-19.0.jar",
+        "org.geotools" % "gt-api" % "19.0" from "s3://fi-viite-dev/geotools-19/gt-api-19.0.jar",
         "org.geotools" % "gt-referencing" % "19.0" from "file:///gt-referencing-19.0.jar",
         "org.geotools" % "gt-metadata" % "19.0" from "file:///gt-metadata-19.0.jar",
         "org.geotools" % "gt-opengis" % "19.0" from "file:///gt-opengis-19.0.jar",
