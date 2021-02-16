@@ -49,7 +49,8 @@ object Digiroad2Build extends Build {
         "jgridshift" % "jgridshift" % "1.0" from "file:///jgridshift-1.0.jar",
         "com.vividsolutions" % "jts-core" % "1.14.0",
   "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
-  )
+  ),
+      unmanagedResourceDirectories in Compile += baseDirectory.value / "lib" / "geotools"
   )
   )
 
@@ -87,8 +88,7 @@ object Digiroad2Build extends Build {
         "org.postgresql" % "postgresql" % "42.2.5",
         "net.postgis" % "postgis-jdbc" % "2.3.0"
       ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf",
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "lib" / "geotools"
+      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn geoJar
 
