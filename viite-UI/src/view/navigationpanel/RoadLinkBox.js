@@ -72,18 +72,18 @@
     ];
 
     var buildMultiColoredSegments = function () {
-      var segments = '<div class = "rainbow-container"><div class="edge-left symbol linear linear-asset-1" />';
+      var segments = '<div class = "rainbow-container"><div class="edge-left symbol linear linear-asset-1"></div>';
       for (var i = 1; i <= 6; i++) {
         segments = segments +
-          '<div class="middle symbol linear rainbow-asset-' + i + '" />';
+          '<div class="middle symbol linear rainbow-asset-' + i + '"></div>';
       }
-      return segments + '<div class="middle symbol linear rainbow-asset-2" /><div class="middle symbol linear rainbow-asset-1 " /> <div class="edge-right symbol linear linear-asset-1" /></div>';
+      return segments + '<div class="middle symbol linear rainbow-asset-2"></div><div class="middle symbol linear rainbow-asset-1 "></div> <div class="edge-right symbol linear linear-asset-1"></div></div>';
     };
 
     var constructionTypeLegendEntries = _.map(constructionTypes, function (constructionType) {
       return '<div class="legend-entry">' +
         '<div class="label">' + constructionType[1] + '</div>' +
-        '<div class="symbol linear construction-type-' + constructionType[0] + '" />' +
+        '<div class="symbol linear construction-type-' + constructionType[0] + '"></div>' +
         '</div>';
     }).join('');
 
@@ -94,7 +94,7 @@
       if (roadClass[0] === 98)
         defaultLegendEntry += buildMultiColoredSegments();
       else
-        defaultLegendEntry += '<div class="symbol linear linear-asset-' + roadClass[0] + '" />';
+        defaultLegendEntry += '<div class="symbol linear linear-asset-' + roadClass[0] + '"></div>';
       return defaultLegendEntry + '</div>';
     }).join('');
 
@@ -108,31 +108,31 @@
     var roadProjectOperations = function () {
       return '<div class="legend-entry">' +
         '<div class="label">Ennallaan</div>' +
-        '<div class="symbol linear operation-type-unchanged" />' +
+        '<div class="symbol linear operation-type-unchanged"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
         '<div class="label">Uusi</div>' +
-        '<div class="symbol linear operation-type-new" />' +
+        '<div class="symbol linear operation-type-new"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
         '<div class="label">Siirto</div>' +
-        '<div class="symbol linear operation-type-transfer" />' +
+        '<div class="symbol linear operation-type-transfer"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
         '<div class="label">Lakkautus</div>' +
-        '<div class="symbol linear operation-type-terminated" />' +
+        '<div class="symbol linear operation-type-terminated"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
         '<div class="label">Numerointi</div>' +
-        '<div class="symbol linear operation-type-renumbered" />' +
+        '<div class="symbol linear operation-type-renumbered"></div>' +
         '</div>' +
         '<div class="legend-entry">' +
         '<div class="label">Käsittelemätön</div>' +
-        '<div class="symbol linear operation-type-unhandeled" />' +
+        '<div class="symbol linear operation-type-unhandeled"></div>' +
         '<div class="label">Muu tieverkko, rakenteilla</div>' +
-        '<div class="symbol linear construction-type-0" />' +
+        '<div class="symbol linear construction-type-0"></div>' +
         '<div class="label">Tuntematon, rakenteilla</div>' +
-        '<div class="symbol linear construction-type-1" />' +
+        '<div class="symbol linear construction-type-1"></div>' +
         '</div>';
     };
 
