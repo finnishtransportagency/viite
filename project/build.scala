@@ -24,7 +24,7 @@ object Digiroad2Build extends Build {
   val MockitoCoreVersion = "2.18.3"
   val LogbackClassicVersion = "1.2.3"
   val JettyVersion = "9.2.15.v20160210"
-
+ 
   lazy val geoJar = Project (
     Digiroad2GeoName,
     file(Digiroad2GeoName),
