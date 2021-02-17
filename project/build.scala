@@ -34,9 +34,6 @@ object Digiroad2Build extends Build {
       version := Version,
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
-      resolvers += (
-        "Local Maven Repository" at s"file:////codebuild/output/src321189951/src/github.com/finnishtransportagency/viite/lib"
-        ),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       libraryDependencies ++= Seq(
         "org.joda" % "joda-convert" % JodaConvertVersion,
@@ -52,8 +49,7 @@ object Digiroad2Build extends Build {
         "jgridshift" % "jgridshift" % "1.0" from "file:///jgridshift-1.0.jar",
         "com.vividsolutions" % "jts-core" % "1.14.0",
   "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
-  ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "lib" / "geotools"
+  )
   )
   )
 
