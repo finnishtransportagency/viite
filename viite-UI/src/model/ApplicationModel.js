@@ -144,8 +144,8 @@
 
     var addSpinner = function (spinnerEvent) {
       jQuery('.container').append(
-        $('<div/>').addClass("spinner-overlay").addClass(spinnerClassName(spinnerEvent)).addClass("modal-overlay").append(
-          $('<div/>').addClass("spinner")
+        $('<div></div>').addClass("spinner-overlay").addClass(spinnerClassName(spinnerEvent)).addClass("modal-overlay").append(
+          $('<div></div>').addClass("spinner")
         )
       );
     };
