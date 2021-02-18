@@ -20,17 +20,17 @@
   var floatingLinksTable = function (layerName, floatingLinks, elyCode) {
     counter += floatingLinks.length;
     var elyHeader = function (elyCodeHeader) {
-      return $('<h2/>').html("ELY " + elyCodeHeader + " " + decodeEly(elyCodeHeader));
+      return $('<h2></h2>').html("ELY " + elyCodeHeader + " " + decodeEly(elyCodeHeader));
     };
 
     var tableContentRows = function (links) {
       return _.map(links, function (link) {
-        return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>').append(floatingDescription('TIE', link.roadNumber)).append(floatingDescription('OSA', link.roadPartNumber)).append(floatingDescription('AJR', link.trackCode)).append(floatingDescription('AET', link.startAddressM)).append(floatingDescription('LET', link.endAddressM))).append($('<td align=right />').append(floatingLink(link)));
+        return $('<tr></tr>').append($('<td align=left style="font-size: smaller;"></td>').append(floatingDescription('TIE', link.roadNumber)).append(floatingDescription('OSA', link.roadPartNumber)).append(floatingDescription('AJR', link.trackCode)).append(floatingDescription('AET', link.startAddressM)).append(floatingDescription('LET', link.endAddressM))).append($('<td align=right></td>').append(floatingLink(link)));
       });
     };
     var floatingLink = function (floating) {
       var link = '#' + layerName + '/' + floating.linkId;
-      return $('<a style="font-size: smaller; class="work-list-item"/>').attr('href', link).html(link);
+      return $('<a style="font-size: smaller;" class="work-list-item"></a>').attr('href', link).html(link);
     };
 
     var floatingDescription = function (desc, value) {
@@ -39,26 +39,26 @@
 
     var tableToDisplayFloatings = function (tableFloatingLinks) {
       if (!tableFloatingLinks || tableFloatingLinks.length === 0) return '';
-      return $('<table/>').addClass('table').append(tableContentRows(tableFloatingLinks));
+      return $('<table></table>').addClass('table').append(tableContentRows(tableFloatingLinks));
     };
-    return $('<div/>').append(elyHeader(elyCode)).append(tableToDisplayFloatings(floatingLinks));
+    return $('<div></div>').append(elyHeader(elyCode)).append(tableToDisplayFloatings(floatingLinks));
   };
 
   var roadAddressErrorsTable = function (layerName, addressErrors, elyCode) {
     counter += addressErrors.length;
     var elyHeader = function (elyCodeHeader) {
-      return $('<h2/>').html("ELY " + elyCodeHeader + " " + decodeEly(elyCodeHeader));
+      return $('<h2></h2>').html("ELY " + elyCodeHeader + " " + decodeEly(elyCodeHeader));
     };
 
     var tableContentRows = function (addresses) {
       return _.map(addresses, function (address) {
-        return $('<tr/>').append($('<td align=left style="font-size: smaller;"/>').append(errorsDescription('ID', address.id)).append(errorsDescription('TIE', address.roadNumber)).append(errorsDescription('OSA', address.roadPartNumber)).append(errorsDescription('ERROR', address.errorCode))).append($('<td align=right />').append(roadAddressError(address)));
+        return $('<tr></tr>').append($('<td align=left style="font-size: smaller;"></td>').append(errorsDescription('ID', address.id)).append(errorsDescription('TIE', address.roadNumber)).append(errorsDescription('OSA', address.roadPartNumber)).append(errorsDescription('ERROR', address.errorCode))).append($('<td align=right></td>').append(roadAddressError(address)));
       });
     };
 
     var roadAddressError = function (roadAddress) {
       var link = '#' + layerName + '/' + roadAddress.linkId;
-      return $('<a style="font-size: smaller; class="work-list-item"/>').attr('href', link).html(link);
+      return $('<a style="font-size: smaller;" class="work-list-item"></a>').attr('href', link).html(link);
     };
 
     var errorsDescription = function (desc, value) {
@@ -67,9 +67,9 @@
 
     var tableToDisplayErrors = function (addressErrorsTable) {
       if (!addressErrorsTable || addressErrorsTable.length === 0) return '';
-      return $('<table/>').addClass('table').append(tableContentRows(addressErrorsTable));
+      return $('<table></table>').addClass('table').append(tableContentRows(addressErrorsTable));
     };
-    return $('<div/>').append(elyHeader(elyCode)).append(tableToDisplayErrors(addressErrors));
+    return $('<div></div>').append(elyHeader(elyCode)).append(tableToDisplayErrors(addressErrors));
   };
 
   var generateWorkListFloatings = function (layerName, listP) {
@@ -100,9 +100,9 @@
       counter = 0;
       var floatingLinks = _.map(floatings, _.partial(floatingLinksTable, layerName));
       if (counter === 0) {
-        $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html("Kaikki irti geometriasta olevat tieosoitteet käsitelty"));
+        $('.work-list').html("").append($('<h3 style="padding-left: 10px;"></h3>').html("Kaikki irti geometriasta olevat tieosoitteet käsitelty"));
       } else {
-        $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html(" " + counter + " tieosoitetta on irti geometriasta")).append(floatingLinks);
+        $('.work-list').html("").append($('<h3 style="padding-left: 10px;"></h3>').html(" " + counter + " tieosoitetta on irti geometriasta")).append(floatingLinks);
       }
       removeSpinner();
     });
@@ -136,9 +136,9 @@
       counter = 0;
       var roadAddressErrors = _.map(errors, _.partial(roadAddressErrorsTable, layerName));
       if (counter === 0) {
-        $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html("Kaikki irti geometriasta olevat tieosoitteet käsitelty"));
+        $('.work-list').html("").append($('<h3 style="padding-left: 10px;"></h3>').html("Kaikki irti geometriasta olevat tieosoitteet käsitelty"));
       } else {
-        $('.work-list').html("").append($('<h3 style="padding-left: 10px;"/>').html(" " + counter + " addresses have errors")).append(roadAddressErrors);
+        $('.work-list').html("").append($('<h3 style="padding-left: 10px;"></h3>').html(" " + counter + " addresses have errors")).append(roadAddressErrors);
       }
       removeSpinner();
     });
