@@ -142,7 +142,7 @@
 
     var Tool = function (toolName, icon, description) {
       var classNameForTool = toolName.toLowerCase();
-      var toolElement = $('<div class="action"/>').addClass(classNameForTool).attr('action', toolName).append(icon).on('click', function () {
+      var toolElement = $('<div class="action"></div>').addClass(classNameForTool).attr('action', toolName).append(icon).on('click', function () {
         executeOrShowConfirmDialog(function () {
           applicationModel.setSelectedTool(toolName);
         });
@@ -173,7 +173,7 @@
     };
 
     var ToolSelection = function (tools) {
-      var toolSelectionElement = $('<div class="panel-section panel-actions" />');
+      var toolSelectionElement = $('<div class="panel-section panel-actions"></div>');
       _.each(tools, function (tool) {
         toolSelectionElement.append(tool.element);
         toolSelectionElement.append('<div>' + tool.description + '</div>');
@@ -251,7 +251,7 @@
     bindExternalEventHandlers();
 
     elements.expanded.find('.legend-container').append(roadClassLegend);
-    var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
+    var element = $('<div class="panel-group ' + className + 's"></div>').append(elements.expanded).hide();
 
     function show() {
       element.show();
