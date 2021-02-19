@@ -483,8 +483,6 @@ SELECT
             )
       INNER JOIN PROJECT P
         ON P.ID = RC.PROJECT_ID
-      WHERE
-        RC.CHANGE_TYPE <> 1
         ORDER BY R.VALID_FROM, RC.ROADWAY_CHANGE_ID
      """
 
