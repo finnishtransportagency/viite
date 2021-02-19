@@ -45,7 +45,7 @@ object Digiroad2Build extends Build {
   )
   )
   )
-  
+ 
   val Digiroad2PostGISName = "digiroad2-oracle"
   lazy val postgisJar = Project (
     Digiroad2PostGISName,
