@@ -28,24 +28,38 @@ object Digiroad2Build extends Build {
   // Get build id to check if executing in aws environment.
   val awsBuildId: Option[String] = Some(scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null))
 
-  lazy val geoJar = Project (
-    Digiroad2GeoName,
-    file(Digiroad2GeoName),
-    settings = Defaults.defaultSettings ++ Seq(
-      organization := Organization,
-      name := Digiroad2GeoName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      if (awsBuildId.isDefined) {
-        "org.joda" % "joda-convert" % JodaConvertVersion,
-        "joda-time" % "joda-time" % JodaTimeVersion,
-        "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
-        "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-        "com.vividsolutions" % "jts-core" % "1.14.0",
-        "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
-      } else {
+  lazy val geoJar = if (awsBuildId.isDefined) {
+    Project(
+      Digiroad2GeoName,
+      file(Digiroad2GeoName),
+      settings = Defaults.defaultSettings ++ Seq(
+        organization := Organization,
+        name := Digiroad2GeoName,
+        version := Version,
+        scalaVersion := ScalaVersion,
+        resolvers += Classpaths.typesafeReleases,
+        scalacOptions ++= Seq("-unchecked", "-feature"),
+        libraryDependencies ++= Seq(
+          "org.joda" % "joda-convert" % JodaConvertVersion,
+          "joda-time" % "joda-time" % JodaTimeVersion,
+          "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
+          "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+          "com.vividsolutions" % "jts-core" % "1.14.0",
+          "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
+        )
+      )
+    )
+  } else {
+    Project(
+      Digiroad2GeoName,
+      file(Digiroad2GeoName),
+      settings = Defaults.defaultSettings ++ Seq(
+        organization := Organization,
+        name := Digiroad2GeoName,
+        version := Version,
+        scalaVersion := ScalaVersion,
+        resolvers += Classpaths.typesafeReleases,
+        scalacOptions ++= Seq("-unchecked", "-feature"),
         libraryDependencies ++= Seq(
           "org.joda" % "joda-convert" % JodaConvertVersion,
           "joda-time" % "joda-time" % JodaTimeVersion,
@@ -61,9 +75,9 @@ object Digiroad2Build extends Build {
           "com.vividsolutions" % "jts-core" % "1.14.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/vividsolutions/jts-core/1.14.0/jts-core-1.14.0.jar",
           "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test"
         )
-      }
-  )
-  )
+      )
+    )
+  }
 
   val Digiroad2PostGISName = "digiroad2-oracle"
   lazy val postgisJar = Project (
