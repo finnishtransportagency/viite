@@ -156,9 +156,9 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val importOnlyCurrent: Boolean = envProps.getProperty("importOnlyCurrent", "false").toBoolean
   override val authenticationTestMode: Boolean = envProps.getProperty("authenticationTestMode", "false").toBoolean
   override val authenticationTestUser: String = envProps.getProperty("authenticationTestUser")
-  override val bonecpJdbcUrl: String = envProps.getProperty("bonecp.jdbcUrl")
-  override val bonecpUsername: String = envProps.getProperty("bonecp.username")
-  override val bonecpPassword: String = envProps.getProperty("bonecp.password")
+  override val bonecpJdbcUrl: String = scala.util.Properties.envOrElse("bonecpJdbcUrl", envProps.getProperty("bonecp.jdbcUrl"))
+  override val bonecpUsername: String = scala.util.Properties.envOrElse("bonecpUsername", envProps.getProperty("bonecp.username"))
+  override val bonecpPassword: String = scala.util.Properties.envOrElse("bonecpPassword", envProps.getProperty("bonecp.password"))
   override val conversionBonecpJdbcUrl: String = envProps.getProperty("conversion.bonecp.jdbcUrl")
   override val conversionBonecpUsername: String = envProps.getProperty("conversion.bonecp.username")
   override val conversionBonecpPassword: String = envProps.getProperty("conversion.bonecp.password")
