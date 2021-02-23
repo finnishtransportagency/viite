@@ -144,10 +144,10 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val municipalityProvider: String = envProps.getProperty("municipalityProvider")
   override val eventBus: String = envProps.getProperty("eventBus")
   override val useVVHGeometry: String = envProps.getProperty("useVVHGeometry")
-  override val vvhServiceHost: String = envProps.getProperty("vvhServiceHost")
-  override val vvhRestApiEndPoint: String = envProps.getProperty("vvhRestApiEndPoint")
+  override val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", envProps.getProperty("vvhServiceHost"))
+  override val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", envProps.getProperty("vvhRestApiEndPoint"))
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
-  override val vkmUrl: String = envProps.getProperty("vkmUrl")
+  override val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", envProps.getProperty("vkmUrl"))
   override val tierekisteriViiteRestApiEndPoint: String = envProps.getProperty("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
   override val tierekisteriEnabled: Boolean = envProps.getProperty("tierekisteri.enabled", "false").toBoolean
   override val httpProxySet: Boolean = envProps.getProperty("http.proxySet", "false").toBoolean
