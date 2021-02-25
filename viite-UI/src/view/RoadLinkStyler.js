@@ -66,17 +66,17 @@
       new StyleRule().where('zoomLevel').is(13).use({stroke: {width: 9}}),
       new StyleRule().where('zoomLevel').is(14).use({stroke: {width: 10}}),
       new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 12}}),
-      new StyleRule().where('zoomLevel').is(5).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 3}}),
-      new StyleRule().where('zoomLevel').is(6).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 3}}),
-      new StyleRule().where('zoomLevel').is(7).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 4}}),
-      new StyleRule().where('zoomLevel').is(8).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 4}}),
-      new StyleRule().where('zoomLevel').is(9).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 5}}),
-      new StyleRule().where('zoomLevel').is(10).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 6}}),
-      new StyleRule().where('zoomLevel').is(11).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 7}}),
-      new StyleRule().where('zoomLevel').is(12).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 8}}),
-      new StyleRule().where('zoomLevel').is(13).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 11}}),
-      new StyleRule().where('zoomLevel').is(14).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 13}}),
-      new StyleRule().where('zoomLevel').is(15).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 15}}),
+      new StyleRule().where('zoomLevel').is(5).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 3}}),
+      new StyleRule().where('zoomLevel').is(6).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 3}}),
+      new StyleRule().where('zoomLevel').is(7).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 4}}),
+      new StyleRule().where('zoomLevel').is(8).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 4}}),
+      new StyleRule().where('zoomLevel').is(9).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 5}}),
+      new StyleRule().where('zoomLevel').is(10).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 6}}),
+      new StyleRule().where('zoomLevel').is(11).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 7}}),
+      new StyleRule().where('zoomLevel').is(12).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 8}}),
+      new StyleRule().where('zoomLevel').is(13).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 11}}),
+      new StyleRule().where('zoomLevel').is(14).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 13}}),
+      new StyleRule().where('zoomLevel').is(15).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 15}}),
       new StyleRule().where('zoomLevel').is(5).and('roadClass').isIn([7, 8, 9, 10, 12]).use({stroke: {width: 1}}),
       new StyleRule().where('zoomLevel').is(6).and('roadClass').isIn([7, 8, 9, 10, 12]).use({stroke: {width: 1}}),
       new StyleRule().where('zoomLevel').is(7).and('roadClass').isIn([7, 8, 9, 10, 12]).use({stroke: {width: 2}}),
@@ -307,57 +307,57 @@
     ];
 
     var borderRules = [
-      new StyleRule().where('zoomLevel').is(5).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({
+      new StyleRule().where('zoomLevel').is(5).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 7}
       }),
-      new StyleRule().where('zoomLevel').is(6).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({
+      new StyleRule().where('zoomLevel').is(6).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 7}
       }),
-      new StyleRule().where('zoomLevel').is(7).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({
+      new StyleRule().where('zoomLevel').is(7).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 8}
       }),
-      new StyleRule().where('zoomLevel').is(8).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({
+      new StyleRule().where('zoomLevel').is(8).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 8}
       }),
-      new StyleRule().where('zoomLevel').is(9).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({
+      new StyleRule().where('zoomLevel').is(9).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 9}
       }),
-      new StyleRule().where('zoomLevel').is(10).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({
+      new StyleRule().where('zoomLevel').is(10).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 10}
       }),
-      new StyleRule().where('zoomLevel').is(11).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({
+      new StyleRule().where('zoomLevel').is(11).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 11}
       }),
-      new StyleRule().where('zoomLevel').is(12).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({
+      new StyleRule().where('zoomLevel').is(12).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 12}
       }),
-      new StyleRule().where('zoomLevel').is(13).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({
+      new StyleRule().where('zoomLevel').is(13).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 15}
       }),
-      new StyleRule().where('zoomLevel').is(14).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({
+      new StyleRule().where('zoomLevel').is(14).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 17}
       }),
-      new StyleRule().where('zoomLevel').is(15).and('roadTypeId').isIn(LinkValues.BlackUnderlineRoadTypes).use({
+      new StyleRule().where('zoomLevel').is(15).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 19}

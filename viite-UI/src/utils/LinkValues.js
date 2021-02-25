@@ -113,25 +113,18 @@
     IndicatorLayer: {value: 99}
   };
 
-  root.RoadType = {
+  root.AdministrativeClass = {
     Empty: {value: 0, description: "", displayText: "--"},
-    PublicRoad: {value: 1, description: "Yleinen tie", displayText: "1 Maantie"},
-    FerryRoad: {value: 2, description: "Lauttaväylä yleisellä tiellä", displayText: "2 Lauttaväylä maantiellä"},
-    MunicipalityStreetRoad: {value: 3, description: "Kunnan katuosuus", displayText: "3 Kunnan katuosuus"},
-    PublicUnderConstructionRoad: {value: 4, description: "Yleisen tien työmaa", displayText: "4 Maantien työmaa"},
-    PrivateRoadType: {value: 5, description: "Yksityistie", displayText: "5 Yksityistie"},
-    UnknownOwnerRoad: {value: 9, description: "Omistaja selvittämättä", displayText: "9 Omistaja selvittämättä"},
-    Unknown: {value: 99, description: "Ei määritelty", displayText: ""}
+    PublicRoad: {value: 1, description: "Yleinen tie", displayText: "1 Valtio"},
+    MunicipalityStreetRoad: {value: 2, description: "Kunnan katuosuus", displayText: "2 Kunta"},
+    PrivateRoadType: {value: 3, description: "Yksityistie", displayText: "3 Yksityinen"},
 
   };
 
-  root.RoadTypeShort = {
-    PublicRoad: {value: 1, description: "tie"},
-    FerryRoad: {value: 2, description: "lautta"},
-    MunicipalityStreetRoad: {value: 3, description: "katu"},
-    PublicUnderConstructionRoad: {value: 4, description: "työmaa"},
-    PrivateRoadType: {value: 5, description: "yks"},
-    UnknownOwnerRoad: {value: 9, description: "omist=?"}
+  root.AdministrativeClassShort = {
+    PublicRoad: {value: 1, description: "valtio"},
+    MunicipalityStreetRoad: {value: 2, description: "kunta"},
+    PrivateRoadType: {value: 3, description: "yksit."},
   };
 
   root.RoadLinkType = {
@@ -170,7 +163,7 @@
 
   root.NewRoadId = -1000;
 
-  root.BlackUnderlineRoadTypes = [root.RoadType.MunicipalityStreetRoad.value, root.RoadType.PrivateRoadType.value];
+  root.BlackUnderlineAdministrativeClasses = [root.AdministrativeClass.MunicipalityStreetRoad.value, root.AdministrativeClass.PrivateRoadType.value];
 
   root.ElyCodes = {
     ELY_U: {value: 1, name: "Uusimaa"},

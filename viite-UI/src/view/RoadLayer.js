@@ -77,23 +77,23 @@
     var displayRoadType = function (roadTypeCode) {
       var roadType;
       switch (roadTypeCode) {
-        case LinkValues.RoadTypeShort.PublicRoad.value:
-          roadType = LinkValues.RoadTypeShort.PublicRoad.description;
+        case LinkValues.AdministrativeClassShort.PublicRoad.value:
+          roadType = LinkValues.AdministrativeClassShort.PublicRoad.description;
           break;
-        case LinkValues.RoadTypeShort.FerryRoad.value:
-          roadType = LinkValues.RoadTypeShort.FerryRoad.description;
+        case LinkValues.AdministrativeClassShort.FerryRoad.value:
+          roadType = LinkValues.AdministrativeClassShort.FerryRoad.description;
           break;
-        case LinkValues.RoadTypeShort.MunicipalityStreetRoad.value:
-          roadType = LinkValues.RoadTypeShort.MunicipalityStreetRoad.description;
+        case LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.value:
+          roadType = LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.description;
           break;
-        case LinkValues.RoadTypeShort.PublicUnderConstructionRoad.value:
-          roadType = LinkValues.RoadTypeShort.PublicUnderConstructionRoad.description;
+        case LinkValues.AdministrativeClassShort.PublicUnderConstructionRoad.value:
+          roadType = LinkValues.AdministrativeClassShort.PublicUnderConstructionRoad.description;
           break;
-        case LinkValues.RoadTypeShort.PrivateRoadType.value:
-          roadType = LinkValues.RoadTypeShort.PrivateRoadType.description;
+        case LinkValues.AdministrativeClassShort.PrivateRoadType.value:
+          roadType = LinkValues.AdministrativeClassShort.PrivateRoadType.description;
           break;
-        case roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.value:
-          roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.description;
+        case roadType = LinkValues.AdministrativeClassShort.UnknownOwnerRoad.value:
+          roadType = LinkValues.AdministrativeClassShort.UnknownOwnerRoad.description;
           break;
         default:
           break;
