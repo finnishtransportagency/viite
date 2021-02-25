@@ -94,13 +94,9 @@
     const administrativeClassDropdown = function (administrativeClassDefaultValue) {
       return '<select class="' + prefix + 'form-control" id="administrativeClassDropdown" size = "1" style="width: auto !important; display: inline">' +
         '<option value = "' + administrativeClassDefaultValue + '" selected hidden >' + administrativeClassLabel(administrativeClassDefaultValue) + '</option>' +
-        '<option value = "1">1 Maantie</option>' +
-        '<option value = "2">2 Lauttaväylä maantiellä</option>' +
-        '<option value = "3">3 Kunnan katuosuus</option>' +
-        '<option value = "4">4 Maantien työmaa</option>' +
-        '<option value = "5">5 Yksityistie</option>' +
-        '<option value = "9">9 Omistaja selvittämättä</option>' +
-
+        '<option value = "1">1 Valtio</option>' +
+        '<option value = "2">2 Kunta</option>' +
+        '<option value = "3">3 Yksityinen</option>' +
         '</select>';
     };
 

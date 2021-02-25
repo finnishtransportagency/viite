@@ -29,13 +29,9 @@
       {
         id: 'HALLINNOLLINEN_LUOKKA',
         attributes: [
-          {value: 1, description: "Maantie"},
-          {value: 2, description: "Lauttaväylä maantiellä"},
-          {value: 3, description: "Kunnan katuosuus"},
-          {value: 4, description: "Maantien työmaa"},
-          {value: 5, description: "Yksityistie"},
-          {value: 9, description: "Omistaja selvittämättä"},
-          {value: 99, description: "Ei määritetty"}
+          {value: 1, description: "Valtio"},
+          {value: 2, description: "Kunta"},
+          {value: 3, description: "Yksityinen"}
         ]
       },
       {

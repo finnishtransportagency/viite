@@ -115,23 +115,15 @@
 
   root.AdministrativeClass = {
     Empty: {value: 0, description: "", displayText: "--"},
-    PublicRoadClass: {value: 1, description: "Yleinen tie", displayText: "1 Maantie"},
-    FerryRoad: {value: 2, description: "Lauttaväylä yleisellä tiellä", displayText: "2 Lauttaväylä maantiellä"},
-    MunicipalityStreetClass: {value: 3, description: "Kunnan katuosuus", displayText: "3 Kunnan katuosuus"},
-    PublicUnderConstructionRoad: {value: 4, description: "Yleisen tien työmaa", displayText: "4 Maantien työmaa"},
-    PrivateRoadClass: {value: 5, description: "Yksityistie", displayText: "5 Yksityistie"},
-    UnknownOwnerRoad: {value: 9, description: "Omistaja selvittämättä", displayText: "9 Omistaja selvittämättä"},
-    Unknown: {value: 99, description: "Ei määritelty", displayText: ""}
-
+    PublicRoadClass: {value: 1, description: "Yleinen tie", displayText: "1 Valtio"},
+    MunicipalityStreetClass: {value: 2, description: "Kunnan katuosuus", displayText: "3 Kunta"},
+    PrivateRoadClass: {value: 3, description: "Yksityistie", displayText: "5 Yksityinen"}
   };
 
   root.AdministrativeClassShort = {
-    PublicRoadClass: {value: 1, description: "tie"},
-    FerryRoad: {value: 2, description: "lautta"},
-    MunicipalityStreetClass: {value: 3, description: "katu"},
-    PublicUnderConstructionRoad: {value: 4, description: "työmaa"},
-    PrivateRoadClass: {value: 5, description: "yks"},
-    UnknownOwnerRoad: {value: 9, description: "omist=?"}
+    PublicRoadClass: {value: 1, description: "valtio"},
+    MunicipalityStreetClass: {value: 2, description: "kunta"},
+    PrivateRoadClass: {value: 3, description: "yksit."},
   };
 
   root.RoadLinkType = {
