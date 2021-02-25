@@ -39,7 +39,7 @@
       '<label class="project-change-table-dimension-header">LET</label>' +
       '<label class="project-change-table-dimension-header">PIT</label>' +
       '<label class="project-change-table-dimension-header">JATK</label>' +
-      '<label class="project-change-table-dimension-header">TIETY</label>' +
+      '<label class="project-change-table-dimension-header">HALL</label>' +
       '<label class="project-change-table-dimension-header">ELY</label>' +
       '<label class="project-change-table-dimension-header target">KÄÄNTÖ</label>' +
       '<label class="project-change-table-dimension-header">TIE</label>' +
@@ -49,7 +49,7 @@
       '<label class="project-change-table-dimension-header">LET</label>' +
       '<label class="project-change-table-dimension-header">PIT</label>' +
       '<label class="project-change-table-dimension-header">JATK</label>' +
-      '<label class="project-change-table-dimension-header">TIETY</label>' +
+      '<label class="project-change-table-dimension-header">HALL</label>' +
       '<label class="project-change-table-dimension-header">ELY</label>');
 
     changeTableHeader.append('<div class="change-table-dimension-headers" style="overflow-y: auto;">' +
