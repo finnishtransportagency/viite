@@ -116,8 +116,8 @@
   root.AdministrativeClass = {
     Empty: {value: 0, description: "", displayText: "--"},
     PublicRoadClass: {value: 1, description: "Yleinen tie", displayText: "1 Valtio"},
-    MunicipalityStreetClass: {value: 2, description: "Kunnan katuosuus", displayText: "3 Kunta"},
-    PrivateRoadClass: {value: 3, description: "Yksityistie", displayText: "5 Yksityinen"}
+    MunicipalityStreetClass: {value: 2, description: "Kunnan katuosuus", displayText: "2 Kunta"},
+    PrivateRoadClass: {value: 3, description: "Yksityistie", displayText: "3 Yksityinen"}
   };
 
   root.AdministrativeClassShort = {
@@ -162,7 +162,7 @@
 
   root.NewRoadId = -1000;
 
-  root.BlackUnderlineRoadTypes = [root.AdministrativeClass.MunicipalityStreetClass.value, root.AdministrativeClass.PrivateRoadClass.value];
+  root.BlackUnderlineAdministrativeClasses = [root.AdministrativeClass.MunicipalityStreetClass.value, root.AdministrativeClass.PrivateRoadType.value];
 
   root.ElyCodes = {
     ELY_U: {value: 1, name: "Uusimaa"},

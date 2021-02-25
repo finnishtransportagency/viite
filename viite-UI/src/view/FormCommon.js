@@ -58,7 +58,7 @@
         addTrackCodeDropdown(trackCodeDropdown) +
         addSmallInputNumber('ely', link.elyCode, !projectEditable, 2) +
         addDiscontinuityDropdown() +
-        addSmallLabel('HALLINNOLLINEN_LUOKKA') +
+        addSmallLabel('HALL. LUOKKA') +
         administrativeClassDropdown(administrativeClass) + '<br>' +
         addSmallLabel('NIMI') +
         addRoadNameField(roadName, selected[0].roadNameBlocked, 50) +

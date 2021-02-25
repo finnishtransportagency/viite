@@ -51,15 +51,15 @@
       new StyleRule().where('zoomLevel').is(13).use({stroke: {width: 9}}),
       new StyleRule().where('zoomLevel').is(14).use({stroke: {width: 10}}),
       new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 12}}),
-      new StyleRule().where('zoomLevel').isIn([5, 6]).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 3}}),
-      new StyleRule().where('zoomLevel').isIn([7, 8]).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 4}}),
-      new StyleRule().where('zoomLevel').is(9).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 5}}),
-      new StyleRule().where('zoomLevel').is(10).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 6}}),
-      new StyleRule().where('zoomLevel').is(11).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 7}}),
-      new StyleRule().where('zoomLevel').is(12).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 8}}),
-      new StyleRule().where('zoomLevel').is(13).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 11}}),
-      new StyleRule().where('zoomLevel').is(14).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 13}}),
-      new StyleRule().where('zoomLevel').is(15).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 15}}),
+      new StyleRule().where('zoomLevel').isIn([5, 6]).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 3}}),
+      new StyleRule().where('zoomLevel').isIn([7, 8]).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 4}}),
+      new StyleRule().where('zoomLevel').is(9).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 5}}),
+      new StyleRule().where('zoomLevel').is(10).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 6}}),
+      new StyleRule().where('zoomLevel').is(11).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 7}}),
+      new StyleRule().where('zoomLevel').is(12).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 8}}),
+      new StyleRule().where('zoomLevel').is(13).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 11}}),
+      new StyleRule().where('zoomLevel').is(14).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 13}}),
+      new StyleRule().where('zoomLevel').is(15).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 15}}),
       new StyleRule().where('zoomLevel').isIn([5, 6]).and('roadClass').isIn([7, 8, 9, 10, 12]).use({stroke: {width: 1}}),
       new StyleRule().where('zoomLevel').isIn([7, 8, 9]).and('roadClass').isIn([7, 8, 9, 10, 12]).use({stroke: {width: 2}}),
       new StyleRule().where('zoomLevel').is(10).and('roadClass').isIn([7, 8, 9, 10, 12]).use({stroke: {width: 3}}),
@@ -257,15 +257,15 @@
     ];
 
     var borderRules = [
-      new StyleRule().where('zoomLevel').isIn([5, 6]).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 7}}),
-      new StyleRule().where('zoomLevel').isIn([7, 8]).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 8}}),
-      new StyleRule().where('zoomLevel').is(9).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 9}}),
-      new StyleRule().where('zoomLevel').is(10).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 10}}),
-      new StyleRule().where('zoomLevel').is(11).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 11}}),
-      new StyleRule().where('zoomLevel').is(12).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 12}}),
-      new StyleRule().where('zoomLevel').is(13).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 15}}),
-      new StyleRule().where('zoomLevel').is(14).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 17}}),
-      new StyleRule().where('zoomLevel').is(15).and('administrativeClassId').isIn(LinkValues.BlackUnderlineRoadTypes).use({stroke: {width: 19}})
+      new StyleRule().where('zoomLevel').isIn([5, 6]).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 7}}),
+      new StyleRule().where('zoomLevel').isIn([7, 8]).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 8}}),
+      new StyleRule().where('zoomLevel').is(9).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 9}}),
+      new StyleRule().where('zoomLevel').is(10).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 10}}),
+      new StyleRule().where('zoomLevel').is(11).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 11}}),
+      new StyleRule().where('zoomLevel').is(12).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 12}}),
+      new StyleRule().where('zoomLevel').is(13).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 15}}),
+      new StyleRule().where('zoomLevel').is(14).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 17}}),
+      new StyleRule().where('zoomLevel').is(15).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 19}})
     ];
 
     var projectBorderStyle = new StyleRuleProvider({
