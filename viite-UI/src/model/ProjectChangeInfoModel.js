@@ -12,7 +12,7 @@
     var changesInfo = [{
       changetype: 0,
       discontinuity: "jatkuva",
-      roadType: 9,
+      administrativeClass: 0,
       source: roadInfoList,
       target: roadInfoList,
       reversed: false
