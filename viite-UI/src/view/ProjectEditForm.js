@@ -161,8 +161,8 @@
       var trackCodeDropdown = $('#trackCodeDropdown')[0];
       filled = filled && !_.isUndefined(trackCodeDropdown) && !_.isUndefined(trackCodeDropdown.value) && trackCodeDropdown.value !== '99';
 
-      var roadTypeCodeDropdown = $('#roadTypeDropdown')[0];
-      filled = filled && !_.isUndefined(roadTypeCodeDropdown) && !_.isUndefined(roadTypeCodeDropdown.value) && roadTypeCodeDropdown.value !== '0';
+      var administrativeClassDropdown = $('#administrativeClassDropdown')[0];
+      filled = filled && !_.isUndefined(administrativeClassDropdown) && !_.isUndefined(administrativeClassDropdown.value) && administrativeClassDropdown.value !== '0';
 
       if (filled) {
         rootElement.find('.project-form button.update').prop("disabled", false);
@@ -431,7 +431,7 @@
         else $('#manualCPWarning').css('display', 'none');
       });
 
-      rootElement.on('change', '#roadTypeDropdown', function () {
+      rootElement.on('change', '#administrativeClassDropdown', function () {
         setFormDirty();
       });
 
@@ -449,7 +449,7 @@
         $('#osa').prop('disabled', false);
         $('#trackCodeDropdown').prop('disabled', false);
         $('#discontinuityDropdown').prop('disabled', false);
-        $('#roadTypeDropdown').prop('disabled', false);
+        $('#administrativeClassDropdown').prop('disabled', false);
         if (this.value === LinkStatus.Terminated.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
@@ -490,7 +490,7 @@
           $('#osa').prop('disabled', true);
           $('#trackCodeDropdown').prop('disabled', true);
           $('#discontinuityDropdown').prop('disabled', false);
-          $('#roadTypeDropdown').prop('disabled', false);
+          $('#administrativeClassDropdown').prop('disabled', false);
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -520,7 +520,7 @@
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
           $('#trackCodeDropdown').prop('disabled', true);
           $('#discontinuityDropdown').prop('disabled', false);
-          $('#roadTypeDropdown').prop('disabled', true);
+          $('#administrativeClassDropdown').prop('disabled', true);
           projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
             return {
               'id': link.id,
@@ -546,7 +546,7 @@
         checkInputs();
       });
 
-      rootElement.on('change', '#roadTypeDropdown', function () {
+      rootElement.on('change', '#administrativeClassDropdown', function () {
         checkInputs();
       });
 

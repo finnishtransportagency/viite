@@ -81,7 +81,7 @@
       }
     };
 
-    var roadTypeShown = true;
+    var administrativeClassShown = true;
 
     var isDirty = function () {
       return _.some(models, function (model) {
@@ -259,10 +259,10 @@
         return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) || (!readOnly && !activeButtons) || (readOnly);
       },
       assetDragDelay: 100,
-      setRoadTypeShown: function (bool) {
-        if (roadTypeShown !== bool) {
-          roadTypeShown = bool;
-          eventbus.trigger('road-type:selected', roadTypeShown);
+      setAdministrativeClassShown: function (bool) {
+        if (administrativeClassShown !== bool) {
+          administrativeClassShown = bool;
+          eventbus.trigger('road-type:selected', administrativeClassShown);
         }
       },
       getCurrentLocation: function () {

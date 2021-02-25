@@ -67,38 +67,38 @@
               'Ajorata:&nbsp;' + roadData.trackCode + '<br>' +
               'AET:&nbsp;' + roadData.startAddressM + '<br>' +
               'LET:&nbsp;' + roadData.endAddressM + '<br>' +
-              'Tietyyppi:&nbsp;' + displayRoadType(roadData.roadTypeId) + '<br>';
+              'Tietyyppi:&nbsp;' + displayAdministrativeClass(roadData.administrativeClassId) + '<br>';
           }
         }
       }
       overlay.setPosition(coordinate);
     };
 
-    var displayRoadType = function (roadTypeCode) {
-      var roadType;
-      switch (roadTypeCode) {
-        case LinkValues.RoadTypeShort.PublicRoad.value:
-          roadType = LinkValues.RoadTypeShort.PublicRoad.description;
+    var displayAdministrativeClass = function (administrativeClass) {
+      var administrativeClass;
+      switch (administrativeClass) {
+        case LinkValues.AdministrativeClassShort.PublicRoadClass.value:
+          administrativeClass = LinkValues.AdministrativeClassShort.PublicRoadClass.description;
           break;
-        case LinkValues.RoadTypeShort.FerryRoad.value:
-          roadType = LinkValues.RoadTypeShort.FerryRoad.description;
+        case LinkValues.AdministrativeClassShort.FerryRoad.value:
+          administrativeClass = LinkValues.AdministrativeClassShort.FerryRoad.description;
           break;
-        case LinkValues.RoadTypeShort.MunicipalityStreetRoad.value:
-          roadType = LinkValues.RoadTypeShort.MunicipalityStreetRoad.description;
+        case LinkValues.AdministrativeClassShort.MunicipalityStreetClass.value:
+          administrativeClass = LinkValues.AdministrativeClassShort.MunicipalityStreetClass.description;
           break;
-        case LinkValues.RoadTypeShort.PublicUnderConstructionRoad.value:
-          roadType = LinkValues.RoadTypeShort.PublicUnderConstructionRoad.description;
+        case LinkValues.AdministrativeClassShort.PublicUnderConstructionRoad.value:
+          administrativeClass = LinkValues.AdministrativeClassShort.PublicUnderConstructionRoad.description;
           break;
-        case LinkValues.RoadTypeShort.PrivateRoadType.value:
-          roadType = LinkValues.RoadTypeShort.PrivateRoadType.description;
+        case LinkValues.AdministrativeClassShort.PrivateRoadClass.value:
+          administrativeClass = LinkValues.AdministrativeClassShort.PrivateRoadClass.description;
           break;
-        case roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.value:
-          roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.description;
+        case administrativeClass = LinkValues.AdministrativeClassShort.UnknownOwnerRoad.value:
+          administrativeClass = LinkValues.AdministrativeClassShort.UnknownOwnerRoad.description;
           break;
         default:
           break;
       }
-      return roadType;
+      return administrativeClass;
     };
 
     var displayNodeInfo = function (event, pixel) {
