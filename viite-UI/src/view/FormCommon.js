@@ -23,7 +23,7 @@
     const addRoadNameField = function (name, isBlocked, maxLength) {
       const nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
       const disabled = nameToDisplay !== "" && isBlocked;
-      return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + '/>';
+      return '<input type="text" class="form-control administrativeClassAndRoadName" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + '/>';
     };
 
     const projectButtons = function () {
@@ -58,9 +58,9 @@
         addTrackCodeDropdown(trackCodeDropdown) +
         addSmallInputNumber('ely', link.elyCode, !projectEditable, 2) +
         addDiscontinuityDropdown() +
-        addSmallLabel('HALL. LUOKKA') +
+        addWideLabel('HALL. LUOKKA') +
         administrativeClassDropdown(administrativeClass) + '<br>' +
-        addSmallLabel('NIMI') +
+        addWideLabel('NIMI') +
         addRoadNameField(roadName, selected[0].roadNameBlocked, 50) +
         ((selected.length === 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
@@ -92,7 +92,7 @@
       return administrativeClassInfo.displayText;
     };
     const administrativeClassDropdown = function (administrativeClassDefaultValue) {
-      return '<select class="' + prefix + 'form-control" id="administrativeClassDropdown" size = "1" style="width: auto !important; display: inline">' +
+      return '<select class="' + prefix + 'form-control administrativeClassAndRoadName" id="administrativeClassDropdown" size = "1" style="width: 190px !important; display: inline">' +
         '<option value = "' + administrativeClassDefaultValue + '" selected hidden >' + administrativeClassLabel(administrativeClassDefaultValue) + '</option>' +
         '<option value = "1">1 Valtio</option>' +
         '<option value = "2">2 Kunta</option>' +
@@ -103,6 +103,10 @@
 
     const addSmallLabel = function (label) {
       return '<label class="control-label-small">' + label + '</label>';
+    };
+
+    const addWideLabel = function (label) {
+      return '<label class="control-label-wide">' + label + '</label>';
     };
 
     const addSmallLabelLowercase = function (label) {
@@ -336,6 +340,7 @@
       replaceAddressInfo: replaceAddressInfo,
       administrativeClass: administrativeClassDropdown,
       addSmallLabel: addSmallLabel,
+      addWideLabel: addWideLabel,
       addSmallInputNumber: addSmallInputNumber,
       nodeInputNumber: nodeInputNumber,
       addDiscontinuityDropdown: addDiscontinuityDropdown,

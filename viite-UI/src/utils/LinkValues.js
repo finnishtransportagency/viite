@@ -117,14 +117,13 @@
     Empty: {value: 0, description: "", displayText: "--"},
     PublicRoad: {value: 1, description: "Yleinen tie", displayText: "1 Valtio"},
     MunicipalityStreetRoad: {value: 2, description: "Kunnan katuosuus", displayText: "2 Kunta"},
-    PrivateRoadType: {value: 3, description: "Yksityistie", displayText: "3 Yksityinen"},
-
+    PrivateRoadType: {value: 3, description: "Yksityistie", displayText: "3 Yksityinen"}
   };
 
   root.AdministrativeClassShort = {
     PublicRoad: {value: 1, description: "valtio"},
     MunicipalityStreetRoad: {value: 2, description: "kunta"},
-    PrivateRoadType: {value: 3, description: "yksit."},
+    PrivateRoadType: {value: 3, description: "yksit."}
   };
 
   root.RoadLinkType = {
