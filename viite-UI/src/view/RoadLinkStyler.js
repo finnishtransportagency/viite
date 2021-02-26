@@ -66,7 +66,7 @@
       new StyleRule().where('zoomLevel').is(13).use({stroke: {width: 9}}),
       new StyleRule().where('zoomLevel').is(14).use({stroke: {width: 10}}),
       new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 12}}),
-      new StyleRule().where('zoomLevel').is(5).and('roadTypeId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 3}}),
+      new StyleRule().where('zoomLevel').is(5).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 3}}),
       new StyleRule().where('zoomLevel').is(6).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 3}}),
       new StyleRule().where('zoomLevel').is(7).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 4}}),
       new StyleRule().where('zoomLevel').is(8).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({stroke: {width: 4}}),

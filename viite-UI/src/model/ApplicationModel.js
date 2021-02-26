@@ -262,7 +262,7 @@
       setAdministrativeClassShown: function (bool) {
         if (administrativeClassShown !== bool) {
           administrativeClassShown = bool;
-          eventbus.trigger('road-type:selected', administrativeClassShown);
+          eventbus.trigger('administrative-class:selected', administrativeClassShown);
         }
       },
       getCurrentLocation: function () {
