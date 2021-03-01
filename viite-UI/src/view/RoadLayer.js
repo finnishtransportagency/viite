@@ -67,29 +67,29 @@
               'Ajorata:&nbsp;' + roadData.trackCode + '<br>' +
               'AET:&nbsp;' + roadData.startAddressM + '<br>' +
               'LET:&nbsp;' + roadData.endAddressM + '<br>' +
-              'Tietyyppi:&nbsp;' + displayRoadType(roadData.roadTypeId) + '<br>';
+              'Hall. luokka:&nbsp;' + displayAdministrativeClass(roadData.roadTypeId) + '<br>';
           }
         }
       }
       overlay.setPosition(coordinate);
     };
 
-    var displayRoadType = function (roadTypeCode) {
-      var roadType;
-      switch (roadTypeCode) {
+    var displayAdministrativeClass = function (administrativeClassCode) {
+      var administrativeClass;
+      switch (administrativeClassCode) {
         case LinkValues.AdministrativeClassShort.PublicRoad.value:
-          roadType = LinkValues.AdministrativeClassShort.PublicRoad.description;
+          administrativeClass = LinkValues.AdministrativeClassShort.PublicRoad.description;
           break;
         case LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.value:
-          roadType = LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.description;
+          administrativeClass = LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.description;
           break;
         case LinkValues.AdministrativeClassShort.PrivateRoadType.value:
-          roadType = LinkValues.AdministrativeClassShort.PrivateRoadType.description;
+          administrativeClass = LinkValues.AdministrativeClassShort.PrivateRoadType.description;
           break;
         default:
           break;
       }
-      return roadType;
+      return administrativeClass;
     };
 
     var displayNodeInfo = function (event, pixel) {
