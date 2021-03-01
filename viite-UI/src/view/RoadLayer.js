@@ -80,20 +80,11 @@
         case LinkValues.AdministrativeClassShort.PublicRoad.value:
           roadType = LinkValues.AdministrativeClassShort.PublicRoad.description;
           break;
-        case LinkValues.AdministrativeClassShort.FerryRoad.value:
-          roadType = LinkValues.AdministrativeClassShort.FerryRoad.description;
-          break;
         case LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.value:
           roadType = LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.description;
           break;
-        case LinkValues.AdministrativeClassShort.PublicUnderConstructionRoad.value:
-          roadType = LinkValues.AdministrativeClassShort.PublicUnderConstructionRoad.description;
-          break;
         case LinkValues.AdministrativeClassShort.PrivateRoadType.value:
           roadType = LinkValues.AdministrativeClassShort.PrivateRoadType.description;
-          break;
-        case roadType = LinkValues.AdministrativeClassShort.UnknownOwnerRoad.value:
-          roadType = LinkValues.AdministrativeClassShort.UnknownOwnerRoad.description;
           break;
         default:
           break;
