@@ -162,7 +162,7 @@
 
   root.NewRoadId = -1000;
 
-  root.BlackUnderlineAdministrativeClasses = [root.AdministrativeClass.MunicipalityStreetRoad.value, root.AdministrativeClass.PrivateRoadType.value];
+  root.BlackUnderlineRoadTypes = [root.AdministrativeClass.MunicipalityStreetRoad.value, root.AdministrativeClass.PrivateRoadType.value];
 
   root.ElyCodes = {
     ELY_U: {value: 1, name: "Uusimaa"},
