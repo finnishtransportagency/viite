@@ -233,7 +233,7 @@
       return selectionData.roadNumber === currentlySelectedSample.roadNumber &&
         selectionData.roadPartNumber === currentlySelectedSample.roadPartNumber &&
         selectionData.trackCode === currentlySelectedSample.trackCode &&
-        selectionData.roadTypeId === currentlySelectedSample.roadTypeId &&
+        selectionData.administrativeClassId === currentlySelectedSample.administrativeClassId &&
         selectionData.elyCode === currentlySelectedSample.elyCode;
     };
 

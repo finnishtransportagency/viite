@@ -67,7 +67,7 @@
               'Ajorata:&nbsp;' + roadData.trackCode + '<br>' +
               'AET:&nbsp;' + roadData.startAddressM + '<br>' +
               'LET:&nbsp;' + roadData.endAddressM + '<br>' +
-              'Hall. luokka:&nbsp;' + displayAdministrativeClass(roadData.roadTypeId) + '<br>';
+              'Hall. luokka:&nbsp;' + displayAdministrativeClass(roadData.administrativeClassId) + '<br>';
           }
         }
       }
