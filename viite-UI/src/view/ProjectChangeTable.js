@@ -216,6 +216,13 @@
       return ((changeInfoSeq.reversed) ? '<td class="project-change-table-dimension">&#10004;</td>' : '<td class="project-change-table-dimension"></td>');
     }
 
+    /**
+     Convert administrativeClass number value to text value
+          1   = Valtio
+          2   = Kunta
+          3   = Yksit.
+     default  = Yksit.
+     */
     function getAdministrativeClassText(administrativeClass) {
       let text;
       switch(administrativeClass) {
@@ -267,6 +274,7 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.endAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + (changeInfoSeq.target.endAddressM - changeInfoSeq.target.startAddressM) + '</td>' +
         '<td class="project-change-table-dimension">' + replaceParallelLink(changeInfoSeq.target.discontinuity) + '</td>' +
+          //TODO VIITE-2568 roadType -> administrativeClass when backend is ready, otherwise it will use MML administrativeClass value which is wrong
         '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.target.roadType) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.ely + '</td>';
     }
@@ -280,6 +288,7 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.endAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + (changeInfoSeq.source.endAddressM - changeInfoSeq.source.startAddressM) + '</td>' +
         '<td class="project-change-table-dimension">' + replaceParallelLink(changeInfoSeq.source.discontinuity) + '</td>' +
+          //TODO VIITE-2568 roadType -> administrativeClass when backend is ready, otherwise it will use MML administrativeClass value which is wrong
         '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.source.roadType) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.ely + '</td>';
     }
