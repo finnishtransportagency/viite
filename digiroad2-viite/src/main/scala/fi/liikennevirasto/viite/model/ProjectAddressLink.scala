@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus}
@@ -15,7 +15,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def linkType: LinkType
   def constructionType: ConstructionType
   def roadLinkSource: LinkGeomSource
-  def roadType: RoadType
+  def roadType: AdministrativeClass
 
   def roadName: Option[String]
   def municipalityCode: BigInt
@@ -48,7 +48,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
 case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                               length: Double, administrativeClass: AdministrativeClass,
                               linkType: LinkType, constructionType: ConstructionType,
-                              roadLinkSource: LinkGeomSource, roadType: RoadType, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String],
+                              roadLinkSource: LinkGeomSource, roadType: AdministrativeClass, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String],
                               attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                               startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                               startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],

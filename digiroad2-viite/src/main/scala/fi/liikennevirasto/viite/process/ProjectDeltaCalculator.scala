@@ -45,18 +45,12 @@ object ProjectDeltaCalculator {
           case Transfer =>
             val termAddress = connectedLink.map(l => (l.startAddrMValue, l.endAddrMValue))
             termAddress.map { case (start, end) =>
-              address.copy(startAddrMValue = if (start == address.startAddrMValue) end else address.startAddrMValue,
-                endAddrMValue = if (end == address.endAddrMValue) start else address.endAddrMValue,
-                startMValue = pl.startMValue,
-                endMValue = pl.endMValue,
-                geometry = geom)
+              address.copy(startAddrMValue = if (start == address.startAddrMValue) end else address.startAddrMValue, endAddrMValue = if (end == address.endAddrMValue) start else address.endAddrMValue, startMValue = pl.startMValue, endMValue = pl.endMValue, geometry = geom)
             }.getOrElse(address)
           case Terminated =>
-            address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue,
-              endMValue = pl.endMValue, geometry = geom)
+            address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue, endMValue = pl.endMValue, geometry = geom)
           case UnChanged =>
-            address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue,
-              endMValue = pl.endMValue, geometry = geom)
+            address.copy(startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue, endMValue = pl.endMValue, geometry = geom)
           case _ =>
             address
         }
@@ -117,21 +111,19 @@ object ProjectDeltaCalculator {
 
     if (matchAddr && matchContinuity && !hasCalibrationPoint &&
       ra1.endAddrMValue == ra2.startAddrMValue &&
-      ra1.roadType == ra2.roadType && pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
+      ra1.administrativeClass == ra2.administrativeClass && pl1.administrativeClass == pl2.administrativeClass && pl1.reversed == pl2.reversed)
       Seq((
         ra1 match {
           case x: RoadAddress => x.copy(discontinuity = ra2.discontinuity, endAddrMValue = ra2.endAddrMValue).asInstanceOf[R]
-          case x: ProjectLink if x.reversed => x.copy(startAddrMValue = ra2.startAddrMValue, discontinuity = ra1.discontinuity).asInstanceOf[R]
-          case x: ProjectLink => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
+          case x: ProjectLink if x.reversed => x.copy(discontinuity = ra1.discontinuity, startAddrMValue = ra2.startAddrMValue).asInstanceOf[R]
+          case x: ProjectLink => x.copy(discontinuity = ra2.discontinuity, endAddrMValue = ra2.endAddrMValue).asInstanceOf[R]
         },
         pl1 match {
           case x: RoadAddress => x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPoints = CalibrationPointsUtils.toCalibrationPoints(pl2.calibrationPoints)).asInstanceOf[P]
           case x: ProjectLink if x.reversed =>
-            x.copy(startAddrMValue = pl2.startAddrMValue, discontinuity = pl1.discontinuity,
-              calibrationPointTypes = (x.startCalibrationPointType, x.endCalibrationPointType)).asInstanceOf[P]
+            x.copy(discontinuity = pl1.discontinuity, startAddrMValue = pl2.startAddrMValue, calibrationPointTypes = (x.startCalibrationPointType, x.endCalibrationPointType)).asInstanceOf[P]
           case x: ProjectLink =>
-            x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
-              calibrationPointTypes = (x.startCalibrationPointType, x.endCalibrationPointType)).asInstanceOf[P]
+            x.copy(discontinuity = pl2.discontinuity, endAddrMValue = pl2.endAddrMValue, calibrationPointTypes = (x.startCalibrationPointType, x.endCalibrationPointType)).asInstanceOf[P]
         }))
     else {
       Seq(tr2, tr1)
@@ -152,7 +144,7 @@ object ProjectDeltaCalculator {
             Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes))
         case LinkStatus.New =>
           if (!hasCalibrationPoint && r1.discontinuity.value != Discontinuity.ParallelLink.value && !r1.isSplit) {
-            Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPointTypes = r2.calibrationPointTypes, connectedLinkId = r2.connectedLinkId))
+            Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes, connectedLinkId = r2.connectedLinkId))
           } else if (!hasCalibrationPoint && r1.discontinuity.value == Discontinuity.ParallelLink.value) {
             Seq(r2, r1)
           } else {
@@ -220,18 +212,18 @@ object ProjectDeltaCalculator {
   }
 
   def partition[T <: BaseRoadAddress](projectLinks: Seq[ProjectLink]): Seq[RoadwaySection] = {
-    val grouped = projectLinks.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
+    val grouped = projectLinks.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.administrativeClass))
       .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadwaySection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.roadwayNumber, Seq())
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.administrativeClass, ra.ely, ra.reversed, ra.roadwayNumber, Seq())
     ).toSeq
 
     val paired = grouped.groupBy(section => (section.roadNumber, section.roadPartNumberStart, section.track, section.roadwayNumber))
 
     val result = paired.flatMap { case (key, targetToMap) =>
       val matches = matchingTracks(paired, key)
-      val target = targetToMap.map(t => t.copy(projectLinks = projectLinks.filter(link => link.roadNumber == t.roadNumber && link.roadPartNumber == t.roadPartNumberEnd && link.track == t.track && link.roadType == t.roadType && link.ely == t.ely &&
-        link.startAddrMValue >= t.startMAddr && link.endAddrMValue <= t.endMAddr)))
+      val target = targetToMap.map(t => t.copy(projectLinks = projectLinks.filter(link => link.roadNumber == t.roadNumber && link.roadPartNumber == t.roadPartNumberEnd && link.track == t.track && link.administrativeClass == t.administrativeClass && link.ely == t.ely &&
+              link.startAddrMValue >= t.startMAddr && link.endAddrMValue <= t.endMAddr)))
       if (matches.nonEmpty && matches.get.lengthCompare(target.length) == 0 && matchesFitOnTarget(target, matches.get)) {
         adjustTrack((target.sortBy(_.startMAddr), matches.get.sortBy(_.startMAddr)))
       } else
@@ -253,8 +245,7 @@ object ProjectDeltaCalculator {
   private def adjustTrack(group: (Seq[RoadwaySection], Seq[RoadwaySection])): Seq[RoadwaySection] = {
     group._1.zip(group._2).map {
       case (e1, e2) =>
-        e1.copy(startMAddr = adjustAddressValues(e1.startMAddr + e2.startMAddr, e1.startMAddr, e1.track),
-          endMAddr = adjustAddressValues(e1.endMAddr + e2.endMAddr, e1.endMAddr, e1.track))
+        e1.copy(startMAddr = adjustAddressValues(e1.startMAddr + e2.startMAddr, e1.startMAddr, e1.track), endMAddr = adjustAddressValues(e1.endMAddr + e2.endMAddr, e1.endMAddr, e1.track))
     }
   }
 
@@ -262,7 +253,7 @@ object ProjectDeltaCalculator {
       def toRoadAddressSection(transfers: Seq[(RoadAddress, ProjectLink)], o: Seq[BaseRoadAddress]): Seq[RoadwaySection] = {
         o.map(ra =>
           RoadwaySection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-            ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.roadwayNumber, Seq()))
+            ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.administrativeClass, ra.ely, ra.reversed, ra.roadwayNumber, Seq()))
       }
 
       val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._1.roadwayNumber, x._2.roadNumber, x._2.roadPartNumber, x._2.track, x._2.roadwayNumber))
@@ -277,7 +268,7 @@ object ProjectDeltaCalculator {
     val sections = sectioned.flatMap { case (key, (src, targetToMap)) =>
       val matches = matchingTracks(sectioned, key, oppositeSections)
       val target = targetToMap.map(t => t.copy(projectLinks = links.filter(link => link.roadwayNumber == t.roadwayNumber && link.roadNumber == t.roadNumber && link.roadPartNumber == t.roadPartNumberEnd && link.track == t.track && link.ely == t.ely &&
-        link.startAddrMValue >= t.startMAddr && link.endAddrMValue <= t.endMAddr)))
+              link.startAddrMValue >= t.startMAddr && link.endAddrMValue <= t.endMAddr)))
       //exclusive 'or' operation, so we don't want to find a matching track when we want to reduce 2 tracks to track 0
       if (matches.nonEmpty && !(key._3 == Track.Combined ^ key._7 == Track.Combined))
         adjustTrack((src, matches.get._1)).zip(adjustTrack((target, matches.get._2)))

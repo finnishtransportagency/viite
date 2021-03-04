@@ -2,9 +2,10 @@ package fi.liikennevirasto.viite
 
 import java.net.ConnectException
 
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.Dummies.dummyRoadwayChangeSection
-import fi.liikennevirasto.viite.RoadType.PublicRoad
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import org.apache.http.client.config.RequestConfig
@@ -26,7 +27,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   val defaultChangeInfo = RoadwayChangeInfo(AddressChangeType.apply(2),
     RoadwayChangeSection(None, None, None, None, None, None, None, None, None),
     RoadwayChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
-      Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1), reversed = false, 1)
+      Option(AdministrativeClass.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), AdministrativeClass.apply(1), reversed = false, 1)
 
   def getRestEndPoint: String = {
     val loadedKeyString = ViiteProperties.tierekisteriViiteRestApiEndPoint
@@ -148,25 +149,25 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
 
     val changeInfos = List(
       RoadwayChangeInfo(AddressChangeType.Unchanged,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1, newEly),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1, newEly),
       RoadwayChangeInfo(AddressChangeType.ReNumeration,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1, newEly),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1, newEly),
       RoadwayChangeInfo(AddressChangeType.Transfer,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1, newEly),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1, newEly),
       RoadwayChangeInfo(AddressChangeType.New,
         source = null,
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1, newEly),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1, newEly),
       RoadwayChangeInfo(AddressChangeType.Termination,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
         target = null,
-        Continuous, RoadType.apply(1), reversed = false, 1, oldEly)
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1, oldEly)
     )
 
     val changes = List(
@@ -221,21 +222,21 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
 
     val changeInfos = List(
       RoadwayChangeInfo(AddressChangeType.Unchanged,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1),
       RoadwayChangeInfo(AddressChangeType.ReNumeration,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1),
       RoadwayChangeInfo(AddressChangeType.Transfer,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1),
       RoadwayChangeInfo(AddressChangeType.New,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1)
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1)
     )
 
     val changes = List(

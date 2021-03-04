@@ -82,10 +82,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       continuousSection(seq.tail, Seq(seq.head))
     else {
       val track = processed.last.track
-      val roadType = processed.last.roadType
+      val roadType = processed.last.administrativeClass
       val discontinuity = processed.last.discontinuity
       val discontinuousSections = List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
-      if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.roadType == roadType) && !discontinuousSections.contains(discontinuity)) {
+      if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.administrativeClass == roadType) && !discontinuousSections.contains(discontinuity)) {
         continuousSection(seq.tail, processed :+ seq.head)
       } else {
         (processed, seq)
@@ -136,10 +136,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
   private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-    val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
+    val roadType = seq.headOption.map(_.administrativeClass.value).getOrElse(0)
 
     val continuousProjectLinks =
-      seq.takeWhile(pl => pl.track == track && pl.roadType.value == roadType).sortBy(_.startAddrMValue)
+      seq.takeWhile(pl => pl.track == track && pl.administrativeClass.value == roadType).sortBy(_.startAddrMValue)
 
     val assignedContinuousSection = assignRoadwayNumbersInContinuousSection(continuousProjectLinks, givenRoadwayNumber)
     (assignedContinuousSection, seq.drop(assignedContinuousSection.size))
@@ -203,7 +203,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             val (unassignedRwnLinks, assignedRwnLinks) = (processedNew :+ remainingNew.head).partition(_.roadwayNumber == NewIdValue)
             val nextRoadwayNumber = Sequences.nextRoadwayNumber
             splitLinksIfNeed(remainingTransfer.tail, processedTransfer ++ remainingTransfer.head._2, if (remainingNew.tail.nonEmpty) remainingNew.tail.head.copy(startAddrMValue = remainingTransfer.head._2.last.endAddrMValue) +: remainingNew.tail.tail else remainingNew.tail, assignedRwnLinks ++ unassignedRwnLinks.init.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+
-              unassignedRwnLinks.last.copy(roadwayNumber = nextRoadwayNumber, endAddrMValue = remainingTransfer.head._2.last.endAddrMValue, connectedLinkId = Some(unassignedRwnLinks.last.linkId)),
+              unassignedRwnLinks.last.copy(endAddrMValue = remainingTransfer.head._2.last.endAddrMValue, connectedLinkId = Some(unassignedRwnLinks.last.linkId), roadwayNumber = nextRoadwayNumber),
               totalTransferMLength, totalNewMLength, missingRoadwayNumbers - 1)
           } else if (minAllowedTransferGroupCoeff > currentNewLinksGroupCoeff) {
             splitLinksIfNeed(remainingTransfer, processedTransfer, remainingNew.tail, processedNew :+ remainingNew.head,
@@ -239,12 +239,9 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
             //processedLinks without and with roadwayNumber
             val (unassignedRwnLinks, assignedRwnLinks) = processedNew.partition(_.roadwayNumber == NewIdValue)
             val nextRoadwayNumber = Sequences.nextRoadwayNumber
-            val processedNewWithSplitedLink = assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+ linkToBeSplited.copy(startMValue = firstSplitedStartMeasure, endMValue = firstSplitedEndMeasure,
-              geometry = firstSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitedLinkGeom), endAddrMValue = firstSplitedEndAddr,
-              roadwayNumber = nextRoadwayNumber, connectedLinkId = Some(linkToBeSplited.linkId))
+            val processedNewWithSplitedLink = assignedRwnLinks ++ unassignedRwnLinks.map(_.copy(roadwayNumber = nextRoadwayNumber)) :+ linkToBeSplited.copy(endAddrMValue = firstSplitedEndAddr, startMValue = firstSplitedStartMeasure, endMValue = firstSplitedEndMeasure, geometry = firstSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(firstSplitedLinkGeom), connectedLinkId = Some(linkToBeSplited.linkId), roadwayNumber = nextRoadwayNumber)
 
-            splitLinksIfNeed(remainingTransfer.tail, processedTransfer ++ remainingTransfer.head._2, linkToBeSplited.copy(id = NewIdValue, startMValue = secondSplitedStartMeasure, endMValue = secondSplitedEndMeasure,
-              geometry = secondSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(secondSplitedLinkGeom), startAddrMValue = firstSplitedEndAddr) +: remainingNew.tail,
+            splitLinksIfNeed(remainingTransfer.tail, processedTransfer ++ remainingTransfer.head._2, linkToBeSplited.copy(id = NewIdValue, startAddrMValue = firstSplitedEndAddr, startMValue = secondSplitedStartMeasure, endMValue = secondSplitedEndMeasure, geometry = secondSplitedLinkGeom, geometryLength = GeometryUtils.geometryLength(secondSplitedLinkGeom)) +: remainingNew.tail,
               processedNewWithSplitedLink, totalTransferMLength, totalNewMLength, missingRoadwayNumbers - 1)
           }
         }

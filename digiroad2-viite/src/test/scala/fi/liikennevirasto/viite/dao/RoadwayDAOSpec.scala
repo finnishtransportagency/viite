@@ -8,7 +8,8 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
-import fi.liikennevirasto.viite.{RoadType, _}
+import fi.liikennevirasto.viite._
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -40,14 +41,11 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   private val roadwayNumber2 = 2000000000l
   private val roadwayNumber3 = 3000000000l
 
-  val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-    0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+  val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
-  val testRoadway2 = Roadway(NewIdValue, roadwayNumber2, roadNumber1, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-    100, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+  val testRoadway2 = Roadway(NewIdValue, roadwayNumber2, roadNumber1, roadPartNumber2, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 100, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
-  val testRoadway3 = Roadway(NewIdValue, roadwayNumber3, roadNumber2, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-    0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
+  val testRoadway3 = Roadway(NewIdValue, roadwayNumber3, roadNumber2, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
 
   val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000l,
     (CalibrationPointReference(Some(0l)), CalibrationPointReference.None),
@@ -236,8 +234,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllByRoadAndPart When existing road and road part number and terminated Then return roadways") {
     runWithRollback {
-      dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = roadPartNumber1, endDate = Some(DateTime.now()),
-        terminated = TerminationCode.Termination), testRoadway3))
+      dao.create(List(testRoadway1, testRoadway2.copy(roadPartNumber = roadPartNumber1, endDate = Some(DateTime.now()), terminated = TerminationCode.Termination), testRoadway3))
       val roadwaysWithoutHistory = dao.fetchAllByRoadAndPart(roadNumber1, roadPartNumber1)
       roadwaysWithoutHistory.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadwaysWithoutHistory.size should be(1)
@@ -450,7 +447,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllBySectionTrackAndAddresses When existing road number and road part numbers and multiple tracks Then return roadways") {
     runWithRollback {
-      dao.create(List(testRoadway1.copy(track = Track.LeftSide), testRoadway2.copy(track = Track.RightSide, roadPartNumber = 1l), testRoadway3))
+      dao.create(List(testRoadway1.copy(track = Track.LeftSide), testRoadway2.copy(roadPartNumber = 1l, track = Track.RightSide), testRoadway3))
       val roadways = dao.fetchAllBySectionTrackAndAddresses(roadNumber1, 1l, Track.LeftSide, Some(0l), Some(100l))
       roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadways.size should be(1)
@@ -522,7 +519,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
 
   test("Test fetchAllBySectionAndAddresses When existing road number and road part numbers and multiple tracks Then return roadways") {
     runWithRollback {
-      dao.create(List(testRoadway1.copy(track = Track.LeftSide), testRoadway2.copy(track = Track.RightSide, roadPartNumber = 1l), testRoadway3))
+      dao.create(List(testRoadway1.copy(track = Track.LeftSide), testRoadway2.copy(roadPartNumber = 1l, track = Track.RightSide), testRoadway3))
       val roadways = dao.fetchAllBySectionAndAddresses(roadNumber1, 1l, Some(0l), Some(100l))
       roadways.count(r => r.roadwayNumber == roadwayNumber1) should be(1)
       roadways.size should be(1)
@@ -667,7 +664,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
   test("Test create When insert roadway with termination code 1 with end date Then roadway should be inserted") {
     runWithRollback {
       val endDate = Some(DateTime.parse("2001-12-31"))
-      dao.create(Seq(testRoadway1.copy(terminated = TerminationCode.Termination, endDate = endDate)))
+      dao.create(Seq(testRoadway1.copy(endDate = endDate, terminated = TerminationCode.Termination)))
       val roadway = dao.fetchByRoadwayNumber(roadwayNumber1, includeHistory = true).getOrElse(fail())
       roadway.roadwayNumber should be(roadwayNumber1)
       roadway.terminated should be(TerminationCode.Termination)
@@ -700,7 +697,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       roadway.startDate should be(testRoadway1.startDate)
       roadway.endDate should be(testRoadway1.endDate)
       roadway.createdBy should be(testRoadway1.createdBy)
-      roadway.roadType should be(testRoadway1.roadType)
+      roadway.administrativeClass should be(testRoadway1.administrativeClass)
       roadway.ely should be(testRoadway1.ely)
       roadway.terminated should be(testRoadway1.terminated)
       roadway.validFrom should not be None
@@ -827,7 +824,7 @@ class RoadwayDAOSpec extends FunSuite with Matchers {
       val roadNetworkVersionId = roadNetworkDAO.getLatestRoadNetworkVersionId.getOrElse(fail())
       val roadwayId1 = dao.getNextRoadwayId
       val roadwayId2 = dao.getNextRoadwayId
-      dao.create(List(testRoadway1.copy(endDate = Some(DateTime.now.plusDays(-1)), id = roadwayId1), testRoadway2.copy(endDate = Some(DateTime.now.plusDays(1)), id = roadwayId2)))
+      dao.create(List(testRoadway1.copy(id = roadwayId1, endDate = Some(DateTime.now.plusDays(-1))), testRoadway2.copy(id = roadwayId2, endDate = Some(DateTime.now.plusDays(1)))))
       roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId1)
       roadNetworkDAO.createPublishedRoadway(roadNetworkVersionId, roadwayId2)
       val roadways = dao.fetchAllByRoadwayNumbers(Set(roadwayNumber1, roadwayNumber2), roadNetworkVersionId, Some(DateTime.now()))

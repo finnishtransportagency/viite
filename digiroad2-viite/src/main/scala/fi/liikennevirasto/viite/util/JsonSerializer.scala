@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.util.{Track, VVHSerializer}
-import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
 import org.json4s.jackson.Serialization.{read, write}
@@ -162,10 +162,10 @@ case object LinkStatusSerializer extends CustomSerializer[LinkStatus](format => 
 }
 ))
 
-case object RoadTypeSerializer extends CustomSerializer[RoadType](format => ( {
+case object RoadTypeSerializer extends CustomSerializer[AdministrativeClass](format => ( {
   case i: JInt =>
-    RoadType.apply(i.values.intValue)
+    AdministrativeClass.apply(i.values.intValue)
 }, {
-  case r: RoadType => JInt(r.value)
+  case r: AdministrativeClass => JInt(r.value)
 }
 ))

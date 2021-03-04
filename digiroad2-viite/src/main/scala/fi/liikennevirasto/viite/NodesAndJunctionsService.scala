@@ -521,8 +521,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (seq.isEmpty) {
         (Seq(), roadTypesSection)
       } else {
-        val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
-        val continuousProjectLinks = seq.takeWhile(pl => pl.roadType.value == roadType)
+        val roadType = seq.headOption.map(_.administrativeClass.value).getOrElse(0)
+        val continuousProjectLinks = seq.takeWhile(pl => pl.administrativeClass.value == roadType)
         continuousNodeSections(seq.drop(continuousProjectLinks.size), roadTypesSection :+ continuousProjectLinks)
       }
     }
@@ -776,8 +776,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (section.isEmpty)
         continuousSection
       else {
-        val roadType = section.head.roadType
-        val sectionByRoadType: Seq[ProjectLink] = section.takeWhile(p => p.roadType == roadType)
+        val roadType = section.head.administrativeClass
+        val sectionByRoadType: Seq[ProjectLink] = section.takeWhile(p => p.administrativeClass == roadType)
         continuousSectionByRoadType(section.drop(sectionByRoadType.size), continuousSection :+ sectionByRoadType)
       }
     }

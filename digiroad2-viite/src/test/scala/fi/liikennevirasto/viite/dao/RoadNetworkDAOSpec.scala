@@ -6,7 +6,8 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.AddressConsistencyValidator.AddressError
-import fi.liikennevirasto.viite.{RoadType, _}
+import fi.liikennevirasto.viite._
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -32,14 +33,11 @@ class RoadNetworkDAOSpec extends FunSuite with Matchers {
   private val roadwayNumber2 = 2000000000l
   private val roadwayNumber3 = 3000000000l
 
-  val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-    0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+  val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, 1, AdministrativeClass.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
-  val testRoadway2 = Roadway(NewIdValue, roadwayNumber2, roadNumber1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-    100, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+  val testRoadway2 = Roadway(NewIdValue, roadwayNumber2, roadNumber1, 2, AdministrativeClass.PublicRoad, Track.Combined, Discontinuity.Continuous, 100, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
-  val testRoadway3 = Roadway(NewIdValue, roadwayNumber3, roadNumber2, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
-    0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
+  val testRoadway3 = Roadway(NewIdValue, roadwayNumber3, roadNumber2, 1, AdministrativeClass.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
 
   // createPublishedRoadNetwork
 
