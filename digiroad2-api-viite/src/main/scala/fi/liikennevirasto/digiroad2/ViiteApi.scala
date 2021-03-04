@@ -1616,8 +1616,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM),
             startMValue = Math.min(a.startMValue, b.endMValue)).asInstanceOf[T]
         case (a: ProjectAddressLink, b) =>
-          a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM),
-            startMValue = Math.min(a.startMValue, b.endMValue)).asInstanceOf[T]
+          a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM), startMValue = Math.min(a.startMValue, b.endMValue)).asInstanceOf[T]
       })
     else
       None
