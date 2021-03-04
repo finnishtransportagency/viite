@@ -78,7 +78,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "start_addr_m" -> 0,
       "end_addr_m" -> 6,
       "ely_code" -> 0,
-      "road_type" -> 3,
+      "road_type" -> 2,
       "discontinuity" -> 0,
       "start_date" -> "2015-01-01",
       "end_date" -> "2015-12-31",
