@@ -41,11 +41,10 @@ trait AddressLinkBuilder {
 
   def getAdministrativeClass(administrativeClass: AdministrativeClass, linkType: LinkType): AdministrativeClass = {
     (administrativeClass, linkType) match {
-//      case (State, CableFerry) => FerryRoad
-      case (State, _) => State
-      case (Municipality, _) => Municipality
-      case (Private, _) => Private
-      case (_, _) => Unknown
+      case (AdministrativeClass.State, _) => AdministrativeClass.State
+      case (AdministrativeClass.Municipality, _) => AdministrativeClass.Municipality
+      case (AdministrativeClass.Private, _) => AdministrativeClass.Private
+      case (_, _) => AdministrativeClass.Unknown
     }
   }
 

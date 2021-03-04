@@ -59,11 +59,11 @@ object Dummies {
 
   def dummyVvhHistoryRoadLink(linkId: Long, yCoordinates: Seq[Double]): VVHHistoryRoadLink = {
     val municipalityCode = 0
-    VVHHistoryRoadLink(linkId, municipalityCode, yCoordinates.map(y => Point(0.0, y)), Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, 0L, 0L, Map(), UnknownConstructionType, HistoryLinkInterface, yCoordinates.sum)
+    VVHHistoryRoadLink(linkId, municipalityCode, yCoordinates.map(y => Point(0.0, y)), AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, 0L, 0L, Map(), UnknownConstructionType, HistoryLinkInterface, yCoordinates.sum)
   }
 
   def dummyRoadLink(linkId: Long, yCoordinates: Seq[Double], linkGeomSource: LinkGeomSource): RoadLink = {
-    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownConstructionType, linkGeomSource)
+    RoadLink(linkId, yCoordinates.map(y => Point(0.0, y)), yCoordinates.sum, AdministrativeClass.Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, Map(), UnknownConstructionType, linkGeomSource)
   }
 
   def dummyChangeInfo(changeType: ChangeType, oldId: Long, newId: Long, oldStartMeasure: Double, oldEndMeasure: Double, newStartMeasure: Double, newEndMeasure: Double, vvhTimeStamp: Long): ChangeInfo = {

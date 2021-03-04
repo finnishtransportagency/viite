@@ -26,7 +26,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
     val calibrationPoints = pl.calibrationPoints
 
-    ProjectAddressLink(pl.id, pl.linkId, pl.geometry, pl.geometryLength, fi.liikennevirasto.digiroad2.asset.Unknown, linkType, ConstructionType.UnknownConstructionType, pl.linkGeomSource, pl.administrativeClass, pl.roadName, pl.roadName, 0L, "", None, Some("vvh_modified"), Map(), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value, pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, calibrationPoints._1, calibrationPoints._2, Anomaly.None, pl.status, pl.roadwayId, pl.linearLocationId, pl.reversed, pl.connectedLinkId, originalGeometry)
+    ProjectAddressLink(pl.id, pl.linkId, pl.geometry, pl.geometryLength, fi.liikennevirasto.digiroad2.asset.AdministrativeClass.Unknown, linkType, ConstructionType.UnknownConstructionType, pl.linkGeomSource, pl.administrativeClass, pl.roadName, pl.roadName, 0L, "", None, Some("vvh_modified"), Map(), pl.roadNumber, pl.roadPartNumber, pl.track.value, pl.ely, pl.discontinuity.value, pl.startAddrMValue, pl.endAddrMValue, pl.startMValue, pl.endMValue, pl.sideCode, calibrationPoints._1, calibrationPoints._2, Anomaly.None, pl.status, pl.roadwayId, pl.linearLocationId, pl.reversed, pl.connectedLinkId, originalGeometry)
   }
 
   @Deprecated

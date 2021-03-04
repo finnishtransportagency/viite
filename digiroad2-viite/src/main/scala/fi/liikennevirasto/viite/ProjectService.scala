@@ -1224,7 +1224,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def updateProjectLinks(projectId: Long, ids: Set[Long], linkIds: Seq[Long], linkStatus: LinkStatus, userName: String,
                          newRoadNumber: Long, newRoadPartNumber: Long, newTrackCode: Int,
-                         userDefinedEndAddressM: Option[Int], administrativeClass: Long = State.value,
+                         userDefinedEndAddressM: Option[Int], administrativeClass: Long = AdministrativeClass.State.value,
                          discontinuity: Int = Discontinuity.Continuous.value, ely: Option[Long] = None,
                          reversed: Boolean = false, roadName: Option[String] = None, coordinates: Option[ProjectCoordinates] = None): Option[String] = {
     def isCompletelyNewPart(toUpdateLinks: Seq[ProjectLink]): (Boolean, Long, Long) = {

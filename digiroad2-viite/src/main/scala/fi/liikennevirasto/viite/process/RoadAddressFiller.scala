@@ -2,10 +2,10 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.State
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.digiroad2.asset.Unknown
+//import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.Unknown
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, _}
@@ -48,12 +48,12 @@ object RoadAddressFiller {
   }
 
   private def isPublicRoad(roadLink: RoadLinkLike) = {
-    roadLink.administrativeClass == State || roadLink.attributes.get("ROADNUMBER").exists(_.toString.toInt > 0)
+    roadLink.administrativeClass == AdministrativeClass.State || roadLink.attributes.get("ROADNUMBER").exists(_.toString.toInt > 0)
   }
 
   private def generateUnknownLink(roadLink: RoadLinkLike) = {
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length)
-    Seq(UnaddressedRoadLink(roadLink.linkId, None, None, Unknown, None, None, Some(0.0), Some(roadLink.length), if (isPublicRoad(roadLink)) {
+    Seq(UnaddressedRoadLink(roadLink.linkId, None, None, AdministrativeClass.Unknown, None, None, Some(0.0), Some(roadLink.length), if (isPublicRoad(roadLink)) {
       Anomaly.NoAddressGiven
     } else {
       Anomaly.None
@@ -190,7 +190,7 @@ object RoadAddressFiller {
         Anomaly.None
       }
       val unaddressedRoadLink =
-        UnaddressedRoadLink(roadLink.linkId, None, None, Unknown, None, None, Some(0.0), Some(roadLink.length), anomaly,
+        UnaddressedRoadLink(roadLink.linkId, None, None, AdministrativeClass.Unknown, None, None, Some(0.0), Some(roadLink.length), anomaly,
           GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length))
 
       Seq(roadAddressLinkBuilder.build(roadLink, unaddressedRoadLink))

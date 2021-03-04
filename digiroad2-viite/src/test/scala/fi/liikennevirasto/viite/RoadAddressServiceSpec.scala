@@ -94,7 +94,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   }
 
     private def toRoadLink(ral: ProjectLink): RoadLink = {
-      RoadLink(ral.linkId, ral.geometry, ral.geometryLength, State, 1,
+      RoadLink(ral.linkId, ral.geometry, ral.geometryLength, AdministrativeClass.State, 1,
         extractTrafficDirection(ral.sideCode, ral.track), Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
           "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
@@ -478,7 +478,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockLinearLocationDAO.fetchByRoadAddress(any[Long],any[Long],any[Long], any[Option[Long]])).thenReturn(towardsDigitizingLinearLocation)
 
     val towardsDigitizingRoadLink = Seq(
-      RoadLink(linkId, Seq(Point(0.0, 10.0), Point(0.0, 15.0)), 10.0, Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)), UnknownConstructionType, NormalLinkInterface)
+      RoadLink(linkId, Seq(Point(0.0, 10.0), Point(0.0, 15.0)), 10.0, AdministrativeClass.Municipality, 0, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)), UnknownConstructionType, NormalLinkInterface)
     )
 
 

@@ -227,16 +227,16 @@
       let text;
       switch(administrativeClass) {
         case 1:
-          text = "Valtio"
+          text = "Valtio";
               break;
         case 2:
-          text = "Kunta"
+          text = "Kunta";
               break;
         case 3:
-          text = "Yksit."
+          text = "Yksit.";
               break;
         default:
-          text = "Yksit."
+          text = "Yksit.";
       }
       return text;
     }

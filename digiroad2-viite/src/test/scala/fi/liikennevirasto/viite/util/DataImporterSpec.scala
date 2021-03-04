@@ -71,7 +71,7 @@ class DataImporterSpec extends FunSuite with Matchers {
   )
 
   val vvhRoadLinks = List(
-    VVHRoadlink(1L, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    VVHRoadlink(1L, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), AdministrativeClass.Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
   )
   when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
