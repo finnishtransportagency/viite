@@ -276,7 +276,7 @@ class ProjectLinkDAO {
       val calibrationPoints = (CalibrationPointType.apply(r.nextInt), CalibrationPointType.apply(r.nextInt))
       val originalCalibrationPointTypes = (CalibrationPointType.apply(r.nextInt), CalibrationPointType.apply(r.nextInt))
       val status = LinkStatus.apply(r.nextInt())
-      val roadType = AdministrativeClass.apply(r.nextInt())
+      val administrativeClass = AdministrativeClass.apply(r.nextInt())
       val source = LinkGeomSource.apply(r.nextInt())
       val roadwayId = r.nextLong()
       val linearLocationId = r.nextLong()
@@ -295,7 +295,7 @@ class ProjectLinkDAO {
       val roadwayNumber = r.nextLong()
       val projectRoadwayNumber = r.nextLong()
 
-      ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue, sideCode, calibrationPoints, originalCalibrationPointTypes, OracleDatabase.loadJGeometryToGeometry(geom), projectId, status, roadType, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, if (roadwayNumber != 0) roadwayNumber else projectRoadwayNumber, Some(roadName), roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)), roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack, roadAddressRoadNumber, roadAddressRoadPart)
+      ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddrMValue, originalEndAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue, sideCode, calibrationPoints, originalCalibrationPointTypes, OracleDatabase.loadJGeometryToGeometry(geom), projectId, status, administrativeClass, source, length, roadwayId, linearLocationId, ely, reversed, connectedLinkId, geometryTimeStamp, if (roadwayNumber != 0) roadwayNumber else projectRoadwayNumber, Some(roadName), roadAddressEndAddrM.map(endAddr => endAddr - roadAddressStartAddrM.getOrElse(0L)), roadAddressStartAddrM, roadAddressEndAddrM, roadAddressTrack, roadAddressRoadNumber, roadAddressRoadPart)
     }
   }
 
@@ -667,18 +667,18 @@ class ProjectLinkDAO {
     }
   }
 
-  def updateProjectLinkRoadTypeDiscontinuity(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadType: Long, discontinuity: Option[Long]): Unit = {
+  def updateProjectLinkAdministrativeClassDiscontinuity(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String, administrativeClass: Long, discontinuity: Option[Long]): Unit = {
     time(logger, "Update project link road type discontinuity") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
       if (discontinuity.isEmpty) {
         projectLinkIds.grouped(500).foreach {
           grp =>
-            val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ADMINISTRATIVE_CLASS= $roadType " +
+            val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ADMINISTRATIVE_CLASS= $administrativeClass " +
               s"WHERE ID IN ${grp.mkString("(", ",", ")")}"
             Q.updateNA(sql).execute
         }
       } else {
-        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ADMINISTRATIVE_CLASS= $roadType, DISCONTINUITY_TYPE = ${discontinuity.get} " +
+        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ADMINISTRATIVE_CLASS= $administrativeClass, DISCONTINUITY_TYPE = ${discontinuity.get} " +
           s"WHERE ID = ${projectLinkIds.head}"
         Q.updateNA(sql).execute
       }
