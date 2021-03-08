@@ -97,7 +97,6 @@ object AdministrativeClass {
   case object MunicipalityStreetRoad extends AdministrativeClass { def value = 2 }
   case object PrivateRoadType extends AdministrativeClass { def value = 3 }
   case object UnknownOwnerRoad extends AdministrativeClass { def value = 99 }
-
 }
 
 sealed trait TrafficDirection {
