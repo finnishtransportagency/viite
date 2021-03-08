@@ -86,33 +86,19 @@ object AdministrativeClass {
     values.find(_.toString == stringValue).getOrElse(Unknown)
   }
 
-//  def State = State
-//  def Municipality = apply(2)
-//  def Private = apply(3)
-//  def Unknown = apply(3)
   case object State extends AdministrativeClass { def value = 1 }
   case object Municipality extends AdministrativeClass { def value = 2 }
   case object Private extends AdministrativeClass { def value = 3 }
   case object Unknown extends AdministrativeClass { def value = 99 }
 
+  /* For possibly old tests cases using RoadType namings. */
   case object PublicRoad extends AdministrativeClass { def value = 1 }
   case object FerryRoad extends AdministrativeClass { def value = 1 }
   case object MunicipalityStreetRoad extends AdministrativeClass { def value = 2 }
   case object PrivateRoadType extends AdministrativeClass { def value = 3 }
   case object UnknownOwnerRoad extends AdministrativeClass { def value = 99 }
 
-//  def PublicRoad = apply(1)
-//  def FerryRoad = apply(1)
-//  def MunicipalityStreetRoad = apply(2)
-//  def PrivateRoadType = apply(3)
-//  def UnknownOwnerRoad = apply(3)
-
-
 }
-//case object State extends AdministrativeClass { def value = 1 }
-//case object Municipality extends AdministrativeClass { def value = 2 }
-//case object Private extends AdministrativeClass { def value = 3 }
-//case object Unknown extends AdministrativeClass { def value = 99 }
 
 sealed trait TrafficDirection {
   def value: Int
