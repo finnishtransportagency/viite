@@ -274,7 +274,6 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.endAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + (changeInfoSeq.target.endAddressM - changeInfoSeq.target.startAddressM) + '</td>' +
         '<td class="project-change-table-dimension">' + replaceParallelLink(changeInfoSeq.target.discontinuity) + '</td>' +
-          //TODO VIITE-2568 roadType -> administrativeClass when backend is ready, otherwise it will use MML administrativeClass value which is wrong
         '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.target.administrativeClass ) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.ely + '</td>';
     }
@@ -288,7 +287,6 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.endAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + (changeInfoSeq.source.endAddressM - changeInfoSeq.source.startAddressM) + '</td>' +
         '<td class="project-change-table-dimension">' + replaceParallelLink(changeInfoSeq.source.discontinuity) + '</td>' +
-          //TODO VIITE-2568 roadType -> administrativeClass when backend is ready, otherwise it will use MML administrativeClass value which is wrong
         '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.source.administrativeClass ) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.ely + '</td>';
     }
