@@ -78,12 +78,37 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "start_addr_m" -> 0,
       "end_addr_m" -> 6,
       "ely_code" -> 0,
-      "road_type" -> 2,
+      "road_type" -> 3,
       "discontinuity" -> 0,
       "start_date" -> "2015-01-01",
       "end_date" -> "2015-12-31",
       "calibration_points" -> Map("start" -> Some(Map("link_id" -> 120, "address_m_value" -> 2, "segment_m_value" -> 1.0)), "end" -> None)
     )))
+  }
+
+  test("Test integrationApi.roadAddressLinksToApi() for roadType When AdministrativeClass is State.") {
+    val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
+    // This roadAddressLink has linearLocationId equal to zero, just to compile.
+    val roadAdressLink = RoadAddressLink(63298, 0, 5171208, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.State, UnknownLinkType, InUse, NormalLinkInterface, AdministrativeClass.State, Some("Vt5"), None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 6, "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(CalibrationPoint(120, 1, 2)), None, Anomaly.None)
+    integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)).head("road_type") shouldBe  1
+  }
+  test("Test integrationApi.roadAddressLinksToApi() When for roadType When AdministrativeClass is Municipality.") {
+    val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
+    // This roadAddressLink has linearLocationId equal to zero, just to compile.
+    val roadAdressLink = RoadAddressLink(63298, 0, 5171208, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Municipality, UnknownLinkType, InUse, NormalLinkInterface, AdministrativeClass.Municipality, Some("Vt5"), None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 6, "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(CalibrationPoint(120, 1, 2)), None, Anomaly.None)
+    integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)).head("road_type") shouldBe 3
+  }
+  test("Test integrationApi.roadAddressLinksToApi() When for roadType When AdministrativeClass is Private.") {
+    val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
+    // This roadAddressLink has linearLocationId equal to zero, just to compile.
+    val roadAdressLink = RoadAddressLink(63298, 0, 5171208, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Private, UnknownLinkType, InUse, NormalLinkInterface, AdministrativeClass.Private, Some("Vt5"), None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 6, "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(CalibrationPoint(120, 1, 2)), None, Anomaly.None)
+    integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)).head("road_type") shouldBe 5
+  }
+  test("Test integrationApi.roadAddressLinksToApi() When for roadType When AdministrativeClass is Unknown.") {
+    val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
+    // This roadAddressLink has linearLocationId equal to zero, just to compile.
+    val roadAdressLink = RoadAddressLink(63298, 0, 5171208, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Unknown, UnknownLinkType, InUse, NormalLinkInterface, AdministrativeClass.Unknown, Some("Vt5"), None, BigInt(0), "", None, None, Map("linkId" -> 5171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 6, "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(CalibrationPoint(120, 1, 2)), None, Anomaly.None)
+    integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)).head("road_type") shouldBe 99
   }
 
   test("Test integrationApi.geometryWKT() When using a 3D sequence of points and a start and end measures that fit in the geometry Then return a proper geometry in LineString format.") {

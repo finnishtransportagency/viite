@@ -855,7 +855,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "name" -> project.name,
           "changeDate" -> project.changeDate,
           "changeInfoSeq" -> project.changeInfoSeq.map(changeInfo =>
-            Map("changetype" -> changeInfo.changeType.value, "roadType" -> changeInfo.administrativeClass.value,
+            Map("changetype" -> changeInfo.changeType.value, "roadType" -> changeInfo.administrativeClass.asRoadTypeValue,
               "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
               "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)))
       ).getOrElse(None)
