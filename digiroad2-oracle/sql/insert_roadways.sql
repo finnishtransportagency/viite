@@ -1,5 +1,6 @@
-﻿-- PUBLISHED_ROAD_NETWORK
-insert into PUBLISHED_ROAD_NETWORK values (PUBLISHED_ROAD_NETWORK_SEQ.nextval, sysdate, sysdate);
+﻿insert into PUBLISHED_ROAD_NETWORK values (PUBLISHED_ROAD_NETWORK_SEQ.nextval, sysdate, sysdate);
+
+-- PUBLISHED_ROAD_NETWORK
 --
 -- Roadway and PUBLISHED_ROADWAY -table rows
 --

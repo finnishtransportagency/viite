@@ -597,11 +597,11 @@ class ProjectValidator {
     }
 
     def checkMinMaxTrackRoadTypes(trackInterval: Seq[ProjectLink]): Option[Seq[ProjectLink]] = {
-      val diffLinks = trackInterval.groupBy(_.administrativeClass).flatMap { projectLinksByRoadType: (AdministrativeClass, Seq[ProjectLink]) =>
-        projectLinksByRoadType._2.partition(_.track == Track.LeftSide) match {
+      val diffLinks = trackInterval.groupBy(_.administrativeClass).flatMap { projectLinksByAdministrativeClass: (AdministrativeClass, Seq[ProjectLink]) =>
+        projectLinksByAdministrativeClass._2.partition(_.track == Track.LeftSide) match {
           case (left, right) if left.nonEmpty && right.nonEmpty =>
-            val leftSection = (projectLinksByRoadType._1, left.minBy(_.startAddrMValue).startAddrMValue, left.maxBy(_.endAddrMValue).endAddrMValue)
-            val rightSection = (projectLinksByRoadType._1, right.minBy(_.startAddrMValue).startAddrMValue, right.maxBy(_.endAddrMValue).endAddrMValue)
+            val leftSection = (projectLinksByAdministrativeClass._1, left.minBy(_.startAddrMValue).startAddrMValue, left.maxBy(_.endAddrMValue).endAddrMValue)
+            val rightSection = (projectLinksByAdministrativeClass._1, right.minBy(_.startAddrMValue).startAddrMValue, right.maxBy(_.endAddrMValue).endAddrMValue)
             val startSectionAdrr = Seq(leftSection._2, rightSection._2).max
             val endSectionAddr = Seq(leftSection._3, rightSection._3).min
             if (leftSection != rightSection) {
