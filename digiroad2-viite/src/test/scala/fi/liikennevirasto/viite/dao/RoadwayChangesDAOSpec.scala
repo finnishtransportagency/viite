@@ -95,7 +95,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
 
   test("Test query for Roadway_change changes api") {
     runWithRollback {
-      val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, AdministrativeClass.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-02"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
+      val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, roadNumber1, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-02"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
       val dao = new RoadwayChangesDAO()
       val roadwayDAO = new RoadwayDAO
 

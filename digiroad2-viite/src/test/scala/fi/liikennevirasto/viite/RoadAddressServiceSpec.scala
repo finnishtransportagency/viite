@@ -645,7 +645,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val id1 = Sequences.nextRoadwayId
       val id2 = id1+1
       val linearLocationId = Sequences.nextLinearLocationId
-      val link1 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.Continuous, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId, AdministrativeClass.PublicRoad, geom1, roadwayNumber1)
+      val link1 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.Continuous, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId, AdministrativeClass.State, geom1, roadwayNumber1)
       val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 5 , 20, Some(DateTime.now()), None, 12346, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, AdministrativeClass.FerryRoad, geom2, roadwayNumber2)
 
       //Roadways and linear location generated AFTER changes
@@ -754,7 +754,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val id1 = Sequences.nextRoadwayId
       val id2 = id1+1
       val linearLocationId = Sequences.nextLinearLocationId
-      val link1 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.Continuous, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId, AdministrativeClass.PublicRoad, geom1, roadwayNumber1)
+      val link1 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.Continuous, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId, AdministrativeClass.State, geom1, roadwayNumber1)
       val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 5 , 20, Some(DateTime.now()), None, 12346, 0, 15, SideCode.AgainstDigitizing, LinkStatus.Transfer, projectId, AdministrativeClass.FerryRoad, geom2, roadwayNumber2)
 
       //Roadways and linear location generated AFTER changes
@@ -860,7 +860,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       val projectId = Sequences.nextViiteProjectId
       val rap =  dummyProject(projectId, ProjectState.Incomplete, Seq(), None).copy(startDate = DateTime.parse("2019-10-10"))
-      val link1 = dummyProjectLink(99, 1, Track.Combined, Discontinuity.EndOfRoad, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.UnChanged, projectId, AdministrativeClass.PublicRoad, geom1, roadwayNumber2)
+      val link1 = dummyProjectLink(99, 1, Track.Combined, Discontinuity.EndOfRoad, 0 , 5, Some(DateTime.now()), None, 12345, 0, 5, SideCode.TowardsDigitizing, LinkStatus.UnChanged, projectId, AdministrativeClass.State, geom1, roadwayNumber2)
       val link2 = dummyProjectLink(99, 2, Track.Combined, Discontinuity.EndOfRoad, 0 , 15, Some(DateTime.now()), None, 12346, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Transfer, projectId, AdministrativeClass.FerryRoad, geom2, roadwayNumber3)
 
       //Roadways and linear location generated AFTER changes

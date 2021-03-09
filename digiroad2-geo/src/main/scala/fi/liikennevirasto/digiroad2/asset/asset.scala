@@ -103,7 +103,7 @@ object AdministrativeClass {
   case object Unknown extends AdministrativeClass      { def value = 99 }
 
   /* For possibly old tests cases using RoadType namings. */
-  case object PublicRoad extends AdministrativeClass             { def value = 1 }
+  //case object PublicRoad extends AdministrativeClass             { def value = 1 }
   case object FerryRoad extends AdministrativeClass              { def value = 1 }
   case object MunicipalityStreetRoad extends AdministrativeClass { def value = 2 }
   case object PrivateRoadType extends AdministrativeClass        { def value = 3 }

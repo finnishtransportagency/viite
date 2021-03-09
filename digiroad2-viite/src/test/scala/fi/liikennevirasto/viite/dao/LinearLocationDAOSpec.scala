@@ -623,7 +623,7 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id1, roadwayNumber = roadwayNumber1, linkId = linkId1)))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber1, linkId = linkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
 
-      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, -9999, 1, AdministrativeClass.PublicRoad, Combined, Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("ROAD 1"), 1, TerminationCode.NoTermination)))
+      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, -9999, 1, AdministrativeClass.State, Combined, Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("ROAD 1"), 1, TerminationCode.NoTermination)))
 
       val locations = linearLocationDAO.fetchByRoadAddress(-9999,1, 1)
       locations.size should be(2)
@@ -657,9 +657,9 @@ class LinearLocationDAOSpec extends FunSuite with Matchers {
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id2, roadwayNumber = roadwayNumber1, linkId = linkId2, geometry = Seq(Point(1000.0, 1000.0), Point(1100.0, 1000.0)))))
       linearLocationDAO.create(Seq(testLinearLocation.copy(id = id3, roadwayNumber = roadwayNumber2, linkId = linkId3)))
 
-      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, 100, 1, AdministrativeClass.PublicRoad, Combined, Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("ROAD 1"), 1, TerminationCode.NoTermination)))
+      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber1, 100, 1, AdministrativeClass.State, Combined, Discontinuity.Continuous, 0, 200, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("ROAD 1"), 1, TerminationCode.NoTermination)))
 
-      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber2, 101, 1, AdministrativeClass.PublicRoad, Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("ROAD 2"), 1, TerminationCode.NoTermination)))
+      roadwayDAO.create(Seq(Roadway(NewIdValue, roadwayNumber2, 101, 1, AdministrativeClass.State, Combined, Discontinuity.Continuous, 0, 100, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("ROAD 2"), 1, TerminationCode.NoTermination)))
 
       val roadNumberFilter = Seq((100, 100))
       val locations = linearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(Point(900.0, 900.0), Point(1200.0, 1200.0)), roadNumberFilter)
