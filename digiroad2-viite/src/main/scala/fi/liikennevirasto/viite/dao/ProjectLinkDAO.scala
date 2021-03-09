@@ -406,7 +406,9 @@ class ProjectLinkDAO {
           if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
             val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
             // Discontinuity, road type and calibration points may change with Unchanged status
-            pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track, startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue, reversed = false)
+            pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
+              startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
+              reversed = false)
           } else
             pl
         }
