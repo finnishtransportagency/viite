@@ -5,7 +5,6 @@ import java.net.ConnectException
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.Dummies.dummyRoadwayChangeSection
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import org.apache.http.client.config.RequestConfig

@@ -66,13 +66,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
     val calibrationPoints = projectLink.calibrationPoints
 
-    build(roadLink, projectLink.id, geom, length, roadNumber, roadPartNumber, trackCode, Some(roadName), municipalityCode,
-      linkType, projectLink.administrativeClass, projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
-      projectLink.startMValue, projectLink.endMValue, projectLink.sideCode,
-      calibrationPoints._1, calibrationPoints._2,
-      Anomaly.None, projectLink.status, projectLink.roadwayId, projectLink.linearLocationId, projectLink.ely, projectLink.reversed, projectLink.connectedLinkId,
-      originalGeometry
-    )
+    build(roadLink, projectLink.id, geom, length, roadNumber, roadPartNumber, trackCode, Some(roadName), municipalityCode, linkType, projectLink.administrativeClass, projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, calibrationPoints._1, calibrationPoints._2, Anomaly.None, projectLink.status, projectLink.roadwayId, projectLink.linearLocationId, projectLink.ely, projectLink.reversed, projectLink.connectedLinkId, originalGeometry)
   }
 
   def build(ral: RoadAddressLinkLike): ProjectAddressLink = {
@@ -80,13 +74,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
   }
 
 
-  private def build(roadLink: RoadLinkLike, id: Long, geom: Seq[Point], length: Double, roadNumber: Long, roadPartNumber: Long,
-                    trackCode: Int, roadName: Option[String], municipalityCode: Int, linkType: LinkType,
-                    roadType: AdministrativeClass, discontinuity: Discontinuity,
-                    startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double,
-                    sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                    anomaly: Anomaly, status: LinkStatus, roadwayId: Long, linearLocationId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[Long],
-                    originalGeometry: Option[Seq[Point]]): ProjectAddressLink = {
+  private def build(roadLink: RoadLinkLike, id: Long, geom: Seq[Point], length: Double, roadNumber: Long, roadPartNumber: Long, trackCode: Int, roadName: Option[String], municipalityCode: Int, linkType: LinkType, administrativeClass: AdministrativeClass, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint], anomaly: Anomaly, status: LinkStatus, roadwayId: Long, linearLocationId: Long, ely: Long, reversed: Boolean, connectedLinkId: Option[Long], originalGeometry: Option[Seq[Point]]) = {
 
     val linkId =
       if (connectedLinkId.nonEmpty && status == LinkStatus.New)
@@ -95,7 +83,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
         roadLink.linkId
 
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
-    ProjectAddressLink(id, linkId, geom, length, roadLink.administrativeClass, linkType, roadLink.constructionType, roadLink.linkSource, roadType, Some(roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString), roadName, municipalityCode, municipalityName, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"), roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value, startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, status, roadwayId, linearLocationId, reversed, connectedLinkId, originalGeometry)
+    ProjectAddressLink(id, linkId, geom, length, roadLink.administrativeClass, linkType, roadLink.constructionType, roadLink.linkSource, administrativeClass, Some(roadLink.attributes.getOrElse(FinnishRoadName, roadLink.attributes.getOrElse(SwedishRoadName, "none")).toString), roadName, municipalityCode, municipalityName, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"), roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value, startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, status, roadwayId, linearLocationId, reversed, connectedLinkId, originalGeometry)
   }
 
   private def combineGeometries(split1: ProjectLink, split2: ProjectLink) = {
