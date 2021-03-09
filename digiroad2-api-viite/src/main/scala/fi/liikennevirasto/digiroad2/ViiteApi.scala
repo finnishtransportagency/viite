@@ -41,10 +41,7 @@ case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNum
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, reservedPartList: List[RoadPartExtractor], formedPartList: List[RoadPartExtractor], resolution: Int)
 
-case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long,
-                                            roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long,
-                                            roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int],
-                                            coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
+case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, administrativeClass: Int, userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
 
 case class roadDataExtractor(chainLinkIds: Seq[Long] )
 
@@ -684,7 +681,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
         logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
         val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
-          Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.roadType),
+          Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass),
           LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))),
           Some(links.coordinates))
         response.get("success") match {
@@ -730,7 +727,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         if (projectService.validateLinkTrack(links.trackCode)) {
           projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus),
             user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
-            links.roadType, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName,
+            links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName,
             Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
