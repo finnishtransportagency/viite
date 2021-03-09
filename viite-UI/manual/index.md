@@ -440,24 +440,24 @@ Huom! Jatkuvuuskoodia 5 on valittavissa kaksi eri vaihtoehtoa. Koodia _5 Jatkuva
 7.2 Muutosilmoitusten tarkastelu taulukkonäkymässä
 --------------------------
 
-Projektin muutosilmoitusnäkymässä on mahdollista tarkastella ilmoitusten yhteenvetotaulukkoa. Avaa projektin yhteenvetotaulukko -painikkeella (1) avautuu taulukkonäkymä, joka kertoo projektissa olevien tieosoitteiden vanhan ja uuden tilanteen sekä tehdyn muutosilmoituksen. Taulukossa rivit on järjestetty suurimmasta pienimpään tieosoitteen mukaan (tie, tieosa). Rivien järjestystä voi muokata nuolipainikkeilla (2). Yhteenvetotaulukon AET- ja LET-arvot päivittyvät oikein vasta kun kaikki tieosan aihiot on käsitelty.
+Projektin muutosilmoitusnäkymässä on mahdollista tarkastella ilmoitusten yhteenvetotaulukkoa. "Avaa projektin yhteenvetotaulukko" -painikkeella (1) avautuu taulukkonäkymä, joka kertoo projektissa olevien tieosoitteiden vanhan ja uuden tilanteen Viitteessä. Nämä vastaavat Tierekisteriin vietäviä muutosilmoituksia. Taulukossa rivit on järjestetty suurimmasta pienimpään tieosoitteen mukaan (tie, tieosa). Rivien järjestystä voi muokata nuolipainikkeilla (2). Yhteenvetotaulukon AET- ja LET-arvot päivittyvät oikein vasta kun kaikki tieosan aihiot on käsitelty.
 
-Taulukon rivien tietoja voi kopioida maalaamalla halutut tiedot hiirellä ja kopioimalla ne. 
+Taulukon rivien tietoja voi kopioida maalaamalla halutut tiedot hiirellä ja kopioimalla ne (esim. hiiren oikean napin takaa valikosta, tai ctrl+c). 
 
-Taulukon kokoa saa muutettua taulukon yläkulmassa olevasta painikkeesta (3). Taulukon voi pitää auki muokatessa ja muutokset päivittyvät taulukkoon tallennettaessa. Viite-sovelluksen voi venyttää kahdelle näytölle, joista toisella voi tarkastella muutostaulukkoa ja toisella käyttää karttanäkymää. Taulukkoa voi liikuttaa tarraamalla osoittimella yläpalkista. Yhteenvetotaulukko ei välttämättä näy oikeanlaisena, jos selaimen zoom-taso on liian suuri. Ongelma korjaantuu palauttamalla selaimen zoom-taso normaaliksi (Firefox/Chrome Ctrl+0). 
+Taulukon kokoa saa muutettua taulukon yläkulmassa olevasta painikkeesta (3). Taulukon voi pitää auki projektin muokkauksen aikana, ja muutokset päivittyvät taulukkoon tallennettaessa. Viite-sovelluksen voi venyttää kahdelle näytölle, joista toisella voi tarkastella muutostaulukkoa ja toisella käyttää karttanäkymää. Taulukkoa voi liikuttaa tarraamalla osoittimella yläpalkista. Yhteenvetotaulukko ei välttämättä näy oikeanlaisena, jos selaimen zoom-taso on liian suuri. Ongelma korjaantuu palauttamalla selaimen zoom-taso normaaliksi (Firefox/Chrome Ctrl+0). 
 
 Taulukon saa pois näkyvistä Sulje-painikkeesta (4).
 
-![Avaus](k41.jpg)
+![Muutosilmoitustaulukko](k41.png)
 
-_Kuva 7.10: Muutosilmoitustaulukkonäkymä._
+_Kuva 7.10: Muutosilmoitustaulukko toimintoineen._
 
 7.3 Tarkastukset
 --------------------------
 
-Viite-sovellus tekee tieosoiteprojektissa automaattisia tarkastuksia, jotka auttavat käyttäjää valmistelemaan muutosilmoituksen Tierekisterin vaatimaan muotoon. Tarkastukset ovat projektissa jatkuvasti päällä ja reagoivat projektin tilan muutoksiin.  Avatun projektin tarkastusilmoitukset tulevat esiin Jatka toimenpiteisiin -painikkeen klikkauksen jälkeen. Ylimpinä näytetään infotiedot oranssilla korostettuina ja niiden alapuolella muut virheilmoitukset.
+Viite-sovellus tekee tieosoiteprojektissa automaattisia tarkastuksia, jotka auttavat käyttäjää valmistelemaan muutosilmoituksen Tierekisterin vaatimaan muotoon. Tarkastukset ovat projektissa jatkuvasti päällä ja reagoivat projektin tilan muutoksiin. Avatun projektin tarkastusilmoitukset tulevat esiin "Jatka toimenpiteisiin" -painikkeen klikkauksen jälkeen, kun Viite on saanut käytyä läpi projektin senhetkisen tilan. Ylimpinä näytetään infotiedot oranssilla korostettuina ja niiden alapuolella muut virheilmoitukset. Jos projektissa on vielä käsittelemättömiä tielinkkejä, ilmoitukset näistä näytetään käyttäjälle aina ensisijaisesti.
 
-![Tarkastusilmoitusnäkymä](k49.jpg)
+![Tarkastusilmoitusnäkymä](k49.png)
 
 _Kuva 7.11: Tarkastusilmoitukset näkyvät projektissa oikealla._
 
@@ -465,21 +465,22 @@ Tarkastusilmoitus koostuu seuraavista kentistä:
 
 |Kenttä|Kuvaus|
 |------|------|
-|Linkids|Tarkastuksen kohteena oleva yksittäisen tielinkin ID. Vaihtoehtoisesti linkkien lukumäärä jos tarkastusilmoitus koskee useampaa linkkiä.|
-|Virhe|Kuvaus tarkastuksen ongelmatilanteesta.|
+|Linkids|Tarkastuksen kohteena oleva yksittäisen tielinkin ID. Vaihtoehtoisesti linkkien lukumäärä, jos tarkastusilmoitus koskee useampaa linkkiä.|
+|Virhe|Kuvaus tarkastuksen havaitsemasta ongelmatilanteesta.|
 |Info|Mahdollisia lisäohjeita tarkastuksen virhetilanteen korjaamiseksi.|
 
 ![Tarkastusilmoitus](k50.JPG)
 
 _Kuva 7.12: Tielinkki 7304402 on tieosan viimeinen linkki, mutta siltä puuttuu jatkuvuuskoodi Tien loppu._ 
 
-Karttanäkymä kohdistuu tarkastusilmoituksen kohteena olevan tielinkin keskikohtaan painamalla Korjaa-painiketta. Painiketta uudestaan klikkaamalla kohdistus siirtyy seuraavaan tielinkkiin, jos sama tarkastus kohdistuu useampaan linkkiin. Käyttäjä voi valita tarkastusilmoituksen kohteena olevan tielinkin ja tehdä sille korjaavan toimenpiteen. 
+Karttanäkymä kohdistuu tarkastusilmoituksen kohteena olevan tielinkin keskikohtaan painamalla "Korjaa"-painiketta. Klikkaamalla painiketta uudestaan kohdistus siirtyy seuraavaan tielinkkiin, jos sama tarkastus kohdistuu useampaan linkkiin. Käyttäjä voi valita tarkastusilmoituksen kohteena olevan tielinkin ja tehdä sille korjaavan toimenpiteen. 
 
 #### Tieosoiteprojektissa tehtävät tarkastukset:
 
 Tieosoiteprojektiin kohdistuvat tarkastukset:
 
 - Uusi tieosa ei saa olla varattuna jossakin toisessa tieosoiteprojektissa
+- Kaikki projektiin varatuille tielinkeille tulee tehdä jokin toimenpide
 - Tieosoitteen kasvusuunta ei saa muuttua kesken tien
 - Tieosoitteellinen tie ei saa haarautua muuten kuin ajoratakoodivaihdoksessa
 - Ajoratojen 1 ja 2 tulee kattaa samaa osoitealue
@@ -488,37 +489,33 @@ Tieosoiteprojektiin kohdistuvat tarkastukset:
 Jatkuvuuden tarkastukset:
 
 - Tieosan sisällä jatkuvissa kohdissa (aukkopaikka alle 0,1 m), jatkuvuuskoodin tulee olla _5 Jatkuva_.
-
 - Tieosan sisällä jatkuvissa kohdissa rinnakkaisen linkin jatkuvuuskoodin tulee olla _5 Jatkuva (Rinnakkainen linkki)_.
-
 - Tieosan sisällä epäjatkuvuuskohdissa (aukkopaikka yli 0,1 m) jatkuvuuskoodi tulee olla _4 Lievä epäjatkuvuus_. 
 Tieosan sisäisen epäjatkuvuuden pituudelle ei ole asetettu ylärajaa.
-
 - Tieosan lopussa tulee olla jatkuvuuskoodi _2 Epäjatkuva_ tai _4 Lievä epäjatkuvuus_, jos ennen tien seuraavaa tieosaa on epäjatkuvuuskohta. Seuraavaa tieosaa ei ole välttämättä valittu projektiin, joten tarkastus huomioi myös projektin ulkopuoliset tieosat.
-
 - Tieosoitteen viimeisellä (suurin tieosanumero) tieosalla tulee olla jatkuvuuskoodi _1 Tien loppu_.
-
 - Jos tieosoitteen viimeinen tieosa lakkautetaan kokonaan, tien edellisellä tieosalla tulee olla jatkuvuuskoodi _1 Tien loppu_. Tätä tieosaa ei ole välttämättä valittu projektiin ja siksi tarkastus ulottuu myös projektin ulkopuolisiin tieosiin.
-
 - Jos tieosan seuraava tieosa on eri ELY-koodilla, jatkuvuuskoodin tulee olla tieosan lopussa _3 ELYn raja_.
 
 7.4 Muutosilmoitusten lähettäminen
 --------------------------
 
-Muutosilmoitus viedään tierekisteriin avaamalla ensin yhteenvetotaulukko klikkaamalla oikean alakulman sinistä Avaa projektin yhteenvetotaulukko -painiketta. Kun projektilla ei ole enää korjaamattomia tarkastusilmoituksia, aktivoituu vihreä Lähetä muutosilmoitus Tierekisteriin -painike. Painikkeen painamisen jälkeen sovellus ilmoittaa muutosilmoituksen tekemisestä Muutosilmoitus lähetetty Tierekisteriin -viestillä.
+Muutosilmoitus viedään tierekisteriin avaamalla ensin yhteenvetotaulukko klikkaamalla oikean alakulman sinistä "Avaa projektin yhteenvetotaulukko" -painiketta. Kun projektilla ei ole enää korjaamattomia tarkastusilmoituksia, aktivoituu vihreä "Lähetä muutosilmoitus Tierekisteriin" -painike. Painikkeen painamisen jälkeen sovellus ilmoittaa muutosilmoituksen lähettämisestä "Muutosilmoitus lähetetty Tierekisteriin" -viestillä.
 
-![Muutosilmoituksen painike](k38.jpg)
+![Muutosilmoituksen painike](k38.png)
 
 _Kuva 7.13: Muutosilmoituksen lähetyspainike oikeassa alakulmassa._
 
-Kun muutosilmoitus on lähetetty, muuttuu projektin tilatiedoksi Lähetetty tierekisteriin. Viite-sovellus tarkistaa minuutin välein tierekisterin tilanteen. Kun muutos on käsitelty siellä, tilatiedoksi tulee Viety tierekisteriin ja projekti on valmis. Mikäli muutosilmoitus ei ole mennyt läpi Tierekisterissä, tilaksi päivittyy Virhe tierekisterissä ja listalle tulee oranssi Avaa uudelleen -painike. Viemällä hiiren Virhe tierekisterissä -tekstin päälle virheen infolaatikko tulee näkyviin. Virhe korjataan avaamalla projekti ja tekemällä tarvittavat muokkaukset, jonka jälkeen ilmoitus lähetetään uudelleen Tierekisteriin.  
+Kun muutosilmoitus on lähetetty, muuttuu projektin tilatiedoksi "Lähetetty tierekisteriin". Viite-sovellus tarkistaa minuutin välein Tierekisterin tilanteen. Kun muutos on käsitelty siellä, Viite saa tästä tiedon, ja tilatiedoksi tulee "Viety tierekisteriin", ja tieosoiteprojekti on nyt valmis. Mikäli muutosilmoitus ei ole mennyt läpi Tierekisterissä, tilaksi päivittyy "Virhe tierekisterissä" ja listalle tulee oranssi "Avaa uudelleen" -painike. Viemällä hiiren "Virhe tierekisterissä" -tekstin päälle virheen infolaatikko tulee näkyviin. Virhe korjataan avaamalla projekti ja tekemällä tarvittavat muokkaukset, jonka jälkeen ilmoitus lähetetään uudelleen Tierekisteriin.  
 
-|Tieosoiteprojektin tila|Selitys|
-|-|-|
-|Keskeneräinen|Projekti on työn alla ja sitä ei ole vielä lähetetty tierekisteriin.|
+Tässä koostettuna tieosoiteprojektin tilat
+
+|Tieosoiteprojektin tila|Selite|
+|------|------|
+|Keskeneräinen|Projekti on työn alla ja sitä ei ole vielä lähetetty Tierekisteriin.|
 |Lähetetty tierekisteriin|Projekti on lähetetty tierekisteriin.|
-|Tierekisterissä käsittelyssä|Projekti on tierekisterissä käsittelyssä. Tierekisteri käsittelee projektin sisältämiä muutosilmoituksia.|
-|Viety tierekisteriin|Projekti on hyväksytty tierekisterissä. Muutokset näkyvät myös Viite-sovelluksessa.|
+|Tierekisterissä käsittelyssä|Projekti on Tierekisterissä käsittelyssä. Tierekisteri käsittelee projektin sisältämiä muutosilmoituksia.|
+|Viety tierekisteriin|Projekti on hyväksytty Tierekisterissä. Muutokset näkyvät myös Viite-sovelluksessa.|
 |Virhe tierekisterissä|Tierekisteri ei hyväksynyt projektia. Tierekisterin tarkempi virheilmoitus tulee näkyviin viemällä osoittimen "Virhe tierekisterissä"-tekstin päälle. Projektin voi avata uudelleen.|
 |Virhetilanne Viitteessä|Projekti on lähetty Tierekisteriin ja se on Tierekisterin hyväksymä, mutta projektin tiedot eivät piirry Viite-sovelluksessa.| 
 
@@ -527,7 +524,7 @@ Kun muutosilmoitus on lähetetty, muuttuu projektin tilatiedoksi Lähetetty tier
 
 Viitteessä teillä, joiden tienumero on suurempi kuin 70 000, tienimi on pakollinen tieto. Tienimi annetaan uutta tietä luotaessa projektilomakkeella.
 
-Jos annettu tienimi täytyy vaihtaa tai sitä pitää muokata esim. kirjoitusvirheen vuoksi, käytetään Tiennimen ylläpito -työkalua, joka avataan Tieosoiteprojektit-painikkeen alta näytön oikeasta reunasta (kuva 6.1).
+Jos annettu tienimi täytyy vaihtaa tai sitä pitää muokata esim. kirjoitusvirheen vuoksi, käytetään Tiennimen ylläpito -työkalua, joka avataan alkutilasta (karttakäyttöliittymän katselutilasta) Tieosoiteprojektit-painikkeen alta näytön oikeasta reunasta (kuva 6.1).
 
 Muokattavat tienimet haetaan tienumeron perusteella kirjoittamalla tien numero lomakkeen syöttökenttään (1) (kuva 8.1). Tiennimen ylläpito -ikkuna suljetaan klikkaamalla oikeasta yläkulmasta löytyvästä rastista (2). Lomakkeen alareunassa on huomautus (3), että tallennetut muutokset päivittyvät tierekisteriin tunnin sisällä.
 
@@ -538,7 +535,7 @@ _Kuva 8.1: Tienimen ylläpito -työkalun lomakkeen etusivu._
 8.1 Tien nimen muokkaaminen, kun tiellä on jo nimi
 --------------------------
 
-Kun tienumero on kirjoitettu syöttökenttään, painetaan Hae-painiketta, ja hakutulokset listautuvat hakukentän alapuolelle otsikkorivien alle (1). Listalla näkyvät tien aiemmat nimet alku- ja loppupäivämäärineen. Voimassa oleva nimi on listassa alimpana (2). Sitä voi muokata (syöttökenttä on valkoinen). Rivin lopussa on [+] –painike (3), jos haettu tie on voimassa oleva. Voimassa olevalla nimellä ei ole loppupäivämäärää (4). Hakukenttä ei tyhjene, mutta uuden haun voi tehdä kirjoittamalla uuden tienumeron hakukenttään.
+Kun tienumero on kirjoitettu syöttökenttään, painetaan Hae-painiketta, ja hakutulokset listautuvat hakukentän alapuolelle otsikkorivien alle (1). Listalla näkyvät tien aiemmat nimet alku- ja loppupäivämäärineen. Voimassa oleva nimi on listassa alimpana (2). Sitä voi muokata (syöttökenttä on valkoinen). Rivin lopussa on [+] –painike (3), jos haettu tie on voimassa oleva. Voimassa olevalla nimellä ei ole loppupäivämäärää (4). Hakukenttä ei tyhjene, mutta uuden haun voi tehdä kirjoittamalla uuden tienumeron hakukenttään ja painamalla jälleen Hae.
 
 ![Listaus tienimistä ja uudelleenhaku](k54.JPG)
 
@@ -572,7 +569,7 @@ Kun käyttäjä on tallentanut uuden nimen, muuttuu [-] -painike [+] -painikkeek
 
 _Kuva 8.6: Uusi nimi on tallennettu onnistuneesti. Loppupvm-kenttä ei ole aktiivinen, mutta tienimeä voi muuttaa. Uuden nimen voi tallentaa [+]-painikkeella._
 
-Kirjoitusvirheiden välttämiseksi Viitteessä on päivämäärärajaus. Nimen alkupäivämäärä voi olla enintään 5 vuoden kuluttua nimenantopäivämäärästä. Toisin sanoen, jos käyttäjä antaa 1.3.2019 tielle uuden nimen, voi tien alkupäivämäärä olla viimeistään 28.2.2024.
+Kirjoitusvirheiden karsimiseksi Viitteessä on päivämäärärajaus. Nimen alkupäivämäärä voi olla enintään 5 vuoden kuluttua nimenantopäivämäärästä. Toisin sanoen, jos käyttäjä antaa 1.3.2019 tielle uuden nimen, voi tien alkupäivämäärä olla viimeistään 28.2.2024.
 
 # 9. Solmut ja liittymät
 --------------------------
@@ -583,7 +580,7 @@ Kirjoitusvirheiden välttämiseksi Viitteessä on päivämäärärajaus. Nimen a
 9.1.1 Tieosoitemuutosprojekti
 --------------------------
 
-Tieosoitemuutoksista Viite tunnistaa uudet tien tai tieosan alku- tai loppupisteet sekä hallinnollisen luokan vaihtumiskohdat, joihin se luo solmukohta-aihiot. Tieosoitemuutoksista Viite tunnistaa uudet liittymät, joihin Viite luo liittymäaihiot liittymäkohtineen. 
+Tieosoitemuutoksista Viite tunnistaa uudet tien tai tieosan alku- tai loppupisteet sekä hallinnollisen luokan vaihtumiskohdat, joihin se luo solmukohta-aihiot. Tieosoitemuutoksista Viite tunnistaa myös uudet liittymät, joihin Viite luo liittymäaihiot liittymäkohtineen. 
 
 Viite tunnistaa tieosoitemuutoksessa tarpeettomaksi jäävät solmut, solmukohdat ja liittymät, jolloin se päättää ne. 
 
@@ -611,33 +608,38 @@ Työkalu avataan klikkaamalla karttanäkymän oikeassa reunassa sijaitsevaa Solm
 
 _Kuva 9.1: Solmut ja liittymät -työkalun avaaminen._ 
 
-Avautuneessa näkymässä solmutyypit esitetään kartalla symboleilla, joiden selitteet (1) löytyvät vasemmasta reunasta. Sieltä löytyvät myös liittymä-, liittymäaihio- ja solmukohta-aihiosymboleiden selitteet (2) sekä työkalu solmun valintaan (3). 
+Avautuneessa näkymässä solmut esitetään kartalla vinoneliösymboleina. Solmutyyppien selitteet (1) löytyvät vasemmasta reunasta. Sieltä löytyvät myös liittymä-, liittymäaihio- ja solmukohta-aihiosymboleiden selitteet (2) sekä työkalu solmun valintaan (3). 
 
-Näkymän oikeassa reunassa on solmujen hakutoiminto (4).
+Näkymän oikeassa reunassa on solmujen hakutoiminto (4). Hakutoiminnostsa tarkemmin luvussa 9.3 (Solmujen haku).
 
-Hakutoiminnon alapuolella näytetään listat käsittelemättömistä liittymä- ja solmukohta-aihioista (5).
+Hakutoiminnon alapuolella näytetään listat käsittelemättömistä liittymä- ja solmukohta-aihioista (5). Näistä tarkemmin kappaleessa 9.4 (Lista liittymä- ja solmukohta-aihioista).
 
-![Solmut ja liittymät -työkalu](k60.jpg)
+Työkalusta poistutaan klikkaamalla oikean yläkulman Sulje-painiketta. (6)
+
+![Solmut ja liittymät -työkalu](k60.png)
 
 _Kuva 9.2: Solmut ja liittymät -työkalu._ 
 
-Kun hiiren vie kartalla jonkin solmun päälle, tulee näkyviin infolaatikko (6), joka kertoo kyseisen solmun nimen ja solmutyypin.
+Kun hiiren vie kartalla jonkin solmun päälle, tulee näkyviin infolaatikko (7), joka kertoo kyseisen solmun nimen ja solmutyypin.
 
-Solmun liittymät tulevat näkyviin, kun zoomaa tasolle, jonka mittakaavajanassa on lukema 100 m. Liittymät esitetään sinisillä, numeroiduilla liittymäsymboleilla. Viemällä hiiren liittymän päälle käyttäjä saa esiin infolaatikon (7), jossa näytetään ko. liittymän tieosoite ja sen solmun nimi, johon liittymä on liitetty.
+Solmun liittymät tulevat näkyviin, kun zoomaa tasolle, jonka mittakaavajanassa on lukema 100 m. Liittymät esitetään sinisillä, numeroiduilla liittymäsymboleilla. Viemällä hiiren liittymän päälle käyttäjä saa esiin infolaatikon (8), jossa näytetään ko. liittymän tieosoite ja sen solmun nimi, johon liittymä on liitetty.
 
-![Solmun ja liittymän -infolaatikot](k61.jpg)
+![Solmun ja liittymän -infolaatikot](k61.png)
 
 _Kuva 9.3: Solmun ja liittymän infolaatikot._ 
 
-Työkalusta poistutaan klikkaamalla oikean yläkulman Sulje-painiketta. 
 
 
 9.3 Solmujen haku
 --------------------------
 
-Solmujen tietoja voi hakea joko tienumeron tai tienumeron ja tieosien (AOSA, LOSA) perusteella. Käyttäjä syöttää haluamansa arvot kenttiin, painaa Hae solmut -painiketta ja Viite listaa hakua vastaavat solmut formille.
+Solmujen tietoja voi hakea joko pelkän tienumeron, tai tienumeron ja tieosien (AOSA, LOSA) perusteella. Käyttäjä syöttää haluamansa arvot kenttiin, painaa Hae solmut -painiketta ja Viite listaa hakua vastaavat solmut formille.
 
-Jos käyttäjä täyttää vain tienumeron, listataan kaikkien kyseisellä tiellä olevien solmujen tiedot. Jos käyttäjä antaa tienumeron ja tieosan, listataan kaikki kyseisen tieosan solmut. Jos käyttäjä on antanut sekä tieosien alku- että loppuosa-arvon, tuodaan näiden välisten tieosien solmujen tiedot. Mikäli käyttäjä antaa tiedon vain AOSA- tai LOSA-kenttään, tulkitaan haun kohdistuvan vain sille tieosalle.
+![Solmujen hakutulos](k61_2.png)
+
+_Kuva 9.3: Solmujen hakutulos._
+
+Jos käyttäjä täyttää vain tienumeron, listataan kaikkien kyseisellä tiellä olevien solmujen tiedot. Jos käyttäjä antaa tienumeron ja tieosan, listataan kaikki kyseisen tieosan solmut. Jos käyttäjä on antanut sekä tieosien alku- että loppuosa-arvon, tuodaan näiden ja näiden välisten tieosien solmujen tiedot. Mikäli käyttäjä antaa tiedon vain AOSA- tai LOSA-kenttään, tulkitaan haun kohdistuvan vain sille tieosalle.
 
 Haun jälkeen karttanäkymä zoomataan niin, että kaikki haetut solmut mahtuvat näytölle.
 Formilla näytetään solmuista seuraavat tiedot:
@@ -661,15 +663,15 @@ Tyhjennä tulokset -painike tyhjentää hakutuloslistan.
 
 Formilla näytetään käyttäjän ELYn/ELYjen mukainen lista liittymä- ja solmukohta-aihioista kasvavassa tieosoitejärjestyksessä. Yhdestä liittymäkohdasta listataan yksi, pienimmällä tienumerolla oleva linkki. Tieosan vaihtumiskohdassa listataan alkavan tieosan 0-kohta.
 
-Liittymäaihion osoite näytetään muodossa tie/ajr/osa/aet ja solmukohta-aihion osoite muodossa tie/osa/ aet.  Osoite on linkki, jota klikkaamalla zoomataan kartalla kyseiseen kohtaan ja päästään käsittelemään aihiota. 
+Liittymäaihion osoite näytetään muodossa tie/ajr/osa/aet ja solmukohta-aihion osoite muodossa tie/osa/aet.  Osoite on linkki, jota klikkaamalla zoomataan kartalla kyseiseen kohtaan ja päästään käsittelemään aihiota. 
 
 
 9.5 Nykyisen solmun tietojen katselu/muokkaaminen
 --------------------------
 
-Kun käyttäjä klikkaa vasemmassa reunassa sijaitsevaa Solmun valinta -työkalua, muokkaustoiminto aktivoituu ja painikkeen tausta muuttuu siniseksi.  Tämän jälkeen käyttäjä valitsee kartalta solmun, jonka tietoja haluaa katsella tai muokata, ja formille avautuu tiedot solmusta (1), solmukohdista (2) ja liittymistä (3).
+Kun käyttäjä klikkaa vasemmassa reunassa sijaitsevaa Solmun valinta -työkalua, muokkaustoiminto aktivoituu ja painikkeen tausta muuttuu vaaleansiniseksi.  Tämän jälkeen käyttäjä valitsee kartalta solmun, jonka tietoja haluaa katsella tai muokata, ja formille avautuu tiedot solmusta (1), solmukohdista (2) ja liittymistä (3).
 
-![Solmun tiedot, solmukohdat ja liittymät](k62.jpg)
+![Solmun tiedot, solmukohdat ja liittymät](k62.png)
 
 _Kuva 9.4: Solmun tiedot, solmukohdat ja liittymät._ 
 
@@ -681,7 +683,8 @@ Solmun valinta -painike inaktivoituu tietojen tallennuksen tai peruutuksen jälk
 
 Formille avautuvassa nimikentässä voi muokata solmun nimeä. Solmun tyypin saa muutettua valitsemalla uuden tyypin pudotusvalikosta. Kun tyyppi on valittu, sille valitaan uusi alkupäivämäärä. Virheellisen solmutyypin voi korjata ilman päivämäärämuutosta.
 
-Lopuksi käyttäjä tallentaa muutokset tai peruuttaa ne (4).
+Lopuksi käyttäjä voi tallentaa muutokset tai peruuttaa ne (4).
+Tallenna-nappi on epäaktiivinen, kunnes solmulle on tehty joku muutos.
 
 #### Solmun solmukohtien katselu
 
@@ -695,7 +698,7 @@ _Kuva 9.5: Solmun solmukohdat._
 
 #### Solmun liittymien katselu ja liittymänumeron muokkaus
 
-Liittymista näytetään liittymänumero, tienumero, ajorata, tieosa, etäisyyslukema ja ennen/jälkeen-arvo (7). Liittymät näytetään numerojärjestyksessä (8), liittymäkohdat alekkain tieosoitejärjestyksessä.
+Liittymistä näytetään liittymänumero, tienumero, ajorata, tieosa, etäisyyslukema ja ennen/jälkeen-arvo (7). Liittymät näytetään numerojärjestyksessä (8), liittymäkohdat alekkain tieosoitejärjestyksessä.
 
 Käyttäjä voi muokata liittymänumeroa kirjoittamalla uuden liittymänumeron vanhan numeron tilalle (9). Solmulla ei voi olla useita samalla numerolla olevia liittymiä. Viite estää tällaisen tallennuksen. Tallennus on estetty myös silloin, jos liittymänumero(ita) puuttuu.
 
@@ -711,26 +714,34 @@ Irrotettava solmukohta ja/tai liittymä valitaan klikkaamalla rivin alussa oleva
 
 _Kuva 9.7: Varmistus valinnan perumisesta_ 
 
-![Solmukohtien ja liittymien irrotus](k66.jpg)
+Viite valitsee automaattisesti kaikki samassa kohdassa sijaitsevat solmukohdat ja liittymät irrotettaviksi. Käyttäjää pyydetään vahvistamaan irrotus (10).  
+
+![Solmukohtien ja liittymien irrotus](k66.png)
 
 _Kuva 9.8: Solmukohtien ja liittymien irrotus_ 
 
-Viite valitsee automaattisesti kaikki samassa kohdassa sijaitsevat solmukohdat ja liittymät irrotettaviksi. Käyttäjää pyydetään vahvistamaan irrotus (10).  
-
-![Tilanne solmukohdan ja liittymien irrotuksen jälkeen](k67.jpg)
+![Tilanne solmukohdan ja liittymien irrotuksen jälkeen](k67.png)
 
 _Kuva 9.9: Tilanne solmukohdan ja liittymien irrotuksen jälkeen_ 
 
-Kun käyttäjä on valinnut irrotettavat liittymät ja solmut, ko. solmukohdat/liittymät muuttuvat aihioiksi (11) kartalla ja liittymänumero poistuu (12) formilla.
+Kun käyttäjä on valinnut irrotettavat liittymät ja solmut, ja tallentanut muutokset, ko. solmukohdat/liittymät poistuvat näkyvistä (11) kartalta ja liittymänumero poistuu (12) formilta.
 
 Nykyisen solmun muutokset tallennetaan Tallenna-painikeella tai peruutetaan Peruuta-painikkeella.
+
+Tallennuksen jälkeen irroitettavat liittymät näkyvät kartalla aihioina.
+
+![Tilanne tallennuksen jälkeen irrotetut näkyvät aihioina.](k67_2.png)
+
+_Kuva 9.9: Tallennuksen jälkeen irrotetut solmukohdat/liittymät näkyvät aihioina._ 
 
 9.6 Aihioiden liittäminen solmuun
 --------------------------
 
 #### Aihioiden liittäminen uuteen solmuun
 
-Uusi solmu luodaan aihioiden käsittelyn yhteydessä. Käyttäjä valitsee liittymä- tai solmukohta-aihion joko kartalta (1) tai aihiolistalta ja klikkaa “Luo uusi solmu, johon haluat liittää aihiot” -painiketta (2). Hiiren kursori muuttuu nuolesta ristiksi, jolla klikkaamalla asetetaan solmun sijainti kartalla (3).  Sijaintia voi muokata hiirellä vetämällä.
+Uusi solmu luodaan aihioiden käsittelyn yhteydessä. Käyttäjä valitsee liittymä- tai solmukohta-aihion joko suoraan kartalta (1) (huom. solmun valinta-työkalu ei toimi tähän) tai aihiolistalta ja klikkaa “Luo uusi solmu, johon haluat liittää aihiot” -painiketta (2). Hiiren kursori muuttuu tällöin nuolesta ristiksi, jolla klikkaamalla haluttuun paikkaan solmun asetetaan kartalle (3).
+
+Solmun sijaintia voi muokata raahaamalla sitä hiirellä. Siirtämisestä lisää kappaleessa 9.7 (Solmun sijainnin muokkaaminen).
 
 ![Aihion liittäminen uuteen solmuun](k68.jpg)
 
