@@ -111,13 +111,15 @@ Karttaa liikutetaan raahaamalla pitämällä hiiren vasenta painiketta pohjassa 
 
 #### Hakukenttä
 
-Käyttöliittymässä on hakukenttä (1), jossa voi hakea koordinaateilla ja katuosoitteella tai tieosoitteella. Haku suoritetaan kirjoittamalla hakuehto hakukenttään ja klikkaamalla Hae. Hakutulos tulee listaan hakukentän alle. Hakutuloslistassa ylimpänä on maantieteellisesti kartan nykyistä keskipistettä lähimpänä oleva kohde. Mikäli hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, täytyy listalta valita tulos, johon kartta keskittyy. Tyhjennä tulokset -painike tyhjentää hakutuloslistan.
-
-Tieosoitteella haku: Tieosoitteesta hakukenttään voi syöttää joko tienumeron tai tienumero + tieosanumeroyhdistelmän, esim. 2 tai 2 1. (Varsinainen tieosoitehaku tieosoitteiden ylläpidon tarpeisiin toteutetaan myöhemmin.)
+Käyttöliittymässä on hakukenttä (1), jossa voi hakea koordinaateilla, tieosoitteella, katuosoitteella, MTKID:llä ja Linkin ID:llä. Haku suoritetaan kirjoittamalla hakuehto hakukenttään ja klikkaamalla Hae. Hakutulos tulee listaan hakukentän alle. Hakutuloslistassa ylimpänä on maantieteellisesti kartan nykyistä keskipistettä lähimpänä oleva kohde. Mikäli hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, täytyy listalta valita tulos, johon kartta keskittyy. Tyhjennä tulokset -painike tyhjentää hakutuloslistan.
 
 Koordinaateilla haku: Koordinaatit syötetään muodossa "pohjoinen (7 merkkiä), itä (6 merkkiä)". Koordinaatit tulee olla ETRS89-TM35FIN -koordinaattijärjestelmässä, esim. 6975061, 535628.
 
-Katuosoitteella haku: Katuosoitteesta hakukenttään voi syöttää koko osoitteen tai sen osan, esim. "Mannerheimintie" tai "Mannerheimintie 10, Helsinki".
+Tieosoitteella haku: Tieosoitteesta hakukenttään voi syöttää joko tienumeron (esim. 2), tienumero + tieosanumeroyhdistelmän (esim. 2 1) tai tienumero + tieosanumero + etäisyys –yhdistelmän (esim. 2 1 350). 
+
+Katuosoitteella haku: Katuosoitteesta hakukenttään voi syöttää koko osoitteen tai sen osan, esim. "Mannerheimintie”, ”Mannerheimintie, Helsinki” tai "Mannerheimintie 10, Helsinki".
+
+Linkin ID:llä haku toimii myös selaimen osoitekentän kautta. Ks. tarkemmin 5.3.
 
 #### Taustakartat
 
@@ -125,7 +127,7 @@ Taustakartaksi (2) voi valita vasemman alakulman painikkeista maastokartan, orto
 
 #### Näytettävät tiedot
 
-Käyttäjä voi halutessaan valita, näytetäänkö kartalla kiinteistörajat, Suravage-linkit tai tieosoiteverkko symboleineen (3). Valinnat saa päälle ja päältä pois valintaruutuja klikkaamalla. Näytä Suravage-linkit ja Näytä tieosoiteverkko -valinnat ovat automaattisesti päällä. Tieosoiteverkon symboleita ovat etäisyyslukemasymbolit ja suuntanuolet.
+Käyttäjä voi halutessaan valita, näytetäänkö kartalla kiinteistörajat, tieosoitteettomat linkit, rakenteilla-linkit tai tieosoiteverkko symboleineen (3). Valinnat saa päälle ja päältä pois valintaruutuja klikkaamalla. Muut kuin Näytä kiinteistörajat -valinnat ovat automaattisesti päällä. Tieosoiteverkon symboleita ovat etäisyyslukemasymbolit ja suuntanuolet.
 
 #### Mittakaavataso ja mittakaava
 
