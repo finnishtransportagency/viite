@@ -362,7 +362,7 @@
         discontinuity: Number(roadAddressProjectForm.find('#discontinuityDropdown')[0].value),
         roadEly: Number(roadAddressProjectForm.find('#ely')[0].value),
         roadLinkSource: Number(_.head(changedLinks).roadLinkSource),
-        roadType: Number(roadAddressProjectForm.find('#administrativeClassDropdown')[0].value),
+        administrativeClass: Number(roadAddressProjectForm.find('#administrativeClassDropdown')[0].value),
         userDefinedEndAddressM: userDefinedEndAddressM,
         coordinates: coordinates,
         roadName: roadAddressProjectForm.find('#roadName')[0].value,
