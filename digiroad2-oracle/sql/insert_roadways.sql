@@ -1,6 +1,6 @@
 ﻿-- PUBLISHED_ROAD_NETWORK
 insert into PUBLISHED_ROAD_NETWORK values (PUBLISHED_ROAD_NETWORK_SEQ.nextval, sysdate, sysdate);
---
+-- 
 -- Roadway and PUBLISHED_ROADWAY -table rows
 --
 -- Insert clauses generated with the following SQL:
