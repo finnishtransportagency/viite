@@ -175,7 +175,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomRight1 = Seq(Point(5.0, 0.0), Point(5.0, 5.0))
       val geomRight2 = Seq(Point(5.0, 5.0), Point(5.0, 62.0))
 
-      val projectLinkRight1 = ProjectLink(projectLinkId + 2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None, Some("user"), 12347L, 0.0, 5.0, SideCode.Unknown, (RoadAddressCP, NoCP), (NoCP, NoCP), geomRight1, projId, LinkStatus.Transfer, AdministrativeClass.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12346L)
+      val projectLinkRight1 = ProjectLink(projectLinkId + 2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None, Some("user"), 12347L, 0.0, 5.0, SideCode.Unknown, (RoadAddressCP, NoCP), (NoCP, NoCP), geomRight1, projId, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12346L)
 
       val projectLinkRight2 = ProjectLink(projectLinkId + 3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None, Some("user"), 12348L, 0.0, 57.0, SideCode.Unknown, (NoCP, RoadAddressCP), (NoCP, NoCP), geomRight2, projId, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId + 1, linearLocationId + 1, 0, reversed = false, None, 86400L, roadwayNumber = 12347L)
 
@@ -208,9 +208,9 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomRight1 = Seq(Point(5.0, 0.0), Point(5.0, 5.0))
       val geomRight2 = Seq(Point(5.0, 5.0), Point(5.0, 62.0))
 
-      val projectLinkRight1 = ProjectLink(projectLinkId+2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None, Some("user"), 12347L, 0.0, 5.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP), geomRight1, 0L, LinkStatus.Transfer, AdministrativeClass.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12346L)
+      val projectLinkRight1 = ProjectLink(projectLinkId+2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None, Some("user"), 12347L, 0.0, 5.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP), geomRight1, 0L, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12346L)
 
-      val projectLinkRight2 = ProjectLink(projectLinkId+3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None, Some("user"), 12348L, 0.0, 57.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP), geomRight2, 0L, LinkStatus.Transfer, AdministrativeClass.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId, linearLocationId+1, 0, reversed = false, None, 86400L, roadwayNumber = 12347L)
+      val projectLinkRight2 = ProjectLink(projectLinkId+3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None, Some("user"), 12348L, 0.0, 57.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP), geomRight2, 0L, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId, linearLocationId+1, 0, reversed = false, None, 86400L, roadwayNumber = 12347L)
 
       val leftSideProjectLinks = Seq(projectLinkLeft1, projectLinkLeft2)
       val rightSideProjectLinks = Seq(projectLinkRight1, projectLinkRight2)
@@ -241,9 +241,9 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val geomRight1 = Seq(Point(5.0, 0.0), Point(5.0, 5.0))
       val geomRight2 = Seq(Point(5.0, 5.0), Point(5.0, 62.0))
 
-      val projectLinkRight1 = ProjectLink(projectLinkId+2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None, Some("user"), 12347L, 0.0, 5.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP), geomRight1, 0L, LinkStatus.Transfer, AdministrativeClass.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12346L)
+      val projectLinkRight1 = ProjectLink(projectLinkId+2, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 5L, 0L, 5L, None, None, Some("user"), 12347L, 0.0, 5.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP), geomRight1, 0L, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight1), roadwayId, linearLocationId, 0, reversed = false, None, 86400L, roadwayNumber = 12346L)
 
-      val projectLinkRight2 = ProjectLink(projectLinkId+3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None, Some("user"), 12348L, 0.0, 57.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP), geomRight2, 0L, LinkStatus.Transfer, AdministrativeClass.FerryRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId, linearLocationId+1, 0, reversed = false, None, 86400L, roadwayNumber = 12347L)
+      val projectLinkRight2 = ProjectLink(projectLinkId+3, 9999L, 1L, Track.apply(1), Discontinuity.Discontinuous, 5L, 62L, 5L, 62L, None, None, Some("user"), 12348L, 0.0, 57.0, SideCode.Unknown, (NoCP, NoCP), (CalibrationPointType.NoCP, CalibrationPointType.NoCP), geomRight2, 0L, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomRight2), roadwayId, linearLocationId+1, 0, reversed = false, None, 86400L, roadwayNumber = 12347L)
 
       val leftSideProjectLinks = Seq(projectLinkLeft1)
       val rightSideProjectLinks = Seq(projectLinkRight1, projectLinkRight2)
@@ -823,7 +823,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       groupedLeft1.size should be (1)
       groupedLeft1.zip(groupedRight1).forall(zipped => zipped._1._2.maxBy(_.endAddrMValue).endAddrMValue == zipped._2._2.maxBy(_.endAddrMValue).endAddrMValue) should be (true)
 
-      val assignedValues2 = defaultSectionCalculatorStrategy.assignMValues(Seq(projectLinkRight1, projectLinkRight2.copy(administrativeClass = AdministrativeClass.PrivateRoadType)), Seq(projectLinkLeft1, projectLinkLeft2.copy(administrativeClass = AdministrativeClass.PrivateRoadType, roadwayNumber = Sequences.nextRoadwayNumber)), Seq.empty[UserDefinedCalibrationPoint])
+      val assignedValues2 = defaultSectionCalculatorStrategy.assignMValues(Seq(projectLinkRight1, projectLinkRight2.copy(administrativeClass = AdministrativeClass.Private)), Seq(projectLinkLeft1, projectLinkLeft2.copy(administrativeClass = AdministrativeClass.Private, roadwayNumber = Sequences.nextRoadwayNumber)), Seq.empty[UserDefinedCalibrationPoint])
 
       val (left2, right2) = assignedValues2.partition(_.track == Track.LeftSide)
       //should have same 2 different roadwayNumber since they have 2 different roadtypes (projectLinkLeft2 have now Private RoadType)

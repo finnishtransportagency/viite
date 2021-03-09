@@ -200,7 +200,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       if (ra.id > 50)
         ra
       else
-        ra.copy(administrativeClass = AdministrativeClass.MunicipalityStreetRoad)
+        ra.copy(administrativeClass = AdministrativeClass.Municipality)
     )
     val unchanged = addresses.map(a => (a, toProjectLink(project, LinkStatus.UnChanged)(a)))
 
@@ -212,11 +212,11 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       (fr.startMAddr == 60 || fr.endMAddr == 60) should be(true)
       (to.startMAddr == 60 || to.endMAddr == 60) should be(true)
       if (fr.startMAddr == 0L)
-        fr.administrativeClass should be(AdministrativeClass.MunicipalityStreetRoad)
+        fr.administrativeClass should be(AdministrativeClass.Municipality)
       else
         fr.administrativeClass should be(AdministrativeClass.State)
       if (to.startMAddr == 0L)
-        to.administrativeClass should be(AdministrativeClass.MunicipalityStreetRoad)
+        to.administrativeClass should be(AdministrativeClass.Municipality)
       else
         to.administrativeClass should be(AdministrativeClass.State)
     })

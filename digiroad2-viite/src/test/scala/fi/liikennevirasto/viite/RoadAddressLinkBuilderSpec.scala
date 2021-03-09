@@ -12,7 +12,6 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass.UnknownOwnerRoad
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
@@ -109,11 +108,11 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers {
   }
 
   test("Test ProjectAddressLinkBuilder.build() When building project address links from regular project links and road links Then return the build ProjectAddressLinks.") {
-    val unknownProjectLink = ProjectLink(0, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 0, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
+    val unknownProjectLink = ProjectLink(0, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 0, NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
     val projectLinks =
       Map(
-        1717380l -> ProjectLink(1270, 0, 0, Track.apply(99), Continuous, 1021, 1028, 1021, 1028, None, None, None, 1717380, 0.0, 6.0, AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
-        1717374l -> ProjectLink(1259, 1130, 0, Combined, Continuous, 959, 1021, 959, 1021, None, None, None, 1717374, 0.0, 61.0, AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, NotHandled, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
+        1717380l -> ProjectLink(1270, 0, 0, Track.apply(99), Continuous, 1021, 1028, 1021, 1028, None, None, None, 1717380, 0.0, 6.0, AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L),
+        1717374l -> ProjectLink(1259, 1130, 0, Combined, Continuous, 959, 1021, 959, 1021, None, None, None, 1717374, 0.0, 61.0, AgainstDigitizing, (NoCP, NoCP), (NoCP, NoCP), List(), 1227, NotHandled, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 8, reversed = false, None, 85088L)
       )
 
     val roadLinks = Seq(
