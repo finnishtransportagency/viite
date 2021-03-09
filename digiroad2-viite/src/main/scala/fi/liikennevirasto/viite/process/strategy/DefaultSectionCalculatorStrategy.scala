@@ -82,10 +82,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       continuousSection(seq.tail, Seq(seq.head))
     else {
       val track = processed.last.track
-      val roadType = processed.last.administrativeClass
+      val administrativeClass = processed.last.administrativeClass
       val discontinuity = processed.last.discontinuity
       val discontinuousSections = List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
-      if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.administrativeClass == roadType) && !discontinuousSections.contains(discontinuity)) {
+      if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.administrativeClass == administrativeClass) && !discontinuousSections.contains(discontinuity)) {
         continuousSection(seq.tail, processed :+ seq.head)
       } else {
         (processed, seq)
@@ -136,10 +136,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
   private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-    val roadType = seq.headOption.map(_.administrativeClass.value).getOrElse(0)
+    val administrativeClass = seq.headOption.map(_.administrativeClass.value).getOrElse(0)
 
     val continuousProjectLinks =
-      seq.takeWhile(pl => pl.track == track && pl.administrativeClass.value == roadType).sortBy(_.startAddrMValue)
+      seq.takeWhile(pl => pl.track == track && pl.administrativeClass.value == administrativeClass).sortBy(_.startAddrMValue)
 
     val assignedContinuousSection = assignRoadwayNumbersInContinuousSection(continuousProjectLinks, givenRoadwayNumber)
     (assignedContinuousSection, seq.drop(assignedContinuousSection.size))

@@ -259,11 +259,11 @@ class DataImporter {
   }
 
   // TODO This is not used and should probably be removed.
-  def splitRoadAddresses(roadAddress: RoadAddress, addrMToSplit: Long, roadTypeBefore: AdministrativeClass, roadTypeAfter: AdministrativeClass, elyCode: Long): Seq[RoadAddress] = {
+  def splitRoadAddresses(roadAddress: RoadAddress, addrMToSplit: Long, administrativeClassBefore: AdministrativeClass, administrativeClassAfter: AdministrativeClass, elyCode: Long): Seq[RoadAddress] = {
     // mValue at split point on a TowardsDigitizing road address:
     val splitMValue = roadAddress.startMValue + (roadAddress.endMValue - roadAddress.startMValue) / (roadAddress.endAddrMValue - roadAddress.startAddrMValue) * (addrMToSplit - roadAddress.startAddrMValue)
     println(s"Splitting roadway id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on AddrMValue = $addrMToSplit")
-    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, administrativeClass = roadTypeBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, administrativeClass = administrativeClassBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
                 roadAddress.endMValue - splitMValue
               else
                 0.0, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
@@ -271,7 +271,7 @@ class DataImporter {
               else
                 splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode) // TODO Check roadway_number
 
-    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, administrativeClass = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, administrativeClass = administrativeClassAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
                 0.0
               else
                 splitMValue, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
