@@ -2111,30 +2111,30 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changeInfos = List(
         RoadwayChangeInfo(AddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, AdministrativeClass.apply(1), reversed = false, 1),
 
         RoadwayChangeInfo(AddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
-          Continuous, AdministrativeClass.apply(5), reversed = false, 2),
+          target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, AdministrativeClass.apply(3), reversed = false, 2),
 
         RoadwayChangeInfo(AddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(testRoadNumber1), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          Continuous, AdministrativeClass.apply(5), reversed = false, 3),
+          Continuous, AdministrativeClass.apply(3), reversed = false, 3),
         RoadwayChangeInfo(AddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          Continuous, AdministrativeClass.apply(5), reversed = false, 3),
+          Continuous, AdministrativeClass.apply(3), reversed = false, 3),
         RoadwayChangeInfo(AddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          Continuous, AdministrativeClass.apply(5), reversed = false, 3),
+          Continuous, AdministrativeClass.apply(3), reversed = false, 3),
         RoadwayChangeInfo(AddressChangeType.New,
           source = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(testRoadNumber2), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          Continuous, AdministrativeClass.apply(5), reversed = false, 3)
+          Continuous, AdministrativeClass.apply(3), reversed = false, 3)
       )
 
       val projectStartTime = DateTime.now()
@@ -2186,18 +2186,18 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changeInfos = List(
         RoadwayChangeInfo(AddressChangeType.Termination,
           source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, AdministrativeClass.apply(1), reversed = false, 1),
 
         RoadwayChangeInfo(AddressChangeType.Unchanged,
           source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
-          Continuous, AdministrativeClass.apply(5), reversed = false, 2),
+          target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
+          Continuous, AdministrativeClass.apply(3), reversed = false, 2),
 
         RoadwayChangeInfo(AddressChangeType.Unchanged,
           source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
           target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(200L), Some(400L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          Continuous, AdministrativeClass.apply(5), reversed = false, 3)
+          Continuous, AdministrativeClass.apply(3), reversed = false, 3)
       )
 
       val projectStartTime = DateTime.now()
@@ -2242,7 +2242,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changeInfos = List(
         RoadwayChangeInfo(AddressChangeType.Transfer,
           source = dummyRoadwayChangeSection(Some(srcRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, AdministrativeClass.apply(1), reversed = false, 1)
       )
 
@@ -2290,7 +2290,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changeInfos = List(
         RoadwayChangeInfo(AddressChangeType.Transfer,
           source = dummyRoadwayChangeSection(Some(srcRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, AdministrativeClass.apply(1), reversed = false, 1)
       )
 
@@ -2330,7 +2330,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changeInfos = List(
         RoadwayChangeInfo(AddressChangeType.ReNumeration,
           source = dummyRoadwayChangeSection(Some(srcRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, AdministrativeClass.apply(1), reversed = false, 1)
       )
 
@@ -2378,7 +2378,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val changeInfos = List(
         RoadwayChangeInfo(AddressChangeType.ReNumeration,
           source = dummyRoadwayChangeSection(Some(srcRoadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(8L)),
-          target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(5)), Some(Discontinuity.Continuous), Some(8L)),
+          target = dummyRoadwayChangeSection(Some(targetRoadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(8L)),
           Continuous, AdministrativeClass.apply(1), reversed = false, 1)
       )
 
