@@ -67,7 +67,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo]
         JObject(
           JField("change_type", JInt(BigInt.apply(o.changeType.value))),
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
-          JField("road_type", JInt(BigInt.apply(o.administrativeClass.value))),
+          JField("road_type", JInt(BigInt.apply(o.administrativeClass.asRoadTypeValue))),
           JField("ely", JInt(BigInt.apply(o.ely))),
           JField("source", Extraction.decompose(emptySection)),
           JField("target", Extraction.decompose(o.target))
@@ -76,7 +76,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo]
         JObject(
           JField("change_type", JInt(BigInt.apply(o.changeType.value))),
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
-          JField("road_type", JInt(BigInt.apply(o.administrativeClass.value))),
+          JField("road_type", JInt(BigInt.apply(o.administrativeClass.asRoadTypeValue))),
           JField("ely", JInt(BigInt.apply(o.ely))),
           JField("source", Extraction.decompose(o.source)),
           JField("target", Extraction.decompose(emptySection))
@@ -85,7 +85,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadwayChangeInfo]
         JObject(
           JField("change_type", JInt(BigInt.apply(o.changeType.value))),
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
-          JField("road_type", JInt(BigInt.apply(o.administrativeClass.value))),
+          JField("road_type", JInt(BigInt.apply(o.administrativeClass.asRoadTypeValue))),
           JField("reversed", JInt(BigInt.apply(if (o.reversed) 1 else 0))),
           JField("ely", JInt(BigInt.apply(o.ely))),
           JField("source", Extraction.decompose(o.source)),
