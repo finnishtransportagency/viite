@@ -46,7 +46,7 @@ class TrackCalculatorStrategySpec extends FunSuite with Matchers {
 
 
     val projectLinkLeft1 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 10L, 0L, 10L, None, None, None, 12345L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomLeft1, 0L, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft1), 0L, 0, 1L, reversed = false, None, 86400L)
-    val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 10L, 20L, 10L, 20L, None, None, None, 12346L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomLeft2, 0L, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 1L, reversed = false, None, 86400L)
+    val projectLinkLeft2 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 10L, 20L, 10L, 20L, None, None, None, 12346L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomLeft2, 0L, LinkStatus.Transfer, AdministrativeClass.Municipality, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft2), 0L, 0, 1L, reversed = false, None, 86400L)
     val projectLinkLeft3 = ProjectLink(-1000L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 20L, 30L, 20L, 30L, None, None, None, 12347L, 0.0, 10.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomLeft2, 0L, LinkStatus.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomLeft3), 0L, 0, 1L, reversed = false, None, 86400L)
 
     val geomRight1 = Seq(Point(10.0, 10.0), Point(20.0, 10.0))
