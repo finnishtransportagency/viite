@@ -190,6 +190,7 @@
     MaintenanceOpening: {value: 15, description: "Huoltoaukko"},
     PrivateRoad: {value: 16, description: "Yksityistie- tai katuliittymä"},
     StaggeredIntersection: {value: 17, description: "Porrastettu liittymä"},
+    Ferry: {value: 18, description: "Lautta"},
     UnknownNodeType: {value: 99, description: "Ei määritelty"}
   };
 
