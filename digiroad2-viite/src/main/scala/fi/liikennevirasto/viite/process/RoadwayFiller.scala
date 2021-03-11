@@ -27,11 +27,11 @@ object RoadwayFiller {
     val changeTarget = change.changeInfo.target
     currentRoadways.map { currentRoadway =>
       val projectLinksInRoadway = projectLinks.filter(_.roadwayId == currentRoadway.id).sortBy(_.startAddrMValue)
-      val roadTypeDiscontinuityOrElyChanged = currentRoadway.administrativeClass != changeTarget.administrativeClass.get ||
+      val administrativeClassDiscontinuityOrElyChanged = currentRoadway.administrativeClass != changeTarget.administrativeClass.get ||
         currentRoadway.discontinuity != changeTarget.discontinuity.get || currentRoadway.ely != changeTarget.ely.get
       val lengthChanged = currentRoadway.startAddrMValue != changeTarget.startAddressM.get ||
         currentRoadway.endAddrMValue != changeTarget.endAddressM.get
-      val roadways = if (roadTypeDiscontinuityOrElyChanged || lengthChanged) {
+      val roadways = if (administrativeClassDiscontinuityOrElyChanged || lengthChanged) {
         generateNewRoadwaysWithHistory(changeSource, changeTarget, projectLinksInRoadway, currentRoadway,
           change.projectStartDate)
       } else {

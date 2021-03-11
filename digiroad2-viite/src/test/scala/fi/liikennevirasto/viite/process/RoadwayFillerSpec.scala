@@ -91,9 +91,9 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, roadType = AdministrativeClass.apply(1)),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.UnChanged, roadType = AdministrativeClass.apply(3)),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 200L, 400L, Some(DateTime.now()), status = LinkStatus.UnChanged, roadType = AdministrativeClass.apply(1))
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.apply(1)),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.apply(3)),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 200L, 400L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.apply(1))
       )
 
       val changes = Seq(
@@ -133,9 +133,9 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.New, roadType = AdministrativeClass.apply(1), roadwayNumber = NewIdValue),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.New, roadType = AdministrativeClass.apply(3), roadwayNumber = NewIdValue),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 200L, 400L, Some(DateTime.now()), status = LinkStatus.New, roadType = AdministrativeClass.apply(1), roadwayNumber = NewIdValue)
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.New, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = NewIdValue),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.New, administrativeClass = AdministrativeClass.apply(3), roadwayNumber = NewIdValue),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 200L, 400L, Some(DateTime.now()), status = LinkStatus.New, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = NewIdValue)
       )
 
       val changes = Seq(
@@ -172,8 +172,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, roadType = AdministrativeClass.apply(1)),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.UnChanged, roadType = AdministrativeClass.apply(1))
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.apply(1)),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.apply(1))
       )
 
       val changes = Seq(
@@ -210,8 +210,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.Terminated, roadType = AdministrativeClass.apply(1)),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.Transfer, roadType = AdministrativeClass.apply(1))
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.Terminated, administrativeClass = AdministrativeClass.apply(1)),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.apply(1))
       )
 
       val changes = Seq(
@@ -258,10 +258,10 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, roadType = AdministrativeClass.apply(1)),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), endDate = Some(DateTime.now()), status = LinkStatus.Terminated, roadType = AdministrativeClass.apply(1)),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 500L, Some(DateTime.now()), status = LinkStatus.New, roadType = AdministrativeClass.apply(1)),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 500L, 600L, Some(DateTime.now()), status = LinkStatus.Transfer, roadType = AdministrativeClass.apply(1))
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.apply(1)),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), endDate = Some(DateTime.now()), status = LinkStatus.Terminated, administrativeClass = AdministrativeClass.apply(1)),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 500L, Some(DateTime.now()), status = LinkStatus.New, administrativeClass = AdministrativeClass.apply(1)),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 500L, 600L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.apply(1))
       )
 
       val changes = Seq(
@@ -304,8 +304,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.Numbering, roadType = AdministrativeClass.apply(1), roadwayNumber = roadways.head._2.roadwayNumber),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.Numbering, roadType = AdministrativeClass.apply(1), roadwayNumber = roadways.head._2.roadwayNumber)
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.Numbering, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = roadways.head._2.roadwayNumber),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.Numbering, administrativeClass = AdministrativeClass.apply(1), roadwayNumber = roadways.head._2.roadwayNumber)
       )
 
       val changes = Seq(
@@ -339,8 +339,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.Terminated, roadType = AdministrativeClass.apply(1)),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.Terminated, roadType = AdministrativeClass.apply(1))
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.Terminated, administrativeClass = AdministrativeClass.apply(1)),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 200L, Some(DateTime.now()), status = LinkStatus.Terminated, administrativeClass = AdministrativeClass.apply(1))
       )
 
       val changes = Seq(
@@ -383,9 +383,9 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, roadType = AdministrativeClass.apply(1)),
-        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 300L, Some(DateTime.now()), status = LinkStatus.Transfer, roadType = AdministrativeClass.apply(1)),
-        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 300L, 1000L, Some(DateTime.now()), status = LinkStatus.Transfer, roadType = AdministrativeClass.apply(1))
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.apply(1)),
+        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 0L, 300L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.apply(1)),
+        dummyProjectLink(1L, 2L, Track.Combined, Discontinuity.Continuous, 300L, 1000L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.apply(1))
       )
 
       val changes = Seq(
@@ -429,8 +429,8 @@ class RoadwayFillerSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val projectLinks = Seq(
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, roadType = AdministrativeClass.apply(1)).copy(roadwayNumber = roadwayNumber1),
-        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 300L, Some(DateTime.now()), status = LinkStatus.Transfer, roadType = AdministrativeClass.apply(1)).copy(roadwayNumber = roadwayNumber1)
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 0L, 100L, Some(DateTime.now()), status = LinkStatus.UnChanged, administrativeClass = AdministrativeClass.apply(1)).copy(roadwayNumber = roadwayNumber1),
+        dummyProjectLink(1L, 1L, Track.Combined, Discontinuity.Continuous, 100L, 300L, Some(DateTime.now()), status = LinkStatus.Transfer, administrativeClass = AdministrativeClass.apply(1)).copy(roadwayNumber = roadwayNumber1)
       )
 
       val changes = Seq(
