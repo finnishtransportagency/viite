@@ -636,7 +636,7 @@ class ProjectValidator {
       } else Seq.empty[ProjectLink]
     }
 
-    def validateTrackadministrativeClasses(groupInterval: Seq[(Long, Seq[ProjectLink])]) = {
+    def validateTrackAdministrativeClasses(groupInterval: Seq[(Long, Seq[ProjectLink])]): Seq[ProjectLink] = {
       groupInterval.groupBy(_._1).flatMap{ interval =>
         val leftrRightTracks = interval._2.flatMap(_._2)
         val validTrackInterval = leftrRightTracks.filterNot(r => r.status == Terminated || r.track == Track.Combined)
@@ -673,7 +673,7 @@ class ProjectValidator {
 
     def checkTrackAdministrativeClass(links: Seq[ProjectLink]) = {
       val trackIntervals = getTwoTrackInterval(links, Seq())
-      val errorLinks = validateTrackadministrativeClasses(trackIntervals)
+      val errorLinks = validateTrackAdministrativeClasses(trackIntervals)
       error(project.id, ValidationErrorList.DistinctAdministrativeClassesBetweenTracks)(errorLinks)
     }
 
