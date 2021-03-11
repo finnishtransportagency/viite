@@ -2548,7 +2548,7 @@ Left|      |Right
       val brokenContinuity = endOfRoadSet.tail :+ endOfRoadSet.head.copy(administrativeClass = AdministrativeClass.Municipality)
       val errors = projectValidator.checkTrackCodePairing(project, brokenContinuity).distinct
       errors should have size 1
-      errors.head.validationError should be(projectValidator.ValidationErrorList.DistinctRoadTypesBetweenTracks)
+      errors.head.validationError should be(projectValidator.ValidationErrorList.DistinctAdministrativeClassesBetweenTracks)
     }
   }
 
@@ -2566,7 +2566,7 @@ Left|      |Right
 
       val errors = projectValidator.checkTrackCodePairing(project, endOfRoadSet).distinct
       errors should have size 1
-      errors.head.validationError should be(projectValidator.ValidationErrorList.DistinctRoadTypesBetweenTracks)
+      errors.head.validationError should be(projectValidator.ValidationErrorList.DistinctAdministrativeClassesBetweenTracks)
     }
   }
 

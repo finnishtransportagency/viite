@@ -108,12 +108,12 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
   val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000l, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000l,
     (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
 
-  def dummyProjectLink(roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuityType: Discontinuity, startAddrM: Long, endAddrM: Long, originalStartAddr: Long = 0, originalEndAddr: Long = 0, startDate: Option[DateTime], endDate: Option[DateTime] = None, linkId: Long = 0, startMValue: Double = 0,
-                       endMValue: Double = 0, sideCode: SideCode = SideCode.Unknown, status: LinkStatus, projectId: Long = 0, roadType: AdministrativeClass = AdministrativeClass.State, geometry: Seq[Point] = Seq(), roadwayNumber: Long) = {
-    ProjectLink(0L, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddr, originalEndAddr, startDate, endDate, Some("user"), linkId, startMValue, endMValue, sideCode, (NoCP, NoCP), (NoCP, NoCP), geometry, projectId, status, roadType, LinkGeomSource.NormalLinkInterface, geometryLength = 0.0, roadwayId = 0, linearLocationId = 0, ely = 8, reversed = false, None, linkGeometryTimeStamp = 0, roadwayNumber)
+  def dummyProjectLink(roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuityType: Discontinuity, startAddrM: Long, endAddrM: Long, originalStartAddr: Long = 0, originalEndAddr: Long = 0, startDate: Option[DateTime], endDate: Option[DateTime] = None, linkId: Long = 0, startMValue: Double = 0, endMValue: Double = 0, sideCode: SideCode = SideCode.Unknown, status: LinkStatus, projectId: Long = 0, administrativeClass: AdministrativeClass = AdministrativeClass.State, geometry: Seq[Point] = Seq(), roadwayNumber: Long): ProjectLink = {
+    ProjectLink(0L, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, originalStartAddr, originalEndAddr, startDate, endDate, Some("user"), linkId, startMValue, endMValue, sideCode, (NoCP, NoCP), (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, geometryLength = 0.0, roadwayId = 0, linearLocationId = 0, ely = 8, reversed = false, None, linkGeometryTimeStamp = 0, roadwayNumber)
   }
 
-  def buildTestDataForProject(project: Option[Project], rws: Option[Seq[Roadway]], lil: Option[Seq[LinearLocation]], pls: Option[Seq[ProjectLink]]): Unit = {
+  def buildTestDataForProject(project: Option[Project], rws: Option[Seq[Roadway]], lil: Option[Seq[LinearLocation]],
+                              pls: Option[Seq[ProjectLink]]): Unit = {
     if (rws.nonEmpty)
       roadwayDAO.create(rws.get)
     if (lil.nonEmpty)
@@ -3089,9 +3089,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       linearLocationDAO.expireByRoadwayNumbers(Set(combLink3.roadwayNumber))
       roadwayDAO.expireHistory(Set(combLink3.roadwayId))
       projectLinkDAO.moveProjectLinksToHistory(projectId)
-      val terminatingCombLink3 = dummyProjectLink(road, part2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15,
-              Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Terminated,
-              projectId + 1, AdministrativeClass.State, combGeom3, rwNumber + 1).copy(id = plId + 3, calibrationPointTypes = (RoadAddressCP, RoadAddressCP), roadwayId = rwId + 1, linearLocationId = llId + 2)
+      val terminatingCombLink3 = dummyProjectLink(road, part2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15, Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId + 1, AdministrativeClass.State, combGeom3, rwNumber + 1).copy(id = plId + 3, calibrationPointTypes = (RoadAddressCP, RoadAddressCP), roadwayId = rwId + 1, linearLocationId = llId + 2)
 
       buildTestDataForProject(Some(project2), None, None, Some(Seq(terminatingCombLink3)))
 
@@ -3256,9 +3254,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       linearLocationDAO.expireByRoadwayNumbers(Set(combLink3.roadwayNumber))
       roadwayDAO.expireHistory(Set(combLink3.roadwayId))
       projectLinkDAO.moveProjectLinksToHistory(projectId)
-      val terminatingCombLink3 = dummyProjectLink(road, part2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15,
-              Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Terminated,
-              projectId + 1, AdministrativeClass.State, combGeom3, rwNumber + 1).copy(id = plId + 3, calibrationPointTypes = (RoadAddressCP, RoadAddressCP), roadwayId = rwId + 1, linearLocationId = llId + 2)
+      val terminatingCombLink3 = dummyProjectLink(road, part2, Track.Combined, Discontinuity.EndOfRoad, 0, 15, 0, 15, Some(DateTime.now()), None, 12347, 0, 15, SideCode.TowardsDigitizing, LinkStatus.Terminated, projectId + 1, AdministrativeClass.State, combGeom3, rwNumber + 1).copy(id = plId + 3, calibrationPointTypes = (RoadAddressCP, RoadAddressCP), roadwayId = rwId + 1, linearLocationId = llId + 2)
 
       buildTestDataForProject(Some(project2),
         None,
@@ -4439,9 +4435,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val startPoint = firstPointAt.x + (i * size)
       val endPoint = startPoint + size
       val geom = Seq(Point(startPoint, firstPointAt.y), Point(endPoint, firstPointAt.y))
-      val projectLink = dummyProjectLink(roadNumber, roadPartNumber, track, if (i == numberOfLinearLocations-1) discontinuity else Discontinuity.Continuous,
-              startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, 0, size,
-              SideCode.TowardsDigitizing, LinkStatus.New, projectId, roadType, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
+      val projectLink = dummyProjectLink(roadNumber, roadPartNumber, track, if (i == numberOfLinearLocations-1) discontinuity else Discontinuity.Continuous, startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, 0, size, SideCode.TowardsDigitizing, LinkStatus.New, projectId, roadType, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
       projectLink
     }
     val (linearLocations, roadways) = projectLinks.map(toRoadwayAndLinearLocation).unzip
@@ -4461,8 +4455,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val endPoint = startPoint + size
       val geom = Seq(Point(firstPointAt.x, startPoint), Point(firstPointAt.x, endPoint))
       val discontinuityCode = if ( i === (numberOfLinearLocations - 1) ) { discontinuity } else { Discontinuity.Continuous }
-      dummyProjectLink(roadNumber, roadPartNumber, track, discontinuityCode, startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, 0, size,
-              SideCode.TowardsDigitizing, LinkStatus.New, projectId, roadType, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
+      dummyProjectLink(roadNumber, roadPartNumber, track, discontinuityCode, startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, 0, size, SideCode.TowardsDigitizing, LinkStatus.New, projectId, roadType, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
     }
     val (linearLocations, roadways) = projectLinks.map(toRoadwayAndLinearLocation).unzip
     val orderedLinearLocations: Seq[LinearLocation] = linearLocations.zipWithIndex.map { case (ll, i) => ll.copy(orderNumber = orderNumber + i) }

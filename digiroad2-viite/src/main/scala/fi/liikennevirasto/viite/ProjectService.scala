@@ -384,9 +384,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     else None
   }
 
-  def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
-                         discontinuity: Discontinuity, roadType: AdministrativeClass, roadLinkSource: LinkGeomSource,
-                         roadEly: Long, user: String, roadName: String, coordinates: Option[ProjectCoordinates] = None): Map[String, Any] = {
+  def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, roadLinkSource: LinkGeomSource, roadEly: Long, user: String, roadName: String, coordinates: Option[ProjectCoordinates] = None): Map[String, Any] = {
     withDynSession {
       writableWithValidTrack(projectId, track.value) match {
         case None =>
@@ -400,7 +398,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val reversed = if (existingProjectLinks.nonEmpty) existingProjectLinks.forall(_.reversed) else false
 
           val projectLinks: Seq[ProjectLink] = linkIds.toSet.map { id: Long =>
-            newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, roadType, roadEly, roadName, reversed)
+            newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, administrativeClass, roadEly, roadName, reversed)
           }.toSeq
           if (coordinates.isDefined) {
             saveProjectCoordinates(project.id, coordinates.get)
@@ -1242,7 +1240,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (replaceable, reservedPart.roadNumber, reservedPart.roadPartNumber)
     }
 
-    def updateRoadTypeDiscontinuity(links: Seq[ProjectLink]): Unit = {
+    def updateAdministrativeClassDiscontinuity(links: Seq[ProjectLink]): Unit = {
       val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(links.map(_.roadwayId))
       if (links.nonEmpty) {
         val lastSegment = links.maxBy(_.endAddrMValue)
@@ -1374,13 +1372,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               l.copy(ely = ely.getOrElse(l.ely))
             })
             resetLinkValues(updated)
-            updateRoadTypeDiscontinuity(updated.map(_.copy(status = linkStatus, administrativeClass = AdministrativeClass.apply(administrativeClass.toInt))))
+            updateAdministrativeClassDiscontinuity(updated.map(_.copy(status = linkStatus, administrativeClass = AdministrativeClass.apply(administrativeClass.toInt))))
 
           case LinkStatus.New =>
             // Current logic allows only re adding new road addresses within same road/part group
             if (toUpdateLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).size <= 1) {
               checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.New, toUpdateLinks)
-              updateRoadTypeDiscontinuity(toUpdateLinks.map(l => l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), administrativeClass = AdministrativeClass.apply(administrativeClass.toInt), ely = ely.getOrElse(l.ely))))
+              updateAdministrativeClassDiscontinuity(toUpdateLinks.map(l => l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), administrativeClass = AdministrativeClass.apply(administrativeClass.toInt), ely = ely.getOrElse(l.ely))))
               val nameError = roadName.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
               if (nameError.nonEmpty)
                 return nameError
@@ -1617,15 +1615,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   y
   }
 
-  private def newProjectLink(rl: RoadLinkLike, project: Project, roadNumber: Long,
-                             roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, roadType: AdministrativeClass,
-                             ely: Long, roadName: String = "", reversed: Boolean = false): ProjectLink = {
-    ProjectLink(NewIdValue, roadNumber, roadPartNumber, trackCode, discontinuity, 0L, 0L, 0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), rl.geometry, project.id, LinkStatus.New, roadType, rl.linkSource, rl.length, 0L, 0L, ely, reversed, None, rl.vvhTimeStamp, roadName = Some(roadName))
+  private def newProjectLink(rl: RoadLinkLike, project: Project, roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, roadName: String = "", reversed: Boolean = false): ProjectLink = {
+    ProjectLink(NewIdValue, roadNumber, roadPartNumber, trackCode, discontinuity, 0L, 0L, 0L, 0L, Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), rl.geometry, project.id, LinkStatus.New, administrativeClass, rl.linkSource, rl.length, 0L, 0L, ely, reversed, None, rl.vvhTimeStamp, roadName = Some(roadName))
   }
 
   private def newProjectLink(rl: RoadLinkLike, project: Project, splitOptions: SplitOptions): ProjectLink = {
-    newProjectLink(rl, project, splitOptions.roadNumber, splitOptions.roadPartNumber, splitOptions.trackCode,
-      splitOptions.discontinuity, splitOptions.administrativeClass, splitOptions.ely)
+    newProjectLink(rl, project, splitOptions.roadNumber, splitOptions.roadPartNumber, splitOptions.trackCode, splitOptions.discontinuity, splitOptions.administrativeClass, splitOptions.ely)
   }
 
   private def buildProjectRoadLink(projectLinks: Seq[ProjectLink]): Seq[ProjectAddressLink] = {

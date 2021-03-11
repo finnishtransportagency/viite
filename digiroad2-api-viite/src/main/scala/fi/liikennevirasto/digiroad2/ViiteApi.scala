@@ -680,10 +680,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         if (links.roadPartNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
         logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
-        val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
-          Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass),
-          LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))),
-          Some(links.coordinates))
+        val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber, Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))), Some(links.coordinates))
         response.get("success") match {
           case Some(true) =>
             val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(errorPartsToApi)

@@ -135,7 +135,7 @@ class ProjectValidator {
       IncompatibleDiscontinuityCodes, EndOfRoadNotOnLastPart, ElyCodeChangeDetected, DiscontinuityOnRamp, DiscontinuityInsideRoadPart,
       ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
       MultipleElyInPart, IncorrectLinkStatusOnElyCodeChange,
-      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DistinctRoadTypesBetweenTracks)
+      ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DistinctAdministrativeClassesBetweenTracks)
 
     // Viite-942
     case object MissingEndOfRoad extends ValidationError {
@@ -390,10 +390,10 @@ class ProjectValidator {
       def notification = true
     }
 
-    case object DistinctRoadTypesBetweenTracks extends ValidationError {
+    case object DistinctAdministrativeClassesBetweenTracks extends ValidationError {
       def value = 29
 
-      def message: String = DistinctRoadTypesBetweenTracksMessage
+      def message: String = DistinctAdministrativeClassesBetweenTracksMessage
 
       def notification = true
     }
@@ -596,7 +596,7 @@ class ProjectValidator {
       } else None
     }
 
-    def checkMinMaxTrackRoadTypes(trackInterval: Seq[ProjectLink]): Option[Seq[ProjectLink]] = {
+    def checkMinMaxTrackAdministrativeClasses(trackInterval: Seq[ProjectLink]) = {
       val diffLinks = trackInterval.groupBy(_.administrativeClass).flatMap { projectLinksByAdministrativeClass: (AdministrativeClass, Seq[ProjectLink]) =>
         projectLinksByAdministrativeClass._2.partition(_.track == Track.LeftSide) match {
           case (left, right) if left.nonEmpty && right.nonEmpty =>
@@ -636,12 +636,12 @@ class ProjectValidator {
       } else Seq.empty[ProjectLink]
     }
 
-    def validateTrackRoadTypes(groupInterval: Seq[(Long, Seq[ProjectLink])]): Seq[ProjectLink] = {
+    def validateTrackadministrativeClasses(groupInterval: Seq[(Long, Seq[ProjectLink])]) = {
       groupInterval.groupBy(_._1).flatMap{ interval =>
         val leftrRightTracks = interval._2.flatMap(_._2)
         val validTrackInterval = leftrRightTracks.filterNot(r => r.status == Terminated || r.track == Track.Combined)
         if (validTrackInterval.nonEmpty) {
-          checkMinMaxTrackRoadTypes(validTrackInterval) match {
+          checkMinMaxTrackAdministrativeClasses(validTrackInterval) match {
             case Some(links) => links
             case _ => Seq.empty[ProjectLink]
           }
@@ -671,10 +671,10 @@ class ProjectValidator {
       }
     }
 
-    def checkTrackRoadType(links: Seq[ProjectLink]): Option[ValidationErrorDetails] = {
+    def checkTrackAdministrativeClass(links: Seq[ProjectLink]) = {
       val trackIntervals = getTwoTrackInterval(links, Seq())
-      val errorLinks = validateTrackRoadTypes(trackIntervals)
-      error(project.id, ValidationErrorList.DistinctRoadTypesBetweenTracks)(errorLinks)
+      val errorLinks = validateTrackadministrativeClasses(trackIntervals)
+      error(project.id, ValidationErrorList.DistinctAdministrativeClassesBetweenTracks)(errorLinks)
     }
 
     val groupedLinks = notCombinedLinks.filterNot(_.status == LinkStatus.Terminated).groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
@@ -684,11 +684,11 @@ class ProjectValidator {
         case _ => Seq()
       }
 
-      val RoadTypePairingErrors = checkTrackRoadType(roadPart._2) match {
+      val administrativeClassPairingErrors = checkTrackAdministrativeClass(roadPart._2) match {
         case Some(errors) => Seq(errors)
         case _ => Seq()
       }
-      trackCoverageErrors ++ RoadTypePairingErrors
+      trackCoverageErrors ++ administrativeClassPairingErrors
     }).headOption.getOrElse(Seq())
   }
 
