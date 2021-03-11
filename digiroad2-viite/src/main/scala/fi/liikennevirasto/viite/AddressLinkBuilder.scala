@@ -39,15 +39,6 @@ trait AddressLinkBuilder {
       MunicipalityDAO.getMunicipalityNames
     }
 
-  def getAdministrativeClass(administrativeClass: AdministrativeClass, linkType: LinkType): AdministrativeClass = {
-    (administrativeClass, linkType) match {
-      case (AdministrativeClass.State, _) => AdministrativeClass.State
-      case (AdministrativeClass.Municipality, _) => AdministrativeClass.Municipality
-      case (AdministrativeClass.Private, _) => AdministrativeClass.Private
-      case (_, _) => AdministrativeClass.Unknown
-    }
-  }
-
   def getLinkType(roadLink: VVHRoadlink): LinkType ={  //similar logic used in roadLinkService
     roadLink.featureClass match {
       case FeatureClass.TractorRoad => TractorRoad
