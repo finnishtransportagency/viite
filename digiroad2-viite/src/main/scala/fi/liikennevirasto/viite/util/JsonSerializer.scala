@@ -79,7 +79,7 @@ class JsonSerializer extends VVHSerializer {
 object DigiroadSerializers {
   val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +
-    DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + RoadTypeSerializer + ChangeTypeSerializer
+    DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + ChangeTypeSerializer
 }
 
 case object ChangeTypeSerializer extends CustomSerializer[ChangeType](format => ( {
@@ -159,13 +159,5 @@ case object LinkStatusSerializer extends CustomSerializer[LinkStatus](format => 
     LinkStatus.apply(i.values.intValue)
 }, {
   case l: LinkStatus => JInt(l.value)
-}
-))
-
-case object RoadTypeSerializer extends CustomSerializer[AdministrativeClass](format => ( {
-  case i: JInt =>
-    AdministrativeClass.apply(i.values.intValue)
-}, {
-  case r: AdministrativeClass => JInt(r.value)
 }
 ))

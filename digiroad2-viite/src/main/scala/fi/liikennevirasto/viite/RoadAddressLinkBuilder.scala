@@ -35,7 +35,10 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
     val roadName = roadAddress.roadName
     val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, 0).asInstanceOf[Number].intValue()
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
-    val administrativeClass = roadLink.administrativeClass
+    val administrativeClass = roadAddress.administrativeClass match {
+      case AdministrativeClass.Unknown => roadLink.administrativeClass
+      case _ => roadAddress.administrativeClass
+    }
     RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadLink.linkId, geom, length, roadLink.administrativeClass, UnknownLinkType, roadLink.constructionType, roadLink.linkSource, administrativeClass, VVHRoadName, roadName, municipalityCode, municipalityName, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"), roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.startCalibrationPoint, roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.roadwayNumber)
   }
 
@@ -63,7 +66,10 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
     val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, 0).asInstanceOf[Number].intValue()
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
-    val administrativeClass = roadLink.administrativeClass
+    val administrativeClass = unaddressedRoadLink.administrativeClass match {
+      case AdministrativeClass.Unknown => roadLink.administrativeClass
+      case _ => unaddressedRoadLink.administrativeClass
+    }
     RoadAddressLink(0, 0, roadLink.linkId, geom, length, roadLink.administrativeClass, roadLink.linkType, roadLink.constructionType, roadLink.linkSource, administrativeClass, VVHRoadName, Some(""), municipalityCode, municipalityName, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"), roadLink.attributes, unaddressedRoadLink.roadNumber.getOrElse(roadLinkRoadNumber), unaddressedRoadLink.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value, 0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, unaddressedRoadLink.anomaly, newGeometry = Some(roadLink.geometry))
   }
 
@@ -75,7 +81,10 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
     val VVHRoadName = getVVHRoadName(roadLink.attributes)
     val municipalityCode = roadLink.attributes.getOrElse(MunicipalityCode, 0).asInstanceOf[Number].intValue()
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
-    val administrativeClass = roadLink.administrativeClass
+    val administrativeClass = unaddressedRoadLink.administrativeClass match {
+      case AdministrativeClass.Unknown => roadLink.administrativeClass
+      case _ => unaddressedRoadLink.administrativeClass
+    }
     RoadAddressLink(0, 0, roadLink.linkId, geom, length, roadLink.administrativeClass, UnknownLinkType, roadLink.constructionType, roadLink.linkSource, administrativeClass, VVHRoadName, Some(""), municipalityCode, municipalityName, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"), roadLink.attributes, unaddressedRoadLink.roadNumber.getOrElse(roadLinkRoadNumber), unaddressedRoadLink.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value, 0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, unaddressedRoadLink.anomaly, newGeometry = Some(roadLink.geometry))
   }
 
