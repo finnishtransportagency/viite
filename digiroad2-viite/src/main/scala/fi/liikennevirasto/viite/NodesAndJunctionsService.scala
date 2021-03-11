@@ -521,8 +521,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       if (seq.isEmpty) {
         (Seq(), administrativeClassesSection)
       } else {
-        val roadType = seq.headOption.map(_.administrativeClass.value).getOrElse(0)
-        val continuousProjectLinks = seq.takeWhile(pl => pl.administrativeClass.value == roadType)
+        val administrativeClass = seq.headOption.map(_.administrativeClass.value).getOrElse(0)
+        val continuousProjectLinks = seq.takeWhile(pl => pl.administrativeClass.value == administrativeClass)
         continuousNodeSections(seq.drop(continuousProjectLinks.size), administrativeClassesSection :+ continuousProjectLinks)
       }
     }
