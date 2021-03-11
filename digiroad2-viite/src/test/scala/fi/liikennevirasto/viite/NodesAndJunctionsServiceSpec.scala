@@ -1469,31 +1469,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val llId = Sequences.nextLinearLocationId
 
       // road part 1
-      val (pl1_1, ll1_1, rw1_1) = dummyVerticalRoad(projectId, 1, 999L, 1L, Sequences.nextRoadwayNumber, Track.RightSide,
-        discontinuity = Discontinuity.Discontinuous, firstPointAt = Point(5.0, 0.0),
-        linkId = 12345, plId = plId, rw = (rwId, None), llId = llId)
-      val (pl1_2, ll1_2, rw1_2) = dummyVerticalRoad(projectId, 1, 999L, 1L, Sequences.nextRoadwayNumber, Track.LeftSide,
-        discontinuity = Discontinuity.Continuous,
-        linkId = 12346, plId = plId + 1, rw = (rwId + 1, None), llId = llId + 1)
+      val (pl1_1, ll1_1, rw1_1) = dummyVerticalRoad(projectId, 1, 999L, 1L, Sequences.nextRoadwayNumber, Track.RightSide, discontinuity = Discontinuity.Discontinuous, firstPointAt = Point(5.0, 0.0), linkId = 12345, plId = plId, rw = (rwId, None), llId = llId)
+      val (pl1_2, ll1_2, rw1_2) = dummyVerticalRoad(projectId, 1, 999L, 1L, Sequences.nextRoadwayNumber, Track.LeftSide, discontinuity = Discontinuity.Continuous, linkId = 12346, plId = plId + 1, rw = (rwId + 1, None), llId = llId + 1)
 
       // road part 2
-      val (pl2_1, ll2_1, rw2_a) = dummyHorizontalRoad(projectId, 1, 999L, 2L, Sequences.nextRoadwayNumber,
-        firstPointAt = Point(0.0, 10.0),
-        linkId = 12347, plId = plId + 2, rw = (rwId + 2, None), llId = llId + 2, size = 5)
-      val (pl2_2, ll2_2, rw2_b) = dummyHorizontalRoad(projectId, 3, 999L, 2L, rw2_a.roadwayNumber, startAddrAt = 5,
-        firstPointAt = Point(5.0, 10.0), orderNumber = 2.0,
-        linkId = 12348, plId = plId + 3, rw = (rwId + 2, Some(rw2_a)), llId = llId + 3, size = 7)
-      val (pl2_3, ll2_3, rw2) = dummyHorizontalRoad(projectId, 1, 999L, 2L, rw2_a.roadwayNumber, startAddrAt = 26,
-        firstPointAt = Point(26.0, 10.0), orderNumber = 5.0,
-        linkId = 12351, plId = plId + 6, rw = (rwId + 2, Some(rw2_b)), llId = llId + 6, size = 5)
+      val (pl2_1, ll2_1, rw2_a) = dummyHorizontalRoad(projectId, 1, 999L, 2L, Sequences.nextRoadwayNumber, firstPointAt = Point(0.0, 10.0), linkId = 12347, plId = plId + 2, rw = (rwId + 2, None), llId = llId + 2, size = 5)
+      val (pl2_2, ll2_2, rw2_b) = dummyHorizontalRoad(projectId, 3, 999L, 2L, rw2_a.roadwayNumber, startAddrAt = 5, firstPointAt = Point(5.0, 10.0), orderNumber = 2.0, linkId = 12348, plId = plId + 3, rw = (rwId + 2, Some(rw2_a)), llId = llId + 3, size = 7)
+      val (pl2_3, ll2_3, rw2) = dummyHorizontalRoad(projectId, 1, 999L, 2L, rw2_a.roadwayNumber, startAddrAt = 26, firstPointAt = Point(26.0, 10.0), orderNumber = 5.0, linkId = 12351, plId = plId + 6, rw = (rwId + 2, Some(rw2_b)), llId = llId + 6, size = 5)
 
       // road part 3
-      val (pl3_1, ll3_1, rw3_1) = dummyVerticalRoad(projectId, 2, 999L, 3L, Sequences.nextRoadwayNumber, Track.RightSide,
-        discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(31.0, 10.0),
-        linkId = 12352, plId = plId + 7, rw = (rwId + 3, None), llId = llId + 7)
-      val (pl3_2, ll3_2, rw3_2) = dummyVerticalRoad(projectId, 2, 999L, 3L, Sequences.nextRoadwayNumber, Track.LeftSide,
-        discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(26.0, 10.0),
-        linkId = 12354, plId = plId + 9, rw = (rwId + 4, None), llId = llId + 9)
+      val (pl3_1, ll3_1, rw3_1) = dummyVerticalRoad(projectId, 2, 999L, 3L, Sequences.nextRoadwayNumber, Track.RightSide, discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(31.0, 10.0), linkId = 12352, plId = plId + 7, rw = (rwId + 3, None), llId = llId + 7)
+      val (pl3_2, ll3_2, rw3_2) = dummyVerticalRoad(projectId, 2, 999L, 3L, Sequences.nextRoadwayNumber, Track.LeftSide, discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(26.0, 10.0), linkId = 12354, plId = plId + 9, rw = (rwId + 4, None), llId = llId + 9)
 
       val roadways = Seq(rw1_1, rw1_2, rw2, rw3_1, rw3_2)
       val projectLinks = pl1_1 ++ pl1_2 ++ pl2_1 ++ pl2_2 ++ pl2_3 ++ pl3_1 ++ pl3_2
@@ -1624,25 +1610,15 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val plId = Sequences.nextProjectLinkId
       val llId = Sequences.nextLinearLocationId
 
-      val (pl1, ll1, rw1) = dummyHorizontalRoad(projectId, 1, 999L, 1L, rwNumber,
-        discontinuity = Discontinuity.Discontinuous, firstPointAt = Point(0.0, 5.0),
-        linkId = 12345, plId = plId, rw = (rwId, None), llId = llId, size = 5)
+      val (pl1, ll1, rw1) = dummyHorizontalRoad(projectId, 1, 999L, 1L, rwNumber, discontinuity = Discontinuity.Discontinuous, firstPointAt = Point(0.0, 5.0), linkId = 12345, plId = plId, rw = (rwId, None), llId = llId, size = 5)
 
-      val (pl2_1, ll2_1, rw2_1) = dummyVerticalRoad(projectId, 1, 999L, 2L, rwNumber + 1,
-        discontinuity = Discontinuity.Continuous, firstPointAt = Point(5.0, 0.0),
-        linkId = 12346, plId = plId + 1, rw = (rwId + 1, None), llId = llId + 1, size = 5)
+      val (pl2_1, ll2_1, rw2_1) = dummyVerticalRoad(projectId, 1, 999L, 2L, rwNumber + 1, discontinuity = Discontinuity.Continuous, firstPointAt = Point(5.0, 0.0), linkId = 12346, plId = plId + 1, rw = (rwId + 1, None), llId = llId + 1, size = 5)
 
-      val (pl2_2, ll2_2, rw2_2) = dummyVerticalRoad(projectId, 2, 999L, 2L, rwNumber + 2, startAddrAt = 5,
-        discontinuity = Discontinuity.Discontinuous, firstPointAt = Point(5.0, 5.0),
-        linkId = 12347, plId = plId + 2, rw = (rwId + 2, None), llId = llId + 2, size = 15)
+      val (pl2_2, ll2_2, rw2_2) = dummyVerticalRoad(projectId, 2, 999L, 2L, rwNumber + 2, startAddrAt = 5, discontinuity = Discontinuity.Discontinuous, firstPointAt = Point(5.0, 5.0), linkId = 12347, plId = plId + 2, rw = (rwId + 2, None), llId = llId + 2, size = 15)
 
-      val (pl3, ll3, rw3) = dummyHorizontalRoad(projectId, 1, 999L, 3L, rwNumber + 3,
-        discontinuity = Discontinuity.Continuous, firstPointAt = Point(5.0, 20.0),
-        linkId = 12349, plId = plId + 4, rw = (rwId + 3, None), llId = llId + 4, size = 5)
+      val (pl3, ll3, rw3) = dummyHorizontalRoad(projectId, 1, 999L, 3L, rwNumber + 3, discontinuity = Discontinuity.Continuous, firstPointAt = Point(5.0, 20.0), linkId = 12349, plId = plId + 4, rw = (rwId + 3, None), llId = llId + 4, size = 5)
 
-      val (pl4, ll4, rw4) = dummyHorizontalRoad(projectId, 1, 999L, 4L, rwNumber + 4,
-        discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(10.0, 20.0),
-        linkId = 12350, plId = plId + 5, rw = (rwId + 4, None), llId = llId + 5, size = 5)
+      val (pl4, ll4, rw4) = dummyHorizontalRoad(projectId, 1, 999L, 4L, rwNumber + 4, discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(10.0, 20.0), linkId = 12350, plId = plId + 5, rw = (rwId + 4, None), llId = llId + 5, size = 5)
 
       val roadways = Seq(rw1, rw2_1, rw2_2, rw3, rw4)
       val projectLinks = pl1 ++ pl2_1 ++ pl2_2 ++ pl3 ++ pl4
@@ -4425,9 +4401,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     }
   }
 
-  def dummyHorizontalRoad(projectId: Long, numberOfLinearLocations: Int, roadNumber: Long, roadPartNumber: Long, rwNumber: Long, track: Track = Track.Combined, startAddrAt: Long = 0,
-                          roadType: AdministrativeClass = AdministrativeClass.State, discontinuity: Discontinuity = Discontinuity.Continuous, firstPointAt: Point = Point(0.0, 0.0), orderNumber: Double = 1.0,
-                          linkId: Long = 0, plId: Long = 0, rw: (Long, Option[Roadway]) = (0, None), llId: Long = 0, size: Int = 10): (Seq[ProjectLink], Seq[LinearLocation], Roadway) = {
+  def dummyHorizontalRoad(projectId: Long, numberOfLinearLocations: Int, roadNumber: Long, roadPartNumber: Long, rwNumber: Long, track: Track = Track.Combined, startAddrAt: Long = 0, administrativeClass: AdministrativeClass = AdministrativeClass.State, discontinuity: Discontinuity = Discontinuity.Continuous, firstPointAt: Point = Point(0.0, 0.0), orderNumber: Double = 1.0, linkId: Long = 0, plId: Long = 0, rw: (Long, Option[Roadway]) = (0, None), llId: Long = 0, size: Int = 10): (Seq[ProjectLink], Seq[LinearLocation], Roadway) = {
     val (rwId, roadway) = rw
     val projectLinks = for (i: Int <- 0 until numberOfLinearLocations) yield {
       val startAddrM = i * size + startAddrAt
@@ -4435,7 +4409,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val startPoint = firstPointAt.x + (i * size)
       val endPoint = startPoint + size
       val geom = Seq(Point(startPoint, firstPointAt.y), Point(endPoint, firstPointAt.y))
-      val projectLink = dummyProjectLink(roadNumber, roadPartNumber, track, if (i == numberOfLinearLocations-1) discontinuity else Discontinuity.Continuous, startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, 0, size, SideCode.TowardsDigitizing, LinkStatus.New, projectId, roadType, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
+      val projectLink = dummyProjectLink(roadNumber, roadPartNumber, track, if (i == numberOfLinearLocations-1) discontinuity else Discontinuity.Continuous, startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, 0, size, SideCode.TowardsDigitizing, LinkStatus.New, projectId, administrativeClass, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
       projectLink
     }
     val (linearLocations, roadways) = projectLinks.map(toRoadwayAndLinearLocation).unzip
@@ -4444,9 +4418,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
     (projectLinks, orderedLinearLocations, roadway.getOrElse(roadways.head).copy(endAddrMValue = roadways.last.endAddrMValue))
   }
 
-  def dummyVerticalRoad(projectId: Long, numberOfLinearLocations: Int, roadNumber: Long, roadPartNumber: Long, rwNumber: Long, track: Track = Track.Combined, startAddrAt: Long = 0,
-                        roadType: AdministrativeClass = AdministrativeClass.State, discontinuity: Discontinuity = Discontinuity.Continuous, firstPointAt: Point = Point(0.0, 0.0), orderNumber: Double = 1.0,
-                        linkId: Long = 0, plId: Long = 0, rw: (Long, Option[Roadway]) = (0, None), llId: Long = 0, size: Int = 10): (Seq[ProjectLink], Seq[LinearLocation], Roadway) = {
+  def dummyVerticalRoad(projectId: Long, numberOfLinearLocations: Int, roadNumber: Long, roadPartNumber: Long, rwNumber: Long, track: Track = Track.Combined, startAddrAt: Long = 0, administrativeClass: AdministrativeClass = AdministrativeClass.State, discontinuity: Discontinuity = Discontinuity.Continuous, firstPointAt: Point = Point(0.0, 0.0), orderNumber: Double = 1.0, linkId: Long = 0, plId: Long = 0, rw: (Long, Option[Roadway]) = (0, None), llId: Long = 0, size: Int = 10): (Seq[ProjectLink], Seq[LinearLocation], Roadway) = {
     val (rwId, roadway) = rw
     val projectLinks = for (i: Int <- 0 until numberOfLinearLocations) yield {
       val startAddrM = i * size + startAddrAt
@@ -4455,7 +4427,7 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val endPoint = startPoint + size
       val geom = Seq(Point(firstPointAt.x, startPoint), Point(firstPointAt.x, endPoint))
       val discontinuityCode = if ( i === (numberOfLinearLocations - 1) ) { discontinuity } else { Discontinuity.Continuous }
-      dummyProjectLink(roadNumber, roadPartNumber, track, discontinuityCode, startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, 0, size, SideCode.TowardsDigitizing, LinkStatus.New, projectId, roadType, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
+      dummyProjectLink(roadNumber, roadPartNumber, track, discontinuityCode, startAddrM, endAddrM, startAddrM, endAddrM, Some(DateTime.now()), None, linkId + i, 0, size, SideCode.TowardsDigitizing, LinkStatus.New, projectId, administrativeClass, geom, rwNumber).copy(id = plId + i, roadwayId = rwId, linearLocationId = llId + i)
     }
     val (linearLocations, roadways) = projectLinks.map(toRoadwayAndLinearLocation).unzip
     val orderedLinearLocations: Seq[LinearLocation] = linearLocations.zipWithIndex.map { case (ll, i) => ll.copy(orderNumber = orderNumber + i) }
@@ -4474,16 +4446,11 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
-      val (pl1, ll1, rw1) = dummyHorizontalRoad(projectId, 1, 999L, 1L, Sequences.nextRoadwayNumber,
-        linkId = 12345, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl1, ll1, rw1) = dummyHorizontalRoad(projectId, 1, 999L, 1L, Sequences.nextRoadwayNumber, linkId = 12345, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
-      val (pl2, ll2, rw2) = dummyHorizontalRoad(projectId, 1, 999L, 1L, Sequences.nextRoadwayNumber, startAddrAt = 10,
-        roadType = AdministrativeClass.Municipality, firstPointAt = Point(10.0, 0.0),
-        linkId = 12346, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl2, ll2, rw2) = dummyHorizontalRoad(projectId, 1, 999L, 1L, Sequences.nextRoadwayNumber, startAddrAt = 10, administrativeClass = AdministrativeClass.Municipality, firstPointAt = Point(10.0, 0.0), linkId = 12346, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
-      val (pl3, ll3, rw3) = dummyHorizontalRoad(projectId, 1, 999L, 1L, Sequences.nextRoadwayNumber, startAddrAt = 20,
-        firstPointAt = Point(20.0, 0.0),
-        linkId = 12347, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl3, ll3, rw3) = dummyHorizontalRoad(projectId, 1, 999L, 1L, Sequences.nextRoadwayNumber, startAddrAt = 20, firstPointAt = Point(20.0, 0.0), linkId = 12347, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
       val roadways = Seq(rw1, rw2, rw3)
       val projectLinks = pl1 ++ pl2 ++ pl3
@@ -4554,29 +4521,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val project1 = Project(project1Id, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
-      val (pl1, ll1, rw1) = dummyHorizontalRoad(project1Id, 1, 997L, 1L, Sequences.nextRoadwayNumber,
-        firstPointAt = Point(0.0, 10.0),
-        linkId = 12345, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl1, ll1, rw1) = dummyHorizontalRoad(project1Id, 1, 997L, 1L, Sequences.nextRoadwayNumber, firstPointAt = Point(0.0, 10.0), linkId = 12345, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
-      val (pl2, ll2, rw2) = dummyHorizontalRoad(project1Id, 1, 997L, 1L, Sequences.nextRoadwayNumber, startAddrAt = 10,
-        roadType = AdministrativeClass.Municipality, firstPointAt = Point(10.0, 10.0),
-        linkId = 12346, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl2, ll2, rw2) = dummyHorizontalRoad(project1Id, 1, 997L, 1L, Sequences.nextRoadwayNumber, startAddrAt = 10, administrativeClass = AdministrativeClass.Municipality, firstPointAt = Point(10.0, 10.0), linkId = 12346, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
-      val (pl3, ll3, rw3) = dummyHorizontalRoad(project1Id, 1, 997L, 1L, Sequences.nextRoadwayNumber, startAddrAt = 20,
-        discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(20.0, 10.0),
-        linkId = 12347, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl3, ll3, rw3) = dummyHorizontalRoad(project1Id, 1, 997L, 1L, Sequences.nextRoadwayNumber, startAddrAt = 20, discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(20.0, 10.0), linkId = 12347, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
-      val (pl4, ll4, rw4) = dummyHorizontalRoad(project1Id, 1, 998L, 1L, Sequences.nextRoadwayNumber,
-        firstPointAt = Point(0.0, 0.0),
-        linkId = 12355, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl4, ll4, rw4) = dummyHorizontalRoad(project1Id, 1, 998L, 1L, Sequences.nextRoadwayNumber, firstPointAt = Point(0.0, 0.0), linkId = 12355, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
-      val (pl5, ll5, rw5) = dummyHorizontalRoad(project1Id, 1, 998L, 1L, Sequences.nextRoadwayNumber, startAddrAt = 10,
-        roadType = AdministrativeClass.Municipality, firstPointAt = Point(10.0, 0.0),
-        linkId = 12356, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl5, ll5, rw5) = dummyHorizontalRoad(project1Id, 1, 998L, 1L, Sequences.nextRoadwayNumber, startAddrAt = 10, administrativeClass = AdministrativeClass.Municipality, firstPointAt = Point(10.0, 0.0), linkId = 12356, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
-      val (pl6, ll6, rw6) = dummyHorizontalRoad(project1Id, 1, 998L, 1L, Sequences.nextRoadwayNumber, startAddrAt = 20,
-        discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(20.0, 0.0),
-        linkId = 12357, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl6, ll6, rw6) = dummyHorizontalRoad(project1Id, 1, 998L, 1L, Sequences.nextRoadwayNumber, startAddrAt = 20, discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(20.0, 0.0), linkId = 12357, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
       val roadways = Seq(rw1, rw2, rw3, rw4, rw5, rw6)
       val projectLinks = pl1 ++ pl2 ++ pl3 ++ pl4 ++ pl5 ++ pl6
@@ -4671,29 +4626,17 @@ class NodesAndJunctionsServiceSpec extends FunSuite with Matchers with BeforeAnd
       val project2 = Project(project2Id, ProjectState.Incomplete, "n", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
         "", Seq(), Seq(), None, None)
 
-      val (pl1t2, ll1t2, rw1t2) = dummyHorizontalRoad(project1Id, 1, 999L, 1L, rw1.roadwayNumber, track = Track.LeftSide,
-        firstPointAt = Point(0.0, 10.0),
-        linkId = 12345, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl1t2, ll1t2, rw1t2) = dummyHorizontalRoad(project1Id, 1, 999L, 1L, rw1.roadwayNumber, track = Track.LeftSide, firstPointAt = Point(0.0, 10.0), linkId = 12345, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
-      val (pl2t2, ll2t2, rw2t2) = dummyHorizontalRoad(project1Id, 1, 999L, 1L, rw2.roadwayNumber, track = Track.LeftSide, startAddrAt = 10,
-        roadType = AdministrativeClass.Municipality, firstPointAt = Point(10.0, 10.0),
-        linkId = 12346, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl2t2, ll2t2, rw2t2) = dummyHorizontalRoad(project1Id, 1, 999L, 1L, rw2.roadwayNumber, track = Track.LeftSide, startAddrAt = 10, administrativeClass = AdministrativeClass.Municipality, firstPointAt = Point(10.0, 10.0), linkId = 12346, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
-      val (pl3t2, ll3t2, rw3t2) = dummyHorizontalRoad(project1Id, 1, 999L, 1L, rw3.roadwayNumber, track = Track.LeftSide, startAddrAt = 20,
-        discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(20.0, 10.0),
-        linkId = 12347, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl3t2, ll3t2, rw3t2) = dummyHorizontalRoad(project1Id, 1, 999L, 1L, rw3.roadwayNumber, track = Track.LeftSide, startAddrAt = 20, discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(20.0, 10.0), linkId = 12347, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
-      val (pl1t1, ll1t1, rw1t1) = dummyHorizontalRoad(project1Id, 1, 999L, 1L, rw4.roadwayNumber, track = Track.RightSide,
-        firstPointAt = Point(0.0, 0.0),
-        linkId = 12355, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl1t1, ll1t1, rw1t1) = dummyHorizontalRoad(project1Id, 1, 999L, 1L, rw4.roadwayNumber, track = Track.RightSide, firstPointAt = Point(0.0, 0.0), linkId = 12355, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
-      val (pl2t1, ll2t1, rw2t1) = dummyHorizontalRoad(project1Id, 1, 999L, 1L, rw5.roadwayNumber, track = Track.RightSide, startAddrAt = 10,
-        roadType = AdministrativeClass.Municipality, firstPointAt = Point(10.0, 0.0),
-        linkId = 12356, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl2t1, ll2t1, rw2t1) = dummyHorizontalRoad(project1Id, 1, 999L, 1L, rw5.roadwayNumber, track = Track.RightSide, startAddrAt = 10, administrativeClass = AdministrativeClass.Municipality, firstPointAt = Point(10.0, 0.0), linkId = 12356, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
-      val (pl3t1, ll3t1, rw3t1) = dummyHorizontalRoad(project1Id, 1, 999L, 1L, rw6.roadwayNumber, track = Track.RightSide, startAddrAt = 20,
-        discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(20.0, 0.0),
-        linkId = 12357, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
+      val (pl3t1, ll3t1, rw3t1) = dummyHorizontalRoad(project1Id, 1, 999L, 1L, rw6.roadwayNumber, track = Track.RightSide, startAddrAt = 20, discontinuity = Discontinuity.EndOfRoad, firstPointAt = Point(20.0, 0.0), linkId = 12357, plId = Sequences.nextProjectLinkId, rw = (Sequences.nextRoadwayId, None), llId = Sequences.nextLinearLocationId)
 
       val rwt2 = Seq(rw1t2, rw2t2, rw3t2)
       val rwt1 = Seq(rw1t1, rw2t1, rw3t1)
