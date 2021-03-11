@@ -158,7 +158,7 @@ _Kuva 5.1: Tieosoiteverkon piirtyminen kartalle, kun mittakaavajanassa on 2 km._
 
 _Kuva 5.2: Tieosoiteverkon piirtyminen kartalle, kun mittakaavajanassa on 100 m._
 
-Tieosoitteelliset kadut erottuvat kartalla muista tieosoitesegmenteistä siten, että niiden ympärillä on musta reunaviiva.
+Tieosoitteelliset kadut ja yksityistiet erottuvat kartalla muista tieosoitesegmenteistä siten, että niiden ympärillä on musta reunaviiva.
 
 ![Tieosoitteellinen katu](k16.jpg)
 
@@ -166,7 +166,7 @@ _Kuva 5.3: Tieosoitteellinen katu, merkattuna mustalla reunaviivalla tienumeron 
 
 Kun hiiren vie tieosoiteverkon päälle, tulee kartalle näkyviin infolaatikko, joka kertoo kyseisen tieosoitesegmentin tienumeron, tieosanumeron, ajoratakoodin sekä alku- ja loppuetäisyyden.
 
-![Hover](k35.jpg)
+![Tieosoitteen hoverointi](k35.jpg)
 
 _Kuva 5.4: Infolaatikko, kun hiiri on viety tieosoitesegmentin päälle._
 
@@ -193,21 +193,22 @@ Tieosoitteilla on seuraavat ominaisuustiedot:
 |---------------|------|----------------|
 |Muokattu viimeksi*|Muokkaajan käyttäjätunnus ja tiedon muokkaushetki.|X|
 |Linkkien lukumäärä|Niiden tielinkkien lukumäärä, joihin valinta  kohdistuu.|X|
-|Geometrian lähde|MML, Täydentävä tai Suravage.|X|
+|Geometrian lähde|MML_jäädytetty, MML, Täydentävä tai Suravage.|X|
 |Tienumero|Tieosoiteverkon mukainen tienumero. Lähtöaineistona Tierekisterin tieosoitteet 1.1.2019.||
 |Tieosanumero|Tieosoiteverkon mukainen tieosanumero. Lähtöaineistona Tierekisterin tieosoitteet 1.1.2019.||
 |Ajorata|Tieosoiteverkon mukainen ajoratakoodi. Lähtöaineistona Tierekisterin tieosoitteet 1.1.2019.||
 |Alkuetäisyys**|Tieosoiteverkon etäisyyslukemien avulla laskettu alkuetäisyys. Etäisyyslukeman kohdalla alkuetäisyyden lähtöaineistona on Tierekisterin tieosoitteet 1.1.2019.|X|
 |Loppuetäisyys**|Tieosoiteverkon etäisyyslukemien avulla laskettu loppuetäisyys. Etäisyyslukeman kohdalla loppuetäisyyden lähtöaineistona on Tierekisterin tieosoitteet 1.1.2019.|X|
 |ELY|Väylän ELY-numero.|X|
-|Hallinnollinen luokka&ast;&ast;&ast;|Saadaan Maanmittauslaitoksen hallinnollinen luokka -tiedoista. Jos valitulla tieosalla on useita hallinnollisia luokkia, ne kerrotaan ominaisuustietotaulussa pilkulla erotettuna.||
+|Hallinnollinen luokka***|Saadaan Maanmittauslaitoksen hallinnollinen luokka -tiedoista. Jos valitulla tieosalla on useita hallinnollisia luokkia, ne kerrotaan ominaisuustietotaulussa pilkulla erotettuna.||
 |Jatkuvuus|Tieosoiteverkon mukainen jatkuvuustieto. Lähtöaineistona Tierekisterin tieosoitteet 1.1.2019.|X|
 
 *) Muokattu viimeksi -tiedoissa vvh_modified tarkoittaa, että muutos on tullut Maanmittauslaitokselta joko geometriaan tai geometrian ominaisuustietoihin. Muokattu viimeksi -päivät ovat kaikki vähintään 29.10.2015, koska tuolloin on tehty Maanmittauslaitoksen geometrioista alkulataus VVH:n tietokantaan.
 
 **) Tieosoiteverkon etäisyyslukemat (tieosan alku- ja loppupisteet sekä ajoratakoodin vaihtuminen) määrittelevät mitatut alku- ja loppuetäisyydet. Etäisyyslukemien välillä alku- ja loppuetäisyydet lasketaan tieosoitesegmenttikohtaisesti Viite-sovelluksessa.
 
-&ast;&ast;&ast;) Viitteessä luovuttiin Tietyypistä ja se korvattiin hallinnollisella luokalla 3/2021. Palautteet hallinnollisen luokan virheistä voi toimittaa Maanmittauslaitokselle osoitteeseen maasto@maanmittauslaitos.fi. Mukaan selvitys virheestä ja sen sijainnista (kuvakaappaus tms.).
+***) Viitteessä luovuttiin Tietyypistä ja se korvattiin Hallinnollisella luokalla 3/2021.
+Palautteet hallinnollisen luokan virheistä voi toimittaa Maanmittauslaitokselle osoitteeseen maasto@maanmittauslaitos.fi. Mukaan selvitys virheestä ja sen sijainnista (kuvakaappaus tms.).
 
 5.3 Kohdistaminen tieosoitteeseen tielinkin ID:n avulla
 --------------------------
@@ -218,7 +219,7 @@ Esimerkiksi: https://extranet.vayla.fi/viite/#linkProperty/1204420 näkyy kuvass
 
 ![Kohdistaminen tielinkin ID:llä](k8.jpg)
 
-_kuva 5.7: Kohdistaminen tielinkin ID:llä._
+_Kuva 5.7: Kohdistaminen tielinkin ID:llä._
 
 # 6. Tieosoiteprojekti
 --------------------------
@@ -232,28 +233,28 @@ Uuden tieosoiteprojektin tekeminen aloitetaan klikkaamalla painiketta Tieosoitep
 
 _Kuva 6.1: Tieosoiteprojektit-painike ja Uusi tieosoiteprojekti -painike._
 
-Näytön oikeaan reunaan avautuu lomake tieosoiteprojektin perustietojen täydentämistä varten. Jos käyttäjä on ollut katselutilassa,  sovellus siirtyy tässä vaiheessa automaattisesti muokkaustilaan.
+Näytön oikeaan reunaan avautuu lomake tieosoiteprojektin perustietojen täydentämistä varten. Jos käyttäjä on ollut katselutilassa, sovellus siirtyy tässä vaiheessa automaattisesti muokkaustilaan.
 
 Pakollisia tietoja ovat nimi ja projektin muutosten voimaantulopäivämäärä, jotka on merkattu lomakkeelle oranssilla (3). Projektiin ei tarvitse varata yhtään tieosaa. Lisätiedot-kenttään käyttäjä voi halutessaan tehdä muistiinpanoja tieosoiteprojektista. Tiedot tallentuvat painamalla Jatka toimenpiteisiin -painiketta (4). Poistu-painike (5) sulkee projektin tietoja tallentamatta.
 
 ![Uusi tieosoiteprojekti](k19.jpg)
 
-_kuva 6.2: Tieosoiteprojektin perustietojen täyttäminen._
+_Kuva 6.2: Tieosoiteprojektin perustietojen täyttäminen._
 
 Projektin tieosat lisätään täydentämällä niiden tiedot kenttiin TIE, AOSA sekä LOSA ja painamalla painiketta Varaa (6). __Kaikki kentät tulee täyttää, jos haluaa varata tieosan!__ 
 
 Varauksen yhteydessä järjestelmä tekee varattaville tieosille tarkastukset:
 
-- Onko varattava tieosa olemassa projektin voimaantulopäivänä
-- Onko varattava tieosa vapaana vai onko se jo varattu toiseen projektiin
+- Varattavan tieosan täytyy olla olemassa projektin voimaantulopäivänä
+- Varattavan tieosan on oltava vapaana. Tieosa voi olla varattuna vain yhteen projektiin kerrallaan. 
 
-Virheellisistä varausyrityksistä järjestelmä antaa virheilmoituksen.  __Käyttäjän tulee huomioida, että varauksen yhteydessä kaikki kentät (TIE, AOSA, LOSA) tulee täyttää, tai käyttäjä saa virheilmoituksen!__
+Virheellisistä varausyrityksistä järjestelmä antaa virheilmoituksen.  __Käyttäjän tulee huomioida, että varauksen yhteydessä kaikki kentät (TIE, AOSA, LOSA) tulee täyttää.__ Varausyritys Varaa-painikkeella antaa virheilmoituksen, jos kenttiä on täyttämättä.
 
-Varaa-painikkeen klikkauksen jälkeen tieosan tiedot tulevat näkyviin lomakkeelle (7).
+Varaa-painikkeen klikkauksen jälkeen, varauksen onnistuessa, tieosan tiedot tulevat näkyviin lomakkeelle (7).
 
 ![Uusi tieosoiteprojekti](k22.jpg)
 
-_kuva 6.3: Tieosan tiedot lomakkeella Varaa-painikkeen painamisen jälkeen._
+_Kuva 6.3: Tieosan tiedot lomakkeella Varaa-painikkeen painamisen jälkeen._
 
 Tieosoiteprojekti tallentuu automaattisesti painikkeesta Jatka toimenpiteisiin, jolloin tiedot tallentuvat tietokantaan ja sovellus siirtyy toimenpidenäytölle. Varaamisen yhteydessä Viite kohdistaa kartan varatun tieosan alkuun. Poistu-painikkeesta projekti suljetaan ja käyttäjältä varmistetaan, halutaanko tallentamattomat muutokset tallentaa. Projektiin pääsee palaamaan Tieosoiteprojektit-listan kautta. 
 
@@ -276,7 +277,7 @@ Järjestystä voi muuttaa sarakkeiden nuolipainikkeilla. Käyttäjä-sarakkeen s
 
 Viety tierekisteriin -tilaiset projektit näytetään listalla vuorokauden ajan niiden viennistä tierekisteriin. Kaikki tierekisteriin viedyt projektit saa näkyviin klikkaamalla listan alareunassa olevaa valintaruutua, ja vastaavasti ne saa pois näkyvistä poistamalla valinnan.
 
-Listan oikeassa alakulmassa olevaa Päivitä lista -painiketta klikkaamalla projektien muuttuneet tilat päivittyvät listalla.
+Listan oikeassa alakulmassa olevaa Päivitä lista -painiketta (kaksi nuolta ympyränä) klikkaamalla projektien muuttuneet tilat päivittyvät listalla.
 
 Tallennetun tieosoiteprojektin saa auki Tieosoiteprojektit-listalta painamalla Avaa-painiketta. Avaamisen yhteydessä sovellus kohdistaa kartan paikkaan, jossa käyttäjä on viimeksi tallentanut toimenpiteen. Mikäli toimenpiteitä ei ole tehty, karttanäkymä rajautuu siten, että kaikki varatut aihiot näkyvät karttanäkymässä.
 
@@ -302,7 +303,7 @@ Tieosoiteprojektissa on mahdollista tehdä seuraavia muutosilmoituksia:
 - etäisyyslukeman muutos (etäisyyslukeman loppuarvon voi syöttää tieosalle manuaalisesti)
 - ELY-koodin, jatkuvuuden ja hallinnollisen luokan muutos
 
-Tieosoiteprojektissa muutostoimenpiteitä pääsee tekemään klikkaamalla Jatka toimenpiteisiin -painiketta tieosoitemuutosprojektin perustietojen lomakkeella. Tämän jälkeen sovellus muuttaa varatut tieosat muokattaviksi kohteiksi ja ne näkyvät avautuvassa karttanäkymässä keltaisella korostettuina (1). Mikäli toimenpiteenä lisätään uusi tieosoite eikä tieosia ole varattu projektiin, kartalta ei valikoidu mitään ennen käyttäjän tekemää valintaa. 
+Tieosoiteprojektissa muutostoimenpiteitä pääsee tekemään klikkaamalla "Jatka toimenpiteisiin" -painiketta tieosoitemuutosprojektin perustietojen lomakkeella. Tämän jälkeen sovellus muuttaa varatut tieosat muokattaviksi kohteiksi ja ne näkyvät avautuvassa karttanäkymässä keltaisella korostettuina (1). Mikäli toimenpiteenä lisätään uusi tieosoite, eikä tieosia ole varattu projektiin, kartalta ei valikoidu mitään ennen käyttäjän tekemää valintaa. 
 
 Projektitilassa voi valita kartalta klikkaamalla projektiin tieosia, tuntemattomia tielinkkejä, muun tieverkon linkkejä tai suunnitelmalinkkejä (Suravage-linkkejä). Suunnitelmalinkit saa pois piirrosta ja piirtoon sivun alapalkissa olevasta valintaruudusta. Ne ovat oletuksena piirrossa. Tieverkon tieosoitetietoja voi katsella kartalla viemällä hiiren tieosoitelinkin päälle. Tällöin tielinkin infolaatikko tulee näkyviin.
 
@@ -312,7 +313,7 @@ Projektin nimen vieressä on sininen kynäkuvake (2), josta pääsee projektin p
 
 _Kuva 7.1: Projektissa muokattavissa olevat varatut tieosat näkyvät kartalla keltaisella värillä ja suuntanuolet ovat tien alkuperäisen tieluokan värin mukaiset._
 
-Projektin muutosilmoitukset tallentuvat projektin yhteenvetotaulukkoon, jonka voi avata toimenpidenäkymässä Avaa projektin yhteenvetotaulukko -painikkeesta (4). Yhteenvetotaulukon toiminta on kuvattu tarkemmin luvussa 7.2. Lisäksi kaikkien projektien muutostiedot voidaan lähettää tierekisteriin klikkaamalla vihreää Lähetä muutosilmoitus Tierekisteriin -painiketta (5). Muutosilmoituksen lähettäminen on kuvattu luvussa 7.4. 
+Projektin muutosilmoitukset tallentuvat projektin yhteenvetotaulukkoon, jonka voi avata toimenpidenäkymässä "Avaa projektin yhteenvetotaulukko" -painikkeesta (4). Yhteenvetotaulukon toiminta on kuvattu tarkemmin luvussa 7.2. Lisäksi kaikkien projektien muutostiedot voidaan lähettää Tierekisteriin klikkaamalla vihreää "Lähetä muutosilmoitus Tierekisteriin" -painiketta (5). Muutosilmoituksen lähettäminen on kuvattu luvussa 7.4. 
 
 Kun keltaista, muokattavaa kohdetta klikataan kerran kartalla, muuttuu valittu osuus vihreäksi ja oikeaan reunaan tulee pudotusvalikko, josta voi valita kohteelle tehtävän muutosilmoituksen (esim. lakkautus). Kertaklikkauksella valitaan kartalta homogeeninen jakso (= sama tienumero, tieosanumero, ajoratakoodi, hallinnollinen luokka ja jatkuvuus). Kaksoisklikkaus tai Ctrl+klikkaus valitsee yhden tieosoitesegmentin verran (tielinkin mittainen osuus). Kun halutaan valita vain osa tieosan linkeistä, kaksois- tai Ctrl+klikataan ensimmäistä linkkiä ja seuraavat linkit lisätään valintaan Ctrl+klikkauksella samalta tieosalta. Samalla tavalla voi myös poistaa yksittäisiä linkkejä valinnasta. 
 
@@ -322,7 +323,7 @@ _Kuva 7.2: Kun keltaista, muokattavissa olevaa kohdetta klikataan, muuttuu tieos
 
 Muutokset tallennetaan oikean alakulman Tallenna-painikkeesta. Ennen tallennusta muutokset voi perua Peruuta-painikkeesta, jolloin Viite palaa edeltävään vaiheeseen.
 
-Jos käyttäjä on jo tehnyt projektissa muutoksia tieosoitteille, ne tulevat näkyviin lomakkeelle klikatessa kyseistä tielinkkiä. Jos esimerkiksi tieosalle on toteutettu Lakkautus, tieosaa valittaessa tiedot sen lakkautuksesta ilmestyvät lomakkeelle ja tieosalle on mahdollista tehdä toinen toimenpide. Mahdolliset uudet toimenpidevaihtoehdot kunkin toimenpiteen tallentamisen jälkeen on kuvattu tarkemmin seuraavissa luvuissa. 
+Jos käyttäjä on jo tehnyt projektissa muutoksia tieosoitteille, ne tulevat näkyviin lomakkeelle klikattaessa kyseistä tielinkkiä. Jos esimerkiksi tieosalle on toteutettu Lakkautus, tieosaa valittaessa tiedot sen lakkautuksesta ilmestyvät lomakkeelle, ja tieosalle on mahdollista tehdä toinen toimenpide. Mahdolliset uudet toimenpidevaihtoehdot kunkin toimenpiteen tallentamisen jälkeen on kuvattu tarkemmin seuraavissa luvuissa. 
 
 Selite projektitilassa on erilainen kuin katselutilassa. Projektitilan selite kuvaa linkkiverkkoon tehdyt toimenpiteet, kun taas katselutilan selite kuvaa tieluokitusta.
 
@@ -334,11 +335,11 @@ Selite projektitilassa on erilainen kuin katselutilassa. Projektitilan selite ku
 
 Kun halutaan lakkauttaa joko tieosia, tieosa tai osa tieosasta, ko. osat pitää ensin varata projektiin. Varaaminen tehdään luvussa 6.1 esitetyllä tavalla syöttämällä projektitietojen lomakkeelle haluttu tienumero ja tieosa sekä painamalla Varaa-painiketta.
 
-Tämän jälkeen klikataan Jatka toimenpiteisiin -painiketta, jolla siirrytään toimenpidelomakkeelle tekemään tieosoitemuutosta. Toimenpidelomakkeella valitaan kartalta projektiin varattu tieosa, -osat tai tarvittavat linkit valitusta tieosasta. Ne muuttuvat valittuina vihreiksi. (Shift+kaksoisklikkaus-painalluksella voi lisätä yksittäisiä linkkejä valintaan tai poistaa yksittäisiä linkkejä valinnasta.) Toimenpide-lomakkeelle tulee tiedot valituista linkeistä sekä pudotusvalikko, josta valitaan Lakkautus. Tämän jälkeen tallennetaan muutos projektiin. Lakkautettu linkki tulee näkyviin mustalla ja sen tiedot päivittyvät yhteenvetotaulukkoon, jonka voi avata sinisestä Avaa projektin yhteenvetotaulukko -painikkeesta. Yhteenvetotaulukon toiminta on kuvattu luvussa 7.2. Mikäli on lakkautettu vain osa tieosan linkeistä, tulee tieosan muut kuin lakkautetut linkit käsitellä joko Ennallaan- tai Siirto-toimenpiteillä tilanteesta riippuen. Kun tarvittavat muutokset projektissa on tehty, muutostiedot voi lähettää Tierekisteriin painamalla Lähetä muutosilmoitus Tierekisteriin -painiketta. 
+Tämän jälkeen klikataan "Jatka toimenpiteisiin" -painiketta, jolla siirrytään toimenpidelomakkeelle tekemään tieosoitemuutosta. Toimenpidelomakkeella valitaan kartalta projektiin varattu tieosa, -osat tai tarvittavat linkit valitusta tieosasta. Ne muuttuvat valittuina vihreiksi. (Shift+kaksoisklikkaus-painalluksella voi lisätä yksittäisiä linkkejä valintaan tai poistaa yksittäisiä linkkejä valinnasta.) Toimenpide-lomakkeelle tulee tiedot valituista linkeistä sekä pudotusvalikko, josta valitaan Lakkautus. Tämän jälkeen tallennetaan muutos projektiin. Lakkautettu linkki tulee näkyviin mustalla ja sen tiedot päivittyvät yhteenvetotaulukkoon, jonka voi avata sinisestä "Avaa projektin yhteenvetotaulukko" -painikkeesta. Yhteenvetotaulukon toiminta on kuvattu luvussa 7.2. Mikäli on lakkautettu vain osa tieosan linkeistä, tulee tieosan muut kuin lakkautetut linkit käsitellä joko Ennallaan- tai Siirto-toimenpiteillä tilanteesta riippuen. Kun tarvittavat muutokset projektissa on tehty, muutostiedot voi lähettää Tierekisteriin painamalla "Lähetä muutosilmoitus Tierekisteriin" -painiketta. (Yhteenvetotaulukon tulee olla tällöin avattuna.)
 
 7.1.2 Uusi
 --------------------------
-Toimenpiteellä määritetään uusi tieosoite tieosoitteettomille linkeille. Tieosoitteettomia muun tieverkon linkkejä, jotka piirtyvät kartalle harmaina tai tuntemattomia mustia linkkejä, joissa on kysymysmerkkisymboli tai Suravage-linkkejä, voi valita kerta- tai kaksoisklikkauksella, kuten muitakin tielinkkejä. Kaksoisklikkaus valitsee yhden tielinkin ja Ctrl+klikkauksella voi lisätä tai poistaa valintaan linkkejä yksi kerrallaan. Kertaklikkaus valitsee homogeenisen jakson, jossa käytetään VVH:n tielinkin tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa käytetään tienimeä.
+Toimenpiteellä Uusi määritetään uusi tieosoite tieosoitteettomille linkeille. Tieosoitteettomia muun tieverkon linkkejä, jotka piirtyvät kartalle harmaina tai tuntemattomia mustia linkkejä, joissa on kysymysmerkkisymboli tai Suravage-linkkejä, voi valita kerta- tai kaksoisklikkauksella, kuten muitakin tielinkkejä. Kaksoisklikkaus valitsee yhden tielinkin ja Ctrl+klikkauksella voi lisätä tai poistaa valintaan linkkejä yksi kerrallaan. Kertaklikkaus valitsee homogeenisen jakson, jossa käytetään VVH:n tielinkin tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa käytetään tienimeä.
 
 Valitut tielinkit näkyvät kartalla vihreällä korostettuna. Kun valitaan Toimenpiteet-pudotusvalikosta Uusi (1), lomakkeelle avautuvat kentät uuden tieosoitteen tiedoille (2). Jos valitulla tieosuudella on jo olemassa VVH:ssa tienumero ja tieosanumero, ne esitäyttyvät kenttiin automaattisesti.
 
@@ -352,23 +353,23 @@ Jos uusi tieosoite on jo olemassa projektin alkupäivänä tai se on varattuna t
 
 ![Tieosoite on jo olemassa](k44.JPG)
 
-_kuva 7.4: Tieosoite on jo olemassa projektin alkupäivänä._
+_Kuva 7.4: Tieosoite on jo olemassa projektin alkupäivänä._
 
-Uudelle tieosoitteelle määrittyy aluksi satunnainen kasvusuunta, joka näytetään kartalla pinkeillä nuolilla (2). Kasvusuunnan voi vaihtaa Käännä tieosan kasvusuunta -painikkeella (1).
+Uudelle tieosoitteelle määrittyy aluksi satunnainen kasvusuunta, joka näytetään kartalla pinkeillä nuolilla (2). Kasvusuunnan voi vaihtaa "Käännä tieosan kasvusuunta" -painikkeella (1).
 
 ![Kasvusuunnan vaihto](k47.jpg)
 
-_kuva 7.5: Valittuna olevan uuden tieosoitteen kasvusuunta vaihtuu lomakkeen Käännä tieosan kasvusuunta -painikkeesta._
+_Kuva 7.5: Valittuna olevan uuden tieosoitteen kasvusuunta vaihtuu lomakkeen Käännä tieosan kasvusuunta -painikkeesta._
 
 Uuden tieosoitteen linkit piirtyvät kartalle pinkillä (1). Tieosan alku- ja loppupisteisiin (2) sijoitetaan automaattisesti etäisyyslukema-symbolit. Viite laskee uudelle tieosuudelle automaattisesti myös linkkien m-arvot käyttäen VVH:n tietoja. 
 
 ![Uusi tieosoite pinkilla](k46.jpg)
 
-_kuva 7.6: Uuden tieosoitteen linkit piirtyvät kartalle pinkillä. Tieosan voi valita klikkaamalla, jolloin se korostuu vihreällä._
+_Kuva 7.6: Uuden tieosoitteen linkit piirtyvät kartalle pinkillä. Tieosan voi valita klikkaamalla, jolloin se korostuu vihreällä._
 
 Tallennettuun tieosoitteeseen voi jatkaa uusien linkkien lisäämistä vaiheittain. Ensin valitaan tallennetun tieosan jatkeeksi seuraava linkki. Sitten valitaan lomakkeelta toimenpide Uusi, annetaan linkille sama tieosoite (TIE= tienumero, OSA=tieosanumero, AJR=ajoratakoodi) ja tallennetaan. Viite täyttää automaattisesti ELY-koodin, joka määräytyy tielinkin kuntakoodin perustella VVH:sta. 
 
-Projektin voi myös tallentaa ja sulkea ja jatkaa lisäystä samaan tieosoitteeseen myöhemmin. Kasvusuunta lisätylle osuudelle määräytyy aiemmin osoitteistettujen linkkien mukaan ja sitä voi edelleen muuttaa Käännä kasvusuunta -painikkeella. M-arvot päivittyvät koko tieosalle, jolle on annettu sama tieosoite.
+Projektin voi myös tallentaa ja sulkea ja jatkaa lisäystä samaan tieosoitteeseen myöhemmin. Kasvusuunta lisätylle osuudelle määräytyy aiemmin osoitteistettujen linkkien mukaan ja sitä voi edelleen muuttaa "Käännä kasvusuunta" -painikkeella. M-arvot päivittyvät koko tieosalle, jolle on annettu sama tieosoite.
 
 Tieosoitteen voi antaa Viitteessä myös ns. Suravage-linkeille (SuRavaGe = Suunniteltu rakentamisvaiheen geometria). Suravage-tiet näkyvät Viitteessä vaaleanpunaisella värillä ja niissä näkyy myös tieosoitteen kasvusuuntanuolet. 
 
@@ -380,11 +381,11 @@ Muussa tapauksessa kiertoliittymän alkukohta asetetaan manuaalisesti kahdessa v
 1. Valitaan alkupaikka kaksoisklikkaamalla kiertoliittymän linkkiä tieosoitteen haluttuun alkupaikkaan. Valitulle linkille annetaan Uusi-toimenpiteellä tieosoite. 
 2. Kiertoliittymän loput linkit valitaan Ctrl+klikkaamalla ja annetaan niille sama tieosoite.    
 
-Tieosoiteprojektissa Uusi-toimenpiteellä jo tieosoitteistetun kiertoliittymän alkupaikka muutetaan palauttamalla kiertoliittymä ensin tieosoitteettomaksi ja osoitteistamalla se uudelleen. Valitse tieosoitteistettu kiertoliittymä ja käytä toimenpidettä Palautus aihioksi tai tieosoitteettomaksi. Toimenpiteen jälkeen kiertoliittymän voi tieosoitteistaa uudelleen halutusta alkupaikasta aloittaen.
+Tieosoiteprojektissa Uusi-toimenpiteellä jo tieosoitteistetun kiertoliittymän alkupaikka muutetaan palauttamalla kiertoliittymä ensin tieosoitteettomaksi ja osoitteistamalla se uudelleen. Valitse tieosoitteistettu kiertoliittymä ja käytä toimenpidettä *Palautus aihioksi tai tieosoitteettomaksi*. Toimenpiteen jälkeen kiertoliittymän voi tieosoitteistaa uudelleen halutusta alkupaikasta aloittaen.
 
 7.1.3 Ennallaan
 --------------------------
-Tieosan linkkien tieosoitteen voi säilyttää ennallaan esimerkiksi silloin, kun osalle tieosaa halutaan tehdä tieosoitemuutoksia ja osan säilyvän ennallaan. Tällöin tieosa käsitellään toimenpiteellä Ennallaan. Toimenpide tehdään varaamalla ensin projektitietojen formilla projektiin muokattava tieosa tai -osat. Seuraavaksi siirrytään toimenpidenäytölle Jatka toimenpiteisiin -painikkeella. Valittu tieosa tai sen tietyt linkit valitaan kartalta, jolloin ne muuttuvat vihreiksi, ja lomakkeelle ilmestyy pudotusvalikko. Valikosta valitaan toimenpide Ennallaan ja tallennetaan muutokset.   
+Tieosan linkkien tieosoitteen voi säilyttää ennallaan esimerkiksi silloin, kun osalle tieosaa halutaan tehdä tieosoitemuutoksia ja osan säilyvän ennallaan. Tällöin tieosa käsitellään toimenpiteellä Ennallaan. Toimenpide tehdään varaamalla ensin projektitietojen formilla projektiin muokattava tieosa tai -osat. Seuraavaksi siirrytään toimenpidenäytölle "Jatka toimenpiteisiin" -painikkeella. Valittu tieosa tai sen tietyt linkit valitaan kartalta, jolloin ne muuttuvat vihreiksi, ja lomakkeelle ilmestyy pudotusvalikko. Valikosta valitaan toimenpide Ennallaan ja tallennetaan muutokset.   
 
 7.1.4 Siirto
 --------------------------
@@ -393,21 +394,21 @@ Siirto-toimenpide tehdään tieosalle uusien m-arvojen laskemiseksi. Siirtoa kä
 7.1.5 Numerointi
 --------------------------
 Tieosoitteen numeroinnin muutoksella tarkoitetaan Viitteessä tienumeron ja/tai tieosanumeron muuttamista. 
-Projektiin varataan tarvittava(t) tieosa(t). Varaamisen jälkeen siirrytään toimenpidelomakkeelle Jatka toimenpiteisiin -painikkeella. Valitaan muokattava, keltaisella näkyvä varattu tieosa klikkaamalla kartalta. Tieosa muuttuu vihreäksi. Viite poimii tällöin koko tieosan mukaan valintaan, vaikkei se näkyisi kokonaisuudessaan karttanäkymässä, ja käyttäjälle tulee tästä ilmoitus. Mikäli on tarpeen muuttaa vain tietyn linkin numerointia tieosalla, tehdään valinta kaksoisklikkauksella halutun linkin päältä. Jos valitaan lisää yksittäisiä linkkejä, tehdään se Ctrl+klikkaamalla. Toimenpide-lomakkeelle syötetään uusi numerointi (tienumero ja/tai tieosanumero) ja tallennetaan muutokset. Numeroitu osuus muuttuu tallennettaessa ruskeaksi.
+Projektiin varataan tarvittava(t) tieosa(t). Varaamisen jälkeen siirrytään toimenpidelomakkeelle "Jatka toimenpiteisiin" -painikkeella. Valitaan muokattava, keltaisella näkyvä varattu tieosa klikkaamalla kartalta. Tieosa muuttuu vihreäksi. Viite poimii tällöin koko tieosan mukaan valintaan, vaikkei se näkyisi kokonaisuudessaan karttanäkymässä, ja käyttäjälle tulee tästä ilmoitus. Mikäli on tarpeen muuttaa vain tietyn linkin numerointia tieosalla, tehdään valinta kaksoisklikkauksella halutun linkin päältä. Jos valitaan lisää yksittäisiä linkkejä, tehdään se Ctrl+klikkaamalla. Toimenpide-lomakkeelle syötetään uusi numerointi (tienumero ja/tai tieosanumero) ja tallennetaan muutokset. Numeroitu osuus muuttuu tallennettaessa ruskeaksi.
 
 Koska numeroinnin muutos kohdistuu koko tieosaan, muita toimenpiteitä ei tallennuksen jälkeen tarvitse tehdä. 
 
 7.1.6 Kääntö
 --------------------------
-Tieosoitteen kasvusuunnan voi kääntää Viitteessä joko esimerkiksi siirron tai numeroinnin yhteydessä. Kääntö tapahtuu joko automaattisesti tai tietyissä tilanteissa käyttäjä tekee sen manuaalisesti.  
+Tieosoitteen kasvusuunnan voi kääntää Viitteessä joko esimerkiksi siirron tai numeroinnin yhteydessä. Kääntö tapahtuu joko automaattisesti, tai tietyissä tilanteissa käyttäjä tekee sen manuaalisesti.  
 
-#### Automaattinen kääntö siirron yhteydessä:
+#### Automaattinen kääntö siirron yhteydessä
 
 Kun siirretään tieosa (osittain tai kokonaan) toiselle tieosalle, jolla on eri tieosoitteen kasvusuunta, Viite päättelee siirron yhteydessä kasvusuunnan siirrettäville linkeille. 
 
 Alla olevassa kuvasarjassa on tehty siirto ja kääntö osalle tieosaa. Projektiin on varattu tie 459, osa 1 ja tie 14, osa 1 (näkyvät kartalla keltaisella). Osa tien 14 linkeistä halutaan siirtää tielle 459 osalle 1 (lännen suuntaan), jolloin siirrettävät linkit valitaan kartalta. Lomakkeelta valitaan muutosilmoitus Siirto (1). Annetaan kohtaan TIE arvoksi kohdetien numero 459. Muut tiedot säilyvät tässä tapauksessa samana, mutta myös tieosaa, hallinnollista luokkaa ja jatkuvuuskoodia tulee tarvittaessa muuttaa. Tallennetaan muutokset (2). Kohde muuttuu siirretyksi ja tieosoitteen kasvusuunta päivittyy vastaamaan tien 459 kasvusuuntaa (3). 
 
-Tämän jälkeen siirtoon ja kääntöön voi valita lisää linkkejä tieltä 14 tai jättää loput ennalleen. Jälkimmäisessä tilanteessa loput projektiin valitut keltaiset aihiot tulee aina käsitellä, jotta muutosilmoitukset voi lähettää tierekisteriin. Mikäli muuta ei tehdä, tulee tie 459, osa 1 valita kartalta ja tehdä sille muutosilmoitus Siirto ja painaa Tallenna. Samoin tehdään tielle 14 osalle 1. Ilmoitusten yhteenvetotaulukko avataan ja mikäli tiedot ovat valmiit, voi ne lähettää tierekisteriin vihreästä painikkeesta.  
+Tämän jälkeen siirtoon ja kääntöön voi valita lisää linkkejä tieltä 14 tai jättää loput ennalleen. Jälkimmäisessä tilanteessa loput projektiin valitut keltaiset aihiot tulee aina käsitellä, jotta muutosilmoitukset voi lähettää tierekisteriin. Mikäli muuta ei tehdä, tulee tie 459, osa 1 valita kartalta ja tehdä sille muutosilmoitus Siirto ja painaa Tallenna. Samoin tehdään tielle 14 osalle 1. Ilmoitusten yhteenvetotaulukko avataan, ja mikäli tiedot ovat valmiit, voi ne lähettää tierekisteriin vihreästä "Lähetä muutosilmoitus Tierekisteriin" -painikkeesta.  
 
 ![Siirto ja kääntö](k48.jpg)
 
@@ -417,15 +418,20 @@ Tämän jälkeen siirtoon ja kääntöön voi valita lisää linkkejä tieltä 1
 
 _Kuva 7.7: Kuvasarjassa siirretään osa tiestä 14 tielle 459. Tieosoitteiden kasvusuunnat teillä ovat vastakkaiset, jolloin siirrossa tien 14 kasvusuunta kääntyy._
 
-![Manuaalinen kääntö](k70.jpg)
+#### Tieosan manuaalinen kääntö
 
-_Kuva 7.8: Manuaalinen kääntö siirron ja numeroinnin yhteydessä:_
+Manuaalista kääntöä varten Viitteessä on "Käännä kasvusuunta" -painike. Painike aktivoituu lomakkeelle, kun käyttäjä on tehnyt varaamalleen aihiolle toimenpiteen ja tallentanut sen. Kun käsiteltyä aihiota (on tehty muutosilmoitus siirto tai numerointi) klikataan kartalla, lomakkeella näkyvät tehty ilmoitus ja sen tiedot sekä "Käännä kasvusuunta" -painike. Kun sitä klikataan ja sen jälkeen tallennetaan, tieosan kasvusuunta kääntyy, ja projektin yhteenvetotauluun tulee tieto käännöstä sarakkeeseen Kääntö (rasti ruudussa).
 
-Manuaalista kääntöä varten Viitteessä on Käännä kasvusuunta -painike. Painike aktivoituu lomakkeelle, kun käyttäjä on tehnyt varaamalleen aihiolle toimenpiteen ja tallentanut sen. Kun käsiteltyä aihiota (on tehty muutosilmoitus siirto tai numerointi) klikataan kartalla, lomakkeella näkyvät tehty ilmoitus ja sen tiedot sekä Käännä kasvusuunta -painike. Kun sitä klikataan sekä tallennetaan, kasvusuunta kääntyy ja yhteenvetotauluun tulee tieto käännöstä oman sarakkeeseen Kääntö (rasti ruudussa). 
-	
+Manuaalinen kääntö koskee aina koko tieosaa. Sen vuoksi manuaalista kääntöä ei voi suorittaa, jos joku tieosan linkeistä on käsitelty toimenpiteellä Ennallaan.
 
-Kun käännetään tieosan kaksiajoratainen osuus, se tehdään edellä kuvatulla tavalla siirron tai numeroinnin yhteydessä yksi ajorata kerrallaan. Kartalta valitaan haluttu ajorata ja lomakkeelta joko siirto tai numerointi. Määritetään uusi ajoratakoodi sekä muut tarvittavat tieosoitemuutostiedot lomakkeelle ja tallennetaan. Mikäli tieosoitteen kasvusuunta ei automaattisesti käänny (esim. kun käsitellään yhtä tieosaa), tehdään kääntö manuaalisesti Käännä kasvusuunta -painikkeella. Yhteenvetotaulussa Kääntö-sarake sekä muutosilmoituksen rivit päivittyvät. 
- 
+![Manuaalinen kääntö](k70.png)
+
+_Kuva 7.8: Manuaalinen kääntö siirron tai numeroinnin yhteydessä_
+
+#### Kaksiajorataisen osuuden kääntö
+
+Kun käännetään tieosan kaksiajoratainen osuus, se tehdään edellä kuvatulla tavalla siirron tai numeroinnin yhteydessä yksi ajorata kerrallaan. Kartalta valitaan haluttu ajorata ja lomakkeelta joko siirto tai numerointi. Määritetään uusi ajoratakoodi sekä muut tarvittavat tieosoitemuutostiedot lomakkeelle ja tallennetaan. Mikäli tieosoitteen kasvusuunta ei automaattisesti käänny (esim. kun käsitellään yhtä tieosaa), tehdään kääntö manuaalisesti "Käännä kasvusuunta" -painikkeella. Yhteenvetotaulussa Kääntö-sarake sekä muutosilmoituksen rivit päivittyvät.
+
 7.1.7 Etäisyyslukeman muutos
 --------------------------
 Tieosoiteprojektissa uudelle tieosoitteistettavalle tieosalle on mahdollista asettaa käyttäjän antama tieosan loppuetäisyyslukema. Ensin valitaan haluttu tieosa kartalta, jonka jälkeen lomakkeelle ilmestyy kenttä, johon loppuetäisyyden voi muuttaa. Muutettu arvo huomioidaan lomakkeella punaisella huutomerkillä. 
@@ -435,9 +441,6 @@ Tieosoiteprojektissa uudelle tieosoitteistettavalle tieosalle on mahdollista ase
 Viitteessä voi muokata ELY-koodia, jatkuvuutta ja hallinnollista luokkaa. Näitä muutoksia voi tehdä esimerkiksi Ennallaan-toimenpiteellä, jolloin lomakkeelle tulee pudotusvalikot ELYlle, jatkuvuudelle ja hallinnolliselle luokalle. Uudet arvot annetaan valitulle aihiolle ja tallennetaan. Jatkuvuus-koodi näytetään valinnan viimeiseltä linkiltä ja muutokset kohdistuvat myös viimeiseen linkkiin. Hallinnollisen luokan ja ELY-koodin muutos kohdistuu kaikkiin valittuihin linkkeihin. Ennallaan-toimenpiteen lisäksi näitä arvoja voi muokata aina, kun ne ovat muutosilmoituksen yhteydessä lomakkeella muokattavissa. 
 
 Huom! Jatkuvuuskoodia 5 on valittavissa kaksi eri vaihtoehtoa. Koodia _5 Jatkuva (Rinnakkainen linkki)_ käytetään kaksiajorataisella tiellä osoittamaan rinnakkainen linkki silloin, kun toisella ajoradalla on lievä epäjatkuvuus, eikä automaatio ole löytänyt oikeaa linkkiparia. Jatkuvuuskoodi _4 Lievä epäjatkuvuus_ annetaan normaalisti toisen ajoradan epäjatkuvuuskohtaan. Viite antaa automaattisesti kalibrointipisteet molemmille ajoradoille. Jos rinnakkaisen ajoradan kalibrointipiste ei ole halutussa kohdassa, valitaan haluttu rinnakkainen linkki ja annetaan sille koodiksi _5 Jatkuva (Rinnakkainen linkki)_. Tällöin kalibrointipiste tulee kyseisen linkin loppuun, ja ajoratojen AET- ja LET-arvot saadaan täsmättyä lievään epäjatkuvuuskohtaan.
-
-7.1.9 Useiden muutosten tekeminen samalle tieosalle
---------------------------
 
 7.2 Muutosilmoitusten tarkastelu taulukkonäkymässä
 --------------------------
@@ -475,7 +478,7 @@ Tarkastusilmoitus koostuu seuraavista kentistä:
 
 _Kuva 7.12: Tielinkki 7304402 on tieosan viimeinen linkki, mutta siltä puuttuu jatkuvuuskoodi Tien loppu._ 
 
-Karttanäkymä kohdistuu tarkastusilmoituksen kohteena olevan tielinkin keskikohtaan painamalla "Korjaa"-painiketta. Klikkaamalla painiketta uudestaan kohdistus siirtyy seuraavaan tielinkkiin, jos sama tarkastus kohdistuu useampaan linkkiin. Käyttäjä voi valita tarkastusilmoituksen kohteena olevan tielinkin ja tehdä sille korjaavan toimenpiteen. 
+Karttanäkymä kohdistuu tarkastusilmoituksen kohteena olevan tielinkin keskikohtaan painamalla Korjaa-painiketta. Klikkaamalla painiketta uudestaan kohdistus siirtyy seuraavaan tielinkkiin, jos sama tarkastus kohdistuu useampaan linkkiin. Käyttäjä voi valita tarkastusilmoituksen kohteena olevan tielinkin ja tehdä sille korjaavan toimenpiteen. 
 
 #### Tieosoiteprojektissa tehtävät tarkastukset:
 
@@ -502,20 +505,20 @@ Tieosan sisäisen epäjatkuvuuden pituudelle ei ole asetettu ylärajaa.
 7.4 Muutosilmoitusten lähettäminen
 --------------------------
 
-Muutosilmoitus viedään tierekisteriin avaamalla ensin yhteenvetotaulukko klikkaamalla oikean alakulman sinistä "Avaa projektin yhteenvetotaulukko" -painiketta. Kun projektilla ei ole enää korjaamattomia tarkastusilmoituksia, aktivoituu vihreä "Lähetä muutosilmoitus Tierekisteriin" -painike. Painikkeen painamisen jälkeen sovellus ilmoittaa muutosilmoituksen lähettämisestä "Muutosilmoitus lähetetty Tierekisteriin" -viestillä.
+Muutosilmoitus viedään Tierekisteriin avaamalla ensin yhteenvetotaulukko klikkaamalla oikean alakulman sinistä "Avaa projektin yhteenvetotaulukko" -painiketta. Kun projektilla ei ole enää korjaamattomia tarkastusilmoituksia, aktivoituu vihreä "Lähetä muutosilmoitus Tierekisteriin" -painike. Painikkeen painamisen jälkeen sovellus ilmoittaa muutosilmoituksen lähettämisestä "Muutosilmoitus lähetetty Tierekisteriin" -viestillä.
 
 ![Muutosilmoituksen painike](k38.png)
 
 _Kuva 7.13: Muutosilmoituksen lähetyspainike oikeassa alakulmassa._
 
-Kun muutosilmoitus on lähetetty, muuttuu projektin tilatiedoksi "Lähetetty tierekisteriin". Viite-sovellus tarkistaa minuutin välein Tierekisterin tilanteen. Kun muutos on käsitelty siellä, Viite saa tästä tiedon, ja tilatiedoksi tulee "Viety tierekisteriin", ja tieosoiteprojekti on nyt valmis. Mikäli muutosilmoitus ei ole mennyt läpi Tierekisterissä, tilaksi päivittyy "Virhe tierekisterissä" ja listalle tulee oranssi "Avaa uudelleen" -painike. Viemällä hiiren "Virhe tierekisterissä" -tekstin päälle virheen infolaatikko tulee näkyviin. Virhe korjataan avaamalla projekti ja tekemällä tarvittavat muokkaukset, jonka jälkeen ilmoitus lähetetään uudelleen Tierekisteriin.  
+Kun muutosilmoitus on lähetetty, muuttuu projektin tilatiedoksi *Lähetetty tierekisteriin*. Viite-sovellus tarkistaa minuutin välein Tierekisterin tilanteen. Kun muutos on käsitelty siellä, Viite saa tästä tiedon, ja tilatiedoksi tulee *Viety tierekisteriin*, ja tieosoiteprojekti on nyt valmis. Mikäli muutosilmoitus ei ole mennyt läpi Tierekisterissä, tilaksi päivittyy *Virhe tierekisterissä* ja listalle tulee oranssi "Avaa uudelleen" -painike. Viemällä hiiren *Virhe tierekisterissä* -tekstin päälle virheen infolaatikko tulee näkyviin. Virhe korjataan avaamalla projekti ja tekemällä tarvittavat muokkaukset, jonka jälkeen korjattu ilmoitus täytyy lähettää Tierekisteriin.  
 
 Tässä koostettuna tieosoiteprojektin tilat
 
 |Tieosoiteprojektin tila|Selite|
 |------|------|
 |Keskeneräinen|Projekti on työn alla ja sitä ei ole vielä lähetetty Tierekisteriin.|
-|Lähetetty tierekisteriin|Projekti on lähetetty tierekisteriin.|
+|Lähetetty tierekisteriin|Projekti on lähetetty Tierekisteriin.|
 |Tierekisterissä käsittelyssä|Projekti on Tierekisterissä käsittelyssä. Tierekisteri käsittelee projektin sisältämiä muutosilmoituksia.|
 |Viety tierekisteriin|Projekti on hyväksytty Tierekisterissä. Muutokset näkyvät myös Viite-sovelluksessa.|
 |Virhe tierekisterissä|Tierekisteri ei hyväksynyt projektia. Tierekisterin tarkempi virheilmoitus tulee näkyviin viemällä osoittimen "Virhe tierekisterissä"-tekstin päälle. Projektin voi avata uudelleen.|
@@ -547,9 +550,9 @@ Jos tie on lakkautettu, tien nimi näkyy harmaana (kuva 8.3) eikä [+] -painiket
 
 ![Tienimeä ei voi muuttaa](k55.JPG)
 
-_Kuva 8.3: Lakkautettu tie. Tienimeä ei voi enää muuttaa._
+_Kuva 8.3: Lakkautettu tie. Tien nimeä ei voi enää muuttaa._
 
-Voimassa olevaa nimeä voi muokata suoraan Tien nimi -kentässä (2) (Kuva 8.2). Tallenna-painike (5) aktivoituu, kun nimeä muokataan. Tallennuksen jälkeen tulee ilmoitus jo olemasta olevasta nimestä (kuva 8.4). Kun nimeä muokkaa, se ei saa uutta loppupäivämäärää eikä uutta riviä muodostu listalle.
+Voimassa olevaa nimeä voi muokata suoraan "Tien nimi" -kentässä (2) (Kuva 8.2). Tallenna-painike (5) aktivoituu, kun nimeä muokataan. Tallennuksen jälkeen tulee ilmoitus jo olemasta olevasta nimestä (kuva 8.4). Kun nimeä muokkaa, se ei saa uutta loppupäivämäärää eikä uutta riviä muodostu listalle.
 
 ![Uuden tienimen muuttaminen](k56.JPG)
 
@@ -558,14 +561,14 @@ _Kuva 8.4: Varmistusilmoitus tienimen muuttamisesta._
 8.2 Uuden tienimen antaminen tielle, jolla on jo nimi
 --------------------------
 
-Tielle on mahdollista antaa uusi nimi esimerkiksi tien alku- tai loppupaikkakunnan muuttuessa. Uusi nimi annetaan painamalla voimassa olevan nimen perässä olevaa [+] -painiketta (3) (kuva 8.2) . Lomakkeelle ilmestyy uusi rivi (1), johon tiedot syötetään (kuva 8.5). Tielle annetaan uusi nimi (2), joka  voi olla enintään 50 merkkiä pitkä, ja alkupäivämäärä (3). Alkupäivämäärä voi olla aikaisintaan edellistä alkupäivämäärää seuraava päivä.
+Tielle on mahdollista antaa uusi nimi esimerkiksi tien alku- tai loppupaikkakunnan muuttuessa. Uusi nimi annetaan painamalla voimassa olevan nimen perässä olevaa [+] -painiketta (3) (kuva 8.2) . Lomakkeelle ilmestyy uusi rivi (1), johon tiedot syötetään (kuva 8.5). Tielle annetaan uusi nimi (2), joka voi olla enintään 50 merkkiä pitkä, ja alkupäivämäärä (3). Alkupäivämäärä voi olla aikaisintaan edellistä alkupäivämäärää seuraava päivä.
 Edellinen nimi saa loppupäivämääräksi (4) automaattisesti uuden nimen alkupäivämäärän. Jos uutta nimeä ei halutakaan tallentaa, painetaan [-]-painiketta (5), jolloin alin rivi poistuu. Uusi nimi tallennetaan Tallenna-painikkeella. Viite varmistaa, halutaanko tielle varmasti antaa uusi nimi. 
 
 ![Uuden tienimen muuttaminen](k57.JPG)
 
 _Kuva 8.5: Uuden tienimen antaminen_ 
 
-Kun käyttäjä on tallentanut uuden nimen, muuttuu [-] -painike [+] -painikkeeksi ja vain Tien nimi -kenttää on mahdollista muokata (Ks. tien nimen muokkaaminen, kun tiellä on nimi). 
+Kun käyttäjä on tallentanut uuden nimen, muuttuu [-] -painike [+] -painikkeeksi ja vain "Tien nimi" -kenttää on mahdollista muokata (Ks. tien nimen muokkaaminen, kun tiellä on nimi). 
 
 ![Tienimeä ei voi muuttaa](k58.JPG)
 
@@ -593,13 +596,13 @@ Viite myös päivittää nykyisten solmujen solmukohtia ja nykyisten liittymien 
  
 Käyttäjä liittää solmukohta- ja liittymäaihiot solmuun. Tarvittaessa käyttäjä luo liittämisen yhteydessä uuden solmun. Jos jollakin solmun tieosalla ei ole solmukohtaa, järjestelmä laskee solmuun liitettyjen liittymien perusteella näille solmun tieosille solmukohdat.
 
-Käyttäjä voi liittää samaan solmuun useita saman tieosan solmukohtia. Käyttäjä voi myös irrottaa solmukohdan tai liittymän solmusta. Liittymien perusteella laskettuja solmukohtia käyttäjä ei voi irrottaa solmusta, ainoastaan tien tai tieosan alku-tai loppupisteen sekä hallinnollisen luokan vaihtumiskohdan solmukohdat voi irrottaa solmusta. Irrotetettu solmukohta tai liittymä muuttuu takaisin aihioksi, jonka käyttäjä voi liittää toiseen solmuun.
+Käyttäjä voi liittää samaan solmuun useita saman tieosan solmukohtia. Käyttäjä voi myös irrottaa solmukohdan tai liittymän solmusta. Liittymien perusteella laskettuja solmukohtia käyttäjä ei voi irrottaa solmusta, ainoastaan tien tai tieosan alku- tai loppupisteen sekä hallinnollisen luokan vaihtumiskohdan solmukohdat voi irrottaa solmusta. Irrotetettu solmukohta tai liittymä muuttuu takaisin aihioksi, jonka käyttäjä voi liittää toiseen solmuun.
 
 Jos käyttäjä liittää liittymäaihion solmuun tai irrottaa liittymän solmusta, järjestelmä päivittää liittymien perusteella lasketut solmukohdat.
 
 Jos käyttäjä liittää solmuun solmukohta-aihion, järjestelmä poistaa ko. tieosalta liittymien perusteella lasketun solmukohdan.
 
-Jos käyttäjä irrottaa solmusta solmukohdan, järjestelmä laskee liittymien perusteella solmukohdat niille tieosille, joilla ei ole enää  tien tai tieosan alku-tai loppupisteen sekä hallinnollisen luokan vaihtumiskohdan solmukohtia.
+Jos käyttäjä irrottaa solmusta solmukohdan, järjestelmä laskee liittymien perusteella solmukohdat niille tieosille, joilla ei ole enää  tien tai tieosan alku- tai loppupisteen sekä hallinnollisen luokan vaihtumiskohdan solmukohtia.
 
 9.2 Solmujen ja liittymien ylläpitotyökalu
 --------------------------
@@ -612,7 +615,7 @@ _Kuva 9.1: Solmut ja liittymät -työkalun avaaminen._
 
 Avautuneessa näkymässä solmut esitetään kartalla vinoneliösymboleina. Solmutyyppien selitteet (1) löytyvät vasemmasta reunasta. Sieltä löytyvät myös liittymä-, liittymäaihio- ja solmukohta-aihiosymboleiden selitteet (2) sekä työkalu solmun valintaan (3). 
 
-Näkymän oikeassa reunassa on solmujen hakutoiminto (4). Hakutoiminnostsa tarkemmin luvussa 9.3 (Solmujen haku).
+Näkymän oikeassa reunassa on solmujen hakutoiminto (4). Hakutoiminnosta tarkemmin luvussa 9.3 (Solmujen haku).
 
 Hakutoiminnon alapuolella näytetään listat käsittelemättömistä liittymä- ja solmukohta-aihioista (5). Näistä tarkemmin kappaleessa 9.4 (Lista liittymä- ja solmukohta-aihioista).
 
@@ -635,7 +638,7 @@ _Kuva 9.3: Solmun ja liittymän infolaatikot._
 9.3 Solmujen haku
 --------------------------
 
-Solmujen tietoja voi hakea joko pelkän tienumeron, tai tienumeron ja tieosien (AOSA, LOSA) perusteella. Käyttäjä syöttää haluamansa arvot kenttiin, painaa Hae solmut -painiketta ja Viite listaa hakua vastaavat solmut formille.
+Solmujen tietoja voi hakea joko pelkän tienumeron, tai tienumeron ja tieosien (AOSA, LOSA) perusteella. Käyttäjä syöttää haluamansa arvot kenttiin, painaa "Hae solmut" -painiketta ja Viite listaa hakua vastaavat solmut formille.
 
 ![Solmujen hakutulos](k61_2.png)
 
@@ -671,7 +674,7 @@ Liittymäaihion osoite näytetään muodossa tie/ajr/osa/aet ja solmukohta-aihio
 9.5 Nykyisen solmun tietojen katselu/muokkaaminen
 --------------------------
 
-Kun käyttäjä klikkaa vasemmassa reunassa sijaitsevaa Solmun valinta -työkalua, muokkaustoiminto aktivoituu ja painikkeen tausta muuttuu vaaleansiniseksi.  Tämän jälkeen käyttäjä valitsee kartalta solmun, jonka tietoja haluaa katsella tai muokata, ja formille avautuu tiedot solmusta (1), solmukohdista (2) ja liittymistä (3).
+Kun käyttäjä klikkaa vasemmassa reunassa sijaitsevaa "Solmun valinta" -työkalua, muokkaustoiminto aktivoituu ja painikkeen tausta muuttuu vaaleansiniseksi.  Tämän jälkeen käyttäjä valitsee kartalta solmun, jonka tietoja haluaa katsella tai muokata, ja formille avautuu tiedot solmusta (1), solmukohdista (2) ja liittymistä (3).
 
 ![Solmun tiedot, solmukohdat ja liittymät](k62.png)
 
@@ -679,7 +682,7 @@ _Kuva 9.4: Solmun tiedot, solmukohdat ja liittymät._
 
 Valinnan jälkeen muut kuin käyttäjän valitsema solmu ja sen liittymät näkyvät kartalla himmennettyinä.
 
-Solmun valinta -painike inaktivoituu tietojen tallennuksen tai peruutuksen jälkeen. 
+"Solmun valinta" -painike inaktivoituu tietojen tallennuksen tai peruutuksen jälkeen. 
 
 #### Solmun tiedot
 
@@ -700,7 +703,7 @@ _Kuva 9.5: Solmun solmukohdat._
 
 #### Solmun liittymien katselu ja liittymänumeron muokkaus
 
-Liittymistä näytetään liittymänumero, tienumero, ajorata, tieosa, etäisyyslukema ja ennen/jälkeen-arvo (7). Liittymät näytetään numerojärjestyksessä (8), liittymäkohdat alekkain tieosoitejärjestyksessä.
+Liittymistä näytetään liittymänumero, tienumero, ajorata, tieosa, etäisyyslukema ja ennen/jälkeen-arvo (7). Liittymät näytetään numerojärjestyksessä (8), liittymäkohdat allekkain tieosoitejärjestyksessä.
 
 Käyttäjä voi muokata liittymänumeroa kirjoittamalla uuden liittymänumeron vanhan numeron tilalle (9). Solmulla ei voi olla useita samalla numerolla olevia liittymiä. Viite estää tällaisen tallennuksen. Tallennus on estetty myös silloin, jos liittymänumero(ita) puuttuu.
 
@@ -730,7 +733,7 @@ Kun käyttäjä on valinnut irrotettavat liittymät ja solmut, ja tallentanut mu
 
 Nykyisen solmun muutokset tallennetaan Tallenna-painikeella tai peruutetaan Peruuta-painikkeella.
 
-Tallennuksen jälkeen irroitettavat liittymät näkyvät kartalla aihioina.
+Tallennuksen jälkeen irrotettavat liittymät näkyvät kartalla aihioina.
 
 ![Tilanne tallennuksen jälkeen irrotetut näkyvät aihioina.](k67_2.png)
 
@@ -769,4 +772,4 @@ Tallenna-painike aktivoituu, kun kaikki pakolliset tiedot on annettu. Tallennuks
 9.7 Solmun sijainnin muokkaaminen
 --------------------------
 
-Siirrettävä solmu valitaan Solmun valinta -työkalulla. Käyttäjä vetää solmun haluamaansa paikkaan hiirellä. Solmua voi kerralla siirtää enintään 200 metriä.  Solmun saa siirrettyä yli 200 metrin päähän tekemällä sille useamman siirron. Solmun koordinaatit näkyvät formilla, josta sijainnin voi tarkistaa solmua siirrettäessä. Kun solmu on halutulla paikalla, käyttäjä tallentaa tiedot Tallenna-painikkeesta.  
+Siirrettävä solmu valitaan "Solmun valinta" -työkalulla. Käyttäjä vetää solmun haluamaansa paikkaan hiirellä. Solmua voi kerralla siirtää enintään 200 metriä.  Solmun saa siirrettyä yli 200 metrin päähän tekemällä sille useamman siirron. Solmun koordinaatit näkyvät formilla, josta sijainnin voi tarkistaa solmua siirrettäessä. Kun solmu on halutulla paikalla, käyttäjä tallentaa tiedot Tallenna-painikkeesta.  
