@@ -233,7 +233,7 @@ Uuden tieosoiteprojektin tekeminen aloitetaan klikkaamalla painiketta Tieosoitep
 
 _Kuva 6.1: Tieosoiteprojektit-painike ja Uusi tieosoiteprojekti -painike._
 
-Näytön oikeaan reunaan avautuu lomake tieosoiteprojektin perustietojen täydentämistä varten. Jos käyttäjä on ollut katselutilassa,  sovellus siirtyy tässä vaiheessa automaattisesti muokkaustilaan.
+Näytön oikeaan reunaan avautuu lomake tieosoiteprojektin perustietojen täydentämistä varten. Jos käyttäjä on ollut katselutilassa, sovellus siirtyy tässä vaiheessa automaattisesti muokkaustilaan.
 
 Pakollisia tietoja ovat nimi ja projektin muutosten voimaantulopäivämäärä, jotka on merkattu lomakkeelle oranssilla (3). Projektiin ei tarvitse varata yhtään tieosaa. Lisätiedot-kenttään käyttäjä voi halutessaan tehdä muistiinpanoja tieosoiteprojektista. Tiedot tallentuvat painamalla Jatka toimenpiteisiin -painiketta (4). Poistu-painike (5) sulkee projektin tietoja tallentamatta.
 
@@ -245,7 +245,7 @@ Projektin tieosat lisätään täydentämällä niiden tiedot kenttiin TIE, AOSA
 
 Varauksen yhteydessä järjestelmä tekee varattaville tieosille tarkastukset:
 
-- Vrattavan tieosan täytyy olla olemassa projektin voimaantulopäivänä
+- Varattavan tieosan täytyy olla olemassa projektin voimaantulopäivänä
 - Varattavan tieosan on oltava vapaana. Tieosa voi olla varattuna vain yhteen projektiin kerrallaan. 
 
 Virheellisistä varausyrityksistä järjestelmä antaa virheilmoituksen.  __Käyttäjän tulee huomioida, että varauksen yhteydessä kaikki kentät (TIE, AOSA, LOSA) tulee täyttää.__ Varausyritys Varaa-painikkeella antaa virheilmoituksen, jos kenttiä on täyttämättä.
@@ -561,7 +561,7 @@ _Kuva 8.4: Varmistusilmoitus tienimen muuttamisesta._
 8.2 Uuden tienimen antaminen tielle, jolla on jo nimi
 --------------------------
 
-Tielle on mahdollista antaa uusi nimi esimerkiksi tien alku- tai loppupaikkakunnan muuttuessa. Uusi nimi annetaan painamalla voimassa olevan nimen perässä olevaa [+] -painiketta (3) (kuva 8.2) . Lomakkeelle ilmestyy uusi rivi (1), johon tiedot syötetään (kuva 8.5). Tielle annetaan uusi nimi (2), joka  voi olla enintään 50 merkkiä pitkä, ja alkupäivämäärä (3). Alkupäivämäärä voi olla aikaisintaan edellistä alkupäivämäärää seuraava päivä.
+Tielle on mahdollista antaa uusi nimi esimerkiksi tien alku- tai loppupaikkakunnan muuttuessa. Uusi nimi annetaan painamalla voimassa olevan nimen perässä olevaa [+] -painiketta (3) (kuva 8.2) . Lomakkeelle ilmestyy uusi rivi (1), johon tiedot syötetään (kuva 8.5). Tielle annetaan uusi nimi (2), joka voi olla enintään 50 merkkiä pitkä, ja alkupäivämäärä (3). Alkupäivämäärä voi olla aikaisintaan edellistä alkupäivämäärää seuraava päivä.
 Edellinen nimi saa loppupäivämääräksi (4) automaattisesti uuden nimen alkupäivämäärän. Jos uutta nimeä ei halutakaan tallentaa, painetaan [-]-painiketta (5), jolloin alin rivi poistuu. Uusi nimi tallennetaan Tallenna-painikkeella. Viite varmistaa, halutaanko tielle varmasti antaa uusi nimi. 
 
 ![Uuden tienimen muuttaminen](k57.JPG)
@@ -596,13 +596,13 @@ Viite myös päivittää nykyisten solmujen solmukohtia ja nykyisten liittymien 
  
 Käyttäjä liittää solmukohta- ja liittymäaihiot solmuun. Tarvittaessa käyttäjä luo liittämisen yhteydessä uuden solmun. Jos jollakin solmun tieosalla ei ole solmukohtaa, järjestelmä laskee solmuun liitettyjen liittymien perusteella näille solmun tieosille solmukohdat.
 
-Käyttäjä voi liittää samaan solmuun useita saman tieosan solmukohtia. Käyttäjä voi myös irrottaa solmukohdan tai liittymän solmusta. Liittymien perusteella laskettuja solmukohtia käyttäjä ei voi irrottaa solmusta, ainoastaan tien tai tieosan alku-tai loppupisteen sekä hallinnollisen luokan vaihtumiskohdan solmukohdat voi irrottaa solmusta. Irrotetettu solmukohta tai liittymä muuttuu takaisin aihioksi, jonka käyttäjä voi liittää toiseen solmuun.
+Käyttäjä voi liittää samaan solmuun useita saman tieosan solmukohtia. Käyttäjä voi myös irrottaa solmukohdan tai liittymän solmusta. Liittymien perusteella laskettuja solmukohtia käyttäjä ei voi irrottaa solmusta, ainoastaan tien tai tieosan alku- tai loppupisteen sekä hallinnollisen luokan vaihtumiskohdan solmukohdat voi irrottaa solmusta. Irrotetettu solmukohta tai liittymä muuttuu takaisin aihioksi, jonka käyttäjä voi liittää toiseen solmuun.
 
 Jos käyttäjä liittää liittymäaihion solmuun tai irrottaa liittymän solmusta, järjestelmä päivittää liittymien perusteella lasketut solmukohdat.
 
 Jos käyttäjä liittää solmuun solmukohta-aihion, järjestelmä poistaa ko. tieosalta liittymien perusteella lasketun solmukohdan.
 
-Jos käyttäjä irrottaa solmusta solmukohdan, järjestelmä laskee liittymien perusteella solmukohdat niille tieosille, joilla ei ole enää  tien tai tieosan alku-tai loppupisteen sekä hallinnollisen luokan vaihtumiskohdan solmukohtia.
+Jos käyttäjä irrottaa solmusta solmukohdan, järjestelmä laskee liittymien perusteella solmukohdat niille tieosille, joilla ei ole enää  tien tai tieosan alku- tai loppupisteen sekä hallinnollisen luokan vaihtumiskohdan solmukohtia.
 
 9.2 Solmujen ja liittymien ylläpitotyökalu
 --------------------------
@@ -615,7 +615,7 @@ _Kuva 9.1: Solmut ja liittymät -työkalun avaaminen._
 
 Avautuneessa näkymässä solmut esitetään kartalla vinoneliösymboleina. Solmutyyppien selitteet (1) löytyvät vasemmasta reunasta. Sieltä löytyvät myös liittymä-, liittymäaihio- ja solmukohta-aihiosymboleiden selitteet (2) sekä työkalu solmun valintaan (3). 
 
-Näkymän oikeassa reunassa on solmujen hakutoiminto (4). Hakutoiminnostsa tarkemmin luvussa 9.3 (Solmujen haku).
+Näkymän oikeassa reunassa on solmujen hakutoiminto (4). Hakutoiminnosta tarkemmin luvussa 9.3 (Solmujen haku).
 
 Hakutoiminnon alapuolella näytetään listat käsittelemättömistä liittymä- ja solmukohta-aihioista (5). Näistä tarkemmin kappaleessa 9.4 (Lista liittymä- ja solmukohta-aihioista).
 
@@ -703,7 +703,7 @@ _Kuva 9.5: Solmun solmukohdat._
 
 #### Solmun liittymien katselu ja liittymänumeron muokkaus
 
-Liittymistä näytetään liittymänumero, tienumero, ajorata, tieosa, etäisyyslukema ja ennen/jälkeen-arvo (7). Liittymät näytetään numerojärjestyksessä (8), liittymäkohdat alekkain tieosoitejärjestyksessä.
+Liittymistä näytetään liittymänumero, tienumero, ajorata, tieosa, etäisyyslukema ja ennen/jälkeen-arvo (7). Liittymät näytetään numerojärjestyksessä (8), liittymäkohdat allekkain tieosoitejärjestyksessä.
 
 Käyttäjä voi muokata liittymänumeroa kirjoittamalla uuden liittymänumeron vanhan numeron tilalle (9). Solmulla ei voi olla useita samalla numerolla olevia liittymiä. Viite estää tällaisen tallennuksen. Tallennus on estetty myös silloin, jos liittymänumero(ita) puuttuu.
 
@@ -733,7 +733,7 @@ Kun käyttäjä on valinnut irrotettavat liittymät ja solmut, ja tallentanut mu
 
 Nykyisen solmun muutokset tallennetaan Tallenna-painikeella tai peruutetaan Peruuta-painikkeella.
 
-Tallennuksen jälkeen irroitettavat liittymät näkyvät kartalla aihioina.
+Tallennuksen jälkeen irrotettavat liittymät näkyvät kartalla aihioina.
 
 ![Tilanne tallennuksen jälkeen irrotetut näkyvät aihioina.](k67_2.png)
 
