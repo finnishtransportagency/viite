@@ -138,10 +138,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     dummyRoadLink(linkId = 124L, Seq(0.0, 10.0), NormalLinkInterface)
   )
 
-  private def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Int,
-                                 discontinuity: Int, roadType: Int, roadLinkSource: Int,
-                                 roadEly: Long, user: String, roadName: String): Map[String, Any] = {
-    projectService.createProjectLinks(linkIds, projectId, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), AdministrativeClass.apply(roadType), LinkGeomSource.apply(roadLinkSource), roadEly, user, roadName)
+  private def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, track: Int, discontinuity: Int, administrativeClass: Int, roadLinkSource: Int, roadEly: Long, user: String, roadName: String) = {
+    projectService.createProjectLinks(linkIds, projectId, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), AdministrativeClass.apply(administrativeClass), LinkGeomSource.apply(roadLinkSource), roadEly, user, roadName)
   }
 
   private def toProjectLink(project: Project, status: LinkStatus)(roadAddress: RoadAddress): ProjectLink = {

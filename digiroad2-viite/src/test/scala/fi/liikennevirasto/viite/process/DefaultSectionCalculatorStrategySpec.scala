@@ -826,7 +826,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       val assignedValues2 = defaultSectionCalculatorStrategy.assignMValues(Seq(projectLinkRight1, projectLinkRight2.copy(administrativeClass = AdministrativeClass.Private)), Seq(projectLinkLeft1, projectLinkLeft2.copy(administrativeClass = AdministrativeClass.Private, roadwayNumber = Sequences.nextRoadwayNumber)), Seq.empty[UserDefinedCalibrationPoint])
 
       val (left2, right2) = assignedValues2.partition(_.track == Track.LeftSide)
-      //should have same 2 different roadwayNumber since they have 2 different roadtypes (projectLinkLeft2 have now Private RoadType)
+      //should have same 2 different roadwayNumber since they have 2 different administrativeClasses (projectLinkLeft2 have now Private AdministrativeClass)
       val groupedLeft2: ListMap[Long, Seq[ProjectLink]] = ListMap(left2.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
       val groupedRight2: ListMap[Long, Seq[ProjectLink]] = ListMap(right2.groupBy(_.roadwayNumber).toSeq.sortBy(r => r._2.minBy(_.startAddrMValue).startAddrMValue): _*)
       groupedLeft2.size should be (groupedRight2.size)

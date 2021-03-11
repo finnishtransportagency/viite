@@ -2534,7 +2534,7 @@ Left|      |Right
     }
   }
 
-  test("Test checkTrackRoadType When there are different Road Types in each Track Then ProjectValidator should show DistinctRoadTypesBetweenTracks") {
+  test("Test checkTrackAdministrativeClass When there are different Road Types in each Track Then ProjectValidator should show DistinctAdministrativeClasssBetweenTracks") {
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
       val (left, right) = projectLinks.partition(_.track == LeftSide)
@@ -2552,15 +2552,15 @@ Left|      |Right
     }
   }
 
-  test("Test checkTrackRoadType When there are same Road Types in each Track but in different order Then ProjectValidator should show DistinctRoadTypesBetweenTracks") {
+  test("Test checkTrackAdministrativeClass When there are same Road Types in each Track but in different order Then ProjectValidator should show DistinctAdministrativeClasssBetweenTracks") {
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
       val (left, right) = projectLinks.partition(_.track == LeftSide)
       val endOfRoadLeft = left.init :+ left.last.copy(discontinuity = Discontinuity.EndOfRoad)
       val endOfRoadRight = right.init :+ right.last.copy(discontinuity = Discontinuity.EndOfRoad)
-      val leftRoadType = endOfRoadLeft.init :+ endOfRoadLeft.last.copy(administrativeClass = AdministrativeClass.Municipality)
-      val rightRoadType = endOfRoadRight.head.copy(administrativeClass = AdministrativeClass.Municipality) +: endOfRoadRight.tail
-      val endOfRoadSet = leftRoadType ++ rightRoadType
+      val leftAdministrativeClass = endOfRoadLeft.init :+ endOfRoadLeft.last.copy(administrativeClass = AdministrativeClass.Municipality)
+      val rightAdministrativeClass = endOfRoadRight.head.copy(administrativeClass = AdministrativeClass.Municipality) +: endOfRoadRight.tail
+      val endOfRoadSet = leftAdministrativeClass ++ rightAdministrativeClass
 
       mockEmptyRoadAddressServiceCalls()
 
@@ -2570,15 +2570,15 @@ Left|      |Right
     }
   }
 
-  test("Test checkTrackRoadType When there are same Road Types in each Track and in same order Then ProjectValidator shouldn't show DistinctRoadTypesBetweenTracks") {
+  test("Test checkTrackAdministrativeClass When there are same Road Types in each Track and in same order Then ProjectValidator shouldn't show DistinctAdministrativeClassesBetweenTracks") {
     runWithRollback {
       val (project, projectLinks) = util.setUpProjectWithLinks(LinkStatus.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
       val (left, right) = projectLinks.partition(_.track == LeftSide)
       val endOfRoadLeft = left.init :+ left.last.copy(discontinuity = Discontinuity.EndOfRoad)
       val endOfRoadRight = right.init :+ right.last.copy(discontinuity = Discontinuity.EndOfRoad)
-      val leftRoadType = endOfRoadLeft.init :+ endOfRoadLeft.last.copy(administrativeClass = State)
-      val rightRoadType = endOfRoadRight.init :+ endOfRoadRight.last.copy(administrativeClass = State)
-      val endOfRoadSet = leftRoadType ++ rightRoadType
+      val leftAdministrativeClass = endOfRoadLeft.init :+ endOfRoadLeft.last.copy(administrativeClass = State)
+      val rightAdministrativeClass = endOfRoadRight.init :+ endOfRoadRight.last.copy(administrativeClass = State)
+      val endOfRoadSet = leftAdministrativeClass ++ rightAdministrativeClass
 
       mockEmptyRoadAddressServiceCalls()
 
