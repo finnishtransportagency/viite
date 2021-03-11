@@ -68,7 +68,8 @@
       [14, 'Silta'],
       [15, 'Huoltoaukko'],
       [16, 'Yksityistie- tai katuliittymä'],
-      [17, 'Porrastettu liittymä']
+      [17, 'Porrastettu liittymä'],
+      [18, 'Lautta']
     ];
 
     var buildMultiColoredSegments = function () {
