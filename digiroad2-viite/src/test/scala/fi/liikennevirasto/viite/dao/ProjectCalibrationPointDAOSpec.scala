@@ -11,7 +11,8 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.viite
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService, RoadType}
+import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._

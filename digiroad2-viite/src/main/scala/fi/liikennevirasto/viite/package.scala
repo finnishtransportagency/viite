@@ -85,7 +85,7 @@ package object viite {
   val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosan sisällä on epäjatkuvuuksia. Tarkista Jatkuu-koodit."
   val DiscontinuityInsideRoadPartMessage = "Epäjatkuvuus (2) voi olla vain tieosan lopussa."
-  val DistinctRoadTypesBetweenTracksMessage = "Rinnakkaisilla ajoradoilla eri tietyyppi."
+  val DistinctAdministrativeClassesBetweenTracksMessage = "Rinnakkaisilla ajoradoilla eri hallinnollinen luokka."
   val DiscontinuityOnParallelLinksMessage = "Rinnakkaiselta ajoradalta puuttuu jatkuu-koodi 5 Jatkuva (Rinnakkainen linkki)."
   val WrongParallelLinksMessage = "Väärä paikka rinnakkaiselle linkille."
   val RoadNotEndingInElyBorderMessage = "Tien lopussa pitää olla jatkuu-koodi 1. Korjaa jatkuu-koodi."
