@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 
 //JATKUVUUS (1 = Tien loppu, 2 = epäjatkuva (esim. vt9 välillä Akaa-Tampere), 3 = ELY:n raja, 4 = Lievä epäjatkuvuus (esim kiertoliittymä), 5 = jatkuva)
 sealed trait Discontinuity {
@@ -198,7 +199,7 @@ trait BaseRoadAddress {
 
   def discontinuity: Discontinuity
 
-  def roadType: RoadType
+  def administrativeClass: AdministrativeClass
 
   def startAddrMValue: Long
 
@@ -318,14 +319,7 @@ trait BaseRoadAddress {
 
 //TODO the start date and the created by should not be optional on the road address case class
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
-case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
-                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long,
-                       startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None,
-                       linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
-                       adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
-                       geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long,
-                       terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None,
-                       roadName: Option[String] = None) extends BaseRoadAddress {
+case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None, createdBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, terminated: TerminationCode = NoTermination, roadwayNumber: Long, validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, roadName: Option[String] = None) extends BaseRoadAddress {
 
   override lazy val startCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._1
   override lazy val endCalibrationPoint: Option[CalibrationPoint] = calibrationPoints._2
@@ -393,11 +387,7 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadNumber: Long, roadP
   }
 }
 
-case class Roadway(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, roadType: RoadType, track: Track,
-                   discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, reversed: Boolean = false,
-                   startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String],
-                   ely: Long, terminated: TerminationCode = NoTermination, validFrom: DateTime = DateTime.now(),
-                   validTo: Option[DateTime] = None)
+case class Roadway(id: Long, roadwayNumber: Long, roadNumber: Long, roadPartNumber: Long, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, reversed: Boolean = false, startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String], ely: Long, terminated: TerminationCode = NoTermination, validFrom: DateTime = DateTime.now(), validTo: Option[DateTime] = None)
 
 
 class BaseDAO {
@@ -626,7 +616,7 @@ class RoadwayDAO extends BaseDAO {
       """
         select
           a.id, a.ROADWAY_NUMBER, a.road_number, a.road_part_number, a.TRACK, a.start_addr_m, a.end_addr_m,
-          a.reversed, a.discontinuity, a.start_date, a.end_date, a.created_by, a.road_type, a.ely, a.terminated,
+          a.reversed, a.discontinuity, a.start_date, a.end_date, a.created_by, a.ADMINISTRATIVE_CLASS, a.ely, a.terminated,
           a.valid_from, a.valid_to,
           (select rn.road_name from road_name rn where rn.road_number = a.road_number and rn.end_date is null and rn.valid_to is null) as road_name
         from ROADWAY a
@@ -841,15 +831,14 @@ class RoadwayDAO extends BaseDAO {
       val startDate = formatter.parseDateTime(r.nextDate.toString)
       val endDate = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val createdBy = r.nextString()
-      val roadType = RoadType.apply(r.nextInt())
+      val administrativeClass = AdministrativeClass.apply(r.nextInt())
       val ely = r.nextLong()
       val terminated = TerminationCode.apply(r.nextInt())
       val validFrom = formatter.parseDateTime(r.nextDate.toString)
       val validTo = r.nextDateOption.map(d => formatter.parseDateTime(d.toString))
       val roadName = r.nextStringOption()
 
-      Roadway(id, roadwayNumber, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
-        startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
+      Roadway(id, roadwayNumber, roadNumber, roadPartNumber, administrativeClass, Track.apply(trackCode), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, reverted, startDate, endDate, createdBy, roadName, ely, terminated, validFrom, validTo)
     }
   }
 
@@ -937,7 +926,7 @@ class RoadwayDAO extends BaseDAO {
       """
         insert into ROADWAY (id, roadway_number, road_number, road_part_number,
         TRACK, start_addr_m, end_addr_m, reversed, discontinuity, start_date, end_date, created_by,
-        road_type, ely, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, ?,
+        ADMINISTRATIVE_CLASS, ely, terminated) values (?, ?, ?, ?, ?, ?, ?, ?, ?,
         TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, ?)
       """)
     val (ready, idLess) = roadways.partition(_.id != NewIdValue)
@@ -966,7 +955,7 @@ class RoadwayDAO extends BaseDAO {
         case None => ""
       })
       roadwayPS.setString(12, address.createdBy)
-      roadwayPS.setInt(13, address.roadType.value)
+      roadwayPS.setInt(13, address.administrativeClass.value)
       roadwayPS.setLong(14, address.ely)
       roadwayPS.setInt(15, address.terminated.value)
       roadwayPS.addBatch()

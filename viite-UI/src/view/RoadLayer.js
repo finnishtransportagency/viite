@@ -83,8 +83,8 @@
         case LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.value:
           administrativeClass = LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.description;
           break;
-        case LinkValues.AdministrativeClassShort.PrivateRoadType.value:
-          administrativeClass = LinkValues.AdministrativeClassShort.PrivateRoadType.description;
+        case LinkValues.AdministrativeClassShort.PrivateRoad.value:
+          administrativeClass = LinkValues.AdministrativeClassShort.PrivateRoad.description;
           break;
         default:
           break;
