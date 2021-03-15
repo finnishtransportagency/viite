@@ -32,7 +32,7 @@
           {value: 1, description: "Valtio"},
           {value: 2, description: "Kunta"},
           {value: 3, description: "Yksityinen"},
-          {value: 99, description: "Ei määritetty"}
+          {value: 99, description: "Ei määritelty"}
         ]
       },
       {
@@ -217,7 +217,7 @@
         if (attrValue) {
           return attrValue.description;
         } else {
-          return "Ei määritetty";
+          return "Ei määritelty";
         }
       } else {
         return "";
