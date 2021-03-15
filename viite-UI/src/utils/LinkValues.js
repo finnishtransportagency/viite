@@ -118,7 +118,7 @@
     PublicRoad: {value: 1, description: "Yleinen tie", displayText: "1 Valtio"},
     MunicipalityStreetRoad: {value: 2, description: "Kunnan katuosuus", displayText: "2 Kunta"},
     PrivateRoad: {value: 3, description: "Yksityistie", displayText: "3 Yksityinen"},
-    Unknown: {value: 99, description: "Ei määritelty", displayText: ""}
+    Unknown: {value: 99, description: "Ei määritelty", displayText: "--"}
   };
 
   root.AdministrativeClassShort = {
