@@ -67,7 +67,7 @@
             "z": 106.4870091717406
           }],
           "id": 190723,
-          "roadType": "Yleinen tie",
+          "administrativeClassId": "1",
           "status": 99,
           "anomaly": 0,
           "startMValue": 0.0,
@@ -127,7 +127,7 @@
         "z": 57.51499999999942
       }],
       "id": 0,
-      "roadType": "Yksityistie",
+      "administrativeClassId": "3",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0,
@@ -201,7 +201,7 @@
         "z": 50.45900000000256
       }],
       "id": 0,
-      "roadType": "Yksityistie",
+      "administrativeClassId": "3",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0,
@@ -271,7 +271,7 @@
         "z": 75.3550002129825
       }],
       "id": 4984,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -314,7 +314,7 @@
         "z": 66.0570000000007
       }, {"x": 362992.018, "y": 6682294.04, "z": 66.68799999999464}],
       "id": 67508,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -369,7 +369,7 @@
         "z": 64.45500000000175
       }],
       "id": 68822,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -404,7 +404,7 @@
         "z": 64.41599999999744
       }, {"x": 362989.693, "y": 6682223.426, "z": 64.94199999999546}],
       "id": 968,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -451,7 +451,7 @@
         "z": 59.99099999999453
       }, {"x": 363623.03414022806, "y": 6681666.87794901, "z": 60.910996866785226}],
       "id": 10556,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -498,7 +498,7 @@
         "z": 65.12099895995395
       }],
       "id": 16378,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -533,7 +533,7 @@
         "z": 62.44100000000617
       }, {"x": 362981.9142934901, "y": 6682045.683822963, "z": 63.27099401804783}],
       "id": 57283,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -595,7 +595,7 @@
         "z": 60.861999999993714
       }, {"x": 363031.9211101923, "y": 6682015.610933944, "z": 62.01499420331399}],
       "id": 53568,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -654,7 +654,7 @@
         "z": 56.57499999999709
       }, {"x": 363921.276, "y": 6681556.807, "z": 56.721999999994296}],
       "id": 62702,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -693,7 +693,7 @@
         "z": 57.51600058262698
       }],
       "id": 60827,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -728,7 +728,7 @@
         "z": 57.570000000006985
       }, {"x": 356442.96337434935, "y": 6680245.415737351, "z": 57.13802415157958}],
       "id": 58965,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -763,7 +763,7 @@
         "z": 53.812000000005355
       }, {"x": 357031.22920882, "y": 6679620.744834874, "z": 53.75200102849422}],
       "id": 39379,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -826,7 +826,7 @@
         "z": 58.40099999999802
       }],
       "id": 20108,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -873,7 +873,7 @@
         "z": 60.36599999999453
       }, {"x": 355998.231, "y": 6680300.343, "z": 60.336999999999534}],
       "id": 35338,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -912,7 +912,7 @@
         "z": 54.92699999999604
       }, {"x": 356885.06417273637, "y": 6679747.086644516, "z": 56.253979931613316}],
       "id": 25617,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -955,7 +955,7 @@
         "z": 57.370999999999185
       }],
       "id": 55644,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1022,7 +1022,7 @@
         "z": 59.24199999999837
       }, {"x": 356454.35624045745, "y": 6680237.274816905, "z": 57.94701537967973}],
       "id": 49137,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1077,7 +1077,7 @@
         "z": 53.221999999994296
       }],
       "id": 14506,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1112,7 +1112,7 @@
         "z": 56.8859999999986
       }],
       "id": 65886,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1155,7 +1155,7 @@
         "z": 51.30899999999383
       }, {"x": 357268.2261649311, "y": 6679352.838582977, "z": 51.295004108600594}],
       "id": 66813,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1194,7 +1194,7 @@
         "z": 53.14100000000326
       }, {"x": 356964.038, "y": 6679667.671, "z": 53.328999999997905}],
       "id": 53751,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1249,7 +1249,7 @@
         "z": 51.56100000000151
       }, {"x": 356809.094181801, "y": 6679994.38387118, "z": 51.896993118714875}],
       "id": 49776,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1288,7 +1288,7 @@
         "z": 56.80599999999686
       }, {"x": 355948.2790697769, "y": 6680408.8818721, "z": 56.87299932285589}],
       "id": 33164,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1330,7 +1330,7 @@
         "z": 52.21799999999348
       }, {"x": 357254.18605195713, "y": 6679440.963611608, "z": 52.39099443086785}],
       "id": 28704,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1365,7 +1365,7 @@
         "z": 53.529999999998836
       }, {"x": 356931.204, "y": 6679688.793, "z": 53.83599999999569}],
       "id": 11463,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1400,7 +1400,7 @@
         "z": 53.52600307539529
       }],
       "id": 50719,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1439,7 +1439,7 @@
         "z": 53.69899999999325
       }],
       "id": 23125,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1486,7 +1486,7 @@
         "z": 55.15700000000652
       }, {"x": 357481.615054402, "y": 6679156.023997887, "z": 54.91500056254019}],
       "id": 18189,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1533,7 +1533,7 @@
         "z": 47.285001533285126
       }],
       "id": 21633,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1568,7 +1568,7 @@
         "z": 51.854999999995925
       }, {"x": 358080.641, "y": 6678789.175, "z": 51.96499999999651}],
       "id": 35898,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1627,7 +1627,7 @@
         "z": 52.66900720292503
       }],
       "id": 5926,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1662,7 +1662,7 @@
         "z": 51.73399999999674
       }],
       "id": 30888,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1697,7 +1697,7 @@
         "z": 51.630999999993946
       }, {"x": 357794.1182388854, "y": 6678907.477714273, "z": 50.705012627462956}],
       "id": 65819,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1736,7 +1736,7 @@
         "z": 49.55200855258941
       }],
       "id": 49767,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1779,7 +1779,7 @@
         "z": 59.93200604976028
       }],
       "id": 5412,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1826,7 +1826,7 @@
         "z": 52.62399999999616
       }, {"x": 355100.0623950749, "y": 6679503.761890829, "z": 53.00298822202154}],
       "id": 32927,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1869,7 +1869,7 @@
         "z": 64.25900000000547
       }, {"x": 355395.495, "y": 6680011.213, "z": 64.36199999999371}],
       "id": 65999,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1908,7 +1908,7 @@
         "z": 59.63999905701469
       }],
       "id": 23639,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1955,7 +1955,7 @@
         "z": 52.46899999999732
       }],
       "id": 68092,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -1998,7 +1998,7 @@
         "z": 61.570000000006985
       }, {"x": 355583.673, "y": 6680275.267, "z": 61.40099999999802}],
       "id": 1919,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2053,7 +2053,7 @@
         "z": 57.220000000001164
       }],
       "id": 14596,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2096,7 +2096,7 @@
         "z": 61.82499999999709
       }, {"x": 355319.869, "y": 6679617.919, "z": 61.5570000000007}],
       "id": 33420,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2143,7 +2143,7 @@
         "z": 60.65899999999965
       }, {"x": 355403.85386173916, "y": 6680131.231851994, "z": 60.63300395901236}],
       "id": 13639,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2178,7 +2178,7 @@
         "z": 60.69200560299948
       }],
       "id": 52819,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2221,7 +2221,7 @@
         "z": 51.060005044697085
       }],
       "id": 35138,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2264,7 +2264,7 @@
         "z": 60.69199924040364
       }],
       "id": 15490,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2343,7 +2343,7 @@
         "z": 61.15600000000268
       }],
       "id": 18966,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2394,7 +2394,7 @@
         "z": 59.47897972011981
       }],
       "id": 18408,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2437,7 +2437,7 @@
         "z": 63.369999730310084
       }],
       "id": 44898,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2476,7 +2476,7 @@
         "z": 59.09701059815222
       }],
       "id": 52028,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2523,7 +2523,7 @@
         "z": 38.60899999999674
       }],
       "id": 23246,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2566,7 +2566,7 @@
         "z": 37.99000000000524
       }],
       "id": 38969,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2621,7 +2621,7 @@
         "z": 41.25
       }, {"x": 355085.92, "y": 6676142.414, "z": 41.11800000000221}],
       "id": 63468,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2692,7 +2692,7 @@
         "z": 48.421000000002095
       }, {"x": 355526.095, "y": 6675896.526, "z": 48.961999999999534}],
       "id": 51136,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2751,7 +2751,7 @@
         "z": 49.846000000005006
       }, {"x": 355288.893, "y": 6676077.346, "z": 49.75900000000547}],
       "id": 42600,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2802,7 +2802,7 @@
         "z": 43.138000000006286
       }, {"x": 356419.009, "y": 6676045.157, "z": 43.138999999995576}],
       "id": 42658,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2869,7 +2869,7 @@
         "z": 34.346000000005006
       }],
       "id": 20836,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2908,7 +2908,7 @@
         "z": 42.35099999999511
       }, {"x": 356162.7970583355, "y": 6676613.228570018, "z": 42.85399016993706}],
       "id": 52491,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -2963,7 +2963,7 @@
         "z": 43.16000000000349
       }, {"x": 356188.3000043343, "y": 6676846.877958353, "z": 43.42299921166352}],
       "id": 35975,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3013,7 +3013,7 @@
         "z": 41.48099999999977
       }, {"x": 356445.646, "y": 6675933.124, "z": 41.494000000006054}],
       "id": 33676,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3060,7 +3060,7 @@
         "z": 41.14899502018367
       }],
       "id": 50485,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3107,7 +3107,7 @@
         "z": 40.31100000000151
       }],
       "id": 52817,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3166,7 +3166,7 @@
         "z": 54.35101135878572
       }],
       "id": 59728,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3201,7 +3201,7 @@
         "z": 54.18399999999383
       }, {"x": 361938.402, "y": 6682552.112, "z": 54.20699999999488}],
       "id": 58419,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3276,7 +3276,7 @@
         "z": 62.91700000000128
       }],
       "id": 47652,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3355,7 +3355,7 @@
         "z": 60.60199999999895
       }, {"x": 361951.159, "y": 6682537.722, "z": 60.47699999999895}],
       "id": 41910,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3390,7 +3390,7 @@
         "z": 63.220000000001164
       }],
       "id": 54728,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3449,7 +3449,7 @@
         "z": 69.3640000000014
       }, {"x": 363000.991, "y": 6682209.415, "z": 69.65200000000186}],
       "id": 10276,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3484,7 +3484,7 @@
         "z": 69.81900000000314
       }, {"x": 362979.681, "y": 6682219.554, "z": 68.89900000000489}],
       "id": 23659,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3571,7 +3571,7 @@
         "z": 36.828999999997905
       }],
       "id": 0,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 1,
       "startMValue": 0.0,
@@ -3622,7 +3622,7 @@
         "z": 52.49800000000687
       }, {"x": 357304.031, "y": 6679261.483, "z": 52.854000000006636}],
       "id": 0,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 1,
       "startMValue": 0.0,
@@ -3689,7 +3689,7 @@
         "z": 35.67200000000594
       }, {"x": 354727.078, "y": 6676512.523, "z": 36.120999999999185}],
       "id": 0,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 1,
       "startMValue": 0.0,
@@ -3728,7 +3728,7 @@
         "z": 36.802999999999884
       }, {"x": 355532.258, "y": 6676807.614, "z": 36.604999999995925}],
       "id": 0,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 1,
       "startMValue": 0.0,
@@ -3771,7 +3771,7 @@
         "z": 60.02599999999802
       }],
       "id": 0,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 1,
       "startMValue": 0.0,
@@ -3806,7 +3806,7 @@
         "z": 57.986999999993714
       }, {"x": 355926.57603302744, "y": 6680484.2158867465, "z": 60.025990884811605}],
       "id": 47196,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3845,7 +3845,7 @@
         "z": 48.711999999999534
       }],
       "id": 64804,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3880,7 +3880,7 @@
         "z": 60.07300000000396
       }, {"x": 355920.7950194165, "y": 6680506.764923765, "z": 60.906997081760736}],
       "id": 18269,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3935,7 +3935,7 @@
         "z": 41.197000000000116
       }, {"x": 355596.28729396954, "y": 6680899.634913175, "z": 39.30101893485555}],
       "id": 67375,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -3978,7 +3978,7 @@
         "z": 51.59299999999348
       }, {"x": 354948.168, "y": 6681079.209, "z": 51.58900000000722}],
       "id": 58388,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4029,7 +4029,7 @@
         "z": 44.02599999999802
       }],
       "id": 5964,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4112,7 +4112,7 @@
         "z": 46.17099771451348
       }],
       "id": 9427,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4159,7 +4159,7 @@
         "z": 53.57200917252501
       }],
       "id": 11250,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4198,7 +4198,7 @@
         "z": 46.171016448173155
       }],
       "id": 2732,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4233,7 +4233,7 @@
         "z": 50.16800000000512
       }, {"x": 355025.364, "y": 6681052.01, "z": 50.16800000000512}],
       "id": 44467,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4268,7 +4268,7 @@
         "z": 60.721999999994296
       }],
       "id": 2163,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4311,7 +4311,7 @@
         "z": 51.546000000002095
       }, {"x": 354948.168, "y": 6681079.209, "z": 51.58900000000722}],
       "id": 32864,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4346,7 +4346,7 @@
         "z": 44.69000000000233
       }, {"x": 356373.584, "y": 6682139.396, "z": 44.63000000000466}],
       "id": 45720,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4381,7 +4381,7 @@
         "z": 48.955000000001746
       }, {"x": 356070.965, "y": 6682516.73, "z": 49.278000000005704}],
       "id": 7700,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4436,7 +4436,7 @@
         "z": 52.802995863177635
       }],
       "id": 37021,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4471,7 +4471,7 @@
         "z": 47.22400000000198
       }, {"x": 356172.487, "y": 6682367.472, "z": 46.93399999999383}],
       "id": 23008,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4510,7 +4510,7 @@
         "z": 45.304000000003725
       }, {"x": 356266.38904874236, "y": 6682176.959666368, "z": 45.27200244475303}],
       "id": 58726,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4553,7 +4553,7 @@
         "z": 48.00202402799131
       }],
       "id": 26801,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4588,7 +4588,7 @@
         "z": 49.794999999998254
       }, {"x": 356784.684, "y": 6682316.896, "z": 50.21499999999651}],
       "id": 32693,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4647,7 +4647,7 @@
         "z": 52.61699999999837
       }, {"x": 356667.296, "y": 6682261.337, "z": 53.419999999998254}],
       "id": 59854,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4690,7 +4690,7 @@
         "z": 48.97299999999814
       }, {"x": 356233.442, "y": 6682285.546, "z": 50.820000000006985}],
       "id": 9443,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4725,7 +4725,7 @@
         "z": 52.887000000002445
       }, {"x": 356706.7429722639, "y": 6682277.097986771, "z": 52.332000946300624}],
       "id": 19840,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4764,7 +4764,7 @@
         "z": 51.91000000000349
       }],
       "id": 60877,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4807,7 +4807,7 @@
         "z": 49.074010722375164
       }],
       "id": 65479,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4846,7 +4846,7 @@
         "z": 51.42499938112409
       }],
       "id": 50423,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4885,7 +4885,7 @@
         "z": 46.629000000000815
       }, {"x": 356123.69826417946, "y": 6682424.824627786, "z": 46.357007405633055}],
       "id": 2573,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4920,7 +4920,7 @@
         "z": 50.86500000000524
       }, {"x": 356733.471, "y": 6682290.787, "z": 50.512000000002445}],
       "id": 44629,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -4959,7 +4959,7 @@
         "z": 45.17600000000675
       }, {"x": 356277.295, "y": 6682122.755, "z": 45.39800000000105}],
       "id": 23610,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5002,7 +5002,7 @@
         "z": 47.02398391983404
       }],
       "id": 55750,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5037,7 +5037,7 @@
         "z": 51.713000000003376
       }],
       "id": 9863,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5072,7 +5072,7 @@
         "z": 53.330000000001746
       }, {"x": 356685.2946666742, "y": 6682266.95686369, "z": 53.08201191993544}],
       "id": 65818,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5107,7 +5107,7 @@
         "z": 50.02599999999802
       }, {"x": 356845.5989676666, "y": 6682349.8519830005, "z": 50.599999373508574}],
       "id": 7330,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5142,7 +5142,7 @@
         "z": 46.262000000002445
       }, {"x": 355420.2058945777, "y": 6682312.473853691, "z": 49.119987138897265}],
       "id": 4742,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5185,7 +5185,7 @@
         "z": 51.653999999994994
       }],
       "id": 28678,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5220,7 +5220,7 @@
         "z": 51.85099999999511
       }],
       "id": 15189,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5263,7 +5263,7 @@
         "z": 63.634997431517135
       }],
       "id": 30076,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5306,7 +5306,7 @@
         "z": 54.28800746791858
       }],
       "id": 49840,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5349,7 +5349,7 @@
         "z": 49.25299999999697
       }, {"x": 354935.0389016963, "y": 6681477.274909697, "z": 49.88099824706277}],
       "id": 31879,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5384,7 +5384,7 @@
         "z": 51.49499999999534
       }, {"x": 355089.218, "y": 6681701.611, "z": 51.50999999999476}],
       "id": 31021,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5423,7 +5423,7 @@
         "z": 51.365002237782015
       }],
       "id": 42484,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5458,7 +5458,7 @@
         "z": 61.88300000000163
       }, {"x": 355588.349, "y": 6682447.074, "z": 60.53599999999278}],
       "id": 34081,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5497,7 +5497,7 @@
         "z": 47.72400000000198
       }, {"x": 355166.35290786176, "y": 6681874.332831671, "z": 48.115997383113296}],
       "id": 51347,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5536,7 +5536,7 @@
         "z": 51.52300000000105
       }, {"x": 355074.2479948622, "y": 6681650.54796833, "z": 51.734999504678434}],
       "id": 10748,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5571,7 +5571,7 @@
         "z": 53.22699999999895
       }, {"x": 355686.783, "y": 6682521.9, "z": 52.5850000000064}],
       "id": 45473,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5626,7 +5626,7 @@
         "z": 44.05199992392123
       }],
       "id": 31786,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5665,7 +5665,7 @@
         "z": 50.18300773855483
       }],
       "id": 58592,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5724,7 +5724,7 @@
         "z": 24.410000000003492
       }],
       "id": 13329,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5762,7 +5762,7 @@
         "z": 45.80599999999686
       }, {"x": 360742.764689948, "y": 6675919.261909848, "z": 46.17999279396257}],
       "id": 43877,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5845,7 +5845,7 @@
         "z": 50.69899085689928
       }],
       "id": 44962,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5904,7 +5904,7 @@
         "z": 30.52400000000489
       }],
       "id": 454656,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -5967,7 +5967,7 @@
         "z": 29.698000000003958
       }],
       "id": 69068,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6030,7 +6030,7 @@
         "z": 45.49700000000303
       }],
       "id": 64205,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6073,7 +6073,7 @@
         "z": 50.221000000005006
       }],
       "id": 12458,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6112,7 +6112,7 @@
         "z": 17.220000000001164
       }, {"x": 362801.482, "y": 6676451.338, "z": 17.65799999999581}],
       "id": 47691,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6163,7 +6163,7 @@
         "z": 32.62399999999616
       }, {"x": 361141.209, "y": 6676968.993, "z": 32.937000000005355}],
       "id": 54829,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6202,7 +6202,7 @@
         "z": 18.309002256174928
       }],
       "id": 5214,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6269,7 +6269,7 @@
         "z": 43.52003599638054
       }],
       "id": 65042,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6312,7 +6312,7 @@
         "z": 18.24299697270747
       }],
       "id": 29914,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6359,7 +6359,7 @@
         "z": 24.410004076646704
       }],
       "id": 19741,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6402,7 +6402,7 @@
         "z": 24.169999999998254
       }],
       "id": 45393,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6445,7 +6445,7 @@
         "z": 49.570000000006985
       }, {"x": 360046.623, "y": 6678553.843, "z": 49.62699999999313}],
       "id": 66335,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6496,7 +6496,7 @@
         "z": 48.21300247655543
       }],
       "id": 68834,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6535,7 +6535,7 @@
         "z": 14.25800000000163
       }],
       "id": 57894,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6594,7 +6594,7 @@
         "z": 45.388000000006286
       }],
       "id": 46903,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6641,7 +6641,7 @@
         "z": 50.586999999999534
       }, {"x": 359611.09, "y": 6679114.884, "z": 50.921000000002095}],
       "id": 3675,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6688,7 +6688,7 @@
         "z": 17.3530006850076
       }],
       "id": 60116,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6751,7 +6751,7 @@
         "z": 39.161999999996624
       }, {"x": 360427.476, "y": 6678155.682, "z": 39.84200000000419}],
       "id": 5686,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6786,7 +6786,7 @@
         "z": 49.79399999999441
       }],
       "id": 32648,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6841,7 +6841,7 @@
         "z": 49.14400000000023
       }],
       "id": 1598,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6896,7 +6896,7 @@
         "z": 18.627999999996973
       }, {"x": 362121.619, "y": 6676759.554, "z": 18.243000000002212}],
       "id": 60095,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6943,7 +6943,7 @@
         "z": 15.638999999995576
       }],
       "id": 36419,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -6978,7 +6978,7 @@
         "z": 16.236000000004424
       }, {"x": 363446.931, "y": 6676313.198, "z": 17.105999999999767}],
       "id": 21861,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7013,7 +7013,7 @@
         "z": 44.99300000000221
       }, {"x": 360246.7670103255, "y": 6678218.560987654, "z": 44.98700002268716}],
       "id": 30459,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7056,7 +7056,7 @@
         "z": 47.39999999999418
       }, {"x": 359683.0351573948, "y": 6679025.156744415, "z": 47.52399398738572}],
       "id": 13961,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7095,7 +7095,7 @@
         "z": 52.269014672423886
       }],
       "id": 49326,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7138,7 +7138,7 @@
         "z": 30.887000226525025
       }],
       "id": 28330,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7181,7 +7181,7 @@
         "z": 50.4829995197869
       }],
       "id": 21370,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7236,7 +7236,7 @@
         "z": 44.78799430206264
       }],
       "id": 2244,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7299,7 +7299,7 @@
         "z": 17.75199999999313
       }, {"x": 363813.3364286842, "y": 6676301.799992765, "z": 16.53301450403343}],
       "id": 34169,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7354,7 +7354,7 @@
         "z": 20.895000084524234
       }],
       "id": 29461,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7397,7 +7397,7 @@
         "z": 19.80099733275327
       }],
       "id": 41959,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7436,7 +7436,7 @@
         "z": 19.3810013616069
       }],
       "id": 63582,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7471,7 +7471,7 @@
         "z": 44.763999999995576
       }, {"x": 360256.0830520565, "y": 6678207.701945333, "z": 44.92099911309276}],
       "id": 51077,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7510,7 +7510,7 @@
         "z": 17.2670000000071
       }, {"x": 363093.537, "y": 6676338.243, "z": 17.206000000005588}],
       "id": 18527,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7561,7 +7561,7 @@
         "z": 55.88000000000466
       }],
       "id": 67103,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7596,7 +7596,7 @@
         "z": 48.25900000000547
       }, {"x": 359862.3170821226, "y": 6678761.06491473, "z": 48.675997886761806}],
       "id": 55918,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7647,7 +7647,7 @@
         "z": 44.14499604948839
       }],
       "id": 41870,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7690,7 +7690,7 @@
         "z": 54.98399999999674
       }],
       "id": 18007,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7740,7 +7740,7 @@
         "z": 44.69999999999709
       }, {"x": 360271.06, "y": 6678192.595, "z": 44.796000000002095}],
       "id": 46812,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7791,7 +7791,7 @@
         "z": 52.83100000000559
       }],
       "id": 10746,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7838,7 +7838,7 @@
         "z": 68.53699502913274
       }],
       "id": 45959,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7881,7 +7881,7 @@
         "z": 58.46999535318405
       }],
       "id": 34437,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7920,7 +7920,7 @@
         "z": 58.463000899534705
       }],
       "id": 996,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -7955,7 +7955,7 @@
         "z": 57.84300628800574
       }],
       "id": 15677,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8006,7 +8006,7 @@
         "z": 52.021999999997206
       }, {"x": 361966.1153550048, "y": 6682342.525729612, "z": 52.00600311236465}],
       "id": 33929,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8045,7 +8045,7 @@
         "z": 68.47599999999511
       }, {"x": 362661.057, "y": 6682149.008, "z": 68.36699999999837}],
       "id": 59911,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8080,7 +8080,7 @@
         "z": 67.36599082636658
       }],
       "id": 54929,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8131,7 +8131,7 @@
         "z": 67.10898582502212
       }],
       "id": 18680,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8170,7 +8170,7 @@
         "z": 68.36699993572596
       }],
       "id": 28439,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8209,7 +8209,7 @@
         "z": 49.794999999998254
       }],
       "id": 454832,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8256,7 +8256,7 @@
         "z": 50.49899999999616
       }],
       "id": 454817,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8295,7 +8295,7 @@
         "z": 49.38300000000163
       }, {"x": 359142.908, "y": 6679048.109, "z": 49.3179999999993}],
       "id": 454816,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8338,7 +8338,7 @@
         "z": 36.83999999999651
       }, {"x": 357544.591, "y": 6678449.335, "z": 36.60099999999511}],
       "id": 454840,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8381,7 +8381,7 @@
         "z": 52.095000000001164
       }],
       "id": 454812,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8420,7 +8420,7 @@
         "z": 57.788000000000466
       }],
       "id": 454825,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8463,7 +8463,7 @@
         "z": 49.721999999994296
       }],
       "id": 454815,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8506,7 +8506,7 @@
         "z": 45.09200000000419
       }, {"x": 357950.142, "y": 6678634.535, "z": 45.2390000000014}],
       "id": 454834,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8541,7 +8541,7 @@
         "z": 57.78100000000268
       }],
       "id": 454824,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8576,7 +8576,7 @@
         "z": 55.070000000006985
       }, {"x": 359555.613, "y": 6679206.958, "z": 54.98399999999674}],
       "id": 454809,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8619,7 +8619,7 @@
         "z": 35.205000000001746
       }, {"x": 357305.863, "y": 6677917.204, "z": 35.14299999999639}],
       "id": 454844,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8662,7 +8662,7 @@
         "z": 54.229000000006636
       }],
       "id": 454821,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 1,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8701,7 +8701,7 @@
         "z": 57.52499999999418
       }],
       "id": 454826,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8744,7 +8744,7 @@
         "z": 37.52599999999802
       }],
       "id": 454836,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8787,7 +8787,7 @@
         "z": 56.31399999999849
       }],
       "id": 454823,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8850,7 +8850,7 @@
         "z": 38.945000000006985
       }, {"x": 357288.493, "y": 6678276.228, "z": 39.205000000001746}],
       "id": 454843,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8897,7 +8897,7 @@
         "z": 37.86999999999534
       }],
       "id": 454845,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8940,7 +8940,7 @@
         "z": 39.013999999995576
       }],
       "id": 454841,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -8975,7 +8975,7 @@
         "z": 33.59399999999732
       }],
       "id": 454837,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9014,7 +9014,7 @@
         "z": 50.95799999999872
       }, {"x": 359328.595, "y": 6679079.192, "z": 51.095000000001164}],
       "id": 454813,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9049,7 +9049,7 @@
         "z": 37.15099999999802
       }],
       "id": 454847,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9084,7 +9084,7 @@
         "z": 38.48399999999674
       }],
       "id": 454835,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9131,7 +9131,7 @@
         "z": 53.270999999993364
       }],
       "id": 454829,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9170,7 +9170,7 @@
         "z": 34.65600000000268
       }, {"x": 357630.374, "y": 6678496.722, "z": 34.03100000000268}],
       "id": 454839,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9205,7 +9205,7 @@
         "z": 49.90700000000652
       }],
       "id": 454814,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9240,7 +9240,7 @@
         "z": 54.85000000000582
       }, {"x": 359540.682, "y": 6679199.184, "z": 55.00100000000384}],
       "id": 454810,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9283,7 +9283,7 @@
         "z": 39.861999999993714
       }],
       "id": 454846,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9318,7 +9318,7 @@
         "z": 50.029999999998836
       }],
       "id": 454831,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9357,7 +9357,7 @@
         "z": 47.75100000000384
       }, {"x": 358015.136, "y": 6678679.667, "z": 47.812000000005355}],
       "id": 454833,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9396,7 +9396,7 @@
         "z": 40.288000000000466
       }],
       "id": 454842,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9439,7 +9439,7 @@
         "z": 57.05199999999604
       }, {"x": 358501.075, "y": 6678864.95, "z": 57.11599999999453}],
       "id": 454827,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9474,7 +9474,7 @@
         "z": 52.11800000000221
       }, {"x": 358951.67, "y": 6679007.532, "z": 52.177999999999884}],
       "id": 454818,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9509,7 +9509,7 @@
         "z": 55.88999999999942
       }, {"x": 358671.441, "y": 6678998.552, "z": 55.45699999999488}],
       "id": 454822,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9548,7 +9548,7 @@
         "z": 33.53599999999278
       }],
       "id": 454838,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9587,7 +9587,7 @@
         "z": 52.68099999999686
       }, {"x": 358836.015, "y": 6679003.415, "z": 52.90600000000268}],
       "id": 454819,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9626,7 +9626,7 @@
         "z": 54.179000000003725
       }, {"x": 358766.935, "y": 6679011.54, "z": 54.229000000006636}],
       "id": 454820,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9665,7 +9665,7 @@
         "z": 54.46600000000035
       }, {"x": 359508.274, "y": 6679181.17, "z": 54.570000000006985}],
       "id": 454811,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9700,7 +9700,7 @@
         "z": 50.85599999999977
       }, {"x": 358103.914, "y": 6678766.914, "z": 51.38199999999779}],
       "id": 454830,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9747,7 +9747,7 @@
         "z": 53.20299999999406
       }, {"x": 358219.989, "y": 6678807.928, "z": 53.270999999993364}],
       "id": 454828,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9794,7 +9794,7 @@
         "z": 32.19000000000233
       }],
       "id": 454858,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9837,7 +9837,7 @@
         "z": 33.54099999999744
       }, {"x": 355444.857, "y": 6676807.148, "z": 35.052999999999884}],
       "id": 454857,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9876,7 +9876,7 @@
         "z": 36.59900000000198
       }, {"x": 355532.258, "y": 6676807.614, "z": 36.604999999995925}],
       "id": 454855,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9915,7 +9915,7 @@
         "z": 35.070999999996275
       }, {"x": 355444.857, "y": 6676807.148, "z": 35.052999999999884}],
       "id": 454856,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -9970,7 +9970,7 @@
         "z": 39.653000000005704
       }],
       "id": 454849,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10013,7 +10013,7 @@
         "z": 43.44000000000233
       }, {"x": 356188.3, "y": 6676846.878, "z": 43.42299999999523}],
       "id": 454851,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10056,7 +10056,7 @@
         "z": 40.52300000000105
       }, {"x": 356896.912, "y": 6677075.878, "z": 40.520000000004075}],
       "id": 454848,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10091,7 +10091,7 @@
         "z": 38.255999999993946
       }],
       "id": 454853,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10138,7 +10138,7 @@
         "z": 42.39800000000105
       }],
       "id": 454852,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10185,7 +10185,7 @@
         "z": 40.95600000000559
       }],
       "id": 454850,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10228,7 +10228,7 @@
         "z": 38.06600000000617
       }],
       "id": 454854,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10291,7 +10291,7 @@
         "z": 50.23399999999674
       }, {"x": 356794.113, "y": 6682744.18, "z": 48.687999999994645}],
       "id": 25865,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10338,7 +10338,7 @@
         "z": 49.157999650434334
       }],
       "id": 8394,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10373,7 +10373,7 @@
         "z": 67.88999999999942
       }],
       "id": 37428,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10408,7 +10408,7 @@
         "z": 61.25500000000466
       }, {"x": 361926.965, "y": 6682530.686, "z": 58.86800000000221}],
       "id": 8299,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10487,7 +10487,7 @@
         "z": 61.49199999999837
       }, {"x": 361954.858, "y": 6682514.611, "z": 61.25}],
       "id": 53850,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10542,7 +10542,7 @@
         "z": 69.28399999999965
       }, {"x": 363003.847, "y": 6682187.127, "z": 69.403999999995}],
       "id": 66757,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10577,7 +10577,7 @@
         "z": 63.059991983279104
       }],
       "id": 18428,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10644,7 +10644,7 @@
         "z": 62.380999999993946
       }, {"x": 363598.684, "y": 6681848.289, "z": 62.695000000006985}],
       "id": 23185,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10687,7 +10687,7 @@
         "z": 62.10899999999674
       }],
       "id": 17301,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10738,7 +10738,7 @@
         "z": 51.41900044882689
       }],
       "id": 32898,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10781,7 +10781,7 @@
         "z": 54.90600000000268
       }, {"x": 359269.943, "y": 6680778.739, "z": 54.80100000000675}],
       "id": 57035,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10832,7 +10832,7 @@
         "z": 58.984988876942666
       }],
       "id": 54279,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10883,7 +10883,7 @@
         "z": 54.56600000000617
       }, {"x": 359528.7380423694, "y": 6679660.921810147, "z": 53.784009236930935}],
       "id": 24462,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10946,7 +10946,7 @@
         "z": 59.75900000000547
       }, {"x": 358782.17812906683, "y": 6682571.321660653, "z": 59.70400160385544}],
       "id": 29571,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -10985,7 +10985,7 @@
         "z": 52.763999999995576
       }],
       "id": 60258,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11028,7 +11028,7 @@
         "z": 48.18099999999686
       }, {"x": 358691.072, "y": 6681401.284, "z": 48.30000000000291}],
       "id": 19185,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11079,7 +11079,7 @@
         "z": 50.312999999994645
       }, {"x": 358540.1090731278, "y": 6681597.348662678, "z": 50.18000378885186}],
       "id": 41459,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11114,7 +11114,7 @@
         "z": 53.8640000000014
       }, {"x": 358888.8840469822, "y": 6682339.272668361, "z": 54.48998098845652}],
       "id": 56506,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11157,7 +11157,7 @@
         "z": 51.33299999999872
       }, {"x": 359169.0160240623, "y": 6680905.733923087, "z": 51.1430014097505}],
       "id": 63987,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11192,7 +11192,7 @@
         "z": 62.48099999999977
       }],
       "id": 28760,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11235,7 +11235,7 @@
         "z": 52.096015814817605
       }],
       "id": 25070,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11290,7 +11290,7 @@
         "z": 50.02700000000186
       }],
       "id": 26279,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11325,7 +11325,7 @@
         "z": 52.687000000005355
       }, {"x": 358892.7070077753, "y": 6682316.141965154, "z": 53.19999839228431}],
       "id": 38279,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11364,7 +11364,7 @@
         "z": 55.11999999999534
       }, {"x": 359344.246, "y": 6680462.135, "z": 55.34799999999814}],
       "id": 16854,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11407,7 +11407,7 @@
         "z": 56.445999999996275
       }, {"x": 359339.301, "y": 6680558.744, "z": 56.58299999999872}],
       "id": 46115,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11442,7 +11442,7 @@
         "z": 49.96700000000419
       }, {"x": 358547.9769805219, "y": 6681636.612942316, "z": 49.87600047712594}],
       "id": 4842,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11481,7 +11481,7 @@
         "z": 49.43300000000454
       }],
       "id": 61889,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11532,7 +11532,7 @@
         "z": 48.66800000000512
       }, {"x": 358876.8029518952, "y": 6682075.951927458, "z": 48.74899965388792}],
       "id": 42058,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11571,7 +11571,7 @@
         "z": 51.88999999999942
       }, {"x": 358898.762, "y": 6682289.938, "z": 52.22699999999895}],
       "id": 22068,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11614,7 +11614,7 @@
         "z": 52.10899999999674
       }, {"x": 359418.61, "y": 6679875.322, "z": 51.304999999993015}],
       "id": 40136,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11653,7 +11653,7 @@
         "z": 48.27101085170238
       }],
       "id": 46458,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11700,7 +11700,7 @@
         "z": 48.3640000000014
       }, {"x": 358764.21517947514, "y": 6681357.075887402, "z": 48.315001337535406}],
       "id": 44217,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11735,7 +11735,7 @@
         "z": 56.80199999999604
       }],
       "id": 16425,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11790,7 +11790,7 @@
         "z": 48.98399999999674
       }, {"x": 359072.1250445604, "y": 6681087.023975816, "z": 49.20799896852923}],
       "id": 55562,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11829,7 +11829,7 @@
         "z": 47.53299999999581
       }, {"x": 358879.3422491824, "y": 6681248.491664049, "z": 47.39600312246525}],
       "id": 8927,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11868,7 +11868,7 @@
         "z": 58.07300000000396
       }, {"x": 359300.63306369237, "y": 6680713.689693944, "z": 58.106999100692256}],
       "id": 48939,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11903,7 +11903,7 @@
         "z": 57.69800000000396
       }, {"x": 359313.058, "y": 6680646.026, "z": 57.83199999999488}],
       "id": 46036,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -11966,7 +11966,7 @@
         "z": 54.179999999993015
       }],
       "id": 42496,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12005,7 +12005,7 @@
         "z": 57.55799249853021
       }],
       "id": 23613,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12052,7 +12052,7 @@
         "z": 48.64800000000105
       }],
       "id": 52656,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12087,7 +12087,7 @@
         "z": 50.04200000000128
       }, {"x": 358542.7639574217, "y": 6681619.164729589, "z": 50.02000057468119}],
       "id": 68465,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12146,7 +12146,7 @@
         "z": 50.00900000000547
       }, {"x": 358822.405, "y": 6681929.959, "z": 49.546000000002095}],
       "id": 14469,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12185,7 +12185,7 @@
         "z": 52.96899999999732
       }, {"x": 359477.8272161873, "y": 6679772.108610364, "z": 53.29398823888345}],
       "id": 6052,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12228,7 +12228,7 @@
         "z": 49.64299999999639
       }, {"x": 358629.168, "y": 6681463.591, "z": 49.9320000000007}],
       "id": 53306,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12283,7 +12283,7 @@
         "z": 99.51399999999558
       }, {"x": 537792.078, "y": 6989846.167, "z": 99.50900000000547}],
       "id": 251890,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12329,7 +12329,7 @@
         "z": 104.81399889680209
       }],
       "id": 206601,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12367,7 +12367,7 @@
         "z": 106.40899999999965
       }, {"x": 537151.1619828065, "y": 6989668.187000756, "z": 106.38000075662258}],
       "id": 259613,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12405,7 +12405,7 @@
         "z": 99.50899839036344
       }],
       "id": 219591,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12447,7 +12447,7 @@
         "z": 98.8579999999929
       }, {"x": 537581.8839194343, "y": 6989823.41795571, "z": 98.82700163451804}],
       "id": 205673,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12481,7 +12481,7 @@
         "z": 104.99199999999837
       }, {"x": 537410.956, "y": 6989734.488, "z": 104.80599999999686}],
       "id": 258351,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12523,7 +12523,7 @@
         "z": 96.35899999999674
       }],
       "id": 215352,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12561,7 +12561,7 @@
         "z": 96.87399859418505
       }],
       "id": 191361,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12607,7 +12607,7 @@
         "z": 98.69500000000698
       }, {"x": 537861.3401124008, "y": 6989796.946899244, "z": 98.6959994936861}],
       "id": 239931,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12645,7 +12645,7 @@
         "z": 105.17600000000675
       }, {"x": 537151.162, "y": 6989668.187, "z": 106.38000000000466}],
       "id": 228515,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12679,7 +12679,7 @@
         "z": 92.98900083452023
       }],
       "id": 213260,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12713,7 +12713,7 @@
         "z": 105.23399999999674
       }, {"x": 536475.6468933235, "y": 6986568.344634977, "z": 105.04600263018959}],
       "id": 454434,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12759,7 +12759,7 @@
         "z": 105.92600000000675
       }, {"x": 536715.517, "y": 6987238.847, "z": 106.08100000000559}],
       "id": 233697,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12805,7 +12805,7 @@
         "z": 112.82099999999627
       }],
       "id": 233059,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12843,7 +12843,7 @@
         "z": 102.55400000000373
       }, {"x": 535847.344820069, "y": 6984578.654888194, "z": 101.89700479669618}],
       "id": 247102,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12881,7 +12881,7 @@
         "z": 96.65798944215761
       }],
       "id": 207554,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12915,7 +12915,7 @@
         "z": 105.31200212814676
       }],
       "id": 216008,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -12949,7 +12949,7 @@
         "z": 102.6079999999929
       }],
       "id": 242160,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13003,7 +13003,7 @@
         "z": 97.56500515539135
       }],
       "id": 231255,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13037,7 +13037,7 @@
         "z": 99.65700000000652
       }],
       "id": 231800,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13071,7 +13071,7 @@
         "z": 112.00800000000163
       }, {"x": 536378.5629787042, "y": 6986176.360915019, "z": 111.19800162839664}],
       "id": 266691,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13105,7 +13105,7 @@
         "z": 100.14800000000105
       }, {"x": 535929.213, "y": 6984648.108, "z": 99.8289999999979}],
       "id": 268420,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13143,7 +13143,7 @@
         "z": 96.98699999999371
       }],
       "id": 193504,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13181,7 +13181,7 @@
         "z": 105.57300000000396
       }],
       "id": 241149,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13215,7 +13215,7 @@
         "z": 103.81299999999464
       }, {"x": 535776.772, "y": 6984538.883, "z": 103.55000000000291}],
       "id": 236012,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13261,7 +13261,7 @@
         "z": 107.13499999999476
       }, {"x": 537236.486, "y": 6989221.001, "z": 108.49599999999919}],
       "id": 253036,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13299,7 +13299,7 @@
         "z": 99.52099999999336
       }],
       "id": 209635,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13337,7 +13337,7 @@
         "z": 97.59200000000419
       }, {"x": 537263.5650183968, "y": 6988798.341645126, "z": 97.0300037004475}],
       "id": 242260,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13387,7 +13387,7 @@
         "z": 100.721000000005
       }, {"x": 535516.671, "y": 6991069.52, "z": 100.71300000000338}],
       "id": 230910,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13429,7 +13429,7 @@
         "z": 96.21499999999651
       }, {"x": 536028.4728668111, "y": 6984800.463707714, "z": 95.01200985038473}],
       "id": 231117,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13475,7 +13475,7 @@
         "z": 102.34999343428588
       }],
       "id": 243176,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13513,7 +13513,7 @@
         "z": 108.99899999999616
       }, {"x": 537025.5690551063, "y": 6989784.955882215, "z": 108.9860020946856}],
       "id": 235119,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13551,7 +13551,7 @@
         "z": 96.99500100760744
       }],
       "id": 242102,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13585,7 +13585,7 @@
         "z": 106.82399999999325
       }, {"x": 536229.4369731247, "y": 6985577.707891806, "z": 108.61199652167662}],
       "id": 214907,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13623,7 +13623,7 @@
         "z": 92.84300068055934
       }],
       "id": 236635,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13657,7 +13657,7 @@
         "z": 105.98200000000361
       }, {"x": 536448.895, "y": 6986464.38, "z": 105.68600000000151}],
       "id": 239254,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13691,7 +13691,7 @@
         "z": 113.71899999999732
       }, {"x": 537022.401, "y": 6987772.038, "z": 113.59399999999732}],
       "id": 263638,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13729,7 +13729,7 @@
         "z": 108.46899999999732
       }, {"x": 536414.3649858193, "y": 6986320.511945515, "z": 107.97100123138618}],
       "id": 240033,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13783,7 +13783,7 @@
         "z": 99.44700000000012
       }],
       "id": 253189,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13817,7 +13817,7 @@
         "z": 106.70699999999488
       }, {"x": 536432.1549067228, "y": 6986392.925610016, "z": 106.58400601630703}],
       "id": 191904,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13855,7 +13855,7 @@
         "z": 110.30000000000291
       }, {"x": 536390.3739428384, "y": 6986223.487784409, "z": 110.0950046225374}],
       "id": 203993,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13893,7 +13893,7 @@
         "z": 110.9429999999993
       }],
       "id": 223880,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13935,7 +13935,7 @@
         "z": 94.68299573665344
       }],
       "id": 188054,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -13984,7 +13984,7 @@
         "z": 104.11500000000524
       }, {"x": 535771.6120362739, "y": 6984518.916945702, "z": 104.11400022530556}],
       "id": 201872,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14017,7 +14017,7 @@
         "z": 103.90200000000186
       }],
       "id": 213760,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14051,7 +14051,7 @@
         "z": 112.13199999999779
       }, {"x": 536271.5249211162, "y": 6985750.520662485, "z": 112.62799399348697}],
       "id": 265258,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14093,7 +14093,7 @@
         "z": 96.88199640553576
       }],
       "id": 256793,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14139,7 +14139,7 @@
         "z": 107.34799999999814
       }],
       "id": 189292,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14181,7 +14181,7 @@
         "z": 110.32399999999325
       }, {"x": 537079.386, "y": 6989666.881, "z": 110.28800000000047}],
       "id": 201920,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14219,7 +14219,7 @@
         "z": 98.91599999999744
       }, {"x": 535760.325, "y": 6990846.562, "z": 98.81200000000536}],
       "id": 211959,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14253,7 +14253,7 @@
         "z": 94.70600000000559
       }],
       "id": 224166,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14291,7 +14291,7 @@
         "z": 95.45900000000256
       }, {"x": 537284.879983676, "y": 6988390.424521688, "z": 95.33300248709313}],
       "id": 260873,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14333,7 +14333,7 @@
         "z": 109.96799999999348
       }, {"x": 536922.963, "y": 6987596.958, "z": 110.07300000000396}],
       "id": 252887,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14383,7 +14383,7 @@
         "z": 112.91999999999825
       }, {"x": 537157.315091002, "y": 6989481.846787532, "z": 112.92999609432304}],
       "id": 212228,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14437,7 +14437,7 @@
         "z": 93.63499999999476
       }],
       "id": 231594,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14479,7 +14479,7 @@
         "z": 101.90698510198757
       }],
       "id": 454435,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14513,7 +14513,7 @@
         "z": 110.76397732762476
       }],
       "id": 207551,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14551,7 +14551,7 @@
         "z": 92.71300000000338
       }, {"x": 536193.4684039024, "y": 6990506.632742243, "z": 92.92099715879388}],
       "id": 212181,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14605,7 +14605,7 @@
         "z": 98.9890000000014
       }],
       "id": 191763,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14643,7 +14643,7 @@
         "z": 91.38800000000629
       }],
       "id": 266082,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14677,7 +14677,7 @@
         "z": 105.44500000000698
       }, {"x": 536460.817, "y": 6986514.105, "z": 105.39500000000407}],
       "id": 229270,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14719,7 +14719,7 @@
         "z": 113.89399988833229
       }],
       "id": 224651,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14757,7 +14757,7 @@
         "z": 100.04700000000594
       }, {"x": 535900.773, "y": 6984618.321, "z": 99.91300000000047}],
       "id": 194364,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14795,7 +14795,7 @@
         "z": 96.42300079172338
       }],
       "id": 188088,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14829,7 +14829,7 @@
         "z": 97.89400000000023
       }, {"x": 537274.9770217818, "y": 6988586.163681764, "z": 98.63699145064962}],
       "id": 225445,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14863,7 +14863,7 @@
         "z": 113.10700000000361
       }],
       "id": 454550,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14921,7 +14921,7 @@
         "z": 111.2329999999929
       }],
       "id": 454546,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -14987,7 +14987,7 @@
         "z": 109.23699999999371
       }],
       "id": 454553,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15021,7 +15021,7 @@
         "z": 112.2219999999943
       }],
       "id": 454545,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15055,7 +15055,7 @@
         "z": 110.80100000000675
       }, {"x": 533347.708, "y": 6988359.985, "z": 111.10899999999674}],
       "id": 454543,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15117,7 +15117,7 @@
         "z": 117.13300000000163
       }],
       "id": 454551,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15163,7 +15163,7 @@
         "z": 110.08800000000338
       }, {"x": 533375.053, "y": 6988268.755, "z": 110.69700000000012}],
       "id": 454542,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15201,7 +15201,7 @@
         "z": 116.87200000000303
       }, {"x": 533474.305, "y": 6990390.877, "z": 116.76300000000629}],
       "id": 454552,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15247,7 +15247,7 @@
         "z": 112.58999999999651
       }, {"x": 533232.769, "y": 6989604.369, "z": 112.89100000000326}],
       "id": 454549,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15281,7 +15281,7 @@
         "z": 111.83400000000256
       }],
       "id": 454541,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15315,7 +15315,7 @@
         "z": 111.92299999999523
       }],
       "id": 454544,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15349,7 +15349,7 @@
         "z": 110.96499999999651
       }],
       "id": 454548,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15403,7 +15403,7 @@
         "z": 89.88599733181654
       }],
       "id": 268021,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15521,7 +15521,7 @@
         "z": 131.922000792255
       }],
       "id": 245259,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15555,7 +15555,7 @@
         "z": 94.7480006656576
       }],
       "id": 258757,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15601,7 +15601,7 @@
         "z": 98.6929999999993
       }, {"x": 535896.2680274083, "y": 6984448.1845664205, "z": 98.04800731113939}],
       "id": 263913,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15647,7 +15647,7 @@
         "z": 114.30899999999383
       }],
       "id": 197659,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15681,7 +15681,7 @@
         "z": 112.9890000000014
       }, {"x": 533593.916, "y": 6987734.971, "z": 112.37699999999313}],
       "id": 239774,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15722,7 +15722,7 @@
         "z": 93.0599935788815
       }],
       "id": 239847,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15756,7 +15756,7 @@
         "z": 105.59298796925131
       }],
       "id": 245348,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15794,7 +15794,7 @@
         "z": 95.27099999999336
       }, {"x": 535877.883, "y": 6984585.782, "z": 95.20100000000093}],
       "id": 262642,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15840,7 +15840,7 @@
         "z": 104.96799999999348
       }],
       "id": 234960,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15890,7 +15890,7 @@
         "z": 121.50599999999395
       }],
       "id": 218081,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15932,7 +15932,7 @@
         "z": 119.60500345149329
       }],
       "id": 187840,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -15986,7 +15986,7 @@
         "z": 105.10000000000582
       }, {"x": 532866.9689830488, "y": 6988691.492961879, "z": 105.10999921883734}],
       "id": 210251,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16036,7 +16036,7 @@
         "z": 111.61900000000605
       }, {"x": 533002.493, "y": 6989057.755, "z": 111.33999999999651}],
       "id": 244445,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16098,7 +16098,7 @@
         "z": 109.65200000000186
       }, {"x": 533070.9569918775, "y": 6989592.213991919, "z": 109.7679998151027}],
       "id": 201682,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16144,7 +16144,7 @@
         "z": 106.4870091717406
       }],
       "id": 190723,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16178,7 +16178,7 @@
         "z": 110.85099999999511
       }, {"x": 533494.878, "y": 6990375.869, "z": 111.16800000000512}],
       "id": 207021,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16216,7 +16216,7 @@
         "z": 118.81699999999546
       }, {"x": 533787.2747769256, "y": 6990738.110586655, "z": 118.86298411543663}],
       "id": 248017,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16250,7 +16250,7 @@
         "z": 117.403999999995
       }],
       "id": 247109,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 74.429,
@@ -16312,7 +16312,7 @@
         "z": 119.47400103018607
       }],
       "id": 265377,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16350,7 +16350,7 @@
         "z": 96.56600000000617
       }, {"x": 532904.8512366835, "y": 6988393.6416504225, "z": 97.15999276837786}],
       "id": 245209,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16392,7 +16392,7 @@
         "z": 117.70749647731529
       }],
       "id": 247110,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16438,7 +16438,7 @@
         "z": 95.83000000000175
       }],
       "id": 266618,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16500,7 +16500,7 @@
         "z": 115.62801388906541
       }],
       "id": 208129,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16550,7 +16550,7 @@
         "z": 110.41599995326943
       }],
       "id": 240571,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16608,7 +16608,7 @@
         "z": 100.48699999999371
       }],
       "id": 227075,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16654,7 +16654,7 @@
         "z": 110.52101467189834
       }],
       "id": 251734,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16692,7 +16692,7 @@
         "z": 117.12200000000303
       }, {"x": 533762.654, "y": 6990707.161, "z": 117.59200000000419}],
       "id": 197621,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16738,7 +16738,7 @@
         "z": 110.24700000000303
       }],
       "id": 187766,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16808,7 +16808,7 @@
         "z": 113.93700057623246
       }],
       "id": 234970,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16842,7 +16842,7 @@
         "z": 119.53100000000268
       }, {"x": 533797.619845183, "y": 6990759.321729996, "z": 119.6119849997851}],
       "id": 213134,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16896,7 +16896,7 @@
         "z": 110.91000000000349
       }, {"x": 533396.748, "y": 6990287.743, "z": 110.83000000000175}],
       "id": 454437,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16946,7 +16946,7 @@
         "z": 112.57000000000698
       }, {"x": 536284.398, "y": 6985745.581, "z": 112.48399999999674}],
       "id": 454436,
-      "roadType": "Kunnan katuosuus",
+      "administrativeClassId": "2",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -16984,7 +16984,7 @@
         "z": 112.62799999999697
       }],
       "id": 221159,
-      "roadType": "Kunnan katuosuus",
+      "administrativeClassId": "2",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17021,7 +17021,7 @@
         "z": 100.33499882679477
       }],
       "id": 245468,
-      "roadType": "Kunnan katuosuus",
+      "administrativeClassId": "2",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17074,7 +17074,7 @@
         "z": 100.2940013222098
       }],
       "id": 234027,
-      "roadType": "Kunnan katuosuus",
+      "administrativeClassId": "2",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17116,7 +17116,7 @@
         "z": 95.08199999999488
       }, {"x": 529149.4728380453, "y": 6990631.155759238, "z": 95.12299519179588}],
       "id": 209645,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17166,7 +17166,7 @@
         "z": 92.83900000000722
       }],
       "id": 240052,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17204,7 +17204,7 @@
         "z": 93.11100000000442
       }],
       "id": 225274,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17242,7 +17242,7 @@
         "z": 90.92000414247579
       }],
       "id": 219184,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17280,7 +17280,7 @@
         "z": 95.49700102369681
       }],
       "id": 240940,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17318,7 +17318,7 @@
         "z": 91.20200528112056
       }],
       "id": 225736,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17380,7 +17380,7 @@
         "z": 91.43700000000536
       }],
       "id": 219876,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17422,7 +17422,7 @@
         "z": 108.5109999999986
       }],
       "id": 190013,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17456,7 +17456,7 @@
         "z": 110.98600000000442
       }, {"x": 535903.6402977644, "y": 6985738.860981557, "z": 111.29999159493154}],
       "id": 266416,
-      "roadType": "Kunnan katuosuus",
+      "administrativeClassId": "2",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17514,7 +17514,7 @@
         "z": 147.03100000000268
       }],
       "id": 263108,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17548,7 +17548,7 @@
         "z": 111.76900000000023
       }, {"x": 533519.1151650656, "y": 6987539.639825217, "z": 111.57900582403906}],
       "id": 214138,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17622,7 +17622,7 @@
         "z": 113.3469999999943
       }, {"x": 533536.995, "y": 6987520.633, "z": 112.31299999999464}],
       "id": 236071,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17664,7 +17664,7 @@
         "z": 106.07499999999709
       }, {"x": 532370.2712764523, "y": 6988091.187917152, "z": 105.5880050452475}],
       "id": 219322,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17718,7 +17718,7 @@
         "z": 111.87600000000384
       }, {"x": 532922.173, "y": 6987738.37, "z": 111.91000000000349}],
       "id": 226068,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17756,7 +17756,7 @@
         "z": 120.94199999999546
       }, {"x": 534470.209, "y": 6986242.071, "z": 121.38000000000466}],
       "id": 220538,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17794,7 +17794,7 @@
         "z": 127.19000000000233
       }, {"x": 534419.223, "y": 6986493.028, "z": 130.2170000000042}],
       "id": 193639,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17844,7 +17844,7 @@
         "z": 111.77700268154771
       }],
       "id": 221957,
-      "roadType": "Kunnan katuosuus",
+      "administrativeClassId": "2",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17898,7 +17898,7 @@
         "z": 142.5850000000064
       }],
       "id": 224191,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17940,7 +17940,7 @@
         "z": 110.35199511034574
       }],
       "id": 191385,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -17974,7 +17974,7 @@
         "z": 110.25100000000384
       }, {"x": 536195.759, "y": 6985688.888, "z": 109.91599999999744}],
       "id": 219542,
-      "roadType": "Kunnan katuosuus",
+      "administrativeClassId": "2",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18012,7 +18012,7 @@
         "z": 111.75600138269537
       }],
       "id": 258248,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18058,7 +18058,7 @@
         "z": 96.39900000000489
       }, {"x": 532137.283, "y": 6988150.993, "z": 95.76799999999639}],
       "id": 211639,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18116,7 +18116,7 @@
         "z": 93.63300000000163
       }, {"x": 532090.197, "y": 6988155.665, "z": 94.23500000000058}],
       "id": 201654,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18150,7 +18150,7 @@
         "z": 110.88999792707021
       }],
       "id": 239664,
-      "roadType": "Kunnan katuosuus",
+      "administrativeClassId": "2",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18192,7 +18192,7 @@
         "z": 109.5219999999972
       }, {"x": 534713.6611451235, "y": 6985726.034955621, "z": 110.32199528379282}],
       "id": 212486,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18242,7 +18242,7 @@
         "z": 110.42399999999907
       }, {"x": 532601.274, "y": 6988010.983, "z": 109.5679999999993}],
       "id": 227274,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18316,7 +18316,7 @@
         "z": 117.96199999999953
       }, {"x": 534502.313114432, "y": 6986136.0396918375, "z": 117.98799913660994}],
       "id": 262172,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18354,7 +18354,7 @@
         "z": 94.24000000000524
       }, {"x": 532090.1974431637, "y": 6988155.664959871, "z": 94.2350087236941}],
       "id": 192766,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18404,7 +18404,7 @@
         "z": 89.7839980945255
       }],
       "id": 194486,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18438,7 +18438,7 @@
         "z": 112.0
       }, {"x": 532895.868001851, "y": 6987762.075998274, "z": 112.00499999905486}],
       "id": 211126,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18480,7 +18480,7 @@
         "z": 112.97400122767462
       }],
       "id": 454438,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18522,7 +18522,7 @@
         "z": 111.17000216333683
       }],
       "id": 249241,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18556,7 +18556,7 @@
         "z": 114.6079999999929
       }],
       "id": 241115,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18594,7 +18594,7 @@
         "z": 117.28099979904387
       }],
       "id": 240193,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18628,7 +18628,7 @@
         "z": 84.91999999999825
       }],
       "id": 233946,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18662,7 +18662,7 @@
         "z": 111.77700000000186
       }],
       "id": 234629,
-      "roadType": "Kunnan katuosuus",
+      "administrativeClassId": "2",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18716,7 +18716,7 @@
         "z": 110.73200000000361
       }, {"x": 535948.119, "y": 6985734.787, "z": 110.72599999999511}],
       "id": 264664,
-      "roadType": "Kunnan katuosuus",
+      "administrativeClassId": "2",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18762,7 +18762,7 @@
         "z": 109.45699999999488
       }],
       "id": 228012,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18796,7 +18796,7 @@
         "z": 113.44400000000314
       }],
       "id": 221113,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18842,7 +18842,7 @@
         "z": 114.6079999999929
       }],
       "id": 197485,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18880,7 +18880,7 @@
         "z": 111.66700000000128
       }],
       "id": 454511,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18914,7 +18914,7 @@
         "z": 111.04399999999441
       }],
       "id": 454516,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -18948,7 +18948,7 @@
         "z": 112.05899999999383
       }, {"x": 533350.231, "y": 6988423.725, "z": 112.24599999999919}],
       "id": 454513,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19006,7 +19006,7 @@
         "z": 109.3179999999993
       }],
       "id": 454521,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19044,7 +19044,7 @@
         "z": 116.73200000000361
       }],
       "id": 454520,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19094,7 +19094,7 @@
         "z": 112.83400000000256
       }],
       "id": 454517,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19128,7 +19128,7 @@
         "z": 111.97900000000664
       }],
       "id": 454512,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19162,7 +19162,7 @@
         "z": 113.03200000000652
       }],
       "id": 454518,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19212,7 +19212,7 @@
         "z": 111.29899999999907
       }, {"x": 533244.289, "y": 6989018.034, "z": 111.36000000000058}],
       "id": 454514,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19246,7 +19246,7 @@
         "z": 111.9210000000021
       }],
       "id": 454509,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19308,7 +19308,7 @@
         "z": 117.05499999999302
       }],
       "id": 454519,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19354,7 +19354,7 @@
         "z": 110.028999999995
       }],
       "id": 454510,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 0,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19400,7 +19400,7 @@
         "z": 88.70200000000477
       }, {"x": 535725.831, "y": 6985015.701, "z": 88.66999999999825}],
       "id": 202744,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19434,7 +19434,7 @@
         "z": 104.83199980844219
       }],
       "id": 225964,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19472,7 +19472,7 @@
         "z": 126.6710000000021
       }],
       "id": 246953,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19582,7 +19582,7 @@
         "z": 133.04099999999744
       }, {"x": 534033.1763753364, "y": 6987339.484700227, "z": 131.93601176186274}],
       "id": 264564,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19628,7 +19628,7 @@
         "z": 94.97501450833664
       }],
       "id": 257473,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19674,7 +19674,7 @@
         "z": 104.45200000000477
       }, {"x": 535246.2342781334, "y": 6985557.277797174, "z": 104.51399221828703}],
       "id": 216738,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19708,7 +19708,7 @@
         "z": 94.67300571018596
       }],
       "id": 234302,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19754,7 +19754,7 @@
         "z": 93.00100000000384
       }],
       "id": 220737,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19800,7 +19800,7 @@
         "z": 112.32800594711262
       }],
       "id": 242200,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19841,7 +19841,7 @@
         "z": 99.42599935176248
       }],
       "id": 251546,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19879,7 +19879,7 @@
         "z": 97.2039999999979
       }],
       "id": 208028,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19917,7 +19917,7 @@
         "z": 98.0089999025067
       }],
       "id": 233642,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19951,7 +19951,7 @@
         "z": 100.31100000000151
       }, {"x": 537007.4280722997, "y": 6984801.381587289, "z": 100.2630160666163}],
       "id": 241900,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -19985,7 +19985,7 @@
         "z": 106.56900000000314
       }, {"x": 537027.5210508411, "y": 6984671.255670891, "z": 106.53701241920157}],
       "id": 194131,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20027,7 +20027,7 @@
         "z": 95.21700000000419
       }, {"x": 536934.066, "y": 6985263.179, "z": 95.26200000000244}],
       "id": 204913,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20073,7 +20073,7 @@
         "z": 97.88800085184897
       }],
       "id": 201811,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20107,7 +20107,7 @@
         "z": 100.00400000000081
       }, {"x": 536701.1941620187, "y": 6985781.617759337, "z": 100.33499589025237}],
       "id": 213572,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20141,7 +20141,7 @@
         "z": 100.5280000000057
       }, {"x": 536584.363, "y": 6986427.666, "z": 100.8179999999993}],
       "id": 227029,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20175,7 +20175,7 @@
         "z": 96.71099999999569
       }, {"x": 536896.257, "y": 6985473.784, "z": 98.28500000000349}],
       "id": 257173,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20213,7 +20213,7 @@
         "z": 99.41599908019187
       }],
       "id": 221064,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20251,7 +20251,7 @@
         "z": 100.80400000000373
       }],
       "id": 222348,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20289,7 +20289,7 @@
         "z": 100.22900000000664
       }],
       "id": 255465,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20323,7 +20323,7 @@
         "z": 113.94100000000617
       }, {"x": 537056.7, "y": 6984498.342, "z": 113.47400000000198}],
       "id": 228719,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20357,7 +20357,7 @@
         "z": 99.22500000000582
       }, {"x": 536820.212, "y": 6985607.936, "z": 99.02700000000186}],
       "id": 246674,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20391,7 +20391,7 @@
         "z": 95.57600000000093
       }, {"x": 536986.6610047398, "y": 6984941.7328947075, "z": 95.50200313168067}],
       "id": 224493,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20425,7 +20425,7 @@
         "z": 99.4829999999929
       }, {"x": 536746.3852264888, "y": 6985712.319670973, "z": 99.54399920065283}],
       "id": 208093,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20463,7 +20463,7 @@
         "z": 97.05101506116765
       }],
       "id": 243224,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20501,7 +20501,7 @@
         "z": 97.9829999999929
       }, {"x": 536992.412, "y": 6984881.766, "z": 97.36699999999837}],
       "id": 215819,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20535,7 +20535,7 @@
         "z": 111.8289999999979
       }, {"x": 537046.5850536687, "y": 6984561.148688281, "z": 111.81600955744628}],
       "id": 234111,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20569,7 +20569,7 @@
         "z": 99.65499999999884
       }, {"x": 536723.424, "y": 6985746.7, "z": 99.81399999999849}],
       "id": 266840,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20607,7 +20607,7 @@
         "z": 97.2280005917364
       }],
       "id": 189000,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20649,7 +20649,7 @@
         "z": 105.04599979565502
       }],
       "id": 207213,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20690,7 +20690,7 @@
         "z": 101.00599999999395
       }, {"x": 536666.272, "y": 6985896.185, "z": 101.27099999999336}],
       "id": 194133,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20728,7 +20728,7 @@
         "z": 101.32200000000012
       }, {"x": 536558.063, "y": 6986503.124, "z": 101.74899999999616}],
       "id": 225351,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20766,7 +20766,7 @@
         "z": 102.05399177307878
       }],
       "id": 187687,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20800,7 +20800,7 @@
         "z": 114.96999993836334
       }],
       "id": 207494,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20886,7 +20886,7 @@
         "z": 101.11500000000524
       }, {"x": 531402.735, "y": 6985927.427, "z": 101.11199999999371}],
       "id": 197136,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20928,7 +20928,7 @@
         "z": 94.58100000000559
       }],
       "id": 192949,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -20978,7 +20978,7 @@
         "z": 101.44800000000396
       }, {"x": 530273.2399821673, "y": 6985194.198994626, "z": 101.84399960382643}],
       "id": 264507,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21016,7 +21016,7 @@
         "z": 84.85599999999977
       }, {"x": 531650.913, "y": 6988050.829, "z": 84.74300000000221}],
       "id": 222944,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21054,7 +21054,7 @@
         "z": 102.60400000000664
       }],
       "id": 243119,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21092,7 +21092,7 @@
         "z": 103.8179999999993
       }],
       "id": 267735,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21178,7 +21178,7 @@
         "z": 87.89298879979107
       }],
       "id": 207755,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21220,7 +21220,7 @@
         "z": 107.05999781644556
       }],
       "id": 204921,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21270,7 +21270,7 @@
         "z": 97.96199999999953
       }],
       "id": 195534,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21316,7 +21316,7 @@
         "z": 93.49599999999919
       }, {"x": 531592.134, "y": 6987984.574, "z": 92.22500000000582}],
       "id": 203339,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21354,7 +21354,7 @@
         "z": 90.89999999999418
       }, {"x": 529397.5612609794, "y": 6984909.43693364, "z": 91.07099671276308}],
       "id": 255331,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21388,7 +21388,7 @@
         "z": 91.12900000000081
       }, {"x": 529383.984, "y": 6984912.783, "z": 91.11900000000605}],
       "id": 239414,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21422,7 +21422,7 @@
         "z": 87.94800000000396
       }, {"x": 530076.4699354103, "y": 6985024.259905237, "z": 89.41299596056163}],
       "id": 263659,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21456,7 +21456,7 @@
         "z": 84.74199999999837
       }, {"x": 531660.3898871768, "y": 6988058.623902369, "z": 84.74199999999837}],
       "id": 227985,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21517,7 +21517,7 @@
         "z": 106.12399999999616
       }, {"x": 530766.207, "y": 6985323.08, "z": 106.1359999999986}],
       "id": 199523,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21551,7 +21551,7 @@
         "z": 98.25500991545016
       }],
       "id": 212236,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21589,7 +21589,7 @@
         "z": 100.13199999999779
       }],
       "id": 223091,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21635,7 +21635,7 @@
         "z": 99.64299999999639
       }],
       "id": 204972,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21677,7 +21677,7 @@
         "z": 104.3350000000064
       }, {"x": 530889.3508350481, "y": 6985392.111838299, "z": 104.744992984406}],
       "id": 200943,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21723,7 +21723,7 @@
         "z": 108.43099999999686
       }, {"x": 530927.976, "y": 6985560.371, "z": 107.66999999999825}],
       "id": 214634,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21765,7 +21765,7 @@
         "z": 98.58400000000256
       }],
       "id": 204403,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21819,7 +21819,7 @@
         "z": 101.90100313494891
       }],
       "id": 205682,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21853,7 +21853,7 @@
         "z": 97.95600000000559
       }, {"x": 529043.97, "y": 6985067.884, "z": 97.80800000000454}],
       "id": 252771,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21915,7 +21915,7 @@
         "z": 107.58800000000338
       }, {"x": 531624.474, "y": 6987189.094, "z": 106.5850000000064}],
       "id": 221837,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -21993,7 +21993,7 @@
         "z": 97.35000000000582
       }],
       "id": 242036,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -22031,7 +22031,7 @@
         "z": 106.14500262561695
       }],
       "id": 189576,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "status": 99,
       "anomaly": 0,
       "startMValue": 0.0,
@@ -22088,7 +22088,7 @@
             "z": 111.29899999999907
           }, {"x": 533244.289, "y": 6989018.034, "z": 111.36000000000058}],
           "id": 454340,
-          "roadType": "Yleinen tie",
+          "administrativeClassId": "1",
           "status": 1,
           "anomaly": 0,
           "startMValue": 0.0,
@@ -22215,7 +22215,7 @@
         "z": 55.070000000006985
       }, {"x": 359555.613, "y": 6679206.958, "z": 54.98399999999674}],
       "id": 57023,
-      "roadType": "Yleinen tie",
+      "administrativeClassId": "1",
       "anomaly": 0,
       "startMValue": 0.0,
       "endAddressM": 17,
