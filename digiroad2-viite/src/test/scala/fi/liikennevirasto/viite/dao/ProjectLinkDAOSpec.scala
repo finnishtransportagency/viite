@@ -188,7 +188,7 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test updateProjectLinkRoadTypeDiscontinuity When road type or discontinuity got updated Then update should be made with success") {
+  test("Test updateProjectLinkAdministrativeClassDiscontinuity When Administrative Class or discontinuity got updated Then update should be made with success") {
     runWithRollback {
       val roadwayIds = roadwayDAO.create(dummyRoadways)
       val id = Sequences.nextViiteProjectId
