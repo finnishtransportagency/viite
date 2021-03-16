@@ -260,7 +260,7 @@ package object viite {
     "|      discontinuity     |         Int        |                       Discontinuity code of all project links                       |       |\n" +
     "|         roadEly        |        Long        |                            Ely code of all project links                            |       |\n" +
     "|     roadLinkSource     |         Int        |                        Road link source of all project links                        |       |\n" +
-    "|        roadType        |         Int        |                       Road type code for all the project links                      |       |\n" +
+    "|  administrative class  |         Int        |               Administrative class code for all the project links                   |       |\n" +
     "| userDefinedEndAddressM |     Option[Int]    | Optional value, simbolizes if there is a specific value for the end address m value |       |\n" +
     "|       coordinates      | ProjectCoordinates |  This represents the middle point of all the project links involved in the project  |       |\n" +
     "|        roadName        |   Option[String]   |                Possible road name for all the project links sent here               |       |\n" +
