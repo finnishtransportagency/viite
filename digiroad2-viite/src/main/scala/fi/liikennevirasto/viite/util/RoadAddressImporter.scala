@@ -147,7 +147,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
              WHEN 4 THEN 1
              WHEN 5 THEN 3
              WHEN 9 THEN 3
-             ELSE 99
+             ELSE 3
            END AS tietyyppi,
            linkid, kayttaja, alkux, alkuy, loppux,
            loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
@@ -169,7 +169,7 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
              WHEN 4 THEN 1
              WHEN 5 THEN 3
              WHEN 9 THEN 3
-             ELSE 99
+             ELSE 3
            END AS tietyyppi,
            linkid, kayttaja, alkux, alkuy, loppux,
            loppuy, ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste from #$tableName
