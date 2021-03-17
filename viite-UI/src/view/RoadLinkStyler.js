@@ -307,57 +307,57 @@
     ];
 
     var borderRules = [
-      new StyleRule().where('zoomLevel').is(5).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
+      new StyleRule().where('zoomLevel').is(5).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).and('roadClass').isNot(LinkValues.RoadClass.NoClass.value).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 7}
       }),
-      new StyleRule().where('zoomLevel').is(6).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
+      new StyleRule().where('zoomLevel').is(6).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).and('roadClass').isNot(LinkValues.RoadClass.NoClass.value).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 7}
       }),
-      new StyleRule().where('zoomLevel').is(7).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
+      new StyleRule().where('zoomLevel').is(7).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).and('roadClass').isNot(LinkValues.RoadClass.NoClass.value).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 8}
       }),
-      new StyleRule().where('zoomLevel').is(8).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
+      new StyleRule().where('zoomLevel').is(8).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).and('roadClass').isNot(LinkValues.RoadClass.NoClass.value).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 8}
       }),
-      new StyleRule().where('zoomLevel').is(9).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
+      new StyleRule().where('zoomLevel').is(9).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).and('roadClass').isNot(LinkValues.RoadClass.NoClass.value).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 9}
       }),
-      new StyleRule().where('zoomLevel').is(10).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
+      new StyleRule().where('zoomLevel').is(10).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).and('roadClass').isNot(LinkValues.RoadClass.NoClass.value).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 10}
       }),
-      new StyleRule().where('zoomLevel').is(11).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
+      new StyleRule().where('zoomLevel').is(11).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).and('roadClass').isNot(LinkValues.RoadClass.NoClass.value).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 11}
       }),
-      new StyleRule().where('zoomLevel').is(12).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
+      new StyleRule().where('zoomLevel').is(12).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).and('roadClass').isNot(LinkValues.RoadClass.NoClass.value).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 12}
       }),
-      new StyleRule().where('zoomLevel').is(13).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
+      new StyleRule().where('zoomLevel').is(13).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).and('roadClass').isNot(LinkValues.RoadClass.NoClass.value).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 15}
       }),
-      new StyleRule().where('zoomLevel').is(14).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
+      new StyleRule().where('zoomLevel').is(14).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).and('roadClass').isNot(LinkValues.RoadClass.NoClass.value).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 17}
       }),
-      new StyleRule().where('zoomLevel').is(15).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).use({
+      new StyleRule().where('zoomLevel').is(15).and('administrativeClassId').isIn(LinkValues.BlackUnderlineAdministrativeClasses).and('roadClass').isNot(LinkValues.RoadClass.NoClass.value).use({
         color: '#1E1E1E',
         lineCap: 'round',
         stroke: {width: 19}
