@@ -15,6 +15,8 @@ phases:
     commands:
       - pip install --upgrade awscli
       - $(aws ecr get-login --no-include-email --region eu-west-1)
+      - REPOSITORYURI=$(echo $REPOSITORY_URI)
+      - echo REPOSITORYURI
       - mkdir digiroad2-geo/lib
       - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-graph-19.0.jar" ./digiroad2-geo/lib
       - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-main-19.0.jar" ./digiroad2-geo/lib
@@ -32,6 +34,6 @@ phases:
       - sbt assembly
       - docker build -t viite-ci-build:latest -f aws/fargate/Dockerfile .
       - docker images -a
-      - docker tag $(echo $REPOSITORY_URI):latest
+      - docker tag $REPOSITORYURI:latest
       - echo "Pushing the Docker image"
-      - docker push $(echo $REPOSITORY_URI):latest
+      - docker push $REPOSITORYURI:latest
