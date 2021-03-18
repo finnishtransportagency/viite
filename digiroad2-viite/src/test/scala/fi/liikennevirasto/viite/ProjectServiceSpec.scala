@@ -2218,9 +2218,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectLinksAfter = projectLinkDAO.fetchProjectLinks(project.id).sortBy(pl => (pl.startAddrMValue, -pl.track.value))
       projectLinksAfter.size should be(projectLinksBefore.size)
       projectLinksAfter.head.startAddrMValue should be(projectLinksBefore.head.startAddrMValue)
-      projectLinksAfter.head.endAddrMValue should not be(projectLinksBefore.head.endAddrMValue)
-
-
       projectLinksAfter.last.endAddrMValue should be(projectLinksBefore.last.endAddrMValue)
       var i = 0
       projectLinksAfter.foreach(pl => {
