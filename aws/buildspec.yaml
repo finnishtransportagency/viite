@@ -39,6 +39,6 @@ phases:
       - sbt assembly
       - docker build -t viite-ci-build:latest -f aws/fargate/Dockerfile .
       - docker images -a
-      - docker tag viite-ci-build:latest 783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite-ci-build:latest
+      - docker tag $(REPOSITORY_URI):latest
       - echo "Pushing the Docker image"
-      - docker push 783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite-ci-build:latest
+      - docker push $(REPOSITORY_URI):latest

@@ -575,9 +575,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             } else
               Map()
 
-            projectLinkDAO.fetchProjectLinks(projectId).foreach(println)
+            projectLinkDAO.fetchProjectLinks(projectId).map(pl => pl.toString).foreach(logger.debug)
             projectLinkDAO.reverseRoadPartDirection(projectId, roadNumber, roadPartNumber)
-            projectLinkDAO.fetchProjectLinks(projectId).foreach(println)
+            projectLinkDAO.fetchProjectLinks(projectId).map(pl => pl.toString).foreach(logger.debug)
 
             val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter(pl => {
               pl.status != LinkStatus.Terminated && pl.roadNumber == roadNumber && pl.roadPartNumber == roadPartNumber
