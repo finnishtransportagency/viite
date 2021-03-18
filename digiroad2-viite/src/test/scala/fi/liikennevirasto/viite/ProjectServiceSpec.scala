@@ -2209,7 +2209,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val roadNumber = 9999L
       val roadPartNumber = 1L
-      val project = setUpProjectWithLinks(LinkStatus.Transfer, Seq(0, 100, 150, 300), changeTrack = true, roadNumber, roadPartNumber)
+      val project = setUpProjectWithLinks(LinkStatus.New, Seq(0, 100, 150, 300), changeTrack = true, roadNumber, roadPartNumber)
       val projectLinksBefore = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
 
       val linksToRevert = projectLinksBefore.map(pl => LinkToRevert(pl.id, pl.id, LinkStatus.Transfer.value, pl.geometry))
