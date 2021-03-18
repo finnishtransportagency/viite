@@ -574,7 +574,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 Map(discontinuityAtEnd._1 -> discontinuityAtEnd._2)
             } else
               Map()
+
+            projectLinkDAO.fetchProjectLinks(projectId).foreach(println)
             projectLinkDAO.reverseRoadPartDirection(projectId, roadNumber, roadPartNumber)
+            projectLinkDAO.fetchProjectLinks(projectId).foreach(println)
+
             val projectLinks = projectLinkDAO.fetchProjectLinks(projectId).filter(pl => {
               pl.status != LinkStatus.Terminated && pl.roadNumber == roadNumber && pl.roadPartNumber == roadPartNumber
             })
