@@ -1,0 +1,37 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto8
+    commands:
+      - echo "deb https://dl.bintray.com/sbt/debian /" | tee -a  /etc/apt/sources.list.d/sbt.list
+      - apt-get update
+      - apt-get install sbt
+      - npm install -g yarn
+      - npm install && yarn install --ignore-engines
+      - npm install -g grunt-cli
+  pre_build:
+    commands:
+      - pip install --upgrade awscli
+      - $(aws ecr get-login --no-include-email --region eu-west-1)
+      - mkdir digiroad2-geo/lib
+      - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-graph-19.0.jar" ./digiroad2-geo/lib
+      - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-main-19.0.jar" ./digiroad2-geo/lib
+      - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-api-19.0.jar" ./digiroad2-geo/lib
+      - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-referencing-19.0.jar" ./digiroad2-geo/lib
+      - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-metadata-19.0.jar" ./digiroad2-geo/lib
+      - aws s3 cp "s3://fi-viite-dev/geotools-19/gt-opengis-19.0.jar" ./digiroad2-geo/lib
+      - aws s3 cp "s3://fi-viite-dev/geotools-19/jgridshift-1.0.jar" ./digiroad2-geo/lib
+  build:
+    commands:
+      - grunt test
+      - sbt test
+      - grunt deploy
+      - sbt clean
+      - sbt assembly
+      - docker build -t viite-ci-build:latest -f aws/fargate/Dockerfile .
+      - docker images -a
+      - docker tag viite-ci-build:latest $(echo $REPOSITORY_URI):latest
+      - echo "Pushing the Docker image"
+      - docker push $(echo $REPOSITORY_URI):latest
