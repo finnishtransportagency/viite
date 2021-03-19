@@ -35,3 +35,4 @@ phases:
       - docker tag viite-ci-build:latest $(echo $REPOSITORY_URI):latest
       - echo "Pushing the Docker image"
       - docker push $(echo $REPOSITORY_URI):latest
+      - aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster VIITE-ECS-Cluster --service viite-dev --force-new-deployment
