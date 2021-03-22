@@ -19,7 +19,7 @@ object ProjectLinkSplitter {
   }
 
   // Test if connected from template geometry end (towards digitization end)
-  private def isTailConnected(suravage: PolyLine, template: PolyLine) = {
+  def isTailConnected(suravage: PolyLine, template: PolyLine) = {
     GeometryUtils.areAdjacent(suravage.geometry.last, template.geometry.last, MaxDistanceForConnectedLinks) ||
       isDirectionReversed(suravage, template) &&
         GeometryUtils.areAdjacent(suravage.geometry.head, template.geometry.last, MaxDistanceForConnectedLinks)
