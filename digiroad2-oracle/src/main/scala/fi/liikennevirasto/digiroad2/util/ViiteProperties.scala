@@ -45,7 +45,7 @@ class ViiteProperties {
   lazy val useVVHGeometry: String = dr2Properties.getProperty("digiroad2.useVVHGeometry")
   lazy val vvhServiceHost: String = dr2Properties.getProperty("digiroad2.VVHServiceHost")
   lazy val vvhRestApiEndPoint: String = dr2Properties.getProperty("digiroad2.VVHRestApiEndPoint")
-  lazy val vvhRoadlinkFrozen: Boolean = dr2Properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
+  lazy val vvhRoadlinkFrozen: Boolean = dr2Properties.getProperty("digiroad2.VVHRoadlink.frozen", "true").toBoolean
   lazy val vkmUrl: String = dr2Properties.getProperty("digiroad2.VKMUrl")
   lazy val tierekisteriViiteRestApiEndPoint: String = dr2Properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
   lazy val tierekisteriEnabled: Boolean = dr2Properties.getProperty("digiroad2.tierekisteri.enabled", "false").toBoolean
