@@ -5,6 +5,7 @@ import java.sql.{PreparedStatement, Timestamp}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, ParallelLink}
+import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.projectLinkDAO
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadwaySection}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -329,6 +330,8 @@ class RoadwayChangesDAO {
           val roadWayChangesLinkPS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES_LINK " +
             "(roadway_change_id, project_id, project_link_id) values (?,?,?)")
 
+          val projectLinksFetched  = projectLinkDAO.fetchProjectLinks(project.id)
+
           val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping)
           terminated.originalSections.foreach(roadwaySection =>
             addToBatch(roadwaySection._2, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
@@ -336,6 +339,8 @@ class RoadwayChangesDAO {
 
           val news = ProjectDeltaCalculator.partition(delta.newRoads)
           news.foreach(roadwaySection => addToBatch(roadwaySection, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
+
+          val test = ProjectDeltaCalculator.partition(delta.unChanged.mapping.map(_._2) ++ delta.newRoads ++ delta.transferred.mapping.map(_._2))
 
           val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping)
 

@@ -15,8 +15,8 @@ object TrackCalculatorContext {
     new DiscontinuityTrackCalculatorStrategy(Seq(MinorDiscontinuity, ParallelLink))
   }
 
-  private lazy val discontinuousStrategy: DiscontinuityTrackCalculatorStrategy = {
-    new DiscontinuityTrackCalculatorStrategy(Seq(Discontinuous, ParallelLink))
+  private lazy val discontinuousStrategy: DefaultTrackCalculatorStrategy = {
+    new DefaultTrackCalculatorStrategy //DiscontinuityTrackCalculatorStrategy(Seq(Discontinuous, ParallelLink))
   }
 
   private lazy val linkStatusChangeTrackCalculatorStrategy: LinkStatusChangeTrackCalculatorStrategy = {
