@@ -80,11 +80,15 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
   val roadAddressService_db: RoadAddressService = new RoadAddressService(roadLinkService_db, roadwayDAO, linearLocationDAO,
     roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus_db, true)
 
-  val projectService_db = spy(new ProjectService(roadAddressService_db, roadLinkService_db, nodesAndJunctionsService_db, roadwayDAO,
+  val projectService_db = new ProjectService(roadAddressService_db, roadLinkService_db, nodesAndJunctionsService_db, roadwayDAO,
     roadwayPointDAO, linearLocationDAO, projectDAO, projectLinkDAO,
     nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
-    roadwayAddressMapper, eventbus_db, frozenTimeVVHAPIServiceEnabled = true)
-  )
+    roadwayAddressMapper, eventbus_db, frozenTimeVVHAPIServiceEnabled = true){
+//    override def withDynSession[T](f: => T): T = f
+//
+//    override def withDynTransaction[T](f: => T): T = f
+  }
+
 
 
   /* ---db */
@@ -337,10 +341,12 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test road_13_218 projectService.updateProjectLinks() "
   //  "When reserving a road part, try to renumber it to the same number Then it should produce an error."
   ) {
+     {
       runWithRollback {
         //      reset(mockRoadLinkService)
 
-        val road_13_218 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(13, 218).map(_.roadwayNumber).toSet)).sortBy(_.startAddrMValue).toList
+        val road_13_218 = roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocationDAO.fetchByRoadways(roadwayDAO.fetchAllBySection(13, 218).map(_.roadwayNumber)
+                                                                                                                            .toSet)).sortBy(_.startAddrMValue).toList
 
 
         val reservedRoadPart_1 = ProjectReservedPart(
@@ -374,22 +380,24 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           None, Some(ProjectCoordinates(512315, 6838732, 8))
         )
 
-        val project = projectService_db.createRoadLinkProject(rap)
+        val project      = projectService_db.createRoadLinkProject(rap)
         val projectSaved = projectService_db.saveProject(project)
 
 
         case class Test_config(
                                 track_to_test: List[ProjectLink],
                                 discontinuity: Int,
-                                linkStatus: LinkStatus
+                                linkStatus   : LinkStatus
                               )
 
         case class Test_terminated_config(
                                            track_to_test: List[ProjectLink],
-                                           linkStatus: LinkStatus
+                                           linkStatus   : LinkStatus
                                          )
 
-        val first_road_part_to_update = projectService_db.getProjectLinks(projectSaved.id).filter(x => x.track == Track(0) && x.endAddrMValue <= 1510).toList
+        val first_road_part_to_update = projectService_db.getProjectLinks(projectSaved.id).filter(x => {
+          x.track == Track(0) && x.endAddrMValue <= 1510
+        }).toList
 
 
         //      val third_road_part_to_update  = projectService_db.getProjectLinks(projectSaved.id).filter(x => x.track == Track(0)).toList
@@ -419,7 +427,10 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           )
         }
 
-        val links_to_terminate = projectService_db.getProjectLinks(projectSaved.id).filter(x => List(11910502, 11910505, 3227478, 3227484, 3227486, 11910568, 11910533, 3227482, 3227480, 11910572, 11910587, 11910588, 12017340, 12017341).contains(x.linkId)).toList
+        val links_to_terminate = projectService_db.getProjectLinks(projectSaved.id).filter(x => {
+          List(11910502, 11910505, 3227478, 3227484, 3227486, 11910568, 11910533, 3227482,
+            3227480, 11910572, 11910587, 11910588, 12017340, 12017341).contains(x.linkId)
+        }).toList
 
         val road_tracks_to_test_2 = List(
           Test_terminated_config(links_to_terminate, LinkStatus.Terminated)
@@ -446,20 +457,21 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         }
 
         case class New_links_config(
-                                     coordinates: Option[ProjectCoordinates],
-                                     discontinuity: Discontinuity,
-                                     ids: Set[Long],
-                                     linkIds: Seq[Long],
-                                     linkStatus: LinkStatus,
-                                     projectId: Long,
-                                     roadEly: Long,
-                                     roadLinkSource: LinkGeomSource,
-                                     roadName: Option[String],
-                                     roadNumber: Long,
-                                     roadPartNumber: Long,
-                                     roadType: RoadType,
-                                     trackCode: Track,
-                                     userDefinedEndAddressM: Option[Int])
+                                     coordinates           : Option[ProjectCoordinates],
+                                     discontinuity         : Discontinuity,
+                                     ids                   : Set[Long],
+                                     linkIds               : Seq[Long],
+                                     linkStatus            : LinkStatus,
+                                     projectId             : Long,
+                                     roadEly               : Long,
+                                     roadLinkSource        : LinkGeomSource,
+                                     roadName              : Option[String],
+                                     roadNumber            : Long,
+                                     roadPartNumber        : Long,
+                                     roadType              : RoadType,
+                                     trackCode             : Track,
+                                     userDefinedEndAddressM: Option[Int]
+                                   )
 
         val new_links = New_links_config(
           coordinates = projectSaved.coordinates,
@@ -503,8 +515,10 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           new_links_2.roadLinkSource, new_links_2.roadEly, projectSaved.createdBy, new_links_2.roadName.get,
           new_links_2.coordinates)
 
-        val transfer_1_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => x.track == Track(1) && x.linkId == 11910585).toList
-        val transfer_1 = List(
+        val transfer_1_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => {
+          x.track == Track(1) && x.linkId == 11910585
+        }).toList
+        val transfer_1       = List(
           Test_config(transfer_1_links, 5, LinkStatus.Transfer)
         )
 
@@ -571,8 +585,10 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           new_links_4.coordinates)
 
 
-        val transfer_2_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => List(11910590, 3227503, 3227468, 3227469, 3227544, 3227541).contains(x.linkId)).toList
-        val transfer_2 = List(
+        val transfer_2_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => {
+          List(11910590, 3227503, 3227468, 3227469, 3227544, 3227541).contains(x.linkId)
+        }).toList
+        val transfer_2       = List(
           Test_config(transfer_2_links, 2, LinkStatus.Transfer)
         )
 
@@ -618,8 +634,10 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           new_links_5.coordinates)
 
 
-        val transfer_3_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => x.linkId == 11910540).toList
-        val transfer_3 = List(
+        val transfer_3_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => {
+          x.linkId == 11910540
+        }).toList
+        val transfer_3       = List(
           Test_config(transfer_3_links, 5, LinkStatus.Transfer)
         )
 
@@ -645,7 +663,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
 
         val new_links_6 = New_links_config(
           coordinates = projectSaved.coordinates,
-          discontinuity = Discontinuity.Continuous,
+          discontinuity = Discontinuity.MinorDiscontinuity,
           ids = Set(),
           linkIds = Seq(11910530, 11910544, 11910546),
           linkStatus = LinkStatus.New,
@@ -707,8 +725,10 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           new_links_8.coordinates)
 
 
-        val transfer_4_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => x.track == Track(2) && x.linkId == 11910586).toList
-        val transfer_4 = List(
+        val transfer_4_links = projectService_db.getProjectLinks(projectSaved.id).filter(x => {
+          x.track == Track(2) && x.linkId == 11910586
+        }).toList
+        val transfer_4       = List(
           Test_config(transfer_4_links, 5, LinkStatus.Transfer)
         )
 
@@ -732,8 +752,25 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
           )
         }
 
-      } //Rollback
+        projectService_db.recalculateProjectLinks(projectSaved.id, projectSaved.modifiedBy)
+        val all_projectlinks = projectService_db.getProjectLinks(projectSaved.id)
 
+
+        //all_projectlinks.filter(_.track != Track.LeftSide).tail.foldLeft(all_projectlinks.head.endAddrMValue) { (cur, next) => next.endAddrMValue}
+//adjustedRight.tail.foldLeft(adjustedRight.head.endAddrMValue) { (cur, next) =>
+        //  println(cur)
+        //  println(next.startAddrMValue)
+        //  assert(cur == next.startAddrMValue)
+        //  next.endAddrMValue
+        //}
+
+        /* Create change table */
+//        val (changeProject, warningMessage) = projectService_db.getChangeProject(projectSaved.id)
+//        println("change table warningMessage")
+//        println(warningMessage)
+
+      } //Rollback
+    }
   }
 
     }
