@@ -212,7 +212,7 @@ object RoadwayFiller {
       }
     }
 
-    val (operationsToCheck, rest) = changesWithLinks.partition(c => List(AddressChangeType.Unchanged, AddressChangeType.Transfer, AddressChangeType.ReNumeration).contains(c._1.changeInfo.changeType))
+    val (operationsToCheck, rest) = changesWithLinks.partition(c => List(AddressChangeType.Unchanged, AddressChangeType.Transfer, AddressChangeType.ReNumeration, AddressChangeType.Termination).contains(c._1.changeInfo.changeType))
     (groupedSections(operationsToCheck).toSeq ++ rest).sortBy(_._1.changeInfo.orderInChangeTable)
   }
 }
