@@ -753,7 +753,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         }
 
         projectService_db.recalculateProjectLinks(projectSaved.id, projectSaved.modifiedBy)
-        val all_projectlinks = projectService_db.getProjectLinks(projectSaved.id)
+        //val all_projectlinks = projectService_db.getProjectLinks(projectSaved.id)
 
 
         //all_projectlinks.filter(_.track != Track.LeftSide).tail.foldLeft(all_projectlinks.head.endAddrMValue) { (cur, next) => next.endAddrMValue}
