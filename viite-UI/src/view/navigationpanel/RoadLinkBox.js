@@ -52,7 +52,7 @@
 
     var constructionTypes = [
       [0, 'Muu tieverkko, rakenteilla'],
-      [1, 'Tuntematon, rakenteilla']
+      [1, 'Maantie, rakenteilla']
     ];
 
     var nodes = [
@@ -131,7 +131,7 @@
         '<div class="symbol linear operation-type-unhandeled"></div>' +
         '<div class="label">Muu tieverkko, rakenteilla</div>' +
         '<div class="symbol linear construction-type-0"></div>' +
-        '<div class="label">Tuntematon, rakenteilla</div>' +
+        '<div class="label">Maantie, rakenteilla</div>' +
         '<div class="symbol linear construction-type-1"></div>' +
         '</div>';
     };
