@@ -54,7 +54,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           if (sec.right == sec.left)
             sec.right.links
           else {
-            sec.right.links ++ sec.left.links
+            sec.right.links ++ sec.left.links.filterNot(_.track == Track.Combined) // Remove dublicated
           }
         }
       } catch {

@@ -413,16 +413,17 @@ class ProjectLinkDAO {
       time(logger, "Update project links") {
         val nonUpdatingStatus = Set[LinkStatus](NotHandled)
         val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
-        val links = projectLinks.map { pl =>
-          if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
-            val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
-            // Discontinuity, road type and calibration points may change with Unchanged status
-            pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
-              startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
-              reversed = false)
-          } else
-            pl
-        }
+        val links = projectLinks
+//          projectLinks.map { pl =>
+//          if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
+//            val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
+//            // Discontinuity, road type and calibration points may change with Unchanged status
+//            pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
+//              startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
+//              reversed = false)
+//          } else
+//            pl
+//        }
         val projectLinkPS = dynamicSession.prepareStatement("""
           UPDATE project_link
           SET ROAD_NUMBER = ?, ROAD_PART_NUMBER = ?, TRACK = ?, DISCONTINUITY_TYPE = ?, START_ADDR_M = ?, END_ADDR_M = ?,
