@@ -42,8 +42,8 @@ object TwoTrackRoadUtils {
             (prevPl_othersidePls_udcps._2.filterNot(rl => splitted_pls_link_id == rl.linkId && rl.startAddrMValue == splitted_pls_link_startAddr) ++ Seq(pls._1, pls._2)).sortBy
             (_.startAddrMValue),
             // update udcp:s if new defined
-            if (splitted_pls._2.isDefined)
-              prevPl_othersidePls_udcps._3 :+ splitted_pls._2
+            if (!splitted_pls._2.isEmpty)
+              prevPl_othersidePls_udcps._3 ++ splitted_pls._2
             else
               prevPl_othersidePls_udcps._3
           )
@@ -56,7 +56,7 @@ object TwoTrackRoadUtils {
   }
 
   /* split start */
-  def createCalibrationPointsAtStatusChange(toUpdateLinks: Seq[ProjectLink], roadPartLinks: Seq[ProjectLink], projectId: Long, userName: String) = {
+  def createCalibrationPointsAtStatusChange(toUpdateLinks: Seq[ProjectLink], roadPartLinks: Seq[ProjectLink], projectId: Long, userName: String): (Option[(ProjectLink, ProjectLink)], Seq[Option[UserDefinedCalibrationPoint]], Option[(ProjectLink, ProjectLink)]) = {
     val last = toUpdateLinks.maxBy(_.endAddrMValue)
     val roadPartCalibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, last.roadNumber, last.roadPartNumber)
     //  val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(toUpdateLinks.head.roadNumber, toUpdateLinks.head.roadPartNumber, projectId)
@@ -106,12 +106,12 @@ object TwoTrackRoadUtils {
     }
 
     def createCalibrationPoints(startCP: CalibrationPointDAO.CalibrationPointType, endCP: CalibrationPointDAO.CalibrationPointType, otherSideLinkStartCP: CalibrationPointDAO.CalibrationPointType, otherSideLinkEndCP: CalibrationPointDAO.CalibrationPointType, otherSideLink: ProjectLink) = {
-      if (roadPartCalibrationPoints.filter(cp => cp.projectLinkId == last.id && cp.addressMValue == last.endAddrMValue).isEmpty) {
+      val leftCalibrationPoint = if (roadPartCalibrationPoints.filter(cp => cp.projectLinkId == last.id && cp.addressMValue == last.endAddrMValue).isEmpty) {
         println("lastid: " + last.id)
-        val leftCalibrationPoint =
-          UserDefinedCalibrationPoint(NewIdValue, last.id, last.projectId, last.endMValue - last.startMValue, last.endAddrMValue)
-        ProjectCalibrationPointDAO.createCalibrationPoint(leftCalibrationPoint)
-      }
+          val newUdcp = UserDefinedCalibrationPoint(NewIdValue, last.id, last.projectId, last.endMValue - last.startMValue, last.endAddrMValue)
+        ProjectCalibrationPointDAO.createCalibrationPoint(newUdcp)
+        Some(newUdcp)
+      } else None
 
       val rightCalibrationPoint =
         UserDefinedCalibrationPoint(NewIdValue, otherSideLink.id, otherSideLink.projectId, last.endAddrMValue - otherSideLink.startMValue, last.endAddrMValue)
@@ -130,10 +130,11 @@ object TwoTrackRoadUtils {
         Seq(updatedCpToLast, updatedCpToOtherSideLink),
         userName,
         originalAddresses)
+
       if (newUcpId > 0)
-        (Some(rightCalibrationPoint), Some(updatedCpToLast, updatedCpToOtherSideLink))
+        (Seq(Some(rightCalibrationPoint), Some(leftCalibrationPoint.getOrElse())), Some(updatedCpToLast, updatedCpToOtherSideLink))
       else
-        (None, None)
+        (Seq.empty[Option[UserDefinedCalibrationPoint]], None)
     }
 
     def findOtherShorterTrackStatusChangePoint(lastPl: ProjectLink) = {
@@ -156,7 +157,8 @@ object TwoTrackRoadUtils {
       x
     }
 
-    def splitAndSetCalibrationPointsAtEnd(last: ProjectLink, roadPartLinks: Seq[ProjectLink]): (Option[(ProjectLink, ProjectLink)], Option[UserDefinedCalibrationPoint], Option[(ProjectLink, ProjectLink)]) = {
+    def splitAndSetCalibrationPointsAtEnd(last: ProjectLink, roadPartLinks: Seq[ProjectLink]): (Option[(ProjectLink, ProjectLink)], Seq[Option[UserDefinedCalibrationPoint]],
+      Option[(ProjectLink, ProjectLink)]) = {
       if (last.track != Track.Combined && last.discontinuity == Discontinuity.Continuous) {
 
         val hasOtherSideLink = roadPartLinks.filter(pl =>
@@ -200,14 +202,14 @@ object TwoTrackRoadUtils {
           if (otherSideLink.endAddrMValue != last.endAddrMValue) {
             val endPoints = TrackSectionOrder.findChainEndpoints(roadPartLinks.filter(pl => pl.endAddrMValue <= otherSideLink.endAddrMValue && pl.track == otherSideLink.track))
             val (plPart1, plPart2) = splitAt(otherSideLink, last.endAddrMValue, endPoints)
-            val (newCP, cpUpdatedPls) = createCalibrationPoints(startCP, endCP, otherSideLinkStartCP, otherSideLinkEndCP, plPart1)
+            val (newCP: Seq[Option[UserDefinedCalibrationPoint]], cpUpdatedPls) = createCalibrationPoints(startCP, endCP, otherSideLinkStartCP, otherSideLinkEndCP, plPart1)
             (Some(plPart1, plPart2), newCP, cpUpdatedPls)
           } else {
-            val (newCP, cpUpdatedPls) = createCalibrationPoints(startCP, endCP, otherSideLinkStartCP, otherSideLinkEndCP, otherSideLink)
+            val (newCP: Seq[Option[UserDefinedCalibrationPoint]], cpUpdatedPls) = createCalibrationPoints(startCP, endCP, otherSideLinkStartCP, otherSideLinkEndCP, otherSideLink)
             (None, newCP, cpUpdatedPls)
           }
-        } else (None, None, None) //Seq(None)
-      } else (None, None, None) //Seq(None)
+        } else (None, Seq.empty[Option[UserDefinedCalibrationPoint]], None) //Seq(None)
+      } else (None, Seq.empty[Option[UserDefinedCalibrationPoint]], None) //Seq(None)
     }
 
     // TODO: If other track is shorter, find its status changepoint if any and do split + calibration point.

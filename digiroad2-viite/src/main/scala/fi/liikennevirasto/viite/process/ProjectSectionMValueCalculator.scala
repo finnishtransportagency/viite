@@ -63,17 +63,18 @@ object ProjectSectionMValueCalculator {
 //    val newAddressValues = seq.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
     val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
       val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
-      if (!pl.isSplit) {
-        val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + pl.geometryLength * coEff
+//      if (!pl.isSplit) {
+        val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) //* coEff
+  // if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue m + pl.geometryLength * coEff
         pl.status match {
           case LinkStatus.New => addressValue
           case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => addressValue //m + pl.addrMLength
-          case LinkStatus.Terminated => pl.endAddrMValue
+//          case LinkStatus.Terminated => pl.endAddrMValue
           case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
         }
-      } else {
-        pl.endAddrMValue
-      }
+//      } else {
+//        pl.endAddrMValue
+//      }
     }
     seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) =>
       pl.copy(startAddrMValue = Math.round(st), endAddrMValue = Math.round(en))
@@ -83,8 +84,8 @@ object ProjectSectionMValueCalculator {
   def calculateAddressingFactors(seq: Seq[ProjectLink]): TrackAddressingFactors = {
     seq.foldLeft[TrackAddressingFactors](TrackAddressingFactors(0, 0, 0.0)) { case (a, pl) =>
       pl.status match {
-        case UnChanged | Numbering => a.copy(unChangedLength = a.unChangedLength + pl.addrMLength)
-        case Transfer | LinkStatus.NotHandled => a.copy(transferLength = a.transferLength + pl.addrMLength)
+        case UnChanged | Numbering => a.copy(unChangedLength = a.unChangedLength + pl.geometryLength.toLong)
+        case Transfer | LinkStatus.NotHandled => a.copy(transferLength = a.transferLength + pl.geometryLength.toLong)
         case New => a.copy(newLength = a.newLength + pl.geometryLength)
         case Terminated => a
         case _ => throw new InvalidAddressDataException(s"Invalid status found at factor assignment ${pl.status}, linkId: ${pl.linkId}")

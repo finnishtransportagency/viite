@@ -31,20 +31,36 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
     }
   }
 
-  private def setUpProjectWithLinks(testTrack1: TestTrack, testTrack2: TestTrack)= {
-    val roadNumber = 19999L
+  private def setUpProjectWithLinks(
+                                     testTrack1: TestTrack,
+                                     testTrack2: TestTrack
+                                   ) = {
+    val roadNumber     = 19999L
     val roadPartNumber = 1L
-    val discontinuity = Discontinuity.Continuous
-    val ely = 8L
-    val roadwayId = 0L
-    val startDate = None
+    val discontinuity  = Discontinuity.Continuous
+    val ely            = 8L
+    val roadwayId      = 0L
+    val startDate      = None
 
 
     val id = Sequences.nextViiteProjectId
 
-    def projectLink(startAddrM: Long, endAddrM: Long, track: Track, projectId: Long, status: LinkStatus = LinkStatus.NotHandled,
-                    roadNumber: Long = 19999L, roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, linkId: Long = 0L,
-                    geom: Seq[Point],  roadwayId: Long = 0L, linearLocationId: Long = 0L, startDate: Option[DateTime] = None) = {
+    def projectLink(
+                     startAddrM      : Long,
+                     endAddrM        : Long,
+                     track           : Track,
+                     projectId       : Long,
+                     status          : LinkStatus = LinkStatus.NotHandled,
+                     roadNumber      : Long = 19999L,
+                     roadPartNumber  : Long = 1L,
+                     discontinuity   : Discontinuity = Discontinuity.Continuous,
+                     ely             : Long = 8L,
+                     linkId          : Long = 0L,
+                     geom            : Seq[Point],
+                     roadwayId       : Long = 0L,
+                     linearLocationId: Long = 0L,
+                     startDate       : Option[DateTime] = None
+                   ) = {
       ProjectLink(NewIdValue, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startAddrM, endAddrM, startDate, None,
         Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
         geom: Seq[Point], projectId, status, RoadType.PublicRoad,
@@ -52,27 +68,29 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
     }
 
     def withTrack(testTrack: TestTrack): Seq[ProjectLink] = {
-//      addrM.init.zip(addrM.tail).zipWithIndex.map { case (se, index) => {
+      //      addrM.init.zip(addrM.tail).zipWithIndex.map { case (se, index) => {
       testTrack.status.zipWithIndex.map { case (status, index) => {
         val (st, en) = (testTrack.geom(index).minBy(_.x).x.toLong, testTrack.geom(index).maxBy(_.x).x.toLong)
 
         projectLink(st, en, testTrack.track, id, status, roadNumber, roadPartNumber, discontinuity, ely, geom = testTrack.geom(index), linkId = index, roadwayId = roadwayId,
           startDate =
-          startDate)
+            startDate)
       }
       }
     }
 
     val projectStartDate = if (startDate.isEmpty) DateTime.now() else startDate.get
-    val project = Project(id, ProjectState.Incomplete, "f", "s", projectStartDate, "", projectStartDate, projectStartDate,
+    val project          = Project(id, ProjectState.Incomplete, "f", "s", projectStartDate, "", projectStartDate, projectStartDate,
       "", Seq(), Seq(), None, None)
     projectDAO.create(project)
     val links =
-        withTrack(testTrack1) ++ withTrack(testTrack2)
+      withTrack(testTrack1) ++ withTrack(testTrack2)
 
     projectReservedPartDAO.reserveRoadPart(id, roadNumber, roadPartNumber, "u")
     val ids: Seq[Long] = projectLinkDAO.create(links)
-    links.zipWithIndex.map(pl_with_index => pl_with_index._1.copy(id = ids(pl_with_index._2)))
+    links.zipWithIndex.map(pl_with_index => {
+      pl_with_index._1.copy(id = ids(pl_with_index._2))
+    })
   }
 
   case class TestTrack(status: Seq[LinkStatus], track: Track, geom: Seq[Seq[Point]])
@@ -344,7 +362,8 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test splitPlsAtStatusChange() When there are two status changes on track1 and zero on track 2 after doubleThen should split track 2 and create 2 udcps.") {
+  test("Test splitPlsAtStatusChange() When there are two status changes on track1 and zero on track 2 after both sides split processsed Then should split both tracks and create " +
+       "3 udcps.") {
     runWithRollback {
       val geomTrack1_1 = Seq(Point(  0.0, 0.0),  Point(100.0,  0.0))
       val geomTrack1_2 = Seq(Point(100.0, 0.0),  Point(200.0,  0.0))
@@ -359,16 +378,16 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       val (track1AfterFirstSplitcCheck, track2AfterFirstSplitcCheck, udcptAfterFirstSplitcCheck) = TwoTrackRoadUtils.splitPlsAtStatusChange(rightProjectLinks, leftProjectLinks)
       val (track2, track1, udcp) = TwoTrackRoadUtils.splitPlsAtStatusChange(track2AfterFirstSplitcCheck, track1AfterFirstSplitcCheck)
 
-      track1 should have size 4
-      track2 should have size 4
-      udcp should   have size 1
+      track1                     should have size 4
+      track2                     should have size 4
+      udcp                       should have size 1
       udcptAfterFirstSplitcCheck should have size 2
 
       track1.foreach(_.track shouldBe Track.RightSide)
       track2.foreach(_.track shouldBe Track.LeftSide)
 
       (udcptAfterFirstSplitcCheck ++ udcp).foreach(_.get shouldBe a [UserDefinedCalibrationPoint])
-      (udcptAfterFirstSplitcCheck ++ udcp).map(_.get.addressMValue).sorted shouldBe Seq(100, 150, 200)
+//      (udcptAfterFirstSplitcCheck ++ udcp).map(_.get.addressMValue).sorted shouldBe Seq(100, 150, 200)
 
       track1(0).startAddrMValue shouldBe 0
       track1(0).endAddrMValue   shouldBe 100
@@ -410,53 +429,62 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
     }
   }
 
-//  test("Test splitPlsAtStatusChange() When two splits are required for track1 and zero on track 2 Then should .") {
-//    runWithRollback {
-//      val geomTrack1_1 = Seq(Point(  0.0, 0.0), Point(100.0,  0.0))
-//      val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0,  0.0))
-//      val geomTrack1_3 = Seq(Point(200.0, 0.0), Point(300.0,  0.0))
-//      val geomTrack2   = Seq(Point(0.0,  10.0), Point(300.0, 10.0))
-//
-//      val testTrack1 = TestTrack(Seq(LinkStatus.UnChanged, LinkStatus.New, LinkStatus.Transfer), Track.apply(1), Seq(geomTrack1_1, geomTrack1_2, geomTrack1_3))
-//      val testTrack2 = TestTrack(Seq(LinkStatus.New), Track.apply(2), Seq(geomTrack2))
-//
-//      val (rightProjectLinks, leftProjectLinks) = setUpProjectWithLinks(testTrack1, testTrack2).partition(_.track == Track.RightSide)
-//      val (track1, track2, udcp) = TwoTrackRoadUtils.splitPlsAtStatusChange(rightProjectLinks, leftProjectLinks)
-//
-//      track1 should have size 3
-//      track2 should have size 3
-//      udcp should   have size 2
-//
-//      track1(0).startAddrMValue shouldBe 0
-//      track1(0).endAddrMValue   shouldBe 100
-//      track1(1).startAddrMValue shouldBe 100
-//      track1(1).endAddrMValue   shouldBe 200
-//      track1(2).startAddrMValue shouldBe 200
-//      track1(2).endAddrMValue   shouldBe 300
-//
-//      track1(0).geometry shouldBe Seq(Point(0.0, 0.0), Point(100.0, 0.0))
-//      track1(1).geometry shouldBe Seq(Point(100.0, 0.0), Point(200.0, 0.0))
-//      track1(2).geometry shouldBe Seq(Point(200.0, 0.0), Point(300.0, 0.0))
-//
-//      track1(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-//      track1(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-//      track1(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
-//
-//      track2(0).startAddrMValue shouldBe 0
-//      track2(0).endAddrMValue   shouldBe 100
-//      track2(1).startAddrMValue shouldBe 100
-//      track2(1).endAddrMValue   shouldBe 200
-//      track2(2).startAddrMValue shouldBe 200
-//      track2(2).endAddrMValue   shouldBe 300
-//
-//      track2(0).geometry shouldBe Seq(Point(0.0, 10.0), Point(100.0, 10.0))
-//      track2(1).geometry shouldBe Seq(Point(100.0, 10.0), Point(200.0, 10.0))
-//      track2(2).geometry shouldBe Seq(Point(200.0, 10.0), Point(300.0, 10.0))
-//
-//      track2(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-//      track2(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
-//      track2(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
-//    }
-//  }
+  test("Test splitPlsAtStatusChange() When there are two status changes on track1 and one on track 2 and two links having different sidecode Then should split and create udcp " +
+       "correctly.") {
+    runWithRollback {
+      val geomTrack1_1 = Seq(Point(  0.0, 0.0), Point(100.0,  0.0))
+      val geomTrack1_2 = Seq(Point(200.0, 0.0), Point(100.0,  0.0))
+      val geomTrack1_3 = Seq(Point(200.0, 0.0), Point(300.0,  0.0))
+      val geomTrack2_1 = Seq(Point(150.0, 10.0), Point(  0.0, 10.0))
+      val geomTrack2_2 = Seq(Point(150.0, 10.0), Point(300.0, 10.0))
+
+      val testTrack1 = TestTrack(Seq(LinkStatus.UnChanged, LinkStatus.New, LinkStatus.Transfer), Track.apply(1), Seq(geomTrack1_1, geomTrack1_2, geomTrack1_3))
+      val testTrack2 = TestTrack(Seq(LinkStatus.UnChanged, LinkStatus.Transfer), Track.apply(2), Seq(geomTrack2_1, geomTrack2_2))
+
+      var (rightProjectLinks, leftProjectLinks) = setUpProjectWithLinks(testTrack1, testTrack2).partition(_.track == Track.RightSide)
+      // Update side code
+      rightProjectLinks = rightProjectLinks.head.copy(sideCode = SideCode.AgainstDigitizing) +: rightProjectLinks.tail
+
+      val (track1, track2, udcp) = TwoTrackRoadUtils.splitPlsAtStatusChange(rightProjectLinks, leftProjectLinks)
+
+      track1 should have size 3
+      track2 should have size 4
+      udcp should   have size 2
+
+      track1(0).startAddrMValue shouldBe 0
+      track1(0).endAddrMValue   shouldBe 100
+      track1(1).startAddrMValue shouldBe 100
+      track1(1).endAddrMValue   shouldBe 200
+      track1(2).startAddrMValue shouldBe 200
+      track1(2).endAddrMValue   shouldBe 300
+
+      track1(0).geometry shouldBe Seq(Point(0.0, 0.0), Point(100.0, 0.0))
+      track1(1).geometry shouldBe Seq(Point(200.0, 0.0), Point(100.0, 0.0))
+      track1(2).geometry shouldBe Seq(Point(200.0, 0.0), Point(300.0, 0.0))
+
+      track1(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
+      track1(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
+      track1(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+
+      track2(0).startAddrMValue shouldBe 0
+      track2(0).endAddrMValue   shouldBe 100
+      track2(1).startAddrMValue shouldBe 100
+      track2(1).endAddrMValue   shouldBe 150
+      track2(2).startAddrMValue shouldBe 150
+      track2(2).endAddrMValue   shouldBe 200
+      track2(3).startAddrMValue shouldBe 200
+      track2(3).endAddrMValue   shouldBe 300
+
+      track2(0).geometry shouldBe Seq(Point(150.0, 10.0), Point( 50.0, 10.0))
+      track2(1).geometry shouldBe Seq(Point( 50.0, 10.0), Point(  0.0, 10.0))
+      track2(2).geometry shouldBe Seq(Point(150.0, 10.0), Point(200.0, 10.0))
+      track2(3).geometry shouldBe Seq(Point(200.0, 10.0), Point(300.0, 10.0))
+
+      track2(0).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
+      track2(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track2(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
+      track2(3).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+    }
+  }
 
 }
