@@ -1674,11 +1674,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
 
     /* Terminate unhandled links */
-    val notHandled = projectLinks.filter(_.status == LinkStatus.NotHandled)
-    if (notHandled.nonEmpty) {
-      projectLinkDAO.updateProjectLinksStatus(notHandled.map(_.id).toSet, LinkStatus.Terminated, userName)
-      projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-    }
+//    val notHandled = projectLinks.filter(_.status == LinkStatus.NotHandled)
+//    if (notHandled.nonEmpty) {
+//      projectLinkDAO.updateProjectLinksStatus(notHandled.map(_.id).toSet, LinkStatus.Terminated, userName)
+//      projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+//    }
 
     logger.info(s"Recalculating project $projectId, parts ${roadParts.map(p => s"${p._1}/${p._2}").mkString(", ")}")
 
