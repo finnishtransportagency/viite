@@ -5,6 +5,7 @@ import java.sql.{PreparedStatement, Timestamp}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, ParallelLink}
+import fi.liikennevirasto.viite.process.ProjectDeltaCalculator.projectLinkDAO
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadwaySection}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -69,7 +70,7 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
                      sourceRoadType: Option[Int], sourceDiscontinuity: Option[Int], sourceEly: Option[Long],
                      rotatingTRId: Option[Long], reversed: Boolean, orderInTable: Long)
 
-case class ChangeTableRows(adjustedSections: Map[(RoadwaySection, RoadwaySection), Option[String]], originalSections: Map[RoadwaySection, RoadwaySection])
+case class ChangeTableRows(adjustedSections: Iterable[((RoadwaySection, RoadwaySection), Option[String])], originalSections: Iterable[(RoadwaySection, RoadwaySection)])
 
 case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, validFrom: DateTime, change_type: Long, reversed: Long,
                               old_road_number: Long, old_road_part_number: Long, old_TRACK: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, old_road_type: Long, old_ely: Long,
@@ -177,62 +178,7 @@ class RoadwayChangesDAO {
   }
 
   private def queryResumeList(query: String) = {
-    mapper(mergeChangeRows(Q.queryNA[ChangeRow](query).list))
-  }
-
-  /**
-    * Merge all the change rows by source and target road number, road part number, road type, ely, change type and reversed.
-    * Then if the end address of the previous row is equal to the start of the next one and the dicontinuity is equal the merge is performed.
-    *
-    * @param resultList
-    * @return
-    */
-  private def mergeChangeRows(resultList: List[ChangeRow]): List[ChangeRow] = {
-    def combine(resultList: Seq[ChangeRow], nextRow: ChangeRow): Seq[ChangeRow] = {
-      val previousRow = resultList.last
-      if (previousRow.sourceEndAddressM == nextRow.sourceStartAddressM && previousRow.targetEndAddressM == nextRow.targetStartAddressM && checkContinuityMergingRows(previousRow, nextRow)){
-        resultList.dropRight(1) ++ Seq(previousRow.copy(sourceEndAddressM = nextRow.sourceEndAddressM, targetEndAddressM = nextRow.targetEndAddressM, sourceDiscontinuity = nextRow.sourceDiscontinuity, targetDiscontinuity = nextRow.targetDiscontinuity))
-      }
-      else
-        resultList ++ Seq(nextRow)
-    }
-
-
-    def combineReversed(resultList: Seq[ChangeRow], nextRow: ChangeRow): Seq[ChangeRow] = {
-      val previousRow = resultList.last
-      if (nextRow.sourceEndAddressM == previousRow.sourceStartAddressM && nextRow.targetStartAddressM == previousRow.targetEndAddressM && checkContinuityMergingRows(previousRow, nextRow)){
-        resultList.dropRight(1) ++ Seq(previousRow.copy(sourceStartAddressM = nextRow.sourceStartAddressM, targetEndAddressM = nextRow.targetEndAddressM, sourceDiscontinuity = nextRow.sourceDiscontinuity, targetDiscontinuity = nextRow.targetDiscontinuity))
-      }
-      else
-        resultList ++ Seq(nextRow)
-    }
-
-    def checkContinuityMergingRows(previousRow: ChangeRow, nextRow: ChangeRow): Boolean = {
-      // Checking sourceDiscontinuity
-      (((previousRow.sourceDiscontinuity == nextRow.sourceDiscontinuity || previousRow.sourceDiscontinuity.isEmpty) && previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value))
-        || (previousRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.sourceDiscontinuity.contains(Discontinuity.Continuous.value))) &&
-        !previousRow.sourceDiscontinuity.contains(Discontinuity.ParallelLink.value)  &&
-      // Checking targetDiscontinuity
-      (((previousRow.targetDiscontinuity == nextRow.targetDiscontinuity || previousRow.targetDiscontinuity.isEmpty) && previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value))
-        || (previousRow.targetDiscontinuity.contains(Discontinuity.Continuous.value) && !nextRow.targetDiscontinuity.contains(Discontinuity.Continuous.value))) &&
-        !previousRow.targetDiscontinuity.contains(Discontinuity.ParallelLink.value)
-    }
-
-    resultList.groupBy(r =>
-      (
-        r.changeType, r.reversed,
-        r.sourceRoadNumber, r.sourceTrackCode, r.sourceStartRoadPartNumber, r.sourceEndRoadPartNumber, r.sourceRoadType, r.sourceEly,
-        r.targetRoadNumber, r.targetTrackCode, r.targetStartRoadPartNumber, r.targetEndRoadPartNumber, r.targetRoadType, r.targetEly
-      )
-    ).flatMap { case (_, changeRows) =>
-      changeRows.sortBy(_.targetStartAddressM).foldLeft(Seq[ChangeRow]()) {
-        case (result, nextChangeRow) =>
-          if (result.isEmpty) Seq(nextChangeRow)
-          else if(nextChangeRow.reversed) combineReversed(result, nextChangeRow)
-          else combine(result, nextChangeRow)
-      }
-    }.toList.sortBy(r => (r.targetRoadNumber, r.targetStartRoadPartNumber, r.targetStartAddressM, r.targetTrackCode,
-      r.sourceRoadNumber, r.sourceStartRoadPartNumber, r.sourceStartAddressM, r.sourceTrackCode))
+    mapper(Q.queryNA[ChangeRow](query).list)
   }
 
   private def mapper(resultList: List[ChangeRow]): List[ProjectRoadwayChange] = {
@@ -392,9 +338,9 @@ class RoadwayChangesDAO {
           val news = ProjectDeltaCalculator.partition(delta.newRoads)
           news.foreach(roadwaySection => addToBatch(roadwaySection, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
 
-          val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping, terminated.originalSections.values.toSeq ++ news)
+          val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping)
 
-          val transferred = ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated.originalSections.values.toSeq ++ news)
+          val transferred = ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated.originalSections.map(_._2).toSeq ++ news) //values.toSeq ++ news)
 
           val numbering = ProjectDeltaCalculator.partition(delta.numbering.mapping)
 
@@ -402,7 +348,8 @@ class RoadwayChangesDAO {
           val adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(transferred.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections ++ terminated.originalSections)
           val adjustedNumbering = ProjectDeltaCalculator.adjustStartSourceAddressValues(numbering.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
 
-          adjustedUnchanged._1.foreach { case (roadwaySection1, roadwaySection2) =>
+          adjustedUnchanged._1.foreach { rs1_2 =>
+            val (roadwaySection1, roadwaySection2) = rs1_2
             addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
           }
           adjustedTransferred._1.foreach { case (roadwaySection1, roadwaySection2) =>
