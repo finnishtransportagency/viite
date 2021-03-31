@@ -442,16 +442,16 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val junctionStartDate = DateTime.parse("2019-01-01")
       val roadwayStartDate = DateTime.parse("2000-01-01")
 
-      val intersectingRoadway = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      val intersectingRoadway = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
         0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 1"), 1, TerminationCode.NoTermination)
-      val reservedRoadway1 = Roadway(NewIdValue, NewIdValue, roadNumber2 , roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      val reservedRoadway1 = Roadway(NewIdValue, NewIdValue, roadNumber2 , roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
         0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 2"), 1, TerminationCode.NoTermination)
-      val reservedRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber2 + 1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      val reservedRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber2 + 1, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
         0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 3"), 1, TerminationCode.NoTermination)
 
-      val outsideRoadway1 = Roadway(NewIdValue, NewIdValue, roadNumber2, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      val outsideRoadway1 = Roadway(NewIdValue, NewIdValue, roadNumber2, roadPartNumber2, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
         0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road, no junctions"), 1, TerminationCode.NoTermination)
-      val outsideRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      val outsideRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber2, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
         0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road, no junctions"), 1, TerminationCode.NoTermination)
 
       val connectedRoadways: Seq[Roadway] = Seq(intersectingRoadway, reservedRoadway1, reservedRoadway2)
@@ -498,7 +498,7 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
       val projectLinks = Seq(dummyProjectLink(projectLinkId, id, linkId1, roadways.head.id, roadways.head.roadwayNumber, roadNumber1,
         roadPartNumber1,  0, 100, 0.0, 100.0, None,
-        (NoCP, NoCP), Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false)
+        (NoCP, NoCP), Seq(),LinkStatus.Transfer, AdministrativeClass.State, reversed = false)
       )
       projectLinkDAO.create(projectLinks)
 
@@ -513,15 +513,15 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
       val junctionStartDate = DateTime.parse("2019-01-01")
       val roadwayStartDate = DateTime.parse("2000-01-01")
 
-      val newIntersectingRoadway = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      val newIntersectingRoadway = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
         0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 1"), 1, TerminationCode.NoTermination)
-      val newIntersectingRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      val newIntersectingRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber1, roadPartNumber2, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
         0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 1"), 1, TerminationCode.NoTermination)
-      val newReservedRoadway = Roadway(NewIdValue, NewIdValue, roadNumber2 , roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      val newReservedRoadway = Roadway(NewIdValue, NewIdValue, roadNumber2 , roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
         0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 2"), 1, TerminationCode.NoTermination)
-      val newNotReservedRoadway = Roadway(NewIdValue, NewIdValue, roadNumber3, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      val newNotReservedRoadway = Roadway(NewIdValue, NewIdValue, roadNumber3, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
         0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 3"), 1, TerminationCode.NoTermination)
-      val newReservedRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber4, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      val newReservedRoadway2 = Roadway(NewIdValue, NewIdValue, roadNumber4, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
         0, 100, reversed = false, roadwayStartDate, None, "test", Some("Test road 4"), 1, TerminationCode.NoTermination)
 
 
@@ -606,10 +606,10 @@ class ProjectReservedPartDAOSpec extends FunSuite with Matchers {
 
       val projectLinks1 = Seq(dummyProjectLink(projectLinkId1, id1, reservedRoadwayLocation.linkId, reservedRoadway.id, reservedRoadway.roadwayNumber, reservedRoadway.roadNumber,
         reservedRoadway.roadPartNumber,  0, 100, 0.0, 100.0, None,
-        (NoCP, NoCP), Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false))
+        (NoCP, NoCP), Seq(),LinkStatus.Transfer, AdministrativeClass.State, reversed = false))
       val projectLinks2 = Seq(dummyProjectLink(projectLinkId2, id2, reservedRoadway2Location.linkId, reservedRoadway2.id, reservedRoadway2.roadwayNumber, reservedRoadway2.roadNumber,
         reservedRoadway2.roadPartNumber,  0, 100, 0.0, 100.0, None,
-        (NoCP, NoCP), Seq(),LinkStatus.Transfer, RoadType.PublicRoad, reversed = false))
+        (NoCP, NoCP), Seq(),LinkStatus.Transfer, AdministrativeClass.State, reversed = false))
 
       projectLinkDAO.create(projectLinks1 ++ projectLinks2)
 

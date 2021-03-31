@@ -760,13 +760,13 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val roadNumber1 = 990
       val roadPartNumber1 = 1
 
-      val testRoadway1 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      val testRoadway1 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber1, roadPartNumber1, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
         0, 50, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
 
-      val testRoadway2 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+      val testRoadway2 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber1, roadPartNumber1, AdministrativeClass.State, Track.RightSide, Discontinuity.EndOfRoad,
         50, 105, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
 
-      val testRoadway3 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber1, roadPartNumber1, RoadType.PublicRoad, Track.LeftSide, Discontinuity.EndOfRoad,
+      val testRoadway3 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber1, roadPartNumber1, AdministrativeClass.State, Track.LeftSide, Discontinuity.EndOfRoad,
         50, 107, reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 3"), 1, TerminationCode.NoTermination)
 
       val linearLocation1 = LinearLocation(Sequences.nextLinearLocationId, 1, 12345, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000L,
@@ -785,7 +785,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
       linearLocationDAO.create(List(linearLocation1, linearLocation2, linearLocation3))
 
-      val projectLink1 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(testRoadway1.id, linearLocation1.id, roadNumber1, roadPartNumber1, RoadType.Unknown, Track.Combined, Continuous, 0L, 50L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 50.0, SideCode.TowardsDigitizing, 0, (None, None),
+      val projectLink1 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(testRoadway1.id, linearLocation1.id, roadNumber1, roadPartNumber1, AdministrativeClass.Unknown, Track.Combined, Continuous, 0L, 50L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, 50.0, SideCode.TowardsDigitizing, 0, (None, None),
         Seq(Point(0.0, 5.0), Point(50.0, 5.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway1.roadwayNumber)).copy(roadAddressStartAddrM = Some(0L), roadAddressEndAddrM = Some(50L), roadAddressTrack = Some(Track.Combined))
 
       val projectLink2 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(testRoadway2.id, linearLocation2.id, roadNumber1, roadPartNumber1, AdministrativeClass.Unknown, Track.RightSide, EndOfRoad, 50L, 105L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L, 0.0, 55.0, SideCode.TowardsDigitizing, 0, (None, None),
@@ -806,7 +806,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val roadPartNumber = 1
 
       // Track 0
-      val testRoadway1 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous,
+      val testRoadway1 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
         0L, 50L, reversed = false, DateTime.parse("2000-01-01"), None, "tester", Some("TEST ROADWAY 1, TRACK 0"), 1, TerminationCode.NoTermination)
 
       val linearLocation1 = LinearLocation(Sequences.nextLinearLocationId, 1, 12345, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000L,
@@ -814,14 +814,14 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Seq(Point(0.0, 5.0), Point(50.0, 5.0)), LinkGeomSource.NormalLinkInterface, testRoadway1.roadwayNumber)
 
       val projectLink1 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(
-        testRoadway1.id, linearLocation1.id, roadNumber, roadPartNumber, testRoadway1.roadType, testRoadway1.track, Discontinuity.Discontinuous,
+        testRoadway1.id, linearLocation1.id, roadNumber, roadPartNumber, testRoadway1.administrativeClass, testRoadway1.track, Discontinuity.Discontinuous,
         testRoadway1.startAddrMValue, testRoadway1.endAddrMValue, Some(testRoadway1.startDate), None, Some(testRoadway1.createdBy),
         linearLocation1.linkId, linearLocation1.startMValue, linearLocation1.endMValue, linearLocation1.sideCode, 0, (None, None),
         linearLocation1.geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway1.roadwayNumber))
         .copy(roadAddressStartAddrM = Some(testRoadway1.startAddrMValue), roadAddressEndAddrM = Some(testRoadway1.endAddrMValue), roadAddressTrack = Some(testRoadway1.track))
 
       // Track 1
-      val testRoadway2 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.RightSide, Discontinuity.Continuous,
+      val testRoadway2 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous,
         50L, 150L, reversed = false, DateTime.parse("2000-01-01"), None, "tester", Some("TEST ROADWAY 2, TRACK 1"), 1, TerminationCode.NoTermination)
 
       val linearLocation2 = LinearLocation(Sequences.nextLinearLocationId, 1, 12347, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000L,
@@ -829,13 +829,13 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Seq(Point(50.0, 5.0), Point(150.0, 0.0)), LinkGeomSource.NormalLinkInterface, testRoadway2.roadwayNumber)
 
       val projectLink2 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(
-        testRoadway2.id, linearLocation2.id, roadNumber, roadPartNumber, testRoadway2.roadType, testRoadway2.track, testRoadway2.discontinuity,
+        testRoadway2.id, linearLocation2.id, roadNumber, roadPartNumber, testRoadway2.administrativeClass, testRoadway2.track, testRoadway2.discontinuity,
         testRoadway2.startAddrMValue, testRoadway2.endAddrMValue, Some(testRoadway2.startDate), None, Some(testRoadway2.createdBy),
         linearLocation2.linkId, linearLocation2.startMValue, linearLocation2.endMValue, linearLocation2.sideCode, 0, (None, None),
         linearLocation2.geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway2.roadwayNumber))
         .copy(roadAddressStartAddrM = Some(testRoadway2.startAddrMValue), roadAddressEndAddrM = Some(testRoadway2.endAddrMValue), roadAddressTrack = Some(testRoadway2.track))
 
-      val testRoadway3 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.RightSide, Discontinuity.EndOfRoad,
+      val testRoadway3 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.RightSide, Discontinuity.EndOfRoad,
         150L, 200L, reversed = false, DateTime.parse("2000-01-01"), None, "tester", Some("TEST ROADWAY 3, TRACK 1"), 1, TerminationCode.NoTermination)
 
       val linearLocation3_1 = LinearLocation(Sequences.nextLinearLocationId, 1, 12349, 0.0, 10.0, SideCode.TowardsDigitizing, 10000000000L,
@@ -843,7 +843,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Seq(Point(150.0, 0.0), Point(160.0, 0.0)), LinkGeomSource.NormalLinkInterface, testRoadway3.roadwayNumber)
 
       val projectLink3_1 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(
-        testRoadway3.id, linearLocation3_1.id, roadNumber, roadPartNumber, testRoadway3.roadType, testRoadway3.track, Discontinuity.Continuous,
+        testRoadway3.id, linearLocation3_1.id, roadNumber, roadPartNumber, testRoadway3.administrativeClass, testRoadway3.track, Discontinuity.Continuous,
         testRoadway3.startAddrMValue, 160, Some(testRoadway3.startDate), None, Some(testRoadway3.createdBy),
         linearLocation3_1.linkId, linearLocation3_1.startMValue, linearLocation3_1.endMValue, linearLocation3_1.sideCode, 0, (None, None),
         linearLocation3_1.geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway3.roadwayNumber))
@@ -854,14 +854,14 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Seq(Point(160.0, 0.0), Point(200.0, 0.0)), LinkGeomSource.NormalLinkInterface, testRoadway3.roadwayNumber)
 
       val projectLink3_2 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(
-        testRoadway3.id, linearLocation3_2.id, roadNumber, roadPartNumber, testRoadway3.roadType, testRoadway3.track, testRoadway3.discontinuity,
+        testRoadway3.id, linearLocation3_2.id, roadNumber, roadPartNumber, testRoadway3.administrativeClass, testRoadway3.track, testRoadway3.discontinuity,
         160, testRoadway3.endAddrMValue, Some(testRoadway3.startDate), None, Some(testRoadway3.createdBy),
         linearLocation3_2.linkId, linearLocation3_2.startMValue, linearLocation3_2.endMValue, linearLocation3_2.sideCode, 0, (None, None),
         linearLocation3_2.geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway3.roadwayNumber))
         .copy(roadAddressStartAddrM = Some(160), roadAddressEndAddrM = Some(testRoadway3.endAddrMValue), roadAddressTrack = Some(testRoadway3.track))
 
       // Track 2
-      val testRoadway4 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.LeftSide, Discontinuity.Continuous,
+      val testRoadway4 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.LeftSide, Discontinuity.Continuous,
         50L, 150L, reversed = false, DateTime.parse("2000-01-01"), None, "tester", Some("TEST ROADWAY 4, TRACK 2"), 1, TerminationCode.NoTermination)
 
       val linearLocation4 = LinearLocation(Sequences.nextLinearLocationId, 1, 12346, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000L,
@@ -869,13 +869,13 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Seq(Point(50.0, 5.0), Point(150.0, 10.0)), LinkGeomSource.NormalLinkInterface, testRoadway4.roadwayNumber)
 
       val projectLink4 = toProjectLink(rap, LinkStatus.Terminated)(RoadAddress(
-        testRoadway4.id, linearLocation4.id, roadNumber, roadPartNumber, testRoadway4.roadType, testRoadway4.track, testRoadway4.discontinuity,
+        testRoadway4.id, linearLocation4.id, roadNumber, roadPartNumber, testRoadway4.administrativeClass, testRoadway4.track, testRoadway4.discontinuity,
         testRoadway4.startAddrMValue, testRoadway4.endAddrMValue, Some(testRoadway4.startDate), None, Some(testRoadway4.createdBy),
         linearLocation4.linkId, linearLocation4.startMValue, linearLocation4.endMValue, linearLocation4.sideCode, 0, (None, None),
         linearLocation4.geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway4.roadwayNumber))
         .copy(roadAddressStartAddrM = Some(testRoadway4.startAddrMValue), roadAddressEndAddrM = Some(testRoadway4.endAddrMValue), roadAddressTrack = Some(testRoadway4.track))
 
-      val testRoadway5 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.LeftSide, Discontinuity.EndOfRoad,
+      val testRoadway5 = Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, roadNumber, roadPartNumber, AdministrativeClass.State, Track.LeftSide, Discontinuity.EndOfRoad,
         150L, 200L, reversed = false, DateTime.parse("2000-01-01"), None, "tester", Some("TEST ROADWAY 5, TRACK 2"), 1, TerminationCode.NoTermination)
 
       val linearLocation5 = LinearLocation(Sequences.nextLinearLocationId, 1, 12348, 0.0, 50.0, SideCode.TowardsDigitizing, 10000000000L,
@@ -883,7 +883,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Seq(Point(150.0, 10.0), Point(200.0, 10.0)), LinkGeomSource.NormalLinkInterface, testRoadway5.roadwayNumber)
 
       val projectLink5 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(
-        testRoadway5.id, linearLocation5.id, roadNumber, roadPartNumber, testRoadway5.roadType, testRoadway5.track, testRoadway5.discontinuity,
+        testRoadway5.id, linearLocation5.id, roadNumber, roadPartNumber, testRoadway5.administrativeClass, testRoadway5.track, testRoadway5.discontinuity,
         testRoadway5.startAddrMValue, testRoadway5.endAddrMValue, Some(testRoadway5.startDate), None, Some(testRoadway5.createdBy),
         linearLocation5.linkId, linearLocation5.startMValue, linearLocation5.endMValue, linearLocation5.sideCode, 0, (None, None),
         linearLocation5.geometry, LinkGeomSource.NormalLinkInterface, 8, NoTermination, testRoadway5.roadwayNumber))
