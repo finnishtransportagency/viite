@@ -679,15 +679,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val id = Sequences.nextViiteProjectId
       val ra1 = Seq(
-        RoadAddress(12345, linearLocationId, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 5L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 5, TowardsDigitizing, DateTime.now().getMillis, (None, None),
+        RoadAddress(12345, linearLocationId, 19999L, 1L, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0L, 5L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1000, 0, 5, TowardsDigitizing, DateTime.now().getMillis, (None, None),
           Seq(Point(1000.0, 0.0), Point(1000.0, 5.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber1, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12346, linearLocationId + 1, 19999L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 5L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1001, 0, 5, TowardsDigitizing, DateTime.now().getMillis, (None, None),
+        RoadAddress(12346, linearLocationId + 1, 19999L, 1L, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 5L, 10L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1001, 0, 5, TowardsDigitizing, DateTime.now().getMillis, (None, None),
           Seq(Point(1000.0, 5.0), Point(1000.0, 10.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber2, Some(DateTime.parse("1901-01-01")), None, None)
       )
       val ra2 = Seq(
-        RoadAddress(12347, linearLocationId + 2, 12345L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 10L, 15L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1002, 0, 5, TowardsDigitizing, DateTime.now().getMillis, (None, None),
+        RoadAddress(12347, linearLocationId + 2, 12345L, 1L, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 10L, 15L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1002, 0, 5, TowardsDigitizing, DateTime.now().getMillis, (None, None),
           Seq(Point(1000.0, 10.0), Point(1000.0, 25.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber3, Some(DateTime.parse("1901-01-01")), None, None),
-        RoadAddress(12348, linearLocationId + 3, 12345L, 1L, RoadType.PublicRoad, Track.Combined, Discontinuity.EndOfRoad, 15L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1003, 0, 5, TowardsDigitizing, DateTime.now().getMillis, (None, None),
+        RoadAddress(12348, linearLocationId + 3, 12345L, 1L, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, 15L, 20L, Some(DateTime.parse("1901-01-01")), None, Some("User"), 1003, 0, 5, TowardsDigitizing, DateTime.now().getMillis, (None, None),
           Seq(Point(1000.0, 25.0), Point(1000.0, 30.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, roadwayNumber4, Some(DateTime.parse("1901-01-01")), None, None)
       )
 
@@ -706,11 +706,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.saveProject(rap2)
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(projectLinks1.map(toRoadLink))
-      val response1 = projectService.createProjectLinks(Seq(1000L, 1001L), rap1.id, 56, 207, Track.Combined, Discontinuity.EndOfRoad, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      val response1 = projectService.createProjectLinks(Seq(1000L, 1001L), rap1.id, 56, 207, Track.Combined, Discontinuity.EndOfRoad, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       response1("success").asInstanceOf[Boolean] should be(true)
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(projectLinks2.map(toRoadLink))
-      val response2 = projectService.createProjectLinks(Seq(1002L,1003L), rap2.id, 55, 206, Track.Combined, Discontinuity.EndOfRoad, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+      val response2 = projectService.createProjectLinks(Seq(1002L,1003L), rap2.id, 55, 206, Track.Combined, Discontinuity.EndOfRoad, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       response2("success").asInstanceOf[Boolean] should be(false)
       response2("errorMessage").asInstanceOf[String] should be(ErrorWithNewAction)
 
