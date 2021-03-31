@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.model
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus}
@@ -11,11 +11,11 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def id: Long
   def linkId: Long
   def length: Double
-  def administrativeClass: AdministrativeClass
+  def administrativeClassMML: AdministrativeClass
   def linkType: LinkType
   def constructionType: ConstructionType
   def roadLinkSource: LinkGeomSource
-  def roadType: RoadType
+  def administrativeClass: AdministrativeClass
 
   def roadName: Option[String]
   def municipalityCode: BigInt
@@ -45,15 +45,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def roadwayNumber: Long
 }
 
-case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
-                              length: Double, administrativeClass: AdministrativeClass,
-                              linkType: LinkType, constructionType: ConstructionType,
-                              roadLinkSource: LinkGeomSource, roadType: RoadType, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String],
-                              attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
-                              startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
-                              startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                              anomaly: Anomaly = Anomaly.None, status: LinkStatus, roadwayId: Long, linearLocationId: Long, reversed: Boolean = false,
-                              connectedLinkId: Option[Long] = None, originalGeometry: Option[Seq[Point]] = None, roadwayNumber: Long = 0) extends ProjectAddressLinkLike {
+case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point], length: Double, administrativeClassMML: AdministrativeClass, linkType: LinkType, constructionType: ConstructionType, roadLinkSource: LinkGeomSource, administrativeClass: AdministrativeClass, VVHRoadName: Option[String], roadName: Option[String], municipalityCode: BigInt, municipalityName: String, modifiedAt: Option[String], modifiedBy: Option[String], attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long, startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint], anomaly: Anomaly = Anomaly.None, status: LinkStatus, roadwayId: Long, linearLocationId: Long, reversed: Boolean = false, connectedLinkId: Option[Long] = None, originalGeometry: Option[Seq[Point]] = None, roadwayNumber: Long = 0) extends ProjectAddressLinkLike {
   override def partitioningName: String = {
     if (roadNumber > 0)
       s"$roadNumber/$roadPartNumber/$trackCode"
