@@ -67,38 +67,29 @@
               'Ajorata:&nbsp;' + roadData.trackCode + '<br>' +
               'AET:&nbsp;' + roadData.startAddressM + '<br>' +
               'LET:&nbsp;' + roadData.endAddressM + '<br>' +
-              'Tietyyppi:&nbsp;' + displayRoadType(roadData.roadTypeId) + '<br>';
+              'Hall. luokka:&nbsp;' + displayAdministrativeClass(roadData.administrativeClassId) + '<br>';
           }
         }
       }
       overlay.setPosition(coordinate);
     };
 
-    var displayRoadType = function (roadTypeCode) {
-      var roadType;
-      switch (roadTypeCode) {
-        case LinkValues.RoadTypeShort.PublicRoad.value:
-          roadType = LinkValues.RoadTypeShort.PublicRoad.description;
+    var displayAdministrativeClass = function (administrativeClassCode) {
+      var administrativeClass;
+      switch (administrativeClassCode) {
+        case LinkValues.AdministrativeClassShort.PublicRoad.value:
+          administrativeClass = LinkValues.AdministrativeClassShort.PublicRoad.description;
           break;
-        case LinkValues.RoadTypeShort.FerryRoad.value:
-          roadType = LinkValues.RoadTypeShort.FerryRoad.description;
+        case LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.value:
+          administrativeClass = LinkValues.AdministrativeClassShort.MunicipalityStreetRoad.description;
           break;
-        case LinkValues.RoadTypeShort.MunicipalityStreetRoad.value:
-          roadType = LinkValues.RoadTypeShort.MunicipalityStreetRoad.description;
-          break;
-        case LinkValues.RoadTypeShort.PublicUnderConstructionRoad.value:
-          roadType = LinkValues.RoadTypeShort.PublicUnderConstructionRoad.description;
-          break;
-        case LinkValues.RoadTypeShort.PrivateRoadType.value:
-          roadType = LinkValues.RoadTypeShort.PrivateRoadType.description;
-          break;
-        case roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.value:
-          roadType = LinkValues.RoadTypeShort.UnknownOwnerRoad.description;
+        case LinkValues.AdministrativeClassShort.PrivateRoad.value:
+          administrativeClass = LinkValues.AdministrativeClassShort.PrivateRoad.description;
           break;
         default:
           break;
       }
-      return roadType;
+      return administrativeClass;
     };
 
     var displayNodeInfo = function (event, pixel) {
