@@ -85,7 +85,7 @@ package object viite {
   val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosan sisällä on epäjatkuvuuksia. Tarkista Jatkuu-koodit."
   val DiscontinuityInsideRoadPartMessage = "Epäjatkuvuus (2) voi olla vain tieosan lopussa."
-  val DistinctRoadTypesBetweenTracksMessage = "Rinnakkaisilla ajoradoilla eri tietyyppi."
+  val DistinctAdministrativeClassesBetweenTracksMessage = "Rinnakkaisilla ajoradoilla eri hallinnollinen luokka."
   val DiscontinuityOnParallelLinksMessage = "Rinnakkaiselta ajoradalta puuttuu jatkuu-koodi 5 Jatkuva (Rinnakkainen linkki)."
   val WrongParallelLinksMessage = "Väärä paikka rinnakkaiselle linkille."
   val RoadNotEndingInElyBorderMessage = "Tien lopussa pitää olla jatkuu-koodi 1. Korjaa jatkuu-koodi."
@@ -260,7 +260,7 @@ package object viite {
     "|      discontinuity     |         Int        |                       Discontinuity code of all project links                       |       |\n" +
     "|         roadEly        |        Long        |                            Ely code of all project links                            |       |\n" +
     "|     roadLinkSource     |         Int        |                        Road link source of all project links                        |       |\n" +
-    "|        roadType        |         Int        |                       Road type code for all the project links                      |       |\n" +
+    "|  administrative class  |         Int        |               Administrative class code for all the project links                   |       |\n" +
     "| userDefinedEndAddressM |     Option[Int]    | Optional value, simbolizes if there is a specific value for the end address m value |       |\n" +
     "|       coordinates      | ProjectCoordinates |  This represents the middle point of all the project links involved in the project  |       |\n" +
     "|        roadName        |   Option[String]   |                Possible road name for all the project links sent here               |       |\n" +

@@ -247,6 +247,10 @@ object DataFixture {
     flyway.migrate()
   }
 
+  def repair() = {
+    flyway.repair()
+  }
+
   def tearDown() {
     flyway.clean()
   }
@@ -300,6 +304,10 @@ object DataFixture {
     operation match {
       case Some("check_road_network") =>
         checkRoadNetwork()
+      case Some("flyway_migrate") =>
+        migrateAll()
+      case Some("flyway_repair") =>
+        repair()
       case Some("import_road_addresses") =>
         if (args.length > 1)
           importRoadAddresses(Some(args(1)))

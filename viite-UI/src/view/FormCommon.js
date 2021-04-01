@@ -3,7 +3,7 @@
     const Track = LinkValues.Track;
     const RoadNameSource = LinkValues.RoadNameSource;
     const editableStatus = LinkValues.ProjectStatus.Incomplete.value;
-    const RoadType = LinkValues.RoadType;
+    const AdministrativeClass = LinkValues.AdministrativeClass;
 
     const title = function (titleName) {
       const fixedTitle = titleName || "Uusi tieosoiteprojekti";
@@ -23,7 +23,7 @@
     const addRoadNameField = function (name, isBlocked, maxLength) {
       const nameToDisplay = _.isUndefined(name) || _.isNull(name) || name === 'null' || name === '' ? "" : name;
       const disabled = nameToDisplay !== "" && isBlocked;
-      return '<input type="text" class="form-control" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + '/>';
+      return '<input type="text" class="form-control administrativeClassAndRoadName" style="float:none; display:inline-block" id = "roadName" value="' + nameToDisplay + '" ' + (disabled ? 'disabled' : '') + (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + '/>';
     };
 
     const projectButtons = function () {
@@ -39,7 +39,7 @@
       const link = _.head(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
-      const roadType = (link.roadTypeId) ? link.roadTypeId : RoadType.Empty.value;
+      const administrativeClass = (link.administrativeClassId) ? link.administrativeClassId : AdministrativeClass.Empty.value;
       const projectEditable = project.statusCode === editableStatus;
       let trackCodeDropdown;
       if (track === Track.Unknown.value) {
@@ -58,9 +58,9 @@
         addTrackCodeDropdown(trackCodeDropdown) +
         addSmallInputNumber('ely', link.elyCode, !projectEditable, 2) +
         addDiscontinuityDropdown() +
-        addSmallLabel('TIETYYPPI') +
-        roadTypeDropdown(roadType) + '<br>' +
-        addSmallLabel('NIMI') +
+        addWideLabel('HALL. LUOKKA') +
+        administrativeClassDropdown(administrativeClass) + '<br>' +
+        addWideLabel('NIMI') +
         addRoadNameField(roadName, selected[0].roadNameBlocked, 50) +
         ((selected.length === 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
@@ -85,27 +85,28 @@
       }
     };
 
-    const roadTypeLabel = function (roadType) {
-      const roadTypeInfo = _.find(LinkValues.RoadType, function (obj) {
-        return obj.value === roadType;
+    const administrativeClassLabel = function (administrativeClass) {
+      const administrativeClassInfo = _.find(LinkValues.AdministrativeClass, function (obj) {
+        return obj.value === administrativeClass;
       });
-      return roadTypeInfo.displayText;
+      return administrativeClassInfo.displayText;
     };
-    const roadTypeDropdown = function (roadTypeDefaultValue) {
-      return '<select class="' + prefix + 'form-control" id="roadTypeDropdown" size = "1" style="width: auto !important; display: inline">' +
-        '<option value = "' + roadTypeDefaultValue + '" selected hidden >' + roadTypeLabel(roadTypeDefaultValue) + '</option>' +
-        '<option value = "1">1 Maantie</option>' +
-        '<option value = "2">2 Lauttaväylä maantiellä</option>' +
-        '<option value = "3">3 Kunnan katuosuus</option>' +
-        '<option value = "4">4 Maantien työmaa</option>' +
-        '<option value = "5">5 Yksityistie</option>' +
-        '<option value = "9">9 Omistaja selvittämättä</option>' +
+    const administrativeClassDropdown = function (administrativeClassDefaultValue) {
+      return '<select class="' + prefix + 'form-control administrativeClassAndRoadName" id="administrativeClassDropdown" size = "1" style="width: 190px !important; display: inline">' +
+        '<option value = "' + administrativeClassDefaultValue + '" selected hidden >' + administrativeClassLabel(administrativeClassDefaultValue) + '</option>' +
+        '<option value = "1">1 Valtio</option>' +
+        '<option value = "2">2 Kunta</option>' +
+        '<option value = "3">3 Yksityinen</option>' +
 
         '</select>';
     };
 
     const addSmallLabel = function (label) {
       return '<label class="control-label-small">' + label + '</label>';
+    };
+
+    const addWideLabel = function (label) {
+      return '<label class="control-label-wide">' + label + '</label>';
     };
 
     const addSmallLabelLowercase = function (label) {
@@ -337,8 +338,9 @@
     return {
       newRoadAddressInfo: newRoadAddressInfo,
       replaceAddressInfo: replaceAddressInfo,
-      roadTypeDropdown: roadTypeDropdown,
+      administrativeClass: administrativeClassDropdown,
       addSmallLabel: addSmallLabel,
+      addWideLabel: addWideLabel,
       addSmallInputNumber: addSmallInputNumber,
       nodeInputNumber: nodeInputNumber,
       addDiscontinuityDropdown: addDiscontinuityDropdown,
