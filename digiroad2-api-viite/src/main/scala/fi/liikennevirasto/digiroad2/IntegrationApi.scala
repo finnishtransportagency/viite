@@ -66,6 +66,16 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
     roadLinkService.clearCache()
   }
 
+  /* For APIs which require RoadType values. */
+  def toRoadTypeValue(value: Long): Int = {
+    value match {
+      case  1 =>  1
+      case  2 =>  3
+      case  3 =>  5
+      case 99 => 99
+    }
+  }
+
   before() {
     basicAuth
   }
@@ -177,6 +187,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
             "discontinuity" -> r.discontinuity.value,
             "ely" -> r.ely,
             "roadType" -> r.administrativeClass.asRoadTypeValue,
+            "hallinnollinen_luokka" -> r.administrativeClass.value,
             "terminated" -> r.terminated.value,
             "reversed" -> r.reversed,
             "roadName" -> r.roadName,
@@ -246,7 +257,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
                 "etaisyys" -> roadwayChangesInfo.old_start_addr_m,
                 "etaisyys_loppu" -> roadwayChangesInfo.old_end_addr_m,
                 "jatkuvuuskoodi" -> roadwayChangesInfo.old_discontinuity,
-                "tietyyppi" -> roadwayChangesInfo.OLD_ADMINISTRATIVE_CLASS,
+                "tietyyppi" -> toRoadTypeValue(roadwayChangesInfo.OLD_ADMINISTRATIVE_CLASS),
+                "hallinnollinen_luokka" -> roadwayChangesInfo.OLD_ADMINISTRATIVE_CLASS,
                 "ely" -> roadwayChangesInfo.old_ely
               ),
             "kohde" ->
@@ -257,7 +269,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
                 "etaisyys" -> roadwayChangesInfo.new_start_addr_m,
                 "etaisyys_loppu" -> roadwayChangesInfo.new_end_addr_m,
                 "jatkuvuuskoodi" -> roadwayChangesInfo.new_discontinuity,
-                "tietyyppi" -> roadwayChangesInfo.NEW_ADMINISTRATIVE_CLASS,
+                "tietyyppi" -> toRoadTypeValue(roadwayChangesInfo.NEW_ADMINISTRATIVE_CLASS),
+                "hallinnollinen_luokka" -> roadwayChangesInfo.NEW_ADMINISTRATIVE_CLASS,
                 "ely" -> roadwayChangesInfo.new_ely
               )
           )
@@ -430,6 +443,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           "end_addr_m" -> roadAddressLink.endAddressM,
           "ely_code" -> roadAddressLink.elyCode,
           "road_type" -> roadAddressLink.administrativeClass.asRoadTypeValue,
+          "hallinnollinen_luokka" -> roadAddressLink.administrativeClass,
           "discontinuity" -> roadAddressLink.discontinuity,
           "start_date" -> roadAddressLink.startDate,
           "end_date" -> roadAddressLink.endDate,
