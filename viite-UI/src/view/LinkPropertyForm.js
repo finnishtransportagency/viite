@@ -27,15 +27,12 @@
         ]
       },
       {
-        id: 'TIETYYPPI',
+        id: 'HALLINNOLLINEN LUOKKA',
         attributes: [
-          {value: 1, description: "Maantie"},
-          {value: 2, description: "Lauttaväylä maantiellä"},
-          {value: 3, description: "Kunnan katuosuus"},
-          {value: 4, description: "Maantien työmaa"},
-          {value: 5, description: "Yksityistie"},
-          {value: 9, description: "Omistaja selvittämättä"},
-          {value: 99, description: "Ei määritetty"}
+          {value: 1, description: "Valtio"},
+          {value: 2, description: "Kunta"},
+          {value: 3, description: "Yksityinen"},
+          {value: 99, description: "Ei määritelty"}
         ]
       },
       {
@@ -51,28 +48,28 @@
       }
     ];
 
-    var roadTypeDynamicField = function () {
+    var administrativeClassDynamicField = function () {
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
       var field = '';
-      var uniqRoadTypes = _.uniq(_.map(selectedLinkProperty.get(), 'roadTypeId'));
-      var decodedRoadTypes = "";
-      _.each(uniqRoadTypes, function (rt) {
-        if (decodedRoadTypes.length === 0) {
-          decodedRoadTypes = rt + " " + decodeAttributes('TIETYYPPI', rt);
+      var uniqAdministrativeClasses = _.uniq(_.map(selectedLinkProperty.get(), 'administrativeClassId'));
+      var decodedAdministrativeClasses = "";
+      _.each(uniqAdministrativeClasses, function (rt) {
+        if (decodedAdministrativeClasses.length === 0) {
+          decodedAdministrativeClasses = rt + " " + decodeAttributes('HALLINNOLLINEN LUOKKA', rt);
         } else {
-          decodedRoadTypes = decodedRoadTypes + ", " + rt + " " + decodeAttributes('TIETYYPPI', rt);
+          decodedAdministrativeClasses = decodedAdministrativeClasses + ", " + rt + " " + decodeAttributes('HALLINNOLLINEN LUOKKA', rt);
         }
       });
 
       if (floatingTransfer) {
         field = '<div class="form-group">' +
-          '<label class="control-label-floating">TIETYYPPI</label>' +
-          '<p class="form-control-static-floating">' + decodedRoadTypes + '</p>' +
+          '<label class="control-label-floating">HALLINNOLLINEN LUOKKA</label>' +
+          '<p class="form-control-static-floating">' + decodedAdministrativeClasses + '</p>' +
           '</div>';
       } else {
         field = '<div class="form-group" style="margin-bottom: 0">' +
-          '<label class="control-label-short">TIETYYPPI</label>' +
-          '<p class="form-control-static-short">' + decodedRoadTypes + '</p>' +
+          '<label class="control-label-short">HALLINNOLLINEN LUOKKA</label>' +
+          '<p class="form-control-static-short">' + decodedAdministrativeClasses + '</p>' +
           '</div>';
       }
       return field;
@@ -220,7 +217,7 @@
         if (attrValue) {
           return attrValue.description;
         } else {
-          return "Ei määritetty";
+          return "Ei määritelty";
         }
       } else {
         return "";
@@ -283,7 +280,7 @@
     };
 
     var template = function (firstSelectedLinkProperty, linkProperties) {
-      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
+      var administrativeClasses = selectedLinkProperty.count() === 1 ? staticField('HALLINNOLLINEN LUOKKA', firstSelectedLinkProperty.administrativeClassId) : administrativeClassDynamicField();
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : staticField('ALKUETÄISYYS', linkProperties.startAddressM);
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : staticField('LOPPUETÄISYYS', linkProperties.endAddressM);
       var mtkId = selectedLinkProperty.count() === 1 ? '; MTKID: ' + linkProperties.mmlId : '';
@@ -314,7 +311,7 @@
         startAddress +
         endAddress +
         staticField('ELY', firstSelectedLinkProperty.elyCode) +
-        roadTypes +
+        administrativeClasses +
         staticField('JATKUVUUS', linkProperties.discontinuity) +
         '</div>' +
         revertToFloatingButton() +
@@ -325,7 +322,7 @@
     var templateFloating = function (firstSelectedLinkProperty, linkProperties) {
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : measureDynamicField('ALKUETÄISYYS', 'startAddressM');
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : measureDynamicField('LOPPUETÄISYYS', 'endAddressM');
-      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
+      var administrativeClasses = selectedLinkProperty.count() === 1 ? staticField('HALLINNOLLINEN LUOKKA', firstSelectedLinkProperty.administrativeClassId) : administrativeClassDynamicField();
       var mtkId = selectedLinkProperty.count() === 1 ? '; MTKID: ' + linkProperties.mmlId : '';
       var roadName = firstSelectedLinkProperty.roadName ? staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) : '';
       return _.template('' +
@@ -353,7 +350,7 @@
         staticField('AJORATA', firstSelectedLinkProperty.trackCode) +
         startAddress +
         endAddress +
-        roadTypes +
+        administrativeClasses +
         notificationFloatingTransfer(true) +
         '</div>' +
         '</div>' +
@@ -363,7 +360,7 @@
     var templateFloatingEditMode = function (firstSelectedLinkProperty, linkProperties) {
       var startAddress = selectedLinkProperty.count() === 1 ? staticField('ALKUETÄISYYS', firstSelectedLinkProperty.startAddressM) : measureDynamicField('ALKUETÄISYYS', 'startAddressM');
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : measureDynamicField('LOPPUETÄISYYS', 'endAddressM');
-      var roadTypes = selectedLinkProperty.count() === 1 ? staticField('TIETYYPPI', firstSelectedLinkProperty.roadTypeId) : roadTypeDynamicField();
+      var administrativeClasses = selectedLinkProperty.count() === 1 ? staticField('HALLINNOLLINEN LUOKKA', firstSelectedLinkProperty.administrativeClassId) : administrativeClassDynamicField();
       var mtkId = selectedLinkProperty.count() === 1 ? '; MTKID: ' + linkProperties.mmlId : '';
       var roadName = firstSelectedLinkProperty.roadName ? staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) : '';
       return _.template('<div style="display: none" id="floatingEditModeForm">' +
@@ -391,7 +388,7 @@
         startAddress +
         endAddress +
         staticField('AJORATA', firstSelectedLinkProperty.trackCode) +
-        roadTypes +
+        administrativeClasses +
         notificationFloatingTransfer(true) +
         formFields(selectedLinkProperty.getSources() ? selectedLinkProperty.getSources() : selectedLinkProperty.get()) +
         '</div>' +
