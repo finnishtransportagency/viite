@@ -247,8 +247,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
                 "etaisyys" -> roadwayChangesInfo.old_start_addr_m,
                 "etaisyys_loppu" -> roadwayChangesInfo.old_end_addr_m,
                 "jatkuvuuskoodi" -> roadwayChangesInfo.old_discontinuity,
-                "tietyyppi" -> roadwayChangesInfo.OLD_ADMINISTRATIVE_CLASS.asRoadTypeValue,
-                "hallinnollinen_luokka" -> roadwayChangesInfo.OLD_ADMINISTRATIVE_CLASS.value,
+                "tietyyppi" -> AdministrativeClass.apply(roadwayChangesInfo.old_administrative_class).asRoadTypeValue,
+                "hallinnollinen_luokka" -> roadwayChangesInfo.old_administrative_class,
                 "ely" -> roadwayChangesInfo.old_ely
               ),
             "kohde" ->
@@ -259,8 +259,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
                 "etaisyys" -> roadwayChangesInfo.new_start_addr_m,
                 "etaisyys_loppu" -> roadwayChangesInfo.new_end_addr_m,
                 "jatkuvuuskoodi" -> roadwayChangesInfo.new_discontinuity,
-                "tietyyppi" -> roadwayChangesInfo.NEW_ADMINISTRATIVE_CLASS.asRoadTypeValue,
-                "hallinnollinen_luokka" -> roadwayChangesInfo.NEW_ADMINISTRATIVE_CLASS.value,
+                "tietyyppi" -> AdministrativeClass.apply(roadwayChangesInfo.new_administrative_class).asRoadTypeValue,
+                "hallinnollinen_luokka" -> roadwayChangesInfo.new_administrative_class,
                 "ely" -> roadwayChangesInfo.new_ely
               )
           )
