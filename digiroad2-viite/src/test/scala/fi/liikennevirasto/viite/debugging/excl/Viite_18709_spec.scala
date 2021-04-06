@@ -10,8 +10,8 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.viite.{NewIdValue, NodesAndJunctionsService, ProjectService, ProjectValidator, RoadAddressService, RoadType}
-//import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+//import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
@@ -120,16 +120,16 @@ class Viite_18709_spec extends FunSuite with Matchers with BeforeAndAfter {
     reset(mockRoadLinkService)
   }
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-
-  def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val t = f
-      dynamicSession.rollback()
-  t
-}
-  }
-  /* def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+//  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+//
+//  def runWithRollback[T](f: => T): T = {
+//    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+//      val t = f
+//      dynamicSession.rollback()
+//  t
+//}
+//  }
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
    def runWithRollback[T](f: => T): T = {
 	 Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
@@ -137,7 +137,7 @@ class Viite_18709_spec extends FunSuite with Matchers with BeforeAndAfter {
 	   dynamicSession.rollback()
 	   t
 	 }
-   }*/
+   }
   /*private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false, roadNumber: Long = 19999L,
                                     roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L) = {
     val id = Sequences.nextViiteProjectId
@@ -648,19 +648,19 @@ class Viite_18709_spec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       /* Create change table */
-      val (changeProject, warningMessage) = projectService_db.getChangeProject(projectSaved.id)
-      println("change table warningMessage")
-      println(warningMessage)
-
-      val all_projectlinks = projectService_db.getProjectLinks(projectSaved.id)
-
-      /* Send to TR*/
-      val projectWritableError = projectService_db.projectWritableCheck(projectSaved.id)
-      projectWritableError.isEmpty should be (true)
-
-      val sendStatus = projectService_db.publishProject(projectSaved.id)
-      sendStatus.validationSuccess should be (true)
-      sendStatus.sendSuccess should be (true)
+//      val (changeProject, warningMessage) = projectService_db.getChangeProject(projectSaved.id)
+//      println("change table warningMessage")
+//      println(warningMessage)
+//
+//      val all_projectlinks = projectService_db.getProjectLinks(projectSaved.id)
+//
+//      /* Send to TR*/
+//      val projectWritableError = projectService_db.projectWritableCheck(projectSaved.id)
+//      projectWritableError.isEmpty should be (true)
+//
+//      val sendStatus = projectService_db.publishProject(projectSaved.id)
+//      sendStatus.validationSuccess should be (true)
+//      sendStatus.sendSuccess should be (true)
 
 
     }//Rollback

@@ -107,9 +107,10 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
       }
 
     }
-    val sortedLinearLocations = linearLocations.sortBy(_.orderNumber)
 
     val coefficient = (endAddress - startAddress) / linearLocations.map(l => l.endMValue - l.startMValue).sum
+
+    val sortedLinearLocations = linearLocations.sortBy(_.orderNumber)
 
     val addresses = mappedAddressValues(sortedLinearLocations.init, Seq(), startAddress, endAddress, coefficient, Seq(startAddress), 0) :+ endAddress
 
@@ -184,32 +185,15 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
   }
 
   def mapLinearLocations(roadway: Roadway, projectLinks: Seq[ProjectLink], allProjectLinks: Seq[ProjectLink]): Seq[LinearLocation] = {
-//    val projectLinkDAO = new ProjectLinkDAO
-//    val allProjectLinks = projectLinkDAO.fetchProjectLinks(projectLinks.head.projectId)
-//
-//    val x = projectLinks.filter(_.startMValue > 0)
-//    val orders =  x.map( r => {
-//        val _links = allProjectLinks.filter(s => s.linkId == r.linkId).sortBy(_.startAddrMValue)
-//        (r.id, _links.indexWhere(_.id == r.id) + 1)
-//      } )
-    //MUUTA ROADWAY COUNTINKSI
-
     projectLinks.sortBy(_.startAddrMValue).zip(1 to projectLinks.size).
       map {
         case (projectLink, key) => {
-//          val isOrdered = orders.find(_._1 == projectLink.id)
-//          val orderN = if (isOrdered.isDefined) {
-//            isOrdered.get._2
-//          } else 1
-//
-//  println("key: " + key + " orderN: " + orderN)
-
           LinearLocation(projectLink.linearLocationId, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
             (CalibrationPointsUtils.toCalibrationPointReference(projectLink.startCalibrationPoint),
               CalibrationPointsUtils.toCalibrationPointReference(projectLink.endCalibrationPoint)),
             projectLink.geometry, projectLink.linkGeomSource, roadway.roadwayNumber, Some(DateTime.now()))
       }
-  }
+    }
   }
 
   /**

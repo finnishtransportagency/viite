@@ -414,17 +414,16 @@ class ProjectLinkDAO {
       time(logger, "Update project links") {
         val nonUpdatingStatus = Set[LinkStatus](NotHandled)
         val maxInEachTracks = projectLinks.filter(pl => pl.status == UnChanged).groupBy(_.track).map(p => p._2.maxBy(_.endAddrMValue).id).toSeq
-        val links = projectLinks
-//          projectLinks.map { pl =>
-//          if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
-//            val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
-//            // Discontinuity, road type and calibration points may change with Unchanged status
-//            pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
-//              startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
-//              reversed = false)
-//          } else
-//            pl
-//        }
+        val links = projectLinks.map { pl =>
+          if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
+            val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
+            // Discontinuity, road type and calibration points may change with Unchanged status
+            pl.copy(roadNumber = ra.roadNumber, roadPartNumber = ra.roadPartNumber, track = ra.track,
+              startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue,
+              reversed = false)
+          } else
+            pl
+        }
         val projectLinkPS = dynamicSession.prepareStatement("""
           UPDATE project_link
           SET ROAD_NUMBER = ?, ROAD_PART_NUMBER = ?, TRACK = ?, DISCONTINUITY_TYPE = ?, START_ADDR_M = ?, END_ADDR_M = ?,
@@ -484,6 +483,23 @@ class ProjectLinkDAO {
       }
       projectLinkPS.executeBatch()
       projectLinkPS.close()
+    }
+  }
+
+  /* Used from updateProjectLinks() to remove cp from pl when connected to a terminated link. */
+  def updateProjectLinkCalibrationPoints(
+                                          projectLink: ProjectLink,
+                                          cals: (CalibrationPointDAO.CalibrationPointType, CalibrationPointDAO.CalibrationPointType)
+                                        ): Unit = {
+    time(logger,
+      "Update project link calibrationpoints.") {
+      sqlu"""
+                update project_link
+                set modified_date = current_timestamp,
+                    start_calibration_point = ${cals._1.value},
+                    end_calibration_point = ${cals._2.value}
+                where id = ${projectLink.id}
+      """.execute
     }
   }
 

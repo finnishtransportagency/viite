@@ -9,8 +9,8 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
-//import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+//import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{Track, ViiteProperties}
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.NoCP
@@ -123,16 +123,16 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
     reset(mockRoadLinkService)
   }
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-
-  def runWithRollback[T](f: => T): T = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val t = f
-      dynamicSession.rollback()
-  t
-}
-  }
-  /* def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+//  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+//
+//  def runWithRollback[T](f: => T): T = {
+//    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+//      val t = f
+//      dynamicSession.rollback()
+//  t
+//}
+//  }
+   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
    def runWithRollback[T](f: => T): T = {
 	 Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
@@ -140,7 +140,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
 	   dynamicSession.rollback()
 	   t
 	 }
-   }*/
+   }
   /*private def setUpProjectWithLinks(linkStatus: LinkStatus, addrM: Seq[Long], changeTrack: Boolean = false, roadNumber: Long = 19999L,
                                     roadPartNumber: Long = 1L, discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadwayId: Long = 0L) = {
     val id = Sequences.nextViiteProjectId
@@ -753,8 +753,13 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         }
 
 //        projectService_db.recalculateProjectLinks(projectSaved.id, projectSaved.modifiedBy)
-        //val all_projectlinks = projectService_db.getProjectLinks(projectSaved.id)
+        val all_projectlinks = projectService_db.getProjectLinks(projectSaved.id)
 
+        all_projectlinks.filter(pl => Seq(11910530, 11910544, 11910546).contains(pl.linkId)).exists(pl => pl.discontinuity == Discontinuity.MinorDiscontinuity) shouldBe(true)
+        all_projectlinks.filter(pl => Seq(11910497, 11910547, 11910527).contains(pl.linkId)).exists(pl => pl.discontinuity == Discontinuity.MinorDiscontinuity) shouldBe(true)
+
+
+        //discontinuity = Discontinuity.MinorDiscontinuity, linkIds = ,
 
         //all_projectlinks.filter(_.track != Track.LeftSide).tail.foldLeft(all_projectlinks.head.endAddrMValue) { (cur, next) => next.endAddrMValue}
 //adjustedRight.tail.foldLeft(adjustedRight.head.endAddrMValue) { (cur, next) =>
@@ -765,7 +770,7 @@ class Viite_13_218_spec extends FunSuite with Matchers with BeforeAndAfter {
         //}
 
         /* Create change table */
-//        val (changeProject, warningMessage) = projectService_db.getChangeProject(projectSaved.id)
+//       val (changeProject, warningMessage) = projectService_db.getChangeProject(projectSaved.id)
 //        println("change table warningMessage")
 //        println(warningMessage)
 
