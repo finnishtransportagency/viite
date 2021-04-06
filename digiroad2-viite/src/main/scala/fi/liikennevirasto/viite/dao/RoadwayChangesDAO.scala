@@ -64,8 +64,8 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
 case class ChangeTableRows(adjustedSections: Map[(RoadwaySection, RoadwaySection), Option[String]], originalSections: Map[RoadwaySection, RoadwaySection])
 
 case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, validFrom: DateTime, change_type: Long, reversed: Long,
-                              old_road_number: Long, old_road_part_number: Long, old_TRACK: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, OLD_ADMINISTRATIVE_CLASS: Long, old_ely: Long,
-                              new_road_number: Long, new_road_part_number: Long, new_TRACK: Long, new_start_addr_m: Long, new_end_addr_m: Long, new_discontinuity: Long, NEW_ADMINISTRATIVE_CLASS: Long, new_ely: Long)
+                              old_road_number: Long, old_road_part_number: Long, old_TRACK: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, OLD_ADMINISTRATIVE_CLASS: AdministrativeClass, old_ely: Long,
+                              new_road_number: Long, new_road_part_number: Long, new_TRACK: Long, new_start_addr_m: Long, new_end_addr_m: Long, new_discontinuity: Long, NEW_ADMINISTRATIVE_CLASS: AdministrativeClass, new_ely: Long)
 
 class RoadwayChangesDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
@@ -491,7 +491,7 @@ SELECT
       val old_start_addr_m = r.nextLong()
       val old_end_addr_m = r.nextLong()
       val old_discontinuity = r.nextLong()
-      val OLD_ADMINISTRATIVE_CLASS = r.nextLong()
+      val OLD_ADMINISTRATIVE_CLASS = AdministrativeClass.apply(r.nextInt())
       val old_ely = r.nextLong()
       val new_road_number = r.nextLong()
       val new_road_part_number = r.nextLong()
@@ -499,7 +499,7 @@ SELECT
       val new_start_addr_m = r.nextLong()
       val new_end_addr_m = r.nextLong()
       val new_discontinuity = r.nextLong()
-      val NEW_ADMINISTRATIVE_CLASS = r.nextLong()
+      val NEW_ADMINISTRATIVE_CLASS = AdministrativeClass.apply(r.nextInt())
       val new_ely = r.nextLong()
 
       RoadwayChangesInfo(roadwayChangeId, startDate, validFrom, change_type, reversed,
