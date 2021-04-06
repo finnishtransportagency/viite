@@ -64,8 +64,8 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
 case class ChangeTableRows(adjustedSections: Map[(RoadwaySection, RoadwaySection), Option[String]], originalSections: Map[RoadwaySection, RoadwaySection])
 
 case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, validFrom: DateTime, change_type: Long, reversed: Long,
-                              old_road_number: Long, old_road_part_number: Long, old_TRACK: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, OLD_ADMINISTRATIVE_CLASS: Long, old_ely: Long,
-                              new_road_number: Long, new_road_part_number: Long, new_TRACK: Long, new_start_addr_m: Long, new_end_addr_m: Long, new_discontinuity: Long, NEW_ADMINISTRATIVE_CLASS: Long, new_ely: Long)
+                              old_road_number: Long, old_road_part_number: Long, old_TRACK: Long, old_start_addr_m: Long, old_end_addr_m: Long, old_discontinuity: Long, old_administrative_class: Long, old_ely: Long,
+                              new_road_number: Long, new_road_part_number: Long, new_TRACK: Long, new_start_addr_m: Long, new_end_addr_m: Long, new_discontinuity: Long, new_administrative_class: Long, new_ely: Long)
 
 class RoadwayChangesDAO {
   val formatter: DateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser()
@@ -244,7 +244,7 @@ class RoadwayChangesDAO {
                 rac.old_road_part_number, rac.old_road_part_number,
                 rac.old_start_addr_m, rac.old_end_addr_m, rac.new_road_number, rac.new_TRACK,
                 rac.new_road_part_number, rac.new_road_part_number,
-                rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.NEW_ADMINISTRATIVE_CLASS, rac.OLD_ADMINISTRATIVE_CLASS,
+                rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_administrative_class, rac.old_administrative_class,
                 rac.old_discontinuity, rac.old_ely, p.tr_id, rac.reversed, rac.ROADWAY_CHANGE_ID
                 From ROADWAY_CHANGES rac Inner Join Project p on rac.project_id = p.id
                 $withProjectIds
@@ -367,7 +367,7 @@ class RoadwayChangesDAO {
           val roadwayChangePS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES " +
             "(project_id, change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
             "old_TRACK,new_TRACK,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
-            "new_discontinuity,NEW_ADMINISTRATIVE_CLASS,new_ely, OLD_ADMINISTRATIVE_CLASS, old_discontinuity, old_ely, reversed, roadway_change_id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+            "new_discontinuity,new_administrative_class,new_ely, old_administrative_class, old_discontinuity, old_ely, reversed, roadway_change_id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 
           val roadWayChangesLinkPS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES_LINK " +
             "(roadway_change_id, project_id, project_link_id) values (?,?,?)")
@@ -452,7 +452,7 @@ SELECT
     , RC.old_start_addr_m
     , RC.old_end_addr_m
     , RC.old_discontinuity
-    , RC.OLD_ADMINISTRATIVE_CLASS
+    , RC.old_administrative_class
     , RC.old_ely
     , RC.new_road_number
     , RC.new_road_part_number
@@ -460,7 +460,7 @@ SELECT
     , RC.new_start_addr_m
     , RC.new_end_addr_m
     , RC.new_discontinuity
-    , RC.NEW_ADMINISTRATIVE_CLASS
+    , RC.new_administrative_class
     , RC.new_ely
     FROM ROADWAY_CHANGES RC
       INNER JOIN ROADWAYS R
@@ -491,7 +491,7 @@ SELECT
       val old_start_addr_m = r.nextLong()
       val old_end_addr_m = r.nextLong()
       val old_discontinuity = r.nextLong()
-      val OLD_ADMINISTRATIVE_CLASS = r.nextLong()
+      val old_administrative_class = r.nextLong()
       val old_ely = r.nextLong()
       val new_road_number = r.nextLong()
       val new_road_part_number = r.nextLong()
@@ -499,12 +499,12 @@ SELECT
       val new_start_addr_m = r.nextLong()
       val new_end_addr_m = r.nextLong()
       val new_discontinuity = r.nextLong()
-      val NEW_ADMINISTRATIVE_CLASS = r.nextLong()
+      val new_administrative_class = r.nextLong()
       val new_ely = r.nextLong()
 
       RoadwayChangesInfo(roadwayChangeId, startDate, validFrom, change_type, reversed,
-        old_road_number, old_road_part_number, old_TRACK, old_start_addr_m, old_end_addr_m, old_discontinuity, OLD_ADMINISTRATIVE_CLASS, old_ely,
-        new_road_number, new_road_part_number, new_TRACK, new_start_addr_m, new_end_addr_m, new_discontinuity, NEW_ADMINISTRATIVE_CLASS, new_ely)
+        old_road_number, old_road_part_number, old_TRACK, old_start_addr_m, old_end_addr_m, old_discontinuity, old_administrative_class, old_ely,
+        new_road_number, new_road_part_number, new_TRACK, new_start_addr_m, new_end_addr_m, new_discontinuity, new_administrative_class, new_ely)
     }
   }
 
