@@ -179,22 +179,14 @@ trait TrackCalculatorStrategy {
     if (leftProjectLinks.isEmpty || rightProjectLinks.isEmpty)
       throw new MissingTrackException(s"Missing track, R: ${rightProjectLinks.size}, L: ${leftProjectLinks.size}")
 
-    val leftRoadwayNumber = leftProjectLinks.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
-    val continuousLeftProjectLinks = leftProjectLinks // .takeWhile(pl => pl.roadwayNumber == leftRoadwayNumber)
-
-    val rightRoadwayNumber = rightProjectLinks.headOption.map(_.roadwayNumber).getOrElse(NewIdValue)
-    val continuousRightProjectLinks = rightProjectLinks //.takeWhile(pl => pl.roadwayNumber == rightRoadwayNumber)
-
     //  Find a calibration point annexed to the projectLink Id
-    val availableCalibrationPoint = calibrationPoints.get(continuousRightProjectLinks.last.id).orElse(calibrationPoints.get(continuousLeftProjectLinks.last.id))
+    val availableCalibrationPoint = calibrationPoints.get(rightProjectLinks.last.id).orElse(calibrationPoints.get(leftProjectLinks.last.id))
 
-    val startSectionAddress = startAddress.getOrElse(getFixedAddress(continuousLeftProjectLinks.head, continuousRightProjectLinks.head)._1)
+    val startSectionAddress = startAddress.getOrElse(getFixedAddress(leftProjectLinks.head, rightProjectLinks.head)._1)
 
-//    getFixedAddress Laskee keskiarvon.
+    val estimatedEnd = getFixedAddress(leftProjectLinks.last, rightProjectLinks.last, availableCalibrationPoint)._2
 
-    val estimatedEnd = getFixedAddress(continuousLeftProjectLinks.last, continuousRightProjectLinks.last, availableCalibrationPoint)._2
-
-    val (adjustedLeft, adjustedRight) = adjustTwoTracks(continuousRightProjectLinks, continuousLeftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
+    val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, startSectionAddress, estimatedEnd, calibrationPoints)
 
     //  The getFixedAddress method have to be called twice because when we do it the first time we are getting the estimated end measure, that will be used for the calculation of
     //  NEW sections. For example if in one of the sides we have a TRANSFER section it will use the value after recalculate all the existing sections with the original length.
@@ -204,8 +196,8 @@ trait TrackCalculatorStrategy {
       setLastEndAddrMValue(adjustedLeft, endSectionAddress),
       setLastEndAddrMValue(adjustedRight, endSectionAddress),
       startSectionAddress, endSectionAddress,
-      leftProjectLinks.drop(continuousLeftProjectLinks.size) ++ restLeftProjectLinks,
-      rightProjectLinks.drop(continuousRightProjectLinks.size) ++ restRightProjectLinks)
+      leftProjectLinks.drop(leftProjectLinks.size) ++ restLeftProjectLinks,
+      rightProjectLinks.drop(rightProjectLinks.size) ++ restRightProjectLinks)
   }
 
   /**

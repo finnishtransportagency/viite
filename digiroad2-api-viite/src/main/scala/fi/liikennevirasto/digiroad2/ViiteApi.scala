@@ -6,7 +6,8 @@ import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{JWTAuthentication, RequestHeaderAuthentication}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+//import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
@@ -849,13 +850,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       tags "ViiteAPI - Project"
       summary "Given a valid projectId, this will run the validations to the project in question and it will also fetch all the changes made on said project."
     )
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   get("/project/getchangetable/:projectId", operation(validateProjectAndReturnChangeTableById)) {
     val projectId = params("projectId").toLong
     try {
-      withDynSession {
+      withDynTransaction {
        val project = projectService.fetchProjectById(projectId).get
         projectService.recalculateProjectLinks(projectId, project.modifiedBy)
       }

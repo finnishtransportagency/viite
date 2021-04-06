@@ -330,6 +330,8 @@ class RoadwayChangesDAO {
           val roadWayChangesLinkPS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES_LINK " +
             "(roadway_change_id, project_id, project_link_id) values (?,?,?)")
 
+          val allNonTerminatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id).filter(_.status != LinkStatus.Terminated)
+
           val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping)
           terminated.originalSections.foreach(roadwaySection =>
             addToBatch(roadwaySection._2, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
@@ -338,18 +340,17 @@ class RoadwayChangesDAO {
           val news = ProjectDeltaCalculator.partition(delta.newRoads)
           news.foreach(roadwaySection => addToBatch(roadwaySection, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
 
-          val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping)
+          val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping, allNonTerminatedProjectLinks)
 
-          val transferred = ProjectDeltaCalculator.partition(delta.transferred.mapping, terminated.originalSections.map(_._2).toSeq ++ news) //values.toSeq ++ news)
+          val transferred = ProjectDeltaCalculator.partition(delta.transferred.mapping, allNonTerminatedProjectLinks)
 
-          val numbering = ProjectDeltaCalculator.partition(delta.numbering.mapping)
+          val numbering = ProjectDeltaCalculator.partition(delta.numbering.mapping, allNonTerminatedProjectLinks)
 
           val adjustedUnchanged = ProjectDeltaCalculator.adjustStartSourceAddressValues(unchanged.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
           val adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(transferred.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections ++ terminated.originalSections)
           val adjustedNumbering = ProjectDeltaCalculator.adjustStartSourceAddressValues(numbering.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
 
-          adjustedUnchanged._1.foreach { rs1_2 =>
-            val (roadwaySection1, roadwaySection2) = rs1_2
+          adjustedUnchanged._1.foreach { case (roadwaySection1, roadwaySection2) =>
             addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
           }
           adjustedTransferred._1.foreach { case (roadwaySection1, roadwaySection2) =>

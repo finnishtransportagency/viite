@@ -315,12 +315,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val splitCreatedCpsFromRightSide: Map[Long, UserDefinedCalibrationPoint] = updatedudcpsFromRightSideSplits.map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
     val splitCreatedCpsFromLeftSide: Map[Long, UserDefinedCalibrationPoint] = udcpsFromLeftSideSplits.map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
 
-
-    //    val (adjustedLeft, adjustedRight) = (leftLinks, rightLinks) //if ((leftLinks ++ rightLinks).exists(_.status == LinkStatus.NotHandled)) (leftLinks, rightLinks) else adjustTracksToMatch(leftLinks, rightLinks, None)
-//    val (adjustedLeft, adjustedRight) = if ((leftLinks ++ rightLinks).exists(_.status == LinkStatus.NotHandled)) (leftLinks, rightLinks) else adjustTracksToMatch(leftLinks, rightLinks, None)
     val (adjustedLeft, adjustedRight) = adjustTracksToMatch(splittedLeftLinks, rightLinksWithUdcps, None, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
 
-    val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
+    val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint++ splitCreatedCpsFromRightSide ++
+                       splitCreatedCpsFromLeftSide)
     TrackSectionOrder.createCombinedSections(right, left)
   }
 

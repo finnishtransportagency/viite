@@ -4,11 +4,17 @@ import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+//Compliler :
+//reference to RoadNetworkChecker is ambiguous;
+//it is imported twice in the same scope by
+//import fi.liikennevirasto.viite.process._
+//and import fi.liikennevirasto.digiroad2._
+//val checker = new RoadNetworkChecker(roadLinkService)
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.{ds, setSessionLanguage}
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.ds
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
@@ -16,9 +22,6 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.DateTime
-import slick.driver.JdbcDriver.backend.Database
-import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.immutable.ParSet
@@ -86,7 +89,7 @@ object DataFixture {
     val username = ViiteProperties.bonecpUsername
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen)
     PostGISDatabase.withDynTransaction {
-      val checker = new RoadNetworkChecker(roadLinkService)
+      val checker = new fi.liikennevirasto.viite.process.RoadNetworkChecker(roadLinkService)
       checker.checkRoadNetwork(username)
     }
     println(s"\nend checking road network at time: ${DateTime.now()}")
