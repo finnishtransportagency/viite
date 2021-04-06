@@ -93,6 +93,10 @@ object AdministrativeClass {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
+  def apply(value: Long): AdministrativeClass = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
   def apply(stringValue: String): AdministrativeClass = {
     values.find(_.toString == stringValue).getOrElse(Unknown)
   }
