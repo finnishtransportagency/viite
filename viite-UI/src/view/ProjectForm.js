@@ -385,7 +385,7 @@
       };
 
       var disableAutoComplete = function () {
-        $('[id=nimi]').attr('autocomplete', 'off');
+        $('[id=nimi]').attr('autocomplete', 'false');
         $('[id=alkupvm]').attr('autocomplete', 'off');
         $('[id=lisatiedot]').attr('autocomplete', 'off');
       };
