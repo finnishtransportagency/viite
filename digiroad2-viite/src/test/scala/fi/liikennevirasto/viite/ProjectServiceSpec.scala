@@ -302,25 +302,26 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test saveProject When two projects with same road part Then return on key error") {
+  test("Test saveProject When two projects with same road part Then throw exception on unique key constraint violation") {
     runWithRollback {
       var project2: Project = null
-      val error = intercept[BatchUpdateException] {
-        val rap1 = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-          "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info",
-          Seq(), Seq(), None)
-        val rap2 = Project(0L, ProjectState.apply(1), "TestProject2", "TestUser", DateTime.parse("1901-01-01"),
-          "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info",
-          Seq(), Seq(), None)
-        val addr1 = List(ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None))
-        val project1 = projectService.createRoadLinkProject(rap1)
-        mockForProject(project1.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(5, 207)).map(toProjectLink(project1)))
-        projectService.saveProject(project1.copy(reservedParts = addr1))
-        project2 = projectService.createRoadLinkProject(rap2)
-        mockForProject(project2.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(5, 207)).map(toProjectLink(project2)))
+      val rap1 = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info",
+        Seq(), Seq(), None)
+      val rap2 = Project(0L, ProjectState.apply(1), "TestProject2", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1963-01-01"), DateTime.now(), "Some additional info",
+        Seq(), Seq(), None)
+      val addr1 = List(ProjectReservedPart(Sequences.nextViitePrimaryKeySeqValue, 5, 207, Some(0L), Some(Continuous), Some(8L), None, None, None, None))
+      val project1 = projectService.createRoadLinkProject(rap1)
+      mockForProject(project1.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(5, 207)).map(toProjectLink(project1)))
+      projectService.saveProject(project1.copy(reservedParts = addr1))
+      project2 = projectService.createRoadLinkProject(rap2)
+      mockForProject(project2.id, roadwayAddressMapper.getRoadAddressesByRoadway(roadwayDAO.fetchAllByRoadAndPart(5, 207)).map(toProjectLink(project2)))
+
+      val exception = intercept[BatchUpdateException] {
         projectService.saveProject(project2.copy(reservedParts = addr1))
       }
-      error.getMessage should include(s"""Key (project_id, road_number, road_part_number)=(${project2.id}, 5, 207) is not present in table "project_reserved_road_part"""")
+      exception.getMessage should include(s"""Key (project_id, road_number, road_part_number)=(${project2.id}, 5, 207) is not present in table "project_reserved_road_part"""")
     }
   }
 
