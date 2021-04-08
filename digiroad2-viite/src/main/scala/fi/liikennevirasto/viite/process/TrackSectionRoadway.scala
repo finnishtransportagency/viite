@@ -1,13 +1,14 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.GeometryUtils
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.LinkStatus.Terminated
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.TrackCalculatorContext
-import fi.liikennevirasto.viite.{MaxThresholdDistance, NewIdValue, RoadType}
+import fi.liikennevirasto.viite.{MaxThresholdDistance, NewIdValue}
 import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
@@ -62,7 +63,7 @@ object TrackSectionRoadway {
 
   private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long, opposite: Seq[ProjectLink] = Seq.empty[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-    val roadType = seq.headOption.map(_.roadType.value).getOrElse(RoadType.Empty.value)
+    val administrativeClass = seq.headOption.map(_.administrativeClass.value).getOrElse(AdministrativeClass.Unknown.value)
     val status = seq.headOption.map(_.status.value).getOrElse(LinkStatus.NotHandled.value)
 
     val (continuousProjectLinks, restProjectLinks) = {
@@ -71,7 +72,7 @@ object TrackSectionRoadway {
       val existSplitOnOppositeTrack = opposite.exists(_.isSplit) &&
         (splitAddrMValue.isDefined && startAddrMValue.isDefined && splitAddrMValue.get > startAddrMValue.get)
       val continuousSection = seq.takeWhile { pl =>
-        pl.track == track && pl.roadType.value == roadType && pl.status.value == status && !pl.isSplit && !(existSplitOnOppositeTrack && splitAddrMValue.contains(pl.endAddrMValue))
+        pl.track == track && pl.administrativeClass.value == administrativeClass && pl.status.value == status && !pl.isSplit && !(existSplitOnOppositeTrack && splitAddrMValue.contains(pl.endAddrMValue))
       }.sortBy(_.startAddrMValue)
 
       if ((seq.exists(_.isSplit) || existSplitOnOppositeTrack) && seq.drop(continuousSection.size).nonEmpty)

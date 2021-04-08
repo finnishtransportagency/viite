@@ -4,7 +4,8 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.{NewIdValue, RoadType}
+import fi.liikennevirasto.viite.{NewIdValue}
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -75,7 +76,7 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
   test("Test fetchJunctionPointsByJunctionIds When existing junctionId Then return junction points") {
     runWithRollback {
       val newRoadwayNumber = Sequences.nextRoadwayNumber
-      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
       roadwayDAO.create(Seq(roadway))
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
       val junctionId = junctionDAO.create(Seq(testJunction1)).head
@@ -91,7 +92,7 @@ class JunctionPointDAOSpec extends FunSuite with Matchers {
   test("Test expireById When two created and one expired Then expire one and keep the other") {
     runWithRollback {
       val newRoadwayNumber = Sequences.nextRoadwayNumber
-      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
+      val roadway = Roadway(NewIdValue, newRoadwayNumber, 1, 2, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, 0L, 10L, reversed = false, DateTime.now, None, "user", None, 8L, TerminationCode.NoTermination, DateTime.now, None)
       roadwayDAO.create(Seq(roadway))
       val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
       val junctionId = junctionDAO.create(Seq(testJunction1)).head

@@ -156,10 +156,10 @@ BEGIN
 				INSERT INTO EXPORT_TABLE VALUES (COUNTER,
 				'INSERT INTO ROADWAY (ID,ROADWAY_NUMBER,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK,' ||
 				'START_ADDR_M,END_ADDR_M,REVERSED,DISCONTINUITY,START_DATE,' ||
-				'CREATED_BY,CREATED_TIME,ROAD_TYPE,ELY,TERMINATED,VALID_FROM) VALUES (' ||
+				'CREATED_BY,CREATED_TIME,ADMINISTRATIVE_CLASS,ELY,TERMINATED,VALID_FROM) VALUES (' ||
 					roadway.ID || ',' || roadway.ROADWAY_NUMBER || ',' || roadway.ROAD_NUMBER || ',' || roadway.ROAD_PART_NUMBER || ',' || roadway.TRACK || ',' ||
 					roadway.START_ADDR_M || ',' || roadway.END_ADDR_M || ',' || roadway.REVERSED || ',' || roadway.DISCONTINUITY || ',''' || roadway.START_DATE || ''',''' ||
-					roadway.CREATED_BY || ''',''' || roadway.CREATED_TIME || ''',' || roadway.ROAD_TYPE || ',' || roadway.ELY || ',' || roadway.TERMINATED || ',''' || roadway.VALID_FROM || ''');');
+					roadway.CREATED_BY || ''',''' || roadway.CREATED_TIME || ''',' || roadway.ADMINISTRATIVE_CLASS || ',' || roadway.ELY || ',' || roadway.TERMINATED || ',''' || roadway.VALID_FROM || ''');');
 				COUNTER := COUNTER + 1;
 			END LOOP;
 

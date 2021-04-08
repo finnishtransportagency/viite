@@ -136,10 +136,7 @@ object TrackSectionOrder {
     def adjust(pl: ProjectLink, sideCode: Option[SideCode] = None, startAddrMValue: Option[Long] = None,
                endAddrMValue: Option[Long] = None, startCalibrationPoint: Option[Option[CalibrationPoint]] = None,
                endCalibrationPoint: Option[Option[CalibrationPoint]] = None) = {
-      pl.copy(sideCode = sideCode.getOrElse(pl.sideCode), startAddrMValue = startAddrMValue.getOrElse(pl.startAddrMValue),
-        endAddrMValue = endAddrMValue.getOrElse(pl.endAddrMValue),
-        calibrationPointTypes = (pl.startCalibrationPointType, pl.endCalibrationPointType)
-      )
+      pl.copy(startAddrMValue = startAddrMValue.getOrElse(pl.startAddrMValue), endAddrMValue = endAddrMValue.getOrElse(pl.endAddrMValue), sideCode = sideCode.getOrElse(pl.sideCode), calibrationPointTypes = (pl.startCalibrationPointType, pl.endCalibrationPointType))
     }
 
     def firstPoint(pl: ProjectLink) = {
@@ -395,8 +392,8 @@ object TrackSectionOrder {
             hasStartCP = true, hasEndCP = true, RoadAddressCP, RoadAddressCP))
         case _ =>
           val projectLinks = initialProjectLinks.map(p => p.copy(calibrationPointTypes =
-            (if (p.startCalibrationPointType != RoadAddressCP) p.startCalibrationPointType else NoCP,
-              if (p.endCalibrationPointType != RoadAddressCP) p.endCalibrationPointType else NoCP)))
+                      (if (p.startCalibrationPointType != RoadAddressCP) p.startCalibrationPointType else NoCP,
+                        if (p.endCalibrationPointType != RoadAddressCP) p.endCalibrationPointType else NoCP)))
           val raCPs = Seq(setCalibrationPoint(projectLinks.head, userCalibrationPoint.get(projectLinks.head.id),
             hasStartCP = true, hasEndCP = projectLinks.tail.head.calibrationPoints._1.isDefined,
             RoadAddressCP, projectLinks.tail.head.startCalibrationPointType)) ++ projectLinks.init.tail ++ Seq(setCalibrationPoint(projectLinks.last,
@@ -407,7 +404,7 @@ object TrackSectionOrder {
             if (list.isEmpty) {
               Seq(i)
             } else {
-              if (list.last.roadType != i.roadType || list.last.track != i.track || list.last.roadNumber != i.roadNumber ||
+              if (list.last.administrativeClass != i.administrativeClass || list.last.track != i.track || list.last.roadNumber != i.roadNumber ||
                 list.last.roadPartNumber != i.roadPartNumber || list.last.discontinuity == Discontinuous ||
                 list.last.discontinuity == MinorDiscontinuity || list.last.discontinuity == ParallelLink) {
                 val last = list.last
