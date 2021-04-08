@@ -48,6 +48,10 @@ object TwoTrackRoadUtils {
               prevPl_othersidePls_udcps._3
           )
         } else
+          if (splitted_pls._2.nonEmpty) { // Had same addresses
+            (prevPl_othersidePls_udcps._1 :+ currentPl, prevPl_othersidePls_udcps._2, prevPl_othersidePls_udcps._3 ++ splitted_pls._2)
+          }
+          else
           (prevPl_othersidePls_udcps._1 :+ currentPl, prevPl_othersidePls_udcps._2, prevPl_othersidePls_udcps._3)
       } else
         (prevPl_othersidePls_udcps._1 :+ currentPl, prevPl_othersidePls_udcps._2, prevPl_othersidePls_udcps._3)
@@ -107,7 +111,7 @@ object TwoTrackRoadUtils {
 
     def createCalibrationPoints(startCP: CalibrationPointDAO.CalibrationPointType, endCP: CalibrationPointDAO.CalibrationPointType, otherSideLinkStartCP: CalibrationPointDAO.CalibrationPointType, otherSideLinkEndCP: CalibrationPointDAO.CalibrationPointType, otherSideLink: ProjectLink) = {
       val leftCalibrationPoint = if (roadPartCalibrationPoints.filter(cp => cp.projectLinkId == last.id && cp.addressMValue == last.endAddrMValue).isEmpty) {
-        println("lastid: " + last.id)
+        logger.info(s"Splitting pl.id ${last.id}")
           val newUdcp = UserDefinedCalibrationPoint(NewIdValue, last.id, last.projectId, last.endMValue - last.startMValue, last.endAddrMValue)
         ProjectCalibrationPointDAO.createCalibrationPoint(newUdcp)
         Some(newUdcp)

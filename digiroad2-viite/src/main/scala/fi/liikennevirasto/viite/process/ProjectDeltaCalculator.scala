@@ -93,7 +93,7 @@ object ProjectDeltaCalculator {
 
   private def combineTwo[R <: BaseRoadAddress, P <: BaseRoadAddress](tr1: (R, P), tr2: (R, P), allNonTerminatedProjectLinks: Seq[ProjectLink]): Seq[(R, P)] = {
     val (ra1, pl1) = (tr1._1, tr1._2.asInstanceOf[ProjectLink])
-    val (ra2, pl2) = tr2
+    val (ra2, pl2) = (tr2._1, tr2._2.asInstanceOf[ProjectLink])
     val matchAddr = (!pl1.reversed && pl1.endAddrMValue == pl2.startAddrMValue) ||
       (pl1.reversed && pl1.startAddrMValue == pl2.endAddrMValue)
     val matchContinuity = (pl1.reversed && pl2.discontinuity == Discontinuity.Continuous) ||
@@ -102,13 +102,12 @@ object ProjectDeltaCalculator {
     val oppositePl = allNonTerminatedProjectLinks.filter( pl => pl.track != pl1.track && pl.endAddrMValue == pl1.endAddrMValue)
 
     val hasCalibrationPoint =
-          ((!pl1.reversed && pl1.hasCalibrationPointAtEnd || pl1.reversed && pl1.hasCalibrationPointAtStart) &&
-            pl1.hasCalibrationPointCreatedInProject) ||
-            (oppositePl.nonEmpty && oppositePl.head.hasCalibrationPointAtEnd && pl1.hasCalibrationPointAtEnd) // Opposite side has user cp
+      ((!pl1.reversed && pl1.track == Track.Combined && pl1.hasCalibrationPointAtEnd || pl1.reversed && pl1.track == Track.Combined && pl1.hasCalibrationPointAtStart) &&
+       pl1.hasCalibrationPointCreatedInProject) ||
+      (oppositePl.nonEmpty && oppositePl.head.hasCalibrationPointAtEnd && pl1.hasCalibrationPointAtEnd) // Opposite side has user cp
 
 
     if (matchAddr && matchContinuity && !hasCalibrationPoint &&
-        pl1.endAddrMValue == pl2.startAddrMValue &&
          pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
       Seq((
             ra1 match {
@@ -277,8 +276,8 @@ object ProjectDeltaCalculator {
           ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely, ra.reversed, ra.roadwayNumber, Seq()))
     }
 
-      val trans_ =  transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._2.roadNumber, x._2.roadPartNumber, x._2.track))
-      val trans_mapped = trans_.mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue), allNonTerminatedProjectLinks))
+      val trans_ =  transfers.groupBy(x => (x._2.roadNumber, x._2.roadPartNumber, x._2.track))
+      val trans_mapped = trans_.mapValues(v => combinePair(v.sortBy(_._2.startAddrMValue), allNonTerminatedProjectLinks))
       val sectioned = trans_mapped.mapValues(v => {
         val (from, to) = v.unzip
         toRoadAddressSection(transfers, from) -> toRoadAddressSection(transfers, to)

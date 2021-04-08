@@ -269,8 +269,13 @@ object TrackSectionOrder {
         val (nextPoint, nextLink): (Point, ProjectLink) = connected.size match {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
-            val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
-            (getOppositeEnd(link, closestPoint), link)
+            if (subsetB.size > 0) {
+              val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
+              (getOppositeEnd(link, closestPoint), link)
+            }
+            else { // Should be here only if the geometries are the same, i.e. in tests geometries may be all zeros -> just select the first.
+              (unprocessed.head.getEndPoints._1, unprocessed.head)
+            }
           case 1 =>
             (getOppositeEnd(connected.head, currentPoint), connected.head)
           case 2 =>

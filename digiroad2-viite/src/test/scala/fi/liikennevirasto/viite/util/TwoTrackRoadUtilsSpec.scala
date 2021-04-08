@@ -123,7 +123,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
   }
 
 
-  test("Test splitPlsAtStatusChange() When there is status change at the same distance Then should return unmodified pls without udcp.") {
+  test("Test splitPlsAtStatusChange() When there is status change at the same distance Then should return unmodified pls with two udcps.") {
     runWithRollback {
       val geomTrack1_1 = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
       val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
@@ -138,7 +138,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
 
       track1 should have size 2
       track2 should have size 2
-      udcp   should have size 0
+      udcp   should have size 2
 
       track1.head.startAddrMValue shouldBe 0
       track1.head.endAddrMValue   shouldBe 100
@@ -173,7 +173,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
 
       track1 should have size 2
       track2 should have size 2
-        udcp should have size 1
+        udcp should have size 2
 
       track1.head.startAddrMValue shouldBe 0
       track1.head.endAddrMValue   shouldBe 100
@@ -214,7 +214,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
 
       track1 should have size 3
       track2 should have size 3
-      udcp should   have size 2
+      udcp should   have size 4
 
       track1(0).startAddrMValue shouldBe 0
       track1(0).endAddrMValue   shouldBe 100
@@ -264,7 +264,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
 
       track1 should have size 3
       track2 should have size 4
-      udcp should   have size 2
+      udcp should   have size 4
 
       track1(0).startAddrMValue shouldBe 0
       track1(0).endAddrMValue   shouldBe 100
@@ -318,7 +318,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
 
       track1 should have size 3
       track2 should have size 4
-      udcp should   have size 2
+      udcp should   have size 4
 
       track1(0).startAddrMValue shouldBe 0
       track1(0).endAddrMValue   shouldBe 100
@@ -380,14 +380,17 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
 
       track1                     should have size 4
       track2                     should have size 4
-      udcp                       should have size 1
-      udcptAfterFirstSplitcCheck should have size 2
+      udcp                       should have size 2
+      udcptAfterFirstSplitcCheck should have size 4
 
       track1.foreach(_.track shouldBe Track.RightSide)
       track2.foreach(_.track shouldBe Track.LeftSide)
 
       (udcptAfterFirstSplitcCheck ++ udcp).foreach(_.get shouldBe a [UserDefinedCalibrationPoint])
-//      (udcptAfterFirstSplitcCheck ++ udcp).map(_.get.addressMValue).sorted shouldBe Seq(100, 150, 200)
+      udcp.head.get.addressMValue shouldBe 150
+      udcp.last.get.addressMValue shouldBe 150
+      udcp.head.get.projectLinkId shouldBe track1(1).id
+      udcp.last.get.projectLinkId shouldBe track2(1).id
 
       track1(0).startAddrMValue shouldBe 0
       track1(0).endAddrMValue   shouldBe 100
@@ -449,7 +452,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
 
       track1 should have size 3
       track2 should have size 4
-      udcp should   have size 2
+      udcp should   have size 4
 
       track1(0).startAddrMValue shouldBe 0
       track1(0).endAddrMValue   shouldBe 100
