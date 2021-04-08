@@ -306,11 +306,13 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val (rightLinksWithUdcps, splittedLeftLinks, udcpsFromLeftSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(splittedRightLinks, leftLinksWithUdcps)
 
     val dups = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits).filter(_.isDefined).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
+    /* Update udcp pl if splitted after second pass. */
     val updatedudcpsFromRightSideSplits = dups.foldLeft(udcpsFromRightSideSplits) { (udcpsToUpdate, cur) => {
-      val x       = (splittedLeftLinks).find(_.id == cur._1).get
-      val newLink = splittedLeftLinks.find(_.startAddrMValue == x.endAddrMValue).get
+      val splittedLeftLink       = (splittedLeftLinks).find(_.id == cur._1).get
+      val newLink = splittedLeftLinks.find(_.startAddrMValue == splittedLeftLink.endAddrMValue).get
       udcpsToUpdate.filterNot(_.get.projectLinkId == cur._1) :+ Some(udcpsToUpdate.find(_.get.projectLinkId == cur._1).get.get.copy(projectLinkId = newLink.id))
     }}
+
 
     val splitCreatedCpsFromRightSide: Map[Long, UserDefinedCalibrationPoint] = updatedudcpsFromRightSideSplits.map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
     val splitCreatedCpsFromLeftSide: Map[Long, UserDefinedCalibrationPoint] = udcpsFromLeftSideSplits.map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap

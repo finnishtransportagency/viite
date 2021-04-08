@@ -24,7 +24,7 @@ import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrateg
 import fi.liikennevirasto.viite.util.{StaticTestData, _}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{reset, spy, when}
+import org.mockito.Mockito.{reset, when}
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.scalatest.mockito.MockitoSugar

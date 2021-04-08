@@ -1517,7 +1517,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
      {
-      var projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+
 
 
       /* Terminate unhandled links */
@@ -1532,6 +1532,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }).mkString(", ")}")
 
       time(logger, "Recalculate links") {
+        var projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+        ProjectCalibrationPointDAO.removeAllCalibrationPointsFromProject(projectId)
+
         val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
 
         val recalculated = others.groupBy(pl => {
