@@ -172,7 +172,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
             "endAddrMValue" -> r.endAddrMValue,
             "discontinuity" -> r.discontinuity.value,
             "ely" -> r.ely,
-            "roadType" -> r.roadType.value,
+            "roadType" -> r.administrativeClass.asRoadTypeValue,
+            "administrativeClass" -> r.administrativeClass.value,
             "terminated" -> r.terminated.value,
             "reversed" -> r.reversed,
             "roadName" -> r.roadName,
@@ -242,7 +243,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
                 "etaisyys" -> roadwayChangesInfo.old_start_addr_m,
                 "etaisyys_loppu" -> roadwayChangesInfo.old_end_addr_m,
                 "jatkuvuuskoodi" -> roadwayChangesInfo.old_discontinuity,
-                "tietyyppi" -> roadwayChangesInfo.old_road_type,
+                "tietyyppi" -> AdministrativeClass.apply(roadwayChangesInfo.old_administrative_class).asRoadTypeValue,
+                "hallinnollinen_luokka" -> roadwayChangesInfo.old_administrative_class,
                 "ely" -> roadwayChangesInfo.old_ely
               ),
             "kohde" ->
@@ -253,7 +255,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
                 "etaisyys" -> roadwayChangesInfo.new_start_addr_m,
                 "etaisyys_loppu" -> roadwayChangesInfo.new_end_addr_m,
                 "jatkuvuuskoodi" -> roadwayChangesInfo.new_discontinuity,
-                "tietyyppi" -> roadwayChangesInfo.new_road_type,
+                "tietyyppi" -> AdministrativeClass.apply(roadwayChangesInfo.new_administrative_class).asRoadTypeValue,
+                "hallinnollinen_luokka" -> roadwayChangesInfo.new_administrative_class,
                 "ely" -> roadwayChangesInfo.new_ely
               )
           )
@@ -425,7 +428,8 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
           "start_addr_m" -> roadAddressLink.startAddressM,
           "end_addr_m" -> roadAddressLink.endAddressM,
           "ely_code" -> roadAddressLink.elyCode,
-          "road_type" -> roadAddressLink.roadType.value,
+          "road_type" -> roadAddressLink.administrativeClass.asRoadTypeValue,
+          "administrative_class" -> roadAddressLink.administrativeClass.value,
           "discontinuity" -> roadAddressLink.discontinuity,
           "start_date" -> roadAddressLink.startDate,
           "end_date" -> roadAddressLink.endDate,

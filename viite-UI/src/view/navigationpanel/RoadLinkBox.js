@@ -46,7 +46,7 @@
       [8, 'Jalka- tai pyörätie (70001 - 89999, 90001 - 99999)'],
       [9, 'Yksityistie, talvitie tai polku (50001-62999)'],
       [11, 'Muu tieverkko'],
-      [98, 'Tietyyppi kunnan katuosuus tai yks.tie'],
+      [98, 'Hallinnollinen luokka kunta tai yksityinen'],
       [99, 'Tuntematon']
     ];
 
@@ -68,7 +68,8 @@
       [14, 'Silta'],
       [15, 'Huoltoaukko'],
       [16, 'Yksityistie- tai katuliittymä'],
-      [17, 'Porrastettu liittymä']
+      [17, 'Porrastettu liittymä'],
+      [18, 'Lautta']
     ];
 
     var buildMultiColoredSegments = function () {

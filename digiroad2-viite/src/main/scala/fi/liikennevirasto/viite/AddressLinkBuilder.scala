@@ -2,7 +2,8 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.viite.RoadType._
+//import fi.liikennevirasto.viite.AdministrativeClass._
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
@@ -37,16 +38,6 @@ trait AddressLinkBuilder {
     PostGISDatabase.withDynSession {
       MunicipalityDAO.getMunicipalityNames
     }
-
-  def getRoadType(administrativeClass: AdministrativeClass, linkType: LinkType): RoadType = {
-    (administrativeClass, linkType) match {
-      case (State, CableFerry) => FerryRoad
-      case (State, _) => PublicRoad
-      case (Municipality, _) => MunicipalityStreetRoad
-      case (Private, _) => PrivateRoadType
-      case (_, _) => UnknownOwnerRoad
-    }
-  }
 
   def getLinkType(roadLink: VVHRoadlink): LinkType ={  //similar logic used in roadLinkService
     roadLink.featureClass match {
