@@ -1142,7 +1142,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
       reAssignedRight2.roadwayNumber should not be reAssignedRight1.roadwayNumber
     }
   }
-  
+
   /* This roadwaynumber based test needs fixing / rethinking */
 /* This test caused a split to right side with calibration point copien to middle link. Test fails to  mismatch on last line. -> should remove old roadway splitting? */
 
