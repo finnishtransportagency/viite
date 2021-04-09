@@ -6,7 +6,7 @@ import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.SequenceResetterDAO
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -76,16 +76,16 @@ class DataImporter {
     }
   }
 
-  case class RoadTypeChangePoints(roadNumber: Long, roadPartNumber: Long, addrM: Long, before: RoadType, after: RoadType, elyCode: Long)
+  case class AdministrativeClassChangePoints(roadNumber: Long, roadPartNumber: Long, addrM: Long, before: AdministrativeClass, after: AdministrativeClass, elyCode: Long)
 
   /**
-    * Get road type for road address object with a list of road type change points
+    * Get administrative class for road address object with a list of road type change points
     *
     * @param changePoints Road part change points for road types
-    * @param roadAddress Road address to get the road type for
-    * @return road type for the road address or if a split is needed then a split point (address) and road types for first and second split
+    * @param roadAddress Road address to get the dministrative class for
+    * @return dministrative class for the road address or if a split is needed then a split point (address) and road types for first and second split
     */
-  def roadType(changePoints: Seq[RoadTypeChangePoints], roadAddress: RoadAddress): Either[RoadType, (Long, RoadType, RoadType)] = {
+  def getAdministrativeClass(changePoints: Seq[AdministrativeClassChangePoints], roadAddress: RoadAddress): Either[AdministrativeClass, (Long, AdministrativeClass, AdministrativeClass)] = {
     // Check if this road address overlaps the change point and needs to be split
     val overlaps = changePoints.find(c => c.addrM > roadAddress.startAddrMValue && c.addrM < roadAddress.endAddrMValue)
     if (overlaps.nonEmpty)
@@ -296,32 +296,26 @@ class DataImporter {
   }
 
   // TODO This is not used and should probably be removed.
-  def splitRoadAddresses(roadAddress: RoadAddress, addrMToSplit: Long, roadTypeBefore: RoadType, roadTypeAfter: RoadType, elyCode: Long): Seq[RoadAddress] = {
+  def splitRoadAddresses(roadAddress: RoadAddress, addrMToSplit: Long, administrativeClassBefore: AdministrativeClass, administrativeClassAfter: AdministrativeClass, elyCode: Long): Seq[RoadAddress] = {
     // mValue at split point on a TowardsDigitizing road address:
     val splitMValue = roadAddress.startMValue + (roadAddress.endMValue - roadAddress.startMValue) / (roadAddress.endAddrMValue - roadAddress.startAddrMValue) * (addrMToSplit - roadAddress.startAddrMValue)
     println(s"Splitting roadway id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on AddrMValue = $addrMToSplit")
-    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, roadType = roadTypeBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-            roadAddress.endMValue - splitMValue
-          else
-            0.0, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-            roadAddress.endMValue
-          else
-            splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode) // TODO Check roadway_number
+    val roadAddressA = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, administrativeClass = administrativeClassBefore, endAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+                roadAddress.endMValue - splitMValue
+              else
+                0.0, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+                roadAddress.endMValue
+              else
+                splitMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue), ely = elyCode) // TODO Check roadway_number
 
-    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, roadType = roadTypeAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-            0.0
-          else
-            splitMValue, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
-            roadAddress.endMValue - splitMValue
-          else
-            roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode) // TODO Check roadway_number
+    val roadAddressB = roadAddress.copy(id = fi.liikennevirasto.viite.NewIdValue, administrativeClass = administrativeClassAfter, startAddrMValue = addrMToSplit, startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+                0.0
+              else
+                splitMValue, endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+                roadAddress.endMValue - splitMValue
+              else
+                roadAddress.endMValue, geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue), ely = elyCode) // TODO Check roadway_number
     Seq(roadAddressA, roadAddressB)
-  }
-
-  // TODO This is not used and probably should be removed.
-  def updateRoadWithSingleRoadType(roadNumber:Long, roadPartNumber: Long, roadType : Long, elyCode :Long) = {
-    println(s"Updating road number $roadNumber and part $roadPartNumber with roadType = $roadType and elyCode = $elyCode")
-    sqlu"""UPDATE ROADWAY SET ROAD_TYPE = $roadType, ELY= $elyCode where ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber """.execute
   }
 
   private def generateChunks(linkIds: Seq[Long], chunkNumber: Long): Seq[(Long, Long)] = {

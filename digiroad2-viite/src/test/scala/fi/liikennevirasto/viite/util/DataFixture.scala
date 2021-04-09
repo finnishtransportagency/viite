@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{MunicipalityCodeImporter, SqlScriptRunner, ViiteProperties}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process._
+import fi.liikennevirasto.viite.process.{ApplyChangeInfoProcess, ContinuityChecker, RoadNetworkChecker, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.DataImporter.Conversion
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
@@ -221,6 +221,10 @@ object DataFixture {
     flyway.migrate()
   }
 
+  def repair() = {
+    flyway.repair()
+  }
+
   def tearDown() {
 
     // flyway.clean()
@@ -294,6 +298,10 @@ object DataFixture {
     operation match {
       case Some("check_road_network") =>
         checkRoadNetwork()
+      case Some("flyway_migrate") =>
+        migrateAll()
+      case Some("flyway_repair") =>
+        repair()
       case Some("import_road_addresses") =>
         if (args.length > 1)
           importRoadAddresses(Some(args(1)))
