@@ -2,9 +2,9 @@ package fi.liikennevirasto.viite
 
 import java.net.ConnectException
 
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.Dummies.dummyRoadwayChangeSection
-import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import org.apache.http.client.config.RequestConfig
@@ -13,9 +13,10 @@ import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.util.EntityUtils
 import org.joda.time.DateTime
+import org.json4s
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.jackson.Serialization
-import org.json4s.{DefaultFormats, StreamInput, StringInput}
+import org.json4s.{DefaultFormats, JInt, JString, JsonAST, StreamInput, StringInput}
 import org.scalatest.{FunSuite, Matchers}
 
 /**
@@ -26,7 +27,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   val defaultChangeInfo = RoadwayChangeInfo(AddressChangeType.apply(2),
     RoadwayChangeSection(None, None, None, None, None, None, None, None, None),
     RoadwayChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
-      Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1), reversed = false, 1)
+      Option(AdministrativeClass.State), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), AdministrativeClass.apply(1), reversed = false, 1)
 
   def getRestEndPoint: String = {
     val loadedKeyString = ViiteProperties.tierekisteriViiteRestApiEndPoint
@@ -121,7 +122,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
       " \n\t\"change_info\":[ {\n\t\t\"change_type\": 4,\n\t\t\"source\": {\n\t\t\t\"tie\": 11007," +
       "\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 2,\n\t\t\t\"aet\": 0,\n\t\t\t\"losa\": 2,\n\t\t\t\"let\": 1895\n\t\t}," +
       "\n\t\t\"target\": {\n\t\t\t\"tie\": 11007,\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 1,\n\t\t\t\"aet\": 3616," +
-      "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5511\n\t\t},\n\t\t\"continuity\": 5,\n\t\t\"road_type\": 821,\n\t\"ely\": 9\n\t}]\n}"
+      "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5511\n\t\t},\n\t\t\"continuity\": 5,\n\t\t\"administrativeClass\": 821,\n\t\"ely\": 9\n\t}]\n}"
     parse(StringInput(string)).extract[ChangeProject]
   }
 
@@ -131,13 +132,14 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
       " \n\t\"change_info\":[ {\n\t\t\"change_type\": 4,\n\t\t\"source\": {\n\t\t\t\"tie\": 11007," +
       "\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 2,\n\t\t\t\"aet\": 0,\n\t\t\t\"losa\": 2,\n\t\t\t\"let\": 1895\n\t\t}," +
       "\n\t\t\"target\": {\n\t\t\t\"tie\": 11007,\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 1,\n\t\t\t\"aet\": 3616," +
-      "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5511\n\t\t},\n\t\t\"continuity\": 5,\n\t\t\"road_type\": 821,\n\t\"ely\": 9\n\t}]\n}"
+      "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5511\n\t\t},\n\t\t\"continuity\": 5,\n\t\t\"administrativeClass\": 821,\n\t\"ely\": 9\n\t}]\n}"
     val parsedProject = parse(StringInput(string)).extract[ChangeProject]
-    val reparsed = parse(StreamInput(ViiteTierekisteriClient.createJsonMessage(parsedProject).getContent)).extract[ChangeProject]
-    parsedProject should be(reparsed)
-    reparsed.id should be(8914)
-    reparsed.changeDate should be("2017-06-01")
-    reparsed.changeInfoSeq should have size 1
+    val reparsed = parse(StreamInput(ViiteTierekisteriClient.createJsonMessage(parsedProject).getContent))
+
+    // TR still needs road_type  instead of new administrativeClass.
+    reparsed.asInstanceOf[JsonAST.JObject].obj.find(_._1 == "change_info").get._2.asInstanceOf[JsonAST.JArray].arr.head.asInstanceOf[JsonAST.JObject].obj(2)._1 should be ("road_type")
+    reparsed.asInstanceOf[JsonAST.JObject].obj.find(_._1 == "change_date").get._2 should be(JString(parsedProject.changeDate))
+    reparsed.asInstanceOf[JsonAST.JObject].obj.find(_._1 == "id").get._2 should be(JInt(parsedProject.id))
   }
 
   test("Test createJsonMessage to check if it returns the JSON with the ely codes inside the change_info objects") {
@@ -148,25 +150,25 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
 
     val changeInfos = List(
       RoadwayChangeInfo(AddressChangeType.Unchanged,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1, newEly),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1, newEly),
       RoadwayChangeInfo(AddressChangeType.ReNumeration,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1, newEly),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1, newEly),
       RoadwayChangeInfo(AddressChangeType.Transfer,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1, newEly),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1, newEly),
       RoadwayChangeInfo(AddressChangeType.New,
         source = null,
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1, newEly),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1, newEly),
       RoadwayChangeInfo(AddressChangeType.Termination,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
         target = null,
-        Continuous, RoadType.apply(1), reversed = false, 1, oldEly)
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1, oldEly)
     )
 
     val changes = List(
@@ -180,13 +182,15 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     val changeProject = ViiteTierekisteriClient.convertToChangeProject(changes)
     val jsonMsg = ViiteTierekisteriClient.createJsonMessage(changeProject)
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
-    val reparsed = parse(StreamInput(jsonMsg.getContent)).extract[ChangeProject]
-    reparsed.changeInfoSeq.size should be(changes.size)
-    reparsed.changeInfoSeq.foreach(ci => {
-      if(AddressChangeType.Termination.value == ci.changeType.value)
-        ci.ely should be(oldEly)
+    val reparsed = parse(StreamInput(jsonMsg.getContent))
+    val changeInfoSeq = reparsed.asInstanceOf[JsonAST.JObject].obj.find(_._1 == "change_info").get._2.asInstanceOf[JsonAST.JArray].arr
+
+    changeInfoSeq.size should be(changes.size)
+    changeInfoSeq.foreach(ci => {
+      if(AddressChangeType.Termination.value == ci.asInstanceOf[JsonAST.JObject].obj.find(_._1 == "change_type").get._2.asInstanceOf[json4s.JInt].num.bigInteger.intValue())
+        ci.asInstanceOf[JsonAST.JObject].obj.find(_._1 == "ely").get._2.asInstanceOf[json4s.JInt].num.bigInteger.longValue() should be(oldEly)
       else
-        ci.ely should be(newEly)
+        ci.asInstanceOf[JsonAST.JObject].obj.find(_._1 == "ely").get._2.asInstanceOf[json4s.JInt].num.bigInteger.longValue() should be(newEly)
     })
 
   }
@@ -197,20 +201,19 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
       " \n\t\"change_info\":[ {\n\t\t\"change_type\": 4,\n\t\t\"source\": {\n\t\t\t\"tie\": 11007," +
       "\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 2,\n\t\t\t\"aet\": 0,\n\t\t\t\"losa\": 2,\n\t\t\t\"let\": 1895\n\t\t}," +
       "\n\t\t\"target\": {\n\t\t\t\"tie\": 11007,\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 1,\n\t\t\t\"aet\": 3616," +
-      "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5511\n\t\t},\n\t\t\"continuity\": 5,\n\t\t\"road_type\": 821,\n\t\"ely\": 9\n\t}," +
+      "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5511\n\t\t},\n\t\t\"continuity\": 5,\n\t\t\"administrativeClass\": 821,\n\t\"ely\": 9\n\t}," +
       "{\n\t\t\"change_type\": 4,\n\t\t\"source\": {\n\t\t\t\"tie\": 11007," +
       "\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 3,\n\t\t\t\"aet\": 0,\n\t\t\t\"losa\": 3,\n\t\t\t\"let\": 95\n\t\t}," +
       "\n\t\t\"target\": {\n\t\t\t\"tie\": 11007,\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 1,\n\t\t\t\"aet\": 5511," +
-      "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5606\n\t\t},\n\t\t\"continuity\": 1,\n\t\t\"road_type\": 821,\n\t\"ely\": 9\n\t}" +
+      "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5606\n\t\t},\n\t\t\"continuity\": 1,\n\t\t\"administrativeClass\": 821,\n\t\"ely\": 9\n\t}" +
       "]\n}"
     val parsedProject = parse(StringInput(string)).extract[ChangeProject]
-    val reparsed = parse(StreamInput(ViiteTierekisteriClient.createJsonMessage(parsedProject).getContent)).extract[ChangeProject]
-    parsedProject should be(reparsed)
-    reparsed.changeInfoSeq should have size 2
-    val part2 = reparsed.changeInfoSeq.find(_.source.startRoadPartNumber.get == 2)
-    val part3 = reparsed.changeInfoSeq.find(_.source.startRoadPartNumber.get == 3)
-    part2.nonEmpty should be(true)
-    part3.nonEmpty should be(true)
+    val reparsed = parse(StreamInput(ViiteTierekisteriClient.createJsonMessage(parsedProject).getContent))
+    val changeInfoSeq = reparsed.asInstanceOf[JsonAST.JObject].obj.find(_._1 == "change_info").get._2.asInstanceOf[JsonAST.JArray].arr
+
+    changeInfoSeq should have size 2
+    changeInfoSeq(0).asInstanceOf[JsonAST.JObject].obj.find(_._1 == "source").get._2.asInstanceOf[JsonAST.JObject].obj.find(_._1 == "aosa").get._2.asInstanceOf[json4s.JInt].num.bigInteger.intValue() should be(2)
+    changeInfoSeq(1).asInstanceOf[JsonAST.JObject].obj.find(_._1 == "source").get._2.asInstanceOf[JsonAST.JObject].obj.find(_._1 == "aosa").get._2.asInstanceOf[json4s.JInt].num.bigInteger.intValue() should be(3)
   }
 
   test("Test ViiteTierekisteriClient.convertToChangeProject() The change table ely codes should be the ones in the change infos") {
@@ -221,21 +224,21 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
 
     val changeInfos = List(
       RoadwayChangeInfo(AddressChangeType.Unchanged,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1),
       RoadwayChangeInfo(AddressChangeType.ReNumeration,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1),
       RoadwayChangeInfo(AddressChangeType.Transfer,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1),
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1),
       RoadwayChangeInfo(AddressChangeType.New,
-        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(RoadType.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
-        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(RoadType.apply(5)), Some(Discontinuity.Continuous), Some(newEly)),
-        Continuous, RoadType.apply(1), reversed = false, 1)
+        source = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(0L), Some(100L), Some(AdministrativeClass.apply(1)), Some(Discontinuity.Continuous), Some(oldEly)),
+        target = dummyRoadwayChangeSection(Some(roadNumber), Some(1L), Some(0L), Some(100L), Some(200L), Some(AdministrativeClass.apply(3)), Some(Discontinuity.Continuous), Some(newEly)),
+        Continuous, AdministrativeClass.apply(1), reversed = false, 1)
     )
 
     val changes = List(

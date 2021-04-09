@@ -39,7 +39,7 @@
       '<label class="project-change-table-dimension-header">LET</label>' +
       '<label class="project-change-table-dimension-header">PIT</label>' +
       '<label class="project-change-table-dimension-header">JATK</label>' +
-      '<label class="project-change-table-dimension-header">TIETY</label>' +
+      '<label class="project-change-table-dimension-header">HALL</label>' +
       '<label class="project-change-table-dimension-header">ELY</label>' +
       '<label class="project-change-table-dimension-header target">KÄÄNTÖ</label>' +
       '<label class="project-change-table-dimension-header">TIE</label>' +
@@ -49,7 +49,7 @@
       '<label class="project-change-table-dimension-header">LET</label>' +
       '<label class="project-change-table-dimension-header">PIT</label>' +
       '<label class="project-change-table-dimension-header">JATK</label>' +
-      '<label class="project-change-table-dimension-header">TIETY</label>' +
+      '<label class="project-change-table-dimension-header">HALL</label>' +
       '<label class="project-change-table-dimension-header">ELY</label>');
 
     changeTableHeader.append('<div class="change-table-dimension-headers" style="overflow-y: auto;">' +
@@ -216,6 +216,31 @@
       return ((changeInfoSeq.reversed) ? '<td class="project-change-table-dimension">&#10004;</td>' : '<td class="project-change-table-dimension"></td>');
     }
 
+    /**
+     Convert administrativeClass number value to text value
+          1   = Valtio
+          2   = Kunta
+          3   = Yksit.
+     default  = Yksit.
+     */
+    function getAdministrativeClassText(administrativeClass) {
+      let text;
+      switch(administrativeClass) {
+        case 1:
+          text = "Valtio";
+              break;
+        case 2:
+          text = "Kunta";
+              break;
+        case 3:
+          text = "Yksit.";
+              break;
+        default:
+          text = "Yksit.";
+      }
+      return text;
+    }
+
     function getEmptySource(changeInfoSeq) {
       return '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
         '<td class="project-change-table-dimension"></td>' +
@@ -249,7 +274,7 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.endAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + (changeInfoSeq.target.endAddressM - changeInfoSeq.target.startAddressM) + '</td>' +
         '<td class="project-change-table-dimension">' + replaceParallelLink(changeInfoSeq.target.discontinuity) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.roadType + '</td>' +
+        '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.target.administrativeClass ) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.ely + '</td>';
     }
 
@@ -262,7 +287,7 @@
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.endAddressM + '</td>' +
         '<td class="project-change-table-dimension">' + (changeInfoSeq.source.endAddressM - changeInfoSeq.source.startAddressM) + '</td>' +
         '<td class="project-change-table-dimension">' + replaceParallelLink(changeInfoSeq.source.discontinuity) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.roadType + '</td>' +
+        '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.source.administrativeClass ) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.ely + '</td>';
     }
 

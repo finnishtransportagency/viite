@@ -621,7 +621,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     Option(attributes("ADMINCLASS").asInstanceOf[BigInt])
       .map(_.toInt)
       .map(AdministrativeClass.apply)
-      .getOrElse(Unknown)
+      .getOrElse(AdministrativeClass.Unknown)
   }
 
   protected def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
