@@ -406,7 +406,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val reversed = if (existingProjectLinks.nonEmpty) existingProjectLinks.forall(_.reversed) else false
 
           val projectLinks: Seq[ProjectLink] = linkIds.toSet.map { id: Long =>
-            /* Set calibration point*/
+            /* Set calibration point */
             val connectedProjectlink = existingProjectLinks.filterNot(_.status == LinkStatus.Terminated).find(pl => roadLinks(id).geometry.exists(rl_point => pl.connected(rl_point)))
             val newPl = newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, roadType, roadEly, roadName, reversed)
             if (connectedProjectlink.isDefined && connectedProjectlink.get.hasCalibrationPointAtStart) {
@@ -472,7 +472,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def addNewLinksToProjectInTX(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: Long, discontinuity: Discontinuity): Option[String] = {
     val newRoadNumber = newLinks.head.roadNumber
     val newRoadPartNumber = newLinks.head.roadPartNumber
-    val newTrack = newLinks.head.track
     val linkStatus = newLinks.head.status
     try {
       val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber, linkStatus, newLinks)
@@ -520,8 +519,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           newLinks
         }
 
-      val newLinkIds = projectLinkDAO.create(createLinks.map(_.copy(createdBy = Some(user))))
-//      recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)), Some(newTrack), Some(discontinuity), newLinkIds)
+      projectLinkDAO.create(createLinks.map(_.copy(createdBy = Some(user))))
       newLinks.flatMap(_.roadName).headOption.flatMap(setProjectRoadName(projectId, newRoadNumber, _)).toList.headOption
     } catch {
       case ex: ProjectValidationException => Some(ex.getMessage)

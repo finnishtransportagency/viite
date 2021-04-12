@@ -157,39 +157,49 @@ object ProjectSectionCalculator {
       )
 
       val rightReassignedEnd: Seq[ProjectLink] = rightReassignedStart.map(rightTerminatedpl => {
-        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
-          (pl.id != rightTerminatedpl.id && ( pl.startingPoint.connected(rightTerminatedpl.endPoint))
-            ))
+        val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl => {
+          (pl.id != rightTerminatedpl.id && (pl.startingPoint.connected(rightTerminatedpl.endPoint))
+          )
+        })
         if (startingPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = startingPointLink.get.startAddrMValue)
         else {
-          val endPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl =>
+          val endPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl => {
             pl.id != rightTerminatedpl.id && (pl.endPoint.connected(rightTerminatedpl.endPoint))
-          )
+          })
           if (endPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = endPointLink.get.endAddrMValue)
           else rightTerminatedpl
         }
       }
       )
-// 11908903
 
-
-//      val (leftAdjusted, rightAdjusted) = adjustTracksToMatch(leftLinks, rightLinks, None)
-//      val (completedAdjustedLeft, completedAdjustedRight) = TrackSectionOrder.setCalibrationPoints(leftAdjusted, rightAdjusted, Map())
-//      val (completedAdjustedLeft, completedAdjustedRight) = TrackSectionOrder.setCalibrationPoints(leftLinks, rightLinks, Map())
-
-      if (rightReassignedEnd == leftReassignedEnd)
-        rightReassignedEnd
+      def retval: Seq[ProjectLink] = {
+        if (rightReassignedEnd == leftReassignedEnd)
+          rightReassignedEnd
         else
-        rightReassignedEnd ++ leftReassignedEnd.filterNot(_.track == Track.Combined)
-//      val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(rightReassignedEnd), groupIntoSections(leftReassignedEnd))
-//      val calculatedSections = TrackSectionOrder.createCombinedSectionss(groupIntoSections(completedAdjustedRight), groupIntoSections(completedAdjustedLeft))
-//      calculatedSections.flatMap { sec =>
-//        if (sec.right == sec.left)
-//          sec.right.links
-//        else
-//          sec.right.links ++ sec.left.links
-//      }.filter(_.status == LinkStatus.Terminated)
-    }
+          rightReassignedEnd ++ leftReassignedEnd
+      }
+      def checkAverage =  {
+        val maxrpl      = rightReassignedEnd.maxBy(_.endAddrMValue)
+        val maxlpl      = leftReassignedEnd.maxBy(_.endAddrMValue)
+        val endAddrDiff = Math.abs(maxrpl.endAddrMValue - maxlpl.endAddrMValue)
+        val minLength   = Math.min(maxrpl.geometryLength, maxrpl.geometryLength)
+        // Ensure difference is not too great, i.e. links are about aligned.
+        if (endAddrDiff < minLength) {
+          val avg = Math.round((maxrpl.endAddrMValue + maxlpl.endAddrMValue) / 2)
+          (rightReassignedEnd.filterNot(_.id == maxrpl.id) :+ maxrpl.copy(endAddrMValue = avg)) ++
+          (leftReassignedEnd.filterNot(_.track == Track.Combined).filterNot(_.id == maxlpl.id) :+ maxlpl.copy(endAddrMValue = avg))
+        } else
+          retval
+      }
+
+      /* Average end values for change table when terminated links are the last links on the road part. */
+      if (rightReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue != leftReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
+          && left.maxBy(_.endAddrMValue).endAddrMValue <= leftReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
+          && right.maxBy(_.endAddrMValue).endAddrMValue <= rightReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue)
+        checkAverage
+      else
+        retval
+      }
   }
 }
 

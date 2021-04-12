@@ -115,7 +115,8 @@ trait TrackCalculatorStrategy {
     * @return Returns all the given project links with recalculated measures
     */
   protected def assignValues(seq: Seq[ProjectLink], st: Long, en: Long, factor: TrackAddressingFactors, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
-    val coEff = 1.0 //(en - st - factor.unChangedLength - factor.transferLength) / factor.newLength
+    val coEff_old = (en - st - factor.unChangedLength - factor.transferLength) / factor.newLength
+    val coEff = (en - st) / (factor.newLength + factor.unChangedLength + factor.transferLength)
     ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), if (coEff.isNaN || coEff.isInfinity || coEff <= 0) 1.0
     else
       coEff)
