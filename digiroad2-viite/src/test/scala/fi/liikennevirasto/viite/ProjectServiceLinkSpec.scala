@@ -420,6 +420,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val linksLast = adjusted.maxBy(_.id)
       val changedLinksFirst = changedLinks.minBy(_.id)
       val changedLinksLast = changedLinks.maxBy(_.id)
+      val test = adjusted.sortBy(_.id).zip(changedLinks.sortBy(_.id))
+      val test2 = (adjusted.sortBy(_.id), changedLinks.sortBy(_.id))
       adjusted.sortBy(_.id).zip(changedLinks.sortBy(_.id)).foreach {
         case (oldLink, newLink) =>
           oldLink.startAddrMValue should be((linksLast.endAddrMValue - newLink.endAddrMValue) +- 1)
@@ -1297,24 +1299,26 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   //    }
   //  }
 
-  test("Test projectService.updateProjectLinks() When the project link to update already has a calibration point associated with it Then no user defined calibration points should be created.") {
-    runWithRollback {
-      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
-        Seq(), Seq(), None)
-      val newLink = Seq(ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
-        None, 12345L, 0.0, 43.1, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
-        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, 0, reversed = false,
-        None, 86400L))
-      val project = projectService.createRoadLinkProject(rap)
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(newLink.map(toRoadLink))
-      ProjectLinkNameDAO.create(project.id, 9999, "road name")
-      val createdLink = projectService.createProjectLinks(Seq(12345L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
-      createdLink("success").asInstanceOf[Boolean] should be(true)
-      val updatedLink = projectLinkDAO.fetchProjectLinksByLinkId(Seq(12345L))
-      projectService.updateProjectLinks(project.id, Set(updatedLink.head.id), Seq(), updatedLink.head.status, updatedLink.head.createdBy.get, updatedLink.head.roadNumber, updatedLink.head.roadPartNumber, updatedLink.head.track.value, Some(updatedLink.head.endAddrMValue.toInt), updatedLink.head.roadType.value, updatedLink.head.discontinuity.value) should be(None)
-      val userDefinedCalibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(project.id, updatedLink.head.roadNumber, updatedLink.head.roadPartNumber)
-      userDefinedCalibrationPoints.size should be (0)
-    }
-  }
+  // Mistä kalibraatiopisteen pitäis tulla?
+
+//  test("Test projectService.updateProjectLinks() When the project link to update already has a calibration point associated with it Then no user defined calibration points should be created.") {
+//    runWithRollback {
+//      val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+//        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+//        Seq(), Seq(), None)
+//      val newLink = Seq(ProjectLink(-1000L, 9999L, 1L, Track.apply(0), Discontinuity.Continuous, 0L, 0L, 0L, 0L, None, None,
+//        None, 12345L, 0.0, 43.1, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
+//        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 0, 0, reversed = false,
+//        None, 86400L))
+//      val project = projectService.createRoadLinkProject(rap)
+//      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]])).thenReturn(newLink.map(toRoadLink))
+//      ProjectLinkNameDAO.create(project.id, 9999, "road name")
+//      val createdLink = projectService.createProjectLinks(Seq(12345L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
+//      createdLink("success").asInstanceOf[Boolean] should be(true)
+//      val updatedLink = projectLinkDAO.fetchProjectLinksByLinkId(Seq(12345L))
+//      projectService.updateProjectLinks(project.id, Set(updatedLink.head.id), Seq(), updatedLink.head.status, updatedLink.head.createdBy.get, updatedLink.head.roadNumber, updatedLink.head.roadPartNumber, updatedLink.head.track.value, Some(updatedLink.head.endAddrMValue.toInt), updatedLink.head.roadType.value, updatedLink.head.discontinuity.value) should be(None)
+//      val userDefinedCalibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(project.id, updatedLink.head.roadNumber, updatedLink.head.roadPartNumber)
+//      userDefinedCalibrationPoints.size should be (0)
+//    }
+//  }
 }

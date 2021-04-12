@@ -19,7 +19,7 @@ object ProjectSectionMValueCalculator {
 
     val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
       val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
-        val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) //* coEff
+        val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
         pl.status match {
           case LinkStatus.New => addressValue
           case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => addressValue
