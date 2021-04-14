@@ -508,8 +508,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           if (discontinuity != Discontinuity.Continuous) {
             val existingLinksGeoms = existingLinks.map(nl => (nl.geometry.head, nl.geometry.last))
             val onceConnectedNewLinks = TrackSectionOrder.findOnceConnectedLinks(newLinks)
-            val endLinkOfNewLinks = onceConnectedNewLinks.filterNot(ep => existingLinksGeoms.exists(el => ep._1.connected(el._1) || ep._1.connected(el._2))).map(_._2)
-            if (endLinkOfNewLinks.size == 1) {
+            val endLinkOfNewLinks = onceConnectedNewLinks.filterNot(ep => existingLinksGeoms.exists(el => ep._1.connected(el._1) || ep._1.connected(el._2))).map(_._2).toList
+            if (endLinkOfNewLinks.distinct.size == 1) {
               newLinks.filterNot(_.equals(endLinkOfNewLinks.head)) :+ endLinkOfNewLinks.head.copy(discontinuity = discontinuity)
             }
             else
@@ -1375,36 +1375,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             // Fetching road addresses in order to obtain the original addressMValues, since we may not have those values
             // on project_link table, after previous recalculations
             resetLinkValues(toUpdateLinks)
-
-//            /* Remove calibration points from pls connected to terminated links. */
-//            val linksWithStartCP = toUpdateLinks.filter(pl => {
-//              pl.calibrationPointTypes._1 == CalibrationPointDAO.CalibrationPointType.RoadAddressCP
-//            }).map(_.startAddrMValue)
-//            val linksWithEndCP   = toUpdateLinks.filter(pl => {
-//              pl.calibrationPointTypes._2 == CalibrationPointDAO.CalibrationPointType.RoadAddressCP
-//            }).map(_.endAddrMValue)
-//
-//            if ((linksWithStartCP ++ linksWithEndCP).nonEmpty) {
-//              val allProjectLinks                      = projectLinkDAO.fetchProjectLinks(projectId)
-//              val plsConnectedWithStartAddrToTermlinks = allProjectLinks.filter(pl => {
-//                linksWithStartCP.contains(pl.startAddrMValue)
-//              })
-//              val plsConnectedWithEndAddrToTermlinks   = allProjectLinks.filter(pl => {
-//                linksWithEndCP.contains(pl.endAddrMValue)
-//              })
-//
-//              if (plsConnectedWithStartAddrToTermlinks.size > 1 || plsConnectedWithEndAddrToTermlinks.size > 1) {
-//                logger.warn("Removing calibrationpoints from more than one projectlink. This may not be intended.")
-//              }
-//
-//              plsConnectedWithStartAddrToTermlinks.foreach(pl => { // pl endCalibrationPoint defaults to NoCP
-//                projectLinkDAO.updateProjectLinkCalibrationPoints(pl, (CalibrationPointDAO.CalibrationPointType.NoCP, pl.endCalibrationPoint.get.typeCode))
-//              })
-//              plsConnectedWithEndAddrToTermlinks.foreach(pl => { // pl startCalibrationPoint defaults to NoCP
-//                projectLinkDAO.updateProjectLinkCalibrationPoints(pl, (pl.startCalibrationPoint.get.typeCode, CalibrationPointDAO.CalibrationPointType.NoCP))
-//              })
-//            }
-
             projectLinkDAO.updateProjectLinksStatus(toUpdateLinks.map(_.id).toSet, LinkStatus.Terminated, userName)
 
           case LinkStatus.Numbering =>

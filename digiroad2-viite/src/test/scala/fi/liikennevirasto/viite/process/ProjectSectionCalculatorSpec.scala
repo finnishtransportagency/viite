@@ -1196,7 +1196,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
         Some(109L), roadAddressTrack = Some(Track.LeftSide))
 
       val (terminated, others) = (Seq(projectLink3, projectLink4), Seq(projectLink1, projectLink2))
-      val recalculated = ProjectSectionCalculator.assignMValues(others, Seq.empty[UserDefinedCalibrationPoint]).sortBy(_.endAddrMValue)
+      val recalculated = ProjectSectionCalculator.assignMValues(others).sortBy(_.endAddrMValue)
 
       val terminatedProjectLinks = ProjectSectionCalculator.assignTerminatedMValues(terminated, recalculated)
 

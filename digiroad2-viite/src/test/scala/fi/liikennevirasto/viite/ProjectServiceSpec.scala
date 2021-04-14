@@ -23,7 +23,7 @@ import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectRoadwayChange, RoadwayDAO, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -524,9 +524,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val projectLinks = projectLinkDAO.fetchProjectLinks(id)
       projectLinkDAO.updateProjectLinksStatus(projectLinks.map(x => x.id).toSet, LinkStatus.Transfer, "test")
       mockForProject(id)
+      val fetchedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
+      val calculatedProjectLinks = ProjectSectionCalculator.assignMValues(fetchedProjectLinks)
+
       projectService.changeDirection(id, 5, 207, projectLinks.map(l => LinkToRevert(l.id, l.linkId, l.status.value, l.geometry)), ProjectCoordinates(0, 0, 0), "test") should be(None)
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(id)
-      val maxBefore = if (projectLinks.nonEmpty) projectLinks.maxBy(_.endAddrMValue).endAddrMValue else 0
+      val maxBefore = if (projectLinks.nonEmpty) calculatedProjectLinks.maxBy(_.endAddrMValue).endAddrMValue else 0
       val maxAfter = if (updatedProjectLinks.nonEmpty) updatedProjectLinks.maxBy(_.endAddrMValue).endAddrMValue else 0
       maxBefore should be(maxAfter)
       val combined = updatedProjectLinks.filter(_.track == Track.Combined)
@@ -1270,7 +1273,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val valueToIncrement = 2.0
       val newEndAddressValue = Seq(links.filter(_.linkId == linkidToIncrement).head.endAddrMValue.toInt, valueToIncrement.toInt).sum
       projectService.updateProjectLinks(project.id, Set(idsToIncrement), Seq(linkidToIncrement), LinkStatus.New, "TestUserTwo", 9999, 1, 0, Some(newEndAddressValue), 1L, 5) should be(None)
-      val linksAfterGivenAddrMValue = projectLinkDAO.fetchProjectLinks(project.id)
+
+      val links_ = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
+      val linksAfterGivenAddrMValue = ProjectSectionCalculator.assignMValues(links_).sortBy(_.endAddrMValue)
+
+//      val linksAfterGivenAddrMValue = projectLinkDAO.fetchProjectLinks(project.id)
 
       //only link and links after linkidToIncrement should be extended
       val extendedLink = links.filter(_.linkId == linkidToIncrement).head
@@ -1281,10 +1288,11 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       }
 
       projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), ProjectCoordinates(0, 0, 0), "TestUserTwo")
+      val linksBeforeReverse = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
       projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), ProjectCoordinates(0, 0, 0), "TestUserTwo")
       val linksAfterReverse = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
 
-      links.sortBy(_.endAddrMValue).zip(linksAfterReverse.sortBy(_.endAddrMValue)).foreach { case (st, en) =>
+      linksAfterGivenAddrMValue.sortBy(pl => (pl.endAddrMValue, pl.startAddrMValue)).zip(linksAfterReverse.sortBy(pl => (pl.endAddrMValue, pl.startAddrMValue))).foreach { case (st, en) =>
         (st.startAddrMValue, st.endAddrMValue) should be(en.startAddrMValue, en.endAddrMValue)
         (st.startMValue, st.endMValue) should be(en.startMValue, en.endMValue)
       }
@@ -1478,8 +1486,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         9999, 2, 2, None, 1, 5, Some(1L), reversed = false, None)
 
       val projectLinks2 = projectLinkDAO.fetchProjectLinks(id)
+      val projectLinks3 = ProjectSectionCalculator.assignMValues(projectLinks2).sortBy(_.endAddrMValue)
 
-      val parts = projectLinks2.partition(_.roadPartNumber === 1)
+      val parts = projectLinks3.partition(_.roadPartNumber === 1)
       val part1tracks = parts._1.partition(_.track === Track.RightSide)
       part1tracks._1.maxBy(_.endAddrMValue).endAddrMValue should be(part1tracks._2.maxBy(_.endAddrMValue).endAddrMValue)
       val part2tracks = parts._2.partition(_.track === Track.RightSide)
@@ -1603,7 +1612,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.updateProjectLinks(id, part1AdjacentToPart2LinkLeftSide, Seq(), LinkStatus.Transfer, "test",
         newRoadNumber = 9999, newRoadPartNumber = 2, newTrackCode = 2, userDefinedEndAddressM = None, roadType = 1, discontinuity = 5, ely = Some(1L), roadName = None)
 
-      val projectLinks2 = projectLinkDAO.fetchProjectLinks(id)
+      val projectLinks_ = projectLinkDAO.fetchProjectLinks(id)
+       val projectLinks2 = ProjectSectionCalculator.assignMValues(projectLinks_)
 
       val parts = projectLinks2.partition(_.roadPartNumber === 1)
       val part1tracks = parts._1.partition(_.track === Track.RightSide)
@@ -2017,11 +2027,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(savedProject.id)
       updatedProjectLinks.exists { x => x.status == LinkStatus.UnChanged } should be(true)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Terminated } should be(true)
-      updatedProjectLinks.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, Some(CalibrationPoint(5168579, 15.173, 4681, RoadAddressCP))))
+      val calculatedProjectLinks = ProjectSectionCalculator.assignMValues(updatedProjectLinks)
+      calculatedProjectLinks.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, Some(CalibrationPoint(5168579, 15.173, 4717, RoadAddressCP))))
+
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168579), LinkStatus.Terminated, "-", 0, 0, 0, Option.empty[Int])
-      val updatedProjectLinks2 = projectLinkDAO.fetchProjectLinks(savedProject.id)
+      val updatedProjectLinks_ = projectLinkDAO.fetchProjectLinks(savedProject.id).toList
+      val updatedProjectLinks2 = ProjectSectionCalculator.assignMValues(updatedProjectLinks_)
       val sortedRoad206AfterTermination = updatedProjectLinks2.filter(_.roadPartNumber == 206).sortBy(_.startAddrMValue)
-      updatedProjectLinks2.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, None))
+      val updatedProjectLinks2_ = projectLinkDAO.fetchProjectLinks(savedProject.id).toList
+      updatedProjectLinks2_.filter(pl => pl.linkId == 5168579).head.calibrationPoints should be((None, None))
       val lastValid = sortedRoad206AfterTermination.filter(_.status != LinkStatus.Terminated).last
       sortedRoad206AfterTermination.filter(_.status != LinkStatus.Terminated).last.calibrationPoints should be((None, Some(CalibrationPoint(lastValid.linkId, lastValid.endMValue, lastValid.endAddrMValue, RoadAddressCP))))
       updatedProjectLinks2.filter(pl => pl.roadPartNumber == 205).exists { x => x.status == LinkStatus.Terminated } should be(false)
@@ -2067,8 +2081,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linkId2 = 5168540
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(linkId1), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int]) should be(None)
       projectService.allLinksHandled(savedProject.id) should be(true)
+      val links_ = projectLinkDAO.fetchProjectLinks(savedProject.id)
+      ProjectSectionCalculator.assignMValues(links_).sortBy(_.endAddrMValue)
       val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(savedProject.id)
-      updatedProjectLinks.exists { x => x.status == LinkStatus.Transfer } should be(true)
+        updatedProjectLinks.exists { x => x.status == LinkStatus.Transfer } should be(true)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Terminated } should be(true)
       val sortedProjectLinks = updatedProjectLinks.sortBy(_.startAddrMValue)
       sortedProjectLinks.head.calibrationPoints._1.nonEmpty should be (true)
@@ -2127,7 +2143,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.updateProjectLinks(savedProject.id, Set(), Seq(5168510), LinkStatus.Terminated, "-", 5, 207, 0, Option.empty[Int])
       projectService.updateProjectLinks(savedProject.id, Set(), linkIds207.filterNot(_ == 5168510L).toSeq, LinkStatus.Transfer, "-", 5, 207, 0, Option.empty[Int])
       projectService.allLinksHandled(savedProject.id) should be(true)
-      val updatedProjectLinks = projectLinkDAO.fetchProjectLinks(savedProject.id)
+      projectService.updateProjectLinks(savedProject.id, Set(), Seq(6460794), LinkStatus.Transfer, "-", 5, 207, 0, Option.empty[Int], discontinuity = Discontinuous.value)
+
+      val links_ = projectLinkDAO.fetchProjectLinks(savedProject.id)
+      val updatedProjectLinks = ProjectSectionCalculator.assignMValues(links_).sortBy(_.endAddrMValue) ++ projectLinkDAO.fetchProjectLinks(savedProject.id).filter(_.status == LinkStatus.Terminated)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Transfer } should be(true)
       updatedProjectLinks.exists { x => x.status == LinkStatus.Terminated } should be(true)
       val sortedProjectLinks = updatedProjectLinks.sortBy(_.startAddrMValue)
@@ -2769,6 +2788,12 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       projectService.updateProjectLinks(project_id, lastLink, Seq(), LinkStatus.Transfer, "test",
         roadNumber, newRoadPartNumber, 0, None, 1, 5, Some(8L), reversed = false, None)
+
+      val projectLinks_ = projectLinkDAO.fetchProjectLinks(project_id)
+      withDynTransaction {
+        val calculatedProjectLinks = ProjectSectionCalculator.assignMValues(projectLinks_)
+      }
+
       val lengthOfTheTransferredPart = 5
       val lengthPart1 = linearLocations.filter(_.roadwayNumber == roadwayNumber1).map(_.endMValue).sum - linearLocations.filter(_.roadwayNumber == roadwayNumber1).map(_.startMValue).sum
       val lengthPart2 = linearLocations.filter(_.roadwayNumber == roadwayNumber2).map(_.endMValue).sum - linearLocations.filter(_.roadwayNumber == roadwayNumber2).map(_.startMValue).sum
@@ -2778,6 +2803,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val reservation = projectReservedPartDAO.fetchReservedRoadParts(project_id)
       val formed = projectReservedPartDAO.fetchFormedRoadParts(project_id)
 
+      val x =  reservation.filter(_.roadPartNumber == 1).head.addressLength
+      val y = Some(ra.head.endAddrMValue)
       reservation.filter(_.roadPartNumber == 1).head.addressLength should be(Some(ra.head.endAddrMValue))
       reservation.filter(_.roadPartNumber == 2).head.addressLength should be(Some(ra.last.endAddrMValue))
 
@@ -2805,7 +2832,9 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Test projectService.createProjectLinks() discontinuity assignment When creating some links Then the Discontinuity of the last (with bigger endAddrM) new created links should be the one the user gave and should not change any other link discontinuity that was previosly given.") {
+  test("Test projectService.createProjectLinks() discontinuity assignment When creating some links Then " +
+       "the Discontinuity of the last (with bigger endAddrM) new created links should be the one the user " +
+       "gave and should not change any other link discontinuity that was previosly given.") {
     runWithRollback {
 
       val rap = Project(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
@@ -2835,8 +2864,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val afterAllProjectLinksCreation = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
 
       afterAllProjectLinksCreation.filter(_.linkId == 12345L).head.discontinuity should be (Discontinuity.EndOfRoad)
-      afterAllProjectLinksCreation.filter(_.linkId == 12346L).head.discontinuity should be (Discontinuity.MinorDiscontinuity)
-      afterAllProjectLinksCreation.filter(_.linkId == 12347L).head.discontinuity should be (Discontinuity.Continuous)
+      afterAllProjectLinksCreation.filter(_.linkId == 12346L).head.discontinuity should be (Discontinuity.Continuous)
+      afterAllProjectLinksCreation.filter(_.linkId == 12347L).head.discontinuity should be (Discontinuity.MinorDiscontinuity)
     }
   }
 
