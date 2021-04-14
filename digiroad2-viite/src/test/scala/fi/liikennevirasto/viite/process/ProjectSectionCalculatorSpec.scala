@@ -1300,9 +1300,11 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val linearLeft2WithId = linearLeft2.copy(id = linearLocationId + 8)
       val linearRight1WithId = linearRight1.copy(id = linearLocationId + 9)
       val linearRight2WithId = linearRight2.copy(id = linearLocationId + 10)
-      buildTestDataForProject(Some(rap), Some(Seq(rwCombWithId, rwLeft1And2WithId, rwRight1And2WithId)), Some(Seq(linearCombinedWithId, linearLeft1WithId, linearLeft2WithId, linearRight1WithId, linearRight2WithId)), None)
-
       val list1 = List(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6)
+
+      buildTestDataForProject(Some(rap), Some(Seq(rwCombWithId, rwLeft1And2WithId, rwRight1And2WithId)), Some(Seq(linearCombinedWithId, linearLeft1WithId, linearLeft2WithId, linearRight1WithId, linearRight2WithId)),
+        Some(list1 ++ Seq(projectLink7, projectLink8, projectLink9, projectLink10, projectLink11)))
+
       val ordered = ProjectSectionCalculator.assignMValues(list1)
       ordered.minBy(_.startAddrMValue).id should be(idRoad0) // TODO "6 was not equal to 0"
 
@@ -1402,9 +1404,11 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val linearLeft2WithId = linearLeft2.copy(id = linearLocationId + 8)
       val linearRight1WithId = linearRight1.copy(id = linearLocationId + 9)
       val linearRight2WithId = linearRight2.copy(id = linearLocationId + 10)
-      buildTestDataForProject(Some(rap), Some(Seq(rwCombWithId, rwLeft1And2WithId, rwRight1And2WithId)), Some(Seq(linearCombinedWithId, linearLeft1WithId, linearLeft2WithId, linearRight1WithId, linearRight2WithId)), None)
-
       val list1 = List(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6)
+
+      buildTestDataForProject(Some(rap), Some(Seq(rwCombWithId, rwLeft1And2WithId, rwRight1And2WithId)), Some(Seq(linearCombinedWithId, linearLeft1WithId, linearLeft2WithId, linearRight1WithId, linearRight2WithId)),
+        Some(list1 ++ Seq(projectLink7, projectLink8, projectLink9, projectLink10, projectLink11)))
+
       val ordered = ProjectSectionCalculator.assignMValues(list1)
       ordered.minBy(_.startAddrMValue).id should be(idRoad0) // TODO "6 was not equal to 0"
 
