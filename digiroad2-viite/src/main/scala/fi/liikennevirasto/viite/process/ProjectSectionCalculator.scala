@@ -179,7 +179,7 @@ object ProjectSectionCalculator {
         else
           rightReassignedEnd ++ leftReassignedEnd
       }
-      def checkAverage =  {
+      def checkAverage: Seq[ProjectLink] =  {
         val maxrpl      = rightReassignedEnd.maxBy(_.endAddrMValue)
         val maxlpl      = leftReassignedEnd.maxBy(_.endAddrMValue)
         val endAddrDiff = Math.abs(maxrpl.endAddrMValue - maxlpl.endAddrMValue)
@@ -194,7 +194,8 @@ object ProjectSectionCalculator {
       }
 
       /* Average end values for change table when terminated links are the last links on the road part. */
-      if (rightReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue != leftReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
+      if (rightReassignedEnd.nonEmpty && leftReassignedEnd.nonEmpty
+          && rightReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue != leftReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
           && left.maxBy(_.endAddrMValue).endAddrMValue <= leftReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
           && right.maxBy(_.endAddrMValue).endAddrMValue <= rightReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue)
         checkAverage
