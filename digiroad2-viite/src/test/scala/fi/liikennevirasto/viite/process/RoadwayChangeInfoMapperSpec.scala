@@ -7,7 +7,8 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.{LinkRoadAddressHistory, NewIdValue, RoadType}
+import fi.liikennevirasto.viite.{LinkRoadAddressHistory, NewIdValue}
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
@@ -16,9 +17,7 @@ import org.scalatest.{FunSuite, Matchers}
 class RoadwayChangeInfoMapperSpec extends FunSuite with Matchers {
 
   //TODO the road address now have the linear location id and has been set to 1L
-  val roadAddr = RoadAddress(1, 1L, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 1000, Some(DateTime.now), None,
-    None, 0L, 0.0, 1000.0, SideCode.AgainstDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(1000.234, 0.0)),
-    LinkGeomSource.NormalLinkInterface, 8, NoTermination, 123456)
+  val roadAddr = RoadAddress(1, 1L, 1, 1, AdministrativeClass.Unknown, Track.RightSide, Discontinuity.Continuous, 0, 1000, Some(DateTime.now), None, None, 0L, 0.0, 1000.0, SideCode.AgainstDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(1000.234, 0.0)), LinkGeomSource.NormalLinkInterface, 8, NoTermination, 123456)
 
   //TODO will be implemented at VIITE-1536
 //  test("resolve simple case") {

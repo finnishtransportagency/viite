@@ -85,7 +85,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       continuousSection(seq.tail, Seq(seq.head))
     else {
       val track = processed.last.track
-      val roadType = processed.last.roadType
+      val administrativeClass = processed.last.administrativeClass
       val discontinuity = processed.last.discontinuity
       /* Check if status changes */
       if (track != seq.head.track) {

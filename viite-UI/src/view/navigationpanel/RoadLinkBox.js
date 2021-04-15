@@ -46,13 +46,13 @@
       [8, 'Jalka- tai pyörätie (70001 - 89999, 90001 - 99999)'],
       [9, 'Yksityistie, talvitie tai polku (50001-62999)'],
       [11, 'Muu tieverkko'],
-      [98, 'Tietyyppi kunnan katuosuus tai yks.tie'],
+      [98, 'Hallinnollinen luokka kunta tai yksityinen'],
       [99, 'Tuntematon']
     ];
 
     var constructionTypes = [
       [0, 'Muu tieverkko, rakenteilla'],
-      [1, 'Tuntematon, rakenteilla']
+      [1, 'Maantie, rakenteilla']
     ];
 
     var nodes = [
@@ -68,7 +68,8 @@
       [14, 'Silta'],
       [15, 'Huoltoaukko'],
       [16, 'Yksityistie- tai katuliittymä'],
-      [17, 'Porrastettu liittymä']
+      [17, 'Porrastettu liittymä'],
+      [18, 'Lautta']
     ];
 
     var buildMultiColoredSegments = function () {
@@ -131,7 +132,7 @@
         '<div class="symbol linear operation-type-unhandeled"></div>' +
         '<div class="label">Muu tieverkko, rakenteilla</div>' +
         '<div class="symbol linear construction-type-0"></div>' +
-        '<div class="label">Tuntematon, rakenteilla</div>' +
+        '<div class="label">Maantie, rakenteilla</div>' +
         '<div class="symbol linear construction-type-1"></div>' +
         '</div>';
     };

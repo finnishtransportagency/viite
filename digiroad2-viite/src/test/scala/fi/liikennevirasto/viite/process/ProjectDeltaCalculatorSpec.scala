@@ -7,8 +7,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.RoadType.PublicRoad
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, MinorDiscontinuity}
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
@@ -33,10 +32,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
 
   private def createRoadAddress(start: Long, distance: Long, roadwayNumber: Long = 0L) = {
     //TODO the road address now have the linear location id and has been set to 1L
-    RoadAddress(id = start, linearLocationId = 1L, roadNumber = 5, roadPartNumber = 205, roadType = PublicRoad, track = Track.Combined,
-      discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start + distance, linkId = start,
-      startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L,
-      geometry = Seq(Point(0.0, start), Point(0.0, start + distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, roadwayNumber = roadwayNumber)
+    RoadAddress(id = start, linearLocationId = 1L, roadNumber = 5, roadPartNumber = 205, administrativeClass = AdministrativeClass.State, track = Track.Combined, discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start + distance, linkId = start, startMValue = 0.0, endMValue = distance.toDouble, sideCode = TowardsDigitizing, adjustedTimestamp = 0L, geometry = Seq(Point(0.0, start), Point(0.0, start + distance)), linkGeomSource = NormalLinkInterface, ely = 8, terminated = NoTermination, roadwayNumber = roadwayNumber)
   }
 
   private val project: Project = Project(13L, ProjectState.Incomplete, "foo", "user", DateTime.now(), "user", DateTime.now(),
@@ -259,7 +255,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       if (ra.id > 50)
         ra
       else
-        ra.copy(roadType = RoadType.MunicipalityStreetRoad)
+        ra.copy(administrativeClass = AdministrativeClass.Municipality)
     )
     val unchanged = addresses.map(a => (a, toProjectLink(project, LinkStatus.UnChanged)(a)))
 
@@ -267,7 +263,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       Discontinuity.MinorDiscontinuity, 120, 130, 120, 130, None, None,
       createdBy = Option(project.createdBy), 981, 0.0, 12.1,
       TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New,
-      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.1, -1L, -1L, 8, reversed = false,
+      AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 12.1, -1L, -1L, 8, reversed = false,
       None, 748800L))
     val uncParts = ProjectDeltaCalculator.partition(unchanged, Seq()).adjustedSections.map(_._1)
     uncParts should have size 2
@@ -276,13 +272,13 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       (fr.startMAddr == 60 || fr.endMAddr == 60) should be(true)
       (to.startMAddr == 60 || to.endMAddr == 60) should be(true)
       if (fr.startMAddr == 0L)
-        fr.roadType should be(RoadType.MunicipalityStreetRoad)
+        fr.administrativeClass should be(AdministrativeClass.Municipality)
       else
-        fr.roadType should be(RoadType.PublicRoad)
+        fr.administrativeClass should be(AdministrativeClass.State)
       if (to.startMAddr == 0L)
-        to.roadType should be(RoadType.MunicipalityStreetRoad)
+        to.administrativeClass should be(AdministrativeClass.Municipality)
       else
-        to.roadType should be(RoadType.PublicRoad)
+        to.administrativeClass should be(AdministrativeClass.State)
     })
     val newParts = ProjectDeltaCalculator.partition(newLinks)
     newParts should have size 1

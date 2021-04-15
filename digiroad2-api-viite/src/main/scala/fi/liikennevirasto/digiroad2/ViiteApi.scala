@@ -43,10 +43,7 @@ case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNum
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, reservedPartList: List[RoadPartExtractor], formedPartList: List[RoadPartExtractor], resolution: Int)
 
-case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long,
-                                            roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long,
-                                            roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int],
-                                            coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
+case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, administrativeClass: Int, userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean])
 
 case class roadDataExtractor(chainLinkIds: Seq[Long] )
 
@@ -692,10 +689,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         if (links.roadPartNumber == 0)
           throw RoadAndPartNumberException("Virheellinen tieosanumero")
         logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
-        val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
-          Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), RoadType.apply(links.roadType),
-          LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))),
-          Some(links.coordinates))
+        val response = projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber, Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))), Some(links.coordinates))
         response.get("success") match {
           case Some(true) =>
             val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(errorPartsToApi)
@@ -739,7 +733,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         if (projectService.validateLinkTrack(links.trackCode)) {
           projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, LinkStatus.apply(links.linkStatus),
             user.username, links.roadNumber, links.roadPartNumber, links.trackCode, links.userDefinedEndAddressM,
-            links.roadType, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName,
+            links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName,
             Some(links.coordinates)) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
@@ -878,7 +872,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "name" -> project.name,
           "changeDate" -> project.changeDate,
           "changeInfoSeq" -> project.changeInfoSeq.map(changeInfo =>
-            Map("changetype" -> changeInfo.changeType.value, "roadType" -> changeInfo.roadType.value,
+            Map("changetype" -> changeInfo.changeType.value, "roadType" -> changeInfo.administrativeClass.asRoadTypeValue,
               "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
               "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)))
       ).getOrElse(None)
@@ -1254,9 +1248,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "calibrationCode" -> CalibrationCode.getFromAddressLinkLike(roadAddressLink).value,
       "calibrationPoints" -> Seq(calibrationPointToApi(roadAddressLink.geometry, roadAddressLink.startCalibrationPoint),
         calibrationPointToApi(roadAddressLink.geometry, roadAddressLink.endCalibrationPoint)),
-      "administrativeClass" -> roadAddressLink.administrativeClass.toString,
+      "administrativeClassMML" -> roadAddressLink.administrativeClassMML.toString,
       "roadClass" -> RoadClass.get(roadAddressLink.roadNumber.toInt),
-      "roadTypeId" -> roadAddressLink.roadType.value,
+      "administrativeClassId" -> roadAddressLink.administrativeClass.value,
       "modifiedAt" -> roadAddressLink.modifiedAt,
       "modifiedBy" -> roadAddressLink.modifiedBy,
       "municipalityCode" -> roadAddressLink.attributes.get("MUNICIPALITYCODE"),
@@ -1480,7 +1474,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "startAddressM" -> projectLink.startAddrMValue,
       "endAddressM" -> projectLink.endAddrMValue,
       "status" -> projectLink.status.value,
-      "roadTypeId" -> projectLink.roadType.value,
+      "administrativeClassId" -> projectLink.administrativeClass.value,
       "discontinuity" -> projectLink.discontinuity.value,
       "elyCode" -> projectLink.ely,
       "roadName" -> projectLink.roadName)
@@ -1565,7 +1559,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "startAddressM" -> splittedLinks.startAddrMValue,
             "endAddressM" -> splittedLinks.endAddrMValue,
             "status" -> splittedLinks.status.value,
-            "roadTypeId" -> splittedLinks.roadType.value,
+            "administrativeClassId" -> splittedLinks.administrativeClass.value,
             "discontinuity" -> splittedLinks.discontinuity.value,
             "elyCode" -> splittedLinks.ely,
             "roadName" -> splittedLinks.roadName.getOrElse(""),
@@ -1580,7 +1574,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "startAddressM" -> splittedLinks.startAddrMValue,
             "endAddressM" -> splittedLinks.endAddrMValue,
             "status" -> splittedLinks.status.value,
-            "roadTypeId" -> splittedLinks.roadType.value,
+            "administrativeClassId" -> splittedLinks.administrativeClass.value,
             "discontinuity" -> splittedLinks.discontinuity.value,
             "elyCode" -> splittedLinks.ely,
             "roadName" -> splittedLinks.roadName.getOrElse(""),
@@ -1595,7 +1589,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             "startAddressM" -> splittedLinks.startAddrMValue,
             "endAddressM" -> splittedLinks.endAddrMValue,
             "status" -> splittedLinks.status.value,
-            "roadTypeId" -> splittedLinks.roadType.value,
+            "administrativeClassId" -> splittedLinks.administrativeClass.value,
             "discontinuity" -> splittedLinks.discontinuity.value,
             "elyCode" -> splittedLinks.ely,
             "roadName" -> splittedLinks.roadName.getOrElse(""),
@@ -1640,8 +1634,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM),
             startMValue = Math.min(a.startMValue, b.endMValue)).asInstanceOf[T]
         case (a: ProjectAddressLink, b) =>
-          a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM),
-            startMValue = Math.min(a.startMValue, b.endMValue)).asInstanceOf[T]
+          a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM), startMValue = Math.min(a.startMValue, b.endMValue)).asInstanceOf[T]
       })
     else
       None

@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.util.DigiroadSerializers
-import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectCoordinates}
 import fi.liikennevirasto.viite.util.SplitOptions
 import org.json4s._
