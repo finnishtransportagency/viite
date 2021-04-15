@@ -35,6 +35,12 @@
       ];
     }
 
+    function unAddressedVectorLayerStyle(feature) {
+      return [projectLinkStyler.getUnderConstructionStyler(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)}),
+        projectLinkStyler.getProjectLinkStyler(feature.linkData, {zoomLevel: zoomlevels.getViewZoom(map)})
+      ];
+    }
+
     var underConstructionRoadProjectLayer = new ol.layer.Vector({
       source: underConstructionRoadVector,
       name: 'underConstructionRoadProjectLayer',
@@ -44,7 +50,7 @@
     var unAddressedRoadsProjectLayer = new ol.layer.Vector({
       source: unAddressedRoadsRoadVector,
       name: 'unAddressedRoadsProjectLayer',
-      style: vectorLayerStyle,
+      style: unAddressedVectorLayerStyle,
       zIndex: RoadZIndex.unAddressedRoadsLayer.value
     });
 
@@ -233,7 +239,7 @@
       return selectionData.roadNumber === currentlySelectedSample.roadNumber &&
         selectionData.roadPartNumber === currentlySelectedSample.roadPartNumber &&
         selectionData.trackCode === currentlySelectedSample.trackCode &&
-        selectionData.roadTypeId === currentlySelectedSample.roadTypeId &&
+        selectionData.administrativeClassId === currentlySelectedSample.administrativeClassId &&
         selectionData.elyCode === currentlySelectedSample.elyCode;
     };
 

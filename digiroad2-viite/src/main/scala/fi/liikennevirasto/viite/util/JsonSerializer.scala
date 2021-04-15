@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.util.{Track, VVHSerializer}
-import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
 import org.json4s.jackson.Serialization.{read, write}
@@ -79,7 +79,7 @@ class JsonSerializer extends VVHSerializer {
 object DigiroadSerializers {
   val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer +
-    DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + RoadTypeSerializer + ChangeTypeSerializer
+    DiscontinuitySerializer + TrackSerializer + PointSerializer + LinkStatusSerializer + ChangeTypeSerializer
 }
 
 case object ChangeTypeSerializer extends CustomSerializer[ChangeType](format => ( {
@@ -159,13 +159,5 @@ case object LinkStatusSerializer extends CustomSerializer[LinkStatus](format => 
     LinkStatus.apply(i.values.intValue)
 }, {
   case l: LinkStatus => JInt(l.value)
-}
-))
-
-case object RoadTypeSerializer extends CustomSerializer[RoadType](format => ( {
-  case i: JInt =>
-    RoadType.apply(i.values.intValue)
-}, {
-  case r: RoadType => JInt(r.value)
 }
 ))

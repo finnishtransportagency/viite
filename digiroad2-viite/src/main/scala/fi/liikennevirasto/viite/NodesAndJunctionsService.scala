@@ -654,13 +654,13 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
      */
   def handleNodePoints(roadwayChanges: List[ProjectRoadwayChange], projectLinks: Seq[ProjectLink], mappedRoadwayNumbers: Seq[ProjectRoadLinkChange], username: String = "-"): Unit = {
     @tailrec
-    def continuousNodeSections(seq: Seq[ProjectLink], roadTypesSection: Seq[Seq[ProjectLink]] = Seq.empty[Seq[ProjectLink]]): (Seq[ProjectLink], Seq[Seq[ProjectLink]]) = {
+    def continuousNodeSections(seq: Seq[ProjectLink], administrativeClassesSection: Seq[Seq[ProjectLink]] = Seq.empty[Seq[ProjectLink]]): (Seq[ProjectLink], Seq[Seq[ProjectLink]]) = {
       if (seq.isEmpty) {
-        (Seq(), roadTypesSection)
+        (Seq(), administrativeClassesSection)
       } else {
-        val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
-        val continuousProjectLinks = seq.takeWhile(pl => pl.roadType.value == roadType)
-        continuousNodeSections(seq.drop(continuousProjectLinks.size), roadTypesSection :+ continuousProjectLinks)
+        val administrativeClass = seq.headOption.map(_.administrativeClass.value).getOrElse(0)
+        val continuousProjectLinks = seq.takeWhile(pl => pl.administrativeClass.value == administrativeClass)
+        continuousNodeSections(seq.drop(continuousProjectLinks.size), administrativeClassesSection :+ continuousProjectLinks)
       }
     }
 
@@ -687,8 +687,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         val groupSections = filteredLinks.groupBy(l => (l.roadNumber, l.roadPartNumber))
 
         groupSections.values.foreach { group =>
-          val roadTypeSections: Seq[Seq[ProjectLink]] = continuousNodeSections(group.sortBy(_.startAddrMValue))._2
-          roadTypeSections.foreach { section =>
+          val administrativeClassSections: Seq[Seq[ProjectLink]] = continuousNodeSections(group.sortBy(_.startAddrMValue))._2
+          administrativeClassSections.foreach { section =>
 
             val headProjectLink = section.head
             val headReversed = roadwayChanges.exists(ch => ch.changeInfo.target.startAddressM.nonEmpty && headProjectLink.startAddrMValue == ch.changeInfo.target.startAddressM.get
@@ -912,13 +912,13 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       nodePointDAO.expireById(nodePointsOfExpiredNodes.map(_.id))
     }
 
-    def continuousSectionByRoadType(section: Seq[ProjectLink], continuousSection: Seq[Seq[ProjectLink]] = Seq.empty): Seq[Seq[ProjectLink]] = {
+    def continuousSectionByAdministrativeClass(section: Seq[ProjectLink], continuousSection: Seq[Seq[ProjectLink]] = Seq.empty): Seq[Seq[ProjectLink]] = {
       if (section.isEmpty)
         continuousSection
       else {
-        val roadType = section.head.roadType
-        val sectionByRoadType: Seq[ProjectLink] = section.takeWhile(p => p.roadType == roadType)
-        continuousSectionByRoadType(section.drop(sectionByRoadType.size), continuousSection :+ sectionByRoadType)
+        val administrativeClass = section.head.administrativeClass
+        val sectionByAdministrativeClass: Seq[ProjectLink] = section.takeWhile(p => p.administrativeClass == administrativeClass)
+        continuousSectionByAdministrativeClass(section.drop(sectionByAdministrativeClass.size), continuousSection :+ sectionByAdministrativeClass)
       }
     }
 
@@ -932,7 +932,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
     val projectLinkSections = filteredProjectLinks.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber))
     val obsoletePointsFromModifiedRoadways: Seq[(Seq[NodePoint], Seq[JunctionPoint])] = projectLinkSections.mapValues { section: Seq[ProjectLink] =>
-      continuousSectionByRoadType(section.sortBy(_.startAddrMValue)).map { continuousSection =>
+      continuousSectionByAdministrativeClass(section.sortBy(_.startAddrMValue)).map { continuousSection =>
         val modifiedRoadwayNumbers = continuousSection.map(_.roadwayNumber).distinct
         getObsoleteNodePointsAndJunctionPointsByModifiedRoadwayNumbers(modifiedRoadwayNumbers, terminatedJunctionPoints)
       }
