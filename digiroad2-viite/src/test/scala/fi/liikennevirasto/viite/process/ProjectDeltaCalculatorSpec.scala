@@ -89,6 +89,31 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     start205.map(x => (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)) should be(Some((0L, 0L, 110L, 110L)))
   }
 
+  test("Test ProjectDeltaCalculator.partition When .") {
+    val addresses = (0 to 21).map(i => createRoadAddress(i * 21, 21))
+    val transferLinks= addresses.map(toTransition(project, LinkStatus.Transfer))
+    val projectLinks = transferLinks.map(l => (l._1, l._2.copy(reversed = true)))
+
+    val partitions = ProjectDeltaCalculator.partition(projectLinks)
+    val adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(partitions.adjustedSections, partitions.originalSections)
+
+    adjustedTransferred._1.foreach(println)
+        partitions
+  }
+  test("Test ProjectDeltaCalculator.partition When two parts.") {
+    val addresses = (0 to 10).map(i => createRoadAddress(i * 10, 10))
+    val addresses2 = (11 to 21).map(i => createRoadAddress(i * 10, 10L)).map(a => a.copy(roadPartNumber = 206, startAddrMValue = a.startAddrMValue - 110L,
+      endAddrMValue = a.endAddrMValue - 110L))
+    val transferLinks= (addresses ++ addresses2).map(toTransition(project, LinkStatus.Transfer))
+    val projectLinks = transferLinks.map(l => (l._1, l._2.copy(reversed = true)))
+
+    val partitions = ProjectDeltaCalculator.partition(projectLinks)
+    val adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(partitions.adjustedSections, partitions.originalSections)
+
+    adjustedTransferred._1.foreach(println)
+    partitions
+  }
+
   test("Test ProjectDeltaCalculator.partition When executing a numbering operation on single road part Then returns the correct From RoadSection -> To RoadSection mapping with the new road number/road part number.") {
     val addresses = (0 to 10).map(i => createRoadAddress(i * 10, 10L))
     val numberingLinks = addresses.map(a => (a, a.copy(roadNumber = 12345, roadPartNumber = 1))).map(x => (x._1, toProjectLink(project, LinkStatus.Numbering)(x._2)))

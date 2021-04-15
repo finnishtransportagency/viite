@@ -605,7 +605,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               x.copy(reversed = isReversed(originalSideCodes)(x),
                 discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous))), username, originalAddresses)
             ProjectCalibrationPointDAO.removeAllCalibrationPoints(projectLinks.map(_.id).toSet)
-            recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
+//            recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
             saveProjectCoordinates(projectId, coordinates)
             None
           case Some(error) => Some(error)
