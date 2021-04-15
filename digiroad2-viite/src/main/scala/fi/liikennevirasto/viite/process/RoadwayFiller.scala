@@ -60,7 +60,7 @@ object RoadwayFiller {
         }
       }
       val projectLinksWithGivenAttributes = projectLinks.map(pl => pl.copy(roadwayNumber = roadways.head.roadwayNumber, linearLocationId = Sequences.nextLinearLocationId))
-      (roadways ++ newHistoryRoadways, roadwayAddressMapper.mapLinearLocations(roadways.head, projectLinksWithGivenAttributes, allProjectLinks), projectLinksWithGivenAttributes)
+      (roadways ++ newHistoryRoadways, roadwayAddressMapper.mapLinearLocations(roadways.head, projectLinksWithGivenAttributes), projectLinksWithGivenAttributes)
     }
   }
 
@@ -90,7 +90,7 @@ object RoadwayFiller {
         }
       }
       val projectLinksWithGivenAttributes = projectLinks.map(pl => pl.copy(roadwayNumber = roadways.head.roadwayNumber, linearLocationId = Sequences.nextLinearLocationId))
-      (roadways ++ newHistoryRoadways, roadwayAddressMapper.mapLinearLocations(roadways.find(_.endDate.isEmpty).getOrElse(throw new Exception), projectLinksWithGivenAttributes, allProjectLinks), projectLinksWithGivenAttributes)
+      (roadways ++ newHistoryRoadways, roadwayAddressMapper.mapLinearLocations(roadways.find(_.endDate.isEmpty).getOrElse(throw new Exception), projectLinksWithGivenAttributes), projectLinksWithGivenAttributes)
     }
   }
 
@@ -115,7 +115,7 @@ object RoadwayFiller {
         }
       }
       val projectLinksWithGivenAttributes = projectLinks.map(pl => pl.copy(roadwayNumber = roadway.roadwayNumber, linearLocationId = Sequences.nextLinearLocationId))
-      (Seq(roadway) ++ newHistoryRoadways, roadwayAddressMapper.mapLinearLocations(roadway, projectLinksWithGivenAttributes, allProjectLinks), projectLinksWithGivenAttributes)
+      (Seq(roadway) ++ newHistoryRoadways, roadwayAddressMapper.mapLinearLocations(roadway, projectLinksWithGivenAttributes), projectLinksWithGivenAttributes)
     }
   }
 
@@ -126,7 +126,7 @@ object RoadwayFiller {
       changeTarget.startAddressM.get, changeTarget.endAddressM.get, change.changeInfo.reversed, startDate = projectLinks.head.startDate.get, endDate = projectLinks.head.endDate, createdBy = projectLinks.head.createdBy.get, projectLinks.head.roadName,
       projectLinks.head.ely, NoTermination)
    val projectLinksWithGivenAttributes = projectLinks.map(pl => pl.copy(roadwayNumber = roadway.roadwayNumber, linearLocationId = if(pl.linearLocationId == 0 || pl.linearLocationId == NewIdValue) Sequences.nextLinearLocationId else pl.linearLocationId))
-    Seq((Seq(roadway), roadwayAddressMapper.mapLinearLocations(roadway, projectLinksWithGivenAttributes, allProjectLinks), projectLinksWithGivenAttributes))
+    Seq((Seq(roadway), roadwayAddressMapper.mapLinearLocations(roadway, projectLinksWithGivenAttributes), projectLinksWithGivenAttributes))
   }
 
   private def applyNumbering(change: ProjectRoadwayChange, projectLinks: Seq[ProjectLink], currentRoadways: Seq[Roadway], historyRoadways: Seq[Roadway], allProjectLinks: Seq[ProjectLink]): Seq[(Seq[Roadway], Seq[LinearLocation], Seq[ProjectLink])] = {
@@ -150,7 +150,7 @@ object RoadwayFiller {
         }
       }
       val projectLinksWithGivenAttributes = projectLinks.map(pl => pl.copy(roadwayNumber = roadways.head.roadwayNumber, linearLocationId = Sequences.nextLinearLocationId))
-      (roadways ++ newHistoryRoadways, roadwayAddressMapper.mapLinearLocations(roadways.find(_.endDate.isEmpty).getOrElse(throw new Exception), projectLinksWithGivenAttributes, allProjectLinks), projectLinksWithGivenAttributes)
+      (roadways ++ newHistoryRoadways, roadwayAddressMapper.mapLinearLocations(roadways.find(_.endDate.isEmpty).getOrElse(throw new Exception), projectLinksWithGivenAttributes), projectLinksWithGivenAttributes)
     }
   }
 
