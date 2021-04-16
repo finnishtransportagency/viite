@@ -87,12 +87,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val track = processed.last.track
       val administrativeClass = processed.last.administrativeClass
       val discontinuity = processed.last.discontinuity
-      /* Check if status changes */
-      if (track != seq.head.track) {
-
-      }
       val discontinuousSections = List(Discontinuity.Discontinuous, Discontinuity.MinorDiscontinuity, Discontinuity.ParallelLink)
-      if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.roadType == roadType) && !discontinuousSections.contains(discontinuity)) {
+      if ((seq.head.track == track && seq.head.track == Track.Combined) || (seq.head.track == track && seq.head.track != Track.Combined && seq.head.administrativeClass == administrativeClass) && !discontinuousSections.contains(discontinuity)) {
         continuousSection(seq.tail, processed :+ seq.head)
       } else {
         (processed, seq)
@@ -143,10 +139,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
   private def continuousRoadwaySection(seq: Seq[ProjectLink], givenRoadwayNumber: Long): (Seq[ProjectLink], Seq[ProjectLink]) = {
     val track = seq.headOption.map(_.track).getOrElse(Track.Unknown)
-    val roadType = seq.headOption.map(_.roadType.value).getOrElse(0)
+    val roadType = seq.headOption.map(_.administrativeClass.value).getOrElse(0)
 
     val continuousProjectLinks =
-      seq.takeWhile(pl => pl.track == track && pl.roadType.value == roadType).sortBy(_.startAddrMValue)
+      seq.takeWhile(pl => pl.track == track && pl.administrativeClass.value == roadType).sortBy(_.startAddrMValue)
 
     val assignedContinuousSection = assignRoadwayNumbersInContinuousSection(continuousProjectLinks, givenRoadwayNumber)
     (assignedContinuousSection, seq.drop(assignedContinuousSection.size))
