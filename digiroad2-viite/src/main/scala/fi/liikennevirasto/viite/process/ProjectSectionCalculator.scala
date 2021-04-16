@@ -194,11 +194,17 @@ object ProjectSectionCalculator {
       }
 
       /* Average end values for change table when terminated links are the last links on the road part. */
-      if (rightReassignedEnd.nonEmpty && leftReassignedEnd.nonEmpty
-          && rightReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue != leftReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
-          && left.maxBy(_.endAddrMValue).endAddrMValue <= leftReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
-          && right.maxBy(_.endAddrMValue).endAddrMValue <= rightReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue)
-        checkAverage
+      if (rightReassignedEnd.nonEmpty && leftReassignedEnd.nonEmpty) {
+        val rightReassignedMax = rightReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
+        val leftReassignedMax  = leftReassignedEnd.maxBy(_.endAddrMValue).endAddrMValue
+        val leftmax            = left.maxBy(_.endAddrMValue).endAddrMValue
+        val rightmax           = right.maxBy(_.endAddrMValue).endAddrMValue
+
+        if (rightReassignedMax != leftReassignedMax && leftmax <= leftReassignedMax && rightmax <= rightReassignedMax)
+          checkAverage
+        else
+          retval
+      }
       else
         retval
       }

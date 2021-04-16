@@ -63,7 +63,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
                    ) = {
       ProjectLink(NewIdValue, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startAddrM, endAddrM, startDate, None,
         Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
-        geom: Seq[Point], projectId, status, RoadType.PublicRoad,
+        geom: Seq[Point], projectId, status, AdministrativeClass.State,
         LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
     }
 
@@ -103,15 +103,15 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
 
     val projectLinkTrack1_1 = ProjectLink(1001L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 100L, 0L, 100L, None, None,
       None, 1L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
-      geomTrack1_1, 0L, LinkStatus.UnChanged, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false,
+      geomTrack1_1, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLinkTrack1_2 = ProjectLink(1002L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 100L, 200L, 100L, 200L, None, None,
       None, 2L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
-      geomTrack1_2, 0L, LinkStatus.UnChanged, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false,
+      geomTrack1_2, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false,
       None, 86400L)
     val projectLinkTrack2 = ProjectLink(1003L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 200L, 0L, 200L, None, None,
       None, 3L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
-      geomTrack2, 0L, LinkStatus.UnChanged, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack2), 0L, 0, 0, reversed = false,
+      geomTrack2, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack2), 0L, 0, 0, reversed = false,
       None, 86400L)
 
     val (track1, track2, udcp) = TwoTrackRoadUtils.splitPlsAtStatusChange(Seq(projectLinkTrack1_1, projectLinkTrack1_2), Seq(projectLinkTrack2))

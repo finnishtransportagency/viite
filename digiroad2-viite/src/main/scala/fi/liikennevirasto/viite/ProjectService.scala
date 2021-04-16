@@ -406,7 +406,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val projectLinks: Seq[ProjectLink] = linkIds.toSet.map { id: Long =>
             /* Set calibration point */
             val connectedProjectlink = existingProjectLinks.filterNot(_.status == LinkStatus.Terminated).find(pl => roadLinks(id).geometry.exists(rl_point => pl.connected(rl_point)))
-            val newPl = newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, roadType, roadEly, roadName, reversed)
+            val newPl = newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, administrativeClass, roadEly, roadName, reversed)
             if (connectedProjectlink.isDefined && connectedProjectlink.get.hasCalibrationPointAtStart) {
               newPl.copy(calibrationPointTypes = (connectedProjectlink.get.startCalibrationPoint.get.typeCode, CalibrationPointDAO.CalibrationPointType.NoCP))
             } else newPl
