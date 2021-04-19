@@ -293,7 +293,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           if (address.size > 1) MunicipalityDAO.getMunicipalityIdByName(address.last.trim).headOption.map(_._1) else None
         }
         val (streetName, streetNumber) = address.head.split(" ").partition(_.matches(("\\D+")))
-        searchResult = viiteVkmClient.get("/viitekehysmuunnin/muunna", Map(("kuntakoodi", municipalityId.getOrElse("").toString), ("katunimi", streetName.mkString("%20")), ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {
+        searchResult = viiteVkmClient.get("/viitekehysmuunnin/muunna", Map(
+          ("kuntakoodi", municipalityId.getOrElse("").toString),
+          ("katunimi", streetName.mkString(" ")), // parameter expected to be unescaped; pad with space only
+          ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {
           case Left(result) => Seq(result)
           case Right(error) => throw new VkmException(error.toString)
         }
