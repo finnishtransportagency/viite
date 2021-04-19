@@ -921,7 +921,15 @@ class ProjectValidator {
       }
 
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
-        val trackIntervals: Seq[Seq[ProjectLink]] = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
+        val endPoints = TrackSectionOrder.findChainEndpoints(g._2)
+        val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
+        val orderedProjectLinks =
+          if (g._2.exists(_.reversed))
+            (TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, g._2))._1.reverse
+        else
+          TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, g._2)._1
+
+        val trackIntervals: Seq[Seq[ProjectLink]] = Seq(orderedProjectLinks.filter(_.track != RightSide), orderedProjectLinks.filter(_.track != LeftSide))
         trackIntervals.flatMap {
           interval => {
             if (interval.size > 1) {
