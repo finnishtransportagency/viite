@@ -266,6 +266,7 @@ object ProjectDeltaCalculator {
           pl.roadNumber == v.head._2.roadNumber && pl.roadPartNumber == v.head._2.roadPartNumber
         }))
       })
+
       val sectioned = trans_mapped.mapValues(v => {
         val (from, to) = v.unzip
         toRoadAddressSection(from) -> toRoadAddressSection(to)
