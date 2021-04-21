@@ -328,6 +328,52 @@ object ProjectDeltaCalculator {
     val warning = sectionsAfterAdjust.map(_._2).flatten.toSeq ++ adjustedStartSourceSections.map(_._2).flatten.toSeq
     (adjustedStartSourceSections.map(_._1).toMap, if (warning.nonEmpty) Option(warning.head) else None)
   }
+
+  def buildTwoTrackOldAddressRoadParts(unchanged: ChangeTableRows, transferred: ChangeTableRows, numbering: ChangeTableRows, terminated: ChangeTableRows): Map[(Long, Long), Iterable[Seq[(RoadwaySection, String)]]] = {
+    (unchanged.originalSections.map(roadwaySection => {
+      (roadwaySection._1, "unchanged")
+    }).toSeq ++ transferred.originalSections.map(roadwaySection => {
+      (roadwaySection._1, "transferred")
+    }).toSeq ++ numbering.originalSections.map(roadwaySection => {
+      (roadwaySection._1, "numbering")
+    }).toSeq ++ terminated.originalSections.map(roadwaySection => {
+      (roadwaySection._1, "terminated")
+    }).toSeq).filterNot(_._1.track == Track.Combined).sortBy(_._1.startMAddr).groupBy(p => {
+      (p._1.roadNumber, p._1.roadPartNumberStart)
+    }).map(p => {
+      p._1 -> p._2.groupBy(_._1.track).map(_._2)
+    })
+  }
+
+  def calc_parts(twoTrackOldAddressRoadParts: Map[(Long, Long), Iterable[Seq[(RoadwaySection, String)]]]): Map[Seq[RoadwaySection], Seq[RoadwaySection]] = {
+    twoTrackOldAddressRoadParts.map(m => {
+      val (longer_values, shorter_values) = if (m._2.head.size > m._2.last.size) (m._2.head, m._2.last) else (m._2.last, m._2.head)
+      val matchedTerminatedTrackSections = ProjectDeltaCalculator.matchTerminatedTracksOnRoadPart(longer_values, shorter_values)
+      val FirstOfTwoTracks = matchedTerminatedTrackSections.filterNot(_._2 == "transferred").map(_._1).filterNot(addr => {addr.startMAddr == addr.endMAddr})
+      val otherOfTwoTracks = m._2.head.filterNot(_._2 == "transferred").map(_._1).filterNot(addr => {addr.startMAddr == addr.endMAddr})
+      (FirstOfTwoTracks, otherOfTwoTracks)
+    })
+  }
+
+  def matchTerminatedTracksOnRoadPart(longerTrackSeq: Seq[(RoadwaySection, String)],
+                                      shorterTrackSeq           : Seq[(RoadwaySection, String)],
+                                      adjustedShorterTrackSeq: Seq[(RoadwaySection, String)] = Seq.empty[(RoadwaySection, String)]
+                                     )   : Seq[(RoadwaySection, String)] = {
+    if (longerTrackSeq.isEmpty)
+      adjustedShorterTrackSeq
+    else {
+      if (longerTrackSeq.head._1.startMAddr == shorterTrackSeq.head._1.startMAddr && longerTrackSeq.head._1.endMAddr < shorterTrackSeq.head._1.endMAddr && shorterTrackSeq.head._2 == "terminated") {
+        val n = (shorterTrackSeq.head._1.copy(startMAddr = longerTrackSeq.head._1.endMAddr), "terminated")
+        matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, n +: shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq((shorterTrackSeq.head._1.copy(endMAddr = longerTrackSeq.head._1.endMAddr), "terminated")))
+      }
+      else if (longerTrackSeq.head._1.startMAddr == shorterTrackSeq.head._1.startMAddr && longerTrackSeq.head._1.endMAddr == shorterTrackSeq.head._1.endMAddr) {
+        matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(shorterTrackSeq.head))
+      }
+      else
+        matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(shorterTrackSeq.head))
+    }
+  }
+
 }
 
 case class Delta(startDate: DateTime, newRoads: Seq[ProjectLink], terminations: Termination,
