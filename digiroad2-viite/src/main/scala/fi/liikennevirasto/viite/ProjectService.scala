@@ -2095,7 +2095,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         .filter(_.endDate.isEmpty)
         .groupBy(_.track).map(g => (g._2.groupBy(_.roadwayNumber).map(t =>
         t._2.head.copy(startAddrMValue = t._2.minBy(_.startAddrMValue).startAddrMValue, endAddrMValue = t._2.maxBy(_.endAddrMValue).endAddrMValue
-        )))).flatten
+        )))).flatten ++ generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).filter(_.endDate.nonEmpty)
 
 
 //      roadwaysToInsert = roadwaysToInsert.groupBy(_.roadwayNumber).map{r => {
