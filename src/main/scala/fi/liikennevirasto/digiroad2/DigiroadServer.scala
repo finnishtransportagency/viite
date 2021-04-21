@@ -51,9 +51,13 @@ trait DigiroadServer {
 
 class OAGProxyServlet extends ProxyServlet {
 
+  private val logger = LoggerFactory.getLogger(getClass)
+
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    java.net.URI.create(s"http://oag.liikennevirasto.fi/rasteripalvelu-mml$uri")
+    val url = s"${ViiteProperties.rasterServiceURL}$uri"
+    logger.info(s"OAGProxyServlet: $url")
+    java.net.URI.create(url)
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
@@ -67,8 +71,8 @@ class OAGRasterServiceProxyServlet extends ProxyServlet {
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    val url = s"http://oag.liikennevirasto.fi$uri?${req.getQueryString}"
-    logger.info(url)
+    val url = s"${ViiteProperties.oagProxyServer}$uri?${req.getQueryString}"
+    logger.info(s"OAGRasterServiceProxyServlet: $url")
     java.net.URI.create(url)
   }
 

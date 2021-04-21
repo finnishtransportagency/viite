@@ -10,6 +10,8 @@ trait ViiteProperties {
   val eventBus: String
   val useVVHGeometry: String
   val vvhServiceHost: String
+  val oagProxyServer: String
+  val rasterServiceURL: String
   val vvhRestApiEndPoint: String
   val vvhRoadlinkFrozen: Boolean
   val vkmUrl: String
@@ -61,6 +63,8 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val eventBus: String = scala.util.Properties.envOrElse("eventBus", null)
   val useVVHGeometry: String = scala.util.Properties.envOrElse("useVVHGeometry", null)
   val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", null)
+  val oagProxyServer: String = scala.util.Properties.envOrElse("oagProxyServer", null)
+  val rasterServiceURL: String = scala.util.Properties.envOrElse("rasterServiceURL", null)
   val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
@@ -145,6 +149,8 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val eventBus: String = envProps.getProperty("eventBus")
   override val useVVHGeometry: String = envProps.getProperty("useVVHGeometry")
   override val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", envProps.getProperty("vvhServiceHost"))
+  override val oagProxyServer: String = scala.util.Properties.envOrElse("oagProxyServer", envProps.getProperty("oagProxyServer"))
+  override val rasterServiceURL: String = scala.util.Properties.envOrElse("rasterServiceURL", envProps.getProperty("rasterServiceURL"))
   override val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", envProps.getProperty("vvhRestApiEndPoint"))
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
   override val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", envProps.getProperty("vkmUrl"))
@@ -226,6 +232,8 @@ object ViiteProperties {
   lazy val eventBus: String = properties.eventBus
   lazy val useVVHGeometry: String = properties.useVVHGeometry
   lazy val vvhServiceHost: String = properties.vvhServiceHost
+  lazy val oagProxyServer: String = properties.oagProxyServer
+  lazy val rasterServiceURL: String = properties.rasterServiceURL
   lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
   lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
   lazy val vkmUrl: String = properties.vkmUrl
