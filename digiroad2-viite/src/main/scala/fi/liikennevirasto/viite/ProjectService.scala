@@ -2029,14 +2029,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadAddressService.handleProjectCalibrationPointChanges(linearLocations, username, projectLinkChanges.filter(_.status == LinkStatus.Terminated))
       logger.debug(s"Creating nodes and junctions templates")
 
-//      val mappedRoadAddressesProjection: Seq[RoadAddress] = roadAddressService.getRoadAddressesByRoadwayIds(roadwayIds)
+      val mappedRoadAddressesProjection: Seq[RoadAddress] = roadAddressService.getRoadAddressesByRoadwayIds(roadwayIds)
       val roadwayLinks = if (generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
-//      val roadwayLinks = projectLinks
-//      val (enrichedProjectLinks: Seq[ProjectLink], enrichedProjectRoadLinkChanges: Seq[ProjectRoadLinkChange]) = ProjectChangeFiller.mapAddressProjectionsToLinks(
-//        roadwayLinks, projectLinkChanges, mappedRoadAddressesProjection)
 
-      val enrichedProjectLinks = projectLinks
-      val enrichedProjectRoadLinkChanges = projectLinkChanges
+      val (enrichedProjectLinks: Seq[ProjectLink], enrichedProjectRoadLinkChanges: Seq[ProjectRoadLinkChange]) = ProjectChangeFiller.mapAddressProjectionsToLinks(
+        roadwayLinks, projectLinkChanges, mappedRoadAddressesProjection)
 
       nodesAndJunctionsService.handleJunctionAndJunctionPoints(roadwayChanges, enrichedProjectLinks, enrichedProjectRoadLinkChanges, username)
       nodesAndJunctionsService.handleNodePoints(roadwayChanges, enrichedProjectLinks, enrichedProjectRoadLinkChanges, username)
@@ -2091,11 +2088,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       /* Merge roadwaynumbers */
 //      val new_rws = generatedRoadways.flatMap(_._1)
-      var roadwaysToInsert = generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue)
-        .filter(_.endDate.isEmpty)
-        .groupBy(_.track).map(g => (g._2.groupBy(_.roadwayNumber).map(t =>
-        t._2.head.copy(startAddrMValue = t._2.minBy(_.startAddrMValue).startAddrMValue, endAddrMValue = t._2.maxBy(_.endAddrMValue).endAddrMValue
-        )))).flatten
+      var roadwaysToInsert = generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).filter(_.endDate.isEmpty).groupBy(_.track).map(g =>
+        (g._2.groupBy(_.roadwayNumber).map(t =>
+          t._2.head.copy(startAddrMValue = t._2.minBy(_.startAddrMValue).startAddrMValue, endAddrMValue = t._2.maxBy(_.endAddrMValue).endAddrMValue)
+          ))).flatten ++ generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).filter(_.endDate.nonEmpty)
+      roadwaysToInsert.foreach(rwtoinsert => logger.info(s"roadwaysToInsert ${rwtoinsert.roadwayNumber} ${rwtoinsert.endDate} ${rwtoinsert.validTo}"))
 
 
 //      roadwaysToInsert = roadwaysToInsert.groupBy(_.roadwayNumber).map{r => {
