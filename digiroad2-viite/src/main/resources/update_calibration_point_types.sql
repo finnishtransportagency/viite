@@ -1,6 +1,6 @@
 UPDATE CALIBRATION_POINT AS cpu SET TYPE = (SELECT CASE
 -- leave expired calibration points and user assigned points to original value
--- [TYPE = 3] Includes templates, points where ADDR_M is equal to START_ADDR_M or END_ADDR_M of the road (road_number, road_part_number and track) and when ROAD_TYPE changes
+-- [TYPE = 3] Includes templates, points where ADDR_M is equal to START_ADDR_M or END_ADDR_M of the road (road_number, road_part_number and track) and when ADMINISTRATIVE_CLASS changes
 		WHEN (rp.ADDR_M IN (SELECT roadAddr.END_ADDR_M FROM ROADWAY roadAddr
 				WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
 				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL AND roadAddr.DISCONTINUITY = 4)) THEN 3  /* Minor discontinuity in previous roadway end makes second roadway start also "discontinuos" */
@@ -11,12 +11,12 @@ UPDATE CALIBRATION_POINT AS cpu SET TYPE = (SELECT CASE
 		WHEN (rp.ADDR_M = (SELECT MAX(roadAddr.END_ADDR_M) FROM ROADWAY roadAddr
 				WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER
 				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 3 /* ADDR_M is equal to END_ADDR_M */
-		WHEN ((SELECT DISTINCT(roadAddr.ROAD_TYPE) FROM ROADWAY roadAddr
+		WHEN ((SELECT DISTINCT(roadAddr.ADMINISTRATIVE_CLASS) FROM ROADWAY roadAddr
 				WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.START_ADDR_M = rp.ADDR_M
 				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL) !=
-			(SELECT DISTINCT(roadAddr.ROAD_TYPE) FROM ROADWAY roadAddr
+			(SELECT DISTINCT(roadAddr.ADMINISTRATIVE_CLASS) FROM ROADWAY roadAddr
 				WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.END_ADDR_M = rp.ADDR_M
-				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 3 /* ROAD_TYPE changed on ADDR_M */
+				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL)) THEN 3 /* ADMINISTRATIVE_CLASS changed on ADDR_M */
 		WHEN ((SELECT DISTINCT(roadAddr.TRACK) FROM ROADWAY roadAddr
 				WHERE roadAddr.ROAD_NUMBER = rw.ROAD_NUMBER AND roadAddr.ROAD_PART_NUMBER = rw.ROAD_PART_NUMBER AND roadAddr.START_ADDR_M = rp.ADDR_M
 				AND roadAddr.VALID_TO IS NULL AND roadAddr.END_DATE IS NULL AND roadAddr.TRACK = 0) !=
