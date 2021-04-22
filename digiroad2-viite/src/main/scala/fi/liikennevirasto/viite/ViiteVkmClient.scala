@@ -31,6 +31,11 @@ class ViiteVkmClient {
 
   private val client = HttpClientBuilder.create().build
 
+  /**
+    * Builds http query fom given parts, executes the query, and returns the result (or error if http>=400).
+    * @param params query parameters. Parameters are expected to be unescaped.
+    * @return The query result, or VKMError in case the response was http>=400.
+    */
   def get(path: String, params: Map[String, String]): Either[Any, VKMError] = {
 
     val builder = new URIBuilder(getRestEndPoint + path)
