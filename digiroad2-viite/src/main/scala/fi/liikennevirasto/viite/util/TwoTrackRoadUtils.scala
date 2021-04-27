@@ -32,7 +32,10 @@ object TwoTrackRoadUtils {
     trackToSearchStatusChanges.tail.foldLeft((Seq(trackToSearchStatusChanges.head), oppositeTrack, Seq.empty[Option[UserDefinedCalibrationPoint]])) { (prevPl_othersidePls_udcps, currentPl) =>
 
       // Check if status changes and do spliting with user defined calibration point if links on both sides do not split at the same position.
-      if (currentPl.status != prevPl_othersidePls_udcps._1.last.status) {
+      if (
+//        (currentPl.status == LinkStatus.Terminated && trackToSearchStatusChanges.find(_.connected(currentPl.startingPoint)).getOrElse(false).asInstanceOf[ProjectLink].status != LinkStatus.Terminated) ||
+//          (currentPl.status == LinkStatus.Terminated && trackToSearchStatusChanges.find(_.connected(currentPl.endPoint)).getOrElse(false).asInstanceOf[ProjectLink].status != LinkStatus.Terminated) ||
+        (currentPl.status != prevPl_othersidePls_udcps._1.last.status)) {
         val splitted_pls = this.createCalibrationPointsAtStatusChange(Seq(prevPl_othersidePls_udcps._1.last), prevPl_othersidePls_udcps._2, currentPl.projectId, currentPl.createdBy.getOrElse("splitter"))
         if (splitted_pls._1.nonEmpty) {
           val pls = splitted_pls._1.get
@@ -55,7 +58,6 @@ object TwoTrackRoadUtils {
           (prevPl_othersidePls_udcps._1 :+ currentPl, prevPl_othersidePls_udcps._2, prevPl_othersidePls_udcps._3)
       } else
         (prevPl_othersidePls_udcps._1 :+ currentPl, prevPl_othersidePls_udcps._2, prevPl_othersidePls_udcps._3)
-
     }
   }
 
@@ -169,7 +171,7 @@ object TwoTrackRoadUtils {
           pl.track != Track.Combined &&
             pl.track != last.track &&
             pl.status != LinkStatus.NotHandled &&
-            pl.status != LinkStatus.Terminated &&
+            //pl.status != LinkStatus.Terminated &&
             // pl.status != last.status &&
             pl.startAddrMValue < last.endAddrMValue &&
             pl.endAddrMValue >= last.endAddrMValue)

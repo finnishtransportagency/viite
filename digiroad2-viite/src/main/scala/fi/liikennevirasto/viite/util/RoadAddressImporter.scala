@@ -334,7 +334,9 @@ class RoadAddressImporter(conversionDatabase: DatabaseDef, vvhClient: VVHClient,
         insertRoadway(roadwayPs, roadAddress)
     }
     calibrationPointPs.executeBatch()
+    println(s"${DateTime.now()} - calibrationPointPs saved")
     linearLocationPs.executeBatch()
+    println(s"${DateTime.now()} - linearLocationPs saved")
     roadwayPs.executeBatch()
     println(s"${DateTime.now()} - Roadways saved")
     calibrationPointPs.close()
