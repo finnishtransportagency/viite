@@ -568,12 +568,13 @@ class ProjectValidator {
   }
 
   def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
-    previous.track == currentLink.track //&& previous.endAddrMValue == currentLink.startAddrMValue
+    previous.track == currentLink.track && previous.endAddrMValue == currentLink.startAddrMValue
   }
 
   def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
+    val notCalculated = links.exists(_.endAddrMValue == 0)
     links.foldLeft(Seq.empty[ProjectLink]) { (linkSameTrack, current) => {
-      if (current.track == track && (linkSameTrack.isEmpty || isSameTrack(linkSameTrack.last, current))) {
+      if (notCalculated && current.track == track || !notCalculated && (current.track == track && (linkSameTrack.isEmpty || isSameTrack(linkSameTrack.last, current)))) {
         linkSameTrack :+ current
       } else {
         linkSameTrack
@@ -600,24 +601,26 @@ class ProjectValidator {
     }
 
     def checkMinMaxTrackAdministrativeClasses(trackInterval: Seq[ProjectLink]) = {
-      if (trackInterval.exists(_.endAddrMValue == 0)) None
-      else {
         val diffLinks = trackInterval.groupBy(_.administrativeClass).flatMap { projectLinksByAdministrativeClass: (AdministrativeClass, Seq[ProjectLink]) =>
           projectLinksByAdministrativeClass._2.partition(_.track == Track.LeftSide) match {
-            case (left, right) if left.nonEmpty && right.nonEmpty => val leftSection      = (projectLinksByAdministrativeClass._1, left.minBy(_.startAddrMValue).startAddrMValue, left.maxBy(_.endAddrMValue).endAddrMValue)
-                                                                     val rightSection     = (projectLinksByAdministrativeClass._1, right.minBy(_.startAddrMValue).startAddrMValue, right.maxBy(_.endAddrMValue).endAddrMValue)
-                                                                     val startSectionAdrr = Seq(leftSection._2, rightSection._2).max
-                                                                     val endSectionAddr   = Seq(leftSection._3, rightSection._3).min
-              if (leftSection != rightSection) {
-                val criticalLeftLinks  = left.filterNot(link => {link.startAddrMValue >= startSectionAdrr && link.endAddrMValue <= endSectionAddr}).filterNot(link => {right.map(_.startAddrMValue).contains(link.startAddrMValue) || right.map(_.endAddrMValue).contains(link.endAddrMValue)})
-                val criticalRightLinks = right.filterNot(link => {link.startAddrMValue >= startSectionAdrr && link.endAddrMValue <= endSectionAddr}).filterNot(link => {left.map(_.startAddrMValue).contains(link.startAddrMValue) || left.map(_.endAddrMValue).contains(link.endAddrMValue)})
-                criticalLeftLinks ++ criticalRightLinks
+            case (left, right) if left.nonEmpty && right.nonEmpty => {
+              // Do address check only when addresses are calculated, otherwise do rought check that both tracks are defined with the same adminclass.
+              if (!trackInterval.exists(_.endAddrMValue == 0)) {
+                val leftSection      = (projectLinksByAdministrativeClass._1, left.minBy(_.startAddrMValue).startAddrMValue, left.maxBy(_.endAddrMValue).endAddrMValue)
+                val rightSection     = (projectLinksByAdministrativeClass._1, right.minBy(_.startAddrMValue).startAddrMValue, right.maxBy(_.endAddrMValue).endAddrMValue)
+                val startSectionAdrr = Seq(leftSection._2, rightSection._2).max
+                val endSectionAddr   = Seq(leftSection._3, rightSection._3).min
+                if (leftSection != rightSection) {
+                  val criticalLeftLinks  = left.filterNot(link => {link.startAddrMValue >= startSectionAdrr && link.endAddrMValue <= endSectionAddr}).filterNot(link => {right.map(_.startAddrMValue).contains(link.startAddrMValue) || right.map(_.endAddrMValue).contains(link.endAddrMValue)})
+                  val criticalRightLinks = right.filterNot(link => {link.startAddrMValue >= startSectionAdrr && link.endAddrMValue <= endSectionAddr}).filterNot(link => {left.map(_.startAddrMValue).contains(link.startAddrMValue) || left.map(_.endAddrMValue).contains(link.endAddrMValue)})
+                  criticalLeftLinks ++ criticalRightLinks
+                } else Seq.empty[ProjectLink]
               } else Seq.empty[ProjectLink]
+            }
             case (left, right) if left.isEmpty || right.isEmpty => left ++ right
           }
         }.toSeq
         if (diffLinks.nonEmpty) Some(diffLinks) else None
-      }
     }
 
     def validateTrackTopology(trackInterval: Seq[ProjectLink]): Seq[ProjectLink] = {
@@ -662,25 +665,20 @@ class ProjectValidator {
       }
     }
 
-    def getTwoTrackInterval(links: Seq[ProjectLink], interval: Seq[(Long, Seq[ProjectLink])]): Seq[(Long, Seq[ProjectLink])] = {
+    def getTwoTrackInterval(links   : Seq[ProjectLink], interval: Seq[(Long, Seq[ProjectLink])]): Seq[(Long, Seq[ProjectLink])] = {
       if (links.isEmpty) {
         interval
       } else {
-        val trackToCheck = links.head.track
-
-        val endPoints_ = TrackSectionOrder.findChainEndpoints(links)
-        val mappedEndpoints = (endPoints_.head._1, endPoints_.last._1)
-        val orderedProjectLinks =
-//          if  (trackToCheck == Track.LeftSide)//(links.exists(_.reversed))
-//            TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, links)._2.reverse
-//          else
-            TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, links)._1++ TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, links)._2.reverse
-
-       //poista startAddrMValue ja lisää molemmat ajoradat
-//       val trackInterval = getTrackInterval(links.sortBy(o => (o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)), trackToCheck)
-       val trackInterval = getTrackInterval(orderedProjectLinks, trackToCheck)
-        val headerAddr = trackInterval.minBy(_.startAddrMValue).startAddrMValue
-        getTwoTrackInterval(links.filterNot(l => trackInterval.exists(lt => lt.id == l.id)), interval ++ Seq(headerAddr -> trackInterval.filterNot(_.track == Track.Combined)))
+        val trackToCheck  = links.head.track
+        val trackInterval =
+        if (links.exists(_.endAddrMValue == 0))
+          getTrackInterval(links.sortBy(o => {(o.roadNumber, o.roadPartNumber, o.track.value)}), trackToCheck)
+        else
+          getTrackInterval(links.sortBy(o => {(o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)}), trackToCheck)
+        val headerAddr    = trackInterval.minBy(_.startAddrMValue).startAddrMValue
+        getTwoTrackInterval(links.filterNot(l => {
+          trackInterval.exists(lt => {lt.id == l.id})
+        }), interval ++ Seq(headerAddr -> trackInterval.filterNot(_.track == Track.Combined)))
       }
     }
 

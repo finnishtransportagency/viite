@@ -297,11 +297,15 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
     //  adjustedRight and adjustedLeft already ordered by geometry -> TrackSectionOrder.orderProjectLinksTopologyByGeometry
 
+    // TODO: roadpart konditio
+//    val terminatedProjectLinks = projectLinkDAO.fetchProjectLinks(rightSections.head.projectId, linkStatusFilter = Some(LinkStatus.Terminated))
+//    val terminatedLeftProjectLinks = terminatedProjectLinks.filter(_.track == Track.LeftSide)
+//    val terminatedRightProjectLinks = terminatedProjectLinks.filter(_.track == Track.RightSide)
 
     val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(leftLinks, rightLinks)
     val (rightLinksWithUdcps, splittedLeftLinks, udcpsFromLeftSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(splittedRightLinks, leftLinksWithUdcps)
 
-    val dups = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits).filter(_.isDefined).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
+    val dups = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
     /* Update udcp pl if splitted after second pass. */
     val updatedudcpsFromRightSideSplits = dups.foldLeft(udcpsFromRightSideSplits) { (udcpsToUpdate, cur) => {
       val splittedLeftLink       = (splittedLeftLinks).find(_.id == cur._1).get
@@ -309,11 +313,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       udcpsToUpdate.filterNot(_.get.projectLinkId == cur._1) :+ Some(udcpsToUpdate.find(_.get.projectLinkId == cur._1).get.get.copy(projectLinkId = newLink.id))
     }}
 
-
     val splitCreatedCpsFromRightSide: Map[Long, UserDefinedCalibrationPoint] = updatedudcpsFromRightSideSplits.map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
-    val splitCreatedCpsFromLeftSide: Map[Long, UserDefinedCalibrationPoint] = udcpsFromLeftSideSplits.map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
+    val splitCreatedCpsFromLeftSide: Map[Long, UserDefinedCalibrationPoint] = udcpsFromLeftSideSplits.filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
 
-    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(splittedLeftLinks, rightLinksWithUdcps, None, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
+
+
+    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(splittedLeftLinks.filterNot(_.status == LinkStatus.Terminated), rightLinksWithUdcps.filterNot(_.status == LinkStatus.Terminated), None, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
 
     val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint++ splitCreatedCpsFromRightSide ++
                        splitCreatedCpsFromLeftSide)
