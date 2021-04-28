@@ -1347,7 +1347,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     try {
       withDynTransaction {
         val toUpdateLinks = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(ids, linkIds.toSet, projectId)
-        userDefinedEndAddressM.map(addressM => {
+        userDefinedEndAddressM.foreach(addressM => {
           val endSegment = toUpdateLinks.maxBy(_.endAddrMValue)
           val calibrationPoint = UserDefinedCalibrationPoint(NewIdValue, endSegment.id, projectId, addressM.toDouble - endSegment.startMValue, addressM)
           val calibrationPointIsPresent = toUpdateLinks.find(ul => ul.projectId == projectId && ul.startAddrMValue == endSegment.startAddrMValue) match {
