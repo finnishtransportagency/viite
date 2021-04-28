@@ -320,7 +320,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
     val (adjustedLeft, adjustedRight) = adjustTracksToMatch(splittedLeftLinks.filterNot(_.status == LinkStatus.Terminated), rightLinksWithUdcps.filterNot(_.status == LinkStatus.Terminated), None, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
 
-    val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint++ splitCreatedCpsFromRightSide ++
+    val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++
                        splitCreatedCpsFromLeftSide)
     TrackSectionOrder.createCombinedSections(right, left)
   }

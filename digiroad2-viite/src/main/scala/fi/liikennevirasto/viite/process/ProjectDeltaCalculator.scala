@@ -104,7 +104,7 @@ object ProjectDeltaCalculator {
     val matchContinuity = pl1.discontinuity == Discontinuity.Continuous
     val oppositePl = allNonTerminatedProjectLinks.filter( pl => pl.track != pl1.track && pl.endAddrMValue == pl1.endAddrMValue).filter(_.status != LinkStatus.Terminated)
     val hasCalibrationPoint = ((pl1.track == Track.Combined && pl1.hasCalibrationPointAtEnd) && pl1.hasCalibrationPointCreatedInProject) || (oppositePl.nonEmpty && oppositePl.head.hasCalibrationPointAtEnd && pl1.hasCalibrationPointAtEnd) // Opposite side has user cp
-    if (matchAddr && matchContinuity && !hasCalibrationPoint &&
+    if (matchAddr && matchContinuity && !hasCalibrationPoint && ra1.endAddrMValue == ra2.startAddrMValue &&
         ra1.administrativeClass == ra2.administrativeClass && pl1.administrativeClass == pl2.administrativeClass && pl1.reversed == pl2.reversed) {
       Seq((
             ra1.asInstanceOf[RoadAddress].copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R],
