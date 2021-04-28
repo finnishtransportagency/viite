@@ -1496,6 +1496,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       time(logger, "Recalculate links") {
         var projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
         ProjectCalibrationPointDAO.removeAllCalibrationPointsFromProject(projectId)
+//        val cptoremove = projectLinks.filterNot(_.status == LinkStatus.New)
+//                    .filter(pl => pl.calibrationPoints._1 == CalibrationPointDAO.CalibrationPointType.UserDefinedCP || pl.calibrationPoints._2 == CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
+//        ProjectCalibrationPointDAO.removeAllCalibrationPoints(cptoremove.map(_.id).toSet)
 
         val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
 
@@ -2029,14 +2032,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadAddressService.handleProjectCalibrationPointChanges(linearLocations, username, projectLinkChanges.filter(_.status == LinkStatus.Terminated))
       logger.debug(s"Creating nodes and junctions templates")
 
-//      val mappedRoadAddressesProjection: Seq[RoadAddress] = roadAddressService.getRoadAddressesByRoadwayIds(roadwayIds)
+      val mappedRoadAddressesProjection: Seq[RoadAddress] = roadAddressService.getRoadAddressesByRoadwayIds(roadwayIds)
       val roadwayLinks = if (generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
 //      val roadwayLinks = projectLinks
-//      val (enrichedProjectLinks: Seq[ProjectLink], enrichedProjectRoadLinkChanges: Seq[ProjectRoadLinkChange]) = ProjectChangeFiller.mapAddressProjectionsToLinks(
-//        roadwayLinks, projectLinkChanges, mappedRoadAddressesProjection)
+      val (enrichedProjectLinks: Seq[ProjectLink], enrichedProjectRoadLinkChanges: Seq[ProjectRoadLinkChange]) = ProjectChangeFiller.mapAddressProjectionsToLinks(
+        roadwayLinks, projectLinkChanges, mappedRoadAddressesProjection)
 
-      val enrichedProjectLinks = projectLinks
-      val enrichedProjectRoadLinkChanges = projectLinkChanges
+//      val enrichedProjectLinks = projectLinks
+//      val enrichedProjectRoadLinkChanges = projectLinkChanges
 
       nodesAndJunctionsService.handleJunctionAndJunctionPoints(roadwayChanges, enrichedProjectLinks, enrichedProjectRoadLinkChanges, username)
       nodesAndJunctionsService.handleNodePoints(roadwayChanges, enrichedProjectLinks, enrichedProjectRoadLinkChanges, username)
@@ -2091,12 +2094,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       /* Merge roadwaynumbers */
 //      val new_rws = generatedRoadways.flatMap(_._1)
-      var roadwaysToInsert = generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue)
-        .filter(_.endDate.isEmpty)
-        .groupBy(_.track).map(g => (g._2.groupBy(_.roadwayNumber).map(t =>
-        t._2.head.copy(startAddrMValue = t._2.minBy(_.startAddrMValue).startAddrMValue, endAddrMValue = t._2.maxBy(_.endAddrMValue).endAddrMValue
-        )))).flatten ++ generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).filter(_.endDate.nonEmpty)
+//      var roadwaysToInsert = generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue)
+//        .filter(_.endDate.isEmpty)
+//        .groupBy(_.track).map(g => (g._2.groupBy(_.roadwayNumber).map(t =>
+//        t._2.head.copy(startAddrMValue = t._2.minBy(_.startAddrMValue).startAddrMValue, endAddrMValue = t._2.maxBy(_.endAddrMValue).endAddrMValue
+//        )))).flatten ++ generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).filter(_.endDate.nonEmpty)
 
+      var roadwaysToInsert = generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).filter(_.endDate.isEmpty).groupBy(_.track).map(g =>
+        (g._2.groupBy(_.roadwayNumber).map(t =>
+          t._2.head.copy(startAddrMValue = t._2.minBy(_.startAddrMValue).startAddrMValue, endAddrMValue = t._2.maxBy(_.endAddrMValue).endAddrMValue)
+        ))).flatten ++ generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).filter(_.endDate.nonEmpty)
+      roadwaysToInsert.foreach(rwtoinsert => logger.info(s"roadwaysToInsert ${rwtoinsert.roadwayNumber} ${rwtoinsert.endDate} ${rwtoinsert.validTo}"))
 
 //      roadwaysToInsert = roadwaysToInsert.groupBy(_.roadwayNumber).map{r => {
 //        val min_addr = r._2.minBy(_.startAddrMValue).startAddrMValue
