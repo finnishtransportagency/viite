@@ -71,7 +71,7 @@ class OAGRasterServiceProxyServlet extends ProxyServlet {
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    val url = s"${ViiteProperties.oagProxyServer}$uri?${req.getQueryString}"
+    val url = s"${ViiteProperties.oagProxyURL}$uri?${req.getQueryString}"
     logger.info(s"OAGRasterServiceProxyServlet: $url")
     java.net.URI.create(url)
   }

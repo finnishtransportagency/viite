@@ -11,6 +11,7 @@ trait ViiteProperties {
   val useVVHGeometry: String
   val vvhServiceHost: String
   val oagProxyServer: String
+  val oagProxyURL: String
   val rasterServiceURL: String
   val vvhRestApiEndPoint: String
   val vvhRoadlinkFrozen: Boolean
@@ -64,6 +65,7 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val useVVHGeometry: String = scala.util.Properties.envOrElse("useVVHGeometry", null)
   val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", null)
   val oagProxyServer: String = scala.util.Properties.envOrElse("oagProxyServer", null)
+  val oagProxyURL: String = scala.util.Properties.envOrElse("oagProxyURL", null)
   val rasterServiceURL: String = scala.util.Properties.envOrElse("rasterServiceURL", null)
   val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
@@ -150,6 +152,7 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val useVVHGeometry: String = envProps.getProperty("useVVHGeometry")
   override val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", envProps.getProperty("vvhServiceHost"))
   override val oagProxyServer: String = scala.util.Properties.envOrElse("oagProxyServer", envProps.getProperty("oagProxyServer"))
+  override val oagProxyURL:  String = scala.util.Properties.envOrElse("oagProxyURL", envProps.getProperty("oagProxyURL"))
   override val rasterServiceURL: String = scala.util.Properties.envOrElse("rasterServiceURL", envProps.getProperty("rasterServiceURL"))
   override val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", envProps.getProperty("vvhRestApiEndPoint"))
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
@@ -233,6 +236,7 @@ object ViiteProperties {
   lazy val useVVHGeometry: String = properties.useVVHGeometry
   lazy val vvhServiceHost: String = properties.vvhServiceHost
   lazy val oagProxyServer: String = properties.oagProxyServer
+  lazy val oagProxyURL: String = properties.oagProxyURL
   lazy val rasterServiceURL: String = properties.rasterServiceURL
   lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
   lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
