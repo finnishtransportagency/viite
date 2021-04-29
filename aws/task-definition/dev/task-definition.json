@@ -26,9 +26,10 @@
                 { "name": "vvhRestApiEndPoint", "value": "https://haproxy.vayla.fi:2027/vvhdata/" },
                 { "name": "vvhRoadlink.frozen", "value": "true" },
                 { "name": "vkmUrl", "value": "http://oag.vayla.fi" },
-                { "name": "tierekisteriViiteRestApiEndPoint", "value": "http://testioag.vayla.fi:8081/trrest/devtest/" },
-                { "name": "tierekisteri.enabled", "value": "false" },
+                { "name": "tierekisteriViiteRestApiEndPoint", "value": "https://testioag.vayla.fi/trrest/devtest/" },
+                { "name": "tierekisteri.enabled", "value": "true" },
                 { "name": "viiteTierekisteri.username", "value": "trrestviite" },
+                { "name": "oag.username", "value": "svc_cloudviite" },
                 { "name": "http.proxySet", "value": "false" },
                 { "name": "http.proxyHost", "value": "127.0.0.1" },
                 { "name": "http.nonProxyHosts", "value": "127.0.0.1" },
@@ -73,6 +74,10 @@
                 {
                     "name": "viiteTierekisteri.password",
                     "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/viiteTierekisteri.password"
+                },
+                {
+                    "name": "oag.password",
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.oag.basic.password"
                 }
             ],
             "memoryReservation": 2048,
