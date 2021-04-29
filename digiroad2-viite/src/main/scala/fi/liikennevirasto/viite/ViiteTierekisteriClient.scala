@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.util.ViiteTierekisteriAuthPropertyReader
+import fi.liikennevirasto.viite.util.{OAGAuthPropertyReader, ViiteTierekisteriAuthPropertyReader}
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -192,6 +192,8 @@ object ViiteTierekisteriClient {
   }
 
   private val auth = new ViiteTierekisteriAuthPropertyReader
+  private val oagAuth = new OAGAuthPropertyReader
+
 
   private val client = HttpClientBuilder.create().build
 
@@ -214,6 +216,7 @@ object ViiteTierekisteriClient {
     if (ViiteProperties.tierekisteriEnabled) {
       val request = new HttpPost(getRestEndPoint + "addresschange/")
       request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
+      request.addHeader("Authorization", "Basic " + oagAuth.getAuthInBase64)
       request.setEntity(createJsonMessage(trProject))
       val response = client.execute(request)
       try {
@@ -279,6 +282,7 @@ object ViiteTierekisteriClient {
     implicit val formats = DefaultFormats
     val request = new HttpGet(s"${getRestEndPoint}addresschange/$projectId")
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
+    request.addHeader("Authorization", "Basic " + oagAuth.getAuthInBase64)
 
     val response = client.execute(request)
     try {
