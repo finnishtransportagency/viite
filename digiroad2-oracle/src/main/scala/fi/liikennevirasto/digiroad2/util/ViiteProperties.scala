@@ -33,6 +33,8 @@ trait ViiteProperties {
   val authenticationServiceRoadBasicPassword: String
   val authenticationMunicipalityBasicUsername: String
   val authenticationMunicipalityBasicPassword: String
+  val oagUsername: String
+  val oagPassword: String
   val viitetierekisteriUsername: String
   val viitetierekisteriPassword: String
   val latestDeploy: String
@@ -84,6 +86,8 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val authenticationServiceRoadBasicPassword: String = scala.util.Properties.envOrElse("authentication.serviceRoad.basic.password", null)
   val authenticationMunicipalityBasicUsername: String = scala.util.Properties.envOrElse("authentication.municipality.basic.username", null)
   val authenticationMunicipalityBasicPassword: String = scala.util.Properties.envOrElse("authentication.municipality.basic.password", null)
+  val oagUsername: String = scala.util.Properties.envOrElse("oag.username", null)
+  val oagPassword: String = scala.util.Properties.envOrElse("oag.password", null)
   val viitetierekisteriUsername: String = scala.util.Properties.envOrElse("viiteTierekisteri.username", null)
   val viitetierekisteriPassword: String = scala.util.Properties.envOrElse("viiteTierekisteri.password", null)
   val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
@@ -168,6 +172,8 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val authenticationServiceRoadBasicPassword: String = envProps.getProperty("authentication.serviceRoad.basic.password")
   override val authenticationMunicipalityBasicUsername: String = envProps.getProperty("authentication.municipality.basic.username")
   override val authenticationMunicipalityBasicPassword: String = envProps.getProperty("authentication.municipality.basic.password")
+  override val oagUsername: String = envProps.getProperty("oag.username")
+  override val oagPassword: String = envProps.getProperty("oag.password")
   override val viitetierekisteriUsername: String = envProps.getProperty("viiteTierekisteri.username")
   override val viitetierekisteriPassword: String = envProps.getProperty("viiteTierekisteri.password")
   override val latestDeploy: String = revisionProperties.getProperty("latestDeploy", "-")
@@ -249,6 +255,8 @@ object ViiteProperties {
   lazy val authenticationServiceRoadBasicPassword: String = properties.authenticationServiceRoadBasicPassword
   lazy val authenticationMunicipalityBasicUsername: String = properties.authenticationMunicipalityBasicUsername
   lazy val authenticationMunicipalityBasicPassword: String = properties.authenticationMunicipalityBasicPassword
+  lazy val oagUsername: String = properties.oagUsername
+  lazy val oagPassword: String = properties.oagPassword
   lazy val viitetierekisteriUsername: String = properties.viitetierekisteriUsername
   lazy val viitetierekisteriPassword: String = properties.viitetierekisteriPassword
   lazy val latestDeploy: String = properties.latestDeploy
