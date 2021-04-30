@@ -115,7 +115,7 @@ object TwoTrackRoadUtils {
       val leftCalibrationPoint = if (roadPartCalibrationPoints.filter(cp => cp.projectLinkId == last.id && cp.addressMValue == last.endAddrMValue).isEmpty) {
         logger.info(s"Splitting pl.id ${last.id}")
           val newUdcp = UserDefinedCalibrationPoint(NewIdValue, last.id, last.projectId, last.endMValue - last.startMValue, last.endAddrMValue)
-        ProjectCalibrationPointDAO.createCalibrationPoint(newUdcp)
+//        ProjectCalibrationPointDAO.createCalibrationPoint(newUdcp)
         Some(newUdcp)
       } else None
 
@@ -123,8 +123,9 @@ object TwoTrackRoadUtils {
         UserDefinedCalibrationPoint(NewIdValue, otherSideLink.id, otherSideLink.projectId, last.endAddrMValue - otherSideLink.startMValue, last.endAddrMValue)
 
       val newUcpId = if (roadPartCalibrationPoints.filter(cp => cp.projectLinkId == otherSideLink.id && cp.addressMValue == last.endAddrMValue).isEmpty) {
-        ProjectCalibrationPointDAO.createCalibrationPoint(rightCalibrationPoint)
-      } else -1
+        true
+//        ProjectCalibrationPointDAO.createCalibrationPoint(rightCalibrationPoint)
+      } else false
 
       val roadways = roadwayDAO.fetchAllByRoadwayId(Seq(last.roadwayId, otherSideLink.roadwayId))
       val originalAddresses = roadwayAddressMapper.getRoadAddressesByRoadway(roadways) //roadAddressService.getRoadAddressesByRoadwayIds(Seq(last.roadwayId, otherSideLink.roadwayId))
@@ -137,7 +138,7 @@ object TwoTrackRoadUtils {
         userName,
         originalAddresses)
 
-      if (newUcpId > 0)
+      if (newUcpId )
         (Seq(Some(rightCalibrationPoint), Some(leftCalibrationPoint.getOrElse())), Some(updatedCpToLast, updatedCpToOtherSideLink))
       else
         (Seq.empty[Option[UserDefinedCalibrationPoint]], None)

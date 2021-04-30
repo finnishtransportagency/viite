@@ -1495,7 +1495,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       time(logger, "Recalculate links") {
         var projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-        ProjectCalibrationPointDAO.removeAllCalibrationPointsFromProject(projectId)
+//        ProjectCalibrationPointDAO.removeAllCalibrationPointsFromProject(projectId)
 //        val cptoremove = projectLinks.filterNot(_.status == LinkStatus.New)
 //                    .filter(pl => pl.calibrationPoints._1 == CalibrationPointDAO.CalibrationPointType.UserDefinedCP || pl.calibrationPoints._2 == CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
 //        ProjectCalibrationPointDAO.removeAllCalibrationPoints(cptoremove.map(_.id).toSet)
