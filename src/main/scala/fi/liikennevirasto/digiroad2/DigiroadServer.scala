@@ -56,7 +56,7 @@ class OAGProxyServlet extends ProxyServlet {
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
     val url = s"${ViiteProperties.rasterServiceURL}$uri"
-    logger.info(s"OAGProxyServlet: $url")
+    logger.debug(url)
     java.net.URI.create(url)
   }
 
@@ -72,7 +72,7 @@ class OAGRasterServiceProxyServlet extends ProxyServlet {
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
     val url = s"${ViiteProperties.oagProxyURL}$uri?${req.getQueryString}"
-    logger.info(s"OAGRasterServiceProxyServlet: $url")
+    logger.debug(url)
     java.net.URI.create(url)
   }
 
@@ -88,7 +88,7 @@ class ArcGisProxyServlet extends ProxyServlet {
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
     val url = s"http://aineistot.esri.fi$uri"
-    logger.info(url)
+    logger.debug(url)
     java.net.URI.create(url)
   }
 
