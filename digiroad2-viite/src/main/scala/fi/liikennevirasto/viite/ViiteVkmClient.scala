@@ -49,7 +49,7 @@ class ViiteVkmClient {
 
     if (builder.getHost == "localhost") {
       // allow ssh port forward for developing
-      request.setHeader("Host", "testioag.vayla.fi")
+      request.setHeader("Host", ViiteProperties.oagProxyServer)
     }
 
     val response = client.execute(request)
@@ -79,7 +79,7 @@ class ViiteVkmClient {
     val url = new URL(getRestEndPoint)
     if (url.getHost == "localhost") {
       // allow ssh port forward for developing
-      post.setHeader("Host", "oag.liikennevirasto.fi")
+      post.setHeader("Host", ViiteProperties.oagProxyServer)
     }
     var response: CloseableHttpResponse = null
     try {
