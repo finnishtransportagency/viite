@@ -49,15 +49,16 @@ object ProjectSectionMValueCalculator {
     val endPoints = TrackSectionOrder.findChainEndpoints(seq)
     val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
     val orderedPairs = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
-    val ordered = if (seq.exists(_.track == Track.RightSide)) orderedPairs._1 else orderedPairs._2.reverse
+    val ordered = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
 
     val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
       val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
       if (!pl.isSplit) {
         val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
+        val test = m + pl.addrMLength
         pl.status match {
           case LinkStatus.New => addressValue
-          case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + pl.addrMLength
+          case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => test
           case LinkStatus.Terminated => pl.endAddrMValue
           case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
         }
