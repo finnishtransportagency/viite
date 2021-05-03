@@ -572,9 +572,8 @@ class ProjectValidator {
   }
 
   def getTrackInterval(links: Seq[ProjectLink], track: Track): Seq[ProjectLink] = {
-    val notCalculated = links.exists(_.endAddrMValue == 0)
     links.foldLeft(Seq.empty[ProjectLink]) { (linkSameTrack, current) => {
-      if (notCalculated && current.track == track || !notCalculated && (current.track == track && (linkSameTrack.isEmpty || isSameTrack(linkSameTrack.last, current)))) {
+      if (current.track == track && (linkSameTrack.isEmpty || isSameTrack(linkSameTrack.last, current))) {
         linkSameTrack :+ current
       } else {
         linkSameTrack
@@ -603,9 +602,7 @@ class ProjectValidator {
     def checkMinMaxTrackAdministrativeClasses(trackInterval: Seq[ProjectLink]) = {
         val diffLinks = trackInterval.groupBy(_.administrativeClass).flatMap { projectLinksByAdministrativeClass: (AdministrativeClass, Seq[ProjectLink]) =>
           projectLinksByAdministrativeClass._2.partition(_.track == Track.LeftSide) match {
-            case (left, right) if left.nonEmpty && right.nonEmpty => {
-              // Do address check only when addresses are calculated, otherwise do rought check that both tracks are defined with the same adminclass.
-              if (!trackInterval.exists(_.endAddrMValue == 0)) {
+          case (left, right) if left.nonEmpty && right.nonEmpty =>
                 val leftSection      = (projectLinksByAdministrativeClass._1, left.minBy(_.startAddrMValue).startAddrMValue, left.maxBy(_.endAddrMValue).endAddrMValue)
                 val rightSection     = (projectLinksByAdministrativeClass._1, right.minBy(_.startAddrMValue).startAddrMValue, right.maxBy(_.endAddrMValue).endAddrMValue)
                 val startSectionAdrr = Seq(leftSection._2, rightSection._2).max
@@ -615,8 +612,6 @@ class ProjectValidator {
                   val criticalRightLinks = right.filterNot(link => {link.startAddrMValue >= startSectionAdrr && link.endAddrMValue <= endSectionAddr}).filterNot(link => {left.map(_.startAddrMValue).contains(link.startAddrMValue) || left.map(_.endAddrMValue).contains(link.endAddrMValue)})
                   criticalLeftLinks ++ criticalRightLinks
                 } else Seq.empty[ProjectLink]
-              } else Seq.empty[ProjectLink]
-            }
             case (left, right) if left.isEmpty || right.isEmpty => left ++ right
           }
         }.toSeq
@@ -640,8 +635,6 @@ class ProjectValidator {
     }
 
     def validateTrackAdministrativeClasses(groupInterval: Seq[(Long, Seq[ProjectLink])]): Seq[ProjectLink] = {
-//      groupInterval.flatMap{ interval =>
-
       groupInterval.groupBy(_._1).flatMap{ interval =>
         val leftrRightTracks = interval._2.flatMap(_._2)
         val validTrackInterval = leftrRightTracks.filterNot(r => r.status == Terminated || r.track == Track.Combined)
@@ -670,15 +663,9 @@ class ProjectValidator {
         interval
       } else {
         val trackToCheck  = links.head.track
-        val trackInterval =
-        if (links.exists(_.endAddrMValue == 0))
-          getTrackInterval(links.sortBy(o => {(o.roadNumber, o.roadPartNumber, o.track.value)}), trackToCheck)
-        else
-          getTrackInterval(links.sortBy(o => {(o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)}), trackToCheck)
+        val trackInterval = getTrackInterval(links.sortBy(o => (o.roadNumber, o.roadPartNumber, o.track.value, o.startAddrMValue)), trackToCheck)
         val headerAddr    = trackInterval.minBy(_.startAddrMValue).startAddrMValue
-        getTwoTrackInterval(links.filterNot(l => {
-          trackInterval.exists(lt => {lt.id == l.id})
-        }), interval ++ Seq(headerAddr -> trackInterval.filterNot(_.track == Track.Combined)))
+        getTwoTrackInterval(links.filterNot(l => trackInterval.exists(lt => lt.id == l.id)), interval ++ Seq(headerAddr -> trackInterval.filterNot(_.track == Track.Combined)))
       }
     }
 
@@ -690,19 +677,12 @@ class ProjectValidator {
 
     val groupedLinks = notCombinedLinks.filterNot(_.status == LinkStatus.Terminated).groupBy(pl => (pl.roadNumber, pl.roadPartNumber))
     groupedLinks.map(roadPart => {
-      val endPoints = TrackSectionOrder.findChainEndpoints(roadPart._2)
-      val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
-      val orderedProjectLinks =
-        if (roadPart._2.exists(_.reversed))
-          (TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, roadPart._2))._1.reverse
-        else
-          TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, roadPart._2)._1
-      val trackCoverageErrors = recursiveCheckTrackChange(orderedProjectLinks) match {
+      val trackCoverageErrors = recursiveCheckTrackChange(roadPart._2) match {
         case Some(errors) => Seq(errors)
         case _ => Seq()
       }
 
-      val administrativeClassPairingErrors = checkTrackAdministrativeClass(roadPart._2.toList) match {
+      val administrativeClassPairingErrors = checkTrackAdministrativeClass(roadPart._2) match {
         case Some(errors) => Seq(errors)
         case _ => Seq()
       }
@@ -936,15 +916,7 @@ class ProjectValidator {
       }
 
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
-        val endPoints = TrackSectionOrder.findChainEndpoints(g._2)
-        val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
-        val orderedProjectLinks =
-          if (g._2.exists(_.reversed))
-            (TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, g._2))._1.reverse
-        else
-          TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, g._2)._1
-
-        val trackIntervals: Seq[Seq[ProjectLink]] = Seq(orderedProjectLinks.filter(_.track != RightSide), orderedProjectLinks.filter(_.track != LeftSide))
+        val trackIntervals: Seq[Seq[ProjectLink]] = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
         trackIntervals.flatMap {
           interval => {
             if (interval.size > 1) {
@@ -986,38 +958,15 @@ class ProjectValidator {
         if (next.isEmpty)
           false
         else
-//          curr.endAddrMValue == next.get.startAddrMValue && curr.connected(next.get)
-        Seq((curr.getEndPoints._1, next.get.getEndPoints._1),
-            (curr.getEndPoints._1, next.get.getEndPoints._2),
-            (curr.getEndPoints._2, next.get.getEndPoints._1),
-            (curr.getEndPoints._2, next.get.getEndPoints._2)).exists( pair =>
-              GeometryUtils.areAdjacent(pair._1, pair._2, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
-            )
+          curr.endAddrMValue == next.get.startAddrMValue && curr.connected(next.get)
       }
 
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>
-        val left = g._2.filterNot(_.track == Track.RightSide)
-        val right = g._2.filterNot(_.track == Track.LeftSide)
-        val leftEndPoints = TrackSectionOrder.findChainEndpoints(left)
-        val rightEndPoints = TrackSectionOrder.findChainEndpoints(right)
-        val mappedLeftEndpoints = (leftEndPoints.head._1, leftEndPoints.last._1)
-        val mappedRightEndpoints = (rightEndPoints.head._1, rightEndPoints.last._1)
-        val orderedLeftProjectLinks =
-          if (g._2.exists(_.reversed))
-            (TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedLeftEndpoints, left))._2
-          else
-            TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedLeftEndpoints, left)._2.reverse
-        val orderedRightProjectLinks =
-          if (g._2.exists(_.reversed))
-            (TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedRightEndpoints, right))._1.reverse
-          else
-            TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedRightEndpoints, right)._1
-
-        val trackIntervals = Seq(orderedLeftProjectLinks, orderedRightProjectLinks)
+        val trackIntervals = Seq(g._2.filter(_.track != RightSide), g._2.filter(_.track != LeftSide))
         trackIntervals.flatMap {
           interval => {
             if (interval.size > 1) {
-              interval.sliding(2).flatMap {
+              interval.sortBy(_.startAddrMValue).sliding(2).flatMap {
                 case Seq(curr, next) =>
                   /*
                         catches discontinuity between Combined -> RightSide ? true => checks discontinuity between Combined -> LeftSide ? false => No error
