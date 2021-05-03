@@ -351,9 +351,9 @@ class RoadwayChangesDAO {
           var adjustedNumbering = ProjectDeltaCalculator.adjustStartSourceAddressValues(numbering.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
 
           /* Filter off zero lengths from change table if splits and roundings produced such. */
-           adjustedUnchanged = (adjustedUnchanged._1.filterNot(addr => addr._1.startMAddr == addr._1.endMAddr), adjustedUnchanged._2)
-           adjustedTransferred = (adjustedTransferred._1.filterNot(addr => addr._1.startMAddr == addr._1.endMAddr), adjustedUnchanged._2)
-           adjustedNumbering = (adjustedNumbering._1.filterNot(addr => addr._1.startMAddr == addr._1.endMAddr), adjustedUnchanged._2)
+//           adjustedUnchanged = (adjustedUnchanged._1.filterNot(addr => addr._1.startMAddr == addr._1.endMAddr), adjustedUnchanged._2)
+//           adjustedTransferred = (adjustedTransferred._1.filterNot(addr => addr._1.startMAddr == addr._1.endMAddr), adjustedUnchanged._2)
+//           adjustedNumbering = (adjustedNumbering._1.filterNot(addr => addr._1.startMAddr == addr._1.endMAddr), adjustedUnchanged._2)
 
 //          adjustedTerminated.foreach(roadwaySection =>
 //            addToBatch(roadwaySection, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)

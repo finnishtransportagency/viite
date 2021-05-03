@@ -6,7 +6,7 @@ import java.util.Date
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, switch}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.Sequences
@@ -406,10 +406,39 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val projectLinks: Seq[ProjectLink] = linkIds.toSet.map { id: Long =>
             /* Set calibration point */
             val connectedProjectlink = existingProjectLinks.filterNot(_.status == LinkStatus.Terminated).find(pl => roadLinks(id).geometry.exists(rl_point => pl.connected(rl_point)))
-            val newPl = newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, administrativeClass, roadEly, roadName, reversed)
-            if (connectedProjectlink.isDefined && connectedProjectlink.get.hasCalibrationPointAtStart) {
-              newPl.copy(calibrationPointTypes = (connectedProjectlink.get.startCalibrationPoint.get.typeCode, CalibrationPointDAO.CalibrationPointType.NoCP))
-            } else newPl
+            val connectedStartProjectlink = existingProjectLinks.filterNot(pl => Seq(LinkStatus.Terminated, LinkStatus.New).contains(pl.status)).find(pl => roadLinks(id).geometry.exists(rl_point => GeometryUtils.areAdjacent(rl_point, if (pl.sideCode == AgainstDigitizing) pl.geometry.head else pl.geometry.last, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)))
+            val connectedEndProjectlink = existingProjectLinks.filterNot(pl => Seq(LinkStatus.Terminated, LinkStatus.New).contains(pl.status)).find(pl => roadLinks(id).geometry.exists(rl_point => GeometryUtils.areAdjacent(rl_point, if (pl.sideCode == AgainstDigitizing) pl.geometry.last else pl.geometry.head, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)))
+            var newPl = newProjectLink(roadLinks(id), project, roadNumber, roadPartNumber, track, Continuous, administrativeClass, roadEly, roadName, reversed)
+            val connectedEnd = if (connectedStartProjectlink.isDefined) connectedStartProjectlink else if (connectedEndProjectlink.isDefined) connectedEndProjectlink else None
+
+            val sc = if (connectedEnd.isDefined && connectedEnd.get.endPoint.connected(newPl.geometry.head) || (connectedEnd.isDefined && connectedEnd.get.startingPoint.connected(newPl.geometry.last))) {
+              if (connectedEnd.get.sideCode == SideCode.TowardsDigitizing) Some(connectedEnd.get.sideCode) else Some(switch(connectedEnd.get.sideCode))
+            }
+            else
+              if (connectedEnd.isDefined)
+                if (connectedEnd.get.sideCode == SideCode.TowardsDigitizing)
+                  Some(switch(connectedEnd.get.sideCode))
+                else Some(connectedEnd.get.sideCode)
+              else
+                None
+
+            newPl = if (connectedEndProjectlink.isDefined)
+                      newPl.copy(endAddrMValue = connectedEndProjectlink.get.startAddrMValue, sideCode = sc.get)
+                    else
+                      newPl.copy(endAddrMValue = newPl.geometryLength.toInt, sideCode = sc.get)
+
+            newPl = if (connectedStartProjectlink.isDefined)
+                      newPl.copy(startAddrMValue = connectedStartProjectlink.get.endAddrMValue, sideCode = sc.get)
+                    else
+                      newPl
+
+            if (connectedProjectlink.isDefined && connectedProjectlink.get.hasCalibrationPointAtEnd) {
+              newPl.copy(calibrationPointTypes = (connectedProjectlink.get.endCalibrationPoint.get.typeCode, CalibrationPointDAO.CalibrationPointType.NoCP))
+            } else if (connectedEndProjectlink.isDefined && connectedEndProjectlink.get.hasCalibrationPointAtStart) {
+              newPl.copy(calibrationPointTypes = (CalibrationPointDAO.CalibrationPointType.NoCP,connectedProjectlink.get.startCalibrationPoint.get.typeCode))
+            } else
+            newPl
+
           }.toSeq
 
           if (isConnectedtoOtherProjects(projectId, projectLinks)) {
