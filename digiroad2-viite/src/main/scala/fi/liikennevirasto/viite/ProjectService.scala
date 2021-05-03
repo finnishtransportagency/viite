@@ -403,7 +403,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val existingProjectLinks = projectLinkDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
           val reversed = if (existingProjectLinks.nonEmpty) existingProjectLinks.forall(_.reversed) else false
 
-          val projectLinks: Seq[ProjectLink] = linkIds.toSet.map { id: Long =>
+          var projectLinks: Seq[ProjectLink] = linkIds.toSet.map { id: Long =>
             /* Set calibration point */
             val connectedProjectlink = existingProjectLinks.filterNot(_.status == LinkStatus.Terminated).find(pl => roadLinks(id).geometry.exists(rl_point => pl.connected(rl_point)))
             val connectedStartProjectlink = existingProjectLinks.filterNot(pl => Seq(LinkStatus.Terminated, LinkStatus.New).contains(pl.status)).find(pl => roadLinks(id).geometry.exists(rl_point => GeometryUtils.areAdjacent(rl_point, if (pl.sideCode == AgainstDigitizing) pl.geometry.head else pl.geometry.last, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)))
@@ -422,13 +422,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               else
                 None
 
+            newPl = if (connectedStartProjectlink.isDefined)
+              newPl.copy(startAddrMValue = connectedStartProjectlink.get.endAddrMValue, endAddrMValue = newPl.startAddrMValue + newPl.geometryLength.toInt, sideCode = sc.get)
+            else
+              newPl
+
             newPl = if (connectedEndProjectlink.isDefined)
                       newPl.copy(endAddrMValue = connectedEndProjectlink.get.startAddrMValue, sideCode = sc.get)
-                    else
-                      newPl.copy(endAddrMValue = newPl.geometryLength.toInt, sideCode = sc.get)
-
-            newPl = if (connectedStartProjectlink.isDefined)
-                      newPl.copy(startAddrMValue = connectedStartProjectlink.get.endAddrMValue, sideCode = sc.get)
                     else
                       newPl
 
@@ -440,6 +440,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             newPl
 
           }.toSeq
+          // update continuous projectlinks start and end values for validation.
+//          projectLinks = projectLinks.tail.scanLeft(projectLinks.head) { (l, pl) => {
+//            if (pl.endAddrMValue == 0)
+//              pl.copy(startAddrMValue = l.endAddrMValue, endAddrMValue = l.endAddrMValue + pl.geometryLength.toInt, sideCode = l.sideCode)
+//            else
+//              pl.copy(startAddrMValue = l.endAddrMValue, sideCode = l.sideCode)
+//          }
+//          }
 
           if (isConnectedtoOtherProjects(projectId, projectLinks)) {
             Map("success" -> false, "errorMessage" -> ErrorWithNewAction)
