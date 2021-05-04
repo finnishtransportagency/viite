@@ -104,7 +104,7 @@ object ProjectDeltaCalculator {
     val matchContinuity = pl1.discontinuity == Discontinuity.Continuous
     val oppositePl = allNonTerminatedProjectLinks.filter( pl => pl.track != pl1.track && pl.endAddrMValue == pl1.endAddrMValue).filter(_.status != LinkStatus.Terminated)
     val hasCalibrationPoint = ((pl1.track == Track.Combined && pl1.hasCalibrationPointAtEnd) && pl1.hasCalibrationPointCreatedInProject) || (oppositePl.nonEmpty && oppositePl.head.hasCalibrationPointAtEnd && pl1.hasCalibrationPointAtEnd) // Opposite side has user cp
-    if (matchAddr && matchContinuity && !hasCalibrationPoint && //ra1.endAddrMValue == ra2.startAddrMValue &&
+    if (matchAddr && matchContinuity && !hasCalibrationPoint && //ra1.roadwayNumber == ra2.roadwayNumber &&
         ra1.administrativeClass == ra2.administrativeClass && pl1.administrativeClass == pl2.administrativeClass && pl1.reversed == pl2.reversed) {
       Seq((
             ra1.asInstanceOf[RoadAddress].copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R],
@@ -297,7 +297,7 @@ object ProjectDeltaCalculator {
           ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.administrativeClass, ra.ely, ra.reversed, ra.roadwayNumber, Seq()))
     }
 
-      val trans_ =  transfers.groupBy(x => (x._2.roadNumber, x._2.roadPartNumber, x._2.track))
+      val trans_ =  transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._1.roadwayNumber, x._2.roadNumber, x._2.roadPartNumber, x._2.track, x._2.roadwayNumber)) //(x._2.roadNumber, x._2.roadPartNumber, x._2.track))
       val trans_mapped = trans_.mapValues(v => {
         // If roadpart was reversed, process old roadaddresses in reverse direction.
         val trans_directed = if (v.exists(_._2.reversed)) v.map(_._1).reverse.zip(v.map(_._2)) else v
@@ -305,19 +305,6 @@ object ProjectDeltaCalculator {
           pl.roadNumber == v.head._2.roadNumber && pl.roadPartNumber == v.head._2.roadPartNumber
         }))
       })
-
-    val trans_mappedBaseAddr = trans_.mapValues(v => {
-      // If roadpart was reversed, process old roadaddresses in reverse direction.
-      val trans_directed = if (v.exists(_._2.reversed)) v.map(_._1).reverse.zip(v.map(_._2)) else v
-      combineBaseAddr(trans_directed.sortBy(_._2.startAddrMValue), allNonTerminatedProjectLinks.filter(pl => {
-        pl.roadNumber == v.head._1.roadNumber && pl.roadPartNumber == v.head._1.roadPartNumber
-      }))
-    })
-
-    val sectionedBaseAddr = trans_mappedBaseAddr.mapValues(v => {
-      val (from, to) = v.unzip
-      toRoadAddressSection(from) -> toRoadAddressSection(to)
-    })
 
         val sectioned = trans_mapped.mapValues(v => {
         val (from, to) = v.unzip
@@ -339,18 +326,6 @@ object ProjectDeltaCalculator {
     }
     ).flatten
 
-    val sectionsBaseAddr = sectionedBaseAddr.map(sect => {
-      val (key, (src, targetToMap)) = sect
-      val target                    = targetToMap.map(t => {
-        t.copy(projectLinks = links.filter(link => {
-          link.roadwayNumber == t.roadwayNumber && link.roadNumber == t.roadNumber &&
-          link.roadPartNumber == t.roadPartNumberEnd && link.track == t.track && link.ely == t.ely &&
-          link.startAddrMValue >= t.startMAddr && link.endAddrMValue <= t.endMAddr
-        }))
-      })
-      src.zip(target)
-    }
-    ).flatten
 
     //  adjusted the end of sources
     val adjustedEndSourceSections = sections.map { case (src, target) =>
@@ -368,10 +343,6 @@ object ProjectDeltaCalculator {
       }
     }
 
-//    val x = (adjustedEndSourceSections.map(_._1).zip(sectionsBaseAddr))
-//    val y = (adjustedEndSourceSections.map(_._1).zipAll(sectionsBaseAddr, None, None))
-//      val new_adjustedEndSourceSections = x.map(t => ((t._2._1, t._1._2)))
-//    ChangeTableRows(adjustedSections = adjustedEndSourceSections.zip(new_adjustedEndSourceSections).map(t => (t._2, t._1._2)), originalSections = sectionsBaseAddr)
     ChangeTableRows(adjustedSections = adjustedEndSourceSections, originalSections = sections)
   }
 
