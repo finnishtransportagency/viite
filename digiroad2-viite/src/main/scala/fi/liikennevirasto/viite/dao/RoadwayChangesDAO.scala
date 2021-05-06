@@ -321,13 +321,13 @@ class RoadwayChangesDAO {
 
           val allNonTerminatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)//.filter(_.status != LinkStatus.Terminated)
 
-          val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping)
+          val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping, allNonTerminatedProjectLinks)
 
-          terminated.originalSections.foreach(roadwaySection =>
-            addToBatch(roadwaySection._1, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
-          )
+//          terminated.originalSections.foreach(roadwaySection =>
+//            addToBatch(roadwaySection._1, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
+//          )
 
-          val news = ProjectDeltaCalculator.partition(delta.newRoads)
+          val news = ProjectDeltaCalculator.partition(delta.newRoads, allNonTerminatedProjectLinks)
           news.foreach(roadwaySection => addToBatch(roadwaySection, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
 
           val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping, allNonTerminatedProjectLinks)
@@ -336,28 +336,30 @@ class RoadwayChangesDAO {
 
           val numbering = ProjectDeltaCalculator.partition(delta.numbering.mapping, allNonTerminatedProjectLinks)
 
-//          val twoTrackOldAddressRoadParts = ProjectDeltaCalculator.buildTwoTrackOldAddressRoadParts(unchanged, transferred, numbering, terminated)
-//          val old_road_two_track_parts = ProjectDeltaCalculator.calc_parts(twoTrackOldAddressRoadParts)
-//
-//          val twoTrackAdjustedTerminated = old_road_two_track_parts.flatMap(_._1) ++ old_road_two_track_parts.flatMap(_._2)
-//          val combinedTerminatedTrack = terminated.originalSections.map(_._1).filter(_.track == Track.Combined)
+          val twoTrackOldAddressRoadParts = ProjectDeltaCalculator.buildTwoTrackOldAddressRoadParts(unchanged, transferred, numbering, terminated)
+          val old_road_two_track_parts = ProjectDeltaCalculator.calc_parts(twoTrackOldAddressRoadParts)
+
+          val twoTrackAdjustedTerminated = old_road_two_track_parts.flatMap(_._1) ++ old_road_two_track_parts.flatMap(_._2)
+          val combinedTerminatedTrack = terminated.originalSections.map(_._1).filter(_.track == Track.Combined)
 
 //          1. vie ylijäävät transferred bztachiin 2. Etsi kadonnut lakkautettu rivi alusta
 //           -- news.foreach(roadwaySection => addToBatch(roadwaySection, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
 
-//          val adjustedTerminated = combinedTerminatedTrack ++ twoTrackAdjustedTerminated
+          val adjustedTerminated = combinedTerminatedTrack ++ twoTrackAdjustedTerminated
           var adjustedUnchanged = ProjectDeltaCalculator.adjustStartSourceAddressValues(unchanged.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
           var adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(transferred.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections ++ terminated.originalSections)
           var adjustedNumbering = ProjectDeltaCalculator.adjustStartSourceAddressValues(numbering.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
 
+          val t1 = adjustedTransferred._1.map(_._1)
+          val t2 = adjustedTransferred._1.map(_._2)
           /* Filter off zero lengths from change table if splits and roundings produced such. */
 //           adjustedUnchanged = (adjustedUnchanged._1.filterNot(addr => addr._1.startMAddr == addr._1.endMAddr), adjustedUnchanged._2)
 //           adjustedTransferred = (adjustedTransferred._1.filterNot(addr => addr._1.startMAddr == addr._1.endMAddr), adjustedUnchanged._2)
 //           adjustedNumbering = (adjustedNumbering._1.filterNot(addr => addr._1.startMAddr == addr._1.endMAddr), adjustedUnchanged._2)
 
-//          adjustedTerminated.foreach(roadwaySection =>
-//            addToBatch(roadwaySection, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
-//          )
+          adjustedTerminated.foreach(roadwaySection =>
+            addToBatch(roadwaySection, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
+          )
             adjustedUnchanged._1.foreach { case (roadwaySection1, roadwaySection2) =>
             addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
           }
