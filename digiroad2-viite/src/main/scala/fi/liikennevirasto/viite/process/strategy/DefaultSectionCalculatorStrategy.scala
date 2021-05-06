@@ -268,6 +268,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val right = continuousSection(rightLinks, Seq())
         val left = continuousSection(leftLinks, Seq())
 
+
         val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
           if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
             adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
@@ -297,10 +298,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
     //  adjustedRight and adjustedLeft already ordered by geometry -> TrackSectionOrder.orderProjectLinksTopologyByGeometry
 
-    val terminatedProjectLinks = projectLinkDAO.fetchProjectLinks(rightSections.head.projectId, linkStatusFilter = Some(LinkStatus.Terminated))
-                                               .filter(pl => pl.roadNumber == leftLinks.head.roadNumber && pl.roadPartNumber == leftLinks.head.roadPartNumber)
-    val terminatedLeftProjectLinks = terminatedProjectLinks.filter(_.track == Track.LeftSide)
-    val terminatedRightProjectLinks = terminatedProjectLinks.filter(_.track == Track.RightSide)
+//    val terminatedProjectLinks = projectLinkDAO.fetchProjectLinks(rightSections.head.projectId, linkStatusFilter = Some(LinkStatus.Terminated))
+//                                               .filter(pl => pl.roadNumber == leftLinks.head.roadNumber && pl.roadPartNumber == leftLinks.head.roadPartNumber)
+//    val terminatedLeftProjectLinks = terminatedProjectLinks.filter(_.track == Track.LeftSide)
+//    val terminatedRightProjectLinks = terminatedProjectLinks.filter(_.track == Track.RightSide)
 
     def continuousTerminatedTrackSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink] = Seq(), out: Map[Int, Seq[ProjectLink]] = Map()): Map[Int, Seq[ProjectLink]] = {
       if (seq.isEmpty) {
@@ -320,51 +321,94 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       }
     }
 
-    val terminatedLeftSections = continuousTerminatedTrackSection(terminatedLeftProjectLinks)
-    val terminatedRightSections = continuousTerminatedTrackSection(terminatedRightProjectLinks)
+//    val terminatedLeftSections = continuousTerminatedTrackSection(terminatedLeftProjectLinks)
+//    val terminatedRightSections = continuousTerminatedTrackSection(terminatedRightProjectLinks)
 
-    val l1 = terminatedLeftSections.values.map(p => if (p.nonEmpty) rightLinks.find(pl => pl.connected(p.head.startingPoint)) else None)
-    val l2 = terminatedLeftSections.values.map(p => if (p.nonEmpty) rightLinks.find(_.connected(p.last.endPoint)) else None)
+//    val l1 = terminatedLeftSections.values.map(p => if (p.nonEmpty) rightLinks.find(pl => pl.connected(p.head.startingPoint)) else None)
+//    val l2 = terminatedLeftSections.values.map(p => if (p.nonEmpty) rightLinks.find(_.connected(p.last.endPoint)) else None)
+//
+//    val r1 = terminatedRightSections.values.map(p => if (p.nonEmpty) leftLinks.find(pl => pl.connected(p.head.startingPoint)) else None)
+//    val r2 = terminatedRightSections.values.map(p => if (p.nonEmpty) leftLinks.find(_.connected(p.last.endPoint)) else None)
 
-    val r1 = terminatedRightSections.values.map(p => if (p.nonEmpty) leftLinks.find(pl => pl.connected(p.head.startingPoint)) else None)
-    val r2 = terminatedRightSections.values.map(p => if (p.nonEmpty) leftLinks.find(_.connected(p.last.endPoint)) else None)
+//    val l0 = leftLinks.groupBy(_.roadwayNumber).values.map(_.last).toSeq.sortBy(_.startAddrMValue)
+    val (l1,l2) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(leftLinks, rightLinks)
+    val (r1,r2) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(l2, l1)
+    val rr1 = r1//.map(pl => if (pl.endCalibrationPointType == UserDefinedCP) pl.copy(calibrationPointTypes = (pl.startCalibrationPointType, NoCP)) else pl)
+    val rr2 = r2//.map(pl => if (pl.endCalibrationPointType == UserDefinedCP) pl.copy(calibrationPointTypes = (pl.startCalibrationPointType, NoCP)) else pl)
 
-     val l3 =  (l1 ++ l2).filter(_.isDefined).map(t => {
-          TwoTrackRoadUtils.createCalibrationPointsAtStatusChange(Seq(t.get), leftLinks, t.get.projectId, t.get.createdBy.getOrElse("splitter"))
-      })
+    //     val l3 =  (l1 ++ l2).filter(_.isDefined).map(t => {
+//          TwoTrackRoadUtils.createCalibrationPointsAtStatusChange(Seq(t.get), leftLinks, t.get.projectId, t.get.createdBy.getOrElse("splitter"))
+//      })
+//val l3 =  (l0).map(t => {
+//  TwoTrackRoadUtils.createCalibrationPointsAtStatusChange(Seq(t), rightLinks, t.projectId, t.createdBy.getOrElse("splitter"))
+//})
+//     val l4 = l3.toSeq.flatMap(_._2)
+//     val l5 = l3.toSeq.flatMap(_._1) // splitted
+//     val l6 = l3.toSeq.flatMap(_._3).map(_._1) //right
+//
+//    val r = (rightLinks.filterNot(pl => l5.map(_._1).exists(_.id == pl.id)) ++ l5.flatMap(pl => Seq(pl._1, pl._2))).sortBy(_.startAddrMValue)
+//    val r0 = (r).groupBy(_.roadwayNumber).values.map(_.last).toSeq.sortBy(_.startAddrMValue)
+//    val r3 =  (r1 ++ r2).filter(_.isDefined).map(t => {
+//      TwoTrackRoadUtils.createCalibrationPointsAtStatusChange(Seq(t.get), rightLinks.filterNot(pl => l6.exists(_.id == pl.id)) ++ l6, t.get.projectId, t.get.createdBy.getOrElse("splitter"))
+//    })
+//val r3 =  (r0).map(t => {
+//  TwoTrackRoadUtils.createCalibrationPointsAtStatusChange(Seq(t), (leftLinks.filterNot(pl => l6.exists(_.id == pl.id)) ++ l6).sortBy(_.startAddrMValue), t.projectId, t.createdBy.getOrElse("splitter"))
+//})
+//
+//    val r4 = r3.toSeq.flatMap(_._2)
+//    val r5 = r3.toSeq.flatMap(_._1)// splitted
+//    val r6 = r3.toSeq.flatMap(_._3).map(_._1) // left
 
-     val l4 = l3.toSeq.flatMap(_._2)
-     val l5 = l3.toSeq.flatMap(_._1)
-     val l6 = l3.toSeq.flatMap(_._3).map(_._1) //right
+//    val dups1 = (l4 ++ r4).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
+//
+//    val fr5 = r5.flatMap(p => Seq(p._1, p._2))
+//    dups1.foldLeft(l4) { (udcpsToUpdate, cur) => {
+//      val splittedRightLink = fr5.find(_.id == cur._1)
+//      val newLink         = fr5.find(_.startAddrMValue == splittedRightLink.get.endAddrMValue).get
+//      val maybeMaybePoint = udcpsToUpdate.find(_.get.projectLinkId == cur._1)
+//      udcpsToUpdate.filterNot(_.get.projectLinkId == cur._1) :+ Some(maybeMaybePoint.get.get.copy(projectLinkId = newLink.id))
+//
+//    }
+//    }
 
-    val r3 =  (r1 ++ r2).filter(_.isDefined).map(t => {
-      TwoTrackRoadUtils.createCalibrationPointsAtStatusChange(Seq(t.get), rightLinks.filterNot(pl => l6.exists(_.id == pl.id)) ++ l6, t.get.projectId, t.get.createdBy.getOrElse("splitter"))
-    })
 
-    val r4 = r3.toSeq.flatMap(_._2)
-    val r5 = r3.toSeq.flatMap(_._1)
-    val r6 = r3.toSeq.flatMap(_._3).map(_._1) // left
+    //    val leftWithTerminatedUdcp  = ( leftLinks.filterNot(pl => l5.map(_._1).exists(_.id == pl.id) || r6.exists(_.id == pl.id)) ++ l5.flatMap(pl => Seq(pl._1, pl._2)) ++ r6).sortBy(_.startAddrMValue)
+//    val rightWithTerminatedUdcp = (rightLinks.filterNot(pl => r5.map(_._1).exists(_.id == pl.id) || l6.exists(_.id == pl.id)) ++ r5.flatMap(pl => Seq(pl._1, pl._2)) ++ l6).sortBy(_.startAddrMValue)
+
+//    val leftWithTerminatedUdcp  = ( leftLinks.filterNot(pl => r5.map(_._1).exists(_.id == pl.id)) ++ r5.flatMap(pl => Seq(pl._1.copy( calibrationPointTypes = (NoCP, NoCP)), pl._2))).sortBy(_.startAddrMValue)
+//    val rightWithTerminatedUdcp = (rightLinks.filterNot(pl => l5.map(_._1).exists(_.id == pl.id)) ++ l5.flatMap(pl => Seq(pl._1.copy( calibrationPointTypes = (NoCP, NoCP)), pl._2))).sortBy(_.startAddrMValue)
 
 
-    val leftWithTerminatedUdcp  = ( leftLinks.filterNot(pl => l5.map(_._1).exists(_.id == pl.id) || r6.exists(_.id == pl.id)) ++ l5.flatMap(pl => Seq(pl._1, pl._2)) ++ r6).sortBy(_.startAddrMValue)
-    val rightWithTerminatedUdcp = (rightLinks.filterNot(pl => r5.map(_._1).exists(_.id == pl.id) || l6.exists(_.id == pl.id)) ++ r5.flatMap(pl => Seq(pl._1, pl._2)) ++ l6).sortBy(_.startAddrMValue)
-
-    val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(leftWithTerminatedUdcp, rightWithTerminatedUdcp)
-
+    val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(rr2, rr1)
     val (rightLinksWithUdcps, splittedLeftLinks, udcpsFromLeftSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(splittedRightLinks, leftLinksWithUdcps)
 
-    val dups = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits ++ l4).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
+    val dups = (udcpsFromRightSideSplits ++ udcpsFromLeftSideSplits).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).groupBy(_.get.projectLinkId).filter(_._2.size > 1)
     /* Update udcp pl if splitted after second pass. */
     val updatedudcpsFromRightSideSplits = dups.foldLeft(udcpsFromRightSideSplits) { (udcpsToUpdate, cur) => {
-      val splittedLeftLink       = (splittedLeftLinks).find(_.id == cur._1)
-      val x = splittedLeftLink.get
-      val newLink = splittedLeftLinks.find(_.startAddrMValue == x.endAddrMValue)
-      val y = newLink.get
-      udcpsToUpdate.filterNot(_.get.projectLinkId == cur._1) :+ Some(udcpsToUpdate.find(_.get.projectLinkId == cur._1).get.get.copy(projectLinkId = y.id))
+      val splittedLeftLink       = splittedLeftLinks.find(_.id == cur._1)
+      if (splittedLeftLink.isDefined) {
+        val newLink = splittedLeftLinks.find(_.startAddrMValue == splittedLeftLink.get.endAddrMValue).get
+        val maybeMaybePoint = udcpsToUpdate.find(_.get.projectLinkId == cur._1)
+        udcpsToUpdate.filterNot(_.get.projectLinkId == cur._1) :+ Some(maybeMaybePoint.get.get.copy(projectLinkId = newLink.id))
+      } else {
+        udcpsToUpdate
+      }
     }}
 
-    val splitCreatedCpsFromRightSide: Map[Long, UserDefinedCalibrationPoint] = updatedudcpsFromRightSideSplits.filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
-    val splitCreatedCpsFromLeftSide: Map[Long, UserDefinedCalibrationPoint] = (udcpsFromLeftSideSplits ++ r4).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
+//    val updatedudcpsFromLeftSideSplits = dups.foldLeft(udcpsFromLeftSideSplits) { (udcpsToUpdate, cur) => {
+//      val splittedRightLink = rightLinksWithUdcps.find(_.id == cur._1)
+//      if (splittedRightLink.isDefined) {
+//        val newLink         = rightLinksWithUdcps.find(_.startAddrMValue == splittedRightLink.get.endAddrMValue).get
+//        val maybeMaybePoint = udcpsToUpdate.find(_.get.projectLinkId == cur._1)
+//        udcpsToUpdate.filterNot(_.get.projectLinkId == cur._1) :+ Some(maybeMaybePoint.get.get.copy(projectLinkId = newLink.id))
+//      } else {
+//        udcpsToUpdate
+//      }
+//    }
+//    }
+
+    val splitCreatedCpsFromRightSide: Map[Long, UserDefinedCalibrationPoint] = (updatedudcpsFromRightSideSplits ).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
+    val splitCreatedCpsFromLeftSide: Map[Long, UserDefinedCalibrationPoint] = (udcpsFromLeftSideSplits).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
 
 
 

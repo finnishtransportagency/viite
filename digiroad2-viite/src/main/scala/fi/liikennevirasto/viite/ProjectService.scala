@@ -423,11 +423,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 None
 
             newPl = if (connectedStartProjectlink.isDefined)
-              newPl.copy(startAddrMValue = connectedStartProjectlink.get.endAddrMValue, endAddrMValue = newPl.startAddrMValue + newPl.geometryLength.toInt, sideCode = sc.get)
+              newPl.copy(startAddrMValue = connectedStartProjectlink.get.endAddrMValue, endAddrMValue = connectedStartProjectlink.get.endAddrMValue + newPl.geometryLength.toInt, sideCode = sc.get)
             else
               newPl
 
-            newPl = if (connectedEndProjectlink.isDefined)
+            newPl = if (connectedEndProjectlink.isDefined && !connectedStartProjectlink.isDefined)
+                      newPl.copy(startAddrMValue = connectedEndProjectlink.get.startAddrMValue - newPl.geometryLength.toInt, endAddrMValue = connectedEndProjectlink.get.startAddrMValue, sideCode = sc.get)
+                  else if (connectedEndProjectlink.isDefined)
                       newPl.copy(endAddrMValue = connectedEndProjectlink.get.startAddrMValue, sideCode = sc.get)
                     else
                       newPl
@@ -435,19 +437,26 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             if (connectedProjectlink.isDefined && connectedProjectlink.get.hasCalibrationPointAtEnd) {
               newPl.copy(calibrationPointTypes = (connectedProjectlink.get.endCalibrationPoint.get.typeCode, CalibrationPointDAO.CalibrationPointType.NoCP))
             } else if (connectedEndProjectlink.isDefined && connectedEndProjectlink.get.hasCalibrationPointAtStart) {
-              newPl.copy(calibrationPointTypes = (CalibrationPointDAO.CalibrationPointType.NoCP,connectedProjectlink.get.startCalibrationPoint.get.typeCode))
+              newPl.copy(calibrationPointTypes = (CalibrationPointDAO.CalibrationPointType.NoCP,connectedEndProjectlink.get.startCalibrationPoint.get.typeCode))
             } else
             newPl
 
           }.toSeq
+
+          val endPoints = TrackSectionOrder.findChainEndpoints(projectLinks)
+          val mappedEndpoints = (endPoints.head._1, endPoints.head._1)
+          val orderedPairs = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, projectLinks)
+          projectLinks =  if (projectLinks.exists(_.track == Track.RightSide || projectLinks.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2
+
           // update continuous projectlinks start and end values for validation.
-//          projectLinks = projectLinks.tail.scanLeft(projectLinks.head) { (l, pl) => {
-//            if (pl.endAddrMValue == 0)
-//              pl.copy(startAddrMValue = l.endAddrMValue, endAddrMValue = l.endAddrMValue + pl.geometryLength.toInt, sideCode = l.sideCode)
-//            else
-//              pl.copy(startAddrMValue = l.endAddrMValue, sideCode = l.sideCode)
-//          }
-//          }
+//          projectLinks = projectLinks.sortBy(-_.startAddrMValue)
+          projectLinks = projectLinks.tail.scan(projectLinks.head) { (l: ProjectLink, pl: ProjectLink) => {
+            if (pl.endAddrMValue == 0)
+              pl.copy(startAddrMValue = l.endAddrMValue, endAddrMValue = (l.endAddrMValue + pl.geometryLength.toInt), sideCode = l.sideCode)
+            else
+              pl.copy(startAddrMValue = l.endAddrMValue, sideCode = l.sideCode)
+          }
+          }
 
           if (isConnectedtoOtherProjects(projectId, projectLinks)) {
             Map("success" -> false, "errorMessage" -> ErrorWithNewAction)
@@ -737,6 +746,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * Fetches the projectLink name, first from the project link, if that's not available then search for the road address.
     *
     * @param projectLink
+   *
     * @return
     */
   def fillRoadNames(projectLink: ProjectLink): ProjectLink = {

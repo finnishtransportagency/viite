@@ -142,12 +142,12 @@ object ProjectDeltaCalculator {
     }
   }
 
-  private def combineTwo(r1: ProjectLink, r2: ProjectLink): Seq[ProjectLink] = {
+  private def combineTwo(r1: ProjectLink, r2: ProjectLink, allNonTerminatedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     val hasCalibrationPoint = r1.hasCalibrationPointAtEnd
 
     val hasParallelLinkOnCalibrationPoint =
       if (!hasCalibrationPoint && r1.track != Track.Combined) {
-        val projectLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(r1.roadNumber, r1.roadPartNumber, r1.projectId)
+        val projectLinks = allNonTerminatedProjectLinks //projectLinkDAO.fetchProjectLinksByProjectRoadPart(r1.roadNumber, r1.roadPartNumber, r1.projectId)
         val parallelLastOnCalibrationPoint = projectLinks.filter(pl =>
           pl.status != LinkStatus.Terminated &&
             pl.track != r1.track &&
@@ -190,13 +190,13 @@ object ProjectDeltaCalculator {
       Seq(r2, r1)
   }
 
-  private def combine(projectLinkSeq: Seq[ProjectLink], result: Seq[ProjectLink] = Seq()): Seq[ProjectLink] = {
+  private def combine(projectLinkSeq: Seq[ProjectLink], result: Seq[ProjectLink] = Seq(), allNonTerminatedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     if (projectLinkSeq.isEmpty)
       result.reverse
     else if (result.isEmpty)
-      combine(projectLinkSeq.tail, Seq(projectLinkSeq.head))
+      combine(projectLinkSeq.tail, Seq(projectLinkSeq.head), allNonTerminatedProjectLinks: Seq[ProjectLink])
     else
-      combine(projectLinkSeq.tail, combineTwo(result.head, projectLinkSeq.head) ++ result.tail)
+      combine(projectLinkSeq.tail, combineTwo(result.head, projectLinkSeq.head, allNonTerminatedProjectLinks: Seq[ProjectLink]) ++ result.tail, allNonTerminatedProjectLinks: Seq[ProjectLink])
   }
 
   private def combineBaseAddr[T <: BaseRoadAddress, R <: ProjectLink](combinedSeq: Seq[(T, R)], allNonTerminatedProjectLinks: Seq[ProjectLink], result: Seq[(T, R)] = Seq()): Seq[(T, R)] = {
@@ -251,9 +251,10 @@ object ProjectDeltaCalculator {
       (matcherStartMAddress <= targetStartMAddress && matcherEndMAddress >= targetStartMAddress) || (matcherStartMAddress <= targetEndMAddress && matcherEndMAddress >= targetEndMAddress)
   }
 
-  def partition[T <: BaseRoadAddress](projectLinks: Seq[ProjectLink]): Seq[RoadwaySection] = {
+  def partition[T <: BaseRoadAddress](projectLinks: Seq[ProjectLink], allNonTerminatedProjectLinks: Seq[ProjectLink]): Seq[RoadwaySection] = {
     val grouped = projectLinks.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.administrativeClass))
-      .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+      .mapValues(v => combine(v.sortBy(_.startAddrMValue), Seq(), allNonTerminatedProjectLinks.filter(pl => {
+        pl.roadNumber == v.head.roadNumber && pl.roadPartNumber == v.head.roadPartNumber}))).values.flatten.map(ra =>
       RoadwaySection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.administrativeClass, ra.ely, ra.reversed, ra.roadwayNumber, Seq())
     ).toSeq

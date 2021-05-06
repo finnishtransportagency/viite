@@ -163,7 +163,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     val terminations = Seq(toProjectLink(project, LinkStatus.Terminated)(addresses.last), toProjectLink(project, LinkStatus.Terminated)(addresses2.last))
     val unchanged = (addresses.init ++ addresses2.init).map(toTransition(project, LinkStatus.UnChanged))
 
-    val termPart = ProjectDeltaCalculator.partition(terminations)
+    val termPart = ProjectDeltaCalculator.partition(terminations,  Seq())
     termPart should have size 2
     termPart.foreach(x => {
       x.endMAddr should be(120L)
@@ -280,7 +280,7 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
       else
         to.administrativeClass should be(AdministrativeClass.State)
     })
-    val newParts = ProjectDeltaCalculator.partition(newLinks)
+    val newParts = ProjectDeltaCalculator.partition(newLinks, Seq())
     newParts should have size 1
     newParts.foreach(to => {
       to.startMAddr should be(120)

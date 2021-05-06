@@ -478,7 +478,9 @@ class ProjectLinkDAO {
     }
   }
 
-  /* Used from updateProjectLinks() to remove cp from pl when connected to a terminated link. */
+  /* Used from updateProjectLinks() to remove cp from pl when connected to a terminated link.
+  *  Used from twoTrackUtils.
+  * */
   def updateProjectLinkCalibrationPoints(
                                           projectLink: ProjectLink,
                                           cals: (CalibrationPointDAO.CalibrationPointType, CalibrationPointDAO.CalibrationPointType)
