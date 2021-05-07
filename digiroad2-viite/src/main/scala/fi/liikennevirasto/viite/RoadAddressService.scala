@@ -293,9 +293,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
           if (address.size > 1) MunicipalityDAO.getMunicipalityIdByName(address.last.trim).headOption.map(_._1) else None
         }
         val (streetName, streetNumber) = address.head.split(" ").partition(_.matches(("\\D+")))
+
+        // Append '*' wildcard to street name. Keeps Viite search functionality similar to VKM's earlier version (upto 2020).
+        val street = streetName.mkString(" ") + "*" // Pad with plain ' '. Strings expected to be (html-)unescaped, @see viiteVkmClient.get.
+
         searchResult = viiteVkmClient.get("/viitekehysmuunnin/muunna", Map(
           ("kuntakoodi", municipalityId.getOrElse("").toString),
-          ("katunimi", streetName.mkString(" ")), // parameter expected to be unescaped; pad with space only
+          ("katunimi", street),
           ("katunumero", streetNumber.headOption.getOrElse(defaultStreetNumber.toString)))) match {
           case Left(result) => Seq(result)
           case Right(error) => throw new VkmException(error.toString)
