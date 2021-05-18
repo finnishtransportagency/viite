@@ -1542,12 +1542,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       time(logger, "Recalculate links") {
         var projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+        // remove udcp:s before (re)calc
+       val udcpRemovedProjectLinks = projectLinks.tail.toList.scanLeft(projectLinks.head) { (p,r) => {
+          if (r.calibrationPoints._2.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (r.startCalibrationPointType, NoCP)) else
+            if (r.calibrationPoints._1.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (NoCP, r.startCalibrationPointType)) else r
+        }
+        }
 //        ProjectCalibrationPointDAO.removeAllCalibrationPointsFromProject(projectId)
 //        val cptoremove = projectLinks.filterNot(_.status == LinkStatus.New)
 //                    .filter(pl => pl.calibrationPoints._1 == CalibrationPointDAO.CalibrationPointType.UserDefinedCP || pl.calibrationPoints._2 == CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
 //        ProjectCalibrationPointDAO.removeAllCalibrationPoints(cptoremove.map(_.id).toSet)
 
-        val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
+        val (terminated, others) = udcpRemovedProjectLinks.partition(_.status == LinkStatus.Terminated)
 
         val recalculated = others.groupBy(pl => {
           (pl.roadNumber, pl.roadPartNumber)

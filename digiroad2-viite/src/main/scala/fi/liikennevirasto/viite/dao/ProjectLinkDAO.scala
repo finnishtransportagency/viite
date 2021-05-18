@@ -77,6 +77,10 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     endAddrMValue - startAddrMValue
   }
 
+  def addrMOriginalLength: Long = {
+    originalEndAddrMValue - originalStartAddrMValue
+  }
+
   def getFirstPoint: Point = {
     if (sideCode == SideCode.TowardsDigitizing) geometry.head else geometry.last
   }

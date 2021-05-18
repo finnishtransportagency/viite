@@ -44,7 +44,22 @@ object ProjectSectionMValueCalculator {
       throw new InvalidAddressDataException(s"Invalid unchanged link found")
     unchanged.map(resetEndAddrMValue) ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.endAddrMValue.toDouble).sorted.lastOption, None)
   }
-
+def testF(ordered: Seq[ProjectLink], addrSt: Option[Double], cps: Map[Long, UserDefinedCalibrationPoint], coEff: Double) = {
+  ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
+    val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
+    if (!pl.isSplit) {
+      val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
+      pl.status match {
+        case LinkStatus.New => addressValue
+        case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + pl.addrMOriginalLength
+        case LinkStatus.Terminated => pl.endAddrMValue
+        case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
+      }
+    } else {
+      pl.endAddrMValue
+    }
+  }
+}
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
     val endPoints = TrackSectionOrder.findChainEndpoints(seq)
     val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
@@ -55,10 +70,9 @@ object ProjectSectionMValueCalculator {
       val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
       if (!pl.isSplit) {
         val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
-        val test = m + pl.addrMLength
         pl.status match {
           case LinkStatus.New => addressValue
-          case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => test
+          case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + pl.addrMLength
           case LinkStatus.Terminated => pl.endAddrMValue
           case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
         }
