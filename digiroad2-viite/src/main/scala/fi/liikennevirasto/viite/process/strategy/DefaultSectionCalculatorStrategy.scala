@@ -296,41 +296,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val leftSections = sections.flatMap(_.left.links).distinct
     val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(rightSections, userDefinedCalibrationPoint)
     val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
-    //  adjustedRight and adjustedLeft already ordered by geometry -> TrackSectionOrder.orderProjectLinksTopologyByGeometry
 
-//    val terminatedProjectLinks = projectLinkDAO.fetchProjectLinks(rightSections.head.projectId, linkStatusFilter = Some(LinkStatus.Terminated))
-//                                               .filter(pl => pl.roadNumber == leftLinks.head.roadNumber && pl.roadPartNumber == leftLinks.head.roadPartNumber)
-//    val terminatedLeftProjectLinks = terminatedProjectLinks.filter(_.track == Track.LeftSide)
-//    val terminatedRightProjectLinks = terminatedProjectLinks.filter(_.track == Track.RightSide)
+//    val (leftLinks2, rightLinks2) = adjustTracksToMatch(leftLinks, rightLinks, None, Map())
 
-    def continuousTerminatedTrackSection(seq: Seq[ProjectLink], processed: Seq[ProjectLink] = Seq(), out: Map[Int, Seq[ProjectLink]] = Map()): Map[Int, Seq[ProjectLink]] = {
-      if (seq.isEmpty) {
-        val key = if (out.keys.isEmpty) 1 else out.keys.max + 1
-        out + (key -> processed)
-      }
-      else if (processed.isEmpty)
-        continuousTerminatedTrackSection(seq.tail, Seq(seq.head),out)
-      else {
-        val end = processed.last.endAddrMValue
-        if (seq.head.startAddrMValue == end) {
-          continuousTerminatedTrackSection(seq.tail, processed :+ seq.head, out)
-        } else {
-          val key = if (out.keys.isEmpty) 1 else out.keys.max + 1
-          continuousTerminatedTrackSection(seq, Seq(), out + (key -> processed))
-        }
-      }
-    }
 
-//    val terminatedLeftSections = continuousTerminatedTrackSection(terminatedLeftProjectLinks)
-//    val terminatedRightSections = continuousTerminatedTrackSection(terminatedRightProjectLinks)
-
-//    val l1 = terminatedLeftSections.values.map(p => if (p.nonEmpty) rightLinks.find(pl => pl.connected(p.head.startingPoint)) else None)
-//    val l2 = terminatedLeftSections.values.map(p => if (p.nonEmpty) rightLinks.find(_.connected(p.last.endPoint)) else None)
-//
-//    val r1 = terminatedRightSections.values.map(p => if (p.nonEmpty) leftLinks.find(pl => pl.connected(p.head.startingPoint)) else None)
-//    val r2 = terminatedRightSections.values.map(p => if (p.nonEmpty) leftLinks.find(_.connected(p.last.endPoint)) else None)
-
-//    val l0 = leftLinks.groupBy(_.roadwayNumber).values.map(_.last).toSeq.sortBy(_.startAddrMValue)
     val (l1,l2) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(leftLinks, rightLinks)
     val (r1,r2) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(l2, l1)
     val rr1 = r1//.map(pl => if (pl.endCalibrationPointType == UserDefinedCP) pl.copy(calibrationPointTypes = (pl.startCalibrationPointType, NoCP)) else pl)
@@ -410,12 +379,11 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val splitCreatedCpsFromRightSide: Map[Long, UserDefinedCalibrationPoint] = (updatedudcpsFromRightSideSplits ).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
     val splitCreatedCpsFromLeftSide: Map[Long, UserDefinedCalibrationPoint] = (udcpsFromLeftSideSplits).filter(udcp => udcp.isDefined && udcp.get.isInstanceOf[UserDefinedCalibrationPoint]).map( ucp => ucp.get).map(c => c.projectLinkId -> c).toMap
 
+    val allUdcps =  userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide
 
+    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(splittedLeftLinks.filterNot(_.status == LinkStatus.Terminated), rightLinksWithUdcps.filterNot(_.status == LinkStatus.Terminated), None, allUdcps)
 
-    val (adjustedLeft, adjustedRight) = adjustTracksToMatch(splittedLeftLinks.filterNot(_.status == LinkStatus.Terminated), rightLinksWithUdcps.filterNot(_.status == LinkStatus.Terminated), None, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
-
-    val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++
-                       splitCreatedCpsFromLeftSide)
+    val (right, left) = TrackSectionOrder.setCalibrationPoints(adjustedRight, adjustedLeft, userDefinedCalibrationPoint ++ splitCreatedCpsFromRightSide ++ splitCreatedCpsFromLeftSide)
     TrackSectionOrder.createCombinedSections(right, left)
   }
 
