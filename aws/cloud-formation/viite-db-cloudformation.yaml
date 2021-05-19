@@ -23,7 +23,7 @@ Parameters:
     Type: String
   DBInstanceClass:
     Description: DBInstance DBInstanceClass
-    Default: db.t2.medium
+    Default: db.t3.medium
     Type: String
   DBDeletionProtection:
     Type: String
@@ -78,6 +78,7 @@ Resources:
       DBName: viite
       DeletionProtection: !Ref DBDeletionProtection
       Engine: postgres
+      EngineVersion: 13.2
       AllocatedStorage: 100
       StorageType: gp2
       MasterUsername: postgres
