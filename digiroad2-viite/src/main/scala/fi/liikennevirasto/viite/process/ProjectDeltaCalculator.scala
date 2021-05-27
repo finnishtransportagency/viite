@@ -103,13 +103,28 @@ object ProjectDeltaCalculator {
 
   private def combineProjectLinks(pl1: ProjectLink, pl2: ProjectLink, allNonTerminatedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     val sameStatus =  pl1.status == pl2.status
+    val bothNew = pl1.status == LinkStatus.New && pl2.status == LinkStatus.New && pl1.track != Track.Combined && pl2.track != Track.Combined
 //    val matchAddr = pl1.endAddrMValue == pl2.startAddrMValue
     val matchContinuity = pl1.discontinuity == Discontinuity.Continuous
     val oppositePl = allNonTerminatedProjectLinks.filter( pl => pl.track != pl1.track && pl.endAddrMValue == pl1.endAddrMValue).filter(_.status != LinkStatus.Terminated)
-    val hasCalibrationPoint = ((pl1.track == Track.Combined && pl1.hasCalibrationPointAtEnd) && pl1.hasCalibrationPointCreatedInProject) || (oppositePl.nonEmpty && oppositePl.head.hasCalibrationPointAtEnd && pl1.hasCalibrationPointAtEnd) // Opposite side has user cp
+    val hasCalibrationPoint = ((pl1.status != LinkStatus.New && pl1.hasCalibrationPointAtEnd) && pl1.hasCalibrationPointCreatedInProject) || (oppositePl.nonEmpty && oppositePl.head.hasCalibrationPointAtEnd && pl1.hasCalibrationPointAtEnd) // Opposite side has user cp
 //    val breakAtCp = (pl1.endCalibrationPointType == CalibrationPointDAO.CalibrationPointType.UserDefinedCP && !sameStatus) || (hasCalibrationPoint && pl1.endCalibrationPointType != CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
 
-    if (sameStatus && matchContinuity && !(hasCalibrationPoint) &&
+    val hasParallelLinkOnCalibrationPoint =
+      if (hasCalibrationPoint && bothNew && matchContinuity) {
+        val parallelLastOnCalibrationPoint = allNonTerminatedProjectLinks.filter(pl =>
+          pl.roadNumber == pl1.roadNumber &&
+          pl.roadPartNumber == pl1.roadPartNumber &&
+          pl.status != LinkStatus.Terminated &&
+          pl.track != pl1.track &&
+          pl.track != Track.Combined &&
+          pl.endAddrMValue == pl1.endAddrMValue &&
+          pl.hasCalibrationPointAtEnd)
+        parallelLastOnCalibrationPoint.nonEmpty
+      } else
+          false
+
+    if ((sameStatus && matchContinuity && !(hasCalibrationPoint) || hasParallelLinkOnCalibrationPoint) &&
         pl1.administrativeClass == pl2.administrativeClass) {
       Seq(
             pl1.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
@@ -167,6 +182,7 @@ object ProjectDeltaCalculator {
         !parallelLastOnCalibrationPoint.isEmpty
       } else
         false
+  val hasUdcp = r1.calibrationPointTypes._2 == CalibrationPointDAO.CalibrationPointType.UserDefinedCP && r1.status == LinkStatus.New && r2.status == LinkStatus.New
 
     val openBasedOnSource = hasCalibrationPoint && r1.hasCalibrationPointCreatedInProject
     if (r1.endAddrMValue == r2.startAddrMValue)
@@ -184,7 +200,7 @@ object ProjectDeltaCalculator {
           else
             Seq(r1.copy(discontinuity = r2.discontinuity, endAddrMValue = r2.endAddrMValue, calibrationPointTypes = r2.calibrationPointTypes))
         case LinkStatus.New =>
-          if ( !hasParallelLinkOnCalibrationPoint && !hasCalibrationPoint && r1.discontinuity.value != Discontinuity.ParallelLink.value ) { // && !r1.isSplit
+          if (hasUdcp ||( !hasParallelLinkOnCalibrationPoint && !hasCalibrationPoint) && r1.discontinuity.value != Discontinuity.ParallelLink.value ) { // && !r1.isSplit
             Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity, calibrationPointTypes = r2.calibrationPointTypes, connectedLinkId = r2.connectedLinkId))
           } else if (!hasCalibrationPoint && r1.discontinuity.value == Discontinuity.ParallelLink.value) {
             Seq(r2, r1)
@@ -533,9 +549,9 @@ object ProjectDeltaCalculator {
         val n = (shorterTrackSeq.head._1.copy(startMAddr = longerTrackSeq.head._1.endMAddr), "terminated")
         matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, n +: shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq((shorterTrackSeq.head._1.copy(endMAddr = longerTrackSeq.head._1.endMAddr), "terminated")))
       }
-      else if (longerTrackSeq.head._1.startMAddr < shorterTrackSeq.head._1.startMAddr && longerTrackSeq.head._1.endMAddr == shorterTrackSeq.head._1.endMAddr && shorterTrackSeq.head._2 == "terminated") {
-        val n = (shorterTrackSeq.head._1.copy(startMAddr = longerTrackSeq.head._1.startMAddr, endMAddr = shorterTrackSeq.head._1.startMAddr), "terminated")
-        matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, n +: shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq((shorterTrackSeq.head._1, "terminated")))
+      else if (longerTrackSeq.head._1.startMAddr > shorterTrackSeq.head._1.startMAddr && longerTrackSeq.head._1.endMAddr == shorterTrackSeq.head._1.endMAddr && shorterTrackSeq.head._2 == "terminated") {
+        val n = (shorterTrackSeq.head._1.copy(endMAddr = longerTrackSeq.head._1.startMAddr), "terminated")
+        matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, (shorterTrackSeq.head._1.copy(startMAddr = longerTrackSeq.head._1.startMAddr), shorterTrackSeq.head._2) +: shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(n))
       }
       else if (longerTrackSeq.head._1.startMAddr == shorterTrackSeq.head._1.startMAddr && longerTrackSeq.head._1.endMAddr == shorterTrackSeq.head._1.endMAddr) {
         matchTerminatedTracksOnRoadPart(longerTrackSeq.tail, shorterTrackSeq.tail, adjustedShorterTrackSeq ++ Seq(shorterTrackSeq.head))

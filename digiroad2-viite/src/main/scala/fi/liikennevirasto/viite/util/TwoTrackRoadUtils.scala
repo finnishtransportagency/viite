@@ -157,8 +157,8 @@ object TwoTrackRoadUtils {
 
 
     def splitAt(pl: ProjectLink, address: Long, endPoints: Map[Point, ProjectLink]): (ProjectLink, ProjectLink) = {
-      val coefficient = (pl.endMValue - pl.startMValue) / (pl.endAddrMValue - pl.startAddrMValue)
-      val splitMeasure = pl.startMValue + (math.abs(pl.startAddrMValue - address) * coefficient)
+      val coefficient = if (pl.status == LinkStatus.New) (pl.endMValue - pl.startMValue) / (pl.endAddrMValue - pl.startAddrMValue) else (pl.endMValue - pl.startMValue) / (pl.originalEndAddrMValue - pl.originalStartAddrMValue)
+      val splitMeasure = if (pl.status == LinkStatus.New) pl.startMValue + (math.abs(pl.startAddrMValue - address) * coefficient) else pl.startMValue + (math.abs(pl.originalStartAddrMValue - address) * coefficient)
       val geom = if (pl.geometry.last == endPoints.last._1)
         GeometryUtils.truncateGeometry2D(pl.geometry, startMeasure = 0, endMeasure = splitMeasure - pl.startMValue)
       else GeometryUtils.truncateGeometry2D(pl.geometry.reverse, startMeasure = 0, endMeasure = splitMeasure - pl.startMValue).reverse
@@ -182,16 +182,14 @@ object TwoTrackRoadUtils {
           (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
 
 //      val splittedOriginalEndAddrMValue = Math.round(pl.originalStartAddrMValue + splitMeasure)
-      val addressLength = pl.endAddrMValue - address
+      val addressLength = if (pl.status == LinkStatus.New) pl.endAddrMValue - address else pl.originalEndAddrMValue - address
       val splittedOriginalEndAddrMValue = pl.originalEndAddrMValue - addressLength //Math.round(address - pl.originalStartAddrMValue)
 
       val newProjectLinks =
         (
-          pl.copy(endAddrMValue = address, startMValue = pl.startMValue, endMValue = splitMeasure, status = pl.status, geometry = geom, geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId), calibrationPointTypes = calsForFirstPart, originalEndAddrMValue = splittedOriginalEndAddrMValue),
-          pl.copy(id = NewIdValue, status = pl.status, startAddrMValue = address, endAddrMValue = pl.endAddrMValue, startMValue = splitMeasure, endMValue = pl.endMValue, geometry = new_geometry, geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId), calibrationPointTypes = calsForSecondPart, originalStartAddrMValue = splittedOriginalEndAddrMValue, originalEndAddrMValue = pl.originalEndAddrMValue)
+          pl.copy(endAddrMValue = if (pl.status == LinkStatus.New) address else pl.endAddrMValue - addressLength, startMValue = pl.startMValue, endMValue = splitMeasure, status = pl.status, geometry = geom, geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId), calibrationPointTypes = calsForFirstPart, originalEndAddrMValue = splittedOriginalEndAddrMValue),
+          pl.copy(id = NewIdValue, status = pl.status, startAddrMValue = if (pl.status == LinkStatus.New) address else pl.endAddrMValue - addressLength, endAddrMValue = pl.endAddrMValue, startMValue = splitMeasure, endMValue = pl.endMValue, geometry = new_geometry, geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId), calibrationPointTypes = calsForSecondPart, originalStartAddrMValue = splittedOriginalEndAddrMValue, originalEndAddrMValue = pl.originalEndAddrMValue)
         )
-
-
 
       val id: Seq[Long] = projectLinkDAO.create(Seq(newProjectLinks._2))
       (newProjectLinks._1, newProjectLinks._2.copy(id = id.head))
@@ -261,17 +259,20 @@ object TwoTrackRoadUtils {
           pl.track != Track.Combined &&
             pl.track != last.track &&
             pl.status != LinkStatus.NotHandled &&
+          //!( last.status == LinkStatus.New) && // Don't split new links
             //pl.status != LinkStatus.Terminated &&
             // pl.status != last.status &&
-            pl.startAddrMValue < last.endAddrMValue &&
-            pl.endAddrMValue >= last.endAddrMValue)
+            ( (pl.status == LinkStatus.New && pl.startAddrMValue < last.endAddrMValue && pl.endAddrMValue >= last.endAddrMValue)
+            ||
+            (pl.status != LinkStatus.New && pl.originalStartAddrMValue < last.originalEndAddrMValue && pl.originalEndAddrMValue >= last.originalEndAddrMValue)
+            ))
 
         // TODO: check section end is a status change point (--> remove calibration point if not).
         /* val isStatusChange = roadPartLinks.find(pl =>
                 pl.track == last.track &&
                 pl.startingPoint == last.endPoint
               )
-             if (isStatusChange.isDefined) isStatusChange.get.status != last.status*/
+             if (isStatusChange.isDefined) isStatusChange.get.status != last.status */
 
         if (hasOtherSideLink.nonEmpty) {
           val startCP = last.startCalibrationPointType match {
@@ -295,9 +296,10 @@ object TwoTrackRoadUtils {
 
           val otherSideLink = hasOtherSideLink.head
 
-          if (otherSideLink.endAddrMValue != last.endAddrMValue) {
+          if ((otherSideLink.status == LinkStatus.New && otherSideLink.endAddrMValue != last.endAddrMValue) ||
+              otherSideLink.status != LinkStatus.New && otherSideLink.originalEndAddrMValue != last.originalEndAddrMValue) {
             val endPoints = TrackSectionOrder.findChainEndpoints(roadPartLinks.filter(pl => pl.endAddrMValue <= otherSideLink.endAddrMValue && pl.track == otherSideLink.track))
-            val (plPart1, plPart2) = splitAt(otherSideLink, last.endAddrMValue, endPoints)
+            val (plPart1, plPart2) = if (otherSideLink.status == LinkStatus.New) splitAt(otherSideLink, last.endAddrMValue, endPoints) else splitAt(otherSideLink, last.originalEndAddrMValue, endPoints)
             val (newCP: Seq[Option[UserDefinedCalibrationPoint]], cpUpdatedPls) = createCalibrationPoints(startCP, endCP, otherSideLinkStartCP, otherSideLinkEndCP, plPart1)
             (Some(plPart1, plPart2), newCP, cpUpdatedPls)
           } else {
@@ -313,11 +315,11 @@ object TwoTrackRoadUtils {
     /* roadPartLinks? **/
     //      var ret_links = Array[Seq[ProjectLink]]()
 
-    val otherSideLast = findOtherShorterTrackStatusChangePoint(last)
-    if (otherSideLast.isDefined)
+//    val otherSideLast = findOtherShorterTrackStatusChangePoint(last)
+//    if (otherSideLast.isDefined)
     //        ret_links :+=
-      splitAndSetCalibrationPointsAtEnd(last, roadPartLinks)//.toSeq ++ splitAndSetCalibrationPointsAtEnd(otherSideLast.get, roadPartLinks).toSeq
-    else
+//      splitAndSetCalibrationPointsAtEnd(last, roadPartLinks)//.toSeq ++ splitAndSetCalibrationPointsAtEnd(otherSideLast.get, roadPartLinks).toSeq
+//    else
     //        ret_links :+=
       splitAndSetCalibrationPointsAtEnd(last, roadPartLinks)
   }
