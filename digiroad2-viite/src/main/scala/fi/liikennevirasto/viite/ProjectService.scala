@@ -1527,8 +1527,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
      {
 
-
-
       /* Terminate unhandled links */
       //    val notHandled = projectLinks.filter(_.status == LinkStatus.NotHandled)
       //    if (notHandled.nonEmpty) {
@@ -1542,7 +1540,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       time(logger, "Recalculate links") {
         var projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-        // remove udcp:s before (re)calc
+//        projectLinks.groupBy(_.track).mapValues(_.map(t => t.endCalibrationPoint))
+//        fuseUdcpSplittedProjectLinks()
+        /* Remove udcp:s before (re)calc. */
        val udcpRemovedProjectLinks = projectLinks.tail.toList.scanLeft(projectLinks.head) { (p,r) => {
           if (r.calibrationPoints._2.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (r.startCalibrationPointType, NoCP)) else
             if (r.calibrationPoints._1.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (NoCP, r.startCalibrationPointType)) else r
@@ -1802,6 +1802,29 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  private def fuseUdcpSplittedProjectLinks(links: Seq[ProjectLink]): Seq[ProjectLink] = {
+    val linkIds = links.map(_.linkId).distinct
+    val existingRoadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(links.map(_.roadwayId))
+    val groupedRoadAddresses = existingRoadAddresses.groupBy(record =>
+      (record.roadwayNumber, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.administrativeClass, record.ely, record.terminated))
+
+    if (groupedRoadAddresses.size > 1) {
+      links
+    }
+    else {
+      if (linkIds.lengthCompare(1) != 0)
+        throw new IllegalArgumentException(s"Multiple road link ids given for building one link: ${linkIds.mkString(", ")}")
+
+        val geom = links.head.sideCode match {
+          case SideCode.TowardsDigitizing => links.map(_.geometry).foldLeft(Seq[Point]())((geometries, ge) => geometries ++ ge)
+          case _ => links.map(_.geometry).reverse.foldLeft(Seq[Point]())((geometries, ge) => geometries ++ ge)
+        }
+        val (startM, endM, startA, endA) = (links.map(_.startMValue).min, links.map(_.endMValue).max,
+                                             links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max)
+        Seq(links.head.copy(discontinuity = links.maxBy(_.startAddrMValue).discontinuity, startAddrMValue = startA, endAddrMValue = endA, startMValue = startM, endMValue = endM, geometry = geom))
+    }
+  }
+
   private def awaitRoadLinks(fetch: (Future[Seq[RoadLink]], Future[Seq[RoadLink]])): (Seq[RoadLink], Seq[RoadLink]) = {
     val combinedFuture = for {
       fStandard <- fetch._1
@@ -2050,7 +2073,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         // concatenate the untouched roadways and the modified roadways lists
         returnRoadwaysList ++ notReversedRoadwaysToInsert
       }
-      val roadwayIds = roadwayDAO.create(roadwaysToCreate.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy)))
+      val allrws = roadwayDAO.fetchAllByRoad(13)
+      val test = roadwaysToCreate.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy))
+      val roadwayIds = roadwayDAO.create(test)
       logger.debug(s"Inserting linear locations")
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       // If the project didnt create new roadway numbers we will flip the existing history rows after Viite has created the new "current" roadway and newest history row of the previous "current" roadway

@@ -3,9 +3,11 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
-import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink, ProjectLinkDAO}
 
 object ProjectSectionMValueCalculator {
+
+  val projectLinkDAO = new ProjectLinkDAO
 
   def calculateMValuesForTrack(seq: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
     // That is an address connected extension of this
@@ -60,13 +62,26 @@ def testF(ordered: Seq[ProjectLink], addrSt: Option[Double], cps: Map[Long, User
     }
   }
 }
+  def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
+    previous.roadNumber == currentLink.roadNumber && previous.roadPartNumber == currentLink.roadPartNumber && previous.track == currentLink.track
+  }
+
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
     val endPoints = TrackSectionOrder.findChainEndpoints(seq)
     val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
     val orderedPairs = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
     val ordered = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
 
-    val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
+//    val terminated = projectLinkDAO.fetchProjectLinks(ordered.head.projectId, Some(LinkStatus.Terminated))
+//
+//    val newConnectedToTerminated = ordered.filter(pl => pl.status == LinkStatus.New && terminated.exists(_.connected(pl)))
+
+    val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) => {
+//      val x = if (pl.status == LinkStatus.New && pl.track != Track.Combined) terminated.find(_.connected(pl)) else None
+//            if (x.isDefined) {
+//              val term = x.get
+//              terminated.find(t => t.track != term.track && t.endAddrMValue <= term.endAddrMValue && t.startAddrMValue <= term.endAddrMValue)
+//            }
       val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
       if (!pl.isSplit) {
         val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
@@ -79,6 +94,7 @@ def testF(ordered: Seq[ProjectLink], addrSt: Option[Double], cps: Map[Long, User
       } else {
         pl.endAddrMValue
       }
+    }
     }
     seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) =>
       pl.copy(startAddrMValue = Math.round(st), endAddrMValue = Math.round(en))

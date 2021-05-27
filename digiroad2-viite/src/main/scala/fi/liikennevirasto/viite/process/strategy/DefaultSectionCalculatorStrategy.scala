@@ -297,10 +297,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(rightSections, userDefinedCalibrationPoint)
     val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(leftSections, userDefinedCalibrationPoint)
 
-//    val (leftLinks2, rightLinks2) = adjustTracksToMatch(leftLinks, rightLinks, None, Map())
+    val (leftLinks2, rightLinks2) = adjustTracksToMatch(leftLinks, rightLinks, None, Map())
 
 
-    val (l1,l2) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(leftLinks, rightLinks)
+    val (l1,l2) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(leftLinks2, rightLinks2)
     val (r1,r2) = TwoTrackRoadUtils.splitPlsAtRoadwayChange(l2, l1)
     val rr1 = r1//.map(pl => if (pl.endCalibrationPointType == UserDefinedCP) pl.copy(calibrationPointTypes = (pl.startCalibrationPointType, NoCP)) else pl)
     val rr2 = r2//.map(pl => if (pl.endCalibrationPointType == UserDefinedCP) pl.copy(calibrationPointTypes = (pl.startCalibrationPointType, NoCP)) else pl)
