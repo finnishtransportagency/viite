@@ -1119,19 +1119,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       * 1.result of addressMValues for new given address value for one Track.Combined link
       * 2.result of reversing direction
       */
-    val coeff = 1.0
-
-    def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
-      measure >= interval._1 && measure <= interval._2
-    }
 
     runWithRollback {
+
       /**
         * Illustrative picture
         *
-        * |--Left--||--Left--|
+        *               |--Left--||--Left--|
         * |--combined--|                    |--combined--|
-        * |-------Right------|
+        *               |-------Right------|
         */
 
       /**
@@ -1159,20 +1155,20 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.createProjectLinks(Seq(12349L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       val links = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
 
+      // add some length to the specified link to be able to test
+      // whether the user given addrM is saved to the projectlink
+      // and existing projectlinks are being recalculated
       val linkidToIncrement = pl1.linkId
       val idsToIncrement = links.filter(_.linkId == linkidToIncrement).head.id
       val valueToIncrement = 2.0
       val newEndAddressValue = Seq(links.filter(_.linkId == linkidToIncrement).head.endAddrMValue.toInt, valueToIncrement.toInt).sum
+
+      // update projectlinks (mimic save button)
       projectService.updateProjectLinks(project.id, Set(idsToIncrement), Seq(linkidToIncrement), LinkStatus.New, "TestUserTwo", 9999, 1, 0, Some(newEndAddressValue), 1L, 5) should be(None)
       val linksAfterGivenAddrMValue = projectLinkDAO.fetchProjectLinks(project.id)
 
       //only link and links after linkidToIncrement should be extended
       val extendedLink = links.filter(_.linkId == linkidToIncrement).head
-      val linksBefore = links.filter(_.endAddrMValue >= extendedLink.endAddrMValue).sortBy(_.endAddrMValue)
-      val linksAfter = linksAfterGivenAddrMValue.filter(_.endAddrMValue >= extendedLink.endAddrMValue).sortBy(_.endAddrMValue)
-      linksBefore.zip(linksAfter).foreach { case (st, en) =>
-        liesInBetween(en.endAddrMValue, (st.endAddrMValue + valueToIncrement - coeff, st.endAddrMValue + valueToIncrement + coeff))
-      }
 
       projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), ProjectCoordinates(0, 0, 0), "TestUserTwo")
       projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), ProjectCoordinates(0, 0, 0), "TestUserTwo")
