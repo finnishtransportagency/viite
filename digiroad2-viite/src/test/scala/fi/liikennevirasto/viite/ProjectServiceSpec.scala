@@ -1117,7 +1117,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     /**
       * This test checks:
       * 1.result of addressMValues for new given address value for one Track.Combined link
-      * 2.result of reversing direction
+      * 2.result of re-reversing direction
       */
 
     runWithRollback {
@@ -1172,11 +1172,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), ProjectCoordinates(0, 0, 0), "TestUserTwo")
       projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), ProjectCoordinates(0, 0, 0), "TestUserTwo")
-      val linksAfterReverse = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
+      val linksAfter2Reverses = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
 
-      links.sortBy(_.endAddrMValue).zip(linksAfterReverse.sortBy(_.endAddrMValue)).foreach { case (st, en) =>
-        (st.startAddrMValue, st.endAddrMValue) should be(en.startAddrMValue, en.endAddrMValue)
-        (st.startMValue, st.endMValue) should be(en.startMValue, en.endMValue)
+      // construct pairs of projectlinks (before reverses, after reverses) according to endAddrMValues
+      // the endAddrMValues of the pairs should be the same after reversing the road twice
+      links.sortBy(_.endAddrMValue).zip(linksAfter2Reverses.sortBy(_.endAddrMValue)).foreach {
+        case (beforeReverses, afterReverses) =>
+          (beforeReverses.startAddrMValue, beforeReverses.endAddrMValue) should be(afterReverses.startAddrMValue, afterReverses.endAddrMValue)
+          (beforeReverses.startMValue, beforeReverses.endMValue) should be(afterReverses.startMValue, afterReverses.endMValue)
       }
     }
   }
