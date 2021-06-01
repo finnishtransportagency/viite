@@ -550,8 +550,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 reversed = isReversed(originalSideCodes)(x))),
               username,
               originalAddresses)
-            //ProjectCalibrationPointDAO.removeAllCalibrationPoints(projectLinks.map(_.id).toSet)
-            //recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
             saveProjectCoordinates(projectId, coordinates)
             None
           case Some(error) => Some(error)
