@@ -1176,7 +1176,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       // construct pairs of projectlinks (before reverses, after reverses) according to endAddrMValues
       // the endAddrMValues of the pairs should be the same after reversing the road twice
-      links.sortBy(_.endAddrMValue).zip(linksAfter2Reverses.sortBy(_.endAddrMValue)).foreach {
+      linksAfterGivenAddrMValue.sortBy(_.endAddrMValue).zip(linksAfter2Reverses.sortBy(_.endAddrMValue)).foreach {
         case (beforeReverses, afterReverses) =>
           (beforeReverses.startAddrMValue, beforeReverses.endAddrMValue) should be(afterReverses.startAddrMValue, afterReverses.endAddrMValue)
           (beforeReverses.startMValue, beforeReverses.endMValue) should be(afterReverses.startMValue, afterReverses.endMValue)
