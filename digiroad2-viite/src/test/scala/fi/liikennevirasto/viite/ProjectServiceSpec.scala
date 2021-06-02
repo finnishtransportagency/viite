@@ -1119,19 +1119,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       * 1.result of addressMValues for new given address value for one Track.Combined link
       * 2.result of reversing direction
       */
-    val coeff = 1.0
-
-    def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
-      measure >= interval._1 && measure <= interval._2
-    }
 
     runWithRollback {
+
       /**
         * Illustrative picture
         *
-        * |--Left--||--Left--|
+        *               |--Left--||--Left--|
         * |--combined--|                    |--combined--|
-        * |-------Right------|
+        *               |-------Right------|
         */
 
       /**
@@ -1168,11 +1164,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       //only link and links after linkidToIncrement should be extended
       val extendedLink = links.filter(_.linkId == linkidToIncrement).head
-      val linksBefore = links.filter(_.endAddrMValue >= extendedLink.endAddrMValue).sortBy(_.endAddrMValue)
-      val linksAfter = linksAfterGivenAddrMValue.filter(_.endAddrMValue >= extendedLink.endAddrMValue).sortBy(_.endAddrMValue)
-      linksBefore.zip(linksAfter).foreach { case (st, en) =>
-        liesInBetween(en.endAddrMValue, (st.endAddrMValue + valueToIncrement - coeff, st.endAddrMValue + valueToIncrement + coeff))
-      }
 
       projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), ProjectCoordinates(0, 0, 0), "TestUserTwo")
       projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), ProjectCoordinates(0, 0, 0), "TestUserTwo")

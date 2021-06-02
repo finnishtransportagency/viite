@@ -546,7 +546,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               .map(l => l.id -> l.sideCode).toMap
             val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds(projectLinks.map(_.roadwayId))
             projectLinkDAO.updateProjectLinks(projectLinks.map(x =>
-              x.copy(discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous), reversed = isReversed(originalSideCodes)(x))), username, originalAddresses)
+              x.copy(discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous),
+                reversed = isReversed(originalSideCodes)(x))),
+              username,
+              originalAddresses)
             ProjectCalibrationPointDAO.removeAllCalibrationPoints(projectLinks.map(_.id).toSet)
             recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
             saveProjectCoordinates(projectId, coordinates)
