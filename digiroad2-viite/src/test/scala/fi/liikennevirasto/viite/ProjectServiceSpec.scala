@@ -1117,7 +1117,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     /**
       * This test checks:
       * 1.result of addressMValues for new given address value for one Track.Combined link
-      * 2.result of reversing direction
+      * 2.result of re-reversing direction
       */
 
     runWithRollback {
@@ -1155,10 +1155,15 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.createProjectLinks(Seq(12349L), project.id, 9999, 1, Track.Combined, Discontinuity.Continuous, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 8L, "test", "road name")
       val links = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
 
+      // add some length to the specified link to be able to test
+      // whether the user given addrM is saved to the projectlink
+      // and existing projectlinks are being recalculated
       val linkidToIncrement = pl1.linkId
       val idsToIncrement = links.filter(_.linkId == linkidToIncrement).head.id
       val valueToIncrement = 2.0
       val newEndAddressValue = Seq(links.filter(_.linkId == linkidToIncrement).head.endAddrMValue.toInt, valueToIncrement.toInt).sum
+
+      // update projectlinks (mimic save button)
       projectService.updateProjectLinks(project.id, Set(idsToIncrement), Seq(linkidToIncrement), LinkStatus.New, "TestUserTwo", 9999, 1, 0, Some(newEndAddressValue), 1L, 5) should be(None)
       val linksAfterGivenAddrMValue = projectLinkDAO.fetchProjectLinks(project.id)
 
@@ -1167,11 +1172,14 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), ProjectCoordinates(0, 0, 0), "TestUserTwo")
       projectService.changeDirection(project.id, 9999L, 1L, Seq(LinkToRevert(pl1.id, pl1.linkId, pl1.status.value, pl1.geometry)), ProjectCoordinates(0, 0, 0), "TestUserTwo")
-      val linksAfterReverse = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
+      val linksAfter2Reverses = projectLinkDAO.fetchProjectLinks(project.id).sortBy(_.startAddrMValue)
 
-      links.sortBy(_.endAddrMValue).zip(linksAfterReverse.sortBy(_.endAddrMValue)).foreach { case (st, en) =>
-        (st.startAddrMValue, st.endAddrMValue) should be(en.startAddrMValue, en.endAddrMValue)
-        (st.startMValue, st.endMValue) should be(en.startMValue, en.endMValue)
+      // construct pairs of projectlinks (before reverses, after reverses) according to endAddrMValues
+      // the endAddrMValues of the pairs should be the same after reversing the road twice
+      linksAfterGivenAddrMValue.sortBy(_.endAddrMValue).zip(linksAfter2Reverses.sortBy(_.endAddrMValue)).foreach {
+        case (beforeReverses, afterReverses) =>
+          (beforeReverses.startAddrMValue, beforeReverses.endAddrMValue) should be(afterReverses.startAddrMValue, afterReverses.endAddrMValue)
+          (beforeReverses.startMValue, beforeReverses.endMValue) should be(afterReverses.startMValue, afterReverses.endMValue)
       }
     }
   }

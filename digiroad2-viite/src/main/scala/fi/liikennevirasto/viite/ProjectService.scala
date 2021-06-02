@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP, UserDefinedCP}
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
@@ -550,8 +550,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 reversed = isReversed(originalSideCodes)(x))),
               username,
               originalAddresses)
-            ProjectCalibrationPointDAO.removeAllCalibrationPoints(projectLinks.map(_.id).toSet)
-            recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
             saveProjectCoordinates(projectId, coordinates)
             None
           case Some(error) => Some(error)
@@ -1347,11 +1345,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               val startCP = l.startCalibrationPointType match {
                 case JunctionPointCP => JunctionPointCP
                 case UserDefinedCP => UserDefinedCP
+                case RoadAddressCP => if(l.reversed) RoadAddressCP else NoCP
                 case _ => NoCP
               }
               val endCP = l.endCalibrationPointType match {
                 case JunctionPointCP => JunctionPointCP
                 case UserDefinedCP => UserDefinedCP
+                case RoadAddressCP => if(l.reversed) RoadAddressCP else NoCP
                 case _ => NoCP
               }
               l.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPartNumber, track = Track.apply(newTrackCode), calibrationPointTypes = (startCP, endCP), status = linkStatus, administrativeClass = AdministrativeClass.apply(administrativeClass.toInt), ely = ely.getOrElse(l.ely))
@@ -1390,8 +1390,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case _ =>
             throw new ProjectValidationException(s"Virheellinen operaatio $linkStatus")
         }
-        recalculateProjectLinks(projectId, userName, Set((newRoadNumber, newRoadPartNumber)) ++
-          toUpdateLinks.map(pl => (pl.roadNumber, pl.roadPartNumber)).toSet)
+        // Recalculate projectlinks only if there are no reversed projectlinks
+        if (!toUpdateLinks.exists(_.reversed)) {
+          recalculateProjectLinks(projectId, userName, Set((newRoadNumber, newRoadPartNumber)) ++
+            toUpdateLinks.map(pl => (pl.roadNumber, pl.roadPartNumber)).toSet)
+        }
         if (coordinates.isDefined) {
           saveProjectCoordinates(projectId, coordinates.get)
         }
