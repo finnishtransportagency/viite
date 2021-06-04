@@ -12,7 +12,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import org.scalatra.swagger._
 
 
-class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService: NodesAndJunctionsService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport  {
+class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService: NodesAndJunctionsService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport  {
   val logger: Logger = LoggerFactory.getLogger(getClass)
   val DateTimePropertyFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 
@@ -20,7 +20,6 @@ class ChangeApi(roadAddressService: RoadAddressService, nodesAndJunctionsService
   protected val applicationDescription = "The user interface API "
 
   before() {
-    basicAuth
     contentType = formats("json")
   }
 
