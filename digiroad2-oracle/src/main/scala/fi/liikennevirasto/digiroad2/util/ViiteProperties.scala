@@ -30,12 +30,6 @@ trait ViiteProperties {
   val conversionBonecpJdbcUrl: String
   val conversionBonecpUsername: String
   val conversionBonecpPassword: String
-  val authenticationBasicUsername: String
-  val authenticationBasicPassword: String
-  val authenticationServiceRoadBasicUsername: String
-  val authenticationServiceRoadBasicPassword: String
-  val authenticationMunicipalityBasicUsername: String
-  val authenticationMunicipalityBasicPassword: String
   val oagUsername: String
   val oagPassword: String
   val viitetierekisteriUsername: String
@@ -86,12 +80,6 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val conversionBonecpJdbcUrl: String = scala.util.Properties.envOrElse("conversion.bonecp.jdbcUrl", null)
   val conversionBonecpUsername: String = scala.util.Properties.envOrElse("conversion.bonecp.username", null)
   val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversion.bonecp.password", null)
-  val authenticationBasicUsername: String = scala.util.Properties.envOrElse("authentication.basic.username", null)
-  val authenticationBasicPassword: String = scala.util.Properties.envOrElse("authentication.basic.password", null)
-  val authenticationServiceRoadBasicUsername: String = scala.util.Properties.envOrElse("authentication.serviceRoad.basic.username", null)
-  val authenticationServiceRoadBasicPassword: String = scala.util.Properties.envOrElse("authentication.serviceRoad.basic.password", null)
-  val authenticationMunicipalityBasicUsername: String = scala.util.Properties.envOrElse("authentication.municipality.basic.username", null)
-  val authenticationMunicipalityBasicPassword: String = scala.util.Properties.envOrElse("authentication.municipality.basic.password", null)
   val oagUsername: String = scala.util.Properties.envOrElse("oag.username", null)
   val oagPassword: String = scala.util.Properties.envOrElse("oag.password", null)
   val viitetierekisteriUsername: String = scala.util.Properties.envOrElse("viiteTierekisteri.username", null)
@@ -175,12 +163,6 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val conversionBonecpJdbcUrl: String = scala.util.Properties.envOrElse("conversionBonecpJdbcUrl", envProps.getProperty("conversion.bonecp.jdbcUrl"))
   override val conversionBonecpUsername: String = scala.util.Properties.envOrElse("conversionBonecpUsername", envProps.getProperty("conversion.bonecp.username"))
   override val conversionBonecpPassword: String = scala.util.Properties.envOrElse("conversionBonecpPassword", envProps.getProperty("conversion.bonecp.password"))
-  override val authenticationBasicUsername: String = envProps.getProperty("authentication.basic.username")
-  override val authenticationBasicPassword: String = envProps.getProperty("authentication.basic.password")
-  override val authenticationServiceRoadBasicUsername: String = envProps.getProperty("authentication.serviceRoad.basic.username")
-  override val authenticationServiceRoadBasicPassword: String = envProps.getProperty("authentication.serviceRoad.basic.password")
-  override val authenticationMunicipalityBasicUsername: String = envProps.getProperty("authentication.municipality.basic.username")
-  override val authenticationMunicipalityBasicPassword: String = envProps.getProperty("authentication.municipality.basic.password")
   override val oagUsername: String = envProps.getProperty("oag.username")
   override val oagPassword: String = envProps.getProperty("oag.password")
   override val viitetierekisteriUsername: String = envProps.getProperty("viiteTierekisteri.username")
@@ -261,19 +243,12 @@ object ViiteProperties {
   lazy val conversionBonecpJdbcUrl: String = properties.conversionBonecpJdbcUrl
   lazy val conversionBonecpUsername: String = properties.conversionBonecpUsername
   lazy val conversionBonecpPassword: String = properties.conversionBonecpPassword
-  lazy val authenticationBasicUsername: String = properties.authenticationBasicUsername
-  lazy val authenticationBasicPassword: String = properties.authenticationBasicPassword
-  lazy val authenticationServiceRoadBasicUsername: String = properties.authenticationServiceRoadBasicUsername
-  lazy val authenticationServiceRoadBasicPassword: String = properties.authenticationServiceRoadBasicPassword
-  lazy val authenticationMunicipalityBasicUsername: String = properties.authenticationMunicipalityBasicUsername
-  lazy val authenticationMunicipalityBasicPassword: String = properties.authenticationMunicipalityBasicPassword
   lazy val oagUsername: String = properties.oagUsername
   lazy val oagPassword: String = properties.oagPassword
   lazy val viitetierekisteriUsername: String = properties.viitetierekisteriUsername
   lazy val viitetierekisteriPassword: String = properties.viitetierekisteriPassword
   lazy val latestDeploy: String = properties.latestDeploy
   lazy val env: String = properties.env
-
   lazy val bonecpProperties: Properties = properties.bonecpProperties
   lazy val conversionBonecpProperties: Properties = properties.conversionBonecpProperties
 
