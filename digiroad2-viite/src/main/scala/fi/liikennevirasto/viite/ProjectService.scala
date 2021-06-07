@@ -1414,11 +1414,55 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[(Long, Long)] = Set(), newTrack: Option[Track] = None, newDiscontinuity: Option[Discontinuity] = None, completelyNewLinkIds: Seq[Long] = Seq()): Unit = {
 
-    def setReversedFlag(adjustedLink: ProjectLink, before: Option[ProjectLink]): ProjectLink = {
+
+    /**
+      Before:
+
+                    RoadNumber 1                  RoadNumber 2
+                          --------L--------><--------R---------^
+            |-----C------->                                    |
+                          --------R--------><--------L---------|
+                                                               |
+                                                               C
+                                                               |
+      After:
+                                       RoadNumber 1
+                          ---------L------->---------L-------->^
+            |-----C------->                                    | RoadNumber 2
+                          ---------R------->---------R-------->|
+                                                               |
+                                                               C
+                                                               |
+      Notes:
+        C: Combined track
+        L: Left track
+        R: Right Track
+
+        Sometimes road reversing is not done by the user clicking the "reverse roadpart direction" -button,
+        instead it happens by transferring part of the road to be part of another road
+        that has opposite direction. In those cases we set the reversed flag
+        and flip the track codes of the automatically reversed projectLinks
+      */
+    def setReversedFlagAndTrackCode(adjustedLink: ProjectLink, before: Option[ProjectLink]): ProjectLink = {
       before.map(_.sideCode) match {
         case Some(value) if value != adjustedLink.sideCode && value != SideCode.Unknown =>
-          adjustedLink.copy(reversed = !adjustedLink.reversed)
+          adjustedLink.copy(reversed = !adjustedLink.reversed, track = flipTrackCode(adjustedLink))
         case _ => adjustedLink
+      }
+    }
+
+    /**
+      * @param projectLink
+      * @return Flip track code if track is not combined track
+      */
+    def flipTrackCode(projectLink: ProjectLink): Track = {
+      projectLink.track match {
+        case Track.RightSide =>
+          Track.LeftSide
+        case Track.LeftSide =>
+          Track.RightSide
+        case Track.Combined =>
+          Track.Combined
       }
     }
 
@@ -1433,7 +1477,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         grp =>
           val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1._1, grp._1._2)
           val calculatedLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map(rpl =>
-            setReversedFlag(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadwayId != 0L))
+            setReversedFlagAndTrackCode(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadwayId != 0L))
           ).sortBy(_.endAddrMValue)
           if (!calculatedLinks.exists(_.isNotCalculated) && newDiscontinuity.isDefined && newTrack.isDefined &&
             roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
