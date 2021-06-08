@@ -1418,21 +1418,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     /**
       Before:
 
-                    RoadNumber 1                  RoadNumber 2
-                          --------L--------><--------R---------^
-            |-----C------->                                    |
-                          --------R--------><--------L---------|
-                                                               |
-                                                               C
-                                                               |
-      After:
-                                       RoadNumber 1
-                          ---------L------->---------L-------->^
-            |-----C------->                                    | RoadNumber 2
-                          ---------R------->---------R-------->|
-                                                               |
-                                                               C
-                                                               |
+                    RoadNumber 1                        RoadNumber 2
+                          --------L--------> <--------R---------<--------R-------|
+            |-----C------->
+                          --------R--------> <--------L---------<--------L-------|
+      After
+                                       RoadNumber 1                  RoadNumber 2
+                          ---------L------->---------L--------> <--------R-------|
+            |-----C------->
+                          ---------R------->---------R--------> <--------L-------|
       Notes:
         C: Combined track
         L: Left track
@@ -1446,25 +1440,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     def setReversedFlagAndTrackCode(adjustedLink: ProjectLink, before: Option[ProjectLink]): ProjectLink = {
       before.map(_.sideCode) match {
         case Some(value) if value != adjustedLink.sideCode && value != SideCode.Unknown =>
-          adjustedLink.copy(reversed = !adjustedLink.reversed, track = flipTrackCode(adjustedLink))
+          adjustedLink.copy(reversed = !adjustedLink.reversed, track = Track.switch(adjustedLink.track))
         case _ => adjustedLink
       }
     }
 
-    /**
-      * @param projectLink
-      * @return Flip track code if track is not combined track
-      */
-    def flipTrackCode(projectLink: ProjectLink): Track = {
-      projectLink.track match {
-        case Track.RightSide =>
-          Track.LeftSide
-        case Track.LeftSide =>
-          Track.RightSide
-        case Track.Combined =>
-          Track.Combined
-      }
-    }
 
     val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
     logger.info(s"Recalculating project $projectId, parts ${roadParts.map(p => s"${p._1}/${p._2}").mkString(", ")}")
