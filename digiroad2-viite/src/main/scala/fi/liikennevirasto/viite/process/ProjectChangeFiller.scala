@@ -19,10 +19,18 @@ object ProjectChangeFiller {
 
   def mapAddressProjectionsToLinks(roadwayLinks: Seq[ProjectLink], projectLinkChanges: Seq[ProjectRoadLinkChange], mappedRoadAddressesProjection: Seq[RoadAddress]): (Seq[ProjectLink], Seq[ProjectRoadLinkChange]) = {
     val (terminatedRoadwayLinks, validRoadwayLinks) = roadwayLinks.partition(_.status == LinkStatus.Terminated)
+//    val test = validRoadwayLinks.map { l =>
+//      mappedRoadAddressesProjection.filter(_.linearLocationId == l.linearLocationId)
+//    }
+
     val enrichedProjectLinks = validRoadwayLinks.map { l =>
-      val ra = mappedRoadAddressesProjection.find(_.linearLocationId == l.linearLocationId).get
-      l.copy(startAddrMValue = ra.startAddrMValue, endAddrMValue = ra.endAddrMValue)
-    } ++ terminatedRoadwayLinks
+      val ra = mappedRoadAddressesProjection.find(_.linearLocationId == l.linearLocationId)
+      if (ra.isDefined)
+        Some(l.copy(startAddrMValue = ra.get.startAddrMValue, endAddrMValue = ra.get.endAddrMValue))
+      else
+        None
+    }.filter(_.isDefined).map(_.get) ++ terminatedRoadwayLinks
+
     val (terminatedProjectLinkChanges, validProjectLinkChanges) = projectLinkChanges.partition(_.status == LinkStatus.Terminated)
     val enrichedProjectRoadLinkChanges = validProjectLinkChanges.map { rlc =>
       val pl: ProjectLink = enrichedProjectLinks.find(_.id == rlc.id).get

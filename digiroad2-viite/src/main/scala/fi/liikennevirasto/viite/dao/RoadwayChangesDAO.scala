@@ -342,7 +342,7 @@ class RoadwayChangesDAO {
 
           val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping, allNonTerminatedProjectLinks)
 
-          val testTerminated = ProjectDeltaCalculator.partitionTerminatedWithProjectLinks(delta.terminations.mapping.map(_._2), allNonTerminatedProjectLinks)
+//          val testTerminated = ProjectDeltaCalculator.partitionTerminatedWithProjectLinks(delta.terminations.mapping.map(_._2), allNonTerminatedProjectLinks)
 
 
           val twoTrackOldAddressRoadParts = ((test3 ++ test4).map(_._2).map(roadwaySection => {

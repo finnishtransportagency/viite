@@ -424,12 +424,19 @@ object ProjectDeltaCalculator {
     //adjusted the end of sources
     val links    = transfers.map(_._2)
     val sections = sectioned.map(sect => {
-      val (key, (src, targetToMap)) = sect
+      val (key, (srcToMap, targetToMap)) = sect
       val target                    = targetToMap.map(t => {
         t.copy(projectLinks = links.filter(link => {
           link.roadwayNumber == t.roadwayNumber && link.roadNumber == t.roadNumber &&
           link.roadPartNumber == t.roadPartNumberEnd && link.track == t.track && link.ely == t.ely &&
           link.startAddrMValue >= t.startMAddr && link.endAddrMValue <= t.endMAddr
+        }))
+      })
+      val src                    = srcToMap.map(s => {
+        s.copy(projectLinks = links.filter(link => {
+          link.roadwayNumber == s.roadwayNumber && link.roadNumber == s.roadNumber &&
+          link.roadPartNumber == s.roadPartNumberStart && link.track == s.track && link.ely == s.ely &&
+          link.originalStartAddrMValue >= s.startMAddr && link.originalEndAddrMValue <= s.endMAddr
         }))
       })
       src.zip(target)

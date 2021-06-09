@@ -159,8 +159,7 @@ object ProjectSectionCalculator {
 
       val rightReassignedEnd: Seq[ProjectLink] = rightReassignedStart.map(rightTerminatedpl => {
         val startingPointLink = projectLinks.filterNot(_.status == LinkStatus.Terminated).sortBy(_.startAddrMValue).find(pl => {
-          (pl.id != rightTerminatedpl.id && (pl.startingPoint.connected(rightTerminatedpl.endPoint))
-          )
+          pl.id != rightTerminatedpl.id && (pl.startingPoint.connected(rightTerminatedpl.endPoint))
         })
         if (startingPointLink.isDefined) rightTerminatedpl.copy(endAddrMValue = startingPointLink.get.startAddrMValue)
         else {
