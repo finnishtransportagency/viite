@@ -1435,12 +1435,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         Sometimes road reversing is not done by the user clicking the "reverse roadpart direction" -button,
         instead it happens by transferring part of the road to be part of another road
         that has opposite direction. In those cases we set the reversed flag
-        and flip the track codes of the automatically reversed projectLinks
+        and flip the track codes of the automatically reversed projectLinks.
+        All calibrationpoints are also removed when projectlink is automatically reversed.
       */
-    def setReversedFlagAndTrackCode(adjustedLink: ProjectLink, before: Option[ProjectLink]): ProjectLink = {
+    def setReversedFlagAndTrackCodeAndRemoveCalibrationPoints(adjustedLink: ProjectLink, before: Option[ProjectLink]): ProjectLink = {
       before.map(_.sideCode) match {
         case Some(value) if value != adjustedLink.sideCode && value != SideCode.Unknown =>
-          adjustedLink.copy(reversed = !adjustedLink.reversed, track = Track.switch(adjustedLink.track))
+          adjustedLink.copy(
+            reversed = !adjustedLink.reversed,
+            track = Track.switch(adjustedLink.track),
+            calibrationPointTypes = (NoCP,NoCP)
+          )
         case _ => adjustedLink
       }
     }
@@ -1457,7 +1462,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         grp =>
           val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1._1, grp._1._2)
           val calculatedLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints).map(rpl =>
-            setReversedFlagAndTrackCode(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadwayId != 0L))
+            setReversedFlagAndTrackCodeAndRemoveCalibrationPoints(rpl, grp._2.find(pl => pl.id == rpl.id && rpl.roadwayId != 0L))
           ).sortBy(_.endAddrMValue)
           if (!calculatedLinks.exists(_.isNotCalculated) && newDiscontinuity.isDefined && newTrack.isDefined &&
             roadParts.contains((calculatedLinks.head.roadNumber, calculatedLinks.head.roadPartNumber))) {
