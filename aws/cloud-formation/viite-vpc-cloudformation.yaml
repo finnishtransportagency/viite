@@ -14,29 +14,29 @@ Metadata:
           - Subnet2
 Parameters:
   VPCCIDR:
+    Description: CIDR of the VPC
     Type: String
     Default: 100.64.206.0/23
-    Description: Enter the VPC CIDR that you want to use
-  AZForSubnet1:
-    Type: 'AWS::EC2::AvailabilityZone::Name'
-    Default: eu-west-1a
-    Description: Enter the AZ for the primary subnet
-  AZForSubnet2:
-    Type: 'AWS::EC2::AvailabilityZone::Name'
-    Default: eu-west-1b
-    Description: Enter the AZ for the secondary subnet
   Subnet1CIDR:
+    Description: CIDR of the 1st subnet
     Type: String
     Default: 100.64.206.0/24
-    Description: Enter the value of the subnet 1
   Subnet2CIDR:
+    Description: CIDR of the 2nd subnet
     Type: String
     Default: 100.64.207.0/24
-    Description: Enter the value of the subnet 2
+  AZForSubnet1:
+    Description: Subnet 1 AZ
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Default: eu-west-1a
+  AZForSubnet2:
+    Description: Subnet 2 AZ
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Default: eu-west-1b
   TransitGatewayId:
+    Description: Id of the Transit Gateway
     Type: String
     Default: tgw-0cf1eb7c72778eaad
-    Description: Choose the transit gateway
 Conditions: {}
 Resources:
   VPCID:
@@ -47,10 +47,7 @@ Resources:
       EnableDnsHostnames: 'true'
       Tags:
         - Key: Name
-          Value: !Join 
-            - '-'
-            - - !Ref 'AWS::StackName'
-              - Vpc
+          Value: !Join ['-', [!Ref 'AWS::StackName', Vpc]]
   Subnet1:
     Type: 'AWS::EC2::Subnet'
     Properties:
@@ -59,10 +56,7 @@ Resources:
       AvailabilityZone: !Ref AZForSubnet1
       Tags:
         - Key: Name
-          Value: !Join 
-            - '-'
-            - - !Ref 'AWS::StackName'
-              - Subnet1
+          Value: !Join ['-', [!Ref 'AWS::StackName', Subnet1]]
   Subnet2:
     Type: 'AWS::EC2::Subnet'
     Properties:
@@ -71,20 +65,14 @@ Resources:
       AvailabilityZone: !Ref AZForSubnet2
       Tags:
         - Key: Name
-          Value: !Join 
-            - '-'
-            - - !Ref 'AWS::StackName'
-              - Subnet2
+          Value: !Join ['-', [!Ref 'AWS::StackName', Subnet2]]
   RouteTable:
     Type: 'AWS::EC2::RouteTable'
     Properties:
       VpcId: !Ref VPCID
       Tags:
         - Key: Name
-          Value: !Join 
-            - '-'
-            - - !Ref 'AWS::StackName'
-              - RouteTable
+          Value: !Join ['-', [!Ref 'AWS::StackName', RouteTable]]
   AttachGateway:
     Type: 'AWS::EC2::TransitGatewayAttachment'
     Properties:
