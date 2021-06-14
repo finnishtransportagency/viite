@@ -1,20 +1,25 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: ECS Fargate service in private subnets
+Description: ECS Fargate service in private subnets. Outputs ALB.
 Parameters:
   NetworkStackName:
-    Description: Name of the network stack
     Type: String
+    Default: Viite-dev
+    Description: Name of the network stack
   ApplicationName:
     Description: Name of the application (no whitespace or special characters)
+    Default: Viite
     Type: String
   Environment:
     Description: "Environment of the application, that these resources are created for. Used when tagging the resources"
+    Default: Dev
     Type: String
   Owner:
     Description: "Owner of the of application, that these resources are created for. Used when tagging the resources"
+    Default: Vaylavirasto
     Type: String
   Project:
     Description: "Project of the of application, that these resources are created for. Used when tagging the resources"
+    Default: Viite
     Type: String
   ContainerTag:
     Type: String
@@ -22,10 +27,11 @@ Parameters:
     Description: Tag of the container
   ContainerPort:
     Type: Number
-    Default: 80
+    Default: 9080
     Description: Port of the container
   RepositoryURI:
     Type: String
+    Default: 783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite
     Description: URI to repository, where the container is
   LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
@@ -88,8 +94,8 @@ Resources:
     Properties:
       Family: !Ref ApplicationName
       # Adjust these according to the needs of your applications containers
-      Cpu: 256
-      Memory: 512
+      Cpu: 2048
+      Memory: 4096
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
       # TaskRoleArn: # Enable and create this role, if your container needs access to other AWS services like SQS, SES, DynamoDB etc.
       NetworkMode: awsvpc # This is the only possible option with Fargate mode, but set here to remind of this behaviour

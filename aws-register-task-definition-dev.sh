@@ -16,3 +16,6 @@ aws ecs register-task-definition --profile vaylaapp --region eu-west-1 --cli-inp
 #         "taskDefinitionArn": "arn:aws:ecs:eu-west-1:783354560127:task-definition/Viite-dev:<VERSION>",
 #
 # aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster VIITE-ECS-Cluster --service viite-dev --task-definition Viite-dev:<VERSION> --force-new-deployment
+#
+# VIITE-1906, To be possibly refined, for the automatic AWS Viite-dev-ALB stack
+# aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster Viite-ECS-Cluster-Private --service Viite-ECS-Service-Private --task-definition Viite:<VERSION> --force-new-deployment
