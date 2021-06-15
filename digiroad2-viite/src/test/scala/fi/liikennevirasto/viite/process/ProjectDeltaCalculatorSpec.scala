@@ -237,76 +237,67 @@ class ProjectDeltaCalculatorSpec extends FunSuite with Matchers {
     }
   }
 
-  // uncParts and transfers needs rethinking if adjustement in parition are needed.
+  /* uncParts and transfers needs rethinking if adjustements in partition() are needed.
+     This test does not introduce any new problem -> original problem may be related to termination and its post adjustment.
+     Projectlinks are not calculated as expected. */
 
 //  test("Test ProjectDeltaCalculator.partition When executing a unchanged, a 2 track termination and a transfer operation on a single road part with 2 tracks Then returns the correct From RoadSection -> To RoadSection mapping.") {
-//    val addresses    = (0 to 9).map(i => createRoadAddress(i * 12, 12L)).map(_.copy(track = Track.RightSide))
-//    val addresses2   = (0 to 11).map(i => createRoadAddress(i * 10, 10L)).map(l => l.copy(track = Track.LeftSide, id = l.id + 1))
-//    val terminations = Seq(addresses(4), addresses(5), addresses2(5), addresses2(6)).map(t => {
-//      toProjectLink(project, LinkStatus.Terminated)(t)
-//    })
-//    val unchanged    = (addresses.take(3) ++ addresses2.take(4)).map(toTransition(project, LinkStatus.UnChanged))
-//    val transfers    = (addresses.drop(5) ++ addresses2.drop(6)).map(toTransition(project, LinkStatus.Transfer)).map {
-//      case (a, pl) =>
-//        val d = if (pl.track == Track.RightSide) 11L else 7L
-//        (a, pl.copy(startAddrMValue = pl.startAddrMValue - d, endAddrMValue = pl.endAddrMValue - d))
-//    }
-//
-//    val newLinks = Seq(ProjectLink(981, 5, 205, Track.RightSide,
-//      Discontinuity.MinorDiscontinuity, 36, 49, 36, 49, None, None,
-//      createdBy = Option(project.createdBy), 981, 0.0, 12.1,
-//      TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New,
-//      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.1, -1L, -1L, 8, reversed = false, None, 85900L),
-//      ProjectLink(982, 5, 205, Track.LeftSide,
-//        Discontinuity.MinorDiscontinuity, 40, 53, 40, 53, None, None,
-//        createdBy = Option(project.createdBy), 982, 0.0, 12.2,
-//        TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 36.0), Point(0.0, 48.2)), project.id, LinkStatus.New,
-//        RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.2, -1L, -1L, 8, reversed = false, None, 85900L),
-//      ProjectLink(983, 5, 205, Track.RightSide,
-//        Discontinuity.MinorDiscontinuity, 109, 124, 109, 124, None, None,
-//        createdBy = Option(project.createdBy), 983, 0.0, 15.2,
-//        TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 120.0), Point(0.0, 135.2)), project.id, LinkStatus.New,
-//        RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 15.2, -1L, -1L, 8, reversed = false, None, 85900L),
-//      ProjectLink(984, 5, 205, Track.LeftSide,
-//        Discontinuity.MinorDiscontinuity, 113, 127, 113, 127, None, None,
-//        createdBy = Option(project.createdBy), 984, 0.0, 14.2,
-//        TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 120.0), Point(0.0, 135.2)), project.id, LinkStatus.New,
-//        RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 14.2, -1L, -1L, 8, reversed = false, None, 85900L)
-//    )
-//    withDynTransaction {
-//      val termPart: Seq[RoadwaySection] = ProjectDeltaCalculator.partition(terminations)
-//      termPart should have size 2
-//      termPart.foreach(x => {
-//        x.endMAddr should be(71L)
+//    runWithRollback {
+//      val addresses    = (0 to 9).map(i => {
+//        createRoadAddress(i * 12, 12L)
+//      }).map(_.copy(track = Track.RightSide))
+//      val addresses2   = (0 to 11).map(i => {
+//        createRoadAddress(i * 10, 10L)
+//      }).map(l => {
+//        l.copy(track = Track.LeftSide, id = l.id + 1)
 //      })
-//    }
+//      val terminations = Seq(addresses(4), addresses(5), addresses2(5), addresses2(6)).map(t => {
+//        toProjectLink(project, LinkStatus.Terminated)(t)
+//      })
+//      val unchanged    = (addresses.take(3) ++ addresses2.take(4)).map(toTransition(project, LinkStatus.UnChanged))
+//      val transfers    = (addresses.drop(5) ++ addresses2.drop(6)).map(toTransition(project, LinkStatus.Transfer)).map { case (a, pl) => val d = if (pl.track == Track.RightSide) 11L else 7L
+//        (a, pl.copy(startAddrMValue = pl.startAddrMValue - d, endAddrMValue = pl.endAddrMValue - d))
+//      }
 //
-//        val uncParts = ProjectDeltaCalculator.partition(unchanged).adjustedSections.map(_._1)
-//        uncParts should have size 2
-//        uncParts.foreach(x => {
-//          val (fr, _) = x
-//          fr.startMAddr should be(0L)
-////          fr.endMAddr should be(38L)
-//        })
+//      val newLinks = Seq(ProjectLink(981, 5, 205, Track.RightSide, Discontinuity.MinorDiscontinuity, 36, 49, 36, 49, None, None, createdBy = Option(project.createdBy), 981, 0.0, 12.1, TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 12.1, -1L, -1L, 8, reversed = false, None, 85900L), ProjectLink(982, 5, 205, Track.LeftSide, Discontinuity.MinorDiscontinuity, 40, 53, 40, 53, None, None, createdBy = Option(project.createdBy), 982, 0.0, 12.2, TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 36.0), Point(0.0, 48.2)), project.id, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 12.2, -1L, -1L, 8, reversed = false, None, 85900L), ProjectLink(983, 5, 205, Track.RightSide, Discontinuity.MinorDiscontinuity, 109, 124, 109, 124, None, None, createdBy = Option(project.createdBy), 983, 0.0, 15.2, TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 120.0), Point(0.0, 135.2)), project.id, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 15.2, -1L, -1L, 8, reversed = false, None, 85900L), ProjectLink(984, 5, 205, Track.LeftSide, Discontinuity.MinorDiscontinuity, 113, 127, 113, 127, None, None, createdBy = Option(project.createdBy), 984, 0.0, 14.2, TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, 120.0), Point(0.0, 135.2)), project.id, LinkStatus.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, 14.2, -1L, -1L, 8, reversed = false, None, 85900L))
 //
-//    val transferParts = ProjectDeltaCalculator.partition(transfers).adjustedSections.map(_._1)
-//    transferParts should have size 2
-//    transferParts.foreach(x => {
-//      val (fr, to) = x
-//      fr.endMAddr should be(120L)
-//      to.endMAddr should be(111L)
-//    })
+//      val termPart2 = ProjectDeltaCalculator.partitionWithProjectLinks(terminations, terminations)
+//      val termPart  = termPart2.adjustedSections.zip(termPart2.originalSections)
 //
-//    withDynTransaction {
-//    val newParts = ProjectDeltaCalculator.partition(newLinks)
-//    newParts should have size 4
-//    newParts.filter(_.startMAddr < 100).foreach(to => {
-//      to.endMAddr should be(51)
-//    })
-//    newParts.filter(_.startMAddr >= 100).foreach(to => {
-//      to.endMAddr should be(125)
-//    })
-//  }
+//      //      val termPart: Seq[RoadwaySection] = ProjectDeltaCalculator.partition(terminations)
+//      termPart should have size 2
+//      //      termPart.foreach(x => {
+//      //        x.endMAddr should be(71L)
+//      //      })
+////              val uncParts = ProjectDeltaCalculator.partition(unchanged).adjustedSections.map(_._1)
+//
+//              val uncParts2 = ProjectDeltaCalculator.partitionWithProjectLinks(unchanged.map(_._2), unchanged.map(_._2))
+//              val uncParts  = uncParts2.adjustedSections.zip(uncParts2.originalSections)
+//
+//              uncParts should have size 2
+//              uncParts.foreach(x => {
+//                val (fr, _) = x
+//                fr.startMAddr should be(0L)
+//                fr.endMAddr should be(38L)
+//              })
+//      //
+//      //    val transferParts = ProjectDeltaCalculator.partition(transfers).adjustedSections.map(_._1)
+//      //    transferParts should have size 2
+//      //    transferParts.foreach(x => {
+//      //      val (fr, to) = x
+//      //      fr.endMAddr should be(120L)
+//      //      to.endMAddr should be(111L)
+//      //    })
+//      //
+//      //    val newParts = ProjectDeltaCalculator.partition(newLinks)
+//      //    newParts should have size 4
+//      //    newParts.filter(_.startMAddr < 100).foreach(to => {
+//      //      to.endMAddr should be(51)
+//      //    })
+//      //    newParts.filter(_.startMAddr >= 100).foreach(to => {
+//      //      to.endMAddr should be(125)
+//      //    })
+//      }
 //  }
 
   test("Test ProjectDeltaCalculator.partition When executing a unchanged and a road type change operation on a single road part, then create a new road Then returns the correct From RoadSection -> To RoadSection mapping.") {
