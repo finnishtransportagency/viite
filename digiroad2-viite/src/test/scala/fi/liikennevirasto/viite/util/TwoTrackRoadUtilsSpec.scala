@@ -61,10 +61,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
                      linearLocationId: Long = 0L,
                      startDate       : Option[DateTime] = None
                    ) = {
-      ProjectLink(NewIdValue, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startAddrM, endAddrM, startDate, None,
-        Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP),
-        geom: Seq[Point], projectId, status, AdministrativeClass.State,
-        LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
+      ProjectLink(NewIdValue, roadNumber, roadPartNumber, track, discontinuity, startAddrM, endAddrM, startAddrM, endAddrM, startDate, None, Some("User"), linkId, 0.0, (endAddrM - startAddrM).toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geom: Seq[Point], projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, (endAddrM - startAddrM).toDouble, roadwayId, linearLocationId, ely, reversed = false, None, 0L)
     }
 
     def withTrack(testTrack: TestTrack): Seq[ProjectLink] = {
@@ -101,18 +98,9 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
     val geomTrack1_2 = Seq(Point(100.0, 0.0), Point(200.0, 0.0))
     val geomTrack2   = Seq(Point(0.0, 10.0),  Point(200.0, 10.0))
 
-    val projectLinkTrack1_1 = ProjectLink(1001L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 100L, 0L, 100L, None, None,
-      None, 1L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
-      geomTrack1_1, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false,
-      None, 86400L)
-    val projectLinkTrack1_2 = ProjectLink(1002L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 100L, 200L, 100L, 200L, None, None,
-      None, 2L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
-      geomTrack1_2, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false,
-      None, 86400L)
-    val projectLinkTrack2 = ProjectLink(1003L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 200L, 0L, 200L, None, None,
-      None, 3L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP),
-      geomTrack2, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack2), 0L, 0, 0, reversed = false,
-      None, 86400L)
+    val projectLinkTrack1_1 = ProjectLink(1001L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 0L, 100L, 0L, 100L, None, None, None, 1L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_1, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_1), 0L, 0, 0, reversed = false, None, 86400L)
+    val projectLinkTrack1_2 = ProjectLink(1002L, 9999L, 1L, Track.apply(1), Discontinuity.Continuous, 100L, 200L, 100L, 200L, None, None, None, 2L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack1_2, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack1_2), 0L, 0, 0, reversed = false, None, 86400L)
+    val projectLinkTrack2 = ProjectLink(1003L, 9999L, 1L, Track.apply(2), Discontinuity.Continuous, 0L, 200L, 0L, 200L, None, None, None, 3L, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomTrack2, 0L, LinkStatus.UnChanged, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTrack2), 0L, 0, 0, reversed = false, None, 86400L)
 
     val (track1, track2, udcp) = TwoTrackRoadUtils.splitPlsAtStatusChange(Seq(projectLinkTrack1_1, projectLinkTrack1_2), Seq(projectLinkTrack2))
     track1 should have size 2
@@ -134,7 +122,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       val testTrack2 = TestTrack(Seq(LinkStatus.UnChanged, LinkStatus.Transfer), Track.apply(2), Seq(geomTrack2_1, geomTrack2_2))
 
       val (rightProjectLinks, leftProjectLinks) = setUpProjectWithLinks(testTrack1, testTrack2).partition(_.track == Track.RightSide)
-      val (track1, track2, udcp) = TwoTrackRoadUtils.splitPlsAtStatusChange(rightProjectLinks, leftProjectLinks)
+      val (track1, track2, udcp)                = TwoTrackRoadUtils.splitPlsAtStatusChange(rightProjectLinks, leftProjectLinks)
 
       track1 should have size 2
       track2 should have size 2
@@ -145,7 +133,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track1.last.startAddrMValue shouldBe 100
       track1.last.endAddrMValue   shouldBe 200
 
-      track1.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track1.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
       track1.last.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
 
       track2.head.startAddrMValue shouldBe 0
@@ -153,7 +141,7 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2.last.startAddrMValue shouldBe 100
       track2.last.endAddrMValue   shouldBe 200
 
-      track2.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
+      track2.head.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
       track2.last.calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
 
     }

@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.util
 
 import fi.liikennevirasto.GeometryUtils
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.NewIdValue
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
@@ -112,14 +113,15 @@ object TwoTrackRoadUtils {
       val addressLength = pl.endAddrMValue - address
       val splittedOriginalEndAddrMValue = pl.originalEndAddrMValue - addressLength //Math.round(pl.originalStartAddrMValue + splitMeasure)
 
+      val newPlId = Sequences.nextProjectLinkId
       val newProjectLinks =
         (
-          pl.copy(endAddrMValue = address, startMValue = pl.startMValue, endMValue = splitMeasure, status = pl.status, geometry = geom, geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId), calibrationPointTypes = calsForFirstPart, originalEndAddrMValue = splittedOriginalEndAddrMValue),
-          pl.copy(id = NewIdValue, status = pl.status, startAddrMValue = address, endAddrMValue = pl.endAddrMValue, startMValue = splitMeasure, endMValue = pl.endMValue, geometry = new_geometry, geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId), calibrationPointTypes = calsForSecondPart, originalStartAddrMValue = splittedOriginalEndAddrMValue, originalEndAddrMValue = pl.originalEndAddrMValue)
+          pl.copy(endAddrMValue = address, originalEndAddrMValue = splittedOriginalEndAddrMValue, startMValue = pl.startMValue, endMValue = splitMeasure, calibrationPointTypes = calsForFirstPart, geometry = geom, status = pl.status, geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId)),
+          pl.copy(id = newPlId, startAddrMValue = address, endAddrMValue = pl.endAddrMValue, originalStartAddrMValue = splittedOriginalEndAddrMValue, originalEndAddrMValue = pl.originalEndAddrMValue, startMValue = splitMeasure, endMValue = pl.endMValue, calibrationPointTypes = calsForSecondPart, geometry = new_geometry, status = pl.status, geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId))
         )
 
-      val id: Seq[Long] = projectLinkDAO.create(Seq(newProjectLinks._2))
-      (newProjectLinks._1, newProjectLinks._2.copy(id = id.head))
+//      val id: Seq[Long] = projectLinkDAO.create(Seq(newProjectLinks._2))
+      (newProjectLinks._1, newProjectLinks._2.copy(id = newPlId)) //id.head))
     }
 
     def splitAndSetCalibrationPointsAtEnd(last: ProjectLink, roadPartLinks: Seq[ProjectLink]): Option[(ProjectLink, ProjectLink)] = {
@@ -185,14 +187,15 @@ object TwoTrackRoadUtils {
       val addressLength = if (pl.status == LinkStatus.New) pl.endAddrMValue - address else pl.originalEndAddrMValue - address
       val splittedOriginalEndAddrMValue = pl.originalEndAddrMValue - addressLength //Math.round(address - pl.originalStartAddrMValue)
 
+      val newPlId = Sequences.nextProjectLinkId
       val newProjectLinks =
         (
-          pl.copy(endAddrMValue = if (pl.status == LinkStatus.New) address else pl.endAddrMValue - addressLength, startMValue = pl.startMValue, endMValue = splitMeasure, status = pl.status, geometry = geom, geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId), calibrationPointTypes = calsForFirstPart, originalEndAddrMValue = splittedOriginalEndAddrMValue),
-          pl.copy(id = NewIdValue, status = pl.status, startAddrMValue = if (pl.status == LinkStatus.New) address else pl.endAddrMValue - addressLength, endAddrMValue = pl.endAddrMValue, startMValue = splitMeasure, endMValue = pl.endMValue, geometry = new_geometry, geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId), calibrationPointTypes = calsForSecondPart, originalStartAddrMValue = splittedOriginalEndAddrMValue, originalEndAddrMValue = pl.originalEndAddrMValue)
+          pl.copy(endAddrMValue = if (pl.status == LinkStatus.New) address else pl.endAddrMValue - addressLength, originalEndAddrMValue = splittedOriginalEndAddrMValue, startMValue = pl.startMValue, endMValue = splitMeasure, calibrationPointTypes = calsForFirstPart, geometry = geom, status = pl.status, geometryLength = splitMeasure, connectedLinkId = Some(pl.linkId)),
+          pl.copy(id = NewIdValue, startAddrMValue = if (pl.status == LinkStatus.New) address else pl.endAddrMValue - addressLength, endAddrMValue = pl.endAddrMValue, originalStartAddrMValue = splittedOriginalEndAddrMValue, originalEndAddrMValue = pl.originalEndAddrMValue, startMValue = splitMeasure, endMValue = pl.endMValue, calibrationPointTypes = calsForSecondPart, geometry = new_geometry, status = pl.status, geometryLength = pl.geometryLength - splitMeasure, connectedLinkId = Some(pl.linkId))
         )
 
-      val id: Seq[Long] = projectLinkDAO.create(Seq(newProjectLinks._2))
-      (newProjectLinks._1, newProjectLinks._2.copy(id = id.head))
+//      val id: Seq[Long] = projectLinkDAO.create(Seq(newProjectLinks._2))
+      (newProjectLinks._1, newProjectLinks._2.copy(id = newPlId)) //id.head))
     }
 
     def createCalibrationPoints(startCP: CalibrationPointDAO.CalibrationPointType, endCP: CalibrationPointDAO.CalibrationPointType, otherSideLinkStartCP: CalibrationPointDAO.CalibrationPointType, otherSideLinkEndCP: CalibrationPointDAO.CalibrationPointType, otherSideLink: ProjectLink) = {

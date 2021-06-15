@@ -269,14 +269,15 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val left = continuousSection(leftLinks, Seq())
 
 
-        val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) =
-          if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
-            adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
-            } else {
-            val newRoadwayNumber1 = Sequences.nextRoadwayNumber
-            val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
-            (continuousRoadwaySection(rightLinks, newRoadwayNumber1),
-              continuousRoadwaySection(leftLinks, newRoadwayNumber2))
+        val ((firstRight, restRight), (firstLeft, restLeft)): ((Seq[ProjectLink], Seq[ProjectLink]), (Seq[ProjectLink], Seq[ProjectLink])) = {
+//          if (adjustableToRoadwayNumberAttribution(right._1, right._2, left._1, left._2)) {
+//            adjustTwoTrackRoadwayNumbers(right._1, right._2, left._1, left._2)
+//            } else {
+//        {
+          val newRoadwayNumber1 = Sequences.nextRoadwayNumber
+          val newRoadwayNumber2 = if (rightLinks.head.track == Track.Combined || leftLinks.head.track == Track.Combined) newRoadwayNumber1 else Sequences.nextRoadwayNumber
+          (continuousRoadwaySection(rightLinks, newRoadwayNumber1), continuousRoadwaySection(leftLinks, newRoadwayNumber2))
+//        }
             }
 
         if (firstRight.isEmpty || firstLeft.isEmpty)

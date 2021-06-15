@@ -397,8 +397,8 @@ object TrackSectionOrder {
             hasStartCP = true, hasEndCP = true, RoadAddressCP, RoadAddressCP))
         case _ =>
           val projectLinks = initialProjectLinks.map(p => p.copy(calibrationPointTypes =
-                      (if (p.startCalibrationPointType != RoadAddressCP) p.startCalibrationPointType else NoCP,
-                        if (p.endCalibrationPointType != RoadAddressCP) p.endCalibrationPointType else NoCP)))
+                                                    (if (p.startCalibrationPointType != RoadAddressCP) p.startCalibrationPointType else NoCP,
+                                                      if (p.endCalibrationPointType != RoadAddressCP) p.endCalibrationPointType else NoCP)))
           val raCPs = Seq(setCalibrationPoint(projectLinks.head, userCalibrationPoint.get(projectLinks.head.id),
             hasStartCP = true, hasEndCP = projectLinks.tail.head.calibrationPoints._1.isDefined,
             RoadAddressCP, projectLinks.tail.head.startCalibrationPointType)) ++ projectLinks.init.tail ++ Seq(setCalibrationPoint(projectLinks.last,

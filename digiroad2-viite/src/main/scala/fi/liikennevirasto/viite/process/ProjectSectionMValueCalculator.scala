@@ -67,37 +67,37 @@ def testF(ordered: Seq[ProjectLink], addrSt: Option[Double], cps: Map[Long, User
   }
 
   def assignLinkValues(seq: Seq[ProjectLink], cps: Map[Long, UserDefinedCalibrationPoint], addrSt: Option[Double], addrEn: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
-    val endPoints = TrackSectionOrder.findChainEndpoints(seq)
-    val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
-    val orderedPairs = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
-    val ordered = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
+    if (seq.isEmpty) Seq() else {
+      val endPoints       = TrackSectionOrder.findChainEndpoints(seq)
+      val mappedEndpoints = (endPoints.head._1, endPoints.last._1)
+      val orderedPairs    = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
+      val ordered         = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
 
-//    val terminated = projectLinkDAO.fetchProjectLinks(ordered.head.projectId, Some(LinkStatus.Terminated))
-//
-//    val newConnectedToTerminated = ordered.filter(pl => pl.status == LinkStatus.New && terminated.exists(_.connected(pl)))
-
-    val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) => {
-//      val x = if (pl.status == LinkStatus.New && pl.track != Track.Combined) terminated.find(_.connected(pl)) else None
-//            if (x.isDefined) {
-//              val term = x.get
-//              terminated.find(t => t.track != term.track && t.endAddrMValue <= term.endAddrMValue && t.startAddrMValue <= term.endAddrMValue)
-//            }
-      val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
-      if (!pl.isSplit) {
-        val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
-        pl.status match {
-          case LinkStatus.New => addressValue
-          case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + pl.addrMLength
-          case LinkStatus.Terminated => pl.endAddrMValue
-          case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
+      //    val terminated = projectLinkDAO.fetchProjectLinks(ordered.head.projectId, Some(LinkStatus.Terminated))
+      //
+      //    val newConnectedToTerminated = ordered.filter(pl => pl.status == LinkStatus.New && terminated.exists(_.connected(pl)))
+      val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) => {
+        //      val x = if (pl.status == LinkStatus.New && pl.track != Track.Combined) terminated.find(_.connected(pl)) else None
+        //            if (x.isDefined) {
+        //              val term = x.get
+        //              terminated.find(t => t.track != term.track && t.endAddrMValue <= term.endAddrMValue && t.startAddrMValue <= term.endAddrMValue)
+        //            }
+        val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
+        if (!pl.isSplit) {
+          val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
+          pl.status match {
+            case LinkStatus.New => addressValue
+            case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + pl.addrMLength
+            case LinkStatus.Terminated => pl.endAddrMValue
+            case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
+          }
+        } else {
+          pl.endAddrMValue
         }
-      } else {
-        pl.endAddrMValue
       }
-    }
-    }
-    seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) =>
-      pl.copy(startAddrMValue = Math.round(st), endAddrMValue = Math.round(en))
+      }
+      seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) => pl.copy(startAddrMValue = Math.round(st), endAddrMValue = Math.round(en))
+      }
     }
   }
 
