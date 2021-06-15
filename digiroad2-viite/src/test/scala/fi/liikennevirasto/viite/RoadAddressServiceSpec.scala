@@ -895,16 +895,22 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       projectReservedPartDAO.reserveRoadPart(projectId, 99, 1, "u")
       projectReservedPartDAO.reserveRoadPart(projectId, 99, 2, "u")
       projectLinkDAO.create(pls.map(_.copy(id = NewIdValue)))
-      val projectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
-
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.linkId), LinkStatus.UnChanged, "-", 99, 1, 0, Option.empty[Int])
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
 
       roadwayPointDAO.create(roadwayNumber1, 0, link1.createdBy.getOrElse("test"))
       roadwayPointDAO.create(roadwayNumber1, 5, link2.createdBy.getOrElse("test"))
       roadwayPointDAO.create(roadwayNumber1, 20, link2.createdBy.getOrElse("test"))
 
-      val afterUpdateProjectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
+      val projectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
+
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.linkId), LinkStatus.UnChanged, "-", 99, 1, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
+
+      val updatedProjectLinks_ = projectLinkDAO.fetchProjectLinks(projectId).toList
+      val updatedProjectLinks2 = ProjectSectionCalculator.assignMValues(updatedProjectLinks_)
+
+//      projectLinkDAO.updateProjectLinks(updatedProjectLinks2.sortBy(_.startAddrMValue), rap.createdBy, Seq(ra1, ra2))
+
+      val afterUpdateProjectLinks = updatedProjectLinks2.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber))//projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
       val beforeDualPoint = afterUpdateProjectLinks.head.copy(roadwayNumber = roadwayNumber2)
       val afterDualPoint = afterUpdateProjectLinks.last.copy(roadwayNumber = roadwayNumber3)
       val mappedRoadwayChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -937,7 +943,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
 
       when(mockRoadwayDAO.fetchAllBySectionAndTracks(any[Long], any[Long], any[Set[Track]])).thenReturn(Seq(rw1WithId, rw2WithId))
-      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, mappedRoadwayChanges.map { rwc =>
+      val t1 = roadwayChanges.last.changeInfo.source.copy(startAddressM = Some(5), endAddressM = Some(20), startRoadPartNumber = Some(1), endRoadPartNumber = Some(1))
+      val t2 = roadwayChanges.last.changeInfo.copy(source = t1)
+      val t3 = roadwayChanges.last.copy(changeInfo = t2)
+
+      roadAddressService.handleRoadwayPointsUpdate(List(roadwayChanges.head, t3), mappedRoadwayChanges.map { rwc =>
         rwc.originalRoadPartNumber match {
           case 1 => rwc.copy(originalRoadwayNumber = roadwayNumber1)
           case 2 => rwc.copy(originalRoadPartNumber = 1, originalStartAddr = 5, originalEndAddr = 20, originalRoadwayNumber = roadwayNumber1)
@@ -949,11 +959,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       roadwayPointsForExpiredRoadwayNumber.size should be (0)
 
       val roadwayPointsBeforeDual = roadwayPointDAO.fetchByRoadwayNumber(beforeDualPoint.roadwayNumber).sortBy(_.addrMValue)
+      val roadwayPointsAfterDual = roadwayPointDAO.fetchByRoadwayNumber(afterDualPoint.roadwayNumber).sortBy(_.addrMValue)
+
       roadwayPointsBeforeDual.size should be (2)
       roadwayPointsBeforeDual.head.addrMValue should be (beforeDualPoint.startAddrMValue)
       roadwayPointsBeforeDual.last.addrMValue should be (beforeDualPoint.endAddrMValue)
 
-      val roadwayPointsAfterDual = roadwayPointDAO.fetchByRoadwayNumber(afterDualPoint.roadwayNumber).sortBy(_.addrMValue)
       roadwayPointsAfterDual.size should be (2)
       roadwayPointsAfterDual.head.addrMValue should be (afterDualPoint.startAddrMValue)
       roadwayPointsAfterDual.last.addrMValue should be (afterDualPoint.endAddrMValue)
