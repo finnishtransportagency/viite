@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory
 import java.net.URL
 
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import fi.liikennevirasto.viite.ViiteTierekisteriClient.oagAuth
+import fi.liikennevirasto.viite.util.OAGAuthPropertyReader
 
 import scala.util.control.NonFatal
 
@@ -30,6 +32,7 @@ class ViiteVkmClient {
   }
 
   private val client = HttpClientBuilder.create().build
+  private val oagAuth = new OAGAuthPropertyReader
 
   /**
     * Builds http query fom given parts, executes the query, and returns the result (or error if http>=400).
@@ -49,8 +52,10 @@ class ViiteVkmClient {
 
     if (builder.getHost == "localhost") {
       // allow ssh port forward for developing
-      request.setHeader("Host", "testioag.vayla.fi")
+      request.setHeader("Host", ViiteProperties.oagProxyServer)
     }
+
+    request.addHeader("Authorization", "Basic " + oagAuth.getAuthInBase64)
 
     val response = client.execute(request)
     try {
@@ -79,7 +84,7 @@ class ViiteVkmClient {
     val url = new URL(getRestEndPoint)
     if (url.getHost == "localhost") {
       // allow ssh port forward for developing
-      post.setHeader("Host", "oag.liikennevirasto.fi")
+      post.setHeader("Host", ViiteProperties.oagProxyServer)
     }
     var response: CloseableHttpResponse = null
     try {

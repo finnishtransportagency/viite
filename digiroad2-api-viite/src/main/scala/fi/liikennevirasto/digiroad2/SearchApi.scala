@@ -17,7 +17,6 @@ class SearchApi(roadAddressService: RoadAddressService,
                 implicit val swagger: Swagger)
   extends ScalatraServlet
     with JacksonJsonSupport
-    with ViiteAuthenticationSupport
     with SwaggerSupport {
   protected val applicationDescription = "The Search API "
 
@@ -27,7 +26,6 @@ class SearchApi(roadAddressService: RoadAddressService,
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
   before() {
-    basicAuth
     contentType = formats("json")
   }
 
