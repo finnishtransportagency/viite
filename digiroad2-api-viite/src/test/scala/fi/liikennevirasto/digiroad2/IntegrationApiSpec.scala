@@ -29,27 +29,13 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   private val integrationApi = new IntegrationApi(mockRoadAddressService, mockRoadNameService, new ViiteSwagger)
   addServlet(integrationApi, "/*")
 
-  def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
-    val credentials = username + ":" + password
-    val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
-    val authorizationToken = "Basic " + encodedCredentials
-    get(uri, Seq.empty, Map("Authorization" -> authorizationToken))(f)
-  }
 
-  test("Test get() and getWithBasicUserAuth() When using no credentials or wrong credentials Then return status code 401.", Tag("db")) {
+
+  test("Test When asking for the road addresses by municipality but 1st not defining it and 2nd with it Then return status code 400 for the 1st and status code 200 for the 2nd.") {
     get("/road_address") {
-      status should equal(401)
-    }
-    getWithBasicUserAuth("/road_address", "nonexisting", "incorrect") {
-      status should equal(401)
-    }
-  }
-
-  test("Test getWithBasicUserAuth() When asking for the road addresses by municipality but 1st not defining it and 2nd with it Then return status code 400 for the 1st and status code 200 for the 2nd.") {
-    getWithBasicUserAuth("/road_address", "kalpa", "kalpa") {
       status should equal(400)
     }
-    getWithBasicUserAuth("/road_address?municipality=235", "kalpa", "kalpa") {
+    get("/road_address?municipality=235") {
       status should equal(200)
     }
   }
@@ -116,46 +102,46 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     Option(new DateTime(year, month, day, 0, 0, 0))
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames but missing the Since parameter Then returns status code 400") {
-    getWithBasicUserAuth("/roadnames/changes", "kalpa", "kalpa") {
+  test("Test When asking for changes in the roadnames but missing the Since parameter Then returns status code 400") {
+    get("/roadnames/changes") {
       status should equal(400)
     }
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames including the Since parameter but giving it no value Then returns status code 400") {
-    getWithBasicUserAuth("/roadnames/changes?since=", "kalpa", "kalpa") {
+  test("Test When asking for changes in the roadnames including the Since parameter but giving it no value Then returns status code 400") {
+    get("/roadnames/changes?since=") {
       status should equal(400)
     }
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames including the Since parameter but giving it a incorrect value Then returns status code 400") {
-    getWithBasicUserAuth("/roadnames/changes?since=abc", "kalpa", "kalpa") {
+  test("Test When asking for changes in the roadnames including the Since parameter but giving it a incorrect value Then returns status code 400") {
+    get("/roadnames/changes?since=abc") {
       status should equal(400)
     }
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames including the Since parameter but giving it a incorrect date Then returns status code 400") {
-    getWithBasicUserAuth("/roadnames/changes?since=1.1.2018", "kalpa", "kalpa") {
+  test("Test When asking for changes in the roadnames including the Since parameter but giving it a incorrect date Then returns status code 400") {
+    get("/roadnames/changes?since=1.1.2018") {
       status should equal(400)
     }
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since but with no data to return Then returns status code 200 and a empty array as the response body.") {
+  test("Test When asking for changes in the roadnames correctly including the Since but with no data to return Then returns status code 200 and a empty array as the response body.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
-    getWithBasicUserAuth("/roadnames/changes?since=9999-01-01", "kalpa", "kalpa") {
+    get("/roadnames/changes?since=9999-01-01") {
       status should equal(200)
       response.getHeader("Content-Type") should equal("application/json;charset=utf-8")
       response.body should equal("[]")
     }
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since but with 1 update to 1 road Then returns status code 200 and a filled array with the info for the road.") {
+  test("Test When asking for changes in the roadnames correctly including the Since but with 1 update to 1 road Then returns status code 200 and a filled array with the info for the road.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
       ))
     )
-    getWithBasicUserAuth("/roadnames/changes?since=2018-01-01", "kalpa", "kalpa") {
+    get("/roadnames/changes?since=2018-01-01") {
       status should equal(200)
       response.body should equal(
         "[{\"road_number\":2,\"names\":[{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"road_name\":\"MYROAD\",\"end_date\":null,\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\"}]}]"
@@ -163,7 +149,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since with many updates to return to 1 road Then returns status code 200 and a filled array with the info for the updates.") {
+  test("Test When asking for changes in the roadnames correctly including the Since with many updates to return to 1 road Then returns status code 200 and a filled array with the info for the updates.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
@@ -171,7 +157,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
         RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 1), date(1900, 1, 1), None, "MOCK")
       ))
     )
-    getWithBasicUserAuth("/roadnames/changes?since=2018-01-01", "kalpa", "kalpa") {
+    get("/roadnames/changes?since=2018-01-01") {
       status should equal(200)
       response.body should equal(
         "[{\"road_number\":2,\"names\":[" +
@@ -182,7 +168,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since with many updates to return to 2 roads Then returns status code 200 and a filled array with the info for the updates.") {
+  test("Test When asking for changes in the roadnames correctly including the Since with many updates to return to 2 roads Then returns status code 200 and a filled array with the info for the updates.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
@@ -191,7 +177,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
         RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 1), date(1900, 1, 1), None, "MOCK")
       ))
     )
-    getWithBasicUserAuth("/roadnames/changes?since=2017-12-01", "kalpa", "kalpa") {
+    get("/roadnames/changes?since=2017-12-01") {
       status should equal(200)
       response.body should equal(
         "[" +
@@ -208,22 +194,22 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since with no updates to any road Then returns status code 200 and the returning array should be empty.") {
+  test("Test When asking for changes in the roadnames correctly including the Since with no updates to any road Then returns status code 200 and the returning array should be empty.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(Right(Seq()))
-    getWithBasicUserAuth("/roadnames/changes?since=9999-01-01&until=9999-01-01", "kalpa", "kalpa") {
+    get("/roadnames/changes?since=9999-01-01&until=9999-01-01") {
       status should equal(200)
       response.getHeader("Content-Type") should equal("application/json;charset=utf-8")
       response.body should equal("[]")
     }
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since with 1 change to a single road Then returns status code 200 and the returning array should contain that road info.") {
+  test("Test When asking for changes in the roadnames correctly including the Since with 1 change to a single road Then returns status code 200 and the returning array should contain that road info.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(1, 2, "MYROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK")
       ))
     )
-    getWithBasicUserAuth("/roadnames/changes?since=2018-01-01&until=2018-01-03", "kalpa", "kalpa") {
+    get("/roadnames/changes?since=2018-01-01&until=2018-01-03") {
       status should equal(200)
       response.body should equal(
         "[{\"road_number\":2,\"names\":[{\"created_by\":\"MOCK\",\"start_date\":\"" + DateTime.parse("2018-02-02").toString + "\",\"road_name\":\"MYROAD\",\"end_date\":null,\"change_date\":\"" + DateTime.parse("2018-01-01").toString + "\"}]}]"
@@ -231,7 +217,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since with some changes to a single road Then returns status code 200 and the returning array should contain the multiple road info.") {
+  test("Test When asking for changes in the roadnames correctly including the Since with some changes to a single road Then returns status code 200 and the returning array should contain the multiple road info.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(3, 2, "MY ROAD", date(2018, 2, 2), None, date(2018, 1, 1), None, "MOCK"),
@@ -239,7 +225,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
         RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 1), date(1900, 1, 1), None, "MOCK")
       ))
     )
-    getWithBasicUserAuth("/roadnames/changes?since=2018-01-01&until=2018-01-03", "kalpa", "kalpa") {
+    get("/roadnames/changes?since=2018-01-01&until=2018-01-03") {
       status should equal(200)
       response.body should equal(
         "[{\"road_number\":2,\"names\":[" +
@@ -250,7 +236,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Test getWithBasicUserAuth() When asking for changes in the roadnames correctly including the Since with some changes to multiple roads Then returns status code 200 and the returning array should contain the multiple road info.") {
+  test("Test When asking for changes in the roadnames correctly including the Since with some changes to multiple roads Then returns status code 200 and the returning array should contain the multiple road info.") {
     when(mockRoadNameService.getUpdatedRoadNames(any[DateTime], any[Option[DateTime]])).thenReturn(
       Right(Seq(
         RoadName(4, 3, "ANOTHER ROAD", date(2017, 12, 12), None, date(2017, 12, 1), None, "MOCK"),
@@ -259,7 +245,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
         RoadName(1, 2, "OLDROAD", date(1900, 2, 2), date(2000, 2, 1), date(1900, 1, 1), None, "MOCK")
       ))
     )
-    getWithBasicUserAuth("/roadnames/changes?since=2017-12-01&until=2018-12-03", "kalpa", "kalpa") {
+    get("/roadnames/changes?since=2017-12-01&until=2018-12-03") {
       status should equal(200)
       response.body should equal(
         "[" +

@@ -23,25 +23,26 @@
                 { "name": "municipalityProvider", "value": "fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider" },
                 { "name": "eventBus", "value": "fi.liikennevirasto.digiroad2.DigiroadEventBus" },
                 { "name": "vvhServiceHost", "value": "haproxy.vayla.fi" },
+                { "name": "oagProxyServer", "value": "oag.vayla.fi" },
+                { "name": "oagProxyURL", "value": "http://oag.vayla.fi" },
+                { "name": "rasterServiceURL", "value": "http://oag.vayla.fi/rasteripalvelu-mml" },
                 { "name": "vvhRestApiEndPoint", "value": "https://haproxy.vayla.fi:2027/vvhdata/" },
                 { "name": "vvhRoadlink.frozen", "value": "true" },
-                { "name": "vkmUrl", "value": "http://oag.vayla.fi" },
-                { "name": "tierekisteriViiteRestApiEndPoint", "value": "http://testioag.vayla.fi:8081/trrest/devtest/" },
-                { "name": "tierekisteri.enabled", "value": "false" },
+                { "name": "vkmUrl", "value": "https://oag.vayla.fi" },
+                { "name": "tierekisteriViiteRestApiEndPoint", "value": "https://testioag.vayla.fi/trrest/devtest/" },
+                { "name": "tierekisteri.enabled", "value": "true" },
                 { "name": "viiteTierekisteri.username", "value": "trrestviite" },
+                { "name": "oag.username", "value": "svc_cloudviite" },
                 { "name": "http.proxySet", "value": "false" },
                 { "name": "http.proxyHost", "value": "127.0.0.1" },
                 { "name": "http.nonProxyHosts", "value": "127.0.0.1" },
                 { "name": "importOnlyCurrent", "value": "false" },
                 { "name": "authenticationTestMode", "value": "false" },
-                { "name": "bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1g916wf1lodch.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/viite_dev" },
+                { "name": "bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1bbyq5el8tjd2.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/viite" },
                 { "name": "bonecp.username", "value": "viite_dev" },
-                { "name": "conversion.bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1g916wf1lodch.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv" },
+                { "name": "conversion.bonecp.jdbcUrl", "value": "jdbc:postgresql://vd1bbyq5el8tjd2.c8dj2qlvf50d.eu-west-1.rds.amazonaws.com:5432/drkonv" },
                 { "name": "conversion.bonecp.username", "value": "drkonv" },
-                { "name": "authentication.basic.username", "value": "kalpa" },
                 { "name": "authentication.admin.basic.username", "value": "admin" },
-                { "name": "authentication.serviceRoad.basic.username", "value": "livi" },
-                { "name": "authentication.municipality.basic.username", "value": "municipality" },
                 { "name": "env", "value": "Dev" }
             ],
             "mountPoints": [],
@@ -55,24 +56,16 @@
                     "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/conversion.bonecp.password"
                 },
                 {
-                    "name": "authentication.basic.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.basic.password"
-                },
-                {
                     "name": "authentication.admin.basic.password",
                     "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.admin.basic.password"
                 },
                 {
-                    "name": "authentication.serviceRoad.basic.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.serviceRoad.basic.password"
-                },
-                {
-                    "name": "authentication.municipality.basic.password",
-                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.municipality.basic.password"
-                },
-                {
                     "name": "viiteTierekisteri.password",
                     "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/viiteTierekisteri.password"
+                },
+                {
+                    "name": "oag.password",
+                    "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.oag.basic.password"
                 }
             ],
             "memoryReservation": 2048,

@@ -12,45 +12,16 @@ import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.auth.strategy.BasicAuthSupport
-import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
 import org.scalatra.{BadRequest, ScalatraBase}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.control.NonFatal
-
-trait ViiteAuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuthSupport[BasicAuthUser] {
-  self: ScalatraBase =>
-
-  val realm = "Viite Integration API"
-
-  protected def fromSession: PartialFunction[String, BasicAuthUser] = {
-    case id: String => BasicAuthUser(id)
-  }
-
-  protected def toSession: PartialFunction[BasicAuthUser, String] = {
-    case user: BasicAuthUser => user.username
-  }
-
-  protected val scentryConfig: ScentryConfiguration = new ScentryConfig {}.asInstanceOf[ScentryConfiguration]
-
-  override protected def configureScentry: Unit = {
-    scentry.unauthenticated {
-      scentry.strategies("Basic").unauthenticated()
-    }
-  }
-
-  override protected def registerAuthStrategies: Unit = {
-    scentry.register("Basic", app => new IntegrationAuthStrategy(app, realm))
-  }
-}
-
 import org.scalatra.ScalatraServlet
 
 class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameService: RoadNameService, implicit val swagger: Swagger) extends ScalatraServlet
-  with JacksonJsonSupport with ViiteAuthenticationSupport with SwaggerSupport {
+  with JacksonJsonSupport with SwaggerSupport {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -61,10 +32,6 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-
-  before() {
-    basicAuth
-  }
 
   val getRoadAddressesByMunicipality: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[List[Map[String, Any]]]("getRoadAddressesByMunicipality")
