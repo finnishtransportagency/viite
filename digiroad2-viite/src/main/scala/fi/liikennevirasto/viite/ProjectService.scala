@@ -2074,10 +2074,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         returnRoadwaysList ++ notReversedRoadwaysToInsert
       }
 
-      // CHECK START/END DATE BELOW
-      val test = roadwaysToCreate.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy))
-//      val test2 = roadwaysToCreate.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy)).groupBy(x => (x.startAddrMValue, x.endDate)).mapValues(_.head).values
-      val roadwayIds = roadwayDAO.create(test)
+      val roadwayIds = roadwayDAO.create(roadwaysToCreate.filter(roadway => roadway.endDate.isEmpty || !roadway.startDate.isAfter(roadway.endDate.get)).map(_.copy(createdBy = project.createdBy)))
       logger.debug(s"Inserting linear locations")
       linearLocationDAO.create(linearLocationsToInsert, createdBy = project.createdBy)
       // If the project didnt create new roadway numbers we will flip the existing history rows after Viite has created the new "current" roadway and newest history row of the previous "current" roadway
@@ -2112,19 +2109,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadAddressService.handleProjectCalibrationPointChanges(linearLocations, username, projectLinkChanges.filter(_.status == LinkStatus.Terminated))
       logger.debug(s"Creating nodes and junctions templates")
 
-      val test2 =  generatedRoadways.flatMap(_._1).filterNot(_.endDate.isDefined).map(r => {
-        val x = roadwayAddressMapper.mapRoadAddresses(r, generatedRoadways.flatMap(_._2))
-        x
-      })
-
       val mappedRoadAddressesProjection: Seq[RoadAddress] = roadAddressService.getRoadAddressesByRoadwayIds(roadwayIds)
       val roadwayLinks = if (generatedRoadways.flatMap(_._3).nonEmpty) generatedRoadways.flatMap(_._3) else projectLinks
-//      val roadwayLinks = projectLinks
       val (enrichedProjectLinks: Seq[ProjectLink], enrichedProjectRoadLinkChanges: Seq[ProjectRoadLinkChange]) = ProjectChangeFiller.mapAddressProjectionsToLinks(
         roadwayLinks, projectLinkChanges, mappedRoadAddressesProjection)
-
-//      val enrichedProjectLinks = projectLinks
-//      val enrichedProjectRoadLinkChanges = projectLinkChanges
 
       nodesAndJunctionsService.handleJunctionAndJunctionPoints(roadwayChanges, enrichedProjectLinks, enrichedProjectRoadLinkChanges, username)
       nodesAndJunctionsService.handleNodePoints(roadwayChanges, enrichedProjectLinks, enrichedProjectRoadLinkChanges, username)
@@ -2152,17 +2140,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val currentRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
     val historyRoadways = roadwayDAO.fetchAllByRoadwayNumbers(currentRoadways.map(_._2.roadwayNumber).toSet, withHistory = true).filter(_.endDate.isDefined).map(roadway => (roadway.id, roadway)).toMap
     val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
-    val roadwayProjectLinkIds = roadwayChangesDAO.fetchRoadwayChangesLinks(projectID)
 
-//    val testr = (currentRoadways ++ historyRoadways).toMap.values.map(r => r.roadwayNumber).toSet[Long].map(rwn => (rwn,projectLinks.toList.filter(_.roadwayNumber == rwn)))
-//    val x = (currentRoadways ++ historyRoadways).values.groupBy(_.roadwayNumber).values
-//    case class rwChanges(currentRoadway: Roadway, historyRoadways: Seq[Roadway], projectLinks: Seq[ProjectLink])
     def f(x: Long):Seq[Roadway] = {
       historyRoadways.filter(_._2.roadwayNumber == x).map(_._2).toSeq
     }
     val testr2 = currentRoadways.values.map(r => RoadwayFiller.RwChanges(r, f(r.roadwayNumber),projectLinks.toList.filter(_.roadwayId == r.id))).toList
-
-    val mappedChangesWithLinks = ProjectChangeFiller.mapLinksToChanges(roadwayChanges, roadwayProjectLinkIds, projectLinks, projectLinkChanges)
 
     if (projectLinks.isEmpty) {
       logger.error(s" There are no addresses to update, rollbacking update ${project.id}")
@@ -2172,44 +2154,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectLinkDAO.moveProjectLinksToHistory(projectID)
 
     try {
-      //val generatedRoadways = RoadwayFiller.fillRoadways(currentRoadways, historyRoadways, mappedChangesWithLinks, projectLinks)
-//      val merged_mappedChangesWithLinks = RoadwayFiller.mergeRoadwayChanges(mappedChangesWithLinks)
-      //Tarkista lineaarilokaatiot geometriat + m-arvot ja sidecode
-
       val new_generatedRoadways = RoadwayFiller.applyNewLinks(projectLinks.filter(_.status == LinkStatus.New))
 
       val generatedRoadways = RoadwayFiller.applyRoadwayChanges(testr2).flatten.filter(_._1.nonEmpty) ++ new_generatedRoadways
-//val x = generatedRoadways2.sortBy(_._3.minBy(_.startAddrMValue).startAddrMValue)
-
 
       val historyRoadwaysToKeep = generatedRoadways.flatMap(_._1).filter(_.id != NewIdValue).map(_.id)
       var linearLocationsToInsert = generatedRoadways.flatMap(_._2).groupBy(l => (l.roadwayNumber, l.orderNumber, l.linkId,
         l.startMValue, l.endMValue, l.validTo.map(_.toYearMonthDay), l.startCalibrationPoint.addrM, l.endCalibrationPoint.addrM, l.sideCode,
         l.linkGeomSource)).map(_._2.head).toSeq
-//      var roadwaysToInsert = generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).groupBy(roadway =>
-//        (roadway.roadNumber, roadway.roadPartNumber, roadway.startAddrMValue, roadway.endAddrMValue, roadway.track,
-//          roadway.discontinuity, roadway.startDate.toYearMonthDay, roadway.endDate.map(_.toYearMonthDay),
-//        roadway.validFrom.toYearMonthDay, roadway.validTo.map(_.toYearMonthDay), roadway.ely, roadway.roadType, roadway.terminated)).map(_._2.head)
-
-      /* Merge roadwaynumbers */
-//      val new_rws = generatedRoadways.flatMap(_._1)
-//      var roadwaysToInsert = generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue)
-//        .filter(_.endDate.isEmpty)
-//        .groupBy(_.track).map(g => (g._2.groupBy(_.roadwayNumber).map(t =>
-//        t._2.head.copy(startAddrMValue = t._2.minBy(_.startAddrMValue).startAddrMValue, endAddrMValue = t._2.maxBy(_.endAddrMValue).endAddrMValue
-//        )))).flatten ++ generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).filter(_.endDate.nonEmpty)
 
       var roadwaysToInsert = generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).filter(_.endDate.isEmpty).groupBy(_.track).map(g =>
         (g._2.groupBy(_.roadwayNumber).map(t =>
           t._2.head.copy(startAddrMValue = t._2.minBy(_.startAddrMValue).startAddrMValue, endAddrMValue = t._2.maxBy(_.endAddrMValue).endAddrMValue)
         ))).flatten ++ generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).filter(_.endDate.nonEmpty)
       roadwaysToInsert.foreach(rwtoinsert => logger.info(s"roadwaysToInsert ${rwtoinsert.roadwayNumber} ${rwtoinsert.endDate} ${rwtoinsert.validTo}"))
-
-//      roadwaysToInsert = roadwaysToInsert.groupBy(_.roadwayNumber).map{r => {
-//        val min_addr = r._2.minBy(_.startAddrMValue).startAddrMValue
-//        val max_addr = r._2.maxBy(_.endAddrMValue).endAddrMValue
-//        r._2.head.copy(startAddrMValue = min_addr, endAddrMValue = max_addr )}
-//      }
 
       //järjestä projektilinkeillä
       /* Update order numbers */
@@ -2221,18 +2179,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val sorted_lins: Seq[LinearLocation] = sorted_pls.flatMap(pl => lins.filter(l => l.linkId == pl.linkId && l.startMValue == pl.startMValue).sortBy(_.startMValue) )
         sorted_lins.zip(1 to lins.size).map(ls => ls._1.copy(orderNumber =  ls._2))
       })
-val test = roadwaysToInsert.filterNot(_.endDate.isDefined)
+
       val roadwayIds = handleRoadPrimaryTables(currentRoadways, historyRoadways, roadwaysToInsert, historyRoadwaysToKeep, linearLocationsToInsert, project)
       handleRoadComplementaryTables(roadwayChanges, projectLinkChanges, linearLocationsToInsert,
         roadwayIds, generatedRoadways, projectLinks,
         Some(project.startDate.minusDays(1)), nodeIds, project.createdBy)
 
-      val testing = generatedRoadways.flatMap(_._1).map(_.roadwayNumber).distinct.map(rwn => roadwayPointDAO.fetchByRoadwayNumber(rwn))
-
-// Test calibrationpoints
-      val calIds = rwns.map(crw => CalibrationPointDAO.fetchIdByRoadwayNumberSection(crw, 0,5000)).flatten
-      val cals = calIds.map(cpid => CalibrationPointDAO.fetch(cpid))
-      //--
       nodesAndJunctionsService.publishNodes(nodeIds, project.createdBy)
       projectLinks.map(_.roadNumber).toSet
     } catch {
