@@ -1,18 +1,18 @@
 package fi.liikennevirasto.digiroad2
 
-import java.lang.management.ManagementFactory
-
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.api.Request
 import org.eclipse.jetty.client.{HttpClient, HttpProxy}
 import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
 import org.eclipse.jetty.server.{Handler, Server}
+import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.eclipse.jetty.webapp.WebAppContext
 import org.slf4j.LoggerFactory
 
+import java.lang.management.ManagementFactory
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import scala.collection.JavaConversions._
 
 trait DigiroadServer {
@@ -53,6 +53,10 @@ class OAGProxyServlet extends ProxyServlet {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
+  override def newHttpClient(): HttpClient = {
+    new HttpClient(new SslContextFactory)
+  }
+
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
     val url = s"${ViiteProperties.rasterServiceURL}$uri"
@@ -69,6 +73,10 @@ class OAGRasterServiceProxyServlet extends ProxyServlet {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
+  override def newHttpClient(): HttpClient = {
+    new HttpClient(new SslContextFactory)
+  }
+
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
     val url = s"${ViiteProperties.oagProxyURL}$uri?${req.getQueryString}"
@@ -84,6 +92,10 @@ class OAGRasterServiceProxyServlet extends ProxyServlet {
 
 class ArcGisProxyServlet extends ProxyServlet {
   private val logger = LoggerFactory.getLogger(getClass)
+
+  override def newHttpClient(): HttpClient = {
+    new HttpClient(new SslContextFactory)
+  }
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
