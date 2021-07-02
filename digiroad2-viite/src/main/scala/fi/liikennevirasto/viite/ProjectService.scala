@@ -438,9 +438,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               newPl.copy(calibrationPointTypes = (connectedProjectlink.get.endCalibrationPoint.get.typeCode, CalibrationPointDAO.CalibrationPointType.NoCP))
             } else if (connectedEndProjectlink.isDefined && connectedEndProjectlink.get.hasCalibrationPointAtStart) {
               newPl.copy(calibrationPointTypes = (CalibrationPointDAO.CalibrationPointType.NoCP,connectedEndProjectlink.get.startCalibrationPoint.get.typeCode))
-            } else
-            newPl
+            } else {
+//            newPl
 
+            if (newPl.calibrationPointTypes._2 == NoCP) newPl.copy(calibrationPointTypes = (newPl.calibrationPointTypes._1, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)) else newPl
+            }
           }.toSeq
 
           val endPoints = TrackSectionOrder.findChainEndpoints(projectLinks)
@@ -725,7 +727,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               })))
             checkAndReserve(project, reserved)
             logger.debug(s"Reserve done")
-            addresses.map(ra => newProjectTemplate(fullMapping(ra.linkId), ra, project))
+
+            // remove uses old links.
+            val test2 = addresses.map(_.linkId).diff(fullMapping.keys.toSeq)
+
+            val test = roadLinkService.getCurrentAndHistoryRoadLinksFromVVH(test2.toSet)
+            val maps = test._2.map(t => (t.linkId -> t)).toMap
+            val fullMapping2 = fullMapping ++ maps
+              addresses.map(ra => newProjectTemplate(fullMapping2(ra.linkId), ra, project))
         }
       }
     }
@@ -1481,7 +1490,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             resetLinkValues(updated)
             updateAdministrativeClassDiscontinuity(updated.map(_.copy(status = linkStatus, administrativeClass = AdministrativeClass.apply(administrativeClass.toInt))))
 
-          case LinkStatus.New =>
+          case LinkStatus.New => {
             // Current logic allows only re adding new road addresses within same road/part group
             if (toUpdateLinks.groupBy(l => (l.roadNumber, l.roadPartNumber)).size <= 1) {
               checkAndMakeReservation(projectId, newRoadNumber, newRoadPartNumber, LinkStatus.New, toUpdateLinks)
@@ -1492,6 +1501,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             } else {
               throw new RoadAddressException(s"Useamman kuin yhden tien/tieosan tallennus kerralla ei ole tuettu.")
             }
+          }
           case _ =>
             throw new ProjectValidationException(s"Virheellinen operaatio $linkStatus")
         }
