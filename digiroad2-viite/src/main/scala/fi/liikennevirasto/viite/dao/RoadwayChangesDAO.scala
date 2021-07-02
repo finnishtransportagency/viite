@@ -322,30 +322,28 @@ class RoadwayChangesDAO {
           val roadWayChangesLinkPS = dynamicSession.prepareStatement("INSERT INTO ROADWAY_CHANGES_LINK " +
             "(roadway_change_id, project_id, project_link_id) values (?,?,?)")
 
-          val allNonTerminatedProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)//.filter(_.status != LinkStatus.Terminated)
+          val allProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
 
-          val test1 = delta.unChanged.mapping.map(_._2) ++ delta.transferred.mapping.map(_._2) ++ delta.newRoads
-          val test2 = ProjectDeltaCalculator.partitionWithProjectLinks(test1, allNonTerminatedProjectLinks)
-          val test3 = test2.adjustedSections.zip(test2.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.UnChanged))
-          val test4 = test2.adjustedSections.zip(test2.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.Transfer))
-          val test5 = test2.adjustedSections.zip(test2.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.New))
+          val nonTerminatedProjectlinks = delta.unChanged.mapping.map(_._2) ++ delta.transferred.mapping.map(_._2) ++ delta.newRoads //allProjectLinks.filter(_.status != LinkStatus.Terminated)
 
-          test3.foreach { case (roadwaySection1, roadwaySection2) =>
+          val changeTableRows = ProjectDeltaCalculator.partitionWithProjectLinks(nonTerminatedProjectlinks, allProjectLinks)
+          val unChanged_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.UnChanged))
+          val transferred_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.Transfer))
+          val new_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.New))
+
+          unChanged_roadway_sections.foreach { case (roadwaySection1, roadwaySection2) =>
             addToBatchWithOldValues(roadwaySection2, roadwaySection1, AddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
           }
 
-          test4.foreach { case (roadwaySection1, roadwaySection2) =>
+          transferred_roadway_sections.foreach { case (roadwaySection1, roadwaySection2) =>
             addToBatchWithOldValues(roadwaySection2, roadwaySection1, AddressChangeType.Transfer, roadwayChangePS, roadWayChangesLinkPS)
           }
 
-          test5.foreach(roadwaySection => addToBatch(roadwaySection._1, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
+          new_roadway_sections.foreach(roadwaySection => addToBatch(roadwaySection._1, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
 
-          val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping, allNonTerminatedProjectLinks)
+          val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping, allProjectLinks)
 
-//          val testTerminated = ProjectDeltaCalculator.partitionTerminatedWithProjectLinks(delta.terminations.mapping.map(_._2), allNonTerminatedProjectLinks)
-
-
-          val twoTrackOldAddressRoadParts = ((test3 ++ test4).map(_._2).map(roadwaySection => {
+          val twoTrackOldAddressRoadParts = ((unChanged_roadway_sections ++ transferred_roadway_sections).map(_._2).map(roadwaySection => {
             (roadwaySection, "other")
           }).toSeq ++ terminated.originalSections.map(roadwaySection => {
             (roadwaySection._1, "terminated")
@@ -357,55 +355,14 @@ class RoadwayChangesDAO {
 
           val old_road_two_track_parts = ProjectDeltaCalculator.calc_parts(twoTrackOldAddressRoadParts)
 
-//          terminated.originalSections.foreach(roadwaySection =>
-//            addToBatch(roadwaySection._1, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
-//          )
-
-//          val news = ProjectDeltaCalculator.partition(delta.newRoads, allNonTerminatedProjectLinks)
-//          news.foreach(roadwaySection => addToBatch(roadwaySection, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
-
-//          val unchanged = ProjectDeltaCalculator.partition(delta.unChanged.mapping, allNonTerminatedProjectLinks)
-//
-//          val transferred = ProjectDeltaCalculator.partition(delta.transferred.mapping, allNonTerminatedProjectLinks)
-//
-//          val numbering = ProjectDeltaCalculator.partition(delta.numbering.mapping, allNonTerminatedProjectLinks)
-
-//          val twoTrackOldAddressRoadParts = ProjectDeltaCalculator.buildTwoTrackOldAddressRoadParts(unchanged, transferred, numbering, terminated)
-//          val old_road_two_track_parts = ProjectDeltaCalculator.calc_parts(twoTrackOldAddressRoadParts)
-
           val twoTrackAdjustedTerminated = old_road_two_track_parts.flatMap(_._1) ++ old_road_two_track_parts.flatMap(_._2)
           val combinedTerminatedTrack = terminated.originalSections.map(_._1).filter(_.track == Track.Combined)
 
-//          1. vie ylijäävät transferred bztachiin 2. Etsi kadonnut lakkautettu rivi alusta
-//           -- news.foreach(roadwaySection => addToBatch(roadwaySection, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
-
           val adjustedTerminated = combinedTerminatedTrack ++ twoTrackAdjustedTerminated
-//          val x = ProjectDeltaCalculator.adjustStartSourceAddressValues2(test3.map(_._1) ++ test4.map(_._1), test3.map(_._2) ++ test4.map(_._2) ++ terminated.originalSections)
-
-//          var adjustedUnchanged = ProjectDeltaCalculator.adjustStartSourceAddressValues(unchanged.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
-//          var adjustedTransferred = ProjectDeltaCalculator.adjustStartSourceAddressValues(transferred.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections ++ terminated.originalSections)
-//          var adjustedNumbering = ProjectDeltaCalculator.adjustStartSourceAddressValues(numbering.adjustedSections, unchanged.originalSections ++ transferred.originalSections ++ numbering.originalSections)
-//
-//          val t1 = adjustedTransferred._1.map(_._1)
-//          val t2 = adjustedTransferred._1.map(_._2)
-          /* Filter off zero lengths from change table if splits and roundings produced such. */
-//           adjustedUnchanged = (adjustedUnchanged._1.filterNot(addr => addr._1.startMAddr == addr._1.endMAddr), adjustedUnchanged._2)
-//           adjustedTransferred = (adjustedTransferred._1.filterNot(addr => addr._1.startMAddr == addr._1.endMAddr), adjustedUnchanged._2)
-//           adjustedNumbering = (adjustedNumbering._1.filterNot(addr => addr._1.startMAddr == addr._1.endMAddr), adjustedUnchanged._2)
 
           adjustedTerminated.foreach(roadwaySection =>
             addToBatch(roadwaySection, AddressChangeType.Termination, roadwayChangePS, roadWayChangesLinkPS)
           )
-//            adjustedUnchanged._1.foreach { case (roadwaySection1, roadwaySection2) =>
-//            addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.Unchanged, roadwayChangePS, roadWayChangesLinkPS)
-//          }
-//          adjustedTransferred._1.foreach { case (roadwaySection1, roadwaySection2) =>
-//            addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.Transfer, roadwayChangePS, roadWayChangesLinkPS)
-//          }
-//          adjustedNumbering._1.foreach { case (roadwaySection1, roadwaySection2) =>
-//            addToBatchWithOldValues(roadwaySection1, roadwaySection2, AddressChangeType.ReNumeration, roadwayChangePS, roadWayChangesLinkPS)
-//          }
-
 
           roadwayChangePS.executeBatch()
           roadwayChangePS.close()

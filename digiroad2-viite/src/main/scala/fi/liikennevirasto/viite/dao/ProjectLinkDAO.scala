@@ -355,8 +355,8 @@ class ProjectLinkDAO {
           START_ADDR_M, END_ADDR_M, ORIGINAL_START_ADDR_M, ORIGINAL_END_ADDR_M, created_by, modified_by,
           start_calibration_point, end_calibration_point, orig_start_calibration_point, orig_end_calibration_point,
           status, ADMINISTRATIVE_CLASS, roadway_id, linear_location_id, connected_link_id, ely, roadway_number, reversed, geometry,
-          link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, modified_date, ORIGINAL_TRACK, ORIGINAL_ELY, ORIGINAL_ADMINISTRATIVE_CLASS)
-          values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?, 3067), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          link_id, SIDE, start_measure, end_measure, adjusted_timestamp, link_source, modified_date)
+          values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?, 3067), ?, ?, ?, ?, ?, ?, ?)
         """)
       val (ready, idLess) = links.partition(_.id != NewIdValue)
       val plIds = Sequences.fetchProjectLinkIds(idLess.size)
@@ -407,9 +407,9 @@ class ProjectLinkDAO {
         addressPS.setInt(31, pl.linkGeomSource.value)
         addressPS.setDate(32, new java.sql.Date(new Date().getTime))
 
-        addressPS.setLong(33, pl.originalTrack.value)
-        addressPS.setLong(34, pl.originalEly)
-        addressPS.setLong(35, pl.originalAdministrativeClass.value)
+//        addressPS.setLong(33, pl.originalTrack.value)
+//        addressPS.setLong(34, pl.originalEly)
+//        addressPS.setLong(35, pl.originalAdministrativeClass.value)
 
         addressPS.addBatch()
       }
