@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: ECS Fargate service in private subnets. Outputs ALB.
+Description: Viite ECS Fargate service in private subnets. Outputs ALB.
 Parameters:
   NetworkStackName:
     Type: String
