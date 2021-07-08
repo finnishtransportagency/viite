@@ -14,29 +14,36 @@ Metadata:
           - Subnet2
 Parameters:
   VPCCIDR:
+    Description: CIDR of the VPC
     Type: String
     Default: 100.64.206.0/23
-    Description: Enter the VPC CIDR that you want to use
-  AZForSubnet1:
-    Type: 'AWS::EC2::AvailabilityZone::Name'
-    Default: eu-west-1a
-    Description: Enter the AZ for the primary subnet
-  AZForSubnet2:
-    Type: 'AWS::EC2::AvailabilityZone::Name'
-    Default: eu-west-1b
-    Description: Enter the AZ for the secondary subnet
+  ApplicationName:
+    Description: Name of the application, that these resources are created for. Used for Output export names"
+    # Would be nice to also tag stuff according to ApplicationName, but that cannot be done, unless the stack
+    # is rebuilt from scratch. Using 'AWS::StackName' for tags for not needing to ceate them from scratch.
+    Type: String
+    #   Default: Viite-<PUT-YOUR-ENV-HERE-OR-NOTHING-FOR-PROD>
+    Default: Viite-dev
   Subnet1CIDR:
+    Description: CIDR of the 1st subnet
     Type: String
     Default: 100.64.206.0/24
-    Description: Enter the value of the subnet 1
   Subnet2CIDR:
+    Description: CIDR of the 2nd subnet
     Type: String
     Default: 100.64.207.0/24
-    Description: Enter the value of the subnet 2
+  AZForSubnet1:
+    Description: Subnet 1 AZ
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Default: eu-west-1a
+  AZForSubnet2:
+    Description: Subnet 2 AZ
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Default: eu-west-1b
   TransitGatewayId:
+    Description: Id of the Transit Gateway
     Type: String
     Default: tgw-0cf1eb7c72778eaad
-    Description: Choose the transit gateway
 Conditions: {}
 Resources:
   VPCID:
@@ -47,10 +54,7 @@ Resources:
       EnableDnsHostnames: 'true'
       Tags:
         - Key: Name
-          Value: !Join 
-            - '-'
-            - - !Ref 'AWS::StackName'
-              - Vpc
+          Value: !Join ['-', [!Ref 'AWS::StackName', Vpc]]
   Subnet1:
     Type: 'AWS::EC2::Subnet'
     Properties:
@@ -59,10 +63,7 @@ Resources:
       AvailabilityZone: !Ref AZForSubnet1
       Tags:
         - Key: Name
-          Value: !Join 
-            - '-'
-            - - !Ref 'AWS::StackName'
-              - Subnet1
+          Value: !Join ['-', [!Ref 'AWS::StackName', Subnet1]]
   Subnet2:
     Type: 'AWS::EC2::Subnet'
     Properties:
@@ -71,20 +72,14 @@ Resources:
       AvailabilityZone: !Ref AZForSubnet2
       Tags:
         - Key: Name
-          Value: !Join 
-            - '-'
-            - - !Ref 'AWS::StackName'
-              - Subnet2
+          Value: !Join ['-', [!Ref 'AWS::StackName', Subnet2]]
   RouteTable:
     Type: 'AWS::EC2::RouteTable'
     Properties:
       VpcId: !Ref VPCID
       Tags:
         - Key: Name
-          Value: !Join 
-            - '-'
-            - - !Ref 'AWS::StackName'
-              - RouteTable
+          Value: !Join ['-', [!Ref 'AWS::StackName', RouteTable]]
   AttachGateway:
     Type: 'AWS::EC2::TransitGatewayAttachment'
     Properties:
@@ -110,3 +105,45 @@ Resources:
     Properties:
       SubnetId: !Ref Subnet2
       RouteTableId: !Ref RouteTable
+
+Outputs:
+  VPCId:
+    Description: The ID of the VPC that this stack is deployed in
+    Value: !Ref 'VPCID'
+    Export:
+      Name: !Join ['-', [!Ref ApplicationName, 'VPC-Id']]
+  VPCCIDR:
+    Description: The created VPC CIDR
+    Value: !GetAtt VPCID.CidrBlock
+    Export:
+      Name: !Join ['-', [!Ref ApplicationName, 'VPC-CIDR']]
+  Subnet1:
+    Description: (Private) subnet one
+    Value: !Ref 'Subnet1'
+    Export:
+      Name: !Join ['-', [!Ref ApplicationName, 'Subnet1-Id']]
+  Subnet1CIDR:
+    Description: The created 1st subnet CIDR
+    Value: !Ref Subnet1CIDR
+    Export:
+      Name: !Join ['-', [!Ref ApplicationName, 'Subnet1-CIDR']]
+  Subnet2:
+    Description: (Private) subnet two
+    Value: !Ref 'Subnet2'
+    Export:
+      Name: !Join ['-', [!Ref ApplicationName, 'Subnet2-Id']]
+  Subnet2CIDR:
+    Description: The created 2nd subnet CIDR
+    Value: !Ref Subnet2CIDR
+    Export:
+      Name: !Join ['-', [!Ref ApplicationName, 'Subnet2-CIDR']]
+  TGWAttachement:
+    Description: The created TGWAttachement
+    Value: !Ref AttachGateway
+    Export:
+      Name: !Join ['-', [!Ref ApplicationName, 'TGWAttachement-Id']]
+  RouteTable:
+    Description: The created RouteTable
+    Value: !Ref RouteTable
+    Export:
+      Name: !Join ['-', [!Ref ApplicationName, 'RouteTable-Id']]
