@@ -46,22 +46,7 @@ object ProjectSectionMValueCalculator {
       throw new InvalidAddressDataException(s"Invalid unchanged link found")
     unchanged.map(resetEndAddrMValue) ++ assignLinkValues(others, calibrationPoints, unchanged.map(_.endAddrMValue.toDouble).sorted.lastOption, None)
   }
-def testF(ordered: Seq[ProjectLink], addrSt: Option[Double], cps: Map[Long, UserDefinedCalibrationPoint], coEff: Double) = {
-  ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) =>
-    val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
-    if (!pl.isSplit) {
-      val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
-      pl.status match {
-        case LinkStatus.New => addressValue
-        case LinkStatus.Transfer | LinkStatus.NotHandled | LinkStatus.Numbering | LinkStatus.UnChanged => m + pl.addrMOriginalLength
-        case LinkStatus.Terminated => pl.endAddrMValue
-        case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
-      }
-    } else {
-      pl.endAddrMValue
-    }
-  }
-}
+
   def isSameTrack(previous: ProjectLink, currentLink: ProjectLink): Boolean = {
     previous.roadNumber == currentLink.roadNumber && previous.roadPartNumber == currentLink.roadPartNumber && previous.track == currentLink.track
   }
@@ -73,17 +58,9 @@ def testF(ordered: Seq[ProjectLink], addrSt: Option[Double], cps: Map[Long, User
       val orderedPairs    = TrackSectionOrder.orderProjectLinksTopologyByGeometry(mappedEndpoints, seq)
       val ordered         = if (seq.exists(_.track == Track.RightSide || seq.forall(_.track == Track.Combined))) orderedPairs._1 else orderedPairs._2.reverse
 
-      //    val terminated = projectLinkDAO.fetchProjectLinks(ordered.head.projectId, Some(LinkStatus.Terminated))
-      //
-      //    val newConnectedToTerminated = ordered.filter(pl => pl.status == LinkStatus.New && terminated.exists(_.connected(pl)))
       val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) => {
-        //      val x = if (pl.status == LinkStatus.New && pl.track != Track.Combined) terminated.find(_.connected(pl)) else None
-        //            if (x.isDefined) {
-        //              val term = x.get
-        //              terminated.find(t => t.track != term.track && t.endAddrMValue <= term.endAddrMValue && t.startAddrMValue <= term.endAddrMValue)
-        //            }
         val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
-        if (!pl.isSplit) {
+//          if (!(pl.isSplit && someCalibrationPoint.isEmpty)) {
           val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
           pl.status match {
             case LinkStatus.New => addressValue
@@ -91,9 +68,9 @@ def testF(ordered: Seq[ProjectLink], addrSt: Option[Double], cps: Map[Long, User
             case LinkStatus.Terminated => pl.endAddrMValue
             case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
           }
-        } else {
-          pl.endAddrMValue
-        }
+//        } else {
+//          pl.endAddrMValue
+//        }
       }
       }
       seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) => pl.copy(startAddrMValue = Math.round(st), endAddrMValue = Math.round(en))
