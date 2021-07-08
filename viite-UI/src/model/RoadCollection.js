@@ -73,14 +73,21 @@
     var SelectionType = LinkValues.SelectionType;
     var ConstructionType = LinkValues.ConstructionType;
     var Anomaly = LinkValues.Anomaly;
+    var selectedRoadNumber = 0;
+    var selectedRoadPartNumber = 0;
 
     var roadLinks = function () {
       return _.flatten(roadLinkGroups);
     };
 
     var getSelectedRoadLinks = function () {
+        var selected_road = _.find(roadLinks() , function (roadLink) {return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;});
+        if (selected_road) {
+            selectedRoadNumber = selected_road.getData().roadNumber;
+            selectedRoadPartNumber = selected_road.getData().roadPartNumber;
+        }
       return _.filter(roadLinks().concat(underConstructionRoadLinks()), function (roadLink) {
-        return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;
+        return (roadLink.isSelected() || (roadLink.getData().roadNumber == selectedRoadNumber && roadLink.getData().roadPartNumber == selectedRoadPartNumber)) && roadLink.getData().anomaly === Anomaly.None.value;
       });
     };
 

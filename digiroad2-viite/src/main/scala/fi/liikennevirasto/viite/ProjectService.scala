@@ -735,6 +735,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val maps = test._2.map(t => (t.linkId -> t)).toMap
             val fullMapping2 = fullMapping ++ maps
               addresses.map(ra => newProjectTemplate(fullMapping2(ra.linkId), ra, project))
+//            addresses.map(ra => newProjectTemplate(fullMapping(ra.linkId), ra, project))
         }
       }
     }
@@ -1402,14 +1403,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       withDynTransaction {
         val toUpdateLinks = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(ids, linkIds.toSet, projectId)
         userDefinedEndAddressM.foreach(addressM => {
-          val endSegment = toUpdateLinks.maxBy(_.endAddrMValue)
-          val calibrationPoint = UserDefinedCalibrationPoint(NewIdValue, endSegment.id, projectId, addressM.toDouble - endSegment.startMValue, addressM)
-          val calibrationPointIsPresent = toUpdateLinks.find(ul => ul.projectId == projectId && ul.startAddrMValue == endSegment.startAddrMValue) match {
+          val endSegment                = toUpdateLinks.maxBy(_.endAddrMValue)
+          val calibrationPoint          = UserDefinedCalibrationPoint(NewIdValue, endSegment.id, projectId, addressM.toDouble - endSegment.startMValue, addressM)
+          val lastEndSegmentLink        = toUpdateLinks.find(ul => ul.projectId == projectId && ul.startAddrMValue == endSegment.startAddrMValue)
+          val calibrationPointIsPresent = lastEndSegmentLink match {
             case Some(projectLink) =>
               projectLink.hasCalibrationPointAt(calibrationPoint.addressMValue)
             case _ => false
           }
-          if (!calibrationPointIsPresent) {
+          /* Store the user defined calibration point with given address even if other calibratation type exists. */
+          if (!calibrationPointIsPresent || lastEndSegmentLink.last.endCalibrationPointType != CalibrationPointDAO.CalibrationPointType.UserDefinedCP) {
             val foundCalibrationPoint = ProjectCalibrationPointDAO.findEndCalibrationPoint(endSegment.id, projectId)
             if (foundCalibrationPoint.isEmpty)
               ProjectCalibrationPointDAO.createCalibrationPoint(calibrationPoint)
@@ -1597,12 +1600,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               calculatedLinks
         }.toSeq
 
-        val x = recalculated.map(_.id).diff(projectLinks.map(_.id).toList)
-        val recalculatedTerminated           = terminated //ProjectSectionCalculator.assignTerminatedMValues(terminated, recalculated)
-        val assignedTerminatedRoadwayNumbers = assignTerminatedRoadwayNumbers(others ++ recalculatedTerminated)
-        val originalAddresses                = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ recalculatedTerminated).map(_.roadwayId))
+//        val roadsWithParts = recalculated.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).keys
+//        val projectCalibrationPoints = roadsWithParts.map(rwp => ProjectCalibrationPointDAO.fetchByRoadPart(projectId, rwp._1, rwp._2 )).flatten
+//        val projectlinkIdsInprojectCalibrationPoints = projectCalibrationPoints.map(_.projectLinkId)
+//        val filteredRecalculated = recalculated.map(pl => if (projectlinkIdsInprojectCalibrationPoints.exists(_ == pl.id) && pl.endCalibrationPointType == CalibrationPointDAO.CalibrationPointType.UserDefinedCP) pl else pl.copy(calibrationPointTypes = (pl.startCalibrationPointType, NoCP)))
+//
+//        val recalculatedTerminated           = terminated //ProjectSectionCalculator.assignTerminatedMValues(terminated, recalculated)
+        val assignedTerminatedRoadwayNumbers = assignTerminatedRoadwayNumbers(others ++ terminated)
+        val originalAddresses                = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ terminated).map(_.roadwayId))
         projectLinkDAO.updateProjectLinks(recalculated ++ assignedTerminatedRoadwayNumbers, userName, originalAddresses)
-        projectLinkDAO.create(recalculated.filter(pl => x.exists(_ == pl.id)))
+        val projectLinksToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
+        projectLinkDAO.create(recalculated.filter(pl => projectLinksToDB.exists(_ == pl.id)))
       }
     }
   }

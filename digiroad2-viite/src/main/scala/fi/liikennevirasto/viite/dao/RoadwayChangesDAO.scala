@@ -370,7 +370,7 @@ class RoadwayChangesDAO {
           roadWayChangesLinkPS.close()
           val endTime = System.currentTimeMillis()
           logger.info("Delta insertion in ChangeTable completed in %d ms".format(endTime - startTime))
-          val warning = Seq() //(adjustedUnchanged._2 ++ adjustedTransferred._2 ++ adjustedNumbering._2).toSeq
+          val warning = Seq()
           (true, if (warning.nonEmpty) Option(warning.head) else None)
         } else {
           (false, None)
