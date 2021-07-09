@@ -342,6 +342,8 @@ class RoadwayChangesDAO {
           new_roadway_sections.foreach(roadwaySection => addToBatch(roadwaySection._1, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
 
           val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping, allProjectLinks)
+          val testTerminated = ProjectDeltaCalculator.partitionWithProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
+          val testTerminated2 = ProjectDeltaCalculator.partitionTerminatedWithProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
 
           val twoTrackOldAddressRoadParts = ((unChanged_roadway_sections ++ transferred_roadway_sections).map(_._2).map(roadwaySection => {
             (roadwaySection, "other")
