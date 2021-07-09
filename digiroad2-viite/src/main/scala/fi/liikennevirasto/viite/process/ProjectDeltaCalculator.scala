@@ -111,14 +111,15 @@ object ProjectDeltaCalculator {
     val oppositeStatusChange = oppositePl1.nonEmpty && oppositePl2.nonEmpty && oppositePl1.last.status != oppositePl2.last.status
     val hasCalibrationPoint = ((pl1.status != LinkStatus.New && pl1.hasCalibrationPointAtEnd) && pl1.hasCalibrationPointCreatedInProject) || (oppositePl1.nonEmpty && oppositePl1.head.hasCalibrationPointAtEnd && pl1.hasCalibrationPointAtEnd)
     val trackNotUpdated = pl2.originalTrack == pl2.track
-    val oppositeTrackNotUpdated = (oppositePl1.nonEmpty && oppositePl1.head.originalTrack == oppositePl1.head.track) || oppositePl1.isEmpty
+    val oppositeTrackNotUpdated = (oppositePl2.nonEmpty && oppositePl2.head.originalTrack == oppositePl2.head.track) || oppositePl1.isEmpty
+    val originalTrackContinuous = pl1.originalTrack == pl2.originalTrack
     val administrativeClassNotUpdated = pl2.originalAdministrativeClass == pl2.administrativeClass
 
     val hasParallelLinkOnCalibrationPoint = hasCalibrationPoint && bothNew && matchContinuity && allNonTerminatedProjectLinks.exists(pl => {
       pl.roadNumber == pl1.roadNumber && pl.roadPartNumber == pl1.roadPartNumber && pl.status != LinkStatus.Terminated && pl.track != pl1.track && pl.track != Track.Combined && pl.endAddrMValue == pl1.endAddrMValue && pl.hasCalibrationPointAtEnd
     })
 
-    if (!oppositeStatusChange && (matchAddr && sameStatus && matchContinuity && administrativeClassNotUpdated && trackNotUpdated && oppositeTrackNotUpdated && !(hasCalibrationPoint || hasParallelLinkOnCalibrationPoint)) &&
+    if (!oppositeStatusChange && (matchAddr && sameStatus && matchContinuity && administrativeClassNotUpdated && trackNotUpdated && originalTrackContinuous && oppositeTrackNotUpdated && !(hasCalibrationPoint || hasParallelLinkOnCalibrationPoint)) &&
         pl1.administrativeClass == pl2.administrativeClass) {
       Seq(
             pl1.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity,
@@ -302,13 +303,15 @@ object ProjectDeltaCalculator {
   }
 
   def partitionTerminatedWithProjectLinks[T <: BaseRoadAddress](projectLinks: Seq[ProjectLink], allNonTerminatedProjectLinks: Seq[ProjectLink]): ChangeTableRows3 = {
-    val sectioned = projectLinks.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.administrativeClass, ra.roadwayNumber))
+
+    val groupedToSections = projectLinks.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.administrativeClass, ra.roadwayNumber))
+    val sectioned    = groupedToSections
                                 .mapValues(v => combineTerminatedLinks(v.sortBy(_.startAddrMValue), Seq(), allNonTerminatedProjectLinks.filter(pl => {
                                   pl.roadNumber == v.head.roadNumber && pl.roadPartNumber == v.head.roadPartNumber && pl.administrativeClass == v.head.administrativeClass}))).values.flatten.map(ra =>
       RoadwaySection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.originalStartAddrMValue, ra.originalEndAddrMValue, ra.discontinuity, ra.administrativeClass, ra.ely, ra.reversed, ra.roadwayNumber, Seq())
     ).toSeq
-    val sections = sectioned.map(sect => {
+    val sections     = sectioned.map(sect => {
       val (src) = sect
       val target                    = src.copy(projectLinks = projectLinks.filter(link => {
         link.roadNumber == src.roadNumber &&
@@ -324,15 +327,15 @@ object ProjectDeltaCalculator {
   }
 
   def partitionWithProjectLinks[T <: BaseRoadAddress](projectLinks: Seq[ProjectLink], allNonTerminatedProjectLinks: Seq[ProjectLink]): ChangeTableRows2 = {
-    val sectioned = projectLinks.groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track))
-                              .mapValues(v => combineWithProjectLinks(v.sortBy(_.startAddrMValue), Seq(), allNonTerminatedProjectLinks.filter(pl => {
-                                pl.roadNumber == v.head.roadNumber && pl.roadPartNumber == v.head.roadPartNumber}))).values.flatten.map(pl => {
-      RoadwaySection(pl.originalRoadNumber, pl.originalRoadPartNumber, pl.originalRoadPartNumber,
-        pl.originalTrack, pl.originalStartAddrMValue, pl.originalEndAddrMValue, pl.originalDiscontinuity, pl.administrativeClass, pl.originalEly, pl.reversed, pl.roadwayNumber, Seq()) ->
-      RoadwaySection(pl.roadNumber, pl.roadPartNumber, pl.roadPartNumber,
-        pl.track, pl.startAddrMValue, pl.endAddrMValue, pl.discontinuity, pl.administrativeClass, pl.ely, pl.reversed, pl.roadwayNumber, Seq())
-    }
-    ).toSeq
+    val sectioned = projectLinks.groupBy(pl => {
+      (pl.roadNumber, pl.roadPartNumber, pl.track)
+    }).mapValues(v => {
+      combineWithProjectLinks(v.sortBy(_.startAddrMValue), Seq(), allNonTerminatedProjectLinks.filter(pl => {
+        pl.roadNumber == v.head.roadNumber && pl.roadPartNumber == v.head.roadPartNumber
+      }))
+    }).values.flatten.map(pl => {
+      RoadwaySection(pl.originalRoadNumber, pl.originalRoadPartNumber, pl.originalRoadPartNumber, pl.originalTrack, pl.originalStartAddrMValue, pl.originalEndAddrMValue, pl.originalDiscontinuity, pl.administrativeClass, pl.originalEly, pl.reversed, pl.roadwayNumber, Seq()) -> RoadwaySection(pl.roadNumber, pl.roadPartNumber, pl.roadPartNumber, pl.track, pl.startAddrMValue, pl.endAddrMValue, pl.discontinuity, pl.administrativeClass, pl.ely, pl.reversed, pl.roadwayNumber, Seq())
+    }).toSeq
 
     val sections = sectioned.map(sect => {
       val (src, targetToMap) = sect
