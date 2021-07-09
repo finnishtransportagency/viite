@@ -76,6 +76,7 @@
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified) +
         formCommon.staticField('Geometrian lähde', roadLinkSources) +
         showLinkId(selected) +
+        showLinkLength(selected) +
         '<div class="form-group editable form-editable-roadAddressProject"> ' +
 
         selectionForm(project, selection, selected, road) +
@@ -91,6 +92,14 @@
     var showLinkId = function (selected) {
       if (selected.length === 1) {
         return String(formCommon.staticField('Linkin ID', selected[0].linkId));
+      } else {
+        return '';
+      }
+    };
+
+    var showLinkLength = function (selected) {
+      if (selected.length === 1) {
+        return String(formCommon.staticField('Linkin pituus', Math.round(selected[0].endMValue - selected[0].startMValue)));
       } else {
         return '';
       }
