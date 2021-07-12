@@ -324,7 +324,8 @@ class RoadwayChangesDAO {
 
           val allProjectLinks = projectLinkDAO.fetchProjectLinks(project.id)
 
-          val nonTerminatedProjectlinks = delta.unChanged.mapping.map(_._2) ++ delta.transferred.mapping.map(_._2) ++ delta.newRoads //allProjectLinks.filter(_.status != LinkStatus.Terminated)
+//          val nonTerminatedProjectlinks = delta.unChanged.mapping.map(_._2) ++ delta.transferred.mapping.map(_._2) ++ delta.newRoads //
+          val nonTerminatedProjectlinks = allProjectLinks.filter(_.status != LinkStatus.Terminated)
 
           val changeTableRows = ProjectDeltaCalculator.partitionWithProjectLinks(nonTerminatedProjectlinks, allProjectLinks)
           val unChanged_roadway_sections = changeTableRows.adjustedSections.zip(changeTableRows.originalSections).filter(_._1.projectLinks.exists(_.status == LinkStatus.UnChanged))
@@ -341,24 +342,34 @@ class RoadwayChangesDAO {
 
           new_roadway_sections.foreach(roadwaySection => addToBatch(roadwaySection._1, AddressChangeType.New, roadwayChangePS, roadWayChangesLinkPS))
 
-          val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping, allProjectLinks)
-          val testTerminated = ProjectDeltaCalculator.partitionWithProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
-          val testTerminated2 = ProjectDeltaCalculator.partitionTerminatedWithProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
+//          val terminated = ProjectDeltaCalculator.partition(delta.terminations.mapping, allProjectLinks)
+          val terminated = ProjectDeltaCalculator.partitionWithProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
+//          val testTerminated2 = ProjectDeltaCalculator.partitionTerminatedWithProjectLinks(allProjectLinks.filter(_.status == LinkStatus.Terminated), allProjectLinks)
 
-          val twoTrackOldAddressRoadParts = ((unChanged_roadway_sections ++ transferred_roadway_sections).map(_._2).map(roadwaySection => {
-            (roadwaySection, "other")
-          }).toSeq ++ terminated.originalSections.map(roadwaySection => {
-            (roadwaySection._1, "terminated")
+//          val twoTrackOldAddressRoadParts = ((unChanged_roadway_sections ++ transferred_roadway_sections).map(_._2).map(roadwaySection => {
+//            (roadwaySection, "other")
+//          }).toSeq ++ terminated.originalSections.map(roadwaySection => {
+//            (roadwaySection._1, "terminated")
+//          }).toSeq).filterNot(_._1.track == Track.Combined).sortBy(_._1.startMAddr).groupBy(p => {
+//            (p._1.roadNumber, p._1.roadPartNumberStart)
+//          }).map(p => {
+//            p._1 -> p._2.groupBy(_._1.track).map(_._2)
+//          })
+
+          val twoTrackOldAddressRoadParts = ((unChanged_roadway_sections ++ transferred_roadway_sections).map(roadwaySection => {
+            (roadwaySection._2, "other")
+          }).toSeq ++ terminated.adjustedSections.map(roadwaySection => {
+            (roadwaySection, "terminated")
           }).toSeq).filterNot(_._1.track == Track.Combined).sortBy(_._1.startMAddr).groupBy(p => {
             (p._1.roadNumber, p._1.roadPartNumberStart)
           }).map(p => {
-            p._1 -> p._2.groupBy(_._1.track).map(_._2)
+            p._1 -> p._2.groupBy(_._1.track).values
           })
 
           val old_road_two_track_parts = ProjectDeltaCalculator.calc_parts(twoTrackOldAddressRoadParts)
 
           val twoTrackAdjustedTerminated = old_road_two_track_parts.flatMap(_._1) ++ old_road_two_track_parts.flatMap(_._2)
-          val combinedTerminatedTrack = terminated.originalSections.map(_._1).filter(_.track == Track.Combined)
+          val combinedTerminatedTrack = terminated.originalSections.filter(_.track == Track.Combined)
 
           val adjustedTerminated = combinedTerminatedTrack ++ twoTrackAdjustedTerminated
 

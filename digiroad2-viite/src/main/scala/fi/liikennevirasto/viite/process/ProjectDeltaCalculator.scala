@@ -327,9 +327,14 @@ object ProjectDeltaCalculator {
   }
 
   def partitionWithProjectLinks[T <: BaseRoadAddress](projectLinks: Seq[ProjectLink], allNonTerminatedProjectLinks: Seq[ProjectLink]): ChangeTableRows2 = {
-    val sectioned = projectLinks.groupBy(pl => {
+
+    val grouped = if (projectLinks.exists(_.status == LinkStatus.Terminated)) projectLinks.groupBy(pl => {
+      (pl.roadNumber, pl.roadPartNumber, pl.track, pl.roadwayNumber)
+    }) else projectLinks.groupBy(pl => {
       (pl.roadNumber, pl.roadPartNumber, pl.track)
-    }).mapValues(v => {
+    })
+
+    val sectioned    = grouped.mapValues(v => {
       combineWithProjectLinks(v.sortBy(_.startAddrMValue), Seq(), allNonTerminatedProjectLinks.filter(pl => {
         pl.roadNumber == v.head.roadNumber && pl.roadPartNumber == v.head.roadPartNumber
       }))
