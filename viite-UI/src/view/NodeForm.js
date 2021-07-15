@@ -701,7 +701,7 @@
           var nodePointTemplates = !_.isUndefined(templates) && _.has(templates, 'nodePoints') && templates.nodePoints;
           var junctionTemplates = !_.isUndefined(templates) && _.has(templates, 'junctions') && templates.junctions;
           rootElement.html(nodeForm('Solmun tiedot:', currentNode));
-          addDatePicker($('#nodeStartDate'), currentNode.startDate || moment("1.1.2000", dateutil.FINNISH_DATE_FORMAT).toDate());
+          addDatePicker($('#nodeStartDate'), currentNode.startDate || moment("1.1.1900", dateutil.FINNISH_DATE_FORMAT).toDate());
           disableAutoComplete(); // this code should broke on different browsers
 
           //  setting nodePoints on the form
