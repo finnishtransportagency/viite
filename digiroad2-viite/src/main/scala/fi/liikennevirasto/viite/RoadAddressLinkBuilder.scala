@@ -12,8 +12,11 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import org.slf4j.LoggerFactory
 
 class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLocationDAO, projectLinkDAO: ProjectLinkDAO) extends AddressLinkBuilder {
+
+  private val logger = LoggerFactory.getLogger(getClass)
 
   val vvhClient = new VVHClient(ViiteProperties.vvhRestApiEndPoint)
   val eventBus = new DummyEventBus
@@ -26,6 +29,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
   def build(roadLink: RoadLinkLike, roadAddress: RoadAddress): RoadAddressLink = {
+    logger.info(s"linkid: ${roadAddress.linkId} roadNumber: ${roadAddress.roadNumber} roadpart: ${roadAddress.roadPartNumber}")
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     val VVHRoadName = getVVHRoadName(roadLink.attributes)

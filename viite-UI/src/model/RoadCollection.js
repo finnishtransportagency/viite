@@ -78,11 +78,34 @@
       return _.flatten(roadLinkGroups);
     };
 
+    // Arin koodi
+
+    var selectedRoadNumber = 0;
+    var selectedRoadPartNumber = 0;
+
+
+    // Arin koodi
+    var getSelectedRoadLinks = function () {
+      var selected_road = _.find(roadLinks() , function (roadLink) {return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;});
+      if (selected_road) {
+        selectedRoadNumber = selected_road.getData().roadNumber;
+        selectedRoadPartNumber = selected_road.getData().roadPartNumber;
+      }
+      var testi = _.filter(roadLinks().concat(underConstructionRoadLinks()), function (roadLink) {
+        return (roadLink.isSelected() || (roadLink.getData().roadNumber == selectedRoadNumber && roadLink.getData().roadPartNumber == selectedRoadPartNumber)) && roadLink.getData().anomaly === Anomaly.None.value;
+      });
+      console.log(testi);
+
+      eventbus.trigger("linkProperties:setOpacity", testi);
+      return testi;
+    };
+/**
     var getSelectedRoadLinks = function () {
       return _.filter(roadLinks().concat(underConstructionRoadLinks()), function (roadLink) {
         return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;
       });
     };
+ */
 
     this.getDate = function () {
       return date;
@@ -98,11 +121,18 @@
       var month = withHistory ? date[1] : -1;
       var year = withHistory ? date[2] : -1;
       currentZoom = zoom;
+      console.log("Fetch ");
+      console.log("bounding box");
+      console.log(boundingBox);
       backend.getRoadLinks({
         boundingBox: boundingBox, zoom: zoom,
         withHistory: withHistory, day: day, month: month, year: year
       }, function (fetchedRoadLinks) {
         currentAllRoadLinks = fetchedRoadLinks;
+        currentAllRoadLinks.forEach(x => x.forEach(y => {
+          if(y.roadNumber === 5 && y.roadPartNumber === 205 && y.trackCode === 1) console.log(y)
+        }));
+        console.log(currentAllRoadLinks);
         fetchProcess(fetchedRoadLinks, zoom);
       });
     };
@@ -121,14 +151,26 @@
     });
 
     var fetchProcess = function (fetchedRoadLinks, zoom, drawUnknowns) {
+      console.log("fetchProcess");
+      console.log("tusti");
       var selectedLinkIds = _.map(getSelectedRoadLinks(), function (roadLink) {
         return roadLink.getId();
       });
+/**
+      fetchedRoadLinks.forEach( rl =>
+        rl.forEach(r => console.log(r))
+
+      );
+ */
+
       var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function (roadLinkGroup) {
         return _.map(roadLinkGroup, function (roadLink) {
           return new RoadLinkModel(roadLink);
         });
       });
+      console.log("roadlinkgroups before setting them");
+      roadLinkGroups.forEach(rg => console.log(rg));
+
       var fetched = _.partition(fetchedRoadLinkModels, function (model) {
         return _.every(model, function (mod) {
           return mod.getData().roadNumber === 0;
@@ -149,6 +191,11 @@
         setRoadLinkGroups(fetchedRoadLinkModels);
       }
 
+      console.log("roadlinkgroups after setting them");
+      roadLinkGroups.forEach(rg => rg.forEach(link => {
+        if (link.getData().roadNumber === 5 && link.getData().roadPartNumber === 205 && link.getData().trackCode === 1 ) console.log(link.getData())
+      }));
+
       if (!_.isEmpty(getSelectedRoadLinks())) {
         var nonFetchedLinksInSelection = _.reject(getSelectedRoadLinks(), function (selected) {
           var allGroups = _.map(_.flatten(fetchedRoadLinkModels), function (group) {
@@ -156,6 +203,8 @@
           });
           return _.includes(_.map(allGroups, 'linkId'), selected.getData().linkId);
         });
+        console.log("nonfetched");
+        console.log(nonFetchedLinksInSelection);
         roadLinkGroups.concat(nonFetchedLinksInSelection);
       }
 
@@ -297,11 +346,16 @@
     };
 
     this.getGroupByLinearLocationId = function (linearLocationId) {
-      return _.find(roadLinkGroups, function (roadLinkGroup) {
+      console.log("lineaarilokaatio ID = " + linearLocationId);
+      var roadlinkGroupTesti =  _.find(roadLinkGroups, function (roadLinkGroup) {
+        console.log("haetaan roadlinkGroupista grouppi lineaarilocaatio ID:lla");
         return _.some(roadLinkGroup, function (roadLink) {
           return roadLink.getData().linearLocationId === linearLocationId;
         });
       });
+      console.log("roadLinkGroup");
+      console.log(roadlinkGroupTesti);
+      return roadlinkGroupTesti;
     };
 
     this.addTmpRoadLinkGroups = function (tmp) {

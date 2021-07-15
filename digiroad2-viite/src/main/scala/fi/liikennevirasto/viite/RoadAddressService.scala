@@ -50,6 +50,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   val defaultStreetNumber = 1
 
   private def fetchLinearLocationsByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()) = {
+    logger.info(s"TESTI!@#@!#!@#")
     val linearLocations = withDynSession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
@@ -86,6 +87,49 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(linearLocations)
   }
 
+
+  /**
+    * Returns all linearlocations in roadpart based on 1 or more linear locations in roadpart
+    *
+    * @param linearLocations : Seq[LinearLocation] - some of the linear locations in roadpart
+    */
+
+  def getLinearlocationsOfWholeRoadway(linearLocations: Seq[LinearLocation]) = {
+    // get roadwaynumbers from linearlocations
+    val roadwayNumbers = linearLocations.map(ll => ll.roadwayNumber).distinct.toSet
+    logger.info(s"---------roadwaynumbers: ${roadwayNumbers}")
+    // get roadways with the roadwaynumbers
+    val roadways =  withDynSession {
+      roadwayDAO.fetchAllByRoadwayNumbers(roadwayNumbers)
+    }
+    roadways.foreach(rw => if (rw.roadNumber == 5 && rw.roadPartNumber == 205 && rw.track.value == 1  ) logger.info(s"------roadNumber: ${rw.roadNumber} roadpart ${rw.roadPartNumber} startM ${rw.startAddrMValue}"))
+    logger.info(s"---------roadways: ${roadways}")
+    // get roadnumber and roadpart number from the roadways and store in a tuple
+    val roadAndPartNumbers = roadways.map(rw => (rw.roadNumber, rw.roadPartNumber)).distinct
+    roadAndPartNumbers.foreach(rp => logger.info(s"roadnumber: ${rp._1} roadpart: ${rp._2}"))
+    logger.info(s"---------roadAndPartNumbers: ${roadAndPartNumbers}")
+    // get all the roadways (not just the roadwaynumbers that are on the linearlocations that we got from the boundingbox)
+    val allRoadwaysInRoadParts =  withDynSession {
+      val roadways = roadAndPartNumbers.map(rp => roadwayDAO.fetchAllByRoadAndPart(rp._1, rp._2)).flatten.distinct
+      roadways.foreach(rw => logger.info(s"validto ${rw.validTo} enddate ${rw.endDate}"))
+      roadways
+    }
+
+    allRoadwaysInRoadParts.foreach(rw => if (rw.roadNumber == 5 && rw.roadPartNumber == 205 && rw.track.value == 1  ) logger.info(s"----allroadways------roadNumber: ${rw.roadNumber} roadpart ${rw.roadPartNumber} startM ${rw.startAddrMValue}"))
+
+    // get all the roadwayNumbers from the roadways
+    val allRoadwayNumbersInRoadParts = allRoadwaysInRoadParts.map(rw => rw.roadwayNumber)
+
+    logger.info(s"---------allRoadwayNumbersInRoadParts ${allRoadwayNumbersInRoadParts}")
+    // get all the linearlocations
+    val allLinearlocations =  withDynSession {
+      linearLocationDAO.fetchByRoadwayNumber(allRoadwayNumbersInRoadParts)
+    }
+
+    allLinearlocations.foreach(ll => if(ll.roadwayNumber == 52331 | ll.roadwayNumber == 52330) logger.info(s"linearlocations ------ ${ll.id}"))
+    allLinearlocations
+  }
+
   private def getRoadAddressLinks(boundingBoxResult: BoundingBoxResult): Seq[RoadAddressLink] = {
     val boundingBoxResultF =
       for {
@@ -95,21 +139,40 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
         linearLocationsAndHistoryRoadLinksF <- boundingBoxResult.roadAddressResultF
       } yield (changeInfoF, roadLinksF, complementaryRoadLinksF, linearLocationsAndHistoryRoadLinksF)
 
+
+
     val (changeInfos, roadLinks, complementaryRoadLinks, (linearLocations, historyRoadLinks)) =
       time(logger, "Fetch VVH bounding box data") {
         Await.result(boundingBoxResultF, Duration.Inf)
       }
 
+    logger.info(s"linearlocations size ${linearLocations.size}")
+    linearLocations.foreach(ll => if (ll.linkId == 5172091 | ll.linkId == 5172090) logger.info(s"testitesti true"))
+
     val allRoadLinks = roadLinks ++ complementaryRoadLinks
+    //allRoadLinks.foreach(link =>  logger.info(s"-----roadlink: ${link.roadNumber} ${link.}"))
+
+    //lineaarilocaatioita muokkaillaan ja roadaddressit ei palaudu kunnolla???
+
 
     //removed apply changes before adjusting topology since in future NLS will give perfect geometry and supposedly, we will not need any changes
     val (adjustedLinearLocations, changeSet) = if (frozenVVH) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
-    if (!frozenVVH)
+    if (!frozenVVH) {
       eventbus.publish("roadAddress:persistChangeSet", changeSet)
+    }
+
+    logger.info(s"linearlocations size adjusted ${adjustedLinearLocations.size}")
 
     val roadAddresses = withDynSession {
       roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
     }
+
+    val testi2 = roadAddresses.map(r => r.linkId).toSet
+    logger.info(s"test2 ${testi2}")
+
+    //allRoadLinks.foreach(l => logger.info(s"roadlink linkd id---- ${l.linkId}"))
+    val testi = allRoadLinks.map(l => l.linkId)
+    logger.info(s"link ids---------${testi}")
     RoadAddressFiller.fillTopology(allRoadLinks, roadAddresses)
   }
 
@@ -127,13 +190,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
     * @return
     */
   def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
-
+    // lineaarilocaatiot
     val linearLocations = withDynSession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
       }
     }
-    val linearLocationsLinkIds = linearLocations.map(_.linkId).toSet
+    val allLinearlocations = getLinearlocationsOfWholeRoadway(linearLocations)
+    // get all the link id:s from the linearlocations
+    allLinearlocations.foreach(ll => if (ll.linkId == 5172091 | ll.linkId == 5172090) logger.info(s"testitesti true"))
+    val linearLocationsLinkIds = allLinearlocations.map(_.linkId).toSet
+    //val linearLocationsLinkIds = linearLocations.map(_.linkId).toSet
+
+    logger.info(s"linearlocations size ${allLinearlocations.size}")
+
 
     val boundingBoxResult = BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(linearLocationsLinkIds),
@@ -141,7 +211,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
       Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(linearLocationsLinkIds)),
       Future(Seq())
     )
-
+    logger.info("CASE 2")
+    //jatka tasta
     getRoadAddressLinks(boundingBoxResult)
   }
 
@@ -171,9 +242,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
     val roadAddresses = withDynTransaction {
       val linearLocations = linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
-      roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
-    }
 
+      val allLinearlocations = getLinearlocationsOfWholeRoadway(linearLocations)
+
+      roadwayAddressMapper.getRoadAddressesByLinearLocation(allLinearlocations)
+    }
+    logger.info("CASE 1")
     roadAddresses.map(roadAddressLinkBuilder.build)
   }
 
@@ -705,13 +779,30 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)],
                           everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
 
+    val linearLocations = withDynSession {
+      time(logger, "Fetch addresses") {
+        linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
+      }
+    }
+    val allLinearLocations = getLinearlocationsOfWholeRoadway(linearLocations)
+    val allLinearLocationLinkIds = allLinearLocations.map(_.linkId).toSet
     val boundingBoxResult = BoundingBoxResult(
-      roadLinkService.getChangeInfoFromVVHF(boundingRectangle, Set()),
+      roadLinkService.getChangeInfoFromVVHF(allLinearLocationLinkIds),
+      //roadLinkService.getChangeInfoFromVVHF(boundingRectangle, Set()),
       //Should fetch all the road types
-      Future(fetchLinearLocationsByBoundingBox(boundingRectangle)),
-      Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads)),
-      Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, Set()))
+      Future {
+        val historyRoadLinks = roadLinkService.getRoadLinksHistoryFromVVH(allLinearLocationLinkIds)
+        (allLinearLocations, historyRoadLinks)
+      },
+      //Future(roadLinkService.getRoadLinksFromVVH(boundingRectangle, roadNumberLimits, Set(), everything, publicRoads)),
+      Future(roadLinkService.getRoadLinksByLinkIdsFromVVH(allLinearLocationLinkIds)),
+      //Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, Set()))
+      Future{
+        val complementaryRoadLinks = roadLinkService.getComplementaryRoadLinksFromVVHByLinkIds(allLinearLocationLinkIds)
+        complementaryRoadLinks
+      }
     )
+    logger.info("CASE 3")
     getRoadAddressLinks(boundingBoxResult)
   }
 

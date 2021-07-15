@@ -14,15 +14,20 @@
       var day = params.day;
       var month = params.month;
       var year = params.year;
-      if (withHistory)
+
+      if (withHistory) {
+        console.log("with history");
+        console.log('api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox);
         return {
           url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox + '&dd=' + day + '&mm=' + month + '&yyyy=' + year
-        };
-      else
+        };}
+      else {
+        console.log("without history");
+        console.log('api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox);
         return {
           url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox
         };
-    });
+    }});
 
     this.getNodesAndJunctions = createCallbackRequestor(function (params) {
       var zoom = params.zoom;

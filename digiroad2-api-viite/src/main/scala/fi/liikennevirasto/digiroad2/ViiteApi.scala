@@ -1097,11 +1097,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case DrawRoadPartsOnly =>
         Seq()
       case DrawLinearPublicRoads => time(logger, operationName = "DrawLinearPublicRoads") {
+        // muokattu
         roadAddressService.getRoadAddressesWithLinearGeometry(boundingRectangle, Seq((1, 19999), (40000, 49999)))
       }
       case DrawPublicRoads => time(logger, operationName = "DrawPublicRoads") {
+        // muokattu
         roadAddressService.getRoadAddressLinksByBoundingBox(boundingRectangle, Seq((1, 19999), (40000, 49999)))
-      }
+      } // muokattu
       case DrawAllRoads => time(logger, operationName = "DrawAllRoads") {
         roadAddressService.getRoadAddressLinks(boundingRectangle, roadNumberLimits = Seq(), everything = true)
       }

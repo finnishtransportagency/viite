@@ -165,6 +165,12 @@
       geometryChangedLayer.setOpacity(opacity);
     };
 
+
+    me.eventListener.listenTo(eventbus, 'linkProperties:setOpacity', function (links) {
+      console.log(links);
+      console.log("eventbus toimiii");
+    });
+
     /**
      * We declare the type of interaction we want the map to be able to respond.
      * A selected feature is moved to a new/temporary layer out of the default roadLayer.
@@ -252,10 +258,13 @@
       filter: function (feature) {
         var currentSelectionType = applicationModel.getSelectionType().value;
         if (currentSelectionType === SelectionType.Floating.value) {
+          console.log("if ///");
           return feature.linkData.anomaly !== Anomaly.None.value && feature.linkData.floating === SelectionType.Floating.value;
         } else if (currentSelectionType === SelectionType.Unknown.value) {
+          console.log("else if///");
           return feature.linkData.anomaly !== Anomaly.None.value && feature.linkData.roadLinkType === RoadLinkType.UnknownRoadLinkType.value;
         } else {
+          console.log("else ///");
           return currentSelectionType === SelectionType.All.value;
         }
       },
@@ -282,10 +291,18 @@
       var selectedF = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.linkData);
       });
-
+      console.log("selectSingleClick");
+      console.log("selectedF");
+      console.log(selectedF);
       if (selectedF) {
+        console.log("if selectedF");
         var selection = selectedF.linkData;
+        console.log("selection (alla)");
+        console.log(selection);
+        console.log("visibleFeatures (alla)");
+        console.log(visibleFeatures);
         if (roadLayer.layer.getOpacity() === 1) {
+          console.log("asetetaan opacity haaleaksi muille linkeille");
           setGeneralOpacity(0.2);
         }
         if (selection.floating === SelectionType.Floating.value && !applicationModel.isReadOnly()) {
@@ -308,6 +325,7 @@
         } else {
           selectedLinkProperty.close();
           setGeneralOpacity(0.2);
+          console.log("open selected link (vain se mihin klikki osuu)");
           selectedLinkProperty.open(selection, true, visibleFeatures);
         }
         if (applicationModel.selectionTypeIs(SelectionType.Unknown) && selection.floating !== SelectionType.Floating.value && (selection.anomaly === Anomaly.NoAddressGiven.value || selection.anomaly === Anomaly.GeometryChanged.value)) {

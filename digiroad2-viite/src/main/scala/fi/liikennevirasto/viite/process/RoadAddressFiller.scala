@@ -199,7 +199,9 @@ object RoadAddressFiller {
   }
 
   private def generateSegments(topology: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink]  = {
-    roadAddresses.map(ra => roadAddressLinkBuilder.build(topology, ra))
+    val roadAddressLinks =  roadAddresses.map(ra => roadAddressLinkBuilder.build(topology, ra))
+    logger.info(s"roadaddress links length: ${roadAddressLinks.length}")
+    roadAddressLinks
   }
 
   def fillTopology(topology: Seq[RoadLinkLike], roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {

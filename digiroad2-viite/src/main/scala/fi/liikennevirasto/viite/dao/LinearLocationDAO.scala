@@ -611,6 +611,7 @@ class LinearLocationDAO {
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
 
       val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(extendedBoundingRectangle, "iloc.geometry")
+      logger.info(s"----------------ROADNUMBERLIMITS ${roadNumberLimits}")
 
       val boundingBoxQuery = if (roadNumberLimits.isEmpty) {
         s"""select ROADWAY_NUMBER from linear_location iloc

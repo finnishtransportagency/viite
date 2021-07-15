@@ -49,6 +49,7 @@
     };*/
 
     var setCurrent = function (data) {
+      console.log("asetetaan currentti");
       current = data;
     };
 
@@ -61,7 +62,6 @@
       var extractUniqueValues = function (dataToExtract, property) {
         return _.chain(dataToExtract).map(property).uniq().value().join(', ');
       };
-
       var isMultiSelect = selectedData.length > 1;
       var selectedLinkIds = {selectedLinks: _.map(selectedData, 'linkId')};
       var selectedIds = {selectedIds: _.map(selectedData, 'id')};
@@ -113,7 +113,12 @@
     };
 
     var openSingleClick = function (data) {
+      console.log("openSingleClick");
       if (isOnLinearLocation(data)) {
+        console.log("setCurrent/ haetaan grouppi valitun linkin lineaarilocaatio Idlla");
+        console.log("current");
+        var testi123 = roadCollection.getGroupByLinearLocationId(data.linearLocationId);
+        console.log(testi123);
         setCurrent(roadCollection.getGroupByLinearLocationId(data.linearLocationId));
       } else {
         setCurrent(roadCollection.getGroupByLinkId(data.linkId));
@@ -129,12 +134,20 @@
     };
 
     var open = function (data, isSingleClick, visibleFeatures) {
+      console.log("open funktio");
+      console.log("data/selection (klikattu linkki)");
+      console.log(data);
+      //console.log("visibleFeatures");
+      //console.log(visibleFeatures);
       if (isSingleClick) {
         openSingleClick(data);
       } else {
         openDoubleClick(data);
       }
+      console.log("current");
+      console.log(current);
       _.forEach(current, function (selected) {
+        console.log("asetetaan groupista kaikki valituksi yksikerrallaan");
         selected.select();
       });
       processOlFeatures(visibleFeatures);
@@ -142,6 +155,7 @@
     };
 
     var openFloating = function (data, isSingleClick, visibleFeatures) {
+      console.log("openFloating");
       open(data, isSingleClick, visibleFeatures);
       getGroupAdjacents(data.linkId);
       /*var data4Display = _.map(get(), function (feature) {
