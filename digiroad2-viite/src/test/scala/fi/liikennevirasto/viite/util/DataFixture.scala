@@ -4,12 +4,6 @@ import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-//Compliler :
-//reference to RoadNetworkChecker is ambiguous;
-//it is imported twice in the same scope by
-//import fi.liikennevirasto.viite.process._
-//and import fi.liikennevirasto.digiroad2._
-//val checker = new RoadNetworkChecker(roadLinkService)
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
@@ -89,7 +83,7 @@ object DataFixture {
     val username = ViiteProperties.bonecpUsername
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer, geometryFrozen)
     PostGISDatabase.withDynTransaction {
-      val checker = new fi.liikennevirasto.viite.process.RoadNetworkChecker(roadLinkService)
+      val checker = new RoadNetworkChecker(roadLinkService)
       checker.checkRoadNetwork(username)
     }
     println(s"\nend checking road network at time: ${DateTime.now()}")

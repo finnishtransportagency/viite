@@ -65,7 +65,6 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
     }
 
     def withTrack(testTrack: TestTrack): Seq[ProjectLink] = {
-      //      addrM.init.zip(addrM.tail).zipWithIndex.map { case (se, index) => {
       testTrack.status.zipWithIndex.map { case (status, index) => {
         val (st, en) = (testTrack.geom(index).minBy(_.x).x.toLong, testTrack.geom(index).maxBy(_.x).x.toLong)
 
@@ -341,12 +340,6 @@ class TwoTrackRoadUtilsSpec extends FunSuite with Matchers {
       track2(1).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
       track2(2).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.UserDefinedCP)
       track2(3).calibrationPointTypes shouldBe (CalibrationPointDAO.CalibrationPointType.NoCP, CalibrationPointDAO.CalibrationPointType.NoCP)
-
-      //      println("---")
-      //      track1.foreach(println)
-      //      println("---")
-      //      track2.foreach(println)
-      //      println(udcp)
     }
   }
 

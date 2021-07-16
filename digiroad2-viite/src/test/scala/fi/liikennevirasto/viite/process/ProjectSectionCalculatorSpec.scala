@@ -588,10 +588,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       val geom0 = Seq(Point(0.0, 0.0), Point(0.0, 9.8))
       val geom1 = Seq(Point(0.0, -10.0), Point(0.0, 0.0))
       val geom2 = Seq(Point(0.0, -20.2), Point(0.0, -10.0))
-      val geom3 = Seq(Point(0.0, 9.8), Point(0.0, 20.2))
-      val projectLink0 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad0, 0, 5, 1, AdministrativeClass.Unknown,
-                          Track.Combined, Continuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L,
-                          0.0, GeometryUtils.geometryLength(geom0), SideCode.TowardsDigitizing, 0, (None, None), geom0, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val projectLink0 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad0, 0, 5, 1, AdministrativeClass.Unknown, Track.Combined, Continuous, 0L, 12L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12345L, 0.0, GeometryUtils.geometryLength(geom0), SideCode.TowardsDigitizing, 0, (None, None), geom0, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
                           .copy(projectId = rap.id, roadwayId = roadwayId, linearLocationId = linearLocationId, roadwayNumber = roadwayNumber)
       val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 0, 5, 1, AdministrativeClass.Unknown,
                           Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12346L,
@@ -599,9 +596,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
                           .copy(projectId = rap.id)
       val projectLink2 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad2, 0, 5, 1, AdministrativeClass.Unknown, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12347L, 0.0, GeometryUtils.geometryLength(geom2), SideCode.TowardsDigitizing, 0, (None, None), geom2, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
                           .copy(projectId = rap.id)
-      val projectLink3 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad3, 0, 5, 1, AdministrativeClass.Unknown,
-                          Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12348L,
-                          0.0, GeometryUtils.geometryLength(geom3), SideCode.TowardsDigitizing, 0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
+      val geom3 = Seq(Point(0.0, 9.8), Point(0.0, 20.2))
+      val projectLink3 = toProjectLink(rap, LinkStatus.Transfer)(RoadAddress(idRoad3, 0, 5, 1, AdministrativeClass.Unknown, Track.Combined, Discontinuous, 12L, 24L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 12348L, 0.0, GeometryUtils.geometryLength(geom3), SideCode.TowardsDigitizing, 0, (None, None), geom3, LinkGeomSource.NormalLinkInterface, 8, NoTermination, 0))
                           .copy(projectId = rap.id, roadwayId = roadwayId+3, linearLocationId = linearLocationId+3, roadwayNumber = roadwayNumber+3)
 
       val (linearCombined0, rwComb0): (LinearLocation, Roadway) = Seq(projectLink0).map(toRoadwayAndLinearLocation).head
@@ -620,11 +616,11 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       output.filter(_.id == idRoad0).foreach { r =>
         r.calibrationPoints should be(None, None)
         // new value = original + (new end - old end)
-        r.startAddrMValue should be(Math.round(-projectLink0.geometryLength + maxAddr - projectLink3.geometryLength))
-        r.endAddrMValue should be(Math.round( maxAddr - projectLink3.geometryLength))
+        r.startAddrMValue should be(projectLink0.startAddrMValue + maxAddr - projectLink3.endAddrMValue)
+        r.endAddrMValue should be(projectLink0.endAddrMValue + maxAddr - projectLink3.endAddrMValue)
       }
       output.filter(_.id == idRoad3).foreach { r =>
-        r.calibrationPoints should be(None, Some(CalibrationPoint(12348, Math.round(10.399999999999999 * 10.0) / 10.0, maxAddr, RoadAddressCP)))
+        r.calibrationPoints should be(None, Some(CalibrationPoint(12348, Math.round(10.399999999999999 * 10.0) / 10.0, 44, RoadAddressCP)))
         r.startAddrMValue should be(maxAddr + projectLink3.startAddrMValue - projectLink3.endAddrMValue)
         r.endAddrMValue should be(maxAddr)
       }
