@@ -54,7 +54,7 @@ class DiscontinuityTrackCalculatorStrategy(discontinuities: Seq[Discontinuity]) 
         val (newLeft, newLeftRest) = getUntilNearestAddress(leftProjectLinks, right.last)
         adjustTwoTracks(startAddress, newLeft, right, userDefinedCalibrationPoint, newLeftRest, restRight)
 
-      case (Continuous, Continuous) => // If both sides have a discontinuity
+      case (Continuous, Continuous) => // If both sides have a continuity?
         adjustTwoTracks(startAddress, left, right, userDefinedCalibrationPoint, restLeft, restRight)
 
       /* left here if needed for some case. Was in place of: case (_, MinorDiscontinuity) above. */

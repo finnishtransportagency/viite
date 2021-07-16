@@ -268,6 +268,8 @@ trait BaseRoadAddress {
     GeometryUtils.areAdjacent(p, currEndPoint, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)
   }
 
+  lazy val roadwayDAO = new RoadwayDAO
+
   lazy val startingPoint: Point = (sideCode == SideCode.AgainstDigitizing, reversed) match {
     case (true, true) | (false, false) =>
       //reversed for both SideCodes

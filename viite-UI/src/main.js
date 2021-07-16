@@ -12,7 +12,7 @@ $(function () {
   var parameters = parseQueryParameters(queryString);
   var isExperimental = parameters.isExperimental === 'true';
 
-  Analytics.start();
+  // Analytics.start();
 
   Application.start(undefined, undefined, isExperimental);
 });

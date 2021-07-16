@@ -136,9 +136,9 @@ class ProjectLinkDAOSpec extends FunSuite with Matchers {
       projectReservedPartDAO.reserveRoadPart(projectId, roadNumber1, roadPartNumber1, project.createdBy)
       val projectLinks = Seq(
         dummyProjectLink(projectLinkId1, projectId, linkId1, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 0, 100, 0.0, 100.0, None, (Some(CalibrationPoint(linkId1, 0.0, 0, RoadAddressCP)), None), Seq(), LinkStatus.New, AdministrativeClass.State, reversed = false, 0)
-                  .copy(originalCalibrationPointTypes = (NoCP, NoCP)),
+                                          .copy(originalCalibrationPointTypes = (NoCP, NoCP)),
         dummyProjectLink(projectLinkId2, projectId, linkId2, roadwayIds.head, roadwayNumber1, roadNumber1, roadPartNumber1, 100, 200, 0.0, 100.0, None, (None, Some(CalibrationPoint(linkId2, 100.0, 200, RoadAddressCP))), Seq(), LinkStatus.New, AdministrativeClass.State, reversed = false, 0)
-                  .copy(originalCalibrationPointTypes = (NoCP, NoCP))
+                                          .copy(originalCalibrationPointTypes = (NoCP, NoCP))
       )
       projectLinkDAO.create(projectLinks)
       val returnedProjectLinks = projectLinkDAO.fetchProjectLinks(projectId)

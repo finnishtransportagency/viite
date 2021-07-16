@@ -36,10 +36,12 @@
     }
 
     function getChanges(projectID, sortFn) {
+      applicationModel.addSpinner();
       backend.getChangeTable(projectID, function (changeData) {
         roadChangeAPIResultParser(changeData);
         sortFn();
         loadChanges();
+        applicationModel.removeSpinner();
       });
     }
 

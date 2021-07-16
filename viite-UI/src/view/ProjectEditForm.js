@@ -323,7 +323,7 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated', function (data) {
-        eventbus.trigger('projectChangeTable:refresh');
+        //eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
         selectedProjectLinkProperty.setCurrent([]);
@@ -487,7 +487,7 @@
           }));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
-          if (selectedProjectLink[0].id !== 0) {
+          if (selectedProjectLink[0].id !== -1) {
             fillDistanceValues(selectedProjectLink);
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
             rootElement.find('#distanceValue').prop("hidden", false);

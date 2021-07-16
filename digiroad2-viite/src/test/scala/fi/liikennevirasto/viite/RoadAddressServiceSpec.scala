@@ -717,12 +717,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadwayPointsBeforeTransferLink = Seq(beforeChangesTransfer).filter(_.status == LinkStatus.Transfer).map(_.roadwayNumber).distinct.flatMap{ rwp=>
       roadwayPointDAO.fetchByRoadwayNumber(rwp)
       }
-      val delta = Delta(DateTime.now, newRoads , terminated, unchanged, transferred, renumbered)
 
       val reservedParts = Seq(ProjectReservedPart(0, 99, 2, Some(20), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L)))
 
       val project = projectDAO.fetchById(projectId).get
-      roadwayChangesDAO.insertDeltaToRoadChangeTable(delta, projectId, Some(project.copy(reservedParts = reservedParts)))
+      roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, Some(project.copy(reservedParts = reservedParts)))
 
       val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
 
@@ -832,7 +831,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val formedParts = Seq(ProjectReservedPart(0, 99, 2, None, None, None, Some(15), Some(Discontinuity.Continuous), Some(8L), Some(12345L)))
 
       val project = projectDAO.fetchById(projectId).get
-      roadwayChangesDAO.insertDeltaToRoadChangeTable(delta, projectId, Some(project.copy(reservedParts = reservedParts, formedParts = formedParts)))
+      roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, Some(project.copy(reservedParts = reservedParts, formedParts = formedParts)))
       val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
 
       when(mockRoadwayDAO.fetchAllBySectionAndTracks(any[Long], any[Long], any[Set[Track]])).thenReturn(Seq(rw1WithId, rw2WithId))
@@ -895,49 +894,37 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       projectReservedPartDAO.reserveRoadPart(projectId, 99, 1, "u")
       projectReservedPartDAO.reserveRoadPart(projectId, 99, 2, "u")
       projectLinkDAO.create(pls.map(_.copy(id = NewIdValue)))
-      val projectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
-
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.linkId), LinkStatus.UnChanged, "-", 99, 1, 0, Option.empty[Int])
-      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
 
       roadwayPointDAO.create(roadwayNumber1, 0, link1.createdBy.getOrElse("test"))
       roadwayPointDAO.create(roadwayNumber1, 5, link2.createdBy.getOrElse("test"))
       roadwayPointDAO.create(roadwayNumber1, 20, link2.createdBy.getOrElse("test"))
 
-      val afterUpdateProjectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
+      val projectLinks = projectLinkDAO.fetchByProjectRoad(99, projectId).sortBy(_.startAddrMValue)
+
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.head.linkId), LinkStatus.UnChanged, "-", 99, 1, 0, Option.empty[Int])
+      projectService.updateProjectLinks(projectId, Set(), Seq(projectLinks.last.linkId), LinkStatus.Transfer, "-", 99, 2, 0, Option.empty[Int])
+
+      val updatedProjectLinks_ = projectLinkDAO.fetchProjectLinks(projectId).toList
+      val updatedProjectLinks2 = ProjectSectionCalculator.assignMValues(updatedProjectLinks_)
+
+      val afterUpdateProjectLinks = updatedProjectLinks2.sortBy(pl => (pl.startAddrMValue, pl.roadPartNumber))
       val beforeDualPoint = afterUpdateProjectLinks.head.copy(roadwayNumber = roadwayNumber2)
       val afterDualPoint = afterUpdateProjectLinks.last.copy(roadwayNumber = roadwayNumber3)
       val mappedRoadwayChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
 
-      val newRoads = Seq()
-      val terminated = Termination(Seq())
-      val unchanged = Unchanged(Seq(
-        (
-          dummyRoadAddress(roadwayNumber1, 99, 1, 0, 5, Some(DateTime.now()),None, 12345, 0 , 5, LinkGeomSource.NormalLinkInterface, geom1),
-          beforeDualPoint
-        )
-      )
-      )
-      val transferred = Transferred(Seq(
-        (
-          dummyRoadAddress(roadwayNumber1, 99, 1, 5, 20, Some(DateTime.now()),None, 12346, 0 , 15, LinkGeomSource.NormalLinkInterface, geom2),
-          afterDualPoint
-        )
-      )
-      )
-      val renumbered = ReNumeration(Seq())
-
-      val delta = Delta(DateTime.now, newRoads , terminated, unchanged, transferred, renumbered)
-
       val reservedParts = Seq(ProjectReservedPart(0, 99, 2, Some(20), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L)))
 
       val project = projectDAO.fetchById(projectId).get
-      roadwayChangesDAO.insertDeltaToRoadChangeTable(delta, projectId, Some(project.copy(reservedParts = reservedParts)))
+      roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, Some(project.copy(reservedParts = reservedParts)))
 
       val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectId))
 
       when(mockRoadwayDAO.fetchAllBySectionAndTracks(any[Long], any[Long], any[Set[Track]])).thenReturn(Seq(rw1WithId, rw2WithId))
-      roadAddressService.handleRoadwayPointsUpdate(roadwayChanges, mappedRoadwayChanges.map { rwc =>
+      val t1 = roadwayChanges.last.changeInfo.source.copy(startAddressM = Some(5), endAddressM = Some(20), startRoadPartNumber = Some(1), endRoadPartNumber = Some(1))
+      val t2 = roadwayChanges.last.changeInfo.copy(source = t1)
+      val updatedRoadwayChanges = roadwayChanges.last.copy(changeInfo = t2)
+
+      roadAddressService.handleRoadwayPointsUpdate(List(roadwayChanges.head, updatedRoadwayChanges), mappedRoadwayChanges.map { rwc =>
         rwc.originalRoadPartNumber match {
           case 1 => rwc.copy(originalRoadwayNumber = roadwayNumber1)
           case 2 => rwc.copy(originalRoadPartNumber = 1, originalStartAddr = 5, originalEndAddr = 20, originalRoadwayNumber = roadwayNumber1)
@@ -949,11 +936,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       roadwayPointsForExpiredRoadwayNumber.size should be (0)
 
       val roadwayPointsBeforeDual = roadwayPointDAO.fetchByRoadwayNumber(beforeDualPoint.roadwayNumber).sortBy(_.addrMValue)
+      val roadwayPointsAfterDual = roadwayPointDAO.fetchByRoadwayNumber(afterDualPoint.roadwayNumber).sortBy(_.addrMValue)
+
       roadwayPointsBeforeDual.size should be (2)
       roadwayPointsBeforeDual.head.addrMValue should be (beforeDualPoint.startAddrMValue)
       roadwayPointsBeforeDual.last.addrMValue should be (beforeDualPoint.endAddrMValue)
 
-      val roadwayPointsAfterDual = roadwayPointDAO.fetchByRoadwayNumber(afterDualPoint.roadwayNumber).sortBy(_.addrMValue)
       roadwayPointsAfterDual.size should be (2)
       roadwayPointsAfterDual.head.addrMValue should be (afterDualPoint.startAddrMValue)
       roadwayPointsAfterDual.last.addrMValue should be (afterDualPoint.endAddrMValue)

@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
-import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.{ProjectLinkDAO, _}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -184,12 +184,13 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
   def mapLinearLocations(roadway: Roadway, projectLinks: Seq[ProjectLink]): Seq[LinearLocation] = {
     projectLinks.sortBy(_.startAddrMValue).zip(1 to projectLinks.size).
       map {
-        case (projectLink, key) =>
+        case (projectLink, key) => {
           LinearLocation(projectLink.linearLocationId, key, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode, projectLink.linkGeometryTimeStamp,
             (CalibrationPointsUtils.toCalibrationPointReference(projectLink.startCalibrationPoint),
               CalibrationPointsUtils.toCalibrationPointReference(projectLink.endCalibrationPoint)),
             projectLink.geometry, projectLink.linkGeomSource, roadway.roadwayNumber, Some(DateTime.now()))
       }
+    }
   }
 
   /**
