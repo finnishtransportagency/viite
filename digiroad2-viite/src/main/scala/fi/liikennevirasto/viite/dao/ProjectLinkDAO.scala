@@ -406,11 +406,6 @@ class ProjectLinkDAO {
         addressPS.setDouble(30, pl.linkGeometryTimeStamp)
         addressPS.setInt(31, pl.linkGeomSource.value)
         addressPS.setDate(32, new java.sql.Date(new Date().getTime))
-
-//        addressPS.setLong(33, pl.originalTrack.value)
-//        addressPS.setLong(34, pl.originalEly)
-//        addressPS.setLong(35, pl.originalAdministrativeClass.value)
-
         addressPS.addBatch()
       }
       addressPS.executeBatch()

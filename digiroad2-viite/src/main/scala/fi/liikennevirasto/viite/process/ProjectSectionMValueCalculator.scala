@@ -7,8 +7,6 @@ import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectLink, ProjectLinkDAO}
 
 object ProjectSectionMValueCalculator {
 
-  val projectLinkDAO = new ProjectLinkDAO
-
   def calculateMValuesForTrack(seq: Seq[ProjectLink], calibrationPoints: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
     // That is an address connected extension of this
     def isExtensionOf(ext: ProjectLink)(thisPL: ProjectLink) = {
@@ -60,7 +58,6 @@ object ProjectSectionMValueCalculator {
 
       val newAddressValues = ordered.scanLeft(addrSt.getOrElse(0.0)) { case (m, pl) => {
         val someCalibrationPoint: Option[UserDefinedCalibrationPoint] = cps.get(pl.id)
-//          if (!(pl.isSplit && someCalibrationPoint.isEmpty)) {
           val addressValue = if (someCalibrationPoint.nonEmpty) someCalibrationPoint.get.addressMValue else m + Math.abs(pl.geometryLength) * coEff
           pl.status match {
             case LinkStatus.New => addressValue
@@ -68,9 +65,6 @@ object ProjectSectionMValueCalculator {
             case LinkStatus.Terminated => pl.endAddrMValue
             case _ => throw new InvalidAddressDataException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
           }
-//        } else {
-//          pl.endAddrMValue
-//        }
       }
       }
       seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) => pl.copy(startAddrMValue = Math.round(st), endAddrMValue = Math.round(en))

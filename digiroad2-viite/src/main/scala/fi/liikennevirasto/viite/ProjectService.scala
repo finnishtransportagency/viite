@@ -404,7 +404,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           val reversed = if (existingProjectLinks.nonEmpty) existingProjectLinks.forall(_.reversed) else false
 
           var projectLinks: Seq[ProjectLink] = linkIds.toSet.map { id: Long =>
-            /* Set calibration point */
+            /* Set calibration point and start and end addresses for UI. */
             val connectedProjectlink = existingProjectLinks.filterNot(_.status == LinkStatus.Terminated).find(pl => roadLinks(id).geometry.exists(rl_point => pl.connected(rl_point)))
             val connectedStartProjectlink = existingProjectLinks.filterNot(pl => Seq(LinkStatus.Terminated, LinkStatus.New).contains(pl.status)).find(pl => roadLinks(id).geometry.exists(rl_point => GeometryUtils.areAdjacent(rl_point, if (pl.sideCode == AgainstDigitizing) pl.geometry.head else pl.geometry.last, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)))
             val connectedEndProjectlink = existingProjectLinks.filterNot(pl => Seq(LinkStatus.Terminated, LinkStatus.New).contains(pl.status)).find(pl => roadLinks(id).geometry.exists(rl_point => GeometryUtils.areAdjacent(rl_point, if (pl.sideCode == AgainstDigitizing) pl.geometry.last else pl.geometry.head, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)))
@@ -549,7 +549,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               firstLinkId, existingLinks)
           }
         } else {
-          /* Set given discontinuity to the last new link if not continuous.
+          /* Set discontinuity to the last new link if not continuous.
            * Finds the link by assuming the end is not connected, i.e. before round about. */
           if (discontinuity != Discontinuity.Continuous) {
             val existingLinksGeoms = existingLinks.map(nl => (nl.geometry.head, nl.geometry.last))
@@ -650,7 +650,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             projectLinkDAO.updateProjectLinks(projectLinks.map(x =>
               x.copy(discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous), reversed = isReversed(originalSideCodes)(x))), username, originalAddresses)
             ProjectCalibrationPointDAO.removeAllCalibrationPoints(projectLinks.map(_.id).toSet)
-//            recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
             saveProjectCoordinates(projectId, coordinates)
             None
           case Some(error) => Some(error)
@@ -752,7 +751,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * Fetches the projectLink name, first from the project link, if that's not available then search for the road address.
     *
     * @param projectLink
-   *
     * @return
     */
   def fillRoadNames(projectLink: ProjectLink): ProjectLink = {
@@ -1540,7 +1538,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
       /* Remove user defined calibration points before (re)calc. */
-      val udcpRemovedProjectLinks = projectLinks.tail.toList.scanLeft(projectLinks.head) { (p, r) => {
+      val udcpRemovedProjectLinks = projectLinks.tail.scanLeft(projectLinks.head) { (p, r) => {
         if (r.calibrationPoints._2.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (r.startCalibrationPointType, NoCP)) else if (r.calibrationPoints._1.getOrElse(NoCP) == UserDefinedCP) r.copy(calibrationPointTypes = (NoCP, r.startCalibrationPointType)) else r
       }
       }
@@ -1577,17 +1575,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               calculatedLinks
         }.toSeq
 
-//        val roadsWithParts = recalculated.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).keys
-//        val projectCalibrationPoints = roadsWithParts.map(rwp => ProjectCalibrationPointDAO.fetchByRoadPart(projectId, rwp._1, rwp._2 )).flatten
-//        val projectlinkIdsInprojectCalibrationPoints = projectCalibrationPoints.map(_.projectLinkId)
-//        val filteredRecalculated = recalculated.map(pl => if (projectlinkIdsInprojectCalibrationPoints.exists(_ == pl.id) && pl.endCalibrationPointType == CalibrationPointDAO.CalibrationPointType.UserDefinedCP) pl else pl.copy(calibrationPointTypes = (pl.startCalibrationPointType, NoCP)))
-//
-//        val recalculatedTerminated           = terminated //ProjectSectionCalculator.assignTerminatedMValues(terminated, recalculated)
         val assignedTerminatedRoadwayNumbers = assignTerminatedRoadwayNumbers(others ++ terminated)
         val originalAddresses                = roadAddressService.getRoadAddressesByRoadwayIds((recalculated ++ terminated).map(_.roadwayId))
         projectLinkDAO.updateProjectLinks(recalculated ++ assignedTerminatedRoadwayNumbers, userName, originalAddresses)
-        val projectLinksToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
-        projectLinkDAO.create(recalculated.filter(pl => projectLinksToDB.exists(_ == pl.id)))
+        val projectLinkIdsToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
+        projectLinkDAO.create(recalculated.filter(pl => projectLinkIdsToDB.contains(pl.id)))
       }
   }
 
@@ -1619,8 +1611,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     project.status match {
       case ProjectState.Saved2TR => (true, None)
       case _ =>
-        val delta = ProjectDeltaCalculator.delta(project)
-        setProjectDeltaToDB(delta, projectId, projectOpt)
+        setProjectDeltaToDB(projectId, projectOpt)
     }
   }
 
@@ -1731,9 +1722,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def setProjectDeltaToDB(projectDelta: Delta, projectId: Long, project: Option[Project]): (Boolean, Option[String]) = {
+  private def setProjectDeltaToDB(projectId: Long, project: Option[Project]) = {
     roadwayChangesDAO.clearRoadChangeTable(projectId)
-    roadwayChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId, project)
+    roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, project)
   }
 
   private def newProjectTemplate(rl: RoadLinkLike, ra: RoadAddress, project: Project): ProjectLink = {
@@ -1793,29 +1784,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max)
         Seq(links.head.copy(discontinuity = links.maxBy(_.startAddrMValue).discontinuity, startAddrMValue = startA, endAddrMValue = endA, startMValue = startM, endMValue = endM, geometry = geom))
       }
-    }
-  }
-
-  private def fuseUdcpSplittedProjectLinks(links: Seq[ProjectLink]): Seq[ProjectLink] = {
-    val linkIds = links.map(_.linkId).distinct
-    val existingRoadAddresses = roadAddressService.getRoadAddressesByRoadwayIds(links.map(_.roadwayId))
-    val groupedRoadAddresses = existingRoadAddresses.groupBy(record =>
-      (record.roadwayNumber, record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.administrativeClass, record.ely, record.terminated))
-
-    if (groupedRoadAddresses.size > 1) {
-      links
-    }
-    else {
-      if (linkIds.lengthCompare(1) != 0)
-        throw new IllegalArgumentException(s"Multiple road link ids given for building one link: ${linkIds.mkString(", ")}")
-
-        val geom = links.head.sideCode match {
-          case SideCode.TowardsDigitizing => links.map(_.geometry).foldLeft(Seq[Point]())((geometries, ge) => geometries ++ ge)
-          case _ => links.map(_.geometry).reverse.foldLeft(Seq[Point]())((geometries, ge) => geometries ++ ge)
-        }
-        val (startM, endM, startA, endA) = (links.map(_.startMValue).min, links.map(_.endMValue).max,
-                                             links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max)
-        Seq(links.head.copy(discontinuity = links.maxBy(_.startAddrMValue).discontinuity, startAddrMValue = startA, endAddrMValue = endA, startMValue = startM, endMValue = endM, geometry = geom))
     }
   }
 
@@ -2134,8 +2102,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val currentRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
     val historyRoadways = roadwayDAO.fetchAllByRoadwayNumbers(currentRoadways.map(_._2.roadwayNumber).toSet, withHistory = true).filter(_.endDate.isDefined).map(roadway => (roadway.id, roadway)).toMap
 
-    def findHistoryRoadways(x: Long):Seq[Roadway] = {
-      historyRoadways.filter(_._2.roadwayNumber == x).values.toSeq
+    def findHistoryRoadways(rwnum: Long):Seq[Roadway] = {
+      historyRoadways.filter(_._2.roadwayNumber == rwnum).values.toSeq
     }
 
     val roadwayChanges = roadwayChangesDAO.fetchRoadwayChanges(Set(projectID))
@@ -2159,7 +2127,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val roadwaysToInsert = generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).filter(_.endDate.isEmpty).groupBy(_.track).flatMap(g => (g._2.groupBy(_.roadwayNumber).map(t => t._2.head.copy(startAddrMValue = t._2.minBy(_.startAddrMValue).startAddrMValue, endAddrMValue = t._2.maxBy(_.endAddrMValue).endAddrMValue)))) ++ generatedRoadways.flatMap(_._1).filter(_.id == NewIdValue).filter(_.endDate.nonEmpty)
       roadwaysToInsert.foreach(rwtoinsert => logger.info(s"roadwaysToInsert ${rwtoinsert.roadwayNumber} ${rwtoinsert.endDate} ${rwtoinsert.validTo}"))
 
-      /* Update order numbers */
+      /* Fuse linearlocations with the same roadwaynumber and linkid. */
+      val linsToFuse = linearLocationsToInsert.groupBy(ll => (ll.roadwayNumber, ll.linkId)).values.filter(_.size > 1)
+      val linsToFuseIds = linsToFuse.flatten.map(_.id).toSeq
+      val fusedLinearLocations = linsToFuse.map(lls => {
+        val maxOrderNum = lls.map(_.orderNumber).max
+        val firstLl = lls.find(_.orderNumber == 1).get
+        val lastLl = lls.find(_.orderNumber == maxOrderNum).get
+        val geometries = lls.sortBy(_.orderNumber).flatMap(_.geometry).distinct
+        firstLl.copy(calibrationPoints = (lastLl.startCalibrationPoint, lastLl.endCalibrationPoint), geometry = geometries)
+      })
+      linearLocationsToInsert = linearLocationsToInsert.filterNot(ll => linsToFuseIds.contains(ll.id)) ++ fusedLinearLocations
+
+      /* Update order numbers. */
       val rwns = generatedRoadways.flatMap(_._1).map(g => g.roadwayNumber).distinct
       linearLocationsToInsert = rwns.flatMap(r => {
         val lins = linearLocationsToInsert.filter(l => l.roadwayNumber == r).toList

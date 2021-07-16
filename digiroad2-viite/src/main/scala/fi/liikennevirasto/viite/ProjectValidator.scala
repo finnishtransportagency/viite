@@ -958,7 +958,7 @@ class ProjectValidator {
         if (next.isEmpty)
           false
         else
-          curr.endAddrMValue == next.get.startAddrMValue && curr.connected(next.get)
+          curr.endAddrMValue == next.get.startAddrMValue && (if (curr.reversed && next.get.reversed) next.get.connected(curr) else curr.connected(next.get))
       }
 
       val discontinuous: Seq[ProjectLink] = roadProjectLinks.groupBy(s => (s.roadNumber, s.roadPartNumber)).flatMap { g =>

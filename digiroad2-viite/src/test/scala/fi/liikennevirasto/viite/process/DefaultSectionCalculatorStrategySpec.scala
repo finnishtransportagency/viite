@@ -926,7 +926,7 @@ class DefaultSectionCalculatorStrategySpec extends FunSuite with Matchers {
 //  }
 
   /* This roadwaynumber based test needs fixing / rethinking */
-/* This test caused a split to right side with calibration point copien to middle link. Test fails to  mismatch on last line. -> should remove old roadway splitting? */
+/* This test caused a split to right side with calibration point copied to middle link. Test fails to  mismatch on last line. -> should remove old roadway splitting? */
 
   /*test("Test defaultSectionCalculatorStrategy.assignMValues() and the attribution of roadway_numbers for new Left Right sections with same number of links Then " +
     "if there are for e.g. 2 (two) consecutive links with diff roadway number (and all Transfer status), the opposite track (New), should also have 2 diff roadway numbers link(s) even if the amount of the new links is the same than the Transfer side") {

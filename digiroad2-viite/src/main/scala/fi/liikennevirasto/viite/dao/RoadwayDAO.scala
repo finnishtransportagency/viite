@@ -587,15 +587,6 @@ class RoadwayDAO extends BaseDAO {
       }
     }
   }
-/* poista */
-private def withQuery()(query: String): String = {
-  s"""$query"""
-}
-def fetch13All(): Seq[Roadway] = {
-  time(logger, "Fetch all") {
-    fetch(withQuery())
-  }
-}
 
   def fetchAllCurrentRoadNumbers(): Seq[Long] = {
     time(logger, "Fetch all the road numbers") {

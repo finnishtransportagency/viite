@@ -67,20 +67,17 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
   }
 
   test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When inserting the results of the delta calculation for a project Then when querying directly the roadway_changes it should confirm data insertion.") {
-    val newProjectLink = ProjectLink(1, 1, 1, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 1, LinkStatus.New, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L)
-    val delta = Delta(DateTime.now(), Seq(newProjectLink), Termination(Seq()), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {
       addprojects()
       val project1 = projectDAO.fetchById(1).get
       val reservedParts = Seq(ProjectReservedPart(0, 1, 1, Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L)))
-      new RoadwayChangesDAO().insertDeltaToRoadChangeTable(delta, 1, Some(project1.copy(reservedParts = reservedParts)))
+      new RoadwayChangesDAO().insertDeltaToRoadChangeTable(1, Some(project1.copy(reservedParts = reservedParts)))
       sql"""Select Project_Id From ROADWAY_CHANGES Where Project_Id In (1)""".as[Long].firstOption.getOrElse(0) should be(1)
     }
   }
 
   test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When inserting the results of the delta calculation for a project, the inserted ely code should be the roadway ely instead of project ely") {
     val newProjectLink = ProjectLink(1, 1, 1, Track.Unknown, Discontinuity.Continuous, 0, 0, 0, 0, None, None, None, 0, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 1, LinkStatus.New, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, 5, reversed = false, None, 748800L)
-    val delta = Delta(DateTime.now(), Seq(newProjectLink), Termination(Seq()), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {
       addprojects()
       val project1 = projectDAO.fetchById(1).get
@@ -92,7 +89,7 @@ class RoadwayChangesDAOSpec extends FunSuite with Matchers {
       projectLinkDAO.updateProjectLinks(Seq(newProjectLink), project1.createdBy, ra)
       val reservedParts = Seq(ProjectReservedPart(0, 1, 1, Some(0), Some(Discontinuity.Continuous), Some(8L), None, None, None, Some(12345L)))
       val dao = new RoadwayChangesDAO()
-      dao.insertDeltaToRoadChangeTable(delta, 1, Some(project1.copy(reservedParts = reservedParts)))
+      dao.insertDeltaToRoadChangeTable(1, Some(project1.copy(reservedParts = reservedParts)))
       val changes = dao.fetchRoadwayChanges(Set(1))
       changes.foreach(c => {
         c.changeInfo.target.ely.get should be(5)

@@ -16,11 +16,7 @@ object TrackCalculatorContext {
   }
 
   private lazy val discontinuousStrategy: DefaultTrackCalculatorStrategy = {
-    new DefaultTrackCalculatorStrategy //DiscontinuityTrackCalculatorStrategy(Seq(Discontinuous, ParallelLink))
-  }
-
-  private lazy val linkStatusChangeTrackCalculatorStrategy: LinkStatusChangeTrackCalculatorStrategy = {
-    new LinkStatusChangeTrackCalculatorStrategy
+    new DefaultTrackCalculatorStrategy
   }
 
   private lazy val terminatedLinkStatusChangeStrategy: TerminatedLinkStatusChangeStrategy = {
@@ -31,7 +27,7 @@ object TrackCalculatorContext {
     new DefaultTrackCalculatorStrategy
   }
 
-  private val strategies = Seq(minorDiscontinuityStrategy, discontinuousStrategy, terminatedLinkStatusChangeStrategy) // linkStatusChangeTrackCalculatorStrategy,
+  private val strategies = Seq(minorDiscontinuityStrategy, discontinuousStrategy, terminatedLinkStatusChangeStrategy)
 
   def getNextStrategy(projectLinks: Seq[ProjectLink]): Option[(Long, TrackCalculatorStrategy)] = {
     val head = projectLinks.head
@@ -115,7 +111,6 @@ trait TrackCalculatorStrategy {
     * @return Returns all the given project links with recalculated measures
     */
   protected def assignValues(seq: Seq[ProjectLink], st: Long, en: Long, factor: TrackAddressingFactors, userDefinedCalibrationPoint: Map[Long, UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
-//    val coEff_old = (en - st - factor.unChangedLength - factor.transferLength) / factor.newLength
     val coEff = (en - st) / (factor.newLength + factor.unChangedLength + factor.transferLength)
     ProjectSectionMValueCalculator.assignLinkValues(seq, userDefinedCalibrationPoint, Some(st.toDouble), Some(en.toDouble), if (coEff.isNaN || coEff.isInfinity || coEff <= 0) 1.0
     else
@@ -147,7 +142,7 @@ trait TrackCalculatorStrategy {
     (leftLink.calibrationPointTypes._2, rightLink.calibrationPointTypes._2) match {
       case (CalibrationPointDAO.CalibrationPointType.UserDefinedCP, _ ) | (_, CalibrationPointDAO.CalibrationPointType.UserDefinedCP) =>
         userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
-        (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
+          (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
         )
       case _ =>
           (averageOfAddressMValues(rightLink.startAddrMValue, leftLink.startAddrMValue, reversed), averageOfAddressMValues(rightLink.endAddrMValue, leftLink.endAddrMValue, reversed))
@@ -183,8 +178,8 @@ trait TrackCalculatorStrategy {
       setLastEndAddrMValue(adjustedLeft, endSectionAddress),
       setLastEndAddrMValue(adjustedRight, endSectionAddress),
       startSectionAddress, endSectionAddress,
-      leftProjectLinks.drop(leftProjectLinks.size) ++ restLeftProjectLinks,
-      rightProjectLinks.drop(rightProjectLinks.size) ++ restRightProjectLinks)
+      restLeftProjectLinks,
+      restRightProjectLinks)
   }
 
   /**
