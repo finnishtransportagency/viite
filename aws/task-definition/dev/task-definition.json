@@ -71,7 +71,7 @@
             "memoryReservation": 2048,
             "volumesFrom": [],
             "image": "783354560127.dkr.ecr.eu-west-1.amazonaws.com/viite:latest",
-            "name": "viite",
+            "name": "Viite",
             "healthCheck": {
                 "startPeriod": 15,
                 "command": [ "CMD-SHELL", "curl -f http://127.0.0.1:9080/api/ping/ || exit 1" ]
@@ -79,8 +79,8 @@
         }
     ],
     "memory": "4096",
-    "taskRoleArn": "arn:aws:iam::783354560127:role/TaskExecutionRole",
-    "family": "Viite-dev",
+    "taskRoleArn": "arn:aws:iam::783354560127:role/Viite-dev-ALB-ECSTaskExecutionRole-1STE9GFL3ZCWY",
+    "family": "Viite",
     "requiresCompatibilities": [
         "FARGATE"
     ],

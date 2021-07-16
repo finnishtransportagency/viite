@@ -285,6 +285,10 @@
       var endAddress = selectedLinkProperty.count() === 1 ? staticField('LOPPUETÄISYYS', firstSelectedLinkProperty.endAddressM) : staticField('LOPPUETÄISYYS', linkProperties.endAddressM);
       var mtkId = selectedLinkProperty.count() === 1 ? '; MTKID: ' + linkProperties.mmlId : '';
       var roadName = firstSelectedLinkProperty.roadName ? staticField('TIEN NIMI', firstSelectedLinkProperty.roadName) : '';
+      var startAddrM = selectedLinkProperty.count() === 1 ? firstSelectedLinkProperty.startAddressM : linkProperties.startAddressM;
+      var endAddrM = selectedLinkProperty.count() === 1 ? firstSelectedLinkProperty.endAddressM : linkProperties.endAddressM;
+      var length = (selectedLinkProperty.count() > 1 && endAddrM - startAddrM === 0) ? '' : endAddrM - startAddrM;
+      var addrLength = staticField('PITUUS', length) ;
       return _.template('' +
         '<header>' +
         title() +
@@ -303,6 +307,7 @@
         '</div>' +
         showMunicipality() +
         showLinkId(selectedLinkProperty, linkProperties) +
+        showLinkLength(selectedLinkProperty, linkProperties) +
         '</div>' +
         roadName +
         staticField('TIENUMERO', firstSelectedLinkProperty.roadNumber) +
@@ -310,6 +315,7 @@
         staticField('AJORATA', firstSelectedLinkProperty.trackCode) +
         startAddress +
         endAddress +
+        addrLength +
         staticField('ELY', firstSelectedLinkProperty.elyCode) +
         administrativeClasses +
         staticField('JATKUVUUS', linkProperties.discontinuity) +
@@ -402,6 +408,17 @@
           '<div class="form-group-metadata">' +
           '<p class="form-control-static asset-log-info-metadata">Linkin ID: ' + linkProperties.linkId + '</p>' +
           '</div>';
+      } else {
+        return '';
+      }
+    };
+
+    var showLinkLength = function (selectedLinkPropertyToShow, linkProperties) {
+      if (selectedLinkPropertyToShow.count() === 1) {
+        return '' +
+            '<div class="form-group-metadata">' +
+            '<p class="form-control-static asset-log-info-metadata">Linkin pituus: ' + Math.round(linkProperties.endMValue - linkProperties.startMValue) + '</p>' +
+            '</div>';
       } else {
         return '';
       }
