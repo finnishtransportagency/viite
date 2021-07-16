@@ -104,7 +104,7 @@ object TwoTrackRoadUtils {
   }
 
   /* split start */
-  def createCalibrationPointsAtStatusChange(
+  private def createCalibrationPointsAtStatusChange(
     toUpdateLinks: Seq[ProjectLink],
     roadPartLinks: Seq[ProjectLink],
     projectId:     Long
@@ -477,7 +477,7 @@ object TwoTrackRoadUtils {
           calibrationPointTypes   = calsForSecondPart,
           geometry                = new_geometry,
           status                  = pl.status,
-          geometryLength          = pl.geometryLength - splitMeasure,
+          geometryLength          = pl.geometryLength - splitMeasure, // Should be pl.endMValue - splitMeasure?
           connectedLinkId         = Some(pl.linkId)
         )
       )
