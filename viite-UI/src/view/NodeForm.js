@@ -123,7 +123,7 @@
         addNodeTypeDropdown('Solmutyyppi', 'nodeTypeDropdown', getNodeType(node.type)) +
         inputFieldRequired('Alkupvm', 'nodeStartDate', 'pp.kk.vvvv', startDate, 'disabled', true) +
         '   <div class="form-check-date-notifications"> ' +
-        '     <p id="nodeStartDate-validation-notification">' + '</p>' +
+        '     <p id="nodeStartDate-validation-notification"> </p>' +
         '   </div>' +
         '   </div>' +
         '   <div>' +
@@ -735,7 +735,7 @@
           });
 
           var checkDateNotification = function (nodeStartDate) {
-            var nodeNotificationText = ""
+            var nodeNotificationText = "";
             var parts_DMY=nodeStartDate.split('.');
 
             var nodeSD = new Date(parts_DMY[2], parts_DMY[1] - 1, parts_DMY[0]);
