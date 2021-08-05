@@ -69,6 +69,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else Seq.empty[VVHRoadlink]
   }
 
+  def fetchVVHComplementaryLinksFromVVH(linkIds: Set[Long]): Seq[VVHRoadlink] = {
+    if (linkIds.nonEmpty) vvhClient.complementaryData.fetchByLinkIds(linkIds)
+    else Seq.empty[VVHRoadlink]
+  }
+
   private def fetchVVHFrozenRoadLinksAndComplementaryFromVVH(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     if (linkIds.nonEmpty) vvhClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds) ++ vvhClient.complementaryData.fetchByLinkIds(linkIds)
     else Seq.empty[VVHRoadlink]
@@ -314,6 +319,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         link.modifiedAt.map(DateTimePropertyFormat.print),
         None, link.attributes, link.constructionType, link.linkSource)
     }
+  }
+
+  def getComplementaryRoadLinksFromVVHByLinkIds(linkIds: Set[Long]): Seq[RoadLink] = {
+    val links = {
+      if (linkIds.nonEmpty) fetchVVHComplementaryLinksFromVVH(linkIds)
+      else Seq.empty[VVHRoadlink]
+    }
+    (enrichRoadLinksFromVVH(links), Seq())._1
   }
 
   def getComplementaryRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {

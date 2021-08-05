@@ -78,10 +78,16 @@
       return _.flatten(roadLinkGroups);
     };
 
+    var selectedRoadNumber = 0;
+    var selectedRoadPartNumber = 0;
     var getSelectedRoadLinks = function () {
-      return _.filter(roadLinks().concat(underConstructionRoadLinks()), function (roadLink) {
+      var selected_road = _.find(roadLinks() , function (roadLink) {
         return roadLink.isSelected() && roadLink.getData().anomaly === Anomaly.None.value;
       });
+      if (selected_road) {
+        selectedRoadNumber = selected_road.getData().roadNumber;
+        selectedRoadPartNumber = selected_road.getData().roadPartNumber;
+      }
     };
 
     this.getDate = function () {

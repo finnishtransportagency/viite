@@ -124,8 +124,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     )
 
     when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int,Int)]])).thenReturn(linearLocations)
+    when(mockLinearLocationDAO.fetchByRoadwayNumber(any[Iterable[Long]])).thenReturn(linearLocations.toList)
 
     when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(roadways)
+    when(mockRoadwayDAO.fetchAllByRoadAndPart(any[Long], any[Long], any[Boolean], any[Boolean])).thenReturn(roadways)
 
     //Road Link service mocks
     when(mockRoadLinkService.getChangeInfoFromVVHF(any[Set[Long]])).thenReturn(Future(Seq.empty))
