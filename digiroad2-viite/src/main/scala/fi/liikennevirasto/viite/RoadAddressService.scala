@@ -104,8 +104,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, roadwayDAO: RoadwayDA
 
     // get all the roadways in the roadpart(s)(not just the roadwaynumbers that are on the linearlocations that we got from the boundingbox)
     val allRoadwaysInRoadParts =  {
-      val roadways = roadAndPartNumbers.flatMap(rp => roadwayDAO.fetchAllByRoadAndPart(rp._1, rp._2)).distinct
-      roadways
+      roadAndPartNumbers.flatMap(rp => roadwayDAO.fetchAllByRoadAndPart(rp._1, rp._2)).distinct
     }
 
     // get all the roadwayNumbers from the roadways
