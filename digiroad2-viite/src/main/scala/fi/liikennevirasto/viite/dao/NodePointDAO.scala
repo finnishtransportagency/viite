@@ -183,6 +183,7 @@ class NodePointDAO extends BaseDAO {
           JOIN ROADWAY RW on (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
           where NP.ROADWAY_POINT_ID in (${roadwayPointIds.mkString(", ")}) and NP.valid_to is null
         """
+      logger.debug(s"******* Querying by roadwaypointId.s: ${roadwayPointIds.mkString(", ")} \n    query: : $query")
       queryList(query)
     }
   }
@@ -346,8 +347,10 @@ class NodePointDAO extends BaseDAO {
       """
     if (ids.isEmpty)
       0
-    else
+    else {
+      logger.debug(s"Expiring by id: ${ids.mkString(", ")} \n    query: : $query")
       Q.updateNA(query).first
+    }
   }
 
   def expireByNodeNumberAndType(nodeNumber: Long, nodePointType: NodePointType): Unit = {
@@ -356,6 +359,7 @@ class NodePointDAO extends BaseDAO {
         Update NODE_POINT Set valid_to = CURRENT_TIMESTAMP where valid_to IS NULL AND node_number = $nodeNumber
         AND type = ${nodePointType.value}
       """
+    logger.debug(s"Expiring by number and type: ${nodeNumber}, ${nodePointType.value} \n    query: : $query")
     Q.updateNA(query).execute
   }
 
