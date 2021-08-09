@@ -159,6 +159,9 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
+  /** Gets joined NodePoint, Node, RoadwayPoint, and Roadway info where
+    * nodePoint~roadPoint~roadway, and nodePoint~node,
+    * and <b>nodePoint is still eligible</b> (end_date, and valid_to are nulls) */
   def fetchByRoadwayPointIds(roadwayPointIds: Seq[Long]): Seq[NodePoint] = {
     if (roadwayPointIds.isEmpty) {
       Seq()
@@ -178,6 +181,32 @@ class NodePointDAO extends BaseDAO {
     }
   }
 
+  /** Gets joined NodePoint, Node, RoadwayPoint, and Roadway info where
+    * nodePoint~roadPoint~roadway, and nodePoint~node,
+    * and nodePoint is still eligible (end_date, and valid_to are nulls)
+    * <b>but there is no more corresponding roadway available.</b>*/
+  def fetchRoadwiseOrphansByRoadwayPointIds(roadwayPointIds: Seq[Long]): Seq[NodePoint] = {
+    if (roadwayPointIds.isEmpty) {
+      Seq()
+    } else {
+      val query =
+        s"""
+           SELECT NP.ID, NP.BEFORE_AFTER, NP.ROADWAY_POINT_ID, NP.NODE_NUMBER, NP.TYPE,
+                  N.START_DATE, N.END_DATE,
+                  NP.VALID_FROM, NP.VALID_TO, NP.CREATED_BY, NP.CREATED_TIME,
+                  RP.ROADWAY_NUMBER, RP.ADDR_M,
+                  RW.ROAD_NUMBER, RW.ROAD_PART_NUMBER, RW.TRACK, RW.ELY
+           FROM            NODE_POINT NP
+           INNER JOIN      ROADWAY_POINT RP ON (RP.ID = ROADWAY_POINT_ID)
+           LEFT OUTER JOIN NODE N     ON (N.NODE_NUMBER = np.NODE_NUMBER AND N.VALID_TO IS NULL AND N.END_DATE IS NULL)
+           LEFT OUTER JOIN ROADWAY RW ON (RW.ROADWAY_NUMBER = RP.ROADWAY_NUMBER)
+           WHERE           NP.ROADWAY_POINT_ID IN (${roadwayPointIds.mkString(", ")}) AND NP.valid_to is null
+                           AND RW.ROADWAY_NUMBER is null
+        """
+      logger.debug(s"******* Querying Roadwaywise orphan Nodes by roadwaypointId.s: ${roadwayPointIds.mkString(", ")} \n    query: : $query")
+      queryList(query)
+    }
+  }
   def fetchByRoadwayPointId(roadwayPointId: Long): Seq[NodePoint] = {
     val query =
       s"""
