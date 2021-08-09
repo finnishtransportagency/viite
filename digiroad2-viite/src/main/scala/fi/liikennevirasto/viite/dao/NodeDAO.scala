@@ -337,6 +337,7 @@ class NodeDAO extends BaseDAO {
       val query = s"""
         UPDATE NODE SET valid_to = CURRENT_TIMESTAMP WHERE valid_to IS NULL AND id IN (${ids.mkString(", ")})
       """
+      logger.debug(s"******* Expiring nodes by ids: ${ids.mkString(", ")} \n    query: : $query")
       Q.updateNA(query).first
     }
   }
